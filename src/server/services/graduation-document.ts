@@ -18,6 +18,7 @@ import {
   codedForbidden,
   codedNotFound,
   codedRateLimited,
+  codedUnauthenticated,
   codedValidation,
 } from '@/lib/errors';
 
@@ -52,7 +53,7 @@ const nowOf = (deps: { now?: () => Date }) => (deps.now ?? (() => new Date()))()
 /**
  * Mezun belgesi yükle. Sözleşme doğrulamasını (Zod) çağıran yapmıştır; burada SUNUCU yeniden doğrular ve
  * dosyanın İÇERİĞİNE bakar (sihirli bayt; istemcinin söylediği tür/uzantı güvenilmez).
- * Sıra: dosya yazılır → veritabanı kaydı; kayıt başarısızsa dosya geri silinir (artık dosya kalmaz).
+ * Kullanıcı kilidi alındıktan sonra dosya yazılır → veritabanı kaydı; hata varsa dosya geri silinir.
  */
 export async function uploadGraduationDocument(
   deps: GraduationDocumentDeps,
@@ -96,10 +97,17 @@ export async function uploadGraduationDocument(
   if (verifiedAlumni) throw codedConflict('MEMBERSHIP_ALREADY_VERIFIED');
 
   const key = newGraduationDocumentKey(actor.userId);
-  await storage.put(key, bytes, { contentType: 'application/pdf' });
 
   try {
     return await db.$transaction(async (tx) => {
+      // Hesap silme ile aynı kullanıcı satırı kilitlenir; bayat oturumla dosya bırakılamaz.
+      await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${actor.userId} FOR UPDATE`;
+      const user = await tx.user.findUnique({
+        where: { id: actor.userId },
+        select: { deletedAt: true },
+      });
+      if (!user || user.deletedAt) throw codedUnauthenticated('AUTH_UNAUTHENTICATED');
+      await storage.put(key, bytes, { contentType: 'application/pdf' });
       await tx.$queryRaw`
         SELECT "id" FROM "Membership"
         WHERE "userId" = ${actor.userId} AND "departmentId" = ${form.departmentId}

@@ -386,3 +386,10 @@ commit olmadan kalabilir. Bu dar belirsizlikte yeniden deneme çift teslim üret
 idempotency anahtarının sabit özetinden üretilir ama SMTP genelinde kesin tek teslim garantisi
 vermez. Bu adım normal yinelenen çağrıları ve kayıtlı SENT teslimlerini engeller; böyle bir garantiyi
 varmış gibi sunmaz. Sağlayıcı düzeyinde idempotency API'si P1-18 sağlayıcı kararıyla değerlendirilir.
+
+## 2026-11-08 · Hesap silme ve belge yükleme aynı kullanıcı kilidini paylaşır
+
+Hesap silme kullanıcı satırını işlem başında kilitler, silinme işaretini koyar ve belge anahtarlarını
+kilit altında toplar; işlem sonrasında kalan kayıtlı anahtarları yeniden tarar. Belge yükleme de aynı
+kullanıcı satırını kilitleyip silinmiş hesabı reddeder ve önceden yazılan dosyayı temizler. Böylece
+silme sürerken başlayan yükleme silinmiş hesaba belge kaydı ve artık dosya bırakamaz.

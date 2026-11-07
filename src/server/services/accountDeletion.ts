@@ -45,30 +45,30 @@ export async function deleteAccount(
   now: Date = new Date(),
 ): Promise<DeleteAccountOutput> {
   await consumeRateLimit(db, RATE_LIMITS.accountDeletion, userId, now);
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { email: true, deletedAt: true },
-  });
-  if (!user || user.deletedAt) throw codedNotFound('RESOURCE_NOT_FOUND');
-  if (user.email.toLowerCase() !== input.confirmEmail.toLowerCase()) {
-    throw codedValidation('ACCOUNT_DELETE_CONFIRMATION_MISMATCH');
-  }
-
-  const pendingFiles = await db.graduationDocument.findMany({
-    where: { userId, status: 'PENDING' },
-    select: { storageKey: true },
-  });
-  const fileKeys = pendingFiles
-    .map((row) => row.storageKey)
-    .filter((key): key is string => key !== null);
-  if (fileKeys.length > 0 && !deps.removeStoredFiles) {
-    // Dosya silme bağlanmadan hesap silinirse belge diskte kalırdı: hiç başlama.
-    throw new Error('Dosya silme bağlı değil; hesap silme başlatılmadı');
-  }
-
   await db.$transaction(async (tx) => {
+    // Yükleme de aynı satırı kilitler; eski bir oturumla başlayan yükleme silmeyle yarışamaz.
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { email: true, deletedAt: true },
+    });
+    if (!user || user.deletedAt) throw codedNotFound('RESOURCE_NOT_FOUND');
+    if (user.email.toLowerCase() !== input.confirmEmail.toLowerCase()) {
+      throw codedValidation('ACCOUNT_DELETE_CONFIRMATION_MISMATCH');
+    }
+    await tx.user.update({ where: { id: userId }, data: { deletedAt: now } });
     for (const handler of deps.handlers ?? PUBLISHED_CONTENT_HANDLERS) {
       await handler(tx, userId, input.publishedContent);
+    }
+    const pendingFiles = await tx.graduationDocument.findMany({
+      where: { userId, status: 'PENDING' },
+      select: { storageKey: true },
+    });
+    const fileKeys = pendingFiles
+      .map((row) => row.storageKey)
+      .filter((key): key is string => key !== null);
+    if (fileKeys.length > 0 && !deps.removeStoredFiles) {
+      throw new Error('Dosya silme bağlı değil; hesap silme başlatılmadı');
     }
     await tx.graduationDocument.deleteMany({ where: { userId, status: 'PENDING' } });
 
@@ -114,5 +114,17 @@ export async function deleteAccount(
     // Depolama idempotenttir: kısmen silinen dosyalar yeniden silinebilir.
     if (fileKeys.length > 0 && deps.removeStoredFiles) await deps.removeStoredFiles(fileKeys);
   });
+  // Kilitli yükleme yolu sonrasında kalmış kayıtlı anahtar varsa tekrar temizle.
+  const remaining = await db.graduationDocument.findMany({
+    where: { userId, storageKey: { not: null } },
+    select: { storageKey: true },
+  });
+  const remainingKeys = remaining
+    .map((row) => row.storageKey)
+    .filter((key): key is string => key !== null);
+  if (remainingKeys.length > 0) {
+    if (!deps.removeStoredFiles) throw new Error('Dosya silme bağlı değil');
+    await deps.removeStoredFiles(remainingKeys);
+  }
   return { deleted: true };
 }
