@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { codedConflict, codedNotFound, codedForbidden } from '@/lib/errors';
 
 import { errorForDenyReason } from '../permissions/guards';
@@ -91,43 +91,15 @@ export async function transitionStudentToAlumni(
     }
 
     // 4) Uygula: öğrenci üyeliği kapanır, mezun üyeliği doğrulanmış olarak etkinleşir.
-    await tx.membership.update({
-      where: { id: plan.endStudentMembershipId },
-      data: { endedAt: now },
-    });
-
-    const verified = {
-      verificationStatus: 'VERIFIED' as const,
-      verificationMethod: input.method,
-      verifiedAt: now,
-      verifiedById: admin.userId,
+    const alumniMembershipId = await applyAlumniTransitionPlan(tx, {
+      plan,
+      userId: input.userId,
+      departmentId: input.departmentId,
+      adminUserId: admin.userId,
+      method: input.method,
       graduationYear: input.graduationYear,
-    };
-    let alumniMembershipId: string;
-    switch (plan.alumni.action) {
-      case 'CREATE': {
-        const created = await tx.membership.create({
-          data: {
-            userId: input.userId,
-            departmentId: input.departmentId,
-            role: 'ALUMNI',
-            entryYear: plan.entryYear,
-            ...verified,
-          },
-          select: { id: true },
-        });
-        alumniMembershipId = created.id;
-        break;
-      }
-      case 'VERIFY_PENDING': {
-        await tx.membership.update({ where: { id: plan.alumni.membershipId }, data: verified });
-        alumniMembershipId = plan.alumni.membershipId;
-        break;
-      }
-      case 'KEEP_VERIFIED':
-        alumniMembershipId = plan.alumni.membershipId;
-        break;
-    }
+      now,
+    });
 
     // 5) İşlem kaydı — aynı işlemde (kayıt yazılamazsa geçiş de geri alınır).
     await recordAdminAction(tx, {
@@ -153,4 +125,63 @@ export async function transitionStudentToAlumni(
       alumniMembershipId,
     };
   });
+}
+
+type TransitionPlan = Extract<ReturnType<typeof planAlumniTransition>, { outcome: 'TRANSITION' }>;
+type MembershipWriter = Pick<Prisma.TransactionClient, 'membership'>;
+
+/**
+ * Geçiş planını uygular (öğrenci üyeliğini kapatır, mezun üyeliğini oluşturur/doğrular) ve mezun üyelik
+ * kimliğini döner. Çağıran AYNI işlemde yetkiyi doğrulamış, satırları kilitlemiş ve işlem kaydını yazmış
+ * olmalıdır; mezun belgesi onayı da bu işlevi kullanır.
+ */
+export async function applyAlumniTransitionPlan(
+  tx: MembershipWriter,
+  input: {
+    plan: TransitionPlan;
+    userId: string;
+    departmentId: string;
+    adminUserId: string;
+    method: 'GRADUATION_DOCUMENT' | 'ADMIN';
+    graduationYear: number;
+    now: Date;
+  },
+): Promise<string> {
+  const { plan, now } = input;
+  await tx.membership.update({
+    where: { id: plan.endStudentMembershipId },
+    data: { endedAt: now },
+  });
+
+  const verified = {
+    verificationStatus: 'VERIFIED' as const,
+    verificationMethod: input.method,
+    verifiedAt: now,
+    verifiedById: input.adminUserId,
+    graduationYear: input.graduationYear,
+  };
+  switch (plan.alumni.action) {
+    case 'CREATE': {
+      const created = await tx.membership.create({
+        data: {
+          userId: input.userId,
+          departmentId: input.departmentId,
+          role: 'ALUMNI',
+          entryYear: plan.entryYear,
+          ...verified,
+        },
+        select: { id: true },
+      });
+      return created.id;
+    }
+    case 'VERIFY_PENDING':
+      // Belge akışında bekleyen mezun satırı giriş yılını bilmez; öğrenci üyeliğinden devralınır (geçmiş).
+      await tx.membership.update({
+        where: { id: plan.alumni.membershipId },
+        data: { ...verified, ...(plan.entryYear !== null ? { entryYear: plan.entryYear } : {}) },
+      });
+      return plan.alumni.membershipId;
+    case 'KEEP_VERIFIED':
+      return plan.alumni.membershipId;
+  }
 }
