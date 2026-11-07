@@ -23,6 +23,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
+    "test:e2e": "playwright test",
+    "evidence": "node scripts/evidence.mjs",
     "dev:all": "node scripts/dev.mjs all",
     "dev:lan": "node scripts/dev.mjs lan",
     "test:local": "node --test scripts/*.test.mjs"
@@ -39,6 +41,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "1.65.0",
     "@tailwindcss/postcss": "^4.3.5",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
