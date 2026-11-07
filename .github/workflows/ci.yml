@@ -48,7 +48,7 @@ jobs:
       - name: Lint
         run: pnpm lint
       - name: Biçim
-        run: pnpm format:check && false
+        run: pnpm format:check
       - name: Test
         run: pnpm test
       - name: Prisma doğrulama
