@@ -302,3 +302,12 @@ Görünürlük `rules/visibility` karar tablosundadır: sahibi hep tam görür; 
 maskeli görür; `PRIVATE` onaylı iletişim talebiyle de açılmaz; dışarıdakine hiçbir alan dönmez. İletişim
 talebinde ret gerekçesi yoktur (talep edene neden söylenmez); başkasının talebine erişim `RESOURCE_NOT_FOUND`
 döner (varlığı sızmaz). Onaylı talep de “açık” sayılır: aynı ikili için yeni talep ancak kapanınca açılır.
+
+## 2026-11-08 · KVKK servisi: hız sınırları, hesap silmede anonimleştirme ve dosya silme (P1-03 servisi)
+Uygulama hız sınırları yeni tablo yerine Better Auth'un `RateLimit` tablosunda, `app:` önekli anahtarla ve
+tek atomik SQL'le (sabit pencere) tutulur: iletişim talebi günde 10, veri dökümü saatte 5, hesap silme
+denemesi saatte 5. Hesap silmede kullanıcı satırı anonimleştirilir (ad yer tutucu, e-posta
+`deleted-<id>@deleted.invalid`, telefon/görsel boş): rıza ve işlem kaydı kanıt olarak bağlı kalır, eski
+e-postayla bu hesaba giriş yolu kalmaz. Bekleyen belge dosyası varken dosya silme bağlı değilse işlem hiç
+başlamaz (veritabanı silinip dosyanın kalması, yani yarım silme, yok). İletişim talebinde yalnız “onaylı
+talebe açık” alan istenebilir (PRIVATE kimseye açılmaz, MEMBERS zaten görünür).

@@ -93,6 +93,8 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
   anonimleştirilir). `Account.password` kullanılmaz (giriş parolasızdır).
 - `MentorProfile`: görüşme süresi 15/20/30 dk; etkin profilin en az bir görüşme biçimi vardır. Kapasite
   ve süre mentorun kararıdır, varsayılanı yoktur.
+- `RateLimit`: Better Auth'un hız sınırı deposu; uygulamanın kendi sınırları (iletişim talebi, veri dökümü,
+  hesap silme) aynı tabloda `app:` önekli anahtarla, kullanıcı kimliğiyle tutulur (anahtarda kişisel veri yok).
 - `Consent`: geri çekme ve yeni sürüm onayı yeni satırdır; bir belgenin geçerli durumu o belge için en son
   satırdır. Rızası olan kullanıcı satırı silinemez (hesap silme anonimleştirir).
 - `FieldVisibility`: kullanıcı × alan başına tek satır; satır yoksa varsayılan geçerlidir
