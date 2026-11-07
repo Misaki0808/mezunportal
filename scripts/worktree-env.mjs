@@ -1,0 +1,112 @@
+import { execFileSync } from 'node:child_process';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { setTimeout } from 'node:timers/promises';
+import { parseEnv } from 'node:util';
+import { portAvailable, readLocalSettings, worktreeSettings } from './local-env.mjs';
+
+const root = realpathSync(process.cwd());
+const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+const mainRoot = dirname(resolve(git('rev-parse', '--git-common-dir')));
+const settings = worktreeSettings(basename(root), root === mainRoot);
+const lock = join(tmpdir(), `mezunportal-env-${process.getuid()}.lock`);
+let locked = false;
+try {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    try {
+      mkdirSync(lock, { mode: 0o700 });
+      locked = true;
+      break;
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      await setTimeout(100);
+    }
+  }
+  if (!locked) throw new Error('Ortam hazırlama kilidi dolu; çalışan betik bitince yeniden dene.');
+  const file = join(root, '.env.local');
+  let port;
+  let content;
+  if (existsSync(file)) {
+    ({ port } = readLocalSettings(readFileSync(file, 'utf8'), settings));
+  } else {
+    const reserved = new Set();
+    const paths = git('worktree', 'list', '--porcelain')
+      .split('\n')
+      .filter((line) => line.startsWith('worktree '))
+      .map((line) => line.slice(9));
+    // Aynı rolün henüz Git'e kaydedilmemiş test kopyalarını da korur.
+    for (const entry of readdirSync(dirname(root), { withFileTypes: true })) {
+      if (entry.isDirectory()) paths.push(join(dirname(root), entry.name));
+    }
+    for (const path of paths) {
+      const envFile = join(path, '.env.local');
+      if (existsSync(envFile)) {
+        try {
+          reserved.add(Number(new URL(parseEnv(readFileSync(envFile, 'utf8')).APP_URL).port || 80));
+        } catch {
+          /* İlgisiz/eksik ortam dosyası değiştirilmez. */
+        }
+      }
+    }
+    for (let index = 0; index < (settings.base === 3000 ? 1 : 100); index++) {
+      const candidate = settings.base + ((settings.offset + index) % 100);
+      if (!reserved.has(candidate) && (await portAvailable(candidate))) {
+        port = candidate;
+        break;
+      }
+    }
+    if (!port) throw new Error('Rol diliminde boş port bulunamadı.');
+    content = readFileSync('.env.example', 'utf8')
+      .replace(/^APP_URL=.*$/m, `APP_URL=http://localhost:${port}`)
+      .replace(
+        /^DATABASE_URL=.*$/m,
+        `DATABASE_URL=postgresql://mezun:mezun@127.0.0.1:5432/${settings.database}`,
+      )
+      .replace(
+        /^DATABASE_URL_TEST=.*$/m,
+        `DATABASE_URL_TEST=postgresql://mezun:mezun@127.0.0.1:5432/${settings.testDatabase}`,
+      );
+  }
+  for (const database of [settings.database, settings.testDatabase]) {
+    const args = ['compose', '-p', 'mezunportal', 'exec', '-T', 'postgres'];
+    const found = execFileSync(
+      'docker',
+      [
+        ...args,
+        'psql',
+        '-U',
+        'mezun',
+        '-d',
+        'postgres',
+        '-Atc',
+        `SELECT 1 FROM pg_database WHERE datname = '${database}'`,
+      ],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+    ).trim();
+    if (found !== '1')
+      execFileSync('docker', [...args, 'createdb', '-U', 'mezun', database], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+  }
+  if (content) writeFileSync(file, content, { mode: 0o600, flag: 'wx' });
+  mkdirSync('.data/files', { recursive: true });
+  process.stdout.write(
+    `Yerel ortam hazır: ${settings.database}, ${settings.testDatabase}; port ${port}. Mevcut ayar ve veri korundu.\n`,
+  );
+} catch {
+  process.stderr.write(
+    'Yerel ortam hazırlanamadı. Worktree adı/ayarı, boş rol portu ve Docker PostgreSQL durumunu kontrol et; mevcut .env.local korunur.\n',
+  );
+  process.exitCode = 1;
+} finally {
+  if (locked) rmSync(lock, { recursive: true });
+}
