@@ -103,6 +103,7 @@ pnpm lint
 pnpm format:check
 pnpm test                        # birim + veritabanlı testler (DATABASE_URL_TEST ister)
 pnpm test:unit                   # yalnız birim testleri (veritabanı gerekmez)
+pnpm test:local                  # yerel ortam/port kuralları (veritabanı gerekmez)
 pnpm messages:check
 pnpm prisma validate
 pnpm build
