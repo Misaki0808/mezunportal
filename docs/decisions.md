@@ -293,3 +293,90 @@ Başlatma eylemi hedef yolu istemciden almaz (açık yönlendirme yok).
 Profil sekmesi Hesabım merkezine açılır; doğrulama, e-posta ve çıkış buradan erişilir. Yönetim
 bağlantısı yalnız sunucuda yetki korumalarını geçen yöneticilere gösterilir; yönetim sayfası ayrıca
 sunucuda korunur. Giriş sonrası hedef ana sayfa kalır, doğrulanmamış üyeye doğrulama kartı gösterilir.
+
+## 2026-11-08 · Better Auth HTTP yüzeyi beyaz liste; giriş sunucu eylemlerinden geçer
+Better Auth yüzlerce uç açar (admin eklentisinin `impersonate-user`/`set-role`/`remove-user`, kayıt, parola,
+doğrudan `sign-in/magic-link`). Hiçbirine istemciden ulaşılması gerekmez ve doğrudan giriş ucu bizim hız
+sınırımızı ve nötr yanıtımızı atlardı. `/api/auth/` altında yalnız kullanıcının bağlantıya tıklamasıyla
+tetiklenen üç GET ucu açıktır (`magic-link/verify`, `verify-email`, `callback/linkedin`); gerisi 404. Giriş,
+e-posta değiştirme ve çıkış `auth.api` ile sunucu eylemlerinden yapılır. İki kat savunma: HTTP beyaz listesi
+VE eklentinin rol sisteminin kapatılması (`adminRoles: []`, tek rol izinsiz): `User.role='admin'` olsa bile
+`auth.api.impersonateUser` reddedilir (davranış testi). Bağlantı hataları `/giris?hata=<ErrorCode>`'a çevrilir
+(askıdaki kullanıcının 403'ü dahil: Better Auth bu durumda yönlendirme değil JSON verir).
+
+## 2026-11-08 · Hız sınırı: eylem düzeyinde kendi sayacımız, e-posta başına asıl koruma
+Better Auth'un yerleşik sınırlayıcısı yalnız HTTP isteklerinde çalışır ve IP'ye dayanır; IP başlığı
+taklit edilebilir. Asıl koruma e-posta başınadır (saatte 5 bağlantı: posta bombardımanını keser), istemci
+adresi tamamlayıcıdır. Sayaç tek atomik `INSERT … ON CONFLICT` ile sayar (eşzamanlı 20 çağrıdan tam `max`
+kadarı geçer, testli), anahtarlar HMAC ile özetlenir. Bedel: bir saldırgan bir kurbanın kotasını (5/saat)
+tüketip girişini geciktirebilir; bağlantı 10 dakika geçerli ve test girişi/yönetici yolları ayrı olduğundan
+kabul edildi. Better Auth'un kendi sınırlayıcısı da açık (veritabanı depolu) ve açık kalan GET uçlarını korur.
+
+## 2026-11-08 · KVKK veri en azlığı: oturumda IP/user-agent yok, LinkedIn jetonları saklanmaz
+Oturum satırında IP ve user-agent tutmak yetki kararına gerekmez; kanca (`sessionCreateBefore`) bunları null
+yazar (hız sınırı IP'yi kendi anahtarında özetler). LinkedIn yalnız kimlik kanıtıdır: girişten sonra sağlayıcı
+API'sine bir daha gidilmediği için erişim/yenileme/kimlik jetonları ve süreleri hiç saklanmaz
+(`accountTokensStripped`). Şifreleyip saklamak (`encryptOAuthTokens`) yerine hiç saklamamak seçildi: sızabilecek
+sır yok. Reddedilen: jetonları şifreli tutmak (yalnız ileride sağlayıcı API'si gerekirse).
+
+## 2026-11-08 · Hesap bağlama: güvenilir sağlayıcı listesi boş
+Aynı e-postalı LinkedIn hesabı mevcut kullanıcıya YALNIZ sağlayıcı e-postayı doğrulanmış bildirirse bağlanır
+(Better Auth varsayılanı); `trustedProviders` boştur, `allowDifferentEmails` kapalıdır. Böylece doğrulanmamış
+bir sağlayıcı e-postasıyla başkasının hesabını devralmak mümkün değildir.
+
+## 2026-11-08 · Mezun belgesi: dosya yaşam döngüsü ve işlem sırası
+Yükleme: dosya ÖNCE depoya yazılır, sonra kayıt; kayıt başarısızsa dosya geri silinir (artık dosya kalmaz).
+Karar: aynı veritabanı işleminde yetki yeniden doğrulanır, belge satırı kilitlenir, üyelik güncellenir, işlem
+kaydı yazılır ve dosya SİLİNİR; silme başarısızsa karar geri alınır (karar yazılıp dosya kalması, "dosya karar
+anında silinir" kuralını bozardı). Çok nadir ters durum (silme sonrası işlem tamamlanamaz): belge bekleyen kalır
+ve dosyası yoktur; yönetici gerekçeyle reddeder, başvuran yeniden yükler. Bekleyen mezun üyeliği yükleme
+anında oluşur (öğrenci üyeliği onaya kadar etkin kalır, erişim kesilmez); onayda öğrenci → mezun geçişi
+(`applyAlumniTransitionPlan`, giriş yılı öğrenci satırından devralınır), retle bekleyen satır `REJECTED` olup
+kapanır ve yeniden başvuru yeni satır açar. Karar e-postası işlemden SONRA kuyruğa verilir (başarısızlığı
+kararı etkilemez). Dosya yalnız belgenin bölümünü kapsayan doğrulanmış yöneticiye yetki kontrollü rotadan akar.
+
+## 2026-11-08 · Kayıtta bölüm listesi ve alan adı kuralı
+`listSelectableDepartments` oturumdaki e-postanın alan adıyla EŞLEŞEN üniversitenin bölümlerini döner,
+eşleşme yoksa (mezun, kişisel e-posta) hepsini (PM kararı). Alan adı eşleşmesi TAM eşleşmedir: kayıtlı alan
+adının alt alan adı ya da benzeri (`x.ogr…`, `evil-ogr…`) eşleşmez; başka üniversitenin adresi bu
+üniversitenin bölümünü doğrulayamaz. Öğrenci ve personel listesi aynı alan adını içerirse iki rol de
+beyan edilebilir. Mezun alan adıyla asla doğrulanmaz.
+
+## 2026-11-08 · Sunucu eylemi gövde sınırı 6 MB
+Next.js 16 sunucu eylemleri varsayılan olarak 1 MB gövde kabul eder; 5 MB PDF + çok parçalı form zarfı için
+`experimental.serverActions.bodySizeLimit = '6mb'` (`next.config.ts`; testle sabit). Sözleşme sınırı (5 MB)
+şema ve servis katmanında ayrıca doğrulanır; gövde sınırı yalnız taşıma tavanıdır.
+
+## 2026-11-08 · Hesap silmede yayınlanmış içerik kullanıcıya sorulur (K-09, P1-03 sözleşmesi)
+PM kararı: hesap silinirken kullanıcıya sorulur; varsayılan **yayınlanmış deneyimleri sil**, isterse
+**anonimleştirip bırak** (yazar bağı koparılır; hiçbir yanıtta yazar görünmez). Her iki seçenekte oturumlar
+düşer, kişisel alanlar anında temizlenir, dosyalar silinir, giriş kapanır; ekran sonuçları seçeneğin altında
+açıklar (`ACCOUNT_DELETION_EFFECTS`). Onay: kullanıcı kendi e-postasını yazar. Kullanıcı satırı silinmez,
+anonimleştirilir: rıza ve işlem kaydı hukuki kanıt olarak kalır. Gerekçe: KVKK silme hakkı ile platform
+içeriğinin sürekliliği arasında seçimi kullanıcıya bırakmak; varsayılan, en çok veriyi silen seçenektir.
+
+## 2026-11-08 · Görünürlük karar tablosu ve iletişim talebi durumları (P1-03 sözleşmesi)
+Görünürlük `rules/visibility` karar tablosundadır: sahibi hep tam görür; yönetici yalnız görev ekranında ve
+maskeli görür; `PRIVATE` onaylı iletişim talebiyle de açılmaz; dışarıdakine hiçbir alan dönmez. İletişim
+talebinde ret gerekçesi yoktur (talep edene neden söylenmez); başkasının talebine erişim `RESOURCE_NOT_FOUND`
+döner (varlığı sızmaz). Onaylı talep de “açık” sayılır: aynı ikili için yeni talep ancak kapanınca açılır.
+
+## 2026-11-08 · KVKK sözleşmesinde çıktı ve SQL sınırları
+PostgreSQL CHECK, NULL sonucu reddetmez: iletişim alanları açıkça NULL dışlanarak ve tek boyut
+şartıyla korunur. Onaylı olmayan talep ya da talepte istenmeyen alan çıktıdaki `revealed` içine
+giremez. JSON veri dökümünde talepler yalnız kendi skaler alanlarını taşır; genel nesne şeması
+karşı tarafın e-posta/telefon nesnesini kabul edebildiği için kapalı bir şemaya daraltılır.
+Bu sınırlar servis kartında da zorlanır; sözleşme doğrulaması yetkilendirmenin yerini almaz.
+
+## 2026-11-08 · E-posta giden kutusu: işlemli kayıt, sınırlı taşıma
+EmailLog ve pg-boss işi aynı PostgreSQL işleminde eklenir; idempotency anahtarı için transaction
+kilidi hem eşzamanlı istekleri hem worker teslimlerini sıralar. Şablon metnini çağıran hazırlar;
+worker yalnız taşır. EmailLog gövde/adres içermez; pg-boss yükleri kısa süreli saklanır ve ham
+SMTP yanıtları kaydedilmez. Geçici hatalar iki kez yeniden denenir; terminal broker hataları
+ayrı kuyrukla kalıcı, gövdesiz kayda dönüşür.
+
+SMTP dış sistemdir: sağlayıcı kabulünden hemen sonra süreç/bağlantı kaybolursa yerel SENT kaydı
+commit olmadan kalabilir. Bu dar belirsizlikte yeniden deneme çift teslim üretebilir; Message-ID
+idempotency anahtarının sabit özetinden üretilir ama SMTP genelinde kesin tek teslim garantisi
+vermez. Bu adım normal yinelenen çağrıları ve kayıtlı SENT teslimlerini engeller; böyle bir garantiyi
+varmış gibi sunmaz. Sağlayıcı düzeyinde idempotency API'si P1-18 sağlayıcı kararıyla değerlendirilir.

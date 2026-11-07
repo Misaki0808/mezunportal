@@ -20,13 +20,16 @@ export type Institution = {
   deptB1: string;
 };
 
-export async function createInstitution(prisma: PrismaClient): Promise<Institution> {
+export async function createInstitution(
+  prisma: PrismaClient,
+  options: { studentEmailDomains?: string[]; staffEmailDomains?: string[] } = {},
+): Promise<Institution> {
   const university = await prisma.university.create({
     data: {
       name: unique('Üni'),
       shortName: unique('Ü'),
-      studentEmailDomains: [],
-      staffEmailDomains: [],
+      studentEmailDomains: options.studentEmailDomains ?? [],
+      staffEmailDomains: options.staffEmailDomains ?? [],
       faculties: {
         create: [
           {
@@ -72,6 +75,7 @@ export async function createInstitution(prisma: PrismaClient): Promise<Instituti
 export async function createUser(
   prisma: PrismaClient,
   overrides: {
+    email?: string;
     banned?: boolean;
     banExpires?: Date | null;
     deletedAt?: Date | null;
@@ -82,7 +86,7 @@ export async function createUser(
   const user = await prisma.user.create({
     data: {
       name: overrides.name ?? 'Test Kullanıcı',
-      email: `${key}@test.mezunportal.local`,
+      email: overrides.email ?? `${key}@test.mezunportal.local`,
       emailVerified: true,
       banned: overrides.banned ?? false,
       banExpires: overrides.banExpires ?? null,

@@ -21,11 +21,39 @@ kural sunucuda zorlanır.
 - Better Auth: e-posta bağlantısıyla giriş (parolasız) ve LinkedIn ile giriş. Veritabanı oturumu;
   çerez `httpOnly`, `secure`, `sameSite=lax`.
 - Giriş ekranı e-postanın kayıtlı olup olmadığını sızdırmaz; her durumda “bağlantı gönderildi”.
-- Giriş bağlantısı süreli ve tek kullanımlıktır. Giriş uçlarında hız sınırı vardır.
-- Askıya alma Better Auth admin eklentisinin ban özelliğiyle yapılır: aktif oturumlar anında
-  düşer, giriş engellenir. **“Başka kullanıcı gibi giriş yapma” (impersonation) kapalıdır.**
-- Test girişi yalnız `APP_ENV` `local`/`test`'te; `prod`'da yapılandırmada yoktur ve bunun testi
-  vardır.
+- Giriş bağlantısı 10 dakika geçerli, **tek kullanımlıdır** ve veritabanında özetli saklanır. Hız sınırı
+  (veritabanı destekli, sabit pencere): bir e-postaya saatte 5 bağlantı, bir istemci adresinden saatte 20
+  (adres başlıkla taklit edilebildiği için tamamlayıcıdır; asıl koruma e-posta başınadır), e-posta
+  değiştirme kullanıcı başına saatte 3, mezun belgesi yükleme kullanıcı başına saatte 5. Sayaç anahtarları
+  HMAC ile özetlenir; ham e-posta/kimlik tabloya yazılmaz.
+- **HTTP yüzeyi beyaz listedir** (`rules/authRoutePolicy.ts`): `/api/auth/` altında yalnız bağlantıya
+  tıklamayla tetiklenen GET uçları (`magic-link/verify`, `verify-email`, `callback/linkedin`) açıktır;
+  Better Auth'un admin (impersonation dahil), kayıt, parola, oturum ve doğrudan giriş uçlarının hepsi 404
+  verir. Giriş, e-posta değiştirme ve çıkış sunucu eylemlerinden geçer (kendi hız sınırımız ve nötr
+  yanıtımızla). Bağlantı hataları kullanıcıya `/giris?hata=<ErrorCode>` olarak gösterilir.
+- Oturum 14 gün, çerez önbelleği yok (askı/silme anında etkili). Oturum kaydında IP ve user-agent
+  SAKLANMAZ. Çerez: `httpOnly`, `sameSite=lax`; `secure` canlıda (yerelde http çalışmak zorunda).
+- Askıya alma Better Auth admin eklentisinin ban alanlarıyla yapılır: askıdaki kullanıcı bağlantıya
+  tıklasa da oturum AÇAMAZ (`BANNED_USER` → `/giris?hata=AUTH_ACCOUNT_SUSPENDED`); açık oturumları yetki
+  katmanı zaten reddeder. **“Başka kullanıcı gibi giriş yapma” (impersonation) kapalıdır:** eklentinin rol
+  sistemi devre dışıdır (hiçbir rol yönetici sayılmaz, tek tanımlı rolün izni yoktur); `User.role` bir yetki
+  kaynağı değildir ve `role = 'admin'` olsa bile `impersonate-user`, `set-role`, `remove-user` reddedilir.
+- **LinkedIn** (anahtar yoksa kapalı): yalnız ad, e-posta ve fotoğraf; erişim/yenileme/kimlik jetonları
+  SAKLANMAZ (sağlayıcıya girişten sonra bir daha gidilmez). Hesap bağlama yalnız sağlayıcı e-postayı
+  doğrulanmış bildirirse ve e-posta eşleşirse olur; güvenilir-sağlayıcı listesi boştur (hesap devralma yok).
+- **E-posta değiştirme** iki adımlıdır: eski adrese onay bağlantısı, onaydan sonra yeni adrese doğrulama
+  bağlantısı. Yeni adres başkasına aitse ya da aynıysa yanıt aynıdır ve e-posta gitmez.
+- **Alan adı doğrulaması** (D2) seçilen bölümün ÜNİVERSİTESİNİN `University` kaydındaki alan adı listesine
+  göredir, tam eşleşmedir (alt alan adı/benzer alan adı eşleşmez); e-posta doğrulanmış olmalıdır; mezun alan
+  adıyla doğrulanamaz.
+- **Mezun belgesi:** yalnız PDF ≤ 5 MB; sunucu boyutu yeniden doğrular ve dosyanın İÇERİĞİNE bakar (`%PDF-`
+  sihirli baytı; MIME/uzantı güvenilmez). Dosya `graduation/<userId>/<uuid>.pdf` anahtarıyla Git dışı
+  depoda durur ve yalnız belgenin bölümünü kapsayan doğrulanmış yöneticiye yetki kontrollü rotadan akıtılır
+  (`nosniff`, `no-store`, `default-src 'none'; sandbox`); başvuran kendi belgesini bu rotadan okuyamaz.
+  Karar işlemi tek veritabanı işleminde yetkiyi yeniden doğrular, üyeliği günceller, işlem kaydını yazar ve
+  dosyayı SİLER (silme başarısızsa karar geri alınır); karar sonrası belge depoda yoktur.
+- Test girişi yalnız `APP_ENV` `local`/`test`'te; `prod`'da yapılandırmada yoktur (eklenti yüklenmez, uç
+  hiç bulunmaz) ve bunun testi vardır.
 
 ## Yetkilendirme
 
@@ -81,7 +109,8 @@ kimlikler). Sistem yöneticisi panelden görür.
 - **İletişim talebi** onaylanınca ilgili alanlar o kişiye açılır; sahibi istediği an geri alır.
 - **Randevu onayında e-posta paylaşılır** (takvim daveti için); talep ekranında önceden yazılır.
 - **Hesap silme:** oturumlar düşer, kişisel alanlar anında temizlenir, dosyalar silinir;
-  yayınlanmış içeriğin akıbeti K-09.
+  yayınlanmış içerik kullanıcının seçimine göre silinir (varsayılan) ya da anonimleştirilir (K-09,
+  `docs/decisions.md`).
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11).
 - **Çerezler:** yalnız zorunlu oturum çerezi; üçüncü taraf analitik ve reklam çerezi yok
   (metrikler kendi tablomuzda). Çerez bandı yerine aydınlatma metninde çerez bölümü yeterli

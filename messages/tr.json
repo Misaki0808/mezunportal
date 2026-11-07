@@ -33,7 +33,15 @@
       "DOCUMENT_TOO_LARGE": "Dosya en fazla 5 MB olabilir.",
       "DOCUMENT_NOT_PDF": "Yalnız PDF dosyası yükleyebilirsin.",
       "DOCUMENT_ALREADY_PENDING": "Bu bölüm için bekleyen bir belgen var. Sonuçlanmasını bekle.",
-      "DOCUMENT_NOT_PENDING": "Bu belge için karar zaten verilmiş."
+      "DOCUMENT_NOT_PENDING": "Bu belge için karar zaten verilmiş.",
+      "CONSENT_REQUIRED": "Devam etmek için aydınlatma metnini ve kullanım şartlarını onaylaman gerekiyor.",
+      "CONSENT_VERSION_OUTDATED": "Metnin yeni bir sürümü var. Sayfayı yenileyip güncel metni onayla.",
+      "CONTACT_REQUEST_SELF": "Kendine iletişim talebi gönderemezsin.",
+      "CONTACT_REQUEST_ALREADY_OPEN": "Bu kişiye açık bir iletişim talebin zaten var.",
+      "CONTACT_REQUEST_NOT_PENDING": "Bu talep artık beklemede değil.",
+      "CONTACT_REQUEST_NOT_APPROVED": "Yalnız onayladığın bir talebi geri alabilirsin.",
+      "CONTACT_FIELD_NOT_REQUESTABLE": "İstediğin bilgilerden biri talep edilemiyor. Seçimini değiştirip tekrar dene.",
+      "ACCOUNT_DELETE_CONFIRMATION_MISMATCH": "Yazdığın e-posta hesabının e-postasıyla aynı değil."
     }
   },
   "nav": {
@@ -192,6 +200,28 @@
       "back": "Geri",
       "next": "İleri",
       "firstStep": "İlk adımdasın"
+    }
+  },
+  "emails": {
+    "signInLink": {
+      "subject": "MezunPortal giriş bağlantın",
+      "text": "Merhaba,\n\nMezunPortal'a girmek için bu bağlantıya tıkla:\n{url}\n\nBağlantı {minutes} dakika geçerlidir ve yalnız bir kez kullanılabilir. Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin; hesabına kimse erişmedi."
+    },
+    "changeEmailConfirmation": {
+      "subject": "E-posta değişikliğini onayla",
+      "text": "Merhaba,\n\nMezunPortal hesabının e-posta adresini {newEmail} olarak değiştirmek için bir istek yapıldı. Onaylamak için bu bağlantıya tıkla:\n{url}\n\nBu isteği sen yapmadıysan bağlantıya tıklama; adresin değişmez."
+    },
+    "changeEmailVerification": {
+      "subject": "Yeni e-posta adresini doğrula",
+      "text": "Merhaba,\n\nBu adresi MezunPortal hesabının yeni e-postası yapmak için doğrulaman gerekiyor. Doğrulamak için bu bağlantıya tıkla:\n{url}\n\nBu isteği sen yapmadıysan bu e-postayı yok sayabilirsin."
+    },
+    "documentApproved": {
+      "subject": "Mezun belgen onaylandı",
+      "text": "Merhaba,\n\nMezun belgen onaylandı; mezun üyeliğin doğrulandı. Yüklediğin belge dosyası silindi.\n\nMezunPortal'a girerek devam edebilirsin."
+    },
+    "documentRejected": {
+      "subject": "Mezun belgen onaylanamadı",
+      "text": "Merhaba,\n\nMezun belgen onaylanamadı. Gerekçe: {reason}\n\nYüklediğin belge dosyası silindi. Yeni bir belge yükleyerek yeniden başvurabilirsin."
     }
   },
   "authScreens": {

@@ -6,6 +6,7 @@ import {
   isLinkedInConfigured,
   parseAuthEnv,
   parseEnv,
+  parseStorageEnv,
 } from '@/lib/env';
 
 const valid = {
@@ -155,5 +156,30 @@ describe('kimlik doğrulama ortamı (parseAuthEnv)', () => {
       parseAuthEnv({ ...auth, BETTER_AUTH_SECRET: secret, SMTP_PORT: 'x' }),
     );
     expect((error as Error).message).not.toContain(secret);
+  });
+});
+
+describe('dosya depolama ortamı (parseStorageEnv)', () => {
+  it('hiçbir değişken yokken güvenli varsayılanlar (yerel sürücü, .data/files)', () => {
+    expect(parseStorageEnv({})).toEqual({
+      STORAGE_DRIVER: 'local',
+      STORAGE_LOCAL_PATH: '.data/files',
+    });
+  });
+
+  it('boş satırlar (.env.example) varsayılana düşer; verilen yol korunur', () => {
+    expect(parseStorageEnv({ STORAGE_DRIVER: '', STORAGE_LOCAL_PATH: '' })).toEqual({
+      STORAGE_DRIVER: 'local',
+      STORAGE_LOCAL_PATH: '.data/files',
+    });
+    expect(parseStorageEnv({ STORAGE_LOCAL_PATH: '/var/mezun/dosyalar' }).STORAGE_LOCAL_PATH).toBe(
+      '/var/mezun/dosyalar',
+    );
+  });
+
+  it('bilinmeyen sürücü düşer ve yalnız değişken adını söyler', () => {
+    const error = catchError(() => parseStorageEnv({ STORAGE_DRIVER: 's3' }));
+    expect(error).toBeInstanceOf(EnvValidationError);
+    expect((error as EnvValidationError).invalidKeys).toEqual(['STORAGE_DRIVER']);
   });
 });

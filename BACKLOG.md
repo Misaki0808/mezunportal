@@ -12,7 +12,10 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   Telefon testi bekliyor. Henüz ürün özelliği teslim edilmedi.
 - Faz 1 kimlik/üyelik/yetki katmanı kuruldu: kullanıcı, üyelik, yönetici yetkisi, mentor profili,
   işlem kaydı, yetki korumaları, rol geçişi, sınıf kuralı ve rol başına test kullanıcıları.
-  Oturum bağlantısı P1-02'de kurulacak.
+- P1-02 servisi: Better Auth (e-posta bağlantısı, isteğe bağlı LinkedIn, e-posta değiştirme), oturum
+  bağlantısı, alan adı ile üyelik beyanı, bölüm seçimi, mezun belgesi akışı (yükleme, yönetici kuyruğu,
+  onay/ret, dosya karar anında silinir), depolama adaptörü ve test girişi tamam. E-posta gönderimi R2'nin
+  kuyruğuna bağlı; SMTP teslimi ayrı worker'da.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -45,7 +48,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 | K-06 | İÜ personel e-posta alanı, YBS'nin fakültesi ve program dili | PM ölçer, kullanıcı teyit eder | Geçici değerler `prisma/seed-data.ts`'te (`ogr.iu.edu.tr`, `istanbul.edu.tr`, İktisat Fakültesi); öğrenci alanı ölçüldü; kalanlar teyit bekler | P1-02 |
 | K-07 | Yayınlanmış içeriğin görünürlük kapsamı | PM | Üniversitedeki tüm doğrulanmış üyeler | P1-07 |
 | K-08 | Öğrencinin mentor olma eşiği | PM | 3. sınıf ve üstü + en az bir yayınlanmış deneyim | P1-04 |
-| K-09 | Hesap silmede yayınlanmış deneyimler | PM | Kullanıcıya sor; varsayılan sil | P1-03 |
 | K-10 | Kurucu üye etiketi kuralı | PM | Pilot süresince ilk deneyimi yayınlanan herkes | P1-16 |
 | K-11 | Puan ağırlıkları ve şüphe eşikleri | PM | `docs/architecture.md` puan tablosu | P1-16 |
 | K-12 | Pilot: kimler, ne zaman, başarı ölçütleri | Hoca | Hocayla | P1-18 |
@@ -81,6 +83,15 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   `APP_ENV=prod` ile alınan build'de çıkar (`next.config.ts`).
   Neden borç: canlı build yanlış env'le alınırsa HSTS sessizce düşer.
   Kapanış ölçütü: P1-18 dağıtım betiği build'i `APP_ENV=prod` ile alır ve başlık kanıtlanır.
+- [ ] **TD-006** · P1 · Süresi geçmiş oturum ve doğrulama kayıtları temizlenmiyor
+  Ne: `Session` ve `Verification` tablolarında süresi geçen satırlar birikir (indeksler hazır: `expiresAt`).
+  Neden borç: veri en azlığı (KVKK) ve tablo büyümesi.
+  Kapanış ölçütü: zamanlanmış pg-boss işi süresi geçmiş satırları siler (idempotent, testli).
+- [ ] **TD-007** · P1 · Askıya alma servisi oturumları düşürmüyor
+  Ne: yetki katmanı askıdaki kullanıcıyı zaten reddeder; ancak askıya alma eylemi (yönetim adımı) `Session`
+  satırlarını da silmeli ki kullanıcı çerezle bile oturum görmesin.
+  Neden borç: derinlemesine savunma; Better Auth `banUser` HTTP ucu kapalı olduğundan eylem kendi yazılmalı.
+  Kapanış ölçütü: askıya alma servisi ban alanlarını yazar, oturumları siler ve `USER_SUSPEND` kaydı tutar.
 
 ### Bilinçli kabul edilen sınırlar
 
