@@ -131,6 +131,10 @@ model User {
   graduationDocuments         GraduationDocument[] @relation("GraduationDocumentOwner")
   reviewedGraduationDocuments GraduationDocument[] @relation("GraduationDocumentReviewer")
   emailLogs                   EmailLog[]
+  consents                    Consent[]
+  fieldVisibilities           FieldVisibility[]
+  sentContactRequests         ContactRequest[]     @relation("ContactRequestRequester")
+  receivedContactRequests     ContactRequest[]     @relation("ContactRequestTarget")
 }
 
 /// Üyelik = kullanıcı × bölüm × rol. Rol geçişinde eski satır `endedAt` ile kapanır, yenisi eklenir;
@@ -355,4 +359,98 @@ model EmailLog {
 
   @@index([status, createdAt])
   @@index([recipientUserId])
+}
+
+// ---------------------------------------------------------------------------------------------
+// KVKK ve kontrollü iletişim (P1-03 sözleşmesi). Kurallar: docs/security.md “KVKK”; görünürlük kararı
+// yalnız `src/server/rules/visibility.ts`. Ham SQL kısıtlar 20261108000000_privacy_contract migration'ındadır.
+// ---------------------------------------------------------------------------------------------
+
+/// Onaylanan hukuki metin (docs/legal-drafts.md §1–§3).
+enum ConsentDocument {
+  PRIVACY_NOTICE
+  TERMS_OF_USE
+  CROSS_BORDER_TRANSFER
+}
+
+/// Rıza kaydı: YALNIZ EKLENİR (güncellenmez, silinmez — tetikleyici). Geri çekme yeni satırdır
+/// (`granted = false`). Bir belgenin geçerli durumu, o belge için en son satırdır. Hesap silmede kalır
+/// (kişisel alan taşımaz; hukuki kanıttır).
+model Consent {
+  id           String          @id @default(uuid(7))
+  userId       String
+  documentType ConsentDocument
+  /// Metin sürümü (örn. `taslak-1`); güncel sürümle aynı değilse kullanıcı yeniden onaya yönlenir.
+  version      String
+  granted      Boolean
+  createdAt    DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, documentType, createdAt])
+}
+
+/// İletişim/kişisel alan (görünürlüğü kullanıcı seçer).
+enum ContactField {
+  EMAIL
+  PHONE
+  SOCIAL_LINKS
+  LINKEDIN
+}
+
+/// `PRIVATE`: yalnız sahibi (yönetici yalnız görev ekranında, maskeli) · `ON_APPROVED_REQUEST`: onaylı
+/// iletişim talebi sahibine · `MEMBERS`: doğrulanmış üyelere.
+enum VisibilityLevel {
+  PRIVATE
+  ON_APPROVED_REQUEST
+  MEMBERS
+}
+
+/// Alan başına görünürlük. Satır yoksa varsayılan geçerlidir (e-posta/telefon `ON_APPROVED_REQUEST`,
+/// sosyal/LinkedIn `MEMBERS` — `src/contracts/privacy.ts` `DEFAULT_FIELD_VISIBILITY`).
+model FieldVisibility {
+  id        String          @id @default(uuid(7))
+  userId    String
+  field     ContactField
+  level     VisibilityLevel
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, field])
+}
+
+/// `PENDING` → `APPROVED` | `REJECTED` (hedef karar verir) · `PENDING` → `WITHDRAWN` (talep eden geri çeker)
+/// · `APPROVED` → `REVOKED` (hedef istediği an geri alır; alanlar yeniden kapanır).
+enum ContactRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+  REVOKED
+}
+
+/// İletişim talebi: onaylanınca istenen alanlar YALNIZ talep edene açılır (görünürlük kuralı bunu okur).
+/// Aynı ikili için aynı anda en fazla bir açık (bekleyen ya da onaylı) talep olur.
+model ContactRequest {
+  id          String               @id @default(uuid(7))
+  requesterId String
+  targetId    String
+  fields      ContactField[]
+  /// İsteğe bağlı kısa not (≤ 500 karakter); hedefe görünür.
+  message     String?
+  status      ContactRequestStatus @default(PENDING)
+  /// Onay ya da ret anı.
+  decidedAt   DateTime?
+  /// Geri çekme (`WITHDRAWN`) ya da geri alma (`REVOKED`) anı.
+  closedAt    DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  requester User @relation("ContactRequestRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  target    User @relation("ContactRequestTarget", fields: [targetId], references: [id], onDelete: Restrict)
+
+  @@index([targetId, status, createdAt])
+  @@index([requesterId, status, createdAt])
 }
