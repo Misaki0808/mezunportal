@@ -4,6 +4,8 @@ allowBuilds:
   # Reddedilen: kullanılmayan, isteğe bağlı next-intl çıkarım araçlarının parçaları
   '@parcel/watcher': false
   '@swc/core': false
+  # esbuild (tsx üzerinden): ikili dosya isteğe bağlı platform paketiyle gelir, betik yalnız doğrulama yapar
+  esbuild: false
   # Onaylanan: Prisma CLI ve şema motoru ikilisi (prisma migrate için gerekli, resmî paket)
   '@prisma/engines': true
   prisma: true

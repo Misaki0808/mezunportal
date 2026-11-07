@@ -16,7 +16,13 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run --maxWorkers=4",
-    "messages:check": "node scripts/check-messages.mjs"
+    "messages:check": "node scripts/check-messages.mjs",
+    "test:unit": "vitest run --maxWorkers=4 --project unit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset --force"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
@@ -40,6 +46,7 @@
     "prettier": "^3.9.10",
     "prisma": "7.10.1",
     "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
     "typescript": "6.0.3",
     "vitest": "^5.1.0"
   }
