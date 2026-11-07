@@ -205,6 +205,10 @@ Normal geliştirme yalnız `127.0.0.1`'e açılır; LAN modu aşağıdadır.
   `@test.mezunportal.local` (gerçek alan adı değil) ve giriş bilgisi yoktur; test girişi ve Better Auth
   oturumları P1-02'de gelir, bilgileri Git dışı `korunan/test-hesaplari.md`'de tutulur. Sonraki özellikler
   kendi örnek verisini modül sırasına ekler.
+- **Giriş ve e-posta:** e-posta bağlantıları R2'nin kuyruğuna (`enqueueEmail`) bağlanır; bağlanana kadar
+  `src/server/auth/index.ts` `getAuthEmailPort()` gönderimi reddeder ve giriş bağlantısı gelmez. Telefon ve
+  yerel denemede **test girişi** (`signInAsTestPersona`, yalnız `local`/`test`) seed kullanıcısı olarak
+  e-posta olmadan oturum açar. Giriş akışı Mailpit'ten (`http://localhost:8025`) denenir.
 - Dış servisler yerelde de gerçek çalışabilir (LLM, Google Takvim, LinkedIn); anahtar yoksa sahte
   adaptör seçilir.
 
@@ -221,7 +225,10 @@ yalnız değişken adını taşır.
 ve diğer sayfalar bağlı değildir): `BETTER_AUTH_SECRET` (≥ 32 karakter; `.env.example`'daki genel `dev-only…` değeri
 yalnız `local`/`test`'te kabul edilir, `prod`'da env doğrulamasını düşürür), `SMTP_HOST`/`SMTP_PORT`/`SMTP_SECURE`
 (yerelde Mailpit 127.0.0.1:1025), `SMTP_USER`+`SMTP_PASSWORD` (ikisi birlikte; Mailpit için boş), `EMAIL_FROM`,
-ve İSTEĞE BAĞLI `LINKEDIN_CLIENT_ID`+`LINKEDIN_CLIENT_SECRET` (ikisi de yoksa LinkedIn kapalıdır). Mevcut
+ve İSTEĞE BAĞLI `LINKEDIN_CLIENT_ID`+`LINKEDIN_CLIENT_SECRET` (ikisi de yoksa LinkedIn kapalıdır).
+**Dosya depolama grubu** (`getStorageEnv()`, varsayılanlı; `.env.local`'a eklenmesi gerekmez): `STORAGE_DRIVER`
+(`local`) ve `STORAGE_LOCAL_PATH` (varsayılan `.data/files`, Git dışı, çalışma dizinine göre yani worktree
+başına). Sürücüler `src/server/external/storage/` (yerel, bellek/sahte); arayüz `put/get/delete`. Mevcut
 `.env.local` dosyalarına eklenmesi gerekmez; yeni worktree'ler `.env.example`'dan alır.
 
 ### Telefon testi (faz sonu)

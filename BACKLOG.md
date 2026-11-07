@@ -12,7 +12,10 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   Telefon testi bekliyor. Henüz ürün özelliği teslim edilmedi.
 - Faz 1 kimlik/üyelik/yetki katmanı kuruldu: kullanıcı, üyelik, yönetici yetkisi, mentor profili,
   işlem kaydı, yetki korumaları, rol geçişi, sınıf kuralı ve rol başına test kullanıcıları.
-  Oturum bağlantısı P1-02'de kurulacak.
+- P1-02 servisi: Better Auth (e-posta bağlantısı, isteğe bağlı LinkedIn, e-posta değiştirme), oturum
+  bağlantısı, alan adı ile üyelik beyanı, bölüm seçimi, mezun belgesi akışı (yükleme, yönetici kuyruğu,
+  onay/ret, dosya karar anında silinir), depolama adaptörü ve test girişi tamam. E-posta gönderimi R2'nin
+  kuyruğuna bağlanmayı bekliyor (TD-002).
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -81,6 +84,20 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   `APP_ENV=prod` ile alınan build'de çıkar (`next.config.ts`).
   Neden borç: canlı build yanlış env'le alınırsa HSTS sessizce düşer.
   Kapanış ölçütü: P1-18 dağıtım betiği build'i `APP_ENV=prod` ile alır ve başlık kanıtlanır.
+- [ ] **TD-002** · P1 · Giriş e-postaları kuyruğa bağlanmadı
+  Ne: `src/server/auth/index.ts` `getAuthEmailPort()` `notConfiguredEnqueue` kullanıyor; R2'nin `enqueueEmail`'i
+  (kart 022) birleşince tek satırda bağlanır.
+  Neden borç: bağlanana kadar giriş bağlantısı ve belge kararı e-postası gitmez (test girişi çalışır).
+  Kapanış ölçütü: `getAuthEmailPort` gerçek kuyruğu kullanır; Mailpit'te giriş bağlantısı görülür.
+- [ ] **TD-003** · P1 · Süresi geçmiş oturum ve doğrulama kayıtları temizlenmiyor
+  Ne: `Session` ve `Verification` tablolarında süresi geçen satırlar birikir (indeksler hazır: `expiresAt`).
+  Neden borç: veri en azlığı (KVKK) ve tablo büyümesi.
+  Kapanış ölçütü: zamanlanmış pg-boss işi süresi geçmiş satırları siler (idempotent, testli).
+- [ ] **TD-004** · P1 · Askıya alma servisi oturumları düşürmüyor
+  Ne: yetki katmanı askıdaki kullanıcıyı zaten reddeder; ancak askıya alma eylemi (yönetim adımı) `Session`
+  satırlarını da silmeli ki kullanıcı çerezle bile oturum görmesin.
+  Neden borç: derinlemesine savunma; Better Auth `banUser` HTTP ucu kapalı olduğundan eylem kendi yazılmalı.
+  Kapanış ölçütü: askıya alma servisi ban alanlarını yazar, oturumları siler ve `USER_SUSPEND` kaydı tutar.
 
 ### Bilinçli kabul edilen sınırlar
 
