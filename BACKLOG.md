@@ -7,7 +7,7 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 
 ## Güncel durum
 
-- Repo iskeleti (Next.js 16, TypeScript, Tailwind, next-intl, Vitest) ve veritabanı katmanı (PostgreSQL + Mailpit compose, Prisma 7, kurum tabloları, seed, `/api/health` `db` kontrolü) kuruldu; CI, yerel tam ortam betikleri, tasarım sistemi ve ekip araçları Faz 0'ın kalan adımlarıdır (`docs/faz0-plan.md`). Ürün özelliği yok.
+- Repo iskeleti (Next.js 16, TypeScript, Tailwind, next-intl, Vitest) ve veritabanı katmanı (PostgreSQL + Mailpit compose, Prisma 7, kurum tabloları, seed, `/api/health` `db` kontrolü) kuruldu; yerel tam ortam (worktree yalıtımı, web/worker ve LAN başlatıcısı, seed çerçevesi) hazır; CI, tasarım sistemi ve ekip araçları Faz 0'ın kalan adımlarıdır (`docs/faz0-plan.md`). Ürün özelliği yok.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.

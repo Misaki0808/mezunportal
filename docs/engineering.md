@@ -60,7 +60,8 @@ ister; iki geliştirme sunucusu aynı portu ister.
   adından veritabanı adı (`mezun_<slug>`, test için `mezun_<slug>_test`) ve sabit bir port
   dilimi üretir, `.env.local`'ı yazar, veritabanını oluşturur. Hepsi aynı PostgreSQL
   konteynerindedir; Mailpit ortaktır.
-- Yeni worktree'de ilk iş bu script, sonra `pnpm db:reset && pnpm db:seed`.
+- Yeni worktree'de ilk iş bu script, sonra `pnpm db:deploy && pnpm db:seed`. Ajanlar
+  `db:reset` çalıştırmaz.
 - **Geliştirme sunucusu yalnız kanıt alırken açılır,** iş bitince kapatılır. Aynı anda tek ağır
   iş (tam build, Playwright koşusu).
 - `main`'i dalına birleştirdikten sonra migration'ları yeniden uygula (`pnpm db:migrate`).
@@ -102,6 +103,7 @@ pnpm lint
 pnpm format:check
 pnpm test                        # birim + veritabanlı testler (DATABASE_URL_TEST ister)
 pnpm test:unit                   # yalnız birim testleri (veritabanı gerekmez)
+pnpm test:local                  # yerel ortam/port kuralları (veritabanı gerekmez)
 pnpm messages:check
 pnpm prisma validate
 pnpm build
@@ -144,22 +146,26 @@ son adımıdır (P1-18).
 pnpm install --frozen-lockfile
 docker compose up -d             # PostgreSQL + Mailpit (yalnız 127.0.0.1)
 sh scripts/worktree-env.sh       # bu worktree'ye veritabanı + port + .env.local
-pnpm db:reset && pnpm db:seed    # şema + deterministik sahte veri
+pnpm db:generate                 # Prisma istemcisi (temiz checkout)
+pnpm db:deploy && pnpm db:seed   # şema + deterministik sahte veri
 pnpm dev:all                     # web + worker
 ```
 
-`scripts/worktree-env.sh` ve `dev:all` P0-04 ile gelir. O zamana kadar elle (örnek: worktree
-`w1-p0-02` → `mezun_w1_p0_02`):
+`worktree-env.sh` yoksa oluşturur, varsa `.env.local` dosyasını ve veritabanlarını korur.
+Adı worktree'den üretir; `w1-`, `w2-`, `r1-`, `r2-`, `pm-` öneklerinin port dilimleri
+sırasıyla 3100, 3200, 3300, 3400, 3900'den başlar (100 port). Ana kopya 3000 kullanır.
+Adın sabit özetinden sapma seçer; dolu/diğer worktree'ye ayrılmış portta sıradakini dener.
+Eşzamanlı hazırlamalar yerel kilitle sıralanır; 60 saniyeden eski (ölmüş koşudan kalan) kilit
+kendiliğinden kaldırılır. Klasör adı başka worktree'nin veritabanı adına dönüşüyorsa (ör. `r1-a b`
+ve `r1-a_b`) betik durur; worktree'yi farklı adla aç. Mevcut dosya yanlış veritabanına/rol portuna
+bakıyorsa değiştirmeden durur; ayarı elle incele. Veritabanlarını yalnız paylaşılan
+`mezunportal` Compose projesinde oluşturur; konteyner zaten çalışıyor olmalıdır.
 
-```bash
-docker compose up -d
-docker compose exec postgres createdb -U mezun mezun_w1_p0_02
-docker compose exec postgres createdb -U mezun mezun_w1_p0_02_test
-cp .env.example .env.local       # DATABASE_URL ve DATABASE_URL_TEST'i kendi veritabanı adlarınla düzenle
-pnpm install --frozen-lockfile && pnpm db:generate
-pnpm db:deploy && pnpm db:seed   # boş veritabanına migration + seed
-PORT=3100 pnpm dev               # port .env.local'dan okunmaz; komutla verilir (dilim: dönem kuralları)
-```
+`pnpm dev`, `dev:all`, `dev:lan` portu `.env.local` içindeki `APP_URL`'den okur ve Next.js'e
+`--port` ile verir; Next.js aksi halde `.env.local` içindeki portu seçmez. `dev:all` web ile
+ayrı Node worker sürecini başlatır. Worker şimdilik yalnız sağlık döngüsüdür; iş kuyruğu
+ve ürün işi henüz yoktur. Ctrl+C veya süreçlerden birinin çıkışı ikisini de kapatır.
+Normal geliştirme yalnız `127.0.0.1`'e açılır; LAN modu aşağıdadır.
 
 - **PostgreSQL kimliği** (`mezun` / `mezun`) yalnız `127.0.0.1`'e bağlı yerel konteynere aittir;
   sır değildir ve canlıya taşınmaz. Veritabanı adresi biçimi:
@@ -170,25 +176,27 @@ PORT=3100 pnpm dev               # port .env.local'dan okunmaz; komutla verilir 
   ajanından çalıştırıldığında **kullanıcının açık onayı olmadan reddeder**. Ajanlar yeni worktree'de
   `db:reset` yerine `db:deploy` + `db:seed` kullanır; sıfırlama gerekiyorsa kullanıcıya gider.
   Prisma 7'de `migrate reset` seed'i kendiliğinden çalıştırmaz: sıfırlamadan sonra `pnpm db:seed`.
-- Konteynerleri iş bitince `docker compose stop` ile durdur; veritabanı hacmi (`postgres-data`)
-  silinmez.
+- Paylaşılan konteynerleri başka roller çalışırken durdurma; yalnız kendi geliştirme
+  sunucunu kapat. Kullanıcı bütün işleri bitirdiğinde `docker compose stop` kullanabilir;
+  veritabanı hacmi (`postgres-data`) silinmez.
 
 - **Worktree başına veritabanı ve port:** her worktree kendi `mezun_<slug>` (ve test için
   `mezun_<slug>_test`) veritabanını ve sabit bir port dilimini kullanır; hepsi aynı PostgreSQL
   konteynerinde. Ayrıntı yukarıda “Yerel paralel çalışma”.
 - **Mailpit:** `http://localhost:8025`; giriş bağlantıları ve bütün bildirimler buraya düşer.
 - **Dosyalar:** Git dışı `.data/files/`.
-- **Seed:** rol başına test kullanıcıları (öğrenci, üst sınıf mentor, mezun mentor, akademisyen,
-  bölüm yöneticisi, sistem yöneticisi), mentorlar, deneyimler, randevular, SSS. Her çalıştırmada
-  aynı sonucu verir. Test hesapları yalnız test girişiyle açılır; bilgileri Git dışı
-  `korunan/test-hesaplari.md`'de.
+- **Seed:** kurumlar hazırdır. Modül sırası ve deterministik kimlik/zaman üreticisi
+  `prisma/seed-framework.ts`'tedir. Altı rol için yalnız kimlik bilgisi içermeyen yer tutucu
+  vardır; kullanıcı modeli/Better Auth ve hesaplar P1-02'de eklenecek. Sonraki özellikler kendi
+  örnek verisini modül sırasına ekler. Test hesabı bilgileri repoya yazılmaz;
+  P1-02'de Git dışı `korunan/test-hesaplari.md`'de tutulur.
 - Dış servisler yerelde de gerçek çalışabilir (LLM, Google Takvim, LinkedIn); anahtar yoksa sahte
   adaptör seçilir.
 
 ### Env grupları
 
 Kanonik liste `.env.example` ve `src/lib/env.ts`'tir; burada çoğaltılmaz. Gruplar: uygulama
-(`APP_ENV`, `APP_URL`, `GIT_SHA`; geliştirme portu komutta `PORT=…` ile verilir), veritabanı
+(`APP_ENV`, `APP_URL`, `GIT_SHA`; geliştirme portu `APP_URL` üzerinden dev betiğince seçilir), veritabanı
 (`DATABASE_URL`; yalnız testler için `DATABASE_URL_TEST`, adı `_test` ile biter),
 kimlik (Better Auth sırrı, LinkedIn), e-posta, LLM, Google Takvim, depolama, iş kuyruğu. Sırlar yalnız
 `.env.local` ve `korunan/`'dadır. Eksik ya da geçersiz değişken `EnvValidationError` fırlatır; mesaj
@@ -199,8 +207,13 @@ yalnız değişken adını taşır.
 Her faz bitince kullanıcı telefondan test eder; faz içinde telefon testi yoktur.
 
 1. Bilgisayar ve telefon aynı Wi-Fi'da.
-2. `pnpm dev:lan` sunucuyu ağa açar ve telefonda açılacak adresi yazar.
-3. Telefonda test girişiyle rol hesaplarına girilir (giriş bağlantısı ve LinkedIn yerel adrese
+2. `pnpm dev:lan` sunucuyu `0.0.0.0`'a açar ve telefonda açılacak IPv4 adreslerini yazar.
+   Yalnız güvenilen ev/okul Wi-Fi'ında kullan; deneme bitince Ctrl+C ile kapat.
+   Birden çok ağ adresi varsa Wi-Fi arayüzünün adresini seç. Terminaldeki adresi telefonda aç;
+   güvenlik duvarı sorarsa yalnız bu yerel deneme için erişime izin ver. LAN modunda bağlantı
+   kökü süreçte ilk ağ adresine ayarlanır; `.env.local` değiştirilmez.
+3. P0-04'te hesap gerekmeden ana sayfa açılır (390/1440); test girişi P1-02'de gelir.
+   O aşamadan sonra telefonda test girişiyle rol hesaplarına girilir (giriş bağlantısı ve LinkedIn yerel adrese
    bağlı olduğu için telefonda test girişi kullanılır).
 4. “Ana ekrana ekle” ile uygulama gibi açılabilir.
 5. Kontrol listesi faz kapanış paketindedir (`faz-kapanis` skill'i).
