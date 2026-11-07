@@ -94,6 +94,14 @@ export type ConsentState = z.infer<typeof consentStateSchema>;
 // ---------------------------------------------------------------------------------------------
 
 export const CONTACT_FIELDS = ['EMAIL', 'PHONE', 'SOCIAL_LINKS', 'LINKEDIN'] as const;
+// Kontrollü iletişim ve JSON veri dökümü aynı durum kümesini paylaşır.
+export const CONTACT_REQUEST_STATUSES = [
+  'PENDING',
+  'APPROVED',
+  'REJECTED',
+  'WITHDRAWN',
+  'REVOKED',
+] as const;
 export type ContactField = (typeof CONTACT_FIELDS)[number];
 
 export const VISIBILITY_LEVELS = ['PRIVATE', 'ON_APPROVED_REQUEST', 'MEMBERS'] as const;
@@ -163,10 +171,26 @@ export type DeleteAccountOutput = z.infer<typeof deleteAccountOutputSchema>;
 /**
  * Veri dökümü (KVKK m. 11): oturumdaki kullanıcının kendi verisi, JSON dosyası olarak yetki kontrollü
  * rotadan iner (servis kartı yazar). Başka kullanıcının kişisel verisi dökümde YOKTUR (iletişim
- * taleplerinde karşı taraf yalnız kimlik + ad ile görünür). Yeni bölümler sonraki adımlarda eklenir.
+ * taleplerinde karşı taraf yalnız kullanıcı kimliğiyle tanımlanır). Yeni bölümler sonraki adımlarda eklenir.
  */
 export const DATA_EXPORT_HREF = '/api/hesabim/veri-dokumu';
 export const DATA_EXPORT_FORMAT_VERSION = 1;
+
+/** Yalnız talep satırının skalerleri; karşı tarafın kullanıcı/iletişim nesnesi eklenemez. */
+export const exportedContactRequestSchema = z
+  .object({
+    id: z.string(),
+    requesterId: z.string(),
+    targetId: z.string(),
+    fields: z.array(z.enum(CONTACT_FIELDS)),
+    message: z.string().nullable(),
+    status: z.enum(CONTACT_REQUEST_STATUSES),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    decidedAt: z.string().nullable(),
+    closedAt: z.string().nullable(),
+  })
+  .strict();
 
 export const dataExportSchema = z.object({
   formatVersion: z.literal(DATA_EXPORT_FORMAT_VERSION),
@@ -191,8 +215,8 @@ export const dataExportSchema = z.object({
     z.object({ field: z.enum(CONTACT_FIELDS), level: z.enum(VISIBILITY_LEVELS) }),
   ),
   contactRequests: z.object({
-    sent: z.array(z.record(z.string(), z.unknown())),
-    received: z.array(z.record(z.string(), z.unknown())),
+    sent: z.array(exportedContactRequestSchema),
+    received: z.array(exportedContactRequestSchema),
   }),
 });
 export type DataExport = z.infer<typeof dataExportSchema>;

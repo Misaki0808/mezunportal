@@ -302,3 +302,10 @@ Görünürlük `rules/visibility` karar tablosundadır: sahibi hep tam görür; 
 maskeli görür; `PRIVATE` onaylı iletişim talebiyle de açılmaz; dışarıdakine hiçbir alan dönmez. İletişim
 talebinde ret gerekçesi yoktur (talep edene neden söylenmez); başkasının talebine erişim `RESOURCE_NOT_FOUND`
 döner (varlığı sızmaz). Onaylı talep de “açık” sayılır: aynı ikili için yeni talep ancak kapanınca açılır.
+
+## 2026-11-08 · KVKK sözleşmesinde çıktı ve SQL sınırları
+PostgreSQL CHECK, NULL sonucu reddetmez: iletişim alanları açıkça NULL dışlanarak ve tek boyut
+şartıyla korunur. Onaylı olmayan talep ya da talepte istenmeyen alan çıktıdaki `revealed` içine
+giremez. JSON veri dökümünde talepler yalnız kendi skaler alanlarını taşır; genel nesne şeması
+karşı tarafın e-posta/telefon nesnesini kabul edebildiği için kapalı bir şemaya daraltılır.
+Bu sınırlar servis kartında da zorlanır; sözleşme doğrulaması yetkilendirmenin yerini almaz.

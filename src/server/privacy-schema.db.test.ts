@@ -161,3 +161,16 @@ describe('ContactRequest', () => {
     }
   });
 });
+
+it('alan listesi NULL veya çok boyutlu olamaz; CHECK üç değerli SQL ile aşılamaz', async () => {
+  const requesterId = await createUser(prisma),
+    targetId = await createUser(prisma);
+  await expectDbReject(
+    prisma.$executeRaw`INSERT INTO "ContactRequest" (id,"requesterId","targetId",fields,"updatedAt") VALUES ('null-probe',${requesterId},${targetId},NULL,now())`,
+    'ContactRequest_fields_shape_check',
+  );
+  await expectDbReject(
+    prisma.$executeRaw`INSERT INTO "ContactRequest" (id,"requesterId","targetId",fields,"updatedAt") VALUES ('dim-probe',${requesterId},${targetId},ARRAY[['EMAIL'],['PHONE']]::"ContactField"[],now())`,
+    'ContactRequest_fields_shape_check',
+  );
+});

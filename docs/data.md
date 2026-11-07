@@ -97,7 +97,7 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
   satırdır. Rızası olan kullanıcı satırı silinemez (hesap silme anonimleştirir).
 - `FieldVisibility`: kullanıcı × alan başına tek satır; satır yoksa varsayılan geçerlidir
   (`src/contracts/privacy.ts`).
-- `ContactRequest`: kendine talep yok; 1–4 tekrarsız alan; not ≤ 500 karakter; aynı ikili için aynı anda en
+- `ContactRequest`: kendine talep yok; NULL olmayan, tek boyutlu listede 1–4 tekrarsız alan; not ≤ 500 karakter; aynı ikili için aynı anda en
   fazla bir açık (bekleyen/onaylı) talep (kısmi indeks). Karar anı yalnız onay/ret/geri alınmış, kapanış anı
   yalnız geri çekilmiş/geri alınmış satırda (CHECK).
 - `Consent` ve `AdminAuditLog` yalnız eklenir; güncellenmez, silinmez (hesap silmede audit

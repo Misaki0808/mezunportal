@@ -26,6 +26,8 @@ export type ViewerRelation = (typeof VIEWER_RELATIONS)[number];
 
 /** `FULL`: değer olduğu gibi · `MASKED`: maskeli (`a***@o***.edu.tr`, `+90 5** *** ** 12`) · `NONE`: yanıtta YOK. */
 export type FieldAccess = 'FULL' | 'MASKED' | 'NONE';
+/** Tanınmayan seviye/ilişki veya tablo eşleşmesi yoksa alan yanıta girmez. */
+export const DEFAULT_FIELD_ACCESS = 'NONE' satisfies FieldAccess;
 
 export type VisibilityInput = {
   field: ContactField;

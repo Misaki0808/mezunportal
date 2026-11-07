@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
 
-import { CONTACT_FIELDS } from './privacy';
+import { CONTACT_FIELDS, CONTACT_REQUEST_STATUSES } from './privacy';
+export { CONTACT_REQUEST_STATUSES } from './privacy';
 
 /**
  * Kontrollü iletişim sözleşmesi (P1-03; D7, docs/security.md “KVKK”). Telefon/e-posta varsayılan gizlidir;
@@ -17,13 +18,6 @@ import { CONTACT_FIELDS } from './privacy';
 
 const INVALID = 'VALIDATION_INVALID' satisfies ErrorCode;
 
-export const CONTACT_REQUEST_STATUSES = [
-  'PENDING',
-  'APPROVED',
-  'REJECTED',
-  'WITHDRAWN',
-  'REVOKED',
-] as const;
 export type ContactRequestStatus = (typeof CONTACT_REQUEST_STATUSES)[number];
 
 export const CONTACT_MESSAGE_MAX = 500;
@@ -105,18 +99,30 @@ export const revealedContactSchema = z
   })
   .strict();
 
-export const contactRequestItemSchema = z.object({
-  id: z.string(),
-  /** Karşı taraf: gelen kutusunda talep eden, giden kutusunda hedef. Yalnız kimlik + ad. */
-  counterpart: z.object({ userId: z.string(), name: z.string() }).strict(),
-  fields: z.array(z.enum(CONTACT_FIELDS)),
-  message: z.string().nullable(),
-  status: z.enum(CONTACT_REQUEST_STATUSES),
-  createdAt: z.date(),
-  decidedAt: z.date().nullable(),
-  closedAt: z.date().nullable(),
-  revealed: revealedContactSchema.nullable(),
-});
+export const contactRequestItemSchema = z
+  .object({
+    id: z.string(),
+    /** Karşı taraf: gelen kutusunda talep eden, giden kutusunda hedef. Yalnız kimlik + ad. */
+    counterpart: z.object({ userId: z.string(), name: z.string() }).strict(),
+    fields: z.array(z.enum(CONTACT_FIELDS)),
+    message: z.string().nullable(),
+    status: z.enum(CONTACT_REQUEST_STATUSES),
+    createdAt: z.date(),
+    decidedAt: z.date().nullable(),
+    closedAt: z.date().nullable(),
+    revealed: revealedContactSchema.nullable(),
+  })
+  .superRefine((item, ctx) => {
+    if (item.revealed === null) return;
+    if (
+      item.status !== 'APPROVED' ||
+      Object.keys(item.revealed).some(
+        (field) => !item.fields.some((requested) => requested === field),
+      )
+    ) {
+      ctx.addIssue({ code: 'custom', path: ['revealed'], message: 'VALIDATION_INVALID' });
+    }
+  });
 export type ContactRequestItem = z.infer<typeof contactRequestItemSchema>;
 
 export const contactRequestPageSchema = z.object({
