@@ -151,3 +151,36 @@ web ve worker aynı başlatıcıdan kapanır. Port `APP_URL`'den türetilir: ek 
 ve port ile adresin ayrı tutulmasına gerek kalmaz. Worktree hazırlama mevcut ayarı korur,
 veritabanını sıfırlamaz; eşzamanlı port seçimi kilit ve kayıtlı worktree ayarlarıyla korunur.
 Kullanıcı modeli henüz olmadığı için seed hesap üretmez; rol yer tutucuları P1-02'de büyütülür.
+
+## 2026-11-07 · Tasarım sistemi: yerel öğeler, satır içi ikon, sistem yazı tipi
+Bileşenler mümkün olduğunca yerel HTML öğelerine yaslanır: `<dialog>` (Modal/Sheet; odak tuzağı,
+Esc ve arka planı etkisizleştirme tarayıcıdan gelir), `<select>`, `<input type=checkbox|radio>`
+(Switch `role="switch"` ile). Gerekçe: erişilebilirliği ve mobil davranışı yeniden yazmak yerine
+tarayıcıya bırakmak daha az kod ve daha az hata. İkon kütüphanesi ve ağdan yazı tipi yok: birkaç
+satır içi SVG (`ui/icons`), sistem yazı tipi yığını. Modal mobilde alt sayfa, ≥ 768 px'te ortada
+pencere; Sheet mobilde alt sayfa, ≥ 768 px'te sağ yan panel. Reddedilen: Radix/Headless UI (yeni
+bağımlılık, bu ölçekte gereksiz).
+
+## 2026-11-07 · Devre dışı sebebi tip düzeyinde zorunlu
+`Button` için `disabled` verildiğinde `disabledReason` zorunludur (TypeScript ayırt edilmiş
+birleşim); sebep düğmenin altında görünür ve `aria-describedby` ile bağlanır. Kural belgede kalmaz,
+derleyici denetler. Yükleniyor durumu ayrıdır: `loading` düğmeyi kilitler (çift gönderim yok) ve
+duyurur.
+
+## 2026-11-07 · `/ui-ornekleri` kapısı güvenli tarafa düşer
+Galeri yalnız `APP_ENV` `local` ya da `test` iken açılır; tanımsız, hatalı ya da `prod` değer 404
+verir (`src/lib/app-env.ts`). Sayfa `force-dynamic`tir: aksi halde derleme anındaki `APP_ENV`
+sayfaya gömülür ve `prod`'da açık kalabilirdi.
+
+## 2026-11-07 · Gezinme sekmeleri yer tutucu
+Ürün sayfaları Faz 1'de gelecek; alt çubuk/yan menü şimdilik genel adlarla (Ana sayfa, Deneyimler,
+Mentorlar, Randevular, Profil) kurulu ve yalnız Ana sayfa bağlantıdır, diğerleri “yakında” olarak
+etkisizdir. Sekme listesi ürün kararı değildir; Faz 1'de PM netleştirir (`AppShell` içindeki
+`NAV_ITEMS`).
+
+## 2026-11-07 · Bileşen testleri: jsdom, dosya başına ortam
+Bileşen testleri `*.test.tsx` dosyalarında `// @vitest-environment jsdom` ile jsdom'da koşar
+(`@testing-library/react`, `user-event`, `jest-dom`); Vitest ortamı genel olarak değişmez, birim
+testleri node'da kalır. `@testing-library/dom`, `@testing-library/react`'ın zorunlu eş
+bağımlılığıdır. Token kontrastı (`src/lib/contrast.test.ts`) `globals.css`'i okur: ekran bileşeni
+kaynağını taramaz, renk değerini ölçer.
