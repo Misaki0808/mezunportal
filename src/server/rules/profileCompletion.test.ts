@@ -1,44 +1,109 @@
 import { describe, expect, it } from 'vitest';
-import { computeProfileCompletion, studentMentorEligibility } from './profileCompletion';
-import type { CompletionField } from '@/contracts/profile';
+import {
+  computeProfileCompletion,
+  finishOnboarding,
+  isSkippableStep,
+  markCompleted,
+  markSkipped,
+  nextOnboardingStep,
+  stepStatuses,
+  studentMentorEligibility,
+  type StepLists,
+} from './profileCompletion';
+import { SKIPPABLE_STEPS, type CompletionField, type StepStatus } from '@/contracts/profile';
 
-const empty: Record<CompletionField, boolean> = {
-  MEMBERSHIP: false,
-  INTERESTS: false,
-  GOALS: false,
-  MENTOR_PREFERENCE: false,
-  VISIBILITY: false,
+type Statuses = Record<CompletionField, StepStatus>;
+const pending: Statuses = {
+  MEMBERSHIP: 'PENDING',
+  INTERESTS: 'PENDING',
+  GOALS: 'PENDING',
+  MENTOR_PREFERENCE: 'PENDING',
+  VISIBILITY: 'PENDING',
+};
+const allDone: Statuses = {
+  MEMBERSHIP: 'COMPLETED',
+  INTERESTS: 'COMPLETED',
+  GOALS: 'COMPLETED',
+  MENTOR_PREFERENCE: 'COMPLETED',
+  VISIBILITY: 'COMPLETED',
 };
 describe('profil tamamlama (uygulanabilir adımlar eşit ağırlıklı)', () => {
   it.each([
-    [empty, 0, 5],
-    [{ ...empty, MEMBERSHIP: true }, 20, 4],
-    [{ ...empty, MEMBERSHIP: true, INTERESTS: true, GOALS: true }, 60, 2],
+    [pending, true, 0, ['MEMBERSHIP', 'INTERESTS', 'GOALS', 'MENTOR_PREFERENCE', 'VISIBILITY']],
     [
-      { MEMBERSHIP: true, INTERESTS: true, GOALS: true, MENTOR_PREFERENCE: true, VISIBILITY: true },
-      100,
-      0,
+      { ...pending, MEMBERSHIP: 'COMPLETED' },
+      true,
+      20,
+      ['INTERESTS', 'GOALS', 'MENTOR_PREFERENCE', 'VISIBILITY'],
     ],
-  ])('tamamlanan adımlardan yüzde ve eksikleri hesaplar', (input, percent, missing) => {
-    expect(computeProfileCompletion(input, { mentorStepAvailable: true })).toMatchObject({
+    [
+      { ...pending, MEMBERSHIP: 'COMPLETED', INTERESTS: 'COMPLETED', GOALS: 'COMPLETED' },
+      true,
+      60,
+      ['MENTOR_PREFERENCE', 'VISIBILITY'],
+    ],
+    [allDone, true, 100, []],
+    // Atlanan adım eksiktir; atlama yüzdeyi artırmaz.
+    [{ ...allDone, INTERESTS: 'SKIPPED', GOALS: 'SKIPPED' }, true, 60, ['INTERESTS', 'GOALS']],
+    // Kapalı mentor adımı paydada yok (5 → 4), tamamlanmış/atlanmış olması fark etmez.
+    [{ ...pending, MEMBERSHIP: 'COMPLETED' }, false, 25, ['INTERESTS', 'GOALS', 'VISIBILITY']],
+    [{ ...allDone, MENTOR_PREFERENCE: 'SKIPPED' }, false, 100, []],
+    [{ ...allDone, MENTOR_PREFERENCE: 'PENDING' }, false, 100, []],
+    [{ ...allDone, VISIBILITY: 'SKIPPED' }, false, 75, ['VISIBILITY']],
+  ] as const)('%o · mentor açık=%s → %%%d', (statuses, mentorStepAvailable, percent, missing) => {
+    expect(computeProfileCompletion(statuses, { mentorStepAvailable })).toEqual({
       percent,
-    });
-    expect(computeProfileCompletion(input, { mentorStepAvailable: true }).missing).toHaveLength(
       missing,
-    );
+    });
   });
-  it('kapalı mentor adımını payda ve eksiklerden çıkarır; atlanabilen adım eksik kalır', () => {
-    const result = computeProfileCompletion(
-      { ...empty, MEMBERSHIP: true },
-      { mentorStepAvailable: false },
-    );
-    expect(result).toEqual({ percent: 25, missing: ['INTERESTS', 'GOALS', 'VISIBILITY'] });
-    expect(
-      computeProfileCompletion(
-        { ...empty, MEMBERSHIP: true, INTERESTS: true, GOALS: true, VISIBILITY: true },
-        { mentorStepAvailable: false },
-      ).percent,
-    ).toBe(100);
+});
+
+describe('açık “atla” biçimi', () => {
+  const none: StepLists = { completed: [], skipped: [] };
+
+  it('listelerden durum: tamamlanan, atlanan, dokunulmayan', () => {
+    expect(stepStatuses({ completed: ['MEMBERSHIP'], skipped: ['GOALS'] })).toEqual({
+      ...pending,
+      MEMBERSHIP: 'COMPLETED',
+      GOALS: 'SKIPPED',
+    });
+  });
+
+  it('atlama ↔ kaydetme son kararı tutar ve listeler ayrık kalır', () => {
+    const skipped = markSkipped(markCompleted(none, 'INTERESTS'), 'INTERESTS');
+    expect(skipped).toEqual({ completed: [], skipped: ['INTERESTS'] });
+    const completed = markCompleted(skipped, 'INTERESTS');
+    expect(completed).toEqual({ completed: ['INTERESTS'], skipped: [] });
+    expect(markSkipped(markSkipped(none, 'GOALS'), 'GOALS').skipped).toEqual(['GOALS']);
+  });
+
+  it('zorunlu adım atlanabilir değildir; atlanabilir liste rol+bölüm dışındaki dört adımdır', () => {
+    expect(isSkippableStep('MEMBERSHIP')).toBe(false);
+    expect(isSkippableStep('COMPLETE')).toBe(false);
+    expect([...SKIPPABLE_STEPS]).toEqual(['INTERESTS', 'GOALS', 'MENTOR_PREFERENCE', 'VISIBILITY']);
+  });
+
+  it('bitirme: zorunlu adım yoksa hata; varsa kalan PENDING adımlar SKIPPED olur, diğerleri korunur', () => {
+    expect(finishOnboarding({ completed: ['INTERESTS'], skipped: [] })).toEqual({
+      ok: false,
+      errorCode: 'ONBOARDING_REQUIRED_STEP_PENDING',
+    });
+    const result = finishOnboarding({ completed: ['MEMBERSHIP', 'GOALS'], skipped: ['INTERESTS'] });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepStatuses(result.lists)).toEqual({
+      MEMBERSHIP: 'COMPLETED',
+      INTERESTS: 'SKIPPED',
+      GOALS: 'COMPLETED',
+      MENTOR_PREFERENCE: 'SKIPPED',
+      VISIBILITY: 'SKIPPED',
+    });
+  });
+
+  it("ilerleme noktası sıradaki adıma geçer ve COMPLETE'te durur", () => {
+    expect(nextOnboardingStep('MEMBERSHIP')).toBe('INTERESTS');
+    expect(nextOnboardingStep('VISIBILITY')).toBe('COMPLETE');
+    expect(nextOnboardingStep('COMPLETE')).toBe('COMPLETE');
   });
 });
 describe('öğrenci mentor eşiği K-08', () => {
