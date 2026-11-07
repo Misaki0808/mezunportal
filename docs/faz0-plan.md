@@ -28,7 +28,7 @@ Faz 0 sonunda hiçbir ürün özelliği yoktur; ama Faz 1'in her adımı doğrud
 | D9 | Dil | Kod tanımlayıcıları İngilizce; arayüz, belge, commit Türkçe |
 | D10 | Commit | Conventional Commits, plan kimliği gövdede |
 | D11 | Sürümler | Beta/canary/RC yok; lockfile zorunlu |
-| D12 | Repo | Adı K-01, görünürlüğü K-13 (öneri: private) |
+| D12 | Repo | `mezunportal`, public (kullanıcı kararı 2026-11-07) |
 
 ## 3. Adımlar
 

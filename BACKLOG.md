@@ -7,7 +7,7 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 
 ## Güncel durum
 
-- Kod yok. Belgeler ve rol protokolü hazır; **sıradaki iş Faz 0** (`docs/faz0-plan.md`).
+- Repo iskeleti (Next.js 16, TypeScript, Tailwind, next-intl, Vitest, `/api/health`) kuruldu; veritabanı, CI, yerel tam ortam, tasarım sistemi ve ekip araçları Faz 0'ın kalan adımlarıdır (`docs/faz0-plan.md`). Ürün özelliği yok.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -33,7 +33,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 
 | No | Karar | Kim | Öneri | Bekleyen |
 |---|---|---|---|---|
-| K-01 | Proje/ürün adı ve repo adı | Kullanıcı | Çalışma adı MezunPortal | P0-01 |
 | K-02 | Canlı sunucu ve dağıtım aracı | Kullanıcı | Üniversite sunucusu (hocaya sor) ya da ücretsiz bir seçenek | P1-18 |
 | K-03 | Veri sorumlusu ve yöneticiler kim | Hoca | Hocaya sorulacak | P1-03, P1-18 |
 | K-04 | LLM sağlayıcısı | Kullanıcı | PDF girdisi + yapılandırılmış çıktı + API verisini eğitimde kullanmama politikası olan ücretli API | P1-05 |
@@ -45,7 +44,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 | K-10 | Kurucu üye etiketi kuralı | PM | Pilot süresince ilk deneyimi yayınlanan herkes | P1-16 |
 | K-11 | Puan ağırlıkları ve şüphe eşikleri | PM | `docs/architecture.md` puan tablosu | P1-16 |
 | K-12 | Pilot: kimler, ne zaman, başarı ölçütleri | Hoca | Hocayla | P1-18 |
-| K-13 | Repo görünürlüğü | Kullanıcı | Private | P0-01 |
 
 ## Pilot öncesi kapılar
 

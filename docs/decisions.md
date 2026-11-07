@@ -75,3 +75,37 @@ dakikası sınırlıdır. Roller ekran görüntüsü almaz (makine yükü, çak�
 ara sıra yaptığı tarayıcı turu ve kullanıcının faz sonu telefon denemesi yapar. Ürün/UX
 kararlarını PM verir ve panoda gösterir; kullanıcıya yalnız onun verebileceği kararlar sorulur.
 
+
+## 2026-11-07 · Repo adı `mezunportal` (K-01)
+Kullanıcı kararı: "Repo adı mezunportal; K-01 cevaplandı." Çalışma adı MezunPortal ürün adı olarak
+da kaldı; GitHub deposu `Misaki0808/mezunportal`.
+
+## 2026-11-07 · Repo görünürlüğü public (K-13)
+Kullanıcı kararı: "public yap repoyu." Önceki öneri private'tı; gerekçe: ücretsiz planda private
+repoda dal koruması çalışmıyor (HTTP 403), public repoda `main` korunabiliyor. Sonuç olarak repoya
+sır, kişisel veri ve gerçek test hesabı bilgisi asla girmez (`.env*`, `korunan/` Git dışı); roller ve
+PM belgeleri repo dışındadır.
+
+## 2026-11-07 · TypeScript 6.0.3 ve ESLint 9 (güncel major değil)
+`typescript` son sürümü 7.x, fakat `typescript-eslint` (eslint-config-next'in kullandığı)
+`typescript <6.1` ister; ESLint 10 ise eslint-config-next'in eklentilerinde (react, import, jsx-a11y)
+henüz desteklenmiyor (eşlenik uyarısı). Kararlı ve uyumlu en yeni kombinasyon seçildi: TypeScript
+6.0.3 + ESLint 9.39. Araç zinciri 7.x/10'u desteklediğinde yükseltilir. Reddedilen: uyarıyla
+bırakmak (lint çalışma anında kırılabilir).
+
+## 2026-11-07 · İçerik güvenlik politikası `unsafe-inline`
+Next.js App Router satır içi betik üretir; nonce'lu CSP her sayfayı dinamik yapar ve önbelleği
+bozar. Başlangıçta `script-src 'self' 'unsafe-inline'` kullanılır (geliştirmede ek olarak
+`unsafe-eval`, HMR için `ws:`); `object-src 'none'`, `frame-ancestors 'none'`, `base-uri` ve
+`form-action` `'self'`. Nonce'a geçiş, Faz 1 sonunda dinamik render maliyetiyle birlikte
+değerlendirilir. HSTS yalnız `APP_ENV=prod` iken eklenir.
+
+## 2026-11-07 · Yapılandırma tercihleri (iskelet)
+Vitest `@/` takma adı `vite-tsconfig-paths` yerine `resolve.alias` ile verilir (ek bağımlılık yok).
+`package.json` `"type": "module"` (Node 24 TypeScript dosyalarını doğrudan çalıştırır; `messages:check`
+hata kodu kaydını `src/lib/errors.ts`'ten okur). Prettier `*.md`, `.agents/` ve `tsconfig.json`'ı kapsamaz: belgeler elle
+yazılır, kapı kod ve yapılandırmaya bakar; `next build` tsconfig'i kendi biçiminde yeniden yazar. pnpm `allowBuilds`: `@parcel/watcher` ve `@swc/core`
+derleme betikleri kapalı (yalnız next-intl'in kullanılmayan çıkarım araçları); yeni betik isteyen
+paket kurulumu kırar ve onay gerektirir. Hata kodları `UPPER_SNAKE` yazılır: next-intl anahtardaki
+noktayı yol ayırıcı sayar. `next.config.ts` `agentRules: false`: `next dev` aksi halde `AGENTS.md`'ye kendi
+bloğunu yazar; o dosya yalnız kullanıcı onaylı kartla değişir.
