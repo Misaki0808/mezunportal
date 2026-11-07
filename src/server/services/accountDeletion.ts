@@ -86,6 +86,9 @@ export async function deleteAccount(
       data: { status: 'REVOKED', closedAt: now },
     });
 
+    // Profil yayınlanmış içerik değildir: K-09'un her iki seçiminde de kişisel veri silinir.
+    // ProfileTag ilişkileri ON DELETE CASCADE; ortak etiket sözlüğü korunur.
+    await tx.profile.deleteMany({ where: { userId } });
     await tx.fieldVisibility.deleteMany({ where: { userId } });
     await tx.session.deleteMany({ where: { userId } });
     await tx.account.deleteMany({ where: { userId } });

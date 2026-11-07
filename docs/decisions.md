@@ -420,3 +420,12 @@ false`) bir cevaptır, atlama değildir, boş seçim de kaydetme sayılmaz. Atla
 adım yüzdede eksik kalır; ilerleme noktası kalıcıdır. Rol ve bölüm adımı atlanamaz; ilk girişi bitirmek
 kalan bekleyen adımları atlanmış sayar. Gerekçe: ekran ile servis aynı ayrımı tek yerden okur ve sonradan
 “eksik adımı tamamla” daveti yalnız gerçekten atlananı hedefler.
+
+## 2026-11-08 · P1-04 profil yazımı ve KVKK yaşam döngüsü
+
+İlk giriş kayıtları hesap silmeyle aynı kullanıcı satırını kilitler ve hesap durumunu kilitten sonra
+yeniden okur; böylece eşzamanlı kayıt silinmiş hesaba profil bırakamaz. Profil yayınlanmış içerik
+değildir: K-09'un iki seçeneğinde de profil ve etiket ilişkileri silinir, ortak sözlük kalır. JSON dökümü
+yalnız kullanıcının kendi profilini açık alan seçimiyle içerir. Mentor isteği bir tercihtir, üyeliği
+doğrulamaz ve etkin mentor profili açmaz. P1-07 deneyim verisi gelene kadar öğrencinin mentor adımı
+güvenli biçimde kapalıdır; sınıf düzeltmesi sunucudaki üyelikten hesaplanır.

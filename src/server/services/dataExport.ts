@@ -1,6 +1,10 @@
 import 'server-only';
 
-import { DATA_EXPORT_FORMAT_VERSION, type DataExport } from '@/contracts/privacy';
+import {
+  DATA_EXPORT_FORMAT_VERSION,
+  exportedProfileSchema,
+  type DataExport,
+} from '@/contracts/privacy';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { codedNotFound } from '@/lib/errors';
 
@@ -47,6 +51,35 @@ export async function buildDataExport(
       phone: true,
       createdAt: true,
       deletedAt: true,
+      profile: {
+        select: {
+          id: true,
+          headline: true,
+          summary: true,
+          city: true,
+          goals: true,
+          socialLinks: true,
+          linkedinUrl: true,
+          completionScore: true,
+          onboardingStep: true,
+          completedSteps: true,
+          skippedSteps: true,
+          mentorInterested: true,
+          cvUpdatedAt: true,
+          lastFreshnessPromptAt: true,
+          lastStillThereCheckAt: true,
+          createdAt: true,
+          updatedAt: true,
+          tags: {
+            select: {
+              createdAt: true,
+              updatedAt: true,
+              tag: { select: { id: true, kind: true, slug: true } },
+            },
+            orderBy: { tagId: 'asc' },
+          },
+        },
+      },
       memberships: {
         select: {
           id: true,
@@ -110,6 +143,21 @@ export async function buildDataExport(
       phone: user.phone,
       createdAt: user.createdAt.toISOString(),
     },
+    profile: user.profile
+      ? exportedProfileSchema.parse({
+          ...user.profile,
+          cvUpdatedAt: iso(user.profile.cvUpdatedAt),
+          lastFreshnessPromptAt: iso(user.profile.lastFreshnessPromptAt),
+          lastStillThereCheckAt: iso(user.profile.lastStillThereCheckAt),
+          createdAt: user.profile.createdAt.toISOString(),
+          updatedAt: user.profile.updatedAt.toISOString(),
+          tags: user.profile.tags.map(({ tag, createdAt, updatedAt }) => ({
+            ...tag,
+            assignedAt: createdAt.toISOString(),
+            updatedAt: updatedAt.toISOString(),
+          })),
+        })
+      : null,
     memberships: user.memberships.map(({ department, ...membership }) => ({
       ...membership,
       departmentName: department.name,
