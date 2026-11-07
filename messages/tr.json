@@ -377,5 +377,47 @@
     "masters": "Yüksek lisans",
     "network": "Mentor bulmak",
     "careerChange": "Sektör değiştirmek"
+  },
+  "onboarding": {
+    "eyebrow": "SANA ÖZEL BİR BAŞLANGIÇ",
+    "progress": "Profilin %{percent} tamamlandı",
+    "membershipTitle": "Önce üyeliğini doğrula",
+    "membershipDescription": "Bölümünü seçerek üniversite topluluğuna katıl.",
+    "membershipAction": "Üyeliğimi doğrula",
+    "interestsTitle": "Neler ilgini çekiyor?",
+    "interestsDescription": "Sana uygun içerikleri göstermek için ilgilerini seç.",
+    "goalsTitle": "Birlikte neyi hedefleyelim?",
+    "goalsDescription": "Hedeflerini seç; tercihlerini daha sonra değiştirebilirsin.",
+    "mentorTitle": "Mentor olmak ister misin?",
+    "mentorDescription": "Deneyimlerini paylaşarak başkalarına destek olabilirsin.",
+    "mentorYes": "Evet, ilgileniyorum",
+    "mentorNo": "Şimdilik düşünmüyorum",
+    "visibilityTitle": "Gizlilik tercihlerini gözden geçir",
+    "visibilityDescription": "E-posta ve telefonun varsayılan olarak gizlidir. İstediğin zaman değiştirebilirsin.",
+    "visibilityAction": "Gizlilik ayarlarına git",
+    "visibilityConfirm": "Tercihlerimi gözden geçirdim",
+    "completeTitle": "Hazırsın!",
+    "completeDescription": "Profilini istediğin zaman Hesabım bölümünden güncelleyebilirsin.",
+    "home": "Ana sayfaya git",
+    "next": "Devam et",
+    "skip": "Şimdilik atla",
+    "saving": "Kaydediliyor…",
+    "emptyTitle": "Seçenekler yüklenemedi",
+    "emptyDescription": "Biraz sonra tekrar dene.",
+    "retry": "Tekrar dene",
+    "selectionHint": "Birden fazla seçenek seçebilirsin.",
+    "unavailable": "Bu adım şu anda kullanılamıyor.",
+    "unavailableDescription": "İlerlemen korunuyor; daha sonra yeniden deneyebilirsin.",
+    "fields": {
+      "EMAIL": "E-posta",
+      "PHONE": "Telefon",
+      "SOCIAL_LINKS": "Sosyal bağlantılar",
+      "LINKEDIN": "LinkedIn"
+    },
+    "levels": {
+      "PRIVATE": "Yalnızca ben",
+      "ON_APPROVED_REQUEST": "Onayladığım istekler",
+      "MEMBERS": "Doğrulanmış üyeler"
+    }
   }
 }
