@@ -115,7 +115,7 @@ describe('e-posta giden kutusu', () => {
     await expect(service.deliver(message, 2, 2)).rejects.not.toThrow(secret);
     expect(JSON.stringify(logger.mock.calls)).not.toContain(message.to);
     expect(JSON.stringify(logger.mock.calls)).not.toContain(message.text);
-    expect(JSON.stringify(rows)).not.toContain(secret);
+    expect(JSON.stringify([...rows.values()])).not.toContain(secret);
   });
   it('gerçek günlük fonksiyonu maskeyi bozamaz', () => {
     const write = vi.spyOn(process.stdout, 'write').mockReturnValue(true);

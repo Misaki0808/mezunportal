@@ -288,3 +288,16 @@ göstermediği için bütün bölümler döner ve doğrulama mezun belgesiyle ya
 üniversite göndermez. LinkedIn anahtarı yoksa giriş seçeneği `enabled: false` ve bir `errorCode`
 (`AUTH_PROVIDER_NOT_CONFIGURED`) taşır: ekran düğmeyi gizlemek yerine devre dışı gösterip sebebini yazar.
 Başlatma eylemi hedef yolu istemciden almaz (açık yönlendirme yok).
+
+## 2026-11-08 · E-posta giden kutusu: işlemli kayıt, sınırlı taşıma
+EmailLog ve pg-boss işi aynı PostgreSQL işleminde eklenir; idempotency anahtarı için transaction
+kilidi hem eşzamanlı istekleri hem worker teslimlerini sıralar. Şablon metnini çağıran hazırlar;
+worker yalnız taşır. EmailLog gövde/adres içermez; pg-boss yükleri kısa süreli saklanır ve ham
+SMTP yanıtları kaydedilmez. Geçici hatalar iki kez yeniden denenir; terminal broker hataları
+ayrı kuyrukla kalıcı, gövdesiz kayda dönüşür.
+
+SMTP dış sistemdir: sağlayıcı kabulünden hemen sonra süreç/bağlantı kaybolursa yerel SENT kaydı
+commit olmadan kalabilir. Bu dar belirsizlikte yeniden deneme çift teslim üretebilir; Message-ID
+idempotency anahtarının sabit özetinden üretilir ama SMTP genelinde kesin tek teslim garantisi
+vermez. Bu adım normal yinelenen çağrıları ve kayıtlı SENT teslimlerini engeller; böyle bir garantiyi
+varmış gibi sunmaz. Sağlayıcı düzeyinde idempotency API'si P1-18 sağlayıcı kararıyla değerlendirilir.

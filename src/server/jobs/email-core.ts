@@ -60,6 +60,21 @@ export function createEmailService(
         return { emailLogId: row.id };
       });
     },
+    async markExhausted(input: QueuedEmail): Promise<void> {
+      const parsed = queuedEmailSchema.safeParse(input);
+      if (!parsed.success) throw new EmailTransportError(false);
+      await outbox.withKey(parsed.data.idempotencyKey, async (work) => {
+        const row = await work.find(parsed.data.idempotencyKey);
+        if (!row || row.status !== 'QUEUED') return;
+        await work.mark(row.id, {
+          status: 'FAILED',
+          attempts: row.attempts,
+          errorCode: 'EMAIL_DELIVERY_EXHAUSTED',
+          sentAt: null,
+        });
+        logger('failed', maskEmail(parsed.data.to));
+      });
+    },
     async deliver(input: QueuedEmail, retryCount: number, retryLimit: number): Promise<void> {
       const parsed = queuedEmailSchema.safeParse(input);
       if (!parsed.success) throw new EmailTransportError(false);

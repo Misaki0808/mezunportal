@@ -1,15 +1,17 @@
 import 'server-only';
 import nodemailer from 'nodemailer';
-import { EnvValidationError, type Env } from '@/lib/env';
+import { EnvValidationError, type SmtpEnv } from '@/lib/env';
 import { emailMessageSchema, EmailTransportError, type EmailTransport } from './types';
 
-export function smtpSettings(env: Env) {
+export function smtpSettings(env: SmtpEnv) {
   const missing = (['SMTP_HOST', 'SMTP_PORT', 'EMAIL_FROM'] as const).filter((key) => !env[key]);
   if (missing.length) throw new EnvValidationError(missing);
   // Yerel ortam gerçek SMTP'ye/adrese gönderemez: yalnız ortak Mailpit servisi.
   if (
     env.APP_ENV !== 'prod' &&
-    (!['127.0.0.1', 'localhost'].includes(env.SMTP_HOST ?? '') || env.SMTP_PORT !== 1025)
+    (!['127.0.0.1', 'localhost'].includes(env.SMTP_HOST ?? '') ||
+      env.SMTP_PORT !== 1025 ||
+      env.SMTP_SECURE)
   ) {
     throw new EnvValidationError(['SMTP_HOST', 'SMTP_PORT']);
   }
@@ -20,8 +22,8 @@ export function smtpSettings(env: Env) {
     host: env.SMTP_HOST,
     port: env.SMTP_PORT,
     from: env.EMAIL_FROM,
-    secure: env.SMTP_PORT === 465,
-    requireTLS: env.APP_ENV === 'prod' && env.SMTP_PORT !== 465,
+    secure: env.SMTP_SECURE,
+    requireTLS: env.APP_ENV === 'prod' && !env.SMTP_SECURE,
     auth: env.SMTP_USER ? { user: env.SMTP_USER, pass: env.SMTP_PASSWORD ?? '' } : undefined,
     connectionTimeout: 5_000,
     greetingTimeout: 5_000,
@@ -33,7 +35,7 @@ export function smtpSettings(env: Env) {
   };
 }
 
-export function createSmtpTransport(env: Env): EmailTransport {
+export function createSmtpTransport(env: SmtpEnv): EmailTransport {
   const { from, ...options } = smtpSettings(env);
   const transport = nodemailer.createTransport(options);
   return {
@@ -44,7 +46,7 @@ export function createSmtpTransport(env: Env): EmailTransport {
           ...valid,
           from,
           messageId: message.messageId,
-          envelope: { from: from ?? '', to: [valid.to] },
+          envelope: { from: from.match(/<([^<>]+)>$/)?.[1] ?? from, to: [valid.to] },
           disableFileAccess: true,
           disableUrlAccess: true,
         });
