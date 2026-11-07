@@ -351,6 +351,10 @@
       "verificationTitle": "Doğrulamanı tamamla",
       "verificationDescription": "Üyeliğini doğrulayarak devam et.",
       "verificationAction": "Doğrulamaya git"
+    },
+    "testSignIn": {
+      "title": "Yerel test girişi",
+      "submit": "Test hesabıyla giriş yap"
     }
   }
 }
