@@ -110,6 +110,36 @@ paket kurulumu kırar ve onay gerektirir. Hata kodları `UPPER_SNAKE` yazılır:
 noktayı yol ayırıcı sayar. `next.config.ts` `agentRules: false`: `next dev` aksi halde `AGENTS.md`'ye kendi
 bloğunu yazar; o dosya yalnız kullanıcı onaylı kartla değişir.
 
+## 2026-11-07 · Prisma 7.10.1 (npm "latest" bir RC)
+`prisma` npm `latest` etiketi 8.0.0-rc.33 gösteriyor (D11: RC yok); kararlı hat 7.10.1'dir ve plan da
+Prisma 7'yi söyler. `prisma`, `@prisma/client` ve `@prisma/adapter-pg` 7.10.1'e sabit. `.env`
+dosyalarını Prisma 7 kendiliğinden yüklemediği için `prisma.config.ts` Node'un yerleşik
+`process.loadEnvFile`'ı ile `.env.local`'ı okur (`dotenv` eklenmedi). Üretilen istemci Git dışı
+`src/generated/prisma`'dadır.
+
+## 2026-11-07 · Seed çalıştırıcısı `tsx`; Prisma betikleri
+Üretilen Prisma istemcisi uzantısız içe aktarır (`./enums`), Node'un yerleşik TypeScript desteği
+bunları çözemez; seed `tsx` ile çalışır (`tsx` onaylı bağımlılık, `esbuild` derleme betiği kapalı).
+`prisma` ve `@prisma/engines` derleme betikleri açık onaylı (şema motoru ikilisi).
+
+## 2026-11-07 · Veritabanlı testler ayrı proje; sessiz atlama yok
+`*.db.test.ts` dosyaları Vitest `db` projesindedir ve her koşuda `DATABASE_URL_TEST` veritabanını
+sıfırlayıp migration'ları boş veritabanına uygular (adı `_test` ile bitmeyen veritabanı reddedilir).
+`DATABASE_URL_TEST` yoksa `pnpm test` düşer: sessizce atlayan test "yeşil" görünüp migration'ı
+denetlemez. Veritabanı gerekmeyen hızlı koşu için `pnpm test:unit`. Reddedilen: `skipIf` ile
+koşullu atlama.
+
+## 2026-11-07 · `/api/health` veritabanı kapalıyken 503
+Sağlık yanıtı `db: ok|down` taşır; veritabanı ulaşılamazsa HTTP 503 ve kararlı `errorCode`
+(`DB_UNAVAILABLE`) döner. Bağlantı adresi, kimlik bilgisi ve sürücü hata metni yanıta ve loga girmez
+(günlüğe yalnız hata türü yazılır). Dağıtım sağlık kontrolleri (P1-18) 503'ü "hazır değil" sayar.
+
+## 2026-11-07 · `pnpm db:reset` ajan koruması
+Prisma 7 `migrate reset`, bir yapay zekâ ajanından çalıştırıldığında kullanıcının açık onayı olmadan
+reddediyor (`PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`). Bu onayı ajanlar kendi başlarına vermez.
+Ajanlar boş veritabanında `pnpm db:deploy` + `pnpm db:seed` kullanır; sıfırlama kullanıcıya gider.
+Test veritabanı sıfırlaması ayrıdır: `_test` ad kontrolüyle global kurulumda yapılır.
+
 ## 2026-11-07 · Tasarım sistemi: yerel öğeler, satır içi ikon, sistem yazı tipi
 Bileşenler mümkün olduğunca yerel HTML öğelerine yaslanır: `<dialog>` (Modal/Sheet; odak tuzağı,
 Esc ve arka planı etkisizleştirme tarayıcıdan gelir), `<select>`, `<input type=checkbox|radio>`

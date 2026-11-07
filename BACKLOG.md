@@ -7,7 +7,7 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 
 ## Güncel durum
 
-- Repo iskeleti (Next.js 16, TypeScript, Tailwind, next-intl, Vitest, `/api/health`) ve tasarım sistemi (`src/components/ui`, uygulama düzeni, `/ui-ornekleri` galeri, manifest) kuruldu; veritabanı, CI, yerel tam ortam, ekip araçları Faz 0'ın kalan adımlarıdır (`docs/faz0-plan.md`). Ürün özelliği yok.
+- Repo iskeleti (Next.js 16, TypeScript, Tailwind, next-intl, Vitest), veritabanı katmanı (PostgreSQL + Mailpit compose, Prisma 7, kurum tabloları, seed, `/api/health` `db` kontrolü) ve tasarım sistemi (`src/components/ui`, uygulama düzeni, `/ui-ornekleri` galeri, manifest) kuruldu; CI, yerel tam ortam betikleri ve ekip araçları Faz 0'ın kalan adımlarıdır (`docs/faz0-plan.md`). Ürün özelliği yok.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -37,7 +37,7 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 | K-03 | Veri sorumlusu ve yöneticiler kim | Hoca | Hocaya sorulacak | P1-03, P1-18 |
 | K-04 | LLM sağlayıcısı | Kullanıcı | PDF girdisi + yapılandırılmış çıktı + API verisini eğitimde kullanmama politikası olan ücretli API | P1-05 |
 | K-05 | E-posta sağlayıcısı (canlı) | Kullanıcı | Üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | P1-18 |
-| K-06 | İÜ öğrenci/personel e-posta alan adları, YBS'nin fakültesi | PM ölçer, kullanıcı teyit eder | Kurulumda doğrulanır | P0-02, P1-02 |
+| K-06 | İÜ öğrenci/personel e-posta alan adları, YBS'nin fakültesi | PM ölçer, kullanıcı teyit eder | Geçici değerler `prisma/seed-data.ts`'te (`ogr.iu.edu.tr`, `istanbul.edu.tr`, İktisat Fakültesi); teyitte yalnız o dosya değişir | P1-02 |
 | K-07 | Yayınlanmış içeriğin görünürlük kapsamı | PM | Üniversitedeki tüm doğrulanmış üyeler | P1-07 |
 | K-08 | Öğrencinin mentor olma eşiği | PM | 3. sınıf ve üstü + en az bir yayınlanmış deneyim | P1-04 |
 | K-09 | Hesap silmede yayınlanmış deneyimler | PM | Kullanıcıya sor; varsayılan sil | P1-03 |
@@ -69,7 +69,11 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 
 ### Açık borçlar
 
-Şu an yok.
+- [ ] **TD-001** · P1 · Güvenlik başlıkları build anında yazılıyor
+  Ne: başlıklar `next build` sırasında `.next/routes-manifest.json`'a yazılıyor; HSTS yalnız
+  `APP_ENV=prod` ile alınan build'de çıkar (`next.config.ts`).
+  Neden borç: canlı build yanlış env'le alınırsa HSTS sessizce düşer.
+  Kapanış ölçütü: P1-18 dağıtım betiği build'i `APP_ENV=prod` ile alır ve başlık kanıtlanır.
 
 ### Bilinçli kabul edilen sınırlar
 

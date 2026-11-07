@@ -1,0 +1,55 @@
+// Tek doğruluk kaynağı: model, alan, indeks ve ilişki burada; ilkeler docs/data.md'dedir.
+// Prisma 7: üretilen istemci `node_modules`'a değil `output` yoluna yazılır (Git dışı);
+// bağlantı adresi prisma.config.ts'tedir, istemci driver adapter ile kurulur (src/server/db.ts).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Kurum yapısı (üniversite → fakülte → bölüm) sistem yöneticisinindir.
+model University {
+  id                  String    @id @default(uuid(7))
+  name                String    @unique
+  shortName           String    @unique
+  /// Öğrenci e-postası alan adları: üniversiteyi doğrular, bölümü doğrulamaz (docs/architecture.md).
+  studentEmailDomains String[]
+  /// Personel (akademisyen) e-postası alan adları.
+  staffEmailDomains   String[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  faculties Faculty[]
+}
+
+model Faculty {
+  id           String   @id @default(uuid(7))
+  universityId String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  university  University   @relation(fields: [universityId], references: [id], onDelete: Restrict)
+  departments Department[]
+
+  @@unique([universityId, name])
+}
+
+model Department {
+  id        String   @id @default(uuid(7))
+  facultyId String
+  name      String
+  /// Kısa kod (örn. YBS); fakülte içinde benzersiz.
+  code      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+
+  @@unique([facultyId, code])
+  @@unique([facultyId, name])
+}

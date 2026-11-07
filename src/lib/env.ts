@@ -14,6 +14,10 @@ const optionalText = z.preprocess(
   z.string().min(1).optional(),
 );
 
+// Yalnız PostgreSQL adresleri kabul edilir. Hata yalnız değişken adını taşır; adres (kimlik bilgisi
+// içerebilir) asla loga ya da mesaja girmez.
+const postgresUrl = z.string().regex(/^postgres(ql)?:\/\/\S+$/);
+
 const envSchema = z.object({
   /** Çalışma ortamı: yerel geliştirme, CI/test ya da canlı (P1-18). */
   APP_ENV: z.enum(['local', 'test', 'prod']),
@@ -21,6 +25,13 @@ const envSchema = z.object({
   APP_URL: z.url(),
   /** Derleme anındaki commit. Yerelde tanımsızdır; `/api/health` o zaman `local` döner. */
   GIT_SHA: optionalText,
+  /** Uygulama veritabanı (worktree başına `mezun_<slug>`; docs/engineering.md "Yerel paralel çalışma"). */
+  DATABASE_URL: postgresUrl,
+  /** Yalnız veritabanlı testler için `mezun_<slug>_test`; uygulama okumaz. Adı `_test` ile bitmeli. */
+  DATABASE_URL_TEST: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    postgresUrl.optional(),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;
