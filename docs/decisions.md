@@ -233,3 +233,15 @@ aynıdır.
 reddeder (alan adı sözcükleri, e-posta/telefon/kimlik numarası desenleri). Bu bir ağdır, asıl kural “yalnız
 kimlikler yazılır” olarak kalır; desenler UUID/seed kimliklerini yanlış alarma sokmaz (testle sabitlendi).
 Gerekçe isteyen eylemler (`ADMIN_ACTIONS`) gerekçesiz çağrıldığında `AUDIT_REASON_REQUIRED` döner.
+
+## 2026-11-07 · Telefon denemesinde geliştirme göstergesi kapalı
+Faz 0 turunda Next.js göstergesi 390 px genişlikte alt gezinmedeki Ana sayfa öğesini örtüyordu.
+Telefon denemesi geliştirme sunucusuyla yapıldığı için gösterge `devIndicators: false` ile kapatılır;
+derleme ve çalışma zamanı hata katmanı açık kalır. [Next.js 16.4.5 belgesi](https://nextjs.org/docs/app/api-reference/config/next-config-js/devIndicators).
+
+## 2026-11-07 · Field ipucu girişin altında
+Aynı satırdaki alanlardan yalnız birinde ipucu olduğunda girişler farklı yükseklikte kalıyordu.
+İpucu girişin altında, hatadan önce gösterilir; etiket satırında etiket, zorunlu işareti ve yardım
+düğmesi kalır. Yardım düğmeli ve düğmesiz etiket satırları aynı asgari yüksekliği kullanır. İpucu/hata
+`aria-describedby` bağları korunur, böylece düzen düzeltmesi ekran okuyucuya verilen
+açıklamayı değiştirmez.
