@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 
 import { createTestPrisma } from '../src/test/db';
 import { INSTITUTION_SEED } from './seed-data';
@@ -6,11 +6,17 @@ import { seedInstitutions } from './seed-institutions';
 
 const prisma = createTestPrisma();
 
-beforeEach(async () => {
-  await prisma.department.deleteMany();
-  await prisma.faculty.deleteMany();
-  await prisma.university.deleteMany();
-});
+// Diğer test dosyaları aynı veritabanında üyelikler bırakır (bölümler silinemez); bu yüzden kayıtlar
+// silinmez, yalnız seed'in doğal anahtarlı kayıtları sınanır.
+const seeded = {
+  university: { name: INSTITUTION_SEED.university.name },
+  faculty: { name: INSTITUTION_SEED.faculty.name, university: INSTITUTION_SEED.university },
+  department: {
+    code: INSTITUTION_SEED.department.code,
+    faculty: { name: INSTITUTION_SEED.faculty.name },
+  },
+};
+
 afterAll(() => prisma.$disconnect());
 
 describe('seedInstitutions', () => {
@@ -33,9 +39,13 @@ describe('seedInstitutions', () => {
     const first = await seedInstitutions(prisma);
     const second = await seedInstitutions(prisma);
 
-    expect(await prisma.university.count()).toBe(1);
-    expect(await prisma.faculty.count()).toBe(1);
-    expect(await prisma.department.count()).toBe(1);
+    expect(await prisma.university.count({ where: seeded.university })).toBe(1);
+    expect(await prisma.faculty.count({ where: { name: seeded.faculty.name } })).toBe(1);
+    expect(
+      await prisma.department.count({
+        where: { code: seeded.department.code, faculty: { name: seeded.faculty.name } },
+      }),
+    ).toBe(1);
     expect(second.university.id).toBe(first.university.id);
     expect(second.faculty.id).toBe(first.faculty.id);
     expect(second.department.id).toBe(first.department.id);
@@ -43,8 +53,14 @@ describe('seedInstitutions', () => {
 
   it('bozulmuş kaydı sabitlerle yeniden eşitler', async () => {
     await seedInstitutions(prisma);
-    await prisma.university.updateMany({ data: { studentEmailDomains: ['yanlis.example'] } });
-    await prisma.department.updateMany({ data: { name: 'Yanlış Ad' } });
+    await prisma.university.updateMany({
+      where: seeded.university,
+      data: { studentEmailDomains: ['yanlis.example'] },
+    });
+    await prisma.department.updateMany({
+      where: { id: (await seedInstitutions(prisma)).department.id },
+      data: { name: 'Yanlış Ad' },
+    });
 
     const { university, department } = await seedInstitutions(prisma);
 
