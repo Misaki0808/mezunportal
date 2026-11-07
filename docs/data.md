@@ -28,9 +28,8 @@ tablosu `AdminAuditLog` `updatedAt` taşımaz). Adlar İngilizce.
 (Better Auth 1.7 Prisma adaptörünün beklediği alanlar) · `GraduationDocument` · `EmailLog`. `User.role`
 yalnız admin eklentisi şeması için vardır ve yetki vermez.
 
-**KVKK:** `Consent` (userId, documentType, version, granted; append-only) ·
-`FieldVisibility` (userId, field, level; benzersiz userId+field) · `ContactRequest`
-(requesterId, targetId, fields[], message?, status, decidedAt).
+**KVKK ve kontrollü iletişim (şemada, P1-03 sözleşmesi):** `Consent` · `FieldVisibility` ·
+`ContactRequest`. Görünürlük kararı yalnız `src/server/rules/visibility.ts` karar tablosundadır.
 
 **Profil:** `Profile` (headline, summary, city, goals, socialLinks JSON, linkedinUrl,
 completionScore, cvUpdatedAt, lastFreshnessPromptAt, lastStillThereCheckAt, onboardingStep) ·
@@ -94,8 +93,15 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
   anonimleştirilir). `Account.password` kullanılmaz (giriş parolasızdır).
 - `MentorProfile`: görüşme süresi 15/20/30 dk; etkin profilin en az bir görüşme biçimi vardır. Kapasite
   ve süre mentorun kararıdır, varsayılanı yoktur.
+- `Consent`: geri çekme ve yeni sürüm onayı yeni satırdır; bir belgenin geçerli durumu o belge için en son
+  satırdır. Rızası olan kullanıcı satırı silinemez (hesap silme anonimleştirir).
+- `FieldVisibility`: kullanıcı × alan başına tek satır; satır yoksa varsayılan geçerlidir
+  (`src/contracts/privacy.ts`).
+- `ContactRequest`: kendine talep yok; 1–4 tekrarsız alan; not ≤ 500 karakter; aynı ikili için aynı anda en
+  fazla bir açık (bekleyen/onaylı) talep (kısmi indeks). Karar anı yalnız onay/ret/geri alınmış, kapanış anı
+  yalnız geri çekilmiş/geri alınmış satırda (CHECK).
 - `Consent` ve `AdminAuditLog` yalnız eklenir; güncellenmez, silinmez (hesap silmede audit
-  satırı kişisel alan içermediği için kalır). `AdminAuditLog` için bu, veritabanı tetikleyicisiyle
+  satırı kişisel alan içermediği için kalır). İkisi için de bu, veritabanı tetikleyicisiyle
   zorlanır (UPDATE, DELETE ve TRUNCATE reddedilir); `recordAdminAction` ise eylemle aynı işlemde yazar.
 - `GraduationDocument.storageKey` karar verilen satırda `null`'dır ve dosya depoda yoktur.
 - Aynı mentor için `REQUESTED`/`CONFIRMED` randevuların zaman aralıkları çakışamaz
@@ -131,5 +137,5 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
 - Mezun belgesi karar anında silinir. CV'de son dosya tutulur; eski dosyalar uygulama anında
   silinir (açık incelemeye bağlı olan hariç). Ayrıştırma çıktısı uygulama/atma anında temizlenir.
 - `EmailLog` 6 ay; `Event` 24 ay sonra kullanıcıdan koparılır (userId `null`).
-- Hesap silmede kişisel alanlar anında temizlenir, dosyalar silinir; yayınlanmış içeriğin akıbeti
-  K-09.
+- Hesap silmede kişisel alanlar anında temizlenir, dosyalar silinir; yayınlanmış içerik kullanıcının
+  seçimine göre silinir (varsayılan) ya da yazar bağı koparılarak kalır (K-09, `docs/decisions.md`).

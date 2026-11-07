@@ -288,3 +288,17 @@ göstermediği için bütün bölümler döner ve doğrulama mezun belgesiyle ya
 üniversite göndermez. LinkedIn anahtarı yoksa giriş seçeneği `enabled: false` ve bir `errorCode`
 (`AUTH_PROVIDER_NOT_CONFIGURED`) taşır: ekran düğmeyi gizlemek yerine devre dışı gösterip sebebini yazar.
 Başlatma eylemi hedef yolu istemciden almaz (açık yönlendirme yok).
+
+## 2026-11-08 · Hesap silmede yayınlanmış içerik kullanıcıya sorulur (K-09, P1-03 sözleşmesi)
+PM kararı: hesap silinirken kullanıcıya sorulur; varsayılan **yayınlanmış deneyimleri sil**, isterse
+**anonimleştirip bırak** (yazar bağı koparılır; hiçbir yanıtta yazar görünmez). Her iki seçenekte oturumlar
+düşer, kişisel alanlar anında temizlenir, dosyalar silinir, giriş kapanır; ekran sonuçları seçeneğin altında
+açıklar (`ACCOUNT_DELETION_EFFECTS`). Onay: kullanıcı kendi e-postasını yazar. Kullanıcı satırı silinmez,
+anonimleştirilir: rıza ve işlem kaydı hukuki kanıt olarak kalır. Gerekçe: KVKK silme hakkı ile platform
+içeriğinin sürekliliği arasında seçimi kullanıcıya bırakmak; varsayılan, en çok veriyi silen seçenektir.
+
+## 2026-11-08 · Görünürlük karar tablosu ve iletişim talebi durumları (P1-03 sözleşmesi)
+Görünürlük `rules/visibility` karar tablosundadır: sahibi hep tam görür; yönetici yalnız görev ekranında ve
+maskeli görür; `PRIVATE` onaylı iletişim talebiyle de açılmaz; dışarıdakine hiçbir alan dönmez. İletişim
+talebinde ret gerekçesi yoktur (talep edene neden söylenmez); başkasının talebine erişim `RESOURCE_NOT_FOUND`
+döner (varlığı sızmaz). Onaylı talep de “açık” sayılır: aynı ikili için yeni talep ancak kapanınca açılır.
