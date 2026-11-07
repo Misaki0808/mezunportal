@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { hasAdminAccess } from '@/components/layout/admin-access';
 import { ErrorState } from '@/components/ui';
+import { PrivacyAccountLinks } from '@/components/privacy/account-links';
 import { getVerificationState } from '@/server/actions/auth';
 import { requireUser } from '@/server/permissions';
 
@@ -56,6 +57,7 @@ export default async function AccountPage() {
           </li>
         ))}
       </ul>
+      <PrivacyAccountLinks />
     </div>
   );
 }
