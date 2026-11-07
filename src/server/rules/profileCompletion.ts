@@ -6,15 +6,17 @@ import {
 } from '@/contracts/profile';
 import { isUpperClass, type ClassStanding } from './classYear';
 
-/** Taslak: beş adım eşit ağırlıklı; ağırlık ve zorunluluklar PM doğrulaması bekler. */
+/** Açık olmayan mentor adımı paydaya veya eksiklere girmez; atlanan açık adım eksik kalır. */
 export function computeProfileCompletion(
   completed: Readonly<Record<CompletionField, boolean>>,
+  options: { mentorStepAvailable: boolean },
 ): ProfileCompletion {
-  const missing = COMPLETION_FIELDS.filter((field) => !completed[field]);
+  const applicable = COMPLETION_FIELDS.filter(
+    (field) => field !== 'MENTOR_PREFERENCE' || options.mentorStepAvailable,
+  );
+  const missing = applicable.filter((field) => !completed[field]);
   return {
-    percent: Math.round(
-      ((COMPLETION_FIELDS.length - missing.length) / COMPLETION_FIELDS.length) * 100,
-    ),
+    percent: Math.round(((applicable.length - missing.length) / applicable.length) * 100),
     missing,
   };
 }

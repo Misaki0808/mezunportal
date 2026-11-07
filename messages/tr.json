@@ -361,11 +361,21 @@
     }
   },
   "profileTags": {
-    "software": "Yazılım",
-    "data": "Veri",
-    "business": "İş dünyası",
+    "software": "Yazılım geliştirme",
+    "data": "Veri analitiği",
+    "business": "İş analizi",
+    "product": "Ürün yönetimi",
+    "cybersecurity": "Siber güvenlik",
+    "erp": "ERP/SAP",
+    "marketing": "Dijital pazarlama",
+    "project": "Proje yönetimi",
+    "entrepreneurship": "Girişimcilik",
+    "academic": "Akademik kariyer",
     "internship": "Staj bulmak",
-    "career": "Kariyer geliştirmek",
-    "network": "Bağlantı kurmak"
+    "career": "İlk iş",
+    "erasmus": "Erasmus/yurt dışı",
+    "masters": "Yüksek lisans",
+    "network": "Mentor bulmak",
+    "careerChange": "Sektör değiştirmek"
   }
 }

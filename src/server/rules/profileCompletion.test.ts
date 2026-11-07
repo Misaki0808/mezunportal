@@ -9,7 +9,7 @@ const empty: Record<CompletionField, boolean> = {
   MENTOR_PREFERENCE: false,
   VISIBILITY: false,
 };
-describe('profil tamamlama (taslak eşit ağırlık)', () => {
+describe('profil tamamlama (uygulanabilir adımlar eşit ağırlıklı)', () => {
   it.each([
     [empty, 0, 5],
     [{ ...empty, MEMBERSHIP: true }, 20, 4],
@@ -20,8 +20,25 @@ describe('profil tamamlama (taslak eşit ağırlık)', () => {
       0,
     ],
   ])('tamamlanan adımlardan yüzde ve eksikleri hesaplar', (input, percent, missing) => {
-    expect(computeProfileCompletion(input)).toMatchObject({ percent });
-    expect(computeProfileCompletion(input).missing).toHaveLength(missing);
+    expect(computeProfileCompletion(input, { mentorStepAvailable: true })).toMatchObject({
+      percent,
+    });
+    expect(computeProfileCompletion(input, { mentorStepAvailable: true }).missing).toHaveLength(
+      missing,
+    );
+  });
+  it('kapalı mentor adımını payda ve eksiklerden çıkarır; atlanabilen adım eksik kalır', () => {
+    const result = computeProfileCompletion(
+      { ...empty, MEMBERSHIP: true },
+      { mentorStepAvailable: false },
+    );
+    expect(result).toEqual({ percent: 25, missing: ['INTERESTS', 'GOALS', 'VISIBILITY'] });
+    expect(
+      computeProfileCompletion(
+        { ...empty, MEMBERSHIP: true, INTERESTS: true, GOALS: true, VISIBILITY: true },
+        { mentorStepAvailable: false },
+      ).percent,
+    ).toBe(100);
   });
 });
 describe('öğrenci mentor eşiği K-08', () => {
