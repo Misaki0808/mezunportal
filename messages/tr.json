@@ -16,5 +16,162 @@
       "RATE_LIMITED": "Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.",
       "SERVER_UNEXPECTED": "Beklenmeyen bir sorun oluştu. Biraz sonra tekrar dene."
     }
+  },
+  "nav": {
+    "brand": "MezunPortal",
+    "labelBottom": "Ana gezinme",
+    "labelSide": "Yan menü",
+    "skipToContent": "İçeriğe geç",
+    "comingSoon": "yakında",
+    "items": {
+      "home": "Ana sayfa",
+      "experiences": "Deneyimler",
+      "mentors": "Mentorlar",
+      "appointments": "Randevular",
+      "profile": "Profil"
+    }
+  },
+  "ui": {
+    "button": {
+      "loading": "Yükleniyor"
+    },
+    "field": {
+      "required": "zorunlu",
+      "toggleHelp": "Açıklamayı göster ya da gizle"
+    },
+    "tag": {
+      "remove": "{label} etiketini kaldır"
+    },
+    "dialog": {
+      "close": "Kapat"
+    },
+    "toast": {
+      "region": "Bildirimler",
+      "dismiss": "Bildirimi kapat"
+    },
+    "pagination": {
+      "label": "Sayfalama",
+      "previous": "Önceki",
+      "next": "Sonraki",
+      "status": "Sayfa {page} / {total}",
+      "firstPage": "ilk sayfadasın",
+      "lastPage": "son sayfadasın"
+    },
+    "stepper": {
+      "label": "Adımlar",
+      "status": "Adım {current} / {total}",
+      "done": "tamamlandı",
+      "current": "şu anki adım"
+    },
+    "errorState": {
+      "title": "Bir sorun oluştu",
+      "retry": "Tekrar dene"
+    }
+  },
+  "gallery": {
+    "title": "Arayüz örnekleri",
+    "intro": "Tasarım sisteminin bileşenleri. Bu sayfa yalnız yerel ve test ortamında açılır.",
+    "sections": {
+      "buttons": "Düğmeler",
+      "fields": "Form alanları",
+      "choices": "Seçim kontrolleri",
+      "badges": "Rozet, etiket ve avatar",
+      "cards": "Kart ve liste satırı",
+      "overlays": "Pencere, alt sayfa ve bildirim",
+      "tabs": "Sekmeler",
+      "states": "Yükleniyor, boş ve hata",
+      "navigation": "Sayfalama ve adımlar"
+    },
+    "buttons": {
+      "primary": "Kaydet",
+      "secondary": "Vazgeç",
+      "ghost": "Daha fazla",
+      "danger": "Hesabımı sil",
+      "loading": "Gönder",
+      "disabled": "Randevu al",
+      "disabledReason": "Bu ay kapasite doldu",
+      "lg": "Büyük düğme",
+      "iconLabel": "Bildirimleri aç"
+    },
+    "fields": {
+      "nameLabel": "Ad soyad",
+      "nameHint": "Kimliğinde yazdığı gibi",
+      "nameHelp": "Adın profilinde ve randevu taleplerinde görünür. İstediğin zaman değiştirebilirsin.",
+      "emailLabel": "E-posta",
+      "emailError": "Geçerli bir e-posta adresi yaz.",
+      "aboutLabel": "Kendini tanıt",
+      "departmentLabel": "Bölüm",
+      "departmentPlaceholder": "Bölüm seç",
+      "departmentYbs": "Yönetim Bilişim Sistemleri",
+      "departmentOther": "Diğer"
+    },
+    "choices": {
+      "checkbox": "Haberleri e-postayla al",
+      "checkboxDescription": "Ayda en fazla bir e-posta gönderilir.",
+      "switch": "Müsait değilim",
+      "switchDescription": "Açıkken yeni randevu talebi almazsın.",
+      "radioLegend": "Görüşme biçimi",
+      "radioOnline": "Çevrim içi",
+      "radioInPerson": "Yüz yüze",
+      "radioError": "Bir görüşme biçimi seç."
+    },
+    "badges": {
+      "neutral": "Taslak",
+      "info": "İncelemede",
+      "success": "Onaylandı",
+      "warning": "Bekliyor",
+      "danger": "Reddedildi",
+      "tag": "Veri analizi",
+      "tagRemovable": "Girişimcilik",
+      "avatarName": "Ayşe Yılmaz"
+    },
+    "cards": {
+      "cardTitle": "Staj deneyimi",
+      "cardBody": "Kart basınca yalnız hafifçe küçülür.",
+      "rowTitle": "Liste satırı",
+      "rowBody": "Satır basınca zemin rengi almaz; yazı hafif solar ve satır hafifçe büyür."
+    },
+    "overlays": {
+      "openModal": "Pencere aç",
+      "openSheet": "Alt sayfa aç",
+      "modalTitle": "Randevuyu iptal et",
+      "modalDescription": "İptal edersen mentora bildirim gider.",
+      "modalBody": "Bu işlem geri alınamaz.",
+      "modalConfirm": "Randevuyu iptal et",
+      "modalCancel": "Vazgeç",
+      "sheetTitle": "Filtrele",
+      "sheetBody": "Filtre seçenekleri burada olur.",
+      "sheetApply": "Uygula",
+      "toastInfo": "Bilgi bildirimi",
+      "toastSuccess": "Başarı bildirimi",
+      "toastError": "Hata bildirimi",
+      "toastInfoMessage": "Taslak kaydedildi.",
+      "toastSuccessMessage": "Randevun onaylandı.",
+      "toastErrorMessage": "Randevu kaydedilemedi."
+    },
+    "tabs": {
+      "label": "Profil bölümleri",
+      "about": "Hakkında",
+      "experience": "Deneyim",
+      "education": "Eğitim",
+      "aboutBody": "Hakkında sekmesinin içeriği.",
+      "experienceBody": "Deneyim sekmesinin içeriği.",
+      "educationBody": "Eğitim sekmesinin içeriği."
+    },
+    "states": {
+      "loading": "Yükleniyor",
+      "emptyTitle": "Henüz deneyim yok",
+      "emptyDescription": "İlk deneyimi paylaşan sen ol.",
+      "emptyAction": "Deneyim yaz"
+    },
+    "navigation": {
+      "stepOne": "Bilgiler",
+      "stepTwo": "Doğrulama",
+      "stepThree": "Onay",
+      "stepFour": "Bitti",
+      "back": "Geri",
+      "next": "İleri",
+      "firstStep": "İlk adımdasın"
+    }
   }
 }
