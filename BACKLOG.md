@@ -7,7 +7,7 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 
 ## Güncel durum
 
-- Repo iskeleti (Next.js 16, TypeScript, Tailwind, next-intl, Vitest, `/api/health`) kuruldu; veritabanı, CI, yerel tam ortam, tasarım sistemi ve ekip araçları Faz 0'ın kalan adımlarıdır (`docs/faz0-plan.md`). Ürün özelliği yok.
+- Repo iskeleti (Next.js 16, TypeScript, Tailwind, next-intl, Vitest, `/api/health`) ve tasarım sistemi (`src/components/ui`, uygulama düzeni, `/ui-ornekleri` galeri, manifest) kuruldu; veritabanı, CI, yerel tam ortam, ekip araçları Faz 0'ın kalan adımlarıdır (`docs/faz0-plan.md`). Ürün özelliği yok.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
