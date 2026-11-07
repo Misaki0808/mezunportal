@@ -31,9 +31,11 @@ yalnız admin eklentisi şeması için vardır ve yetki vermez.
 **KVKK ve kontrollü iletişim (şemada, P1-03 sözleşmesi):** `Consent` · `FieldVisibility` ·
 `ContactRequest`. Görünürlük kararı yalnız `src/server/rules/visibility.ts` karar tablosundadır.
 
-**Profil:** `Profile` (headline, summary, city, goals, socialLinks JSON, linkedinUrl,
-completionScore, cvUpdatedAt, lastFreshnessPromptAt, lastStillThereCheckAt, onboardingStep) ·
-`Tag` (kind: `INTEREST` | `SKILL` | `GOAL`) · `ProfileTag` · `Education` · `Position`
+**Profil (P1-04 şemasında):** `Profile`, `Tag`, `ProfileTag`; kullanıcı ve etiket ilişkileri için
+kanonik kaynak Prisma şemasıdır. Profil içeriğinin hesap silmeye ve veri dökümüne bağlanması servis
+uygulamasının zorunlu parçasıdır; kullanıcı hesabı satırı silinmediğinden cascade tek başına yeterli değildir.
+
+**Profilin sonraki modelleri:** `Education` · `Position`
 (companyId?, companyRaw, titleId?, titleRaw, sectorId?, employmentType, tarihler, isCurrent,
 source, manuallyEdited) · `Language` · `Certification` · `CvUpload` (storageKey, status,
 parsedJson?, errorCode?, appliedAt?).

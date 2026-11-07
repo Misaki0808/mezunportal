@@ -41,7 +41,9 @@
       "CONTACT_REQUEST_NOT_PENDING": "Bu talep artık beklemede değil.",
       "CONTACT_REQUEST_NOT_APPROVED": "Yalnız onayladığın bir talebi geri alabilirsin.",
       "CONTACT_FIELD_NOT_REQUESTABLE": "İstediğin bilgilerden biri talep edilemiyor. Seçimini değiştirip tekrar dene.",
-      "ACCOUNT_DELETE_CONFIRMATION_MISMATCH": "Yazdığın e-posta hesabının e-postasıyla aynı değil."
+      "ACCOUNT_DELETE_CONFIRMATION_MISMATCH": "Yazdığın e-posta hesabının e-postasıyla aynı değil.",
+      "PROFILE_TAG_INVALID": "Seçtiğin etiketlerden biri geçerli değil. Seçimini yenile.",
+      "MENTOR_NOT_ELIGIBLE": "Mentorluk için koşullar henüz tamamlanmadı."
     }
   },
   "nav": {
@@ -357,5 +359,13 @@
       "title": "Yerel test girişi",
       "submit": "Test hesabıyla giriş yap"
     }
+  },
+  "profileTags": {
+    "software": "Yazılım",
+    "data": "Veri",
+    "business": "İş dünyası",
+    "internship": "Staj bulmak",
+    "career": "Kariyer geliştirmek",
+    "network": "Bağlantı kurmak"
   }
 }

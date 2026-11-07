@@ -135,6 +135,72 @@ model User {
   fieldVisibilities           FieldVisibility[]
   sentContactRequests         ContactRequest[]     @relation("ContactRequestRequester")
   receivedContactRequests     ContactRequest[]     @relation("ContactRequestTarget")
+  profile                     Profile?
+}
+
+/// İlk giriş adımı; atlanan ya da tamamlanan adımların kalıcı ilerleme noktası.
+enum OnboardingStep {
+  MEMBERSHIP
+  INTERESTS
+  GOALS
+  MENTOR_PREFERENCE
+  VISIBILITY
+  COMPLETE
+}
+
+enum TagKind {
+  INTEREST
+  SKILL
+  GOAL
+}
+
+/// Kullanıcının kendi profili; kimlik, rol ve yetki kaynağı değildir.
+model Profile {
+  id                    String         @id @default(uuid(7))
+  userId                String         @unique
+  headline              String?
+  summary               String?
+  city                  String?
+  goals                 String?
+  socialLinks           Json?
+  linkedinUrl           String?
+  completionScore       Int            @default(0)
+  cvUpdatedAt           DateTime?
+  lastFreshnessPromptAt DateTime?
+  lastStillThereCheckAt DateTime?
+  onboardingStep        OnboardingStep @default(MEMBERSHIP)
+  mentorInterested      Boolean?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags ProfileTag[]
+}
+
+/// Sabit sözlük anahtarı; görünen Türkçe karşılık mesaj kataloğundadır.
+model Tag {
+  id        String   @id @default(uuid(7))
+  kind      TagKind
+  slug      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profiles ProfileTag[]
+
+  @@unique([kind, slug])
+}
+
+model ProfileTag {
+  profileId String
+  tagId     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Restrict)
+
+  @@id([profileId, tagId])
+  @@index([tagId])
 }
 
 /// Üyelik = kullanıcı × bölüm × rol. Rol geçişinde eski satır `endedAt` ile kapanır, yenisi eklenir;
