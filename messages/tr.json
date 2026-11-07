@@ -419,6 +419,10 @@
       "PRIVATE": "Yalnızca ben",
       "ON_APPROVED_REQUEST": "Onayladığım istekler",
       "MEMBERS": "Doğrulanmış üyeler"
-    }
+    },
+    "chooseOrSkip": "En az bir seçenek seç veya bu adımı şimdilik atla.",
+    "readyTitle": "Son bir adım",
+    "readyDescription": "Hazırsan başlangıcı tamamlayıp devam edebilirsin.",
+    "finish": "Başlangıcı tamamla"
   }
 }

@@ -2,13 +2,19 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { OnboardingState } from '@/contracts/profile';
+import { COMPLETION_FIELDS, type OnboardingState } from '@/contracts/profile';
 import { CONTACT_FIELDS, DEFAULT_FIELD_VISIBILITY } from '@/contracts/privacy';
 import { renderUi } from '@/test/render';
 import { OnboardingFlow } from './onboarding-flow';
 
 const initial: OnboardingState = {
   step: 'INTERESTS',
+  steps: COMPLETION_FIELDS.map((step) => ({
+    step,
+    status: step === 'MEMBERSHIP' ? ('COMPLETED' as const) : ('PENDING' as const),
+    skippable: step !== 'MEMBERSHIP',
+    applicable: step !== 'MENTOR_PREFERENCE',
+  })),
   interestTagIds: [],
   goalTagIds: [],
   mentorInterested: null,
@@ -27,14 +33,12 @@ const goals = [{ id: 'g', kind: 'GOAL' as const, slug: 'internship' }];
 const saveVisibility = vi.fn();
 
 describe('ilk giriş akışı', () => {
-  it('ilgi seçimini sunucuya yollar ve hedef adımına geçer; hedef atlama boş seçim yollar', async () => {
-    const save = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        data: { ...initial, step: 'GOALS', interestTagIds: ['i'] },
-      })
-      .mockResolvedValueOnce({ ok: true, data: { ...initial, step: 'VISIBILITY' } });
+  it('ilgi seçimini kaydeder ve hedef atlamasını ayrı eyleme yollar', async () => {
+    const save = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      data: { ...initial, step: 'GOALS', interestTagIds: ['i'] },
+    });
+    const skip = vi.fn().mockResolvedValue({ ok: true, data: { ...initial, step: 'VISIBILITY' } });
     const { user } = renderUi(
       <OnboardingFlow
         initialState={initial}
@@ -42,6 +46,7 @@ describe('ilk giriş akışı', () => {
         goals={goals}
         initialVisibility={{ fields: [...visibility.fields] }}
         save={save}
+        skip={skip}
         saveVisibility={saveVisibility}
       />,
     );
@@ -52,7 +57,8 @@ describe('ilk giriş akışı', () => {
     ).toBeInTheDocument();
     expect(save).toHaveBeenNthCalledWith(1, { step: 'INTERESTS', tagIds: ['i'] });
     await user.click(screen.getByRole('button', { name: 'Şimdilik atla' }));
-    expect(save).toHaveBeenNthCalledWith(2, { step: 'GOALS', tagIds: [] });
+    expect(skip).toHaveBeenCalledWith({ step: 'GOALS' });
+    expect(save).toHaveBeenCalledTimes(1);
   });
   it('sunucu hata kodunu metne çevirir ve adımda kalır', async () => {
     const save = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
@@ -63,9 +69,11 @@ describe('ilk giriş akışı', () => {
         goals={goals}
         initialVisibility={{ fields: [...visibility.fields] }}
         save={save}
+        skip={vi.fn()}
         saveVisibility={saveVisibility}
       />,
     );
+    await user.click(screen.getByRole('checkbox', { name: 'Yazılım geliştirme' }));
     await user.click(screen.getByRole('button', { name: 'Devam et' }));
     expect(await screen.findByRole('alert')).not.toHaveTextContent('RATE_LIMITED');
     expect(screen.getByRole('heading', { name: 'Neler ilgini çekiyor?' })).toBeInTheDocument();
@@ -78,6 +86,7 @@ describe('ilk giriş akışı', () => {
         goals={goals}
         initialVisibility={{ fields: [...visibility.fields] }}
         save={vi.fn()}
+        skip={vi.fn()}
         saveVisibility={saveVisibility}
       />,
     );
@@ -98,6 +107,7 @@ describe('ilk giriş akışı', () => {
         goals={goals}
         initialVisibility={{ fields: [...visibility.fields] }}
         save={vi.fn()}
+        skip={vi.fn()}
         saveVisibility={update}
       />,
     );

@@ -6,9 +6,11 @@ import { useEffect, useRef, useState } from 'react';
 
 import {
   saveOnboardingStepSchema,
+  skipOnboardingStepSchema,
   type OnboardingState,
   type ProfileTagsOutput,
   type SaveOnboardingStepInput,
+  type SkipOnboardingStepInput,
 } from '@/contracts/profile';
 import type { ActionResult } from '@/contracts/result';
 import {
@@ -29,6 +31,7 @@ export function OnboardingFlow({
   interests,
   goals,
   save,
+  skip,
   initialVisibility,
   saveVisibility,
 }: {
@@ -36,6 +39,7 @@ export function OnboardingFlow({
   interests: Tag[];
   goals: Tag[];
   save: Save;
+  skip: (input: SkipOnboardingStepInput) => Promise<ActionResult<OnboardingState>>;
   initialVisibility: FieldVisibilitySettings;
   saveVisibility: (
     input: SetFieldVisibilityInput,
@@ -49,7 +53,9 @@ export function OnboardingFlow({
     initialState.step === 'GOALS' ? initialState.goalTagIds : initialState.interestTagIds,
   );
   const [error, setError] = useState<ErrorCode>();
+  const [emptySelection, setEmptySelection] = useState(false);
   const [pending, setPending] = useState(false);
+  const [finished, setFinished] = useState(false);
   const [visibility, setVisibility] = useState(initialVisibility);
   const locked = useRef(false);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -63,7 +69,40 @@ export function OnboardingFlow({
 
   async function submit(input: SaveOnboardingStepInput) {
     if (locked.current) return;
+    if ((input.step === 'INTERESTS' || input.step === 'GOALS') && input.tagIds.length === 0) {
+      setEmptySelection(true);
+      return;
+    }
     const parsed = saveOnboardingStepSchema.safeParse(input);
+    if (!parsed.success) {
+      setError('VALIDATION_INVALID');
+      return;
+    }
+    locked.current = true;
+    setEmptySelection(false);
+    setPending(true);
+    setError(undefined);
+    try {
+      const result = await save(parsed.data);
+      if (!result.ok) {
+        setError(result.errorCode);
+        return;
+      }
+      setState(result.data);
+      if (input.step === 'COMPLETE') setFinished(true);
+      setSelected(
+        result.data.step === 'GOALS' ? result.data.goalTagIds : result.data.interestTagIds,
+      );
+    } catch {
+      setError('SERVER_UNEXPECTED');
+    } finally {
+      locked.current = false;
+      setPending(false);
+    }
+  }
+  async function skipStep(input: SkipOnboardingStepInput) {
+    if (locked.current) return;
+    const parsed = skipOnboardingStepSchema.safeParse(input);
     if (!parsed.success) {
       setError('VALIDATION_INVALID');
       return;
@@ -71,8 +110,9 @@ export function OnboardingFlow({
     locked.current = true;
     setPending(true);
     setError(undefined);
+    setEmptySelection(false);
     try {
-      const result = await save(parsed.data);
+      const result = await skip(parsed.data);
       if (!result.ok) {
         setError(result.errorCode);
         return;
@@ -117,6 +157,9 @@ export function OnboardingFlow({
   );
   const mentorAvailable =
     !state.studentMentorEligibility || state.studentMentorEligibility.eligible;
+  const skippable = state.steps.some(
+    (item) => item.step === step && item.skippable && item.applicable,
+  );
   const title =
     step === 'MEMBERSHIP'
       ? t('membershipTitle')
@@ -128,7 +171,7 @@ export function OnboardingFlow({
             ? t('mentorTitle')
             : step === 'VISIBILITY'
               ? t('visibilityTitle')
-              : t('completeTitle');
+              : t(finished ? 'completeTitle' : 'readyTitle');
   const description =
     step === 'MEMBERSHIP'
       ? t('membershipDescription')
@@ -140,7 +183,7 @@ export function OnboardingFlow({
             ? t('mentorDescription')
             : step === 'VISIBILITY'
               ? t('visibilityDescription')
-              : t('completeDescription');
+              : t(finished ? 'completeDescription' : 'readyDescription');
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16">
       <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
@@ -257,6 +300,11 @@ export function OnboardingFlow({
           {errors(error)}
         </p>
       )}
+      {emptySelection && (
+        <p role="alert" className="mt-5 text-base text-danger">
+          {t('chooseOrSkip')}
+        </p>
+      )}
       <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto space-y-2 bg-bg pt-4 pb-2 lg:static lg:pt-8">
         {step === 'MEMBERSHIP' && (
           <Link className={buttonClasses({ fullWidth: true, size: 'lg' })} href="/dogrulama">
@@ -273,14 +321,6 @@ export function OnboardingFlow({
             >
               {pending ? t('saving') : t('next')}
             </Button>
-            <Button
-              variant="ghost"
-              fullWidth
-              loading={pending}
-              onClick={() => void submit({ step, tagIds: [] })}
-            >
-              {t('skip')}
-            </Button>
           </>
         )}
         {step === 'VISIBILITY' && (
@@ -293,11 +333,35 @@ export function OnboardingFlow({
             {pending ? t('saving') : t('visibilityConfirm')}
           </Button>
         )}
-        {step === 'COMPLETE' && (
+        {step === 'COMPLETE' && !finished && (
+          <Button
+            size="lg"
+            fullWidth
+            loading={pending}
+            onClick={() => void submit({ step: 'COMPLETE' })}
+          >
+            {pending ? t('saving') : t('finish')}
+          </Button>
+        )}
+        {step === 'COMPLETE' && finished && (
           <Link className={buttonClasses({ fullWidth: true, size: 'lg' })} href="/">
             {t('home')}
           </Link>
         )}
+        {skippable &&
+          (step === 'INTERESTS' ||
+            step === 'GOALS' ||
+            step === 'MENTOR_PREFERENCE' ||
+            step === 'VISIBILITY') && (
+            <Button
+              variant="ghost"
+              fullWidth
+              loading={pending}
+              onClick={() => void skipStep({ step })}
+            >
+              {t('skip')}
+            </Button>
+          )}
       </div>
     </div>
   );

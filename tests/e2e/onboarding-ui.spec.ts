@@ -19,6 +19,7 @@ test('öğrenci oturumuyla ilk giriş ekranları 390 px’te tamamlanır (sahte 
   ).toBeVisible();
   await page.getByLabel('LinkedIn').selectOption('PRIVATE');
   await page.getByRole('button', { name: 'Tercihlerimi gözden geçirdim' }).click();
+  await page.getByRole('button', { name: 'Başlangıcı tamamla' }).click();
   await expect(page.getByRole('heading', { name: 'Hazırsın!' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,

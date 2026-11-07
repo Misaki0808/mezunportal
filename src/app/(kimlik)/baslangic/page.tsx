@@ -1,5 +1,10 @@
 import { ErrorState } from '@/components/ui';
-import { getOnboardingState, listProfileTags, saveOnboardingStep } from '@/server/actions/profile';
+import {
+  getOnboardingState,
+  listProfileTags,
+  saveOnboardingStep,
+  skipOnboardingStep,
+} from '@/server/actions/profile';
 import { getFieldVisibility, setFieldVisibility } from '@/server/actions/privacy';
 
 import { OnboardingFlow } from './onboarding-flow';
@@ -27,6 +32,7 @@ export default async function OnboardingPage() {
       initialVisibility={visibility.data}
       saveVisibility={setFieldVisibility}
       save={saveOnboardingStep}
+      skip={skipOnboardingStep}
     />
   );
 }

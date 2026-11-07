@@ -6,9 +6,11 @@ import {
   type FieldVisibilitySettings,
 } from '@/contracts/privacy';
 import {
+  COMPLETION_FIELDS,
   ONBOARDING_STEPS,
   type OnboardingState,
   type SaveOnboardingStepInput,
+  type SkipOnboardingStepInput,
 } from '@/contracts/profile';
 import type { ActionResult } from '@/contracts/result';
 import { PROFILE_TAG_SEED } from '../../../../../prisma/seed-profile-tags';
@@ -16,6 +18,12 @@ import { OnboardingFlow } from '../onboarding-flow';
 
 const initial: OnboardingState = {
   step: 'INTERESTS',
+  steps: COMPLETION_FIELDS.map((step) => ({
+    step,
+    status: step === 'MEMBERSHIP' ? ('COMPLETED' as const) : ('PENDING' as const),
+    skippable: step !== 'MEMBERSHIP',
+    applicable: step !== 'MENTOR_PREFERENCE',
+  })),
   interestTagIds: [],
   goalTagIds: [],
   mentorInterested: null,
@@ -40,11 +48,25 @@ export function FixtureFlow({ requestedStep }: { requestedStep?: string }) {
       return { ok: true, data: { ...initial, step: 'VISIBILITY', goalTagIds: input.tagIds } };
     return { ok: true, data: { ...initial, step: 'COMPLETE' } };
   }
+  async function skip(input: SkipOnboardingStepInput): Promise<ActionResult<OnboardingState>> {
+    const next =
+      input.step === 'INTERESTS'
+        ? 'GOALS'
+        : input.step === 'GOALS' || input.step === 'MENTOR_PREFERENCE'
+          ? 'VISIBILITY'
+          : 'COMPLETE';
+    return { ok: true, data: { ...initial, step: next } };
+  }
   return (
     <OnboardingFlow
       initialState={{
         ...initial,
         step,
+        steps: initial.steps.map((item) =>
+          item.step === 'MENTOR_PREFERENCE' && step === 'MENTOR_PREFERENCE'
+            ? { ...item, applicable: true }
+            : item,
+        ),
         studentMentorEligibility:
           step === 'MENTOR_PREFERENCE'
             ? { eligible: true, reason: null }
@@ -59,6 +81,7 @@ export function FixtureFlow({ requestedStep }: { requestedStep?: string }) {
         id: tag.slug,
       }))}
       save={save}
+      skip={skip}
       initialVisibility={fields}
       saveVisibility={async () => ({ ok: true, data: fields })}
     />
