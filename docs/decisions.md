@@ -392,6 +392,13 @@ idempotency anahtarının sabit özetinden üretilir ama SMTP genelinde kesin te
 vermez. Bu adım normal yinelenen çağrıları ve kayıtlı SENT teslimlerini engeller; böyle bir garantiyi
 varmış gibi sunmaz. Sağlayıcı düzeyinde idempotency API'si P1-18 sağlayıcı kararıyla değerlendirilir.
 
+## 2026-11-08 · Hesap silme ve belge yükleme aynı kullanıcı kilidini paylaşır
+
+Hesap silme kullanıcı satırını işlem başında kilitler, silinme işaretini koyar ve belge anahtarlarını
+kilit altında toplar; işlem sonrasında kalan kayıtlı anahtarları yeniden tarar. Belge yükleme de aynı
+kullanıcı satırını kilitleyip silinmiş hesabı reddeder ve önceden yazılan dosyayı temizler. Böylece
+silme sürerken başlayan yükleme silinmiş hesaba belge kaydı ve artık dosya bırakamaz.
+
 ## 2026-11-08 · Giriş ekranında odaklı düzen (PM ekran turu kararı)
 Giriş ve e-postanı kontrol et sayfalarında uygulama alt gezinmesi/yan menü yerine logo ve içerik
 vardır. LinkedIn yapılandırılmamışsa düğmesi ve ayraç gösterilmez; açıkken formun üstünde ikonlu
