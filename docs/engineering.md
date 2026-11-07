@@ -177,8 +177,7 @@ bakıyorsa değiştirmeden durur; ayarı elle incele. Veritabanlarını yalnız 
 
 `pnpm dev`, `dev:all`, `dev:lan` portu `.env.local` içindeki `APP_URL`'den okur ve Next.js'e
 `--port` ile verir; Next.js aksi halde `.env.local` içindeki portu seçmez. `dev:all` web ile
-ayrı Node worker sürecini başlatır. Worker şimdilik yalnız sağlık döngüsüdür; iş kuyruğu
-ve ürün işi henüz yoktur. Ctrl+C veya süreçlerden birinin çıkışı ikisini de kapatır.
+ayrı Node worker sürecini başlatır. Worker `email.send` kuyruğunu ve kalıcı başarısızlık kuyruğunu işler; sağlık satırı da üretir. Ctrl+C veya süreçlerden birinin çıkışı ikisini de kapatır.
 Normal geliştirme yalnız `127.0.0.1`'e açılır; LAN modu aşağıdadır.
 
 - **PostgreSQL kimliği** (`mezun` / `mezun`) yalnız `127.0.0.1`'e bağlı yerel konteynere aittir;
@@ -333,3 +332,28 @@ Reviewer kusur bulmak zorunda değildir; bulgusuz geçiş normaldir.
 
 Uygulama değişince yalnız dayanıklı belge güncellenir; şema, rota ve env listesi belgeye
 kopyalanmaz (`AGENTS.md` §6).
+
+### E-posta giden kutusu ve worker (P1-02)
+
+SMTP ayarlarının kanonik kaynağı `.env.example` ve `src/lib/env.ts`'tir. Önceden açılmış
+worktree'lerde yeni SMTP satırlarını `.env.local` dosyasına ekle; `worktree-env` mevcut dosyayı
+üzerine yazmaz. Worker `parseSmtpEnv` ile yalnız e-posta ayarlarını doğrular; Better Auth sırrı
+ve LinkedIn anahtarları gerekmez. Kimlik ve worker aynı SMTP alan tanımlarını kullanır.
+Yerelde yalnız `127.0.0.1`/`localhost:1025` Mailpit kabul edilir; `test` runtime sahte adaptör seçer.
+
+Çağıran, metni katalogdan hazırlayıp `src/server/jobs/email.ts` içindeki `enqueueEmail` yardımcısına
+`to`, `subject`, `text`, isteğe bağlı `html`, `template`, `idempotencyKey`, isteğe bağlı
+`recipientUserId` verir; sonuç `{ emailLogId }` olur. Yardımcı yalnız sunucu içindir ve SMTP
+çağırmaz. Yetki/kimlik akışının kontrolü çağırandadır; bu adım kullanıcı rotası açmaz.
+İstek katmanı kuyruk hatasını kendi kararlı yanıtına dönüştürür (girişte adresin kayıt durumunu
+belli etmez); sağlayıcı yanıtı/hata nesnesi istemciye veya günlüğe aktarılmaz.
+
+`pnpm dev:all` web + worker'ı başlatır. Worker kendi girişinden Node `react-server` koşuluyla
+çalışır; `server-only` sınırı korunur. Kuyruk aynı worktree veritabanında `pgboss` şemasındadır;
+Prisma `public` şemasına ek tablo oluşturulmaz, sözleşmedeki `EmailLog` kullanılır. Durdururken
+Ctrl+C; paylaşılan konteynerleri durdurma. Test kuyruğu yalnız kendi `_test` veritabanındadır.
+
+Yerel teslim kanıtı Mailpit `http://localhost:8025` ve `/api/v1/messages` API'sinden alınır.
+Mesaj gövdesi/alıcı yalnız kısa ömürlü kuyruk yükündedir; EmailLog gövde/adres taşımaz. Başarılı
+ve başarısız işler 60 saniye sonrası bakımda temizlenir; bekleyen işin saklama sınırı bir saattir.
+Yalnız maskeli alıcı ve sabit olay kodu loglanır. Kalıcı durum EmailLog üzerinde kalır.

@@ -309,3 +309,16 @@ PostgreSQL CHECK, NULL sonucu reddetmez: iletişim alanları açıkça NULL dı�
 giremez. JSON veri dökümünde talepler yalnız kendi skaler alanlarını taşır; genel nesne şeması
 karşı tarafın e-posta/telefon nesnesini kabul edebildiği için kapalı bir şemaya daraltılır.
 Bu sınırlar servis kartında da zorlanır; sözleşme doğrulaması yetkilendirmenin yerini almaz.
+
+## 2026-11-08 · E-posta giden kutusu: işlemli kayıt, sınırlı taşıma
+EmailLog ve pg-boss işi aynı PostgreSQL işleminde eklenir; idempotency anahtarı için transaction
+kilidi hem eşzamanlı istekleri hem worker teslimlerini sıralar. Şablon metnini çağıran hazırlar;
+worker yalnız taşır. EmailLog gövde/adres içermez; pg-boss yükleri kısa süreli saklanır ve ham
+SMTP yanıtları kaydedilmez. Geçici hatalar iki kez yeniden denenir; terminal broker hataları
+ayrı kuyrukla kalıcı, gövdesiz kayda dönüşür.
+
+SMTP dış sistemdir: sağlayıcı kabulünden hemen sonra süreç/bağlantı kaybolursa yerel SENT kaydı
+commit olmadan kalabilir. Bu dar belirsizlikte yeniden deneme çift teslim üretebilir; Message-ID
+idempotency anahtarının sabit özetinden üretilir ama SMTP genelinde kesin tek teslim garantisi
+vermez. Bu adım normal yinelenen çağrıları ve kayıtlı SENT teslimlerini engeller; böyle bir garantiyi
+varmış gibi sunmaz. Sağlayıcı düzeyinde idempotency API'si P1-18 sağlayıcı kararıyla değerlendirilir.
