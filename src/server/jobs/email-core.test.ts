@@ -63,6 +63,17 @@ describe('e-posta giden kutusu', () => {
     expect(rows.get(message.idempotencyKey)).toMatchObject({ status: 'SENT', attempts: 1 });
     expect(transport.sent[0]?.messageId).not.toContain(message.idempotencyKey);
   });
+  it('başarı yolunda da (kuyruğa yazma, gönderim) günlüğe yalnız maskeli alıcı gider', async () => {
+    const { service, logger } = fixture();
+    await service.enqueueEmail(message);
+    await service.deliver(message, 0, 2);
+    expect(logger.mock.calls.map(([event]) => event)).toEqual(['queued', 'sent']);
+    for (const [, recipient] of logger.mock.calls) expect(recipient).toBe('***@***');
+    const logged = JSON.stringify(logger.mock.calls);
+    expect(logged).not.toContain(message.to);
+    expect(logged).not.toContain(message.text);
+    expect(logged).not.toContain(message.idempotencyKey);
+  });
   it('geçici hatayı yeniden dener; son denemede kalıcı başarısızlık kaydı yazar', async () => {
     const { service, rows, transport } = fixture(['temporary', 'temporary', 'temporary']);
     await service.enqueueEmail(message);
