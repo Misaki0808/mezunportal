@@ -157,3 +157,31 @@ export function isLinkedInConfigured(
 ): boolean {
   return env.LINKEDIN_CLIENT_ID !== undefined && env.LINKEDIN_CLIENT_SECRET !== undefined;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Dosya depolama (P1-02 servis: mezun belgesi; CV P1-05'te aynı adaptörü kullanır)
+// ---------------------------------------------------------------------------------------------
+
+const blankToUndefined = (value: unknown) => (value === '' ? undefined : value);
+
+const storageEnvSchema = z.object({
+  /** Yalnız yerel sürücü var; canlıda S3 uyumlu sürücü arayüz değişmeden eklenir (docs/architecture.md). */
+  STORAGE_DRIVER: z.preprocess(blankToUndefined, z.enum(['local']).default('local')),
+  /** Yerel sürücünün kökü; göreli yol çalışma dizinine (worktree köküne) göredir. Git dışı `.data/`. */
+  STORAGE_LOCAL_PATH: z.preprocess(blankToUndefined, z.string().min(1).default('.data/files')),
+});
+
+export type StorageEnv = z.infer<typeof storageEnvSchema>;
+
+export function parseStorageEnv(source: Readonly<Record<string, string | undefined>>): StorageEnv {
+  const result = storageEnvSchema.safeParse(source);
+  if (!result.success) {
+    const keys = new Set(result.error.issues.map((issue) => String(issue.path[0] ?? '(kök)')));
+    throw new EnvValidationError([...keys]);
+  }
+  return result.data;
+}
+
+export function getStorageEnv(): StorageEnv {
+  return parseStorageEnv(process.env);
+}
