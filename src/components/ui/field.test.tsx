@@ -27,7 +27,11 @@ describe('Field', () => {
     expect(error).toHaveTextContent('Geçerli bir e-posta yaz.');
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input.getAttribute('aria-describedby')).toContain(error.id);
-    expect(input.getAttribute('aria-describedby')).toContain(screen.getByText('Okul adresin').id);
+    const hint = screen.getByText('Okul adresin');
+    expect(input.getAttribute('aria-describedby')).toContain(hint.id);
+    expect(input).toHaveAccessibleDescription('Okul adresin Geçerli bir e-posta yaz.');
+    expect(input.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(hint.compareDocumentPosition(error) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('hata yokken aria-invalid ve hata öğesi yoktur', () => {
@@ -50,7 +54,7 @@ describe('Field', () => {
 
   it('“i” düğmesi açıklamayı açar/kapatır ve aria-expanded ile bağlıdır', async () => {
     const { user } = renderUi(
-      <Field label="Ad" help="Uzun açıklama metni">
+      <Field label="Ad" hint="Kısa ipucu" help="Uzun açıklama metni">
         {(control) => <Input {...control} />}
       </Field>,
     );
@@ -63,9 +67,12 @@ describe('Field', () => {
     await user.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     expect(help).not.toHaveAttribute('hidden');
-    expect(screen.getByLabelText('Ad').getAttribute('aria-describedby')).toContain(help?.id);
+    const input = screen.getByLabelText('Ad');
+    expect(input.getAttribute('aria-describedby')).toContain(help?.id);
+    expect(input).toHaveAccessibleDescription('Kısa ipucu Uzun açıklama metni');
 
     await user.click(toggle);
     expect(help).toHaveAttribute('hidden');
+    expect(input).toHaveAccessibleDescription('Kısa ipucu');
   });
 });

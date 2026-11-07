@@ -179,3 +179,15 @@ Bileşen testleri `*.test.tsx` dosyalarında `// @vitest-environment jsdom` ile 
 testleri node'da kalır. `@testing-library/dom`, `@testing-library/react`'ın zorunlu eş
 bağımlılığıdır. Token kontrastı (`src/lib/contrast.test.ts`) `globals.css`'i okur: ekran bileşeni
 kaynağını taramaz, renk değerini ölçer.
+
+## 2026-11-07 · Telefon denemesinde geliştirme göstergesi kapalı
+Faz 0 turunda Next.js göstergesi 390 px genişlikte alt gezinmedeki Ana sayfa öğesini örtüyordu.
+Telefon denemesi geliştirme sunucusuyla yapıldığı için gösterge `devIndicators: false` ile kapatılır;
+derleme ve çalışma zamanı hata katmanı açık kalır. [Next.js 16.4.5 belgesi](https://nextjs.org/docs/app/api-reference/config/next-config-js/devIndicators).
+
+## 2026-11-07 · Field ipucu girişin altında
+Aynı satırdaki alanlardan yalnız birinde ipucu olduğunda girişler farklı yükseklikte kalıyordu.
+İpucu girişin altında, hatadan önce gösterilir; etiket satırında etiket, zorunlu işareti ve yardım
+düğmesi kalır. Yardım düğmeli ve düğmesiz etiket satırları aynı asgari yüksekliği kullanır. İpucu/hata
+`aria-describedby` bağları korunur, böylece düzen düzeltmesi ekran okuyucuya verilen
+açıklamayı değiştirmez.

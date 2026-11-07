@@ -38,6 +38,8 @@ const nextConfig: NextConfig = {
   // kartla değişir (prompts/README.md), bu yüzden kapalı.
   agentRules: false,
   reactStrictMode: true,
+  // Yerel telefon testinde alt gezinmeyi örtmesin; hata katmanı açık kalır.
+  devIndicators: false,
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
