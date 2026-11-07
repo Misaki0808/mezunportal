@@ -25,6 +25,15 @@ const envSchema = z.object({
   APP_URL: z.url(),
   /** Derleme anındaki commit. Yerelde tanımsızdır; `/api/health` o zaman `local` döner. */
   GIT_SHA: optionalText,
+  /** E-posta worker'ı başlarken SMTP üçlüsü ayrıca zorunlu tutulur. */
+  SMTP_HOST: optionalText,
+  SMTP_PORT: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.coerce.number().int().min(1).max(65535).optional(),
+  ),
+  SMTP_USER: optionalText,
+  SMTP_PASSWORD: optionalText,
+  EMAIL_FROM: z.preprocess((value) => (value === '' ? undefined : value), z.email().optional()),
   /** Uygulama veritabanı (worktree başına `mezun_<slug>`; docs/engineering.md "Yerel paralel çalışma"). */
   DATABASE_URL: postgresUrl,
   /** Yalnız veritabanlı testler için `mezun_<slug>_test`; uygulama okumaz. Adı `_test` ile bitmeli. */
