@@ -261,3 +261,22 @@ Better Auth adaptörünün istediği `Session`/`Account`/`Verification` ve `rate
 `EmailLog` giden kutusunun idempotans anahtarını tutar, gövde/adres tutmaz. Servis kartı için notlar: Better Auth
 `telemetry` kapalı olmalı; `account.encryptOAuthTokens` açık olmalı (LinkedIn jetonları); oturumda IP/user-agent
 saklanması gerekçelendirilmeli ya da kapatılmalı.
+
+## 2026-11-07 · Telefon denemesinde geliştirme göstergesi kapalı
+Faz 0 turunda Next.js göstergesi 390 px genişlikte alt gezinmedeki Ana sayfa öğesini örtüyordu.
+Telefon denemesi geliştirme sunucusuyla yapıldığı için gösterge `devIndicators: false` ile kapatılır;
+derleme ve çalışma zamanı hata katmanı açık kalır. [Next.js 16.4.5 belgesi](https://nextjs.org/docs/app/api-reference/config/next-config-js/devIndicators).
+
+## 2026-11-07 · Field ipucu girişin altında
+Aynı satırdaki alanlardan yalnız birinde ipucu olduğunda girişler farklı yükseklikte kalıyordu.
+İpucu girişin altında, hatadan önce gösterilir; etiket satırında etiket, zorunlu işareti ve yardım
+düğmesi kalır. Yardım düğmeli ve düğmesiz etiket satırları aynı asgari yüksekliği kullanır. İpucu/hata
+`aria-describedby` bağları korunur, böylece düzen düzeltmesi ekran okuyucuya verilen
+açıklamayı değiştirmez.
+
+## 2026-11-07 · Audit kimlik değerlerinde biçim doğrulamalı ayrım
+Telefon/kimlik numarası desenleri rastgele UUID ve seed kimliklerinin alt dizilerine denk
+gelebiliyor; rol geçişi bu nedenle aralıklı olarak geri alınıyordu. Yalnız kimlik anahtarlarında
+(`id`, `ids`, `Id`/`Ids` veya `_id`/`_ids` son eki) tam UUID ve 24 hex seed biçimi metin
+taramasından ayrılır. Alan adı yasağı önce uygulanır; telefon/e-posta/TC biçimleri kimlik
+anahtarında da reddedilir. Serbest metin ve gerekçede istisna yoktur.

@@ -98,6 +98,18 @@ export function looksLikePersonalData(text: string): boolean {
   return EMAIL_PATTERN.test(text) || PHONE_PATTERN.test(text) || NATIONAL_ID_PATTERN.test(text);
 }
 
+// Yalnız tam UUID (RFC varyantı) veya seedId'nin 24 hex biçimi. Serbest metin/gerekçe
+// bu istisnaya girmez; kimlik anahtarı tek başına telefon/e-postayı aklamaz.
+function isAuditIdentifier(value: string): boolean {
+  return /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|[0-9a-f]{24})$/i.test(
+    value,
+  );
+}
+
+function isIdentifierKey(key: string): boolean {
+  return key === 'id' || key === 'ids' || /(?:Id|Ids|_id|_ids)$/.test(key);
+}
+
 function keyWords(key: string): string[] {
   return key
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -124,7 +136,7 @@ export function findMetadataProblems(metadata: unknown): MetadataProblem[] {
     problems.push({ path: '(kök)', problem: `en fazla ${METADATA_MAX_KEYS} alan` });
   }
 
-  const checkPrimitive = (path: string, value: unknown) => {
+  const checkPrimitive = (path: string, value: unknown, identifierField: boolean) => {
     if (value === null || typeof value === 'boolean') return;
     if (typeof value === 'number') {
       if (!Number.isFinite(value)) problems.push({ path, problem: 'sayı sonlu olmalı' });
@@ -133,7 +145,7 @@ export function findMetadataProblems(metadata: unknown): MetadataProblem[] {
     if (typeof value === 'string') {
       if (value.length > METADATA_MAX_STRING) {
         problems.push({ path, problem: `metin en fazla ${METADATA_MAX_STRING} karakter` });
-      } else if (looksLikePersonalData(value)) {
+      } else if (!(identifierField && isAuditIdentifier(value)) && looksLikePersonalData(value)) {
         problems.push({ path, problem: 'kişisel veri gibi görünen değer' });
       }
       return;
@@ -151,9 +163,11 @@ export function findMetadataProblems(metadata: unknown): MetadataProblem[] {
         problems.push({ path: key, problem: `en fazla ${METADATA_MAX_ARRAY} öğe` });
         continue;
       }
-      value.forEach((item, index) => checkPrimitive(`${key}[${index}]`, item));
+      value.forEach((item, index) =>
+        checkPrimitive(`${key}[${index}]`, item, isIdentifierKey(key)),
+      );
     } else {
-      checkPrimitive(key, value);
+      checkPrimitive(key, value, isIdentifierKey(key));
     }
   }
   return problems;
