@@ -288,3 +288,8 @@ göstermediği için bütün bölümler döner ve doğrulama mezun belgesiyle ya
 üniversite göndermez. LinkedIn anahtarı yoksa giriş seçeneği `enabled: false` ve bir `errorCode`
 (`AUTH_PROVIDER_NOT_CONFIGURED`) taşır: ekran düğmeyi gizlemek yerine devre dışı gösterip sebebini yazar.
 Başlatma eylemi hedef yolu istemciden almaz (açık yönlendirme yok).
+
+## 2026-11-08 · Hesabım ve doğrulama gezinmesi
+Profil sekmesi Hesabım merkezine açılır; doğrulama, e-posta ve çıkış buradan erişilir. Yönetim
+bağlantısı yalnız sunucuda yetki korumalarını geçen yöneticilere gösterilir; yönetim sayfası ayrıca
+sunucuda korunur. Giriş sonrası hedef ana sayfa kalır, doğrulanmamış üyeye doğrulama kartı gösterilir.
