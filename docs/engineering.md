@@ -155,7 +155,9 @@ pnpm dev:all                     # web + worker
 Adı worktree'den üretir; `w1-`, `w2-`, `r1-`, `r2-`, `pm-` öneklerinin port dilimleri
 sırasıyla 3100, 3200, 3300, 3400, 3900'den başlar (100 port). Ana kopya 3000 kullanır.
 Adın sabit özetinden sapma seçer; dolu/diğer worktree'ye ayrılmış portta sıradakini dener.
-Eşzamanlı hazırlamalar yerel kilitle sıralanır. Mevcut dosya yanlış veritabanına/rol portuna
+Eşzamanlı hazırlamalar yerel kilitle sıralanır; 60 saniyeden eski (ölmüş koşudan kalan) kilit
+kendiliğinden kaldırılır. Klasör adı başka worktree'nin veritabanı adına dönüşüyorsa (ör. `r1-a b`
+ve `r1-a_b`) betik durur; worktree'yi farklı adla aç. Mevcut dosya yanlış veritabanına/rol portuna
 bakıyorsa değiştirmeden durur; ayarı elle incele. Veritabanlarını yalnız paylaşılan
 `mezunportal` Compose projesinde oluşturur; konteyner zaten çalışıyor olmalıdır.
 

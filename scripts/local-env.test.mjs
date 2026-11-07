@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:net';
 import test from 'node:test';
-import { portAvailable, readLocalSettings, worktreeSettings } from './local-env.mjs';
+import {
+  envReservations,
+  portAvailable,
+  readLocalSettings,
+  worktreeSettings,
+} from './local-env.mjs';
 
 test('veritabanları worktree adından gelir; rol dilimleri ve ana kopya sabittir', () => {
   for (const [role, base] of [
@@ -47,4 +52,33 @@ test('dolu port seçilemez; kapanan port yeniden kullanılabilir', async () => {
   } finally {
     if (server.listening) server.close();
   }
+});
+
+test('veritabanı adı yalnız [a-z0-9_]; boşluk, tırnak, ; ve Türkçe harf kaçışlanır', () => {
+  for (const name of [
+    'r1-a b',
+    "r1-x';DROP DATABASE mezun_w1_p0_02;--",
+    'r1-$(rm -rf ~)',
+    'r1-a"b',
+    'r1-a\\b',
+    'r1-İğüşöç',
+    'r1-p0-04\nDATABASE_URL=x',
+  ]) {
+    const { database, testDatabase } = worktreeSettings(name);
+    assert.match(database, /^mezun_[a-z0-9_]+$/, name);
+    assert.equal(testDatabase, `${database}_test`);
+  }
+});
+
+test('başka worktree ayarındaki port ve veritabanı adları okunur; bozuk dosya boş ayrımdır', () => {
+  const text =
+    'APP_ENV=local\nAPP_URL=http://localhost:3372\nDATABASE_URL=postgresql://mezun:mezun@127.0.0.1:5432/mezun_r1_a_b\nDATABASE_URL_TEST=postgresql://mezun:mezun@127.0.0.1:5432/mezun_r1_a_b_test\n';
+  assert.deepEqual(envReservations(text), {
+    port: 3372,
+    databases: ['mezun_r1_a_b', 'mezun_r1_a_b_test'],
+  });
+  // Farklı klasör adları aynı veritabanına dönüşebilir: çakışma bu ayrımla yakalanır.
+  assert.equal(worktreeSettings('r1-a b').database, worktreeSettings('r1-a_b').database);
+  assert.ok(envReservations(text).databases.includes(worktreeSettings('r1-a"b').database));
+  assert.deepEqual(envReservations('APP_URL=bozuk\n'), { port: undefined, databases: [] });
 });

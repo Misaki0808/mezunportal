@@ -44,6 +44,36 @@ export function readLocalSettings(text, expected) {
   return { values, port };
 }
 
+/**
+ * Başka bir worktree'nin `.env.local`'ından ayrılmış portu ve veritabanı adlarını okur. Okunamayan
+ * dosya boş ayrım sayılır (ilgisiz dosyaya dokunulmaz). Klasör adından türetilen ad çakışabildiği
+ * için (ör. `r1-a b` ve `r1-a_b` → `mezun_r1_a_b`) yeni worktree bu adlarla karşılaştırılır.
+ */
+export function envReservations(text) {
+  let values;
+  try {
+    values = parseEnv(text);
+  } catch {
+    return { port: undefined, databases: [] };
+  }
+  let port;
+  try {
+    port = Number(new URL(values.APP_URL).port || 80);
+  } catch {
+    port = undefined;
+  }
+  const databases = [];
+  for (const key of ['DATABASE_URL', 'DATABASE_URL_TEST']) {
+    try {
+      const name = decodeURIComponent(new URL(values[key]).pathname.slice(1));
+      if (name) databases.push(name);
+    } catch {
+      /* eksik/bozuk adres ayrım sayılmaz */
+    }
+  }
+  return { port, databases };
+}
+
 export async function portAvailable(port) {
   return new Promise((resolve) => {
     const server = createServer();
