@@ -4,7 +4,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 
 import { PrismaClient } from '../src/generated/prisma/client';
-import { seedInstitutions } from './seed-institutions';
+import { runSeedModules } from './seed-framework';
 
 async function main() {
   const connectionString = process.env.DATABASE_URL;
@@ -15,7 +15,7 @@ async function main() {
     adapter: new PrismaPg({ connectionString, connectionTimeoutMillis: 5_000 }),
   });
   try {
-    await seedInstitutions(prisma);
+    await runSeedModules(prisma);
   } finally {
     await prisma.$disconnect();
   }
