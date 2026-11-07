@@ -4,15 +4,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
-const mocks = vi.hoisted(() => ({ requireUser: vi.fn(), getVerificationState: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  requireUser: vi.fn(),
+  getVerificationState: vi.fn(),
+  getConsentState: vi.fn(),
+}));
 vi.mock('@/server/permissions', () => ({ requireUser: mocks.requireUser }));
 vi.mock('@/server/actions/auth', () => ({ getVerificationState: mocks.getVerificationState }));
+vi.mock('@/server/actions/privacy', () => ({ getConsentState: mocks.getConsentState }));
+vi.mock('next/navigation', () => ({
+  redirect: () => {
+    throw new Error('onay-redirect');
+  },
+}));
 vi.mock('next-intl/server', () => ({ getTranslations: async () => (key: string) => key }));
 
 import HomePage from './page';
 
 describe('HomePage', () => {
   beforeEach(() => {
+    mocks.getConsentState.mockResolvedValue({ ok: true, data: { blocking: false } });
     mocks.requireUser.mockReset();
     mocks.getVerificationState.mockReset();
   });
@@ -37,4 +48,12 @@ describe('HomePage', () => {
     renderUi(await HomePage());
     expect(screen.queryByRole('link', { name: /verificationTitle/ })).not.toBeInTheDocument();
   });
+});
+
+it('giriş sonrası zorunlu onay eksikse doğrulamadan önce onaya gider', async () => {
+  mocks.requireUser.mockResolvedValue({});
+  mocks.getConsentState.mockResolvedValue({ ok: true, data: { blocking: true } });
+  mocks.getVerificationState.mockClear();
+  await expect(HomePage()).rejects.toThrow('onay-redirect');
+  expect(mocks.getVerificationState).not.toHaveBeenCalled();
 });

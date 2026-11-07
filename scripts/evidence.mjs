@@ -73,7 +73,9 @@ try {
     const response = await login.goto(loginUrl.href);
     if (!response?.ok()) throw new Error('Test giriş sayfası açılamadı');
     await login.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await login.waitForURL(new URL('/hesap', baseUrl).href);
+    await login.waitForURL(
+      (url) => url.origin === baseUrl.origin && ['/hesap', '/onay'].includes(url.pathname),
+    );
     await login.close();
   }
   for (const [name, width, height] of [

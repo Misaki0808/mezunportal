@@ -18,7 +18,8 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   kuyruğuna bağlı; SMTP teslimi ayrı worker'da.
 - P1-03 servisi: sürümlü rıza durumu, alan görünürlüğü, kontrollü iletişim talepleri,
   hesap anonimleştirme/silme ve kişisel JSON veri dökümü hazır; hesap silme gerçek oturum ve
-  depolama adaptörüne bağlı. Ekran kabulü ilgili ekran kartında yapılacak.
+  depolama adaptörüne bağlı. Onay, hukuki taslaklar, gizlilik, iletişim talepleri, hesap silme ve
+  veri indirme ekranları hazır; bağımsız inceleme ve ekran kabulü bekliyor.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
