@@ -48,7 +48,7 @@ export function Field({ label, hint, help, error, required, className, children 
 
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex min-h-7 items-center justify-between gap-2">
         <label htmlFor={controlId} className="font-medium text-fg">
           {label}
           {required && (
@@ -81,17 +81,17 @@ export function Field({ label, hint, help, error, required, className, children 
           {help}
         </div>
       )}
-      {hint && (
-        <p id={hintId} className="text-sm text-fg-muted">
-          {hint}
-        </p>
-      )}
       {children({
         id: controlId,
         'aria-describedby': describedBy,
         invalid: error ? true : undefined,
         required,
       })}
+      {hint && (
+        <p id={hintId} className="text-sm text-fg-muted">
+          {hint}
+        </p>
+      )}
       {error && (
         <p id={errorId} role="alert" className="flex items-start gap-1.5 text-sm text-danger">
           <AlertIcon className="mt-0.5 shrink-0" width={16} height={16} />
