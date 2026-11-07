@@ -253,7 +253,10 @@ Dış servislerin nasıl bağlanacağı ve projedeki servislerin sözleşmesi.
   kuyruğundan geçer (giden kutusu); aynı anahtarla ikinci gönderim yapılmaz.
 - **Yerel ve CI:** SMTP adaptörü Mailpit'e gönderir; hiçbir e-posta gerçek adrese gitmez.
 - **Canlı (K-05):** üniversite SMTP'si ya da ücretsiz katmanlı bir servis; P1-18'de.
-- Gövde loglanmaz; `EmailLog` yalnız şablon, alıcı kimliği ve durum tutar.
+- Gövde loglanmaz; `EmailLog` yalnız şablon, alıcı kimliği ve durum tutar. Taşınacak hazır metin ve
+  adres pg-boss iş yükünde kısa süreli tutulur; bitmiş işlerin temizleme süresi 60 saniye, bekleme
+  saklama sınırı bir saattir. EmailLog ve iş aynı veritabanı işleminde eklenir. Hatalar sınırlı
+  yeniden denenir; worker duruşuyla tükenen işler de başarısızlık kuyruğundan EmailLog'a işlenir.
 - Şablonlar düz metin + sade HTML; metinler `messages/tr.json`'da; her bildirimde tercih bağlantısı.
 - **Env:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM`.
 

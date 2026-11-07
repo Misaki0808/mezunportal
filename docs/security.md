@@ -109,7 +109,8 @@ kimlikler). Sistem yöneticisi panelden görür.
 - **İletişim talebi** onaylanınca ilgili alanlar o kişiye açılır; sahibi istediği an geri alır.
 - **Randevu onayında e-posta paylaşılır** (takvim daveti için); talep ekranında önceden yazılır.
 - **Hesap silme:** oturumlar düşer, kişisel alanlar anında temizlenir, dosyalar silinir;
-  yayınlanmış içeriğin akıbeti K-09.
+  yayınlanmış içerik kullanıcının seçimine göre silinir (varsayılan) ya da anonimleştirilir (K-09,
+  `docs/decisions.md`).
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11).
 - **Çerezler:** yalnız zorunlu oturum çerezi; üçüncü taraf analitik ve reklam çerezi yok
   (metrikler kendi tablomuzda). Çerez bandı yerine aydınlatma metninde çerez bölümü yeterli
