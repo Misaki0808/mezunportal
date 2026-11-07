@@ -112,6 +112,20 @@ pnpm evidence <yol> --as <rol>
 pnpm db:migrate | db:deploy | db:seed | db:reset   # Prisma; ayrıntı "Yerel geliştirme"
 ```
 
+### Ekip araçları
+
+`sh scripts/session-start.sh` uzakları günceller; dalın `origin/main` karşısındaki durumunu,
+worktree'leri ve açık PR'ları gösterir. BAYAT veya PULL DÜŞTÜ uyarısında sıfırdan farklı çıkar;
+çalışma dosyalarına dokunmaz. Kartın tabanını ayrıca güncel `origin/main` ile karşılaştır.
+
+`pnpm test:e2e` Chromium ile worktree `APP_URL` portunda ayrı bir geliştirme sunucusu açar;
+portta sunucu varsa onu kullanmak yerine durur. `.env.local` veya süreçte `APP_URL` gerekir. İlk kurulumda
+`pnpm exec playwright install chromium` gerekir. `pnpm evidence /`
+çalışan sunucudan 390×844 ve 1440×900 tam sayfa görüntüleri ile konsol hata/uyarı raporu üretir.
+`APP_URL` adresi `--url` yerine kullanılabilir; `--out` çıktı kökünü değiştirir. Varsayılan çıktı,
+ana repo yanındaki `pm-handoff/kanit/<tarih>/` altında her çalışmaya ayrı bir klasördür. Rapor
+konsol içeriği barındırabilir; yalnız sahte veriyle kullanılır. `--as` için test girişi Faz 1'i bekler.
+
 ### Sahte kırmızı: üretilmiş Prisma istemcisi
 
 Prisma 7 istemcisi `output` yoluna üretilir ve depoda durmaz. Temiz checkout'ta ya da şema
