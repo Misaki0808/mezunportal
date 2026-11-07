@@ -23,6 +23,8 @@
       "AUDIT_REASON_INVALID": "Gerekçe 3 ile 1000 karakter arasında olmalı ve e-posta ya da telefon içermemeli.",
       "MEMBERSHIP_TRANSITION_INVALID": "Üyelik geçişi bu durumda yapılamaz. Üyelik kaydını kontrol et.",
       "AUTH_LINK_INVALID": "Giriş bağlantısı geçersiz ya da süresi dolmuş. Yeni bir bağlantı iste.",
+      "AUTH_PROVIDER_NOT_CONFIGURED": "LinkedIn ile giriş şu an kapalı. E-posta bağlantısıyla gir.",
+      "AUTH_PROVIDER_FAILED": "LinkedIn ile giriş tamamlanamadı. Tekrar dene ya da e-posta bağlantısıyla gir.",
       "AUTH_TEST_LOGIN_DISABLED": "Test girişi bu ortamda kapalı.",
       "EMAIL_DOMAIN_NOT_ALLOWED": "Bu e-posta adresiyle bu üyelik türü doğrulanamıyor. Mezunsan mezun belgeni yükle.",
       "MEMBERSHIP_ALREADY_VERIFIED": "Bu bölümde üyeliğin zaten doğrulanmış.",

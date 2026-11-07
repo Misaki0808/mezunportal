@@ -280,3 +280,11 @@ gelebiliyor; rol geçişi bu nedenle aralıklı olarak geri alınıyordu. Yalnı
 (`id`, `ids`, `Id`/`Ids` veya `_id`/`_ids` son eki) tam UUID ve 24 hex seed biçimi metin
 taramasından ayrılır. Alan adı yasağı önce uygulanır; telefon/e-posta/TC biçimleri kimlik
 anahtarında da reddedilir. Serbest metin ve gerekçede istisna yoktur.
+
+## 2026-11-08 · Kayıtta bölüm seçimi ve LinkedIn kapalıyken sebep (P1-02 sözleşmesi)
+PM kararı: kullanıcı kayıt sırasında bölümünü seçer. `listSelectableDepartments` oturumdaki e-postanın
+alan adıyla eşleşen üniversitenin bölümlerini döner; kişisel e-postalı mezunda alan adı üniversiteyi
+göstermediği için bütün bölümler döner ve doğrulama mezun belgesiyle yapılır. İstemci e-posta ya da
+üniversite göndermez. LinkedIn anahtarı yoksa giriş seçeneği `enabled: false` ve bir `errorCode`
+(`AUTH_PROVIDER_NOT_CONFIGURED`) taşır: ekran düğmeyi gizlemek yerine devre dışı gösterip sebebini yazar.
+Başlatma eylemi hedef yolu istemciden almaz (açık yönlendirme yok).

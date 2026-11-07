@@ -14,6 +14,9 @@ import {
   emailSchema,
   requestEmailChangeSchema,
   requestSignInLinkSchema,
+  selectableDepartmentsOutputSchema,
+  signInOptionsSchema,
+  startLinkedInSignInOutputSchema,
   testLoginSchema,
   verificationStateSchema,
 } from './auth';
@@ -182,5 +185,71 @@ describe('hata kodu kayıtları', () => {
   it('eylemlerin ve geri çağrının bütün kodları kayıtlıdır', () => {
     const all = [...Object.values(AUTH_ACTION_ERRORS).flat(), ...SIGN_IN_CALLBACK_ERROR_CODES];
     for (const code of all) expect(ERROR_CODES).toContain(code);
+  });
+});
+
+describe('LinkedIn ile giriş', () => {
+  it('açıkken sebep yoktur; kapalıyken sebep kayıtlı bir hata kodudur', () => {
+    expect(
+      signInOptionsSchema.parse({ linkedin: { enabled: true, disabledReason: null } }).linkedin,
+    ).toEqual({ enabled: true, disabledReason: null });
+    const off = signInOptionsSchema.parse({
+      linkedin: { enabled: false, disabledReason: 'AUTH_PROVIDER_NOT_CONFIGURED' },
+    });
+    expect(ERROR_CODES).toContain(off.linkedin.disabledReason);
+  });
+
+  it.each([
+    [{ linkedin: { enabled: false, disabledReason: null } }], // kapalı ama sebepsiz
+    [{ linkedin: { enabled: true, disabledReason: 'AUTH_PROVIDER_NOT_CONFIGURED' } }], // açık ama sebepli
+    [{ linkedin: { enabled: false, disabledReason: 'SERVER_UNEXPECTED' } }], // tanımsız sebep
+    [{ linkedin: true }], // eski biçim
+  ])('tutarsız seçenek reddedilir: %j', (input) => {
+    expect(signInOptionsSchema.safeParse(input).success).toBe(false);
+  });
+
+  it('başlatma yalnız geçerli bir yönlendirme adresi döner; anahtar yoksa kodu kapalı sağlayıcıdır', () => {
+    expect(
+      startLinkedInSignInOutputSchema.safeParse({ redirectUrl: 'https://www.linkedin.com/oauth' })
+        .success,
+    ).toBe(true);
+    expect(startLinkedInSignInOutputSchema.safeParse({ redirectUrl: '/giris' }).success).toBe(
+      false,
+    );
+    expect(AUTH_ACTION_ERRORS.startLinkedInSignIn).toContain('AUTH_PROVIDER_NOT_CONFIGURED');
+    expect(SIGN_IN_CALLBACK_ERROR_CODES).toContain('AUTH_PROVIDER_FAILED');
+  });
+});
+
+describe('seçilebilir bölümler', () => {
+  const ybs = {
+    id: 'd1',
+    name: 'Yönetim Bilişim Sistemleri',
+    facultyName: 'İktisat Fakültesi',
+    universityName: 'İstanbul Üniversitesi',
+  };
+
+  it('id, ad, fakülte ve üniversite adıyla liste döner (pilotta tek seçenek de geçerlidir)', () => {
+    expect(
+      selectableDepartmentsOutputSchema.parse({ scope: 'EMAIL_DOMAIN', departments: [ybs] }),
+    ).toEqual({ scope: 'EMAIL_DOMAIN', departments: [ybs] });
+    expect(
+      selectableDepartmentsOutputSchema.safeParse({ scope: 'ALL', departments: [] }).success,
+    ).toBe(true);
+  });
+
+  it.each([
+    [{ scope: 'EMAIL_DOMAIN', departments: [{ ...ybs, facultyName: undefined }] }],
+    [{ scope: 'UNIVERSITY', departments: [ybs] }],
+    [{ departments: [ybs] }],
+  ])('eksik alanlı ya da bilinmeyen kapsamlı çıktı reddedilir: %j', (input) => {
+    expect(selectableDepartmentsOutputSchema.safeParse(input).success).toBe(false);
+  });
+
+  it('eylem girdi almaz; hataları yalnız oturum durumudur (başka kullanıcı/kurum bilgisi sızmaz)', () => {
+    expect(AUTH_ACTION_ERRORS.listSelectableDepartments).toEqual([
+      'AUTH_UNAUTHENTICATED',
+      'AUTH_ACCOUNT_SUSPENDED',
+    ]);
   });
 });

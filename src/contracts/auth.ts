@@ -47,6 +47,7 @@ export const SIGN_IN_ERROR_QUERY_PARAM = 'hata';
 export const SIGN_IN_CALLBACK_ERROR_CODES = [
   'AUTH_LINK_INVALID',
   'AUTH_ACCOUNT_SUSPENDED',
+  'AUTH_PROVIDER_FAILED',
   'RATE_LIMITED',
 ] as const satisfies readonly ErrorCode[];
 
@@ -54,9 +55,30 @@ export const SIGN_IN_CALLBACK_ERROR_CODES = [
 // Giriş seçenekleri
 // ---------------------------------------------------------------------------------------------
 
-/** LinkedIn anahtarları yoksa sağlayıcı kapalıdır ve ekran düğmeyi göstermez. E-posta bağlantısı hep açıktır. */
-export const signInOptionsSchema = z.object({ linkedin: z.boolean() });
+/**
+ * Giriş yöntemleri. E-posta bağlantısı hep açıktır. LinkedIn anahtarları (`LINKEDIN_CLIENT_ID/SECRET`)
+ * yoksa sağlayıcı KAPALIDIR: `enabled: false` ve `disabledReason` bir `ErrorCode`'dur; ekran düğmeyi
+ * devre dışı gösterir ve sebebini bu kodun metniyle yazar (devre dışı düğme sebebini yazar kuralı).
+ */
+export const LINKEDIN_DISABLED_REASONS = [
+  'AUTH_PROVIDER_NOT_CONFIGURED',
+] as const satisfies readonly ErrorCode[];
+
+export const signInOptionsSchema = z.object({
+  linkedin: z.discriminatedUnion('enabled', [
+    z.object({ enabled: z.literal(true), disabledReason: z.null() }),
+    z.object({ enabled: z.literal(false), disabledReason: z.enum(LINKEDIN_DISABLED_REASONS) }),
+  ]),
+});
 export type SignInOptions = z.infer<typeof signInOptionsSchema>;
+
+/**
+ * LinkedIn ile girişi başlatır: sunucu sağlayıcının yetkilendirme adresini döner, ekran tarayıcıyı oraya
+ * yönlendirir. Dönüş `AUTH_PATHS.afterSignIn`'e; hata olursa `/giris?hata=AUTH_PROVIDER_FAILED` (ya da
+ * askıdaysa `AUTH_ACCOUNT_SUSPENDED`). Girdi yoktur: hedef yol istemciden alınmaz (açık yönlendirme yok).
+ */
+export const startLinkedInSignInOutputSchema = z.object({ redirectUrl: z.url() });
+export type StartLinkedInSignInOutput = z.infer<typeof startLinkedInSignInOutputSchema>;
 
 // ---------------------------------------------------------------------------------------------
 // E-posta bağlantısıyla giriş ve e-posta değiştirme (aynı nötr yanıt)
@@ -101,6 +123,29 @@ export const declareMembershipSchema = z.discriminatedUnion(
   { error: INVALID },
 );
 export type DeclareMembershipInput = z.input<typeof declareMembershipSchema>;
+
+/**
+ * Bölüm seçimi (PM kararı: kullanıcı kayıt sırasında bölümünü seçer). Sunucu oturumdaki e-postanın alan
+ * adına bakar — istemci e-posta ya da üniversite göndermez:
+ *  - `STUDENT_DOMAIN` / `STAFF_DOMAIN`: yalnız alan adıyla EŞLEŞEN üniversitenin bölümleri.
+ *  - `OTHER` (mezun, kişisel e-posta): alan adı üniversiteyi göstermez; bütün üniversitelerin bölümleri
+ *    döner ve doğrulama mezun belgesiyle yapılır (`graduation-document.ts`).
+ * Sıra: üniversite, fakülte, bölüm adı (`tr-TR`). Pilotta tek seçenek YBS'dir; sözleşme geneldir.
+ */
+export const selectableDepartmentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  facultyName: z.string(),
+  universityName: z.string(),
+});
+export type SelectableDepartment = z.infer<typeof selectableDepartmentSchema>;
+
+export const selectableDepartmentsOutputSchema = z.object({
+  /** Listenin hangi kurala göre üretildiği (ekran açıklama metnini buna göre seçer). */
+  scope: z.enum(['EMAIL_DOMAIN', 'ALL']),
+  departments: z.array(selectableDepartmentSchema),
+});
+export type SelectableDepartmentsOutput = z.infer<typeof selectableDepartmentsOutputSchema>;
 
 export const declareMembershipOutputSchema = z.object({
   membershipId: z.string(),
@@ -189,6 +234,7 @@ export type SignOutOutput = z.infer<typeof signOutOutputSchema>;
 
 export const AUTH_ACTION_ERRORS = {
   getSignInOptions: [],
+  startLinkedInSignIn: ['AUTH_PROVIDER_NOT_CONFIGURED', 'RATE_LIMITED'],
   requestSignInLink: ['VALIDATION_INVALID', 'RATE_LIMITED'],
   requestEmailChange: [
     'VALIDATION_INVALID',
@@ -204,6 +250,7 @@ export const AUTH_ACTION_ERRORS = {
     'RESOURCE_NOT_FOUND',
     'MEMBERSHIP_ALREADY_VERIFIED',
   ],
+  listSelectableDepartments: ['AUTH_UNAUTHENTICATED', 'AUTH_ACCOUNT_SUSPENDED'],
   getVerificationState: ['AUTH_UNAUTHENTICATED', 'AUTH_ACCOUNT_SUSPENDED'],
   signOut: [],
   signInAsTestPersona: ['VALIDATION_INVALID', 'AUTH_TEST_LOGIN_DISABLED', 'RESOURCE_NOT_FOUND'],

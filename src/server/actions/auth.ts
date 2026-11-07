@@ -6,7 +6,9 @@ import type {
   DeclareMembershipOutput,
   RequestEmailChangeInput,
   RequestSignInLinkInput,
+  SelectableDepartmentsOutput,
   SignInOptions,
+  StartLinkedInSignInOutput,
   SignOutOutput,
   TestLoginInput,
   TestLoginOutput,
@@ -24,6 +26,11 @@ import { NotImplementedError } from '@/lib/not-implemented';
 /** Giriş ekranı hangi yöntemleri gösterecek? (LinkedIn anahtarı yoksa kapalı.) */
 export async function getSignInOptions(): Promise<ActionResult<SignInOptions>> {
   throw new NotImplementedError('getSignInOptions');
+}
+
+/** LinkedIn ile girişi başlat: yetkilendirme adresi döner. Anahtar yoksa `AUTH_PROVIDER_NOT_CONFIGURED`. */
+export async function startLinkedInSignIn(): Promise<ActionResult<StartLinkedInSignInOutput>> {
+  throw new NotImplementedError('startLinkedInSignIn');
 }
 
 /** E-posta bağlantısı iste. Kayıtlı/kayıtsız/askıda fark etmez: her zaman `CHECK_EMAIL`. */
@@ -48,6 +55,13 @@ export async function declareMembership(
 ): Promise<ActionResult<DeclareMembershipOutput>> {
   void input;
   throw new NotImplementedError('declareMembership');
+}
+
+/** Kayıtta seçilebilir bölümler: oturumdaki e-postanın alan adıyla eşleşen üniversite (mezunda tümü). */
+export async function listSelectableDepartments(): Promise<
+  ActionResult<SelectableDepartmentsOutput>
+> {
+  throw new NotImplementedError('listSelectableDepartments');
 }
 
 /** “Doğrulama bekliyor / belge yükle / reddedildi” ekranlarının tek veri kaynağı. */
