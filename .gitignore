@@ -25,3 +25,5 @@ pnpm-debug.log*
 # Editör
 .idea/
 .vscode/
+# Üretilmiş Prisma istemcisi (pnpm db:generate)
+src/generated/

@@ -70,12 +70,18 @@ ister; iki geliştirme sunucusu aynı portu ister.
 | Değişiklik | Asgari kanıt |
 |---|---|
 | Saf kural / yardımcı | Birim testi + mutasyon (kuralı kır, test düşsün, geri al) |
-| Şema / migration | Boş ve seed'li veritabanında koşum + ilgili servis testi |
+| Şema / migration | Boş ve seed'li veritabanında koşum + ilgili servis testi (`*.db.test.ts`) |
 | Yetki / KVKK / puan | Mutlu yol + yanlış rol, başka bölüm, askıdaki kullanıcı, tekrar ve yarış negatifleri |
 | Görünürlük | Sunucu yanıtı JSON'unda gizli alanı arayan sızıntı testi |
 | Dış servis | Sahte adaptörle başarı, zaman aşımı ve hata yolu |
 | Ekran | İlgili bileşen testi + sonuçta “ekranda nasıl denenir” (390/1440); görsel kontrol PM'in tarayıcı turunda |
 | Çekirdek akış | Bir Playwright testi (`tests/e2e/`) |
+
+**Veritabanlı testler** `*.db.test.ts` adını taşır, ayrı Vitest projesinde (`db`) sırayla koşar ve
+yalnız `DATABASE_URL_TEST` veritabanını kullanır. Adı `_test` ile bitmeyen veritabanına dokunmaz;
+başlamadan önce o veritabanının `public` şeması düşürülür ve bütün migration'lar boş veritabanına
+uygulanır. `DATABASE_URL_TEST` yoksa `pnpm test` gürültülü düşer (sessiz atlama yok); veritabanı
+gerekmeyen kontrol için `pnpm test:unit`.
 
 Kapsam yüzdesi için test yazılmaz; yanlış aktör, yanlış durum, tekrar ve hata yolları kanıtlanır.
 **Ekran kaynağını tarayan test yazılmaz** (bileşen dosyasını metin olarak okuyup desen arayan
@@ -90,15 +96,18 @@ reviewer gerekirse yerelde koşar.
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm db:generate                 # Prisma istemcisini üretir (temiz checkout'ta typecheck'ten önce)
 pnpm typecheck
 pnpm lint
 pnpm format:check
-pnpm test
+pnpm test                        # birim + veritabanlı testler (DATABASE_URL_TEST ister)
+pnpm test:unit                   # yalnız birim testleri (veritabanı gerekmez)
 pnpm messages:check
 pnpm prisma validate
 pnpm build
 pnpm test:e2e
 pnpm evidence <yol> --as <rol>
+pnpm db:migrate | db:deploy | db:seed | db:reset   # Prisma; ayrıntı "Yerel geliştirme"
 ```
 
 ### Sahte kırmızı: üretilmiş Prisma istemcisi
@@ -139,6 +148,31 @@ pnpm db:reset && pnpm db:seed    # şema + deterministik sahte veri
 pnpm dev:all                     # web + worker
 ```
 
+`scripts/worktree-env.sh` ve `dev:all` P0-04 ile gelir. O zamana kadar elle (örnek: worktree
+`w1-p0-02` → `mezun_w1_p0_02`):
+
+```bash
+docker compose up -d
+docker compose exec postgres createdb -U mezun mezun_w1_p0_02
+docker compose exec postgres createdb -U mezun mezun_w1_p0_02_test
+cp .env.example .env.local       # DATABASE_URL ve DATABASE_URL_TEST'i kendi veritabanı adlarınla düzenle
+pnpm install --frozen-lockfile && pnpm db:generate
+pnpm db:deploy && pnpm db:seed   # boş veritabanına migration + seed
+PORT=3100 pnpm dev               # port .env.local'dan okunmaz; komutla verilir (dilim: dönem kuralları)
+```
+
+- **PostgreSQL kimliği** (`mezun` / `mezun`) yalnız `127.0.0.1`'e bağlı yerel konteynere aittir;
+  sır değildir ve canlıya taşınmaz. Veritabanı adresi biçimi:
+  `postgresql://mezun:mezun@127.0.0.1:5432/<veritabanı>`.
+- **Migration:** geliştirmede `pnpm db:migrate` (yeni migration üretir/uygular), yeni ya da boş
+  veritabanında `pnpm db:deploy`. Şema yalnız bu komutlarla değişir.
+- **`pnpm db:reset` Prisma 7 koruması:** komut veritabanını siler; Prisma bunu bir yapay zekâ
+  ajanından çalıştırıldığında **kullanıcının açık onayı olmadan reddeder**. Ajanlar yeni worktree'de
+  `db:reset` yerine `db:deploy` + `db:seed` kullanır; sıfırlama gerekiyorsa kullanıcıya gider.
+  Prisma 7'de `migrate reset` seed'i kendiliğinden çalıştırmaz: sıfırlamadan sonra `pnpm db:seed`.
+- Konteynerleri iş bitince `docker compose stop` ile durdur; veritabanı hacmi (`postgres-data`)
+  silinmez.
+
 - **Worktree başına veritabanı ve port:** her worktree kendi `mezun_<slug>` (ve test için
   `mezun_<slug>_test`) veritabanını ve sabit bir port dilimini kullanır; hepsi aynı PostgreSQL
   konteynerinde. Ayrıntı yukarıda “Yerel paralel çalışma”.
@@ -154,7 +188,8 @@ pnpm dev:all                     # web + worker
 ### Env grupları
 
 Kanonik liste `.env.example` ve `src/lib/env.ts`'tir; burada çoğaltılmaz. Gruplar: uygulama
-(`APP_ENV`, `APP_URL`, `GIT_SHA`; geliştirme portu `PORT` ile verilir, Next.js okur), veritabanı,
+(`APP_ENV`, `APP_URL`, `GIT_SHA`; geliştirme portu komutta `PORT=…` ile verilir), veritabanı
+(`DATABASE_URL`; yalnız testler için `DATABASE_URL_TEST`, adı `_test` ile biter),
 kimlik (Better Auth sırrı, LinkedIn), e-posta, LLM, Google Takvim, depolama, iş kuyruğu. Sırlar yalnız
 `.env.local` ve `korunan/`'dadır. Eksik ya da geçersiz değişken `EnvValidationError` fırlatır; mesaj
 yalnız değişken adını taşır.

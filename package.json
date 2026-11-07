@@ -16,11 +16,20 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run --maxWorkers=4",
-    "messages:check": "node scripts/check-messages.mjs"
+    "messages:check": "node scripts/check-messages.mjs",
+    "test:unit": "vitest run --maxWorkers=4 --project unit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset --force"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
     "next": "^16.4.5",
     "next-intl": "^4.14.9",
+    "pg": "^8.23.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "server-only": "^0.0.1",
@@ -29,12 +38,15 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.5",
     "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.5",
     "prettier": "^3.9.10",
+    "prisma": "7.10.1",
     "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
     "typescript": "6.0.3",
     "vitest": "^5.1.0"
   }

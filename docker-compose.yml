@@ -1,0 +1,34 @@
+# Yerel geliştirme altyapısı: PostgreSQL + Mailpit. Yalnız 127.0.0.1'e açılır; canlıda kullanılmaz.
+# Hepsi tek PostgreSQL konteynerindedir; her worktree kendi veritabanını açar (docs/engineering.md).
+name: mezunportal
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      # Yerel, 127.0.0.1'e bağlı geliştirme kimliği; sır değildir, canlıya taşınmaz.
+      POSTGRES_USER: mezun
+      POSTGRES_PASSWORD: mezun
+      POSTGRES_DB: postgres
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mezun -d postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.33
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:1025:1025' # SMTP
+      - '127.0.0.1:8025:8025' # web arayüz
+    environment:
+      MP_MAX_MESSAGES: 500
+
+volumes:
+  postgres-data:
