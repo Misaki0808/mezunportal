@@ -199,11 +199,12 @@ Normal geliştirme yalnız `127.0.0.1`'e açılır; LAN modu aşağıdadır.
   konteynerinde. Ayrıntı yukarıda “Yerel paralel çalışma”.
 - **Mailpit:** `http://localhost:8025`; giriş bağlantıları ve bütün bildirimler buraya düşer.
 - **Dosyalar:** Git dışı `.data/files/`.
-- **Seed:** kurumlar hazırdır. Modül sırası ve deterministik kimlik/zaman üreticisi
-  `prisma/seed-framework.ts`'tedir. Altı rol için yalnız kimlik bilgisi içermeyen yer tutucu
-  vardır; kullanıcı modeli/Better Auth ve hesaplar P1-02'de eklenecek. Sonraki özellikler kendi
-  örnek verisini modül sırasına ekler. Test hesabı bilgileri repoya yazılmaz;
-  P1-02'de Git dışı `korunan/test-hesaplari.md`'de tutulur.
+- **Seed:** kurumlar ve rol başına altı test kullanıcısı hazırdır (öğrenci, üst sınıf mentor, mezun mentor,
+  akademisyen, bölüm yöneticisi, sistem yöneticisi: doğrulanmış üyelik, mentor profili, yönetici yetkisi).
+  Modül sırası ve deterministik kimlik/zaman üreticisi `prisma/seed-framework.ts`'tedir. E-postalar
+  `@test.mezunportal.local` (gerçek alan adı değil) ve giriş bilgisi yoktur; test girişi ve Better Auth
+  oturumları P1-02'de gelir, bilgileri Git dışı `korunan/test-hesaplari.md`'de tutulur. Sonraki özellikler
+  kendi örnek verisini modül sırasına ekler.
 - Dış servisler yerelde de gerçek çalışabilir (LLM, Google Takvim, LinkedIn); anahtar yoksa sahte
   adaptör seçilir.
 

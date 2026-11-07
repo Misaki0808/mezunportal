@@ -9,22 +9,30 @@
 
 export const ERROR_CODES = [
   'VALIDATION_INVALID',
+  'AUTH_UNAUTHENTICATED',
+  'AUTH_ACCOUNT_SUSPENDED',
+  'AUTH_NOT_VERIFIED',
   'AUTH_FORBIDDEN',
   'RESOURCE_NOT_FOUND',
   'RESOURCE_CONFLICT',
   'RATE_LIMITED',
   'SERVER_UNEXPECTED',
   'DB_UNAVAILABLE',
+  'AUDIT_REASON_REQUIRED',
+  'AUDIT_REASON_INVALID',
+  'MEMBERSHIP_TRANSITION_INVALID',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
-export type ErrorKind = 'validation' | 'forbidden' | 'notFound' | 'conflict' | 'rateLimited';
+export type ErrorKind =
+  'validation' | 'unauthenticated' | 'forbidden' | 'notFound' | 'conflict' | 'rateLimited';
 
 export type ErrorParams = Readonly<Record<string, string | number | boolean>>;
 
 const STATUS_BY_KIND: Readonly<Record<ErrorKind, number>> = {
   validation: 422,
+  unauthenticated: 401,
   forbidden: 403,
   notFound: 404,
   conflict: 409,
@@ -58,6 +66,10 @@ export class CodedError extends Error {
 
 export function codedValidation(code: ErrorCode, params?: ErrorParams): CodedError {
   return new CodedError('validation', code, params);
+}
+
+export function codedUnauthenticated(code: ErrorCode, params?: ErrorParams): CodedError {
+  return new CodedError('unauthenticated', code, params);
 }
 
 export function codedForbidden(code: ErrorCode, params?: ErrorParams): CodedError {

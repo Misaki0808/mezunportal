@@ -180,6 +180,60 @@ testleri node'da kalır. `@testing-library/dom`, `@testing-library/react`'ın zo
 bağımlılığıdır. Token kontrastı (`src/lib/contrast.test.ts`) `globals.css`'i okur: ekran bileşeni
 kaynağını taramaz, renk değerini ölçer.
 
+## 2026-11-07 · Yetki: saf kural + olgu yükleyici; oturum bağlantısı kapalı başlar
+Yetki kararı `rules/authorization.ts`'te SAF işlevdir (olgular girer, karar çıkar; veritabanı/oturum yok),
+böylece `docs/security.md` matrisi hızlı ve tablo-güdümlü sınanır. `permissions/` yalnız olguları yükler
+(`loadActor`) ve kararı hata koduna çevirir; bağımlılıklar enjekte edilir (testte gerçek veritabanı + sahte
+oturum). Oturumdaki kullanıcı kimliği tek yerden gelir (`permissions/session.ts`); Better Auth gelene kadar
+`null` döner, yani her koruma `AUTH_UNAUTHENTICATED` verir (fail-closed). Reddedilen: kararı korumalara
+dağıtmak (matrisi sınamak için her seferinde veritabanı gerekir ve kural kopyalanır).
+
+## 2026-11-07 · Yönetici yetkisi üyelik yerine geçmez; askıdaki kullanıcıya hiçbir şey açılmaz
+Matris yönetici sütunlarını “üye” gibi ✓ gösteriyor ama yetki tablosu ayrıdır. En az yetki ilkesiyle:
+yönetici işlemi için kapsamı kapsayan etkin `AdminGrant` + doğrulanmış etkin üyelik birlikte gerekir
+(doğrulanmamış kullanıcı yalnız kendi profilini görür kuralı yöneticiyi de bağlar). Yetki yok ise sebep
+`AUTH_FORBIDDEN` olur (doğrulama durumu hakkında ipucu verilmez). Askıdaki kullanıcının oturumu zaten yoktur
+(ban oturumları düşürür); yetki katmanı da kendi profilini dahil hiçbir şeyi açmaz — matristeki “kendi
+profilini görür”den bilinçli olarak daha sıkı. Silinmiş hesap oturumsuz sayılır (varlık sızdırılmaz).
+Gevşetmek gerekirse tek yer `evaluateAccess`'tir.
+
+## 2026-11-07 · Kimlik ve yetki kısıtları veritabanında da durur
+Kuralı yalnız uygulamaya bırakmak, bir hatada sessizce delinir. Veritabanı şunları zorlar: aynı
+kullanıcı+bölüm+rolde tek etkin üyelik (kısmi benzersiz indeks), rol↔doğrulama yolu uyumu (alan adıyla mezun
+doğrulanamaz), doğrulama alanı tutarlılığı, `AdminGrant` kapsam↔hedef uyumu ve tek etkin yetki
+(`NULLS NOT DISTINCT`), `MentorProfile` ayar sınırları, ve `AdminAuditLog` için güncelleme/silme/TRUNCATE'i
+reddeden tetikleyici (yalnız-ekleme değişmezi). Bedel: kısıtlar ham SQL'dir (Prisma ifade edemez; `migrate diff`
+şemayla fark üretmez, doğrulandı) ve testler tabloları silerek temizleyemez — veritabanlı testler yalıtılmış
+fixture ile çalışır, test veritabanı her koşuda sıfırlanır. Tetikleyici ihlali Prisma'da `P2003` görünür.
+
+## 2026-11-07 · `User` tablosunda “rol” alanı yok
+Better Auth admin eklentisi kullanıcıya bir `role` alanı koyabilir; yetki kararı BURADAN verilmez, yalnız
+`Membership` ve `AdminGrant`'tan. Şemada böyle bir alan olmaması “yanlışlıkla rol okuma”yı imkânsız kılar
+(şema testi korur). Eklenti alanı kendisi isterse P1-02 ekleyici migration ile, yetkiye bağlanmadığını
+belirterek ekler. Ban alanları (`banned`, `banReason`, `banExpires`) şimdiden vardır; süresi dolmuş askı
+kalkmış sayılır.
+
+## 2026-11-07 · Rol geçişi: ekle-ve-kapat, yetki işlemde yeniden, satır kilidi
+Öğrenci → mezun geçişi hiçbir satırı silmez: `STUDENT` `endedAt` alır, `ALUMNI` eklenir (ya da belge akışında
+bekleyen satır doğrulanır). Yetki, geçiş işleminin İÇİNDE güncel veriyle yeniden değerlendirilir (bayat
+`Actor` yetki vermez); kullanıcının üyelik satırları `FOR UPDATE` ile kilitlenir, ikinci çağrı güncel durumu
+görür ve `ALREADY_TRANSITIONED` döner (idempotent, ikinci denetim kaydı yok). İşlem kaydı aynı işlemdedir:
+kayıt yazılamazsa geçiş de geri alınır. İçerik ve puan `userId`'ye bağlıdır; hiçbir model `Membership`'e
+yabancı anahtarla bağlanamaz (şema testi korur).
+
+## 2026-11-07 · Sınıf hesabı: Eylül sınırı, düzeltme −3…+3
+Akademik yıl Eylül'de başlar (Europe/Istanbul); gerçek kayıt/ders dönemi tarihleri bölümden bölüme
+değişir, bu yüzden basit ve açıklanabilir bir sınır seçildi. Hazırlık ve dondurma düzeltme değerini (−1)
+kullanır; normal süreyi (4 yıl) aşan öğrenci `extended` olarak işaretlenir ama sınıfı büyümeye devam eder
+(K-08 “3. sınıf ve üstü” uzatmadakileri kapsar). Düzeltme aralığı `rules/classYear` ile veritabanı CHECK'inde
+aynıdır.
+
+## 2026-11-07 · İşlem kaydı politikası: kişisel veri ağı
+`recordAdminAction` bilinmeyen eylem/hedef türünü ve kişisel veri taşıyan metadata/gerekçeyi yazmadan
+reddeder (alan adı sözcükleri, e-posta/telefon/kimlik numarası desenleri). Bu bir ağdır, asıl kural “yalnız
+kimlikler yazılır” olarak kalır; desenler UUID/seed kimliklerini yanlış alarma sokmaz (testle sabitlendi).
+Gerekçe isteyen eylemler (`ADMIN_ACTIONS`) gerekçesiz çağrıldığında `AUDIT_REASON_REQUIRED` döner.
+
 ## 2026-11-07 · Telefon denemesinde geliştirme göstergesi kapalı
 Faz 0 turunda Next.js göstergesi 390 px genişlikte alt gezinmedeki Ana sayfa öğesini örtüyordu.
 Telefon denemesi geliştirme sunucusuyla yapıldığı için gösterge `devIndicators: false` ile kapatılır;
@@ -191,3 +245,10 @@ Aynı satırdaki alanlardan yalnız birinde ipucu olduğunda girişler farklı y
 düğmesi kalır. Yardım düğmeli ve düğmesiz etiket satırları aynı asgari yüksekliği kullanır. İpucu/hata
 `aria-describedby` bağları korunur, böylece düzen düzeltmesi ekran okuyucuya verilen
 açıklamayı değiştirmez.
+
+## 2026-11-07 · Audit kimlik değerlerinde biçim doğrulamalı ayrım
+Telefon/kimlik numarası desenleri rastgele UUID ve seed kimliklerinin alt dizilerine denk
+gelebiliyor; rol geçişi bu nedenle aralıklı olarak geri alınıyordu. Yalnız kimlik anahtarlarında
+(`id`, `ids`, `Id`/`Ids` veya `_id`/`_ids` son eki) tam UUID ve 24 hex seed biçimi metin
+taramasından ayrılır. Alan adı yasağı önce uygulanır; telefon/e-posta/TC biçimleri kimlik
+anahtarında da reddedilir. Serbest metin ve gerekçede istisna yoktur.

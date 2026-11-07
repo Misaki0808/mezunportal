@@ -8,7 +8,11 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 ## Güncel durum
 
 - Faz 0 iskelet, veritabanı, yerel ortam, tasarım sistemi ve ekip araçları main'dedir. P0-03 CI
-  K-14 kararını bekler; ekran turundaki iki düzen bulgusunun düzeltmesi #8 ile main'e alındı. Telefon testi bekliyor. Faz 1 çekirdek çalışması başlamıştır; henüz ürün özelliği teslim edilmedi.
+  K-14 kararını bekler; ekran turundaki iki düzen bulgusunun düzeltmesi #8 ile main'e alındı.
+  Telefon testi bekliyor. Henüz ürün özelliği teslim edilmedi.
+- Faz 1 kimlik/üyelik/yetki katmanı kuruldu: kullanıcı, üyelik, yönetici yetkisi, mentor profili,
+  işlem kaydı, yetki korumaları, rol geçişi, sınıf kuralı ve rol başına test kullanıcıları.
+  Oturum bağlantısı P1-02'de kurulacak.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.

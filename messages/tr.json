@@ -10,12 +10,18 @@
   "errors": {
     "codes": {
       "VALIDATION_INVALID": "Girdiğin bilgilerde eksik ya da hatalı alanlar var. Kontrol edip tekrar dene.",
+      "AUTH_UNAUTHENTICATED": "Devam etmek için giriş yapmalısın.",
+      "AUTH_ACCOUNT_SUSPENDED": "Hesabın askıya alındı. Bilgi almak için bölüm yöneticinle iletişime geç.",
+      "AUTH_NOT_VERIFIED": "Bu işlem için üyeliğinin doğrulanması gerekiyor.",
       "AUTH_FORBIDDEN": "Bu işlem için yetkin yok.",
       "RESOURCE_NOT_FOUND": "Aradığın kayıt bulunamadı.",
       "RESOURCE_CONFLICT": "Bu işlem mevcut bir kayıtla çakıştı. Sayfayı yenileyip tekrar dene.",
       "RATE_LIMITED": "Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.",
       "SERVER_UNEXPECTED": "Beklenmeyen bir sorun oluştu. Biraz sonra tekrar dene.",
-      "DB_UNAVAILABLE": "Veritabanına şu an ulaşılamıyor. Biraz sonra tekrar dene."
+      "DB_UNAVAILABLE": "Veritabanına şu an ulaşılamıyor. Biraz sonra tekrar dene.",
+      "AUDIT_REASON_REQUIRED": "Bu işlem için kısa bir gerekçe yazmalısın.",
+      "AUDIT_REASON_INVALID": "Gerekçe 3 ile 1000 karakter arasında olmalı ve e-posta ya da telefon içermemeli.",
+      "MEMBERSHIP_TRANSITION_INVALID": "Üyelik geçişi bu durumda yapılamaz. Üyelik kaydını kontrol et."
     }
   },
   "nav": {

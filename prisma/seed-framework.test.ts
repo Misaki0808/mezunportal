@@ -12,6 +12,6 @@ describe('sahte veri çerçevesi', () => {
   });
   it('altı rol için kimlik bilgisi içermeyen yer tutucu ve kurumları önce çalıştıran sıra sunar', () => {
     expect(new Set(TEST_ACCOUNT_PLACEHOLDERS).size).toBe(6);
-    expect(SEED_MODULES.map((seedModule) => seedModule.name)).toEqual(['institutions']);
+    expect(SEED_MODULES.map((seedModule) => seedModule.name)).toEqual(['institutions', 'accounts']);
   });
 });
