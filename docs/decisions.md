@@ -139,3 +139,8 @@ Prisma 7 `migrate reset`, bir yapay zekâ ajanından çalıştırıldığında k
 reddediyor (`PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`). Bu onayı ajanlar kendi başlarına vermez.
 Ajanlar boş veritabanında `pnpm db:deploy` + `pnpm db:seed` kullanır; sıfırlama kullanıcıya gider.
 Test veritabanı sıfırlaması ayrıdır: `_test` ad kontrolüyle global kurulumda yapılır.
+
+## 2026-11-07 · Çekirdek akış testleri yalnız main push'unda
+Playwright çekirdek akışları her PR yerine yalnız main'e yapılan push'ta koşar; tarayıcı kurulumu ve
+çalıştırma süresini azaltırken birleşmiş uygulamanın uçtan uca kontrolünü korur. PR kalite kapıları
+ve gerekirse yerel E2E doğrulaması ayrı uygulanır.

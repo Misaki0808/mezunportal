@@ -130,6 +130,14 @@ değişikliğinden sonra üretilmemişse typecheck kodla ilgisiz hatalar verir (
 alanları, bulunamayan modül). **Kural:** kapı beklenmedik bir yerde kırmızıysa kovalamadan önce
 `pnpm prisma generate` ve kök `pnpm typecheck`; hata hâlâ duruyorsa gerçektir.
 
+### CI (K-14 kararına bağlı hazırlık)
+
+GitHub Actions standart Ubuntu çalıştırıcısında PR ve main push için `Kalite kapıları` işini
+çalıştırır: Node `.nvmrc`, pnpm önbelleği, PostgreSQL 16 test servisi ve kalite komutları.
+`Çekirdek akışlar` işi yalnız main push'unda Chromium ile çalışır; PR'da atlanır. Test servisi
+geçicidir, sır veya `.env` dosyası gerektirmez. Dal koruması ve bu akışın birleşmesi K-14 kararına
+bağlıdır.
+
 ## Bağımlılık ve config
 
 - Önce mevcut kütüphaneyle çözmeyi dene. Yeni bağımlılık bakım, güvenlik, lisans ve boyut
