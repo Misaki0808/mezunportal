@@ -1,6 +1,8 @@
 # Faz 0 planı — Altyapı
 
-Durum: **sırada** · Yazıldı: 2026-11-07
+Durum: **Kapanış paketi hazır · P0-03 kullanıcı kararı bekliyor** · 2026-11-07
+
+Kapanış notu: P0-01, P0-02, P0-04, P0-05 ve P0-06 main'e alındı; P0-03 K-14 kararına bağlıdır. Son kapılar d339e3e üzerinde geçti; ekran turundaki iki düzen bulgusu ve telefon testi açıktır. Paket: `faz0-hoca-raporu.pdf`, `faz0-teknik-rapor.pdf`, `faz0-telefon-testi.html`, `faz0-ozet.txt` (repo dışı).
 
 Bu belge Faz 0'ın **tek hedefini** ve ona giden **altı adımı** tanımlar. Rol önce bunu, sonra
 `AGENTS.md`'yi ve kartındaki kaynakları okur. Her adım kendi PR'ı (gerekirse sözleşme/servis/
