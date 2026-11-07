@@ -1,23 +1,15 @@
 import { execFileSync } from 'node:child_process';
 import pg from 'pg';
 
+import { resolveTestDatabaseUrl } from './db-guard';
+
 /**
  * Veritabanlı testler başlamadan: test veritabanını sıfırlar (şema `public` düşer) ve bütün
  * migration'ları boş veritabanına uygular. Böylece "migration boş veritabanında koşar" her koşuda
  * kanıtlanır. Güvenlik: adı `_test` ile bitmeyen veritabanına asla dokunmaz.
  */
 export default async function setup() {
-  const url = process.env.DATABASE_URL_TEST;
-  if (!url) {
-    throw new Error(
-      'DATABASE_URL_TEST tanımlı değil: veritabanlı testler için .env.local ya da ortamda test ' +
-        'veritabanı adresi gerekir (docs/engineering.md "Yerel ortam"). Yalnız birim testleri için: pnpm test:unit',
-    );
-  }
-  const databaseName = decodeURIComponent(new URL(url).pathname.slice(1));
-  if (!databaseName.endsWith('_test')) {
-    throw new Error('DATABASE_URL_TEST adı "_test" ile bitmiyor; sıfırlama reddedildi');
-  }
+  const url = resolveTestDatabaseUrl(process.env);
 
   const client = new pg.Client({ connectionString: url });
   await client.connect();
