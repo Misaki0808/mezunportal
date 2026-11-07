@@ -14,6 +14,7 @@ export const ERROR_CODES = [
   'RESOURCE_CONFLICT',
   'RATE_LIMITED',
   'SERVER_UNEXPECTED',
+  'DB_UNAVAILABLE',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

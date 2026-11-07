@@ -14,7 +14,8 @@
       "RESOURCE_NOT_FOUND": "Aradığın kayıt bulunamadı.",
       "RESOURCE_CONFLICT": "Bu işlem mevcut bir kayıtla çakıştı. Sayfayı yenileyip tekrar dene.",
       "RATE_LIMITED": "Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.",
-      "SERVER_UNEXPECTED": "Beklenmeyen bir sorun oluştu. Biraz sonra tekrar dene."
+      "SERVER_UNEXPECTED": "Beklenmeyen bir sorun oluştu. Biraz sonra tekrar dene.",
+      "DB_UNAVAILABLE": "Veritabanına şu an ulaşılamıyor. Biraz sonra tekrar dene."
     }
   }
 }
