@@ -303,6 +303,13 @@ maskeli görür; `PRIVATE` onaylı iletişim talebiyle de açılmaz; dışarıda
 talebinde ret gerekçesi yoktur (talep edene neden söylenmez); başkasının talebine erişim `RESOURCE_NOT_FOUND`
 döner (varlığı sızmaz). Onaylı talep de “açık” sayılır: aynı ikili için yeni talep ancak kapanınca açılır.
 
+## 2026-11-08 · KVKK sözleşmesinde çıktı ve SQL sınırları
+PostgreSQL CHECK, NULL sonucu reddetmez: iletişim alanları açıkça NULL dışlanarak ve tek boyut
+şartıyla korunur. Onaylı olmayan talep ya da talepte istenmeyen alan çıktıdaki `revealed` içine
+giremez. JSON veri dökümünde talepler yalnız kendi skaler alanlarını taşır; genel nesne şeması
+karşı tarafın e-posta/telefon nesnesini kabul edebildiği için kapalı bir şemaya daraltılır.
+Bu sınırlar servis kartında da zorlanır; sözleşme doğrulaması yetkilendirmenin yerini almaz.
+
 ## 2026-11-08 · KVKK servisi: hız sınırları, hesap silmede anonimleştirme ve dosya silme (P1-03 servisi)
 Uygulama hız sınırları yeni tablo yerine Better Auth'un `RateLimit` tablosunda, `app:` önekli anahtarla ve
 tek atomik SQL'le (sabit pencere) tutulur: iletişim talebi günde 10, veri dökümü saatte 5, hesap silme

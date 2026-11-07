@@ -14,6 +14,7 @@ import {
   REQUIRED_CONSENT_DOCUMENTS,
   VISIBILITY_LEVELS,
   consentStateSchema,
+  exportedContactRequestSchema,
   consentVersionSchema,
   deleteAccountSchema,
   recordConsentsSchema,
@@ -153,4 +154,27 @@ describe('hata kodları', () => {
       expect(ERROR_CODES).toContain(code);
     }
   });
+});
+
+it('veri dökümüne karşı tarafın iletişim/kullanıcı nesnesi eklenemez', () => {
+  const request = {
+    id: 'r1',
+    requesterId: 'u1',
+    targetId: 'u2',
+    fields: ['EMAIL'],
+    message: null,
+    status: 'APPROVED',
+    createdAt: '2026-11-08T00:00:00Z',
+    updatedAt: '2026-11-08T00:00:00Z',
+    decidedAt: '2026-11-08T00:00:00Z',
+    closedAt: null,
+  };
+  expect(exportedContactRequestSchema.safeParse(request).success).toBe(true);
+  for (const extra of [
+    { email: 'other@example.invalid' },
+    { target: { email: 'other@example.invalid' } },
+    { revealed: { EMAIL: 'other@example.invalid' } },
+  ]) {
+    expect(exportedContactRequestSchema.safeParse({ ...request, ...extra }).success).toBe(false);
+  }
 });

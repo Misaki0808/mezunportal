@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { VISIBILITY_LEVELS } from '@/contracts/privacy';
 
 import {
+  DEFAULT_FIELD_ACCESS,
   VIEWER_RELATIONS,
   VISIBILITY_DECISION_TABLE,
   effectiveLevel,
@@ -11,7 +12,8 @@ import {
 
 // Sözleşme: karar tablosunun kendisi (gövde servis kartında bu tabloya karşı test edilir).
 const access = (level: string, relation: string) =>
-  VISIBILITY_DECISION_TABLE.find((row) => row.level === level && row.relation === relation)?.access;
+  VISIBILITY_DECISION_TABLE.find((row) => row.level === level && row.relation === relation)
+    ?.access ?? DEFAULT_FIELD_ACCESS;
 
 describe('görünürlük karar tablosu', () => {
   it('her seviye × ilişki tam bir kez tanımlıdır', () => {
@@ -79,4 +81,10 @@ describe('effectiveLevel', () => {
     expect(effectiveLevel('EMAIL', { EMAIL: 'PRIVATE' })).toBe('PRIVATE');
     expect(effectiveLevel('PHONE', new Map([['PHONE', 'MEMBERS']]))).toBe('MEMBERS');
   });
+});
+
+it('bilinmeyen seviye/ilişki ve eksik eşleşme için sözleşme varsayılanı gizlidir', () => {
+  expect(DEFAULT_FIELD_ACCESS).toBe('NONE');
+  expect(access('PUBLIC', 'VERIFIED_MEMBER')).toBe('NONE');
+  expect(access('MEMBERS', 'UNKNOWN')).toBe('NONE');
 });

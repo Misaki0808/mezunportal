@@ -123,3 +123,29 @@ describe('hata kodları', () => {
     }
   });
 });
+
+it('onaylı olmayan talep ve istenmeyen alan yanıtta açılamaz', () => {
+  const item = {
+    id: 'r1',
+    counterpart: { userId: 'u2', name: 'Sahte' },
+    fields: ['PHONE'],
+    message: null,
+    status: 'APPROVED',
+    createdAt: new Date(),
+    decidedAt: new Date(),
+    closedAt: null,
+    revealed: { PHONE: 'test-phone' },
+  };
+  expect(contactRequestItemSchema.safeParse(item).success).toBe(true);
+  for (const status of ['PENDING', 'REJECTED', 'WITHDRAWN', 'REVOKED']) {
+    expect(contactRequestItemSchema.safeParse({ ...item, status }).success, status).toBe(false);
+    expect(
+      contactRequestItemSchema.safeParse({ ...item, status, revealed: null }).success,
+      status,
+    ).toBe(true);
+  }
+  expect(
+    contactRequestItemSchema.safeParse({ ...item, revealed: { EMAIL: 'fake@example.invalid' } })
+      .success,
+  ).toBe(false);
+});

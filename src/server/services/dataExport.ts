@@ -8,8 +8,31 @@ import { loadVisibilityLevels } from './privacy';
 
 /**
  * Veri dökümü (KVKK m. 11): YALNIZ kullanıcının kendi verisi. İletişim taleplerinde karşı taraf yalnız
- * kimlik + adla görünür; karşı tarafın e-posta/telefonu dökümde yoktur (açık `select`). Tarihler ISO metni.
+ * kullanıcı kimliğiyle (requesterId/targetId) tanımlanır, adı bile dökülmez; karşı tarafın e-posta/telefonu dökümde yoktur (açık `select`). Tarihler ISO metni.
  */
+type RequestRow = {
+  id: string;
+  requesterId: string;
+  targetId: string;
+  fields: DataExport['contactRequests']['sent'][number]['fields'];
+  message: string | null;
+  status: DataExport['contactRequests']['sent'][number]['status'];
+  createdAt: Date;
+  updatedAt: Date;
+  decidedAt: Date | null;
+  closedAt: Date | null;
+};
+
+function exportRequest(row: RequestRow): DataExport['contactRequests']['sent'][number] {
+  return {
+    ...row,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    decidedAt: row.decidedAt ? row.decidedAt.toISOString() : null,
+    closedAt: row.closedAt ? row.closedAt.toISOString() : null,
+  };
+}
+
 export async function buildDataExport(
   db: PrismaClient,
   userId: string,
@@ -44,26 +67,30 @@ export async function buildDataExport(
       sentContactRequests: {
         select: {
           id: true,
+          requesterId: true,
+          targetId: true,
           fields: true,
           message: true,
           status: true,
           createdAt: true,
+          updatedAt: true,
           decidedAt: true,
           closedAt: true,
-          target: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: 'asc' },
       },
       receivedContactRequests: {
         select: {
           id: true,
+          requesterId: true,
+          targetId: true,
           fields: true,
           message: true,
           status: true,
           createdAt: true,
+          updatedAt: true,
           decidedAt: true,
           closedAt: true,
-          requester: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: 'asc' },
       },
@@ -95,20 +122,8 @@ export async function buildDataExport(
     })),
     fieldVisibility: [...levels].map(([field, level]) => ({ field, level })),
     contactRequests: {
-      sent: user.sentContactRequests.map(({ target, ...row }) => ({
-        ...row,
-        counterpart: { userId: target.id, name: target.name },
-        createdAt: row.createdAt.toISOString(),
-        decidedAt: iso(row.decidedAt),
-        closedAt: iso(row.closedAt),
-      })),
-      received: user.receivedContactRequests.map(({ requester, ...row }) => ({
-        ...row,
-        counterpart: { userId: requester.id, name: requester.name },
-        createdAt: row.createdAt.toISOString(),
-        decidedAt: iso(row.decidedAt),
-        closedAt: iso(row.closedAt),
-      })),
+      sent: user.sentContactRequests.map(exportRequest),
+      received: user.receivedContactRequests.map(exportRequest),
     },
   };
 }
