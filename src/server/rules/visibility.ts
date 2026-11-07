@@ -1,10 +1,13 @@
-import type { ContactField, VisibilityLevel } from '@/contracts/privacy';
-import { NotImplementedError } from '@/lib/not-implemented';
+import {
+  DEFAULT_FIELD_VISIBILITY,
+  type ContactField,
+  type VisibilityLevel,
+} from '@/contracts/privacy';
 
 /**
  * Kişisel alan görünürlüğü — TEK KURAL YERİ (P1-03; docs/security.md “KVKK”). Profil, dizin, iletişim
  * talebi ve veri dökümü bu kurala sorar; ekran ve servis kuralı kopyalamaz. Saf işlevdir: veritabanı
- * okumaz, girdisini çağıran hazırlar. SÖZLEŞME PR'I: imza + karar tablosu; gövde servis kartında.
+ * okumaz, girdisini çağıran hazırlar.
  */
 
 /**
@@ -71,8 +74,30 @@ export const VISIBILITY_DECISION_TABLE: readonly VisibilityDecisionRow[] = [
   { level: 'MEMBERS', relation: 'OTHER', access: 'NONE' },
 ];
 
-/** Alan bu bakana nasıl gösterilir? Gövde servis kartında; `VISIBILITY_DECISION_TABLE`'a uyar. */
+/**
+ * Alan bu bakana nasıl gösterilir? `VISIBILITY_DECISION_TABLE`'ın kodudur (tablo testi ikisini eşler).
+ * Bilinmeyen girdi güvenli tarafa düşer: `NONE`.
+ */
 export function fieldAccess(input: VisibilityInput): FieldAccess {
-  void input;
-  throw new NotImplementedError('rules/visibility.fieldAccess');
+  const { level, relation } = input;
+  if (relation === 'OWNER') return 'FULL';
+  if (relation === 'ADMIN_TASK') return 'MASKED';
+  if (level === 'MEMBERS') {
+    return relation === 'VERIFIED_MEMBER' || relation === 'APPROVED_REQUESTER' ? 'FULL' : 'NONE';
+  }
+  if (level === 'ON_APPROVED_REQUEST') return relation === 'APPROVED_REQUESTER' ? 'FULL' : 'NONE';
+  return DEFAULT_FIELD_ACCESS;
+}
+
+/** Kullanıcının seviyesi; satır yoksa varsayılan. */
+export function effectiveLevel(
+  field: ContactField,
+  chosen:
+    ReadonlyMap<ContactField, VisibilityLevel> | Partial<Record<ContactField, VisibilityLevel>>,
+): VisibilityLevel {
+  const value =
+    chosen instanceof Map
+      ? chosen.get(field)
+      : (chosen as Partial<Record<ContactField, VisibilityLevel>>)[field];
+  return value ?? DEFAULT_FIELD_VISIBILITY[field];
 }

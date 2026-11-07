@@ -368,6 +368,17 @@ giremez. JSON veri dökümünde talepler yalnız kendi skaler alanlarını taş�
 karşı tarafın e-posta/telefon nesnesini kabul edebildiği için kapalı bir şemaya daraltılır.
 Bu sınırlar servis kartında da zorlanır; sözleşme doğrulaması yetkilendirmenin yerini almaz.
 
+## 2026-11-08 · KVKK servisi: hız sınırları, hesap silmede anonimleştirme ve dosya silme (P1-03 servisi)
+Uygulama hız sınırları yeni tablo yerine Better Auth'un `RateLimit` tablosunda, `app:` önekli anahtarla ve
+tek atomik SQL'le (sabit pencere) tutulur: iletişim talebi günde 10, veri dökümü saatte 5, hesap silme
+denemesi saatte 5. Hesap silmede kullanıcı satırı anonimleştirilir (ad yer tutucu, e-posta
+`deleted-<id>@deleted.invalid`, telefon/görsel boş): rıza ve işlem kaydı kanıt olarak bağlı kalır, eski
+e-postayla bu hesaba giriş yolu kalmaz. Bekleyen belge dosyası varken dosya silme bağlı değilse işlem hiç
+başlamaz. Depolama adaptörü bağlıdır; dosyalar commit öncesinde idempotent silinir. Silme hatasında
+hesap ve belge anahtarları rollback ile korunur; tekrar denenebilir. Kısmi dosya silinip commit
+başarısız olursa bekleyen belge yeniden yüklenebilir (belge kararıyla aynı dış sistem sınırı). İletişim talebinde yalnız “onaylı
+talebe açık” alan istenebilir (PRIVATE kimseye açılmaz, MEMBERS zaten görünür).
+
 ## 2026-11-08 · E-posta giden kutusu: işlemli kayıt, sınırlı taşıma
 EmailLog ve pg-boss işi aynı PostgreSQL işleminde eklenir; idempotency anahtarı için transaction
 kilidi hem eşzamanlı istekleri hem worker teslimlerini sıralar. Şablon metnini çağıran hazırlar;
@@ -380,6 +391,13 @@ commit olmadan kalabilir. Bu dar belirsizlikte yeniden deneme çift teslim üret
 idempotency anahtarının sabit özetinden üretilir ama SMTP genelinde kesin tek teslim garantisi
 vermez. Bu adım normal yinelenen çağrıları ve kayıtlı SENT teslimlerini engeller; böyle bir garantiyi
 varmış gibi sunmaz. Sağlayıcı düzeyinde idempotency API'si P1-18 sağlayıcı kararıyla değerlendirilir.
+
+## 2026-11-08 · Hesap silme ve belge yükleme aynı kullanıcı kilidini paylaşır
+
+Hesap silme kullanıcı satırını işlem başında kilitler, silinme işaretini koyar ve belge anahtarlarını
+kilit altında toplar; işlem sonrasında kalan kayıtlı anahtarları yeniden tarar. Belge yükleme de aynı
+kullanıcı satırını kilitleyip silinmiş hesabı reddeder ve önceden yazılan dosyayı temizler. Böylece
+silme sürerken başlayan yükleme silinmiş hesaba belge kaydı ve artık dosya bırakamaz.
 
 ## 2026-11-08 · Giriş ekranında odaklı düzen (PM ekran turu kararı)
 Giriş ve e-postanı kontrol et sayfalarında uygulama alt gezinmesi/yan menü yerine logo ve içerik

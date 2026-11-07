@@ -147,7 +147,7 @@ yığın izi kullanıcıya gösterilmez. Ayrıntı `docs/architecture.md` “Dı
 
 - `.env*` repoya girmez; değerler Git dışı `korunan/` klasöründe ve yerel `.env.local`'dadır.
 - Loglanmaz: jeton, parola, giriş bağlantısı, CV/belge içeriği, LLM girdi/çıktısı. E-posta ve
-  telefon maskeli.
+  telefon maskeli (`src/lib/mask.ts`: `maskEmail`, `maskPhone`, serbest metin için `maskPersonalData`).
 
 ## Güvenlik başlıkları
 
