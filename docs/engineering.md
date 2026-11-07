@@ -217,6 +217,13 @@ kimlik (Better Auth sırrı, LinkedIn), e-posta, LLM, Google Takvim, depolama, i
 `.env.local` ve `korunan/`'dadır. Eksik ya da geçersiz değişken `EnvValidationError` fırlatır; mesaj
 yalnız değişken adını taşır.
 
+**Kimlik doğrulama ve e-posta grubu** (`getAuthEnv()`, ayrı şema: yalnız giriş/e-posta kodu okur, `/api/health`
+ve diğer sayfalar bağlı değildir): `BETTER_AUTH_SECRET` (≥ 32 karakter; `.env.example`'daki genel `dev-only…` değeri
+yalnız `local`/`test`'te kabul edilir, `prod`'da env doğrulamasını düşürür), `SMTP_HOST`/`SMTP_PORT`/`SMTP_SECURE`
+(yerelde Mailpit 127.0.0.1:1025), `SMTP_USER`+`SMTP_PASSWORD` (ikisi birlikte; Mailpit için boş), `EMAIL_FROM`,
+ve İSTEĞE BAĞLI `LINKEDIN_CLIENT_ID`+`LINKEDIN_CLIENT_SECRET` (ikisi de yoksa LinkedIn kapalıdır). Mevcut
+`.env.local` dosyalarına eklenmesi gerekmez; yeni worktree'ler `.env.example`'dan alır.
+
 ### Telefon testi (faz sonu)
 
 Her faz bitince kullanıcı telefondan test eder; faz içinde telefon testi yoktur.

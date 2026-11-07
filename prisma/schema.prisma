@@ -49,9 +49,10 @@ model Department {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  faculty     Faculty      @relation(fields: [facultyId], references: [id], onDelete: Restrict)
-  memberships Membership[]
-  adminGrants AdminGrant[]
+  faculty             Faculty              @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  memberships         Membership[]
+  adminGrants         AdminGrant[]
+  graduationDocuments GraduationDocument[]
 
   @@unique([facultyId, code])
   @@unique([facultyId, name])
@@ -110,18 +111,26 @@ model User {
   banned        Boolean   @default(false)
   banReason     String?
   banExpires    DateTime?
+  /// Better Auth admin eklentisinin alanı (eklenti şemasında zorunlu). YETKİ KARARINDA ASLA KULLANILMAZ:
+  /// yetki yalnız `Membership` ve `AdminGrant`'tan gelir (davranış testi: `role = 'admin'` yetki vermez).
+  role          String?
   /// Hesap silindi (P1-03): satır kalır (işlem kaydı ve ilişkiler için), kişisel alanlar temizlenir.
   deletedAt     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  memberships         Membership[]    @relation("MembershipOwner")
-  verifiedMemberships Membership[]    @relation("MembershipVerifier")
-  adminGrants         AdminGrant[]    @relation("AdminGrantOwner")
-  grantedAdminGrants  AdminGrant[]    @relation("AdminGrantGranter")
-  revokedAdminGrants  AdminGrant[]    @relation("AdminGrantRevoker")
-  mentorProfile       MentorProfile?
-  adminAuditLogs      AdminAuditLog[]
+  memberships                 Membership[]         @relation("MembershipOwner")
+  verifiedMemberships         Membership[]         @relation("MembershipVerifier")
+  adminGrants                 AdminGrant[]         @relation("AdminGrantOwner")
+  grantedAdminGrants          AdminGrant[]         @relation("AdminGrantGranter")
+  revokedAdminGrants          AdminGrant[]         @relation("AdminGrantRevoker")
+  mentorProfile               MentorProfile?
+  adminAuditLogs              AdminAuditLog[]
+  sessions                    Session[]
+  accounts                    Account[]
+  graduationDocuments         GraduationDocument[] @relation("GraduationDocumentOwner")
+  reviewedGraduationDocuments GraduationDocument[] @relation("GraduationDocumentReviewer")
+  emailLogs                   EmailLog[]
 }
 
 /// Üyelik = kullanıcı × bölüm × rol. Rol geçişinde eski satır `endedAt` ile kapanır, yenisi eklenir;
@@ -214,4 +223,136 @@ model AdminAuditLog {
   @@index([actorId, createdAt])
   @@index([targetType, targetId])
   @@index([action, createdAt])
+}
+
+// ---------------------------------------------------------------------------------------------
+// Kimlik doğrulama (P1-02 sözleşmesi). Better Auth 1.7 Prisma adaptörünün beklediği alanlar
+// (`getAuthTables`: user + admin eklentisi, session, account, verification, rateLimit); sözleşme
+// docs/data.md. Ham SQL kısıtlar 20261107205405_auth_contract migration'ındadır.
+// ---------------------------------------------------------------------------------------------
+
+/// Veritabanı oturumu. Çerez yalnız jetonu taşır (httpOnly, secure, sameSite=lax). Askıya alma ve hesap
+/// silmede oturumlar silinir. `impersonatedBy` admin eklentisinin alanıdır; "başka kullanıcı gibi giriş"
+/// KAPALIDIR, bu sütun hep boş kalır.
+model Session {
+  id             String   @id @default(uuid(7))
+  expiresAt      DateTime
+  token          String   @unique
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  impersonatedBy String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  /// Süresi geçmiş oturum temizliği için (indeks migration'da oluşturulur).
+  @@index([expiresAt])
+}
+
+/// Dış sağlayıcı bağlantısı (LinkedIn). Giriş parolasızdır; `password` Better Auth şemasında bulunur ama
+/// KULLANILMAZ. Jetonlar sağlayıcı tarafına aittir; servis adımı onları şifreli saklar (decisions.md).
+model Account {
+  id                    String    @id @default(uuid(7))
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+/// Süreli, tek kullanımlık doğrulama kayıtları (e-posta bağlantısı, e-posta değiştirme).
+model Verification {
+  id         String   @id @default(uuid(7))
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([identifier])
+  @@index([expiresAt])
+}
+
+/// Better Auth hız sınırı deposu (`rateLimit.storage = "database"`): süreçler arasında ve yeniden
+/// başlatmada korunur. `lastRequest` milisaniye damgasıdır.
+model RateLimit {
+  id          String @id @default(uuid(7))
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+}
+
+enum GraduationDocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// Mezun belgesi (e-Devlet barkodlu PDF) doğrulama kuyruğu. Belge dosyası YALNIZ karar verilene kadar
+/// durur: karar anında `storageKey` null olur ve dosya silinir (veritabanı kısıtı). Kuyruk bölümün
+/// yöneticisine görünür (`departmentId`). Hedef üyelik (kullanıcı + bölüm, `ALUMNI`) `userId` ve
+/// `departmentId` ile bulunur; `Membership`'e yabancı anahtar YOKTUR (şema değişmezi).
+model GraduationDocument {
+  id             String                   @id @default(uuid(7))
+  userId         String
+  departmentId   String
+  /// Kullanıcının beyan ettiği mezuniyet yılı; onayda `ALUMNI` üyeliğine yazılır.
+  graduationYear Int
+  /// `graduation/<userId>/<uuid>.pdf`; karar verilmiş satırda null.
+  storageKey     String?
+  status         GraduationDocumentStatus @default(PENDING)
+  reviewedById   String?
+  reviewedAt     DateTime?
+  rejectReason   String?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  user       User       @relation("GraduationDocumentOwner", fields: [userId], references: [id], onDelete: Restrict)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  reviewedBy User?      @relation("GraduationDocumentReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([departmentId, status, createdAt])
+  @@index([userId])
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+/// Giden e-posta kaydı (giden kutusu). GÖVDE ve alıcı adresi SAKLANMAZ: yalnız şablon, alıcı kimliği ve
+/// durum. `idempotencyKey` aynı e-postanın ikinci kez gönderilmesini engeller. Saklama 6 ay (docs/data.md).
+model EmailLog {
+  id              String      @id @default(uuid(7))
+  idempotencyKey  String      @unique
+  template        String
+  /// Kayıtsız adrese giden giriş bağlantısında boştur (kayıtlı olup olmadığı sızmasın diye ayrım yok).
+  recipientUserId String?
+  status          EmailStatus @default(QUEUED)
+  attempts        Int         @default(0)
+  errorCode       String?
+  sentAt          DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  recipientUser User? @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([recipientUserId])
 }

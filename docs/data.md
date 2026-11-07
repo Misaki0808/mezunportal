@@ -19,16 +19,14 @@ belgede yalnız sahiplik, değişmezler ve politikalar kalır.
 ## Model grupları
 
 Şemada olanlar (`prisma/schema.prisma`; alan listesi orada, burada çoğaltılmaz): **Kurum**
-(`University`, `Faculty`, `Department`) ve **kimlik/üyelik/yetki** (`User`, `Membership`, `AdminGrant`,
-`MentorProfile`, `AdminAuditLog`). Aşağıdakiler henüz yazılmamış modellerin taslağıdır; ilgili adım
+(`University`, `Faculty`, `Department`), **kimlik/üyelik/yetki** (`User`, `Membership`, `AdminGrant`,
+`MentorProfile`, `AdminAuditLog`) ve **kimlik doğrulama** (aşağıda). Aşağıdakiler henüz yazılmamış modellerin taslağıdır; ilgili adım
 birleşince buradan kaldırılır. Bütün tablolarda `id`, `createdAt`, `updatedAt` vardır (yalnız-ekleme
 tablosu `AdminAuditLog` `updatedAt` taşımaz). Adlar İngilizce.
 
-**Kimlik (Better Auth, P1-02):** `Session` · `Account` · `Verification` (`User` P1-01'de gelmiştir; ban alanları
-Better Auth admin eklentisininkidir, `role` alanı YOKTUR — yetki yalnız `Membership`/`AdminGrant`'tan gelir).
-
-**Üyelik ve yetki (kalan):** `GraduationDocument` — userId, storageKey? (karar anında `null`), status,
-reviewedById, reviewedAt, rejectReason?
+**Kimlik ve doğrulama (şemada, P1-02 sözleşmesi):** `Session` · `Account` · `Verification` · `RateLimit`
+(Better Auth 1.7 Prisma adaptörünün beklediği alanlar) · `GraduationDocument` · `EmailLog`. `User.role`
+yalnız admin eklentisi şeması için vardır ve yetki vermez.
 
 **KVKK:** `Consent` (userId, documentType, version, granted; append-only) ·
 `FieldVisibility` (userId, field, level; benzersiz userId+field) · `ContactRequest`
@@ -69,7 +67,7 @@ sourceType, sourceId, counterpartId?, basePoints, multiplier, points, status: `P
 `FINAL` | `REVOKED`, finalizesAt?, revokedReason?) · `SuspicionFlag` · `UserBadge` (kind:
 `FOUNDING_MEMBER`; Faz 2'de `ALUMNI_OF_YEAR`).
 
-**Bildirim ve metrik:** `NotificationPreference` · `EmailLog` (gövdesiz) · `Event` (props'ta
+**Bildirim ve metrik:** `NotificationPreference` · `Event` (props'ta
 kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
 
 ## Temel değişmezler
@@ -86,6 +84,14 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
 - `AdminGrant`: kapsam hedefle uyumludur (`SYSTEM` hedefsiz, `FACULTY` fakülteli, `DEPARTMENT` bölümlü —
   CHECK); aynı kullanıcıya aynı kapsam için en fazla bir etkin yetki; kaldırılan yetki silinmez
   (`revokedAt`+`revokedById`).
+- `GraduationDocument`: belge dosyası YALNIZ karar verilene kadar durur — bekleyen satırda `storageKey` dolu ve
+  karar alanları boş, karar verilmiş satırda `storageKey` NULL ve karar alanları dolu (CHECK; dosya silinmeden
+  onay/ret yazılamaz). Ret gerekçesi yalnız reddedilen satırda (3–1000 karakter). Kullanıcı+bölüm başına tek
+  BEKLEYEN belge (kısmi indeks). `Membership`'e yabancı anahtar yoktur: hedef üyelik `userId` + `departmentId` ile bulunur.
+- `EmailLog`: gövde ve alıcı adresi tutulmaz (yalnız şablon, alıcı kimliği, durum); `idempotencyKey` benzersizdir;
+  `SENT` ile `sentAt` birlikte. Alıcı kullanıcı silinirse kayıt kalır, kimlik boşalır.
+- `Session`/`Account` kullanıcıyla birlikte silinir (kimlik doğrulama artığıdır; kullanıcı satırı zaten silinmez,
+  anonimleştirilir). `Account.password` kullanılmaz (giriş parolasızdır).
 - `MentorProfile`: görüşme süresi 15/20/30 dk; etkin profilin en az bir görüşme biçimi vardır. Kapasite
   ve süre mentorun kararıdır, varsayılanı yoktur.
 - `Consent` ve `AdminAuditLog` yalnız eklenir; güncellenmez, silinmez (hesap silmede audit
