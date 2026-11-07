@@ -4,8 +4,8 @@ Son güncelleme: **2026-11-07** (kod öncesi taslak).
 
 Şema yazıldıktan sonra model, alan, enum, indeks ve ilişki için tek doğruluk kaynağı
 `prisma/schema.prisma`; değişim geçmişi `prisma/migrations/`'tır. Aşağıdaki “Model grupları”
-bölümü yalnız ilk sözleşme PR'larına yön verir; P1-01 birleşince bu bölüm kısaltılır ve belgede
-yalnız sahiplik, değişmezler ve politikalar kalır.
+bölümü yalnız henüz yazılmamış modellerin taslağıdır; her model şemaya girince buradan kaldırılır ve
+belgede yalnız sahiplik, değişmezler ve politikalar kalır.
 
 ## Veri sahipliği
 
@@ -16,29 +16,19 @@ yalnız sahiplik, değişmezler ve politikalar kalır.
   yöneticisinindir.
 - Ayrıştırma çıktısı, belge ve eski CV geçicidir; amaç bitince silinir.
 
-## Model grupları (ilk taslak)
+## Model grupları
 
-Bütün tablolarda `id`, `createdAt`, `updatedAt` vardır. Adlar İngilizce.
+Şemada olanlar (`prisma/schema.prisma`; alan listesi orada, burada çoğaltılmaz): **Kurum**
+(`University`, `Faculty`, `Department`) ve **kimlik/üyelik/yetki** (`User`, `Membership`, `AdminGrant`,
+`MentorProfile`, `AdminAuditLog`). Aşağıdakiler henüz yazılmamış modellerin taslağıdır; ilgili adım
+birleşince buradan kaldırılır. Bütün tablolarda `id`, `createdAt`, `updatedAt` vardır (yalnız-ekleme
+tablosu `AdminAuditLog` `updatedAt` taşımaz). Adlar İngilizce.
 
-**Kurum:** `University` (name, shortName, studentEmailDomains[], staffEmailDomains[]) ·
-`Faculty` (universityId, name) · `Department` (facultyId, name, code).
+**Kimlik (Better Auth, P1-02):** `Session` · `Account` · `Verification` (`User` P1-01'de gelmiştir; ban alanları
+Better Auth admin eklentisininkidir, `role` alanı YOKTUR — yetki yalnız `Membership`/`AdminGrant`'tan gelir).
 
-**Kimlik (Better Auth):** `User` (email, emailVerified, name, image, phone?, lastSeenAt; ban
-alanları Better Auth admin eklentisinden) · `Session` · `Account` · `Verification`.
-
-**Üyelik ve yetki:**
-- `Membership` — userId, departmentId, role (`STUDENT` | `ALUMNI` | `ACADEMIC`), entryYear?,
-  classOffset? (hazırlık/uzatma düzeltmesi), graduationYear?, verificationStatus (`PENDING` |
-  `VERIFIED` | `REJECTED`), verificationMethod (`STUDENT_EMAIL` | `STAFF_EMAIL` |
-  `GRADUATION_DOCUMENT` | `ADMIN`), verifiedAt, verifiedById, endedAt?
-- `AdminGrant` — userId, scope (`SYSTEM` | `FACULTY` | `DEPARTMENT`), facultyId?, departmentId?,
-  grantedById
-- `AdminAuditLog` — actorId, action, targetType, targetId, reason?, metadata (JSON, kişisel
-  veri yok), createdAt — append-only
-- `MentorProfile` — userId (PK), isActive, monthlyCapacity, sessionMinutes, meetingModes,
-  inPersonNote?, pausedUntil?, cvReviewEnabled, cvReviewMonthlyLimit
-- `GraduationDocument` — userId, storageKey? (karar anında `null`), status, reviewedById,
-  reviewedAt, rejectReason?
+**Üyelik ve yetki (kalan):** `GraduationDocument` — userId, storageKey? (karar anında `null`), status,
+reviewedById, reviewedAt, rejectReason?
 
 **KVKK:** `Consent` (userId, documentType, version, granted; append-only) ·
 `FieldVisibility` (userId, field, level; benzersiz userId+field) · `ContactRequest`
@@ -84,9 +74,23 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
 
 ## Temel değişmezler
 
-- Bir kullanıcının aynı bölüm ve rolde en fazla bir **aktif** üyeliği vardır (`endedAt` boş).
+- Bir kullanıcının aynı bölüm ve rolde en fazla bir **aktif** üyeliği vardır (`endedAt` boş) — kısmi
+  benzersiz indeks. Farklı bölüm/rolde birden çok etkin üyelik (çoklu rol) serbesttir.
+- **Rol ↔ doğrulama yolu** (CHECK): öğrenci yalnız okul e-postasıyla, akademisyen yalnız kurumsal
+  e-postayla, mezun yalnız belgeyle doğrulanır; başka her şey `ADMIN` kararıdır. Alan adıyla mezun
+  doğrulanamaz. Belge/yönetici ile doğrulanan üyelikte `verifiedById` zorunludur; `verifiedAt` yalnız
+  `VERIFIED`'da doludur.
+- **Rol geçişi** (öğrenci → mezun) satır **ekler ve kapatır**, silmez: `STUDENT` satırı `endedAt` alır,
+  `ALUMNI` satırı eklenir. İçerik ve puan `userId`'ye bağlanır, hiçbir model `Membership`'e yabancı
+  anahtarla bağlanmaz (şema testi korur); bu yüzden geçişten etkilenmezler.
+- `AdminGrant`: kapsam hedefle uyumludur (`SYSTEM` hedefsiz, `FACULTY` fakülteli, `DEPARTMENT` bölümlü —
+  CHECK); aynı kullanıcıya aynı kapsam için en fazla bir etkin yetki; kaldırılan yetki silinmez
+  (`revokedAt`+`revokedById`).
+- `MentorProfile`: görüşme süresi 15/20/30 dk; etkin profilin en az bir görüşme biçimi vardır. Kapasite
+  ve süre mentorun kararıdır, varsayılanı yoktur.
 - `Consent` ve `AdminAuditLog` yalnız eklenir; güncellenmez, silinmez (hesap silmede audit
-  satırı kişisel alan içermediği için kalır).
+  satırı kişisel alan içermediği için kalır). `AdminAuditLog` için bu, veritabanı tetikleyicisiyle
+  zorlanır (UPDATE, DELETE ve TRUNCATE reddedilir); `recordAdminAction` ise eylemle aynı işlemde yazar.
 - `GraduationDocument.storageKey` karar verilen satırda `null`'dır ve dosya depoda yoktur.
 - Aynı mentor için `REQUESTED`/`CONFIRMED` randevuların zaman aralıkları çakışamaz
   (exclusion constraint, `btree_gist`, ham SQL migration).
@@ -96,7 +100,8 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
 - Anonim `Experience`'ın yazarı hiçbir istemci yanıtına çıkmaz; yalnız moderasyon ekranında
   yöneticiye görünür.
 - Açık bir `CvReviewRequest`'in bağlı olduğu `CvUpload` dosyası silinmez.
-- Sınıf saklanmaz; `entryYear` + `classOffset`'ten hesaplanır.
+- Sınıf saklanmaz; `entryYear` + `classOffset`'ten hesaplanır (`src/server/rules/classYear.ts`: akademik yıl
+  Eylül'de başlar, düzeltme −3…+3, hazırlık/uzatma ayrı durum).
 - `Event.props` ve `AdminAuditLog.metadata` kişisel veri içermez.
 
 ## Transaction ve eşzamanlılık

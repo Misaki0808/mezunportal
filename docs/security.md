@@ -45,13 +45,23 @@ ve akademisyen açabilir; öğrenci eşiği K-08. Yönetici yetkisi ayrı tablod
 | Rapor, Excel dışa aktarma, metrik paneli | — | — | kendi bölümü | fakülte | hepsi |
 | Puan kuralları, sözlükler, yönetici atama, şüphe kararı | — | — | — | — | ✓ |
 
-- Doğrulanmamış ve askıdaki kullanıcı yalnız kendi profilini görür.
+- Doğrulanmamış kullanıcı yalnız kendi profilini görür. **Askıdaki kullanıcının oturumu yoktur**
+  (ban oturumları düşürür); yetki katmanı da ona hiçbir şey açmaz (`AUTH_ACCOUNT_SUSPENDED`), kendi
+  profilini bile. Silinmiş hesap “oturumsuz” sayılır (`AUTH_UNAUTHENTICATED`; varlığı sızdırılmaz).
+- **Yönetici yetkisi üyelik yerine geçmez:** yönetici işlemi için kapsamı kapsayan etkin yetkiye ek olarak
+  doğrulanmış, etkin bir üyelik de gerekir. Kapsam aşağıyı kapsar (sistem ⊃ fakülte ⊃ bölüm), yukarıyı ve
+  yanı kapsamaz; kaldırılmış yetki ve bozuk (hedefi eksik) yetki hiçbir şeyi kapsamaz.
+- Karar `src/server/rules/authorization.ts`'tedir (saf işlev, matris tablo-güdümlü test); korumalar
+  `src/server/permissions`'tadır (`requireUser`, `requireVerifiedMember`, `requireMentor`, `requireAdmin`,
+  `requireModerator`, `canModerate`). Kimlik oturumdan gelir; oturum bağlantısı P1-02'ye kadar kapalıdır
+  (fail-closed).
 - Moderasyon kapsamı içeriğin yazıldığı andaki bölümüne göre belirlenir.
 - Her yetkili eylemin negatif testi vardır (başka bölüm, yetkisiz rol, doğrulanmamış, askıda).
 
 ## Yönetici işlem kaydı
 
-Her yönetici eylemi `AdminAuditLog`'a yazılır: kim, ne yaptı, hangi kayıtta, gerekçe. Kapsam:
+Her yönetici eylemi `AdminAuditLog`'a `recordAdminAction` ile, eylemle AYNI veritabanı işleminde yazılır: kim, ne yaptı, hangi kayıtta, gerekçe. Eylem adları ve gerekçe zorunluluğu `rules/adminAudit.ts`'tedir; gerekçe ve metadata
+kişisel veri (e-posta, telefon, kimlik numarası, ad alanları) içeremez ve yazılmadan reddedilir. Kapsam:
 mezun belgesi onay/ret, rol düzeltme, askıya alma/kaldırma, moderasyon kararları, puan iptali,
 şüphe kararı, yönetici atama, dışa aktarma. Kayıt yalnız eklenir; kişisel veri içermez (yalnız
 kimlikler). Sistem yöneticisi panelden görür.
