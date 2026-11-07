@@ -124,7 +124,10 @@ portta sunucu varsa onu kullanmak yerine durur. `.env.local` veya süreçte `APP
 çalışan sunucudan 390×844 ve 1440×900 tam sayfa görüntüleri ile konsol hata/uyarı raporu üretir.
 `APP_URL` adresi `--url` yerine kullanılabilir; `--out` çıktı kökünü değiştirir. Varsayılan çıktı,
 ana repo yanındaki `pm-handoff/kanit/<tarih>/` altında her çalışmaya ayrı bir klasördür. Rapor
-konsol içeriği barındırabilir; yalnız sahte veriyle kullanılır. `--as` için test girişi Faz 1'i bekler.
+konsol içeriği barındırabilir; yalnız sahte veriyle kullanılır. `--as student`, `seniorMentor`,
+`alumniMentor`, `academic`, `departmentAdmin` veya `systemAdmin` seed test hesabıyla oturum açar;
+yalnız yerel/test ortamında ve yerel sunucuda çalışır. Oturum tarayıcı belleğinde kalır. Öğrenci
+girişinin uçtan uca testi için yerel Mailpit (SMTP 1025, HTTP 8025) ve seed verileri gerekir.
 
 ### Sahte kırmızı: üretilmiş Prisma istemcisi
 
