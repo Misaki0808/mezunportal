@@ -1,5 +1,9 @@
-# Derleme betiği çalıştıran bağımlılıklar açıkça reddedilir (kullanılmayan, isteğe bağlı next-intl
-# çıkarım araçlarının parçaları); yeni betik isteyen paket kurulumu kırar ve onay gerektirir.
+# Derleme betiği çalıştıran bağımlılıklar açıkça onaylanır ya da reddedilir; yeni betik isteyen
+# paket kurulumu kırar ve onay gerektirir.
 allowBuilds:
+  # Reddedilen: kullanılmayan, isteğe bağlı next-intl çıkarım araçlarının parçaları
   '@parcel/watcher': false
   '@swc/core': false
+  # Onaylanan: Prisma CLI ve şema motoru ikilisi (prisma migrate için gerekli, resmî paket)
+  '@prisma/engines': true
+  prisma: true
