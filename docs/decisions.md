@@ -289,6 +289,11 @@ göstermediği için bütün bölümler döner ve doğrulama mezun belgesiyle ya
 (`AUTH_PROVIDER_NOT_CONFIGURED`) taşır: ekran düğmeyi gizlemek yerine devre dışı gösterip sebebini yazar.
 Başlatma eylemi hedef yolu istemciden almaz (açık yönlendirme yok).
 
+## 2026-11-08 · Hesabım ve doğrulama gezinmesi
+Profil sekmesi Hesabım merkezine açılır; doğrulama, e-posta ve çıkış buradan erişilir. Yönetim
+bağlantısı yalnız sunucuda yetki korumalarını geçen yöneticilere gösterilir; yönetim sayfası ayrıca
+sunucuda korunur. Giriş sonrası hedef ana sayfa kalır, doğrulanmamış üyeye doğrulama kartı gösterilir.
+
 ## 2026-11-08 · Better Auth HTTP yüzeyi beyaz liste; giriş sunucu eylemlerinden geçer
 Better Auth yüzlerce uç açar (admin eklentisinin `impersonate-user`/`set-role`/`remove-user`, kayıt, parola,
 doğrudan `sign-in/magic-link`). Hiçbirine istemciden ulaşılması gerekmez ve doğrudan giriş ucu bizim hız
@@ -375,3 +380,9 @@ commit olmadan kalabilir. Bu dar belirsizlikte yeniden deneme çift teslim üret
 idempotency anahtarının sabit özetinden üretilir ama SMTP genelinde kesin tek teslim garantisi
 vermez. Bu adım normal yinelenen çağrıları ve kayıtlı SENT teslimlerini engeller; böyle bir garantiyi
 varmış gibi sunmaz. Sağlayıcı düzeyinde idempotency API'si P1-18 sağlayıcı kararıyla değerlendirilir.
+
+## 2026-11-08 · Giriş ekranında odaklı düzen (PM ekran turu kararı)
+Giriş ve e-postanı kontrol et sayfalarında uygulama alt gezinmesi/yan menü yerine logo ve içerik
+vardır. LinkedIn yapılandırılmamışsa düğmesi ve ayraç gösterilmez; açıkken formun üstünde ikonlu
+ikincil düğmedir. E-posta sözcüğü bölünmez, alan ipucu öğrenci/akademisyene üniversite,
+mezuna kişisel adresini önerir; sabit üniversite alan adı arayüze yazılmaz.
