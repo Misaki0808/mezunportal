@@ -8,8 +8,7 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 ## Güncel durum
 
 - Faz 0 iskelet, veritabanı, yerel ortam, tasarım sistemi ve ekip araçları main'dedir. P0-03 CI
-  K-14 kararını bekler; ekran turunda iki düzen bulgusu ayrı işte düzeltilmektedir. Telefon testi
-  bekliyor. Faz 1 çekirdek çalışması başlamıştır; henüz ürün özelliği teslim edilmedi.
+  K-14 kararını bekler; ekran turundaki iki düzen bulgusunun düzeltmesi #8 ile main'e alındı. Telefon testi bekliyor. Faz 1 çekirdek çalışması başlamıştır; henüz ürün özelliği teslim edilmedi.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -17,7 +16,7 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 
 ### Yakın hedef
 
-Faz 0 ekran bulgularını kapatmak, K-14 kararını almak ve telefon testini yapmak; Faz 1 çekirdek
+Faz 0 telefon testini yapmak ve K-14 kararını almak; Faz 1 çekirdek
 adımlarını sürdürmek.
 
 ### Bilinen kısıtlar
@@ -72,14 +71,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 ```
 
 ### Açık borçlar
-
-- [ ] **TD-002** · P2 · Faz 0 ekran turundaki iki düzen bulgusu
-  Ne: geliştirme göstergesi mobil alt gezinmeyi örtüyor (kök neden: `next dev` göstergesi varsayılan
-  açık ve sol altta, `next.config.ts`); galeri formunda iki alan masaüstünde 30 px hizasız (kök neden:
-  `src/components/ui/field.tsx` ipucunu etiketle giriş arasına koyuyor).
-  Neden borç: telefon denemesi geliştirme sunucusuyla (`pnpm dev:lan`) yapıldığı için gezinmeye erişim
-  ve görsel tutarlılık etkilenebilir; düzeltme ayrı PR'da (gösterge kapatılır, ipucu girişin altına iner).
-  Kapanış ölçütü: düzeltme birleşir, 390 px gezinme ve 1440 px alan hizası gerçek tarayıcıda doğrulanır.
 
 - [ ] **TD-001** · P1 · Güvenlik başlıkları build anında yazılıyor
   Ne: başlıklar `next build` sırasında `.next/routes-manifest.json`'a yazılıyor; HSTS yalnız
