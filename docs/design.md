@@ -43,7 +43,7 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
 ## Bileşen envanteri
 
 `src/components/ui` (tek giriş: `@/components/ui`): Button/IconButton, Input/Textarea/Select/Checkbox/
-RadioGroup/Switch, Field (etiket + ipucu + “i” yardım + hata), Card, Badge, Tag, Avatar, Modal/Sheet,
+RadioGroup/Switch, Field (etiket satırı + “i” yardım; girişin altında ipucu, ardından hata), Card, Badge, Tag, Avatar, Modal/Sheet,
 Tabs, Toast, Skeleton, EmptyState/ErrorState, Pagination, Stepper. Canlı örnekleri `/ui-ornekleri`
 galerisindedir (yalnız `local`/`test`). Düzen `src/components/layout/app-shell.tsx`.
 
