@@ -13,15 +13,15 @@ datasource db {
 
 /// Kurum yapısı (üniversite → fakülte → bölüm) sistem yöneticisinindir.
 model University {
-  id                  String    @id @default(uuid(7))
-  name                String    @unique
-  shortName           String    @unique
+  id                  String   @id @default(uuid(7))
+  name                String   @unique
+  shortName           String   @unique
   /// Öğrenci e-postası alan adları: üniversiteyi doğrular, bölümü doğrulamaz (docs/architecture.md).
   studentEmailDomains String[]
   /// Personel (akademisyen) e-postası alan adları.
   staffEmailDomains   String[]
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   faculties Faculty[]
 }
@@ -35,6 +35,7 @@ model Faculty {
 
   university  University   @relation(fields: [universityId], references: [id], onDelete: Restrict)
   departments Department[]
+  adminGrants AdminGrant[]
 
   @@unique([universityId, name])
 }
@@ -48,8 +49,169 @@ model Department {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  faculty     Faculty      @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  memberships Membership[]
+  adminGrants AdminGrant[]
 
   @@unique([facultyId, code])
   @@unique([facultyId, name])
+}
+
+// ---------------------------------------------------------------------------------------------
+// Kimlik, üyelik, yetki ve işlem kaydı (P1-01). Prisma'nın ifade edemediği kısıtlar (kısmi benzersizlik,
+// CHECK, yalnız-ekleme tetikleyicisi) ham SQL olarak 20261107203050_identity_membership_admin
+// migration'ındadır; sözleşme docs/data.md "Temel değişmezler"dedir.
+// ---------------------------------------------------------------------------------------------
+
+/// Üyelik rolü. Mentorluk bir rol değil, etkin `MentorProfile`'dır; yönetici yetkisi `AdminGrant`'tır.
+enum MembershipRole {
+  STUDENT
+  ALUMNI
+  ACADEMIC
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+/// Doğrulama yolu (docs/architecture.md "Kimlik ve doğrulama"). Rol ile uyumu veritabanı kısıtıdır:
+/// alan adı ile mezun doğrulanamaz, mezun yalnız belge ya da yönetici ile doğrulanır.
+enum VerificationMethod {
+  STUDENT_EMAIL
+  STAFF_EMAIL
+  GRADUATION_DOCUMENT
+  ADMIN
+}
+
+enum AdminScope {
+  SYSTEM
+  FACULTY
+  DEPARTMENT
+}
+
+enum MeetingMode {
+  ONLINE
+  IN_PERSON
+}
+
+/// Better Auth kullanıcı tablosu (P1-02 Better Auth'u buna bağlar; `Session`/`Account`/`Verification` orada).
+/// Askıya alma alanları admin eklentisinindir: oturumlar düşer, giriş engellenir. Yetki kararı
+/// ASLA bu tablodaki bir "rol" alanından verilmez; yetki `Membership` ve `AdminGrant`'tan gelir.
+model User {
+  id            String    @id @default(uuid(7))
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  phone         String?
+  lastSeenAt    DateTime?
+  banned        Boolean   @default(false)
+  banReason     String?
+  banExpires    DateTime?
+  /// Hesap silindi (P1-03): satır kalır (işlem kaydı ve ilişkiler için), kişisel alanlar temizlenir.
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  memberships         Membership[]    @relation("MembershipOwner")
+  verifiedMemberships Membership[]    @relation("MembershipVerifier")
+  adminGrants         AdminGrant[]    @relation("AdminGrantOwner")
+  grantedAdminGrants  AdminGrant[]    @relation("AdminGrantGranter")
+  revokedAdminGrants  AdminGrant[]    @relation("AdminGrantRevoker")
+  mentorProfile       MentorProfile?
+  adminAuditLogs      AdminAuditLog[]
+}
+
+/// Üyelik = kullanıcı × bölüm × rol. Rol geçişinde eski satır `endedAt` ile kapanır, yenisi eklenir;
+/// geçmiş korunur. İçerik ve puan `userId`'ye bağlanır, üyeliğe değil (bu yüzden geçişten etkilenmez).
+model Membership {
+  id                 String             @id @default(uuid(7))
+  userId             String
+  departmentId       String
+  role               MembershipRole
+  /// Giriş yılı (öğrenci). Sınıf saklanmaz; `rules/classYear` hesaplar.
+  entryYear          Int?
+  /// Hazırlık/uzatma düzeltmesi (kullanıcı girer): etkin sınıf = hesaplanan + düzeltme.
+  classOffset        Int                @default(0)
+  graduationYear     Int?
+  verificationStatus VerificationStatus @default(PENDING)
+  verificationMethod VerificationMethod
+  verifiedAt         DateTime?
+  verifiedById       String?
+  /// Boşsa üyelik etkindir. Aynı kullanıcı+bölüm+rolde en fazla bir etkin satır olabilir.
+  endedAt            DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user       User       @relation("MembershipOwner", fields: [userId], references: [id], onDelete: Restrict)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  verifiedBy User?      @relation("MembershipVerifier", fields: [verifiedById], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([departmentId, verificationStatus])
+}
+
+/// Kapsamlı yönetici yetkisi. `SYSTEM`: her şey; `FACULTY`: fakülte ve altındaki bölümler;
+/// `DEPARTMENT`: yalnız o bölüm. Kaldırılan yetki silinmez, `revokedAt` ile kapanır.
+model AdminGrant {
+  id           String     @id @default(uuid(7))
+  userId       String
+  scope        AdminScope
+  facultyId    String?
+  departmentId String?
+  grantedById  String
+  revokedAt    DateTime?
+  revokedById  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user       User        @relation("AdminGrantOwner", fields: [userId], references: [id], onDelete: Restrict)
+  faculty    Faculty?    @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  grantedBy  User        @relation("AdminGrantGranter", fields: [grantedById], references: [id], onDelete: Restrict)
+  revokedBy  User?       @relation("AdminGrantRevoker", fields: [revokedById], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([facultyId])
+  @@index([departmentId])
+}
+
+/// Mentorluk = etkin profil. Kapasite ve görüşme süresi mentorun kararıdır; bu yüzden varsayılan yoktur.
+model MentorProfile {
+  userId               String        @id
+  isActive             Boolean       @default(false)
+  monthlyCapacity      Int
+  /// 15, 20 ya da 30 dakika (veritabanı kısıtı).
+  sessionMinutes       Int
+  meetingModes         MeetingMode[]
+  inPersonNote         String?
+  /// “Müsait değilim”: bu tarihe kadar yeni talep alınmaz.
+  pausedUntil          DateTime?
+  cvReviewEnabled      Boolean       @default(false)
+  cvReviewMonthlyLimit Int           @default(0)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+}
+
+/// Yönetici işlem kaydı (D6). YALNIZ EKLENİR: veritabanı tetikleyicisi güncelleme/silme/TRUNCATE'i
+/// reddeder. `metadata` ve `reason` kişisel veri içermez (yalnız kimlikler); `recordAdminAction` doğrular.
+model AdminAuditLog {
+  id         String   @id @default(uuid(7))
+  actorId    String
+  action     String
+  targetType String
+  targetId   String
+  reason     String?
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+  @@index([action, createdAt])
 }
