@@ -21,7 +21,17 @@
       "DB_UNAVAILABLE": "Veritabanına şu an ulaşılamıyor. Biraz sonra tekrar dene.",
       "AUDIT_REASON_REQUIRED": "Bu işlem için kısa bir gerekçe yazmalısın.",
       "AUDIT_REASON_INVALID": "Gerekçe 3 ile 1000 karakter arasında olmalı ve e-posta ya da telefon içermemeli.",
-      "MEMBERSHIP_TRANSITION_INVALID": "Üyelik geçişi bu durumda yapılamaz. Üyelik kaydını kontrol et."
+      "MEMBERSHIP_TRANSITION_INVALID": "Üyelik geçişi bu durumda yapılamaz. Üyelik kaydını kontrol et.",
+      "AUTH_LINK_INVALID": "Giriş bağlantısı geçersiz ya da süresi dolmuş. Yeni bir bağlantı iste.",
+      "AUTH_TEST_LOGIN_DISABLED": "Test girişi bu ortamda kapalı.",
+      "EMAIL_DOMAIN_NOT_ALLOWED": "Bu e-posta adresiyle bu üyelik türü doğrulanamıyor. Mezunsan mezun belgeni yükle.",
+      "MEMBERSHIP_ALREADY_VERIFIED": "Bu bölümde üyeliğin zaten doğrulanmış.",
+      "DOCUMENT_REQUIRED": "Bir PDF dosyası seç.",
+      "DOCUMENT_EMPTY": "Seçtiğin dosya boş.",
+      "DOCUMENT_TOO_LARGE": "Dosya en fazla 5 MB olabilir.",
+      "DOCUMENT_NOT_PDF": "Yalnız PDF dosyası yükleyebilirsin.",
+      "DOCUMENT_ALREADY_PENDING": "Bu bölüm için bekleyen bir belgen var. Sonuçlanmasını bekle.",
+      "DOCUMENT_NOT_PENDING": "Bu belge için karar zaten verilmiş."
     }
   },
   "nav": {
