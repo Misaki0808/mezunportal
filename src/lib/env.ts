@@ -79,20 +79,47 @@ const smtpSecure = z.preprocess(
   z.enum(['true', 'false']).optional(),
 );
 
+const smtpFields = {
+  /** SMTP sunucusu: yerelde Mailpit (127.0.0.1:1025); canlı sağlayıcı K-05. */
+  SMTP_HOST: z.string().min(1),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535),
+  SMTP_SECURE: smtpSecure,
+  /** Kimlik doğrulamalı SMTP için ikisi birlikte verilir; Mailpit için boş. */
+  SMTP_USER: optionalText,
+  SMTP_PASSWORD: optionalText,
+  EMAIL_FROM: z.string().regex(emailFromPattern),
+};
+
+function missingSmtpCredential(env: { SMTP_USER?: string; SMTP_PASSWORD?: string }) {
+  if ((env.SMTP_USER === undefined) !== (env.SMTP_PASSWORD === undefined)) {
+    return env.SMTP_USER === undefined ? 'SMTP_USER' : 'SMTP_PASSWORD';
+  }
+  return null;
+}
+const smtpEnvSchema = z
+  .object({ APP_ENV: z.enum(['local', 'test', 'prod']), ...smtpFields })
+  .superRefine((env, ctx) => {
+    const missing = missingSmtpCredential(env);
+    if (missing) ctx.addIssue({ code: 'custom', path: [missing], message: missing });
+  });
+export type SmtpEnv = Omit<z.infer<typeof smtpEnvSchema>, 'SMTP_SECURE'> & { SMTP_SECURE: boolean };
+/** Worker'ın SMTP ayarı auth sırrına/LinkedIn'e bağımlı değildir. */
+export function parseSmtpEnv(source: Readonly<Record<string, string | undefined>>): SmtpEnv {
+  const result = smtpEnvSchema.safeParse(source);
+  if (!result.success)
+    throw new EnvValidationError([
+      ...new Set(result.error.issues.map((issue) => String(issue.path[0] ?? '(kök)'))),
+    ]);
+  return { ...result.data, SMTP_SECURE: result.data.SMTP_SECURE === 'true' };
+}
+
 const authEnvSchema = z
   .object({
     APP_ENV: z.enum(['local', 'test', 'prod']),
     APP_URL: z.url(),
     /** Better Auth çerez/jeton imza sırrı (≥ 32 karakter). Canlıda gerçek, rastgele bir değer olmalı. */
     BETTER_AUTH_SECRET: z.string().min(32),
-    /** SMTP sunucusu: yerelde Mailpit (127.0.0.1:1025); canlı sağlayıcı K-05. */
-    SMTP_HOST: z.string().min(1),
-    SMTP_PORT: z.coerce.number().int().min(1).max(65535),
-    SMTP_SECURE: smtpSecure,
-    /** Kimlik doğrulamalı SMTP için ikisi birlikte verilir; Mailpit için boş. */
-    SMTP_USER: optionalText,
-    SMTP_PASSWORD: optionalText,
-    EMAIL_FROM: z.string().regex(emailFromPattern),
+    ...smtpFields,
     /** LinkedIn ile giriş: İKİSİ de yoksa sağlayıcı kapalıdır (LinkedIn uygulaması kullanıcıda, E maddesi). */
     LINKEDIN_CLIENT_ID: optionalText,
     LINKEDIN_CLIENT_SECRET: optionalText,
@@ -102,9 +129,8 @@ const authEnvSchema = z
     if ((env.LINKEDIN_CLIENT_ID === undefined) !== (env.LINKEDIN_CLIENT_SECRET === undefined)) {
       issue(env.LINKEDIN_CLIENT_ID === undefined ? 'LINKEDIN_CLIENT_ID' : 'LINKEDIN_CLIENT_SECRET');
     }
-    if ((env.SMTP_USER === undefined) !== (env.SMTP_PASSWORD === undefined)) {
-      issue(env.SMTP_USER === undefined ? 'SMTP_USER' : 'SMTP_PASSWORD');
-    }
+    const missing = missingSmtpCredential(env);
+    if (missing) issue(missing);
     if (env.APP_ENV === 'prod' && env.BETTER_AUTH_SECRET.startsWith('dev-only')) {
       issue('BETTER_AUTH_SECRET');
     }
