@@ -44,8 +44,11 @@ describe('şema değişmezleri', () => {
     expect(models.AdminAuditLog).not.toMatch(/updatedAt/);
   });
 
-  it('kullanıcı tablosunda yetki kararı verilebilecek bir “rol” alanı yoktur', () => {
-    expect(models.User).not.toMatch(/^\s+role\s/m);
+  it('User.role yalnız Better Auth admin eklentisi için isteğe bağlı bir metindir ve belgelidir (yetkiye bağlanmaz)', () => {
+    // Eklenti şemasında zorunlu olduğu için sütun vardır; davranış testi (role-column.db.test.ts) yetki
+    // vermediğini kanıtlar. Burada yalnız biçim: isteğe bağlı `String?` ve “kullanılmaz” uyarısı.
+    expect(models.User).toMatch(/^\s+role\s+String\?/m);
+    expect(schema).toMatch(/YETKİ KARARINDA ASLA KULLANILMAZ/);
   });
 
   it('sınıf saklanmaz (D4): üyelikte yalnız giriş yılı ve düzeltme vardır', () => {
