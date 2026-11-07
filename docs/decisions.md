@@ -289,6 +289,11 @@ göstermediği için bütün bölümler döner ve doğrulama mezun belgesiyle ya
 (`AUTH_PROVIDER_NOT_CONFIGURED`) taşır: ekran düğmeyi gizlemek yerine devre dışı gösterip sebebini yazar.
 Başlatma eylemi hedef yolu istemciden almaz (açık yönlendirme yok).
 
+## 2026-11-08 · Hesabım ve doğrulama gezinmesi
+Profil sekmesi Hesabım merkezine açılır; doğrulama, e-posta ve çıkış buradan erişilir. Yönetim
+bağlantısı yalnız sunucuda yetki korumalarını geçen yöneticilere gösterilir; yönetim sayfası ayrıca
+sunucuda korunur. Giriş sonrası hedef ana sayfa kalır, doğrulanmamış üyeye doğrulama kartı gösterilir.
+
 ## 2026-11-08 · Better Auth HTTP yüzeyi beyaz liste; giriş sunucu eylemlerinden geçer
 Better Auth yüzlerce uç açar (admin eklentisinin `impersonate-user`/`set-role`/`remove-user`, kayıt, parola,
 doğrudan `sign-in/magic-link`). Hiçbirine istemciden ulaşılması gerekmez ve doğrudan giriş ucu bizim hız
@@ -393,3 +398,9 @@ Hesap silme kullanıcı satırını işlem başında kilitler, silinme işaretin
 kilit altında toplar; işlem sonrasında kalan kayıtlı anahtarları yeniden tarar. Belge yükleme de aynı
 kullanıcı satırını kilitleyip silinmiş hesabı reddeder ve önceden yazılan dosyayı temizler. Böylece
 silme sürerken başlayan yükleme silinmiş hesaba belge kaydı ve artık dosya bırakamaz.
+
+## 2026-11-08 · Giriş ekranında odaklı düzen (PM ekran turu kararı)
+Giriş ve e-postanı kontrol et sayfalarında uygulama alt gezinmesi/yan menü yerine logo ve içerik
+vardır. LinkedIn yapılandırılmamışsa düğmesi ve ayraç gösterilmez; açıkken formun üstünde ikonlu
+ikincil düğmedir. E-posta sözcüğü bölünmez, alan ipucu öğrenci/akademisyene üniversite,
+mezuna kişisel adresini önerir; sabit üniversite alan adı arayüze yazılmaz.
