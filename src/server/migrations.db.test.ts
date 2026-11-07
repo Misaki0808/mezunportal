@@ -4,10 +4,12 @@ import { createTestPrisma } from '@/test/db';
 
 const prisma = createTestPrisma();
 
+// Diğer test dosyaları aynı veritabanında kendi kurumlarını ve üyeliklerini bırakır; bu dosya yalnız
+// kendi “Test Üni” kayıtlarını temizler.
 async function clearInstitutions() {
-  await prisma.department.deleteMany();
-  await prisma.faculty.deleteMany();
-  await prisma.university.deleteMany();
+  await prisma.department.deleteMany({ where: { faculty: { university: { name: 'Test Üni' } } } });
+  await prisma.faculty.deleteMany({ where: { university: { name: 'Test Üni' } } });
+  await prisma.university.deleteMany({ where: { name: 'Test Üni' } });
 }
 
 afterAll(async () => {
