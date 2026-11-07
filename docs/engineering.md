@@ -116,8 +116,9 @@ pnpm db:migrate | db:deploy | db:seed | db:reset   # Prisma; ayrıntı "Yerel ge
 worktree'leri ve açık PR'ları gösterir. BAYAT veya PULL DÜŞTÜ uyarısında sıfırdan farklı çıkar;
 çalışma dosyalarına dokunmaz. Kartın tabanını ayrıca güncel `origin/main` ile karşılaştır.
 
-`pnpm test:e2e` Chromium ile ayrı bir geliştirme sunucusu açar (3206 portu); ilk kurulumda
-`pnpm exec playwright install chromium` gerekir. `pnpm evidence / --url http://localhost:3206`
+`pnpm test:e2e` Chromium ile worktree `APP_URL` portunda ayrı bir geliştirme sunucusu açar;
+portta sunucu varsa onu kullanmak yerine durur. `.env.local` veya süreçte `APP_URL` gerekir. İlk kurulumda
+`pnpm exec playwright install chromium` gerekir. `pnpm evidence /`
 çalışan sunucudan 390×844 ve 1440×900 tam sayfa görüntüleri ile konsol hata/uyarı raporu üretir.
 `APP_URL` adresi `--url` yerine kullanılabilir; `--out` çıktı kökünü değiştirir. Varsayılan çıktı,
 ana repo yanındaki `pm-handoff/kanit/<tarih>/` altında her çalışmaya ayrı bir klasördür. Rapor
