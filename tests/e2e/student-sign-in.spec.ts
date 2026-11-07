@@ -68,6 +68,13 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     expect(verification?.status()).toBeGreaterThanOrEqual(300);
     expect(verification?.status()).toBeLessThan(400);
     await page.goto('/');
+    await expect(page).toHaveURL(/\/onay$/);
+    const consents = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
+    await consents.nth(0).check();
+    await consents.nth(1).check();
+    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
+    await expect(page).toHaveURL(/\/hesap$/);
+    await page.goto('/');
     await expect(page.getByText('Doğrulamanı tamamla')).toBeVisible();
     await page.getByRole('link', { name: 'Doğrulamaya git' }).click();
     await expect(page).toHaveURL(/\/dogrulama$/);

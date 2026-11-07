@@ -378,5 +378,245 @@
     "masters": "Yüksek lisans",
     "network": "Mentor bulmak",
     "careerChange": "Sektör değiştirmek"
+  },
+  "privacyScreens": {
+    "common": {
+      "back": "Hesabıma dön",
+      "eyebrow": "HESABIN SENİN KONTROLÜNDE",
+      "save": "Kaydet",
+      "saving": "Kaydediliyor…",
+      "saved": "Değişikliklerin kaydedildi.",
+      "cancel": "Vazgeç",
+      "continue": "Devam et",
+      "read": "Metni oku",
+      "default": "Varsayılan",
+      "loading": "Yükleniyor…",
+      "retry": "Yeniden dene"
+    },
+    "account": {
+      "title": "Gizlilik ve verilerin",
+      "description": "Neyi paylaştığını seç, izinlerini yönet.",
+      "consent": "Onaylarım",
+      "visibility": "Gizlilik ayarları",
+      "contacts": "İletişim talepleri",
+      "export": "Verilerimi indir",
+      "delete": "Hesabımı sil"
+    },
+    "consent": {
+      "title": "Başlamadan önce, haklarını bil",
+      "description": "Metinleri incele ve seçimlerini yap. İsteğe bağlı rıza vermeden de devam edebilirsin.",
+      "renewTitle": "Onaylarını yenile",
+      "renewDescription": "Zorunlu metinlerin güncel sürümünü inceleyip onayla.",
+      "manageTitle": "Onayların ve izinlerin",
+      "manageDescription": "Verdiğin izinleri incele; isteğe bağlı aktarım rızanı istediğin an geri al.",
+      "required": "Zorunlu",
+      "optional": "İsteğe bağlı",
+      "version": "Sürüm: {version}",
+      "draft": "Bu metinler taslaktır. Hoca / hukuk onayı bekliyor; veri sorumlusu bilgisi henüz kesinleşmedi.",
+      "requiredHint": "Devam etmek için iki zorunlu metni onayla.",
+      "accept": "Okudum ve onaylıyorum.",
+      "optionalAccept": "Yurt dışına aktarım için açık rıza veriyorum.",
+      "optionalHint": "CV ayrıştırma ve Google Takvim daveti içindir. Onaylamazsan profilini elle doldurabilir, görüşme bağlantısını mentordan alabilirsin.",
+      "submit": "Seçimlerimi kaydet",
+      "saved": "Onayların kaydedildi.",
+      "requiredError": "Devam etmek için bu metni onayla.",
+      "PRIVACY_NOTICE": "Aydınlatma metni",
+      "TERMS_OF_USE": "Kullanım şartları",
+      "CROSS_BORDER_TRANSFER": "Yurt dışına aktarım açık rızası"
+    },
+    "visibility": {
+      "title": "İletişim bilgilerin, senin kararın",
+      "description": "Her alanı kimlerin görebileceğini ayrı seç. E‑posta ve telefonun varsayılan olarak talep onayına kadar gizli.",
+      "help": "Yalnız ben: alan gizlidir. Talep ve onayla: yalnız onay verdiğin kişiye açılır. Doğrulanmış üyeler: platformun doğrulanmış üyeleri görür.",
+      "PRIVATE": "Yalnız ben",
+      "ON_APPROVED_REQUEST": "Talep ve onayla",
+      "MEMBERS": "Doğrulanmış üyeler",
+      "updated": "{field} görünürlüğü kaydedildi."
+    },
+    "fields": {
+      "EMAIL": "E-posta",
+      "PHONE": "Telefon",
+      "SOCIAL_LINKS": "Sosyal bağlantılar",
+      "LINKEDIN": "LinkedIn"
+    },
+    "contacts": {
+      "title": "İletişim taleplerin",
+      "description": "Bilgilerin yalnız sen onayladığında açılır. Verdiğin onayı istediğin an geri alabilirsin.",
+      "incoming": "Gelen",
+      "outgoing": "Gönderilen",
+      "tabs": "Talep kutusu",
+      "emptyTitle": "Burada henüz talep yok",
+      "emptyDescription": "Bir talep geldiğinde buradan karar verebilirsin. Bu sırada kendi görünürlüğünü gözden geçirebilirsin.",
+      "settings": "Görünürlüğümü düzenle",
+      "approve": "Onayla",
+      "reject": "Reddet",
+      "revoke": "Onayı geri al",
+      "withdraw": "Talebi geri çek",
+      "changed": "Talep güncellendi.",
+      "more": "Daha fazla göster",
+      "requested": "İstenen bilgiler",
+      "shared": "Seninle paylaşılan bilgiler",
+      "message": "Kısa not",
+      "PENDING": "Onay bekliyor",
+      "APPROVED": "Onaylandı",
+      "REJECTED": "Reddedildi",
+      "WITHDRAWN": "Geri çekildi",
+      "REVOKED": "Onay geri alındı",
+      "confirmTitle": "Paylaşımı kapat",
+      "confirmDescription": "Bu işlemden sonra ilgili alanlar bu talep üzerinden görülemez. Devam etmek istiyor musun?",
+      "sendTitle": "İletişim bilgisi iste",
+      "sendDescription": "Hangi bilgileri istediğini seç. Karşı taraf onaylayana kadar bu bilgiler görünmez.",
+      "fieldLegend": "İstediğin bilgiler",
+      "fieldError": "En az bir bilgi seç.",
+      "messageHelp": "Neden iletişim kurmak istediğini kısaca anlat. En fazla {max} karakter.",
+      "send": "Talep gönder",
+      "sent": "Talebin gönderildi. Yanıtı Gönderilen kutusundan izleyebilirsin.",
+      "sendDone": "Taleplerime git",
+      "notePlaceholder": "Örneğin, staj deneyimin hakkında danışmak istiyorum.",
+      "requestableHelp": "Bir alan zaten üyelere açıksa veya sahibi paylaşımı kapattıysa o alan için talep gönderilemez."
+    },
+    "delete": {
+      "title": "Hesabını silmeden önce",
+      "description": "Bu işlem geri alınamaz. Önce istersen verilerinin bir kopyasını indir.",
+      "download": "Verilerimi indir",
+      "choice": "Yayınlanmış içeriklerin ne olsun?",
+      "DELETE": "Yayınlanmış deneyimlerimi sil",
+      "DELETEHint": "Paylaştığın yayınlanmış içerikler de silinir.",
+      "ANONYMIZE": "Adımı kaldırıp içerikleri bırak",
+      "ANONYMIZEHint": "İçerikler kalır; seninle bağlantısı kaldırılır.",
+      "consequences": "Her iki seçenekte de",
+      "SESSIONS_ENDED": "Bütün oturumların kapanır.",
+      "PERSONAL_DATA_ERASED": "Kişisel alanların temizlenir.",
+      "FILES_DELETED": "Saklanan dosyaların silinir.",
+      "SIGN_IN_DISABLED": "Bu hesaba yeniden giriş yapılamaz.",
+      "PUBLISHED_CONTENT_DELETED": "Yayınlanmış içeriklerin silinir.",
+      "PUBLISHED_CONTENT_ANONYMIZED": "İçeriklerin adın ve hesabınla ilişkilendirilmeden kalır.",
+      "email": "Onaylamak için e‑posta adresini yaz",
+      "emailHint": "Hesabındaki e‑posta adresiyle eşleşmeli.",
+      "confirmTitle": "Hesabın kalıcı olarak silinecek",
+      "confirmDescription": "Seçtiğin içerik tercihi uygulanır, kişisel verilerin temizlenir ve bütün oturumların kapanır. Bu işlem geri alınamaz.",
+      "button": "Hesabımı sil",
+      "deleted": "Hesabın silindi",
+      "deletedDescription": "Oturumların kapatıldı ve kişisel verilerin temizlendi.",
+      "home": "Ana sayfaya dön"
+    },
+    "export": {
+      "title": "Verilerinin bir kopyası sende olsun",
+      "description": "Hesabına ait bilgileri JSON dosyası olarak indir. Bu dosya kişisel veri içerir; güvenli bir yerde sakla.",
+      "includes": "Dosyada neler var?",
+      "details": "Profil bilgilerin, üyeliklerin, onayların, görünürlük seçimlerin ve iletişim taleplerin. Karşı tarafın gizli iletişim bilgileri bu döküme girmez.",
+      "download": "JSON dosyamı indir",
+      "downloading": "Dosyan hazırlanıyor…",
+      "done": "Veri dosyan indirilmeye hazır.",
+      "fileName": "mezunportal-verilerim.json"
+    },
+    "legal": {
+      "draft": "Taslak · Hoca / hukuk onayı bekliyor",
+      "title": "Hukuki metinler",
+      "back": "Onaylarıma dön",
+      "version": "Sürüm: {version}",
+      "placeholder": "Köşeli parantezli alanlar kesinleşmemiş bilgileri gösterir. Bu taslaklar pilot öncesi onaylanacak."
+    },
+    "documents": {
+      "PRIVACY_NOTICE": {
+        "slug": "aydinlatma",
+        "sections": {
+          "section1": {
+            "title": "1. Veri sorumlusu",
+            "body": "[K-03: veri sorumlusunun unvanı ve iletişim bilgisi]"
+          },
+          "section2": {
+            "title": "2. İşlenen kişisel veriler",
+            "items": {
+              "item1": "Kimlik ve iletişim: ad, soyad, e-posta, (isteğe bağlı) telefon, profil fotoğrafı.",
+              "item2": "Eğitim ve mesleki bilgi: bölüm, giriş/mezuniyet yılı, eğitim ve iş geçmişi, beceriler, diller, sertifikalar, CV dosyası.",
+              "item3": "Doğrulama: okul/kurum e-posta adresi; mezunlar için e-Devlet mezun belgesi (karar verildiği anda silinir).",
+              "item4": "Platform kullanımı: deneyim paylaşımları, randevu ve görüşme kayıtları, SSS talepleri, katkı puanı, güvenilirlik göstergesi, işlem güvenliği kayıtları."
+            }
+          },
+          "section3": {
+            "title": "3. İşleme amaçları",
+            "body": "Üyeliğin doğrulanması; profil oluşturma; öğrencilerin mentor ve deneyimlere erişimi; randevu düzenlenmesi; moderasyon ve platform güvenliği; bölümün mezun takibi için toplu ve kimliksiz raporlar; bildirim gönderimi."
+          },
+          "section4": {
+            "title": "4. Hukuki sebepler",
+            "body": "[Her amaç için KVKK m. 5/2 ve m. 6 kapsamındaki sebepler — hukuk görüşüyle doldurulacak.]"
+          },
+          "section5": {
+            "title": "5. Aktarım",
+            "items": {
+              "item1": "Yurt dışı: CV ayrıştırma için yapay zekâ sağlayıcısı [K-04]; randevu davetleri için Google Takvim; [K-05 canlıda e-posta sağlayıcısı yurt dışındaysa]. Yalnız ayrı açık rızanızla.",
+              "item2": "Platform içi: iletişim bilgileriniz yalnız sizin onayladığınız kişilere; randevu onayında e-posta adresiniz karşı tarafa."
+            }
+          },
+          "section6": {
+            "title": "6. Saklama süreleri",
+            "body": "Mezun belgesi: karar anında silinir. CV: son sürüm, siz silene ya da hesabınızı kapatana kadar. E-posta gönderim kayıtları: 6 ay. Kullanım metrikleri: 24 ay sonra kimliksizleştirilir. Hesap silindiğinde kişisel alanlar derhal silinir."
+          },
+          "section7": {
+            "title": "7. Çerezler",
+            "body": "Yalnız oturumunuzun çalışması için zorunlu çerez kullanılır; analitik veya reklam çerezi yoktur."
+          },
+          "section8": {
+            "title": "8. Haklarınız (KVKK m. 11)",
+            "body": "[Haklar listesi.] Verilerinizin bir kopyasını uygulamadan indirebilir, hesabınızı silebilirsiniz. Başvuru: [K-03 başvuru adresi]."
+          }
+        }
+      },
+      "CROSS_BORDER_TRANSFER": {
+        "slug": "yurt-disi-aktarim",
+        "sections": {
+          "section0": {
+            "title": "Rıza tercihiniz",
+            "body": "Bu rıza isteğe bağlıdır. Vermezseniz platformu kullanmaya devam edersiniz; yalnız aşağıdaki iki özellik çalışmaz."
+          },
+          "section1": {
+            "title": "1. CV'nin otomatik ayrıştırılması",
+            "body": "Yüklediğiniz CV, profilinizi otomatik doldurmak için yurt dışında bulunan yapay zekâ hizmet sağlayıcısına [K-04: sağlayıcı adı ve ülkesi] gönderilir. Sağlayıcı bu veriyi model eğitiminde kullanmaz [sağlayıcı politikasıyla doğrulanacak]. Rıza vermezseniz profilinizi elle doldurursunuz."
+          },
+          "section2": {
+            "title": "2. Online randevu davetleri",
+            "body": "Online randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz Google LLC'ye aktarılır. Rıza vermezseniz mentor görüşme bağlantısını kendisi paylaşır. Rızanızı istediğiniz an gizlilik ayarlarından geri alabilirsiniz; geri alma ileriye dönük işler."
+          }
+        }
+      },
+      "TERMS_OF_USE": {
+        "slug": "kullanim-sartlari",
+        "sections": {
+          "section1": {
+            "title": "1. Platformun amacı",
+            "body": "İÜ öğrencileri, mezunları ve akademisyenleri arasında staj ve kariyer deneyimi paylaşımı ve mentorluk. [Platformu işleten: K-03]"
+          },
+          "section2": {
+            "title": "2. Üyelik ve doğrulama",
+            "body": "Tek kişi tek hesap. Doğrulama bilgileri gerçek olmalıdır; yanlış beyan hesabın askıya alınmasına yol açar."
+          },
+          "section3": {
+            "title": "3. İçerik kuralları",
+            "items": {
+              "item1": "Deneyimler kişisel deneyimdir; şirketler hakkında hakaret, iftira, gizli bilgi ve kişisel veri içeremez.",
+              "item2": "Paylaşımlar yayından önce moderasyondan geçer; moderatör düzenleyebilir veya reddedebilir.",
+              "item3": "Şikâyet edilen içerik incelenir ve gerekirse kaldırılır."
+            }
+          },
+          "section4": {
+            "title": "4. Mentorluk ve randevular",
+            "body": "Mentorlar gönüllüdür; kapasitelerini kendileri belirler. Katılamayacağın randevuyu iptal et; katılım göstergesi mentorlara gösterilir."
+          },
+          "section5": {
+            "title": "5. Katkı puanı",
+            "body": "Puan yalnız doğrulanmış katkılardan doğar. Puan elde etmek için sahte görüşme, sahte hesap veya benzeri yollar yasaktır; tespit edilirse puanlar ve etiketler geri alınır, hesap askıya alınabilir. Ödüller puanla otomatik değil, bölüm kararıyla verilir."
+          },
+          "section6": {
+            "title": "6. Sorumluluk",
+            "body": "[Hoca/hukuk görüşü: platformun mentor tavsiyeleri ve staj sonuçları için sorumluluğu.]"
+          },
+          "section7": {
+            "title": "7. Hesabın kapatılması",
+            "body": "Hesabını istediğin an silebilirsin; sonuçları silme ekranında açıklanır."
+          }
+        }
+      }
+    }
   }
 }
