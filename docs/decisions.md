@@ -412,3 +412,11 @@ paydaya ve eksiklere girmez. Rol ve bölüm beyanı zorunludur, diğer adımlar 
 eksik sayılır. CV adımı P1-06'da paydaya eklenir. İlgi ve hedef etiketleri pilot için sabit seed ile
 başlar, sonraki aşamada değiştirilebilir. Profil verisi P1-04 servisinde hesap silme/anonimleştirme
 ve yalnız kendi verisini içeren veri dökümü akışlarına bağlanır.
+
+## 2026-11-08 · P1-04 açık “atla” biçimi (PM kararı)
+
+Atlanabilir adımın durumu `COMPLETED | SKIPPED | PENDING` olarak saklanır; “tercih etmedim” (`interested:
+false`) bir cevaptır, atlama değildir, boş seçim de kaydetme sayılmaz. Atlama kayıtlı veriyi silmez ama
+adım yüzdede eksik kalır; ilerleme noktası kalıcıdır. Rol ve bölüm adımı atlanamaz; ilk girişi bitirmek
+kalan bekleyen adımları atlanmış sayar. Gerekçe: ekran ile servis aynı ayrımı tek yerden okur ve sonradan
+“eksik adımı tamamla” daveti yalnız gerçekten atlananı hedefler.

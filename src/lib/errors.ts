@@ -43,6 +43,7 @@ export const ERROR_CODES = [
   'ACCOUNT_DELETE_CONFIRMATION_MISMATCH',
   'PROFILE_TAG_INVALID',
   'MENTOR_NOT_ELIGIBLE',
+  'ONBOARDING_REQUIRED_STEP_PENDING',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

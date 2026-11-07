@@ -156,22 +156,26 @@ enum TagKind {
 
 /// Kullanıcının kendi profili; kimlik, rol ve yetki kaynağı değildir.
 model Profile {
-  id                    String         @id @default(uuid(7))
-  userId                String         @unique
+  id                    String           @id @default(uuid(7))
+  userId                String           @unique
   headline              String?
   summary               String?
   city                  String?
   goals                 String?
   socialLinks           Json?
   linkedinUrl           String?
-  completionScore       Int            @default(0)
+  completionScore       Int              @default(0)
   cvUpdatedAt           DateTime?
   lastFreshnessPromptAt DateTime?
   lastStillThereCheckAt DateTime?
-  onboardingStep        OnboardingStep @default(MEMBERSHIP)
+  onboardingStep        OnboardingStep   @default(MEMBERSHIP)
   mentorInterested      Boolean?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  /// Adım durumu açıkça tutulur: listede yoksa PENDING. İki liste ayrıktır; MEMBERSHIP ve COMPLETE
+  /// atlanamaz (ham SQL CHECK). Atlama veriyi silmez (ilgi/hedef/mentor tercihi olduğu gibi kalır).
+  completedSteps        OnboardingStep[] @default([])
+  skippedSteps          OnboardingStep[] @default([])
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
   user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags ProfileTag[]
