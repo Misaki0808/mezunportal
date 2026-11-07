@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { VISIBILITY_LEVELS } from '@/contracts/privacy';
 
-import { VIEWER_RELATIONS, VISIBILITY_DECISION_TABLE } from './visibility';
+import {
+  VIEWER_RELATIONS,
+  VISIBILITY_DECISION_TABLE,
+  effectiveLevel,
+  fieldAccess,
+} from './visibility';
 
 // Sözleşme: karar tablosunun kendisi (gövde servis kartında bu tabloya karşı test edilir).
 const access = (level: string, relation: string) =>
@@ -46,5 +51,32 @@ describe('görünürlük karar tablosu', () => {
 
   it('MEMBERS: doğrulanmış üyeler tam görür', () => {
     expect(access('MEMBERS', 'VERIFIED_MEMBER')).toBe('FULL');
+  });
+});
+
+describe('fieldAccess (gövde) = karar tablosu', () => {
+  it.each(VISIBILITY_DECISION_TABLE.map((row) => [row.level, row.relation, row.access] as const))(
+    '%s × %s → %s',
+    (level, relation, expected) => {
+      expect(fieldAccess({ field: 'EMAIL', level, relation })).toBe(expected);
+    },
+  );
+
+  it('bilinmeyen seviye/ilişki güvenli tarafa düşer (NONE)', () => {
+    expect(
+      fieldAccess({ field: 'EMAIL', level: 'PUBLIC' as never, relation: 'VERIFIED_MEMBER' }),
+    ).toBe('NONE');
+    expect(fieldAccess({ field: 'EMAIL', level: 'MEMBERS', relation: 'STRANGER' as never })).toBe(
+      'NONE',
+    );
+  });
+});
+
+describe('effectiveLevel', () => {
+  it('satır yoksa varsayılan; seçim varsa seçim', () => {
+    expect(effectiveLevel('EMAIL', {})).toBe('ON_APPROVED_REQUEST');
+    expect(effectiveLevel('LINKEDIN', new Map())).toBe('MEMBERS');
+    expect(effectiveLevel('EMAIL', { EMAIL: 'PRIVATE' })).toBe('PRIVATE');
+    expect(effectiveLevel('PHONE', new Map([['PHONE', 'MEMBERS']]))).toBe('MEMBERS');
   });
 });
