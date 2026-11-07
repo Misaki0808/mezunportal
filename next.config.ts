@@ -38,6 +38,13 @@ const nextConfig: NextConfig = {
   // kartla değişir (prompts/README.md), bu yüzden kapalı.
   agentRules: false,
   reactStrictMode: true,
+  experimental: {
+    serverActions: {
+      // Mezun belgesi yükleme (PDF ≤ 5 MB) bir sunucu eylemidir; Next.js 16 varsayılan gövde sınırı 1 MB'dır.
+      // 5 MB dosya + çok parçalı form zarfı için 6 MB (src/contracts/graduation-document.ts MAX_DOCUMENT_BYTES).
+      bodySizeLimit: '6mb',
+    },
+  },
   // Yerel telefon testinde alt gezinmeyi örtmesin; hata katmanı açık kalır.
   devIndicators: false,
   async headers() {
