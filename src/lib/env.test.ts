@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { EnvValidationError, parseEnv } from '@/lib/env';
+import {
+  EnvValidationError,
+  INSECURE_DEV_AUTH_SECRET,
+  isLinkedInConfigured,
+  parseAuthEnv,
+  parseEnv,
+} from '@/lib/env';
 
 const valid = {
   APP_ENV: 'local',
@@ -73,3 +79,81 @@ function catchError(fn: () => unknown): unknown {
   }
   throw new Error('Hata fırlatılması bekleniyordu');
 }
+
+describe('kimlik doğrulama ortamı (parseAuthEnv)', () => {
+  const auth = {
+    APP_ENV: 'local',
+    APP_URL: 'http://localhost:3100',
+    BETTER_AUTH_SECRET: 'dev-only-insecure-secret-for-local-and-test-0000',
+    SMTP_HOST: '127.0.0.1',
+    SMTP_PORT: '1025',
+    EMAIL_FROM: 'MezunPortal <no-reply@test.mezunportal.local>',
+  } as const;
+
+  it('Mailpit ayarlarını çözer; SMTP_SECURE varsayılan false, LinkedIn kapalı', () => {
+    const env = parseAuthEnv(auth);
+    expect(env).toMatchObject({ SMTP_PORT: 1025, SMTP_SECURE: false });
+    expect(isLinkedInConfigured(env)).toBe(false);
+  });
+
+  it('boş SMTP_*, LINKEDIN_* satırları tanımsız sayılır (.env.example boş satırlar)', () => {
+    const env = parseAuthEnv({
+      ...auth,
+      SMTP_SECURE: '',
+      SMTP_USER: '',
+      SMTP_PASSWORD: '',
+      LINKEDIN_CLIENT_ID: '',
+      LINKEDIN_CLIENT_SECRET: '',
+    });
+    expect(env.SMTP_USER).toBeUndefined();
+    expect(isLinkedInConfigured(env)).toBe(false);
+  });
+
+  it.each([
+    ['BETTER_AUTH_SECRET', undefined],
+    ['BETTER_AUTH_SECRET', 'kisa'],
+    ['SMTP_HOST', undefined],
+    ['SMTP_PORT', undefined],
+    ['SMTP_PORT', '70000'],
+    ['SMTP_PORT', 'abc'],
+    ['EMAIL_FROM', undefined],
+    ['EMAIL_FROM', 'adres-degil'],
+    ['EMAIL_FROM', 'Ad <a@b.co>\r\nBcc: x@y.zz'],
+  ])('%s = %s düşer ve yalnız değişken adını söyler', (key, value) => {
+    const error = catchError(() => parseAuthEnv({ ...auth, [key]: value }));
+    expect(error).toBeInstanceOf(EnvValidationError);
+    expect((error as EnvValidationError).invalidKeys).toEqual([key]);
+  });
+
+  it('LinkedIn: yalnız biri verilirse düşer, ikisi birlikte etkinleştirir', () => {
+    expect(() => parseAuthEnv({ ...auth, LINKEDIN_CLIENT_ID: 'a' })).toThrow(EnvValidationError);
+    expect(() => parseAuthEnv({ ...auth, LINKEDIN_CLIENT_SECRET: 'b' })).toThrow(
+      EnvValidationError,
+    );
+    const env = parseAuthEnv({ ...auth, LINKEDIN_CLIENT_ID: 'a', LINKEDIN_CLIENT_SECRET: 'b' });
+    expect(isLinkedInConfigured(env)).toBe(true);
+  });
+
+  it('SMTP kullanıcı/parola ikisi birlikte verilmeli', () => {
+    expect(() => parseAuthEnv({ ...auth, SMTP_USER: 'u' })).toThrow(EnvValidationError);
+    expect(() => parseAuthEnv({ ...auth, SMTP_PASSWORD: 'p' })).toThrow(EnvValidationError);
+    expect(parseAuthEnv({ ...auth, SMTP_USER: 'u', SMTP_PASSWORD: 'p' }).SMTP_USER).toBe('u');
+  });
+
+  it('canlıda (prod) genel geliştirme sırrı reddedilir; local/test kabul eder', () => {
+    expect(() => parseAuthEnv({ ...auth, APP_ENV: 'prod' })).toThrow(EnvValidationError);
+    expect(
+      parseAuthEnv({ ...auth, APP_ENV: 'prod', BETTER_AUTH_SECRET: 'x'.repeat(40) }).APP_ENV,
+    ).toBe('prod');
+    expect(parseAuthEnv({ ...auth, APP_ENV: 'test' }).APP_ENV).toBe('test');
+    expect(INSECURE_DEV_AUTH_SECRET).toBe(auth.BETTER_AUTH_SECRET);
+  });
+
+  it('hata mesajı sırrı sızdırmaz', () => {
+    const secret = 'cok-gizli-sir-degeri-cok-gizli-sir-degeri';
+    const error = catchError(() =>
+      parseAuthEnv({ ...auth, BETTER_AUTH_SECRET: secret, SMTP_PORT: 'x' }),
+    );
+    expect((error as Error).message).not.toContain(secret);
+  });
+});
