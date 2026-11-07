@@ -26,7 +26,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'node',
-          include: ['src/**/*.test.ts', 'prisma/**/*.test.ts'],
+          include: ['src/**/*.test.{ts,tsx}', 'prisma/**/*.test.ts'],
           exclude: ['**/*.db.test.ts', '**/node_modules/**'],
         },
       },

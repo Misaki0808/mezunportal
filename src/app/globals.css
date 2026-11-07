@@ -1,18 +1,119 @@
 @import 'tailwindcss';
 
-/* Tasarım token'ları ve ortak stiller P0-05'te bu dosyaya eklenir. */
+/*
+ * Tasarım token'larının KANONİK kaynağı bu dosyadır (docs/design.md görsel niyeti anlatır, değeri
+ * ikinci kez yönetmez). Tek marka rengi `--color-primary`; başarı/uyarı/hata renkleri yalnız anlam
+ * taşır. Metin/zemin çiftlerinin kontrastı `src/lib/contrast.test.ts` ile korunur
+ * (WCAG AA: normal metin 4.5:1, arayüz sınırı ve büyük metin 3:1). Yeni renk eklenirse o testteki
+ * çift listesine de eklenir.
+ */
+@theme {
+  /* Zemin ve yüzeyler */
+  --color-bg: #ffffff;
+  --color-surface: #f8fafc;
+  --color-surface-strong: #f1f5f9;
+  --color-overlay: rgb(15 23 42 / 0.5);
 
-:root {
-  color-scheme: light;
+  /* Metin */
+  --color-fg: #0f172a;
+  --color-fg-muted: #475569;
+  --color-fg-subtle: #64748b;
+
+  /* Çizgiler: `border` dekoratif ayırıcı, `border-control` etkileşimli kontrol sınırı (3:1) */
+  --color-border: #e2e8f0;
+  --color-border-control: #64748b;
+
+  /* Marka (tek vurgu) */
+  --color-primary: #1d4ed8;
+  --color-primary-hover: #1e40af;
+  --color-on-primary: #ffffff;
+  --color-primary-soft: #eff6ff;
+  --color-on-primary-soft: #1e3a8a;
+
+  /* Anlam renkleri: her biri renk + metinle birlikte kullanılır, tek sinyal değildir */
+  --color-success: #15803d;
+  --color-success-soft: #f0fdf4;
+  --color-on-success-soft: #14532d;
+  --color-warning: #b45309;
+  --color-warning-soft: #fffbeb;
+  --color-on-warning-soft: #78350f;
+  --color-danger: #b91c1c;
+  --color-danger-hover: #991b1b;
+  --color-on-danger: #ffffff;
+  --color-danger-soft: #fef2f2;
+  --color-on-danger-soft: #7f1d1d;
+
+  /* Yazı tipi: sistem yığını (ağdan font yok) */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+
+  /* Radius ölçeği: kontrol < kart < örtü */
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+  --radius-sheet: 1.25rem;
+
+  /* Gölge işlevseldir, hiyerarşinin yerine geçmez */
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.08);
+  --shadow-overlay: 0 10px 30px rgb(15 23 42 / 0.2);
 }
 
-body {
-  background: #ffffff;
-  color: #111827;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    /* Yatay kaydırma yok */
+    overflow-x: hidden;
+  }
+
+  /* Görünür odak: klavye ve ekran okuyucu kullanıcıları için her etkileşimli öğede */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Hareket bilgi taşımıyorsa azaltılır (docs/design.md) */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/*
+ * Basınca görünüm (kullanıcı kararı): kart ve düğme basınca yalnız hafifçe küçülür; liste satırı
+ * zemin rengi almaz, yazı hafif solar ve satır hafifçe büyür.
+ */
+@utility press-control {
+  transition: transform 120ms ease-out;
+
+  &:active:not(:disabled, [aria-disabled='true']) {
+    transform: scale(0.97);
+  }
+}
+
+@utility press-row {
+  transition:
+    transform 120ms ease-out,
+    opacity 120ms ease-out;
+
+  &:active {
+    opacity: 0.7;
+    transform: scale(1.01);
+  }
 }
