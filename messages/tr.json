@@ -86,12 +86,12 @@
     "buttons": {
       "primary": "Kaydet",
       "secondary": "Vazgeç",
-      "ghost": "Daha fazla",
+      "ghost": "Daha fazla göster",
       "danger": "Hesabımı sil",
       "loading": "Gönder",
       "disabled": "Randevu al",
       "disabledReason": "Bu ay kapasite doldu",
-      "lg": "Büyük düğme",
+      "lg": "Başvur",
       "iconLabel": "Bildirimleri aç"
     },
     "fields": {
@@ -143,9 +143,9 @@
       "sheetTitle": "Filtrele",
       "sheetBody": "Filtre seçenekleri burada olur.",
       "sheetApply": "Uygula",
-      "toastInfo": "Bilgi bildirimi",
-      "toastSuccess": "Başarı bildirimi",
-      "toastError": "Hata bildirimi",
+      "toastInfo": "Bilgi bildirimi göster",
+      "toastSuccess": "Başarı bildirimi göster",
+      "toastError": "Hata bildirimi göster",
       "toastInfoMessage": "Taslak kaydedildi.",
       "toastSuccessMessage": "Randevun onaylandı.",
       "toastErrorMessage": "Randevu kaydedilemedi."

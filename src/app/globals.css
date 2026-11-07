@@ -3,7 +3,7 @@
 /*
  * Tasarım token'larının KANONİK kaynağı bu dosyadır (docs/design.md görsel niyeti anlatır, değeri
  * ikinci kez yönetmez). Tek marka rengi `--color-primary`; başarı/uyarı/hata renkleri yalnız anlam
- * taşır. Metin/zemin çiftlerinin kontrastı `src/components/ui/contrast.test.ts` ile korunur
+ * taşır. Metin/zemin çiftlerinin kontrastı `src/lib/contrast.test.ts` ile korunur
  * (WCAG AA: normal metin 4.5:1, arayüz sınırı ve büyük metin 3:1). Yeni renk eklenirse o testteki
  * çift listesine de eklenir.
  */
