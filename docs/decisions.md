@@ -369,7 +369,9 @@ tek atomik SQL'le (sabit pencere) tutulur: iletişim talebi günde 10, veri dök
 denemesi saatte 5. Hesap silmede kullanıcı satırı anonimleştirilir (ad yer tutucu, e-posta
 `deleted-<id>@deleted.invalid`, telefon/görsel boş): rıza ve işlem kaydı kanıt olarak bağlı kalır, eski
 e-postayla bu hesaba giriş yolu kalmaz. Bekleyen belge dosyası varken dosya silme bağlı değilse işlem hiç
-başlamaz (veritabanı silinip dosyanın kalması, yani yarım silme, yok). İletişim talebinde yalnız “onaylı
+başlamaz. Depolama adaptörü bağlıdır; dosyalar commit öncesinde idempotent silinir. Silme hatasında
+hesap ve belge anahtarları rollback ile korunur; tekrar denenebilir. Kısmi dosya silinip commit
+başarısız olursa bekleyen belge yeniden yüklenebilir (belge kararıyla aynı dış sistem sınırı). İletişim talebinde yalnız “onaylı
 talebe açık” alan istenebilir (PRIVATE kimseye açılmaz, MEMBERS zaten görünür).
 
 ## 2026-11-08 · E-posta giden kutusu: işlemli kayıt, sınırlı taşıma

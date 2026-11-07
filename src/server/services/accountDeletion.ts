@@ -11,7 +11,7 @@ import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
  * kanıttır ve kullanıcıya bağlı kalır (Consent yalnız eklenir). Tek işlemde: kişisel alanlar boşalır,
  * e-posta geri dönüşsüz bir yer tutucuya döner (eski e-postayla bu hesaba giriş yok), oturumlar ve sağlayıcı
  * bağlantıları silinir, açık iletişim talepleri kapanır, görünürlük ayarları, üyelikler, mentor profili ve
- * yönetici yetkileri sonlanır, bekleyen belgeler silinir. Dosyalar işlemden SONRA silinir; dosya silme
+ * yönetici yetkileri sonlanır, bekleyen belgeler silinir. Dosyalar işlem commit edilmeden silinir; dosya silme
  * bağlanmamışken silinecek dosya varsa işlem hiç başlamaz (yarım silme yok).
  */
 
@@ -110,8 +110,9 @@ export async function deleteAccount(
         deletedAt: now,
       },
     });
+    // Hata durumunda belge anahtarları ve hesap transaction ile korunur; yeniden denenebilir.
+    // Depolama idempotenttir: kısmen silinen dosyalar yeniden silinebilir.
+    if (fileKeys.length > 0 && deps.removeStoredFiles) await deps.removeStoredFiles(fileKeys);
   });
-
-  if (fileKeys.length > 0 && deps.removeStoredFiles) await deps.removeStoredFiles(fileKeys);
   return { deleted: true };
 }

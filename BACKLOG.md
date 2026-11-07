@@ -16,6 +16,9 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   bağlantısı, alan adı ile üyelik beyanı, bölüm seçimi, mezun belgesi akışı (yükleme, yönetici kuyruğu,
   onay/ret, dosya karar anında silinir), depolama adaptörü ve test girişi tamam. E-posta gönderimi R2'nin
   kuyruğuna bağlı; SMTP teslimi ayrı worker'da.
+- P1-03 servisi: sürümlü rıza durumu, alan görünürlüğü, kontrollü iletişim talepleri,
+  hesap anonimleştirme/silme ve kişisel JSON veri dökümü hazır; hesap silme gerçek oturum ve
+  depolama adaptörüne bağlı. Ekran kabulü ilgili ekran kartında yapılacak.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.

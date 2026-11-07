@@ -1,4 +1,9 @@
 import { randomInt, randomUUID } from 'node:crypto';
+import { mkdtemp, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { createTestAuth, signInWithMagicLink } from '@/test/auth';
+import { createLocalStorage } from '../external/storage/local';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { dataExportSchema } from '@/contracts/privacy';
@@ -474,4 +479,50 @@ describe('veri dökümü', () => {
     expect(data.contactRequests.sent).toHaveLength(1);
     expect(data.contactRequests.received).toHaveLength(1);
   });
+});
+
+it('gerçek oturum ve yerel belge: silme hatası geri alınır; yeniden denemede dosya ve oturum yoktur', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'mezun-account-'));
+  try {
+    const storage = createLocalStorage(root);
+    const inst = await createInstitution(prisma);
+    const me = await person();
+    const { auth, sent } = createTestAuth(prisma);
+    const { headers } = await signInWithMagicLink(auth, sent, me.email);
+    expect((await auth.api.getSession({ headers }))?.user.id).toBe(me.id);
+    const key = `graduation/${me.id}/${randomUUID()}.pdf`;
+    await storage.put(key, new TextEncoder().encode('%PDF-1.7\n'), {
+      contentType: 'application/pdf',
+    });
+    await prisma.graduationDocument.create({
+      data: { userId: me.id, departmentId: inst.deptA1, graduationYear: 2025, storageKey: key },
+    });
+    const input = { publishedContent: 'DELETE' as const, confirmEmail: me.email };
+    await expect(
+      deleteAccount(prisma, me.id, input, {
+        removeStoredFiles: async () => {
+          throw new Error('depo kapalı');
+        },
+      }),
+    ).rejects.toThrow('depo kapalı');
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: me.id } })).deletedAt).toBeNull();
+    expect(await prisma.graduationDocument.count({ where: { userId: me.id } })).toBe(1);
+    expect((await auth.api.getSession({ headers }))?.user.id).toBe(me.id);
+    await deleteAccount(prisma, me.id, input, {
+      removeStoredFiles: async (keys) => {
+        for (const k of keys) await storage.delete(k);
+      },
+    });
+    expect(await storage.get(key)).toBeNull();
+    expect(await auth.api.getSession({ headers })).toBeNull();
+    expect(await prisma.session.count({ where: { userId: me.id } })).toBe(0);
+    // Eski adresle yeni bağlantı, anonimleşmiş eski hesaba veya üyeliklerine bağlanamaz.
+    const fresh = await signInWithMagicLink(auth, sent, me.email);
+    const freshSession = await auth.api.getSession({ headers: fresh.headers });
+    expect(freshSession?.user.id).toBeDefined();
+    expect(freshSession?.user.id).not.toBe(me.id);
+    expect(await prisma.membership.count({ where: { userId: freshSession!.user.id } })).toBe(0);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

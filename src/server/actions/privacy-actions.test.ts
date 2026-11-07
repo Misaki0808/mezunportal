@@ -17,8 +17,8 @@ import {
   setFieldVisibility,
 } from './privacy';
 
-// Oturum bağlantısı (P1-02 servisi) gelene kadar yetki katmanı KAPALIDIR: her eylem veritabanına dokunmadan
-// AUTH_UNAUTHENTICATED döner; veri dökümü rotası 401 verir ve gövdesinde yalnız kod taşır.
+// İstek bağlamı/oturum yokken bütün eylemler AUTH_UNAUTHENTICATED döner;
+// veri dökümü rotası 401 verir ve gövdesinde yalnız kod taşır.
 describe('KVKK eylemleri oturumsuz kapalıdır', () => {
   it.each([
     ['getConsentState', () => getConsentState()],

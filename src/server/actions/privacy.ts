@@ -15,6 +15,7 @@ import type { ActionResult } from '@/contracts/result';
 import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
 
 import { getDb } from '../db';
+import { getStorage } from '../external/storage';
 import { requireUser } from '../permissions';
 import { deleteAccount as deleteAccountService } from '../services/accountDeletion';
 import * as privacy from '../services/privacy';
@@ -69,8 +70,7 @@ export async function setFieldVisibility(
 }
 
 /**
- * Hesabı sil (K-09). Dosya silme, depolama adaptörü (P1-02 servisi) birleşince bağlanır; o zamana kadar
- * silinecek dosyası olan hesapta işlem başlamaz (yarım silme yok).
+ * Hesabı sil (K-09). Bekleyen belge dosyaları sunucudaki depolama adaptörüyle silinir.
  */
 export async function deleteAccount(
   input: DeleteAccountInput,
@@ -80,7 +80,12 @@ export async function deleteAccount(
     const parsed = parseInput(deleteAccountSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(
-      await deleteAccountService(getDb(), actor.userId, parsed.data, { removeStoredFiles: null }),
+      await deleteAccountService(getDb(), actor.userId, parsed.data, {
+        removeStoredFiles: async (keys) => {
+          const storage = getStorage();
+          for (const key of keys) await storage.delete(key);
+        },
+      }),
     );
   } catch (error) {
     return actionFailure(error);
