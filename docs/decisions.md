@@ -233,3 +233,31 @@ aynıdır.
 reddeder (alan adı sözcükleri, e-posta/telefon/kimlik numarası desenleri). Bu bir ağdır, asıl kural “yalnız
 kimlikler yazılır” olarak kalır; desenler UUID/seed kimliklerini yanlış alarma sokmaz (testle sabitlendi).
 Gerekçe isteyen eylemler (`ADMIN_ACTIONS`) gerekçesiz çağrıldığında `AUDIT_REASON_REQUIRED` döner.
+
+## 2026-11-07 · Eylemler hata fırlatmaz, `ActionResult` döner; Zod mesajı `ErrorCode`'dur
+Next.js üretimde fırlatılan hata mesajlarını istemciden gizler; ekranın alanın altında kararlı koda karşılık gelen
+Türkçe metni göstermesi için beklenen hatalar değer olarak döner: `{ ok, data } | { ok:false, errorCode, params?,
+fieldErrors? }` (`src/contracts/result.ts`). Şemalarda hata mesajı doğrudan bir `ErrorCode`'dur (`{ error:
+'DOCUMENT_TOO_LARGE' }`); `failureFromZod` bunu alan → kod haritasına çevirir, kayıtsız mesaj `VALIDATION_INVALID`
+olur. Beklenmeyen hata `SERVER_UNEXPECTED` olur; ham mesaj, yığın ve değer dışarı sızmaz. Eylemin olası kodları
+sözleşmede `*_ACTION_ERRORS` olarak durur (ekran hangi kodları metne çevireceğini oradan bilir).
+
+## 2026-11-07 · Giriş yanıtı kayıt durumunu ele vermez (sözleşmede görünür)
+`requestSignInLink` ve `requestEmailChange` tek bir başarılı yanıt döner: `CHECK_EMAIL`. Olası hatalar yalnız
+geçersiz biçim ve hız sınırıdır; `AUTH_ACCOUNT_SUSPENDED`, `RESOURCE_NOT_FOUND` ya da `EMAIL_DOMAIN_NOT_ALLOWED`
+bu eylemlerin kod listesinde yoktur (test korur). Askı bildirimi bağlantıya TIKLANDIKTAN sonra, e-posta sahipliği
+kanıtlandığında `/giris?hata=AUTH_ACCOUNT_SUSPENDED` ile gösterilir.
+
+## 2026-11-07 · Auth env'i ayrı şema; geliştirme sırrı yalnız local/test'te geçer
+`BETTER_AUTH_SECRET` ve SMTP ayarları `getAuthEnv()` ile ayrı doğrulanır: aksi halde bu değişkenleri henüz taşımayan
+mevcut `.env.local` dosyalarında `/api/health` ve bütün sayfalar kırılırdı. `.env.example` genel, sır olmayan bir
+geliştirme değeri taşır ki yeni worktree'ler giriş akışını hemen çalıştırsın; `APP_ENV=prod` ile `dev-only…` sır
+env doğrulamasını düşürür (test korur). LinkedIn anahtarları isteğe bağlıdır ve ikisi birlikte verilir.
+
+## 2026-11-07 · Sözleşme PR'ında yeni tablolar: oturum, hesap, doğrulama, hız sınırı, mezun belgesi, e-posta kaydı
+Better Auth adaptörünün istediği `Session`/`Account`/`Verification` ve `rateLimit.storage = "database"` için
+`RateLimit` (süreçler ve yeniden başlatma arasında korunur; bellek deposu worker/HMR'da sıfırlanırdı).
+`GraduationDocument` belge dosyasının karar anında silinmesini veritabanında zorlar (`storageKey` ↔ durum CHECK).
+`EmailLog` giden kutusunun idempotans anahtarını tutar, gövde/adres tutmaz. Servis kartı için notlar: Better Auth
+`telemetry` kapalı olmalı; `account.encryptOAuthTokens` açık olmalı (LinkedIn jetonları); oturumda IP/user-agent
+saklanması gerekçelendirilmeli ya da kapatılmalı.
