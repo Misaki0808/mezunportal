@@ -545,6 +545,10 @@
       "CROSS_BORDER_TRANSFER": {
         "slug": "yurt-disi-aktarim",
         "sections": {
+          "section0": {
+            "title": "Rıza tercihiniz",
+            "body": "Bu rıza isteğe bağlıdır. Vermezseniz platformu kullanmaya devam edersiniz; yalnız aşağıdaki iki özellik çalışmaz."
+          },
           "section1": {
             "title": "1. CV'nin otomatik ayrıştırılması",
             "body": "Yüklediğiniz CV, profilinizi otomatik doldurmak için yurt dışında bulunan yapay zekâ hizmet sağlayıcısına [K-04: sağlayıcı adı ve ülkesi] gönderilir. Sağlayıcı bu veriyi model eğitiminde kullanmaz [sağlayıcı politikasıyla doğrulanacak]. Rıza vermezseniz profilinizi elle doldurursunuz."
