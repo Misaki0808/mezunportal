@@ -4,7 +4,7 @@ Son güncelleme: **2026-11-07**. Ajan çalışma ve belge yönlendirmesi için �
 
 ## Stack
 
-- Node.js 22+, pnpm (tek paket, monorepo değil)
+- Node.js 24 LTS (`.nvmrc`), pnpm 11 (`packageManager`; tek paket, monorepo değil)
 - Next.js 16+ (App Router, `src/`) · React · TypeScript `strict` + `noUncheckedIndexedAccess`
 - Tailwind CSS · next-intl (tek dil `tr`, önek yok)
 - PostgreSQL 16+ (`pg_trgm`, `btree_gist`, `turkish` tam metin araması)
@@ -154,8 +154,10 @@ pnpm dev:all                     # web + worker
 ### Env grupları
 
 Kanonik liste `.env.example` ve `src/lib/env.ts`'tir; burada çoğaltılmaz. Gruplar: uygulama
-(`APP_ENV`, `APP_URL`, port), veritabanı, kimlik (Better Auth sırrı, LinkedIn), e-posta, LLM,
-Google Takvim, depolama, iş kuyruğu. Sırlar yalnız `.env.local` ve `korunan/`'dadır.
+(`APP_ENV`, `APP_URL`, `GIT_SHA`; geliştirme portu `PORT` ile verilir, Next.js okur), veritabanı,
+kimlik (Better Auth sırrı, LinkedIn), e-posta, LLM, Google Takvim, depolama, iş kuyruğu. Sırlar yalnız
+`.env.local` ve `korunan/`'dadır. Eksik ya da geçersiz değişken `EnvValidationError` fırlatır; mesaj
+yalnız değişken adını taşır.
 
 ### Telefon testi (faz sonu)
 

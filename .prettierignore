@@ -1,0 +1,12 @@
+# Üretilmiş ve bağımlılık çıktıları
+node_modules/
+.next/
+coverage/
+pnpm-lock.yaml
+next-env.d.ts
+# `next build` bu dosyayı kendi biçiminde yeniden yazar; Prettier ile çatışır
+tsconfig.json
+# Belgeler ve rol dosyaları elle yazılır; biçimlendirme kapısı kod ve yapılandırmaya bakar
+*.md
+.agents/
+prompts/

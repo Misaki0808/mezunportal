@@ -1,4 +1,4 @@
-# Git dışı yerel dosyalar — P0-01 bu dosyayı genişletir.
+# Git dışı yerel dosyalar
 # Rol protokolü (yerel, Git dışı)
 prompts/
 # Ortam değişkenleri ve sırlar (.env.example repoda kalır)
@@ -9,8 +9,19 @@ prompts/
 .data/
 node_modules/
 .next/
+out/
+build/
 coverage/
 playwright-report/
 test-results/
 *.log
+*.tsbuildinfo
+next-env.d.ts
 .DS_Store
+# Paket yöneticisi ve araç artıkları
+.pnpm-store/
+npm-debug.log*
+pnpm-debug.log*
+# Editör
+.idea/
+.vscode/
