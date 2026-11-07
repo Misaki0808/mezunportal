@@ -33,7 +33,15 @@
       "DOCUMENT_TOO_LARGE": "Dosya en fazla 5 MB olabilir.",
       "DOCUMENT_NOT_PDF": "Yalnız PDF dosyası yükleyebilirsin.",
       "DOCUMENT_ALREADY_PENDING": "Bu bölüm için bekleyen bir belgen var. Sonuçlanmasını bekle.",
-      "DOCUMENT_NOT_PENDING": "Bu belge için karar zaten verilmiş."
+      "DOCUMENT_NOT_PENDING": "Bu belge için karar zaten verilmiş.",
+      "CONSENT_REQUIRED": "Devam etmek için aydınlatma metnini ve kullanım şartlarını onaylaman gerekiyor.",
+      "CONSENT_VERSION_OUTDATED": "Metnin yeni bir sürümü var. Sayfayı yenileyip güncel metni onayla.",
+      "CONTACT_REQUEST_SELF": "Kendine iletişim talebi gönderemezsin.",
+      "CONTACT_REQUEST_ALREADY_OPEN": "Bu kişiye açık bir iletişim talebin zaten var.",
+      "CONTACT_REQUEST_NOT_PENDING": "Bu talep artık beklemede değil.",
+      "CONTACT_REQUEST_NOT_APPROVED": "Yalnız onayladığın bir talebi geri alabilirsin.",
+      "CONTACT_FIELD_NOT_REQUESTABLE": "İstediğin bilgilerden biri talep edilemiyor. Seçimini değiştirip tekrar dene.",
+      "ACCOUNT_DELETE_CONFIRMATION_MISMATCH": "Yazdığın e-posta hesabının e-postasıyla aynı değil."
     }
   },
   "nav": {
