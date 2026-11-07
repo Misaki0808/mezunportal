@@ -104,6 +104,11 @@ export function ConsentForm({ state }: { state: ConsentState }) {
           {form.error}
         </p>
       )}
+      {form.failure?.errorCode === 'CONSENT_VERSION_OUTDATED' && (
+        <Button variant="secondary" onClick={() => router.refresh()}>
+          {common('retry')}
+        </Button>
+      )}
       <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] -mx-1 rounded-control border border-border bg-bg p-3 shadow-card lg:bottom-3">
         <Button type="submit" fullWidth loading={form.busy}>
           {form.busy ? common('saving') : t('submit')}

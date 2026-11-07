@@ -1,6 +1,5 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { PrivacyGuard } from './server-guard';
 
 export async function PrivacyAccountLinks() {
   const t = await getTranslations('privacyScreens.account');
@@ -12,7 +11,7 @@ export async function PrivacyAccountLinks() {
     ['delete', '/hesap/hesabi-sil'],
   ] as const;
   return (
-    <PrivacyGuard>
+    <>
       <section className="mt-8" aria-labelledby="privacy-account-heading">
         <h2 id="privacy-account-heading" className="text-xl font-semibold">
           {t('title')}
@@ -32,6 +31,6 @@ export async function PrivacyAccountLinks() {
           ))}
         </ul>
       </section>
-    </PrivacyGuard>
+    </>
   );
 }

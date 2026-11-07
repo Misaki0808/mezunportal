@@ -1,14 +1,17 @@
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdtemp, rm } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
 
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
 test.afterAll(() => db.$disconnect());
 test.describe.configure({ mode: 'serial' });
-async function login(page: Page, persona: 'student' | 'alumni') {
+async function login(page: Page, persona: 'student' | 'alumniMentor') {
   await page.goto(`/giris/test?persona=${persona}`);
   await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
   await page.waitForURL(/\/(hesap|onay)$/);
@@ -27,7 +30,7 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     where: { email: 'student@test.mezunportal.local' },
   });
   const alumni = await db.user.findUniqueOrThrow({
-    where: { email: 'alumni@test.mezunportal.local' },
+    where: { email: 'alumni-mentor@test.mezunportal.local' },
   });
   await db.contactRequest.deleteMany({
     where: {
@@ -42,7 +45,7 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
   const target = await second.newPage();
   try {
     await login(page, 'student');
-    await login(target, 'alumni');
+    await login(target, 'alumniMentor');
     await target.goto('/hesap/gizlilik');
     for (const label of ['E-posta', 'Telefon']) {
       const form = target
@@ -103,6 +106,25 @@ test('zorunlu metin sürümü değişince hesap yeniden onaya yönlenir; isteğe
   await db.consent.create({
     data: { userId: student.id, documentType: 'TERMS_OF_USE', version: 'taslak-0', granted: true },
   });
+  // --as, onay bekleyen test hesabında /onay'a ulaşır; kendiliğinden rıza vermez.
+  const evidenceRoot = await mkdtemp(path.join(os.tmpdir(), 'mezun-consent-evidence-'));
+  try {
+    const output = execFileSync(
+      'pnpm',
+      ['evidence', '/onay', '--as', 'student', '--out', evidenceRoot],
+      { env: { ...process.env, APP_ENV: 'test' }, encoding: 'utf8', timeout: 30_000 },
+    );
+    const report = JSON.parse(output.slice(output.indexOf('{')));
+    expect(report.captures).toHaveLength(2);
+    expect(report.captures.every((capture: { errors: number }) => capture.errors === 0)).toBe(true);
+    const last = await db.consent.findFirstOrThrow({
+      where: { userId: student.id, documentType: 'TERMS_OF_USE' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(last.version).toBe('taslak-0');
+  } finally {
+    await rm(evidenceRoot, { recursive: true, force: true });
+  }
   await page.goto('/hesap/gizlilik');
   await expect(page).toHaveURL(/\/onay$/);
   await expect(page.getByRole('heading', { name: 'Onaylarını yenile', exact: true })).toBeVisible();

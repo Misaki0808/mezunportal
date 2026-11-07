@@ -1,5 +1,8 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getConsentState } from '@/server/actions/privacy';
+import { ErrorState } from '@/components/ui';
 
 import { getVerificationState } from '@/server/actions/auth';
 import { requireUser } from '@/server/permissions';
@@ -10,6 +13,11 @@ export default async function HomePage() {
     getTranslations('authScreens.home'),
   ]);
   const actor = await requireUser().catch(() => null);
+  if (actor) {
+    const consent = await getConsentState();
+    if (!consent.ok) return <ErrorState errorCode={consent.errorCode} />;
+    if (consent.data.blocking) redirect('/onay');
+  }
   const state = actor ? await getVerificationState().catch(() => null) : null;
   const needsVerification = state?.ok && state.data.status !== 'VERIFIED';
   return (

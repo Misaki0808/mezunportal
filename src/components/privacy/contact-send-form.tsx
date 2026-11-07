@@ -64,6 +64,7 @@ export function ContactSendForm({ targetUserId }: { targetUserId: string }) {
       </Card>
       <Card>
         <Field
+          className="[&_p]:text-base"
           label={t('message')}
           hint={t('messageHelp', { max: CONTACT_MESSAGE_MAX })}
           error={form.fieldError('message')}

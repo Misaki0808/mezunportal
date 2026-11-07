@@ -46,6 +46,7 @@ export function DeleteForm() {
       >
         <Card className="space-y-4">
           <RadioGroup
+            className="[&_span]:text-base [&_p]:text-base"
             legend={t('choice')}
             name="publishedContent"
             value={choice}
@@ -65,6 +66,7 @@ export function DeleteForm() {
         </Card>
         <Card>
           <Field
+            className="[&_p]:text-base"
             label={t('email')}
             hint={t('emailHint')}
             required
