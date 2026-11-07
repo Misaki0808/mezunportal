@@ -245,3 +245,10 @@ Aynı satırdaki alanlardan yalnız birinde ipucu olduğunda girişler farklı y
 düğmesi kalır. Yardım düğmeli ve düğmesiz etiket satırları aynı asgari yüksekliği kullanır. İpucu/hata
 `aria-describedby` bağları korunur, böylece düzen düzeltmesi ekran okuyucuya verilen
 açıklamayı değiştirmez.
+
+## 2026-11-07 · Audit kimlik değerlerinde biçim doğrulamalı ayrım
+Telefon/kimlik numarası desenleri rastgele UUID ve seed kimliklerinin alt dizilerine denk
+gelebiliyor; rol geçişi bu nedenle aralıklı olarak geri alınıyordu. Yalnız kimlik anahtarlarında
+(`id`, `ids`, `Id`/`Ids` veya `_id`/`_ids` son eki) tam UUID ve 24 hex seed biçimi metin
+taramasından ayrılır. Alan adı yasağı önce uygulanır; telefon/e-posta/TC biçimleri kimlik
+anahtarında da reddedilir. Serbest metin ve gerekçede istisna yoktur.

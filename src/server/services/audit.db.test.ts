@@ -183,3 +183,21 @@ describe('recordAdminAction', () => {
     expect((await prisma.user.findUniqueOrThrow({ where: { id: marker } })).name).toBe('ilk ad');
   });
 });
+
+it('telefon benzeri alt dizi içeren UUID ve seed kimliklerini değiştirmeden kaydeder', async () => {
+  const actorId = await createUser(prisma);
+  const metadata = {
+    userId: '14578445-7832-7da1-a9b6-3202a38d6c4c',
+    fromMembershipId: 'ed2925f1bf00d68392766449',
+  };
+  const row = await recordAdminAction(prisma, {
+    actor: { userId: actorId },
+    action: 'ROLE_TRANSITION',
+    targetType: 'MEMBERSHIP',
+    targetId: 'regression',
+    metadata,
+  });
+  expect(
+    (await prisma.adminAuditLog.findUniqueOrThrow({ where: { id: row.id } })).metadata,
+  ).toEqual(metadata);
+});

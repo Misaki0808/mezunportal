@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -112,5 +113,45 @@ describe('kayıt', () => {
   it('hedef türleri bilinir', () => {
     expect(isAuditTargetType('MEMBERSHIP')).toBe(true);
     expect(isAuditTargetType('whatever')).toBe(false);
+  });
+});
+
+describe('kimlik değerlerinde kişisel veri yanlış pozitif regresyonu', () => {
+  const identifiers = [
+    '90bcfdb7-cab8-4b0b-827e-b62914379546',
+    '14578445-7832-7da1-a9b6-3202a38d6c4c',
+    'ed2925f1bf00d68392766449',
+  ];
+  it.each(identifiers)(
+    'alt dizisi telefon/kimlik numarasına benzeyen tam kimlik kabul edilir: %s',
+    (id) => {
+      expect(looksLikePersonalData(id)).toBe(true);
+      expect(
+        findMetadataProblems({ userId: id, fromMembershipId: id, department_id: id, ids: [id] }),
+      ).toEqual([]);
+      expect(findMetadataProblems({ note: id })).not.toEqual([]);
+      expect(findReasonProblem('ROLE_TRANSITION', id)).toBe('INVALID');
+    },
+  );
+  it.each(['05321234567', '+90 532 123 45 67', '12345678901', 'ayse@example.invalid'])(
+    'kimlik anahtarında gerçek kişisel veri biçimi yine reddedilir: %s',
+    (value) => {
+      expect(findMetadataProblems({ userId: value })).not.toEqual([]);
+      expect(findMetadataProblems({ ids: [value] })).not.toEqual([]);
+      expect(findReasonProblem('ROLE_TRANSITION', value)).toBe('INVALID');
+    },
+  );
+  it('istisna yalnız tam biçimde ve izinli alan adında işler', () => {
+    expect(findMetadataProblems({ userEmailId: identifiers[0] })).not.toEqual([]);
+    expect(findMetadataProblems({ userId: 'önek ' + identifiers[0] })).not.toEqual([]);
+  });
+  it('20.000 deterministik seed kimliğinde yanlış pozitif yoktur', () => {
+    for (let i = 0; i < 20000; i++) {
+      const id = createHash('sha256')
+        .update('audit-review-' + i)
+        .digest('hex')
+        .slice(0, 24);
+      expect(findMetadataProblems({ userId: id }), id).toEqual([]);
+    }
   });
 });
