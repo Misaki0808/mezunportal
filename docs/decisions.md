@@ -144,3 +144,10 @@ Test veritabanı sıfırlaması ayrıdır: `_test` ad kontrolüyle global kurulu
 Playwright çekirdek akışları her PR yerine yalnız main'e yapılan push'ta koşar; tarayıcı kurulumu ve
 çalıştırma süresini azaltırken birleşmiş uygulamanın uçtan uca kontrolünü korur. PR kalite kapıları
 ve gerekirse yerel E2E doğrulaması ayrı uygulanır.
+
+## 2026-11-07 · Yerel süreçler ve worktree yalıtımı (P0-04)
+Yeni süreç yöneticisi bağımlılığı yerine Node'un yerleşik süreç/ağ araçları kullanılır;
+web ve worker aynı başlatıcıdan kapanır. Port `APP_URL`'den türetilir: ek env değişkenine
+ve port ile adresin ayrı tutulmasına gerek kalmaz. Worktree hazırlama mevcut ayarı korur,
+veritabanını sıfırlamaz; eşzamanlı port seçimi kilit ve kayıtlı worktree ayarlarıyla korunur.
+Kullanıcı modeli henüz olmadığı için seed hesap üretmez; rol yer tutucuları P1-02'de büyütülür.
