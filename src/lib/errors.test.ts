@@ -8,6 +8,7 @@ import {
   codedForbidden,
   codedNotFound,
   codedRateLimited,
+  codedUnauthenticated,
   codedValidation,
   isCodedError,
   isErrorCode,
@@ -39,6 +40,7 @@ describe('hata kodu kataloğu', () => {
 describe('kodlu hata yardımcıları', () => {
   it.each([
     ['validation', codedValidation, 422],
+    ['unauthenticated', codedUnauthenticated, 401],
     ['forbidden', codedForbidden, 403],
     ['notFound', codedNotFound, 404],
     ['conflict', codedConflict, 409],
