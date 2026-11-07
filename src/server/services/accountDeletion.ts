@@ -1,0 +1,117 @@
+import 'server-only';
+
+import type { DeleteAccountOutput } from '@/contracts/privacy';
+import type { PrismaClient } from '@/generated/prisma/client';
+import { codedNotFound, codedValidation } from '@/lib/errors';
+
+import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
+
+/**
+ * Hesap silme (P1-03, K-09). Kullanıcı satırı SİLİNMEZ, anonimleştirilir: rıza ve işlem kaydı hukuki
+ * kanıttır ve kullanıcıya bağlı kalır (Consent yalnız eklenir). Tek işlemde: kişisel alanlar boşalır,
+ * e-posta geri dönüşsüz bir yer tutucuya döner (eski e-postayla bu hesaba giriş yok), oturumlar ve sağlayıcı
+ * bağlantıları silinir, açık iletişim talepleri kapanır, görünürlük ayarları, üyelikler, mentor profili ve
+ * yönetici yetkileri sonlanır, bekleyen belgeler silinir. Dosyalar işlemden SONRA silinir; dosya silme
+ * bağlanmamışken silinecek dosya varsa işlem hiç başlamaz (yarım silme yok).
+ */
+
+export const DELETED_USER_NAME = 'Silinmiş kullanıcı';
+export const deletedEmailFor = (userId: string) => `deleted-${userId}@deleted.invalid`;
+
+export type PublishedContentChoice = 'DELETE' | 'ANONYMIZE';
+
+/**
+ * Yayınlanmış içerik işleyicileri (K-09). Deneyim (P1-07), SSS cevabı (P1-12) gibi adımlar burada kendi
+ * işleyicisini kaydeder; şu an yayınlanabilen içerik yoktur.
+ */
+export type PublishedContentHandler = (
+  tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
+  userId: string,
+  choice: PublishedContentChoice,
+) => Promise<void>;
+export const PUBLISHED_CONTENT_HANDLERS: PublishedContentHandler[] = [];
+
+export type AccountDeletionDeps = {
+  /** Depolamadan dosya siler (idempotent: olmayan dosya hata değildir). Bağlı değilse `null`. */
+  removeStoredFiles: ((keys: readonly string[]) => Promise<void>) | null;
+  handlers?: readonly PublishedContentHandler[];
+};
+
+export async function deleteAccount(
+  db: PrismaClient,
+  userId: string,
+  input: { publishedContent: PublishedContentChoice; confirmEmail: string },
+  deps: AccountDeletionDeps,
+  now: Date = new Date(),
+): Promise<DeleteAccountOutput> {
+  await consumeRateLimit(db, RATE_LIMITS.accountDeletion, userId, now);
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { email: true, deletedAt: true },
+  });
+  if (!user || user.deletedAt) throw codedNotFound('RESOURCE_NOT_FOUND');
+  if (user.email.toLowerCase() !== input.confirmEmail.toLowerCase()) {
+    throw codedValidation('ACCOUNT_DELETE_CONFIRMATION_MISMATCH');
+  }
+
+  const pendingFiles = await db.graduationDocument.findMany({
+    where: { userId, status: 'PENDING' },
+    select: { storageKey: true },
+  });
+  const fileKeys = pendingFiles
+    .map((row) => row.storageKey)
+    .filter((key): key is string => key !== null);
+  if (fileKeys.length > 0 && !deps.removeStoredFiles) {
+    // Dosya silme bağlanmadan hesap silinirse belge diskte kalırdı: hiç başlama.
+    throw new Error('Dosya silme bağlı değil; hesap silme başlatılmadı');
+  }
+
+  await db.$transaction(async (tx) => {
+    for (const handler of deps.handlers ?? PUBLISHED_CONTENT_HANDLERS) {
+      await handler(tx, userId, input.publishedContent);
+    }
+    await tx.graduationDocument.deleteMany({ where: { userId, status: 'PENDING' } });
+
+    // Açık iletişim talepleri kapanır; kapalı satırlar geçmiş olarak kalır (karşı tarafın kutusunda).
+    await tx.contactRequest.updateMany({
+      where: { targetId: userId, status: 'PENDING' },
+      data: { status: 'REJECTED', decidedAt: now },
+    });
+    await tx.contactRequest.updateMany({
+      where: { requesterId: userId, status: 'PENDING' },
+      data: { status: 'WITHDRAWN', closedAt: now },
+    });
+    await tx.contactRequest.updateMany({
+      where: { OR: [{ targetId: userId }, { requesterId: userId }], status: 'APPROVED' },
+      data: { status: 'REVOKED', closedAt: now },
+    });
+
+    await tx.fieldVisibility.deleteMany({ where: { userId } });
+    await tx.session.deleteMany({ where: { userId } });
+    await tx.account.deleteMany({ where: { userId } });
+    await tx.membership.updateMany({ where: { userId, endedAt: null }, data: { endedAt: now } });
+    await tx.mentorProfile.updateMany({
+      where: { userId },
+      data: { isActive: false, inPersonNote: null },
+    });
+    await tx.adminGrant.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: now, revokedById: userId },
+    });
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        name: DELETED_USER_NAME,
+        email: deletedEmailFor(userId),
+        emailVerified: false,
+        image: null,
+        phone: null,
+        lastSeenAt: null,
+        deletedAt: now,
+      },
+    });
+  });
+
+  if (fileKeys.length > 0 && deps.removeStoredFiles) await deps.removeStoredFiles(fileKeys);
+  return { deleted: true };
+}

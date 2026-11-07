@@ -1,58 +1,91 @@
 'use server';
 
-import type {
-  CloseContactRequestInput,
-  ContactRequestPage,
-  ContactRequestStatusOutput,
-  ListContactRequestsInput,
-  RespondToContactRequestInput,
-  SendContactRequestInput,
-  SendContactRequestOutput,
+import {
+  closeContactRequestSchema,
+  listContactRequestsSchema,
+  respondToContactRequestSchema,
+  sendContactRequestSchema,
+  type CloseContactRequestInput,
+  type ContactRequestPage,
+  type ContactRequestStatusOutput,
+  type ListContactRequestsInput,
+  type RespondToContactRequestInput,
+  type SendContactRequestInput,
+  type SendContactRequestOutput,
 } from '@/contracts/contact-request';
 import type { ActionResult } from '@/contracts/result';
-import { NotImplementedError } from '@/lib/not-implemented';
+import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+
+import { getDb } from '../db';
+import { requireUser, requireVerifiedMember } from '../permissions';
+import * as service from '../services/contactRequest';
 
 /**
- * İletişim talebi sunucu eylemleri — YALNIZ İMZALAR (P1-03 sözleşme PR'ı). Hata kodları:
- * `CONTACT_REQUEST_ACTION_ERRORS`. Yetki: talep göndermek doğrulanmış üyelik ister; yanıt/geri alma yalnız
- * hedefin, geri çekme yalnız talep edenin; başkasının talebi `RESOURCE_NOT_FOUND` (varlığı sızmaz).
- * Gönderimde hız sınırı vardır.
+ * İletişim talebi eylemleri: göndermek doğrulanmış etkin üyelik ister; yanıt/geri alma/geri çekme ve liste
+ * oturum ister ve servis yalnız kullanıcının kendi taraflı taleplerine dokunur (`RESOURCE_NOT_FOUND`).
  */
 
 export async function sendContactRequest(
   input: SendContactRequestInput,
 ): Promise<ActionResult<SendContactRequestOutput>> {
-  void input;
-  throw new NotImplementedError('sendContactRequest');
+  try {
+    const actor = await requireVerifiedMember();
+    const parsed = parseInput(sendContactRequestSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await service.sendContactRequest(getDb(), actor.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
 
-/** Hedef: onayla ya da reddet (gerekçesiz). */
 export async function respondToContactRequest(
   input: RespondToContactRequestInput,
 ): Promise<ActionResult<ContactRequestStatusOutput>> {
-  void input;
-  throw new NotImplementedError('respondToContactRequest');
+  try {
+    const actor = await requireUser();
+    const parsed = parseInput(respondToContactRequestSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await service.respondToContactRequest(getDb(), actor.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
 
-/** Talep eden: bekleyen talebini geri çeker (`WITHDRAWN`). */
 export async function withdrawContactRequest(
   input: CloseContactRequestInput,
 ): Promise<ActionResult<ContactRequestStatusOutput>> {
-  void input;
-  throw new NotImplementedError('withdrawContactRequest');
+  try {
+    const actor = await requireUser();
+    const parsed = parseInput(closeContactRequestSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await service.withdrawContactRequest(getDb(), actor.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
 
-/** Hedef: verdiği onayı geri alır (`REVOKED`); açılan alanlar yeniden kapanır. */
 export async function revokeContactRequest(
   input: CloseContactRequestInput,
 ): Promise<ActionResult<ContactRequestStatusOutput>> {
-  void input;
-  throw new NotImplementedError('revokeContactRequest');
+  try {
+    const actor = await requireUser();
+    const parsed = parseInput(closeContactRequestSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await service.revokeContactRequest(getDb(), actor.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
 
 export async function listContactRequests(
   input: ListContactRequestsInput,
 ): Promise<ActionResult<ContactRequestPage>> {
-  void input;
-  throw new NotImplementedError('listContactRequests');
+  try {
+    const actor = await requireUser();
+    const parsed = parseInput(listContactRequestsSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await service.listContactRequests(getDb(), actor.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
