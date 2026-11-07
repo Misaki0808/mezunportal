@@ -7,7 +7,8 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 
 ## Güncel durum
 
-- Repo iskeleti (Next.js 16, TypeScript, Tailwind, next-intl, Vitest), veritabanı katmanı (PostgreSQL + Mailpit compose, Prisma 7, kurum tabloları, seed, `/api/health` `db` kontrolü), yerel tam ortam (worktree yalıtımı, web/worker ve LAN başlatıcısı, seed çerçevesi) ve tasarım sistemi (`src/components/ui`, uygulama düzeni, `/ui-ornekleri` galeri, manifest) kuruldu; CI ve ekip araçları Faz 0'ın kalan adımlarıdır (`docs/faz0-plan.md`). Ürün özelliği yok.
+- Faz 0 iskelet, veritabanı, yerel ortam, tasarım sistemi ve ekip araçları main'dedir. P0-03 CI
+  K-14 kararını bekler; ekran turundaki iki düzen bulgusunun düzeltmesi #8 ile main'e alındı. Telefon testi bekliyor. Faz 1 çekirdek çalışması başlamıştır; henüz ürün özelliği teslim edilmedi.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -15,14 +16,14 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 
 ### Yakın hedef
 
-Faz 0'ın altı adımı: repo iskeleti, veritabanı, CI, yerel tam ortam ve örnek veri, tasarım
-sistemi, ekip araçları. Faz 0 bitince Faz 1 çekirdeği başlar.
+Faz 0 telefon testini yapmak ve K-14 kararını almak; Faz 1 çekirdek
+adımlarını sürdürmek.
 
 ### Bilinen kısıtlar
 
 - Para harcanmaz; yalnız kaçınılmaz küçük maliyet LLM API'sidir (CV ayrıştırma, sağlayıcıda
   harcama sınırıyla).
-- İÜ e-posta alan adları ve YBS'nin fakültesi doğrulanmadı (K-06).
+- Öğrenci e-posta alanı ölçüldü; personel alanı, YBS fakültesi ve program dili teyit bekliyor (K-06).
 
 ## Açık ürün kararları
 
@@ -37,13 +38,15 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 | K-03 | Veri sorumlusu ve yöneticiler kim | Hoca | Hocaya sorulacak | P1-03, P1-18 |
 | K-04 | LLM sağlayıcısı | Kullanıcı | PDF girdisi + yapılandırılmış çıktı + API verisini eğitimde kullanmama politikası olan ücretli API | P1-05 |
 | K-05 | E-posta sağlayıcısı (canlı) | Kullanıcı | Üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | P1-18 |
-| K-06 | İÜ öğrenci/personel e-posta alan adları, YBS'nin fakültesi | PM ölçer, kullanıcı teyit eder | Geçici değerler `prisma/seed-data.ts`'te (`ogr.iu.edu.tr`, `istanbul.edu.tr`, İktisat Fakültesi); teyitte yalnız o dosya değişir | P1-02 |
+| K-06 | İÜ personel e-posta alanı, YBS'nin fakültesi ve program dili | PM ölçer, kullanıcı teyit eder | Geçici değerler `prisma/seed-data.ts`'te (`ogr.iu.edu.tr`, `istanbul.edu.tr`, İktisat Fakültesi); öğrenci alanı ölçüldü; kalanlar teyit bekler | P1-02 |
 | K-07 | Yayınlanmış içeriğin görünürlük kapsamı | PM | Üniversitedeki tüm doğrulanmış üyeler | P1-07 |
 | K-08 | Öğrencinin mentor olma eşiği | PM | 3. sınıf ve üstü + en az bir yayınlanmış deneyim | P1-04 |
 | K-09 | Hesap silmede yayınlanmış deneyimler | PM | Kullanıcıya sor; varsayılan sil | P1-03 |
 | K-10 | Kurucu üye etiketi kuralı | PM | Pilot süresince ilk deneyimi yayınlanan herkes | P1-16 |
 | K-11 | Puan ağırlıkları ve şüphe eşikleri | PM | `docs/architecture.md` puan tablosu | P1-16 |
 | K-12 | Pilot: kimler, ne zaman, başarı ölçütleri | Hoca | Hocayla | P1-18 |
+| K-14 | GitHub Actions CI kullanılsın mı | Kullanıcı | Public repoda standart çalıştırıcılarla hazırlanan PR #6 hakkında karar | P0-03 |
+| K-15 | Gelecekteki commit e-posta gizliliği | Kullanıcı | GitHub gizli adresi veya mevcut ayar | Yeni commit yapılandırması |
 
 ## Pilot öncesi kapılar
 
