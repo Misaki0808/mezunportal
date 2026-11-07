@@ -78,37 +78,40 @@ export function SignInForm({ options, callbackError, requestLink, startLinkedIn 
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-col gap-4">
-        {options.linkedin.enabled ? (
-          <Button
-            variant="secondary"
-            fullWidth
-            loading={pending === 'linkedin'}
-            onClick={handleLinkedIn}
-          >
-            {pending === 'linkedin' ? t('redirecting') : t('linkedin')}
-          </Button>
-        ) : (
-          <div className="[&_span]:text-base">
+        {options.linkedin.enabled && (
+          <>
             <Button
               variant="secondary"
               fullWidth
-              disabled
-              disabledReason={errors(options.linkedin.disabledReason)}
+              loading={pending === 'linkedin'}
+              onClick={handleLinkedIn}
+              leadingIcon={
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M5 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM3 9h4v12H3V9Zm6 0h4v1.6c.6-1 1.7-1.9 3.7-1.9 3.7 0 4.3 2.4 4.3 5.5V21h-4v-6c0-1.5 0-3.3-2-3.3s-2.3 1.6-2.3 3.2V21H9V9Z" />
+                </svg>
+              }
             >
-              {t('linkedin')}
+              {pending === 'linkedin' ? t('redirecting') : t('linkedin')}
             </Button>
-          </div>
+            <div className="flex items-center gap-3 text-base text-fg-muted" aria-hidden="true">
+              <span className="h-px flex-1 bg-border" />
+              {t('divider')}
+              <span className="h-px flex-1 bg-border" />
+            </div>
+          </>
         )}
-        <div className="flex items-center gap-3 text-base text-fg-muted" aria-hidden="true">
-          <span className="h-px flex-1 bg-border" />
-          {t('divider')}
-          <span className="h-px flex-1 bg-border" />
-        </div>
       </div>
       <form noValidate onSubmit={handleSubmit} className="mt-4 flex flex-1 flex-col gap-6">
         <Field
           className="[&_p]:text-base"
           label={t('email')}
+          hint={t('emailHint')}
           error={fieldError ? errors(fieldError) : undefined}
           required
         >

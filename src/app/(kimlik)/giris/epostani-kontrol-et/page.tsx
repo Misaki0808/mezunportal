@@ -6,7 +6,7 @@ export default async function CheckEmailPage() {
   const t = await getTranslations('authScreens.checkEmail');
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-12 sm:pt-20">
+    <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] w-full max-w-lg flex-col px-5 pb-8 pt-12 sm:pt-20">
       <div className="flex-1">
         <div
           aria-hidden="true"
@@ -25,8 +25,16 @@ export default async function CheckEmailPage() {
           </svg>
         </div>
         <p className="mb-2 text-base font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
-        <p className="mt-4 max-w-md text-base leading-relaxed text-fg-muted">{t('description')}</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-fg">
+          {t.rich('title', {
+            email: (chunks) => <span className="whitespace-nowrap">{chunks}</span>,
+          })}
+        </h1>
+        <p className="mt-4 max-w-md text-base leading-relaxed text-fg-muted">
+          {t.rich('description', {
+            email: (chunks) => <span className="whitespace-nowrap">{chunks}</span>,
+          })}
+        </p>
         <p className="mt-6 rounded-card bg-surface p-4 text-base text-fg-muted">{t('security')}</p>
       </div>
       <ActionLink href="/giris" secondary>

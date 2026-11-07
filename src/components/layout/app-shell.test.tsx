@@ -62,3 +62,19 @@ it('Hesabım bağlantısını gösterir, yönetimi yalnız sunucudan açıkça i
     '/yonetim/belge-kuyrugu',
   );
 });
+
+it.each(['/giris', '/giris/epostani-kontrol-et', '/giris/test'])(
+  '%s: yalnız logo ve içerik, uygulama menüsü yok',
+  (pathname) => {
+    navigation.pathname = pathname;
+    try {
+      renderUi(<AppShell showAdmin>İçerik</AppShell>);
+      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+      expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+      expect(screen.getByRole('main')).toHaveTextContent('İçerik');
+      expect(screen.getByRole('link', { name: 'MezunPortal' })).toHaveAttribute('href', '/');
+    } finally {
+      navigation.pathname = '/';
+    }
+  },
+);

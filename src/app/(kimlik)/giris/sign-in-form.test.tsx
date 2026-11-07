@@ -19,15 +19,31 @@ describe('SignInForm', () => {
     push.mockClear();
     startLinkedIn.mockReset();
   });
-  it('LinkedIn kapalıysa sebebini gösterir ve bağlantıyı başlatmaz', async () => {
-    const { user } = renderUi(
+  it('LinkedIn kapalıysa düğme ve veya ayracı görünmez', () => {
+    renderUi(
       <SignInForm options={disabledOptions} requestLink={vi.fn()} startLinkedIn={startLinkedIn} />,
     );
+    expect(screen.queryByRole('button', { name: 'LinkedIn ile devam et' })).not.toBeInTheDocument();
+    expect(screen.queryByText('veya', { exact: true })).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/E-posta adresi/)).toHaveAccessibleDescription(
+      /üniversite adresini/,
+    );
+  });
+  it('LinkedIn açıkken ikonlu düğme ve ayraç e-posta alanının üstündedir', () => {
+    renderUi(
+      <SignInForm
+        options={{ linkedin: { enabled: true, disabledReason: null } }}
+        requestLink={vi.fn()}
+        startLinkedIn={startLinkedIn}
+      />,
+    );
     const button = screen.getByRole('button', { name: 'LinkedIn ile devam et' });
-    expect(button).toBeDisabled();
-    expect(button).toHaveAccessibleDescription();
-    await user.click(button);
-    expect(startLinkedIn).not.toHaveBeenCalled();
+    expect(button.querySelector('svg')).not.toBeNull();
+    expect(screen.getByText('veya', { exact: true })).toBeInTheDocument();
+    expect(
+      button.compareDocumentPosition(screen.getByLabelText(/E-posta adresi/)) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
   it('geçersiz e-postayı alanda gösterir ve sunucuya göndermez', async () => {
     const request = vi.fn();

@@ -380,3 +380,9 @@ commit olmadan kalabilir. Bu dar belirsizlikte yeniden deneme çift teslim üret
 idempotency anahtarının sabit özetinden üretilir ama SMTP genelinde kesin tek teslim garantisi
 vermez. Bu adım normal yinelenen çağrıları ve kayıtlı SENT teslimlerini engeller; böyle bir garantiyi
 varmış gibi sunmaz. Sağlayıcı düzeyinde idempotency API'si P1-18 sağlayıcı kararıyla değerlendirilir.
+
+## 2026-11-08 · Giriş ekranında odaklı düzen (PM ekran turu kararı)
+Giriş ve e-postanı kontrol et sayfalarında uygulama alt gezinmesi/yan menü yerine logo ve içerik
+vardır. LinkedIn yapılandırılmamışsa düğmesi ve ayraç gösterilmez; açıkken formun üstünde ikonlu
+ikincil düğmedir. E-posta sözcüğü bölünmez, alan ipucu öğrenci/akademisyene üniversite,
+mezuna kişisel adresini önerir; sabit üniversite alan adı arayüze yazılmaz.

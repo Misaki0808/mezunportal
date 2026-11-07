@@ -40,6 +40,25 @@ export function AppShellClient({
   const t = useTranslations('nav');
   const pathname = usePathname();
 
+  // PM kararı: giriş ve bağlantı kontrol ekranları uygulama gezinmesinden ayrıdır.
+  if (pathname === '/giris' || pathname.startsWith('/giris/')) {
+    return (
+      <div className="min-h-dvh">
+        <header className="flex h-14 items-center border-b border-border px-5">
+          <Link
+            href="/"
+            className="press-control inline-flex min-h-11 items-center text-lg font-semibold text-primary"
+          >
+            {t('brand')}
+          </Link>
+        </header>
+        <main id="main-content" tabIndex={-1} className="outline-none">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
   function renderItem(item: (typeof NAV_ITEMS)[number], layout: 'bottom' | 'side') {
     const label = t(`items.${item.id}`);
     const current = item.href ? isCurrent(pathname, item.href) : false;

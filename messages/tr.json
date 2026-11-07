@@ -227,8 +227,8 @@
   "authScreens": {
     "checkEmail": {
       "eyebrow": "BİR SONRAKİ ADIM",
-      "title": "E-postanı kontrol et",
-      "description": "Bağlantıyı e-posta adresine gönderdik. Gelen kutunu ve gerekirse istenmeyen posta klasörünü kontrol et.",
+      "title": "<email>E-postanı</email> kontrol et",
+      "description": "Bağlantıyı <email>e-posta</email> adresine gönderdik. Gelen kutunu ve gerekirse istenmeyen posta klasörünü kontrol et.",
       "security": "Bağlantıyı yalnızca sen kullanmalısın.",
       "back": "Girişe dön"
     },
@@ -312,13 +312,14 @@
     "signIn": {
       "eyebrow": "MEZUNPORTAL’A HOŞ GELDİN",
       "title": "Bir adımda giriş yap",
-      "description": "Üniversitenle ve mezunlarla buluşmak için e-posta adresini kullan.",
+      "description": "Üniversitenle ve mezunlarla buluşmak için <email>e-posta</email> adresini kullan.",
       "email": "E-posta adresi",
       "submit": "Giriş bağlantısı gönder",
       "sending": "Gönderiliyor…",
       "divider": "veya",
       "linkedin": "LinkedIn ile devam et",
-      "redirecting": "Yönlendiriliyor…"
+      "redirecting": "Yönlendiriliyor…",
+      "emailHint": "Öğrenci veya akademisyensen üniversite adresini, mezunsan kişisel e-posta adresini kullan."
     },
     "membership": {
       "eyebrow": "ÜYELİK DOĞRULAMA",
