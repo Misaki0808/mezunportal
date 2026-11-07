@@ -40,6 +40,21 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
   küçülür; liste satırı zemin rengi almaz, yazı hafif solar ve satır hafifçe büyür.
 - Hareket bilgi taşımıyorsa azaltılır; `prefers-reduced-motion` korunur.
 
+## Bileşen envanteri
+
+`src/components/ui` (tek giriş: `@/components/ui`): Button/IconButton, Input/Textarea/Select/Checkbox/
+RadioGroup/Switch, Field (etiket + ipucu + “i” yardım + hata), Card, Badge, Tag, Avatar, Modal/Sheet,
+Tabs, Toast, Skeleton, EmptyState/ErrorState, Pagination, Stepper. Canlı örnekleri `/ui-ornekleri`
+galerisindedir (yalnız `local`/`test`). Düzen `src/components/layout/app-shell.tsx`.
+
+- **Modal / Sheet:** Modal masaüstünde ortada pencere, Sheet masaüstünde sağ yan panel; ikisi de
+  mobilde alt sayfadır. Filtre ve ikincil işlem için Sheet.
+- **Basınca görünüm:** `press-control` (kart/düğme küçülür) ve `press-row` (liste satırı: zemin
+  rengi yok, yazı solar, satır büyür) `globals.css` yardımcı sınıflarıdır.
+- **Bağlantıyı düğme gibi göstermek:** `buttonClasses()` (örn. `next/link` ile).
+- **Devre dışı düğme** `disabledReason` olmadan derlenmez; **hata** `ErrorState`'te `errorCode`
+  ile gösterilir, ham mesaj değil.
+
 ## Metin
 
 Bütün metinler `messages/tr.json`'dadır; terimler aşağıdaki “Terimler” bölümüne uyar. Düğmeler emir
