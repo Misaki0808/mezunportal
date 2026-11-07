@@ -1,0 +1,20 @@
+{
+  "metadata": {
+    "title": "MezunPortal",
+    "description": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için doğrulanmış, staj odaklı kariyer platformu."
+  },
+  "home": {
+    "title": "MezunPortal",
+    "tagline": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için staj odaklı kariyer platformu. Çok yakında."
+  },
+  "errors": {
+    "codes": {
+      "VALIDATION_INVALID": "Girdiğin bilgilerde eksik ya da hatalı alanlar var. Kontrol edip tekrar dene.",
+      "AUTH_FORBIDDEN": "Bu işlem için yetkin yok.",
+      "RESOURCE_NOT_FOUND": "Aradığın kayıt bulunamadı.",
+      "RESOURCE_CONFLICT": "Bu işlem mevcut bir kayıtla çakıştı. Sayfayı yenileyip tekrar dene.",
+      "RATE_LIMITED": "Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.",
+      "SERVER_UNEXPECTED": "Beklenmeyen bir sorun oluştu. Biraz sonra tekrar dene."
+    }
+  }
+}
