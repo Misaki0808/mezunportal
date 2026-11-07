@@ -1,4 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { mkdtemp, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
+import { createLocalStorage } from '../external/storage/local';
 
 import {
   MAX_DOCUMENT_BYTES,
@@ -797,3 +802,35 @@ describe('readGraduationDocumentFile (yetki kontrollü dosya akıtma)', () => {
     ).toBe('RESOURCE_NOT_FOUND');
   });
 });
+
+it.each(['APPROVE', 'REJECT'] as const)(
+  'yerel depoda %s kararı dosyayı hemen kaldırır',
+  async (decision) => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'mezun-r2-document-'));
+    try {
+      const storage = createLocalStorage(root);
+      const deps = { db: prisma, storage, secret: SECRET, now: () => NOW };
+      const applicant = await newApplicant();
+      const uploaded = await uploadGraduationDocument(deps, applicant.actor, form(inst));
+      const document = await prisma.graduationDocument.findUniqueOrThrow({
+        where: { id: uploaded.documentId },
+      });
+      const key = document.storageKey!;
+      expect(await storage.get(key)).not.toBeNull();
+      await reviewGraduationDocument(
+        deps,
+        { userId: deptAdmin },
+        decision === 'APPROVE'
+          ? { documentId: document.id, decision }
+          : { documentId: document.id, decision, reason: 'Belgede mezuniyet bilgisi eksik.' },
+      );
+      expect(await storage.get(key)).toBeNull();
+      expect(
+        (await prisma.graduationDocument.findUniqueOrThrow({ where: { id: document.id } }))
+          .storageKey,
+      ).toBeNull();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);
