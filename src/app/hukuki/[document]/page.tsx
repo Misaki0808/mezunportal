@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, getMessages } from 'next-intl/server';
 import { CURRENT_CONSENT_VERSIONS } from '@/contracts/privacy';
 import { Badge, Card } from '@/components/ui';
 const documents = {
@@ -13,7 +13,11 @@ export default async function LegalPage({ params }: { params: Promise<{ document
   const key = documents[slug as keyof typeof documents];
   if (!key) notFound();
   const t = await getTranslations('privacyScreens');
-  const sections = t.raw(`documents.${key}.sections`) as { title: string; body: string }[];
+  const catalog = await getMessages();
+  const sections = catalog.privacyScreens.documents[key].sections as Record<
+    string,
+    { title: string; body?: string; items?: Record<string, string> }
+  >;
   return (
     <article className="mx-auto max-w-3xl space-y-6 px-5 py-8 sm:py-12">
       <Link
@@ -32,12 +36,19 @@ export default async function LegalPage({ params }: { params: Promise<{ document
       <p className="rounded-control bg-warning-soft p-4 text-base text-on-warning-soft">
         {t('legal.placeholder')}
       </p>
-      {sections.map((section) => (
+      {Object.values(sections).map((section) => (
         <Card key={section.title}>
           <h2 className="text-lg font-semibold">{section.title}</h2>
-          <p className="mt-3 text-base leading-relaxed whitespace-pre-line text-fg-muted">
-            {section.body}
-          </p>
+          {section.body && (
+            <p className="mt-3 text-base leading-relaxed text-fg-muted">{section.body}</p>
+          )}
+          {section.items && (
+            <ul className="mt-3 list-disc space-y-3 pl-5 text-base leading-relaxed text-fg-muted">
+              {Object.values(section.items).map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          )}
         </Card>
       ))}
     </article>

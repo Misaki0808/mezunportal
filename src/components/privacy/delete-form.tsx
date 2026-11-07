@@ -34,6 +34,7 @@ export function DeleteForm() {
   return (
     <>
       <form
+        noValidate
         className="space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
@@ -84,7 +85,7 @@ export function DeleteForm() {
             )}
           </Field>
         </Card>
-        {form.error && (
+        {form.error && !confirmed && (
           <p role="alert" className="text-base text-danger">
             {form.error}
           </p>

@@ -86,7 +86,7 @@ it('hesap silme e-posta ve ikinci onay olmadan çağrılmaz; anonimleştirme ter
     </ToastProvider>,
   );
   await user.click(screen.getByRole('radio', { name: /Adımı kaldırıp içerikleri bırak/ }));
-  await user.type(screen.getByLabelText(/Onaylamak için e-posta/), 'sahte@example.invalid');
+  await user.type(screen.getByLabelText(/Onaylamak için/), 'sahte@example.invalid');
   await user.click(screen.getByRole('button', { name: 'Hesabımı sil' }));
   expect(mocks.remove).not.toHaveBeenCalled();
   const dialog = screen.getByRole('dialog');

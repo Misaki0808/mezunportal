@@ -15,7 +15,16 @@ import {
   revokeContactRequest,
   withdrawContactRequest,
 } from '@/server/actions/contact-request';
-import { Badge, Button, Card, EmptyState, Modal, Tabs, buttonClasses } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Modal,
+  Tabs,
+  SkeletonText,
+  buttonClasses,
+} from '@/components/ui';
 import { usePrivacyForm } from './form-state';
 
 type Box = 'INCOMING' | 'OUTGOING';
@@ -32,22 +41,25 @@ export function ContactList({
   const common = useTranslations('privacyScreens.common');
   const format = useFormatter();
   const form = usePrivacyForm();
+  const [loading, setLoading] = useState(false);
   const [box, setBox] = useState<Box>(initialBox);
   const [page, setPage] = useState(initial);
   const [closing, setClosing] = useState<Closing | null>(null);
-  function load(nextBox: Box, more = false) {
+  async function load(nextBox: Box, more = false) {
     const input = form.parse(listContactRequestsSchema, {
       box: nextBox,
       ...(more && page.nextCursor ? { cursor: page.nextCursor } : {}),
     });
-    if (input)
-      void form.run(
-        () => listContactRequests(input),
-        (data) => {
-          setBox(nextBox);
-          setPage(more ? { ...data, items: [...page.items, ...data.items] } : data);
-        },
-      );
+    if (!input) return;
+    setLoading(true);
+    await form.run(
+      () => listContactRequests(input),
+      (data) => {
+        setBox(nextBox);
+        setPage(more ? { ...data, items: [...page.items, ...data.items] } : data);
+      },
+    );
+    setLoading(false);
   }
   async function refresh() {
     const result = await listContactRequests({ box });
@@ -83,7 +95,12 @@ export function ContactList({
   }
   const content = (
     <div className="space-y-4" aria-busy={form.busy}>
-      {page.items.length === 0 ? (
+      {loading ? (
+        <div role="status" className="space-y-4 py-6">
+          <span className="sr-only">{common('loading')}</span>
+          <SkeletonText lines={4} />
+        </div>
+      ) : page.items.length === 0 ? (
         <EmptyState
           title={t('emptyTitle')}
           description={t('emptyDescription')}

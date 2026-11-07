@@ -404,3 +404,10 @@ Giriş ve e-postanı kontrol et sayfalarında uygulama alt gezinmesi/yan menü y
 vardır. LinkedIn yapılandırılmamışsa düğmesi ve ayraç gösterilmez; açıkken formun üstünde ikonlu
 ikincil düğmedir. E-posta sözcüğü bölünmez, alan ipucu öğrenci/akademisyene üniversite,
 mezuna kişisel adresini önerir; sabit üniversite alan adı arayüze yazılmaz.
+
+## 2026-11-08 · KVKK ekranında onay kapısı ve hukuki taslaklar
+Giriş sonrası ana sayfa, hesap ve doğrulama ekranları sunucunun rıza durumundaki `blocking`
+sonucuyla onay adımına gider; ekran rıza/yetki kuralını tekrar hesaplamaz. Zorunlu onaylar ilk
+kayıtta ve yeni sürümde boş başlar; aktarım rızası isteğe bağlıdır. Hukuki sayfalar mevcut
+taslaklardan gelir, K-03 yer tutucusu ve hukuk onayı durumu açıkça gösterilir. Rızalar otomatik
+verilmez; ekran kanıtı aracının test girişi de onay adımında durabilir.

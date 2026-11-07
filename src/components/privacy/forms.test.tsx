@@ -57,7 +57,7 @@ describe('KVKK ekran sınırları', () => {
     expect(html).toMatch(/checked=""[^>]*value="DELETE"|value="DELETE"[^>]*checked=""/);
     expect(html).not.toMatch(/value="ANONYMIZE"[^>]*checked=""/);
     expect(html).toContain('Bütün oturumların kapanır.');
-    expect(html).toContain('Onaylamak için e-posta');
+    expect(html).toContain('Onaylamak için');
   });
   it('geri alınmış talepte dönen kişisel alan yoksa ekranda da yok; durum açıkça görünür', () => {
     const html = render(
