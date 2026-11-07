@@ -18,7 +18,7 @@ export type EnqueueEmail = (input: {
   html?: string;
   template: string;
   idempotencyKey: string;
-  recipientUserId?: string | null;
+  recipientUserId?: string;
 }) => Promise<{ emailLogId: string }>;
 
 export type AuthEmailPort = {

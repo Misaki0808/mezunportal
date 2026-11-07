@@ -204,8 +204,8 @@ Normal geliştirme yalnız `127.0.0.1`'e açılır; LAN modu aşağıdadır.
   `@test.mezunportal.local` (gerçek alan adı değil) ve giriş bilgisi yoktur; test girişi ve Better Auth
   oturumları P1-02'de gelir, bilgileri Git dışı `korunan/test-hesaplari.md`'de tutulur. Sonraki özellikler
   kendi örnek verisini modül sırasına ekler.
-- **Giriş ve e-posta:** e-posta bağlantıları R2'nin kuyruğuna (`enqueueEmail`) bağlanır; bağlanana kadar
-  `src/server/auth/index.ts` `getAuthEmailPort()` gönderimi reddeder ve giriş bağlantısı gelmez. Telefon ve
+- **Giriş ve e-posta:** e-posta bağlantıları `getAuthEmailPort()` üzerinden işlemli giden kutusuna
+  (`enqueueEmail`) yazılır; teslim için `pnpm dev:all` çalışmalıdır. Telefon ve
   yerel denemede **test girişi** (`signInAsTestPersona`, yalnız `local`/`test`) seed kullanıcısı olarak
   e-posta olmadan oturum açar. Giriş akışı Mailpit'ten (`http://localhost:8025`) denenir.
 - Dış servisler yerelde de gerçek çalışabilir (LLM, Google Takvim, LinkedIn); anahtar yoksa sahte

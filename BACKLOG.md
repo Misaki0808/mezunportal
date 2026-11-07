@@ -15,7 +15,7 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 - P1-02 servisi: Better Auth (e-posta bağlantısı, isteğe bağlı LinkedIn, e-posta değiştirme), oturum
   bağlantısı, alan adı ile üyelik beyanı, bölüm seçimi, mezun belgesi akışı (yükleme, yönetici kuyruğu,
   onay/ret, dosya karar anında silinir), depolama adaptörü ve test girişi tamam. E-posta gönderimi R2'nin
-  kuyruğuna bağlanmayı bekliyor (TD-005).
+  kuyruğuna bağlı; SMTP teslimi ayrı worker'da.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -83,11 +83,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   `APP_ENV=prod` ile alınan build'de çıkar (`next.config.ts`).
   Neden borç: canlı build yanlış env'le alınırsa HSTS sessizce düşer.
   Kapanış ölçütü: P1-18 dağıtım betiği build'i `APP_ENV=prod` ile alır ve başlık kanıtlanır.
-- [ ] **TD-005** · P1 · Giriş e-postaları kuyruğa bağlanmadı
-  Ne: `src/server/auth/index.ts` `getAuthEmailPort()` `notConfiguredEnqueue` kullanıyor; R2'nin `enqueueEmail`'i
-  (kart 022) birleşince tek satırda bağlanır.
-  Neden borç: bağlanana kadar giriş bağlantısı ve belge kararı e-postası gitmez (test girişi çalışır).
-  Kapanış ölçütü: `getAuthEmailPort` gerçek kuyruğu kullanır; Mailpit'te giriş bağlantısı görülür.
 - [ ] **TD-006** · P1 · Süresi geçmiş oturum ve doğrulama kayıtları temizlenmiyor
   Ne: `Session` ve `Verification` tablolarında süresi geçen satırlar birikir (indeksler hazır: `expiresAt`).
   Neden borç: veri en azlığı (KVKK) ve tablo büyümesi.
