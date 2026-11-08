@@ -22,6 +22,7 @@ import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
 import { getDb } from '../db';
 import { requireUser, requireVerifiedMember } from '../permissions';
 import * as service from '../services/contactRequest';
+import { sendNotification } from '../services/notification-email';
 
 /**
  * İletişim talebi eylemleri: göndermek doğrulanmış etkin üyelik ister; yanıt/geri alma/geri çekme ve liste
@@ -35,7 +36,14 @@ export async function sendContactRequest(
     const actor = await requireVerifiedMember();
     const parsed = parseInput(sendContactRequestSchema, input);
     if (!parsed.ok) return parsed.failure;
-    return actionOk(await service.sendContactRequest(getDb(), actor.userId, parsed.data));
+    const result = await service.sendContactRequest(getDb(), actor.userId, parsed.data);
+    await sendNotification({
+      userId: parsed.data.targetUserId,
+      event: 'contact',
+      eventId: result.requestId,
+      path: '/hesap/iletisim',
+    }).catch(() => undefined);
+    return actionOk(result);
   } catch (error) {
     return actionFailure(error);
   }

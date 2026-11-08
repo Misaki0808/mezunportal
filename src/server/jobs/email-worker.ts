@@ -1,6 +1,7 @@
 import { createEmailRuntime } from './email';
 import { createAppointmentRuntime } from './appointment';
 import { createCvRuntime } from './cv';
+import { createNotificationRuntime } from './notification-worker';
 import { getDb } from '../db';
 import { isLlmConfigured } from '../external/llm';
 async function main() {
@@ -17,6 +18,12 @@ async function main() {
     await runtime.stop().catch(() => undefined);
     throw error;
   });
+  const notifications = await createNotificationRuntime().catch(async () => {
+    await appointmentRuntime.stop().catch(() => undefined);
+    await cvRuntime?.stop().catch(() => undefined);
+    await runtime.stop().catch(() => undefined);
+    throw new Error('NOTIFICATION_WORKER_UNAVAILABLE');
+  });
   const heartbeat = () => process.stdout.write('worker: ok\n');
   heartbeat();
   const timer = setInterval(heartbeat, 30_000);
@@ -26,6 +33,7 @@ async function main() {
     stopping = true;
     clearInterval(timer);
     try {
+      await notifications.stop();
       await appointmentRuntime.stop();
       await cvRuntime?.stop();
       await runtime.stop();
