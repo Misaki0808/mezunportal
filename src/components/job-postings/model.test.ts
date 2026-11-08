@@ -16,7 +16,11 @@ it('URL süzgeçleri doğrulanır; hatalı alan sağlam alanı bozmaz', () => {
 it('yalnız etkin doğrulanmış mezun ve akademisyen ilan verebilir', () => {
   expect(mayPost([{ role: 'STUDENT', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(false);
   expect(mayPost([{ role: 'ALUMNI', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(true);
+  expect(mayPost([{ role: 'ACADEMIC', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(true);
   expect(mayPost([{ role: 'ACADEMIC', verificationStatus: 'PENDING', endedAt: null }])).toBe(false);
+  expect(mayPost([{ role: 'ALUMNI', verificationStatus: 'VERIFIED', endedAt: new Date() }])).toBe(
+    false,
+  );
 });
 it('serbest ve sözlük kurum seçimi aynı URL ile doğru alana çevrilir', () => {
   const options = [
