@@ -16,6 +16,7 @@ import {
 import type { ActionResult } from '@/contracts/result';
 import { Button, Field, Input, Select, Textarea } from '@/components/ui';
 import { addDays, istanbulDay } from './model';
+import { deadlineProblem } from '@/server/rules/jobPosting';
 
 type Props = {
   context: JobPostingFormContext;
@@ -78,7 +79,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
       showError(t('formSummary'), ['departmentId']);
       return;
     }
-    if (deadline && (deadline < today || deadline > max)) {
+    if (deadline && deadlineProblem(deadline, today)) {
       setStep(1);
       showError(t('invalidDate'), ['deadlineOn']);
       return;

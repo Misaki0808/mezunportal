@@ -1,23 +1,15 @@
 import { searchJobPostingsSchema, type SearchJobPostingsInput } from '@/contracts/job-postings';
 
-/** İstanbul takvim günü; yerel tarayıcı saat diliminden bağımsızdır. */
+import { JOB_POSTING_AUTHOR_ROLES } from '@/contracts/job-postings';
+import { istanbulDay as dayInIstanbul, daysLeft } from '@/server/rules/jobPosting';
+export { addDays } from '@/server/rules/jobPosting';
+
+/** Varsayılan an ile sunucunun da kullandığı İstanbul takvimi. */
 export function istanbulDay(now = new Date()): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Istanbul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(now);
-}
-export function addDays(day: string, count: number): string {
-  const date = new Date(`${day}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + count);
-  return date.toISOString().slice(0, 10);
+  return dayInIstanbul(now);
 }
 export function daysRemaining(deadline: string, now = new Date()): number {
-  return Math.round(
-    (Date.parse(`${deadline}T00:00:00Z`) - Date.parse(`${istanbulDay(now)}T00:00:00Z`)) / 86400000,
-  );
+  return daysLeft(deadline, istanbulDay(now));
 }
 export function parseJobFilters(
   params: URLSearchParams,
@@ -57,7 +49,7 @@ export function mayPost(
 ): boolean {
   return roles.some(
     (role) =>
-      (role.role === 'ALUMNI' || role.role === 'ACADEMIC') &&
+      JOB_POSTING_AUTHOR_ROLES.some((allowed) => allowed === role.role) &&
       role.verificationStatus === 'VERIFIED' &&
       role.endedAt === null,
   );
