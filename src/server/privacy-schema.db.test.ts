@@ -93,14 +93,14 @@ describe('ContactRequest', () => {
     );
   });
 
-  it('aynı ikili için tek açık talep; kapanınca yenisi açılabilir', async () => {
+  it('aynı ikili ve kaynak bağlamı için tek açık talep; kapanınca yenisi açılabilir', async () => {
     const { requesterId, targetId } = await pair();
     const first = await prisma.contactRequest.create({
       data: { requesterId, targetId, fields: ['EMAIL'] },
     });
     await expectDbReject(
       prisma.contactRequest.create({ data: { requesterId, targetId, fields: ['PHONE'] } }),
-      'ContactRequest_open_pair_key',
+      'ContactRequest_open_context_key',
     );
     // ters yön ayrı ikilidir
     await prisma.contactRequest.create({
@@ -113,14 +113,14 @@ describe('ContactRequest', () => {
     await prisma.contactRequest.create({ data: { requesterId, targetId, fields: ['PHONE'] } });
   });
 
-  it('onaylı talep de açıktır: onay varken yeni talep açılamaz, geri alınınca açılabilir', async () => {
+  it('aynı bağlamda onaylı talep de açıktır: yeni talep açılamaz, geri alınınca açılabilir', async () => {
     const { requesterId, targetId } = await pair();
     const request = await prisma.contactRequest.create({
       data: { requesterId, targetId, fields: ['EMAIL'], status: 'APPROVED', decidedAt: new Date() },
     });
     await expectDbReject(
       prisma.contactRequest.create({ data: { requesterId, targetId, fields: ['PHONE'] } }),
-      'ContactRequest_open_pair_key',
+      'ContactRequest_open_context_key',
     );
     await prisma.contactRequest.update({
       where: { id: request.id },

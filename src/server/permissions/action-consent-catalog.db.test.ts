@@ -138,6 +138,12 @@ beforeAll(async () => {
     departmentId: institution.deptA2,
     role: 'ACADEMIC',
   });
+  await addMembership(db, {
+    userId: session.userId,
+    departmentId: institution.deptB1,
+    role: 'ALUMNI',
+    graduationYear: 2020,
+  });
   await addMentorProfile(db, session.userId);
   await addGrant(db, { userId: session.userId, scope: 'SYSTEM' });
 });

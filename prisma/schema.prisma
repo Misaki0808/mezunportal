@@ -293,6 +293,17 @@ model Profile {
   manualFields          String[]         @default([])
   completedSteps        OnboardingStep[] @default([])
   skippedSteps          OnboardingStep[] @default([])
+  /// "Staj arıyorum" (P2-06; D20/D28): aday görünürlüğü YALNIZ bu bayrak AÇIK ve `JOB_SEEKER_VISIBILITY` rızası güncel/verilmiş iken vardır
+  /// (rıza geri alınınca bayrak ne olursa olsun görünürlük kalkar; sorgu anında son rıza satırına bakar).
+  seekingInternship     Boolean          @default(false)
+  seekingTermYear       Int?
+  seekingTermSeason     TermSeason?
+  /// Aday kartının OPAK kimliği (kullanıcı kimliği DEĞİL; rastgele, tahmin edilemez). Görünürlük açılırken üretilir, kapanınca silinir.
+  seekerRef             String?          @unique
+  /// Kartın mezun aramalarında gösterilme sayısı (kim baktığı tutulmaz).
+  seekerViewCount       Int              @default(0)
+  /// Mezun: "işe alım yapıyorum" beyanı (D28). Boşsa beyan yok; her an kapatılabilir.
+  hiringDeclaredAt      DateTime?
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
 
@@ -566,6 +577,8 @@ enum ConsentDocument {
   PRIVACY_NOTICE
   TERMS_OF_USE
   CROSS_BORDER_TRANSFER
+  /// P2-06: "staj arıyorum" görünürlüğü (isteğe bağlı rıza; geri alınınca görünürlük hemen kalkar).
+  JOB_SEEKER_VISIBILITY
 }
 
 /// Rıza kaydı: YALNIZ EKLENİR (güncellenmez, silinmez — tetikleyici). Geri çekme yeni satırdır
@@ -631,6 +644,8 @@ enum ContactRequestStatus {
 enum ContactRequestSource {
   PROFILE
   JOB_POSTING
+  /// P2-06: mezun, "staj arıyorum" aday kartı üzerinden talep gönderdi (hedef öğrenci onaydan önce açılmaz).
+  SEEKER_PROFILE
 }
 
 model ContactRequest {
@@ -1131,6 +1146,7 @@ enum EventType {
   JOB_POSTING_PUBLISHED
   JOB_POSTING_VIEWED
   JOB_POSTING_SEARCH
+  JOB_SEEKER_SEARCH
 }
 
 /// Kullanım metrikleri (P1-13). `props` KİŞİSEL VERİ taşımaz (Zod strict + veritabanı CHECK). `role` ve `departmentId`

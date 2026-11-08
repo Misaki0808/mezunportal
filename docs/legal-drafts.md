@@ -109,3 +109,32 @@ benzeri yollar yasaktır; tespit edilirse puanlar ve etiketler geri alınır, he
 
 ### 7. Hesabın kapatılması
 Hesabını istediğin an silebilirsin; sonuçları silme ekranında açıklanır.
+
+## §4 Staj arayan olarak görünürlük açık rızası (P2-06) — TASLAK, onay bekliyor ⏸
+
+> **Durum:** metin taslaktır; hoca/hukuki onayı kullanıcıdadır (D28; `PILOT-LEGAL`). Özellik bayraksızdır ama ekranda metin “taslak” işaretlidir. Sürüm
+> `taslak-1` (`CURRENT_CONSENT_VERSIONS.JOB_SEEKER_VISIBILITY`); metin değişince sürüm artar.
+
+### Rıza tercihiniz
+Bu rıza **isteğe bağlıdır** ve istediğiniz an geri alınabilir. Vermezseniz platformu kullanmaya devam edersiniz; yalnız işe alım yapan mezunların sizi
+bulması çalışmaz.
+
+### 1. Neyi paylaşırsınız
+“Staj arıyorum” dediğinizde, doğrulanmış ve işe alım yaptığını beyan eden **mezunlar** sizi bölümünüz, sınıfınız, seçtiğiniz ilgi alanları, hedef
+dönemiz ve profilinizdeki başlık satırınızla bulabilir. **Adınız, fotoğrafınız, e-posta ve telefonunuz görünmez.** Başlık satırınıza kişisel veri
+yazmamanızı öneririz; e-posta/telefon biçimindeki başlıklar gösterilmez.
+
+### 2. İletişim
+Bir mezun sizinle iletişime geçmek isterse size bir **talep** gönderir; talebi siz onaylayana kadar kimliğiniz mezuna açılmaz. Onayladığınızda yalnız
+izin verdiğiniz alanlar paylaşılır; onayı istediğiniz an geri alabilirsiniz.
+
+### 3. Geri alma ve sayaç
+Rızanızı ya da görünürlüğü geri aldığınızda kartınız **hemen** aramalardan kalkar, bekleyen talepler kapanır ve kartınızın kimliği silinir. Kartınızın
+kaç kez gösterildiğini görürsünüz; **kimin baktığı tutulmaz.**
+
+### Aydınlatma metnine ek (§1'e eklenecek)
+- **Amaç:** doğrulanmış mezunların staj arayan öğrencileri bulması. **Hukuki sebep:** açık rıza (KVKK m. 5/1).
+- **Alıcılar:** yalnız aynı üniversitedeki, doğrulanmış ve işe alım beyanı vermiş mezunlar; paylaşım beyaz listedir (bölüm, sınıf, ilgi alanı, dönem, başlık satırı).
+- **Saklama:** görünürlük kapanınca kart kimliği silinir; rıza kaydı hukuki kanıt olarak kalır (append-only).
+- **Kapsam dışı:** [K-03: veri sorumlusu bilgisi ve başvuru adresi eklenecek.]
+

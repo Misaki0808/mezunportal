@@ -16,6 +16,7 @@ import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { codedConflict, codedNotFound, codedValidation } from '@/lib/errors';
 
 import { effectiveLevel, fieldAccess } from '../rules/visibility';
+import { accountStatusOf } from '../rules/authorization';
 import { loadVisibilityLevels } from './privacy';
 import { emitEvent } from './event';
 import { stageNotification } from './notification-intent';
@@ -27,19 +28,21 @@ import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
  * varlığı sızmaz). Durum geçişleri koşullu güncellemeyle yapılır: eşzamanlı iki istekten yalnız biri geçer.
  */
 
-const OPEN_PAIR_INDEX = 'ContactRequest_open_pair_key';
+const OPEN_REQUEST_INDEXES = ['ContactRequest_open_context_key'];
 
-function isOpenPairViolation(error: unknown): boolean {
+function isOpenContextViolation(error: unknown): boolean {
   return (
     (error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === 'P2002' &&
-      JSON.stringify(error.meta ?? {}).includes(OPEN_PAIR_INDEX)) ||
-    (error instanceof Error && error.message.includes(OPEN_PAIR_INDEX))
+      OPEN_REQUEST_INDEXES.some((index) => JSON.stringify(error.meta ?? {}).includes(index))) ||
+    (error instanceof Error && OPEN_REQUEST_INDEXES.some((index) => error.message.includes(index)))
   );
 }
 
 /** İlan kaynaklı talep (P2-04, D7): yalnız sunucu içi (ilan üzerinden iletişim servisi) verir; istemci girdisinden gelmez. */
-export type ContactRequestOrigin = { jobPostingId: string; title: string; organization: string };
+export type ContactRequestOrigin =
+  | { source: 'JOB_POSTING'; jobPostingId: string; title: string; organization: string }
+  | { source: 'SEEKER_PROFILE'; title: string; organization: string };
 
 export async function sendContactRequest(
   db: PrismaClient,
@@ -53,9 +56,10 @@ export async function sendContactRequest(
 
   const target = await db.user.findUnique({
     where: { id: input.targetUserId },
-    select: { id: true, deletedAt: true, banned: true },
+    select: { id: true, deletedAt: true, banned: true, banExpires: true },
   });
-  if (!target || target.deletedAt || target.banned) throw codedNotFound('RESOURCE_NOT_FOUND');
+  if (!target || accountStatusOf(target, now) !== 'ACTIVE')
+    throw codedNotFound('RESOURCE_NOT_FOUND');
 
   // Yalnız “onaylı talebe açık” alanlar istenebilir: PRIVATE kimseye açılmaz, MEMBERS zaten görünür.
   const levels = (await loadVisibilityLevels(db, [target.id])).get(target.id) ?? new Map();
@@ -73,8 +77,8 @@ export async function sendContactRequest(
           message: input.message ?? null,
           ...(origin
             ? {
-                source: 'JOB_POSTING' as const,
-                jobPostingId: origin.jobPostingId,
+                source: origin.source,
+                jobPostingId: origin.source === 'JOB_POSTING' ? origin.jobPostingId : null,
                 sourceTitle: origin.title,
                 sourceOrganization: origin.organization,
               }
@@ -96,7 +100,7 @@ export async function sendContactRequest(
     });
     return { requestId: created.id, status: 'PENDING' };
   } catch (error) {
-    if (isOpenPairViolation(error)) throw codedConflict('CONTACT_REQUEST_ALREADY_OPEN');
+    if (isOpenContextViolation(error)) throw codedConflict('CONTACT_REQUEST_ALREADY_OPEN');
     throw error;
   }
 }
@@ -114,13 +118,13 @@ export async function previewContactTarget(
   await consumeRateLimit(db, RATE_LIMITS.contactPreview, requesterId, now);
   const target = await db.user.findUnique({
     where: { id: input.targetUserId },
-    select: { id: true, name: true, deletedAt: true, banned: true },
+    select: { id: true, name: true, deletedAt: true, banned: true, banExpires: true },
   });
   // Olumsuz durumlarda aynı sorgu akışını uygula; erken çıkışlar kullanıcı varlığı hakkında
   // gözlenebilir süre farkı oluşturabilir. Bu, sabit süre garantisi değil, kaba farkı azaltır.
   const levels =
     (await loadVisibilityLevels(db, [input.targetUserId])).get(input.targetUserId) ?? new Map();
-  if (input.targetUserId === requesterId || !target || target.deletedAt || target.banned)
+  if (input.targetUserId === requesterId || !target || accountStatusOf(target, now) !== 'ACTIVE')
     return CONTACT_TARGET_NOT_REQUESTABLE;
   const requestableFields = CONTACT_FIELDS.filter(
     (field) => effectiveLevel(field, levels) === 'ON_APPROVED_REQUEST',
@@ -139,7 +143,7 @@ type Transition = {
 };
 
 async function transition(
-  db: PrismaClient,
+  db: Pick<PrismaClient, 'contactRequest'>,
   actorId: string,
   requestId: string,
   rule: Transition,
@@ -164,19 +168,14 @@ export function respondToContactRequest(
   input: { requestId: string; decision: 'APPROVE' | 'REJECT' },
   now: Date = new Date(),
 ): Promise<ContactRequestStatusOutput> {
-  return transition(
-    db,
-    targetId,
-    input.requestId,
-    {
-      side: 'targetId',
-      from: 'PENDING',
-      to: input.decision === 'APPROVE' ? 'APPROVED' : 'REJECTED',
-      stamp: 'decidedAt',
-      wrongStateCode: 'CONTACT_REQUEST_NOT_PENDING',
-    },
-    now,
-  );
+  const rule: Transition = {
+    side: 'targetId',
+    from: 'PENDING',
+    to: input.decision === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+    stamp: 'decidedAt',
+    wrongStateCode: 'CONTACT_REQUEST_NOT_PENDING',
+  };
+  return transition(db, targetId, input.requestId, rule, now);
 }
 
 export function withdrawContactRequest(
@@ -278,13 +277,13 @@ export async function listContactRequests(
     sourceOrganization: true,
   } as const;
   const originOf = (row: {
-    source: 'PROFILE' | 'JOB_POSTING';
+    source: 'PROFILE' | 'JOB_POSTING' | 'SEEKER_PROFILE';
     sourceTitle: string | null;
     sourceOrganization: string | null;
   }) =>
-    row.source === 'JOB_POSTING' && row.sourceTitle !== null && row.sourceOrganization !== null
+    row.source !== 'PROFILE' && row.sourceTitle !== null && row.sourceOrganization !== null
       ? {
-          kind: 'JOB_POSTING' as const,
+          kind: row.source,
           title: row.sourceTitle,
           organization: row.sourceOrganization,
         }
@@ -314,9 +313,9 @@ export async function listContactRequests(
     const levels = await loadVisibilityLevels(db, approvedTargets);
     items = rows.map(({ target, source, sourceTitle, sourceOrganization, ...row }) => ({
       ...row,
-      // D7: ilan kaynaklı talepte hedefin kimliği/adı yalnız `APPROVED`'da açılır; ilan silinse/kapansa da kaynak işareti kalır.
+      // D7: ilan ya da aday kartı kaynaklı talepte hedefin kimliği/adı yalnız `APPROVED`'da açılır; kaynak kapansa/silinse de işaret kalır.
       counterpart:
-        source === 'JOB_POSTING' && row.status !== 'APPROVED'
+        source !== 'PROFILE' && row.status !== 'APPROVED'
           ? null
           : { userId: target.id, name: target.name },
       origin: originOf({ source, sourceTitle, sourceOrganization }),
@@ -339,12 +338,13 @@ export async function listContactRequests(
 export async function requestableFieldsOf(
   db: Pick<PrismaClient, 'user' | 'fieldVisibility'>,
   targetUserId: string,
+  now: Date = new Date(),
 ): Promise<ContactField[]> {
   const target = await db.user.findUnique({
     where: { id: targetUserId },
-    select: { id: true, deletedAt: true, banned: true },
+    select: { id: true, deletedAt: true, banned: true, banExpires: true },
   });
   const levels = (await loadVisibilityLevels(db, [targetUserId])).get(targetUserId) ?? new Map();
-  if (!target || target.deletedAt || target.banned) return [];
+  if (!target || accountStatusOf(target, now) !== 'ACTIVE') return [];
   return CONTACT_FIELDS.filter((field) => effectiveLevel(field, levels) === 'ON_APPROVED_REQUEST');
 }
