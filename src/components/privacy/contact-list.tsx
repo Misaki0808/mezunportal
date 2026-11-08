@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations, useFormatter } from 'next-intl';
@@ -36,6 +37,7 @@ export function ContactList({
   initial: ContactRequestPage;
   initialBox: Box;
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('privacyScreens.contacts');
   const fields = useTranslations('privacyScreens.fields');
   const common = useTranslations('privacyScreens.common');
@@ -226,7 +228,7 @@ export function ContactList({
     </div>
   );
   return (
-    <>
+    <div data-hydrated={hydrated ? 'true' : undefined}>
       <Tabs
         label={t('tabs')}
         value={box}
@@ -263,6 +265,6 @@ export function ContactList({
       >
         {null}
       </Modal>
-    </>
+    </div>
   );
 }

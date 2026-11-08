@@ -75,7 +75,7 @@ export default async function AccountPage() {
     ...(showAdmin
       ? [
           {
-            href: '/yonetim/belge-kuyrugu',
+            href: '/yonetim',
             title: t('admin'),
             description: t('adminDescription'),
             icon: InboxIcon,

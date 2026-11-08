@@ -57,10 +57,7 @@ it('Hesabım bağlantısını gösterir, yönetimi yalnız sunucudan açıkça i
   expect(within(side).getByRole('link', { name: 'Hesabım' })).toHaveAttribute('href', '/hesap');
   expect(within(side).queryByRole('link', { name: 'Yönetim' })).not.toBeInTheDocument();
   rerender(<AppShell showAdmin>x</AppShell>);
-  expect(within(side).getByRole('link', { name: 'Yönetim' })).toHaveAttribute(
-    'href',
-    '/yonetim/belge-kuyrugu',
-  );
+  expect(within(side).getByRole('link', { name: 'Yönetim' })).toHaveAttribute('href', '/yonetim');
 });
 
 it.each(['/giris', '/giris/epostani-kontrol-et', '/giris/test'])(
