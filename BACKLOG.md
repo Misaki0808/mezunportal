@@ -1,80 +1,72 @@
 # BACKLOG.md — Güncel durum, açık işler ve kararlar
 
-Son güncelleme: **2026-11-07**. Tek durum belgesidir: güncel durum, açık kararlar, pilot kapıları,
+Son güncelleme: **2026-11-08**. Tek durum belgesidir: güncel durum, açık kararlar, pilot kapıları,
 teknik borç ve ertelenmiş işler. Tamamlanan madde silinir; geçmiş Git'tedir. Çalışma günlüğü
 tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararların gerekçesi
 `docs/decisions.md`'dedir.
 
 ## Güncel durum
 
-- Faz 0 iskelet, veritabanı, yerel ortam, tasarım sistemi ve ekip araçları main'dedir. P0-03 CI
-  K-14 kararını bekler; ekran turundaki iki düzen bulgusunun düzeltmesi #8 ile main'e alındı.
-  Telefon testi bekliyor. Henüz ürün özelliği teslim edilmedi.
-- Faz 1 kimlik/üyelik/yetki katmanı kuruldu: kullanıcı, üyelik, yönetici yetkisi, mentor profili,
-  işlem kaydı, yetki korumaları, rol geçişi, sınıf kuralı ve rol başına test kullanıcıları.
-- P1-02 servisi: Better Auth (e-posta bağlantısı, isteğe bağlı LinkedIn, e-posta değiştirme), oturum
-  bağlantısı, alan adı ile üyelik beyanı, bölüm seçimi, mezun belgesi akışı (yükleme, yönetici kuyruğu,
-  onay/ret, dosya karar anında silinir), depolama adaptörü ve test girişi tamam. E-posta gönderimi R2'nin
-  kuyruğuna bağlı; SMTP teslimi ayrı worker'da.
-- P1-03 servisi: sürümlü rıza durumu, alan görünürlüğü, kontrollü iletişim talepleri,
-  hesap anonimleştirme/silme ve kişisel JSON veri dökümü hazır; hesap silme gerçek oturum ve
-  depolama adaptörüne bağlı. Onay, hukuki taslaklar, gizlilik, iletişim talepleri, hesap silme ve
-  veri indirme ekranları hazır; bağımsız inceleme ve ekran kabulü bekliyor.
-- P1-04 servisi: kalıcı ilk giriş adımları, açık atlama ve profil yüzdesi; K-08 sunucu reddi,
-  profilin hesap silme ve kişisel veri dökümüne bağlantısı hazır. Ekran akışı ayrı karttadır.
-- P1-05 CV ayrıştırma hattı (sağlayıcıdan bağımsız): PDF denetimi, `cv.parse` işi, sahte LLM adaptörü, sözlük
-  eşleme, fark/onay, tek işlemde uygulama, staj davetleri, saklama kuralları, günlük sınır, hesap silme ve veri
-  dökümü bağlantısı tamam. Gerçek LLM sağlayıcısı K-04 ile gelir; o zamana kadar `LLM_PROVIDER` boşsa özellik
-  kapalı, `fake` yalnız local/test.
+Faz 0 (iskelet, veritabanı, yerel ortam, tasarım sistemi, ekip araçları) ve Faz 1'in çekirdek ile
+tamamlayıcı adımları main'dedir; **P1-17 (SSS) hariç** her adımın servisi ve ekranı vardır. Canlı ortam yoktur
+ve bilinçli ertelenmiştir: geliştirme, test ve ekran doğrulaması yerelde, birleştirme kapıları yerelde
+(CI yok, K-14). Ürün özellikleri aşağıdaki gibi çalışır; ayrıntı ve gerekçe `docs/decisions.md`'dedir.
 
-- P1-07 servisi: tür bazlı taslak, anonim çıktı, kapsamlı moderasyon/audit, şikâyet sınırı/kuyruğu,
-  K-07 üniversite görünürlüğü hazır (yayınlanmış içerik aynı üniversitedeki tüm doğrulanmış üyelere açık).
-  Deneyimler hesap silme ve kişisel döküme bağlı; K-08 gerçek yayınlanmış deneyim sayısını okur. Ekran
-  akışı/kabulü ayrı kartta.
+### Faz 1'de main'de olanlar
 
-- P1-08 arama servisi: Türkçe tam metin + yazım hatası toleransı, tür/şirket/kanal/dönem/ücret süzgeçleri,
-  sayfalama, K-07 görünürlüğü ve anonim çıktı hazır (1.000 deneyimde tipik sorgu ~10 ms); ekran W2'de.
+- **Kimlik, üyelik, yetki (P1-01, P1-02):** kullanıcı, üyelik, yönetici yetkisi (bölüm/fakülte/sistem), işlem kaydı,
+  yetki korumaları, rol geçişi, sınıf kuralı; Better Auth ile e-posta bağlantısı girişi, e-posta değiştirme, alan adı
+  ile üyelik beyanı, mezun belgesi akışı (karar anında dosya silinir), askıya alma, test girişi (yalnız local/test).
+- **KVKK ve kontrollü iletişim (P1-03):** sürümlü rıza, alan görünürlüğü, iletişim talepleri, hesap silme/anonimleştirme,
+  kişisel veri dökümü; hukuki metinler taslaktır.
+- **İlk giriş ve profil (P1-04, P1-06):** kalıcı başlangıç adımları, profil yüzdesi (tek kaynak `rules/profileCompletion`),
+  K-08 mentor eşiği; profil düzenleme, beceri etiketleri, izinli bağlantılar; başkasının profili görünürlük süzgeçli.
+- **CV hattı (P1-05):** PDF denetimi, `cv.parse` işi, sözlük eşleme, fark/onay ekranı, staj davetleri, saklama kuralları.
+  Sağlayıcıdan bağımsızdır: `LLM_PROVIDER` boşsa özellik kapalı, `fake` yalnız local/test.
+- **Deneyim ve arama (P1-07, P1-08):** tür bazlı deneyim, anonim çıktı, kapsamlı moderasyon, şikâyet; Türkçe tam metin +
+  yazım hatası toleranslı arama, süzgeçler, K-07 üniversite görünürlüğü.
+- **Mentor ve randevu (P1-09, P1-10):** mentor dizini, "benzer yol izleyenler", mentor ayarları (kapasite, müsaitlik),
+  slot seçimi, talep → onay/ret/iptal, D11 zaman aşımı, exclusion constraint, `.ics`, hatırlatma, elle link; takvim
+  adaptörü yalnız sahte (`CALENDAR_PROVIDER=fake`, boşsa kapalı).
+- **Yönetim (P1-11, P1-13, P1-18'in davet kısmı):** panel (kullanıcılar, askı, üyelik düzeltme, yönetici atama, şikâyet,
+  belge kuyruğu, deneyim moderasyonu, sözlük/eşleşmeyen değer, işlem kaydı), mezun istihdam raporu ve kullanım
+  metrikleri (Excel, küçük hücre bastırma), toplu davet (şifreli niyet).
+- **Bildirimler (P1-12):** tercihler, yıllık doğrulama, hatırlatmalar; bildirim niyeti işlemle aynı veritabanı
+  işleminde yazılır (outbox), e-posta ayrı worker'da gider.
+- **Tamamlayıcılar (P1-14, P1-15, P1-16):** görüşme sonrası form ve güvenilirlik göstergesi; CV inceleme talebi (14 gün);
+  puan motoru (ikili tavan, azalan çarpan, gecikmeli puan, şüphe taraması, geriye dönük hesaplama, kurucu üye etiketi),
+  profilde katkı puanı ve `/yonetim/puan`.
+- **Canlıya alım altyapısı (P1-18):** çok aşamalı Dockerfile, başlangıçta `migrate deploy`, worker, kalıcı hacim, `/api/health`,
+  yedek ve geri yükleme betikleri; canlıda test girişi ve `/ui-ornekleri` kapalıdır.
+- **Ana sayfa ve ortak ekran davranışları:** girişli kullanıcıya rol bazlı kişisel pano; beklenen durumlar için ortak durum
+  ekranı; ekran klavyesi açıkken alt gezinme/eylem çubuğu davranışı.
+- **P1-17 (SSS) main'de değildir:** servis ve ekran bağımsız incelemede; puan ve kullanım olayı kancaları onunla gelir.
 
-- P1-11 yönetim paneli sözleşmesi: panel sorguları, kullanıcı/askı/üyelik düzeltme/yönetici atama, sözlük ve
-  eşleşmeyen değer, işlem kaydı görüntüleme ve toplu mezun istihdam raporu imzaları, `requireAnyAdmin` koruması ve
-  hata kodları hazır. Askıya alma/kaldırma (oturumlar aynı işlemde düşer), üyelik düzeltme ve yönetici atama/kaldırma
-  servisi tamam (kapsam, kendi üzerinde işlem yok, işlem kaydı aynı işlemde). Panel sorguları da hazır: genel bakış,
-  maskeli kullanıcı listesi/ayrıntı, şikâyet kuyruğu, yönetici atamaları, işlem kaydı görüntüleme, sözlük +
-  eşleşmeyen değer çözümü, mezun istihdam raporu ve Excel (`/api/yonetim/rapor/istihdam`). Kalan: panel ekranı (W2).
-- P1-06 profil servisi: kendi profilini görüntüle/düzenle (temel alanlar, eğitim, pozisyon, dil, sertifika, beceri,
-  izinli https bağlantılar, LinkedIn), başkasının profili görünürlük süzgeçli, tamamlama göstergesi; CV onayına profil
-  başlığı/özeti/şehri kalemi eklendi; beceri modeli `Tag(SKILL)` + profil bağı. Ekranlar sonra.
-- P1-09 mentor dizini servisi: görünür mentor (etkin profil, geçerli hesap, doğrulanmış üyelik, K-07), tür/sektör/
-  şirket/unvan/deneyim türü/görüşme biçimi/yalnız müsait süzgeçleri, mentor kartı, "benzer yol izleyenler" (en çok 5,
-  gerekçeli, `rules/similarity`) ve profilden giriş uygunluk bayrakları hazır; `Profile.completionScore` her profil
-  yazımında `rules/profileCompletion` kuralından güncellenir. Kapasite doluluğu onaylı randevu sayacına bağlıdır
-  (`services/mentor-load.ts`, P1-10 ile gerçek sayım). Pilot sözlük başlangıç seti
-  (sektör, unvan, beceri; şirket yok) seed'de. Ekran W2'de.
-- P1-13 kullanım metrikleri servisi: `Event` tablosu, tür başına strict `props` (kişisel veri yok), olay kancaları (giriş,
-  profil eşiği, CV yükle/uygula, deneyim yayın, arama, mentor arama/görüntüleme, iletişim talebi), kapsamlı panel sorgusu
-  (rol × bölüm, küçük hücre bastırma) ve Excel (`/api/yonetim/rapor/kullanim`) hazır. Randevu, SSS ve CV inceleme olayları
-  için yalnız tür var; tamamlanan görüşme, SSS ve CV inceleme kancaları ilgili servislerle bağlanacak. Ekran W2'de.
+### Dış bağımlılık bekleyenler
 
-- P1-10 randevu motoru servisi: mentor ayarları (kapasite, süre, haftalık müsaitlik, müsait değilim), slot üretimi
-  (21 gün, 24 saat öncesi, İstanbul saati), talep → onay/ret/iptal, D11 zaman aşımı (`EXPIRED`), kapasite denetimi,
-  exclusion constraint, `.ics`, hatırlatma, elle link yolu, hesap silme/veri dökümü kapsamı hazır. Takvim adaptörü
-  arayüzü + sahtesi var (`CALENDAR_PROVIDER=fake`, boşsa kapalı: mentor linki elle ekler); **gerçek Google adaptörü
-  kullanıcı onayını bekler (E4: bulut projesi, OAuth, yenileme jetonu)**. Ekran W2'de.
-- Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
-  Canlıya alım Faz 1'in son adımıdır (P1-18).
-- Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
-- Ekip: PM + iki worker + iki reviewer (Orca); rol protokolü Git dışı `prompts/`'ta.
+Hiçbiri kodla çözülemez; her biri aşağıdaki işi engeller. Kullanıcı/hoca kararı ilgili adıma gelince sorulur.
+
+| Bekleyen | Neyi engelliyor |
+|---|---|
+| E3 — LinkedIn uygulaması + doğrulanmış şirket sayfası | P1-02 kabulü: LinkedIn ile giriş (kod yolu var, sınanmadı) |
+| K-04 — LLM sağlayıcısı + API anahtarı + harcama sınırı | Gerçek CV ayrıştırma; TD-009 doğruluk tablosu |
+| E4 — Google Cloud projesi + OAuth + yenileme jetonu | P1-10 kabulü: gerçek takvim daveti ve Meet linki |
+| K-02 — sunucu ve dağıtım aracı; K-05 — canlı SMTP | Canlı ortam (PILOT-DEPLOY), gerçek e-posta teslimi |
+| K-03 — veri sorumlusu ve yöneticiler; hoca onayı | PILOT-LEGAL, gerçek yönetici atamaları, canlı açılış |
+| K-12 — pilot kimler, ne zaman, başarı ölçütleri | Pilot kararı, P1-18 başarı ölçütleri kutusu |
 
 ### Yakın hedef
 
-Faz 0 telefon testini yapmak ve K-14 kararını almak; Faz 1 çekirdek
-adımlarını sürdürmek.
+Faz 1'i kapatmak: P1-17'yi main'e almak; kullanıcının faz sonu telefon denemesi (aynı Wi-Fi, `docs/engineering.md`
+"Telefon testi") ve bulguların kapatılması ya da bu belgeye borç olarak yazılması; PILOT-TEST planının
+`docs/faz1-plan.md` sonuna yazılması; canlıya alım kararlarının (K-02, K-05, K-03, K-12) kullanıcı ve hocadan
+alınması; sonra `faz-kapanis` kapanış paketi.
 
 ### Bilinen kısıtlar
 
-- Para harcanmaz; yalnız kaçınılmaz küçük maliyet LLM API'sidir (CV ayrıştırma, sağlayıcıda
-  harcama sınırıyla).
+- Para harcanmaz; yalnız kaçınılmaz küçük maliyet LLM API'sidir (CV ayrıştırma, sağlayıcıda harcama sınırıyla).
 - Öğrenci e-posta alanı ölçüldü; personel alanı, YBS fakültesi ve program dili teyit bekliyor (K-06).
+- CI yok (K-14): kalite kapıları yerelde ve PM birleştirme kapısında koşar.
 
 ## Açık ürün kararları
 
@@ -90,8 +82,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 | K-04 | LLM sağlayıcısı | Kullanıcı | PDF girdisi + yapılandırılmış çıktı + API verisini eğitimde kullanmama politikası olan ücretli API | P1-05 |
 | K-05 | E-posta sağlayıcısı (canlı) | Kullanıcı | Üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | P1-18 |
 | K-06 | İÜ personel e-posta alanı, YBS'nin fakültesi ve program dili | PM ölçer, kullanıcı teyit eder | Geçici değerler `prisma/seed-data.ts`'te (`ogr.iu.edu.tr`, `istanbul.edu.tr`, İktisat Fakültesi); öğrenci alanı ölçüldü; kalanlar teyit bekler | P1-02 |
-| K-08 | Öğrencinin mentor olma eşiği | PM | 3. sınıf ve üstü + en az bir yayınlanmış deneyim | P1-04 |
-| K-11 | Şüphe eşiklerinin sayısal değerleri (ağırlıklar kararlı) | PM | `SUSPICION_THRESHOLDS` (40 puan/24 saat; 90 günde ≥ 15 puanın ≥ %60'ı ve ≥ 3 kaydı tek karşı taraftan; ≤ 60 sn eşzamanlı yanıt ≥ 3) | Pilot öncesi |
 | K-12 | Pilot: kimler, ne zaman, başarı ölçütleri | Hoca | Hocayla | P1-18 |
 | K-14 | GitHub Actions CI kullanılsın mı | Kullanıcı | Public repoda standart çalıştırıcılarla hazırlanan PR #6 hakkında karar | P0-03 |
 | K-15 | Gelecekteki commit e-posta gizliliği | Kullanıcı | GitHub gizli adresi veya mevcut ayar | Yeni commit yapılandırması |
@@ -120,10 +110,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 ```
 
 ### Açık borçlar
-- [ ] **TD-017** · P2 · Çözülemeyen outbox niyeti için kalıcı hata durumu
-  Ne: Bekleyen şifreli davet niyetinin anahtarı değişirse içerik çözülemez.
-  Neden borç: Anahtar döndürme sonrasında niyet her aktarımda sonsuz yeniden denenir.
-  Kapanış ölçütü: Sınırlı deneme, kalıcı hata durumu ve kişisel veri içermeyen işlem kaydı uygulanır.
 
 - [ ] **TD-006** · P1 · Süresi geçmiş oturum ve doğrulama kayıtları temizlenmiyor
   Ne: `Session` ve `Verification` tablolarında süresi geçen satırlar birikir (indeksler hazır: `expiresAt`).
@@ -135,19 +121,27 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).
   Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
   Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
-- [ ] **TD-014** · P2 · `Event` 24 ay saklama işi zamanlanmamış
-  Ne: `detachOldEvents` (userId → null) yazıldı ve testli; periyodik çalıştıran pg-boss işi yok.
-  Neden borç: 24 ayı geçen olaylar kullanıcıya bağlı kalır (hesap silmede bağ zaten hemen kopar).
-  Kapanış ölçütü: günlük zamanlı iş (`files.purge` ile birlikte) + worker kaydı.
-- [ ] **TD-015** · P2 · Görüşme tamamlanması / SSS / CV inceleme kullanım olayları bağlanmadı
-  Ne: `APPOINTMENT_COMPLETED`, `FAQ_*`, `CV_REVIEW_REQUESTED` olay türleri katalogda; ilgili servisler henüz main'de değil.
-  Kapanış ölçütü: servis main'e girince `emitEvent` kancaları eklenir (test: olay + kişisel veri yok).
+
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
   Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
   yerinde duruyor (hesap silme hâlâ eski satırları siler).
   Neden borç: ölü tablo ve yanıltıcı model.
   Kapanış ölçütü: daraltma migration'ı tabloyu kaldırır (geri alma adımıyla), `Skill` sözlüğü yalnız eşleme için kalır.
 
+- [ ] **TD-014** · P2 · `Event` 24 ay saklama işi zamanlanmamış
+  Ne: `detachOldEvents` (userId → null) yazıldı ve testli; periyodik çalıştıran pg-boss işi yok.
+  Neden borç: 24 ayı geçen olaylar kullanıcıya bağlı kalır (hesap silmede bağ zaten hemen kopar).
+  Kapanış ölçütü: günlük zamanlı iş (`files.purge` ile birlikte) + worker kaydı.
+
+- [ ] **TD-015** · P2 · Tamamlanan görüşme için kullanım olayı bağlanmadı
+  Ne: `APPOINTMENT_COMPLETED` olay türü katalogda; iki taraflı tamamlanma (`submitFeedback`) olay yazmaz. `FAQ_*` türleri
+  SSS servisiyle birlikte bağlanacak.
+  Kapanış ölçütü: `emitEvent` kancaları eklenir (test: olay + kişisel veri yok).
+
+- [ ] **TD-017** · P2 · Çözülemeyen outbox niyeti için kalıcı hata durumu
+  Ne: Bekleyen şifreli davet niyetinin anahtarı değişirse içerik çözülemez.
+  Neden borç: Anahtar döndürme sonrasında niyet her aktarımda sonsuz yeniden denenir.
+  Kapanış ölçütü: Sınırlı deneme, kalıcı hata durumu ve kişisel veri içermeyen işlem kaydı uygulanır.
 
 ### Bilinçli kabul edilen sınırlar
 
