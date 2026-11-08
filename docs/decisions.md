@@ -649,3 +649,7 @@ Randevu mutasyonları yetki okunmadan önce User satırını paylaşılmış kil
 Randevu talebinde slotun zaman/biçim geçerliliği doluluk süzülmeden doğrulanır; dolu geçerli slotun son kararı exclusion constraint'e bırakılır. Böylece kazanan önce commit ettiğinde de, çağrılar aynı anda yazdığında da kullanıcıya aynı SLOT_TAKEN sebebi döner; liste dolu slotları göstermemeye devam eder.
 
 Bağımsız worker React server koşuluyla çalıştığından randevu e-posta kataloğundaki basit adlandırılmış alanlar React/Next içe aktarmadan doldurulur. Randevunun kullandığı profil kuralı da oturum bağlayan permissions giriş noktası yerine doğrudan actor/guards yardımcılarını alır. Böylece takvim süpürmesi e-posta worker'ının başlamasını engellemez; ayrı Node sürecinde gerçek iş modülü içe aktarma ve metin üretimi testlidir.
+
+### P1-11 incelemesi: yönetim sayfasında yanıt başlamadan kapsam denetimi
+
+App Router yükleme sınırı yanıtı başlattıktan sonra sayfadaki red HTTP 200 kalabildiği için yönetim layout'u mevcut yetki kapısını önce çalıştırır. Proxy'nin kendisinin yazdığı istek yolu yalnız doğru yeteneği seçer; yetki yine sunucu servisinden gelir. Kapsam dışı sayfa ve kullanıcı ayrıntısı üst grup hata sınırıyla Türkçe 404 döner; eylemlerin kendi yetki denetimleri de korunur. Ortak yönetim listeleri izin verilen uzun, boşluksuz değerleri hücre içinde böler; mobil kart ve masaüstü tablo sayfayı genişletmez.

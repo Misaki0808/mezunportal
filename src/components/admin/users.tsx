@@ -110,7 +110,9 @@ export function AdminUsers({ initial, search }: Props) {
               {items.map((item) => (
                 <li key={item.id} className="rounded-card border border-border p-5 shadow-card">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="break-words text-lg font-semibold">{item.displayName}</h2>
+                    <h2 className="min-w-0 max-w-full text-lg font-semibold [overflow-wrap:anywhere]">
+                      {item.displayName}
+                    </h2>
                     <Badge tone={item.status === 'SUSPENDED' ? 'danger' : 'success'}>
                       {item.status === 'SUSPENDED' ? t('inactive') : t('active')}
                     </Badge>
@@ -129,7 +131,7 @@ export function AdminUsers({ initial, search }: Props) {
                 </li>
               ))}
             </ul>
-            <table className="hidden w-full border-collapse text-left lg:table">
+            <table className="hidden w-full table-fixed border-collapse text-left [overflow-wrap:anywhere] lg:table">
               <thead>
                 <tr className="border-b border-border">
                   <th className="p-3">{t('name')}</th>

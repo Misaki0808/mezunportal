@@ -79,8 +79,16 @@ test('bölüm yöneticisinin panelinde sistem bölümleri yok ve doğrudan eriş
   await expect(page.getByRole('link', { name: /Kullanıcılar/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /Sözlükler/ })).toHaveCount(0);
   await expect(page.getByRole('link', { name: /İşlem kaydı/ })).toHaveCount(0);
-  await page.goto('/yonetim/sozlukler');
-  await expect(page.getByText('Bu işlem için yetkin yok.')).toBeVisible();
+  for (const path of [
+    '/yonetim/sozlukler',
+    '/yonetim/eslesmeyenler',
+    '/yonetim/yetkiler',
+    '/yonetim/islem-kaydi',
+  ]) {
+    const response = await page.goto(path);
+    expect(response?.status()).toBe(404);
+    await expect(page.getByText('Bu işlem için yetkin yok.')).toBeVisible();
+  }
 });
 
 test('sistem yöneticisi toplu istihdam raporunu Excel olarak indirebilir', async ({ page }) => {
@@ -126,8 +134,16 @@ test('fakülte yöneticisi kapsamlı paneli görür, sistem sözlüğüne erişe
     await expect(page.getByRole('link', { name: /Kullanıcılar/ })).toBeVisible();
     await expect(page.getByRole('link', { name: /İstihdam raporu/ })).toBeVisible();
     await expect(page.getByRole('link', { name: /Sözlükler/ })).toHaveCount(0);
-    await page.goto('/yonetim/sozlukler');
-    await expect(page.getByText('Bu işlem için yetkin yok.')).toBeVisible();
+    for (const path of [
+      '/yonetim/sozlukler',
+      '/yonetim/eslesmeyenler',
+      '/yonetim/yetkiler',
+      '/yonetim/islem-kaydi',
+    ]) {
+      const response = await page.goto(path);
+      expect(response?.status()).toBe(404);
+      await expect(page.getByText('Bu işlem için yetkin yok.')).toBeVisible();
+    }
   } finally {
     await db.adminGrant.delete({ where: { id: grant.id } });
   }
@@ -163,5 +179,54 @@ test('sözlük kaydı eklenir, düzenlenir ve gerekçeyle silinir', async ({ pag
     await expect(card).toHaveCount(0);
   } finally {
     await db.sector.deleteMany({ where: { name: { in: [initial, changed] } } });
+  }
+});
+
+test('uzun sözlük/eşleşmeyen adları ve kullanıcı adı 360/390/1440 görünümünde taşmaz', async ({
+  page,
+}) => {
+  test.setTimeout(60000);
+  const suffix = Date.now().toString().slice(-8),
+    companyName = 'W'.repeat(192) + suffix,
+    raw = 'X'.repeat(192) + suffix;
+  const company = await db.company.create({
+    data: { name: companyName, normalizedName: companyName.toLowerCase(), aliases: [] },
+  });
+  const unmatched = await db.unmatchedValue.create({
+    data: { kind: 'COMPANY', rawValue: raw, normalizedValue: raw.toLowerCase(), count: 1 },
+  });
+  const user = await db.user.create({
+    data: {
+      name: 'W'.repeat(100),
+      email: `r2-boundary-${suffix}@example.invalid`,
+      emailVerified: true,
+    },
+  });
+  try {
+    await login(page, 'systemAdmin');
+    for (const width of [360, 390, 1440]) {
+      await page.setViewportSize({ width, height: width === 1440 ? 900 : 844 });
+      for (const path of [
+        '/yonetim/sozlukler',
+        '/yonetim/eslesmeyenler',
+        '/yonetim/kullanicilar',
+      ]) {
+        await page.goto(path);
+        await page.waitForLoadState('networkidle');
+        const boundaryText = path.endsWith('sozlukler')
+          ? companyName
+          : path.endsWith('eslesmeyenler')
+            ? raw
+            : user.name;
+        await expect(
+          page.getByText(boundaryText, { exact: true }).filter({ visible: true }),
+        ).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      }
+    }
+  } finally {
+    await db.unmatchedValue.delete({ where: { id: unmatched.id } });
+    await db.company.delete({ where: { id: company.id } });
+    await db.user.delete({ where: { id: user.id } });
   }
 });
