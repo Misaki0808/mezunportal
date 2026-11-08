@@ -8,7 +8,15 @@ import { useEffect, useRef, useState } from 'react';
 import type { RequestAppointmentInput, SlotList } from '@/contracts/appointment';
 import { APPOINTMENT_NOTE_MAX, requestAppointmentSchema } from '@/contracts/appointment';
 import type { ActionResult } from '@/contracts/result';
-import { Button, buttonClasses, EmptyState, Field, RadioGroup, Textarea } from '@/components/ui';
+import {
+  Button,
+  EmptyState,
+  Field,
+  PageHeader,
+  RadioGroup,
+  Textarea,
+  buttonClasses,
+} from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { dayLabel, groupSlotsByDay, shortDayLabel, timeLabel } from './time';
@@ -101,12 +109,7 @@ export function SlotPicker({ list, request }: Props) {
   }
 
   const header = (
-    <>
-      <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
-      <h1 className="mt-2 break-words text-3xl font-semibold tracking-tight text-fg">
-        {t('title', { name: list.mentor.displayName })}
-      </h1>
-    </>
+    <PageHeader eyebrow={t('eyebrow')} title={t('title', { name: list.mentor.displayName })} />
   );
 
   if (done) {

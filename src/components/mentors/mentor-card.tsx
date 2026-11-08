@@ -38,7 +38,7 @@ export function MentorCard({
     <article className="min-w-0 rounded-card border border-border bg-bg p-5 shadow-card [overflow-wrap:anywhere]">
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone={availability.available ? 'success' : 'warning'}>{availabilityText}</Badge>
-        <Badge tone="info">{t(`types.${mentor.mentorType}`)}</Badge>
+        <Badge tone="category">{t(`types.${mentor.mentorType}`)}</Badge>
       </div>
       <h3 className="mt-3 break-words text-xl font-semibold text-fg">{mentor.displayName}</h3>
       {mentor.headline && <p className="mt-1 break-words text-base text-fg">{mentor.headline}</p>}

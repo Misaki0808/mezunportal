@@ -84,6 +84,23 @@ describe('yönetimde kullanıcılar', () => {
       confirmed: true,
     });
   });
+  it('"Ayrıntıyı aç" bağlantıları hedef kullanıcıyı adıyla ayırt eder (kart ve tablo görünümü)', () => {
+    const second = { ...detail, id: 'u2', displayName: 'Başka Üye' };
+    renderUi(
+      <AdminUsers initial={{ items: [detail, second], nextCursor: null }} search={vi.fn()} />,
+    );
+    for (const [name, id] of [
+      ['Örnek Üye', 'u1'],
+      ['Başka Üye', 'u2'],
+    ] as const) {
+      const links = screen.getAllByRole('link', { name: `Ayrıntıyı aç: ${name}` });
+      expect(links.length).toBe(2); // kart + tablo (biri CSS ile gizli)
+      for (const link of links) expect(link).toHaveAttribute('href', `/yonetim/kullanicilar/${id}`);
+    }
+    // Görünür metin adın başında korunur (etikette görünür metin geçer).
+    expect(screen.getAllByText('Ayrıntıyı aç').length).toBe(4);
+  });
+
   it('çok kısa aramayı göndermeden alan yanında bildirir', async () => {
     const search = vi.fn();
     const { user } = renderUi(

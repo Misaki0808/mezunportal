@@ -14,7 +14,7 @@ import {
   type SetMeetLinkInput,
 } from '@/contracts/appointment';
 import type { ActionResult } from '@/contracts/result';
-import { Button, buttonClasses, Field, Input, Modal, Textarea } from '@/components/ui';
+import { Button, Field, Input, Modal, PageHeader, Textarea, buttonClasses } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { AppointmentStatusBadge } from './status-badge';
@@ -108,13 +108,11 @@ export function AppointmentDetail({
         >
           ← {t('back')}
         </Link>
-        <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="mt-2 break-words text-3xl font-semibold tracking-tight text-fg">
-          {t('with', { name: a.counterpart.displayName })}
-        </h1>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <AppointmentStatusBadge status={a.status} />
-        </div>
+        <PageHeader eyebrow={t('eyebrow')} title={t('with', { name: a.counterpart.displayName })}>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <AppointmentStatusBadge status={a.status} />
+          </div>
+        </PageHeader>
       </div>
 
       {notice && (

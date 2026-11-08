@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
+import { PageHeader } from '@/components/ui';
 
 export async function PrivacyFrame({
   title,
@@ -27,9 +28,7 @@ export async function PrivacyFrame({
           ← {back ? t('backReturn') : t('back')}
         </Link>
       )}
-      <p className="text-sm font-semibold tracking-wider text-primary">{t('eyebrow')}</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-fg sm:text-4xl">{title}</h1>
-      <p className="mt-3 text-base leading-relaxed text-fg-muted">{description}</p>
+      <PageHeader eyebrow={t('eyebrow')} title={title} description={description} />
       <div className="mt-7 space-y-5">{children}</div>
     </div>
   );

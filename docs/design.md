@@ -36,6 +36,13 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
 - Yatay kaydırma yok. Uzun metin “devamını göster” ile kısalır.
 - Web app manifest ve ikon: kullanıcı “ana ekrana ekle” ile uygulama gibi açabilir.
 
+### Ortak başlık ve renk dağılımı
+
+- **Sayfa başlığı:** her sayfa `PageHeader` kullanır (üst etiket İris, `h1` Plus Jakarta Sans, açıklama ikincil metin; `h1` sınıfı sayfada yazılmaz).
+- **Renk dağılımı:** İris ana eylem ve bağlantı; **Mercan** yalnız küçük vurgularda (`IconChip tone="accent"`, `Badge tone="accent"`); **Nane** başarı/veri/rapor
+  çipleri. Kısayol ve yönetim kartlarında simge çipleri (`IconChip`) sırayla İris, Mercan, Nane kullanır; çip dekoratiftir, anlamı metin taşır.
+- **Tanıtım sayfası** (`landing.css`) sabit `#hex` metin rengi kullanmaz; belirteç kullanır (kontrast testi).
+
 ### Kontrast tablosu (WCAG AA)
 
 Kanonik koruma `src/lib/contrast.test.ts` (her çift her iki temada; normal metin ≥ 4.5, sınır ≥ 3). Seçilmiş çiftler:

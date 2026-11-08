@@ -128,6 +128,7 @@ export function AdminUsers({ initial, search }: Props) {
                   <Link
                     href={`/yonetim/kullanicilar/${item.id}`}
                     className={`${buttonClasses({ variant: 'secondary' })} mt-4`}
+                    aria-label={t('detailsFor', { name: item.displayName })}
                   >
                     {t('details')}
                   </Link>
@@ -159,6 +160,7 @@ export function AdminUsers({ initial, search }: Props) {
                       <Link
                         href={`/yonetim/kullanicilar/${item.id}`}
                         className={`${buttonClasses({ variant: 'secondary' })} whitespace-nowrap`}
+                        aria-label={t('detailsFor', { name: item.displayName })}
                       >
                         {t('details')}
                       </Link>
