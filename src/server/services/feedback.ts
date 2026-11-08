@@ -4,6 +4,7 @@ import { feedbackInputSchema, type FeedbackInput, type FeedbackView } from '@/co
 import { codedConflict, codedNotFound } from '@/lib/errors';
 import { createPermissions } from '../permissions/guards';
 import { reliability, reliabilitySince } from '../rules/reliability';
+import { awardForSession, awardSafely } from './points';
 import { requireConsent } from './privacy';
 import { emitEvent } from './event';
 
@@ -51,8 +52,10 @@ export async function submitFeedback(
     }
     return { completed, menteeId: row.menteeId, mode: row.mode };
   });
-  if (result.completed)
+  if (result.completed) {
     emitEvent(db, result.menteeId, { type: 'APPOINTMENT_COMPLETED', props: { mode: result.mode } });
+    await awardSafely(() => awardForSession({ db, now: () => now }, parsed.appointmentId));
+  }
   return { submitted: true };
 }
 export async function feedbackView(

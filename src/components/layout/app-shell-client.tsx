@@ -26,7 +26,7 @@ const NAV_ITEMS: readonly { id: NavId; href?: string; icon: ReactNode }[] = [
   { id: 'home', href: '/', icon: <HomeIcon /> },
   { id: 'experiences', href: '/deneyimler', icon: <BriefcaseIcon /> },
   { id: 'mentors', href: '/mentorlar', icon: <UsersIcon /> },
-  { id: 'appointments', icon: <CalendarIcon /> },
+  { id: 'appointments', href: '/randevular', icon: <CalendarIcon /> },
   { id: 'profile', href: '/hesap', icon: <UserIcon /> },
 ];
 

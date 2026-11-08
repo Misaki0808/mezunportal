@@ -65,9 +65,9 @@ note, status, reviewText?, helpful?, completedAt?).
 `FaqItem` (question, answer, sourceRequestId, publishedById, `searchVector`).
 
 **Puan:** `PointRule` (action PK, points, delayDays, isActive) · `PointEntry` (userId, action,
-sourceType, sourceId, counterpartId?, basePoints, multiplier, points, status: `PENDING` |
-`FINAL` | `REVOKED`, finalizesAt?, revokedReason?) · `SuspicionFlag` · `UserBadge` (kind:
-`FOUNDING_MEMBER`; Faz 2'de `ALUMNI_OF_YEAR`).
+sourceType, sourceId, counterpartId?, basePoints, multiplierPercent, points, eventAt, status: `PENDING` |
+`FINAL` | `REVOKED`, finalizesAt?, revokedReason?) · `SuspicionFlag` (userId, rule, status, evidenceKey, entryIds)
+· `UserBadge` (kind: `FOUNDING_MEMBER`; Faz 2'de `ALUMNI_OF_YEAR`; `sourceEntryId` geri alınca etiket düşer).
 
 **Bildirim ve metrik:** `NotificationPreference` · `Event` (props'ta
 kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
@@ -115,6 +115,9 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
   `Appointment.expiresAt` yalnız `REQUESTED` için anlamlıdır (D11); `calendarFailedAt` doluysa mentor linki elle ekler.
 - `PointEntry` (userId, action, sourceType, sourceId) benzersizdir; aynı olay iki kez puan
   üretemez.
+  Puan = taban × çarpan / 100 (CHECK); durum alanları tutarlıdır (PENDING → `finalizesAt`, REVOKED → neden + an; CHECK).
+  Aynı (kullanıcı, kural) için en çok bir `OPEN` `SuspicionFlag` vardır (kısmi benzersiz indeks). `sourceId` ve karşı taraf hiçbir
+  istemci çıktısına girmez.
 - `SessionFeedback` (appointmentId, authorId) benzersizdir.
 - Anonim `Experience`'ın yazarı kendi listesi ve moderasyon dahil hiçbir istemci yanıtına çıkmaz.
   Sahiplik kimliği yalnız sunucuda saklanır; hesap anonimleştirmede yayınlanmış içerikten koparılabilir.

@@ -161,6 +161,10 @@ model User {
   menteeAppointments    Appointment[]      @relation("AppointmentMentee")
   reviewedReports       Report[]           @relation("ReportReviewer")
   cancelledAppointments Appointment[]      @relation("AppointmentCanceller")
+  pointEntries          PointEntry[]       @relation("PointOwner")
+  counterpartPoints     PointEntry[]       @relation("PointCounterpart")
+  suspicionFlags        SuspicionFlag[]
+  badges                UserBadge[]
 }
 
 /// İşlemle aynı anda kaydedilen, gönderim kuyruğu kapanırsa tekrar taşınacak bildirim niyeti.
@@ -1171,4 +1175,139 @@ model SessionFeedback {
 
   @@unique([appointmentId, authorId])
   @@index([authorId, createdAt])
+}
+
+// ---------------------------------------------------------------------------------------------
+// Puan motoru (P1-16; docs/architecture.md "Puan motoru ve hile önleme")
+// ---------------------------------------------------------------------------------------------
+
+enum PointAction {
+  EXPERIENCE_PUBLISHED
+  FAQ_QUESTION_PUBLISHED
+  FAQ_ANSWER_SELECTED
+  FAQ_ANSWER_PARTICIPATION
+  CV_REVIEW_HELPFUL
+  SESSION_ONLINE
+  SESSION_IN_PERSON
+}
+
+enum PointSourceType {
+  EXPERIENCE
+  APPOINTMENT
+  CV_REVIEW
+  FAQ_REQUEST
+  FAQ_ANSWER
+}
+
+enum PointStatus {
+  PENDING
+  FINAL
+  REVOKED
+}
+
+enum PointRevokeReason {
+  ADMIN_CANCEL
+  FRAUD_CONFIRMED
+}
+
+enum SuspicionRule {
+  BURST
+  SINGLE_COUNTERPART
+  SYNC_FEEDBACK
+}
+
+enum SuspicionStatus {
+  OPEN
+  CONFIRMED
+  DISMISSED
+}
+
+enum BadgeKind {
+  FOUNDING_MEMBER
+}
+
+/// Puan kuralı (K-11; sistem yöneticisi değiştirir). Değişiklik yalnız GELECEKTEKİ kayıtları etkiler:
+/// `PointEntry.basePoints` kayıt anındaki değeri saklar. `updatedById` işlem kaydının (AdminAuditLog) aktörüyle aynıdır.
+model PointRule {
+  action      PointAction @id
+  points      Int
+  delayDays   Int         @default(0)
+  isActive    Boolean     @default(true)
+  updatedAt   DateTime    @updatedAt
+  updatedById String?
+}
+
+/// Puan kaydı. `(userId, action, sourceType, sourceId)` benzersizdir: aynı olay iki kez puan üretemez. `sourceId`
+/// YALNIZ sunucuda kalır (anonim deneyimin yazar bağını çıktıya taşımamak için). `points = basePoints * multiplierPercent / 100`
+/// (tam sayı, aşağı yuvarlanır; CHECK). `eventAt` olayın gerçekleştiği an (ikili tavanı ve azalan çarpan bunun takvimine bakar).
+/// Durum tutarlılığı CHECK'lerle zorlanır (ham SQL migration).
+model PointEntry {
+  id                String             @id @default(uuid(7))
+  userId            String
+  action            PointAction
+  sourceType        PointSourceType
+  sourceId          String
+  counterpartId     String?
+  basePoints        Int
+  multiplierPercent Int                @default(100)
+  points            Int
+  status            PointStatus        @default(FINAL)
+  eventAt           DateTime
+  createdAt         DateTime           @default(now())
+  finalizesAt       DateTime?
+  finalizedAt       DateTime?
+  revokedAt         DateTime?
+  revokedById       String?
+  revokedReason     PointRevokeReason?
+
+  user        User        @relation("PointOwner", fields: [userId], references: [id], onDelete: Restrict)
+  counterpart User?       @relation("PointCounterpart", fields: [counterpartId], references: [id], onDelete: SetNull)
+  badges      UserBadge[]
+
+  @@unique([userId, action, sourceType, sourceId])
+  @@index([userId, status, createdAt])
+  @@index([status, finalizesAt])
+  @@index([userId, counterpartId, eventAt])
+}
+
+/// Şüphe işareti (ceza değildir; sistem yöneticisi karar verir). `evidenceKey` işaretin dayandığı kayıtların özetidir:
+/// aynı kanıt iki kez işaretlenmez. Aynı (kullanıcı, kural) için en çok bir `OPEN` işaret vardır (kısmi benzersiz indeks,
+/// ham SQL migration). Yalnız sayılar ve kayıt kimlikleri saklanır; kişisel veri yok.
+model SuspicionFlag {
+  id           String          @id @default(uuid(7))
+  userId       String
+  rule         SuspicionRule
+  status       SuspicionStatus @default(OPEN)
+  evidenceKey  String
+  entryIds     String[]
+  windowStart  DateTime
+  windowEnd    DateTime
+  entryCount   Int
+  points       Int
+  sharePercent Int?
+  syncedCount  Int?
+  createdAt    DateTime        @default(now())
+  decidedAt    DateTime?
+  decidedById  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, rule, evidenceKey])
+  @@index([status, createdAt])
+}
+
+/// Platform içi etiket (K-10: pilot süresince ilk deneyimi yayınlanan). Kullanıcı başına tür başına bir satır;
+/// geri alınırsa (`revokedAt`) otomatik yeniden verilmez. `sourceEntryId`: etiketi doğuran puan kaydı (o geri alınınca etiket de).
+model UserBadge {
+  id            String    @id @default(uuid(7))
+  userId        String
+  kind          BadgeKind
+  sourceEntryId String?
+  awardedAt     DateTime  @default(now())
+  revokedAt     DateTime?
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  sourceEntry PointEntry? @relation(fields: [sourceEntryId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, kind])
 }
