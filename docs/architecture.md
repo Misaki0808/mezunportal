@@ -116,6 +116,13 @@ LLM çıktısı güvenilmeyen girdidir; yalnız profil alanlarına öneri olur, 
 - **Hatırlatma:** başlangıçtan 24 saat önce; onay o noktadan sonra geldiyse hatırlatma onayla
   birlikte gider. Bitişten 1 saat sonra iki tarafa geri bildirim formu.
 - **İptal:** iki taraftan da; takvim etkinliği silinir.
+- **Uygulama (P1-10):** zaman kuralları `rules/appointmentSlots` (slot üretimi), `rules/appointmentLifecycle` (durum
+  makinesi, D11, hatırlatma), `rules/ics`; servis `services/appointment.ts`; arka plan `services/appointment-jobs.ts`
+  (`appointment.sweep`, pg-boss, dakikada bir): süresi dolan talepleri kapatır, onaylı online randevuya takvim etkinliği
+  ister (en çok 3 deneme; sonra ya da adaptör kapalı / yurt dışı aktarım rızası yoksa mentor linki elle ekler), iptal
+  edilmiş etkinlikleri siler, 24 saat kala hatırlatır. Takvim çağrısı istek içinde değil süpürmede yapılır. Kapasite
+  İstanbul takvim ayına göre `CONFIRMED`/`COMPLETED`/`NO_SHOW` sayısıdır. Bildirimler commit'ten sonra e-posta
+  kuyruğuna gider (idempotent).
 
 ### Arama
 

@@ -59,11 +59,11 @@ function requireDirectoryAccess(actor: Actor) {
 // ---------------------------------------------------------------------------------------------
 
 /** Süresiz ya da süresi dolmamış askı hesabı dizinden düşürür (`accountStatusOf` ile aynı kural). */
-const notSuspended = (now: Date): Prisma.UserWhereInput => ({
+export const notSuspended = (now: Date): Prisma.UserWhereInput => ({
   NOT: { banned: true, OR: [{ banExpires: null }, { banExpires: { gt: now } }] },
 });
 
-function visibleMentorWhere(
+export function visibleMentorWhere(
   universityIds: string[],
   viewerId: string,
   filter: Partial<SearchMentorsFilter>,

@@ -4,9 +4,13 @@ import { getAuthEnv, getLlmEnv } from '@/lib/env';
 
 import { getAuth, getAuthEmailPort } from '../auth';
 import { getDb } from '../db';
+import { getCalendar } from '../external/calendar';
 import { getLlm } from '../external/llm';
 import { getStorage } from '../external/storage';
 import { enqueueCvParse } from '../jobs/cv';
+import { enqueueEmail } from '../jobs/email';
+import { createAppointmentNotifier } from '../services/appointment-notifier';
+import type { AppointmentDeps } from '../services/appointment';
 import type { AuthFlowDeps } from '../services/auth-flow';
 import type { AdminUserDeps } from '../services/admin-users';
 
@@ -41,5 +45,14 @@ export function cvDeps(): CvDeps {
     llm: getLlm(),
     enqueue: enqueueCvParse,
     dailyLimit: getLlmEnv().CV_PARSE_DAILY_LIMIT,
+  };
+}
+
+/** Randevu motoru: takvim kapalıysa `null` (mentor linki elle ekler); bildirimler e-posta kuyruğuna gider. */
+export function appointmentDeps(): AppointmentDeps {
+  return {
+    db: getDb(),
+    calendar: getCalendar(),
+    notifier: createAppointmentNotifier(enqueueEmail),
   };
 }

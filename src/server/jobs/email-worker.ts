@@ -1,4 +1,5 @@
 import { createEmailRuntime } from './email';
+import { createAppointmentRuntime } from './appointment';
 import { createCvRuntime } from './cv';
 import { createNotificationRuntime } from './notification-worker';
 import { getDb } from '../db';
@@ -12,7 +13,13 @@ async function main() {
         throw error;
       })
     : null;
+  const appointmentRuntime = await createAppointmentRuntime(true).catch(async (error: unknown) => {
+    await cvRuntime?.stop().catch(() => undefined);
+    await runtime.stop().catch(() => undefined);
+    throw error;
+  });
   const notifications = await createNotificationRuntime().catch(async () => {
+    await appointmentRuntime.stop().catch(() => undefined);
     await cvRuntime?.stop().catch(() => undefined);
     await runtime.stop().catch(() => undefined);
     throw new Error('NOTIFICATION_WORKER_UNAVAILABLE');
@@ -27,6 +34,7 @@ async function main() {
     clearInterval(timer);
     try {
       await notifications.stop();
+      await appointmentRuntime.stop();
       await cvRuntime?.stop();
       await runtime.stop();
       await getDb().$disconnect();
