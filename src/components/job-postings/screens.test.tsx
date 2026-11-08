@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
 import type { JobPostingCard, JobPostingFormContext } from '@/contracts/job-postings';
@@ -300,6 +300,12 @@ it('mobil süzgeçler alt sayfada uygulanır ve arama metni korunur', async () =
   fireEvent.click(screen.getByRole('button', { name: 'Süzgeçler' }));
   const dialog = screen.getByRole('dialog');
   expect(dialog).toHaveTextContent('Konum');
+  for (const label of ['Kurum', 'Konum', 'Hedef bölüm', 'İlan türü', 'Kalan süre']) {
+    expect(within(dialog).getByLabelText(label, { exact: true })).toHaveProperty(
+      'tagName',
+      'SELECT',
+    );
+  }
   const apply = screen.getByRole('button', { name: 'Süzgeçleri uygula' });
   const form = document.getElementById(apply.getAttribute('form')!);
   expect(form).toHaveAttribute('action', '/ilanlar');

@@ -15,6 +15,7 @@ import {
   Badge,
   IconChip,
   EmptyState,
+  Field,
   Input,
   Pagination,
   Select,
@@ -112,63 +113,71 @@ export function PostingList({
   const [navigating, setNavigating] = useState(false);
   const filterFields = (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <label className="grid gap-2 font-medium">
-        {t('department')}
-        <Select name="departmentId" defaultValue={filters.departmentId ?? ''}>
-          <option value="">{t('all')}</option>
-          {options.departments.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </Select>
-      </label>
-      <label className="grid gap-2 font-medium">
-        {t('company')}
-        <Select
-          name="organization"
-          defaultValue={
-            options.organizations.find((c) =>
-              c.companyId ? c.companyId === filters.companyId : c.name === filters.organizationName,
-            )?.key ?? ''
-          }
-        >
-          <option value="">{t('all')}</option>
-          {options.organizations.map((c) => (
-            <option key={c.key} value={c.key}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
-      </label>
-      <label className="grid gap-2 font-medium">
-        {t('kind')}
-        <Select name="kind" defaultValue={filters.kind ?? ''}>
-          <option value="">{t('allTypes')}</option>
-          <option value="INTERNSHIP">{t('INTERNSHIP')}</option>
-          <option value="JOB">{t('JOB')}</option>
-        </Select>
-      </label>
-      <label className="grid gap-2 font-medium">
-        {t('withinDays')}
-        <Select name="withinDays" defaultValue={filters.withinDays?.toString() ?? ''}>
-          <option value="">{t('anyTime')}</option>
-          <option value="0">{t('today')}</option>
-          <option value="7">{t('sevenDays')}</option>
-          <option value="14">{t('fourteenDays')}</option>
-        </Select>
-      </label>
-      <label className="grid gap-2 font-medium">
-        {t('location')}
-        <Select name="location" defaultValue={filters.location ?? ''}>
-          <option value="">{t('all')}</option>
-          {options.locations.map((location) => (
-            <option key={location.name} value={location.name}>
-              {location.name}
-            </option>
-          ))}
-        </Select>
-      </label>
+      <Field label={t('department')}>
+        {(props) => (
+          <Select {...props} name="departmentId" defaultValue={filters.departmentId ?? ''}>
+            <option value="">{t('all')}</option>
+            {options.departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </Select>
+        )}
+      </Field>
+      <Field label={t('company')}>
+        {(props) => (
+          <Select
+            {...props}
+            name="organization"
+            defaultValue={
+              options.organizations.find((c) =>
+                c.companyId
+                  ? c.companyId === filters.companyId
+                  : c.name === filters.organizationName,
+              )?.key ?? ''
+            }
+          >
+            <option value="">{t('all')}</option>
+            {options.organizations.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        )}
+      </Field>
+      <Field label={t('kind')}>
+        {(props) => (
+          <Select {...props} name="kind" defaultValue={filters.kind ?? ''}>
+            <option value="">{t('allTypes')}</option>
+            <option value="INTERNSHIP">{t('INTERNSHIP')}</option>
+            <option value="JOB">{t('JOB')}</option>
+          </Select>
+        )}
+      </Field>
+      <Field label={t('withinDays')}>
+        {(props) => (
+          <Select {...props} name="withinDays" defaultValue={filters.withinDays?.toString() ?? ''}>
+            <option value="">{t('anyTime')}</option>
+            <option value="0">{t('today')}</option>
+            <option value="7">{t('sevenDays')}</option>
+            <option value="14">{t('fourteenDays')}</option>
+          </Select>
+        )}
+      </Field>
+      <Field label={t('location')}>
+        {(props) => (
+          <Select {...props} name="location" defaultValue={filters.location ?? ''}>
+            <option value="">{t('all')}</option>
+            {options.locations.map((location) => (
+              <option key={location.name} value={location.name}>
+                {location.name}
+              </option>
+            ))}
+          </Select>
+        )}
+      </Field>
       <label className="flex min-h-11 items-center gap-3 font-medium">
         <input
           type="checkbox"
