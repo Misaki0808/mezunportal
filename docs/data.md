@@ -31,19 +31,17 @@ yalnız admin eklentisi şeması için vardır ve yetki vermez.
 **KVKK ve kontrollü iletişim (şemada, P1-03 sözleşmesi):** `Consent` · `FieldVisibility` ·
 `ContactRequest`. Görünürlük kararı yalnız `src/server/rules/visibility.ts` karar tablosundadır.
 
+**CV hattı (şemada, P1-05):** `CvUpload` (durum, dosya anahtarı, doğrulanmış ayrıştırma çıktısı yalnız `PARSED`'da) ·
+profil kalemleri `Education` · `Position` · `Language` · `Certification` · `UserSkill` (`source`: `CV`/`MANUAL`,
+`manuallyEdited` korumalı kalemdir) · sözlükler `Company` · `Title` · `Skill` · `Sector` (+ `UnmatchedValue`
+yönetici kuyruğu) · `ExperienceInvitation`. Bunlar `User`'a bağlıdır (`Profile`'a değil); beceri `Tag(SKILL)` değil
+`Skill`/`UserSkill`'dir (BACKLOG TD-010).
+
 **Profil (P1-04 şemasında):** `Profile`, `Tag`, `ProfileTag`; kullanıcı ve etiket ilişkileri için
 kanonik kaynak Prisma şemasıdır. Profil içeriğinin hesap silmeye ve veri dökümüne bağlanması servis
 uygulamasının zorunlu parçasıdır; kullanıcı hesabı satırı silinmediğinden cascade tek başına yeterli değildir.
 İlk giriş adım durumu `Profile.completedSteps` / `skippedSteps` ile açıkça tutulur (ikisinde de yoksa
 bekliyor); listeler ayrıktır, zorunlu adım atlanamaz (`Profile_step_status_check`). Atlama veriyi silmez.
-
-**Profilin sonraki modelleri:** `Education` · `Position`
-(companyId?, companyRaw, titleId?, titleRaw, sectorId?, employmentType, tarihler, isCurrent,
-source, manuallyEdited) · `Language` · `Certification` · `CvUpload` (storageKey, status,
-parsedJson?, errorCode?, appliedAt?).
-
-**Sözlükler:** `Company` (name, normalizedName, aliases[], sectorId?) · `Sector` · `Title` ·
-`UnmatchedValue` (kind, rawValue, normalizedValue, count, resolvedToId?).
 
 **Deneyim ve şikâyet (P1-07 şemasında):** `Experience`, `Report`. Alan/enum/indekslerin tek kaynağı
 Prisma şemasıdır; tür bazlı alanlar ve taslak/yayına hazır ayrımı `src/contracts/experience.ts`'tedir.
@@ -51,7 +49,8 @@ Taslak eksik olabilir; gönderimden itibaren türün zorunlu alanları ve modera
 SQL CHECK'lerle korunur. `interviewQuestions` NULL olmayan tek boyutlu bir dizidir; JSON başvuru
 adımları kapalı nesnelerden oluşur. Aynı kişi/hedef için tek açık şikâyet kısmi benzersiz indeksle korunur.
 Şimdilik şikâyetin tek hedef türü deneyimdir ve FK ile bağlıdır; SSS kendi sözleşmesinde genişletir.
-`companyId` mevcut olmayan sözlüğü oluşturmaz; P1-08 bağlar. Arama vektörü/indeksi de P1-08'dedir.
+`Company` sözlüğü P1-05 ile vardır; deneyimin `companyId` FK bağlantısını P1-08 ekler. Arama vektörü/indeksi de P1-08'dedir.
+
 
 **Mentorluk:** `AvailabilityRule` (mentorId, weekday, startMinute, endMinute, mode) ·
 `Appointment` (mentorId, menteeId, startsAt, endsAt, mode, menteeNote, location?, status:

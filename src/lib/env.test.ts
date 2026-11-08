@@ -6,6 +6,7 @@ import {
   isLinkedInConfigured,
   parseAuthEnv,
   parseEnv,
+  parseLlmEnv,
   parseStorageEnv,
 } from '@/lib/env';
 
@@ -181,5 +182,47 @@ describe('dosya depolama ortamı (parseStorageEnv)', () => {
     const error = catchError(() => parseStorageEnv({ STORAGE_DRIVER: 's3' }));
     expect(error).toBeInstanceOf(EnvValidationError);
     expect((error as EnvValidationError).invalidKeys).toEqual(['STORAGE_DRIVER']);
+  });
+});
+
+describe('CV ayrıştırma / LLM ortamı (parseLlmEnv)', () => {
+  const base = { APP_ENV: 'local' };
+
+  it('sağlayıcı boşsa özellik kapalıdır ve günlük sınır varsayılan 5’tir', () => {
+    expect(parseLlmEnv(base).LLM_PROVIDER).toBeUndefined();
+    expect(parseLlmEnv(base).CV_PARSE_DAILY_LIMIT).toBe(5);
+    const blank = parseLlmEnv({ ...base, LLM_PROVIDER: '', CV_PARSE_DAILY_LIMIT: '' });
+    expect(blank.LLM_PROVIDER).toBeUndefined();
+    expect(blank.CV_PARSE_DAILY_LIMIT).toBe(5);
+  });
+
+  it('fake sağlayıcı local ve test’te kabul edilir', () => {
+    expect(parseLlmEnv({ ...base, LLM_PROVIDER: 'fake' }).LLM_PROVIDER).toBe('fake');
+    expect(parseLlmEnv({ APP_ENV: 'test', LLM_PROVIDER: 'fake' }).LLM_PROVIDER).toBe('fake');
+  });
+
+  it('PROD’DA fake sağlayıcı env doğrulamasını düşürür (sahte CV çıktısı canlıya gitmez)', () => {
+    expect(() => parseLlmEnv({ APP_ENV: 'prod', LLM_PROVIDER: 'fake' })).toThrow(
+      EnvValidationError,
+    );
+    try {
+      parseLlmEnv({ APP_ENV: 'prod', LLM_PROVIDER: 'fake' });
+    } catch (error) {
+      expect((error as EnvValidationError).invalidKeys).toEqual(['LLM_PROVIDER']);
+    }
+    expect(parseLlmEnv({ APP_ENV: 'prod' }).LLM_PROVIDER).toBeUndefined();
+  });
+
+  it('bilinmeyen sağlayıcı ve geçersiz günlük sınır reddedilir; hata yalnız değişken adını taşır', () => {
+    expect(() => parseLlmEnv({ ...base, LLM_PROVIDER: 'baska' })).toThrow(EnvValidationError);
+    for (const bad of ['0', '51', '-1', 'abc', '2.5']) {
+      expect(() => parseLlmEnv({ ...base, CV_PARSE_DAILY_LIMIT: bad })).toThrow(EnvValidationError);
+    }
+    expect(parseLlmEnv({ ...base, CV_PARSE_DAILY_LIMIT: '50' }).CV_PARSE_DAILY_LIMIT).toBe(50);
+    try {
+      parseLlmEnv({ ...base, LLM_PROVIDER: 'gizli-deger-123' });
+    } catch (error) {
+      expect(String((error as Error).message)).not.toContain('gizli-deger-123');
+    }
   });
 });

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { isValidStorageKey, newGraduationDocumentKey } from './keys';
+import { isValidStorageKey, newCvKey, newGraduationDocumentKey } from './keys';
 import { createLocalStorage } from './local';
 import { createMemoryStorage } from './memory';
 import { StorageError, type StorageAdapter } from './types';
@@ -49,6 +49,14 @@ describe('depolama anahtarları', () => {
     expect(a).not.toBe(b);
     expect(() => newGraduationDocumentKey('../x')).toThrow(TypeError);
     expect(() => newGraduationDocumentKey('a/b')).toThrow(TypeError);
+  });
+
+  it('yeni CV anahtarı cv/<kullanıcı>/<uuid>.pdf biçimindedir; benzersizdir; geçersiz kimlik reddedilir', () => {
+    const a = newCvKey('user-1');
+    expect(a).toMatch(/^cv\/user-1\/[0-9a-f-]{36}\.pdf$/);
+    expect(isValidStorageKey(a)).toBe(true);
+    expect(newCvKey('user-1')).not.toBe(a);
+    expect(() => newCvKey('../x')).toThrow(TypeError);
   });
 });
 
