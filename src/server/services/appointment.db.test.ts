@@ -63,7 +63,6 @@ function harness(options: { calendar?: FakeCalendar | null; now?: Date } = {}): 
   const calendar = options.calendar === undefined ? createFakeCalendar() : options.calendar;
   return { deps: { db, now: () => options.now ?? NOW, calendar, notifier }, notifier, calendar };
 }
-const at = (now: Date, base?: Harness) => ({ ...(base ?? harness()).deps, now: () => now });
 
 async function person(
   role: 'STUDENT' | 'ALUMNI' | 'ACADEMIC' = 'STUDENT',
