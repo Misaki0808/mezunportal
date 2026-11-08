@@ -427,6 +427,15 @@ adım yüzdede eksik kalır; ilerleme noktası kalıcıdır. Rol ve bölüm adı
 kalan bekleyen adımları atlanmış sayar. Gerekçe: ekran ile servis aynı ayrımı tek yerden okur ve sonradan
 “eksik adımı tamamla” daveti yalnız gerçekten atlananı hedefler.
 
+## 2026-11-08 · P1-04 profil yazımı ve KVKK yaşam döngüsü
+
+İlk giriş kayıtları hesap silmeyle aynı kullanıcı satırını kilitler ve hesap durumunu kilitten sonra
+yeniden okur; böylece eşzamanlı kayıt silinmiş hesaba profil bırakamaz. Profil yayınlanmış içerik
+değildir: K-09'un iki seçeneğinde de profil ve etiket ilişkileri silinir, ortak sözlük kalır. JSON dökümü
+yalnız kullanıcının kendi profilini açık alan seçimiyle içerir. Mentor isteği bir tercihtir, üyeliği
+doğrulamaz ve etkin mentor profili açmaz. P1-07 deneyim verisi gelene kadar öğrencinin mentor adımı
+güvenli biçimde kapalıdır; sınıf düzeltmesi sunucudaki üyelikten hesaplanır.
+
 ## 2026-11-08 · Deneyim görünürlüğü ve anonim çıktı sınırı (K-07, P1-07)
 
 PM kararı: yayınlanmış içerik üniversitedeki tüm doğrulanmış üyelere görünür; bölüm/fakülte ayrımıyla
@@ -439,3 +448,4 @@ Sözleşme eksik taslağı tür bazlı tam şablondan ayırır; tür değişince
 Yayın/ret kararına ait alanlar SQL CHECK'le birlikte tutulur; yayınlama yetkisi ve durum geçişleri
 servis kartında zorlanır. CV davetinin isteğe bağlı Position kimliği yalnız girdidedir; sahipliği
 P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK'sı P1-08'e bırakıldı.
+

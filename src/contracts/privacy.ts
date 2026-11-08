@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { ErrorCode } from '@/lib/errors';
 
 import { emailSchema } from './auth';
+import { ONBOARDING_STEPS, profileTagSchema } from './profile';
 
 /**
  * KVKK sözleşmesi (P1-03; docs/security.md “KVKK”, docs/legal-drafts.md). Servis (W1) ve ekran (W2) bunu
@@ -192,6 +193,30 @@ export const exportedContactRequestSchema = z
   })
   .strict();
 
+/** Kullanıcının kendi profili; ilişkiler yalnız etiket sözlüğüne açılır, başka kullanıcıya değil. */
+export const exportedProfileSchema = z
+  .object({
+    id: z.string(),
+    headline: z.string().nullable(),
+    summary: z.string().nullable(),
+    city: z.string().nullable(),
+    goals: z.string().nullable(),
+    socialLinks: z.json().nullable(),
+    linkedinUrl: z.string().nullable(),
+    completionScore: z.number().int().min(0).max(100),
+    onboardingStep: z.enum(ONBOARDING_STEPS),
+    completedSteps: z.array(z.enum(ONBOARDING_STEPS)),
+    skippedSteps: z.array(z.enum(ONBOARDING_STEPS)),
+    mentorInterested: z.boolean().nullable(),
+    cvUpdatedAt: z.string().nullable(),
+    lastFreshnessPromptAt: z.string().nullable(),
+    lastStillThereCheckAt: z.string().nullable(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    tags: z.array(profileTagSchema.extend({ assignedAt: z.string(), updatedAt: z.string() })),
+  })
+  .strict();
+
 export const dataExportSchema = z.object({
   formatVersion: z.literal(DATA_EXPORT_FORMAT_VERSION),
   exportedAt: z.string(),
@@ -202,6 +227,7 @@ export const dataExportSchema = z.object({
     phone: z.string().nullable(),
     createdAt: z.string(),
   }),
+  profile: exportedProfileSchema.nullable(),
   memberships: z.array(z.record(z.string(), z.unknown())),
   consents: z.array(
     z.object({

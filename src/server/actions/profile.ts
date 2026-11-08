@@ -1,39 +1,63 @@
 'use server';
 
-import type {
-  ListProfileTagsInput,
-  OnboardingState,
-  ProfileTagsOutput,
-  SaveOnboardingStepInput,
-  SkipOnboardingStepInput,
+import {
+  listProfileTagsSchema,
+  saveOnboardingStepSchema,
+  skipOnboardingStepSchema,
+  type ListProfileTagsInput,
+  type OnboardingState,
+  type ProfileTagsOutput,
+  type SaveOnboardingStepInput,
+  type SkipOnboardingStepInput,
 } from '@/contracts/profile';
 import type { ActionResult } from '@/contracts/result';
-import { NotImplementedError } from '@/lib/not-implemented';
+import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { getDb } from '../db';
+import * as profile from '../services/profile';
 import { requireUser } from '../permissions';
 
-/** Sözleşme taslağı: uygulama ve sunucu doğrulaması sonraki servis işindedir. */
+/** Oturum → sözleşme doğrulaması → yalnız oturumdaki kullanıcının profili. */
 export async function getOnboardingState(): Promise<ActionResult<OnboardingState>> {
-  await requireUser();
-  throw new NotImplementedError('getOnboardingState');
+  try {
+    const actor = await requireUser();
+    return actionOk(await profile.getOnboardingState(getDb(), actor.userId));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
 export async function listProfileTags(
   input: ListProfileTagsInput,
 ): Promise<ActionResult<ProfileTagsOutput>> {
-  void input;
-  await requireUser();
-  throw new NotImplementedError('listProfileTags');
+  try {
+    const actor = await requireUser();
+    const parsed = parseInput(listProfileTagsSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await profile.listProfileTags(getDb(), actor.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
 export async function saveOnboardingStep(
   input: SaveOnboardingStepInput,
 ): Promise<ActionResult<OnboardingState>> {
-  void input;
-  await requireUser();
-  throw new NotImplementedError('saveOnboardingStep');
+  try {
+    const actor = await requireUser();
+    const parsed = parseInput(saveOnboardingStepSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await profile.saveOnboardingStep(getDb(), actor.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
 export async function skipOnboardingStep(
   input: SkipOnboardingStepInput,
 ): Promise<ActionResult<OnboardingState>> {
-  void input;
-  await requireUser();
-  throw new NotImplementedError('skipOnboardingStep');
+  try {
+    const actor = await requireUser();
+    const parsed = parseInput(skipOnboardingStepSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await profile.skipOnboardingStep(getDb(), actor.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }

@@ -20,9 +20,12 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   hesap anonimleştirme/silme ve kişisel JSON veri dökümü hazır; hesap silme gerçek oturum ve
   depolama adaptörüne bağlı. Onay, hukuki taslaklar, gizlilik, iletişim talepleri, hesap silme ve
   veri indirme ekranları hazır; bağımsız inceleme ve ekran kabulü bekliyor.
+- P1-04 servisi: kalıcı ilk giriş adımları, açık atlama ve profil yüzdesi; K-08 sunucu reddi,
+  profilin hesap silme ve kişisel veri dökümüne bağlantısı hazır. Ekran akışı ayrı karttadır.
 - P1-07 deneyim/moderasyon sözleşmesi hazır: tür bazlı taslaklar, anonim çıktı ayrımı ve şikâyet
   şeması. Yayınlanmış içerik aynı üniversitedeki tüm doğrulanmış üyelere açık (K-07); servis ve
   ekran uygulaması ayrı kartlarda.
+
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
