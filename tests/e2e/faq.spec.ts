@@ -57,7 +57,7 @@ test('SSS: öğrenci talep eder → mentor cevaplar → moderatör yayımlar →
     await expect(card).toBeVisible();
     await card
       .getByLabel(/Cevabın/)
-      .fill('Okulun staj ofisinden formu al, kurum yetkilisine imzalat ve sisteme yükle.');
+      .fill('Okulun staj ofisinden formu al, kurum yetkilisine imzalat ve platforma yükle.');
     await card.getByRole('button', { name: 'Cevabı gönder' }).click();
     await expect(card.getByText('Cevabın kaydedildi.')).toBeVisible();
     expect(await db.faqAnswer.count({ where: { requestId: row.id } })).toBe(1);
