@@ -2,7 +2,16 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 import { hasAdminAccess } from '@/components/layout/admin-access';
-import { BriefcaseIcon, CheckIcon, CloseIcon, ErrorState, InboxIcon } from '@/components/ui';
+import {
+  BadgeCheckIcon,
+  ErrorState,
+  FileTextIcon,
+  InboxIcon,
+  LogOutIcon,
+  MailIcon,
+  ShieldCheckIcon,
+  UserIcon,
+} from '@/components/ui';
 import { PrivacyAccountLinks } from '@/components/privacy/account-links';
 import { getVerificationState } from '@/server/actions/auth';
 import { requireUser } from '@/server/permissions';
@@ -12,11 +21,12 @@ export const dynamic = 'force-dynamic';
 export default async function AccountPage() {
   const actor = await requireUser().catch(() => null);
   if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
-  const [state, showAdmin, t, verification] = await Promise.all([
+  const [state, showAdmin, t, verification, entry] = await Promise.all([
     getVerificationState().catch(() => null),
     hasAdminAccess(),
     getTranslations('authScreens.account'),
     getTranslations('authScreens.verification'),
+    getTranslations('experiences.entry'),
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -31,14 +41,29 @@ export default async function AccountPage() {
       href: '/baslangic?duzenle=1',
       title: t('profile'),
       description: t('profileDescription'),
-      icon: CheckIcon,
+      icon: UserIcon,
     },
-    { href: '/dogrulama', title: t('verification'), description: statusLabel, icon: CheckIcon },
+    {
+      href: '/dogrulama',
+      title: t('verification'),
+      description: statusLabel,
+      icon: BadgeCheckIcon,
+    },
+    ...(state.data.status === 'VERIFIED'
+      ? [
+          {
+            href: '/deneyimlerim',
+            title: entry('mine'),
+            description: entry('mineDescription'),
+            icon: FileTextIcon,
+          },
+        ]
+      : []),
     {
       href: '/hesap/e-posta',
       title: t('email'),
       description: t('emailDescription'),
-      icon: InboxIcon,
+      icon: MailIcon,
     },
     ...(showAdmin
       ? [
@@ -46,7 +71,13 @@ export default async function AccountPage() {
             href: '/yonetim/belge-kuyrugu',
             title: t('admin'),
             description: t('adminDescription'),
-            icon: BriefcaseIcon,
+            icon: InboxIcon,
+          },
+          {
+            href: '/yonetim/deneyimler',
+            title: entry('moderation'),
+            description: entry('moderationDescription'),
+            icon: ShieldCheckIcon,
           },
         ]
       : []),
@@ -83,7 +114,7 @@ export default async function AccountPage() {
             className="press-row flex min-h-20 items-center gap-4 rounded-card border border-border bg-bg p-5 text-fg"
           >
             <span className="text-primary">
-              <CloseIcon />
+              <LogOutIcon />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-lg font-semibold">{t('signOut')}</span>

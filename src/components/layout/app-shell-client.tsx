@@ -24,7 +24,7 @@ type NavId = 'home' | 'experiences' | 'mentors' | 'appointments' | 'profile';
  */
 const NAV_ITEMS: readonly { id: NavId; href?: string; icon: ReactNode }[] = [
   { id: 'home', href: '/', icon: <HomeIcon /> },
-  { id: 'experiences', icon: <BriefcaseIcon /> },
+  { id: 'experiences', href: '/deneyimlerim', icon: <BriefcaseIcon /> },
   { id: 'mentors', icon: <UsersIcon /> },
   { id: 'appointments', icon: <CalendarIcon /> },
   { id: 'profile', href: '/hesap', icon: <UserIcon /> },

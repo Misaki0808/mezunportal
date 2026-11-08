@@ -1,6 +1,12 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { BriefcaseIcon, CheckIcon, CloseIcon, InboxIcon, InfoIcon } from '@/components/ui';
+import {
+  ClipboardCheckIcon,
+  DownloadIcon,
+  ShieldIcon,
+  TrashIcon,
+  UsersIcon,
+} from '@/components/ui';
 
 export async function PrivacyAccountLinks() {
   const t = await getTranslations('privacyScreens.account');
@@ -12,11 +18,11 @@ export async function PrivacyAccountLinks() {
     ['delete', '/hesap/hesabi-sil'],
   ] as const;
   const icons = {
-    consent: CheckIcon,
-    visibility: InfoIcon,
-    contacts: InboxIcon,
-    export: BriefcaseIcon,
-    delete: CloseIcon,
+    consent: ClipboardCheckIcon,
+    visibility: ShieldIcon,
+    contacts: UsersIcon,
+    export: DownloadIcon,
+    delete: TrashIcon,
   };
   return (
     <>

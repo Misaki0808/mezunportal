@@ -16,10 +16,24 @@ describe('yönetim paneli eylemleri', () => {
     expect(Object.keys(adminActions).filter((name) => name in userActions)).toEqual([]);
   });
 
+  // Gövdesi yazılmış eylemler hatayı `ActionResult` olarak döner; sözleşme gövdeleri fırlatır.
+  const implemented = new Set([
+    'suspendUser',
+    'unsuspendUser',
+    'correctMembership',
+    'grantAdmin',
+    'revokeAdmin',
+  ]);
+
   it.each(Object.keys(ADMIN_ACTION_ACCESS))(
     '%s oturumsuz AUTH_UNAUTHENTICATED ile kapalıdır',
     async (name) => {
-      await expect(all[name]!({} as never)).rejects.toMatchObject({ code: 'AUTH_UNAUTHENTICATED' });
+      const call = all[name]!({} as never);
+      if (implemented.has(name)) {
+        await expect(call).resolves.toEqual({ ok: false, errorCode: 'AUTH_UNAUTHENTICATED' });
+      } else {
+        await expect(call).rejects.toMatchObject({ code: 'AUTH_UNAUTHENTICATED' });
+      }
     },
   );
 });

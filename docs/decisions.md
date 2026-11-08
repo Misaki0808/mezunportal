@@ -473,6 +473,15 @@ Yayın/ret kararına ait alanlar SQL CHECK'le birlikte tutulur; yayınlama yetki
 servis kartında zorlanır. CV davetinin isteğe bağlı Position kimliği yalnız girdidedir; sahipliği
 P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK'sı P1-08'e bırakıldı.
 
+## 2026-11-08 · Arama: ASCII katlamalı çift indeks ve sözcük bazlı yazım hatası toleransı
+“ISTANBUL” tr-TR kuralıyla “ıstanbul” olur ve “İstanbul” kaydını bulamazdı; kullanıcı ise noktasız I'yı da noktalı
+yazar. Bu yüzden üretilmiş sütun her alanı hem tr-TR küçük harf + Türkçe gövdeleme hem ASCII katlanmış basit sözlükle
+indeksler (işlevler yerelden bağımsızdır; `lower()` veritabanı yerel ayarına bağlı olurdu). Yazım hatası toleransı
+tüm sorgu üzerinde değil SÖZCÜK başınadır: tüm sorguya benzerlik “marker staj” gibi sorguda tek ortak sözcükle her
+şeyi eşleştiriyordu. Gövde metninde yazım hatası aranmaz (ağır ve gürültülü); şirket, şehir, ülke ve tür adı
+üzerinde yapılır. Sektör süzgeci şirket sözlüğü üzerindendir (`companyId` → `Company.sectorId`); şirketi sözlüğe bağlı olmayan deneyim sektör süzgecinde çıkmaz.
+Yazarı silinmiş, askıdaki ya da yazar bağı kopmuş (K-09 anonimleştirme) deneyim içeriği korur ama yazarsız görünür.
+
 
 ## 2026-11-08 · İlk giriş adımlarına dönüş
 
@@ -516,6 +525,16 @@ kontrol etmeden PDF silmez: eski işin geç hatası yeni PARSED/APPLIED dosyası
 ad düzeltmeleri mevcut eğitim/dil/sertifika kalemlerine de uygulanır; CV yazımı User kilidi altında
 kanonik askı/silinme kontrolünü yeniden yapar. Çıktı üst sınırı UTF-8 baytlarıyla ölçülür.
 
+## 2026-11-08 · Deneyim ekranları: rotalar ve anonimlik sınırı (P1-07)
+
+Deneyim yazma ve yönetimi `/deneyimlerim`, `/deneyim/yeni`, `/deneyim/[id]` (+ `/duzenle`) ve
+`/yonetim/deneyimler` altındadır; `/deneyimler` yolu P1-08 akışı için boş bırakıldı. Form alanları tür
+şablonundan okunur (`experienceTemplateSchema`): sözleşme değişince ekran kendiliğinden değişir, tür değişince
+yeni türde sorulmayan alan içeriğe girmez ve kullanıcıya söylenir. Anonim deneyimde ekran yazar bilgisini hiç
+çizmez; anonim yanıtta yazar alanı olmadığı için sahibin kendi anonim deneyimini şikâyet edememesi kullanıcının
+kendi listesinden anlaşılır (ilk 50 yayınlanmış kayıt; kaçırılırsa yalnız fazladan bir düğme görünür, yetki
+sunucudadır). Moderasyon kuyruğu içeriği açılır bölümde gösterir; karar ve şikâyet çözümü gerekçeli penceredir.
+
 ## 2026-11-08 · Yönetim paneli: kapsam, askı ve toplu rapor kuralları
 Askıya alma Better Auth ban alanlarına yazılır ama eklentinin HTTP ucu kapalı olduğundan kendi servisimiz yazar (oturumlar
 aynı işlemde silinir). Askı hesap geneli olduğu için hedefin bütün etkin üyelikleri yöneticinin kapsamında olmalıdır; aksi
@@ -525,6 +544,15 @@ istihdam raporu ve Excel yalnız toplu sayı verir: kişi satırı yok, yalnız 
 gruplar bastırılır — serbest metin ve tek kişilik gruplar kimliği ele verirdi. Excel `.xlsx`tir (Türkçe karakterler için
 UTF-8, CSV'nin BOM sorunu yok). Sözleşme iki dosyadır: panel sorguları (W2) ve kullanıcı/yetki eylemleri.
 
+## 2026-11-08 · Yönetici atama/kaldırma tek kilitle sıralanır; üyelik düzeltmede geçmiş korunur
+İki sistem yöneticisi aynı anda birbirini kaldırırsa yetki yüklemesi ve yazma sıralanmadığında ikisi de başarılı olup
+sistemde yönetici kalmayabilirdi. Atama/kaldırma tek bir tavsiye kilidiyle sıralanır ve yetki kilitten SONRA yüklenir:
+ikinci istek güncel durumda yetkisizdir. Üyelik düzeltmede bölüm/rol değişirse eski satır silinmez, kapatılır ve
+yöneticice doğrulanmış yenisi açılır; yalnız yıl düzeltmesi yerinde yapılır. Bekleyen/reddedilen üyelik düzeltilmez
+(kendi akışı vardır: belge onayı/ret); düzeltme rolün yıl kısıtlarına (öğrenci giriş, mezun mezuniyet, akademisyen
+hiçbiri) uymak zorundadır. Rol düzeltmesinde mentor uygunluğunun yeniden hesabı bu adımda yoktur: mentor profili
+yetki anında okunur, K-08 eşiği yalnız mentor olma isteğinde denetlenir.
+
 ## 2026-11-08 · Yönetim sözleşmesinde değer maskesi ve açık onay
 
 Maskeli telefon/e-posta çıktı alanları maske biçimini doğrular; yalnız alanı masked diye adlandırmak ham
@@ -533,3 +561,11 @@ confirmed:true ister; askı kaldırma da gerekçelidir. Sözlük silme ve eşle�
 sözleşmede zorunludur. Excel bağlantısı yalnız filtre şemasından geçen alanları taşır; kişisel ya da
 bilinmeyen URL parametresi eklenmez. Bu alanlar ekranın onay penceresi ile sunucu doğrulamasını bağlar.
 
+## 2026-11-08 · Yönetim yazımları yetki iptali ve hesap silmeyle sıralanır
+
+Askı ve üyelik düzeltmesi de atama/kaldırmanın aynı tavsiye kilidini alır; güncel yetki
+kilitten sonra okunur. Böylece yetkisi kaldırılan yöneticinin bekleyen yazımı sonradan
+uygulanmaz. Aktörün kullanıcı satırındaki paylaşım kilidi askı/silmeyle yetki okumasını
+sıralar. Hedef kullanıcı kilidi atama ve üyelik düzeltmesinden önce alınır; hesap silme ve
+mezun geçişiyle ortak sıra User → Membership'tir. Silme ile yarışan atama silinmiş hesapta
+etkin yetki bırakamaz ve ters satır kilidi sırası oluşmaz.
