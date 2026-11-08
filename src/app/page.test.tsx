@@ -10,13 +10,17 @@ const mocks = vi.hoisted(() => ({
   getConsentState: vi.fn(),
   getOnboardingState: vi.fn(),
   getHomeSummary: vi.fn(),
+  getSuggestedJobs: vi.fn(),
   getLandingStats: vi.fn(),
 }));
 vi.mock('@/server/permissions', () => ({ requireUser: mocks.requireUser }));
 vi.mock('@/server/actions/auth', () => ({ getVerificationState: mocks.getVerificationState }));
 vi.mock('@/server/actions/privacy', () => ({ getConsentState: mocks.getConsentState }));
 vi.mock('@/server/actions/profile', () => ({ getOnboardingState: mocks.getOnboardingState }));
-vi.mock('@/server/actions/home', () => ({ getHomeSummary: mocks.getHomeSummary }));
+vi.mock('@/server/actions/home', () => ({
+  getHomeSummary: mocks.getHomeSummary,
+  getSuggestedJobs: mocks.getSuggestedJobs,
+}));
 vi.mock('@/server/services/landing', () => ({ getLandingStats: mocks.getLandingStats }));
 vi.mock('@/components/landing/landing', () => ({
   Landing: () => (
@@ -48,6 +52,7 @@ describe('HomePage', () => {
       mentors: null,
       meetings: null,
     });
+    mocks.getSuggestedJobs.mockResolvedValue({ ok: true, data: [] });
     mocks.getHomeSummary.mockReset();
     mocks.getHomeSummary.mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
   });

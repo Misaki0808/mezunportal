@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import messages from '../../../messages/tr.json';
 import { useTranslations } from 'next-intl';
 import type {
   JobPostingCard,
@@ -20,6 +21,7 @@ import {
 
 export function PostingCard({ posting }: { posting: JobPostingCard }) {
   const t = useTranslations('jobs');
+  const tagLabels = useTranslations('profileTags');
   const initials = posting.organizationName
     .trim()
     .split(/\s+/)
@@ -74,6 +76,24 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
           {t(posting.kind)}
         </span>
       </div>
+      {!!posting.matchTags?.length && (
+        <div>
+          <p className="text-sm font-semibold">{t('whyMatch')}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {posting.matchTags.map((tag) => (
+              <span
+                key={tag.slug}
+                className="rounded-full bg-primary-soft px-3 py-1 text-sm text-on-primary-soft"
+              >
+                {tag.label ??
+                  (tag.slug in messages.profileTags
+                    ? tagLabels(tag.slug as keyof typeof messages.profileTags)
+                    : tag.slug)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="mt-auto flex min-w-0 items-end justify-between gap-3 border-t border-border pt-4">
         <p className="min-w-0 break-words text-sm text-fg-muted">
           <span className="font-semibold">{t('target')}:</span>{' '}

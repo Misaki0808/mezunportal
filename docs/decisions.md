@@ -890,3 +890,5 @@ düşer. Seçenekler: (a) tümünü engel bırakmak — yanlış alarm; (b) öne
 ayırt edilemez; (c) seçilen: kesmeyle ayrılan/bölünmüş/tam ad engel, geri kalanı onaylı uyarı. Bilinen sınır: kesmesiz yazılmış
 gerçek ad ("Ahmete sordum") artık engel değil uyarıdır; moderatör ad olduğunu ayırt edebilmelidir (ad moderatöre gösterilmez, yalnız
 metindeki sözcük). Moderatör ekranı (uyarı + onay düğmesi) #54 main'e girince bağlanır.
+
+**İlan eşleştirme (P2-05, PM kararı).** İlanın metninden etiket türetilmez: yazar sözlükten en çok beş etiket ve isteğe bağlı 1–4 sınıf alt kümesi seçer. Hedef bölüm zorunludur; sınıf seçiliyse öğrenci sınıfı içinde olmalı ve bildirim için en az bir ortak etiket bulunmalıdır. Etiketsiz ilan uygun bölüm/sınıf panosunda görünür, bildirim oluşturmaz. Yayın işlemindeki niyetler İstanbul gününe göre özetlenir; günde bir, kayan yedi günde en çok üç e-posta gönderilir. Küçük erişim sayıları (üçten az) saklanır.

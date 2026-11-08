@@ -20,3 +20,15 @@ export async function getHomeSummary(): Promise<ActionResult<HomeSummary>> {
     return failAction(error);
   }
 }
+
+/** Öğrencinin kişisel ilan önerileri; kullanıcı kimliği istemciden alınmaz. */
+export async function getSuggestedJobs() {
+  try {
+    const actor = await requireVerifiedMember({ roles: ['STUDENT'] });
+    await requireConsent(getDb(), actor.userId);
+    const { listSuggestedJobMatches } = await import('../services/job-match');
+    return actionOk(await listSuggestedJobMatches(getDb(), actor.userId));
+  } catch (error) {
+    return failAction(error);
+  }
+}

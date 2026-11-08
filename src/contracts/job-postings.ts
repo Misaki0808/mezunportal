@@ -132,6 +132,14 @@ const isoDay = z
   );
 
 const targetIds = z.array(deptId).max(JOB_POSTING_TARGETS_MAX, { error: INVALID });
+const tagIds = z
+  .array(adminId)
+  .max(5, { error: INVALID })
+  .refine((v) => new Set(v).size === v.length, { error: INVALID });
+const targetGrades = z
+  .array(z.number().int().min(1).max(4))
+  .max(4, { error: INVALID })
+  .refine((v) => new Set(v).size === v.length, { error: INVALID });
 
 // ---------------------------------------------------------------------------------------------
 // Yazar: form bağlamı, taslak, gönder, kapat, ilanlarım
@@ -143,6 +151,9 @@ export type GetJobPostingFormContextInput = z.input<typeof getJobPostingFormCont
 export const jobPostingFormContextSchema = z
   .object({
     authorDepartments: z.array(z.object({ id: z.string(), name: z.string() }).strict()),
+    availableTags: z.array(
+      z.object({ id: z.string(), slug: z.string(), label: z.string().nullable() }).strict(),
+    ),
     targetDepartments: z.array(
       z.object({ id: z.string(), name: z.string(), facultyName: z.string() }).strict(),
     ),
@@ -175,6 +186,8 @@ export const jobPostingContentSchema = z
     applyUrl: applyUrl.nullable().optional(),
     deadlineOn: isoDay,
     targetDepartmentIds: targetIds.min(1, { error: INVALID }),
+    tagIds: tagIds.optional(),
+    targetGrades: targetGrades.optional(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -216,6 +229,8 @@ export const jobPostingDraftContentSchema = z
     ),
     deadlineOn: isoDay.nullable().optional(),
     targetDepartmentIds: targetIds.optional(),
+    tagIds: tagIds.optional(),
+    targetGrades: targetGrades.optional(),
   })
   .strict();
 export type JobPostingDraftContent = z.infer<typeof jobPostingDraftContentSchema>;
@@ -256,6 +271,14 @@ export const myJobPostingViewSchema = z
     deadlineOn: z.string().nullable(),
     departmentId: z.string(),
     targetDepartments: z.array(targetDepartmentSchema),
+    tagIds: z.array(z.string()),
+    targetGrades: z.array(z.number()),
+    matchReach: z
+      .union([
+        z.object({ belowThreshold: z.literal(true), count: z.null() }),
+        z.object({ belowThreshold: z.literal(false), count: z.number().int().min(3) }),
+      ])
+      .optional(),
     /** `REJECTED`: moderatörün gerekçesi (yazara gösterilir); diğer durumlarda `null`. */
     moderationNote: z.string().nullable(),
     createdAt: z.date(),
@@ -353,6 +376,7 @@ export const jobPostingCardSchema = z
     applyMethod: z.enum(JOB_APPLY_METHODS),
     publishedAt: z.date(),
     authorKind: z.enum(JOB_POSTING_AUTHOR_ROLES),
+    matchTags: z.array(z.object({ slug: z.string(), label: z.string().nullable() })).optional(),
     targetDepartments: z.array(targetDepartmentSchema),
   })
   .strict();

@@ -154,6 +154,11 @@
       "title": "Yönetim",
       "pending": "{count} iş inceleme bekliyor",
       "none": "Bekleyen iş yok"
+    },
+    "jobMatches": {
+      "title": "Sana uyan ilanlar",
+      "empty": "Henüz sana uygun ilan yok. İlgi alanlarını ekleyerek yeni fırsatları keşfedebilirsin.",
+      "profile": "Profilini düzenle"
     }
   },
   "errors": {
@@ -2669,6 +2674,14 @@
     "contactTitle": "İlan için iletişim iste",
     "contactSubtitle": "Talebin ilanı paylaşan kişiye iletilir. İletişim bilgileri yalnız onay verildiğinde açılır.",
     "targetLimit": "En fazla {count} bölüm seçebilirsin.",
-    "newTab": "(yeni sekmede açılır)"
+    "newTab": "(yeni sekmede açılır)",
+    "matchTags": "İlan etiketleri (isteğe bağlı)",
+    "matchTagsHint": "En fazla 5 etiket seçebilirsin. Etiketsiz ilanlar eşleşme bildirimi göndermez.",
+    "matchGrades": "Hedef sınıflar (isteğe bağlı)",
+    "matchGradesHint": "Seçim yapmazsan tüm sınıflar uygundur.",
+    "matchGrade": "{grade}. sınıf",
+    "reachFew": "3'ten az kişiye ulaştı",
+    "reachCount": "{count} kişiye ulaştı",
+    "whyMatch": "Neden sana uygun?"
   }
 }

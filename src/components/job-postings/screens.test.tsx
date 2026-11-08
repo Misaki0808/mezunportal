@@ -30,6 +30,7 @@ const options = {
 };
 const context: JobPostingFormContext = {
   authorDepartments: [{ id: 'dep', name: 'YBS' }],
+  availableTags: [],
   targetDepartments: [{ id: 'dep', name: 'YBS', facultyName: 'İşletme' }],
   limits: { maxDays: 60, submitLimit: 5, submitWindowDays: 30, maxTargets: 10 },
 };
@@ -183,6 +184,8 @@ it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () =>
     deadlineOn: '2027-01-01',
     departmentId: 'dep',
     targetDepartments: [{ id: 'dep', name: 'YBS' }],
+    tagIds: [],
+    targetGrades: [],
     moderationNote: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -221,6 +224,8 @@ it('düzenlemede değiştirilmemiş sözlük kurumu korunur', async () => {
     deadlineOn: null,
     departmentId: 'dep',
     targetDepartments: [],
+    tagIds: [],
+    targetGrades: [],
     moderationNote: null,
     createdAt: new Date(),
     updatedAt: new Date(),

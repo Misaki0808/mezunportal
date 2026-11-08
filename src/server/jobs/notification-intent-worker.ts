@@ -4,6 +4,7 @@ import { getDb } from '../db';
 import { getAuthEnv } from '@/lib/env';
 import messages from '../../../messages/tr.json';
 import { enqueueEmail } from './email';
+import { addDays, istanbulDay } from '../rules/jobPosting';
 import { createCvReviewNotifier } from '../services/cv-review-notifier';
 import {
   createAppointmentNotifier,
@@ -37,6 +38,58 @@ export async function sendNotificationIntent(db: PrismaClient, row: IntentRecord
       event: payload.event,
       eventId: payload.eventId,
       path: payload.path,
+    });
+    return;
+  }
+  if (payload.type === 'jobMatch') {
+    const dayStart = new Date(`${payload.day}T00:00:00+03:00`);
+    const dayEnd = new Date(`${addDays(payload.day, 1)}T00:00:00+03:00`);
+    const today = istanbulDay(new Date());
+    await db.$transaction(async (tx) => {
+      // Bir öğrencinin günlük ve yedi günlük sınırları bütün işçiler arasında serileştirilir.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`job-match:${row.userId}`}, 0))`;
+      const user = await tx.user.findUnique({
+        where: { id: row.userId },
+        select: { email: true, deletedAt: true, banned: true, banExpires: true },
+      });
+      if (
+        !user ||
+        user.deletedAt ||
+        (user.banned && (!user.banExpires || user.banExpires > new Date()))
+      )
+        return;
+      const preference = await tx.notificationPreference.findUnique({
+        where: { userId_type: { userId: row.userId, type: 'JOB_MATCH' } },
+        select: { enabled: true },
+      });
+      if (preference?.enabled === false) return;
+      const active = await tx.jobMatch.count({
+        where: {
+          userId: row.userId,
+          createdAt: { gte: dayStart, lt: dayEnd },
+          posting: { status: 'PUBLISHED', deadlineOn: { gte: new Date(`${today}T00:00:00Z`) } },
+        },
+      });
+      if (!active) return;
+      const existing = await tx.jobMatchDigest.findUnique({
+        where: { userId_day: { userId: row.userId, day: today } },
+      });
+      if (existing) return;
+      const recent = await tx.jobMatchDigest.count({
+        where: { userId: row.userId, day: { gte: addDays(today, -6), lte: today } },
+      });
+      if (recent >= 3) return;
+      const url = new URL('/ilanlar', getAuthEnv().APP_URL).href;
+      const result = await enqueueEmail({
+        to: user.email,
+        recipientUserId: row.userId,
+        template: 'jobMatch.digest',
+        idempotencyKey: `job-match:${row.userId}:${today}:${payload.day}`,
+        subject: messages.notifications.email.jobMatchSubject,
+        text: messages.notifications.email.jobMatchText.replace('{url}', url),
+      });
+      if (result.emailLogId)
+        await tx.jobMatchDigest.create({ data: { userId: row.userId, day: today } });
     });
     return;
   }

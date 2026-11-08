@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import messages from '../../../messages/tr.json';
 import { useTranslations } from 'next-intl';
 import { parseApplyUrl, type JobPostingDetail } from '@/contracts/job-postings';
 import { Card, buttonClasses } from '@/components/ui';
@@ -12,6 +13,7 @@ export function PostingDetail({
   canRequestContact?: boolean;
 }) {
   const t = useTranslations('jobs');
+  const tagLabels = useTranslations('profileTags');
   const url =
     posting.applyMethod === 'URL' && posting.applyUrl ? parseApplyUrl(posting.applyUrl) : null;
   const contact =
@@ -55,6 +57,24 @@ export function PostingDetail({
             </span>
           </div>
         </header>
+        {!!posting.matchTags?.length && (
+          <section className="mt-6">
+            <h2 className="font-semibold">{t('whyMatch')}</h2>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {posting.matchTags.map((tag) => (
+                <span
+                  key={tag.slug}
+                  className="rounded-full bg-primary-soft px-3 py-1 text-sm text-on-primary-soft"
+                >
+                  {tag.label ??
+                    (tag.slug in messages.profileTags
+                      ? tagLabels(tag.slug as keyof typeof messages.profileTags)
+                      : tag.slug)}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
         <section className="mt-8 border-t border-border pt-7">
           <h2 className="text-xl font-bold">{t('description')}</h2>
           <p className="mt-3 whitespace-pre-wrap break-words leading-relaxed text-fg">

@@ -106,6 +106,13 @@ export function MyPostings({
                   {t(`status.${item.status}`)}
                 </span>
               </div>
+              {item.publishedAt && item.matchReach && (
+                <p className="text-sm text-fg-muted">
+                  {item.matchReach.belowThreshold
+                    ? t('reachFew')
+                    : t('reachCount', { count: item.matchReach.count })}
+                </p>
+              )}
               {item.moderationNote && (
                 <p className="break-words rounded-control bg-accent-soft p-3 text-sm text-on-accent-soft">
                   {t('moderationReason', { reason: item.moderationNote })}
