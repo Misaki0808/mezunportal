@@ -298,3 +298,20 @@ export async function listContactRequests(
   const page = hasMore ? items.slice(0, input.limit) : items;
   return { items: page, nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null };
 }
+
+/**
+ * Hedefin onaylı talebe açık (`ON_APPROVED_REQUEST`) alanları. Hedef yok/silinmiş/askıdaysa boş. İlan üzerinden önizleme
+ * (P2-04) ad döndürmeden bu kümeyi kullanır.
+ */
+export async function requestableFieldsOf(
+  db: Pick<PrismaClient, 'user' | 'fieldVisibility'>,
+  targetUserId: string,
+): Promise<ContactField[]> {
+  const target = await db.user.findUnique({
+    where: { id: targetUserId },
+    select: { id: true, deletedAt: true, banned: true },
+  });
+  const levels = (await loadVisibilityLevels(db, [targetUserId])).get(targetUserId) ?? new Map();
+  if (!target || target.deletedAt || target.banned) return [];
+  return CONTACT_FIELDS.filter((field) => effectiveLevel(field, levels) === 'ON_APPROVED_REQUEST');
+}

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import type { ErrorCode } from '@/lib/errors';
 
 import { adminId, adminPageInput, adminReason } from './admin';
+import { sendContactRequestSchema } from './contact-request';
+import { CONTACT_FIELDS } from './privacy';
 
 /**
  * Mezun staj/iş ilanları sözleşmesi (P2-04; docs/faz2-plan.md, D19). Servis (W1) ve ekranlar (W2/R1) paylaşır; DEĞİŞTİRMEZLER
@@ -404,17 +406,71 @@ export type JobPostingFilterOptions = z.infer<typeof jobPostingFilterOptionsSche
 export const getJobPostingSchema = z.object({ id: postingId }).strict();
 export type GetJobPostingInput = z.input<typeof getJobPostingSchema>;
 /**
- * Okuyucu detayı: kart + açıklama. `applyUrl` YALNIZ `URL` yönteminde ve ilan açıkken (yayında, süresi dolmamış) döner;
- * `contactUserId` YALNIZ `CONTACT_REQUEST` yönteminde (iletişim talebi bağlantısı: `/iletisim-iste/{contactUserId}`).
+ * Okuyucu detayı: kart + açıklama. `applyUrl` YALNIZ `URL` yönteminde döner. `CONTACT_REQUEST` yönteminde yazar kimliği HİÇBİR okuyucu
+ * çıktısında yoktur (D7: `/iletisim-iste` önizlemesi ad döndürür; ad yalnız talep onaylanınca açılır): iletişim talebi İLAN ÜZERİNDEN
+ * (`previewJobPostingContact`/`requestJobPostingContact`, girdi `jobPostingId`) gönderilir ve sunucu yazarı çözer.
  */
 export const jobPostingDetailSchema = jobPostingCardSchema
   .extend({
     description: z.string(),
     applyUrl: z.string().nullable(),
-    contactUserId: z.string().nullable(),
   })
   .strict();
 export type JobPostingDetail = z.infer<typeof jobPostingDetailSchema>;
+
+// ---------------------------------------------------------------------------------------------
+// İlan üzerinden iletişim talebi (D7): yazar kimliği/adı okuyucuya HİÇ gitmez
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Önizleme: girdi ilan kimliği; çıktıda ilan başlığı ve kurum (ad/kimlik yok) ile yazarın onayla açılabilecek alanları (en az bir).
+ * Talep edilemeyen her durum (ilan yok/kapsam dışı/açık değil, `CONTACT_REQUEST` yöntemi değil, kendi ilanı, yazar askıda/silinmiş,
+ * alan yok) TEK genel yanıta düşer; ayrım yalnız sunucudadır. Hız sınırlı (kimlik/ilan taraması yavaşlar).
+ */
+export const previewJobPostingContactSchema = z.object({ jobPostingId: postingId }).strict();
+export type PreviewJobPostingContactInput = z.input<typeof previewJobPostingContactSchema>;
+export const jobPostingContactPreviewSchema = z.discriminatedUnion('canRequest', [
+  z
+    .object({
+      canRequest: z.literal(true),
+      postingTitle: z.string(),
+      organizationName: z.string(),
+      requestableFields: z.array(z.enum(CONTACT_FIELDS)).min(1),
+    })
+    .strict(),
+  z
+    .object({
+      canRequest: z.literal(false),
+      postingTitle: z.null(),
+      organizationName: z.null(),
+      requestableFields: z.array(z.enum(CONTACT_FIELDS)).length(0),
+    })
+    .strict(),
+]);
+export type JobPostingContactPreview = z.infer<typeof jobPostingContactPreviewSchema>;
+export const JOB_POSTING_CONTACT_NOT_REQUESTABLE: JobPostingContactPreview = {
+  canRequest: false,
+  postingTitle: null,
+  organizationName: null,
+  requestableFields: [],
+};
+
+/**
+ * Yazara iletişim talebi (mevcut `ContactRequest` kaydı ve bildirimi; hedef sunucuda ilandan çözülür). `message` en çok 500
+ * karakter; talebe ilan başlığı bağlamı sunucuca eklenir. Yazarın ADI/kimliği çıktıda yoktur.
+ */
+export const requestJobPostingContactSchema = z
+  .object({
+    jobPostingId: postingId,
+    fields: sendContactRequestSchema.shape.fields,
+    message: sendContactRequestSchema.shape.message,
+  })
+  .strict();
+export type RequestJobPostingContactInput = z.input<typeof requestJobPostingContactSchema>;
+export const requestJobPostingContactOutputSchema = z
+  .object({ requestId: z.string(), status: z.literal('PENDING') })
+  .strict();
+export type RequestJobPostingContactOutput = z.infer<typeof requestJobPostingContactOutputSchema>;
 
 // ---------------------------------------------------------------------------------------------
 // Moderatör: kuyruk, karar
@@ -525,6 +581,8 @@ export const JOB_POSTING_ACTION_ACCESS = {
   getJobPostingFilterOptions: 'VERIFIED_MEMBER',
   getJobPosting: 'VERIFIED_MEMBER',
   reportJobPosting: 'VERIFIED_MEMBER',
+  previewJobPostingContact: 'VERIFIED_MEMBER',
+  requestJobPostingContact: 'VERIFIED_MEMBER',
   listJobPostingModerationQueue: 'MODERATOR',
   reviewJobPosting: 'MODERATOR',
   listJobPostingReports: 'MODERATOR',
@@ -579,6 +637,16 @@ export const JOB_POSTING_ACTION_ERRORS = {
     'RATE_LIMITED',
     'JOB_POSTING_NOT_OPEN',
     'REPORT_ALREADY_OPEN',
+  ],
+  previewJobPostingContact: [...AUTH_ERRORS, 'VALIDATION_INVALID', 'RATE_LIMITED'],
+  requestJobPostingContact: [
+    ...AUTH_ERRORS,
+    'VALIDATION_INVALID',
+    'RESOURCE_NOT_FOUND',
+    'RATE_LIMITED',
+    'CONTACT_REQUEST_SELF',
+    'CONTACT_REQUEST_ALREADY_OPEN',
+    'CONTACT_FIELD_NOT_REQUESTABLE',
   ],
   listJobPostingModerationQueue: [...AUTH_ERRORS, 'VALIDATION_INVALID'],
   reviewJobPosting: [

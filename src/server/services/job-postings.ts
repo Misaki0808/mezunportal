@@ -523,7 +523,6 @@ export async function getJobPosting(
     ...toCard(row, today),
     description: row.description,
     applyUrl: row.applyMethod === 'URL' ? row.applyUrl : null,
-    contactUserId: row.applyMethod === 'CONTACT_REQUEST' ? row.authorId : null,
   });
 }
 
@@ -574,6 +573,27 @@ export async function reportJobPosting(
     });
     return reportJobPostingOutputSchema.parse({ reportId: report.id, status: 'OPEN' });
   });
+}
+
+/**
+ * İlan üzerinden iletişim için yazarı çözer (D7; yalnız sunucuda): ilan okuyucuya açık (K-07, yayında, süresi dolmamış) ve yöntemi
+ * `CONTACT_REQUEST` olmalı. Aksi halde `null`. Yazar kimliği ve adı bu işlevin dışına, hiçbir okuyucu çıktısına çıkmaz.
+ */
+export async function resolveContactAuthor(
+  deps: JobPostingDeps,
+  userId: string,
+  jobPostingId: string,
+): Promise<{ authorId: string; title: string; organizationName: string } | null> {
+  const today = istanbulDay(nowOf(deps));
+  const row = await asMember(deps, userId, async (tx, actor) =>
+    findJobPostingRow(tx, {
+      universityIds: await viewerUniversityIds(tx, actor),
+      today,
+      id: jobPostingId,
+    }),
+  );
+  if (!row || row.applyMethod !== 'CONTACT_REQUEST' || !row.authorId) return null;
+  return { authorId: row.authorId, title: row.title, organizationName: row.organizationName };
 }
 
 // ---------------------------------------------------------------------------------------------

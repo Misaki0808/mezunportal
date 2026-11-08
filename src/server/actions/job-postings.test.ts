@@ -16,6 +16,10 @@ const mocks = vi.hoisted(() => ({
     getJobPosting: vi.fn(),
     reportJobPosting: vi.fn(),
   },
+  contact: {
+    previewJobPostingContact: vi.fn(),
+    requestJobPostingContact: vi.fn(),
+  },
   moderation: {
     listJobPostingModerationQueue: vi.fn(),
     reviewJobPosting: vi.fn(),
@@ -30,6 +34,7 @@ vi.mock('../permissions', () => ({
 vi.mock('../db', () => ({ getDb: () => ({ marker: 'db' }) }));
 vi.mock('../services/job-postings', () => mocks.posting);
 vi.mock('../services/job-posting-moderation', () => mocks.moderation);
+vi.mock('../services/job-posting-contact', () => mocks.contact);
 
 import { JOB_POSTING_ACTION_ACCESS } from '@/contracts/job-postings';
 
@@ -39,7 +44,11 @@ const draftContent = { title: 'Veri analisti stajyeri' };
 beforeEach(() => {
   mocks.requireAnyAdmin.mockReset().mockResolvedValue({ userId: 'oturum-moderator' });
   mocks.requireVerifiedMember.mockReset().mockResolvedValue({ userId: 'oturum-uye' });
-  for (const fn of [...Object.values(mocks.posting), ...Object.values(mocks.moderation)])
+  for (const fn of [
+    ...Object.values(mocks.posting),
+    ...Object.values(mocks.contact),
+    ...Object.values(mocks.moderation),
+  ])
     fn.mockReset().mockResolvedValue({ sonuc: 1 });
 });
 
@@ -107,6 +116,20 @@ const cases = [
     () => actions.reportJobPosting({ postingId: 'p1', reason: 'Sahte ilan görünüyor' }),
     member,
     mocks.posting.reportJobPosting,
+    'oturum-uye',
+  ],
+  [
+    'previewJobPostingContact',
+    () => actions.previewJobPostingContact({ jobPostingId: 'p1' }),
+    member,
+    mocks.contact.previewJobPostingContact,
+    'oturum-uye',
+  ],
+  [
+    'requestJobPostingContact',
+    () => actions.requestJobPostingContact({ jobPostingId: 'p1', fields: ['EMAIL'] }),
+    member,
+    mocks.contact.requestJobPostingContact,
     'oturum-uye',
   ],
   [
@@ -207,6 +230,15 @@ describe('ilan eylemleri', () => {
       () => actions.searchJobPostings({ q: 'a' }),
       () => actions.searchJobPostings({ companyId: 'c1', organizationName: 'Örnek' }),
       () => actions.reportJobPosting({ postingId: 'p1', reason: '' }),
+      // D7: hedef kullanıcı kimliği istemciden alınmaz
+      () => actions.previewJobPostingContact({ jobPostingId: 'p1', targetUserId: 'u1' } as never),
+      () =>
+        actions.requestJobPostingContact({
+          jobPostingId: 'p1',
+          targetUserId: 'u1',
+          fields: ['EMAIL'],
+        } as never),
+      () => actions.requestJobPostingContact({ jobPostingId: 'p1', fields: [] }),
       () => actions.reviewJobPosting({ postingId: 'p1', decision: 'REJECT' } as never),
       () => actions.reviewJobPosting({ postingId: 'p1', decision: 'DELETE' } as never),
       () =>
@@ -217,7 +249,11 @@ describe('ilan eylemleri', () => {
         } as never),
     ])
       expect(await bad()).toMatchObject({ ok: false, errorCode: 'VALIDATION_INVALID' });
-    for (const fn of [...Object.values(mocks.posting), ...Object.values(mocks.moderation)])
+    for (const fn of [
+      ...Object.values(mocks.posting),
+      ...Object.values(mocks.contact),
+      ...Object.values(mocks.moderation),
+    ])
       expect(fn).not.toHaveBeenCalled();
   });
 
