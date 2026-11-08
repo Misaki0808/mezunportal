@@ -349,3 +349,48 @@ describe('CV akışı', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Bugünlük CV okuma hakkın doldu');
   });
 });
+
+it('inceleyici: üzerine yaz seçimi geri alınınca önceden kabul edilmiş çakışma gönderilmez', async () => {
+  const { user, apply } = setupReview();
+  const lang = screen.getByRole('heading', { name: /Çakışmalar/ }).closest('section')!;
+  const box = within(lang).getByRole('checkbox', { name: /Elle yazdığım değerin üzerine yaz/ });
+  await user.click(box);
+  await user.click(within(lang).getByRole('button', { name: 'Kabul et' }));
+  await user.click(box);
+  await user.click(
+    within(screen.getByText('İstanbul Üniversitesi').closest('li')!).getByRole('button', {
+      name: 'Kabul et',
+    }),
+  );
+  await user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
+  expect(apply.mock.calls[0]![0].decisions).toEqual([
+    { key: 'k-edu', section: 'EDUCATION', overwriteMine: false },
+  ]);
+});
+it('inceleyici: CV temel bilgi özetini düzeltme mevcut özeti açar ve düzenlenen özeti gönderir', async () => {
+  const { user, apply } = setupReview({
+    review: {
+      ...review,
+      items: [
+        {
+          key: 'k-profile',
+          section: 'PROFILE',
+          status: 'NEW',
+          changedFields: [],
+          standardized: {},
+          current: null,
+          proposed: { headline: 'Başlık', summary: 'Eski özet', city: 'İstanbul' },
+        },
+      ],
+    },
+  });
+  await user.click(screen.getByRole('button', { name: 'Düzelt' }));
+  const dialog = await screen.findByRole('dialog');
+  const summary = within(dialog).getByLabelText('Özet');
+  expect(summary).toHaveValue('Eski özet');
+  await user.clear(summary);
+  await user.type(summary, 'Düzeltilen özet');
+  await user.click(within(dialog).getByRole('button', { name: 'Kabul et' }));
+  await user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
+  expect(apply.mock.calls[0]![0].decisions[0].values.summary).toBe('Düzeltilen özet');
+});

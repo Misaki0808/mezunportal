@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 
 import type {
   ApplyCvInput,
@@ -41,6 +41,7 @@ const GROUP_TONE = { NEW: 'success', CHANGED: 'info', CONFLICT: 'warning' } as c
 export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Props) {
   const t = useTranslations('profile.cv.review');
   const sections = useTranslations('profile.sections');
+  const fields = useTranslations('profile.fields');
   const errors = useTranslations('errors.codes');
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [overwrite, setOverwrite] = useState<Record<string, boolean>>({});
@@ -51,6 +52,7 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
   const [noneSelected, setNoneSelected] = useState(false);
   const [pending, setPending] = useState<'apply' | 'discard'>();
   const locked = useRef(false);
+  const editFormId = useId();
 
   const accepted = Object.entries(decisions).filter(([, decision]) => decision.kind === 'accept');
 
@@ -228,7 +230,15 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
                         <EntrySummary section={item.section} value={item.current as Values} />
                         {item.changedFields.length > 0 && (
                           <p className="mt-1 text-sm text-fg-muted">
-                            {t('changedFields', { fields: item.changedFields.join(', ') })}
+                            {t('changedFields', {
+                              fields: item.changedFields
+                                .map((field) =>
+                                  fields.has(field)
+                                    ? fields(field as 'headline')
+                                    : sections(item.section),
+                                )
+                                .join(', '),
+                            })}
                           </p>
                         )}
                       </div>
@@ -239,10 +249,10 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
                           label={t('overwrite')}
                           checked={Boolean(overwrite[item.key])}
                           onChange={(event) => {
-                            setOverwrite((current) => ({
-                              ...current,
-                              [item.key]: event.target.checked,
-                            }));
+                            const checked = event.target.checked;
+                            setOverwrite((current) => ({ ...current, [item.key]: checked }));
+                            // İzin geri alınırsa daha önce kabul edilen çakışma da tekrar karar bekler.
+                            if (!checked) decide(item.key, undefined);
                             setOverwriteMissing(undefined);
                           }}
                         />
@@ -332,10 +342,22 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
         open={editing !== undefined}
         onClose={() => setEditing(undefined)}
         title={t('edit')}
+        footer={
+          <>
+            <Button type="submit" form={editFormId} size="lg" fullWidth>
+              {t('accept')}
+            </Button>
+            <Button variant="secondary" fullWidth onClick={() => setEditing(undefined)}>
+              {t('cancel')}
+            </Button>
+          </>
+        }
         description={editing ? sections(editing.section) : undefined}
       >
         {editing && (
           <EntryEditor
+            formId={editFormId}
+            externalActions
             key={editing.key}
             section={editing.section}
             initial={(decisions[editing.key]?.values ?? editing.proposed) as Values}

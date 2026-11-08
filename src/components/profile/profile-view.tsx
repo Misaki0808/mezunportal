@@ -48,7 +48,7 @@ export function ProfileView({ profile }: { profile: ProfileViewData }) {
     );
 
   return (
-    <article className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-10 pt-10 sm:pt-16">
+    <article className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-10 pt-10 [overflow-wrap:anywhere] sm:pt-16">
       <header>
         <h1 className="break-words text-3xl font-semibold tracking-tight text-fg">
           {profile.displayName}
@@ -100,7 +100,7 @@ export function ProfileView({ profile }: { profile: ProfileViewData }) {
             {profile.skills.map((skill) => (
               <li
                 key={skill.label}
-                className="rounded-full bg-surface-strong px-3 py-1 text-base text-fg"
+                className="max-w-full rounded-full bg-surface-strong px-3 py-1 text-base text-fg"
               >
                 {skill.label}
               </li>

@@ -187,6 +187,9 @@ type Props = {
   submitLabel: string;
   cancelLabel: string;
   pending?: boolean;
+  formId?: string;
+  /** Alt sayfa eylemleri kendi sabit footer alanında çizilir. */
+  externalActions?: boolean;
   /** Sunucu alan hatası (örn. kayıt reddi); alan altında gösterilmez, formun üstünde `error` ile verilir. */
   error?: string;
   onSubmit: (values: Values) => void;
@@ -200,6 +203,8 @@ export function EntryEditor({
   submitLabel,
   cancelLabel,
   pending,
+  formId,
+  externalActions = false,
   error,
   onSubmit,
   onCancel,
@@ -235,6 +240,7 @@ export function EntryEditor({
 
   return (
     <form
+      id={formId}
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
@@ -309,8 +315,8 @@ export function EntryEditor({
                 <Textarea
                   {...control}
                   rows={4}
-                  value={state.description}
-                  onChange={(event) => set('description', event.target.value)}
+                  value={state[key]}
+                  onChange={(event) => set(key, event.target.value)}
                 />
               )}
             </Field>
@@ -337,14 +343,16 @@ export function EntryEditor({
           </Field>
         );
       })}
-      <div className="flex flex-col gap-2">
-        <Button type="submit" size="lg" fullWidth loading={pending}>
-          {submitLabel}
-        </Button>
-        <Button variant="secondary" fullWidth onClick={onCancel}>
-          {cancelLabel}
-        </Button>
-      </div>
+      {!externalActions && (
+        <div className="flex flex-col gap-2">
+          <Button type="submit" size="lg" fullWidth loading={pending}>
+            {submitLabel}
+          </Button>
+          <Button variant="secondary" fullWidth onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

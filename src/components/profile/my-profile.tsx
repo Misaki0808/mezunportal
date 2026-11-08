@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import type { CvSection } from '@/contracts/cv';
 import {
@@ -93,6 +93,7 @@ export function MyProfile({ initial, actions }: Props) {
   const [notice, setNotice] = useState<string>();
   const [pending, setPending] = useState(false);
   const locked = useRef(false);
+  const editFormId = useId();
 
   /** Eylemi çalıştırır; başarıda profili günceller. Alan/sunucu hatası çağırana `false` + kodla döner. */
   async function run(action: () => Result, after?: () => void): Promise<ErrorCode | null> {
@@ -120,6 +121,17 @@ export function MyProfile({ initial, actions }: Props) {
     }
   }
 
+  const editorFooter = (
+    <>
+      <Button type="submit" form={editFormId} size="lg" fullWidth loading={pending}>
+        {pending ? t('saving') : t('save')}
+      </Button>
+      <Button variant="secondary" fullWidth onClick={() => setEditing(undefined)}>
+        {t('cancel')}
+      </Button>
+    </>
+  );
+
   const date = (value: Date | null) =>
     value ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(value)) : null;
   const percent = profile.completion.percent;
@@ -133,7 +145,7 @@ export function MyProfile({ initial, actions }: Props) {
     profile[key] as ({ id: string; source: 'CV' | 'MANUAL'; manuallyEdited: boolean } & Values)[];
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-10 pt-10 sm:pt-16">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-10 pt-10 [overflow-wrap:anywhere] sm:pt-16">
       <header>
         <p className="text-base font-semibold text-primary">
           {t('title').toLocaleUpperCase('tr-TR')}
@@ -293,7 +305,7 @@ export function MyProfile({ initial, actions }: Props) {
           <ul className="flex flex-col gap-2">
             {profile.linkedinUrl && (
               <li className="break-all text-base text-fg">
-                <span className="font-medium">LinkedIn: </span>
+                <span className="font-medium">{t('linkedin')}: </span>
                 <a
                   className="text-primary underline"
                   href={profile.linkedinUrl}
@@ -325,15 +337,15 @@ export function MyProfile({ initial, actions }: Props) {
 
       <Sheet
         open={editing?.kind === 'basics'}
+        footer={editorFooter}
         onClose={() => !pending && setEditing(undefined)}
         title={t('basicsEdit')}
       >
         {editing?.kind === 'basics' && (
           <BasicsForm
+            formId={editFormId}
             profile={profile}
-            pending={pending}
             serverError={error ? errors(error) : undefined}
-            onCancel={() => setEditing(undefined)}
             onSave={(input) =>
               void run(
                 () => actions.updateBasics(input),
@@ -346,6 +358,7 @@ export function MyProfile({ initial, actions }: Props) {
 
       <Sheet
         open={editing?.kind === 'entry'}
+        footer={editorFooter}
         onClose={() => !pending && setEditing(undefined)}
         title={
           editing?.kind === 'entry'
@@ -355,6 +368,8 @@ export function MyProfile({ initial, actions }: Props) {
       >
         {editing?.kind === 'entry' && (
           <EntryEditor
+            formId={editFormId}
+            externalActions
             key={`${editing.section}-${editing.id ?? 'new'}`}
             section={editing.section as CvSection}
             initial={editing.values}
@@ -380,15 +395,15 @@ export function MyProfile({ initial, actions }: Props) {
 
       <Sheet
         open={editing?.kind === 'links'}
+        footer={editorFooter}
         onClose={() => !pending && setEditing(undefined)}
         title={t('linksEdit')}
       >
         {editing?.kind === 'links' && (
           <LinksForm
+            formId={editFormId}
             profile={profile}
-            pending={pending}
             serverError={error ? errors(error) : undefined}
-            onCancel={() => setEditing(undefined)}
             onSave={async (linkedin, links) => {
               const first = await run(() => actions.setLinkedinUrl({ url: linkedin }));
               if (first) return;
@@ -456,15 +471,13 @@ function Block({
 
 function BasicsForm({
   profile,
-  pending,
   serverError,
-  onCancel,
+  formId,
   onSave,
 }: {
   profile: MyProfileData;
-  pending: boolean;
   serverError?: string;
-  onCancel: () => void;
+  formId: string;
   onSave: (input: UpdateProfileBasicsInput) => void;
 }) {
   const t = useTranslations('profile.my');
@@ -483,6 +496,7 @@ function BasicsForm({
   };
   return (
     <form
+      id={formId}
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
@@ -531,12 +545,6 @@ function BasicsForm({
           />
         )}
       </Field>
-      <Button type="submit" size="lg" fullWidth loading={pending}>
-        {pending ? t('saving') : t('save')}
-      </Button>
-      <Button variant="secondary" fullWidth onClick={onCancel}>
-        {t('cancel')}
-      </Button>
     </form>
   );
 }
@@ -545,15 +553,13 @@ type LinkRow = { kind: SocialLinkKind | ''; url: string };
 
 function LinksForm({
   profile,
-  pending,
   serverError,
-  onCancel,
+  formId,
   onSave,
 }: {
   profile: MyProfileData;
-  pending: boolean;
   serverError?: string;
-  onCancel: () => void;
+  formId: string;
   onSave: (linkedin: string | null, links: { kind: SocialLinkKind; url: string }[]) => void;
 }) {
   const t = useTranslations('profile.my');
@@ -596,6 +602,7 @@ function LinksForm({
 
   return (
     <form
+      id={formId}
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
@@ -687,12 +694,6 @@ function LinksForm({
           </Button>
         )}
       </fieldset>
-      <Button type="submit" size="lg" fullWidth loading={pending}>
-        {pending ? t('saving') : t('save')}
-      </Button>
-      <Button variant="secondary" fullWidth onClick={onCancel}>
-        {t('cancel')}
-      </Button>
     </form>
   );
 }
@@ -750,13 +751,15 @@ function SkillsBlock({
           {profile.skills.map((skill) => (
             <li
               key={skill.tagId}
-              className="inline-flex items-center gap-1 rounded-full bg-surface-strong pl-3 text-base text-fg"
+              className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-surface-strong pl-3 text-base text-fg"
             >
-              <span>{skill.label}</span>
+              <span className="min-w-0 truncate" title={skill.label}>
+                {skill.label}
+              </span>
               <button
                 type="button"
                 aria-label={t('skillRemove', { name: skill.label })}
-                className="press-control inline-flex size-11 items-center justify-center rounded-full text-fg-muted hover:text-danger"
+                className="press-control inline-flex size-11 shrink-0 items-center justify-center rounded-full text-fg-muted hover:text-danger"
                 onClick={() => void run(() => actions.removeSkill({ tagId: skill.tagId }))}
               >
                 ×
