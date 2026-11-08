@@ -844,6 +844,35 @@ metni `primary-soft` üstünde AA değil (soft zeminde `on-primary-soft`). Seçe
 (b) Mercan'ı ana renk yapmak — beyaz metinle AA sağlanamaz; (c) seçilen: İris ana, Mercan az kullanılan vurgu. Kontrast
 testi iki temayı da korur (`src/lib/contrast.test.ts`). Risk: ilk derleme ağa muhtaç (Google Fonts indirmesi).
 
+**Mezun staj/iş ilanları: sözleşme ve veri modeli (P2-04, kart 129).** Plan `docs/faz2-plan.md`, kararlar D19 (PM, 8 Kas). İlan yazarı doğrulanmış
+etkin üyelikli mezun/akademisyendir; moderasyon yazarın yazım anındaki bölümünün kapsamındadır (deneyimle aynı kalıp; `MODERATION_*`,
+hedef `JOB_POSTING`); görünürlük K-07 üniversite düzeyindedir, hedef bölümler süzgeç ve eşleştirme içindir. Seçenekler ve gerekçeler:
+(a) **Şikâyet:** plan "ReportTargetType genişler" diyordu, ama `Report` hedefe FK ile (Experience) bağlıdır; çok biçimli hedef için mevcut
+tabloyu daraltmak yerine ayrı `JobPostingReport` seçildi (ekleyici, SSS'nin deneyimi sokmamasıyla aynı mantık). (b) **Son tarih** takvim günüdür
+(`DATE`, İstanbul): ilan o günün sonuna kadar açıktır; "yayından en çok 60 gün" kuralı hem servis hem CHECK'tedir (yayın anı İstanbul gününe
+çevrilir; gün sınırı testli). (c) **Okuyucu çıktısında yazar adı yoktur** (yalnız `authorKind`); `CONTACT_REQUEST` ilanında iletişim talebi bağlantısı
+için `contactUserId` döner (D7), moderatör kuyruğunda görünen ad vardır. (d) **Puan:** `JOB_POSTING_PUBLISHED` 5 puan, 7 gün gecikmeli, ayda en çok
+3 ilan puan getirir (fazlası çarpan 0), kesinleşmeden geri çekilen/kaldırılan ilanın puanı `POSTING_WITHDRAWN` nedeniyle geri alınır; yeni enum
+değerleri (`PointAction`, `PointSourceType`, `PointRevokeReason`, `NotificationType`, `EventType`) PostgreSQL'de kaldırılamaz (geri alma notu
+migration'da). (e) `PENDING` ilan son günü geçerse `EXPIRED` olur (kuyrukta bekletilmez). Hız sınırı: 30 günde 5 gönderim. Bildirim, servis ve
+ekran ayrı kartlardadır (bu PR yalnız sözleşme, şema ve migration).
+
+**Mezun ilanları: servis, D7 ve K-07 kararları (P2-04, kart 129).** (1) **D7 (PM):** `CONTACT_REQUEST` ilanında yazar kimliği okuyucuya HİÇ gitmez. `/iletisim-iste`
+önizlemesi görünen ad döndürdüğü için ilan→yazar adı sızardı (ayrıca uuid7 hesap zamanını sızdırır); bu yüzden `contactUserId` sözleşmeden
+kaldırıldı, iletişim talebi ilan üzerinden gider (`previewJobPostingContact`/`requestJobPostingContact`, girdi `jobPostingId`; sunucu yazarı çözer,
+mevcut `ContactRequest` kaydı/bildirimi/hız sınırı; talebe sunucuca `source=JOB_POSTING` + `jobPostingId` (ilan silinirse SET NULL) + talep anındaki başlık/kurum
+özeti yazılır). **Giden talep sızıntısı (W2 bulgusu, PM kararı):** giden listede hedef adı/kimliği PENDING'de görünürdü; ilan kaynaklı talepte `counterpart` artık
+`null` ve `origin{başlık, kurum}` gösterilir, kimlik/ad yalnız `APPROVED`'da açılır (REVOKED'da yeniden gizli; ilan kapansa/silinse de sızmaz); veri dökümünde onaysız
+giden talepte `targetId` yoktur; doğrudan profil talebi (kişiyi kendisi seçmiş) değişmedi. Önizleme ilan başlığı/kurum gösterir, olumsuz durumların hepsi tek genel yanıttır; talep notuna
+"İlan: <başlık>" bağlamı eklenir; ad yalnız onayda açılır. Seçenekler: (a) uuid'siz takma ad — yeni tablo gerektirir; (b) mevcut `/iletisim-iste` — ad
+sızar; (c) seçilen: ilan üzerinden, sunucuda çözümleme. (2) **K-07 (PM):** başka üniversitenin bölümü `JobPostingDepartment`'a veritabanında
+bağlanabilir; kapı SERVİS katmanındadır (hedef bölümler ve kapsam bölümü yazarın üniversitesinden; gönderimde yeniden denetlenir, gerçek DB testi +
+mutasyon). Tetikleyici bilerek yok: mevcut modüllerle tutarlı (kapsam servis katmanında). (3) **Süzgeç:** `organizationName` yalnız sözlüğe bağlı OLMAYAN
+(serbest adlı) kurumu eşler; sözlük şirketi `companyId` ile seçilir, ikisi birlikte gönderilemez; süzgeç seçenekleri iki grubu ayrı satır verir. (4) **Puan:**
+yalnız yayınlanmış (`PUBLISHED`/`EXPIRED`) ilana; ay tavanı yazar başına advisory kilidiyle sıralanır; süre dolumu puanı geri almaz, çekme/kaldırma
+kesinleşmemiş puanı geri alır (`POSTING_WITHDRAWN`); `points.backfill` ilanı da işler. (5) **Süre dolumu:** `PENDING` ilan son günü geçerse
+`EXPIRED` olur; taslak ve reddedilmiş ilan dokunulmaz. (6) Hesap silme yazarın ilanlarını (hedef bölüm ve şikâyetleriyle) siler; veri dökümü yalnız kendi
+ilanlarını içerir.
 **Girişsiz tanıtım sayfası (kullanıcı isteği, 8 Kas).** Girişsiz ana sayfada deneyim, mentor ve gerçekleşen görüşme için yalnız
 sunucuda hesaplanan toplu sayılar gösterilir; üçten küçük toplam sayı yerine “Yeni başladık” görünür. Veri kaynağına ulaşılamazsa
 ayrı bir belirsiz durum gösterilir. Örnek kartlar sentetiktir ve etkileşim almaz. Kahraman metni ilk HTML'de ve sabit koyu zeminde;

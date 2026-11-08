@@ -161,6 +161,7 @@ it('veri dökümüne karşı tarafın iletişim/kullanıcı nesnesi eklenemez', 
     id: 'r1',
     requesterId: 'u1',
     targetId: 'u2',
+    origin: null,
     fields: ['EMAIL'],
     message: null,
     status: 'APPROVED',
@@ -170,6 +171,20 @@ it('veri dökümüne karşı tarafın iletişim/kullanıcı nesnesi eklenemez', 
     closedAt: null,
   };
   expect(exportedContactRequestSchema.safeParse(request).success).toBe(true);
+  // D7: ilan kaynaklı onaysız giden talepte hedef kimliği null; origin yalnız başlık + kurum (kimlik/ad eklenemez)
+  const hidden = {
+    ...request,
+    status: 'PENDING',
+    targetId: null,
+    origin: { title: 'İlan', organization: 'Kurum' },
+  };
+  expect(exportedContactRequestSchema.safeParse(hidden).success).toBe(true);
+  expect(
+    exportedContactRequestSchema.safeParse({
+      ...hidden,
+      origin: { title: 'İlan', organization: 'Kurum', authorId: 'u2' },
+    }).success,
+  ).toBe(false);
   for (const extra of [
     { email: 'other@example.invalid' },
     { target: { email: 'other@example.invalid' } },

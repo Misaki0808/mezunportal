@@ -84,6 +84,7 @@ describe('yanıt ve liste', () => {
   const item = {
     id: 'r1',
     counterpart: { userId: 'u2', name: 'Ayşe Yılmaz' },
+    origin: null,
     fields: ['EMAIL'],
     message: null,
     status: 'APPROVED',
@@ -108,6 +109,67 @@ describe('yanıt ve liste', () => {
   });
 });
 
+describe('ilan kaynaklı talep (D7): karşı taraf kimliği onaydan önce açılmaz', () => {
+  const origin = {
+    kind: 'JOB_POSTING',
+    title: 'Veri analisti stajyeri',
+    organization: 'Örnek Teknoloji',
+  };
+  const base = {
+    id: 'r1',
+    fields: ['EMAIL'],
+    message: null,
+    createdAt: new Date(),
+    decidedAt: null,
+    closedAt: null,
+    revealed: null,
+    origin,
+  };
+
+  it.each(['PENDING', 'REJECTED', 'WITHDRAWN', 'REVOKED'])(
+    '%s: counterpart null + origin dolu geçerli; counterpart dolu da geçerlidir (gelen kutusu)',
+    (status) => {
+      expect(
+        contactRequestItemSchema.safeParse({ ...base, status, counterpart: null }).success,
+      ).toBe(true);
+      expect(
+        contactRequestItemSchema.safeParse({
+          ...base,
+          status,
+          counterpart: { userId: 'u2', name: 'A' },
+        }).success,
+      ).toBe(true);
+    },
+  );
+
+  it('APPROVED: counterpart null olamaz (onayda açılır); kaynaksız talepte de null olamaz', () => {
+    expect(
+      contactRequestItemSchema.safeParse({ ...base, status: 'APPROVED', counterpart: null })
+        .success,
+    ).toBe(false);
+    expect(
+      contactRequestItemSchema.safeParse({
+        ...base,
+        status: 'PENDING',
+        origin: null,
+        counterpart: null,
+      }).success,
+    ).toBe(false);
+  });
+
+  it('origin yalnız ilan türü, başlık ve kurum taşır (kimlik/ad eklenemez)', () => {
+    for (const extra of [{ authorId: 'u1' }, { name: 'Selin' }, { userId: 'u1' }])
+      expect(
+        contactRequestItemSchema.safeParse({
+          ...base,
+          status: 'PENDING',
+          counterpart: null,
+          origin: { ...origin, ...extra },
+        }).success,
+      ).toBe(false);
+  });
+});
+
 describe('hata kodları', () => {
   it('eylemlerin bütün olası kodları kayıtlıdır; başkasının talebi yetki hatası değil “bulunamadı” döner', () => {
     for (const code of Object.values(CONTACT_REQUEST_ACTION_ERRORS).flat()) {
@@ -128,6 +190,7 @@ it('onaylı olmayan talep ve istenmeyen alan yanıtta açılamaz', () => {
   const item = {
     id: 'r1',
     counterpart: { userId: 'u2', name: 'Sahte' },
+    origin: null,
     fields: ['PHONE'],
     message: null,
     status: 'APPROVED',

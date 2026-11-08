@@ -117,7 +117,7 @@ describe('kural yönetimi (yalnız sistem yöneticisi)', () => {
   it('listeler ve değiştirir; işlem kaydı eski değerleri taşır; yalnız yeni kayıtlar etkilenir', async () => {
     const rules = await listPointRules(deps, admin);
     expect(rules.map((r) => r.action)).toEqual([...POINT_ACTIONS]);
-    expect(rules).toHaveLength(7);
+    expect(rules).toHaveLength(8);
     try {
       const updated = await updatePointRule(deps, admin, {
         action: 'CV_REVIEW_HELPFUL',

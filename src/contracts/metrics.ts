@@ -39,6 +39,9 @@ export const EVENT_TYPES = [
   'FAQ_PUBLISHED',
   'CV_REVIEW_REQUESTED',
   'CONTACT_REQUESTED',
+  'JOB_POSTING_PUBLISHED',
+  'JOB_POSTING_VIEWED',
+  'JOB_POSTING_SEARCH',
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
@@ -109,6 +112,9 @@ export const EVENT_PROPS_SCHEMAS = {
   FAQ_PUBLISHED: z.object({}).strict(),
   CV_REVIEW_REQUESTED: z.object({}).strict(),
   CONTACT_REQUESTED: z.object({ fieldCount: z.number().int().min(1).max(4) }).strict(),
+  JOB_POSTING_PUBLISHED: z.object({ kind: z.enum(['INTERNSHIP', 'JOB']) }).strict(),
+  JOB_POSTING_VIEWED: z.object({}).strict(),
+  JOB_POSTING_SEARCH: z.object({ results: z.enum(RESULT_BUCKETS) }).strict(),
 } as const satisfies Record<EventType, z.ZodType>;
 
 export type EventProps<T extends EventType> = z.infer<(typeof EVENT_PROPS_SCHEMAS)[T]>;

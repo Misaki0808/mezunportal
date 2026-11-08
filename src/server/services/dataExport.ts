@@ -20,6 +20,9 @@ type RequestRow = {
   id: string;
   requesterId: string;
   targetId: string;
+  source: 'PROFILE' | 'JOB_POSTING';
+  sourceTitle: string | null;
+  sourceOrganization: string | null;
   fields: DataExport['contactRequests']['sent'][number]['fields'];
   message: string | null;
   status: DataExport['contactRequests']['sent'][number]['status'];
@@ -29,9 +32,21 @@ type RequestRow = {
   closedAt: Date | null;
 };
 
-function exportRequest(row: RequestRow): DataExport['contactRequests']['sent'][number] {
+/** D7: ilan kaynaklı ve `APPROVED` olmayan GİDEN talepte hedef kimliği dökülmez (onaydan önce açılmaz). */
+function exportRequest(
+  row: RequestRow,
+  userId: string,
+): DataExport['contactRequests']['sent'][number] {
+  const { source, sourceTitle, sourceOrganization, ...rest } = row;
+  const hidden =
+    source === 'JOB_POSTING' && row.requesterId === userId && row.status !== 'APPROVED';
   return {
-    ...row,
+    ...rest,
+    targetId: hidden ? null : row.targetId,
+    origin:
+      source === 'JOB_POSTING' && sourceTitle !== null && sourceOrganization !== null
+        ? { title: sourceTitle, organization: sourceOrganization }
+        : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     decidedAt: row.decidedAt ? row.decidedAt.toISOString() : null,
@@ -105,6 +120,9 @@ export async function buildDataExport(
           id: true,
           requesterId: true,
           targetId: true,
+          source: true,
+          sourceTitle: true,
+          sourceOrganization: true,
           fields: true,
           message: true,
           status: true,
@@ -120,6 +138,9 @@ export async function buildDataExport(
           id: true,
           requesterId: true,
           targetId: true,
+          source: true,
+          sourceTitle: true,
+          sourceOrganization: true,
           fields: true,
           message: true,
           status: true,
@@ -138,6 +159,7 @@ export async function buildDataExport(
   const appointments = await loadAppointmentExport(db, userId);
   const contribution = await loadContributionExport(db, userId, iso);
   const faq = await loadFaqExport(db, userId, iso);
+  const jobPostings = await loadJobPostingExport(db, userId, iso);
   const cvReviews = await db.cvReviewRequest.findMany({
     where: { OR: [{ studentId: userId }, { mentorId: userId }] },
     orderBy: { id: 'asc' },
@@ -199,13 +221,14 @@ export async function buildDataExport(
     })),
     fieldVisibility: [...levels].map(([field, level]) => ({ field, level })),
     contactRequests: {
-      sent: user.sentContactRequests.map(exportRequest),
-      received: user.receivedContactRequests.map(exportRequest),
+      sent: user.sentContactRequests.map((row) => exportRequest(row, userId)),
+      received: user.receivedContactRequests.map((row) => exportRequest(row, userId)),
     },
     cv,
     appointments,
     contribution,
     faq,
+    jobPostings,
     cvReviewRequests: cvReviews.map((row) => ({
       id: row.id,
       role: row.studentId === userId ? ('STUDENT' as const) : ('MENTOR' as const),
@@ -450,4 +473,38 @@ async function loadFaqExport(
     })),
     answers: answers.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() })),
   };
+}
+
+/** İlanlar (P2-04): yalnız kullanıcının KENDİ ilanları (içerik, durum, ret gerekçesi). Moderatör, raportör ve başkası yok. */
+async function loadJobPostingExport(
+  db: PrismaClient,
+  userId: string,
+  iso: (date: Date | null) => string | null,
+): Promise<DataExport['jobPostings']> {
+  const rows = await db.jobPosting.findMany({
+    where: { authorId: userId },
+    orderBy: { id: 'asc' },
+    select: {
+      id: true,
+      kind: true,
+      title: true,
+      organizationName: true,
+      location: true,
+      isRemote: true,
+      description: true,
+      applyMethod: true,
+      applyUrl: true,
+      deadlineOn: true,
+      status: true,
+      moderationNote: true,
+      createdAt: true,
+      publishedAt: true,
+    },
+  });
+  return rows.map((row) => ({
+    ...row,
+    deadlineOn: row.deadlineOn ? row.deadlineOn.toISOString().slice(0, 10) : null,
+    createdAt: row.createdAt.toISOString(),
+    publishedAt: iso(row.publishedAt),
+  }));
 }
