@@ -10,6 +10,7 @@ import type { StorageAdapter } from '../external/storage';
 import { createPermissions } from '../permissions/guards';
 import { emitEvent, subjectFromActor } from './event';
 import { requireConsent } from './privacy';
+import { stageNotification } from './notification-intent';
 import { visibleMentorWhere } from './mentor-directory';
 import { viewerUniversityIds } from './search';
 import { monthRange } from '../rules/appointmentSlots';
@@ -158,6 +159,11 @@ export async function createRequest(
       },
       select,
     });
+    await stageNotification(tx, row.mentorId, {
+      type: 'cvReview',
+      event: 'requested',
+      requestId: row.id,
+    });
     return { row, subject: subjectFromActor(person) };
   });
   // Metrik kişisel içerik taşımaz; olay yazımı iş sonucunu etkileyemez.
@@ -210,6 +216,12 @@ export async function answerRequest(
         data: { status: 'COMPLETED', comment: input.comment, answeredAt: now },
         select,
       });
+      await stageNotification(tx, updated.studentId, {
+        type: 'cvReview',
+        event: 'answered',
+        requestId: updated.id,
+      });
+      // Fiziksel silme bütün veritabanı yazımlarından sonra yapılır.
       await releaseOldFile(tx, deps.storage, updated);
       return updated;
     },
@@ -308,6 +320,11 @@ export async function expireRequests(deps: CvReviewDeps) {
         const row = await tx.cvReviewRequest.findUnique({ where: { id: ref.id } });
         if (!row || row.status !== 'OPEN' || row.expiresAt > now) return false;
         await tx.cvReviewRequest.update({ where: { id: row.id }, data: { status: 'EXPIRED' } });
+        await stageNotification(tx, row.studentId, {
+          type: 'cvReview',
+          event: 'expired',
+          requestId: row.id,
+        });
         await releaseOldFile(tx, deps.storage, row);
         return true;
       },

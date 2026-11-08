@@ -719,6 +719,14 @@ Moderasyon, iletişim, CV daveti ve randevu bildirimlerinde olayın niyeti iş d
 
 Formun taraf denetimi hesap layout'unda loading başlamadan yapılır; yabancı kullanıcı gerçek, Türkçe 404 alır. Sayfa ve gönderim eylemi kendi denetimini korur. İstek yolu yalnız proxy'nin yazdığı başlıktan seçilir, erişim kararı katılımcı servisinindir. Görüşme işi testi bağlantı ayarlarını sahte değerlerle kurup temizler; rolün yerel env dosyasına dayanmaz. İki tarafın onayı, tek yanıt ve gösterge kapsamı bağımsız yarış/negatif testleriyle korunur.
 
+### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
+
+Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun kişi sayısı toplamdan çıkarılarak küçük grup hesaplanamaz. Aynı servis izdüşümü panelin HTML/RSC verisine ve Excel özetine uygulanır. Kullanım sayfasında zorunlu rıza ve yönetici yetkisi loading başlamadan kontrol edilir; rızasız/yetkisiz erişim gerçek 404, dosya rotası 403 döner. Diğer sayfaların yeniden onay akışı korunur.
+
+### P1-15 incelemesi: CV bildiriminde işlemsel telafi
+
+CV talep, yanıt ve süre dolumu bildirimleri #45'in niyet kaydını aynı veritabanı işleminde oluşturur. Hızlı kuyruk denemesi başarısız olsa da niyet kalır; ortak aktarım işi aynı iş anahtarıyla mevcut CV bildirim kapısına döner. Niyette yalnız talep kimliği ve olay türü bulunur; alıcı talebin taraflarıyla yeniden eşleştirilir, not/CV/e-posta kopyalanmaz. Metinleri ve CV dosyasını temizleyen hesap silme, artık bulunmayan talebin bekleyen bildirimini de gönderimsiz sonlandırır.
+
 ## 2026-11-08 · Puan motoru ve hile önleme (P1-16)
 
 **Yazım yolu.** Puan, olayı üreten işlemin DIŞINDA ve kendi işleminde yazılır (deneyim yayını, iki tarafın onayıyla `COMPLETED`
@@ -746,6 +754,8 @@ korunur. Etiket, kaynağı olan puan kaydına bağlıdır: o kayıt geri alını
 tarafın görüşme yanıtı ≤ 60 sn arayla ≥ 3 kez, 180 günde (`SYNC_FEEDBACK`). İşaret ceza değildir: puanı geri almaz; yalnız karar
 verilene dek kullanıcının BEKLEYEN puanı kesinleşmez. Aynı kanıt (`evidenceKey`) iki kez, aynı (kullanıcı, kural) için iki açık işaret
 olmaz. Sistem yöneticisi onaylarsa işarete bağlı kayıtlar `FRAUD_CONFIRMED` ile geri alınır; reddederse puana dokunulmaz.
+
+
 
 ### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
 
