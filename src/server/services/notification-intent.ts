@@ -17,9 +17,12 @@ const generic = z
       'faqRejected',
       'faqRedirected',
       'faqAnswerPublished',
+      'jobPostingPublished',
+      'jobPostingRejected',
+      'jobPostingExpired',
     ]),
     eventId: z.string().min(1).max(160),
-    path: z.enum(['/deneyimlerim', '/hesap/iletisim', '/hesap/sss']),
+    path: z.enum(['/deneyimlerim', '/hesap/iletisim', '/hesap/sss', '/ilanlarim']),
   })
   .strict();
 const appointment = z

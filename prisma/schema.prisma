@@ -49,7 +49,7 @@ model Department {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  faculty             Faculty              @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  faculty             Faculty                @relation(fields: [facultyId], references: [id], onDelete: Restrict)
   memberships         Membership[]
   adminGrants         AdminGrant[]
   experiences         Experience[]
@@ -57,6 +57,8 @@ model Department {
   faqItems            FaqItem[]
   graduationDocuments GraduationDocument[]
   events              Event[]
+  jobPostings         JobPosting[]
+  jobPostingTargets   JobPostingDepartment[]
 
   @@unique([facultyId, code])
   @@unique([facultyId, name])
@@ -169,6 +171,11 @@ model User {
   badges                UserBadge[]
   faqRequests           FaqRequest[]       @relation("FaqAsker")
   faqAnswers            FaqAnswer[]
+  jobPostings           JobPosting[]       @relation("JobPostingAuthor")
+  moderatedJobPostings  JobPosting[]       @relation("JobPostingModerator")
+  endedJobPostings      JobPosting[]       @relation("JobPostingEnder")
+  jobPostingReports     JobPostingReport[] @relation("JobPostingReporter")
+  reviewedJobReports    JobPostingReport[] @relation("JobPostingReportReviewer")
 }
 
 enum NotificationIntentStatus {
@@ -209,6 +216,7 @@ enum NotificationType {
   STUDENT_EMAIL_MIGRATION
   APPOINTMENT
   FAQ
+  JOB_POSTING
 }
 
 enum StillThereChoice {
@@ -616,26 +624,41 @@ enum ContactRequestStatus {
 
 /// İletişim talebi: onaylanınca istenen alanlar YALNIZ talep edene açılır (görünürlük kuralı bunu okur).
 /// Aynı ikili için aynı anda en fazla bir açık (bekleyen ya da onaylı) talep olur.
-model ContactRequest {
-  id          String               @id @default(uuid(7))
-  requesterId String
-  targetId    String
-  fields      ContactField[]
-  /// İsteğe bağlı kısa not (≤ 500 karakter); hedefe görünür.
-  message     String?
-  status      ContactRequestStatus @default(PENDING)
-  /// Onay ya da ret anı.
-  decidedAt   DateTime?
-  /// Geri çekme (`WITHDRAWN`) ya da geri alma (`REVOKED`) anı.
-  closedAt    DateTime?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+enum ContactRequestSource {
+  PROFILE
+  JOB_POSTING
+}
 
-  requester User @relation("ContactRequestRequester", fields: [requesterId], references: [id], onDelete: Restrict)
-  target    User @relation("ContactRequestTarget", fields: [targetId], references: [id], onDelete: Restrict)
+model ContactRequest {
+  id                 String               @id @default(uuid(7))
+  requesterId        String
+  targetId           String
+  fields             ContactField[]
+  /// İsteğe bağlı kısa not (≤ 500 karakter); hedefe görünür.
+  message            String?
+  status             ContactRequestStatus @default(PENDING)
+  /// Onay ya da ret anı.
+  decidedAt          DateTime?
+  /// Geri çekme (`WITHDRAWN`) ya da geri alma (`REVOKED`) anı.
+  closedAt           DateTime?
+  /// Talebin KAYNAĞI (P2-04, D7): `JOB_POSTING` ise talep ilan üzerinden gönderilmiştir; sunucu yazar ve doldurur (istemciden alınmaz).
+  /// İlan kaynaklı talepte hedefin kimliği/adı talep edene YALNIZ `APPROVED`'da açılır; o zamana dek ilan başlığı ve kurum
+  /// (`sourceTitle`/`sourceOrganization`, talep anındaki özet: ilan silinse/kapansa da kalır) gösterilir. `jobPostingId` yalnız bağlantıdır
+  /// (ilan silinirse `SET NULL`; kaynak işareti `source` ve özet kalır).
+  source             ContactRequestSource @default(PROFILE)
+  jobPostingId       String?
+  sourceTitle        String?
+  sourceOrganization String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  requester  User        @relation("ContactRequestRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  target     User        @relation("ContactRequestTarget", fields: [targetId], references: [id], onDelete: Restrict)
+  jobPosting JobPosting? @relation(fields: [jobPostingId], references: [id], onDelete: SetNull)
 
   @@index([targetId, status, createdAt])
   @@index([requesterId, status, createdAt])
+  @@index([jobPostingId])
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -770,15 +793,16 @@ model Sector {
 }
 
 model Company {
-  id             String     @id @default(uuid(7))
+  id             String       @id @default(uuid(7))
   name           String
-  normalizedName String     @unique
+  normalizedName String       @unique
   aliases        String[]
   sectorId       String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  sector         Sector?    @relation(fields: [sectorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  sector         Sector?      @relation(fields: [sectorId], references: [id], onDelete: SetNull)
   positions      Position[]
+  jobPostings    JobPosting[]
 
   @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "Company_normalizedName_trgm")
 }
@@ -1089,6 +1113,9 @@ enum EventType {
   FAQ_PUBLISHED
   CV_REVIEW_REQUESTED
   CONTACT_REQUESTED
+  JOB_POSTING_PUBLISHED
+  JOB_POSTING_VIEWED
+  JOB_POSTING_SEARCH
 }
 
 /// Kullanım metrikleri (P1-13). `props` KİŞİSEL VERİ taşımaz (Zod strict + veritabanı CHECK). `role` ve `departmentId`
@@ -1205,6 +1232,8 @@ enum PointAction {
   CV_REVIEW_HELPFUL
   SESSION_ONLINE
   SESSION_IN_PERSON
+  /// P2-04: veritabanı enum sırası ekleme sırasıdır (sona eklenir); `POINT_ACTIONS` sırası aynıdır.
+  JOB_POSTING_PUBLISHED
 }
 
 enum PointSourceType {
@@ -1213,6 +1242,7 @@ enum PointSourceType {
   CV_REVIEW
   FAQ_REQUEST
   FAQ_ANSWER
+  JOB_POSTING
 }
 
 enum PointStatus {
@@ -1224,6 +1254,8 @@ enum PointStatus {
 enum PointRevokeReason {
   ADMIN_CANCEL
   FRAUD_CONFIRMED
+  /// Puanı doğuran ilan kesinleşmeden geri çekildi/kaldırıldı (P2-04).
+  POSTING_WITHDRAWN
 }
 
 enum SuspicionRule {
@@ -1408,4 +1440,112 @@ model FaqItem {
   @@index([publishedAt(sort: Desc), id])
   @@index([searchVector], type: Gin, map: "FaqItem_searchVector_idx")
   @@index([searchKeys(ops: raw("gin_trgm_ops"))], type: Gin, map: "FaqItem_searchKeys_trgm")
+}
+
+// ---------------------------------------------------------------------------------------------
+// P2-04 · Mezun staj/iş ilanları (docs/faz2-plan.md, D19)
+// ---------------------------------------------------------------------------------------------
+
+enum JobPostingStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  REJECTED
+  EXPIRED
+  CLOSED
+}
+
+enum JobPostingKind {
+  INTERNSHIP
+  JOB
+}
+
+/// Başvuru yolu platform dışındadır (D19): `https` bağlantısı ya da yazara iletişim talebi (D7).
+enum JobApplyMethod {
+  URL
+  CONTACT_REQUEST
+}
+
+/// İlan. Taslak eksik olabilir; DRAFT dışındaki her durum içeriği tamamlamış olmalıdır (CHECK). `departmentIdAtWrite`
+/// MODERASYON KAPSAMIDIR (yazarın yazım anındaki doğrulanmış üyeliği); hedef bölümler `JobPostingDepartment`'tadır.
+/// Yazar kimliği okuyucuya çıkmaz (yalnız moderatöre ad; iletişim yolu `CONTACT_REQUEST` ise yazar kimliği bağlantı için döner).
+/// `deadlineOn` takvim günüdür (İstanbul): o günün sonuna kadar açıktır; yayından en çok 60 gün sonrası olabilir (CHECK).
+/// Arama sütunları üretilmiştir (GENERATED ALWAYS; ham SQL migration) ve Experience ile aynı kuralla modellenir.
+model JobPosting {
+  id                  String                   @id @default(uuid(7))
+  authorId            String
+  departmentIdAtWrite String
+  kind                JobPostingKind           @default(INTERNSHIP)
+  title               String?
+  companyId           String?
+  organizationName    String?
+  location            String?
+  isRemote            Boolean                  @default(false)
+  description         String?
+  applyMethod         JobApplyMethod?
+  applyUrl            String?
+  deadlineOn          DateTime?                @db.Date
+  status              JobPostingStatus         @default(DRAFT)
+  submittedAt         DateTime?
+  moderationNote      String?
+  moderatedById       String?
+  moderatedAt         DateTime?
+  publishedAt         DateTime?
+  /// `EXPIRED` (süre doldu) ya da `CLOSED` (yazar çekti / moderatör kaldırdı) anı. `endedById`: yalnız moderatör kaldırmasında.
+  endedAt             DateTime?
+  endedById           String?
+  searchVector        Unsupported("tsvector")? @default(dbgenerated())
+  searchKeys          String?                  @default(dbgenerated())
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  author          User                   @relation("JobPostingAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  department      Department             @relation(fields: [departmentIdAtWrite], references: [id], onDelete: Restrict)
+  company         Company?               @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  moderatedBy     User?                  @relation("JobPostingModerator", fields: [moderatedById], references: [id], onDelete: Restrict)
+  endedBy         User?                  @relation("JobPostingEnder", fields: [endedById], references: [id], onDelete: Restrict)
+  targets         JobPostingDepartment[]
+  reports         JobPostingReport[]
+  contactRequests ContactRequest[]
+
+  @@index([authorId, updatedAt])
+  @@index([departmentIdAtWrite, status, createdAt])
+  @@index([status, publishedAt(sort: Desc), id])
+  @@index([status, deadlineOn])
+  @@index([searchVector], type: Gin, map: "JobPosting_searchVector_idx")
+  @@index([searchKeys(ops: raw("gin_trgm_ops"))], type: Gin, map: "JobPosting_searchKeys_trgm")
+}
+
+/// İlanın hedef bölümleri (süzgeç ve eşleştirme için; görünürlük K-07 üniversite düzeyindedir). Hepsi yazarın üniversitesindendir.
+model JobPostingDepartment {
+  postingId    String
+  departmentId String
+
+  posting    JobPosting @relation(fields: [postingId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+
+  @@id([postingId, departmentId])
+  @@index([departmentId])
+}
+
+/// İlan şikâyeti (deneyim `Report`'u hedefe FK ile bağlıdır; çok biçimli hedef yerine ayrı tablo). Raportör kimliği hiçbir çıktıda yoktur.
+model JobPostingReport {
+  id             String       @id @default(uuid(7))
+  postingId      String
+  reporterId     String?
+  reason         String
+  status         ReportStatus @default(OPEN)
+  reviewedById   String?
+  reviewedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  posting    JobPosting @relation(fields: [postingId], references: [id], onDelete: Cascade)
+  reporter   User?      @relation("JobPostingReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  reviewedBy User?      @relation("JobPostingReportReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([postingId, status])
+  @@index([status, createdAt])
+  @@index([reporterId])
 }

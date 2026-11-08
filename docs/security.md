@@ -74,10 +74,11 @@ ve akademisyen açabilir; öğrenci eşiği K-08. Yönetici yetkisi ayrı tablod
 |---|---|---|---|---|---|
 | Kendi profili, CV, görünürlük | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Deneyim yaz / taslak / moderasyona gönder | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Yayınlanmış deneyim ve SSS okuma | ✓ (K-07) | ✓ | ✓ | ✓ | ✓ |
+| Yayınlanmış deneyim, SSS ve ilan okuma | ✓ (K-07) | ✓ | ✓ | ✓ | ✓ |
+| İlan yaz / gönder / çek (yalnız mezun ve akademisyen) | — | ✓ | — | — | — |
 | Mentor dizini; randevu, CV inceleme, iletişim talebi | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Müsaitlik, randevu onayı, CV incelemesi, SSS cevabı | — | ✓ | — | — | — |
-| Deneyim/SSS moderasyonu, şikâyet kuyruğu | — | — | kendi bölümü | fakülte | hepsi |
+| Deneyim/SSS/ilan moderasyonu, şikâyet kuyruğu | — | — | kendi bölümü | fakülte | hepsi |
 | Mezun belgesi onayı, rol düzeltme, askıya alma | — | — | kendi bölümü | fakülte | hepsi |
 | Rapor, Excel dışa aktarma, metrik paneli | — | — | kendi bölümü | fakülte | hepsi |
 | Puan kuralları, sözlükler, yönetici atama, şüphe kararı | — | — | — | — | ✓ |
@@ -241,6 +242,11 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
 - İmzalı bağlantılar (ör. “hâlâ orada mısın?”) süreli ve tek kullanımlıktır.
 - Puan hilesi kuralları `docs/architecture.md` “Puan motoru”nda.
 - SSS: soran, cevap yazan ve moderatör kimliği hiçbir çıktıda yoktur; yayın metni adları ve e-posta/telefon biçimini içeremez
+  (sunucuda, yayın anında). Karar notu yalnız soran öğrenciye görünür.
+- İlanlar (P2-04): okuyucu çıktısında yazarın adı, kimliği ve iletişim bilgisi yoktur (yalnız rol türü); `CONTACT_REQUEST` ilanında iletişim talebi
+  ilan üzerinden gider ve ilan→yazar eşlemesi yalnız sunucudadır (önizleme ad değil ilan başlığı gösterir; ad onayda açılır, D7). Hedef bölümler ve
+  kapsam bölümü servis kapısında yazarın üniversitesine bağlanır (K-07; veritabanında tetikleyici yoktur). Başvuru bağlantısı yalnız `https`
+  (şema, kimlik bilgisi, iç adres yok). Veri dökümü yalnız kendi ilanlarını içerir; hesap silme ilanları siler.
   (sunucuda, yayın anında; adın tam hali ve kesmeli ekli biçimi engeldir; kesmesiz ekli biçim ve ad önekiyle eşleşen sözcük moderatör onaylı uyarıdır ve işlem
   kaydına düşer). Karar notu yalnız soran öğrenciye görünür.
 - Puan çıktısında kaynak (deneyim/randevu/CV) ve karşı taraf kimliği yoktur; katkı puanı ve geçmişi yalnız sahibine görünür. Anonim
