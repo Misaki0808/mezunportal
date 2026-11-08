@@ -2134,7 +2134,8 @@
       "rejectedNoReason": "Gerekçe yazılmamış.",
       "redirectedText": "Sorun kişisel görüldü; bir mentorla doğrudan görüşmeni öneriyoruz.",
       "toDirectory": "Mentor dizinine git",
-      "viewPublished": "Yayınlanan soruyu gör"
+      "viewPublished": "Yayınlanan soruyu gör",
+      "moderatorNote": "Moderatör notu: {note}"
     },
     "mentor": {
       "eyebrow": "SSS",

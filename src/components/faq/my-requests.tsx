@@ -76,10 +76,12 @@ export function MyRequests({ items, nextCursor, list, onMore }: Props) {
             )}
             {item.status === 'REDIRECTED' && (
               <div className="mt-2 flex flex-col gap-2">
-                <p className="text-base text-fg-muted [overflow-wrap:anywhere]">
-                  {t('redirectedText')}
-                  {item.decisionNote ? ` ${item.decisionNote}` : ''}
-                </p>
+                <p className="text-base text-fg-muted">{t('redirectedText')}</p>
+                {item.decisionNote && (
+                  <p className="text-base text-fg-muted [overflow-wrap:anywhere]">
+                    {t('moderatorNote', { note: item.decisionNote })}
+                  </p>
+                )}
                 {item.directoryHref && (
                   <Link
                     className="press-row inline-flex min-h-11 items-center font-medium text-primary"

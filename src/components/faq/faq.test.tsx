@@ -27,7 +27,6 @@ beforeAll(() => {
 afterEach(() => vi.useRealTimers());
 
 const QUESTION = 'Staj başvurusunda hangi belgeler isteniyor?';
-const empty = { items: [], nextCursor: null };
 const page = (over: Partial<FaqSearchPage> = {}): FaqSearchPage => ({
   items: [
     {
@@ -92,7 +91,7 @@ function student(over: Record<string, unknown> = {}) {
     })),
     ...over,
   };
-  renderUi(<StudentFaq {...(props as never)} />);
+  renderUi(<StudentFaq {...(props as unknown as Parameters<typeof StudentFaq>[0])} />);
   return props;
 }
 const typeQuestion = (value: string) =>
