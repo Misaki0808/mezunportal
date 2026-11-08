@@ -217,6 +217,7 @@ enum NotificationType {
   APPOINTMENT
   FAQ
   JOB_POSTING
+  JOB_MATCH
 }
 
 enum StillThereChoice {

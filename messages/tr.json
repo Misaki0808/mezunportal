@@ -1963,6 +1963,10 @@
       "CV_REVIEW": {
         "label": "CV incelemeleri",
         "description": "CV inceleme talepleri, yanıtları ve süre dolumu."
+      },
+      "JOB_MATCH": {
+        "label": "İlan eşleşmeleri",
+        "description": "Profiline uyan ilanların özeti."
       }
     },
     "email": {
@@ -1994,7 +1998,9 @@
       "stillThereSubject": "Çalışma bilgin güncel mi?",
       "stillThereText": "Hâlâ {company} bünyesinde misin? Evet: {yesUrl} Hayır: {noUrl}",
       "migrationSubject": "E-posta adresini güncel tut",
-      "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}"
+      "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}",
+      "jobMatchSubject": "Sana uyan yeni fırsatlar",
+      "jobMatchText": "Profiline uyan yeni ilanları incele: {url}"
     },
     "stillThere": {
       "title": "Çalışma bilgini doğrula",
