@@ -233,6 +233,11 @@ ve İSTEĞE BAĞLI `LINKEDIN_CLIENT_ID`+`LINKEDIN_CLIENT_SECRET` (ikisi de yoksa
 (`local`) ve `STORAGE_LOCAL_PATH` (varsayılan `.data/files`, Git dışı, çalışma dizinine göre yani worktree
 başına). Sürücüler `src/server/external/storage/` (yerel, bellek/sahte); arayüz `put/get/delete`. Mevcut
 `.env.local` dosyalarına eklenmesi gerekmez; yeni worktree'ler `.env.example`'dan alır.
+**CV ayrıştırma / LLM grubu** (`getLlmEnv()`, varsayılanlı): `LLM_PROVIDER` boşsa CV ayrıştırma KAPALIDIR
+(yükleme `CV_PROVIDER_NOT_CONFIGURED` ile reddedilir, ekran sebebi gösterir, elle giriş açık); `fake` deterministik
+sahte adaptördür ve yalnız `local`/`test`'te kabul edilir (`prod`'da env doğrulamasını düşürür). Gerçek sağlayıcı
+(K-04) ayrı kartla gelir; `LLM_API_KEY` ve `LLM_MODEL` o zamana kadar okunmaz. `CV_PARSE_DAILY_LIMIT`
+(1–50, varsayılan 5) kullanıcı başına günlük ayrıştırma sınırıdır. Adaptörler `src/server/external/llm/`. Worker (`pnpm dev:all`) `cv.parse` kuyruğunu yalnız `LLM_PROVIDER` doluyken dinler.
 
 ### Telefon testi (faz sonu)
 

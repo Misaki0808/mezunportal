@@ -467,3 +467,68 @@ describe('hasVerifiedMembership', () => {
     ).toBe(false);
   });
 });
+
+describe('adminAny (panele giriş) — tablo-güdümlü', () => {
+  const REQUEST: AccessRequest = { action: 'adminAny' };
+  const at = new Date('2026-01-01');
+  const cases: [string, ActorFacts | null, 'ALLOW' | DenyReason][] = [
+    ['oturumsuz', null, 'UNAUTHENTICATED'],
+    ['silinmiş', facts({ accountStatus: 'DELETED' }), 'UNAUTHENTICATED'],
+    [
+      'askıdaki sistem yöneticisi',
+      facts({ accountStatus: 'SUSPENDED', grants: [grant({ scope: 'SYSTEM' })] }),
+      'SUSPENDED',
+    ],
+    ['yetkisiz doğrulanmış öğrenci', facts(), 'FORBIDDEN'],
+    [
+      'bölüm yöneticisi',
+      facts({ grants: [grant({ scope: 'DEPARTMENT', departmentId: A1.departmentId })] }),
+      'ALLOW',
+    ],
+    [
+      'fakülte yöneticisi',
+      facts({ grants: [grant({ scope: 'FACULTY', facultyId: 'fac-a' })] }),
+      'ALLOW',
+    ],
+    ['sistem yöneticisi', facts({ grants: [grant({ scope: 'SYSTEM' })] }), 'ALLOW'],
+    [
+      'kaldırılmış yetki',
+      facts({ grants: [grant({ scope: 'SYSTEM', revokedAt: at })] }),
+      'FORBIDDEN',
+    ],
+    [
+      'bozuk yetki (bölüm kimliği yok)',
+      facts({ grants: [grant({ scope: 'DEPARTMENT', departmentId: null })] }),
+      'FORBIDDEN',
+    ],
+    [
+      'bozuk yetki (fakülte kimliği yok)',
+      facts({ grants: [grant({ scope: 'FACULTY', facultyId: null })] }),
+      'FORBIDDEN',
+    ],
+    [
+      'yetkili ama doğrulanmış üyeliği yok',
+      facts({ memberships: [], grants: [grant({ scope: 'SYSTEM' })] }),
+      'NOT_VERIFIED',
+    ],
+    [
+      'yetkili ama üyeliği bekliyor',
+      facts({
+        memberships: [membership({ verificationStatus: 'PENDING' })],
+        grants: [grant({ scope: 'SYSTEM' })],
+      }),
+      'NOT_VERIFIED',
+    ],
+    [
+      'yetkili ama üyeliği kapanmış',
+      facts({ memberships: [membership({ endedAt: at })], grants: [grant({ scope: 'SYSTEM' })] }),
+      'NOT_VERIFIED',
+    ],
+    ['yetkisiz ve üyeliksiz: doğrulama durumu sızmaz', facts({ memberships: [] }), 'FORBIDDEN'],
+  ];
+
+  it.each(cases)('%s → %s', (_name, actorFacts, expected) => {
+    const decision = evaluateAccess(actorFacts, REQUEST);
+    expect(decision.allowed ? 'ALLOW' : decision.reason).toBe(expected);
+  });
+});

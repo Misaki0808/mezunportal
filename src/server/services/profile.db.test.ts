@@ -152,8 +152,8 @@ it('hepsini atlayıp bitirme zorunlu beyanı korur; veriler durur, eksikler ve s
 
 it.each([
   [2025, 'NOT_UPPER_CLASS'],
-  [2024, 'EXPERIENCE_UNAVAILABLE'],
-  [2020, 'EXPERIENCE_UNAVAILABLE'],
+  [2024, 'PUBLISHED_EXPERIENCE_REQUIRED'],
+  [2020, 'PUBLISHED_EXPERIENCE_REQUIRED'],
 ])(
   'K-08 sunucuda reddeder: giriş yılı %i, sonuç %s (interested true/false ikisi de kapalı)',
   async (entryYear, reason) => {

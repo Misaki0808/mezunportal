@@ -17,14 +17,19 @@ export const ADMIN_ACTIONS = {
   /** Rol geçişi (öğrenci → mezun). */
   ROLE_TRANSITION: { reasonRequired: false },
   USER_SUSPEND: { reasonRequired: true },
-  USER_UNSUSPEND: { reasonRequired: false },
+  USER_UNSUSPEND: { reasonRequired: true },
   MODERATION_PUBLISH: { reasonRequired: false },
   MODERATION_REJECT: { reasonRequired: true },
+  REPORT_RESOLVE: { reasonRequired: true },
   POINTS_REVOKE: { reasonRequired: true },
   SUSPICION_DECIDE: { reasonRequired: true },
   ADMIN_GRANT: { reasonRequired: false },
   ADMIN_REVOKE: { reasonRequired: true },
   DATA_EXPORT: { reasonRequired: false },
+  /** Sözlük kaydı oluşturma/güncelleme/silme (sistem yöneticisi). */
+  DICTIONARY_CHANGE: { reasonRequired: false },
+  /** Eşleşmeyen CV değerinin çözümü (bağla/yeni kayıt/at). */
+  UNMATCHED_RESOLVE: { reasonRequired: false },
 } as const;
 
 export type AdminActionName = keyof typeof ADMIN_ACTIONS;
@@ -39,6 +44,9 @@ export const AUDIT_TARGET_TYPES = [
   'SUSPICION_FLAG',
   'ADMIN_GRANT',
   'REPORT',
+  'DICTIONARY_ENTRY',
+  'UNMATCHED_VALUE',
+  'EMPLOYMENT_REPORT',
 ] as const;
 
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];

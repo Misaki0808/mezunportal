@@ -5,6 +5,11 @@
  */
 export const RETURN_PATH_PARAM = 'donus';
 export const RETURN_PATH_MAX_LENGTH = 512;
+/**
+ * `proxy.ts` her isteğe sunucu tarafında yazar (istemcinin gönderdiği aynı adlı başlık EZİLİR); sunucu
+ * düzenleri dönüş yolunu buradan okur.
+ */
+export const REQUEST_PATH_HEADER = 'x-mezun-path';
 
 /** Dönüş için anlamsız (döngü kuran) yollar: giriş, onay ve auth uçları. */
 const NON_RETURNABLE_PAGES = ['/giris', '/onay', '/cikis'];
@@ -26,8 +31,33 @@ export function safeReturnPath(value: unknown): string | null {
   if (value.length === 0 || value.length > RETURN_PATH_MAX_LENGTH) return null;
   if (!value.startsWith('/') || value.startsWith('//')) return null;
   if (value.includes('\\')) return null;
-  // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001f\u007f]/.test(value)) return null;
+  // Yol bölümünü tekrar tekrar çöz: tek/çift kodlanmış //, ters eğik çizgi ve kontrol karakterleri
+  // hiçbir ara katmanda yönlendirme hedefine dönüşmemeli. Sorgu değerlerine dokunulmaz.
+  let decodedPath = value.split(/[?#]/, 1)[0]!;
+  try {
+    while (true) {
+      const decoded = decodeURIComponent(decodedPath);
+      if (
+        decoded.startsWith('//') ||
+        decoded.includes('\\') ||
+        /[\u0000-\u001f\u007f]/.test(decoded)
+      )
+        return null;
+      if (/^\/[a-z][a-z0-9+.-]*:/i.test(decoded)) return null;
+      const normalized = new URL(decoded, ORIGIN);
+      if (
+        normalized.origin !== ORIGIN ||
+        normalized.pathname.startsWith('//') ||
+        isNonReturnable(normalized.pathname)
+      )
+        return null;
+      if (decoded === decodedPath) break;
+      decodedPath = decoded;
+    }
+  } catch {
+    return null;
+  }
   let url: URL;
   try {
     url = new URL(value, ORIGIN);

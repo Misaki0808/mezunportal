@@ -18,6 +18,7 @@ import {
   addMembership,
   createInstitution,
   createUser,
+  grantRequiredConsents as grantConsents,
   unique,
   type Institution,
 } from '@/test/fixtures';
@@ -77,10 +78,19 @@ let facultyAdmin: string;
 let otherFacultyAdmin: string;
 let sysAdmin: string;
 
-async function admin(departmentId: string, grant: Omit<Parameters<typeof addGrant>[1], 'userId'>) {
+async function grantRequiredConsents(userId: string) {
+  await grantConsents(prisma, userId);
+}
+
+async function admin(
+  departmentId: string,
+  grant: Omit<Parameters<typeof addGrant>[1], 'userId'>,
+  options: { consented?: boolean } = {},
+) {
   const userId = await createUser(prisma);
   await addMembership(prisma, { userId, departmentId, role: 'ACADEMIC' });
   await addGrant(prisma, { userId, ...grant });
+  if (options.consented !== false) await grantRequiredConsents(userId);
   return userId;
 }
 
@@ -382,6 +392,7 @@ describe('listPendingGraduationDocuments (yönetici kuyruğu)', () => {
     const extraAdmin = await createUser(prisma);
     await addMembership(prisma, { userId: extraAdmin, departmentId: dept, role: 'ACADEMIC' });
     await addGrant(prisma, { userId: extraAdmin, scope: 'DEPARTMENT', departmentId: dept });
+    await grantRequiredConsents(extraAdmin);
     const created: string[] = [];
     for (let i = 0; i < 5; i += 1) {
       const { deps } = harness();
@@ -834,3 +845,55 @@ it.each(['APPROVE', 'REJECT'] as const)(
     }
   },
 );
+
+describe('rıza kapısı: yönetim işleri zorunlu onay ister (tur bulgusu #11)', () => {
+  it('onayı olmayan yönetici kuyruğu göremez, karar veremez, dosya okuyamaz (CONSENT_REQUIRED); onaydan sonra hepsi açılır', async () => {
+    const unconsented = await admin(
+      inst.deptA1,
+      { scope: 'DEPARTMENT', departmentId: inst.deptA1 },
+      { consented: false },
+    );
+    const h = harness();
+    const applicant = await newApplicant();
+    const upload = await uploadGraduationDocument(h.deps, applicant.actor, form(inst));
+
+    expect(
+      await codeOf(listPendingGraduationDocuments({ db: prisma }, await actorOf(unconsented), {})),
+    ).toBe('CONSENT_REQUIRED');
+    await expect(
+      readGraduationDocumentFile(
+        { db: prisma, storage: h.storage, now: () => NOW },
+        unconsented,
+        upload.documentId,
+      ),
+    ).rejects.toMatchObject({ code: 'CONSENT_REQUIRED' });
+    expect(
+      await codeOf(
+        reviewGraduationDocument(
+          h.deps,
+          { userId: unconsented },
+          { decision: 'APPROVE', documentId: upload.documentId },
+        ),
+      ),
+    ).toBe('CONSENT_REQUIRED');
+    // Karar verilmedi: belge hâlâ bekliyor, dosya duruyor.
+    expect(
+      (await prisma.graduationDocument.findUniqueOrThrow({ where: { id: upload.documentId } }))
+        .status,
+    ).toBe('PENDING');
+
+    await grantRequiredConsents(unconsented);
+    const page = await listPendingGraduationDocuments({ db: prisma }, await actorOf(unconsented), {
+      limit: 50,
+    });
+    expect(page.items.map((item) => item.id)).toContain(upload.documentId);
+  });
+
+  it('yetkisi olmayan kullanıcıya rıza durumu söylenmez: önce yetki (AUTH_FORBIDDEN)', async () => {
+    const member = await createUser(prisma);
+    await addMembership(prisma, { userId: member, departmentId: inst.deptA1, role: 'ACADEMIC' });
+    expect(
+      await codeOf(listPendingGraduationDocuments({ db: prisma }, await actorOf(member), {})),
+    ).toBe('AUTH_FORBIDDEN');
+  });
+});

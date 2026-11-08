@@ -4,6 +4,7 @@ import type { ErrorCode } from '@/lib/errors';
 
 import { emailSchema } from './auth';
 import { ONBOARDING_STEPS, profileTagSchema } from './profile';
+import { EXPERIENCE_STATUSES, experienceDraftTemplateSchema } from './experience';
 
 /**
  * KVKK sözleşmesi (P1-03; docs/security.md “KVKK”, docs/legal-drafts.md). Servis (W1) ve ekran (W2) bunu
@@ -193,6 +194,29 @@ export const exportedContactRequestSchema = z
   })
   .strict();
 
+/** CV ve profil kalemleri (P1-05). Dosya anahtarı ve sözlük kimlikleri dökülmez; yalnız kullanıcının kendi verisi. */
+export const exportedCvSchema = z.object({
+  uploads: z.array(
+    z.object({
+      id: z.string(),
+      status: z.enum(['QUEUED', 'PARSING', 'PARSED', 'FAILED', 'APPLIED', 'DISCARDED']),
+      errorCode: z.string().nullable(),
+      pageCount: z.number().int(),
+      hasFile: z.boolean(),
+      createdAt: z.string(),
+      appliedAt: z.string().nullable(),
+      /** Onay bekleyen (uygulanmamış) ayrıştırma önerisi; uygulanınca/atılınca silinir. */
+      pendingParsedCv: z.unknown().nullable(),
+    }),
+  ),
+  education: z.array(z.record(z.string(), z.unknown())),
+  positions: z.array(z.record(z.string(), z.unknown())),
+  languages: z.array(z.record(z.string(), z.unknown())),
+  certifications: z.array(z.record(z.string(), z.unknown())),
+  skills: z.array(z.record(z.string(), z.unknown())),
+  experienceInvitations: z.array(z.object({ positionId: z.string(), status: z.string() })),
+});
+export type ExportedCv = z.infer<typeof exportedCvSchema>;
 /** Kullanıcının kendi profili; ilişkiler yalnız etiket sözlüğüne açılır, başka kullanıcıya değil. */
 export const exportedProfileSchema = z
   .object({
@@ -217,6 +241,21 @@ export const exportedProfileSchema = z
   })
   .strict();
 
+/** Kendi deneyim dökümü; anonim içerikle yazar/moderatör kimliği birlikte taşınmaz. */
+export const exportedExperienceSchema = z
+  .object({
+    id: z.string(),
+    departmentIdAtWrite: z.string(),
+    content: experienceDraftTemplateSchema,
+    isAnonymous: z.boolean(),
+    status: z.enum(EXPERIENCE_STATUSES),
+    moderationNote: z.string().nullable(),
+    publishedAt: z.string().nullable(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .strict();
+
 export const dataExportSchema = z.object({
   formatVersion: z.literal(DATA_EXPORT_FORMAT_VERSION),
   exportedAt: z.string(),
@@ -228,6 +267,7 @@ export const dataExportSchema = z.object({
     createdAt: z.string(),
   }),
   profile: exportedProfileSchema.nullable(),
+  experiences: z.array(exportedExperienceSchema),
   memberships: z.array(z.record(z.string(), z.unknown())),
   consents: z.array(
     z.object({
@@ -244,6 +284,7 @@ export const dataExportSchema = z.object({
     sent: z.array(exportedContactRequestSchema),
     received: z.array(exportedContactRequestSchema),
   }),
+  cv: exportedCvSchema,
 });
 export type DataExport = z.infer<typeof dataExportSchema>;
 

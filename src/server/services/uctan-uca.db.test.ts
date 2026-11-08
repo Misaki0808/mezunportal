@@ -5,6 +5,7 @@ import { createTestPrisma } from '@/test/db';
 import { createTestAuth, signInWithMagicLink, uniqueAddress } from '@/test/auth';
 import {
   addGrant,
+  grantRequiredConsents,
   addMembership,
   createInstitution,
   createUser,
@@ -36,6 +37,7 @@ beforeAll(async () => {
   deptAdminId = await createUser(prisma);
   await addMembership(prisma, { userId: deptAdminId, departmentId: inst.deptA1, role: 'ACADEMIC' });
   await addGrant(prisma, { userId: deptAdminId, scope: 'DEPARTMENT', departmentId: inst.deptA1 });
+  await grantRequiredConsents(prisma, deptAdminId);
 });
 
 function world() {

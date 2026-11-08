@@ -42,7 +42,14 @@ kural sunucuda zorlanır.
   SAKLANMAZ (sağlayıcıya girişten sonra bir daha gidilmez). Hesap bağlama yalnız sağlayıcı e-postayı
   doğrulanmış bildirirse ve e-posta eşleşirse olur; güvenilir-sağlayıcı listesi boştur (hesap devralma yok).
 - **E-posta değiştirme** iki adımlıdır: eski adrese onay bağlantısı, onaydan sonra yeni adrese doğrulama
-  bağlantısı. Yeni adres başkasına aitse ya da aynıysa yanıt aynıdır ve e-posta gitmez.
+  bağlantısı. Yeni adres başkasına aitse yanıt aynıdır ve e-posta gitmez (kayıt durumu sızmaz); kullanıcının
+  kendi mevcut adresi `EMAIL_CHANGE_SAME_ADDRESS` ile reddedilir. İki bağlantı sabit site içi yollara döner
+  (`/hesap/e-posta?adim=eski-onaylandi` / `tamamlandi`; değer beyaz listeden okunur).
+- **Oturum ve dönüş yolu:** oturum isteyen sayfa (`PrivacyGuard`) oturumsuz kullanıcıyı (çıkış yapmış, silinmiş
+  hesap dahil) girişe, zorunlu onayı eksik kullanıcıyı onaya yönlendirir; gidilmek istenen yol `?donus=` ile
+  taşınır ve magic-link geri çağrısına konur. **Açık yönlendirme yoktur:** yalnız `/` ile başlayan site içi
+  yol (`//`, ters eğik çizgi, şema, kontrol karakteri yok; giriş/onay/çıkış/API yollarına dönülmez —
+  `src/lib/return-path.ts`). Yol, `proxy.ts`'in sunucuda yazdığı başlıktan okunur (istemcinin gönderdiği ezilir).
 - **Alan adı doğrulaması** (D2) seçilen bölümün ÜNİVERSİTESİNİN `University` kaydındaki alan adı listesine
   göredir, tam eşleşmedir (alt alan adı/benzer alan adı eşleşmez); e-posta doğrulanmış olmalıdır; mezun alan
   adıyla doğrulanamaz.
@@ -89,6 +96,10 @@ ve akademisyen açabilir; öğrenci eşiği K-08. Yönetici yetkisi ayrı tablod
   kapsamı servis sorgusunda doğrulanır; genel `requireVerifiedMember` tek başına yeterli değildir.
 - **Anonim deneyim:** yazar kimliği kendi listesi ve moderasyon dahil hiçbir çıktı şemasında yoktur;
   sunucudaki sahiplik bağı istemciye verilmez. Şikâyet çıktısı da raportör kimliği taşımaz.
+  Servis yanıtı tek kapalı dönüştürücüden geçer; moderasyon audit metadata'sına yazar kimliği yazılmaz.
+- Deneyimde yayın/ret ve şikâyet çözümü kapsamı işlem içinde yeniden denetler; karar ile audit aynı
+  transaction'dadır. Yayınlanmış içerik yazarınca değiştirilemez; reddedilen içerik yeniden taslağa
+  alınarak gönderilir. Şikâyet sınırı sözleşmedeki kullanıcı başına 10/24 saattir (DB sayacı).
 - Her yetkili eylemin negatif testi vardır (başka bölüm, yetkisiz rol, doğrulanmamış, askıda).
 
 ## Yönetici işlem kaydı
@@ -96,8 +107,28 @@ ve akademisyen açabilir; öğrenci eşiği K-08. Yönetici yetkisi ayrı tablod
 Her yönetici eylemi `AdminAuditLog`'a `recordAdminAction` ile, eylemle AYNI veritabanı işleminde yazılır: kim, ne yaptı, hangi kayıtta, gerekçe. Eylem adları ve gerekçe zorunluluğu `rules/adminAudit.ts`'tedir; gerekçe ve metadata
 kişisel veri (e-posta, telefon, kimlik numarası, ad alanları) içeremez ve yazılmadan reddedilir. Kapsam:
 mezun belgesi onay/ret, rol düzeltme, askıya alma/kaldırma, moderasyon kararları, puan iptali,
-şüphe kararı, yönetici atama, dışa aktarma. Kayıt yalnız eklenir; kişisel veri içermez (yalnız
-kimlikler). Sistem yöneticisi panelden görür.
+şüphe kararı, yönetici atama/kaldırma, sözlük değişikliği, eşleşmeyen değer çözümü, dışa aktarma.
+Kayıt yalnız eklenir; kişisel veri içermez (yalnız kimlikler). Sistem yöneticisi panelden görür.
+
+### Yönetim paneli kuralları (P1-11)
+
+Sözleşme `src/contracts/admin.ts` ve `admin-users.ts`'tedir; hangi eylemin kime açık olduğu `ADMIN_ACTION_ACCESS`
+tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + doğrulanmış üyelik); sistem yöneticisine
+özel eylemler (sözlük, eşleşmeyen değer, yönetici atama, işlem kaydı görüntüleme) `requireAdmin({ kind: 'SYSTEM' })`.
+- **Kapsam dışı görme yok:** her liste yöneticinin kapsamıyla kesişir; `departmentId`/`facultyId` süzgeçleri yetki
+  vermez. Telefon ve e-posta çıktı şemalarında yalnız maskelidir (`maskedEmail`, `maskedPhone`); şikâyet
+  çıktısında raportör, yazar ve moderatör kimliği yoktur.
+- **Askıya alma hesap geneli olduğundan** hedefin BÜTÜN üyelikleri yöneticinin kapsamında olmalıdır; üyeliği olmayan ya da
+  kısmen kapsanan kullanıcıyı yalnız sistem yöneticisi yönetir. Kendi hesabın/yetkin üzerinde işlem yapılamaz;
+  etkin yönetici yetkisi olan kullanıcıyı yalnız sistem yöneticisi askıya alır/düzeltir (bölüm yöneticisi üstündekini
+  askıya alamaz). Yetki işlemin İÇİNDE yeniden doğrulanır; değişiklik ve işlem kaydı aynı işlemdedir.
+- **Açık onay:** askıya alma/kaldırma, üyelik düzeltme, yönetici atama/kaldırma ve sözlük silme
+  girdileri `confirmed:true` ister. Askı kaldırma da gerekçelidir; sözlük silme ve eşleşmeyeni atmada
+  gerekçe zorunludur. Maske yalnız alan adı değildir: çıktı şeması ham telefon/e-posta değerini reddeder.
+- **Askı:** ban alanları yazılır ve oturumlar aynı işlemde silinir; kullanıcı yeni oturum açamaz. Süreli askı en fazla
+  365 gün. Son sistem yöneticisi yetkisi kaldırılamaz.
+- **Toplu rapor ve Excel kişi satırı içermez:** mezun istihdam dağılımları sözlükle eşleşen adlarla ve küçük hücre
+  bastırmayla (`REPORT_MIN_GROUP_SIZE` = 3) verilir; her dışa aktarma `DATA_EXPORT` kaydı yazar ve hız sınırlıdır.
 
 ## KVKK
 
@@ -111,14 +142,22 @@ kimlikler). Sistem yöneticisi panelden görür.
 - **Görünürlük seviyeleri:** `PRIVATE` (yalnız sahibi; yönetici yalnız görev ekranında, maskeli) ·
   `ON_APPROVED_REQUEST` (onaylı iletişim talebi sahibine) · `MEMBERS` (doğrulanmış üyelere).
   Varsayılan: e-posta ve telefon `ON_APPROVED_REQUEST`; sosyal linkler ve LinkedIn `MEMBERS`.
-- **İletişim talebi** onaylanınca ilgili alanlar o kişiye açılır; sahibi istediği an geri alır.
+- **İletişim talebi** onaylanınca ilgili alanlar o kişiye açılır; sahibi istediği an geri alır. Talep formu
+  önizlemesi (`previewContactTarget`) kullanıcı varlığını sızdırmaz: hedef yok, silinmiş, askıda, kendisi ya
+  da talep alabileceği alanı yoksa yanıt aynıdır; saatte 60 ile sınırlıdır.
+- **Rıza kapısı yönetimde de geçerlidir:** zorunlu onayı güncel olmayan yönetici belge kuyruğunu, belge
+  dosyasını ve kararı kullanamaz (`CONSENT_REQUIRED`; yetki kontrolünden sonra, yetkisize rıza durumu söylenmez).
 - **Randevu onayında e-posta paylaşılır** (takvim daveti için); talep ekranında önceden yazılır.
 - **Hesap silme:** oturumlar düşer, kişisel alanlar anında temizlenir, dosyalar silinir;
   yayınlanmış içerik kullanıcının seçimine göre silinir (varsayılan) ya da anonimleştirilir (K-09,
   `docs/decisions.md`). Kişisel profil ve etiket ilişkileri her iki seçimde de silinir; ortak etiket
   sözlüğü korunur. Profil yazımı aynı kullanıcı kilidi altında hesap durumunu yeniden doğrular.
+  Deneyim taslak/bekleyen/ret kayıtları her iki seçimde silinir; anonimleştirme yalnız yayınlanmış
+  deneyimi yazar bağı kopuk bırakır. Kişinin şikâyet metinleri silinir. Deneyim yazımı aynı User kilidini alır.
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11); kendi profilinin
   kişisel alanları, ilk giriş adım durumları ve etiketleri dahildir. Profil yoksa `profile: null` döner.
+  Deneyimler bütün durumlarıyla yalnız kendi içeriklerinden oluşur; yazar/moderatör kimlikleri deneyim
+  döküm nesnesine eklenmez.
 - **Çerezler:** yalnız zorunlu oturum çerezi; üçüncü taraf analitik ve reklam çerezi yok
   (metrikler kendi tablomuzda). Çerez bandı yerine aydınlatma metninde çerez bölümü yeterli
   görünür; son değerlendirme hukuki metin onayıyla (PILOT-LEGAL).
@@ -136,6 +175,13 @@ kimlikler). Sistem yöneticisi panelden görür.
   sınırlıdır; çıktı yalnız **öneri** olarak onay ekranına gelir, kullanıcı onaylamadan
   uygulanmaz; rol, yetki, doğrulama durumu ve başka kullanıcıya ait veri **hiçbir zaman** LLM
   çıktısından yazılmaz; modele araç/çağrı yetkisi verilmez.
+- **Yükleme denetimi içeriğe bakar:** şifreli PDF ve 6 sayfadan uzun PDF reddedilir; maliyet sınırları (5 MB,
+  günlük hak, sağlayıcı harcama sınırı) sayfa sayımının sezgisel olmasını telafi eder.
+- **Çıktı temizliği:** `ParsedCv` bilinmeyen alanları atar (rol/kullanıcı kimliği şemada yok), görünmez ve çift
+  yönlü biçim karakterlerini siler, liste ve metin uzunluklarını sınırlar; saklı çıktı uygulamada yeniden
+  doğrulanır. Veritabanı kısıtları da metin uzunluğu ve tarih tutarlılığını zorlar.
+- **Modele yalnız PDF gider:** kullanıcı kimliği, e-posta, rol ve başka kullanıcı verisi isteğe girmez; yurt dışı
+  rızası yüklemede ve iş başında denetlenir.
 - LLM girdisi ve çıktısı loglanmaz.
 
 ## Kötüye kullanım sınırları
@@ -155,6 +201,9 @@ yığın izi kullanıcıya gösterilmez. Ayrıntı `docs/architecture.md` “Dı
 - `.env*` repoya girmez; değerler Git dışı `korunan/` klasöründe ve yerel `.env.local`'dadır.
 - Loglanmaz: jeton, parola, giriş bağlantısı, CV/belge içeriği, LLM girdi/çıktısı. E-posta ve
   telefon maskeli (`src/lib/mask.ts`: `maskEmail`, `maskPhone`, serbest metin için `maskPersonalData`).
+- Geliştirme sunucusu da (telefon testi `dev:lan` ile yapılır) bu kurala uyar: Next.js'in sunucu eylemi
+  argüman ve istek URL günlükleri kapalıdır; kullanıcı girdisi, kodlanmış jetonlar ve kişisel veri
+  URL içinde de bulunabilir (`src/lib/dev-logging.ts`, `next.config.ts` `logging`).
 
 ## Güvenlik başlıkları
 

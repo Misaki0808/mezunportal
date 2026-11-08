@@ -61,7 +61,9 @@ export type AccessRequest =
   | {
       action: 'selfProfile' | 'experienceWrite' | 'contentRead' | 'directoryUse' | 'mentorAct';
     }
-  | { action: 'adminScope'; target: AdminTarget };
+  | { action: 'adminScope'; target: AdminTarget }
+  /** Panele giriş: kapsamı olan herhangi bir etkin yetki (bölüm/fakülte/sistem) + doğrulanmış üyelik. */
+  | { action: 'adminAny' };
 
 export type DenyReason = 'UNAUTHENTICATED' | 'SUSPENDED' | 'NOT_VERIFIED' | 'FORBIDDEN';
 export type AccessDecision = { allowed: true } | { allowed: false; reason: DenyReason };
@@ -156,6 +158,13 @@ export function evaluateAccess(facts: ActorFacts | null, request: AccessRequest)
     case 'mentorAct':
       if (!hasVerifiedMembership(facts)) return deny('NOT_VERIFIED');
       return facts.mentor?.isActive === true ? ALLOW : deny('FORBIDDEN');
+
+    case 'adminAny': {
+      const scope = describeManagedScope(facts.grants);
+      const covers = scope.system || scope.facultyIds.length > 0 || scope.departmentIds.length > 0;
+      if (!covers) return deny('FORBIDDEN');
+      return hasVerifiedMembership(facts) ? ALLOW : deny('NOT_VERIFIED');
+    }
 
     case 'adminScope':
       // Önce yetki var mı (yetkisiz kullanıcıya doğrulama durumu hakkında ipucu verilmez).
