@@ -44,10 +44,12 @@ for (const signal of ['SIGTERM', 'SIGINT', 'SIGKILL', 'EXIT']) {
       );
       ids = [...output.matchAll(/(?:CHILD|SUP):(\d+)/g)].map((match) => Number(match[1]));
       assert.equal(ids.length, 3);
+      const started = Date.now();
       if (signal === 'EXIT') proc.stdin.write('exit');
       else proc.kill(signal);
       await finished;
       await waitFor(async () => (await Promise.all(ids.map(alive))).every((value) => !value));
+      assert.ok(Date.now() - started < 3000, 'kapanış üç saniyeyi aştı');
     } finally {
       if (await alive(proc.pid)) proc.kill('SIGKILL');
       for (const pid of ids)
