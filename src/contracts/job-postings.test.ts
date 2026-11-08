@@ -12,6 +12,8 @@ import {
   jobPostingContentSchema,
   jobPostingDetailSchema,
   jobPostingDraftContentSchema,
+  jobPostingFilterOptionsSchema,
+  getJobPostingFilterOptionsSchema,
   jobPostingFormContextSchema,
   jobPostingModerationItemSchema,
   jobPostingReportSchema,
@@ -205,6 +207,10 @@ describe('arama, moderasyon ve şikâyet girdileri', () => {
     expect(searchJobPostingsSchema.safeParse({ pageSize: 51 }).success).toBe(false);
     expect(searchJobPostingsSchema.safeParse({ kind: 'JOB', extra: 1 }).success).toBe(false);
     expect(getJobPostingSchema.safeParse({ id: '' }).success).toBe(false);
+    // konum süzgeci: metin, 2-100 karakter
+    expect(searchJobPostingsSchema.parse({ location: '  İstanbul ' }).location).toBe('İstanbul');
+    expect(searchJobPostingsSchema.safeParse({ location: 'a' }).success).toBe(false);
+    expect(searchJobPostingsSchema.safeParse({ location: 'a'.repeat(101) }).success).toBe(false);
   });
 
   it('karar: yayımlamada gerekçe yok, reddetmede zorunlu; bilinmeyen karar reddedilir', () => {
@@ -324,5 +330,37 @@ describe('eylem kataloğu', () => {
     for (const codes of Object.values(JOB_POSTING_ACTION_ERRORS))
       for (const code of ['AUTH_UNAUTHENTICATED', 'AUTH_FORBIDDEN', 'CONSENT_REQUIRED'])
         expect(codes as readonly string[]).toContain(code);
+  });
+});
+
+describe('süzgeç seçenekleri', () => {
+  it('girdi boştur (strict); çıktıda kişi verisi alanı yoktur, listeler sınırlıdır', () => {
+    expect(getJobPostingFilterOptionsSchema.safeParse({}).success).toBe(true);
+    expect(getJobPostingFilterOptionsSchema.safeParse({ userId: 'u1' }).success).toBe(false);
+    const ok = {
+      organizations: [{ companyId: null, name: 'Örnek Teknoloji', count: 2 }],
+      departments: [{ id: 'd1', name: 'Yönetim Bilişim Sistemleri', count: 3 }],
+      locations: [{ name: 'İstanbul', count: 4 }],
+      remoteCount: 1,
+    };
+    expect(jobPostingFilterOptionsSchema.safeParse(ok).success).toBe(true);
+    expect(jobPostingFilterOptionsSchema.safeParse({ ...ok, authorId: 'u1' }).success).toBe(false);
+    expect(
+      jobPostingFilterOptionsSchema.safeParse({
+        ...ok,
+        locations: Array.from({ length: 101 }, (_, i) => ({ name: `Şehir ${i}`, count: 1 })),
+      }).success,
+    ).toBe(false);
+    expect(
+      jobPostingFilterOptionsSchema.safeParse({ ...ok, locations: [{ name: 'x', count: 0 }] })
+        .success,
+    ).toBe(false);
+    for (const key of ['authorId', 'userId', 'email', 'displayName'])
+      for (const shape of [
+        jobPostingFilterOptionsSchema.shape.organizations.element.shape,
+        jobPostingFilterOptionsSchema.shape.departments.element.shape,
+        jobPostingFilterOptionsSchema.shape.locations.element.shape,
+      ])
+        expect(Object.keys(shape)).not.toContain(key);
   });
 });
