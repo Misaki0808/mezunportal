@@ -50,12 +50,16 @@ Faz 1'in D1–D17 kararları **aynen geçerlidir** (`docs/faz1-plan.md` §2). Fa
 | # | Karar | Değer |
 |---|---|---|
 | D18 | Marka ve arayüz | Palet “İris + Mercan”, İÜ renkleri kullanılmaz (kullanıcı kararı); koyu tema; Plus Jakarta Sans + Inter; UI/UX işlevden önemlidir, ürün/UX kararını PM verir (D15) |
-| D19 | İlan | Yalnız doğrulanmış mezun yazar; moderasyonlu (bölüm yöneticisi); son başvuru tarihli, süresi dolan ilan kendiliğinden kapanır; başvuru platform dışında (dış bağlantı ya da mezunla iletişim talebi) |
+| D19 | İlan | Yalnız doğrulanmış **mezun ve akademisyen** yazar (öğrenci yazamaz); moderasyonlu (bölüm yöneticisi); **son başvuru tarihi zorunlu**, en çok **60 gün** yayında, süresi dolan ilan kendiliğinden kapanır; ilan puanı yayından 7 gün sonra kesinleşir, ayda en çok 3 ilan puan getirir (PM, 8 Kas); başvuru platform dışında (dış bağlantı ya da mezunla iletişim talebi) |
 | D20 | Ters yönlü arama | Yalnız öğrencinin **açık rızasıyla** ve her an geri alınabilir; iletişim bilgisi ve ad yalnız onaylı iletişim talebiyle açılır (D7) |
 | D21 | Şirket | Şirket sayfaları **puansız** (D17); yalnız mevcut yayınlanmış deneyim, sözlük ve açık görünürlüklü pozisyon verisinden türetilir |
 | D22 | Ödül | Yılın Mezunu ve ayın mezunu puanla **otomatik** verilmez; puan yalnız aday listesini sıralar, kararı bölüm yöneticisi verir (`docs/architecture.md` “Puan motoru”) |
 | D23 | Rehber özellikleri | Beceri açığı ve ders rehberi yapay zekâsız, açık kuralla ve k-anonim sayımla çalışır |
 | D24 | Dış hesap | LinkedIn “Add to Profile” yalnız bağlantıdır (API/kazıma yok); kurum sayfası ve metinleri kullanıcıdan gelir (E maddesi) |
+| D25 | Ders rehberi kapsamı | YBS'nin **bütün dersleri** listelenir, seçmeliler öne çıkar; resmî ders listesi hoca onayıyla gelir (PM, 8 Kas) |
+| D26 | Soru bankası | Ayrı tablo yoktur; yayınlanmış deneyimlerdeki mülakat sorularından **türetilir** (PM, 8 Kas) |
+| D27 | Yılın Mezunu havuzu | Aday havuzu **akademik yıl** (Eylül–Ağustos); liste törenden 30 gün önce **dondurulur** (PM, 8 Kas) |
+| D28 | Aday arama | Aramayı yalnız doğrulanmış ve “işe alım yapıyorum” beyanlı **mezun** yapar; öğrenci yalnız açık rıza + “staj arıyorum” etiketiyle görünür; sonuçlar maskeli, iletişim mevcut iletişim talebi akışıyla, hız sınırlı (PM, 8 Kas) |
 
 ## 3. Dalga sırası ve bağımlılık
 
@@ -75,26 +79,26 @@ P2-07 ← P2-09 ve profil etiketleri; P2-02 ← P2-01; P2-13 ← P2-05 ve P2-12;
 ## 4. Adımlar — Dalga A · Fırsatlar
 
 ### P2-04 · Mezun staj ilanları · Sözleşme (W1) → Servis (W1) ∥ Ekran (W2) · H3
-**İş:** doğrulanmış mezunun staj/iş ilanı yazması: kurum (sözlük `Company` ya da serbest ad), pozisyon, bölüm hedefi (bir ya
-da birkaç bölüm), konum/uzaktan, açıklama, **son başvuru tarihi**, başvuru yolu (yalnız `https` bağlantısı ya da “mezunla
+**İş:** doğrulanmış mezunun ya da akademisyenin (öğrenci değil) staj/iş ilanı yazması: kurum (sözlük `Company` ya da serbest ad), pozisyon, bölüm hedefi (bir ya
+da birkaç bölüm), konum/uzaktan, açıklama, **zorunlu son başvuru tarihi (yayından en çok 60 gün sonrası)**, başvuru yolu (yalnız `https` bağlantısı ya da “mezunla
 iletişim talebi”, D7). Yeni `JobPosting` (`DRAFT → PENDING → PUBLISHED | REJECTED`, süre dolunca `EXPIRED`, yazar kapatınca
 `CLOSED`); moderasyon bölüm yöneticisindedir ve deneyim moderasyonuyla aynı kalıbı kullanır (`MODERATION_*` işlem kaydı,
 kapsam kontrolü, gerekçeli ret, kuyruk). `postings.expire` günlük pg-boss işi (İstanbul saati) son tarihi geçeni kapatır.
 Görünürlük K-07: arayanın üniversitesindeki bölümlere hedeflenmiş yayınlanmış ilanlar. Arama deneyimdekiyle aynı altyapıyı
 kullanır (üretilmiş `tsvector` + `pg_trgm`, migration bekçisinin izin listesine eklenir). İlan şikâyeti: `ReportTargetType`
-genişler. Hız sınırı: yazar başına ayda en çok 5 yeni ilan. Puan: yeni `PointAction` `JOB_POSTING_PUBLISHED` (yazar; yayında,
-ilan başına bir kez; değer ve gecikme **PM kararı**).
+genişler. Hız sınırı: yazar başına ayda en çok 5 yeni ilan gönderimi. Puan: yeni `PointAction` `JOB_POSTING_PUBLISHED` (yazar; yayında,
+ilan başına bir kez; **7 gün gecikmeli** — yayından 7 gün sonra kesinleşir, bu sürede ilan geri alınırsa puan düşer; **ayda en çok 3
+ilan** puan getirir, fazlası çarpan 0 ile kaydedilir; puan değeri PM kararı).
 **Ekran:** ilan listesi (süzgeçler: bölüm, kurum, konum, kalan gün; “son günler” vurgusu), ilan detayı (tek birincil eylem
-“Başvur” ya da “İletişim iste”), mezun için “İlan ver” formu (adım adım, taslak kaydı, önizleme), “İlanlarım” ve durum
+“Başvur” ya da “İletişim iste”), mezun/akademisyen için “İlan ver” formu (adım adım, taslak kaydı, önizleme), “İlanlarım” ve durum
 rozetleri, yönetimde ilan kuyruğu.
-**Testler:** yazar yalnız `ALUMNI` ve etkin üyelikli (öğrenci/akademisyen 403); başka bölümün yöneticisi karar veremez;
+**Testler:** yazar yalnız etkin üyelikli doğrulanmış `ALUMNI`/`ACADEMIC` (öğrenci 403); son tarih zorunlu ve yayından 60 günden uzak olamaz; ayda 3 ilandan fazlası puan getirmez; puan 7 gün dolmadan `PENDING`; başka bölümün yöneticisi karar veremez;
 süresi geçmiş ilan listede yok ve başvuru bağlantısı sunucuda da kapalı; `javascript:`/`data:`/`http:` bağlantı reddedilir;
 yayında ad/e-posta alanı sızmaz (D7); aylık sınır; puan yalnız yayında ve bir kez, ret/kapatmada geri alınır; `expire` işi
 idempotent; arama sonucu yalnız arayanın üniversitesinden; mutasyon (tarih sınırı, kapsam, bağlantı denetimi); Playwright:
 mezun ilan verir → yönetici yayımlar → öğrenci bulur.
 **Kabul:** yukarıdakiler; ilan yalnız moderasyondan sonra görünür; son tarih geçince kendiliğinden kapanır.
-**📝 PM kararı:** ilan puanı değeri/gecikmesi; en uzun ilan süresi (öneri: 90 gün). **Açık soru:** ilan yalnız mezuna mı açık, yoksa
-mentor olan akademisyen de verebilir mi? (öneri: yalnız mezun, D19.)
+**📝 PM kararı (verildi, D19):** yazar mezun + akademisyen, 60 gün üst sınır, 7 gün gecikme, ayda 3 puanlı ilan. **Kalan:** ilan puan değeri (`PointRule` seed).
 **Bağımlılık:** Faz 1 tamamı.
 
 ### P2-05 · İlan eşleştirme bildirimi · Servis + kural (W1) ∥ Ekran (W2) · H2
@@ -114,20 +118,19 @@ profil etiketine yönlendiren boş durum); ilan kartında “Neden sana uygun?�
 ### P2-06 · Ters yönlü arama (“staj arıyorum”) · Sözleşme (W1) → Servis (W1) ∥ Ekran (W2) · H3
 **İş:** öğrenci açık rızayla “staj arıyorum” görünürlüğünü açar (sürümlü yeni `Consent` belgesi `JOB_SEEKER_VISIBILITY`;
 kapatınca görünürlük hemen kalkar). Profilde yeni alan(lar): `seekingInternship`, hedef dönem, ilgi alanları (mevcut etiketler).
-İşe alım yapan mezun (etkin ilan sahibi ya da “işe alım yapıyorum” beyanı, öneri: **yalnız yayında ilanı olan mezun**) arama
-yapar: bölüm, etiket, dönem süzgeci. **Sonuç kartında yalnız** bölüm, giriş yılından sınıf, etiketler ve başlık satırı görünür;
+Aramayı yalnız **doğrulanmış ve “işe alım yapıyorum” beyanı vermiş mezun** yapar (beyan profil ayarıdır, her an kapatılabilir; D28): bölüm, etiket, dönem süzgeci. **Sonuç kartında yalnız** bölüm, giriş yılından sınıf, etiketler ve başlık satırı görünür;
 ad, fotoğraf, e-posta, telefon görünmez — mezun “İletişim iste” (D7 `ContactRequest`) ile öğrenciden izin ister, kabulde
 görünürlük kuralları işler. Öğrenci “profilin kaç kez görüntülendi” sayısını görür (kim bakmış görünmez). Hız sınırı: mezun
 başına günde 50 aranan kart, ayda 20 iletişim talebi. Her arama `Event` (sayım, kişisel veri yok).
 **Ekran:** öğrencide ayarlar → “İş arayanlara görün” anahtarı + açık rıza metni, anlamlı önizleme (“mezunlar seni böyle görür”);
 mezunda “Aday bul” (süzgeç + kart listesi + iletişim iste); öğrencide görüntülenme sayacı.
 **Testler:** rıza yokken ya da geri alındıktan sonra hiçbir arama yanıtında öğrenci yok (sızıntı testi, JSON'da ad/e-posta/
-kimlik/fotoğraf yok); yalnız `ALUMNI` + etkin ilanı olan arar (diğerleri 403); sonuçta yalnız aynı üniversite (K-07); rıza
+kimlik/fotoğraf yok); yalnız doğrulanmış `ALUMNI` + “işe alım yapıyorum” beyanlı arar (öğrenci, akademisyen, beyansız mezun 403; beyan geri alınınca arama kapanır); sonuçta yalnız aynı üniversite (K-07); rıza
 geri alınınca bekleyen iletişim talepleri kapanır; hesap silinince arama kayıtları yok; hız sınırları; mutasyon (rıza kapısı,
 alan beyaz listesi); Playwright: rıza ver → mezun bul → iletişim iste → kabul.
 **Kabul:** yukarıdakiler; hukuki metin güncellemesi onaylı.
 **⏸ Onay noktası:** KVKK rıza metni ve aydınlatma eki (`docs/legal-drafts.md` taslağı W1 yazar; hoca/hukuki onay kullanıcıda).
-**Açık soru:** aday arayabilmek için “yayında ilanı olan mezun” şartı yeterli mi, yoksa herhangi bir doğrulanmış mezun mu?
+**📝 PM kararı (verildi, D28):** arama yetkisi ve maskeleme kuralı yukarıdaki gibi.
 **Bağımlılık:** P2-04; P1-03 rıza ve iletişim altyapısı.
 
 ### P2-03 · Referans akışı · Sözleşme (W1) → Servis (W1) ∥ Ekran (W2) · H3
@@ -166,13 +169,13 @@ mutasyon (k eşiği, görünürlük).
 **İş:** yayınlanmış deneyimlerdeki `interviewQuestions` ve süreç adımlarından **şirket/pozisyona göre** soru bankası.
 Yinelenenler `rules/questionDedupe` ile (katlama + `pg_trgm` benzerliği) gruplanır, “kaç deneyimde geçti” sayılır; soru metni
 kimlik içeremez (ad/e-posta biçimi, SSS kimlik denetiminin aynı kuralı, `analyzeIdentity`). Kaynak deneyim geri alınır ya da
-yazar hesabı silinirse soru türev çıktıdan düşer (sorgu anında türetme; ayrı tablo yalnız performans gerektirirse).
+yazar hesabı silinirse soru türev çıktıdan düşer (sorgu anında türetme, ayrı tablo yok).
 **Ekran:** `/mulakat-sorulari` (şirket, pozisyon, sektör süzgeci, arama), soru kartı (“3 deneyimde geçti”), şirket sayfasında sekme;
 “kaydet/çalış” (öğrenci kendi listesi) **yalnız ek yükü azsa**, aksi halde sonraki faz.
 **Testler:** anonim deneyimin sorusu yazarsız; geri alınan/silinen deneyim sorusu çıkar; yinelenen sorular tek karta birleşir;
 k-anonimlik (tek deneyimli şirket yalnız “az sayıda” notuyla, yazar tanınmasın); mutasyon (yinelenen eşiği).
 **Kabul:** yukarıdakiler.
-**Açık soru:** soru bankası türetilmiş sorguyla mı (öneri, basit) yoksa ayrı `InterviewQuestion` tablosuyla mı kurulsun?
+**📝 PM kararı (verildi, D26):** ayrı tablo yok; sorgu anında türetilir (performans gerekirse indeks/önbellek, tablo değil).
 **Bağımlılık:** P2-09 (şirket çözümleme).
 
 ### P2-11 · Staj başvuru takvimi · Sözleşme (W1) → Servis (W1) ∥ Ekran (W2) · H2
@@ -204,7 +207,7 @@ profil sayıma girmez; öğrencinin becerisi eşleşme normalizasyonuyla (sözl�
 **Bağımlılık:** P2-09 (pozisyon/sektör çözümleme); P1-04–P1-06 profil ve etiketler.
 
 ### P2-08 · Seçmeli ders rehberi · Sözleşme (W1) → Servis (W1) ∥ Ekran (W2) · H2
-**İş:** mezunun “işimde işe yarayan dersler” işareti: yönetimin yönettiği `Course` sözlüğü (bölüm bazlı, seed'e YBS müfredatı)
+**İş:** mezunun “işimde işe yarayan dersler” işareti: yönetimin yönettiği `Course` sözlüğü (bölüm bazlı; **YBS'nin bütün dersleri**, seçmeli dersler listede ve süzgeçte öne çıkar, D25)
 ve `AlumniCourseMark` (mezun, ders, en çok 5 işaret). Öğrenci ders sayfasında “N mezun işinde işe yaradığını söyledi”, hangi
 sektörlerde (k ≥ 3). Kimlik gösterilmez. Ders sözlüğü yönetici ekranından bakım alır (işlem kaydı).
 **Ekran:** mezun profilinde “Hangi dersler işine yaradı?” seçici; öğrencide “Seçmeli ders rehberi” (ders kartı + mezun sayısı + sektör
@@ -212,13 +215,13 @@ sektörlerde (k ≥ 3). Kimlik gösterilmez. Ders sözlüğü yönetici ekranın
 **Testler:** k altında sayı gösterilmez; mezun silinince işaretleri düşer; en çok 5 işaret sınırı; ders yalnız kendi bölümüne bağlı
 mezundan işaret alır; mutasyon (sınır, k).
 **Kabul:** yukarıdakiler.
-**⏸ Onay noktası:** YBS ders listesi kaynağı (hoca/bölümden resmî müfredat). **Açık soru:** yalnız seçmeli mi, zorunlu dersler de mi?
+**⏸ Onay noktası:** resmî YBS ders listesi **hoca onayıyla** gelir (D25; onay tablosunda); onay gelene kadar seed örnek listedir. Seçmeli/zorunlu ayrımı `Course` alanıdır.
 **Bağımlılık:** Faz 1 profil; bölüm sözlüğü.
 
 ## 7. Adımlar — Dalga D · Tanınma ve topluluk
 
 ### P2-01 · Yılın Mezunu ve LinkedIn rozeti · Sözleşme (W1) → Servis (W1) ∥ Ekran (W2) · H3 (dış servis: yalnız bağlantı)
-**İş:** her yıl bölüm bazında **aday listesi** (yıl içindeki katkı puanı, yayınlanmış deneyim, görüşme sayısı; şüphe işaretli
+**İş:** her akademik yıl (Eylül–Ağustos) bölüm bazında **aday listesi** (o yıl içindeki katkı puanı, yayınlanmış deneyim, görüşme sayısı; şüphe işaretli
 kayıtlar ve açık `SuspicionFlag`'li adaylar listeye girmez), **karar bölüm yöneticisindedir** (puan otomatik vermez, D22; gerekçe
 ve işlem kaydı). Yeni `Award` (tür `YEAR_ALUMNI`, bölüm, yıl, kullanıcı, doğrulama kodu). Ödüllü mezun, ödülünün herkese açık
 yayınlanmasına **açık rıza** verir ya da vermez (rızasız kayıt yalnız platform içinde kalır). **Herkese açık doğrulama sayfası**
@@ -228,13 +231,13 @@ yok, D24) + hazır paylaşım metni düğmesi; mezuniyet töreninde açıklanabi
 **Ekran:** yönetimde aday listesi (puan kırılımı, şüphe uyarısı, “Seç” gerekçe formu), mezunda ödül kartı (kutlama ekranı,
 küçük hareket, reduced-motion saygılı) + “LinkedIn'e ekle” + “Doğrulama bağlantısını kopyala”, doğrulama sayfası (kamuya açık,
 kurumsal ve sade).
-**Testler:** şüpheli aday listede yok; yalnız kendi bölümünün yöneticisi karar verir; rızasız ödül doğrulama sayfasında 404;
+**Testler:** liste akademik yıl sınırına (1 Eylül–31 Ağustos, İstanbul saati) göre; dondurma sonrası yeni puan listeyi değiştirmez; şüpheli aday listede yok; yalnız kendi bölümünün yöneticisi karar verir; rızasız ödül doğrulama sayfasında 404;
 kod tahmin edilemez ve hız sınırlı; sayfada ad dışında kişisel veri yok; hesap silinince kayıt ve sayfa kalkar; LinkedIn
 bağlantısı yalnız beyaz listeli alanlardan üretilir (kod enjeksiyonu yok); mutasyon (aday süzgeci, rıza kapısı).
 **Kabul:** yukarıdakiler.
 **⏸ Onay noktası (kullanıcı):** LinkedIn kurum sayfası/şirket kimliği ve ödül adı metni (E maddesi; ücretli hesap gerekmez ama
 doğrulanmış kurum sayfası kullanıcıdadır); rıza metni (KVKK taslak eki).
-**Açık soru:** aday havuzu yalnız son bir yıl mı, tüm zamanlar mı?
+**📝 PM kararı (verildi, D27):** aday havuzu akademik yıl (Eylül–Ağustos); liste törenden 30 gün önce dondurulur (dondurulduktan sonra puan değişimi listeyi etkilemez; yalnız yönetici bilinçli “yeniden hesapla” yapar, işlem kaydıyla).
 **Bağımlılık:** P1-16 puan motoru, P2-04/P2-03 puanları (isteğe bağlı: onlar olmadan da çalışır).
 
 ### P2-02 · Ayın mezunu · Servis (W1) ∥ Ekran (W2) · H2
@@ -297,10 +300,9 @@ hangi akışın nasıl denendiği; yeni `.md` açılmaz, `docs/engineering.md` �
 |---|---|---|---|
 | LinkedIn “Add to Profile”: kurum sayfası, ödül adı | Kullanıcı | Dış hesap/kurum sayfası (E maddesi) | P2-01 |
 | Ters arama ve ödül yayını rıza metinleri | Kullanıcı + hoca | KVKK (özel rıza), `docs/legal-drafts.md` | P2-06, P2-01, P2-02 |
-| İlan, referans, etkinlik puan değerleri ve gecikmeleri | PM | Puan ekonomisi dengesi (`PointRule` seed) | P2-04, P2-03, P2-12 |
-| YBS ders listesi kaynağı | Hoca/bölüm | Resmî müfredat | P2-08 |
+| İlan (değer), referans, etkinlik puan değerleri ve referans/etkinlik gecikmeleri | PM | Puan ekonomisi dengesi (`PointRule` seed); ilan gecikmesi (7 gün) ve aylık sınır (3) verildi | P2-04, P2-03, P2-12 |
+| YBS'nin bütün derslerinin resmî listesi | Hoca | Resmî müfredat onayı (D25) | P2-08 |
 | Canlı SMTP hacmi (özet + eşleşme e-postaları) | Kullanıcı | K-05; ücretsiz katman sınırları | P2-05, P2-13 |
-| Aday arama yetkisi (hangi mezun arayabilir) | PM | KVKK etkisi, kötüye kullanım riski | P2-06 |
 
 ## 10. Faz düzeyinde kabul
 
