@@ -297,6 +297,13 @@ describe('saklama ve hesap silme', () => {
         userId,
         departmentId: inst.deptA1,
         role: 'STUDENT',
+        at: new Date('2031-09-01T00:00:00Z'),
+      }, // 16 aylık: 24 ay dolmadı, bağ KALIR
+      {
+        type: 'LOGIN',
+        userId,
+        departmentId: inst.deptA1,
+        role: 'STUDENT',
         at: new Date('2032-12-01T00:00:00Z'),
       }, // yeni
     ]);
@@ -305,8 +312,8 @@ describe('saklama ve hesap silme', () => {
       where: { departmentId: inst.deptA1 },
       orderBy: { createdAt: 'asc' },
     });
-    expect(rows.map((r) => r.userId)).toEqual([null, null, userId]);
-    expect(rows).toHaveLength(3);
+    expect(rows.map((r) => r.userId)).toEqual([null, null, userId, userId]);
+    expect(rows).toHaveLength(4);
     expect(await detachOldEvents(db, now)).toBe(0);
   });
 

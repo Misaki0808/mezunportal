@@ -214,18 +214,23 @@ describe('olay kancaları', () => {
     );
   });
 
-  it('profil eşiği: profil yazımı yukarı yönde eşiği geçince PROFILE_THRESHOLD bir kez yazılır', async () => {
+  it('profil eşiği: yazım yukarı yönde eşiği geçince PROFILE_THRESHOLD tam bir kez yazılır, aynı eşik tekrar yazılmaz', async () => {
     const userId = await member();
-    await db.profile.create({ data: { userId, completionScore: 40 } });
-    // Temel alanlar + ilk giriş adımlarını tamamlamak skoru artırır; eşiği geçen en az bir yazım olmalı.
+    await db.profile.create({
+      data: { userId, completedSteps: ['MEMBERSHIP', 'INTERESTS', 'GOALS'] },
+    });
+    // Üyelik + ilgi + hedef + temel alanlar = 4/8 adım → %50
     await updateProfileBasics({ db }, userId, { headline: 'Başlık', city: 'Ankara' });
-    const after = (await db.profile.findUniqueOrThrow({ where: { userId } })).completionScore;
-    const thresholds = (await events(userId, 'PROFILE_THRESHOLD')).map(
-      (e) => (e.props as { threshold: number }).threshold,
-    );
-    expect(new Set(thresholds).size).toBe(thresholds.length);
-    for (const t of thresholds) expect(after).toBeGreaterThanOrEqual(t);
-    expect(thresholds.every((t) => t > 40)).toBe(true);
+    expect((await db.profile.findUniqueOrThrow({ where: { userId } })).completionScore).toBe(50);
+    const thresholds = async () =>
+      (await events(userId, 'PROFILE_THRESHOLD')).map(
+        (e) => (e.props as { threshold: number }).threshold,
+      );
+    expect(await thresholds()).toEqual([50]);
+    await updateProfileBasics({ db }, userId, { summary: 'Özet' }); // skor değişmez
+    await updateProfileBasics({ db }, userId, { city: null }); // düşer (%38)
+    await updateProfileBasics({ db }, userId, { city: 'Ankara' }); // yeniden %50'ye çıkar: eşik zaten yazılmış
+    expect(await thresholds()).toEqual([50]);
     void saveOnboardingStep;
   });
 });
