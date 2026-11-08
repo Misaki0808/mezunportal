@@ -44,6 +44,10 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
   const second = await browser.newContext();
   const target = await second.newPage();
   try {
+    await page.goto('/iletisim-iste/olmayan-kisi');
+    await expect(page).toHaveURL(/\/giris\?donus=/);
+    await page.goto('/hesap/hesabi-sil');
+    await expect(page).toHaveURL(/\/giris\?donus=/);
     await login(page, 'student');
     await login(target, 'alumniMentor');
     await target.goto('/hesap/gizlilik');
