@@ -2761,6 +2761,8 @@
     "profileCount": "Referans verdi: {count}",
     "accountDescription": "Beyanlarını ve bekleyen onaylarını gör.",
     "posting": "İlan (isteğe bağlı)",
-    "noPosting": "İlan seçmeden kurum adı gir"
+    "noPosting": "İlan seçmeden kurum adı gir",
+    "cancelConfirm": "Beyanı iptal etmek istediğinden emin misin? Bekleyen puanlar geri alınır.",
+    "goBack": "Vazgeç"
   }
 }

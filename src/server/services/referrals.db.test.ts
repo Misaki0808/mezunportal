@@ -85,6 +85,16 @@ it('yalnız onaylı iletişimdeki doğrulanmış ve aynı üniversitedeki öğre
     organizationName: 'Kurum',
   });
   expect(result.status).toBe('PROPOSED');
+  await grantRequiredConsents(db, student);
+  const denied = await respondReferral({ db }, student, {
+    referralId: result.referralId,
+    decision: 'REJECT',
+  });
+  expect(denied.status).toBe('REJECTED');
+  expect(
+    await db.referralClaim.findUniqueOrThrow({ where: { id: result.referralId } }),
+  ).toMatchObject({ decisionReason: null, approvedAt: null });
+  expect(await db.pointEntry.count({ where: { sourceId: result.referralId } })).toBe(0);
   await db.contactRequest.updateMany({
     where: { requesterId: student, targetId: alumnus },
     data: { status: 'REVOKED', closedAt: new Date() },

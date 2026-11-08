@@ -115,6 +115,9 @@ export async function proposeReferral(
     for (const id of [...new Set([userId, parsed.studentId])].sort())
       await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${id} FOR SHARE`;
     const actor = await alumniActor(tx, userId, now);
+    // İlişki geri çekme/iptal ile yarışmasın: kontrol ve beyan yazımı boyunca aynı satırlar kilitli.
+    await tx.$queryRaw`SELECT "id" FROM "ContactRequest" WHERE ("requesterId"=${userId} AND "targetId"=${parsed.studentId}) OR ("requesterId"=${parsed.studentId} AND "targetId"=${userId}) ORDER BY "id" FOR SHARE`;
+    await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE ("mentorId"=${userId} AND "menteeId"=${parsed.studentId}) OR ("mentorId"=${parsed.studentId} AND "menteeId"=${userId}) ORDER BY "id" FOR SHARE`;
     const student = (await eligibleStudents(tx, actor, now, parsed.studentId))[0];
     if (!student) throw codedForbidden('REFERRAL_NOT_ELIGIBLE');
     let organizationName = parsed.organizationName ?? null;

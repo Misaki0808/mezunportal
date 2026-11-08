@@ -12,10 +12,12 @@ import {
   Field,
   Input,
   PageHeader,
+  Modal,
   Select,
   Textarea,
 } from '@/components/ui';
 import * as actions from '@/server/actions/referrals';
+import { useHydrated } from '@/hooks/use-hydrated';
 
 export function ReferralCreate({
   candidates,
@@ -27,6 +29,7 @@ export function ReferralCreate({
   const t = useTranslations('referrals');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
+  const hydrated = useHydrated();
   const [studentId, setStudent] = useState('');
   const [postingId, setPosting] = useState('');
   const [organizationName, setOrganization] = useState('');
@@ -50,7 +53,10 @@ export function ReferralCreate({
     });
   }
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 pb-32">
+    <main
+      data-hydrated={hydrated ? 'true' : undefined}
+      className="mx-auto max-w-2xl px-4 py-8 pb-32"
+    >
       <PageHeader title={t('createTitle')} description={t('createDescription')} />
       {!candidates.students.length ? (
         <div className="mt-8">
@@ -112,7 +118,7 @@ export function ReferralCreate({
               {error}
             </p>
           )}
-          <div className="sticky bottom-0 bg-bg pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] bg-bg pb-4 pt-3 lg:bottom-0">
             <Button type="submit" fullWidth loading={pending}>
               {t('send')}
             </Button>
@@ -137,6 +143,8 @@ export function ReferralList({
   const t = useTranslations('referrals');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
+  const hydrated = useHydrated();
+  const [cancelChoice, setCancelChoice] = useState<ReferralView>();
   const [page, setPage] = useState(initial);
   const [reason, setReason] = useState<Record<string, string>>({});
   const [note, setNote] = useState<Record<string, string>>({});
@@ -169,6 +177,7 @@ export function ReferralList({
         setError(errors(result.errorCode));
         return;
       }
+      setCancelChoice(undefined);
       setPage((p) => ({
         ...p,
         items: moderation
@@ -198,7 +207,10 @@ export function ReferralList({
     });
   }
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 pb-32">
+    <main
+      data-hydrated={hydrated ? 'true' : undefined}
+      className="mx-auto max-w-3xl px-4 py-8 pb-32"
+    >
       <PageHeader
         title={t(moderation ? 'moderationTitle' : 'title')}
         description={t(moderation ? 'moderationDescription' : 'description')}
@@ -316,7 +328,7 @@ export function ReferralList({
                       <Button
                         variant="danger-outline"
                         loading={pending}
-                        onClick={() => perform(row, 'CANCEL')}
+                        onClick={() => setCancelChoice(row)}
                       >
                         {t('cancel')}
                       </Button>
@@ -327,6 +339,34 @@ export function ReferralList({
           })}
         </ul>
       )}
+      <Modal
+        open={!!cancelChoice}
+        onClose={() => setCancelChoice(undefined)}
+        title={t('cancel')}
+        description={t('cancelConfirm')}
+        footer={
+          <>
+            <Button
+              variant="danger"
+              loading={pending}
+              onClick={() => {
+                if (cancelChoice) perform(cancelChoice, 'CANCEL');
+              }}
+            >
+              {t('cancel')}
+            </Button>
+            <Button variant="secondary" onClick={() => setCancelChoice(undefined)}>
+              {t('goBack')}
+            </Button>
+          </>
+        }
+      >
+        {error && (
+          <p role="alert" className="text-danger">
+            {error}
+          </p>
+        )}
+      </Modal>
       {page.nextCursor && (
         <div className="mt-5">
           <Button variant="secondary" loading={pending} onClick={more}>

@@ -11,6 +11,7 @@ import {
 import {
   SUSPICION_THRESHOLDS,
   detectBurst,
+  detectReferralPatterns,
   detectSingleCounterpart,
   detectSyncFeedback,
   type ScanEntry,
@@ -293,5 +294,33 @@ describe('detectSyncFeedback', () => {
         points,
       ),
     ).toBeNull();
+  });
+});
+
+describe('referans şüphe örüntüleri', () => {
+  it('sıfır puanlılar da sayılır: aynı öğrenciye üç veya 24 saatte beş', () => {
+    const now = d('2030-06-10T12:00:00Z');
+    const same = [
+      entry('a', 20, '2030-06-10T08:00:00Z', 's'),
+      entry('b', 0, '2030-06-10T09:00:00Z', 's'),
+      entry('c', 0, '2030-06-10T10:00:00Z', 's'),
+    ];
+    expect(detectReferralPatterns(same.slice(0, 2), now)).toEqual([]);
+    expect(detectReferralPatterns(same, now).map((x) => x.rule)).toEqual(['REFERRAL_REPEAT']);
+    const many = [
+      ...same,
+      entry('d', 20, '2030-06-10T10:30:00Z', 'x'),
+      entry('e', 20, '2030-06-10T11:00:00Z', 'y'),
+    ];
+    expect(detectReferralPatterns(many, now).map((x) => x.rule)).toEqual([
+      'REFERRAL_REPEAT',
+      'REFERRAL_BURST',
+    ]);
+    expect(
+      detectReferralPatterns(
+        [entry('old', 0, '2029-01-01T00:00:00Z', 's'), ...same.slice(0, 2)],
+        now,
+      ),
+    ).toEqual([]);
   });
 });
