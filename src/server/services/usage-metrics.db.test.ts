@@ -583,7 +583,8 @@ describe('Excel toplu aktarım', () => {
         .map((row) => [row[1] as string, row[2]]),
     );
     expect(summary.get('Kapsam')).toBe('1 bölüm');
-    expect(summary.get('Etkin kullanıcı sayısı')).toBe(6);
+    // 6 toplam - görünür 4 = gizli 2 çıkarılmamalı.
+    expect(summary.get('Etkin kullanıcı sayısı')).toBe('Gizli');
   });
 
   it('dosyada kişi satırı, e-posta, ad ya da kimlik yok', async () => {

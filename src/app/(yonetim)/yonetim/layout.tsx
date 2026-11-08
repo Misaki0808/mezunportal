@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { ErrorState } from '@/components/ui';
 import { PrivacyGuard } from '@/components/privacy/server-guard';
+import { metricsAccess } from '@/components/metrics/access';
 import { adminAccess } from '@/components/admin/access';
 import type { AdminOverview } from '@/contracts/admin';
 import { REQUEST_PATH_HEADER } from '@/lib/return-path';
@@ -19,11 +20,28 @@ const capabilities: Record<string, keyof AdminOverview['capabilities']> = {
 
 /** İzin reddi loading sınırının üstünde ölçülür; yanıt başlamadan gerçek 404 döner. Sayfa/eylem kontrolleri de korunur. */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const requested = (await headers()).get(REQUEST_PATH_HEADER) ?? '/yonetim';
+  const path = requested.split('?')[0]!.split('/').filter(Boolean);
+  if (path[1] === 'kullanim') {
+    const access = await metricsAccess();
+    if (!access.ok) {
+      if (
+        [
+          'AUTH_UNAUTHENTICATED',
+          'AUTH_ACCOUNT_SUSPENDED',
+          'AUTH_NOT_VERIFIED',
+          'AUTH_FORBIDDEN',
+          'CONSENT_REQUIRED',
+        ].includes(access.errorCode)
+      )
+        notFound();
+      return <ErrorState errorCode={access.errorCode} />;
+    }
+  }
   const guarded = await PrivacyGuard({ children });
   // Oturum/rıza yönlendirmeleri ve hesap hataları önceki kapıyla aynı kalır.
   if (guarded !== children) return guarded;
-  const requested = (await headers()).get(REQUEST_PATH_HEADER) ?? '/yonetim';
-  const path = requested.split('?')[0]!.split('/').filter(Boolean);
+
   const access = await adminAccess(capabilities[path[1] ?? ''] ?? 'users');
   if (!access.ok) {
     if (access.errorCode === 'AUTH_FORBIDDEN') notFound();

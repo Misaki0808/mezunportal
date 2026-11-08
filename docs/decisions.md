@@ -716,3 +716,6 @@ Formun taraf denetimi hesap layout'unda loading başlamadan yapılır; yabancı 
 ### P1-10 ekran incelemesi: yarış sonrası güncel slot ve doğru sekme
 
 Sunucu bir slotu dolu/bayat diye reddettiğinde ekran eski seçimi bırakır, o slotu geçici listeden çıkarır ve sunucu listesini yeniden ister; hata metni korunur. Randevu listesinin rol başlığı yalnız başarılı liste yanıtıyla birlikte değişir; bekleyen ikinci tıklama veya hata, eski veriyi başka rolün başlığı altında göstermez. Görüşme formuna giriş mevcut geri bildirim servisinin taraf/zaman/gönderim kontrolünden gelir.
+### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
+
+Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun kişi sayısı toplamdan çıkarılarak küçük grup hesaplanamaz. Aynı servis izdüşümü panelin HTML/RSC verisine ve Excel özetine uygulanır. Kullanım sayfasında zorunlu rıza ve yönetici yetkisi loading başlamadan kontrol edilir; rızasız/yetkisiz erişim gerçek 404, dosya rotası 403 döner. Diğer sayfaların yeniden onay akışı korunur.
