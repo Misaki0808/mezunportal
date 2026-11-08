@@ -105,12 +105,22 @@ export function MentorCard({
           {t('card.profile')}
         </Link>
         {!compact && (
-          <Link
-            className={buttonClasses({ variant: 'secondary' })}
-            href={`/iletisim-iste/${mentor.userId}`}
-          >
-            {t('card.contact')}
-          </Link>
+          <>
+            <Link
+              className={buttonClasses({ variant: 'secondary' })}
+              href={`/iletisim-iste/${mentor.userId}`}
+            >
+              {t('card.contact')}
+            </Link>
+            {availability.available && (
+              <Link
+                className={buttonClasses({ variant: 'secondary' })}
+                href={`/randevu-al/${mentor.userId}`}
+              >
+                {t('card.appointment')}
+              </Link>
+            )}
+          </>
         )}
       </div>
     </article>

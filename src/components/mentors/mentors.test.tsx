@@ -72,6 +72,10 @@ describe('mentor kartı', () => {
       'href',
       '/iletisim-iste/m1',
     );
+    expect(screen.getByRole('link', { name: 'Randevu iste' })).toHaveAttribute(
+      'href',
+      '/randevu-al/m1',
+    );
     expect(document.body.textContent).not.toMatch(/@|\+90/);
   });
 
@@ -96,6 +100,7 @@ describe('mentor kartı', () => {
       />,
     );
     expect(screen.getByText('Bu ay dolu')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Randevu iste' })).not.toBeInTheDocument();
   });
 });
 
@@ -157,7 +162,7 @@ describe('giriş noktaları', () => {
       />,
     );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Randevu al' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Randevu iste' })).toHaveAttribute(
       'href',
       '/randevu-al/m1',
     );

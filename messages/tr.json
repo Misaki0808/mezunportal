@@ -202,6 +202,7 @@
       "cvReview": "CV incelemesi yapıyor",
       "profile": "Profili gör",
       "contact": "İletişim iste",
+      "appointment": "Randevu iste",
       "skillsLabel": "Beceriler",
       "topicsLabel": "İlgi alanları"
     },
@@ -237,7 +238,7 @@
         "CV_REVIEW_DISABLED": "Bu mentor CV incelemesi yapmıyor.",
         "CV_REVIEW_MONTHLY_LIMIT": "Mentorun bu ayki CV inceleme sınırı doldu."
       },
-      "appointment": "Randevu al"
+      "appointment": "Randevu iste"
     }
   },
   "gallery": {
@@ -1750,7 +1751,7 @@
       },
       "APPOINTMENT": {
         "label": "Randevular",
-        "description": "Randevu bildirimleri bu özellik açıldığında kullanılır."
+        "description": "Randevu talepleri, onaylar, değişiklikler ve yaklaşan görüşme hatırlatmaları."
       },
       "CV_REVIEW": {
         "label": "CV incelemeleri",
@@ -1898,6 +1899,12 @@
     "backProfile": "Mentor profiline dön"
   },
   "appointments": {
+    "account": {
+      "title": "Randevularım",
+      "description": "Açık taleplerini ve onaylı randevularını gör.",
+      "settingsTitle": "Müsaitliğim",
+      "settingsDescription": "Görüşme saatlerini, kapasiteni ve ara verme durumunu düzenle."
+    },
     "status": {
       "REQUESTED": "Yanıt bekliyor",
       "CONFIRMED": "Onaylandı",

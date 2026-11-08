@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { hasAdminAccess } from '@/components/layout/admin-access';
 import {
   BadgeCheckIcon,
+  CalendarIcon,
   ErrorState,
   FileTextIcon,
   InboxIcon,
@@ -14,6 +15,7 @@ import {
 } from '@/components/ui';
 import { PrivacyAccountLinks } from '@/components/privacy/account-links';
 import { getVerificationState } from '@/server/actions/auth';
+import { getMyMentorSettings } from '@/server/actions/appointment';
 import { requireUser } from '@/server/permissions';
 
 export const dynamic = 'force-dynamic';
@@ -21,18 +23,31 @@ export const dynamic = 'force-dynamic';
 export default async function AccountPage() {
   const actor = await requireUser().catch(() => null);
   if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
-  const [state, showAdmin, t, verification, entry, notifications, feedback, cvReview, metrics] =
-    await Promise.all([
-      getVerificationState().catch(() => null),
-      hasAdminAccess(),
-      getTranslations('authScreens.account'),
-      getTranslations('authScreens.verification'),
-      getTranslations('experiences.entry'),
-      getTranslations('notifications'),
-      getTranslations('feedback'),
-      getTranslations('cvReview'),
-      getTranslations('admin.metrics'),
-    ]);
+  const [
+    state,
+    showAdmin,
+    t,
+    verification,
+    entry,
+    notifications,
+    feedback,
+    cvReview,
+    metrics,
+    appointments,
+    mentor,
+  ] = await Promise.all([
+    getVerificationState().catch(() => null),
+    hasAdminAccess(),
+    getTranslations('authScreens.account'),
+    getTranslations('authScreens.verification'),
+    getTranslations('experiences.entry'),
+    getTranslations('notifications'),
+    getTranslations('feedback'),
+    getTranslations('cvReview'),
+    getTranslations('admin.metrics'),
+    getTranslations('appointments.account'),
+    getMyMentorSettings().catch(() => null),
+  ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
   const statusLabel = {
@@ -54,6 +69,26 @@ export default async function AccountPage() {
       description: statusLabel,
       icon: BadgeCheckIcon,
     },
+    ...(state.data.status === 'VERIFIED'
+      ? [
+          {
+            href: '/randevular',
+            title: appointments('title'),
+            description: appointments('description'),
+            icon: CalendarIcon,
+          },
+          ...(mentor?.ok && mentor.data.eligible
+            ? [
+                {
+                  href: '/mentor/ayarlar',
+                  title: appointments('settingsTitle'),
+                  description: appointments('settingsDescription'),
+                  icon: CalendarIcon,
+                },
+              ]
+            : []),
+        ]
+      : []),
     ...(state.data.status === 'VERIFIED'
       ? [
           {
