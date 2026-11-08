@@ -125,7 +125,7 @@ export function AppShellClient({
     <div className="min-h-dvh lg:pl-64">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-control focus:bg-bg focus:px-4 focus:py-2 focus:shadow-overlay"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-16 focus:left-2 focus:z-50 focus:rounded-control focus:bg-bg focus:px-4 focus:py-2 focus:shadow-overlay lg:focus:top-2 lg:focus:left-[17rem]"
       >
         {t('skipToContent')}
       </a>

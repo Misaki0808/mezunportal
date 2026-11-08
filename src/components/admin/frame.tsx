@@ -2,6 +2,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { PageHeader } from '@/components/ui';
 
 export function AdminFrame({
   title,
@@ -21,9 +22,7 @@ export function AdminFrame({
       >
         ← {t('back')}
       </Link>
-      <p className="font-semibold text-primary">{t('eyebrow')}</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{title}</h1>
-      {description && <p className="mt-3 max-w-2xl text-base text-fg-muted">{description}</p>}
+      <PageHeader eyebrow={t('eyebrow')} title={title} description={description} />
       <div className="mt-7">{children}</div>
     </div>
   );

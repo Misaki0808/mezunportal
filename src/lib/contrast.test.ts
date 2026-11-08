@@ -122,3 +122,15 @@ describe('bekçi: primary metni primary-soft üstünde kullanılmaz (açık tema
     expect(offenders).toEqual([]);
   });
 });
+
+describe('tanıtım sayfası metin renkleri', () => {
+  it('adım numarası sabit gri yerine AA belirteç kullanır (R1 bulgusu: #77758b 4,36:1)', () => {
+    const landing = readFileSync(
+      new URL('../components/landing/landing.css', import.meta.url),
+      'utf8',
+    );
+    expect(landing).not.toContain('#77758b');
+    const rule = /\.landing-step-number \{[^}]*\}/.exec(landing)?.[0] ?? '';
+    expect(rule).toContain('color: var(--color-fg-muted)');
+  });
+});

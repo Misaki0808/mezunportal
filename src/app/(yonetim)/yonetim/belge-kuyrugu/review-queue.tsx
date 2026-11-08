@@ -12,7 +12,7 @@ import {
   type ReviewGraduationDocumentOutput,
 } from '@/contracts/graduation-document';
 import type { ActionResult } from '@/contracts/result';
-import { Button, EmptyState, Field, Modal, Textarea } from '@/components/ui';
+import { Button, EmptyState, Field, Modal, PageHeader, Textarea } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 type Props = {
@@ -108,11 +108,12 @@ export function ReviewQueue({ initial, list, review }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
-      <header className="mb-8">
-        <p className="mb-2 text-base font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
-        <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
-      </header>
+      <PageHeader
+        className="mb-8"
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
+      />
       {notice && (
         <p
           role="status"

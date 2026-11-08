@@ -6,6 +6,7 @@ import {
   BriefcaseIcon,
   ClipboardCheckIcon,
   FileTextIcon,
+  IconChip,
   ShieldCheckIcon,
   UserIcon,
   UsersIcon,
@@ -45,6 +46,9 @@ const PENDING_LINKS = [
  * Girişli, doğrulanmış kullanıcının kişisel panosu: karşılama, bekleyen işler (yalnız sıfırdan büyükler), büyük kısayollar
  * ve yöneticiye "Yönetim". Sayılar sunucudan gelir (`getHomeSummary`); bileşen yalnız çizer.
  */
+/** Kısayol çipleri sırayla İris, Mercan, Nane (renk dağılımı; anlam taşımaz). */
+const CHIP_TONES = ['primary', 'accent', 'success', 'primary'] as const;
+
 export function HomeDashboard({ summary }: { summary: HomeSummary }) {
   const t = useTranslations('home');
   const pending = PENDING_LINKS.map((item) => ({
@@ -89,13 +93,13 @@ export function HomeDashboard({ summary }: { summary: HomeSummary }) {
           {t('shortcutsTitle')}
         </h2>
         <ul className="grid grid-cols-2 gap-3">
-          {SHORTCUTS[summary.role].map((item) => (
+          {SHORTCUTS[summary.role].map((item, index) => (
             <li key={item.key}>
               <Link
                 href={item.href}
                 className="press-row flex h-full min-h-32 flex-col gap-2 rounded-card border border-border p-4 shadow-card"
               >
-                <span className="text-primary">{item.icon}</span>
+                <IconChip tone={CHIP_TONES[index % CHIP_TONES.length]}>{item.icon}</IconChip>
                 <span className="text-lg font-semibold text-fg">
                   {t(`shortcuts.${item.key}.title`)}
                 </span>

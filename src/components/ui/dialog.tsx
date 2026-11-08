@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef } from 'react';
-import type { MouseEvent, ReactNode } from 'react';
+import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 import { cn } from './cn';
 import { CloseIcon } from './icons';
@@ -20,6 +20,22 @@ export type DialogProps = {
 };
 
 type Placement = 'modal' | 'sheet';
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), ' +
+  'textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
+
+/** Pencere içindeki görünür, odaklanabilir öğeler (belge sırasıyla). */
+function focusableIn(root: HTMLElement): HTMLElement[] {
+  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((element) => {
+    for (let node: HTMLElement | null = element; node && node !== root; node = node.parentElement) {
+      if (node.hidden || node.hasAttribute('inert')) return false;
+      const style = getComputedStyle(node);
+      if (style.display === 'none' || style.visibility === 'hidden') return false;
+    }
+    return true;
+  });
+}
 
 const PLACEMENT_CLASSES: Record<Placement, string> = {
   // Mobilde alt sayfa, ≥ 768 px'te ortada pencere
@@ -64,6 +80,31 @@ function BaseDialog({
     }
   }, [open]);
 
+  // Tarayıcının kendi modal odak tuzağı, son öğeden sonra odağı tarayıcı arayüzüne/gövdeye bırakır: Tab pencere içinde
+  // döner (sondan ilke, ilkten Shift+Tab ile sona). Esc ve odağın tetikleyiciye dönüşü yukarıda.
+  function handleKeyDown(event: KeyboardEvent<HTMLDialogElement>) {
+    if (event.key !== 'Tab') return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const items = focusableIn(dialog);
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (!first || !last) {
+      event.preventDefault();
+      return;
+    }
+    const active = document.activeElement;
+    const outside =
+      !(active instanceof HTMLElement) || active === dialog || !dialog.contains(active);
+    if (event.shiftKey && (outside || active === first)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (outside || active === last)) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   function handleBackdropClick(event: MouseEvent<HTMLDialogElement>) {
     // Dışına (örtüye) tıklama: hedef <dialog>'un kendisidir.
     if (event.target === event.currentTarget) onClose();
@@ -84,6 +125,7 @@ function BaseDialog({
         if (open) onClose();
       }}
       onClick={handleBackdropClick}
+      onKeyDown={handleKeyDown}
       className={cn(
         'bg-bg p-0 text-fg shadow-overlay backdrop:bg-overlay',
         PLACEMENT_CLASSES[placement],
