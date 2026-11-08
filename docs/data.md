@@ -109,8 +109,10 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
   satırı kişisel alan içermediği için kalır). İkisi için de bu, veritabanı tetikleyicisiyle
   zorlanır (UPDATE, DELETE ve TRUNCATE reddedilir); `recordAdminAction` ise eylemle aynı işlemde yazar.
 - `GraduationDocument.storageKey` karar verilen satırda `null`'dır ve dosya depoda yoktur.
-- Aynı mentor için `REQUESTED`/`CONFIRMED` randevuların zaman aralıkları çakışamaz
-  (exclusion constraint, `btree_gist`, ham SQL migration).
+- Aynı mentor için `REQUESTED`/`CONFIRMED` randevuların zaman aralıkları çakışamaz; aynı öğrenci için de
+  (exclusion constraint, `btree_gist`, ham SQL migration). Aynı öğrencinin aynı mentora yanıt bekleyen en fazla bir
+  talebi olur (kısmi benzersiz indeks). `AvailabilityRule` aralıkları aynı mentor+gün için çakışamaz (exclusion).
+  `Appointment.expiresAt` yalnız `REQUESTED` için anlamlıdır (D11); `calendarFailedAt` doluysa mentor linki elle ekler.
 - `PointEntry` (userId, action, sourceType, sourceId) benzersizdir; aynı olay iki kez puan
   üretemez.
 - `SessionFeedback` (appointmentId, authorId) benzersizdir.

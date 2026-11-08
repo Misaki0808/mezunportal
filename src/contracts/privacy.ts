@@ -256,6 +256,24 @@ export const exportedExperienceSchema = z
   })
   .strict();
 
+/** Kendi randevuların. Karşı taraf yalnız kimlikle tanımlanır; öğrenci notu yalnız onu yazanın dökümündedir. */
+export const exportedAppointmentSchema = z
+  .object({
+    id: z.string(),
+    role: z.enum(['MENTOR', 'MENTEE']),
+    counterpartId: z.string(),
+    startsAt: z.string(),
+    endsAt: z.string(),
+    mode: z.enum(['ONLINE', 'IN_PERSON']),
+    status: z.string(),
+    note: z.string().nullable(),
+    location: z.string().nullable(),
+    meetUrl: z.string().nullable(),
+    reason: z.string().nullable(),
+    createdAt: z.string(),
+  })
+  .strict();
+
 export const dataExportSchema = z.object({
   formatVersion: z.literal(DATA_EXPORT_FORMAT_VERSION),
   exportedAt: z.string(),
@@ -285,6 +303,7 @@ export const dataExportSchema = z.object({
     received: z.array(exportedContactRequestSchema),
   }),
   cv: exportedCvSchema,
+  appointments: z.array(exportedAppointmentSchema),
 });
 export type DataExport = z.infer<typeof dataExportSchema>;
 

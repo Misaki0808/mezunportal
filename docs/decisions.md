@@ -627,3 +627,25 @@ değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki y�
 Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
 kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 
+## 2026-11-08 · Randevu motoru: veritabanı kısıtı, takvim süpürmesi, kapasite tanımı (P1-10)
+Çakışma kuralı iki exclusion constraint'tir (mentor ve öğrenci için, yalnız `REQUESTED`/`CONFIRMED`) ve aynı öğrencinin aynı
+mentora yanıt bekleyen tek talebi kısmi benzersiz indeksle sınırlanır; servis önce slotu yeniden üretip doğrular, eşzamanlı
+yarışta kaybeden `APPOINTMENT_SLOT_TAKEN` alır. Onayda kapasite, mentor profili satırı kilitlenerek serileştirilir: kapasite 1
+iken eşzamanlı iki onaydan yalnız biri geçer. Kapasiteyi `CONFIRMED`, `COMPLETED` ve `NO_SHOW` harcar (İstanbul takvim ayı);
+dizin ve randevu aynı tanımı kullanır (`services/mentor-load.ts`). Zaman aşımı D11: talepten 72 saat sonra ya da başlangıçtan
+12 saat önce, hangisi erkense; süpürme ve yanıt satır kilidiyle yarışır, tek sonuç doğar.
+Takvim çağrısı istekte değil `appointment.sweep` süpürmesinde yapılır: dış servis çökse de onay bozulmaz, en çok 3 deneme,
+sonra (ya da adaptör kapalı / yurt dışı aktarım rızası yok) `calendarFailedAt` dolar ve mentor linki elle ekler. Gerçek Google
+adaptörü kullanıcı onayını bekler (E4); arayüz, sahte adaptör ve elle link yolu tamamdır. Bildirimler commit sonrası, en iyi
+gayretle ve idempotent anahtarla e-posta kuyruğuna gider (e-posta hatası randevuyu geri almaz). Hesap silmede açık randevular
+sistem iptali olur ve kişisel serbest metin temizlenir. Bulgu (düzeltildi): `.ics` metin kaçışında `\;` yanlışlıkla `;`
+yazılmıştı (testin beklentisi de aynı hatayı taşıyordu); mutasyon testi yakaladı.
+
+
+### P1-10 incelemesi: randevu yazımında güncel hesap ve sınırlı takvim denemesi
+
+Randevu mutasyonları yetki okunmadan önce User satırını paylaşılmış kilitle tutar; talep iki tarafı kimlik sırasıyla kilitler. Böylece askı/hesap silme yazımı beklenirken eski yetkiyle işlem tamamlanmaz ve karşılıklı taleplerde ters kilit sırası oluşmaz. Kapasite için MentorProfile, durum için Appointment kilidi korunur. Üst üste binen takvim işleri deneme hakkını satır kilidi altında ayırır; toplam üç hakkın üstüne çağrı yapmaz. Dış çağrı transaction dışında ve aynı iş anahtarıyla idempotent kalır. Hesap silme, kişinin daha önce yazdığı iptal gerekçesini de temizler; ICS metninde CR/LF'nin her biçimi kaçırılır.
+
+Randevu talebinde slotun zaman/biçim geçerliliği doluluk süzülmeden doğrulanır; dolu geçerli slotun son kararı exclusion constraint'e bırakılır. Böylece kazanan önce commit ettiğinde de, çağrılar aynı anda yazdığında da kullanıcıya aynı SLOT_TAKEN sebebi döner; liste dolu slotları göstermemeye devam eder.
+
+Bağımsız worker React server koşuluyla çalıştığından randevu e-posta kataloğundaki basit adlandırılmış alanlar React/Next içe aktarmadan doldurulur. Randevunun kullandığı profil kuralı da oturum bağlayan permissions giriş noktası yerine doğrudan actor/guards yardımcılarını alır. Böylece takvim süpürmesi e-posta worker'ının başlamasını engellemez; ayrı Node sürecinde gerçek iş modülü içe aktarma ve metin üretimi testlidir.
