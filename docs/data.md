@@ -31,19 +31,17 @@ yalnız admin eklentisi şeması için vardır ve yetki vermez.
 **KVKK ve kontrollü iletişim (şemada, P1-03 sözleşmesi):** `Consent` · `FieldVisibility` ·
 `ContactRequest`. Görünürlük kararı yalnız `src/server/rules/visibility.ts` karar tablosundadır.
 
+**CV hattı (şemada, P1-05):** `CvUpload` (durum, dosya anahtarı, doğrulanmış ayrıştırma çıktısı yalnız `PARSED`'da) ·
+profil kalemleri `Education` · `Position` · `Language` · `Certification` · `UserSkill` (`source`: `CV`/`MANUAL`,
+`manuallyEdited` korumalı kalemdir) · sözlükler `Company` · `Title` · `Skill` · `Sector` (+ `UnmatchedValue`
+yönetici kuyruğu) · `ExperienceInvitation`. Bunlar `User`'a bağlıdır (`Profile`'a değil); beceri `Tag(SKILL)` değil
+`Skill`/`UserSkill`'dir (BACKLOG TD-010).
+
 **Profil (P1-04 şemasında):** `Profile`, `Tag`, `ProfileTag`; kullanıcı ve etiket ilişkileri için
 kanonik kaynak Prisma şemasıdır. Profil içeriğinin hesap silmeye ve veri dökümüne bağlanması servis
 uygulamasının zorunlu parçasıdır; kullanıcı hesabı satırı silinmediğinden cascade tek başına yeterli değildir.
 İlk giriş adım durumu `Profile.completedSteps` / `skippedSteps` ile açıkça tutulur (ikisinde de yoksa
 bekliyor); listeler ayrıktır, zorunlu adım atlanamaz (`Profile_step_status_check`). Atlama veriyi silmez.
-
-**Profilin sonraki modelleri:** `Education` · `Position`
-(companyId?, companyRaw, titleId?, titleRaw, sectorId?, employmentType, tarihler, isCurrent,
-source, manuallyEdited) · `Language` · `Certification` · `CvUpload` (storageKey, status,
-parsedJson?, errorCode?, appliedAt?).
-
-**Sözlükler:** `Company` (name, normalizedName, aliases[], sectorId?) · `Sector` · `Title` ·
-`UnmatchedValue` (kind, rawValue, normalizedValue, count, resolvedToId?).
 
 **Deneyim:** `Experience` (authorId, departmentIdAtWrite, type, companyId?, organizationName?,
 country?, city?, termYear, termSeason, durationWeeks?, pay, applicationChannel, processSteps JSON,

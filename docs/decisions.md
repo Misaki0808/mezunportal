@@ -436,3 +436,28 @@ değildir: K-09'un iki seçeneğinde de profil ve etiket ilişkileri silinir, or
 yalnız kullanıcının kendi profilini açık alan seçimiyle içerir. Mentor isteği bir tercihtir, üyeliği
 doğrulamaz ve etkin mentor profili açmaz. P1-07 deneyim verisi gelene kadar öğrencinin mentor adımı
 güvenli biçimde kapalıdır; sınıf düzeltmesi sunucudaki üyelikten hesaplanır.
+
+## 2026-11-08 · CV hattı: kullanıcıya bağlı tablolar, sağlayıcıdan bağımsız LLM
+CV'den gelen kalemler (eğitim, pozisyon, dil, sertifika, beceri) `Profile`'a değil doğrudan `User`'a bağlıdır:
+P1-05'in bağımlılığı P1-03'tür, `Profile` P1-04'te gelir ve iki adım birbirini beklemesin. Beceri, `data.md`
+taslağındaki `Tag(SKILL)` yerine `Skill` sözlüğü + `UserSkill` olarak kuruldu (şirket/unvanla aynı eşleme yolu;
+birleştirme TD-010). LLM sağlayıcısı K-04'te açık olduğundan arayüz yalnız PDF, talimat ve JSON Şeması alır, ham
+`unknown` döner; doğrulama servistedir. Sahte adaptör `local`/`test`'te çalışır ve `prod`'da env doğrulamasını
+düşürür. Reddedilen: sağlayıcı SDK'sına bağlı arayüz (K-04 cevabı hattı yeniden yazdırırdı).
+
+## 2026-11-08 · CV önerisi yalnız açık kararla yazılır
+Fark üç sonuç verir: yeni, değişen, çakışan (elle düzeltilmiş kalem). Uygulama yalnız kullanıcının kalem kalem
+kabul ettiği anahtarları yazar; çakışan kalem ayrıca `overwriteMine` ister; kullanıcı öneriyi onay ekranında
+düzeltirse kalem "elle düzeltilmiş" olur ve sonraki CV'de çakışma olarak çıkar. CV'de olmayan değer fark sayılmaz
+(eksik bilgi profildekini silmez). Kalem anahtarı yalnız öneriden türer; profil/CV değişmişse karar reddedilir
+(`CV_REVIEW_STALE`) ve hiçbir şey yazılmaz. Sözlükte eşleşmeyen değer yalnız kullanıcı onaylayınca yönetici
+kuyruğuna girer (atılan CV kuyruğu kirletmez).
+
+## 2026-11-08 · CV yükleme sınırları ve saklama
+Sayfa sayımı bağımlılıksız ve sezgiseldir (sayfa nesneleri ile `/Pages` `/Count`'unun büyüğü; sıkıştırılmış nesne
+akışları açılır, ad kaçışları çözülür); asıl maliyet sınırı 5 MB + günlük sınır + sağlayıcı harcama sınırıdır.
+Günlük hak yalnız doğrulamayı geçen yüklemede harcanır (sabit 24 saatlik pencere, mevcut sayaçla). Kullanıcı başına
+tek işlenen ve tek onay bekleyen CV vardır (kısmi benzersiz indeks); yeni yükleme eski bekleyen sonucu atar. Yurt
+dışı rızası hem yüklemede hem iş başında okunur. Son uygulanan CV dosyası kalır; uygulamada/atmada eski dosyalar,
+hatada ise dosya hemen silinir; açık inceleme talebine bağlı dosya silinmez (kayıt kancası `CV_FILE_HOLDS`).
+
