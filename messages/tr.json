@@ -252,6 +252,261 @@
       "firstStep": "İlk adımdasın"
     }
   },
+  "profile": {
+    "eyebrow": "PROFİLİM",
+    "sections": {
+      "PROFILE": "Profil bilgileri",
+      "EDUCATION": "Eğitim",
+      "POSITION": "Pozisyon",
+      "LANGUAGE": "Dil",
+      "CERTIFICATION": "Sertifika",
+      "SKILL": "Beceri"
+    },
+    "educationLevels": {
+      "HIGH_SCHOOL": "Lise",
+      "ASSOCIATE": "Ön lisans",
+      "BACHELOR": "Lisans",
+      "MASTER": "Yüksek lisans",
+      "DOCTORATE": "Doktora",
+      "OTHER": "Diğer"
+    },
+    "employmentTypes": {
+      "FULL_TIME": "Tam zamanlı",
+      "PART_TIME": "Yarı zamanlı",
+      "INTERNSHIP": "Staj",
+      "CONTRACT": "Sözleşmeli",
+      "FREELANCE": "Serbest",
+      "VOLUNTEER": "Gönüllü",
+      "OTHER": "Diğer"
+    },
+    "languageLevels": {
+      "A1": "A1",
+      "A2": "A2",
+      "B1": "B1",
+      "B2": "B2",
+      "C1": "C1",
+      "C2": "C2",
+      "NATIVE": "Ana dil"
+    },
+    "present": "Devam ediyor",
+    "dateRange": "{start} – {end}",
+    "cv": {
+      "eyebrowLabel": "CV İLE PROFİL",
+      "title": "CV'nden profilini doldur",
+      "description": "PDF CV'ni yükle; bulduğumuz bilgileri sen onaylayınca profiline yazarız. Onaylamadığın hiçbir şey kaydedilmez.",
+      "manualLink": "Bilgilerimi elle gireceğim",
+      "file": "CV dosyası (PDF)",
+      "fileHint": "Yalnız PDF · en fazla 5 MB · en fazla 6 sayfa",
+      "remaining": "Bugün {count} hakkın kaldı.",
+      "submit": "CV'yi oku",
+      "uploading": "Yükleniyor…",
+      "unavailable": {
+        "PROVIDER_NOT_CONFIGURED": "CV okuma şu an kapalı. Bilgilerini elle girebilirsin.",
+        "TRANSFER_CONSENT_REQUIRED": "CV okuma için yurt dışına aktarım izni gerekir. İzni onay ekranından verebilirsin.",
+        "DAILY_LIMIT_REACHED": "Bugünlük CV okuma hakkın doldu. Yarın tekrar dene ya da bilgilerini elle gir.",
+        "ALREADY_PROCESSING": "CV'n şu anda okunuyor. Bitmesini bekle."
+      },
+      "consentAction": "İzin ekranına git",
+      "linkedin": {
+        "open": "LinkedIn PDF'i nasıl alınır?",
+        "title": "LinkedIn profilini PDF olarak al",
+        "step1": "LinkedIn'de kendi profilini aç.",
+        "step2": "“Kaynaklar” ya da “Daha fazla” menüsünden “PDF olarak kaydet”i seç.",
+        "step3": "İndirilen PDF'i buraya yükle.",
+        "note": "LinkedIn sayfasını kazımıyoruz; yalnız senin yüklediğin PDF okunur.",
+        "close": "Anladım"
+      },
+      "processing": {
+        "title": "CV'n okunuyor",
+        "description": "Birkaç dakika sürebilir. Bu sayfada kalabilir ya da sonra dönebilirsin; kaldığın yerden devam edersin.",
+        "queued": "Sırada bekliyor",
+        "parsing": "Okunuyor"
+      },
+      "failed": {
+        "title": "CV'n okunamadı",
+        "manual": "Bilgilerimi elle gir",
+        "retry": "Başka bir CV yükle"
+      },
+      "applied": "Son CV'nin bilgileri profiline işlendi.",
+      "review": {
+        "title": "Bulunan bilgileri gözden geçir",
+        "description": "Hiçbir bilgi sen kabul etmeden profiline yazılmaz. Her kalem için karar ver.",
+        "groups": {
+          "NEW": "Yeni bilgiler",
+          "CHANGED": "Profilinden farklı olanlar",
+          "CONFLICT": "Çakışmalar"
+        },
+        "conflictHint": "Bunları kendin düzeltmiştin ama CV farklı diyor. Üzerine yazmak istersen açıkça seç.",
+        "proposed": "CV'de bulunan",
+        "current": "Profilinde şu an",
+        "changedFields": "Farklı alanlar: {fields}",
+        "standardized": "Standart ad: {name}",
+        "accept": "Kabul et",
+        "edit": "Düzelt",
+        "reject": "Reddet",
+        "undo": "Kararı geri al",
+        "state": {
+          "accept": "Kabul edildi",
+          "edited": "Düzeltilip kabul edildi",
+          "reject": "Reddedildi",
+          "pending": "Karar bekliyor"
+        },
+        "overwrite": "Elle yazdığım değerin üzerine yaz",
+        "overwriteNeeded": "Üzerine yazmak için kutuyu işaretle.",
+        "apply": "Seçilenleri uygula",
+        "applying": "Uygulanıyor…",
+        "acceptAll": "Yeni ve değişen kalemlerin hepsini kabul et",
+        "refresh": "Sayfayı yenile",
+        "discard": "Hiçbirini uygulama",
+        "discardTitle": "CV sonucu atılsın mı?",
+        "discardDescription": "Bulunan bilgilerin hiçbiri profiline yazılmaz. Dilersen sonra başka bir CV yükleyebilirsin.",
+        "discardConfirm": "Evet, at",
+        "cancel": "Vazgeç",
+        "noneSelected": "Uygulamak için en az bir kalemi kabul et.",
+        "unchanged": "{count} kalem profilinde zaten aynı.",
+        "empty": "Profilinde değiştirilecek bir şey bulunamadı."
+      },
+      "done": {
+        "title": "Profilin güncellendi",
+        "summary": "{created} yeni, {updated} güncellenen kalem yazıldı.",
+        "invitations": "{count} stajın için deneyim yazma önerisi hazır.",
+        "invitationsAction": "Deneyim yaz",
+        "profile": "Profilime git"
+      },
+      "editSheet": {
+        "title": "Kalemi düzelt",
+        "save": "Düzeltmeyi kaydet",
+        "cancel": "Vazgeç"
+      }
+    },
+    "entryErrors": {
+      "required": "Bu alan zorunlu.",
+      "invalid": "Geçerli bir değer gir.",
+      "tooLong": "Bu alan çok uzun.",
+      "dateOrder": "Bitiş, başlangıçtan önce olamaz."
+    },
+    "fields": {
+      "headline": "Başlık",
+      "summary": "Özet",
+      "city": "Şehir",
+      "institution": "Kurum",
+      "level": "Seviye",
+      "fieldOfStudy": "Bölüm / alan",
+      "startDate": "Başlangıç",
+      "endDate": "Bitiş",
+      "isCurrent": "Hâlâ devam ediyor",
+      "company": "Şirket",
+      "title": "Ünvan",
+      "employmentType": "Çalışma türü",
+      "description": "Açıklama",
+      "name": "Ad",
+      "issuer": "Veren kurum",
+      "issuedDate": "Veriliş tarihi",
+      "skill": "Beceri",
+      "dateHint": "YYYY ya da YYYY-AA yaz (örn. 2024-06).",
+      "select": "Seç"
+    },
+    "my": {
+      "title": "Profilim",
+      "description": "Bilgilerini güncel tut. Kimlerin görebileceğini Gizlilik ayarlarından seçersin.",
+      "completion": "Profilin %{percent} tamamlandı",
+      "missingTitle": "Tamamlayabileceklerin",
+      "onboardingLink": "Başlangıç adımlarına git",
+      "missing": {
+        "MEMBERSHIP": "Üyeliğini doğrula",
+        "INTERESTS": "İlgi alanlarını seç",
+        "GOALS": "Hedeflerini seç",
+        "MENTOR_PREFERENCE": "Mentorluk tercihini belirt",
+        "VISIBILITY": "Gizlilik tercihlerini gözden geçir",
+        "BASICS": "Başlık ve şehir ekle",
+        "EDUCATION": "Bir eğitim ekle",
+        "SKILLS": "En az {min} beceri ekle",
+        "CV": "CV'nden profilini doldur"
+      },
+      "updated": "Son güncelleme: {date}",
+      "neverUpdated": "Henüz güncellenmedi",
+      "cvTitle": "CV'nden doldur",
+      "cvDescription": "PDF CV'ni yükle; bulduklarımızı sen onayla.",
+      "cvAction": "CV yükle",
+      "basics": "Temel bilgiler",
+      "skills": "Beceriler",
+      "links": "Bağlantılar",
+      "empty": "Henüz eklenmedi.",
+      "edit": "Düzenle",
+      "add": "Ekle",
+      "delete": "Sil",
+      "cancel": "Vazgeç",
+      "save": "Kaydet",
+      "saving": "Kaydediliyor…",
+      "saved": "Kaydedildi.",
+      "fromCv": "CV'den",
+      "manual": "Elle",
+      "edited": "Düzeltildi",
+      "addEntry": "{section} ekle",
+      "editEntry": "{section} düzenle",
+      "deleteTitle": "Kalem silinsin mi?",
+      "deleteDescription": "Bu kalem profilinden kaldırılır.",
+      "deleteConfirm": "Evet, sil",
+      "basicsEdit": "Temel bilgileri düzenle",
+      "goalsLabel": "Hedeflerin",
+      "skillAdd": "Beceri ekle",
+      "skillHint": "En az 2 harf yaz; öneriler çıkar.",
+      "skillSuggestions": "Öneriler",
+      "skillRemove": "{name} becerisini kaldır",
+      "skillAddButton": "Ekle",
+      "linkedin": "LinkedIn adresi",
+      "linkedinHint": "Örnek: https://www.linkedin.com/in/kullanici-adin",
+      "socialTitle": "Diğer bağlantılar",
+      "siteLabel": "Site",
+      "urlLabel": "Adres",
+      "allowedSites": "Eklenebilen siteler: {sites}",
+      "addLink": "Bağlantı ekle",
+      "removeLink": "Bağlantıyı sil",
+      "linkProblems": {
+        "PROFILE_LINK_INVALID": "Bu geçerli bir adres değil. Tam adresi yapıştır.",
+        "PROFILE_LINK_NOT_HTTPS": "Adres https ile başlamalı.",
+        "PROFILE_LINK_HOST_NOT_ALLOWED": "Bu siteye bağlantı eklenemiyor. Listedeki sitelerden birini seç."
+      },
+      "linkKinds": {
+        "GITHUB": "GitHub",
+        "GITLAB": "GitLab",
+        "BEHANCE": "Behance",
+        "DRIBBBLE": "Dribbble",
+        "MEDIUM": "Medium",
+        "KAGGLE": "Kaggle",
+        "STACKOVERFLOW": "Stack Overflow",
+        "HUGGINGFACE": "Hugging Face",
+        "X": "X",
+        "YOUTUBE": "YouTube"
+      },
+      "linksEdit": "Bağlantıları düzenle",
+      "linkDuplicate": "Her site için en fazla bir bağlantı ekleyebilirsin."
+    },
+    "view": {
+      "back": "Geri",
+      "memberships": "Üyelikler",
+      "roles": {
+        "STUDENT": "Öğrenci",
+        "ALUMNI": "Mezun",
+        "ACADEMIC": "Akademisyen"
+      },
+      "summary": "Hakkında",
+      "goals": "Hedefler",
+      "education": "Eğitim",
+      "positions": "Pozisyonlar",
+      "languages": "Diller",
+      "certifications": "Sertifikalar",
+      "skills": "Beceriler",
+      "links": "Bağlantılar",
+      "contact": "İletişim",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "linkedin": "LinkedIn",
+      "updated": "Son güncelleme: {date}",
+      "emptyTitle": "Gösterilecek bilgi yok",
+      "emptyDescription": "Bu profilde şu anda paylaşılan bir bilgi yok."
+    }
+  },
   "emails": {
     "signInLink": {
       "subject": "MezunPortal giriş bağlantın",
@@ -448,8 +703,8 @@
       "signOutDescription": "Bu cihazdaki oturumunu kapat.",
       "admin": "Yönetim",
       "adminDescription": "Yönetim panelini aç ve yetki alanındaki işlemleri incele.",
-      "profile": "Profilim / Başlangıç adımları",
-      "profileDescription": "İlgi alanlarını, hedeflerini ve tercihlerini tamamla."
+      "profile": "Profilim",
+      "profileDescription": "Bilgilerini, CV'ni ve başlangıç adımlarını yönet."
     },
     "home": {
       "verificationTitle": "Doğrulamanı tamamla",
