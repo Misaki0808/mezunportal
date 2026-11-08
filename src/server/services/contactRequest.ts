@@ -27,28 +27,15 @@ import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
  * varlığı sızmaz). Durum geçişleri koşullu güncellemeyle yapılır: eşzamanlı iki istekten yalnız biri geçer.
  */
 
-const OPEN_REQUEST_INDEXES = [
-  'ContactRequest_open_context_key',
-  'ContactRequest_approved_pair_key',
-];
+const OPEN_REQUEST_INDEXES = ['ContactRequest_open_context_key'];
 
-function isOpenPairViolation(error: unknown): boolean {
+function isOpenContextViolation(error: unknown): boolean {
   return (
     (error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === 'P2002' &&
       OPEN_REQUEST_INDEXES.some((index) => JSON.stringify(error.meta ?? {}).includes(index))) ||
     (error instanceof Error && OPEN_REQUEST_INDEXES.some((index) => error.message.includes(index)))
   );
-}
-
-/** Gönderim ve onay aynı yönlü çiftte sıralanır; bekleyen kaynaklar birbirinden bağımsızdır. */
-async function lockContactPair(
-  tx: Prisma.TransactionClient,
-  requesterId: string,
-  targetId: string,
-) {
-  const key = JSON.stringify(['contact-pair', requesterId, targetId]);
-  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))::text`;
 }
 
 /** İlan kaynaklı talep (P2-04, D7): yalnız sunucu içi (ilan üzerinden iletişim servisi) verir; istemci girdisinden gelmez. */
@@ -80,15 +67,6 @@ export async function sendContactRequest(
 
   try {
     const created = await db.$transaction(async (tx) => {
-      await lockContactPair(tx, requesterId, target.id);
-      // Onaylı çiftte kimlik zaten açık; yeni bağlamdan ikinci açık ilişki kurulmaz.
-      if (
-        await tx.contactRequest.findFirst({
-          where: { requesterId, targetId: target.id, status: 'APPROVED' },
-          select: { id: true },
-        })
-      )
-        throw codedConflict('CONTACT_REQUEST_ALREADY_OPEN');
       const row = await tx.contactRequest.create({
         data: {
           requesterId,
@@ -120,7 +98,7 @@ export async function sendContactRequest(
     });
     return { requestId: created.id, status: 'PENDING' };
   } catch (error) {
-    if (isOpenPairViolation(error)) throw codedConflict('CONTACT_REQUEST_ALREADY_OPEN');
+    if (isOpenContextViolation(error)) throw codedConflict('CONTACT_REQUEST_ALREADY_OPEN');
     throw error;
   }
 }
@@ -195,26 +173,7 @@ export function respondToContactRequest(
     stamp: 'decidedAt',
     wrongStateCode: 'CONTACT_REQUEST_NOT_PENDING',
   };
-  if (input.decision === 'REJECT') return transition(db, targetId, input.requestId, rule, now);
-  return db.$transaction(async (tx) => {
-    const own = await tx.contactRequest.findFirst({
-      where: { id: input.requestId, targetId },
-      select: { requesterId: true },
-    });
-    if (!own) throw codedNotFound('RESOURCE_NOT_FOUND');
-    await lockContactPair(tx, own.requesterId, targetId);
-    const result = await transition(tx, targetId, input.requestId, rule, now);
-    await tx.contactRequest.updateMany({
-      where: {
-        requesterId: own.requesterId,
-        targetId,
-        status: 'PENDING',
-        id: { not: input.requestId },
-      },
-      data: { status: 'REJECTED', decidedAt: now },
-    });
-    return result;
-  });
+  return transition(db, targetId, input.requestId, rule, now);
 }
 
 export function withdrawContactRequest(

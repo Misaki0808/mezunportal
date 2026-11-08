@@ -690,7 +690,7 @@ describe('P2-06 R2 çapraz kaynak gizlilik regresyonu', () => {
 });
 
 describe('P2-06 R2 bağlamlı taleplerde onay atomikliği', () => {
-  it('farklı kaynaktaki iki bekleyen talep yarışında yalnız biri onaylanır, diğeri kapanır', async () => {
+  it('farklı kaynaklar eşzamanlı onaylanır; aynı kaynakta tekrar engellenir', async () => {
     const student = await makeStudent();
     const alumnus = await makeAlumnus();
     const a = await requestSeekerContact(deps, alumnus, { ref: student.ref!, fields: ['EMAIL'] });
@@ -707,15 +707,11 @@ describe('P2-06 R2 bağlamlı taleplerde onay atomikliği', () => {
         }),
       ),
     );
-    expect(decisions.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
-    const rejected = decisions.find((x) => x.status === 'rejected') as PromiseRejectedResult;
-    expect(isCodedError(rejected.reason) && rejected.reason.code).toBe(
-      'CONTACT_REQUEST_NOT_PENDING',
-    );
+    expect(decisions.filter((x) => x.status === 'fulfilled')).toHaveLength(2);
     const rows = await db.contactRequest.findMany({
       where: { requesterId: alumnus, targetId: student.userId },
     });
-    expect(rows.map((x) => x.status).sort()).toEqual(['APPROVED', 'REJECTED']);
+    expect(rows.map((x) => x.status)).toEqual(['APPROVED', 'APPROVED']);
     expect(
       await code(
         sendContactRequest(db, alumnus, { targetUserId: student.userId, fields: ['EMAIL'] }),
@@ -768,7 +764,7 @@ describe('P2-06 R2 veritabanı yarış sınırları', () => {
     expect(isCodedError(fail.reason) && fail.reason.code).toBe('RATE_LIMITED');
     expect(await db.contactRequest.count({ where: { requesterId: alumnus } })).toBe(1);
   });
-  it('servis atlanınca bile çift başına ikinci APPROVED kaydı DB reddeder', async () => {
+  it('DB farklı kaynakta ikinci APPROVED kaydına izin verir', async () => {
     const student = await makeStudent(),
       alumnus = await makeAlumnus();
     const a = await requestSeekerContact(deps, alumnus, { ref: student.ref!, fields: ['EMAIL'] });
@@ -780,11 +776,67 @@ describe('P2-06 R2 veritabanı yarış sınırları', () => {
       where: { id: a.requestId },
       data: { status: 'APPROVED', decidedAt: new Date() },
     });
-    await expect(
-      db.contactRequest.update({
-        where: { id: b.requestId },
-        data: { status: 'APPROVED', decidedAt: new Date() },
+    await db.contactRequest.update({
+      where: { id: b.requestId },
+      data: { status: 'APPROVED', decidedAt: new Date() },
+    });
+    expect(
+      await db.contactRequest.count({
+        where: { requesterId: alumnus, targetId: student.userId, status: 'APPROVED' },
       }),
-    ).rejects.toMatchObject({ code: 'P2002' });
+    ).toBe(2);
   });
+});
+
+it('147 bağımsız ölçüm: daha önce onaylanmış profil talebi anonim adayla eşlenemez', async () => {
+  const known = await makeStudent({ name: 'Bilinen Öğrenci' });
+  const unrelated = await makeStudent({ name: 'Başka Öğrenci' });
+  const alumnus = await makeAlumnus();
+  const profileRequest = await sendContactRequest(db, alumnus, {
+    targetUserId: known.userId,
+    fields: ['EMAIL'],
+  });
+  await respondToContactRequest(db, known.userId, {
+    requestId: profileRequest.requestId,
+    decision: 'APPROVE',
+  });
+  const shown = refsOf(await searchSeekers(deps, alumnus, { pageSize: 20 }));
+  expect(shown).toContain(known.ref);
+  expect(shown).toContain(unrelated.ref);
+  const results = await Promise.all([
+    code(requestSeekerContact(deps, alumnus, { ref: known.ref!, fields: ['EMAIL'] })),
+    code(requestSeekerContact(deps, alumnus, { ref: unrelated.ref!, fields: ['EMAIL'] })),
+  ]);
+  expect(results).toEqual([null, null]);
+});
+
+it('147 bağımsız ölçüm: profil onayı başka aday isteği durumunu değiştirmemeli', async () => {
+  const hidden = await makeStudent();
+  const other = await makeStudent();
+  const alumnus = await makeAlumnus();
+  const a = await requestSeekerContact(deps, alumnus, { ref: hidden.ref!, fields: ['EMAIL'] });
+  const b = await requestSeekerContact(deps, alumnus, { ref: other.ref!, fields: ['EMAIL'] });
+  const profile = await sendContactRequest(db, alumnus, {
+    targetUserId: hidden.userId,
+    fields: ['EMAIL'],
+  });
+  await respondToContactRequest(db, hidden.userId, {
+    requestId: profile.requestId,
+    decision: 'APPROVE',
+  });
+  const out = await listContactRequests(db, alumnus, { box: 'OUTGOING', limit: 50 });
+  expect(out.items.find((item) => item.id === a.requestId)?.status).toBe('PENDING');
+  expect(out.items.find((item) => item.id === b.requestId)?.status).toBe('PENDING');
+});
+
+it('147 iki yön: bekleyen profil talebi anonim aday isteği yanıtını etkilemez', async () => {
+  const hidden = await makeStudent();
+  const other = await makeStudent();
+  const alumnus = await makeAlumnus();
+  await sendContactRequest(db, alumnus, { targetUserId: hidden.userId, fields: ['EMAIL'] });
+  const a = await code(
+    requestSeekerContact(deps, alumnus, { ref: hidden.ref!, fields: ['EMAIL'] }),
+  );
+  const b = await code(requestSeekerContact(deps, alumnus, { ref: other.ref!, fields: ['EMAIL'] }));
+  expect([a, b]).toEqual([null, null]);
 });

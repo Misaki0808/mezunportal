@@ -1455,7 +1455,7 @@ describe('D7 bağlantı sızıntısı: aynı yazarın iki ilanı ayırt edilemez
     ).toBe('CONTACT_REQUEST_ALREADY_OPEN');
   });
 
-  it('onaylı talep varken yazar zaten bilinir: ALREADY_OPEN aynen kalır', async () => {
+  it('başka ilandaki onay yeni ilan talebinin sonucunu etkilemez', async () => {
     const w = await world();
     const a = await contactPosting(w, w.academic, 'İlan A ilanı');
     const b = await contactPosting(w, w.academic, 'İlan B ilanı');
@@ -1467,9 +1467,12 @@ describe('D7 bağlantı sızıntısı: aynı yazarın iki ilanı ayırt edilemez
       requestId: first.requestId,
       decision: 'APPROVE',
     });
-    expect(
-      await code(requestJobPostingContact(deps, w.student, { jobPostingId: b, fields: ['EMAIL'] })),
-    ).toBe('CONTACT_REQUEST_ALREADY_OPEN');
+    const independent = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: b,
+      fields: ['EMAIL'],
+    });
+    expect(independent.status).toBe('PENDING');
+    expect(independent.requestId).not.toBe(first.requestId);
   });
 });
 
@@ -1497,7 +1500,7 @@ describe('P2-04 R2 çapraz kaynak D7 regresyonu', () => {
     );
     expect(
       (await db.contactRequest.findUniqueOrThrow({ where: { id: posting.requestId } })).status,
-    ).toBe('REJECTED');
+    ).toBe('PENDING');
   });
   it('aynı yazarın iki ilanı silinince yetim kaynaklar benzersizlik çakışması yaratmaz', async () => {
     const w = await world();
