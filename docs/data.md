@@ -60,9 +60,10 @@ meetUrl?, calendarEventId?, cancelledById?, cancelReason?) · `SessionFeedback` 
 authorId, happened, helpful?, note?) · `CvReviewRequest` (requesterId, mentorId, cvUploadId,
 note, status, reviewText?, helpful?, completedAt?).
 
-**SSS:** `FaqRequest` (askerId, question, status: `OPEN` | `PUBLISHED` | `REJECTED` |
-`REDIRECTED`, rejectReason?, faqItemId?) · `FaqAnswer` (requestId, mentorId, body, isSelected) ·
-`FaqItem` (question, answer, sourceRequestId, publishedById, `searchVector`).
+**SSS:** `FaqRequest` (askerId?, departmentIdAtWrite, question, status: `OPEN` | `PUBLISHED` | `REJECTED` |
+`REDIRECTED`, decisionNote?, decidedAt?) · `FaqAnswer` (requestId, mentorId?, body, isSelected) · `FaqItem` (sourceRequestId,
+departmentIdAtWrite, question, answer, publishedById, üretilmiş `searchVector`/`searchKeys`). `askerId`/`mentorId` yalnız sahiplik
+içindir; hesap silmede koparılır ve hiçbir çıktıya girmez.
 
 **Puan:** `PointRule` (action PK, points, delayDays, isActive) · `PointEntry` (userId, action,
 sourceType, sourceId, counterpartId?, basePoints, multiplierPercent, points, eventAt, status: `PENDING` |
@@ -113,6 +114,8 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
   (exclusion constraint, `btree_gist`, ham SQL migration). Aynı öğrencinin aynı mentora yanıt bekleyen en fazla bir
   talebi olur (kısmi benzersiz indeks). `AvailabilityRule` aralıkları aynı mentor+gün için çakışamaz (exclusion).
   `Appointment.expiresAt` yalnız `REQUESTED` için anlamlıdır (D11); `calendarFailedAt` doluysa mentor linki elle ekler.
+- `FaqRequest` karar alanları durumla tutarlıdır (CHECK); bir talepte en çok bir seçilmiş `FaqAnswer` (kısmi benzersiz indeks); talep
+  başına tek `FaqItem`. Arama sütunları `Experience` ile aynı kuralla üretilir (migration bekçisi izin listesinde).
 - `PointEntry` (userId, action, sourceType, sourceId) benzersizdir; aynı olay iki kez puan
   üretemez.
   Puan = taban × çarpan / 100 (CHECK); durum alanları tutarlıdır (PENDING → `finalizesAt`, REVOKED → neden + an; CHECK).
