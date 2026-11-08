@@ -1,7 +1,8 @@
 import { PrivacyGuard } from '@/components/privacy/server-guard';
 import { SearchScreen } from '@/components/search/search-screen';
 import { ErrorState } from '@/components/ui';
-import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
+import { ResetLink } from '@/components/search/reset-link';
 import {
   searchExperiencesSchema,
   searchFilterFromParams,
@@ -14,7 +15,16 @@ export const dynamic = 'force-dynamic';
 type Params = Record<string, string | string[] | undefined>;
 async function Results({ params }: { params: Params }) {
   const parsed = searchExperiencesSchema.safeParse(searchFilterFromParams(params));
-  if (!parsed.success) redirect('/deneyimler?filtreler=temizlendi');
+  if (!parsed.success) {
+    const t = await getTranslations('search');
+    return (
+      <div role="alert" className="mx-auto max-w-xl px-5 py-10">
+        <h1 className="text-2xl font-semibold">{t('invalidFiltersTitle')}</h1>
+        <p className="mt-3 mb-6 text-fg-muted">{t('invalidFiltersDescription')}</p>
+        <ResetLink />
+      </div>
+    );
+  }
   const [results, sectors] = await Promise.all([
     searchExperiences(parsed.data),
     listSearchSectors(),
@@ -23,8 +33,7 @@ async function Results({ params }: { params: Params }) {
   if (!sectors.ok) return <ErrorState errorCode={sectors.errorCode} />;
   return (
     <SearchScreen
-      key={`${searchFilterToParams(parsed.data).toString()}-${params.filtreler === 'temizlendi'}`}
-      filtersReset={params.filtreler === 'temizlendi'}
+      key={searchFilterToParams(parsed.data).toString()}
       filter={parsed.data}
       results={results.data}
       sectors={sectors.data.sectors}

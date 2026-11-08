@@ -25,10 +25,9 @@ test('beş geçersiz filtre bağlantısı çökmeden temizleme sunar', async ({ 
     '?termYear=oops',
   ]) {
     await page.goto(`/deneyimler${query}`);
-    await expect(page).toHaveURL(/\/deneyimler\?filtreler=temizlendi$/);
-    await expect(
-      page.getByText('Geçersiz filtreler temizlendi. Yeniden arayabilirsin.'),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Filtre bağlantısı geçersiz' })).toBeVisible();
+    await page.getByRole('link', { name: 'Filtreleri temizle' }).click();
+    await expect(page).toHaveURL(/\/deneyimler$/);
     await expect(page.getByRole('heading', { name: 'Deneyimleri keşfet' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'This page couldn’t load' })).toHaveCount(0);
   }

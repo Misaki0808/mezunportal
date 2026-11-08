@@ -35,9 +35,8 @@ type Props = {
   filter: Filter;
   results: SearchPage;
   sectors: { id: string; name: string }[];
-  filtersReset?: boolean;
 };
-export function SearchScreen({ filter, results, sectors, filtersReset = false }: Props) {
+export function SearchScreen({ filter, results, sectors }: Props) {
   const t = useTranslations('search');
   const router = useRouter();
   const [draft, setDraft] = useState<Filter>(filter);
@@ -251,14 +250,6 @@ export function SearchScreen({ filter, results, sectors, filtersReset = false }:
           {t('mine')}
         </Link>
       </header>
-      {filtersReset && (
-        <p
-          role="status"
-          className="mt-6 rounded-control border border-border bg-surface p-4 text-base text-fg"
-        >
-          {t('invalidFiltersReset')}
-        </p>
-      )}
       <form
         className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-end"
         onSubmit={(event) => {

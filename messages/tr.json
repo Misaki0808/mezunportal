@@ -1031,6 +1031,7 @@
       "NOT_DISCLOSED": "Belirtilmedi"
     },
     "mine": "Deneyimlerim",
-    "invalidFiltersReset": "Geçersiz filtreler temizlendi. Yeniden arayabilirsin."
+    "invalidFiltersTitle": "Filtre bağlantısı geçersiz",
+    "invalidFiltersDescription": "Filtreleri temizleyip yeniden arayabilirsin."
   }
 }
