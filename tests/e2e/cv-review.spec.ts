@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdir, writeFile, rm, access } from 'node:fs/promises';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -69,6 +69,7 @@ test('CV talebi → yorum → faydalı; kapalı dosya erişimi 403', async ({ pa
     expect((await mentorPage.request.get(`/api/cv-inceleme/${request.id}/dosya`)).status()).toBe(
       200,
     );
+    expect((await page.request.get(`/api/cv-inceleme/${request.id}/dosya`)).status()).toBe(403);
     await mentorPage.goto('/hesap/cv-inceleme');
     await mentorPage.waitForLoadState('networkidle');
     await mentorPage.getByLabel('Yazılı yorumun').fill('Projelerini daha belirgin anlatabilirsin.');
@@ -77,6 +78,23 @@ test('CV talebi → yorum → faydalı; kapalı dosya erişimi 403', async ({ pa
     expect((await mentorPage.request.get(`/api/cv-inceleme/${request.id}/dosya`)).status()).toBe(
       403,
     );
+    // 403, depodaki dosyanın fiziksel olarak silinmesine bağlı değildir.
+    await access(file);
+    const expired = await db.cvReviewRequest.create({
+      data: {
+        studentId: student.id,
+        mentorId: mentor.id,
+        cvUploadId: cv.id,
+        note: 'Sentetik süre sınaması',
+        status: 'EXPIRED',
+        expiresAt: new Date(Date.now() - 1),
+      },
+    });
+    expect((await mentorPage.request.get(`/api/cv-inceleme/${expired.id}/dosya`)).status()).toBe(
+      403,
+    );
+    await access(file);
+    await db.cvReviewRequest.delete({ where: { id: expired.id } });
     await page.goto('/hesap/cv-inceleme');
     await page.waitForLoadState('networkidle');
     await expect(page.getByText('Projelerini daha belirgin anlatabilirsin.')).toBeVisible();

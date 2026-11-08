@@ -26,7 +26,7 @@ import {
   type SaveExperienceDraftInput,
   type SubmitExperienceOutput,
 } from '@/contracts/experience';
-import type { Prisma, PrismaClient } from '@/generated/prisma/client';
+import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { codedConflict, codedForbidden, codedNotFound, codedValidation } from '@/lib/errors';
 import { createPermissions, type Actor } from '../permissions';
 import { canEditExperience, canReadExperience } from '../rules/experience';
@@ -40,6 +40,7 @@ import {
 } from './experienceProjection';
 import { consumeRateLimit } from './rateLimit';
 import type { EXPERIENCE_TYPES } from '@/contracts/experience';
+import { stageNotification } from './notification-intent';
 import { emitEvent } from './event';
 import { awardForExperience, awardSafely } from './points';
 import { requireConsent } from './privacy';
@@ -54,9 +55,11 @@ async function asMember<T>(
   userId: string,
   now: Date,
   run: (tx: Tx, actor: Actor, permissions: ReturnType<typeof permissionsFor>) => Promise<T>,
+  relatedUserIds: readonly string[] = [],
 ) {
   return db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR UPDATE`;
+    const ids = [...new Set([userId, ...relatedUserIds])].sort();
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" IN (${Prisma.join(ids)}) ORDER BY "id" FOR UPDATE`;
     const permissions = permissionsFor(tx, userId, now);
     const actor = await permissions.requireVerifiedMember();
     return run(tx, actor, permissions);
@@ -193,6 +196,10 @@ export async function reviewExperience(
   type ExperienceKind = (typeof EXPERIENCE_TYPES)[number];
   let published: { type: ExperienceKind; anonymous: boolean; authorId: string | null } | null =
     null;
+  const subject = await db.experience.findUnique({
+    where: { id: input.experienceId },
+    select: { authorId: true },
+  });
   const output: ReviewExperienceOutput = await asMember(
     db,
     userId,
@@ -205,7 +212,7 @@ export async function reviewExperience(
       await requireConsent(tx, userId);
       if (row.status !== 'PENDING') throw codedConflict('EXPERIENCE_NOT_PENDING');
       const status = parsed.decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED';
-      await tx.experience.update({
+      const moderated = await tx.experience.update({
         where: { id: row.id },
         data: {
           status,
@@ -215,6 +222,13 @@ export async function reviewExperience(
           moderationNote: parsed.decision === 'REJECT' ? parsed.reason : null,
         },
       });
+      if (row.authorId)
+        await stageNotification(tx, row.authorId, {
+          type: 'generic',
+          event: status === 'PUBLISHED' ? 'moderationApproved' : 'moderationRejected',
+          eventId: `${row.id}:${moderated.updatedAt.toISOString()}`,
+          path: '/deneyimlerim',
+        });
       await recordAdminAction(tx, {
         actor,
         action: status === 'PUBLISHED' ? 'MODERATION_PUBLISH' : 'MODERATION_REJECT',
@@ -228,6 +242,7 @@ export async function reviewExperience(
       }
       return { experienceId: row.id, status };
     },
+    subject?.authorId ? [subject.authorId] : [],
   );
   // Kullanım olayı (P1-13): yayın işlemi bittikten sonra. ANONİM deneyimde olay yazarla ilişkilendirilmez
   // (kullanıcı, rol ve bölüm boş): sayı kalır, anonimlik sızmaz.

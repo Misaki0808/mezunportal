@@ -4,8 +4,10 @@ const mocks = vi.hoisted(() => ({
   headers: vi.fn(),
   access: vi.fn(),
   detail: vi.fn(),
+  metrics: vi.fn(),
 }));
 vi.mock('@/components/privacy/server-guard', () => ({ PrivacyGuard: mocks.privacy }));
+vi.mock('@/components/metrics/access', () => ({ metricsAccess: mocks.metrics }));
 vi.mock('next/headers', () => ({ headers: mocks.headers }));
 vi.mock('@/components/admin/access', () => ({ adminAccess: mocks.access }));
 vi.mock('@/server/actions/admin-users', () => ({ getUserDetail: mocks.detail }));
@@ -15,6 +17,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.privacy.mockImplementation(async ({ children }) => children);
   mocks.headers.mockResolvedValue(new Headers({ [REQUEST_PATH_HEADER]: '/yonetim' }));
+  mocks.metrics.mockResolvedValue({ ok: true, data: null });
   mocks.access.mockResolvedValue({ ok: true, overview: {} });
   mocks.detail.mockResolvedValue({ ok: true, data: {} });
 });
@@ -64,4 +67,13 @@ it('inceleyici: yetki servisi arızası içeriğe izin vermez', async () => {
   mocks.access.mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
   const result = await AdminLayout({ children: 'content' });
   expect(result).toMatchObject({ props: { errorCode: 'SERVER_UNEXPECTED' } });
+});
+
+it('inceleyici: rızasız metrik isteği yönlendirme/stream başlamadan 404 olur', async () => {
+  mocks.headers.mockResolvedValue(new Headers({ [REQUEST_PATH_HEADER]: '/yonetim/kullanim' }));
+  mocks.metrics.mockResolvedValue({ ok: false, errorCode: 'CONSENT_REQUIRED' });
+  await expect(AdminLayout({ children: 'report' })).rejects.toMatchObject({
+    digest: expect.stringContaining('404'),
+  });
+  expect(mocks.privacy).not.toHaveBeenCalled();
 });

@@ -29,7 +29,6 @@ import type { ActionResult } from '@/contracts/result';
 import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
 import { getDb } from '../db';
 import * as experience from '../services/experience';
-import { sendNotification } from '../services/notification-email';
 import { requireVerifiedMember } from '../permissions';
 
 /** Oturum → Zod → işlem içinde güncel yetki, sahiplik/üniversite/moderasyon kapsamı. */
@@ -67,21 +66,6 @@ export async function reviewExperience(
     if (!parsed.ok) return parsed.failure;
     const db = getDb();
     const result = await experience.reviewExperience(db, actor.userId, parsed.data);
-    try {
-      const row = await db.experience.findUnique({
-        where: { id: parsed.data.experienceId },
-        select: { authorId: true, updatedAt: true },
-      });
-      if (row?.authorId)
-        await sendNotification({
-          userId: row.authorId,
-          event: parsed.data.decision === 'PUBLISH' ? 'moderationApproved' : 'moderationRejected',
-          eventId: `${parsed.data.experienceId}:${row.updatedAt.toISOString()}`,
-          path: '/deneyimlerim',
-        });
-    } catch {
-      /* Ana işlem başarısı değişmez. */
-    }
     return actionOk(result);
   } catch (error) {
     return actionFailure(error);

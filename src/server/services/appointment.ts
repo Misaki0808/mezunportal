@@ -52,6 +52,7 @@ import { findSlot, generateSlots, monthKey, monthRange } from '../rules/appointm
 import { evaluateAccess } from '../rules/authorization';
 import { buildIcs } from '../rules/ics';
 import type { AppointmentNotice, AppointmentNotifier } from './appointment-notifier';
+import { stageAppointmentNotices } from './notification-intent';
 import { viewerUniversityIds } from './search';
 import { CAPACITY_STATUSES } from './mentor-load';
 import { onboardingSnapshot } from './profile';
@@ -82,7 +83,7 @@ const PAUSE_MAX_DAYS = 365;
 // ---------------------------------------------------------------------------------------------
 
 /** Askı/hesap silme/üyelik yazımları User satırını kilitler. Çoklu hedefte sıra sabittir. */
-async function lockUsers(tx: Tx, userIds: readonly string[]) {
+export async function lockUsers(tx: Tx, userIds: readonly string[]) {
   await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" IN (${Prisma.join([...new Set(userIds)])}) ORDER BY "id" FOR SHARE`;
 }
 
@@ -558,6 +559,7 @@ export async function requestAppointment(
       select: appointmentSelect,
     });
     notices = [noticeFor('requested', row, 'MENTOR', { expiresAt: row.expiresAt })];
+    await stageAppointmentNotices(tx, notices);
     return toView(row, userId, now, new Set());
   }, TX);
   emitEvent(deps.db, userId, { type: 'APPOINTMENT_REQUESTED', props: { mode: view.mode } });
@@ -576,9 +578,13 @@ export async function respondAppointment(
 ): Promise<AppointmentView> {
   const parsed = respondAppointmentSchema.parse(input);
   const now = nowOf(deps);
+  const parties = await deps.db.appointment.findUnique({
+    where: { id: parsed.appointmentId },
+    select: { mentorId: true, menteeId: true },
+  });
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
-    await lockUsers(tx, [userId]);
+    await lockUsers(tx, [userId, ...(parties ? [parties.mentorId, parties.menteeId] : [])]);
     await requireMember(tx, userId, now);
     const peek = await tx.appointment.findUnique({
       where: { id: parsed.appointmentId },
@@ -609,6 +615,7 @@ export async function respondAppointment(
         select: appointmentSelect,
       });
       notices = [noticeFor('declined', next, 'MENTEE', { reason: parsed.reason ?? null })];
+      await stageAppointmentNotices(tx, notices);
       return toView(next, userId, now, new Set());
     }
 
@@ -646,6 +653,7 @@ export async function respondAppointment(
         ? [noticeFor('linkNeeded', next, 'MENTOR')]
         : []),
     ];
+    await stageAppointmentNotices(tx, notices);
     return toView(next, userId, now, new Set());
   }, TX);
   if (view.status === 'CONFIRMED')
@@ -661,9 +669,13 @@ export async function cancelAppointment(
 ): Promise<AppointmentView> {
   const parsed = cancelAppointmentSchema.parse(input);
   const now = nowOf(deps);
+  const parties = await deps.db.appointment.findUnique({
+    where: { id: parsed.appointmentId },
+    select: { mentorId: true, menteeId: true },
+  });
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
-    await lockUsers(tx, [userId]);
+    await lockUsers(tx, [userId, ...(parties ? [parties.mentorId, parties.menteeId] : [])]);
     await requireMember(tx, userId, now);
     await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${parsed.appointmentId} FOR UPDATE`;
     const row = await tx.appointment.findUnique({
@@ -692,6 +704,7 @@ export async function cancelAppointment(
         reason: parsed.reason ?? null,
       }),
     ];
+    await stageAppointmentNotices(tx, notices);
     return toView(next, userId, now, new Set());
   }, TX);
   await dispatchNotices(deps, notices);
@@ -726,9 +739,13 @@ export async function setMeetLink(
 ): Promise<AppointmentView> {
   const parsed = setMeetLinkSchema.parse(input);
   const now = nowOf(deps);
+  const parties = await deps.db.appointment.findUnique({
+    where: { id: parsed.appointmentId },
+    select: { mentorId: true, menteeId: true },
+  });
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
-    await lockUsers(tx, [userId]);
+    await lockUsers(tx, [userId, ...(parties ? [parties.mentorId, parties.menteeId] : [])]);
     await requireMember(tx, userId, now);
     await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${parsed.appointmentId} FOR UPDATE`;
     const row = await tx.appointment.findUnique({
@@ -749,6 +766,7 @@ export async function setMeetLink(
       select: appointmentSelect,
     });
     notices = [noticeFor('linkAdded', next, 'MENTEE')];
+    await stageAppointmentNotices(tx, notices);
     return toView(next, userId, now, new Set());
   }, TX);
   await dispatchNotices(deps, notices);

@@ -134,6 +134,7 @@ model User {
   reviewedGraduationDocuments GraduationDocument[]     @relation("GraduationDocumentReviewer")
   emailLogs                   EmailLog[]
   notificationPreferences     NotificationPreference[]
+  notificationIntents         NotificationIntent[]
   notificationActions         NotificationAction[]
   sessionFeedbacks            SessionFeedback[]
   consents                    Consent[]
@@ -164,6 +165,20 @@ model User {
   counterpartPoints     PointEntry[]       @relation("PointCounterpart")
   suspicionFlags        SuspicionFlag[]
   badges                UserBadge[]
+}
+
+/// İşlemle aynı anda kaydedilen, gönderim kuyruğu kapanırsa tekrar taşınacak bildirim niyeti.
+/// Yük yalnız olay kimlikleri taşır; e-posta, metin, ad ve belge içermez.
+model NotificationIntent {
+  id        String   @id @default(uuid(7))
+  key       String   @unique
+  userId    String
+  kind      String
+  payload   Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt, id])
 }
 
 /// Bildirim türleri; güvenlik bildirimleri daima açıktır.

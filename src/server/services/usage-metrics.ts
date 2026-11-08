@@ -184,7 +184,9 @@ async function computeUsage(
       type,
       events: hiddenTypes.has(type) ? null : (totals.get(type) ?? 0),
     })),
-    activeUsers: allUsers.size >= REPORT_MIN_GROUP_SIZE ? allUsers.size : null,
+    // Etkin toplamdan görünür hücrelerin çıkarılması gizli kişi sayısını ele vermesin.
+    activeUsers:
+      hiddenTypes.size === 0 && allUsers.size >= REPORT_MIN_GROUP_SIZE ? allUsers.size : null,
     cells: [
       ...sortCells(named).map((cell) => ({
         kind: 'NAMED' as const,
@@ -269,7 +271,7 @@ export async function buildUsageWorkbook(
         ['Başlangıç (dahil)', metrics.from.toISOString()],
         ['Bitiş (hariç)', metrics.to.toISOString()],
         ['Kapsam', scopeLabel],
-        ['Etkin kullanıcı sayısı', metrics.activeUsers ?? `${metrics.minGroupSize} kişiden az`],
+        ['Etkin kullanıcı sayısı', metrics.activeUsers ?? 'Gizli'],
         ['Küçük grup eşiği', metrics.minGroupSize],
         [
           'Not',
