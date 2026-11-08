@@ -21,14 +21,17 @@ export const dynamic = 'force-dynamic';
 export default async function AccountPage() {
   const actor = await requireUser().catch(() => null);
   if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
-  const [state, showAdmin, t, verification, entry, metrics] = await Promise.all([
-    getVerificationState().catch(() => null),
-    hasAdminAccess(),
-    getTranslations('authScreens.account'),
-    getTranslations('authScreens.verification'),
-    getTranslations('experiences.entry'),
-    getTranslations('admin.metrics'),
-  ]);
+  const [state, showAdmin, t, verification, entry, notifications, feedback, metrics] =
+    await Promise.all([
+      getVerificationState().catch(() => null),
+      hasAdminAccess(),
+      getTranslations('authScreens.account'),
+      getTranslations('authScreens.verification'),
+      getTranslations('experiences.entry'),
+      getTranslations('notifications'),
+      getTranslations('feedback'),
+      getTranslations('admin.metrics'),
+    ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
   const statusLabel = {
@@ -60,6 +63,34 @@ export default async function AccountPage() {
           },
         ]
       : []),
+    ...(state.data.status === 'VERIFIED'
+      ? [
+          {
+            href: '/hesap/gorusmeler',
+            title: feedback('pendingTitle'),
+            description: feedback('description'),
+            icon: InboxIcon,
+          },
+        ]
+      : []),
+    ...(actor.facts.memberships.some(
+      (m) => m.role === 'STUDENT' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
+    )
+      ? [
+          {
+            href: '/hesap/guvenilirlik',
+            title: feedback('reliability'),
+            description: feedback('reliabilityDescription'),
+            icon: BadgeCheckIcon,
+          },
+        ]
+      : []),
+    {
+      href: '/hesap/bildirimler',
+      title: notifications('accountTitle'),
+      description: notifications('accountDescription'),
+      icon: MailIcon,
+    },
     {
       href: '/hesap/e-posta',
       title: t('email'),
@@ -75,7 +106,7 @@ export default async function AccountPage() {
             icon: InboxIcon,
           },
           {
-            href: '/yonetim/belge-kuyrugu',
+            href: '/yonetim',
             title: t('admin'),
             description: t('adminDescription'),
             icon: InboxIcon,

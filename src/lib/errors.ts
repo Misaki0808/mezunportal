@@ -90,6 +90,8 @@ export const ERROR_CODES = [
   'APPOINTMENT_LINK_NOT_NEEDED',
   'APPOINTMENT_LINK_INVALID',
   'MENTOR_SETTINGS_INVALID',
+  'FEEDBACK_NOT_READY',
+  'FEEDBACK_ALREADY_SUBMITTED',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

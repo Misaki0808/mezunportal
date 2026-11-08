@@ -1,15 +1,17 @@
 'use client';
 import { useTranslations } from 'next-intl';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { DATA_EXPORT_HREF, dataExportSchema } from '@/contracts/privacy';
 import { isErrorCode } from '@/lib/errors';
 import { Button } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
 
 export function ExportButton() {
+  const hydrated = useHydrated();
   const t = useTranslations('privacyScreens.export');
   const form = usePrivacyForm();
   return (
-    <div className="space-y-3">
+    <div data-hydrated={hydrated ? 'true' : undefined} className="space-y-3">
       <Button
         fullWidth
         loading={form.busy}

@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -21,6 +22,7 @@ export function ConsentForm({
   state: ConsentState;
   returnTo?: string | null;
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('privacyScreens.consent');
   const common = useTranslations('privacyScreens.common');
   const router = useRouter();
@@ -36,6 +38,7 @@ export function ConsentForm({
   const [missing, setMissing] = useState<string[]>([]);
   return (
     <form
+      data-hydrated={hydrated ? 'true' : undefined}
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();

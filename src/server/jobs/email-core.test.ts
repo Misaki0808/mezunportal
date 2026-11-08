@@ -63,6 +63,22 @@ describe('e-posta giden kutusu', () => {
     expect(rows.get(message.idempotencyKey)).toMatchObject({ status: 'SENT', attempts: 1 });
     expect(transport.sent[0]?.messageId).not.toContain(message.idempotencyKey);
   });
+  it('kapatılan bildirim kuyruğa girmez; beklerken kapatılan da teslim edilmez', async () => {
+    const { outbox, transport, logger, rows, published } = fixture();
+    let allowed = false;
+    const service = createEmailService(outbox, transport, logger, async () => allowed);
+    expect(await service.enqueueEmail(message)).toEqual({ emailLogId: null });
+    expect(published).toHaveLength(0);
+    allowed = true;
+    await service.enqueueEmail(message);
+    allowed = false;
+    await service.deliver(message, 0, 2);
+    expect(transport.sent).toHaveLength(0);
+    expect(rows.get(message.idempotencyKey)).toMatchObject({
+      status: 'FAILED',
+      errorCode: 'EMAIL_PREFERENCE_DISABLED',
+    });
+  });
   it('başarı yolunda da (kuyruğa yazma, gönderim) günlüğe yalnız maskeli alıcı gider', async () => {
     const { service, logger } = fixture();
     await service.enqueueEmail(message);
@@ -128,12 +144,12 @@ describe('e-posta giden kutusu', () => {
     expect(JSON.stringify(logger.mock.calls)).not.toContain(message.text);
     expect(JSON.stringify([...rows.values()])).not.toContain(secret);
   });
-  it('gerçek günlük fonksiyonu maskeyi bozamaz', () => {
+  it('gerçek günlük fonksiyonu alıcı adresi yazmaz', () => {
     const write = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
     try {
       logEmailEvent('failed', message.to);
       const output = String(write.mock.calls[0]?.[0]);
-      expect(output).toContain('***@***');
+      expect(output).not.toContain('@');
       expect(output).not.toContain(message.to);
     } finally {
       write.mockRestore();

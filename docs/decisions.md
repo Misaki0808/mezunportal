@@ -627,6 +627,23 @@ değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki y�
 Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
 kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 
+## 2026-11-08 · Üretilmiş arama sütunları ve GIN indeksleri şemada modellenir
+`prisma migrate dev`, şemada olmayan GENERATED ALWAYS arama sütunları (`Experience.searchVector`/`searchKeys`) ve 6 GIN
+indeksi için sonraki her migration'a yanlış `ALTER`/`DROP INDEX` yazıyordu; uygulanırsa arama bozulurdu. İndeksler
+`@@index(type: Gin, ops: raw("gin_trgm_ops"))`, sütunlar `@default(dbgenerated())` ile modellenince `migrate diff` boş
+çıktı. Bedel: `searchKeys` istemcide sıradan `String?` görünür; Prisma istemcisinde global `omit`
+(`src/lib/prisma-options.ts`) ile hiçbir sorguda varsayılan dönmez, ham SQL arama yine okur (`searchVector`
+`Unsupported` olduğundan istemcide zaten yoktur). Migration bekçi testi (`prisma/migration-guard.test.ts`) ikinci kemer
+olarak kalır. Reddedilen: yalnız elle düzeltme notu (insan hatasına açık).
+## 2026-11-08 · Bildirim tercihleri ve yıllık doğrulama (P1-12)
+
+Zorunlu hesap/güvenlik iletileri kapatılamaz; diğer türler varsayılan açık olup hem kuyruğa alınırken hem de teslimden
+önce güncel tercihle denetlenir. İşler İstanbul saatiyle günlük çalışır ve dönem/olay anahtarıyla yinelenir. Öğrenci
+posta geçişi için doğrulanmış üyeliğin üniversitesindeki öğrenci alan adı ve mevcut sınıf hesabının dördüncü yılı
+kullanılır. Mezun yanıtları seçime bağlı HMAC, 30 günlük süre ve veritabanında koşullu tek kullanım taşır; kimlik
+oturumdan doğrulanır. E-posta tarayıcılarının bağlantıyı açması yanıt kaydetmez: kullanıcı ayrıca onaylar. Jeton URL
+parçasında taşınır (sunucu istek günlüğüne gitmez); e-posta ile açılan farklı sekmeden dönüş için tarayıcıda geçici tutulur ve sonuçta silinir.
+Bağlı olmayan mezun belgesi artıkları, yeni yükleme olasılığına karşı en az bir saat sonra taranır.
 ## 2026-11-08 · Kullanım metrikleri: kişisel veri içermeyen olay, bastırılmış panel (P1-13)
 Kendi `Event` tablomuz; üçüncü taraf analitik yok. Kişisel veri koruması üç katmanlıdır: tür başına `strict` Zod şeması (serbest
 metin alanı hiç yok, arama olayında yalnız süzgeç TÜRÜ ve sonuç kovası), veritabanı CHECK'i (düz nesne, kısa, `@`/uzun rakam
@@ -668,9 +685,30 @@ Randevu talebinde slotun zaman/biçim geçerliliği doluluk süzülmeden doğrul
 
 Bağımsız worker React server koşuluyla çalıştığından randevu e-posta kataloğundaki basit adlandırılmış alanlar React/Next içe aktarmadan doldurulur. Randevunun kullandığı profil kuralı da oturum bağlayan permissions giriş noktası yerine doğrudan actor/guards yardımcılarını alır. Böylece takvim süpürmesi e-posta worker'ının başlamasını engellemez; ayrı Node sürecinde gerçek iş modülü içe aktarma ve metin üretimi testlidir.
 
+## 2026-11-08 · Görüşme sonrası yanıt ve güvenilirlik (P1-14)
+
+PM kararı: son 12 ayda `COMPLETED` ve `NO_SHOW` sayılır; iptaller ve geri bildirim verme oranı paydaya girmez. Üçten az
+görüşme Yeni, en az üçte katılım oranı %80 veya üzeri Güvenilir, diğerleri Dikkat'tir; kullanıcıya sayı ile nedeni
+gösterilir. Gerçekleşme için iki tarafın olumlu yanıtı gerekir; mentor öğrencinin katılmadığını bildirirse `NO_SHOW`
+olur. Her taraf yalnız bir kez yanıtlar ve diğer tarafın özel notu veri dökümüne girmez.
+
+### P1-11 incelemesi: yönetim sayfasında yanıt başlamadan kapsam denetimi
+
+App Router yükleme sınırı yanıtı başlattıktan sonra sayfadaki red HTTP 200 kalabildiği için yönetim layout'u mevcut yetki kapısını önce çalıştırır. Proxy'nin kendisinin yazdığı istek yolu yalnız doğru yeteneği seçer; yetki yine sunucu servisinden gelir. Kapsam dışı sayfa ve kullanıcı ayrıntısı üst grup hata sınırıyla Türkçe 404 döner; eylemlerin kendi yetki denetimleri de korunur. Ortak yönetim listeleri izin verilen uzun, boşluksuz değerleri hücre içinde böler; mobil kart ve masaüstü tablo sayfayı genişletmez.
 
 ### PM kararı · Profil eşikleri ve veri saklama
 
 `PROFILE_THRESHOLD` eşik başına kullanıcıyla bağlı son 24 aylık pencerede bir kez yazılır; bağ koparıldıktan veya pencere
 dolduktan sonra yeniden geçişte yeni olay yazılabilir. KVKK veri en aza indirme için daha uzun süre yaşayan ayrı kullanıcı
 işaretçisi tutulmaz.
+
+### P1-09 incelemesi: ortak filtre gönderimi ve profil girişleri
+
+Mentor dizini ve arama aynı filtre kabuğunu kullanır. Bekleyen gezinme sırasında Uygula yerel disabled taşır; mentor dizini de çip kaldırma/temizleme kaynaklı ikinci gezinmeyi reddeder. Uzun beceriler kartta erişilebilir tam başlıkla kısalır, öneri gerekçeleri satıra bölünür. Profil görünürlüğü denetimi geçtikten sonra mevcut mentor uygunluk servisiyle iletişim ve kapalı girişlerin nedenleri bağlanır; görünmeyen profilde ek sorgu yapılmaz. Randevu/CV incelemesi eylem ekranları kendi kartlarındadır; uygunluk bayrağı yeni yetki vermez.
+### P1-12 incelemesi: ortak hesaplı uçtan uca testler
+
+Bildirim bağlantısı testi seed öğrencisinin pozisyonuna bağlı kayıt oluşturur; profil/CV testi aynı öğrencinin pozisyonlarını temizler. Bu nedenle ortak hesap kullanan uçtan uca dosyalar tek işçiyle koşar. Her şablonun güncel tercihe uyması ve bağlantının hesap/imza/süre/tek kullanım sınırları bağımsız negatif testlerle korunur. Olay commit edildikten sonra kuyruğa yazım başarısızsa otomatik telafi bu pakette yoktur; ana işlemin başarısı korunur.
+
+### P1-14 incelemesi: form erişimi ve yalıtılmış iş testi
+
+Formun taraf denetimi hesap layout'unda loading başlamadan yapılır; yabancı kullanıcı gerçek, Türkçe 404 alır. Sayfa ve gönderim eylemi kendi denetimini korur. İstek yolu yalnız proxy'nin yazdığı başlıktan seçilir, erişim kararı katılımcı servisinindir. Görüşme işi testi bağlantı ayarlarını sahte değerlerle kurup temizler; rolün yerel env dosyasına dayanmaz. İki tarafın onayı, tek yanıt ve gösterge kapsamı bağımsız yarış/negatif testleriyle korunur.

@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
+import { waitForHydratedControl, waitForHydratedForm } from './hydration';
 
 test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async ({ page, context }) => {
   test.setTimeout(90_000);
@@ -36,7 +37,7 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await expect(page.getByRole('heading', { name: 'Devam etmek için giriş yap' })).toBeVisible();
     // Yönlendirmeyle gelinen sayfa yüklenip sonra hidratlanır; hidratasyondan önce tıklamak formu yerel (GET)
     // gönderir. Ağ durulunca form etkileşime hazırdır.
-    await page.waitForLoadState('networkidle');
+    await waitForHydratedForm(page, 'Giriş bağlantısı gönder');
     await page.getByLabel('E-posta adresi').fill(email);
     await page.getByRole('button', { name: 'Giriş bağlantısı gönder' }).click();
     await expect(page).toHaveURL(/\/giris\/epostani-kontrol-et$/);
@@ -81,6 +82,7 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     expect(decodeURIComponent(verification?.headers().location ?? '')).toContain('/hesap/gizlilik');
     await page.goto('/hesap/gizlilik');
     await expect(page).toHaveURL(/\/onay(?:\?.*)?$/);
+    await waitForHydratedForm(page, 'Seçimlerimi kaydet');
     const consents = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
     await consents.nth(0).check();
     await consents.nth(1).check();
@@ -92,6 +94,7 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await expect(page).toHaveURL(/\/dogrulama$/);
     await page.getByRole('link', { name: 'Üyeliğini doğrula' }).click();
     await expect(page).toHaveURL(/\/dogrulama\/uyelik$/);
+    await waitForHydratedForm(page, 'Doğrulamayı tamamla');
     await page.getByLabel('Bölüm').selectOption({ index: 1 });
     await page.getByLabel('Üniversiteye giriş yılı').fill('2024');
     await page.getByRole('button', { name: 'Doğrulamayı tamamla' }).click();
@@ -101,10 +104,12 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await page.goto('/');
     await page.getByRole('link', { name: /Profilini tamamla/ }).click();
     await expect(page).toHaveURL(/\/baslangic$/);
+    await waitForHydratedControl(page, 'Devam et');
     await page.getByRole('checkbox', { name: 'Yazılım geliştirme' }).check();
     await page.getByRole('button', { name: 'Devam et' }).click();
     await expect(page.getByRole('heading', { name: 'Birlikte neyi hedefleyelim?' })).toBeVisible();
     await page.reload();
+    await waitForHydratedControl(page, 'Devam et');
     await expect(page.getByRole('heading', { name: 'Birlikte neyi hedefleyelim?' })).toBeVisible();
     await page.getByRole('checkbox', { name: 'Staj bulmak' }).check();
     await page.getByRole('button', { name: 'Geri' }).click();

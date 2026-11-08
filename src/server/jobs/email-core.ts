@@ -45,12 +45,14 @@ export function createEmailService(
   outbox: EmailOutbox,
   transport: EmailTransport,
   logger: EmailLogger = logEmailEvent,
+  maySend: (message: QueuedEmail) => Promise<boolean> = async () => true,
 ) {
   return {
-    async enqueueEmail(input: QueuedEmail): Promise<{ emailLogId: string }> {
+    async enqueueEmail(input: QueuedEmail): Promise<{ emailLogId: string | null }> {
       // Ham Zod hatası kullanıcıya/loga taşınmaz (taşıma yardımcısı yalnız sunucu içindir).
       const parsed = queuedEmailSchema.safeParse(input);
       if (!parsed.success) throw new Error('EMAIL_INPUT_INVALID');
+      if (!(await maySend(parsed.data))) return { emailLogId: null };
       return outbox.withKey(parsed.data.idempotencyKey, async (work) => {
         const existing = await work.find(parsed.data.idempotencyKey);
         if (existing) return { emailLogId: existing.id };
@@ -83,6 +85,15 @@ export function createEmailService(
         const row = await work.find(message.idempotencyKey);
         if (!row) throw new Error('EMAIL_LOG_MISSING');
         if (row.status !== 'QUEUED') return null;
+        if (!(await maySend(message))) {
+          await work.mark(row.id, {
+            status: 'FAILED',
+            attempts: row.attempts,
+            errorCode: 'EMAIL_PREFERENCE_DISABLED',
+            sentAt: null,
+          });
+          return null;
+        }
         const attempts = row.attempts + 1;
         try {
           await transport.send({

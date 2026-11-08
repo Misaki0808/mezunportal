@@ -17,6 +17,7 @@ describe('sahte veri çerçevesi', () => {
       'accounts',
       'profileTags',
       'dictionary',
+      'feedback',
     ]);
   });
 });

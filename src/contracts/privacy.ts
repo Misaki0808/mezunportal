@@ -262,6 +262,15 @@ export const exportedAppointmentSchema = z
     id: z.string(),
     role: z.enum(['MENTOR', 'MENTEE']),
     counterpartId: z.string(),
+    feedback: z
+      .object({
+        happened: z.boolean(),
+        helpful: z.boolean().nullable(),
+        note: z.string().nullable(),
+        createdAt: z.string(),
+      })
+      .strict()
+      .nullable(),
     startsAt: z.string(),
     endsAt: z.string(),
     mode: z.enum(['ONLINE', 'IN_PERSON']),

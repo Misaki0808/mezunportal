@@ -46,8 +46,17 @@ describe('AppShell', () => {
     renderUi(<AppShell>x</AppShell>);
 
     const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });
-    expect(within(bottom).queryByRole('link', { name: /Mentorlar/ })).not.toBeInTheDocument();
-    expect(within(bottom).getByText(/Mentorlar/)).toHaveTextContent('yakında');
+    expect(within(bottom).queryByRole('link', { name: /Randevular/ })).not.toBeInTheDocument();
+    expect(within(bottom).getByText(/Randevular/)).toHaveTextContent('yakında');
+  });
+
+  it('Mentorlar sekmesi mentor dizinine bağlanır', () => {
+    renderUi(<AppShell>x</AppShell>);
+    const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });
+    expect(within(bottom).getByRole('link', { name: /Mentorlar/ })).toHaveAttribute(
+      'href',
+      '/mentorlar',
+    );
   });
 });
 
@@ -57,10 +66,7 @@ it('Hesabım bağlantısını gösterir, yönetimi yalnız sunucudan açıkça i
   expect(within(side).getByRole('link', { name: 'Hesabım' })).toHaveAttribute('href', '/hesap');
   expect(within(side).queryByRole('link', { name: 'Yönetim' })).not.toBeInTheDocument();
   rerender(<AppShell showAdmin>x</AppShell>);
-  expect(within(side).getByRole('link', { name: 'Yönetim' })).toHaveAttribute(
-    'href',
-    '/yonetim/belge-kuyrugu',
-  );
+  expect(within(side).getByRole('link', { name: 'Yönetim' })).toHaveAttribute('href', '/yonetim');
 });
 
 it.each(['/giris', '/giris/epostani-kontrol-et', '/giris/test'])(
