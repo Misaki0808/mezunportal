@@ -68,7 +68,8 @@ export function PostingDetail({
         <div className="mt-8">
           {url && (
             <a href={url} target="_blank" rel="noopener noreferrer" className={buttonClasses()}>
-              {t('apply')} ↗
+              {t('apply')} <span aria-hidden="true">↗</span>
+              <span className="sr-only"> {t('newTab')}</span>
             </a>
           )}
           {posting.applyMethod === 'CONTACT_REQUEST' && !canRequestContact && (

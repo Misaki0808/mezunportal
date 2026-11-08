@@ -2662,6 +2662,7 @@
     "contactUnavailable": "Bu ilan için şu anda iletişim talebi oluşturulamıyor.",
     "contactTitle": "İlan için iletişim iste",
     "contactSubtitle": "Talebin ilanı paylaşan kişiye iletilir. İletişim bilgileri yalnız onay verildiğinde açılır.",
-    "targetLimit": "En fazla {count} bölüm seçebilirsin."
+    "targetLimit": "En fazla {count} bölüm seçebilirsin.",
+    "newTab": "(yeni sekmede açılır)"
   }
 }
