@@ -125,7 +125,16 @@ LLM çıktısı güvenilmeyen girdidir; yalnız profil alanlarına öneri olur, 
 - Türkçe büyük/küçük harf `tr-TR` kurallarıyla (`İ→i`, `I→ı`); testler “İstanbul/ISTANBUL”,
   “staj/stajı/STAJ” içerir.
 - Filtreler URL'dedir. Sorgu metni metriklere yazılmaz.
-- Ham SQL yalnız `src/server/repositories/search.ts`.
+- Ham SQL yalnız `src/server/repositories/search.ts`. `Experience.searchVector` ve `searchKeys` ekleyici
+  migration'la üretilmiş sütundur. Büyük/küçük harf `tr_lower` (İ→i, I→ı) ve `tr_ascii` (ı→i, ç→c …)
+  SQL işlevleriyle veritabanı yerelinden bağımsız yapılır: kayıtlar hem Türkçe gövdeli hem ASCII katlanmış
+  indekslenir, sorgu iki biçimde aranır (“ISTANBUL”, “stajı”, “Eskişehir” ↔ “Eskisehir” eşleşir).
+- Sorgu sözcük sözcük VE ile birleşir; 4+ harfli sözcükte `pg_trgm` yazım hatası toleransı (şirket, şehir,
+  ülke ve tür adı üzerinde) devrededir; gövde metnindeki yazım hatası bulunmaz. Durak sözcükler (“ve”, “için”)
+  sorguyu daraltmaz.
+- Sonuç yalnız `PUBLISHED` ve arayanın doğrulanmış üyeliklerinin üniversitesindeki bölümlerde yazılmış
+  deneyimlerdir (K-07). Anonim sonuçta yazar yoktur; yazarı silinmiş/askıdaki/bağı kopmuş deneyim de yazarsız
+  döner. Sektör süzgeci deneyimin sözlükle eşleşmiş şirketi (`companyId` → `Company.sectorId`) üzerindendir.
 
 ### Puan motoru ve hile önleme
 

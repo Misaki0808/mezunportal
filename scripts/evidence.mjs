@@ -11,6 +11,7 @@ let route;
 let base = process.env.APP_URL;
 let output;
 let persona;
+let viewport;
 const personas = {
   student: 'student',
   öğrenci: 'student',
@@ -31,11 +32,16 @@ for (let i = 0; i < args.length; i++) {
     const value = args[++i];
     if (!value || !Object.hasOwn(personas, value)) throw new Error('Geçerli bir test rolü gerekli');
     persona = personas[value];
-  } else if (arg === '--url' || arg === '--out') {
+  } else if (arg === '--url' || arg === '--out' || arg === '--width') {
     const value = args[++i];
     if (!value || value.startsWith('--')) throw new Error(`${arg} için değer gerekli`);
     if (arg === '--url') base = value;
-    else output = value;
+    else if (arg === '--out') output = value;
+    else {
+      if (!['360', '390', '1440'].includes(value))
+        throw new Error('Genişlik 360, 390 veya 1440 olmalı');
+      viewport = value;
+    }
   } else if (arg?.startsWith('-') || route) {
     throw new Error(`Geçersiz argüman: ${arg}`);
   } else route = arg;
@@ -79,9 +85,10 @@ try {
     await login.close();
   }
   for (const [name, width, height] of [
+    ['360', 360, 780],
     ['390', 390, 844],
     ['1440', 1440, 900],
-  ]) {
+  ].filter(([name]) => (viewport ? name === viewport : name !== '360'))) {
     const page = await context.newPage();
     await page.setViewportSize({ width, height });
     const messages = [];

@@ -5,7 +5,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { BriefcaseIcon, CalendarIcon, HomeIcon, UserIcon, UsersIcon, cn } from '@/components/ui';
+import {
+  BriefcaseIcon,
+  CalendarIcon,
+  HomeIcon,
+  InboxIcon,
+  UserIcon,
+  UsersIcon,
+  cn,
+} from '@/components/ui';
 
 type NavId = 'home' | 'experiences' | 'mentors' | 'appointments' | 'profile';
 
@@ -16,7 +24,7 @@ type NavId = 'home' | 'experiences' | 'mentors' | 'appointments' | 'profile';
  */
 const NAV_ITEMS: readonly { id: NavId; href?: string; icon: ReactNode }[] = [
   { id: 'home', href: '/', icon: <HomeIcon /> },
-  { id: 'experiences', icon: <BriefcaseIcon /> },
+  { id: 'experiences', href: '/deneyimlerim', icon: <BriefcaseIcon /> },
   { id: 'mentors', icon: <UsersIcon /> },
   { id: 'appointments', icon: <CalendarIcon /> },
   { id: 'profile', href: '/hesap', icon: <UserIcon /> },
@@ -33,9 +41,11 @@ function isCurrent(pathname: string, href: string): boolean {
 export function AppShellClient({
   children,
   showAdmin = false,
+  signedIn = false,
 }: {
   children: ReactNode;
   showAdmin?: boolean;
+  signedIn?: boolean;
 }) {
   const t = useTranslations('nav');
   const pathname = usePathname();
@@ -111,12 +121,28 @@ export function AppShellClient({
         {t('skipToContent')}
       </a>
 
-      <header className="sticky top-0 z-30 flex h-14 items-center border-b border-border bg-bg px-4 lg:hidden">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-bg px-4 lg:hidden">
         <span className="text-lg font-semibold text-primary">{t('brand')}</span>
+        {!signedIn && (
+          <Link
+            href="/giris"
+            className="inline-flex min-h-11 items-center font-semibold text-primary"
+          >
+            {t('signIn')}
+          </Link>
+        )}
       </header>
 
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col gap-6 border-r border-border bg-surface p-4 lg:flex">
         <span className="px-3 pt-2 text-xl font-semibold text-primary">{t('brand')}</span>
+        {!signedIn && (
+          <Link
+            href="/giris"
+            className="press-control mx-3 inline-flex min-h-11 items-center font-semibold text-primary"
+          >
+            {t('signIn')}
+          </Link>
+        )}
         <nav aria-label={t('labelSide')}>
           <ul className="flex flex-col gap-1">
             {NAV_ITEMS.map((item) => (
@@ -126,8 +152,15 @@ export function AppShellClient({
               <li>
                 <Link
                   href="/yonetim/belge-kuyrugu"
-                  className="press-control inline-flex min-h-11 w-full items-center rounded-control px-3 text-base font-medium text-fg-muted hover:bg-surface-strong"
+                  aria-current={isCurrent(pathname, '/yonetim') ? 'page' : undefined}
+                  className={cn(
+                    'press-control inline-flex min-h-11 w-full items-center gap-1 rounded-control px-3 text-base font-medium',
+                    isCurrent(pathname, '/yonetim')
+                      ? 'bg-primary-soft text-on-primary-soft'
+                      : 'text-fg-muted hover:bg-surface-strong',
+                  )}
                 >
+                  <InboxIcon />
                   {t('admin')}
                 </Link>
               </li>

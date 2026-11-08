@@ -92,11 +92,22 @@ export function DocumentForm({
         required
       >
         {(control) => (
-          <Select {...control} name="departmentId" defaultValue="">
+          <Select
+            {...control}
+            name="departmentId"
+            defaultValue=""
+            onChange={() =>
+              setFields((current) => {
+                const next = { ...current };
+                delete next.departmentId;
+                return next;
+              })
+            }
+          >
             <option value="">{t('departmentPlaceholder')}</option>
             {departments.map((department) => (
               <option key={department.id} value={department.id}>
-                {department.universityName} · {department.facultyName} · {department.name}
+                {department.name} · {department.facultyName} · {department.universityName}
               </option>
             ))}
           </Select>
@@ -115,6 +126,13 @@ export function DocumentForm({
             type="number"
             inputMode="numeric"
             autoComplete="off"
+            onChange={() =>
+              setFields((current) => {
+                const next = { ...current };
+                delete next.graduationYear;
+                return next;
+              })
+            }
           />
         )}
       </Field>
@@ -136,7 +154,14 @@ export function DocumentForm({
               type="file"
               accept="application/pdf,.pdf"
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              onChange={(event) => setFileName(event.target.files?.[0]?.name ?? '')}
+              onChange={(event) => {
+                setFileName(event.target.files?.[0]?.name ?? '');
+                setFields((current) => {
+                  const next = { ...current };
+                  delete next.file;
+                  return next;
+                });
+              }}
             />
           </div>
         )}

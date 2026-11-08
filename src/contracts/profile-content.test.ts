@@ -90,6 +90,11 @@ describe('normalizeLinkedinUrl', () => {
     'https://www.linkedin.com/in/',
     'https://www.linkedin.com/in/ab',
     'https://www.linkedin.com/in/a/b',
+    'https://www.linkedin.com/in/abc%2Fdef',
+    'https://www.linkedin.com/in/abc%5Cdef',
+    'https://www.linkedin.com/in/abc%00def',
+    'https://www.linkedin.com/in/abc%ZZdef',
+    'https://www.linkedin.com/in/abc%252Fdef',
     'https://linkedin.com.evil.com/in/ayse-ornek',
     'https://evil.com/in/ayse-ornek',
   ])('%s reddedilir', (raw) => {

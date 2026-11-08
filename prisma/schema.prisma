@@ -867,7 +867,7 @@ enum ReportStatus {
 /// Taslak eksik olabilir; PENDING/PUBLISHED/REJECTED içerik tür şablonunu tamamlamış olmalıdır.
 /// Anonimlik çıktı sınırıdır: authorId sahiplik/hesap silme için depoda kalır, hiçbir anonim çıktıya girmez.
 model Experience {
-  id                  String              @id @default(uuid(7))
+  id                  String                   @id @default(uuid(7))
   authorId            String?
   /// Yazım anındaki doğrulanmış üyelikten; sonradan rol/bölüm değişimi moderasyon kapsamını değiştirmez.
   departmentIdAtWrite String
@@ -882,19 +882,21 @@ model Experience {
   durationWeeks       Int?
   pay                 ExperiencePay?
   applicationChannel  ApplicationChannel?
-  processSteps        Json                @default("[]")
-  interviewQuestions  String[]            @default([])
-  whatLearned         String              @default("")
-  advice              String              @default("")
-  isAnonymous         Boolean             @default(false)
-  status              ExperienceStatus    @default(DRAFT)
+  processSteps        Json                     @default("[]")
+  interviewQuestions  String[]                 @default([])
+  whatLearned         String                   @default("")
+  advice              String                   @default("")
+  isAnonymous         Boolean                  @default(false)
+  status              ExperienceStatus         @default(DRAFT)
   moderationNote      String?
   moderatedById       String?
   moderatedAt         DateTime?
   publishedAt         DateTime?
-  /// searchVector ve arama indeksi P1-08'de eklenir.
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  /// Üretilmiş arama sütunları (P1-08 ham SQL migration'ı; Prisma yazamaz, yalnız `repositories/search.ts` okur).
+  searchVector        Unsupported("tsvector")?
+  searchKeys          Unsupported("text")?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
 
   author      User?      @relation("ExperienceAuthor", fields: [authorId], references: [id], onDelete: Restrict)
   department  Department @relation(fields: [departmentIdAtWrite], references: [id], onDelete: Restrict)

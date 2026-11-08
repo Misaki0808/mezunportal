@@ -1,9 +1,21 @@
--- P1-06 beceri modeli (TD-010): beceri = Tag(SKILL) + ProfileTag. EKLEYİCİ: veri silmez; eski UserSkill tablosu
--- korunur (daraltma sonraki migration'da). Geri alma:
---   ALTER TABLE "Tag" DROP CONSTRAINT "Tag_skill_label_check";
---   ALTER TABLE "Tag" DROP COLUMN "curated", DROP COLUMN "label";
---   ALTER TABLE "Profile" DROP COLUMN "manualFields";
---   (taşınan ProfileTag/Tag SKILL satırları: DELETE FROM "ProfileTag" WHERE "tagId" IN (SELECT "id" FROM "Tag" WHERE "kind" = 'SKILL'); DELETE FROM "Tag" WHERE "kind" = 'SKILL';)
+-- P1-06 beceri modeli (TD-010): beceri = Tag(SKILL) + ProfileTag. EKLEYİCİ: eski UserSkill korunur.
+-- Geri alma (P1-06 uygulama kodu da geri alınır): yeni becerileri eski modele kopyala;
+-- önceki kurallı etiket/bağları koru, yalnız kişisel etiketleri kaldır. Eski UserSkill satırları değişmez.
+-- ROLLBACK-BEGIN
+-- INSERT INTO "UserSkill" ("id", "userId", "skillId", "name", "normalizedName", "source", "manuallyEdited", "createdAt", "updatedAt")
+-- SELECT gen_random_uuid()::text, p."userId", s."id", COALESCE(t."label", t."slug"), t."slug", 'MANUAL', true, pt."createdAt", pt."updatedAt"
+-- FROM "ProfileTag" pt JOIN "Profile" p ON p."id" = pt."profileId"
+-- JOIN "Tag" t ON t."id" = pt."tagId" AND t."kind" = 'SKILL'
+-- LEFT JOIN "Skill" s ON s."normalizedName" = t."slug"
+-- WHERE NOT EXISTS (SELECT 1 FROM "UserSkill" us LEFT JOIN "Skill" old_s ON old_s."id" = us."skillId"
+--   WHERE us."userId" = p."userId" AND COALESCE(old_s."normalizedName", us."normalizedName") = t."slug")
+-- ON CONFLICT ("userId", "normalizedName") DO NOTHING;
+-- DELETE FROM "ProfileTag" WHERE "tagId" IN (SELECT "id" FROM "Tag" WHERE "kind" = 'SKILL' AND NOT "curated");
+-- DELETE FROM "Tag" WHERE "kind" = 'SKILL' AND NOT "curated";
+-- ALTER TABLE "Tag" DROP CONSTRAINT "Tag_skill_label_check";
+-- ALTER TABLE "Tag" DROP COLUMN "curated", DROP COLUMN "label";
+-- ALTER TABLE "Profile" DROP COLUMN "manualFields";
+-- ROLLBACK-END
 
 ALTER TABLE "Tag" ADD COLUMN "label" TEXT, ADD COLUMN "curated" BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE "Profile" ADD COLUMN "manualFields" TEXT[] DEFAULT ARRAY[]::TEXT[];
@@ -28,7 +40,9 @@ FROM (
   FROM "UserSkill" us LEFT JOIN "Skill" s ON s."id" = us."skillId"
 ) AS source
 ORDER BY slug, curated DESC
-ON CONFLICT ("kind", "slug") DO NOTHING;
+-- Geri alma/yeniden uygulamada görünür ad kaybolmaz; önceden kurallı etiket kişisele düşmez.
+ON CONFLICT ("kind", "slug") DO UPDATE SET
+  "label" = EXCLUDED."label", "curated" = "Tag"."curated" OR EXCLUDED."curated";
 
 INSERT INTO "Profile" ("id", "userId", "createdAt", "updatedAt")
 SELECT gen_random_uuid()::text, "userId", now(), now() FROM (SELECT DISTINCT "userId" FROM "UserSkill") users

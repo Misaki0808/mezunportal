@@ -53,7 +53,7 @@ describe('KVKK ekran sınırları', () => {
     expect(render(<ConsentForm state={old} />)).not.toMatch(/checked=""/);
   });
   it('K-09 sil varsayılanı seçili, anonimleştirme seçilmemiş; kalıcı işlem açıklaması görünür', () => {
-    const html = render(<DeleteForm />);
+    const html = render(<DeleteForm currentEmail="sahte@example.invalid" />);
     expect(html).toMatch(/checked=""[^>]*value="DELETE"|value="DELETE"[^>]*checked=""/);
     expect(html).not.toMatch(/value="ANONYMIZE"[^>]*checked=""/);
     expect(html).toContain('Bütün oturumların kapanır.');
