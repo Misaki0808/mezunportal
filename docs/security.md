@@ -144,6 +144,16 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
   gerekçe zorunludur. Maske yalnız alan adı değildir: çıktı şeması ham telefon/e-posta değerini reddeder.
 - **Askı:** ban alanları yazılır ve oturumlar aynı işlemde silinir; kullanıcı yeni oturum açamaz. Süreli askı en fazla
   365 gün. Son sistem yöneticisi yetkisi kaldırılamaz.
+- **Okuma servisleri** (`services/admin-panel.ts`) yetkiyi işlemin içinde yeniden yükler ve sonucu sözleşme şemasından
+  geçirir (şemalar `strict`: ham alan çıktıya giremez). Kapsam dışı bölüm süzgeci boş sonuç verir. Bölüm yöneticisinde var
+  olmayan ile kapsam dışı kullanıcı ayırt edilmez (`AUTH_FORBIDDEN`). Kullanıcı araması ad/e-postada çalışır ama çıktı
+  maskelidir; arama yalnız yöneticinin kendi kapsamındaki kullanıcıları tarar (kapsam dışı e-posta varlığı sızmaz) ve
+  `LIKE` özel karakterleri kaçırılır. İşlem kaydı görüntülemede kişisel veri gibi görünen metin okuma anında da gizlenir
+  (`[gizlendi]`); yazım yolu zaten reddeder, bu son ağdır.
+- **Excel dışa aktarma** yetki kontrollü rotadır (`/api/yonetim/rapor/istihdam`, oturum + kapsamı olan doğrulanmış
+  yönetici): saatte 10 sınırı, `DATA_EXPORT` kaydı ve dosya üretimi tek işlemdedir; hata hiçbir şey teslim etmez.
+  Hücreler düz metindir (formül değil). Bilinen sınır: gösterilen kovalar toplamı ile `alumniWithPosition` farkı,
+  bastırılan grupların toplamını verir; kişi ya da grup kimliği bu farktan çıkmaz (pilot ölçeği).
 - **Toplu rapor ve Excel kişi satırı içermez:** mezun istihdam dağılımları sözlükle eşleşen adlarla ve küçük hücre
   bastırmayla (`REPORT_MIN_GROUP_SIZE` = 3) verilir; her dışa aktarma `DATA_EXPORT` kaydı yazar ve hız sınırlıdır.
 

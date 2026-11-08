@@ -38,7 +38,9 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 - P1-11 yönetim paneli sözleşmesi: panel sorguları, kullanıcı/askı/üyelik düzeltme/yönetici atama, sözlük ve
   eşleşmeyen değer, işlem kaydı görüntüleme ve toplu mezun istihdam raporu imzaları, `requireAnyAdmin` koruması ve
   hata kodları hazır. Askıya alma/kaldırma (oturumlar aynı işlemde düşer), üyelik düzeltme ve yönetici atama/kaldırma
-  servisi tamam (kapsam, kendi üzerinde işlem yok, işlem kaydı aynı işlemde); panel sorguları ve kalanı W2'de.
+  servisi tamam (kapsam, kendi üzerinde işlem yok, işlem kaydı aynı işlemde). Panel sorguları da hazır: genel bakış,
+  maskeli kullanıcı listesi/ayrıntı, şikâyet kuyruğu, yönetici atamaları, işlem kaydı görüntüleme, sözlük +
+  eşleşmeyen değer çözümü, mezun istihdam raporu ve Excel (`/api/yonetim/rapor/istihdam`). Kalan: panel ekranı (W2).
 - P1-06 profil servisi: kendi profilini görüntüle/düzenle (temel alanlar, eğitim, pozisyon, dil, sertifika, beceri,
   izinli https bağlantılar, LinkedIn), başkasının profili görünürlük süzgeçli, tamamlama göstergesi; CV onayına profil
   başlığı/özeti/şehri kalemi eklendi; beceri modeli `Tag(SKILL)` + profil bağı. Ekranlar sonra.

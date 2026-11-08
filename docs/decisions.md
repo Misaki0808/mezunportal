@@ -588,6 +588,26 @@ sıralar. Hedef kullanıcı kilidi atama ve üyelik düzeltmesinden önce alın�
 mezun geçişiyle ortak sıra User → Membership'tir. Silme ile yarışan atama silinmiş hesapta
 etkin yetki bırakamaz ve ters satır kilidi sırası oluşmaz.
 
+## 2026-11-08 · Yönetim paneli servis payı: eşleşmeyen değer çözümü, istihdam raporu, Excel
+`UnmatchedValue.dismissedAt` (ekleyici migration): "at" kararı sütunla tutulur; çözülmüş ya da atılmış değer yeniden
+gelirse yalnız sayaç artar, kuyruk yeniden açılmaz (CHECK: ikisi birden olamaz). "Bağla" değeri kaydın takma adı yapar ve
+sözlük bağı boş profil kalemlerini bağlar (kalem metni değişmez; tarama pilot ölçeğinde 5.000 pozisyonla sınırlıdır, kalanı
+sonraki CV ile bağlanır). Sektörde takma ad yoktur: sektöre "bağla" geçersiz, "yeni kayıt" geçerlidir. Sözlük yazmaları tür
+başına danışma kilidiyle (`pg_advisory_xact_lock`) serileşir: ad/takma ad çakışma denetimi yarış altında da doğrudur;
+kilit sırası her yerde tür kilidi → satır kilididir. Silinen kayda bağlı eşleşmeyen değerler kuyruğa döner.
+İstihdam raporu: kişi başına tek temsilci pozisyon (güncel > en son biten), yalnız sözlükle eşleşen adlar; küçük gruplar
+(< 3) `Diğer`'de birleşir, o da < 3 ise hiç gösterilmez. Excel için ExcelJS kullanıldı (`docs/engineering.md` yığınında,
+onaylı); dosya bellekte üretilir, işlem kaydı ve hız sınırıyla aynı işlemdedir. Kullanıcı aramasında `LIKE` özel karakterleri
+kaçırılır (Prisma `contains` kaçırmaz).
+
+Panelde SKILL kullanım sayısı ve bağlama `Tag(SKILL)`/`ProfileTag` üzerinden yürür; eski
+`UserSkill` aktif kullanım sayılmaz. Profil yazımıyla aynı etiket anahtarı kullanılır; kişisel
+bağlar kurallı etikete çiftlemeden taşınır, yeniden adlandırma bağları korur, sözlük silinince
+kullanıcının metni kişisel beceri olarak kalır. Excel rotası sayfa kapısına güvenmez: yetki
+sonrası zorunlu onay transaction içinde, hız sayacı ve dosyadan önce doğrulanır. Audit okuması
+eski metadata'nın iç içe değer/anahtarlarında da kişisel veriyi gizler. Üyelikler yetki
+hesabından önce sunum amacıyla kesilmez; eski ama etkin kapsam üyeliği kaybolmamalıdır.
+
 ## 2026-11-08 · Mentor dizini: görünürlük, müsaitlik ve benzer yol kuralı (P1-09)
 Dizinde yalnız görünür mentor vardır: etkin `MentorProfile`, silinmemiş ve askıda olmayan hesap, doğrulanmış etkin
 üyelik, arayanla aynı üniversite (K-07); arayan kendini görmez. Süzgeçler yalnız daraltır, kapsam oturumdan gelir.
