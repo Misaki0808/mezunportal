@@ -160,6 +160,7 @@ export function MentorRequests({ initial, list, answer }: Props) {
       <Switch
         label={t('onlyUnanswered')}
         checked={onlyUnanswered}
+        disabled={pending}
         onChange={(e) => {
           setOnlyUnanswered(e.target.checked);
           void load(e.target.checked);

@@ -40,6 +40,9 @@ test('SSS: öğrenci talep eder → mentor cevaplar → moderatör yayımlar →
   try {
     // 1) Öğrenci talep gönderir.
     await login(s!, 'student');
+    await s!.goto('/hesap');
+    await expect(s!.locator('a[href="/hesap/sss"]')).toBeVisible();
+    await expect(s!.locator('a[href="/mentor/sss"]')).toHaveCount(0);
     await s!.goto('/hesap/sss');
     await s!.waitForLoadState('networkidle');
     await s!.getByLabel(/Sorun/).fill(question);
@@ -51,6 +54,9 @@ test('SSS: öğrenci talep eder → mentor cevaplar → moderatör yayımlar →
 
     // 2) Mentor cevaplar.
     await login(m!, 'alumniMentor');
+    await m!.goto('/hesap');
+    await expect(m!.locator('a[href="/mentor/sss"]')).toBeVisible();
+    await expect(m!.locator('a[href="/hesap/sss"]')).toHaveCount(0);
     await m!.goto('/mentor/sss');
     await m!.waitForLoadState('networkidle');
     const card = m!.locator('li').filter({ hasText: question });

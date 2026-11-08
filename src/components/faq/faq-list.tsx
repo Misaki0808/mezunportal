@@ -40,7 +40,15 @@ function hrefFor(q: string | undefined) {
 }
 
 /** SSS sayfası ve araması (sunucu bileşeni; arama GET formudur, durum URL'de, JS gerekmez). */
-export function FaqList({ result, q }: { result: FaqSearchPage; q?: string }) {
+export function FaqList({
+  result,
+  q,
+  canAsk,
+}: {
+  result: FaqSearchPage;
+  q?: string;
+  canAsk: boolean;
+}) {
   const t = useTranslations('faq');
   const pageCount = Math.max(1, Math.ceil(result.total / result.pageSize));
   return (
@@ -64,9 +72,11 @@ export function FaqList({ result, q }: { result: FaqSearchPage; q?: string }) {
           {t('search')}
         </Button>
       </form>
-      <Link className={buttonClasses({ variant: 'secondary' })} href={FAQ_MY_REQUESTS_HREF}>
-        {t('askLink')}
-      </Link>
+      {canAsk && (
+        <Link className={buttonClasses({ variant: 'secondary' })} href={FAQ_MY_REQUESTS_HREF}>
+          {t('askLink')}
+        </Link>
+      )}
       <p role="status" className="text-sm text-fg-muted">
         {q
           ? t('resultCountFor', { count: result.total, q })

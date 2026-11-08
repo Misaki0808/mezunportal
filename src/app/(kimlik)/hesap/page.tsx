@@ -17,6 +17,7 @@ import { PrivacyAccountLinks } from '@/components/privacy/account-links';
 import { getVerificationState } from '@/server/actions/auth';
 import { getMyMentorSettings } from '@/server/actions/appointment';
 import { requireUser } from '@/server/permissions';
+import { evaluateAccess } from '@/server/rules/authorization';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +53,13 @@ export default async function AccountPage() {
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
+  const canAskFaq = actor.facts.memberships.some(
+    (membership) =>
+      membership.role === 'STUDENT' &&
+      membership.verificationStatus === 'VERIFIED' &&
+      membership.endedAt === null,
+  );
+  const canAnswerFaq = evaluateAccess(actor.facts, { action: 'mentorAct' }).allowed;
   const statusLabel = {
     VERIFIED: verification('verified'),
     NOT_STARTED: verification('notStarted'),
@@ -141,18 +149,26 @@ export default async function AccountPage() {
             description: faq('browseDescription'),
             icon: InboxIcon,
           },
-          {
-            href: '/hesap/sss',
-            title: faq('mine'),
-            description: faq('mineDescription'),
-            icon: FileTextIcon,
-          },
-          {
-            href: '/mentor/sss',
-            title: faq('mentor'),
-            description: faq('mentorDescription'),
-            icon: FileTextIcon,
-          },
+          ...(canAskFaq
+            ? [
+                {
+                  href: '/hesap/sss',
+                  title: faq('mine'),
+                  description: faq('mineDescription'),
+                  icon: FileTextIcon,
+                },
+              ]
+            : []),
+          ...(canAnswerFaq
+            ? [
+                {
+                  href: '/mentor/sss',
+                  title: faq('mentor'),
+                  description: faq('mentorDescription'),
+                  icon: FileTextIcon,
+                },
+              ]
+            : []),
         ]
       : []),
     {

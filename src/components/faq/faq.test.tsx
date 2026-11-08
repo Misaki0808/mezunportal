@@ -44,7 +44,7 @@ const page = (over: Partial<FaqSearchPage> = {}): FaqSearchPage => ({
 
 describe('SSS sayfası ve arama', () => {
   it('soru, cevap ve tarih görünür; kimlik alanı yok; arama GET formudur', () => {
-    renderUi(<FaqList result={page()} q="cv" />);
+    renderUi(<FaqList canAsk={true} result={page()} q="cv" />);
     expect(screen.getByRole('search')).toHaveAttribute('action', '/sss');
     expect(screen.getByRole('searchbox')).toHaveValue('cv');
     expect(screen.getByText('Staj için CV nasıl hazırlanır?')).toBeVisible();
@@ -53,7 +53,7 @@ describe('SSS sayfası ve arama', () => {
   });
 
   it('sayfalama bağlantıları sorguyu korur', () => {
-    renderUi(<FaqList result={page()} q="cv" />);
+    renderUi(<FaqList canAsk={true} result={page()} q="cv" />);
     expect(screen.getByRole('link', { name: /Sonraki/ })).toHaveAttribute(
       'href',
       '/sss?q=cv&page=3',
@@ -61,8 +61,14 @@ describe('SSS sayfası ve arama', () => {
     expect(screen.getByRole('link', { name: /Önceki/ })).toHaveAttribute('href', '/sss?q=cv');
   });
 
+  it('öğrenci yetkisi olmayan üyeye talep gönderme bağlantısı sunmaz', () => {
+    renderUi(<FaqList canAsk={false} result={page()} />);
+    expect(screen.queryByRole('link', { name: /SSS talebi gönder/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('search')).toBeVisible();
+  });
+
   it('boş sonuçta açıklayıcı durum gösterir', () => {
-    renderUi(<FaqList result={page({ items: [], total: 0, page: 1 })} q="xyz" />);
+    renderUi(<FaqList canAsk={true} result={page({ items: [], total: 0, page: 1 })} q="xyz" />);
     expect(screen.getByText('Soru bulunamadı.')).toBeVisible();
     expect(screen.getByText('Başka sözcüklerle aramayı dene.')).toBeVisible();
   });
@@ -202,6 +208,28 @@ const mentorItem = (over: Partial<MentorFaqRequestView> = {}): MentorFaqRequestV
 });
 
 describe('mentor cevap formu', () => {
+  it('cevapsız süzgeci yüklenirken yeni seçim kilitlenir', async () => {
+    const gate = Promise.withResolvers<{
+      ok: true;
+      data: { items: MentorFaqRequestView[]; nextCursor: null };
+    }>();
+    const list = vi.fn(() => gate.promise);
+    renderUi(
+      <MentorRequests
+        initial={{ items: [mentorItem()], nextCursor: null }}
+        list={list}
+        answer={vi.fn()}
+      />,
+    );
+    const toggle = screen.getByRole('switch', { name: 'Yalnız cevapsızlar' });
+    fireEvent.click(toggle);
+    expect(list).toHaveBeenCalledWith({ onlyUnanswered: true });
+    expect(toggle).toBeChecked();
+    expect(toggle).toBeDisabled();
+    await act(async () => gate.resolve({ ok: true, data: { items: [], nextCursor: null } }));
+    expect(toggle).toBeEnabled();
+    expect(screen.getByText('Cevaplanacak soru yok.')).toBeVisible();
+  });
   it('kısa cevap gönderilmez; geçerli cevap kaydedilir ve durum güncellenir', async () => {
     const answer = vi.fn(async () => ({ ok: true as const, data: { answerId: 'a1' } }));
     renderUi(
@@ -332,5 +360,26 @@ describe('moderatör kuyruğu', () => {
       screen.getByText('Yayımlamak için en az bir mentor cevabı gerekir.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mentorluğa yönlendir' })).toBeEnabled();
+  });
+
+  it('mentorluğa yönlendirme onay ve gerekçe ister; tamamlanınca satır çıkar', async () => {
+    const a = actions();
+    renderUi(<FaqModerationQueue initial={{ items: [item()], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Mentorluğa yönlendir' }));
+    expect(a.redirect).not.toHaveBeenCalled();
+    fireEvent.click(dialog().getByRole('button', { name: 'Yönlendir' }));
+    expect(a.redirect).not.toHaveBeenCalled();
+    fireEvent.change(dialog().getByLabelText('Öğrenciye not', { exact: false }), {
+      target: { value: '  Mentor dizininden uygun birini seç.  ' },
+    });
+    fireEvent.click(dialog().getByRole('button', { name: 'Yönlendir' }));
+    await waitFor(() =>
+      expect(a.redirect).toHaveBeenCalledWith({
+        requestId: 'q1',
+        note: 'Mentor dizininden uygun birini seç.',
+      }),
+    );
+    expect(await screen.findByText('Öğrenci mentorluğa yönlendirildi.')).toBeVisible();
+    expect(screen.queryByText(QUESTION)).not.toBeInTheDocument();
   });
 });

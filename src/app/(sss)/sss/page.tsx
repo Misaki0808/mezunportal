@@ -2,6 +2,7 @@ import { FaqList } from '@/components/faq/faq-list';
 import { ErrorState } from '@/components/ui';
 import { searchFaqSchema } from '@/contracts/faq';
 import { searchFaq } from '@/server/actions/faq';
+import { requireVerifiedMember } from '@/server/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,5 +22,9 @@ export default async function FaqPage({ searchParams }: { searchParams: Promise<
   const result = await searchFaq(input).catch(() => null);
   if (!result) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
-  return <FaqList result={result.data} q={parsed.success ? q : undefined} />;
+  const canAsk = await requireVerifiedMember({ roles: ['STUDENT'] }).then(
+    () => true,
+    () => false,
+  );
+  return <FaqList result={result.data} q={parsed.success ? q : undefined} canAsk={canAsk} />;
 }
