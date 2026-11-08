@@ -63,6 +63,8 @@ import {
   istanbulDay,
 } from '../rules/jobPosting';
 import { idCursorWhere, toPage } from './admin-access';
+import { publicReach } from '../rules/jobMatch';
+import { sharedJobMatchTags } from './job-match';
 import { emitEvent } from './event';
 import { stageNotification } from './notification-intent';
 import { withdrawJobPostingPoints } from './points';
@@ -147,6 +149,9 @@ export const MY_POSTING_SELECT = {
   submittedAt: true,
   publishedAt: true,
   endedAt: true,
+  targetGrades: true,
+  _count: { select: { matches: true } },
+  tags: { select: { tagId: true } },
   targets: {
     select: { department: { select: { id: true, name: true } } },
     orderBy: { department: { name: 'asc' } },
@@ -170,6 +175,9 @@ export function projectMyPosting(row: MyPostingRow): MyJobPostingView {
     deadlineOn: row.deadlineOn ? dayOfDateColumn(row.deadlineOn) : null,
     departmentId: row.departmentIdAtWrite,
     targetDepartments: row.targets.map((t) => t.department),
+    tagIds: row.tags.map((t) => t.tagId),
+    targetGrades: row.targetGrades,
+    matchReach: publicReach(row._count.matches),
     moderationNote: row.moderationNote,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -212,6 +220,11 @@ export async function getJobPostingFormContext(
     });
     return jobPostingFormContextSchema.parse({
       authorDepartments: departments.map(({ id, name }) => ({ id, name })),
+      availableTags: await tx.tag.findMany({
+        where: { curated: true },
+        select: { id: true, slug: true, label: true },
+        orderBy: { slug: 'asc' },
+      }),
       targetDepartments: targets.map((t) => ({
         id: t.id,
         name: t.name,
@@ -258,6 +271,13 @@ export async function saveJobPostingDraft(
     if (!ids.includes(parsed.departmentId)) throw codedForbidden('AUTH_FORBIDDEN');
     const universityId = await universityOfDepartment(tx, parsed.departmentId);
     const targetIds = await validTargets(tx, universityId, draft.targetDepartmentIds ?? []);
+    const selectedTagIds = draft.tagIds ?? [];
+    if (
+      selectedTagIds.length &&
+      (await tx.tag.count({ where: { id: { in: selectedTagIds }, curated: true } })) !==
+        selectedTagIds.length
+    )
+      throw codedValidation('VALIDATION_INVALID');
     if (draft.applyMethod === 'CONTACT_REQUEST' && draft.applyUrl)
       throw codedValidation('JOB_POSTING_URL_INVALID');
     if (!draft.applyMethod && draft.applyUrl) throw codedValidation('JOB_POSTING_URL_INVALID');
@@ -270,6 +290,7 @@ export async function saveJobPostingDraft(
 
     const data = {
       kind: draft.kind ?? 'INTERNSHIP',
+      targetGrades: draft.targetGrades ?? [],
       title: draft.title ?? null,
       organizationName: draft.organizationName ?? null,
       companyId,
@@ -304,6 +325,11 @@ export async function saveJobPostingDraft(
       });
       postingId = created.id;
     }
+    await tx.jobPostingTag.deleteMany({ where: { postingId } });
+    if (selectedTagIds.length)
+      await tx.jobPostingTag.createMany({
+        data: selectedTagIds.map((tagId) => ({ postingId, tagId })),
+      });
     await tx.jobPostingDepartment.deleteMany({ where: { postingId } });
     if (targetIds.length > 0)
       await tx.jobPostingDepartment.createMany({
@@ -350,6 +376,8 @@ export async function submitJobPosting(
       applyUrl: row.applyUrl,
       deadlineOn: row.deadlineOn ? dayOfDateColumn(row.deadlineOn) : undefined,
       targetDepartmentIds: row.targets.map((t) => t.department.id),
+      tagIds: row.tags.map((t) => t.tagId),
+      targetGrades: row.targetGrades,
     });
     if (!content.success) {
       const fields = new Set(content.error.issues.map((issue) => String(issue.path[0])));
@@ -472,8 +500,19 @@ export async function searchJobPostings(
     type: 'JOB_POSTING_SEARCH',
     props: { results: resultBucketOf(total) },
   });
+  const matchedTags = await sharedJobMatchTags(
+    deps.db,
+    userId,
+    rows.map((row) => row.id),
+    now,
+  );
   return jobPostingPageSchema.parse({
-    items: rows.map((row) => jobPostingCardSchema.parse(toCard(row, today))),
+    items: rows.map((row) =>
+      jobPostingCardSchema.parse({
+        ...toCard(row, today),
+        matchTags: matchedTags.get(row.id) ?? [],
+      }),
+    ),
     total,
     page: parsed.page,
     pageSize: parsed.pageSize,
@@ -519,8 +558,10 @@ export async function getJobPosting(
   );
   if (!row) throw codedNotFound('RESOURCE_NOT_FOUND');
   emitEvent(deps.db, userId, { type: 'JOB_POSTING_VIEWED', props: {} });
+  const matchedTags = await sharedJobMatchTags(deps.db, userId, [row.id], now);
   return jobPostingDetailSchema.parse({
     ...toCard(row, today),
+    matchTags: matchedTags.get(row.id) ?? [],
     description: row.description,
     applyUrl: row.applyMethod === 'URL' ? row.applyUrl : null,
   });

@@ -175,6 +175,15 @@ export async function buildDataExport(
       createdAt: true,
     },
   });
+  const matchRows = await db.jobMatch.findMany({
+    where: { userId },
+    select: { postingId: true, createdAt: true },
+    orderBy: { createdAt: 'asc' },
+  });
+  const jobMatches = matchRows.map((row) => ({
+    postingId: row.postingId,
+    createdAt: row.createdAt.toISOString(),
+  }));
   const cvReviews = await db.cvReviewRequest.findMany({
     where: { OR: [{ studentId: userId }, { mentorId: userId }] },
     orderBy: { id: 'asc' },
@@ -249,6 +258,7 @@ export async function buildDataExport(
       role: alumnusId === userId ? ('ALUMNI' as const) : ('STUDENT' as const),
       createdAt: createdAt.toISOString(),
     })),
+    jobMatches,
     cvReviewRequests: cvReviews.map((row) => ({
       id: row.id,
       role: row.studentId === userId ? ('STUDENT' as const) : ('MENTOR' as const),
@@ -517,12 +527,15 @@ async function loadJobPostingExport(
       deadlineOn: true,
       status: true,
       moderationNote: true,
+      targetGrades: true,
+      tags: { select: { tagId: true } },
       createdAt: true,
       publishedAt: true,
     },
   });
-  return rows.map((row) => ({
+  return rows.map(({ tags, ...row }) => ({
     ...row,
+    tagIds: tags.map((tag) => tag.tagId),
     deadlineOn: row.deadlineOn ? row.deadlineOn.toISOString().slice(0, 10) : null,
     createdAt: row.createdAt.toISOString(),
     publishedAt: iso(row.publishedAt),

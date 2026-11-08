@@ -384,6 +384,8 @@ export const dataExportSchema = z.object({
         deadlineOn: z.string().nullable(),
         status: z.enum(['DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED', 'EXPIRED', 'CLOSED']),
         moderationNote: z.string().nullable(),
+        tagIds: z.array(z.string()),
+        targetGrades: z.array(z.number().int()),
         createdAt: z.string(),
         publishedAt: z.string().nullable(),
       })
@@ -405,6 +407,8 @@ export const dataExportSchema = z.object({
       })
       .strict(),
   ),
+  /** Yalnız bu kullanıcıya yazılmış ilan eşleşmeleri; üçüncü kişinin verisi yok. */
+  jobMatches: z.array(z.object({ postingId: z.string(), createdAt: z.string() }).strict()),
   /** Katkı puanı (P1-16): kaynak içerik ve karşı taraf kimliği YOK (anonim deneyim bağı ve üçüncü kişi sızmaz). */
   contribution: z
     .object({

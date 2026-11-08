@@ -1471,3 +1471,62 @@ describe('D7 bağlantı sızıntısı: aynı yazarın iki ilanı ayırt edilemez
     ).toBe('CONTACT_REQUEST_ALREADY_OPEN');
   });
 });
+
+describe('ilan eşleşmeleri', () => {
+  it('açık etiket ve uygun bölümde yayında öğrenciye eşleşme ve aynı işlemde günlük niyet yazar', async () => {
+    const w = await world();
+    const tag = await db.tag.create({
+      data: { kind: 'INTEREST', slug: `match-${w.student}`, curated: true },
+    });
+    const profile = await db.profile.create({ data: { userId: w.student } });
+    await db.profileTag.create({ data: { profileId: profile.id, tagId: tag.id } });
+    const id = await submitted(w, w.alumni, { tagIds: [tag.id], targetGrades: [] });
+    expect(await db.jobMatch.count({ where: { postingId: id } })).toBe(0);
+    await reviewJobPosting(deps, w.moderator, { postingId: id, decision: 'PUBLISH' });
+    expect(
+      await db.jobMatch.findMany({ where: { postingId: id }, select: { userId: true } }),
+    ).toEqual([{ userId: w.student }]);
+    const intents = await db.notificationIntent.findMany({
+      where: { userId: w.student, kind: 'jobMatch' },
+    });
+    expect(intents).toHaveLength(1);
+    expect(intents[0]?.nextAttemptAt?.toISOString()).toBe('2030-06-20T21:05:00.000Z');
+    const mine = await listMyJobPostings(deps, w.alumni, {});
+    expect(JSON.stringify(mine)).not.toContain(w.student);
+    expect(mine.items[0]?.matchReach).toEqual({ belowThreshold: true, count: null });
+    expect((await buildDataExport(db, w.student, NOW)).jobMatches).toMatchObject([
+      { postingId: id },
+    ]);
+    expect((await buildDataExport(db, w.alumni, NOW)).jobMatches).toEqual([]);
+    const { listSuggestedJobMatches } = await import('./job-match');
+    expect((await listSuggestedJobMatches(db, w.student, NOW)).map((p) => p.id)).toContain(id);
+    const { listMyJobMatchNotifications } = await import('./job-match');
+    expect((await listMyJobMatchNotifications(db, w.student, NOW)).map((p) => p.id)).toContain(id);
+    await closeJobPosting(deps, w.alumni, { postingId: id });
+    expect(await listMyJobMatchNotifications(db, w.student, NOW)).toEqual([]);
+    const { email } = await db.user.findUniqueOrThrow({
+      where: { id: w.student },
+      select: { email: true },
+    });
+    await deleteAccount(
+      db,
+      w.student,
+      { publishedContent: 'DELETE', confirmEmail: email },
+      { removeStoredFiles: null },
+    );
+    expect(await db.jobMatch.count({ where: { userId: w.student } })).toBe(0);
+    expect(
+      await db.notificationIntent.count({ where: { userId: w.student, kind: 'jobMatch' } }),
+    ).toBe(0);
+  });
+  it('etiketsiz ilan öğrenci panosunda yer alır ama bildirim niyeti oluşturmaz', async () => {
+    const w = await world();
+    const id = await published(w);
+    const { listSuggestedJobMatches } = await import('./job-match');
+    expect((await listSuggestedJobMatches(db, w.student, NOW)).map((p) => p.id)).toContain(id);
+    expect(await db.jobMatch.count({ where: { postingId: id } })).toBe(0);
+    expect(
+      await db.notificationIntent.count({ where: { userId: w.student, kind: 'jobMatch' } }),
+    ).toBe(0);
+  });
+});

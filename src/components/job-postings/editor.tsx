@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import messages from '../../../messages/tr.json';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -28,6 +29,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   const hydrated = useHydrated();
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
+  const tagLabels = useTranslations('profileTags');
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [busy, start] = useTransition();
@@ -47,6 +49,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   const [targets, setTargets] = useState<string[]>(
     initial?.targetDepartments.map((d) => d.id) ?? [],
   );
+  const [tagIds, setTagIds] = useState<string[]>(initial?.tagIds ?? []);
+  const [targetGrades, setTargetGrades] = useState<number[]>(initial?.targetGrades ?? []);
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -66,6 +70,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
     applyMethod: method,
     applyUrl: method === 'URL' ? url : null,
     targetDepartmentIds: targets,
+    tagIds,
+    targetGrades,
   };
   function showError(message: string, fields: string[] = []) {
     setError(message);
@@ -341,6 +347,58 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                     <span>
                       {d.name} · {d.facultyName}
                     </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend className="font-semibold">{t('matchTags')}</legend>
+              <p className="mt-1 text-sm text-fg-muted">{t('matchTagsHint')}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {context.availableTags.map((tag) => (
+                  <label
+                    key={tag.id}
+                    className="flex min-h-11 items-center gap-2 rounded-control border border-border px-3"
+                  >
+                    <input
+                      type="checkbox"
+                      className="size-5 accent-primary"
+                      checked={tagIds.includes(tag.id)}
+                      disabled={!tagIds.includes(tag.id) && tagIds.length >= 5}
+                      onChange={(e) =>
+                        setTagIds((old) =>
+                          e.target.checked ? [...old, tag.id] : old.filter((id) => id !== tag.id),
+                        )
+                      }
+                    />
+                    {tag.label ??
+                      (tag.slug in messages.profileTags
+                        ? tagLabels(tag.slug as keyof typeof messages.profileTags)
+                        : tag.slug)}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend className="font-semibold">{t('matchGrades')}</legend>
+              <p className="mt-1 text-sm text-fg-muted">{t('matchGradesHint')}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[1, 2, 3, 4].map((grade) => (
+                  <label
+                    key={grade}
+                    className="flex min-h-11 items-center gap-2 rounded-control border border-border px-3"
+                  >
+                    <input
+                      type="checkbox"
+                      className="size-5 accent-primary"
+                      checked={targetGrades.includes(grade)}
+                      onChange={(e) =>
+                        setTargetGrades((old) =>
+                          e.target.checked ? [...old, grade] : old.filter((n) => n !== grade),
+                        )
+                      }
+                    />
+                    {t('matchGrade', { grade })}
                   </label>
                 ))}
               </div>

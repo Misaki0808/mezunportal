@@ -141,6 +141,8 @@ model User {
   notificationPreferences     NotificationPreference[]
   notificationIntents         NotificationIntent[]
   notificationActions         NotificationAction[]
+  jobMatches                  JobMatch[]
+  jobMatchDigests             JobMatchDigest[]
   sessionFeedbacks            SessionFeedback[]
   consents                    Consent[]
   fieldVisibilities           FieldVisibility[]
@@ -223,6 +225,7 @@ enum NotificationType {
   FAQ
   JOB_POSTING
   REFERRAL
+  JOB_MATCH
 }
 
 enum StillThereChoice {
@@ -317,6 +320,7 @@ model Tag {
   updatedAt DateTime @updatedAt
 
   profiles ProfileTag[]
+  jobPostings JobPostingTag[]
 
   @@unique([kind, slug])
 }
@@ -1495,6 +1499,7 @@ model JobPosting {
   applyMethod         JobApplyMethod?
   applyUrl            String?
   deadlineOn          DateTime?                @db.Date
+  targetGrades        Int[]                    @default([])
   status              JobPostingStatus         @default(DRAFT)
   submittedAt         DateTime?
   moderationNote      String?
@@ -1515,6 +1520,8 @@ model JobPosting {
   moderatedBy     User?                  @relation("JobPostingModerator", fields: [moderatedById], references: [id], onDelete: Restrict)
   endedBy         User?                  @relation("JobPostingEnder", fields: [endedById], references: [id], onDelete: Restrict)
   targets         JobPostingDepartment[]
+  tags            JobPostingTag[]
+  matches         JobMatch[]
   reports         JobPostingReport[]
   contactRequests ContactRequest[]
   referrals       ReferralClaim[]
@@ -1537,6 +1544,39 @@ model JobPostingDepartment {
 
   @@id([postingId, departmentId])
   @@index([departmentId])
+}
+
+/// İlanın açıkça seçilen sözlük etiketleri; metinden etiket türetilmez.
+model JobPostingTag {
+  postingId String
+  tagId     String
+
+  posting JobPosting @relation(fields: [postingId], references: [id], onDelete: Cascade)
+  tag     Tag        @relation(fields: [tagId], references: [id], onDelete: Restrict)
+
+  @@id([postingId, tagId])
+  @@index([tagId])
+}
+
+/// Öğrencinin yayın sırasında eşleşen ilanları; yalnız kendi panosunda kullanılır.
+model JobMatch {
+  postingId String
+  userId String
+  createdAt DateTime @default(now())
+  posting JobPosting @relation(fields: [postingId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([postingId, userId])
+  @@index([userId, createdAt])
+}
+
+/// Günlük özet hakkı: eşzamanlı işçiler için benzersiz İstanbul günü.
+model JobMatchDigest {
+  userId String
+  day String
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, day])
+  @@index([userId, createdAt])
 }
 
 /// İlan şikâyeti (deneyim `Report`'u hedefe FK ile bağlıdır; çok biçimli hedef yerine ayrı tablo). Raportör kimliği hiçbir çıktıda yoktur.

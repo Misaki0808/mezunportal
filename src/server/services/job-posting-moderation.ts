@@ -38,6 +38,7 @@ import { recordAdminAction } from './audit';
 import { emitEvent } from './event';
 import { MY_POSTING_SELECT, projectMyPosting } from './job-postings';
 import { stageNotification } from './notification-intent';
+import { stageJobMatches } from './job-match';
 import { awardJobPostingInTx, withdrawJobPostingPoints } from './points';
 import { requireConsent } from './privacy';
 
@@ -169,6 +170,7 @@ export async function reviewJobPosting(
         eventId: row.id,
         path: '/ilanlarim',
       });
+      await stageJobMatches(tx, row.id, now);
       // Puan yayınla AYNI işlemde (idempotent; ay tavanı kilit altında). Uzlaştırma güvenlik ağıdır.
       await awardJobPostingInTx(tx, row.id, now);
       published = { authorId: row.authorId, kind: row.kind };

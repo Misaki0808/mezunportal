@@ -25,6 +25,7 @@ it('sunucu, geçiş servisinden gelen yazar kimliğini istemci bileşenine geçi
       publishedAt: new Date(),
       authorKind: 'ALUMNI',
       targetDepartments: [],
+      matchTags: [{ slug: 'software', label: null }],
       description: 'Örnek',
       applyUrl: null,
       contactUserId: 'gizli-yazar',
@@ -33,4 +34,5 @@ it('sunucu, geçiş servisinden gelen yazar kimliğini istemci bileşenine geçi
   const result = await DetailPage({ params: Promise.resolve({ id: 'ilan' }) });
   expect(JSON.stringify(result.props)).not.toContain('gizli-yazar');
   expect(result.props.posting.id).toBe('ilan');
+  expect(result.props.posting.matchTags).toEqual([{ slug: 'software', label: null }]);
 });
