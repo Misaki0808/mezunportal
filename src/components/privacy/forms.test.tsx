@@ -110,6 +110,24 @@ it('ilan kaynaklı giden talep onaydan önce ve geri almada ilanı gösterir; on
     expect(html).not.toContain('Gizli Yazar');
     expect(html).not.toContain('gizli-user-id');
   }
+  // Hatalı/eskimiş yanıtta bile ekran onay öncesi ad göstermez.
+  const malformed = render(
+    <ContactList
+      initialBox="OUTGOING"
+      initial={{
+        nextCursor: null,
+        items: [
+          {
+            ...base,
+            status: 'PENDING',
+            counterpart: { userId: 'gizli-user-id', name: 'Gizli Yazar' },
+          },
+        ],
+      }}
+    />,
+  );
+  expect(malformed).not.toContain('Gizli Yazar');
+  expect(malformed).not.toContain('gizli-user-id');
   const approved = render(
     <ContactList
       initialBox="OUTGOING"
