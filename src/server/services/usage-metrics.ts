@@ -20,6 +20,7 @@ import type { Actor } from '../permissions/actor';
 import { listManagedDepartmentIds } from '../permissions/scope';
 import { isSystem, loadAdmin } from './admin-access';
 import { recordAdminAction } from './audit';
+import { requireConsent } from './privacy';
 import { consumeRateLimit, type RateLimitRule } from './rateLimit';
 
 /**
@@ -37,6 +38,7 @@ type Scope = { actor: Actor; system: boolean; departmentIds: string[] };
 async function loadScope(tx: Tx, adminUserId: string, now: Date, lock = false): Promise<Scope> {
   // Yetki işlemin içinde güncel veriyle yeniden yüklenir (`admin-access`: bayat Actor yetki vermez).
   const actor = await loadAdmin(tx, adminUserId, now, 'ANY_ADMIN', { lock });
+  await requireConsent(tx, adminUserId);
   return {
     actor,
     system: isSystem(actor),
@@ -169,11 +171,19 @@ async function computeUsage(
         (a.departmentId ?? '').localeCompare(b.departmentId ?? ''),
     );
 
+  const hiddenTypes = new Set(
+    [...others.values()]
+      .filter((cell) => cell.users.size < REPORT_MIN_GROUP_SIZE)
+      .map((cell) => cell.type),
+  );
   const metrics = usageMetricsSchema.parse({
     from: filter.from,
     to: filter.to,
     minGroupSize: REPORT_MIN_GROUP_SIZE,
-    totalsByType: types.map((type) => ({ type, events: totals.get(type) ?? 0 })),
+    totalsByType: types.map((type) => ({
+      type,
+      events: hiddenTypes.has(type) ? null : (totals.get(type) ?? 0),
+    })),
     activeUsers: allUsers.size >= REPORT_MIN_GROUP_SIZE ? allUsers.size : null,
     cells: [
       ...sortCells(named).map((cell) => ({
@@ -268,7 +278,7 @@ export async function buildUsageWorkbook(
       ]);
     } else if (definition.name === 'Olay türü') {
       for (const total of metrics.totalsByType)
-        sheet.addRow([EVENT_LABEL[total.type], total.events]);
+        sheet.addRow([EVENT_LABEL[total.type], total.events ?? 'Gizli']);
     } else {
       for (const cell of metrics.cells) {
         sheet.addRow([

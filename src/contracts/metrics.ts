@@ -185,9 +185,9 @@ export const usageMetricsSchema = z
     from: z.date(),
     to: z.date(),
     minGroupSize: z.literal(REPORT_MIN_GROUP_SIZE),
-    /** Kapsamdaki toplam olay sayısı, türe göre (bastırma yok: bu sayılar kişi tanımlamaz). */
+    /** Türe göre toplam; bastırılan hücre varsa fark alınmasını önlemek için null. */
     totalsByType: z.array(
-      z.object({ type: z.enum(EVENT_TYPES), events: z.number().int().min(0) }).strict(),
+      z.object({ type: z.enum(EVENT_TYPES), events: z.number().int().min(0).nullable() }).strict(),
     ),
     /** Kapsamdaki ayrı etkin kullanıcı sayısı; eşiğin altındaysa `null`. */
     activeUsers: z.number().int().min(REPORT_MIN_GROUP_SIZE).nullable(),
@@ -236,6 +236,7 @@ export const METRICS_ACTION_ERRORS = {
     'AUTH_ACCOUNT_SUSPENDED',
     'AUTH_NOT_VERIFIED',
     'AUTH_FORBIDDEN',
+    'CONSENT_REQUIRED',
     'VALIDATION_INVALID',
   ],
 } as const satisfies Record<string, readonly ErrorCode[]>;
@@ -244,6 +245,7 @@ export const USAGE_EXPORT_ERRORS = [
   'AUTH_ACCOUNT_SUSPENDED',
   'AUTH_NOT_VERIFIED',
   'AUTH_FORBIDDEN',
+  'CONSENT_REQUIRED',
   'VALIDATION_INVALID',
   'RATE_LIMITED',
 ] as const satisfies readonly ErrorCode[];

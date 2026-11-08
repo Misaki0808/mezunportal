@@ -11,6 +11,7 @@ import {
   addMembership,
   createInstitution,
   createUser,
+  grantRequiredConsents,
   type Institution,
 } from '@/test/fixtures';
 
@@ -76,6 +77,7 @@ async function adminOf(
     ...(scope === 'DEPARTMENT' ? { departmentId } : {}),
     ...(scope === 'FACULTY' ? { facultyId: institution.facultyA } : {}),
   });
+  await grantRequiredConsents(db, userId);
   return userId;
 }
 
@@ -409,9 +411,9 @@ describe('getUsageMetrics — kapsam ve sayılar', () => {
         'LOGIN',
       ),
     ).toBe(4);
-    // Sistem yöneticisi: süzgeçsiz bölümsüz olayları da sayar; süzgeçle bölüme daralır.
+    // Sistem kapsamındaki görünür hücreler gelir; küçük bölümsüz hücre toplamdan çıkarılamaz.
     const all = await getUsageMetrics(deps, system, range);
-    expect(total(all, 'LOGIN')).toBeGreaterThanOrEqual(3 + 4 + 5 + 2);
+    expect(all.cells.some((cell) => cell.departmentId === inst.deptB1)).toBe(true);
     expect(
       total(await getUsageMetrics(deps, system, { ...range, departmentId: inst.deptB1 }), 'LOGIN'),
     ).toBe(5);
@@ -476,8 +478,8 @@ describe('getUsageMetrics — kapsam ve sayılar', () => {
     // Bastırılan hücrenin kimliği yanıtta yok
     expect(JSON.stringify(metrics)).not.toContain('"ACADEMIC"');
     for (const c of metrics.cells) expect(c.users).toBeGreaterThanOrEqual(3);
-    // Toplam sayılar bastırılmaz
-    expect(total(metrics, 'CV_APPLIED')).toBe(2);
+    // Bastırılan küçük hücre toplamdan da çıkarılamaz.
+    expect(total(metrics, 'CV_APPLIED')).toBeNull();
   });
 
   it('etkin kullanıcı sayısı 3’ün altındaysa null; bağı kopmuş (userId null) olaylar kullanıcı sayısına girmez', async () => {
@@ -494,7 +496,7 @@ describe('getUsageMetrics — kapsam ve sayılar', () => {
     );
     const metrics = await getUsageMetrics(deps, admin, range);
     expect(metrics.activeUsers).toBeNull();
-    expect(total(metrics, 'LOGIN')).toBe(12);
+    expect(total(metrics, 'LOGIN')).toBeNull();
     expect(metrics.cells).toEqual([]); // 2 kullanıcı eşiğin altında, OTHER da 2
   });
 
@@ -568,7 +570,7 @@ describe('Excel toplu aktarım', () => {
         .map((row) => [row[1] as string, row[2]]),
     );
     expect(byType.get('Giriş')).toBe(8);
-    expect(byType.get('Mentor profili görüntülendi')).toBe(2);
+    expect(byType.get('Mentor profili görüntülendi')).toBe('Gizli');
     const detail = (workbook.getWorksheet('Rol ve bölüm')!.getSheetValues() as unknown[][])
       .filter(Array.isArray)
       .slice(1);

@@ -548,10 +548,12 @@ export async function applyCv(
 ): Promise<ApplyCvOutput> {
   const { db, storage } = deps;
   const now = nowOf(deps);
-  const scoreBefore = await storedScore(db, actor.userId);
+  let scoreBefore = 0;
+  let scoreAfter = 0;
   const applied = await db.$transaction(
     async (tx) => {
       await lockUser(tx, actor.userId, nowOf(deps));
+      scoreBefore = await storedScore(tx, actor.userId);
       const upload = await findParsedUpload(tx, actor.userId, input.cvUploadId);
       const parsed = readParsed(upload.parsedJson);
       const lookup = await buildDictionaryLookup(tx, namesOf(parsed, input.decisions));
@@ -762,7 +764,7 @@ export async function applyCv(
       // Son CV uygulama anı profilde durur ("CV" tamamlama adımı ve tazelik hatırlatması bunu okur).
       const applied = await ensureProfile(tx, actor.userId);
       await tx.profile.update({ where: { id: applied.id }, data: { cvUpdatedAt: now } });
-      await syncCompletionScore(tx, actor.userId, now);
+      scoreAfter = (await syncCompletionScore(tx, actor.userId, now)).percent;
 
       // Saklama: son dosya (bu CV) kalır; eski dosyalar silinir (açık incelemeye bağlı olan hariç).
       // Silme işlemin SON adımıdır: hata fırlatırsa işlem geri alınır.
@@ -790,7 +792,7 @@ export async function applyCv(
     },
     subject,
   );
-  emitProfileThresholds(db, actor.userId, scoreBefore, await storedScore(db, actor.userId));
+  emitProfileThresholds(db, actor.userId, scoreBefore, scoreAfter);
   return applied;
 }
 

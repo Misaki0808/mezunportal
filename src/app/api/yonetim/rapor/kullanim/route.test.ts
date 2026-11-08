@@ -64,6 +64,7 @@ describe('GET kullanım metrikleri (Excel)', () => {
     const cases: [unknown, number][] = [
       [codedUnauthenticated('AUTH_UNAUTHENTICATED'), 401],
       [codedForbidden('AUTH_FORBIDDEN'), 403],
+      [codedForbidden('CONSENT_REQUIRED'), 403],
       [codedValidation('VALIDATION_INVALID'), 400],
       [codedRateLimited('RATE_LIMITED'), 429],
       [new Error('postgres://gizli@host/db'), 500],

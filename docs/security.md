@@ -115,7 +115,7 @@ Kayıt yalnız eklenir; kişisel veri içermez (yalnız kimlikler). Sistem yöne
 Olay yazımı kişisel veri taşımaz: `props` tür başına `strict` Zod şemasından geçer (enum/sayı/mantıksal; serbest metin yok,
 arama olayında süzgeç değeri ve sorgu metni asla), veritabanı CHECK'i ek ağdır. Panel ve Excel yalnız yönetici kapsamındaki
 bölümlerin olaylarını gösterir (`departmentId`/`facultyId` süzgeçleri yetki vermez); ayrı kullanıcı sayısı 3'ün altındaki
-hücreler gösterilmez. Anonim deneyim yayın olayı yazarla ilişkilendirilmez. Olay `userId`'si hesap silmede hemen, 24 ay sonra
+hücreler gösterilmez; gizli hücre varsa tür toplamı da gizlenir. Anonim deneyim yayın olayı yazarla ilişkilendirilmez. Olay `userId`'si hesap silmede hemen, 24 ay sonra
 koparılır. Excel: yetki + saatte 10 sınırı + `DATA_EXPORT` kaydı (hedef `USAGE_METRICS`) tek işlemde; dosyada kişi satırı yok.
 
 ### Mentor dizini (P1-09)

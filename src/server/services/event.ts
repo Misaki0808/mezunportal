@@ -21,7 +21,7 @@ import {
  * hatayı yutar. Olay yazımı işlem (transaction) içinden YAPILMAZ: başarısız bir ekleme açık işlemi bozardı; çağıranlar
  * işlem tamamlandıktan sonra yayar.
  */
-export type EventDb = Pick<PrismaClient, 'event' | 'membership'>;
+export type EventDb = Pick<PrismaClient, 'event' | 'membership' | '$transaction'>;
 
 /** Bekleyen yazımlar (testler ve düzgün kapanış `settleEvents` ile bekler). */
 const pending = new Set<Promise<unknown>>();
@@ -48,15 +48,33 @@ export async function recordEvent(
   subject?: EventSubject | null,
 ): Promise<void> {
   const parsed = eventInputSchema.parse(input) as EventInput;
-  const owner = subject !== undefined ? subject : userId ? await subjectOf(db, userId) : null;
-  await db.event.create({
-    data: {
-      type: parsed.type,
-      userId,
-      role: owner?.role ?? null,
-      departmentId: owner?.departmentId ?? null,
-      props: parsed.props as Prisma.InputJsonValue,
-    },
+  if (userId === null) {
+    await db.event.create({
+      data: {
+        type: parsed.type,
+        userId: null,
+        role: null,
+        departmentId: null,
+        props: parsed.props as Prisma.InputJsonValue,
+      },
+    });
+    return;
+  }
+  await db.$transaction(async (tx) => {
+    // Hesap silme de User satırını kilitler: asenkron olay eski kimliği geri bağlayamaz.
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR SHARE`;
+    const user = await tx.user.findUnique({ where: { id: userId }, select: { deletedAt: true } });
+    const liveId = user && !user.deletedAt ? userId : null;
+    const owner = liveId ? (subject !== undefined ? subject : await subjectOf(tx, liveId)) : null;
+    await tx.event.create({
+      data: {
+        type: parsed.type,
+        userId: liveId,
+        role: owner?.role ?? null,
+        departmentId: owner?.departmentId ?? null,
+        props: parsed.props as Prisma.InputJsonValue,
+      },
+    });
   });
 }
 
@@ -106,20 +124,35 @@ export function emitProfileThresholds(
   after: number,
 ): void {
   for (const threshold of crossedThresholds(before, after, PROFILE_THRESHOLDS)) {
-    const work = (async () => {
-      const exists = await db.event.count({
-        where: {
-          userId,
-          type: 'PROFILE_THRESHOLD',
-          props: { path: ['threshold'], equals: threshold },
-        },
-      });
-      if (exists === 0)
-        await recordEvent(db, userId, {
-          type: 'PROFILE_THRESHOLD',
-          props: { threshold: threshold as 50 | 80 | 100 },
+    const work = db
+      .$transaction(async (tx) => {
+        // Aynı kullanıcının eşik geçişleri ve hesap silme aynı kilitte sıralanır.
+        await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR UPDATE`;
+        const user = await tx.user.findUnique({
+          where: { id: userId },
+          select: { deletedAt: true },
         });
-    })().catch(() => undefined);
+        if (!user || user.deletedAt) return;
+        const exists = await tx.event.count({
+          where: {
+            userId,
+            type: 'PROFILE_THRESHOLD',
+            props: { path: ['threshold'], equals: threshold },
+          },
+        });
+        if (exists !== 0) return;
+        const owner = await subjectOf(tx, userId);
+        await tx.event.create({
+          data: {
+            type: 'PROFILE_THRESHOLD',
+            userId,
+            role: owner?.role ?? null,
+            departmentId: owner?.departmentId ?? null,
+            props: { threshold },
+          },
+        });
+      })
+      .catch(() => undefined);
     pending.add(work);
     void work.finally(() => pending.delete(work));
   }

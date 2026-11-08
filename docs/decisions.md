@@ -634,6 +634,13 @@ yok) ve panelde küçük hücre bastırma (ayrı kullanıcı < 3 → `OTHER`, o 
 yapılır: başarısız ekleme açık işlemi bozmaz ve hata kullanıcı akışına yansımaz; profil eşiği olayı yazım işlemi bittikten sonra
 önceki/sonraki skor karşılaştırmasıyla bir kez yazılır. Rol ve bölüm olay anındaki birincil üyelikten (akademisyen > mezun >
 öğrenci) anlık görüntü olarak saklanır; sonradan rol değişse de geçmiş sayı kayar. Anonim deneyim yayın olayı kullanıcıya,
-role ve bölüme bağlanmaz (anonimlik sızmasın); sayısı yalnız toplamlarda görünür. Saklama: hesap silmede `userId` hemen,
+role ve bölüme bağlanmaz (anonimlik sızmasın); küçük hücre gizleniyorsa tür toplamı da gizlenir. Saklama: hesap silmede `userId` hemen,
 24 ay sonra `detachOldEvents` ile kopar (zamanlı iş TD-014). Panel kapsamı `admin-access` yardımcılarıyla yüklenir (yetki işlemin içinde yeniden okunur). Excel ExcelJS ile (#32 ile aynı sürüm), `DATA_EXPORT` kaydı hedefi `USAGE_METRICS`.
 
+
+
+### P1-13 bağımsız inceleme düzeltmesi
+
+Panel ve Excel işlemleri işlem içinde zorunlu rızayı kontrol eder. Gizlenen küçük hücre varsa tür toplamı da gizlenir;
+böylece gösterilen hücrelerin toplamdan çıkarılmasıyla küçük grubun sayısı açığa çıkmaz. Olay yazımı kullanıcı satırıyla
+silinmeye karşı sıralanır ve silinmiş hesap tekrar bağlanmaz; eşzamanlı profil eşiği yazımları tekilleştirilir.
