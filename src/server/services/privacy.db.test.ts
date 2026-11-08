@@ -157,6 +157,15 @@ describe('iletişim talebi', () => {
       fields: ['EMAIL', 'PHONE'],
       message: 'Merhaba',
     });
+    const intent = await prisma.notificationIntent.findFirstOrThrow({
+      where: { userId: target.id, kind: 'generic' },
+    });
+    expect(intent.payload).toMatchObject({
+      type: 'generic',
+      event: 'contact',
+      eventId: sent.requestId,
+    });
+    expect(JSON.stringify(intent.payload)).not.toContain('Merhaba');
     const responses: unknown[] = [sent];
 
     // Beklerken: iki kutuda da hedefin iletişimi yok.
@@ -368,6 +377,7 @@ describe('hesap silme (K-09)', () => {
 
   it('kişisel alanlar boşalır, oturumlar düşer, talepler kapanır, rıza kanıt olarak kalır; silinen hesap oturum açamaz', async () => {
     const { me, other, incoming, outgoing } = await richUser();
+    expect(await prisma.notificationIntent.count({ where: { userId: me.id } })).toBeGreaterThan(0);
     await deleteAccount(
       prisma,
       me.id,
@@ -386,6 +396,7 @@ describe('hesap silme (K-09)', () => {
     expect(user.deletedAt).not.toBeNull();
     expect(JSON.stringify(user)).not.toContain(me.email);
     expect(await prisma.user.count({ where: { email: me.email } })).toBe(0);
+    expect(await prisma.notificationIntent.count({ where: { userId: me.id } })).toBe(0);
     expect(await prisma.session.count({ where: { userId: me.id } })).toBe(0);
     expect(await prisma.account.count({ where: { userId: me.id } })).toBe(0);
     expect(await prisma.fieldVisibility.count({ where: { userId: me.id } })).toBe(0);

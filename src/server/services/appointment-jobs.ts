@@ -1,3 +1,4 @@
+import { stageAppointmentNotices } from './notification-intent';
 import 'server-only';
 
 import { CalendarError } from '../external/calendar/types';
@@ -5,6 +6,7 @@ import { reminderDueAt } from '../rules/appointmentLifecycle';
 import { hasActiveConsent } from '../rules/consent';
 import {
   appointmentSelect,
+  lockUsers,
   dispatchNotices,
   noticeFor,
   nowOf,
@@ -37,14 +39,15 @@ export async function expireDueRequests(
   const now = nowOf(deps);
   const due = await deps.db.appointment.findMany({
     where: { status: 'REQUESTED', expiresAt: { lte: now }, ...only(scope) },
-    select: { id: true },
+    select: { id: true, mentorId: true, menteeId: true },
     orderBy: { expiresAt: 'asc' },
     take: BATCH,
   });
   let expired = 0;
-  for (const { id } of due) {
+  for (const { id, mentorId, menteeId } of due) {
     let notices: AppointmentNotice[] = [];
     const changed = await deps.db.$transaction(async (tx) => {
+      await lockUsers(tx, [mentorId, menteeId]);
       await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${id} FOR UPDATE`;
       const row = await tx.appointment.findUnique({ where: { id }, select: appointmentSelect });
       // Yarış: mentor az önce yanıtladıysa dokunma.
@@ -52,6 +55,7 @@ export async function expireDueRequests(
         return false;
       await tx.appointment.update({ where: { id }, data: { status: 'EXPIRED' } });
       notices = [noticeFor('expired', row, 'MENTEE'), noticeFor('expired', row, 'MENTOR')];
+      await stageAppointmentNotices(tx, notices);
       return true;
     });
     if (changed) {
@@ -74,8 +78,14 @@ async function bothTransferConsents(deps: AppointmentDeps, row: AppointmentRow):
 }
 
 async function giveUpOnCalendar(deps: AppointmentDeps, id: string, now: Date, attempts: number) {
+  const parties = await deps.db.appointment.findUnique({
+    where: { id },
+    select: { mentorId: true, menteeId: true },
+  });
+  if (!parties) return;
   let notices: AppointmentNotice[] = [];
   await deps.db.$transaction(async (tx) => {
+    await lockUsers(tx, [parties.mentorId, parties.menteeId]);
     await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${id} FOR UPDATE`;
     const row = await tx.appointment.findUnique({ where: { id }, select: appointmentSelect });
     if (!row || row.status !== 'CONFIRMED' || row.meetUrl !== null || row.calendarFailedAt !== null)
@@ -85,6 +95,7 @@ async function giveUpOnCalendar(deps: AppointmentDeps, id: string, now: Date, at
       data: { calendarFailedAt: now, calendarAttempts: attempts },
     });
     notices = [noticeFor('linkNeeded', row, 'MENTOR')];
+    await stageAppointmentNotices(tx, notices);
   });
   await dispatchNotices(deps, notices);
 }
@@ -209,20 +220,22 @@ export async function sendDueReminders(deps: AppointmentDeps, scope?: SweepScope
       startsAt: { gt: now, lte: new Date(now.getTime() + 24 * 3_600_000) },
       ...only(scope),
     },
-    select: { id: true },
+    select: { id: true, mentorId: true, menteeId: true },
     orderBy: { startsAt: 'asc' },
     take: BATCH,
   });
   let sent = 0;
-  for (const { id } of due) {
+  for (const { id, mentorId, menteeId } of due) {
     let notices: AppointmentNotice[] = [];
     const marked = await deps.db.$transaction(async (tx) => {
+      await lockUsers(tx, [mentorId, menteeId]);
       await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${id} FOR UPDATE`;
       const row = await tx.appointment.findUnique({ where: { id }, select: appointmentSelect });
       if (!row || row.status !== 'CONFIRMED' || row.reminderSentAt !== null) return false;
       if (reminderDueAt(row.startsAt).getTime() > now.getTime()) return false;
       await tx.appointment.update({ where: { id }, data: { reminderSentAt: now } });
       notices = [noticeFor('reminder', row, 'MENTOR'), noticeFor('reminder', row, 'MENTEE')];
+      await stageAppointmentNotices(tx, notices);
       return true;
     });
     if (marked) {
