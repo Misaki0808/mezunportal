@@ -420,6 +420,20 @@ describe('şüphe taraması', () => {
     expect(await flagsOf(mentor)).toHaveLength(0);
   });
 
+  it('yanıt kaydı eksik görüşme taramayı bozmaz', async () => {
+    const mentor = await member('ALUMNI');
+    const student = await member();
+    const rows = [];
+    for (const iso of ['2030-04-10T10:00:00Z', '2030-05-10T10:00:00Z', '2030-06-10T10:00:00Z'])
+      rows.push(await session(mentor, student, new Date(iso), 'ONLINE', 10_000));
+    await db.sessionFeedback.deleteMany({
+      where: { appointmentId: rows[0]!.id, authorId: student },
+    });
+    await expect(scan()).resolves.toBeTruthy();
+    // eksik yanıtlı görüşme senkron sayılmaz: 2 görüşme < 3
+    expect((await flagsOf(mentor)).map((f) => f.rule)).toEqual(['SINGLE_COUNTERPART']);
+  });
+
   it('gelecekteki ve pencere dışındaki kayıtlar taramaya girmez', async () => {
     const mentor = await member('ALUMNI');
     const student = await member();

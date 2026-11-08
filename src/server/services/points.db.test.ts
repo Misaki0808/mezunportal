@@ -675,6 +675,48 @@ describe('geriye dönük hesaplama ve günlük uzlaştırma', () => {
     ]);
   });
 
+  it('bir öğenin hatası diğerlerini durdurmaz (failed sayılır)', async () => {
+    const moderator = await member();
+    const [a, b] = [await member(), await member()];
+    const first = await publishedExperience(a, moderator, new Date('2030-05-01T10:00:00Z'));
+    const second = await publishedExperience(b, moderator, new Date('2030-05-02T10:00:00Z'));
+    // `first` için deneyim okuması kopar; backfill öbürünü yine işler.
+    const flaky = new Proxy(db, {
+      get(target, prop) {
+        if (prop === '$transaction') {
+          return (run: (tx: unknown) => Promise<unknown>, options?: unknown) =>
+            target.$transaction(
+              (tx) =>
+                run(
+                  new Proxy(tx, {
+                    get(inner, key) {
+                      if (key === 'experience')
+                        return {
+                          findUnique: (args: { where: { id: string } }) =>
+                            args.where.id === first.id
+                              ? Promise.reject(new Error('bağlantı koptu'))
+                              : inner.experience.findUnique(args as never),
+                        };
+                      return (inner as never)[key];
+                    },
+                  }),
+                ),
+              options as never,
+            );
+        }
+        return (target as never)[prop];
+      },
+    });
+    const result = await runPointBackfill(
+      { ...deps, db: flaky as typeof db },
+      { since: new Date('2030-05-01T00:00:00Z') },
+    );
+    expect(result.failed).toBe(1);
+    expect(await entriesOf(a)).toHaveLength(0);
+    expect(await entriesOf(b)).toHaveLength(1);
+    void second;
+  });
+
   it('günlük iş: kaçırılan puanı tamamlar ve bekleyeni kesinleştirir', async () => {
     const { mentor, student } = await pair();
     const second_student = await member();

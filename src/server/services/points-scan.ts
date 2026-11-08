@@ -44,7 +44,8 @@ export async function runSuspicionScan(
   const live = {
     status: { not: 'REVOKED' as const },
     points: { gt: 0 },
-    eventAt: { gte: since, lte: now },
+    // Üst sınırı dedektörler uygular (`<= now`).
+    eventAt: { gte: since },
   };
   let scanned = 0;
   let flagged = 0;
@@ -69,7 +70,7 @@ export async function runSuspicionScan(
 async function scanUser(
   deps: PointDeps,
   userId: string,
-  live: { status: { not: 'REVOKED' }; points: { gt: number }; eventAt: { gte: Date; lte: Date } },
+  live: { status: { not: 'REVOKED' }; points: { gt: number }; eventAt: { gte: Date } },
   now: Date,
 ): Promise<number> {
   const rows = await deps.db.pointEntry.findMany({

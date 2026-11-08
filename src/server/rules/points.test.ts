@@ -173,6 +173,17 @@ describe('detectBurst', () => {
     expect(found?.points).toBe(50);
     expect(detectBurst([])).toBeNull();
   });
+  it('eşit puanlı iki pencerede en erkeni seçilir; sıfır puanlı kayıt işarete girmez', () => {
+    const found = detectBurst([
+      entry('a', 20, '2030-06-02T00:00:00Z'),
+      entry('z', 0, '2030-06-02T01:00:00Z'),
+      entry('b', 20, '2030-06-02T02:00:00Z'),
+      entry('c', 20, '2030-06-20T00:00:00Z'),
+      entry('d', 20, '2030-06-20T02:00:00Z'),
+    ]);
+    expect(found?.entryIds).toEqual(['a', 'b']);
+    expect(found?.windowStart).toEqual(d('2030-06-02T00:00:00Z'));
+  });
   it('eşik ve pencere sabitleri K-11 ile uyumlu', () => {
     expect(SUSPICION_THRESHOLDS.burstPoints).toBe(40);
     expect(SUSPICION_THRESHOLDS.burstWindowHours).toBe(24);
@@ -207,6 +218,16 @@ describe('detectSingleCounterpart', () => {
     ];
     expect(detectSingleCounterpart(small, now)).toBeNull(); // toplam 12 < 15
     expect(detectSingleCounterpart(make(3), d('2030-12-01T00:00:00Z'))).toBeNull();
+  });
+  it('toplam tabanı (15) dahil; karşı tarafsız kayıtlar tek başına işaret üretmez', () => {
+    const exactly = [
+      entry('a', 5, '2030-06-10T10:00:00Z', 'stu'),
+      entry('b', 5, '2030-06-11T10:00:00Z', 'stu'),
+      entry('c', 5, '2030-06-12T10:00:00Z', 'stu'),
+    ];
+    expect(detectSingleCounterpart(exactly, now)?.points).toBe(15);
+    const withoutCounterpart = [1, 2, 3].map((i) => entry(`e${i}`, 10, `2030-06-0${i}T10:00:00Z`));
+    expect(detectSingleCounterpart(withoutCounterpart, now)).toBeNull();
   });
   it('karşı tarafsız kayıtlar (deneyim) paya girmez ama toplama girer', () => {
     const list = [...make(3), entry('e', 30, '2030-06-25T10:00:00Z', null)]; // 30/60 = %50
@@ -249,6 +270,16 @@ describe('detectSyncFeedback', () => {
         points,
       ),
     ).toBeNull();
+  });
+  it('tam 180 gün önceki görüşme pencere dışıdır', () => {
+    const edge = { ...session('a', 1, 0), eventAt: new Date(now.getTime() - 180 * DAY) };
+    expect(
+      detectSyncFeedback([edge, session('b', 2, 0), session('c', 3, 0)], now, points),
+    ).toBeNull();
+    const inside = { ...edge, eventAt: new Date(now.getTime() - 180 * DAY + 1) };
+    expect(
+      detectSyncFeedback([inside, session('b', 2, 0), session('c', 3, 0)], now, points),
+    ).not.toBeNull();
   });
   it('yanıt sırası önemsiz (öğrenci önce yanıtlasa da), 180 gün dışı sayılmaz', () => {
     const early = { ...session('a', 1, 0), menteeFeedbackAt: d('2030-06-01T11:59:30Z') };

@@ -146,9 +146,10 @@ export async function awardForExperience(
   return deps.db.$transaction(async (tx) => {
     const row = await tx.experience.findUnique({
       where: { id: experienceId },
-      select: { status: true, authorId: true, isAnonymous: true, publishedAt: true },
+      select: { authorId: true, isAnonymous: true, publishedAt: true },
     });
-    if (!row || row.status !== 'PUBLISHED' || !row.authorId || !row.publishedAt) return null;
+    // Yayın anı yalnız PUBLISHED durumunda dolar (veritabanı CHECK'i); yazarı kopmuş içerik puan üretmez.
+    if (!row || !row.authorId || !row.publishedAt) return null;
     const result = await awardPoint(
       tx,
       {
