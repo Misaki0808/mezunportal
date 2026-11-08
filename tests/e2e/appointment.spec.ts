@@ -36,7 +36,14 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
   await db.availabilityRule.deleteMany({ where: { mentorId: mentor.id } });
   await db.mentorProfile.update({
     where: { userId: mentor.id },
-    data: { isActive: true, pausedUntil: null },
+    data: {
+      isActive: true,
+      pausedUntil: null,
+      monthlyCapacity: 40,
+      sessionMinutes: 30,
+      meetingModes: ['ONLINE'],
+      inPersonNote: null,
+    },
   });
   await db.rateLimit.deleteMany({});
 
@@ -203,7 +210,9 @@ test('inceleyici: iki oturum aynı slot için yarışır; kaybeden SLOT_TAKEN g�
     const loser = (await pages[0]!.getByRole('heading', { name: 'Talebin gönderildi' }).count())
       ? 1
       : 0;
-    await expect(pages[loser]!.getByRole('alert')).toHaveText(/az önce başkası tarafından alındı/);
+    await expect(
+      pages[loser]!.getByRole('alert').filter({ hasText: /az önce başkası tarafından alındı/ }),
+    ).toHaveText(/az önce başkası tarafından alındı/);
     await expect(pages[loser]!.getByRole('radio', { name: label!, exact: true })).toHaveCount(0);
     await expect.poll(() => refreshed[loser]).toBe(true);
   } finally {
@@ -230,6 +239,76 @@ test('inceleyici: iki oturum aynı slot için yarışır; kaybeden SLOT_TAKEN g�
         monthlyCapacity: profile.monthlyCapacity,
         sessionMinutes: profile.sessionMinutes,
         meetingModes: profile.meetingModes,
+      },
+    });
+  }
+});
+
+test('inceleyici: izin verilen uzun yer notu 360/390/1440 genişliğinde taşmaz', async ({
+  page,
+}) => {
+  test.setTimeout(60000);
+  const mentor = await db.user.findUniqueOrThrow({
+    where: { email: 'alumni-mentor@test.mezunportal.local' },
+  });
+  const profile = await db.mentorProfile.findUniqueOrThrow({ where: { userId: mentor.id } });
+  const rules = await db.availabilityRule.findMany({ where: { mentorId: mentor.id } });
+  try {
+    await db.mentorProfile.update({
+      where: { userId: mentor.id },
+      data: {
+        isActive: true,
+        pausedUntil: null,
+        monthlyCapacity: 40,
+        sessionMinutes: 30,
+        meetingModes: ['ONLINE', 'IN_PERSON'],
+        inPersonNote: 'Yer ' + 'L'.repeat(296),
+      },
+    });
+    await db.availabilityRule.deleteMany({ where: { mentorId: mentor.id } });
+    await db.availabilityRule.createMany({
+      data: Array.from({ length: 7 }, (_, i) => ({
+        mentorId: mentor.id,
+        weekday: i + 1,
+        startMinute: 540,
+        endMinute: 1020,
+        mode: null,
+      })),
+    });
+    await login(page, 'student');
+    await page.goto(`/randevu-al/${mentor.id}`);
+    await page.waitForLoadState('networkidle');
+    await page
+      .getByRole('radio', { name: /saatini seç/ })
+      .first()
+      .click();
+    await page.getByRole('radio', { name: 'Yüz yüze', exact: true }).click();
+    await expect(page.getByText(/Buluşma yeri: Yer L/)).toBeVisible();
+    for (const width of [360, 390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    }
+  } finally {
+    await db.availabilityRule.deleteMany({ where: { mentorId: mentor.id } });
+    if (rules.length)
+      await db.availabilityRule.createMany({
+        data: rules.map(({ mentorId, weekday, startMinute, endMinute, mode }) => ({
+          mentorId,
+          weekday,
+          startMinute,
+          endMinute,
+          mode,
+        })),
+      });
+    await db.mentorProfile.update({
+      where: { userId: mentor.id },
+      data: {
+        isActive: profile.isActive,
+        pausedUntil: profile.pausedUntil,
+        monthlyCapacity: profile.monthlyCapacity,
+        sessionMinutes: profile.sessionMinutes,
+        meetingModes: profile.meetingModes,
+        inPersonNote: profile.inPersonNote,
       },
     });
   }

@@ -27,7 +27,11 @@ export function SlotPicker({ list, request }: Props) {
   const modesT = useTranslations('appointments.modes');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
-  const [slots, setSlots] = useState(list.slots);
+  const [rejected, setRejected] = useState<{ source: SlotList['slots']; startsAt: string[] }>();
+  const excluded = rejected?.source === list.slots ? rejected.startsAt : [];
+  const slots = list.slots.filter(
+    (item) => !excluded.includes(new Date(item.startsAt).toISOString()),
+  );
   const groups = groupSlotsByDay(slots);
   const [dayKeySelected, setDayKey] = useState(groups[0]?.key);
   const [startsAt, setStartsAt] = useState<string>();
@@ -43,11 +47,6 @@ export function SlotPicker({ list, request }: Props) {
     if (done) doneRef.current?.focus();
   }, [done]);
 
-  useEffect(() => {
-    setSlots(list.slots);
-    setStartsAt(undefined);
-    setMode(undefined);
-  }, [list.slots]);
   const day = groups.find((group) => group.key === dayKeySelected) ?? groups[0];
   const slot = slots.find((item) => new Date(item.startsAt).toISOString() === startsAt);
   const modes = slot?.modes ?? [];
@@ -81,9 +80,13 @@ export function SlotPicker({ list, request }: Props) {
       else {
         setError(result.errorCode);
         if (['APPOINTMENT_SLOT_TAKEN', 'APPOINTMENT_SLOT_INVALID'].includes(result.errorCode)) {
-          setSlots((current) =>
-            current.filter((item) => new Date(item.startsAt).toISOString() !== startsAt),
-          );
+          setRejected((current) => ({
+            source: list.slots,
+            startsAt: [
+              ...(current?.source === list.slots ? current.startsAt : []),
+              new Date(slot.startsAt).toISOString(),
+            ],
+          }));
           setStartsAt(undefined);
           setMode(undefined);
           router.refresh();
@@ -272,7 +275,7 @@ export function SlotPicker({ list, request }: Props) {
         </p>
       )}
       {slot && effectiveMode === 'IN_PERSON' && list.mentor.inPersonNote && (
-        <p className="mt-2 text-base text-fg-muted">
+        <p className="mt-2 break-words text-base text-fg-muted [overflow-wrap:anywhere]">
           {t('place', { note: list.mentor.inPersonNote })}
         </p>
       )}
