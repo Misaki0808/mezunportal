@@ -41,6 +41,7 @@ import {
 import { consumeRateLimit } from './rateLimit';
 import type { EXPERIENCE_TYPES } from '@/contracts/experience';
 import { emitEvent } from './event';
+import { awardForExperience, awardSafely } from './points';
 import { requireConsent } from './privacy';
 
 type Tx = Prisma.TransactionClient;
@@ -236,6 +237,8 @@ export async function reviewExperience(
     authorId: string | null;
   } | null;
   if (done) {
+    // Puan (P1-16): yayın işlemi bittikten sonra; hata yayını bozmaz (günlük uzlaştırma tamamlar).
+    await awardSafely(() => awardForExperience({ db, now: () => now }, output.experienceId));
     emitEvent(
       db,
       done.anonymous ? null : done.authorId,

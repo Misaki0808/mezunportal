@@ -136,6 +136,7 @@ export async function buildDataExport(
   const iso = (date: Date | null) => (date ? date.toISOString() : null);
   const cv = await loadCvExport(db, userId, iso);
   const appointments = await loadAppointmentExport(db, userId);
+  const contribution = await loadContributionExport(db, userId, iso);
   const cvReviews = await db.cvReviewRequest.findMany({
     where: { OR: [{ studentId: userId }, { mentorId: userId }] },
     orderBy: { id: 'asc' },
@@ -202,6 +203,7 @@ export async function buildDataExport(
     },
     cv,
     appointments,
+    contribution,
     cvReviewRequests: cvReviews.map((row) => ({
       id: row.id,
       role: row.studentId === userId ? ('STUDENT' as const) : ('MENTOR' as const),
@@ -359,4 +361,56 @@ async function loadAppointmentExport(
       createdAt: row.createdAt.toISOString(),
     };
   });
+}
+
+/** Katkı puanı: kaynak içerik ve karşı taraf kimliği çıkmaz (anonim deneyim bağı, üçüncü kişi). */
+async function loadContributionExport(
+  db: PrismaClient,
+  userId: string,
+  iso: (date: Date | null) => string | null,
+): Promise<DataExport['contribution']> {
+  const [entries, badges, flags] = await Promise.all([
+    db.pointEntry.findMany({
+      where: { userId },
+      orderBy: { id: 'asc' },
+      select: {
+        action: true,
+        basePoints: true,
+        multiplierPercent: true,
+        points: true,
+        status: true,
+        eventAt: true,
+        createdAt: true,
+        revokedReason: true,
+      },
+    }),
+    db.userBadge.findMany({
+      where: { userId },
+      orderBy: { awardedAt: 'asc' },
+      select: { kind: true, awardedAt: true, revokedAt: true },
+    }),
+    db.suspicionFlag.findMany({
+      where: { userId },
+      orderBy: { id: 'asc' },
+      select: { rule: true, status: true, createdAt: true, decidedAt: true },
+    }),
+  ]);
+  return {
+    entries: entries.map((row) => ({
+      ...row,
+      eventAt: row.eventAt.toISOString(),
+      createdAt: row.createdAt.toISOString(),
+    })),
+    badges: badges.map((row) => ({
+      kind: row.kind,
+      awardedAt: row.awardedAt.toISOString(),
+      revokedAt: iso(row.revokedAt),
+    })),
+    suspicionFlags: flags.map((row) => ({
+      rule: row.rule,
+      status: row.status,
+      createdAt: row.createdAt.toISOString(),
+      decidedAt: iso(row.decidedAt),
+    })),
+  };
 }

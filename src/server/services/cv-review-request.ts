@@ -14,6 +14,7 @@ import { visibleMentorWhere } from './mentor-directory';
 import { viewerUniversityIds } from './search';
 import { monthRange } from '../rules/appointmentSlots';
 import { removeUploadFiles } from './cv-shared';
+import { awardForCvReview, awardSafely } from './points';
 
 type Db = Prisma.TransactionClient;
 export type CvReviewDeps = {
@@ -219,7 +220,7 @@ export async function answerRequest(
 }
 export async function markHelpful(deps: CvReviewDeps, userId: string, requestId: string) {
   const now = nowOf(deps);
-  return deps.db.$transaction(async (tx) => {
+  const result = await deps.db.$transaction(async (tx) => {
     await lockUsers(tx, [userId]);
     await actor(tx, userId, now);
     await tx.$queryRaw`SELECT "id" FROM "CvReviewRequest" WHERE "id" = ${requestId} FOR UPDATE`;
@@ -237,6 +238,9 @@ export async function markHelpful(deps: CvReviewDeps, userId: string, requestId:
       now,
     );
   });
+  // Puan (P1-16): "faydalı" işareti tek puan olayıdır; yazım işlem dışında, hatası akışı bozmaz (uzlaştırma tamamlar).
+  await awardSafely(() => awardForCvReview({ db: deps.db, now: deps.now }, requestId));
+  return result;
 }
 export async function listRequests(
   deps: CvReviewDeps,

@@ -142,6 +142,16 @@ export async function deleteAccount(
       data: { status: 'REVOKED', closedAt: now },
     });
 
+    // Katkı puanı (P1-16): kişiye ait puan kayıtları, etiketler ve şüphe işaretleri silinir; başkalarının kayıtlarındaki
+    // karşı taraf bağı kopar (kayıt ve puan kalır). Önce etiket: kaynak kayıt silinmeden bağ düşer.
+    await tx.userBadge.deleteMany({ where: { userId } });
+    await tx.suspicionFlag.deleteMany({ where: { userId } });
+    await tx.pointEntry.deleteMany({ where: { userId } });
+    await tx.pointEntry.updateMany({
+      where: { counterpartId: userId },
+      data: { counterpartId: null },
+    });
+
     // Kullanım olayları (P1-13): sayılar kalır, kullanıcıyla bağ hemen kopar.
     await tx.event.updateMany({ where: { userId }, data: { userId: null } });
 
