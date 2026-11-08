@@ -155,8 +155,6 @@ Taslak plan: `docs/faz2-plan.md` (adım ayrıntıları, dalga sırası, onay nok
   puanları (gecikmeli).
 - **P2-04 · Mezun staj ilanları** — moderasyonlu, son başvuru tarihli; ilan puanı.
 - **P2-05 · İlan eşleştirme bildirimi** — profili uyan öğrencilere.
-- **P2-06 · Ters yönlü arama** — “staj arıyorum” etiketli öğrencileri işe alım yapan mezunlar
-  bulur (öğrencinin açık rızasıyla).
 - **P2-07 · Beceri açığı analizi** — hedef pozisyondaki mezunların becerileriyle küme farkı;
   yapay zekâ gerekmez.
 - **P2-08 · Seçmeli ders rehberi** — mezunların “işimde işe yarayan dersler” işaretleri.

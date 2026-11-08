@@ -82,6 +82,11 @@ export async function buildDataExport(
           completedSteps: true,
           skippedSteps: true,
           mentorInterested: true,
+          seekingInternship: true,
+          seekingTermYear: true,
+          seekingTermSeason: true,
+          seekerViewCount: true,
+          hiringDeclaredAt: true,
           cvUpdatedAt: true,
           lastFreshnessPromptAt: true,
           lastStillThereCheckAt: true,
@@ -196,6 +201,7 @@ export async function buildDataExport(
     profile: user.profile
       ? exportedProfileSchema.parse({
           ...user.profile,
+          hiringDeclaredAt: iso(user.profile.hiringDeclaredAt),
           cvUpdatedAt: iso(user.profile.cvUpdatedAt),
           lastFreshnessPromptAt: iso(user.profile.lastFreshnessPromptAt),
           lastStillThereCheckAt: iso(user.profile.lastStillThereCheckAt),

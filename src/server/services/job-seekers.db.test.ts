@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { SEEKER_CARDS_PER_DAY, SEEKER_CONTACTS_PER_MONTH } from '@/contracts/job-seekers';
 import { CURRENT_CONSENT_VERSIONS } from '@/contracts/privacy';
@@ -13,6 +13,7 @@ import {
 } from '@/test/fixtures';
 
 import { deleteAccount } from './accountDeletion';
+import { buildDataExport } from './dataExport';
 import { listContactRequests, sendContactRequest } from './contactRequest';
 import { settleEvents } from './event';
 import {
@@ -34,7 +35,7 @@ afterAll(() => db.$disconnect());
 
 let inst: Institution;
 let other: Institution;
-beforeAll(async () => {
+beforeEach(async () => {
   inst = await createInstitution(db);
   other = await createInstitution(db);
 });
@@ -566,6 +567,16 @@ describe('P2-06 rıza geri alma ve kapatma', () => {
     expect(after).toMatchObject({ seekingTermYear: 2031, seekingTermSeason: 'SPRING' });
     const settings = await getMySeekerSettings(deps, student.userId);
     expect(settings.preview).toMatchObject({ termYear: 2031, departmentName: 'Bölüm A1' });
+    const dump = await buildDataExport(db, student.userId);
+    expect(dump.profile).toMatchObject({
+      seekingInternship: true,
+      seekingTermYear: 2031,
+      seekingTermSeason: 'SPRING',
+      seekerViewCount: expect.any(Number),
+      hiringDeclaredAt: null,
+    });
+    expect(dump.profile).not.toHaveProperty('seekerRef');
+    expect(JSON.stringify(dump)).not.toContain(student.ref);
     expect(JSON.stringify(settings.preview)).not.toContain(student.ref!);
   });
 

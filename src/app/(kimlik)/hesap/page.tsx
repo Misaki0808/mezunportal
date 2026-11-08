@@ -39,6 +39,7 @@ export default async function AccountPage() {
     faq,
     appointments,
     mentor,
+    seekers,
   ] = await Promise.all([
     getVerificationState().catch(() => null),
     hasAdminAccess(),
@@ -52,6 +53,7 @@ export default async function AccountPage() {
     getTranslations('faq.entry'),
     getTranslations('appointments.account'),
     getMyMentorSettings().catch(() => null),
+    getTranslations('seekers'),
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -81,6 +83,28 @@ export default async function AccountPage() {
       description: statusLabel,
       icon: BadgeCheckIcon,
     },
+    ...(canAskFaq
+      ? [
+          {
+            href: '/hesap/staj-ariyorum',
+            title: seekers('accountTitle'),
+            description: seekers('accountDescription'),
+            icon: UserIcon,
+          },
+        ]
+      : []),
+    ...(actor.facts.memberships.some(
+      (m) => m.role === 'ALUMNI' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
+    )
+      ? [
+          {
+            href: '/adaylar',
+            title: seekers('searchAccountTitle'),
+            description: seekers('searchAccountDescription'),
+            icon: InboxIcon,
+          },
+        ]
+      : []),
     ...(state.data.status === 'VERIFIED'
       ? [
           {
@@ -222,6 +246,8 @@ export default async function AccountPage() {
       tone: 'accent',
       hrefs: [
         '/randevular',
+        '/adaylar',
+        '/hesap/staj-ariyorum',
         '/mentor/ayarlar',
         '/deneyimlerim',
         '/hesap/gorusmeler',
