@@ -892,3 +892,5 @@ gerçek ad ("Ahmete sordum") artık engel değil uyarıdır; moderatör ad oldu�
 metindeki sözcük). Moderatör ekranı (uyarı + onay düğmesi) #54 main'e girince bağlanır.
 
 **İlan eşleştirme (P2-05, PM kararı).** İlanın metninden etiket türetilmez: yazar sözlükten en çok beş etiket ve isteğe bağlı 1–4 sınıf alt kümesi seçer. Hedef bölüm zorunludur; sınıf seçiliyse öğrenci sınıfı içinde olmalı ve bildirim için en az bir ortak etiket bulunmalıdır. Etiketsiz ilan uygun bölüm/sınıf panosunda görünür, bildirim oluşturmaz. Yayın işlemindeki niyetler İstanbul gününe göre özetlenir; günde bir, kayan yedi günde en çok üç e-posta gönderilir. Küçük erişim sayıları (üçten az) gizlenir.
+
+P2-05 geri alma: önce eski uygulama sürümüne dönülür; yeni eşleşme verisi korunacaksa yedeklenir. Yalnız bu özelliğin `JobMatchDigest`, `JobMatch`, `JobPostingTag` tabloları ve `JobPosting.targetGrades` sütunu kaldırılabilir; mevcut ilan/profil/etiket kayıtlarına dokunulmaz. PostgreSQL `NotificationType.JOB_MATCH` enum değeri silinmez, kullanılmadan kalır. Yerel geri alma provası yalnız ayrılmış test kopyasında yapılır; uygulanmış migration dosyaları değiştirilmez.

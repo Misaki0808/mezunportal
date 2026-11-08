@@ -80,7 +80,7 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
       {!!posting.matchTags?.length && (
         <div className="flex min-w-0 items-center gap-1.5 text-xs sm:flex-col sm:items-start sm:gap-2">
           <p className="shrink-0 font-semibold">{t('whyMatch')}</p>
-          <div className="flex min-w-0 gap-1 overflow-hidden sm:flex-wrap sm:gap-2">
+          <div className="flex min-w-0 gap-1 overflow-x-auto sm:flex-wrap sm:gap-2">
             {posting.matchTags.map((tag) => (
               <Badge key={tag.slug} tone="info" className="max-w-full shrink-0">
                 {tag.label ??

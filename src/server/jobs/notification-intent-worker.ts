@@ -47,7 +47,7 @@ export async function sendNotificationIntent(db: PrismaClient, row: IntentRecord
     const today = istanbulDay(new Date());
     await db.$transaction(async (tx) => {
       // Bir öğrencinin günlük ve yedi günlük sınırları bütün işçiler arasında serileştirilir.
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`job-match:${row.userId}`}, 0))`;
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`job-match:${row.userId}`}, 0))::text`;
       const user = await tx.user.findUnique({
         where: { id: row.userId },
         select: { email: true, deletedAt: true, banned: true, banExpires: true },
