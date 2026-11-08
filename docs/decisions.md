@@ -627,6 +627,14 @@ değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki y�
 Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
 kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 
+## 2026-11-08 · Üretilmiş arama sütunları ve GIN indeksleri şemada modellenir
+`prisma migrate dev`, şemada olmayan GENERATED ALWAYS arama sütunları (`Experience.searchVector`/`searchKeys`) ve 6 GIN
+indeksi için sonraki her migration'a yanlış `ALTER`/`DROP INDEX` yazıyordu; uygulanırsa arama bozulurdu. İndeksler
+`@@index(type: Gin, ops: raw("gin_trgm_ops"))`, sütunlar `@default(dbgenerated())` ile modellenince `migrate diff` boş
+çıktı. Bedel: `searchKeys` istemcide sıradan `String?` görünür; Prisma istemcisinde global `omit`
+(`src/lib/prisma-options.ts`) ile hiçbir sorguda varsayılan dönmez, ham SQL arama yine okur (`searchVector`
+`Unsupported` olduğundan istemcide zaten yoktur). Migration bekçi testi (`prisma/migration-guard.test.ts`) ikinci kemer
+olarak kalır. Reddedilen: yalnız elle düzeltme notu (insan hatasına açık).
 ## 2026-11-08 · Bildirim tercihleri ve yıllık doğrulama (P1-12)
 
 Zorunlu hesap/güvenlik iletileri kapatılamaz; diğer türler varsayılan açık olup hem kuyruğa alınırken hem de teslimden
