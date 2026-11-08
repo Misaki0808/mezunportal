@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
+import { nextLogging } from './src/lib/dev-logging';
+
 const isProduction = process.env.NODE_ENV === 'production';
 // HSTS yalnız canlıda (P1-18); yerelde http ile açılır.
 const isLive = process.env.APP_ENV === 'prod';
@@ -47,6 +49,8 @@ const nextConfig: NextConfig = {
   },
   // Yerel telefon testinde alt gezinmeyi örtmesin; hata katmanı açık kalır.
   devIndicators: false,
+  // Sunucu eylemi argümanları ve jetonlu istek satırları günlüğe yazılmaz (src/lib/dev-logging.ts).
+  logging: nextLogging,
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },

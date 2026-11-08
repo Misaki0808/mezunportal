@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { CHECK_EMAIL_RESPONSE } from '@/contracts/auth';
+import { CHECK_EMAIL_RESPONSE, EMAIL_CHANGE_RETURN_PATHS } from '@/contracts/auth';
 import { isCodedError, type ErrorCode } from '@/lib/errors';
 import { createTestPrisma } from '@/test/db';
 import { createTestAuth, signInWithMagicLink, testAuthEnv, uniqueAddress } from '@/test/auth';
@@ -409,6 +409,31 @@ describe('requestSignInLink: kayıtlı/kayıtsız e-postaya AYNI yanıt, hız s�
     }
   });
 
+  it('dönüş yolu: güvenli site içi yol bağlantının callbackURL değerine taşınır; yabancı/güvensiz yol varsayılana düşer', async () => {
+    const harness = createTestAuth(prisma);
+    const deps = { db: prisma, ...harness };
+    const cases: [string | undefined, string][] = [
+      ['/hesap/gizlilik?sekme=1', '/hesap/gizlilik?sekme=1'],
+      [undefined, '/'],
+      ['https://kotu.example/ele-gecir', '/'],
+      ['//kotu.example', '/'],
+      ['/\\kotu.example', '/'],
+      ['javascript:alert(1)', '/'],
+      ['/giris', '/'],
+    ];
+    for (const [returnTo, expected] of cases) {
+      const before = harness.sent.signInLinks.length;
+      await flow.requestSignInLink(deps, {
+        email: uniqueAddress('ornek.test', 'donus'),
+        headers: new Headers(),
+        clientIp: null,
+        returnTo,
+      });
+      const url = new URL(harness.sent.signInLinks[before]?.url ?? '');
+      expect(url.searchParams.get('callbackURL')).toBe(expected);
+    }
+  });
+
   it('e-posta kuyruğu çökse bile yanıt aynıdır (hata yutulur); hiçbir kod kayıt durumunu ele vermez', async () => {
     const harness = createTestAuth(prisma);
     harness.fail.all = true;
@@ -554,6 +579,10 @@ describe('e-posta değiştirme (iki adımlı: eski adres onaylar, yeni adres do�
       userId,
     });
     expect(harness.sent.changeVerifications).toHaveLength(0); // yeni adrese henüz gitmedi
+    // İki bağlantı ayrı ekrana döner (sabit site içi yollar).
+    expect(
+      new URL(harness.sent.changeConfirmations[0]?.url ?? '').searchParams.get('callbackURL'),
+    ).toBe(EMAIL_CHANGE_RETURN_PATHS.oldAddressConfirmed);
 
     // 1. adım: eski adresteki bağlantıya tıkla → yeni adrese doğrulama gider
     const confirmToken =
@@ -565,6 +594,9 @@ describe('e-posta değiştirme (iki adımlı: eski adres onaylar, yeni adres do�
     });
     expect(harness.sent.changeVerifications).toHaveLength(1);
     expect(harness.sent.changeVerifications[0]).toMatchObject({ to: newAddress, userId });
+    expect(
+      new URL(harness.sent.changeVerifications[0]?.url ?? '').searchParams.get('callbackURL'),
+    ).toBe(EMAIL_CHANGE_RETURN_PATHS.completed);
     expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).email).toBe(oldAddress);
 
     // 2. adım: yeni adresteki bağlantıya tıkla → e-posta değişir
@@ -580,7 +612,7 @@ describe('e-posta değiştirme (iki adımlı: eski adres onaylar, yeni adres do�
     expect((await harness.auth.api.getSession({ headers }))?.user.id).toBe(userId);
   });
 
-  it('yeni adres başkasına aitse ya da aynıysa yanıt yine CHECK_EMAIL’dir ve hiçbir e-posta gitmez', async () => {
+  it('yeni adres başkasına aitse CHECK_EMAIL (sızıntı yok); kendi mevcut adresi EMAIL_CHANGE_SAME_ADDRESS; hiçbir e-posta gitmez', async () => {
     const harness = createTestAuth(prisma);
     const deps = { db: prisma, ...harness, now: () => NOW };
     const mine = uniqueAddress('ornek.test', 'benim');
@@ -592,9 +624,14 @@ describe('e-posta değiştirme (iki adımlı: eski adres onaylar, yeni adres do�
     await expect(
       flow.requestEmailChange(deps, actor, { newEmail: taken, headers }),
     ).resolves.toEqual(CHECK_EMAIL_RESPONSE);
-    await expect(
-      flow.requestEmailChange(deps, actor, { newEmail: mine, headers }),
-    ).resolves.toEqual(CHECK_EMAIL_RESPONSE);
+    expect(await codeOf(flow.requestEmailChange(deps, actor, { newEmail: mine, headers }))).toBe(
+      'EMAIL_CHANGE_SAME_ADDRESS',
+    );
+    expect(
+      await codeOf(
+        flow.requestEmailChange(deps, actor, { newEmail: `  ${mine.toUpperCase()} `, headers }),
+      ),
+    ).toBe('EMAIL_CHANGE_SAME_ADDRESS');
     expect(harness.sent.changeConfirmations).toHaveLength(0);
     expect(harness.sent.changeVerifications).toHaveLength(0);
   });

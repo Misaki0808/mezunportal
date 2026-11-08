@@ -42,7 +42,14 @@ kural sunucuda zorlanır.
   SAKLANMAZ (sağlayıcıya girişten sonra bir daha gidilmez). Hesap bağlama yalnız sağlayıcı e-postayı
   doğrulanmış bildirirse ve e-posta eşleşirse olur; güvenilir-sağlayıcı listesi boştur (hesap devralma yok).
 - **E-posta değiştirme** iki adımlıdır: eski adrese onay bağlantısı, onaydan sonra yeni adrese doğrulama
-  bağlantısı. Yeni adres başkasına aitse ya da aynıysa yanıt aynıdır ve e-posta gitmez.
+  bağlantısı. Yeni adres başkasına aitse yanıt aynıdır ve e-posta gitmez (kayıt durumu sızmaz); kullanıcının
+  kendi mevcut adresi `EMAIL_CHANGE_SAME_ADDRESS` ile reddedilir. İki bağlantı sabit site içi yollara döner
+  (`/hesap/e-posta?adim=eski-onaylandi` / `tamamlandi`; değer beyaz listeden okunur).
+- **Oturum ve dönüş yolu:** oturum isteyen sayfa (`PrivacyGuard`) oturumsuz kullanıcıyı (çıkış yapmış, silinmiş
+  hesap dahil) girişe, zorunlu onayı eksik kullanıcıyı onaya yönlendirir; gidilmek istenen yol `?donus=` ile
+  taşınır ve magic-link geri çağrısına konur. **Açık yönlendirme yoktur:** yalnız `/` ile başlayan site içi
+  yol (`//`, ters eğik çizgi, şema, kontrol karakteri yok; giriş/onay/çıkış/API yollarına dönülmez —
+  `src/lib/return-path.ts`). Yol, `proxy.ts`'in sunucuda yazdığı başlıktan okunur (istemcinin gönderdiği ezilir).
 - **Alan adı doğrulaması** (D2) seçilen bölümün ÜNİVERSİTESİNİN `University` kaydındaki alan adı listesine
   göredir, tam eşleşmedir (alt alan adı/benzer alan adı eşleşmez); e-posta doğrulanmış olmalıdır; mezun alan
   adıyla doğrulanamaz.
@@ -111,7 +118,11 @@ kimlikler). Sistem yöneticisi panelden görür.
 - **Görünürlük seviyeleri:** `PRIVATE` (yalnız sahibi; yönetici yalnız görev ekranında, maskeli) ·
   `ON_APPROVED_REQUEST` (onaylı iletişim talebi sahibine) · `MEMBERS` (doğrulanmış üyelere).
   Varsayılan: e-posta ve telefon `ON_APPROVED_REQUEST`; sosyal linkler ve LinkedIn `MEMBERS`.
-- **İletişim talebi** onaylanınca ilgili alanlar o kişiye açılır; sahibi istediği an geri alır.
+- **İletişim talebi** onaylanınca ilgili alanlar o kişiye açılır; sahibi istediği an geri alır. Talep formu
+  önizlemesi (`previewContactTarget`) kullanıcı varlığını sızdırmaz: hedef yok, silinmiş, askıda, kendisi ya
+  da talep alabileceği alanı yoksa yanıt aynıdır; saatte 60 ile sınırlıdır.
+- **Rıza kapısı yönetimde de geçerlidir:** zorunlu onayı güncel olmayan yönetici belge kuyruğunu, belge
+  dosyasını ve kararı kullanamaz (`CONSENT_REQUIRED`; yetki kontrolünden sonra, yetkisize rıza durumu söylenmez).
 - **Randevu onayında e-posta paylaşılır** (takvim daveti için); talep ekranında önceden yazılır.
 - **Hesap silme:** oturumlar düşer, kişisel alanlar anında temizlenir, dosyalar silinir;
   yayınlanmış içerik kullanıcının seçimine göre silinir (varsayılan) ya da anonimleştirilir (K-09,
@@ -155,6 +166,9 @@ yığın izi kullanıcıya gösterilmez. Ayrıntı `docs/architecture.md` “Dı
 - `.env*` repoya girmez; değerler Git dışı `korunan/` klasöründe ve yerel `.env.local`'dadır.
 - Loglanmaz: jeton, parola, giriş bağlantısı, CV/belge içeriği, LLM girdi/çıktısı. E-posta ve
   telefon maskeli (`src/lib/mask.ts`: `maskEmail`, `maskPhone`, serbest metin için `maskPersonalData`).
+- Geliştirme sunucusu da (telefon testi `dev:lan` ile yapılır) bu kurala uyar: Next.js'in sunucu eylemi
+  argüman günlüğü kapalıdır; jeton/doğrulama taşıyan istek satırları (`/api/auth/`, `token=`, `code=`…) ve
+  belge dosyası yolu yazılmaz (`src/lib/dev-logging.ts`, `next.config.ts` `logging`).
 
 ## Güvenlik başlıkları
 
