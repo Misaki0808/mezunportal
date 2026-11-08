@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { TEST_PERSONAS } from '../../prisma/seed-data';
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
@@ -26,6 +27,30 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
   );
   const [alumni, admin, student] = await Promise.all(contexts.map((c) => c.newPage()));
   let postingId: string | undefined;
+  const tag = await db.tag.findUniqueOrThrow({
+    where: { kind_slug: { kind: 'INTEREST', slug: 'software' } },
+  });
+  const seededStudent = await db.user.findUniqueOrThrow({
+    where: { email: TEST_PERSONAS.student.email },
+    select: { id: true },
+  });
+  const profile = await db.profile.upsert({
+    where: { userId: seededStudent.id },
+    create: { userId: seededStudent.id },
+    update: {},
+  });
+  const initialIntents = await db.notificationIntent.findMany({
+    where: { userId: seededStudent.id, kind: 'jobMatch' },
+    select: { id: true },
+  });
+  const hadTag = await db.profileTag.findUnique({
+    where: { profileId_tagId: { profileId: profile.id, tagId: tag.id } },
+  });
+  await db.profileTag.upsert({
+    where: { profileId_tagId: { profileId: profile.id, tagId: tag.id } },
+    create: { profileId: profile.id, tagId: tag.id },
+    update: {},
+  });
   try {
     await login(alumni!, 'alumniMentor');
     await alumni!.goto('/ilanlar/yeni');
@@ -46,6 +71,7 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
       .getByRole('checkbox', { name: /Yönetim Bilişim Sistemleri/ })
       .first()
       .check();
+    await alumni!.getByRole('checkbox', { name: 'Yazılım geliştirme' }).check();
     await alumni!.getByLabel('HTTPS başvuru bağlantısı').fill('https://example.org/staj');
     await alumni!.getByRole('button', { name: 'Devam et' }).click();
     await alumni!.getByRole('button', { name: 'İncelemeye gönder' }).click();
@@ -66,6 +92,14 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     );
     await login(student!, 'student');
     await db.jobPosting.update({ where: { id: postingId }, data: { location: 'K'.repeat(90) } });
+    await student!.goto('/');
+    await expect(student!.getByRole('heading', { name: 'Sana uyan ilanlar' })).toBeVisible();
+    await expect(student!.getByRole('link', { name: new RegExp(title) })).toBeVisible();
+    await student!.goto('/hesap/bildirimler');
+    await expect(
+      student!.getByRole('heading', { name: 'Sana uyan ilan bildirimleri' }),
+    ).toBeVisible();
+    await expect(student!.getByRole('link', { name: new RegExp(title) })).toBeVisible();
     await student!.setViewportSize({ width: 360, height: 780 });
     await student!.goto('/ilanlar');
     await student!.getByLabel('Pozisyon veya kurum ara').fill(title);
@@ -76,6 +110,8 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     );
     await student!.setViewportSize({ width: 390, height: 844 });
     await student!.getByRole('heading', { name: title }).getByRole('link').click();
+    await expect(student!.getByText('Neden sana uygun?')).toBeVisible();
+    await expect(student!.getByText('Yazılım geliştirme')).toBeVisible();
     const apply = student!.getByRole('link', { name: /Başvur/ });
     await expect(apply).toHaveAttribute('href', 'https://example.org/staj');
     await expect(apply).toHaveAttribute('rel', 'noopener noreferrer');
@@ -130,6 +166,15 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     expect(await student!.content()).not.toContain(writer.name);
   } finally {
     await Promise.all(contexts.map((c) => c.close()));
+    await db.notificationIntent.deleteMany({
+      where: {
+        userId: seededStudent.id,
+        kind: 'jobMatch',
+        id: { notIn: initialIntents.map((i) => i.id) },
+      },
+    });
+    if (!hadTag)
+      await db.profileTag.deleteMany({ where: { profileId: profile.id, tagId: tag.id } });
     postingId ??= (await db.jobPosting.findFirst({ where: { title }, select: { id: true } }))?.id;
     if (postingId) {
       await db.contactRequest.deleteMany({ where: { message: { contains: title } } });

@@ -79,14 +79,16 @@ export async function sendNotificationIntent(db: PrismaClient, row: IntentRecord
         where: { userId: row.userId, day: { gte: addDays(today, -6), lte: today } },
       });
       if (recent >= 3) return;
-      const url = new URL('/ilanlar', getAuthEnv().APP_URL).href;
+      const url = new URL('/hesap/bildirimler', getAuthEnv().APP_URL).href;
       const result = await enqueueEmail({
         to: user.email,
         recipientUserId: row.userId,
         template: 'jobMatch.digest',
         idempotencyKey: `job-match:${row.userId}:${today}:${payload.day}`,
         subject: messages.notifications.email.jobMatchSubject,
-        text: messages.notifications.email.jobMatchText.replace('{url}', url),
+        text: messages.notifications.email.jobMatchText
+          .replace('{url}', url)
+          .replace('{count}', String(active)),
       });
       if (result.emailLogId)
         await tx.jobMatchDigest.create({ data: { userId: row.userId, day: today } });

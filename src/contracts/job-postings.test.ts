@@ -326,6 +326,7 @@ describe('çıktı şemaları: kimlik sızıntısı yok', () => {
     expect(
       jobPostingFormContextSchema.safeParse({
         authorDepartments: [],
+        availableTags: [],
         targetDepartments: [],
         limits: { maxDays: 60, submitLimit: 5, submitWindowDays: 30, maxTargets: 10 },
       }).success,

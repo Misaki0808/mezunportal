@@ -2016,7 +2016,7 @@
       "migrationSubject": "E-posta adresini güncel tut",
       "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}",
       "jobMatchSubject": "Sana uyan yeni fırsatlar",
-      "jobMatchText": "Profiline uyan yeni ilanları incele: {url}"
+      "jobMatchText": "Sana uygun {count} yeni ilan var. Eşleşmelerini incele: {url}"
     },
     "stillThere": {
       "title": "Çalışma bilgini doğrula",
@@ -2030,6 +2030,10 @@
       "successNo": "Yanıtın kaydedildi. İstersen profilindeki çalışma bilgilerini güncelle.",
       "invalid": "Bu bağlantı geçersiz, kullanılmış veya süresi dolmuş.",
       "profile": "Profiline git"
+    },
+    "jobMatches": {
+      "title": "Sana uyan ilan bildirimleri",
+      "empty": "Henüz ilan eşleşmesi bildirimin yok."
     }
   },
   "feedback": {

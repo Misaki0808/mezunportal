@@ -25,7 +25,7 @@ function database(
       create: vi.fn(),
     },
   };
-  return { tx, db: { $transaction: async (fn: (tx: typeof tx) => Promise<void>) => fn(tx) } };
+  return { tx, db: { $transaction: async (fn: (client: typeof tx) => Promise<void>) => fn(tx) } };
 }
 beforeEach(() => {
   vi.clearAllMocks();
@@ -36,6 +36,12 @@ describe('ilan özeti', () => {
     const { db, tx } = database();
     await sendNotificationIntent(db as never, { id: 'intent', userId: 'student', payload });
     expect(mocks.enqueue).toHaveBeenCalledTimes(1);
+    expect(mocks.enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({ text: expect.stringContaining('1 yeni ilan') }),
+    );
+    expect(mocks.enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({ text: expect.stringContaining('/hesap/bildirimler') }),
+    );
     expect(tx.jobMatchDigest.create).toHaveBeenCalledTimes(1);
   });
   it.each([{ enabled: false }, { active: 0 }, { existing: true }, { recent: 3 }])(

@@ -181,3 +181,44 @@ export async function sharedJobMatchTags(
   }
   return results;
 }
+
+/** Uygulama içi geçmiş yalnız sahibine ve hâlâ açık, kapsamındaki ilanlara gösterilir. */
+export async function listMyJobMatchNotifications(
+  db: import('@/generated/prisma/client').PrismaClient,
+  userId: string,
+  now = new Date(),
+) {
+  const memberships = await db.membership.findMany({
+    where: {
+      userId,
+      role: 'STUDENT',
+      endedAt: null,
+      verificationStatus: 'VERIFIED',
+      user: { deletedAt: null },
+    },
+    select: { departmentId: true },
+  });
+  if (!memberships.length) return [];
+  const today = istanbulDay(now);
+  const rows = await db.jobMatch.findMany({
+    where: {
+      userId,
+      posting: {
+        status: 'PUBLISHED',
+        deadlineOn: { gte: new Date(`${today}T00:00:00Z`) },
+        targets: { some: { departmentId: { in: memberships.map((m) => m.departmentId) } } },
+      },
+    },
+    select: {
+      createdAt: true,
+      posting: { select: { id: true, title: true, organizationName: true } },
+    },
+    orderBy: [{ createdAt: 'desc' }, { postingId: 'asc' }],
+  });
+  return rows.map((row) => ({
+    day: istanbulDay(row.createdAt),
+    id: row.posting.id,
+    title: row.posting.title ?? '',
+    organizationName: row.posting.organizationName ?? '',
+  }));
+}
