@@ -85,6 +85,7 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
       .filter({ hasText: organization })
       .getByRole('button', { name: 'Onayla' })
       .click();
+    await adminPage!.getByRole('dialog').getByRole('button', { name: 'Onayla' }).click();
     await expect
       .poll(
         async () => (await db.referralClaim.findUniqueOrThrow({ where: { id: claim.id } })).status,
@@ -101,6 +102,12 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
       .filter({ hasText: organization })
       .getByRole('button', { name: 'Onayla' })
       .click();
+    await expect(
+      mentorPage!
+        .locator('li')
+        .filter({ hasText: organization })
+        .getByText('Kabul için yönetici onayı bekleniyor'),
+    ).toBeVisible();
     await adminPage!.reload();
     await expect(adminPage!.locator('[data-hydrated=true]')).toBeVisible();
     await adminPage!
@@ -108,6 +115,7 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
       .filter({ hasText: organization })
       .getByRole('button', { name: 'Onayla' })
       .click();
+    await adminPage!.getByRole('dialog').getByRole('button', { name: 'Onayla' }).click();
     await expect
       .poll(
         async () => (await db.referralClaim.findUniqueOrThrow({ where: { id: claim.id } })).status,
@@ -119,7 +127,7 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
         true,
       );
   } finally {
-    await Promise.all(contexts.map((context) => context.close()));
+    await Promise.allSettled(contexts.map((context) => context.close()));
     if (claimId) {
       await db.notificationIntent.deleteMany({ where: { key: { contains: claimId } } });
       await db.pointEntry.deleteMany({ where: { sourceId: claimId } });

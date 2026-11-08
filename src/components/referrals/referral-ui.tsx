@@ -4,7 +4,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition, type FormEvent } from 'react';
-import type { ReferralCandidates, ReferralPage, ReferralView } from '@/contracts/referrals';
+import {
+  proposeReferralSchema,
+  reviewReferralSchema,
+  type ReferralCandidates,
+  type ReferralPage,
+  type ReferralView,
+} from '@/contracts/referrals';
 import {
   Badge,
   Button,
@@ -35,17 +41,36 @@ export function ReferralCreate({
   const [organizationName, setOrganization] = useState('');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [pending, start] = useTransition();
   function submit(event: FormEvent) {
     event.preventDefault();
+    const input = {
+      studentId,
+      ...(postingId ? { jobPostingId: postingId } : { organizationName }),
+      note,
+    };
+    const parsed = proposeReferralSchema.safeParse(input);
+    if (!parsed.success) {
+      setFieldErrors(
+        Object.fromEntries(
+          parsed.error.issues.map((issue) => [String(issue.path[0]), errors('VALIDATION_INVALID')]),
+        ),
+      );
+      return;
+    }
+    setFieldErrors({});
+    setError('');
     start(async () => {
-      const result = await actions.proposeReferral({
-        studentId,
-        ...(postingId ? { jobPostingId: postingId } : { organizationName }),
-        note,
-      });
+      const result = await actions.proposeReferral(input);
       if (!result.ok) {
         setError(errors(result.errorCode));
+        if (result.fieldErrors)
+          setFieldErrors(
+            Object.fromEntries(
+              Object.entries(result.fieldErrors).map(([key, code]) => [key, errors(code)]),
+            ),
+          );
         return;
       }
       router.push('/hesap/referanslar');
@@ -64,7 +89,7 @@ export function ReferralCreate({
         </div>
       ) : (
         <form onSubmit={submit} className="mt-8 grid gap-5">
-          <Field label={t('student')} required>
+          <Field label={t('student')} error={fieldErrors.studentId} required>
             {(p) => (
               <Select {...p} value={studentId} onChange={(e) => setStudent(e.target.value)}>
                 <option value="">{t('choose')}</option>
@@ -91,7 +116,7 @@ export function ReferralCreate({
             </Field>
           )}
           {!postingId && (
-            <Field label={t('organization')} required>
+            <Field label={t('organization')} error={fieldErrors.organizationName} required>
               {(p) => (
                 <Input
                   {...p}
@@ -103,7 +128,7 @@ export function ReferralCreate({
               )}
             </Field>
           )}
-          <Field label={t('note')} hint={t('noteHint')}>
+          <Field label={t('note')} hint={t('noteHint')} error={fieldErrors.note}>
             {(p) => (
               <Textarea
                 {...p}
@@ -145,12 +170,30 @@ export function ReferralList({
   const router = useRouter();
   const hydrated = useHydrated();
   const [cancelChoice, setCancelChoice] = useState<ReferralView>();
+  const [reviewChoice, setReviewChoice] = useState<{
+    row: ReferralView;
+    operation: 'CONFIRM' | 'REJECT';
+  }>();
   const [page, setPage] = useState(initial);
   const [reason, setReason] = useState<Record<string, string>>({});
+  const [reasonErrors, setReasonErrors] = useState<Record<string, string>>({});
   const [note, setNote] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [pending, start] = useTransition();
   function perform(row: ReferralView, operation: 'CONFIRM' | 'REJECT' | 'ACCEPTANCE' | 'CANCEL') {
+    if (moderation && operation === 'REJECT') {
+      const parsed = reviewReferralSchema.safeParse({
+        referralId: row.id,
+        stage: row.status === 'STUDENT_CONFIRMED' ? 'REFERRAL' : 'ACCEPTANCE',
+        decision: 'REJECT',
+        reason: reason[row.id] ?? '',
+      });
+      if (!parsed.success) {
+        setReasonErrors((previous) => ({ ...previous, [row.id]: errors('VALIDATION_INVALID') }));
+        return;
+      }
+    }
+    setReasonErrors((previous) => ({ ...previous, [row.id]: '' }));
     start(async () => {
       setError('');
       const result = moderation
@@ -178,6 +221,7 @@ export function ReferralList({
         return;
       }
       setCancelChoice(undefined);
+      setReviewChoice(undefined);
       setPage((p) => ({
         ...p,
         items: moderation
@@ -267,20 +311,6 @@ export function ReferralList({
                     {row.decisionReason ?? row.acceptanceReason}
                   </p>
                 )}
-                {moderation && (
-                  <div className="mt-4">
-                    <Field label={t('reason')} hint={t('reasonHint')}>
-                      {(p) => (
-                        <Textarea
-                          {...p}
-                          value={reason[row.id] ?? ''}
-                          maxLength={1000}
-                          onChange={(e) => setReason({ ...reason, [row.id]: e.target.value })}
-                        />
-                      )}
-                    </Field>
-                  </div>
-                )}
                 {student && row.status === 'APPROVED' && (
                   <div className="mt-4">
                     <Field label={t('acceptanceNote')} hint={t('noteHint')}>
@@ -302,13 +332,24 @@ export function ReferralList({
                 )}
                 {canRespond && (
                   <div className="mt-4 flex flex-wrap gap-3">
-                    <Button loading={pending} onClick={() => perform(row, 'CONFIRM')}>
+                    <Button
+                      loading={pending}
+                      onClick={() =>
+                        moderation
+                          ? setReviewChoice({ row, operation: 'CONFIRM' })
+                          : perform(row, 'CONFIRM')
+                      }
+                    >
                       {t('approve')}
                     </Button>
                     <Button
                       variant="secondary"
                       loading={pending}
-                      onClick={() => perform(row, 'REJECT')}
+                      onClick={() =>
+                        moderation
+                          ? setReviewChoice({ row, operation: 'REJECT' })
+                          : perform(row, 'REJECT')
+                      }
                     >
                       {t('reject')}
                     </Button>
@@ -339,6 +380,53 @@ export function ReferralList({
           })}
         </ul>
       )}
+      <Modal
+        open={!!reviewChoice}
+        onClose={() => setReviewChoice(undefined)}
+        title={t(reviewChoice?.operation === 'REJECT' ? 'reject' : 'approve')}
+        description={t(
+          reviewChoice?.operation === 'REJECT' ? 'reviewRejectConfirm' : 'reviewApproveConfirm',
+        )}
+        footer={
+          <>
+            <Button
+              variant={reviewChoice?.operation === 'REJECT' ? 'danger' : 'primary'}
+              loading={pending}
+              onClick={() => {
+                if (reviewChoice) perform(reviewChoice.row, reviewChoice.operation);
+              }}
+            >
+              {t(reviewChoice?.operation === 'REJECT' ? 'reject' : 'approve')}
+            </Button>
+            <Button variant="secondary" onClick={() => setReviewChoice(undefined)}>
+              {t('goBack')}
+            </Button>
+          </>
+        }
+      >
+        {reviewChoice?.operation === 'REJECT' && (
+          <Field
+            label={t('reason')}
+            hint={t('reasonHint')}
+            error={reasonErrors[reviewChoice.row.id]}
+            required
+          >
+            {(p) => (
+              <Textarea
+                {...p}
+                value={reason[reviewChoice.row.id] ?? ''}
+                maxLength={1000}
+                onChange={(e) => setReason({ ...reason, [reviewChoice.row.id]: e.target.value })}
+              />
+            )}
+          </Field>
+        )}
+        {error && (
+          <p role="alert" className="text-danger">
+            {error}
+          </p>
+        )}
+      </Modal>
       <Modal
         open={!!cancelChoice}
         onClose={() => setCancelChoice(undefined)}

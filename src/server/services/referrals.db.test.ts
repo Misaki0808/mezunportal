@@ -139,6 +139,7 @@ it('üçlü onay ve kabul sırasını, yönetici kapsamını ve iptalde puan ger
     status: 'VERIFIED',
   });
   await addGrant(db, { userId: admin, scope: 'DEPARTMENT', departmentId: inst.deptA1 });
+  await addGrant(db, { userId: alumni, scope: 'DEPARTMENT', departmentId: inst.deptA1 });
   await addGrant(db, { userId: outsider, scope: 'DEPARTMENT', departmentId: inst.deptB1 });
   for (const id of [alumni, student, admin, outsider]) await grantRequiredConsents(db, id);
   for (const [action, points] of [
@@ -181,6 +182,7 @@ it('üçlü onay ve kabul sırasını, yönetici kapsamını ve iptalde puan ger
   expect(await code(reviewReferral(deps, admin, review))).toBe('REFERRAL_INVALID_STATE');
   expect(await db.pointEntry.count({ where: { sourceId: claim.referralId } })).toBe(0);
   await respondReferral(deps, student, { referralId: claim.referralId, decision: 'CONFIRM' });
+  expect(await code(reviewReferral(deps, alumni, review))).toBe('AUTH_FORBIDDEN');
   expect((await listReferralModeration(deps, outsider, {})).items).toHaveLength(0);
   expect(await code(reviewReferral(deps, outsider, review))).toBe('AUTH_FORBIDDEN');
   await reviewReferral(deps, admin, review);

@@ -18,6 +18,7 @@ import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { codedConflict, codedForbidden, codedNotFound } from '@/lib/errors';
 import { createPermissions } from '../permissions/guards';
 import type { Actor } from '../permissions/actor';
+import { visibleJobPostingIds } from '../repositories/job-postings';
 import { requireConsent } from './privacy';
 import { stageNotification } from './notification-intent';
 import { covers, loadAnyAdmin, readAsAdmin, idCursorWhere, toPage } from './admin-access';
@@ -122,6 +123,8 @@ export async function proposeReferral(
     if (!student) throw codedForbidden('REFERRAL_NOT_ELIGIBLE');
     let organizationName = parsed.organizationName ?? null;
     if (parsed.jobPostingId) {
+      if (!(await visibleJobPostingIds(tx, [parsed.jobPostingId], now)).length)
+        throw codedNotFound('RESOURCE_NOT_FOUND');
       const posting = await tx.jobPosting.findFirst({
         where: {
           id: parsed.jobPostingId,
@@ -262,6 +265,8 @@ export async function reviewReferral(
   return deps.db.$transaction(async (tx) => {
     const row = await lockedClaim(tx, parsed.referralId, userId);
     const admin = await loadAnyAdmin(tx, userId, now);
+    if (userId === row.alumnusId || userId === row.studentId)
+      throw codedForbidden('AUTH_FORBIDDEN');
     if (!(await covers(tx, admin, row.departmentIdAtWrite))) throw codedForbidden('AUTH_FORBIDDEN');
     if (
       row.status !==

@@ -1783,6 +1783,7 @@
         "EXPERIENCE": "Deneyim",
         "FAQ_REQUEST": "SSS talebi",
         "JOB_POSTING": "İlan",
+        "REFERRAL": "Referans",
         "POINT_ENTRY": "Puan kaydı",
         "POINT_RULE": "Puan kuralı",
         "SUSPICION_FLAG": "Şüphe kaydı",
@@ -2763,6 +2764,8 @@
     "posting": "İlan (isteğe bağlı)",
     "noPosting": "İlan seçmeden kurum adı gir",
     "cancelConfirm": "Beyanı iptal etmek istediğinden emin misin? Bekleyen puanlar geri alınır.",
-    "goBack": "Vazgeç"
+    "goBack": "Vazgeç",
+    "reviewApproveConfirm": "Bu beyanı onaylamak istiyor musun?",
+    "reviewRejectConfirm": "Bu beyanı reddetmek istiyor musun? Gerekçe taraflara gösterilir."
   }
 }
