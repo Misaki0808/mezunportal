@@ -7,6 +7,8 @@ import { expireRequests } from '../services/cv-review-request';
 import { createCvReviewNotifier } from '../services/cv-review-notifier';
 import { relayPendingNotifications } from './notification-intent-worker';
 import { purgeFiles } from '../services/files-purge';
+import { purgeExpiredAuth } from '../services/auth-cleanup';
+import { detachOldEvents } from '../services/event';
 import { runDailyPoints } from '../services/points';
 import { runSuspicionScan } from '../services/points-scan';
 import { scheduleFeedbackPrompts } from './feedback-task';
@@ -34,6 +36,8 @@ export async function createNotificationRuntime() {
       }),
     'notification.relay': () => relayPendingNotifications(),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
+    'auth.purge': () => purgeExpiredAuth(getDb()),
+    'events.detach': () => detachOldEvents(getDb(), new Date()),
     'appointment.feedback': () => scheduleFeedbackPrompts(getDb()),
     // Puan motoru (P1-16): gecikmesi dolanı kesinleştir + son 14 günde kaçırılan puanı tamamla; şüphe taraması.
     'points.finalize': () => runDailyPoints({ db: getDb() }),
