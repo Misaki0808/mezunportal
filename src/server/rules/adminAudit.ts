@@ -30,6 +30,7 @@ export const ADMIN_ACTIONS = {
   ADMIN_GRANT: { reasonRequired: false },
   ADMIN_REVOKE: { reasonRequired: true },
   DATA_EXPORT: { reasonRequired: false },
+  BULK_INVITATION: { reasonRequired: false },
   /** Sözlük kaydı oluşturma/güncelleme/silme (sistem yöneticisi). */
   DICTIONARY_CHANGE: { reasonRequired: false },
   /** Eşleşmeyen CV değerinin çözümü (bağla/yeni kayıt/at). */
@@ -53,6 +54,7 @@ export const AUDIT_TARGET_TYPES = [
   'UNMATCHED_VALUE',
   'EMPLOYMENT_REPORT',
   'USAGE_METRICS',
+  'INVITATION_BATCH',
 ] as const;
 
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];

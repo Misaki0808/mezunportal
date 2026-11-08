@@ -399,6 +399,7 @@ export const AUDIT_ACTION_NAMES = [
   'ADMIN_GRANT',
   'ADMIN_REVOKE',
   'DATA_EXPORT',
+  'BULK_INVITATION',
   'DICTIONARY_CHANGE',
   'UNMATCHED_RESOLVE',
 ] as const;
@@ -419,6 +420,7 @@ export const AUDIT_TARGET_TYPE_NAMES = [
   'UNMATCHED_VALUE',
   'EMPLOYMENT_REPORT',
   'USAGE_METRICS',
+  'INVITATION_BATCH',
 ] as const;
 
 export const listAuditLogSchema = z

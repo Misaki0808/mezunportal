@@ -1,6 +1,8 @@
 import 'server-only';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { getDb } from '../db';
+import { getAuthEnv } from '@/lib/env';
+import messages from '../../../messages/tr.json';
 import { enqueueEmail } from './email';
 import { createCvReviewNotifier } from '../services/cv-review-notifier';
 import {
@@ -10,12 +12,25 @@ import {
 import { sendNotification } from '../services/notification-email';
 import {
   notificationIntentPayload,
+  openPilotInvitation,
   relayNotificationIntents,
   type IntentRecord,
 } from '../services/notification-intent';
 
 export async function sendNotificationIntent(db: PrismaClient, row: IntentRecord) {
   const payload = notificationIntentPayload.parse(row.payload);
+  if (payload.type === 'pilotInvitation') {
+    const env = getAuthEnv();
+    const address = openPilotInvitation(payload, row.userId, env.BETTER_AUTH_SECRET);
+    await enqueueEmail({
+      to: address,
+      subject: messages.invitations.emailSubject,
+      text: messages.invitations.emailBody.replace('{url}', new URL('/giris', env.APP_URL).href),
+      template: 'pilot.invitation',
+      idempotencyKey: `pilot-invitation:${payload.invitationId}`,
+    });
+    return;
+  }
   if (payload.type === 'generic') {
     await sendNotification({
       userId: row.userId,

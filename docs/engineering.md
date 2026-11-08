@@ -271,20 +271,39 @@ Her faz bitince kullanıcı telefondan test eder; faz içinde telefon testi yokt
 
 Hocaya gösterim de aynı yolla, bilgisayardan ya da telefondan, sahte veriyle yapılır.
 
-### Canlıya alım (ileride — P1-18)
+### Canlıya alım
 
-Bu bölüm P1-18'de doldurulur. Çerçeve:
+Sağlayıcıya bağlı değildir; sunucu ve alan adı (K-02), gerçek SMTP (K-05), kurum verisi (K-03)
+ve işletim kararı kullanıcıya aittir. Bu depo hesap açmaz veya dış servise yayın yapmaz.
 
-- **Sunucu (K-02):** üniversite sunucusu (ücretsiz, veri Türkiye'de, veri sorumlusu ve
-  sürdürülebilirlik sorusunu da çözer) ya da ücretsiz/ucuz bir seçenek. Dağıtım aracı (ör.
-  Coolify, lisansı ücretsiz) o zaman seçilir.
-- **İmaj:** çok aşamalı Dockerfile, Next.js `standalone`; başlangıçta `prisma migrate deploy`;
-  aynı imajdan worker süreci; kalıcı dosya hacmi; sağlık kontrolü.
-- **Dağıtım kanıtı:** `GET /api/health` derleme anındaki commit'i döndürür.
-- **Yedek:** zamanlanmış veritabanı yedeği ve ayda bir geri yükleme denemesi.
-- **Canlıda kapalı olanlar:** test girişi, `/ui-ornekleri` galeri sayfası, seed.
-- **Migration güvenliği:** canlıda veri değiştiren migration öncesi yedek doğrulanır ve kullanıcı
-  onayı alınır.
+- `.nvmrc` ile eşleşen Node içeren çok aşamalı `Dockerfile` uygulamayı ve ayrı worker'ı aynı
+  imajdan çalıştırır. Kaynak commit'i `--build-arg GIT_SHA=<commit>` ile derleyin; çalışma zamanı
+  ortamını `.env.example` ve `src/lib/env.ts` üzerinden, sırları imaja veya Git'e koymadan verin.
+- `web` başlangıcı `prisma migrate deploy` uygular ve seed çalıştırmaz. Birden çok web kopyası
+  açmadan önce migration'ın tamamlanmasını bekleyin; `worker` komutunu ayrı süreçte çalıştırın.
+  İkisinin aynı veritabanına ve `STORAGE_LOCAL_PATH` için kalıcı, yazılabilir ortak hacme erişmesi
+  gerekir. Worker için en az 90 saniyelik kapanış süresi ayırın. İmaj root olmayan kullanıcıyla çalışır. HTTPS, ters vekil, güvenli sırlar ve zamanlanmış
+  yedekleri seçilen işletim ortamında sağlayın. `/api/health` durum, ortam, commit ve DB erişimini
+  döndürür; test girişi ve arayüz örnekleri üretimde kapalıdır.
+- Yerel imaj provası `docker-compose.image.yml` profilindedir; yalnız yerel PostgreSQL ve Mailpit
+  ağına bağlanır. Ayrı `mezun_w2_p1_18_image` veritabanını önceden oluşturun, `GIT_SHA` ve geçici
+  `BETTER_AUTH_SECRET` sağlayın; `docker compose -f docker-compose.image.yml --profile image up --build`
+  ile web ve worker başlar. Bu profil canlı dağıtım reçetesi veya gerçek SMTP değildir.
+- Yedek için PostgreSQL sunucusuyla uyumlu `pg_dump`, `pg_restore`, `psql`, `tar` ve SHA-256 aracı
+  ve Node.js gerekir. Bağlantı URI’si komut argümanlarına konmaz; Prisma `schema` seçeneği yoksayılır (tüm DB yedeklenir),
+  desteklenmeyen diğer URI seçenekleri reddedilir.
+  Web ve worker'ı durdurarak DB ile dosyaların tutarlı anını alın; `DATABASE_URL` ve
+  `STORAGE_LOCAL_PATH` tanımlıyken `sh scripts/backup.sh YENI_DIZIN` kullanın. Geri yükleme yalnız
+  güvenilir yedekten, boş ayrı veritabanına ve henüz olmayan dosya yoluna yapılır:
+  `RESTORE_DATABASE_URL=... RESTORE_STORAGE_PATH=... sh scripts/restore.sh YEDEK_DIZINI`.
+  Kaynağın `DATABASE_URL` değerini de verin; eşit hedef reddedilir. Betik checksum doğrular, mevcut
+  veriyi silmez; başarısız işlem kısmi hedef bırakabilir. Yedekler kişisel veri içerir, erişimi
+  sınırlandırın, şifreli saklayın ve geri yüklemeyi düzenli olarak ayrı ortamda sınayın.
+- Toplu davet yalnız rızalı sistem yöneticisine açıktır; 100 adres/işlem ve yönetici başına günde
+  5 işlem sınırı vardır. Kayıtlı adresler atlanır; işlem kaydında adres tutulmaz. Davet adresi
+  bekleyen bildirim niyetinde şifreli tutulur, kuyruk kabulünde silinir; worker kesintiden sonra
+  yeniden dener. Uygulama sırrını değiştirmeden önce bekleyen davetleri boşaltın; aksi halde eski
+  adresler çözülemez. SMTP teslimi ayrıca worker ve sağlayıcıya bağlıdır.
 
 ## Git ve PR
 

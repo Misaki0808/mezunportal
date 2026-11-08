@@ -149,7 +149,7 @@ describe('giriş noktaları', () => {
     expect(screen.queryByText(/yakında/i)).not.toBeInTheDocument();
   });
 
-  it('açık bayrak için (eylem kartı gelene kadar) düğme çizilmez', () => {
+  it('randevu bayrağı açıksa randevu al bağlantısı çizilir; CV incelemesi için düğme yok', () => {
     renderUi(
       <MentorEntryPoints
         userId="m1"
@@ -157,7 +157,11 @@ describe('giriş noktaları', () => {
       />,
     );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.queryByText(/Randevu/)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Randevu al' })).toHaveAttribute(
+      'href',
+      '/randevu-al/m1',
+    );
+    expect(screen.queryByText(/CV incelemesi/)).not.toBeInTheDocument();
   });
 
   it('mentor değil ya da kendi profili: bölüm hiç çizilmez', () => {
