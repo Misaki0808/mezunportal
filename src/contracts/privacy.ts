@@ -313,6 +313,22 @@ export const dataExportSchema = z.object({
   }),
   cv: exportedCvSchema,
   appointments: z.array(exportedAppointmentSchema),
+  cvReviewRequests: z.array(
+    z
+      .object({
+        id: z.string(),
+        role: z.enum(['MENTOR', 'STUDENT']),
+        counterpartId: z.string(),
+        status: z.enum(['OPEN', 'COMPLETED', 'EXPIRED']),
+        note: z.string().nullable(),
+        comment: z.string().nullable(),
+        createdAt: z.string(),
+        expiresAt: z.string(),
+        answeredAt: z.string().nullable(),
+        helpfulAt: z.string().nullable(),
+      })
+      .strict(),
+  ),
 });
 export type DataExport = z.infer<typeof dataExportSchema>;
 

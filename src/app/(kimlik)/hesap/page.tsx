@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 export default async function AccountPage() {
   const actor = await requireUser().catch(() => null);
   if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
-  const [state, showAdmin, t, verification, entry, notifications, feedback, metrics] =
+  const [state, showAdmin, t, verification, entry, notifications, feedback, cvReview, metrics] =
     await Promise.all([
       getVerificationState().catch(() => null),
       hasAdminAccess(),
@@ -30,6 +30,7 @@ export default async function AccountPage() {
       getTranslations('experiences.entry'),
       getTranslations('notifications'),
       getTranslations('feedback'),
+      getTranslations('cvReview'),
       getTranslations('admin.metrics'),
     ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
@@ -82,6 +83,16 @@ export default async function AccountPage() {
             title: feedback('reliability'),
             description: feedback('reliabilityDescription'),
             icon: BadgeCheckIcon,
+          },
+        ]
+      : []),
+    ...(state.data.status === 'VERIFIED'
+      ? [
+          {
+            href: '/hesap/cv-inceleme',
+            title: cvReview('title'),
+            description: cvReview('accountDescription'),
+            icon: FileTextIcon,
           },
         ]
       : []),

@@ -3,6 +3,8 @@ import { PgBoss } from 'pg-boss';
 import { getEnv } from '@/lib/env';
 import { getDb } from '../db';
 import { getStorage } from '../external/storage';
+import { expireRequests } from '../services/cv-review-request';
+import { createCvReviewNotifier } from '../services/cv-review-notifier';
 import { relayPendingNotifications } from './notification-intent-worker';
 import { purgeFiles } from '../services/files-purge';
 import { purgeExpiredAuth } from '../services/auth-cleanup';
@@ -24,6 +26,12 @@ export async function createNotificationRuntime() {
     'profile.freshness': () => profileFreshness(getDb()),
     'alumni.stillThere': () => alumniStillThere(getDb()),
     'student.emailMigration': () => studentEmailMigration(getDb()),
+    'cvReview.expire': () =>
+      expireRequests({
+        db: getDb(),
+        storage: getStorage(),
+        notify: createCvReviewNotifier(getDb()),
+      }),
     'notification.relay': () => relayPendingNotifications(),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
     'auth.purge': () => purgeExpiredAuth(getDb()),
@@ -39,7 +47,9 @@ export async function createNotificationRuntime() {
       });
       await boss.schedule(
         name,
-        ['notification.relay', 'appointment.feedback'].includes(name) ? '* * * * *' : '0 3 * * *',
+        ['notification.relay', 'appointment.feedback', 'cvReview.expire'].includes(name)
+          ? '* * * * *'
+          : '0 3 * * *',
         {},
         { tz: 'Europe/Istanbul', missed: 'once' },
       );
