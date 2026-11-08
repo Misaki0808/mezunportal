@@ -50,6 +50,8 @@ kural sunucuda zorlanır.
   taşınır ve magic-link geri çağrısına konur. **Açık yönlendirme yoktur:** yalnız `/` ile başlayan site içi
   yol (`//`, ters eğik çizgi, şema, kontrol karakteri yok; giriş/onay/çıkış/API yollarına dönülmez —
   `src/lib/return-path.ts`). Yol, `proxy.ts`'in sunucuda yazdığı başlıktan okunur (istemcinin gönderdiği ezilir).
+  Oturumu düşmüş kullanıcının sunucu eyleminde `AUTH_UNAUTHENTICATED` dönerse ortak hata çıkışı (`failAction`,
+  `src/server/fail-action.ts`) aynı kuralla `/giris?donus=<yol>` adresine yönlendirir; eylemler `actionFailure` yerine `failAction` kullanır.
 - **Alan adı doğrulaması** (D2) seçilen bölümün ÜNİVERSİTESİNİN `University` kaydındaki alan adı listesine
   göredir, tam eşleşmedir (alt alan adı/benzer alan adı eşleşmez); e-posta doğrulanmış olmalıdır; mezun alan
   adıyla doğrulanamaz.

@@ -2,7 +2,12 @@ import 'server-only';
 
 import { createHash } from 'node:crypto';
 
-import type { SuspicionRule } from '@/contracts/points';
+import {
+  SUSPICION_RECENT_EVIDENCE_LIMIT,
+  SUSPICION_SEEN_KEYS_LIMIT,
+  storedRecurrenceEvidenceSchema,
+  type SuspicionRule,
+} from '@/contracts/points';
 
 import {
   detectBurst,
@@ -126,12 +131,13 @@ async function scanUser(
 
   let created = 0;
   for (const finding of findings) {
+    const evidenceKey = evidenceKeyOf(finding.rule, finding.entryIds);
     const { count } = await deps.db.suspicionFlag.createMany({
       data: [
         {
           userId,
           rule: finding.rule,
-          evidenceKey: evidenceKeyOf(finding.rule, finding.entryIds),
+          evidenceKey,
           entryIds: finding.entryIds,
           windowStart: finding.windowStart,
           windowEnd: finding.windowEnd,
@@ -144,6 +150,49 @@ async function scanUser(
       skipDuplicates: true,
     });
     created += count;
+    // Eklenmediyse: aynı kanıt zaten işaretli ya da aynı kural için KARAR BEKLEYEN işaret var. İkincisinde yeni kanıt
+    // sessizce atlanmaz; açık işarete sayaç + son görülme olarak işlenir (yeni işaret açılmaz).
+    if (count === 0) await recordRecurrence(deps, userId, finding, evidenceKey, now);
   }
   return created;
+}
+
+/**
+ * Açık işarete yeni kanıt ekler (idempotent): işlem içinde işaret kilitlenir; `seenEvidenceKeys` içindeki ya da işaretin
+ * kendi kanıtı olan anahtar tekrar sayılmaz, böylece aynı tarama iki kez sayacı bir kez artırır. Kanıt kimlikleri
+ * (`entryIds`) değişmez: karar yalnız işaretin asıl kanıtını geri alır; sonraki tarama kalanı yeniden işaretler.
+ */
+async function recordRecurrence(
+  deps: PointDeps,
+  userId: string,
+  finding: SuspicionFinding,
+  evidenceKey: string,
+  now: Date,
+): Promise<void> {
+  await deps.db.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT "id" FROM "SuspicionFlag"
+      WHERE "userId"=${userId} AND "rule"=${finding.rule}::"SuspicionRule" AND "status"='OPEN'
+      FOR UPDATE`;
+    const open = rows[0];
+    if (!open) return; // aynı kanıt kararlı bir işarette: yeni bir şey yok
+    const flag = await tx.suspicionFlag.findUniqueOrThrow({
+      where: { id: open.id },
+      select: { evidenceKey: true, seenEvidenceKeys: true, recentEvidence: true },
+    });
+    if (flag.evidenceKey === evidenceKey || flag.seenEvidenceKeys.includes(evidenceKey)) return;
+    const recent = storedRecurrenceEvidenceSchema.catch([]).parse(flag.recentEvidence);
+    await tx.suspicionFlag.update({
+      where: { id: open.id },
+      data: {
+        recurrenceCount: { increment: 1 },
+        lastSeenAt: now,
+        seenEvidenceKeys: [...flag.seenEvidenceKeys, evidenceKey].slice(-SUSPICION_SEEN_KEYS_LIMIT),
+        recentEvidence: [
+          { at: now.toISOString(), entryCount: finding.entryIds.length, points: finding.points },
+          ...recent,
+        ].slice(0, SUSPICION_RECENT_EVIDENCE_LIMIT),
+      },
+    });
+  });
 }

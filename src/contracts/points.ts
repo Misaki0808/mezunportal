@@ -219,6 +219,25 @@ export const listSuspicionFlagsSchema = z
   .strict();
 export type ListSuspicionFlagsInput = z.input<typeof listSuspicionFlagsSchema>;
 
+/** Açık işarete eklenen kanıt özetinin saklanan sınırları (sayaç sınırsız artar; özet ve tekrar anahtarı sınırlıdır). */
+export const SUSPICION_RECENT_EVIDENCE_LIMIT = 5;
+export const SUSPICION_SEEN_KEYS_LIMIT = 20;
+export const recurrenceEvidenceSchema = z
+  .object({ at: z.date(), entryCount: z.number().int().min(0), points: z.number().int().min(0) })
+  .strict();
+/** Veritabanında JSON olarak saklanan biçim (`at` ISO metin). */
+export const storedRecurrenceEvidenceSchema = z
+  .array(
+    z
+      .object({
+        at: z.string(),
+        entryCount: z.number().int().min(0),
+        points: z.number().int().min(0),
+      })
+      .strict(),
+  )
+  .max(SUSPICION_RECENT_EVIDENCE_LIMIT);
+
 /** Yalnız sayılar ve pencere; kişisel veri ve içerik yok. İşaretlenen kullanıcının adı ayrı alandadır. */
 export const suspicionDetailsSchema = z
   .object({
@@ -230,6 +249,11 @@ export const suspicionDetailsSchema = z
     sharePercent: z.number().int().min(0).max(100).nullable(),
     /** `SYNC_FEEDBACK`: iki tarafın aynı dakikada yanıtladığı görüşme sayısı. */
     syncedCount: z.number().int().min(0).nullable(),
+    /** İşaret açıkken aynı kural için görülen YENİ kanıt sayısı (yeni işaret açılmaz) ve son görülme. */
+    recurrenceCount: z.number().int().min(0),
+    lastSeenAt: z.date().nullable(),
+    /** En çok 5 kanıt özeti (yeniden eskiye); yalnız sayılar. */
+    recentEvidence: z.array(recurrenceEvidenceSchema).max(SUSPICION_RECENT_EVIDENCE_LIMIT),
   })
   .strict();
 export type SuspicionDetails = z.infer<typeof suspicionDetailsSchema>;

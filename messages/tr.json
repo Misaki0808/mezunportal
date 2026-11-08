@@ -2225,6 +2225,8 @@
       "detailCounts": "{entries} kayıt · {points} puan",
       "detailShare": "Tek karşı tarafın payı: %{percent}",
       "detailSynced": "Aynı dakikada yanıtlanan görüşme: {count}",
+      "detailRecurrence": "İşaret açıkken {count} yeni kanıt görüldü · son: {date}",
+      "detailRecurrenceItem": "{date} · {entries} kayıt · {points} puan",
       "confirmFlag": "Onayla",
       "dismissFlag": "Reddet",
       "decideTitle": {

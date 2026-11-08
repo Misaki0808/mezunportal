@@ -828,6 +828,14 @@ form sonuna almak — mobilde eylem çubuğunun hızlı erişimini kaybettirir; 
 görünümü küçülmediği için çubuk klavyenin ARKASINDA kalır; (c) seçilen: klavye açıkken akışa dön, kapalıyken yapışkan kal. Gerçek
 cihaz doğrulaması telefon testine yazıldı (`docs/engineering.md`).
 
+**Açık şüpheye yeni kanıt ve oturumsuz eylemde dönüş (kart 116).** Karar bekleyen işaret varken aynı kural için bulunan yeni
+kanıt artık sessizce atlanmaz: işarete sayaç, son görülme ve en çok 5 sayısal özet eklenir (tekrar anahtarı listesiyle
+idempotent; asıl kanıt kimlikleri değişmez, böylece onay yalnız işaretin kanıtını geri alır, kalanı sonraki tarama yeni işaretle
+yakalar). Seçenekler: (a) her yeni kanıta ayrı işaret — kısmi benzersiz indeks "tek açık işaret" kuralını bozar; (b) kanıtı
+işarete katıp onayda hepsini geri almak — yönetici görmediği kaydı geri almış olur; (c) seçilen: sayaç + özet. Oturumu düşmüş
+kullanıcının eyleminde `AUTH_UNAUTHENTICATED` her formda ayrı ele alınmaz; sunucu eylemlerinin ortak çıkışı `failAction` girişe
+`?donus=` ile yönlendirir (`safeReturnPath`), `ErrorState`'in "Giriş yap" bağlantısı da aynı yolu taşır.
+
 **SSS kimlik denetimi: engel ve uyarı (kart 122, PM kararıyla).** Önceki denetim 4+ harfli adları önek olarak eşleştirdiği için
 "sisteme", "denizcilik" gibi sıradan sözcükler yayını engelliyordu. Türkçe yazım kuralı: özel isim ek alınca kesme alır
 ("Deniz'in"); kesmesiz ekli biçim ("denize", "sisteme", "Ahmete") çoğunlukla cins isimdir. Şimdi: **engel**

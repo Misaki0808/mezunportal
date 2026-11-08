@@ -2,7 +2,8 @@
 
 import type { HomeSummary } from '@/contracts/home';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk } from '@/lib/action-result';
+import { actionOk } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 
 import { getDb } from '../db';
 import { requireVerifiedMember } from '../permissions';
@@ -16,6 +17,6 @@ export async function getHomeSummary(): Promise<ActionResult<HomeSummary>> {
     await requireConsent(getDb(), actor.userId);
     return actionOk(await loadSummary({ db: getDb() }, actor.userId));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

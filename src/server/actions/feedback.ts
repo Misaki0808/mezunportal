@@ -1,7 +1,8 @@
 'use server';
 import { feedbackInputSchema, type FeedbackInput, type FeedbackView } from '@/contracts/feedback';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 import { codedForbidden } from '@/lib/errors';
 import { getDb } from '../db';
 import { requireVerifiedMember } from '../permissions';
@@ -15,7 +16,7 @@ export async function getFeedbackView(appointmentId: string): Promise<ActionResu
     await requireConsent(getDb(), actor.userId);
     return actionOk(await feedback.feedbackView(getDb(), actor.userId, appointmentId));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function submitSessionFeedback(
@@ -27,7 +28,7 @@ export async function submitSessionFeedback(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await feedback.submitFeedback(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function getMyReliability(): Promise<ActionResult<Reliability>> {
@@ -42,7 +43,7 @@ export async function getMyReliability(): Promise<ActionResult<Reliability>> {
     await requireConsent(getDb(), actor.userId);
     return actionOk(await feedback.studentReliability(getDb(), actor.userId, actor.userId));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -52,6 +53,6 @@ export async function getFeedbackOverview() {
     await requireConsent(getDb(), actor.userId);
     return actionOk(await feedback.feedbackOverview(getDb(), actor.userId));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
