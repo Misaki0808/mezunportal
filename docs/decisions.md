@@ -750,3 +750,31 @@ kalıcı hata kaydı tutulur ve operatör günlüğüne kişisel veri içermeyen
 kaydı otomatik işin sonucudur; insan yönetici eylemi olarak kaydedilmez. Kalıcı hata aynı iş
 anahtarının tekrar sahnelenmesiyle canlanmaz; diğer niyetler ve hesap silme ilerler. Geçici kuyruk
 kesintilerinde aynı idempotency anahtarıyla teslim güvencesi korunur.
+
+## 2026-11-08 · Puan motoru ve hile önleme (P1-16)
+
+**Yazım yolu.** Puan, olayı üreten işlemin DIŞINDA ve kendi işleminde yazılır (deneyim yayını, iki tarafın onayıyla `COMPLETED`
+olan görüşme, öğrencinin “faydalı” işareti). Gerekçe: moderasyon, form ve CV akışı puan hatasıyla bozulmasın; kaçan puanı günlük
+`points.finalize` işi son 14 günü aynı kurallarla yeniden tarayarak tamamlar, `points.backfill` ise tarihin tamamını. Her yazım
+`(userId, action, sourceType, sourceId)` anahtarıyla idempotenttir; hata sabit metinle yutulur (`points: award failed`).
+
+**Çarpanlar.** Puan = taban × yüzde / 100, tam sayı ve aşağı yuvarlanır (ör. 10 × %25 = 2). Olay anı görüşmenin başlangıcıdır
+(gecikme ve takvim ayı bundan hesaplanır). İkili tavanı sıradan bağımsızdır: aynı İstanbul ayında çarpanı > 0 başka görüşme varsa
+yeni görüşme 0 alır; yoksa son 180 günde ÖNCEKİ puanlı görüşme sayısına göre %100 → %50 → %25. Geri alınan görüşme ayın hakkını
+serbest bırakır; geri almak diğer kayıtları yeniden hesaplamaz. Eşzamanlı iki tamamlanma ikili advisory kilidiyle sıralanır.
+Kural değişikliği yalnız yeni kayıtları etkiler (`basePoints` kayıt anını saklar).
+
+**Gizlilik.** Hiçbir çıktıda kaynak (deneyim, randevu, CV) ya da karşı taraf kimliği yoktur: anonim deneyimin puanı yazar–içerik
+bağını sızdırmaz. Puan ve geçmiş yalnız sahibine görünür; yönetici ekranları yalnız sistem yöneticisine açıktır. Hesap silinince
+puan kayıtları, etiketler ve şüphe işaretleri silinir; başkalarının kayıtlarındaki karşı taraf bağı kopar.
+
+**Kurucu üye etiketi (K-10).** Pilot süresince ilk yayınlanan ADLI deneyim etiket verir; ANONİM deneyim puan verir ama etiket
+vermez (etiket herkese görünür, anonimlik sızmasın). Geri alınan etiket kendiliğinden yeniden verilmez. Pilot bitişi isteğe bağlı
+`FOUNDING_MEMBER_UNTIL` (`YYYY-MM-DD`, İstanbul günü dahil; boşsa pilot açık) env'inde; bitiş sonradan değişince verilmiş etiket
+korunur. Etiket, kaynağı olan puan kaydına bağlıdır: o kayıt geri alınırsa etiket düşer.
+
+**Şüphe taraması (K-11 eşikleri — PM teyidi bekler).** `rules/pointsSuspicion.ts` `SUSPICION_THRESHOLDS`: 24 saatte ≥ 40 puan
+(`BURST`); son 90 günde toplam ≥ 15 puanın ≥ %60'ı ve ≥ 3 kaydı tek karşı taraftan (`SINGLE_COUNTERPART`); aynı ikilide iki
+tarafın görüşme yanıtı ≤ 60 sn arayla ≥ 3 kez, 180 günde (`SYNC_FEEDBACK`). İşaret ceza değildir: puanı geri almaz; yalnız karar
+verilene dek kullanıcının BEKLEYEN puanı kesinleşmez. Aynı kanıt (`evidenceKey`) iki kez, aynı (kullanıcı, kural) için iki açık işaret
+olmaz. Sistem yöneticisi onaylarsa işarete bağlı kayıtlar `FRAUD_CONFIRMED` ile geri alınır; reddederse puana dokunulmaz.

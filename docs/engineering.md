@@ -249,6 +249,10 @@ yine onaylanır; mentor görüşme linkini elle ekler); `fake` deterministik sah
 kabul edilir (`prod`'da env doğrulamasını düşürür). Gerçek Google adaptörü ve `GOOGLE_*` değişkenleri kullanıcı onayından
 (E4) sonra ayrı kartla gelir. Adaptörler `src/server/external/calendar/`.
 
+**Puan motoru grubu** (`getPointsEnv()`, isteğe bağlı): `FOUNDING_MEMBER_UNTIL` (`YYYY-MM-DD`, İstanbul günü, o gün dahil)
+kurucu üye etiketinin (K-10) pilot bitişidir; BOŞSA pilot açıktır ve etiket verilmeye devam eder. Bitişten sonra yayınlanan
+deneyim etiket doğurmaz; verilmiş etiket değer değişince geri alınmaz.
+
 ### Telefon testi (faz sonu)
 
 Her faz bitince kullanıcı telefondan test eder; faz içinde telefon testi yoktur.

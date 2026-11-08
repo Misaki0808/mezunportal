@@ -264,3 +264,49 @@ export function parseCalendarEnv(
 export function getCalendarEnv(): CalendarEnv {
   return parseCalendarEnv(process.env);
 }
+
+// ---------------------------------------------------------------------------------------------
+// Puan motoru (P1-16)
+// ---------------------------------------------------------------------------------------------
+
+const pointsEnvSchema = z.object({
+  /**
+   * Kurucu üye etiketi (K-10) pilot bitişi: `YYYY-MM-DD` (İstanbul günü, o günün sonu dahil). BOŞSA pilot AÇIKTIR
+   * (etiket verilmeye devam eder); pilot bitince yönetici bu değeri doldurur. Geçmişi değiştirmez: etiket yayın anındaki
+   * değere göre verilir, sonradan değer değişince verilmiş etiket geri alınmaz.
+   */
+  FOUNDING_MEMBER_UNTIL: z.preprocess(
+    blankToUndefined,
+    z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .transform((value, ctx) => {
+        const end = new Date(`${value}T23:59:59.999+03:00`);
+        // Var olmayan gün (30 Şubat) bazı motorlarda ertesi aya taşar: gün aynen geri okunmalı.
+        const valid =
+          !Number.isNaN(end.getTime()) &&
+          new Date(end.getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10) === value;
+        if (!valid) {
+          ctx.addIssue({ code: 'custom', message: 'FOUNDING_MEMBER_UNTIL' });
+          return z.NEVER;
+        }
+        return end;
+      })
+      .optional(),
+  ),
+});
+
+export type PointsEnv = z.infer<typeof pointsEnvSchema>;
+
+export function parsePointsEnv(source: Readonly<Record<string, string | undefined>>): PointsEnv {
+  const result = pointsEnvSchema.safeParse(source);
+  if (!result.success) {
+    const keys = new Set(result.error.issues.map((issue) => String(issue.path[0] ?? '(kök)')));
+    throw new EnvValidationError([...keys]);
+  }
+  return result.data;
+}
+
+export function getPointsEnv(): PointsEnv {
+  return parsePointsEnv(process.env);
+}
