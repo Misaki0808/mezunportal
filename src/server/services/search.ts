@@ -46,6 +46,7 @@ function toResult(row: SearchRow, now: Date): SearchResult {
     id: row.id,
     type: row.type,
     organizationName: row.organizationName,
+    ...(row.companyId ? { companyId: row.companyId } : {}),
     departmentName: row.departmentName,
     city: row.city,
     country: row.country,

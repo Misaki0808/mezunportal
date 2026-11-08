@@ -560,3 +560,13 @@ export async function getMentorEntryPoints(
     contact: open,
   });
 }
+
+/** Şirket sayfası aynı görünürlük süzgecinden geçmiş kimlikler için mevcut dizin kartını yeniden kullanır. */
+export async function loadCompanyMentorCards(
+  db: Pick<PrismaClient, 'mentorProfile' | 'appointment'>,
+  universityIds: string[],
+  mentorIds: string[],
+  now: Date,
+): Promise<MentorCard[]> {
+  return loadCards({ db: db as PrismaClient }, universityIds, mentorIds, now);
+}

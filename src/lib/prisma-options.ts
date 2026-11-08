@@ -8,6 +8,7 @@
  * Arama ham SQL ile okur (`repositories/search.ts`); açık `select` ile istenirse yine okunur.
  */
 export const PRISMA_OMIT = {
+  company: { searchKeys: true },
   experience: { searchKeys: true },
   faqItem: { searchKeys: true },
   jobPosting: { searchKeys: true },

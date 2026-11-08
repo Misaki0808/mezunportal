@@ -34,7 +34,18 @@ export function PostingDetail({
         className="mt-3 rounded-3xl border border-border bg-surface p-5 sm:p-8"
       >
         <header>
-          <p className="break-words font-semibold text-accent-strong">{posting.organizationName}</p>
+          <p className="break-words font-semibold text-accent-strong">
+            {posting.companyId ? (
+              <Link
+                className="inline-flex min-h-11 items-center underline underline-offset-4"
+                href={`/sirketler/${posting.companyId}`}
+              >
+                {posting.organizationName}
+              </Link>
+            ) : (
+              posting.organizationName
+            )}
+          </p>
           <h1 className="mt-2 break-words text-3xl font-bold sm:text-4xl">{posting.title}</h1>
           <div className="mt-5 flex flex-wrap gap-2 text-sm">
             <Badge tone="category">{t(posting.kind)}</Badge>

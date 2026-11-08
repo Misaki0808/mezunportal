@@ -142,6 +142,7 @@ const resultFields = {
   id: z.string(),
   type: z.enum(EXPERIENCE_TYPES),
   organizationName: z.string().nullable(),
+  companyId: z.string().optional(),
   departmentName: z.string(),
   city: z.string().nullable(),
   country: z.string().nullable(),
