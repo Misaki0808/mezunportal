@@ -49,3 +49,15 @@ it('askıdaki hesap girişe değil hata ekranına düşer', async () => {
   const result = await PrivacyGuard({ children: 'korumalı' });
   expect(result).not.toBe('korumalı');
 });
+
+it('onayı eksik kişi yalnız açık listedeki kendi KVKK sayfalarını açar', async () => {
+  state.mockResolvedValue({ ok: true, data: { blocking: true } });
+  for (const value of ['/hesap/gizlilik', '/hesap/veriler?kaynak=hesap', '/hesap/hesabi-sil/']) {
+    path.value = value;
+    expect(await PrivacyGuard({ children: 'kendi hakkı' })).toBe('kendi hakkı');
+  }
+  for (const value of ['/hesap/gizlilik/baskasi', '/hesap/veriler-ek', '/yonetim/kullanicilar']) {
+    path.value = value;
+    await expect(PrivacyGuard({ children: 'korumalı' })).rejects.toThrow('redirect:/onay');
+  }
+});

@@ -81,13 +81,19 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     expect(verification?.status()).toBeLessThan(400);
     expect(decodeURIComponent(verification?.headers().location ?? '')).toContain('/hesap/gizlilik');
     await page.goto('/hesap/gizlilik');
+    // Kendi KVKK ayarları onay verilmeden de açıktır; ürün hesabı güncel onay ister.
+    await expect(page).toHaveURL(/\/hesap\/gizlilik$/);
+    await expect(
+      page.getByRole('heading', { name: 'İletişim bilgilerin, senin kararın' }),
+    ).toBeVisible();
+    await page.goto('/hesap');
     await expect(page).toHaveURL(/\/onay(?:\?.*)?$/);
     await waitForHydratedForm(page, 'Seçimlerimi kaydet');
     const consents = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
     await consents.nth(0).check();
     await consents.nth(1).check();
     await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page).toHaveURL(/\/hesap\/gizlilik$/);
+    await expect(page).toHaveURL(/\/hesap$/);
     await page.goto('/');
     await expect(page.getByText('Doğrulamanı tamamla')).toBeVisible();
     await page.getByRole('link', { name: 'Doğrulamaya git' }).click();

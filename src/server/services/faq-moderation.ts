@@ -16,7 +16,7 @@ import {
   type RedirectFaqInput,
   type RejectFaqInput,
 } from '@/contracts/faq';
-import { codedConflict, codedForbidden, codedNotFound, codedValidation } from '@/lib/errors';
+import { codedConflict, codedNotFound, codedValidation } from '@/lib/errors';
 
 import { analyzeIdentity } from '../rules/faq';
 import {
@@ -65,7 +65,7 @@ async function lockedOpenRequest(tx: Tx, requestId: string) {
   return request;
 }
 
-/** Kapsam dışı talep için yetkisiz yanıtı (deneyim moderasyonuyla aynı); karar verilmiş talep `FAQ_REQUEST_CLOSED`. */
+/** Kapsam dışı ve var olmayan talep aynı yanıttır; karar verilmiş talep `FAQ_REQUEST_CLOSED`. */
 async function requireOpenInScope(
   tx: Tx,
   admin: Awaited<ReturnType<typeof loadAnyAdmin>>,
@@ -73,7 +73,7 @@ async function requireOpenInScope(
 ) {
   const request = await lockedOpenRequest(tx, requestId);
   if (!(await covers(tx, admin, request.departmentIdAtWrite)))
-    throw codedForbidden('AUTH_FORBIDDEN');
+    throw codedNotFound('RESOURCE_NOT_FOUND');
   if (request.status !== 'OPEN') throw codedConflict('FAQ_REQUEST_CLOSED');
   return request;
 }

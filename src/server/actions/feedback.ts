@@ -1,4 +1,5 @@
 'use server';
+import { appointmentIdSchema } from '@/contracts/appointment';
 import { feedbackInputSchema, type FeedbackInput, type FeedbackView } from '@/contracts/feedback';
 import type { ActionResult } from '@/contracts/result';
 import { actionOk, parseInput } from '@/lib/action-result';
@@ -14,7 +15,9 @@ export async function getFeedbackView(appointmentId: string): Promise<ActionResu
   try {
     const actor = await requireVerifiedMember();
     await requireConsent(getDb(), actor.userId);
-    return actionOk(await feedback.feedbackView(getDb(), actor.userId, appointmentId));
+    const parsed = parseInput(appointmentIdSchema, { appointmentId });
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await feedback.feedbackView(getDb(), actor.userId, parsed.data.appointmentId));
   } catch (error) {
     return failAction(error);
   }

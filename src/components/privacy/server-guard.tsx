@@ -20,6 +20,9 @@ export async function PrivacyGuard({ children }: { children: ReactNode }) {
     }
     return <ErrorState errorCode={result.errorCode} />;
   }
-  if (result.data.blocking) redirect(withReturnPath('/onay', requested));
+  const ownRightsPaths = ['/hesap/gizlilik', '/hesap/veriler', '/hesap/hesabi-sil'];
+  const path = requested?.split('?', 1)[0]?.replace(/\/$/, '');
+  if (result.data.blocking && (!path || !ownRightsPaths.includes(path)))
+    redirect(withReturnPath('/onay', requested));
   return children;
 }

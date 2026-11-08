@@ -6,6 +6,7 @@ import { loadActor, type Actor } from '../permissions/actor';
 import { errorForDenyReason } from '../permissions/guards';
 import { listManagedDepartmentIds, resolveDepartmentScope } from '../permissions/scope';
 import { describeManagedScope, evaluateAccess } from '../rules/authorization';
+import { requireConsent } from './privacy';
 
 /**
  * Yönetim paneli servislerinin ortak yetki yardımcıları (P1-11). Yetki HER ZAMAN işlemin içinde güncel veriyle
@@ -39,6 +40,7 @@ export async function loadAdmin(
   if (!decision.allowed || !actor) {
     throw errorForDenyReason(decision.allowed ? 'UNAUTHENTICATED' : decision.reason);
   }
+  await requireConsent(tx, actor.userId);
   return actor;
 }
 

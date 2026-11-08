@@ -272,12 +272,16 @@ export async function reviewGraduationDocument(
     // Yetki: işlemin içinde, güncel olgularla; kapsam BELGENİN bölümüdür.
     const actor = await loadActor(tx, admin.userId, now);
     const department = await resolveDepartmentScope(tx, document.departmentId);
-    if (!actor || !department) throw codedForbidden('AUTH_FORBIDDEN');
+    if (!actor) throw codedForbidden('AUTH_FORBIDDEN');
+    if (!department) throw codedNotFound('RESOURCE_NOT_FOUND');
     const decision = evaluateAccess(actor.facts, {
       action: 'adminScope',
       target: { kind: 'DEPARTMENT', department },
     });
-    if (!decision.allowed) throw errorForDenyReason(decision.reason);
+    if (!decision.allowed) {
+      if (decision.reason !== 'FORBIDDEN') throw errorForDenyReason(decision.reason);
+      throw codedNotFound('RESOURCE_NOT_FOUND');
+    }
     await requireConsent(tx, admin.userId);
 
     if (document.status !== 'PENDING') throw codedConflict('DOCUMENT_NOT_PENDING');

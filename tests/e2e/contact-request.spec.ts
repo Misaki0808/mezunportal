@@ -13,7 +13,7 @@ const db = new PrismaClient({
 test.afterAll(() => db.$disconnect());
 test.describe.configure({ mode: 'serial' });
 /** Sayfa yüklenince hidratasyon biter (ağ durulur); öncesinde tıklanan form/düğme sessizce işlevsiz kalır. */
-async function login(page: Page, persona: 'student' | 'alumniMentor') {
+async function login(page: Page, persona: 'student' | 'alumniMentor' | 'systemAdmin') {
   await page.goto(`/giris/test?persona=${persona}`);
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
@@ -147,8 +147,15 @@ test('zorunlu metin sürümü değişince hesap yeniden onaya yönlenir; isteğe
   }
   await page.goto('/hesap/gizlilik');
   await page.waitForLoadState('networkidle');
+  // Kendi KVKK hakları güncel zorunlu onay olmadan da erişilebilir.
+  await expect(page).toHaveURL(/\/hesap\/gizlilik$/);
+  await expect(
+    page.getByRole('heading', { name: 'İletişim bilgilerin, senin kararın' }),
+  ).toBeVisible();
+  await page.goto('/hesap');
+  await page.waitForLoadState('networkidle');
   // Gidilmek istenen yol dönüş için taşınır (tur #10).
-  await expect(page).toHaveURL(/\/onay\?donus=%2Fhesap%2Fgizlilik$/);
+  await expect(page).toHaveURL(/\/onay\?donus=%2Fhesap$/);
   await waitForHydratedForm(page, 'Seçimlerimi kaydet');
   await expect(page.getByRole('heading', { name: 'Onaylarını yenile', exact: true })).toBeVisible();
   await page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true }).nth(1).check();
@@ -156,8 +163,49 @@ test('zorunlu metin sürümü değişince hesap yeniden onaya yönlenir; isteğe
     .getByRole('checkbox', { name: 'Yurt dışına aktarım için açık rıza veriyorum.' })
     .uncheck();
   await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page).toHaveURL(/\/hesap\/gizlilik$/);
-  await expect(
-    page.getByRole('heading', { name: 'İletişim bilgilerin, senin kararın' }),
-  ).toBeVisible();
+  await expect(page).toHaveURL(/\/hesap$/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+});
+
+test('açık yönetim düzeninde eskiyen rıza rol reddi yerine onay çağrısı gösterir', async ({
+  page,
+}) => {
+  // Önceden yetkili halde indirilmiş içeriği değil, tıklama anındaki sunucu kapısını ölç.
+  await page.route('**/*', (route) =>
+    route.request().headers()['next-router-prefetch'] === '1' ? route.abort() : route.continue(),
+  );
+  await login(page, 'systemAdmin');
+  const admin = await db.user.findUniqueOrThrow({
+    where: { email: 'system-admin@test.mezunportal.local' },
+  });
+  const current = await db.consent.findFirstOrThrow({
+    where: { userId: admin.id, documentType: 'TERMS_OF_USE' },
+    orderBy: { createdAt: 'desc' },
+  });
+  try {
+    await page.goto('/yonetim');
+    await page.waitForLoadState('networkidle');
+    await db.consent.create({
+      data: { userId: admin.id, documentType: 'TERMS_OF_USE', version: 'taslak-0', granted: true },
+    });
+    await page.locator('a[href="/yonetim/kullanicilar"]').first().click();
+    await page.waitForURL((url) => ['/onay', '/yonetim/kullanicilar'].includes(url.pathname));
+    if (new URL(page.url()).pathname !== '/onay') {
+      await expect(
+        page.getByRole('heading', { name: 'Önce metinleri onaylaman gerekiyor', exact: true }),
+      ).toBeVisible();
+      await page.getByRole('link', { name: 'Onay ekranına git', exact: true }).click();
+    }
+    await expect(page).toHaveURL(/\/onay(?:\?.*)?$/);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  } finally {
+    await db.consent.create({
+      data: {
+        userId: admin.id,
+        documentType: 'TERMS_OF_USE',
+        version: current.version,
+        granted: current.granted,
+      },
+    });
+  }
 });

@@ -18,7 +18,10 @@ vi.mock('next/headers', () => ({
   headers: async () =>
     new Headers({ 'x-forwarded-for': '203.0.113.9', 'x-mezun-path': '/dogrulama/uyelik?adim=2' }),
 }));
-vi.mock('../permissions', () => ({ requireUser: mocks.requireUser }));
+vi.mock('../permissions', () => ({
+  requireUser: mocks.requireUser,
+  requireUserWithoutConsent: mocks.requireUser,
+}));
 vi.mock('../auth', () => ({ getAuth: mocks.getAuth, getAuthEmailPort: () => ({}) }));
 vi.mock('../db', () => ({ getDb: () => ({}) }));
 vi.mock('./deps', () => ({ authFlowDeps: () => ({}), documentDeps: () => ({}) }));
