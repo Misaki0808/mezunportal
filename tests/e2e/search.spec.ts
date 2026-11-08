@@ -42,7 +42,7 @@ test('mobil filtreli aramanın paylaşılan bağlantısı aynı sonucu açar', a
   });
   try {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/giris/test?persona=student');
+    await page.goto('/giris/test?persona=academic');
     await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
     await page.waitForURL(/\/(hesap|onay)$/);
     await page.goto('/onay');
@@ -69,7 +69,12 @@ test('mobil filtreli aramanın paylaşılan bağlantısı aynı sonucu açar', a
     const recipient = await context.newPage();
     await recipient.goto(shared);
     await expect(recipient.getByRole('heading', { name: 'KutupTeknoloji' })).toBeVisible();
-    await expect(recipient.getByText('Anonim paylaşıldı')).toBeVisible();
+    await expect(
+      recipient
+        .locator('li')
+        .filter({ has: recipient.getByRole('heading', { name: 'KutupTeknoloji' }) })
+        .getByText('Anonim paylaşıldı'),
+    ).toBeVisible();
     expect(await recipient.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
