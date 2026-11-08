@@ -651,8 +651,8 @@
       "signOutDescription": "Bu cihazdaki oturumunu kapat.",
       "admin": "Yönetim",
       "adminDescription": "Mezun belgesi başvurularını incele.",
-      "profile": "Profilim / Başlangıç adımları",
-      "profileDescription": "İlgi alanlarını, hedeflerini ve tercihlerini tamamla."
+      "profile": "Profilim",
+      "profileDescription": "Bilgilerini, CV'ni ve başlangıç adımlarını yönet."
     },
     "home": {
       "verificationTitle": "Doğrulamanı tamamla",

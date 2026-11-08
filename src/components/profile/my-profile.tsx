@@ -185,16 +185,15 @@ export function MyProfile({ initial, actions }: Props) {
                 <li key={field}>{label(field)}</li>
               ))}
             </ul>
-            {missing.some((field) => ONBOARDING_FIELDS.includes(field)) && (
-              <Link
-                className={buttonClasses({ variant: 'secondary' }) + ' mt-3'}
-                href="/baslangic?duzenle=1"
-              >
-                {t('onboardingLink')}
-              </Link>
-            )}
           </>
         )}
+        {/* İlgi alanı, hedef, mentorluk ve gizlilik adımları tamamlansa da buradan yeniden açılır. */}
+        <Link
+          className={buttonClasses({ variant: 'secondary' }) + ' mt-3'}
+          href="/baslangic?duzenle=1"
+        >
+          {t('onboardingLink')}
+        </Link>
       </section>
 
       <section className="flex flex-col gap-3 rounded-card border border-primary bg-primary-soft p-4 text-on-primary-soft">
