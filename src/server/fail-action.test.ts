@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { codedConflict, codedForbidden, codedUnauthenticated } from '@/lib/errors';
@@ -76,5 +78,15 @@ describe('failAction', () => {
       ok: false,
       errorCode: 'AUTH_UNAUTHENTICATED',
     });
+  });
+});
+
+describe('bekçi: sunucu eylemleri ortak hata çıkışını kullanır', () => {
+  it('src/server/actions içinde actionFailure çağrılmaz (oturumsuz dönüş yolu atlanırdı)', () => {
+    const dir = join(__dirname, 'actions');
+    const offenders = readdirSync(dir)
+      .filter((name) => name.endsWith('.ts') && !name.endsWith('.test.ts'))
+      .filter((name) => /\bactionFailure\b/.test(readFileSync(join(dir, name), 'utf8')));
+    expect(offenders).toEqual([]);
   });
 });
