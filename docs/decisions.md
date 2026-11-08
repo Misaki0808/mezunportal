@@ -715,3 +715,7 @@ Bildirim bağlantısı testi seed öğrencisinin pozisyonuna bağlı kayıt olu�
 ### P1-14 incelemesi: form erişimi ve yalıtılmış iş testi
 
 Formun taraf denetimi hesap layout'unda loading başlamadan yapılır; yabancı kullanıcı gerçek, Türkçe 404 alır. Sayfa ve gönderim eylemi kendi denetimini korur. İstek yolu yalnız proxy'nin yazdığı başlıktan seçilir, erişim kararı katılımcı servisinindir. Görüşme işi testi bağlantı ayarlarını sahte değerlerle kurup temizler; rolün yerel env dosyasına dayanmaz. İki tarafın onayı, tek yanıt ve gösterge kapsamı bağımsız yarış/negatif testleriyle korunur.
+
+### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
+
+Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun kişi sayısı toplamdan çıkarılarak küçük grup hesaplanamaz. Aynı servis izdüşümü panelin HTML/RSC verisine ve Excel özetine uygulanır. Kullanım sayfasında zorunlu rıza ve yönetici yetkisi loading başlamadan kontrol edilir; rızasız/yetkisiz erişim gerçek 404, dosya rotası 403 döner. Diğer sayfaların yeniden onay akışı korunur.

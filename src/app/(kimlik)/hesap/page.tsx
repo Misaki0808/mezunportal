@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 export default async function AccountPage() {
   const actor = await requireUser().catch(() => null);
   if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
-  const [state, showAdmin, t, verification, entry, notifications, feedback, cvReview] =
+  const [state, showAdmin, t, verification, entry, notifications, feedback, cvReview, metrics] =
     await Promise.all([
       getVerificationState().catch(() => null),
       hasAdminAccess(),
@@ -31,6 +31,7 @@ export default async function AccountPage() {
       getTranslations('notifications'),
       getTranslations('feedback'),
       getTranslations('cvReview'),
+      getTranslations('admin.metrics'),
     ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -109,6 +110,12 @@ export default async function AccountPage() {
     },
     ...(showAdmin
       ? [
+          {
+            href: '/yonetim/kullanim',
+            title: metrics('accountTitle'),
+            description: metrics('accountDescription'),
+            icon: InboxIcon,
+          },
           {
             href: '/yonetim',
             title: t('admin'),

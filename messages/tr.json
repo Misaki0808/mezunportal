@@ -1419,7 +1419,8 @@
       "adminGrants": "Yönetici yetkileri",
       "auditLog": "İşlem kaydı",
       "documents": "Mezun belgeleri",
-      "experiences": "Deneyim moderasyonu"
+      "experiences": "Deneyim moderasyonu",
+      "usageMetrics": "Kullanım"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1430,7 +1431,8 @@
       "adminGrants": "Yönetici atamalarını yönet.",
       "auditLog": "Yönetici işlemlerini incele.",
       "documents": "Mezun belgelerini incele.",
-      "experiences": "Deneyim başvurularını değerlendir."
+      "experiences": "Deneyim başvurularını değerlendir.",
+      "usageMetrics": "Toplu kullanım raporunu incele."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1574,6 +1576,65 @@
       "count": "Mezun sayısı",
       "other": "Diğer",
       "unknown": "Bilinmiyor"
+    },
+    "metrics": {
+      "title": "Kullanım metrikleri",
+      "description": "Yetki alanındaki kullanım eğilimlerini toplu olarak incele.",
+      "accountTitle": "Kullanım metrikleri",
+      "accountDescription": "Toplu kullanım raporunu görüntüle.",
+      "back": "Yönetim paneline dön",
+      "from": "Başlangıç tarihi",
+      "to": "Bitiş tarihi",
+      "department": "Bölüm",
+      "all": "Tüm bölümler",
+      "eventType": "Olay türü",
+      "allTypes": "Tüm olaylar",
+      "apply": "Raporu göster",
+      "loading": "Rapor hazırlanıyor…",
+      "invalid": "Geçerli bir tarih aralığı seç. Aralık en fazla 366 gün olabilir.",
+      "download": "Excel indir",
+      "downloading": "Hazırlanıyor…",
+      "rateLimit": "Saatlik indirme sınırına ulaştın. Bir saat sonra tekrar dene.",
+      "downloadError": "Dosya indirilemedi. Lütfen tekrar dene.",
+      "active": "Etkin kullanıcı",
+      "hidden": "Gizli (3’ten az kişi)",
+      "privacy": "Küçük grupların gizliliği için bazı sonuçlar gösterilmez.",
+      "totals": "Olay türleri",
+      "breakdown": "Rol ve bölüm dağılımı",
+      "event": "Olay",
+      "role": "Rol",
+      "departmentColumn": "Bölüm",
+      "events": "Olay sayısı",
+      "users": "Kullanıcı sayısı",
+      "other": "Diğer gruplar",
+      "noRole": "Rol belirtilmedi",
+      "noDepartment": "Bölüm belirtilmedi",
+      "emptyTitle": "Bu dönemde gösterilecek etkinlik yok",
+      "emptyDescription": "Başka bir tarih aralığı veya bölüm seçerek tekrar dene.",
+      "emptyAction": "Tarihleri değiştir",
+      "hiddenDetail": "Bu olay türündeki küçük gruplar gizlidir.",
+      "roles": {
+        "STUDENT": "Öğrenci",
+        "ALUMNI": "Mezun",
+        "ACADEMIC": "Akademisyen"
+      },
+      "types": {
+        "LOGIN": "Giriş",
+        "PROFILE_THRESHOLD": "Profil eşiği",
+        "CV_UPLOADED": "CV yüklendi",
+        "CV_APPLIED": "CV uygulandı",
+        "EXPERIENCE_PUBLISHED": "Deneyim yayınlandı",
+        "SEARCH": "Deneyim araması",
+        "MENTOR_SEARCH": "Mentor araması",
+        "MENTOR_VIEWED": "Mentor profili görüntülendi",
+        "APPOINTMENT_REQUESTED": "Randevu talebi",
+        "APPOINTMENT_CONFIRMED": "Randevu onayı",
+        "APPOINTMENT_COMPLETED": "Randevu gerçekleşti",
+        "FAQ_REQUESTED": "SSS talebi",
+        "FAQ_PUBLISHED": "SSS yayınlandı",
+        "CV_REVIEW_REQUESTED": "CV inceleme talebi",
+        "CONTACT_REQUESTED": "İletişim talebi"
+      }
     }
   },
   "search": {
