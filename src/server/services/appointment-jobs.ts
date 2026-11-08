@@ -26,10 +26,17 @@ import type { AppointmentNotice } from './appointment-notifier';
 export const CALENDAR_MAX_ATTEMPTS = 3;
 const BATCH = 50;
 
-export async function expireDueRequests(deps: AppointmentDeps): Promise<number> {
+/** Süpürmeyi belirli randevulara daraltır (tek randevu için anlık çalıştırma ve testler); boşsa hepsi. */
+export type SweepScope = { ids?: readonly string[] };
+const only = (scope: SweepScope | undefined) => (scope?.ids ? { id: { in: [...scope.ids] } } : {});
+
+export async function expireDueRequests(
+  deps: AppointmentDeps,
+  scope?: SweepScope,
+): Promise<number> {
   const now = nowOf(deps);
   const due = await deps.db.appointment.findMany({
-    where: { status: 'REQUESTED', expiresAt: { lte: now } },
+    where: { status: 'REQUESTED', expiresAt: { lte: now }, ...only(scope) },
     select: { id: true },
     orderBy: { expiresAt: 'asc' },
     take: BATCH,
@@ -84,6 +91,7 @@ async function giveUpOnCalendar(deps: AppointmentDeps, id: string, now: Date, at
 
 export async function syncCalendarEvents(
   deps: AppointmentDeps,
+  scope?: SweepScope,
 ): Promise<{ created: number; failed: number }> {
   const now = nowOf(deps);
   const result = { created: 0, failed: 0 };
@@ -96,6 +104,7 @@ export async function syncCalendarEvents(
       calendarEventId: null,
       calendarFailedAt: null,
       startsAt: { gt: now },
+      ...only(scope),
     },
     select: { id: true },
     orderBy: { startsAt: 'asc' },
@@ -168,10 +177,13 @@ export async function syncCalendarEvents(
   return result;
 }
 
-export async function deleteCancelledEvents(deps: AppointmentDeps): Promise<number> {
+export async function deleteCancelledEvents(
+  deps: AppointmentDeps,
+  scope?: SweepScope,
+): Promise<number> {
   if (!deps.calendar) return 0;
   const rows = await deps.db.appointment.findMany({
-    where: { status: 'CANCELLED', calendarEventId: { not: null } },
+    where: { status: 'CANCELLED', calendarEventId: { not: null }, ...only(scope) },
     select: { id: true },
     take: BATCH,
   });
@@ -179,7 +191,7 @@ export async function deleteCancelledEvents(deps: AppointmentDeps): Promise<numb
   return rows.length;
 }
 
-export async function sendDueReminders(deps: AppointmentDeps): Promise<number> {
+export async function sendDueReminders(deps: AppointmentDeps, scope?: SweepScope): Promise<number> {
   const now = nowOf(deps);
   // Başlangıca 24 saat veya daha az kaldıysa ve henüz başlamadıysa.
   const due = await deps.db.appointment.findMany({
@@ -187,6 +199,7 @@ export async function sendDueReminders(deps: AppointmentDeps): Promise<number> {
       status: 'CONFIRMED',
       reminderSentAt: null,
       startsAt: { gt: now, lte: new Date(now.getTime() + 24 * 3_600_000) },
+      ...only(scope),
     },
     select: { id: true },
     orderBy: { startsAt: 'asc' },
@@ -213,7 +226,7 @@ export async function sendDueReminders(deps: AppointmentDeps): Promise<number> {
 }
 
 /** Süpürme: dört adım sırayla; biri hata verse diğerleri çalışır. */
-export async function runAppointmentSweep(deps: AppointmentDeps) {
+export async function runAppointmentSweep(deps: AppointmentDeps, scope?: SweepScope) {
   const outcome = {
     expired: 0,
     calendarCreated: 0,
@@ -228,13 +241,13 @@ export async function runAppointmentSweep(deps: AppointmentDeps) {
       // Ayrıntı loglanmaz; sonraki süpürmede yeniden denenir.
     }
   };
-  await guard(async () => void (outcome.expired = await expireDueRequests(deps)));
+  await guard(async () => void (outcome.expired = await expireDueRequests(deps, scope)));
   await guard(async () => {
-    const sync = await syncCalendarEvents(deps);
+    const sync = await syncCalendarEvents(deps, scope);
     outcome.calendarCreated = sync.created;
     outcome.calendarFailed = sync.failed;
   });
-  await guard(async () => void (outcome.eventsDeleted = await deleteCancelledEvents(deps)));
-  await guard(async () => void (outcome.reminders = await sendDueReminders(deps)));
+  await guard(async () => void (outcome.eventsDeleted = await deleteCancelledEvents(deps, scope)));
+  await guard(async () => void (outcome.reminders = await sendDueReminders(deps, scope)));
   return outcome;
 }
