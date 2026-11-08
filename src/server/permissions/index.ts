@@ -22,6 +22,7 @@ export const {
   requireVerifiedMember,
   requireMentor,
   requireAdmin,
+  requireAnyAdmin,
   requireModerator,
   canModerate,
   managedDepartmentIds,
