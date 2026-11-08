@@ -86,3 +86,60 @@ describe('KVKK ekran sınırları', () => {
     expect(html).not.toContain('Seninle paylaşılan bilgiler');
   });
 });
+
+it('ilan kaynaklı giden talep onaydan önce ve geri almada ilanı gösterir; onayda adı açar', () => {
+  const base = {
+    id: 'request',
+    origin: { kind: 'JOB_POSTING' as const, title: 'Veri stajı', organization: 'Örnek Kurum' },
+    fields: ['EMAIL' as const],
+    message: null,
+    createdAt: new Date('2026-11-08T12:00:00Z'),
+    decidedAt: null,
+    closedAt: null,
+    revealed: null,
+  };
+  for (const status of ['PENDING', 'REVOKED'] as const) {
+    const html = render(
+      <ContactList
+        initialBox="OUTGOING"
+        initial={{ nextCursor: null, items: [{ ...base, status, counterpart: null }] }}
+      />,
+    );
+    expect(html).toContain('Veri stajı');
+    expect(html).toContain('Örnek Kurum');
+    expect(html).not.toContain('Gizli Yazar');
+    expect(html).not.toContain('gizli-user-id');
+  }
+  // Hatalı/eskimiş yanıtta bile ekran onay öncesi ad göstermez.
+  const malformed = render(
+    <ContactList
+      initialBox="OUTGOING"
+      initial={{
+        nextCursor: null,
+        items: [
+          {
+            ...base,
+            status: 'PENDING',
+            counterpart: { userId: 'gizli-user-id', name: 'Gizli Yazar' },
+          },
+        ],
+      }}
+    />,
+  );
+  expect(malformed).not.toContain('Gizli Yazar');
+  expect(malformed).not.toContain('gizli-user-id');
+  const approved = render(
+    <ContactList
+      initialBox="OUTGOING"
+      initial={{
+        nextCursor: null,
+        items: [
+          { ...base, status: 'APPROVED', counterpart: { userId: 'author', name: 'Onaylı Yazar' } },
+        ],
+      }}
+    />,
+  );
+  expect(approved).toContain('Veri stajı');
+  expect(approved).toContain('Örnek Kurum');
+  expect(approved).toContain('Onaylı Yazar');
+});
