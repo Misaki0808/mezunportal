@@ -14,7 +14,7 @@ import { dayLabel, groupSlotsByDay, shortDayLabel, timeLabel } from './time';
 
 type Props = {
   list: SlotList;
-  request: (input: RequestAppointmentInput) => Promise<ActionResult<{ appointmentId: string }>>;
+  request: (input: RequestAppointmentInput) => Promise<ActionResult<unknown>>;
 };
 
 /**
@@ -155,7 +155,7 @@ export function SlotPicker({ list, request }: Props) {
       <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
       <p className="mt-1 text-sm text-fg-muted">{t('timezone')}</p>
 
-      <fieldset className="mt-6">
+      <fieldset className="mt-6 min-w-0">
         <legend className="mb-2 font-medium text-fg">{t('pickDay')}</legend>
         <div
           className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-2"
@@ -190,7 +190,7 @@ export function SlotPicker({ list, request }: Props) {
       </fieldset>
 
       {day && (
-        <fieldset className="mt-4">
+        <fieldset className="mt-4 min-w-0">
           <legend className="mb-2 font-medium text-fg">
             {t('pickTime')} ·{' '}
             <span className="font-normal text-fg-muted">{dayLabel(day.date)}</span>

@@ -77,7 +77,7 @@ const slotList = (over: Partial<SlotList> = {}): SlotList => ({
 
 describe('slot seçici', () => {
   it('gün → saat → biçim → gönder: sözleşme biçiminde istek gider, başarıda onay görünümü', async () => {
-    const request = vi.fn().mockResolvedValue({ ok: true, data: { appointmentId: 'a1' } });
+    const request = vi.fn().mockResolvedValue({ ok: true, data: {} });
     const { user } = renderUi(<SlotPicker list={slotList()} request={request} />);
     expect(screen.getByText('Saatler İstanbul saatidir.')).toBeInTheDocument();
     expect(screen.getByText(/e-posta adresin mentorla paylaşılır/)).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe('slot seçici', () => {
   });
 
   it('saat seçilmeden gönderilmez; tek biçimli slotta biçim otomatik seçilir', async () => {
-    const request = vi.fn().mockResolvedValue({ ok: true, data: { appointmentId: 'a1' } });
+    const request = vi.fn().mockResolvedValue({ ok: true, data: {} });
     const { user } = renderUi(<SlotPicker list={slotList()} request={request} />);
     await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
     expect(request).not.toHaveBeenCalled();
