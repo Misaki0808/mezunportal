@@ -1014,7 +1014,8 @@
       "noDepartmentAction": "Doğrulamaya git",
       "notEditableTitle": "Bu deneyim düzenlenemez",
       "notEditableDescription": "İncelemedeki ya da yayındaki deneyim düzenlenemez.",
-      "fixErrors": "Kırmızı alanları düzeltip tekrar dene."
+      "fixErrors": "Hatalı alanları düzeltip tekrar dene.",
+      "goToFirstError": "İlk hatalı alana git"
     },
     "fieldErrors": {
       "required": "Bu alan zorunlu.",
@@ -1455,6 +1456,7 @@
     "name": "Ad",
     "status": "Durum",
     "details": "Ayrıntıyı aç",
+    "detailsFor": "Ayrıntıyı aç: {name}",
     "actions": "İşlemler",
     "created": "Tarih",
     "level": "Yetki kapsamı",

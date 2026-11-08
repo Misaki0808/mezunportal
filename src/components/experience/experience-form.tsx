@@ -586,9 +586,16 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
           </p>
         )}
         {Object.keys(fieldErrors).length > 0 && !error && (
-          <p role="alert" className="text-base text-danger">
-            {t('form.fixErrors')}
-          </p>
+          <div role="alert" className="flex flex-wrap items-center gap-x-3 text-base text-danger">
+            <span>{t('form.fixErrors')}</span>
+            <button
+              type="button"
+              className="press-row min-h-11 font-medium underline"
+              onClick={() => setFocusTick((tick) => tick + 1)}
+            >
+              {t('form.goToFirstError')}
+            </button>
+          </div>
         )}
         {notice === 'saved' && (
           <p role="status" className="text-base text-on-success-soft">
