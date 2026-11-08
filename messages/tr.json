@@ -1430,7 +1430,8 @@
       "documents": "Mezun belgeleri",
       "experiences": "Deneyim moderasyonu",
       "invitations": "Toplu davet",
-      "usageMetrics": "Kullanım"
+      "usageMetrics": "Kullanım",
+      "faq": "SSS moderasyonu"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1443,7 +1444,8 @@
       "documents": "Mezun belgelerini incele.",
       "experiences": "Deneyim başvurularını değerlendir.",
       "invitations": "E-posta listesiyle davet gönder.",
-      "usageMetrics": "Toplu kullanım raporunu incele."
+      "usageMetrics": "Toplu kullanım raporunu incele.",
+      "faq": "SSS taleplerini incele, yayımla, reddet ya da mentorluğa yönlendir."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -2077,6 +2079,124 @@
       "expiresAt": "Yanıt son tarihi: {date}",
       "done": "İşlem kaydedildi.",
       "emailShared": "Takvim davetinde iki tarafın e-posta adresi paylaşılır."
+    }
+  },
+  "faq": {
+    "eyebrow": "SSS",
+    "title": "Sık sorulan sorular",
+    "description": "Mentorların cevapladığı, moderatörün yayımladığı sorular. Yayında kimsenin adı görünmez.",
+    "searchLabel": "SSS'te ara",
+    "search": "Ara",
+    "askLink": "Sorum yok mu? SSS talebi gönder",
+    "resultCount": "{count} soru",
+    "resultCountFor": "“{q}” için {count} soru",
+    "empty": "Soru bulunamadı.",
+    "emptySearch": "Başka sözcüklerle aramayı dene.",
+    "emptyAll": "Henüz yayınlanmış soru yok.",
+    "backToList": "Tüm sorulara dön",
+    "entry": {
+      "browse": "Sık sorulan sorular",
+      "browseDescription": "Yayınlanan soruları oku ve ara.",
+      "mine": "SSS taleplerim",
+      "mineDescription": "Soru gönder ve taleplerinin durumunu izle.",
+      "mentor": "Cevaplanacak sorular",
+      "mentorDescription": "Mentor olarak sana düşen SSS taleplerini cevapla.",
+      "moderation": "SSS moderasyonu",
+      "moderationDescription": "SSS taleplerini incele ve yayımla."
+    },
+    "request": {
+      "title": "SSS talebi gönder",
+      "description": "Aklındaki soruyu yaz. Mentorlar cevaplar, moderatör uygun bulursa kimlik belirtmeden yayımlar.",
+      "label": "Sorun",
+      "hint": "{min}–{max} karakter. Ad, e-posta ya da telefon yazma.",
+      "invalid": "Soru {min}–{max} karakter olmalı.",
+      "counter": "{count} / {max}",
+      "similarTitle": "Benzer sorular zaten var",
+      "similarDescription": "Göndermeden önce bunlara göz at; cevabın orada olabilir.",
+      "acknowledge": "Benzer soruları gördüm, yine de göndermek istiyorum.",
+      "acknowledgeFirst": "Önce benzer soruları gördüğünü onayla.",
+      "submit": "Talebi gönder",
+      "sent": "Talebin alındı. Durumunu aşağıdan izleyebilirsin."
+    },
+    "mine": {
+      "title": "Taleplerim",
+      "empty": "Henüz talebin yok.",
+      "emptyDescription": "Gönderdiğin sorular burada görünür.",
+      "more": "Daha fazla göster",
+      "status": {
+        "OPEN": "Bekliyor",
+        "PUBLISHED": "Yayında",
+        "REJECTED": "Reddedildi",
+        "REDIRECTED": "Mentorluğa yönlendirildi"
+      },
+      "openHint": "Mentorların cevabı ve moderatör kararı bekleniyor.",
+      "rejectedReason": "Gerekçe: {reason}",
+      "rejectedNoReason": "Gerekçe yazılmamış.",
+      "redirectedText": "Sorun kişisel görüldü; bir mentorla doğrudan görüşmeni öneriyoruz.",
+      "toDirectory": "Mentor dizinine git",
+      "viewPublished": "Yayınlanan soruyu gör"
+    },
+    "mentor": {
+      "eyebrow": "SSS",
+      "title": "Cevaplanacak sorular",
+      "description": "Soran kişi görünmez. Cevabın yayımlanırsa adın da görünmez.",
+      "onlyUnanswered": "Yalnız cevapsızlar",
+      "answered": "Cevapladın",
+      "unanswered": "Cevap bekliyor",
+      "answerLabel": "Cevabın",
+      "answerHint": "{min}–{max} karakter. Ad, e-posta ya da telefon yazma.",
+      "answerInvalid": "Cevap {min}–{max} karakter olmalı.",
+      "send": "Cevabı gönder",
+      "update": "Cevabı güncelle",
+      "saved": "Cevabın kaydedildi.",
+      "empty": "Cevaplanacak soru yok.",
+      "emptyDescription": "Yeni sorular geldiğinde burada görünür.",
+      "more": "Daha fazla göster"
+    },
+    "moderation": {
+      "title": "SSS moderasyonu",
+      "description": "Cevapları karşılaştır, en iyisini seç ve yayımlamadan önce metni düzenle.",
+      "question": "Soru",
+      "answers": "Mentor cevapları",
+      "answerN": "Cevap {n}",
+      "noAnswers": "Henüz cevap yok.",
+      "publishedAnswer": "Yayınlanacak cevap",
+      "identityWarning": "Yayında hiçbir ad, e-posta ya da telefon kalmamalı. Kimliği belli eden bilgileri kaldır.",
+      "invalid": "Soru ve cevap izin verilen uzunlukta olmalı.",
+      "needsAnswer": "Yayımlamak için en az bir mentor cevabı gerekir.",
+      "publish": "Yayımla",
+      "redirect": "Mentorluğa yönlendir",
+      "reject": "Reddet",
+      "cancel": "Vazgeç",
+      "noteHint": "Öğrenciye gösterilir. Kişisel veri yazma.",
+      "noteInvalid": "En az 3 karakter yaz.",
+      "dialog": {
+        "PUBLISH": {
+          "title": "SSS'i yayımla",
+          "description": "Bu metin tüm doğrulanmış üyelere kimliksiz görünür. Yayımlanınca puanlar yazılır ve geri alınamaz.",
+          "confirm": "Yayımla"
+        },
+        "REJECT": {
+          "title": "Talebi reddet",
+          "description": "Gerekçe soran öğrenciye gösterilir.",
+          "noteLabel": "Gerekçe",
+          "confirm": "Reddet"
+        },
+        "REDIRECT": {
+          "title": "Mentorluğa yönlendir",
+          "description": "Öğrenci mentor dizinine yönlendirilir; notun ona gösterilir.",
+          "noteLabel": "Öğrenciye not",
+          "confirm": "Yönlendir"
+        }
+      },
+      "done": {
+        "PUBLISH": "SSS yayımlandı.",
+        "REJECT": "Talep reddedildi.",
+        "REDIRECT": "Öğrenci mentorluğa yönlendirildi."
+      },
+      "empty": "Bekleyen talep yok.",
+      "emptyDescription": "Yeni talepler burada görünür.",
+      "more": "Daha fazla göster"
     }
   }
 }

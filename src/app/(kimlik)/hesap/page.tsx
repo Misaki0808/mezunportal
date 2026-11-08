@@ -21,18 +21,29 @@ export const dynamic = 'force-dynamic';
 export default async function AccountPage() {
   const actor = await requireUser().catch(() => null);
   if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
-  const [state, showAdmin, t, verification, entry, notifications, feedback, cvReview, metrics] =
-    await Promise.all([
-      getVerificationState().catch(() => null),
-      hasAdminAccess(),
-      getTranslations('authScreens.account'),
-      getTranslations('authScreens.verification'),
-      getTranslations('experiences.entry'),
-      getTranslations('notifications'),
-      getTranslations('feedback'),
-      getTranslations('cvReview'),
-      getTranslations('admin.metrics'),
-    ]);
+  const [
+    state,
+    showAdmin,
+    t,
+    verification,
+    entry,
+    notifications,
+    feedback,
+    cvReview,
+    metrics,
+    faq,
+  ] = await Promise.all([
+    getVerificationState().catch(() => null),
+    hasAdminAccess(),
+    getTranslations('authScreens.account'),
+    getTranslations('authScreens.verification'),
+    getTranslations('experiences.entry'),
+    getTranslations('notifications'),
+    getTranslations('feedback'),
+    getTranslations('cvReview'),
+    getTranslations('admin.metrics'),
+    getTranslations('faq.entry'),
+  ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
   const statusLabel = {
@@ -96,6 +107,28 @@ export default async function AccountPage() {
           },
         ]
       : []),
+    ...(state.data.status === 'VERIFIED'
+      ? [
+          {
+            href: '/sss',
+            title: faq('browse'),
+            description: faq('browseDescription'),
+            icon: InboxIcon,
+          },
+          {
+            href: '/hesap/sss',
+            title: faq('mine'),
+            description: faq('mineDescription'),
+            icon: FileTextIcon,
+          },
+          {
+            href: '/mentor/sss',
+            title: faq('mentor'),
+            description: faq('mentorDescription'),
+            icon: FileTextIcon,
+          },
+        ]
+      : []),
     {
       href: '/hesap/bildirimler',
       title: notifications('accountTitle'),
@@ -121,6 +154,12 @@ export default async function AccountPage() {
             title: t('admin'),
             description: t('adminDescription'),
             icon: InboxIcon,
+          },
+          {
+            href: '/yonetim/sss',
+            title: faq('moderation'),
+            description: faq('moderationDescription'),
+            icon: ShieldCheckIcon,
           },
           {
             href: '/yonetim/deneyimler',
