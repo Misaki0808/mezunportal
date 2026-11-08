@@ -4,6 +4,7 @@ import { feedbackInputSchema, type FeedbackInput, type FeedbackView } from '@/co
 import { codedConflict, codedNotFound } from '@/lib/errors';
 import { createPermissions } from '../permissions/guards';
 import { reliability, reliabilitySince } from '../rules/reliability';
+import { awardForSession, awardSafely } from './points';
 import { requireConsent } from './privacy';
 
 const HOUR = 60 * 60 * 1000;
@@ -14,7 +15,8 @@ export async function submitFeedback(
   now = new Date(),
 ) {
   const parsed = feedbackInputSchema.parse(input);
-  return db.$transaction(async (tx) => {
+  let completed = false;
+  const result = await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR SHARE`;
     await createPermissions({
       db: () => tx,
@@ -45,9 +47,14 @@ export async function submitFeedback(
       row.feedbacks.some((f) => f.authorId !== userId && f.happened)
     ) {
       await tx.appointment.update({ where: { id: row.id }, data: { status: 'COMPLETED' } });
+      completed = true;
     }
     return { submitted: true };
   });
+  // Puan (P1-16): iki taraf "gerçekleşti" dedi ve görüşme TAMAMLANDI; yazım işlem dışında, hatası akışı bozmaz.
+  if (completed)
+    await awardSafely(() => awardForSession({ db, now: () => now }, parsed.appointmentId));
+  return result;
 }
 export async function feedbackView(
   db: PrismaClient,

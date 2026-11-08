@@ -98,6 +98,9 @@
       "CV_REVIEW_OPEN_EXISTS": "Bu mentora açık bir talebin var.",
       "CV_REVIEW_CLOSED": "Bu CV inceleme talebi artık açık değil.",
       "CV_REVIEW_ALREADY_HELPFUL": "Bu yorumu zaten faydalı olarak işaretledin.",
+      "POINT_ALREADY_REVOKED": "Bu puan kaydı zaten geri alınmış.",
+      "SUSPICION_ALREADY_DECIDED": "Bu şüphe işareti için karar zaten verilmiş.",
+      "POINT_BACKFILL_UNAVAILABLE": "Geriye dönük puan hesaplaması şu an başlatılamıyor. Biraz sonra yeniden dene.",
       "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin."
     }
   },
@@ -1540,6 +1543,8 @@
         "MODERATION_REJECT": "Deneyim reddi",
         "REPORT_RESOLVE": "Şikâyet kararı",
         "POINTS_REVOKE": "Puan geri alma",
+        "POINT_RULE_CHANGE": "Puan kuralı değişikliği",
+        "POINTS_BACKFILL": "Geriye dönük puan hesaplaması",
         "SUSPICION_DECIDE": "Şüphe kararı",
         "ADMIN_GRANT": "Yönetici atama",
         "ADMIN_REVOKE": "Yönetici yetkisi kaldırma",
@@ -1555,6 +1560,7 @@
         "EXPERIENCE": "Deneyim",
         "FAQ_REQUEST": "SSS talebi",
         "POINT_ENTRY": "Puan kaydı",
+        "POINT_RULE": "Puan kuralı",
         "SUSPICION_FLAG": "Şüphe kaydı",
         "ADMIN_GRANT": "Yönetici yetkisi",
         "REPORT": "Şikâyet",

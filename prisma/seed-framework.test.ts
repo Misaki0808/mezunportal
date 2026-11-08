@@ -18,6 +18,7 @@ describe('sahte veri çerçevesi', () => {
       'profileTags',
       'dictionary',
       'feedback',
+      'pointRules',
     ]);
   });
 });
