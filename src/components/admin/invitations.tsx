@@ -1,0 +1,88 @@
+'use client';
+import { useTranslations } from 'next-intl';
+import { useState, useTransition } from 'react';
+import { sendInvitations } from '@/server/actions/invitations';
+import { AdminFrame } from './frame';
+
+export function Invitations() {
+  const t = useTranslations('invitations');
+  const errors = useTranslations('errors.codes');
+  const [text, setText] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ queued: number; failed: number; skipped: number } | null>(
+    null,
+  );
+  const [pending, start] = useTransition();
+  return (
+    <AdminFrame title={t('title')} description={t('description')}>
+      <form
+        className="max-w-2xl space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          setError(null);
+          setResult(null);
+          start(async () => {
+            const response = await sendInvitations(text);
+            if (response.ok) setResult(response.data);
+            else setError(response.errorCode);
+          });
+        }}
+      >
+        <label htmlFor="invitation-list" className="block font-medium">
+          {t('label')}
+        </label>
+        <textarea
+          id="invitation-list"
+          className="min-h-48 w-full rounded-lg border border-border bg-surface p-3 text-fg"
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          required
+          aria-describedby="invitation-help"
+        />
+        <p id="invitation-help" className="text-fg-muted">
+          {t('help')}
+        </p>
+        <div>
+          <input
+            id="invitation-file"
+            className="peer sr-only"
+            type="file"
+            accept=".csv,.txt,text/csv,text/plain"
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              if (file && file.size <= 30000) {
+                setText(await file.text());
+                setFileName(file.name);
+                setError(null);
+              } else if (file) {
+                setFileName('');
+                setError('VALIDATION_INVALID');
+              }
+            }}
+          />
+          <label
+            htmlFor="invitation-file"
+            className="inline-flex min-h-11 cursor-pointer items-center rounded-lg border border-border px-4 font-medium text-primary peer-focus-visible:outline peer-focus-visible:outline-2"
+          >
+            {t('file')}
+          </label>
+          {fileName && <p className="mt-2 break-all text-fg-muted">{fileName}</p>}
+        </div>
+        {error && (
+          <p role="alert" className="text-danger">
+            {errors(error as Parameters<typeof errors>[0])}
+          </p>
+        )}
+        {result && <p role="status">{t('result', result)}</p>}
+        <button
+          disabled={pending}
+          className="min-h-11 rounded-lg bg-primary px-5 py-3 font-semibold text-white disabled:opacity-50"
+          type="submit"
+        >
+          {pending ? t('sending') : t('submit')}
+        </button>
+      </form>
+    </AdminFrame>
+  );
+}

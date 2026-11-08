@@ -712,3 +712,11 @@ Bildirim bağlantısı testi seed öğrencisinin pozisyonuna bağlı kayıt olu�
 ### P1-14 incelemesi: form erişimi ve yalıtılmış iş testi
 
 Formun taraf denetimi hesap layout'unda loading başlamadan yapılır; yabancı kullanıcı gerçek, Türkçe 404 alır. Sayfa ve gönderim eylemi kendi denetimini korur. İstek yolu yalnız proxy'nin yazdığı başlıktan seçilir, erişim kararı katılımcı servisinindir. Görüşme işi testi bağlantı ayarlarını sahte değerlerle kurup temizler; rolün yerel env dosyasına dayanmaz. İki tarafın onayı, tek yanıt ve gösterge kapsamı bağımsız yarış/negatif testleriyle korunur.
+
+### P1-18 — dağıtım ve toplu davet sınırı
+
+İşletim sağlayıcısı seçilmeden aynı imaj ayrı web ve worker süreçleri olarak çalışır; web
+başlangıcı yalnız `migrate deploy` yapar, seed üretime taşınmaz. Yedek DB ile dosyayı tutarlı
+almak için süreçlerin durdurulmasını, geri yükleme boş ayrı hedefi gerektirir. Toplu davet yalnız
+sistem yöneticisine açılır; kayıtlı hesaplara bildirim tercihini aşarak gönderilmez. Kuyruğa alma
+sonuçları gösterilir; SMTP teslimi ve altyapı seçimi ayrıca işletim kararına bağlıdır.
