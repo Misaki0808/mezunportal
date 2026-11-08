@@ -8,7 +8,6 @@ import type {
   UnsuspendUserOutput,
 } from '@/contracts/admin-users';
 import { SUSPENSION_MAX_DAYS } from '@/contracts/admin-users';
-import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import {
   codedConflict,
   codedForbidden,
@@ -17,15 +16,24 @@ import {
   type ErrorCode,
 } from '@/lib/errors';
 
-import { loadActor, type Actor } from '../permissions/actor';
-import { errorForDenyReason } from '../permissions/guards';
+import type { Actor } from '../permissions/actor';
 import { resolveDepartmentScope } from '../permissions/scope';
 import { findReasonProblem, type AdminActionName } from '../rules/adminAudit';
-import { accountStatusOf, describeManagedScope, evaluateAccess } from '../rules/authorization';
+import { accountStatusOf } from '../rules/authorization';
 import {
   planMembershipCorrection,
   wouldRemoveLastSystemGrant,
 } from '../rules/membershipCorrection';
+import {
+  covers,
+  isSystem,
+  loadAnyAdmin,
+  loadSystemAdmin,
+  nowOf,
+  TX_OPTIONS,
+  type AdminDeps,
+  type Tx,
+} from './admin-access';
 import { recordAdminAction } from './audit';
 
 /**
@@ -35,55 +43,13 @@ import { recordAdminAction } from './audit';
  * AYNI işlemde yazar: kayıt yazılamazsa eylem geri alınır. Sözleşme kuralları `contracts/admin-users.ts` başındadır.
  */
 
-export type AdminUserDeps = { db: PrismaClient; now?: () => Date };
-type Tx = Prisma.TransactionClient;
-
-const nowOf = (deps: AdminUserDeps) => (deps.now ?? (() => new Date()))();
-const TX_OPTIONS = { timeout: 20_000, maxWait: 10_000 } as const;
+export type AdminUserDeps = AdminDeps;
 
 /** Gerekçe, hiçbir yazma yapılmadan ÖNCE doğrulanır (kişisel veri içeren/eksik gerekçe veritabanına dokunmaz). */
 function assertReason(action: AdminActionName, reason: string | undefined) {
   const problem = findReasonProblem(action, reason);
   if (problem === 'REQUIRED') throw codedValidation('AUDIT_REASON_REQUIRED');
   if (problem === 'INVALID') throw codedValidation('AUDIT_REASON_INVALID');
-}
-
-/** Kilit altında güncel olgularla: panele girebilen (kapsamı olan, doğrulanmış) yönetici. */
-async function loadAnyAdmin(tx: Tx, adminUserId: string, now: Date): Promise<Actor> {
-  // SHARE hesap silme/askıyı bekletir, audit'in aktör FK okumasıyla uyumludur.
-  await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${adminUserId} FOR SHARE`;
-  const actor = await loadActor(tx, adminUserId, now);
-  const decision = evaluateAccess(actor?.facts ?? null, { action: 'adminAny' });
-  if (!decision.allowed || !actor) {
-    throw errorForDenyReason(decision.allowed ? 'UNAUTHENTICATED' : decision.reason);
-  }
-  return actor;
-}
-
-async function loadSystemAdmin(tx: Tx, adminUserId: string, now: Date): Promise<Actor> {
-  // SHARE hesap silme/askıyı bekletir, audit'in aktör FK okumasıyla uyumludur.
-  await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${adminUserId} FOR SHARE`;
-  const actor = await loadActor(tx, adminUserId, now);
-  const decision = evaluateAccess(actor?.facts ?? null, {
-    action: 'adminScope',
-    target: { kind: 'SYSTEM' },
-  });
-  if (!decision.allowed || !actor) {
-    throw errorForDenyReason(decision.allowed ? 'UNAUTHENTICATED' : decision.reason);
-  }
-  return actor;
-}
-
-const isSystem = (actor: Actor) => describeManagedScope(actor.facts.grants).system;
-
-/** Bölüm bu yöneticinin kapsamında mı? (Sistem yöneticisi için her zaman; bölüm yoksa `false`.) */
-async function covers(tx: Tx, actor: Actor, departmentId: string): Promise<boolean> {
-  const department = await resolveDepartmentScope(tx, departmentId);
-  if (!department) return false;
-  return evaluateAccess(actor.facts, {
-    action: 'adminScope',
-    target: { kind: 'DEPARTMENT', department },
-  }).allowed;
 }
 
 /**
