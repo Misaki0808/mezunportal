@@ -389,6 +389,22 @@ export const dataExportSchema = z.object({
       })
       .strict(),
   ),
+  /** Referans beyanları: yalnız ilgili kişinin katıldığı kayıtlar. */
+  referrals: z.array(
+    z
+      .object({
+        id: z.string(),
+        role: z.enum(['ALUMNI', 'STUDENT']),
+        status: z.string(),
+        organizationName: z.string().nullable(),
+        note: z.string().nullable(),
+        acceptanceNote: z.string().nullable(),
+        decisionReason: z.string().nullable(),
+        acceptanceReason: z.string().nullable(),
+        createdAt: z.string(),
+      })
+      .strict(),
+  ),
   /** Katkı puanı (P1-16): kaynak içerik ve karşı taraf kimliği YOK (anonim deneyim bağı ve üçüncü kişi sızmaz). */
   contribution: z
     .object({

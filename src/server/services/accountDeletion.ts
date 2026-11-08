@@ -154,6 +154,27 @@ export async function deleteAccount(
       data: { publishedById: null },
     });
 
+    // Referans beyanı ve notları katılımcı silindiğinde kaldırılır; bekleyen puan kesinleşemez.
+    const referralIds = (
+      await tx.referralClaim.findMany({
+        where: { OR: [{ alumnusId: userId }, { studentId: userId }] },
+        select: { id: true },
+      })
+    ).map((row) => row.id);
+    await tx.pointEntry.updateMany({
+      where: { sourceType: 'REFERRAL', sourceId: { in: referralIds }, status: 'PENDING' },
+      data: { status: 'REVOKED', revokedAt: now, revokedReason: 'REFERRAL_CANCELLED' },
+    });
+    await tx.referralClaim.deleteMany({ where: { id: { in: referralIds } } });
+    await tx.referralClaim.updateMany({
+      where: { reviewedById: userId },
+      data: { reviewedById: null },
+    });
+    await tx.referralClaim.updateMany({
+      where: { acceptanceReviewedById: userId },
+      data: { acceptanceReviewedById: null },
+    });
+
     // İlanlar (P2-04): yazdığı ilanlar (hedef bölümleri ve şikâyetleriyle) tamamen silinir; ilan metni kişiye ait içeriktir ve
     // yazarsız yayında kalmaz. Raportör bağı (şikâyet satırı) `SET NULL` ile kopar; moderatör/kaldıran bağı kopar.
     await tx.jobPosting.deleteMany({ where: { authorId: userId } });

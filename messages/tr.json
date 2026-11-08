@@ -1637,7 +1637,8 @@
       "usageMetrics": "Kullanım",
       "points": "Puan yönetimi",
       "faq": "SSS moderasyonu",
-      "jobPostings": "İlan inceleme"
+      "jobPostings": "İlan inceleme",
+      "referrals": "Referans inceleme"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1653,7 +1654,8 @@
       "usageMetrics": "Toplu kullanım raporunu incele.",
       "points": "Puan kurallarını, kayıtları ve şüpheli işaretleri yönet.",
       "faq": "SSS taleplerini incele, yayımla, reddet ya da mentorluğa yönlendir.",
-      "jobPostings": "Topluluğun paylaştığı ilanları incele."
+      "jobPostings": "Topluluğun paylaştığı ilanları incele.",
+      "referrals": "Referans ve işe kabul beyanlarını incele."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -2009,6 +2011,8 @@
       "faqRedirectedText": "Sorun herkese açık bir soru olmadığı için bir mentorla görüşmeni öneriyoruz. Ayrıntı için: {url}",
       "faqAnswerPublishedSubject": "Cevabın SSS'de kullanıldı",
       "faqAnswerPublishedText": "Yazdığın cevap sık sorulan sorulara katkı sağladı. Görüntüle: {url}",
+      "referralUpdatedSubject": "Referansın hakkında",
+      "referralUpdatedText": "Referans akışında bir güncelleme var. Ayrıntı için: {url}",
       "jobPostingPublishedSubject": "İlanın yayınlandı",
       "jobPostingPublishedText": "Verdiğin ilan incelendi ve yayınlandı; öğrenciler artık görebilir. Görüntüle: {url}",
       "jobPostingRejectedSubject": "İlanın hakkında",
@@ -2689,5 +2693,46 @@
     "compactTitle": "Staj ve iş ilanları",
     "searchPlaceholder": "İlan ara",
     "applyFilters": "Süzgeçleri uygula"
+  },
+  "referrals": {
+    "title": "Referanslarım",
+    "description": "Referans beyanlarını ve onay durumlarını buradan takip et.",
+    "create": "Referans verdim",
+    "createTitle": "Referans verdiğini bildir",
+    "createDescription": "Yalnız onaylı iletişim kurduğun veya görüşmeni tamamladığın öğrenciyi seçebilirsin.",
+    "student": "Öğrenci",
+    "choose": "Seçiniz",
+    "organization": "Kurum adı",
+    "note": "Kısa not",
+    "noteHint": "Telefon, e-posta, kimlik bilgisi gibi kişisel verileri yazma.",
+    "send": "Beyan gönder",
+    "empty": "Henüz gösterilecek referans yok.",
+    "emptyCandidates": "Şu anda seçebileceğin öğrenci yok. Önce bir iletişim isteği veya görüşme tamamla.",
+    "moderationTitle": "Referans inceleme",
+    "moderationDescription": "Öğrenci ve mezunun beyanlarını incele.",
+    "approve": "Onayla",
+    "reject": "Reddet",
+    "cancel": "Beyanı iptal et",
+    "acceptance": "İşe kabul edildim",
+    "reason": "Ret gerekçesi",
+    "reasonHint": "Ret için gerekçe zorunludur; kişisel veri yazma.",
+    "acceptanceNote": "Kabul hakkında kısa not",
+    "studentLabel": "Öğrenci",
+    "alumniLabel": "Mezun",
+    "sent": "İşlem tamamlandı.",
+    "loadMore": "Daha fazla göster",
+    "status": {
+      "PROPOSED": "Öğrenci onayı bekleniyor",
+      "STUDENT_CONFIRMED": "Yönetici onayı bekleniyor",
+      "APPROVED": "Onaylandı",
+      "REJECTED": "Reddedildi",
+      "CANCELLED": "İptal edildi",
+      "ACCEPTED_PROPOSED": "Mezun onayı bekleniyor",
+      "ACCEPTED_ALUMNI_CONFIRMED": "Kabul için yönetici onayı bekleniyor",
+      "ACCEPTED_APPROVED": "İşe kabul onaylandı",
+      "ACCEPTED_REJECTED": "İşe kabul reddedildi"
+    },
+    "profileCount": "Referans verdi: {count}",
+    "accountDescription": "Beyanlarını ve bekleyen onaylarını gör."
   }
 }

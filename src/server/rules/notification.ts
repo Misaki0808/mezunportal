@@ -43,6 +43,8 @@ export function notificationTypeForTemplate(template: string): NotificationType 
     case 'faq.redirected':
     case 'faq.answerPublished':
       return 'FAQ';
+    case 'referral.updated':
+      return 'REFERRAL';
     case 'jobPosting.published':
     case 'jobPosting.rejected':
     case 'jobPosting.expired':

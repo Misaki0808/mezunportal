@@ -17,7 +17,8 @@ type Event =
   | 'faqAnswerPublished'
   | 'jobPostingPublished'
   | 'jobPostingRejected'
-  | 'jobPostingExpired';
+  | 'jobPostingExpired'
+  | 'referralUpdated';
 const templates = {
   moderationApproved: 'experience.moderation-approved',
   moderationRejected: 'experience.moderation-rejected',
@@ -32,6 +33,7 @@ const templates = {
   jobPostingPublished: 'jobPosting.published',
   jobPostingRejected: 'jobPosting.rejected',
   jobPostingExpired: 'jobPosting.expired',
+  referralUpdated: 'referral.updated',
 } as const satisfies Record<Event, string>;
 
 /** Kişisel içerik günlüklenmez; idempotency anahtarı olayın sabit kimliğidir. */
