@@ -77,7 +77,7 @@ export default async function HomePage() {
       {!actor && (
         <Link
           href="/giris"
-          className="press-control mt-auto inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-5 font-semibold text-white"
+          className="press-control mt-auto inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-5 font-semibold text-on-primary"
         >
           {auth('signIn')}
         </Link>

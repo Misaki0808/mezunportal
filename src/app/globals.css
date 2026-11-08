@@ -2,38 +2,50 @@
 
 /*
  * Tasarım token'larının KANONİK kaynağı bu dosyadır (docs/design.md görsel niyeti anlatır, değeri
- * ikinci kez yönetmez). Tek marka rengi `--color-primary`; başarı/uyarı/hata renkleri yalnız anlam
- * taşır. Metin/zemin çiftlerinin kontrastı `src/lib/contrast.test.ts` ile korunur
- * (WCAG AA: normal metin 4.5:1, arayüz sınırı ve büyük metin 3:1). Yeni renk eklenirse o testteki
- * çift listesine de eklenir.
+ * ikinci kez yönetmez). Marka paleti "İris + Mercan" (kullanıcı kararı; İÜ renkleri kullanılmaz):
+ * ana renk İris (`primary`), vurgu Mercan (`accent`), destek Nane (`success`); nötrler sıcak.
+ * Uyarı/hata renkleri yalnız anlam taşır. Koyu tema aynı adlı token'ları `prefers-color-scheme`
+ * ile yeniden tanımlar (bileşenler yalnız token kullanır). Metin/zemin çiftlerinin kontrastı
+ * `src/lib/contrast.test.ts` ile HER İKİ temada korunur (WCAG AA: normal metin 4.5:1, arayüz
+ * sınırı ve büyük metin 3:1). Yeni renk eklenirse o testteki çift listesine de eklenir.
  */
 @theme {
-  /* Zemin ve yüzeyler */
-  --color-bg: #ffffff;
-  --color-surface: #f8fafc;
-  --color-surface-strong: #f1f5f9;
-  --color-overlay: rgb(15 23 42 / 0.5);
+  /* Zemin ve yüzeyler (sıcak nötr) */
+  --color-bg: #fcfcfd;
+  --color-surface: #f6f5fa;
+  --color-surface-strong: #eeedf5;
+  --color-overlay: rgb(23 22 42 / 0.5);
 
   /* Metin */
-  --color-fg: #0f172a;
-  --color-fg-muted: #475569;
-  --color-fg-subtle: #64748b;
+  --color-fg: #17162a;
+  --color-fg-muted: #5a5870;
+  --color-fg-subtle: #6b6985;
 
   /* Çizgiler: `border` dekoratif ayırıcı, `border-control` etkileşimli kontrol sınırı (3:1) */
-  --color-border: #e2e8f0;
-  --color-border-control: #64748b;
+  --color-border: #e7e5ef;
+  --color-border-control: #7a7893;
 
-  /* Marka (tek vurgu) */
-  --color-primary: #1d4ed8;
-  --color-primary-hover: #1e40af;
+  /* Marka: İris (ana). Düğme, bağlantı, odak, seçili durum. */
+  --color-primary: #5b5bf6;
+  --color-primary-hover: #4848d8;
   --color-on-primary: #ffffff;
-  --color-primary-soft: #eff6ff;
-  --color-on-primary-soft: #1e3a8a;
+  --color-primary-soft: #eef0ff;
+  --color-on-primary-soft: #2e2a8f;
 
-  /* Anlam renkleri: her biri renk + metinle birlikte kullanılır, tek sinyal değildir */
-  --color-success: #15803d;
-  --color-success-soft: #f0fdf4;
-  --color-on-success-soft: #14532d;
+  /* Vurgu: Mercan. Az kullanılır (rozet, öne çıkan sayı, ikincil müjde); mercan zeminde metin KOYUDUR
+     (`on-accent`), mercan metin olarak yalnız `accent-strong`. */
+  --color-accent: #ff7a59;
+  --color-accent-hover: #f26a47;
+  --color-on-accent: #1f1530;
+  --color-accent-soft: #fff1ec;
+  --color-on-accent-soft: #8a3414;
+  --color-accent-strong: #b4421f;
+
+  /* Anlam renkleri: her biri renk + metinle birlikte kullanılır, tek sinyal değildir.
+     Başarı = Nane ("müsait", onaylandı). */
+  --color-success: #0f9f8f;
+  --color-success-soft: #e7faf7;
+  --color-on-success-soft: #0b5e55;
   --color-warning: #b45309;
   --color-warning-soft: #fffbeb;
   --color-on-warning-soft: #78350f;
@@ -43,10 +55,14 @@
   --color-danger-soft: #fef2f2;
   --color-on-danger-soft: #7f1d1d;
 
-  /* Yazı tipi: sistem yığını (ağdan font yok) */
+  /* Yazı tipi: metin Inter, başlık Plus Jakarta Sans (`next/font/google`, derlemede kendinden barındırılır;
+     latin-ext = Türkçe). Yüklenemezse sistem yığını. */
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    'Noto Sans', sans-serif;
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-heading:
+    var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, Arial, sans-serif;
 
   /* Radius ölçeği: kontrol < kart < örtü */
   --radius-control: 0.75rem;
@@ -54,13 +70,56 @@
   --radius-sheet: 1.25rem;
 
   /* Gölge işlevseldir, hiyerarşinin yerine geçmez */
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.08);
-  --shadow-overlay: 0 10px 30px rgb(15 23 42 / 0.2);
+  --shadow-card: 0 1px 2px rgb(23 22 42 / 0.06), 0 1px 3px rgb(23 22 42 / 0.08);
+  --shadow-overlay: 0 10px 30px rgb(23 22 42 / 0.2);
+}
+
+/* Koyu tema: aynı token adları. Ana renk koyu zeminde açılır, üstündeki metin koyudur. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #0e0d1a;
+    --color-surface: #17162b;
+    --color-surface-strong: #211f3a;
+    --color-overlay: rgb(0 0 0 / 0.6);
+    --color-fg: #f2f1fa;
+    --color-fg-muted: #b5b3cc;
+    --color-fg-subtle: #9391ad;
+    --color-border: #2b2a45;
+    --color-border-control: #7d7ba0;
+    --color-primary: #8b8bff;
+    --color-primary-hover: #a3a3ff;
+    --color-on-primary: #0e0d1a;
+    --color-primary-soft: #23224a;
+    --color-on-primary-soft: #c9c9ff;
+    --color-accent: #ff8f73;
+    --color-accent-hover: #ffa48b;
+    --color-on-accent: #1f1530;
+    --color-accent-soft: #3a2321;
+    --color-on-accent-soft: #ffb4a0;
+    --color-accent-strong: #ff8f73;
+    --color-success: #3dd6c3;
+    --color-success-soft: #0f2d2b;
+    --color-on-success-soft: #8ff0e3;
+    --color-warning: #f5b355;
+    --color-warning-soft: #33260f;
+    --color-on-warning-soft: #fde0a8;
+    --color-danger: #ff7a8a;
+    --color-danger-hover: #ff9aa6;
+    --color-on-danger: #1f0a10;
+    --color-danger-soft: #3b1820;
+    --color-on-danger-soft: #ffc2cc;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.5);
+    --shadow-overlay: 0 10px 30px rgb(0 0 0 / 0.6);
+  }
 }
 
 @layer base {
   :root {
-    color-scheme: light;
+    color-scheme: light dark;
+    /* Marka geçişi: YALNIZ büyük dekoratif alanda (tanıtım şeridi, boş durum zemini); üzerine metin konmaz,
+       küçük bileşende (düğme, rozet, kart) kullanılmaz. */
+    --gradient-brand: linear-gradient(135deg, #5b5bf6 0%, #a855f7 55%, #ff7a59 100%);
   }
 
   html {
@@ -74,6 +133,14 @@
     line-height: 1.5;
     /* Yatay kaydırma yok */
     overflow-x: hidden;
+  }
+
+  /* Başlıklar Plus Jakarta Sans; metin Inter */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.01em;
   }
 
   /* Görünür odak: klavye ve ekran okuyucu kullanıcıları için her etkileşimli öğede */
