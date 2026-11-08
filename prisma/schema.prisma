@@ -685,10 +685,14 @@ model UnmatchedValue {
   normalizedValue String
   count           Int            @default(1)
   resolvedToId    String?
+  /// Yönetici değeri anlamsız bulup kuyruktan düşürdü (P1-11). Aynı değer yeniden gelirse sayaç artar, kuyruk
+  /// yeniden AÇILMAZ. Durum: açık = ikisi de boş; çözüldü = `resolvedToId`; atıldı = `dismissedAt`.
+  dismissedAt     DateTime?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
   @@unique([kind, normalizedValue])
+  @@index([kind, count])
 }
 
 /// Profil kalemleri (P1-06 ekranı gösterir/düzenler). Kullanıcıya bağlıdır (üyeliğe değil). `manuallyEdited`

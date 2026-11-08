@@ -26,10 +26,9 @@ import { loadActor, type Actor } from '../permissions/actor';
 import { errorForDenyReason } from '../permissions/guards';
 import { accountStatusOf, evaluateAccess } from '../rules/authorization';
 import { normalizeName } from '../rules/dictionary';
-import { computeProfileContentCompletion } from '../rules/profileCompletion';
 import { effectiveLevel, fieldAccess, type ViewerRelation } from '../rules/visibility';
 import { matchDictionaryName, recordUnmatched } from './cv-dictionary';
-import { onboardingSnapshot } from './profile';
+import { loadProfileCompletion, syncCompletionScore } from './profile';
 import { attachSkill, ensureProfile, pruneOrphanSkillTags } from './profile-skills';
 import { loadVisibilityLevels } from './privacy';
 
@@ -119,7 +118,6 @@ async function buildMyProfile(tx: Tx, userId: string, now: Date): Promise<MyProf
     tx.language.findMany({ where: { userId }, orderBy: { id: 'asc' } }),
     tx.certification.findMany({ where: { userId }, orderBy: { id: 'asc' } }),
   ]);
-  const snapshot = await onboardingSnapshot(tx, userId, now);
   const skills = (profile?.tags ?? []).map((row) => ({
     tagId: row.tagId,
     label: row.tag.label ?? '',
@@ -181,15 +179,7 @@ async function buildMyProfile(tx: Tx, userId: string, now: Date): Promise<MyProf
       ...certifications.map((row) => row.updatedAt),
       ...(profile?.tags ?? []).map((row) => row.updatedAt),
     ),
-    completion: computeProfileContentCompletion({
-      onboarding: snapshot.statuses,
-      mentorStepAvailable: snapshot.mentorStepAvailable,
-      headline: profile?.headline ?? null,
-      city: profile?.city ?? null,
-      educationCount: education.length,
-      skillCount: skills.length,
-      cvApplied: profile?.cvUpdatedAt != null,
-    }),
+    completion: await loadProfileCompletion(tx, userId, now),
   };
 }
 
@@ -215,6 +205,7 @@ async function mutate(
     const profile = await ensureProfile(tx, userId);
     await change(tx, profile.id, now);
     await tx.profile.update({ where: { id: profile.id }, data: { updatedAt: now } });
+    await syncCompletionScore(tx, userId, now);
     return buildMyProfile(tx, userId, now);
   }, TX);
 }

@@ -10,6 +10,7 @@ import { deleteAccount } from './accountDeletion';
 import { buildDataExport } from './dataExport';
 import {
   getOnboardingState,
+  loadProfileCompletion,
   listProfileTags,
   saveOnboardingStep,
   skipOnboardingStep,
@@ -86,7 +87,10 @@ it('yarıda kalan akış DB’den sürer; açık olmayan mentor adımı atlanır
   });
   const done = await saveOnboardingStep(db, userId, { step: 'VISIBILITY', confirmed: true }, NOW);
   expect(done.completion).toEqual({ percent: 100, missing: [] });
-  expect((await db.profile.findUniqueOrThrow({ where: { userId } })).completionScore).toBe(100);
+  // Kalıcı skor profil tamamlama kuralından gelir (ilk giriş 100 ama içerik adımları eksik → 4/8).
+  const stored = (await db.profile.findUniqueOrThrow({ where: { userId } })).completionScore;
+  expect(stored).toBe(50);
+  expect(stored).toBe((await loadProfileCompletion(db, userId, NOW)).percent);
   expect(onboardingStateSchema.safeParse(done).success).toBe(true);
 });
 
