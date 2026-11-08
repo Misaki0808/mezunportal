@@ -659,3 +659,10 @@ Randevu mutasyonları yetki okunmadan önce User satırını paylaşılmış kil
 Randevu talebinde slotun zaman/biçim geçerliliği doluluk süzülmeden doğrulanır; dolu geçerli slotun son kararı exclusion constraint'e bırakılır. Böylece kazanan önce commit ettiğinde de, çağrılar aynı anda yazdığında da kullanıcıya aynı SLOT_TAKEN sebebi döner; liste dolu slotları göstermemeye devam eder.
 
 Bağımsız worker React server koşuluyla çalıştığından randevu e-posta kataloğundaki basit adlandırılmış alanlar React/Next içe aktarmadan doldurulur. Randevunun kullandığı profil kuralı da oturum bağlayan permissions giriş noktası yerine doğrudan actor/guards yardımcılarını alır. Böylece takvim süpürmesi e-posta worker'ının başlamasını engellemez; ayrı Node sürecinde gerçek iş modülü içe aktarma ve metin üretimi testlidir.
+
+## 2026-11-08 · Görüşme sonrası yanıt ve güvenilirlik (P1-14)
+
+PM kararı: son 12 ayda `COMPLETED` ve `NO_SHOW` sayılır; iptaller ve geri bildirim verme oranı paydaya girmez. Üçten az
+görüşme Yeni, en az üçte katılım oranı %80 veya üzeri Güvenilir, diğerleri Dikkat'tir; kullanıcıya sayı ile nedeni
+gösterilir. Gerçekleşme için iki tarafın olumlu yanıtı gerekir; mentor öğrencinin katılmadığını bildirirse `NO_SHOW`
+olur. Her taraf yalnız bir kez yanıtlar ve diğer tarafın özel notu veri dökümüne girmez.
