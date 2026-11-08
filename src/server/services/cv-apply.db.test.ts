@@ -225,6 +225,10 @@ describe('applyCv — kullanıcı onayı olmadan yazılmaz', () => {
     ];
     const result = await applyCv(kit.deps, actor, parseApply(id, accept(chosen)));
     expect(result).toEqual({ created: 2, updated: 0, invitations: 1 });
+    const intent = await db.notificationIntent.findFirstOrThrow({
+      where: { userId, kind: 'generic' },
+    });
+    expect(intent.payload).toMatchObject({ type: 'generic', event: 'invitation' });
     expect(
       (await db.position.findMany({ where: { userId } })).map((row) => row.companyRaw),
     ).toEqual([companyA]);

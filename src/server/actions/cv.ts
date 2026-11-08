@@ -23,7 +23,6 @@ import {
 import { requireUser } from '../permissions';
 import * as cv from '../services/cv';
 import { cvDeps } from './deps';
-import { sendNotification } from '../services/notification-email';
 
 /**
  * CV ayrıştırma sunucu eylemleri (hata kodları: `CV_ACTION_ERRORS`). Her eylem önce oturumu doğrular; kullanıcı
@@ -95,23 +94,6 @@ export async function applyCv(input: ApplyCvInput): Promise<ActionResult<ApplyCv
     if (!parsed.ok) return parsed.failure;
     const deps = cvDeps();
     const result = await cv.applyCv(deps, actor, parsed.data);
-    if (result.invitations > 0) {
-      try {
-        const invitations = await deps.db.experienceInvitation.findMany({
-          where: { userId: actor.userId, status: 'OPEN' },
-          select: { id: true },
-        });
-        for (const invitation of invitations)
-          await sendNotification({
-            userId: actor.userId,
-            event: 'invitation',
-            eventId: invitation.id,
-            path: '/deneyimlerim',
-          });
-      } catch {
-        /* Ana işlem başarısı değişmez. */
-      }
-    }
     return actionOk(result);
   } catch (error) {
     return actionFailure(error);
