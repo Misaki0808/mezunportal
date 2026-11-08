@@ -21,13 +21,13 @@ async function waitFor(check, timeout = 3000) {
   }
   throw new Error('Süre doldu: süreçler beklenen duruma gelmedi');
 }
-for (const signal of ['SIGTERM', 'SIGINT', 'SIGKILL']) {
+for (const signal of ['SIGTERM', 'SIGINT', 'SIGKILL', 'EXIT']) {
   test(`dev üst süreci ${signal} ile kapanınca grup üç saniyede temizlenir`, async () => {
     const worker = `process.on('SIGTERM',()=>{}); console.log('CHILD:'+process.pid); setInterval(()=>{},1000)`;
-    const parent = `import { startDevProcesses } from './scripts/dev-process.mjs'; const p=startDevProcesses([['-e',${JSON.stringify(worker)}],['-e',${JSON.stringify(worker)}]],process.env); console.log('SUP:'+p.pid);`;
+    const parent = `import { startDevProcesses } from './scripts/dev-process.mjs'; const p=startDevProcesses([['-e',${JSON.stringify(worker)}],['-e',${JSON.stringify(worker)}]],process.env); console.log('SUP:'+p.pid); ${signal === 'EXIT' ? "process.stdin.on('data',()=>process.exit(0)); process.stdin.resume();" : ''}`;
     const proc = spawn(process.execPath, ['--input-type=module', '-e', parent], {
       cwd: process.cwd(),
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [signal === 'EXIT' ? 'pipe' : 'ignore', 'pipe', 'pipe'],
     });
     let output = '';
     proc.stdout.on('data', (chunk) => {
@@ -44,7 +44,8 @@ for (const signal of ['SIGTERM', 'SIGINT', 'SIGKILL']) {
       );
       ids = [...output.matchAll(/(?:CHILD|SUP):(\d+)/g)].map((match) => Number(match[1]));
       assert.equal(ids.length, 3);
-      proc.kill(signal);
+      if (signal === 'EXIT') proc.stdin.write('exit');
+      else proc.kill(signal);
       await finished;
       await waitFor(async () => (await Promise.all(ids.map(alive))).every((value) => !value));
     } finally {
