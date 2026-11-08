@@ -34,7 +34,15 @@ export const nowOf = (deps: { now?: () => Date }) => (deps.now ?? (() => new Dat
  * (docs/data.md değişmezleri). İlgili adım kendi kontrolünü buraya kaydeder; şu an inceleme talebi yoktur.
  */
 export type CvFileHold = (tx: Tx, uploadIds: readonly string[]) => Promise<ReadonlySet<string>>;
-export const CV_FILE_HOLDS: CvFileHold[] = [];
+export const CV_FILE_HOLDS: CvFileHold[] = [
+  async (tx, uploadIds) => {
+    const rows = await tx.cvReviewRequest.findMany({
+      where: { cvUploadId: { in: [...uploadIds] }, status: 'OPEN' },
+      select: { cvUploadId: true },
+    });
+    return new Set(rows.map((row) => row.cvUploadId));
+  },
+];
 
 export async function heldUploadIds(
   tx: Tx,

@@ -692,6 +692,9 @@ görüşme Yeni, en az üçte katılım oranı %80 veya üzeri Güvenilir, diğe
 gösterilir. Gerçekleşme için iki tarafın olumlu yanıtı gerekir; mentor öğrencinin katılmadığını bildirirse `NO_SHOW`
 olur. Her taraf yalnız bir kez yanıtlar ve diğer tarafın özel notu veri dökümüne girmez.
 
+### CV incelemesi · talep sınırı ve dosya ömrü
+
+Mentorun aylık sınırı İstanbul takvim ayındaki oluşturulmuş talepleri sayar; kapanmış talepler de o ayın kapasitesini tüketir. Mentor ve öğrenci satırları kilitlenerek eşzamanlı talepler sınırı aşamaz. Talep yalnız son uygulanmış CV dosyasına bağlanır; açık talepler bu dosyayı saklama süpürgesinden korur. Yanıt veya 14 günlük süre sonunda erişim hemen kesilir; başka açık talebi olmayan eski dosya temizlenir, kişinin son uygulanmış CV’si korunur. Faydalı işareti tamamlanmış talep üzerinde bir kez kaydedilir; puan P1-16 tarafından işlenir. CV inceleme bildirimleri, deneyim davetlerinden bağımsız ve varsayılan açık bir kullanıcı tercihidir.
 ### P1-11 incelemesi: yönetim sayfasında yanıt başlamadan kapsam denetimi
 
 App Router yükleme sınırı yanıtı başlattıktan sonra sayfadaki red HTTP 200 kalabildiği için yönetim layout'u mevcut yetki kapısını önce çalıştırır. Proxy'nin kendisinin yazdığı istek yolu yalnız doğru yeteneği seçer; yetki yine sunucu servisinden gelir. Kapsam dışı sayfa ve kullanıcı ayrıntısı üst grup hata sınırıyla Türkçe 404 döner; eylemlerin kendi yetki denetimleri de korunur. Ortak yönetim listeleri izin verilen uzun, boşluksuz değerleri hücre içinde böler; mobil kart ve masaüstü tablo sayfayı genişletmez.
@@ -729,3 +732,7 @@ SMTP teslimi ve altyapı seçimi ayrıca işletim kararına bağlıdır.
 ### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
 
 Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun kişi sayısı toplamdan çıkarılarak küçük grup hesaplanamaz. Aynı servis izdüşümü panelin HTML/RSC verisine ve Excel özetine uygulanır. Kullanım sayfasında zorunlu rıza ve yönetici yetkisi loading başlamadan kontrol edilir; rızasız/yetkisiz erişim gerçek 404, dosya rotası 403 döner. Diğer sayfaların yeniden onay akışı korunur.
+
+### P1-15 incelemesi: CV bildiriminde işlemsel telafi
+
+CV talep, yanıt ve süre dolumu bildirimleri #45'in niyet kaydını aynı veritabanı işleminde oluşturur. Hızlı kuyruk denemesi başarısız olsa da niyet kalır; ortak aktarım işi aynı iş anahtarıyla mevcut CV bildirim kapısına döner. Niyette yalnız talep kimliği ve olay türü bulunur; alıcı talebin taraflarıyla yeniden eşleştirilir, not/CV/e-posta kopyalanmaz. Metinleri ve CV dosyasını temizleyen hesap silme, artık bulunmayan talebin bekleyen bildirimini de gönderimsiz sonlandırır.

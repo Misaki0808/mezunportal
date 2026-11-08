@@ -36,10 +36,18 @@ const pilotInvitation = z
     ciphertext: z.string().min(1).max(1024),
   })
   .strict();
+const cvReview = z
+  .object({
+    type: z.literal('cvReview'),
+    event: z.enum(['requested', 'answered', 'expired']),
+    requestId: z.string().min(1).max(64),
+  })
+  .strict();
 export const notificationIntentPayload = z.discriminatedUnion('type', [
   generic,
   appointment,
   pilotInvitation,
+  cvReview,
 ]);
 export type NotificationIntentPayload = z.infer<typeof notificationIntentPayload>;
 
@@ -56,7 +64,9 @@ export async function stageNotification(
       ? payload.eventId
       : payload.type === 'appointment'
         ? payload.appointmentId
-        : payload.invitationId;
+        : payload.type === 'pilotInvitation'
+          ? payload.invitationId
+          : payload.requestId;
   const event = payload.type === 'pilotInvitation' ? 'invitation' : payload.event;
   const key = `${payload.type}:${event}:${eventId}:${userId}`;
   await tx.notificationIntent.upsert({
