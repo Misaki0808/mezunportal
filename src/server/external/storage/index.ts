@@ -7,7 +7,7 @@ import type { StorageAdapter } from './types';
 
 export { StorageError } from './types';
 export type { StorageAdapter } from './types';
-export { isValidStorageKey, newGraduationDocumentKey } from './keys';
+export { isValidStorageKey, newCvKey, newGraduationDocumentKey } from './keys';
 export { createLocalStorage } from './local';
 export { createMemoryStorage } from './memory';
 
