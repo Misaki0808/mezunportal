@@ -5,6 +5,7 @@ import { getDb } from '../db';
 import { getStorage } from '../external/storage';
 import { expireRequests } from '../services/cv-review-request';
 import { createCvReviewNotifier } from '../services/cv-review-notifier';
+import { relayPendingNotifications } from './notification-intent-worker';
 import { purgeFiles } from '../services/files-purge';
 import { runDailyPoints } from '../services/points';
 import { runSuspicionScan } from '../services/points-scan';
@@ -31,6 +32,7 @@ export async function createNotificationRuntime() {
         storage: getStorage(),
         notify: createCvReviewNotifier(getDb()),
       }),
+    'notification.relay': () => relayPendingNotifications(),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
     'appointment.feedback': () => scheduleFeedbackPrompts(getDb()),
     // Puan motoru (P1-16): gecikmesi dolanı kesinleştir + son 14 günde kaçırılan puanı tamamla; şüphe taraması.
@@ -46,7 +48,9 @@ export async function createNotificationRuntime() {
       });
       await boss.schedule(
         name,
-        ['appointment.feedback', 'cvReview.expire'].includes(name) ? '* * * * *' : '0 3 * * *',
+        ['notification.relay', 'appointment.feedback', 'cvReview.expire'].includes(name)
+          ? '* * * * *'
+          : '0 3 * * *',
         {},
         { tz: 'Europe/Istanbul', missed: 'once' },
       );
