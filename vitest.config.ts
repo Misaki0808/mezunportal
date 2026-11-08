@@ -20,6 +20,8 @@ export default defineConfig({
     ],
   },
   test: {
+    // Ajan ortamında otomatik minimal raporlayıcı yavaş test adını/süresini gizler.
+    reporters: process.env.GITHUB_ACTIONS === 'true' ? ['default', 'github-actions'] : ['default'],
     // Vitest bu eşiği proje genelinde raporlar; 5 sn üzerindeki DB testleri görünür kalır.
     slowTestThreshold: 5000,
     projects: [
