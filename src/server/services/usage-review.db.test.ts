@@ -145,3 +145,50 @@ describe('bağımsız KVKK incelemesi', () => {
     ).toBe(2);
   });
 });
+
+it('inceleyici: görünür üç ve gizli iki kişi etkin toplamdan çıkarılamaz; üçe ulaşınca toplam görünür', async () => {
+  const { inst, admin } = await setup();
+  for (let i = 0; i < 5; i++) {
+    const userId = await createUser(db);
+    await db.event.create({
+      data: {
+        type: 'LOGIN',
+        role: i < 2 ? 'STUDENT' : 'ALUMNI',
+        departmentId: inst.deptA1,
+        userId,
+        props: { method: 'EMAIL_LINK' },
+        createdAt: new Date('2037-01-02'),
+      },
+    });
+  }
+  const input = { ...range, types: ['LOGIN' as const] };
+  const first = await getUsageMetrics({ db }, admin, input);
+  expect(first.cells).toHaveLength(1);
+  expect(first.cells[0]?.users).toBe(3);
+  expect(first.totalsByType[0]?.events).toBeNull();
+  expect(first.activeUsers).toBeNull();
+  const { bytes } = await exportUsageMetrics({ db }, admin, input);
+  const { default: ExcelJS } = await import('exceljs');
+  const book = new ExcelJS.Workbook();
+  await book.xlsx.load(Buffer.from(bytes) as never);
+  let active: unknown;
+  book.getWorksheet('Özet')!.eachRow((row) => {
+    if (row.getCell(1).value === 'Etkin kullanıcı sayısı') active = row.getCell(2).value;
+  });
+  expect(active).toBe('Gizli');
+  const userId = await createUser(db);
+  await db.event.create({
+    data: {
+      type: 'LOGIN',
+      role: 'STUDENT',
+      departmentId: inst.deptA1,
+      userId,
+      props: { method: 'EMAIL_LINK' },
+      createdAt: new Date('2037-01-02'),
+    },
+  });
+  const visible = await getUsageMetrics({ db }, admin, input);
+  expect(visible.activeUsers).toBe(6);
+  expect(visible.totalsByType[0]?.events).toBe(6);
+  expect(visible.cells.map((c) => c.users)).toEqual([3, 3]);
+});

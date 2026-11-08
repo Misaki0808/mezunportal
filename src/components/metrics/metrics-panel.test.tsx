@@ -48,3 +48,10 @@ describe('kullanım paneli', () => {
     expect(screen.getByRole('button', { name: 'Tarihleri değiştir' })).toBeVisible();
   });
 });
+
+it('inceleyici: null etkin toplam yalnız gizli etiketi taşır, sıfır veya başka sayı üretmez', () => {
+  renderUi(<MetricsPanel initial={hidden} initialFilter={filter} departments={[]} />);
+  const active = screen.getByText('Etkin kullanıcı', { exact: true }).parentElement!;
+  expect(within(active).getByText('Gizli (3’ten az kişi)')).toBeVisible();
+  expect(within(active).queryByText(/^\d+$/)).not.toBeInTheDocument();
+});

@@ -1493,7 +1493,8 @@
       "adminGrants": "Yönetici yetkileri",
       "auditLog": "İşlem kaydı",
       "documents": "Mezun belgeleri",
-      "experiences": "Deneyim moderasyonu"
+      "experiences": "Deneyim moderasyonu",
+      "usageMetrics": "Kullanım"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1504,7 +1505,8 @@
       "adminGrants": "Yönetici atamalarını yönet.",
       "auditLog": "Yönetici işlemlerini incele.",
       "documents": "Mezun belgelerini incele.",
-      "experiences": "Deneyim başvurularını değerlendir."
+      "experiences": "Deneyim başvurularını değerlendir.",
+      "usageMetrics": "Toplu kullanım raporunu incele."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1654,7 +1656,7 @@
       "description": "Yetki alanındaki kullanım eğilimlerini toplu olarak incele.",
       "accountTitle": "Kullanım metrikleri",
       "accountDescription": "Toplu kullanım raporunu görüntüle.",
-      "back": "Hesabıma dön",
+      "back": "Yönetim paneline dön",
       "from": "Başlangıç tarihi",
       "to": "Bitiş tarihi",
       "department": "Bölüm",

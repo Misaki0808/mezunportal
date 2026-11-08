@@ -103,7 +103,7 @@ export function MetricsPanel({ initial, initialFilter, departments }: Props) {
   const hiddenTypes = report.totalsByType.filter((item) => item.events === null);
   return (
     <main className="mx-auto max-w-5xl px-5 py-10 pb-28">
-      <Link href="/hesap" className="inline-flex min-h-11 items-center text-primary">
+      <Link href="/yonetim" className="inline-flex min-h-11 items-center text-primary">
         ← {t('back')}
       </Link>
       <h1 className="mt-3 text-3xl font-semibold">{t('title')}</h1>
