@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@/generated/prisma/client';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import { createInstitution } from '@/test/fixtures';
@@ -116,5 +118,51 @@ describe('bildirim işleri', () => {
     expect(calls).toHaveLength(2);
     expect(calls[0]!.idempotencyKey).toBe(calls[1]!.idempotencyKey);
     expect(calls[0]!.text).toContain('https://notifications.example.invalid/bildirim-yanit#token=');
+  });
+  it('çok pozisyonda bildirim kayıtlarını sayfa başına toplu sorgular', async () => {
+    const department = await createInstitution(db);
+    const user = await db.user.create({
+      data: { name: 'Test', email: `${randomUUID()}@example.invalid` },
+    });
+    await db.membership.create({
+      data: {
+        userId: user.id,
+        departmentId: department.deptA1,
+        role: 'ALUMNI',
+        verificationStatus: 'VERIFIED',
+        verifiedAt: new Date(),
+        verificationMethod: 'ADMIN',
+        verifiedById: user.id,
+      },
+    });
+    await db.position.createMany({
+      data: Array.from({ length: 150 }, (_, i) => ({
+        userId: user.id,
+        companyRaw: `Test ${i}`,
+        titleRaw: 'Görev',
+        source: 'MANUAL' as const,
+        isCurrent: true,
+      })),
+    });
+    const measured = new PrismaClient({
+      adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL_TEST! }),
+      log: [{ emit: 'event', level: 'query' }],
+    });
+    let actionQueries = 0,
+      pageQueries = 0;
+    measured.$on('query', (event) => {
+      if (event.query.includes('"NotificationAction"')) actionQueries++;
+      if (event.query.includes('"Position"') && event.query.includes('SELECT')) pageQueries++;
+    });
+    try {
+      await alumniStillThere(measured, new Date('2026-11-08T12:00:00Z'));
+      expect(
+        mocks.enqueue.mock.calls.filter(([item]) => item.recipientUserId === user.id),
+      ).toHaveLength(150);
+      expect(pageQueries).toBeGreaterThanOrEqual(2);
+      expect(actionQueries).toBeLessThanOrEqual(pageQueries * 3);
+    } finally {
+      await measured.$disconnect();
+    }
   });
 });

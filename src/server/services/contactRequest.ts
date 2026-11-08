@@ -18,6 +18,7 @@ import { codedConflict, codedNotFound, codedValidation } from '@/lib/errors';
 import { effectiveLevel, fieldAccess } from '../rules/visibility';
 import { loadVisibilityLevels } from './privacy';
 import { emitEvent } from './event';
+import { stageNotification } from './notification-intent';
 import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
 
 /**
@@ -59,14 +60,23 @@ export async function sendContactRequest(
   }
 
   try {
-    const created = await db.contactRequest.create({
-      data: {
-        requesterId,
-        targetId: target.id,
-        fields: input.fields,
-        message: input.message ?? null,
-      },
-      select: { id: true },
+    const created = await db.$transaction(async (tx) => {
+      const row = await tx.contactRequest.create({
+        data: {
+          requesterId,
+          targetId: target.id,
+          fields: input.fields,
+          message: input.message ?? null,
+        },
+        select: { id: true },
+      });
+      await stageNotification(tx, target.id, {
+        type: 'generic',
+        event: 'contact',
+        eventId: row.id,
+        path: '/hesap/iletisim',
+      });
+      return row;
     });
     emitEvent(db, requesterId, {
       type: 'CONTACT_REQUESTED',

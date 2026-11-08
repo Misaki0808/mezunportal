@@ -120,10 +120,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 ```
 
 ### Açık borçlar
-- [ ] **TD-016** · P1 · İşlem sonrası bildirim niyeti kaybolabilir
-  Ne: kuyruk hatasında moderasyon, iletişim, CV ve randevu bildirimi tekrar denenmez.
-  Neden borç: ana işlem başarılıyken bildirim kaybolur.
-  Kapanış ölçütü: işlemle atomik niyet, idempotent kuyruk aktarımı ve hata testleri.
 - [ ] **TD-001** · P1 · Güvenlik başlıkları build anında yazılıyor
   Ne: başlıklar `next build` sırasında `.next/routes-manifest.json`'a yazılıyor; HSTS yalnız
   `APP_ENV=prod` ile alınan build'de çıkar (`next.config.ts`).
