@@ -418,6 +418,10 @@ describe('requestSignInLink: kayıtlı/kayıtsız e-postaya AYNI yanıt, hız s�
       ['https://kotu.example/ele-gecir', '/'],
       ['//kotu.example', '/'],
       ['/\\kotu.example', '/'],
+      ['/%2f%2fkotu.example', '/'],
+      ['/%255ckotu.example', '/'],
+      ['/%252f%252fkotu.example', '/'],
+      ['/%256fnay', '/'],
       ['javascript:alert(1)', '/'],
       ['/giris', '/'],
     ];

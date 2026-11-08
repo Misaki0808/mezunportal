@@ -39,6 +39,7 @@ import {
   type ExperienceRow,
 } from './experienceProjection';
 import { consumeRateLimit } from './rateLimit';
+import { requireConsent } from './privacy';
 
 type Tx = Prisma.TransactionClient;
 function permissionsFor(tx: Tx, userId: string, now: Date) {
@@ -83,13 +84,18 @@ async function requireReadable(
   permissions: ReturnType<typeof permissionsFor>,
   row: ExperienceRow,
 ) {
+  const sameSchool = await sameUniversity(tx, actor, row);
+  const moderator = await permissions.canModerate(actor, row.departmentIdAtWrite);
   const allowed = canReadExperience({
     status: row.status,
     isOwner: row.authorId === actor.userId,
-    sameUniversity: await sameUniversity(tx, actor, row),
-    canModerate: await permissions.canModerate(actor, row.departmentIdAtWrite),
+    sameUniversity: sameSchool,
+    canModerate: moderator,
   });
   if (!allowed) throw codedNotFound('RESOURCE_NOT_FOUND');
+  // Moderatörün yetkisiyle açılan, normal üyeye görünmeyen detay da yönetim verisidir.
+  if (moderator && row.authorId !== actor.userId && !(row.status === 'PUBLISHED' && sameSchool))
+    await requireConsent(tx, actor.userId);
 }
 function requireOwner(row: ExperienceRow, userId: string) {
   if (row.authorId !== userId) throw codedNotFound('RESOURCE_NOT_FOUND');
@@ -186,6 +192,7 @@ export async function reviewExperience(
     const row = await loadExperience(tx, parsed.experienceId, true);
     if (!(await permissions.canModerate(actor, row.departmentIdAtWrite)))
       throw codedForbidden('AUTH_FORBIDDEN');
+    await requireConsent(tx, userId);
     if (row.status !== 'PENDING') throw codedConflict('EXPERIENCE_NOT_PENDING');
     const status = parsed.decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED';
     await tx.experience.update({
@@ -253,6 +260,7 @@ export async function listModerationQueue(
   return asMember(db, userId, now, async (tx, actor, permissions) => {
     const parsed = listModerationQueueSchema.parse(input);
     const ids = await moderatorDepartments(actor, permissions, parsed.departmentId);
+    await requireConsent(tx, userId);
     const rows = await tx.experience.findMany({
       where: { departmentIdAtWrite: { in: ids }, status: 'PENDING', ...pageWhere(parsed.cursor) },
       select: experienceSelect,
@@ -317,6 +325,7 @@ export async function listExperienceReports(
   return asMember(db, userId, now, async (tx, actor, permissions) => {
     const parsed = listExperienceReportsSchema.parse(input);
     const ids = await moderatorDepartments(actor, permissions, parsed.departmentId);
+    await requireConsent(tx, userId);
     const rows = await tx.report.findMany({
       where: {
         status: parsed.status,
@@ -347,6 +356,7 @@ export async function resolveExperienceReport(
     const row = await loadExperience(tx, target.targetId, true);
     if (!(await permissions.canModerate(actor, row.departmentIdAtWrite)))
       throw codedForbidden('AUTH_FORBIDDEN');
+    await requireConsent(tx, userId);
     const report = await tx.report.findUnique({
       where: { id: parsed.reportId },
       select: { status: true },
