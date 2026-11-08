@@ -12,6 +12,8 @@ const baseURL = `http://127.0.0.1:${port}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // Testler ortak seed hesaplarının rıza ve oturum durumunu değiştirir; eşzamanlı dosyalar yarışır.
+  workers: 1,
   use: { baseURL },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
