@@ -4,7 +4,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { isCodedError } from '@/lib/errors';
 import { createTestPrisma } from '@/test/db';
-import { addMembership, createInstitution, createUser, type Institution } from '@/test/fixtures';
+import {
+  addMembership,
+  createInstitution,
+  createUser,
+  grantRequiredConsents,
+  type Institution,
+} from '@/test/fixtures';
 
 import { createFakeCalendar, type FakeCalendar } from '../external/calendar/fake';
 import {
@@ -966,6 +972,12 @@ describe('okuma', () => {
     const view = await ask(h, mentee, mentor, NEXT_WED_10, 'ONLINE', 'Merhaba, kısa bir not');
     await expectCode(
       getAppointmentIcs(h.deps, mentee, { appointmentId: view.id }),
+      'CONSENT_REQUIRED',
+    );
+    await grantRequiredConsents(db, mentee);
+    await grantRequiredConsents(db, mentor);
+    await expectCode(
+      getAppointmentIcs(h.deps, mentee, { appointmentId: view.id }),
       'RESOURCE_NOT_FOUND',
     );
     await respondAppointment(h.deps, mentor, { decision: 'CONFIRM', appointmentId: view.id });
@@ -979,8 +991,10 @@ describe('okuma', () => {
       expect(text).toContain('URL:https://meet.example.com/ics');
       expect(text).not.toMatch(/@(?!mezunportal)/);
     }
+    const outsider = await person();
+    await grantRequiredConsents(db, outsider);
     await expectCode(
-      getAppointmentIcs(h.deps, await person(), { appointmentId: view.id }),
+      getAppointmentIcs(h.deps, outsider, { appointmentId: view.id }),
       'RESOURCE_NOT_FOUND',
     );
   });

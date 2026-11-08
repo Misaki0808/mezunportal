@@ -31,7 +31,7 @@ import { getAuth } from '../auth';
 import { logAuthFailure } from '../auth/log';
 import { getRequestContext } from '../auth/request-context';
 import { getDb } from '../db';
-import { requireUser } from '../permissions';
+import { requireUser, requireUserWithoutConsent } from '../permissions';
 import * as authFlow from '../services/auth-flow';
 import { authFlowDeps } from './deps';
 
@@ -105,7 +105,7 @@ export async function declareMembership(
   input: DeclareMembershipInput,
 ): Promise<ActionResult<DeclareMembershipOutput>> {
   try {
-    const actor = await requireUser();
+    const actor = await requireUserWithoutConsent();
     const parsed = parseInput(declareMembershipSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await authFlow.declareMembership(authFlowDeps(), actor, parsed.data));
@@ -119,7 +119,7 @@ export async function listSelectableDepartments(): Promise<
   ActionResult<SelectableDepartmentsOutput>
 > {
   try {
-    const actor = await requireUser();
+    const actor = await requireUserWithoutConsent();
     return actionOk(await authFlow.listSelectableDepartments(getDb(), actor));
   } catch (error) {
     return failAction(error);
@@ -129,7 +129,7 @@ export async function listSelectableDepartments(): Promise<
 /** “Doğrulama bekliyor / belge yükle / reddedildi” ekranlarının tek veri kaynağı. */
 export async function getVerificationState(): Promise<ActionResult<VerificationState>> {
   try {
-    const actor = await requireUser();
+    const actor = await requireUserWithoutConsent();
     return actionOk(await authFlow.getVerificationState(getDb(), actor));
   } catch (error) {
     return failAction(error);

@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({ db: null as unknown, actorId: '' }));
 vi.mock('@/server/db', () => ({ getDb: () => state.db }));
 vi.mock('@/server/permissions', () => ({
   requireUser: async () => ({ userId: state.actorId }),
+  requireUserWithoutConsent: async () => ({ userId: state.actorId }),
   requireVerifiedMember: async () => ({ userId: state.actorId }),
 }));
 

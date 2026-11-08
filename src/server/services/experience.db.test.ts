@@ -172,6 +172,8 @@ describe('gerçek oturum koruması ve deneyim servisleri', () => {
           where: { userId },
           data: { role: 'ALUMNI', verificationMethod: 'GRADUATION_DOCUMENT' },
         });
+      if (kind === 'unverified')
+        await addGrant(db, { userId, scope: 'DEPARTMENT', departmentId: institution.deptA1 });
       if (kind === 'suspended')
         await db.user.update({ where: { id: userId }, data: { banned: true } });
       if (kind === 'deleted')
@@ -243,6 +245,7 @@ describe('gerçek oturum koruması ve deneyim servisleri', () => {
         NOW,
       ),
     ).rejects.toMatchObject({ code: 'AUTH_FORBIDDEN' });
+    await grantRequiredConsents(db, author);
     session.userId = author;
     expect(
       await actions.saveExperienceDraft({
@@ -302,10 +305,13 @@ describe('gerçek oturum koruması ve deneyim servisleri', () => {
     await service.submitExperience(db, author, { experienceId: row.id }, NOW);
     await expect(
       service.reviewExperience(db, author, { experienceId: row.id, decision: 'PUBLISH' }, NOW),
-    ).rejects.toMatchObject({ code: 'AUTH_FORBIDDEN' });
+    ).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' });
     await expect(
       service.reviewExperience(db, wrong, { experienceId: row.id, decision: 'PUBLISH' }, NOW),
-    ).rejects.toMatchObject({ code: 'AUTH_FORBIDDEN' });
+    ).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' });
+    await expect(
+      service.reviewExperience(db, wrong, { experienceId: 'missing', decision: 'PUBLISH' }, NOW),
+    ).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' });
     expect((await service.listModerationQueue(db, wrong, {}, NOW)).items).toEqual([]);
     await expect(
       service.listModerationQueue(db, wrong, { departmentId: institution.deptA1 }, NOW),
@@ -458,6 +464,8 @@ describe('anonimlik: rastgele verili tüm eylem yanıtları', () => {
     async () => {
       const author = await member(institution.deptA1),
         reader = await member(institution.deptB1);
+      await grantRequiredConsents(db, author);
+      await grantRequiredConsents(db, reader);
       const secret = {
         id: author,
         name: `Anon-${randomBytes(12).toString('hex')}`,
@@ -513,6 +521,8 @@ describe('anonimlik: rastgele verili tüm eylem yanıtları', () => {
   it('hata yolları ve karşı tarafların veri dökümü anonim yazarı taşımaz (rastgele veri)', async () => {
     const author = await member(institution.deptA1),
       reader = await member(institution.deptB1);
+    await grantRequiredConsents(db, author);
+    await grantRequiredConsents(db, reader);
     const secret = {
       id: author,
       name: `Anon-${randomBytes(12).toString('hex')}`,

@@ -30,7 +30,7 @@ import { actionOk, parseInput } from '@/lib/action-result';
 import { failAction } from '../fail-action';
 import { getDb } from '../db';
 import * as experience from '../services/experience';
-import { requireVerifiedMember } from '../permissions';
+import { requireAnyAdmin, requireVerifiedMember } from '../permissions';
 
 /** Oturum → Zod → işlem içinde güncel yetki, sahiplik/üniversite/moderasyon kapsamı. */
 export async function saveExperienceDraft(
@@ -62,7 +62,7 @@ export async function reviewExperience(
   input: ReviewExperienceInput,
 ): Promise<ActionResult<ReviewExperienceOutput>> {
   try {
-    const actor = await requireVerifiedMember();
+    const actor = await requireAnyAdmin();
     const parsed = parseInput(reviewExperienceSchema, input);
     if (!parsed.ok) return parsed.failure;
     const db = getDb();
@@ -114,7 +114,7 @@ export async function listModerationQueue(
   input: ListModerationQueueInput,
 ): Promise<ActionResult<ExperiencePage>> {
   try {
-    const actor = await requireVerifiedMember();
+    const actor = await requireAnyAdmin();
     const parsed = parseInput(listModerationQueueSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.listModerationQueue(getDb(), actor.userId, parsed.data));
@@ -126,7 +126,7 @@ export async function listExperienceReports(
   input: ListExperienceReportsInput,
 ): Promise<ActionResult<ExperienceReportPage>> {
   try {
-    const actor = await requireVerifiedMember();
+    const actor = await requireAnyAdmin();
     const parsed = parseInput(listExperienceReportsSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.listExperienceReports(getDb(), actor.userId, parsed.data));
@@ -138,7 +138,7 @@ export async function resolveExperienceReport(
   input: ResolveExperienceReportInput,
 ): Promise<ActionResult<ResolveExperienceReportOutput>> {
   try {
-    const actor = await requireVerifiedMember();
+    const actor = await requireAnyAdmin();
     const parsed = parseInput(resolveExperienceReportSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.resolveExperienceReport(getDb(), actor.userId, parsed.data));

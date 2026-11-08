@@ -69,3 +69,16 @@ it('inceleyici: gösterge kimliği oturumdan gelir, öğrenci olmayan veya bitmi
   }
   expect(mocks.reliability).not.toHaveBeenCalled();
 });
+
+it('yanlış kimlik türü yetkiden sonra doğrulama hatasıdır', async () => {
+  expect(await getFeedbackView({} as unknown as string)).toMatchObject({
+    ok: false,
+    errorCode: 'VALIDATION_INVALID',
+  });
+  expect(mocks.view).not.toHaveBeenCalled();
+  mocks.actor.mockRejectedValue(codedUnauthenticated('AUTH_UNAUTHENTICATED'));
+  expect(await getFeedbackView({} as unknown as string)).toMatchObject({
+    ok: false,
+    errorCode: 'AUTH_UNAUTHENTICATED',
+  });
+});

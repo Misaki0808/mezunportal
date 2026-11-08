@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { codedForbidden } from '@/lib/errors';
 
 const guards = vi.hoisted(() => ({ requireUser: vi.fn(), requireAdmin: vi.fn() }));
-vi.mock('@/server/permissions', () => guards);
+vi.mock('@/server/permissions', () => ({
+  ...guards,
+  requireUserWithoutConsent: guards.requireUser,
+}));
 
 import { hasAdminAccess } from './admin-access';
 
@@ -30,5 +34,11 @@ describe('hasAdminAccess', () => {
     guards.requireAdmin.mockResolvedValue({});
     expect(await hasAdminAccess()).toBe(true);
     expect(guards.requireAdmin).toHaveBeenCalledWith({ kind: 'FACULTY', facultyId: 'f' });
+  });
+  it('rolü doğrulanmış yöneticinin eksik rızasını rol reddine çevirmez', async () => {
+    guards.requireUser.mockResolvedValue({ facts: { grants: [{ scope: 'SYSTEM' }] } });
+    guards.requireAdmin.mockRejectedValue(codedForbidden('CONSENT_REQUIRED'));
+    expect(await hasAdminAccess()).toBe(true);
+    expect(guards.requireAdmin).toHaveBeenCalledWith({ kind: 'SYSTEM' });
   });
 });

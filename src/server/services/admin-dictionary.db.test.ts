@@ -9,6 +9,7 @@ import {
   addMembership,
   createInstitution,
   createUser,
+  grantRequiredConsents,
   type Institution,
 } from '@/test/fixtures';
 
@@ -37,6 +38,7 @@ beforeAll(async () => {
   system = await createUser(db);
   await addMembership(db, { userId: system, departmentId: inst.deptA1, role: 'ACADEMIC' });
   await addGrant(db, { userId: system, scope: 'SYSTEM' });
+  await grantRequiredConsents(db, system);
   deptAdmin = await createUser(db);
   await addMembership(db, { userId: deptAdmin, departmentId: inst.deptA1, role: 'ACADEMIC' });
   await addGrant(db, { userId: deptAdmin, scope: 'DEPARTMENT', departmentId: inst.deptA1 });

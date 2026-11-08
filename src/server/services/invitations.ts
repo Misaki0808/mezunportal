@@ -10,9 +10,11 @@ import { consumeRateLimit, RATE_LIMITS } from './rateLimit';
 import { stagePilotInvitation } from './notification-intent';
 
 export const INVITATION_MAX = 100;
+export const invitationTextSchema = z.string().max(30000);
 export function parseInvitations(input: string): string[] {
-  if (input.length > 30000) throw codedValidation('VALIDATION_INVALID');
-  const entries = input.split(/[\s,;]+/).filter(Boolean);
+  const text = invitationTextSchema.safeParse(input);
+  if (!text.success) throw codedValidation('VALIDATION_INVALID');
+  const entries = text.data.split(/[\s,;]+/).filter(Boolean);
   if (entries[0]?.toLowerCase() === 'email' || entries[0]?.toLowerCase() === 'e-posta')
     entries.shift();
   if (
