@@ -279,6 +279,9 @@
     "button": {
       "loading": "Yükleniyor"
     },
+    "page": {
+      "loading": "Sayfa yükleniyor"
+    },
     "field": {
       "required": "zorunlu",
       "toggleHelp": "Açıklamayı göster ya da gizle"
@@ -963,6 +966,13 @@
       "successTitle": "Doğrulama tamamlandı"
     },
     "account": {
+      "groups": {
+        "profile": "PROFİL VE DOĞRULAMA",
+        "activity": "GÖRÜŞMELER VE İÇERİKLER",
+        "settings": "BİLDİRİM, GİZLİLİK VE VERİLER",
+        "admin": "YÖNETİM",
+        "session": "OTURUM"
+      },
       "eyebrow": "HESABIM",
       "title": "Hesabın",
       "description": "Doğrulama ve hesap ayarlarını buradan yönet.",

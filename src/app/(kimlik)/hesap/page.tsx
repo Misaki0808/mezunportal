@@ -7,6 +7,7 @@ import {
   CalendarIcon,
   ErrorState,
   FileTextIcon,
+  IconChip,
   InboxIcon,
   LogOutIcon,
   MailIcon,
@@ -213,48 +214,95 @@ export default async function AccountPage() {
         ]
       : []),
   ];
+  // Gruplar: hub 17'ye kadar kart içerebilir; başlıklı bölümlere ayrılır (tarama kolaylığı). Sıra grup içinde korunur.
+  const GROUPS = [
+    { key: 'profile', tone: 'primary', hrefs: ['/profil', '/dogrulama'] },
+    {
+      key: 'activity',
+      tone: 'accent',
+      hrefs: [
+        '/randevular',
+        '/mentor/ayarlar',
+        '/deneyimlerim',
+        '/hesap/gorusmeler',
+        '/hesap/guvenilirlik',
+        '/hesap/cv-inceleme',
+        '/sss',
+        '/hesap/sss',
+        '/mentor/sss',
+      ],
+    },
+    { key: 'settings', tone: 'success', hrefs: ['/hesap/bildirimler', '/hesap/e-posta'] },
+    {
+      key: 'admin',
+      tone: 'primary',
+      hrefs: ['/yonetim/kullanim', '/yonetim', '/yonetim/sss', '/yonetim/deneyimler'],
+    },
+  ] as const;
+  const groupOf = (href: string) =>
+    GROUPS.find((group) => (group.hrefs as readonly string[]).includes(href));
+  const linkClasses =
+    'press-row flex min-h-20 items-center gap-4 rounded-card border border-border bg-bg p-4 text-fg';
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:py-16">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
-      <ul className="mt-8 flex flex-col gap-3">
-        {links.map((link) => (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className="press-row flex min-h-20 items-center justify-between gap-4 rounded-card border border-border bg-bg p-5 text-fg"
+      {GROUPS.map((group) => {
+        const items = links.filter((link) => groupOf(link.href)?.key === group.key);
+        const showPrivacy = group.key === 'settings';
+        if (items.length === 0 && !showPrivacy) return null;
+        return (
+          <section key={group.key} aria-labelledby={`account-${group.key}`} className="mt-8">
+            <h2
+              id={`account-${group.key}`}
+              className="text-sm font-semibold tracking-wider text-fg-muted"
             >
-              <span className="text-primary">
-                <link.icon />
-              </span>
+              {t(`groups.${group.key}`)}
+            </h2>
+            <ul className="mt-3 flex flex-col gap-3">
+              {items.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className={linkClasses}>
+                    <IconChip tone={group.tone}>
+                      <link.icon />
+                    </IconChip>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-lg font-semibold">{link.title}</span>
+                      <span className="mt-1 block text-base text-fg-muted">{link.description}</span>
+                    </span>
+                    <span aria-hidden="true" className="text-xl text-primary">
+                      ›
+                    </span>
+                  </Link>
+                </li>
+              ))}
+              {showPrivacy && <PrivacyAccountLinks />}
+            </ul>
+          </section>
+        );
+      })}
+      <section aria-labelledby="account-session" className="mt-8">
+        <h2 id="account-session" className="text-sm font-semibold tracking-wider text-fg-muted">
+          {t('groups.session')}
+        </h2>
+        <ul className="mt-3 flex flex-col gap-3">
+          <li>
+            <Link href="/cikis" className={linkClasses}>
+              <IconChip tone="accent">
+                <LogOutIcon />
+              </IconChip>
               <span className="min-w-0 flex-1">
-                <span className="block text-lg font-semibold">{link.title}</span>
-                <span className="mt-1 block text-base text-fg-muted">{link.description}</span>
+                <span className="block text-lg font-semibold">{t('signOut')}</span>
+                <span className="mt-1 block text-base text-fg-muted">
+                  {t('signOutDescription')}
+                </span>
               </span>
               <span aria-hidden="true" className="text-xl text-primary">
                 ›
               </span>
             </Link>
           </li>
-        ))}
-        <PrivacyAccountLinks />
-        <li>
-          <Link
-            href="/cikis"
-            className="press-row flex min-h-20 items-center gap-4 rounded-card border border-border bg-bg p-5 text-fg"
-          >
-            <span className="text-primary">
-              <LogOutIcon />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-lg font-semibold">{t('signOut')}</span>
-              <span className="mt-1 block text-base text-fg-muted">{t('signOutDescription')}</span>
-            </span>
-            <span aria-hidden="true" className="text-xl text-primary">
-              ›
-            </span>
-          </Link>
-        </li>
-      </ul>
+        </ul>
+      </section>
     </div>
   );
 }

@@ -27,6 +27,7 @@ export { Input } from './input';
 export type { InputProps } from './input';
 export { PageHeader } from './page-header';
 export type { PageHeaderProps } from './page-header';
+export { PageSkeleton } from './page-skeleton';
 export { Pagination } from './pagination';
 export type { PaginationProps } from './pagination';
 export { RadioGroup } from './radio-group';
