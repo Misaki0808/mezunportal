@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestPrisma } from '@/test/db';
-import { createInstitution, createUser } from '@/test/fixtures';
+import { addMembership, createInstitution, createUser } from '@/test/fixtures';
 import { maySendNotification } from '../services/notification-preferences';
 const mocks = vi.hoisted(() => ({ enqueue: vi.fn() }));
 vi.mock('./email', () => ({ enqueueEmail: mocks.enqueue }));
@@ -30,6 +30,20 @@ async function fixture() {
   const inst = await createInstitution(db),
     userId = await createUser(db),
     authorId = await createUser(db);
+  await addMembership(db, {
+    userId: authorId,
+    departmentId: inst.deptA1,
+    role: 'ALUMNI',
+    status: 'VERIFIED',
+    graduationYear: 2020,
+  });
+  await addMembership(db, {
+    userId,
+    departmentId: inst.deptA1,
+    role: 'STUDENT',
+    status: 'VERIFIED',
+    entryYear: 2024,
+  });
   const posting = await db.jobPosting.create({
     data: {
       authorId,
@@ -46,6 +60,7 @@ async function fixture() {
       moderatedAt: new Date('2030-06-20T09:00:00Z'),
       publishedAt: new Date('2030-06-20T09:00:00Z'),
       moderatedById: authorId,
+      targets: { create: [{ departmentId: inst.deptA1 }] },
     },
   });
   await db.jobMatch.create({
@@ -56,7 +71,7 @@ async function fixture() {
     userId,
     payload: { type: 'jobMatch', event: 'digest', day: '2030-06-20' },
   };
-  return { userId, postingId: posting.id, row };
+  return { userId, authorId, postingId: posting.id, row };
 }
 describe('ilan özeti gerçek PostgreSQL', () => {
   it('gerçek kilitte sekiz eşzamanlı tekrar yalnız bir özet kuyruğa alır', async () => {
@@ -126,6 +141,22 @@ describe('ilan özeti gerçek PostgreSQL', () => {
       data: { status: 'CLOSED', endedAt: new Date() },
     });
     expect(await maySendNotification(db, message)).toBe(false);
+  });
+  it('askıya alınan yazarın ilanı özet kuyruğuna ve teslimine giremez', async () => {
+    const f = await fixture();
+    await sendNotificationIntent(db, f.row);
+    const message = mocks.enqueue.mock.calls[0]![0];
+    expect(await maySendNotification(db, message)).toBe(true);
+    await db.user.update({ where: { id: f.authorId }, data: { banned: true, banExpires: null } });
+    expect(await maySendNotification(db, message)).toBe(false);
+    const other = await fixture();
+    await db.user.update({
+      where: { id: other.authorId },
+      data: { banned: true, banExpires: null },
+    });
+    mocks.enqueue.mockClear();
+    await sendNotificationIntent(db, other.row);
+    expect(mocks.enqueue).not.toHaveBeenCalled();
   });
   it.each(['CLOSED', 'EXPIRED', 'REJECTED'] as const)('%s ilan özet üretmez', async (status) => {
     const f = await fixture();

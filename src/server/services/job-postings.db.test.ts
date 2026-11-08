@@ -1609,6 +1609,33 @@ describe('ilan eşleşmeleri', () => {
       await db.notificationIntent.count({ where: { userId: w.student, kind: 'jobMatch' } }),
     ).toBe(0);
   });
+  it('yayın anında askıdaki yazar eşleşme ve bildirim üretmez; sonradan askıda görünür eşleşme kalmaz', async () => {
+    const w = await world();
+    const tag = await db.tag.create({
+      data: { kind: 'INTEREST', slug: `suspended-${w.student}`, curated: true },
+    });
+    const profile = await db.profile.create({ data: { userId: w.student } });
+    await db.profileTag.create({ data: { profileId: profile.id, tagId: tag.id } });
+    const id = await submitted(w, w.alumni, { tagIds: [tag.id], targetGrades: [] });
+    await db.user.update({ where: { id: w.alumni }, data: { banned: true, banExpires: null } });
+    await reviewJobPosting(deps, w.moderator, { postingId: id, decision: 'PUBLISH' });
+    expect(await db.jobMatch.count({ where: { postingId: id } })).toBe(0);
+    expect(
+      await db.notificationIntent.count({ where: { userId: w.student, kind: 'jobMatch' } }),
+    ).toBe(0);
+    const match = await import('./job-match');
+    expect(
+      (await match.listSuggestedJobMatches(db, w.student, NOW)).map((p) => p.id),
+    ).not.toContain(id);
+    await db.user.update({ where: { id: w.alumni }, data: { banned: false } });
+    await db.$transaction((tx) => match.stageJobMatches(tx, id, NOW));
+    expect(await db.jobMatch.count({ where: { postingId: id } })).toBe(1);
+    await db.user.update({ where: { id: w.alumni }, data: { banned: true, banExpires: null } });
+    expect(
+      (await match.listMyJobMatchNotifications(db, w.student, NOW)).map((p) => p.id),
+    ).not.toContain(id);
+    expect((await match.sharedJobMatchTags(db, w.student, [id], NOW)).has(id)).toBe(false);
+  });
   it('etiketsiz ilan öğrenci panosunda yer alır ama bildirim niyeti oluşturmaz', async () => {
     const w = await world();
     const id = await published(w);
