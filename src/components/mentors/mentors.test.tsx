@@ -74,6 +74,33 @@ describe('mentor kartı', () => {
     );
   });
 
+  it('eylem önceliği: uygunsa "Randevu iste" birincil (dolgulu, tam genişlik), "Profili gör" ve "İletişim iste" ikincil', () => {
+    renderUi(<MentorCard mentor={mentor()} />);
+    const appointment = screen.getByRole('link', { name: 'Randevu iste' });
+    expect(appointment).toHaveClass('bg-primary', 'w-full', 'sm:w-auto');
+    for (const name of ['Profili gör', 'İletişim iste']) {
+      const link = screen.getByRole('link', { name });
+      expect(link).not.toHaveClass('bg-primary');
+      expect(link).toHaveClass('border');
+    }
+  });
+
+  it('uygun değilse "Profili gör" birincil kalır ve randevu bağlantısı yoktur; kompakt kartta yalnız profil', () => {
+    const { unmount } = renderUi(
+      <MentorCard
+        mentor={mentor({
+          availability: { available: false, reason: 'CAPACITY_FULL', pausedUntil: null },
+        })}
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Profili gör' })).toHaveClass('bg-primary');
+    expect(screen.queryByRole('link', { name: 'Randevu iste' })).not.toBeInTheDocument();
+    unmount();
+    renderUi(<MentorCard mentor={mentor()} compact />);
+    expect(screen.getAllByRole('link')).toHaveLength(1);
+    expect(screen.getByRole('link', { name: 'Profili gör' })).toHaveClass('bg-primary');
+  });
+
   it('başlık, şirket/unvan, konular, müsaitlik ve kapasite; e-posta/telefon yok', () => {
     renderUi(<MentorCard mentor={mentor()} />);
     expect(screen.getByRole('heading', { name: 'Mert Yıldız' })).toBeInTheDocument();
@@ -87,6 +114,10 @@ describe('mentor kartı', () => {
     expect(screen.getByRole('link', { name: 'İletişim iste' })).toHaveAttribute(
       'href',
       '/iletisim-iste/m1',
+    );
+    expect(screen.getByRole('link', { name: 'Randevu iste' })).toHaveAttribute(
+      'href',
+      '/randevu-al/m1',
     );
     expect(document.body.textContent).not.toMatch(/@|\+90/);
   });
@@ -112,6 +143,7 @@ describe('mentor kartı', () => {
       />,
     );
     expect(screen.getByText('Bu ay dolu')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Randevu iste' })).not.toBeInTheDocument();
   });
 });
 
@@ -173,7 +205,7 @@ describe('giriş noktaları', () => {
       />,
     );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Randevu al' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Randevu iste' })).toHaveAttribute(
       'href',
       '/randevu-al/m1',
     );

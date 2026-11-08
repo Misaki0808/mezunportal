@@ -54,7 +54,9 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
   try {
     // 1) Mentor haftalık müsaitliği gün listesinden açar.
     await login(m, 'alumniMentor');
-    await m.goto('/mentor/ayarlar');
+    await m.goto('/hesap');
+    await m.getByRole('link', { name: /Müsaitliğim/ }).click();
+    await expect(m).toHaveURL(/\/mentor\/ayarlar$/);
     await m.waitForLoadState('networkidle');
     for (const day of ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']) {
       await m.getByRole('switch', { name: `${day} günü müsait` }).check();
@@ -65,7 +67,28 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
 
     // 2) Öğrenci slot seçip talep eder.
     await login(s, 'student');
-    await s.goto(`/randevu-al/${mentor.id}`);
+    await s.goto('/hesap');
+    await expect(s.getByRole('link', { name: /Müsaitliğim/ })).toHaveCount(0);
+    await expect(s.getByRole('link', { name: /Randevularım/ })).toHaveAttribute(
+      'href',
+      '/randevular',
+    );
+    await s.goto('/mentorlar');
+    const card = s
+      .locator('article')
+      .filter({ has: s.getByRole('heading', { name: mentor.name, exact: true }) })
+      .first();
+    await expect(card.getByRole('link', { name: 'Randevu iste', exact: true })).toHaveAttribute(
+      'href',
+      `/randevu-al/${mentor.id}`,
+    );
+    await card.getByRole('link', { name: 'Profili gör' }).click();
+    await expect(s).toHaveURL(new RegExp(`/uye/${mentor.id}$`));
+    await s
+      .getByRole('region', { name: 'Mentorla bağlantı' })
+      .getByRole('link', { name: 'Randevu iste', exact: true })
+      .click();
+    await expect(s).toHaveURL(new RegExp(`/randevu-al/${mentor.id}$`));
     await s.waitForLoadState('networkidle');
     await expect(s.getByText('Saatler İstanbul saatidir.')).toBeVisible();
     await s
@@ -79,6 +102,9 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
       where: { mentorId: mentor.id, menteeId: student.id, status: 'REQUESTED' },
     });
     expect(row.status).toBe('REQUESTED');
+    await s.goto('/randevular');
+    await expect(s.getByText('Yanıt bekliyor').first()).toBeVisible();
+    await expect(s.locator('a[href="/randevular"][aria-current="page"]:visible')).toHaveCount(1);
 
     // 3) Mentor gelen talebi açıp onaylar.
     await m.goto('/randevular');
@@ -97,6 +123,11 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
     await s.goto('/randevular');
     await s.waitForLoadState('networkidle');
     await expect(s.getByText('Onaylandı').first()).toBeVisible();
+    await s.goto('/hesap/bildirimler');
+    await expect(s.getByRole('switch', { name: /Randevular/ })).toBeEnabled();
+    await expect(
+      s.getByText('Randevu talepleri, onaylar, değişiklikler ve yaklaşan görüşme hatırlatmaları.'),
+    ).toBeVisible();
   } finally {
     await db.appointment.deleteMany({
       where: { mentorId: mentor.id, status: { in: ['REQUESTED', 'CONFIRMED'] } },
