@@ -69,3 +69,14 @@ export const pdfForm = (options: TestPdfOptions = {}) => ({
 export const rawForm = (bytes: Uint8Array, type = 'application/pdf') => ({
   file: new File([new Uint8Array(bytes)], 'cv.pdf', { type }),
 });
+
+/** Beceriler `Tag(SKILL)` + profil bağıdır (P1-06). */
+export const skillCount = (db: PrismaClient, userId: string) =>
+  db.profileTag.count({ where: { profile: { userId }, tag: { kind: 'SKILL' } } });
+export const skillLabels = async (db: PrismaClient, userId: string) =>
+  (
+    await db.profileTag.findMany({
+      where: { profile: { userId }, tag: { kind: 'SKILL' } },
+      select: { tag: { select: { label: true } } },
+    })
+  ).map((row) => row.tag.label);

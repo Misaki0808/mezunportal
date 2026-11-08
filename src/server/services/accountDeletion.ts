@@ -4,6 +4,7 @@ import type { DeleteAccountOutput } from '@/contracts/privacy';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { codedNotFound, codedValidation } from '@/lib/errors';
 
+import { pruneOrphanSkillTags } from './profile-skills';
 import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
 import { eraseExperienceContent } from './experiencePrivacy';
 
@@ -85,7 +86,7 @@ export async function deleteAccount(
     await tx.education.deleteMany({ where: { userId } });
     await tx.language.deleteMany({ where: { userId } });
     await tx.certification.deleteMany({ where: { userId } });
-    await tx.userSkill.deleteMany({ where: { userId } });
+    await tx.userSkill.deleteMany({ where: { userId } }); // eski tablo (TD-013)
     await tx.cvUpload.deleteMany({ where: { userId } });
 
     // Açık iletişim talepleri kapanır; kapalı satırlar geçmiş olarak kalır (karşı tarafın kutusunda).
@@ -105,6 +106,8 @@ export async function deleteAccount(
     // Profil yayınlanmış içerik değildir: K-09'un her iki seçiminde de kişisel veri silinir.
     // ProfileTag ilişkileri ON DELETE CASCADE; ortak etiket sözlüğü korunur.
     await tx.profile.deleteMany({ where: { userId } });
+    // Serbest metin (kişisel) beceri etiketi hiçbir profile bağlı kalmadıysa geride bırakılmaz.
+    await pruneOrphanSkillTags(tx);
     await tx.fieldVisibility.deleteMany({ where: { userId } });
     await tx.session.deleteMany({ where: { userId } });
     await tx.account.deleteMany({ where: { userId } });

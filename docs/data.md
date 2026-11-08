@@ -32,10 +32,11 @@ yalnız admin eklentisi şeması için vardır ve yetki vermez.
 `ContactRequest`. Görünürlük kararı yalnız `src/server/rules/visibility.ts` karar tablosundadır.
 
 **CV hattı (şemada, P1-05):** `CvUpload` (durum, dosya anahtarı, doğrulanmış ayrıştırma çıktısı yalnız `PARSED`'da) ·
-profil kalemleri `Education` · `Position` · `Language` · `Certification` · `UserSkill` (`source`: `CV`/`MANUAL`,
-`manuallyEdited` korumalı kalemdir) · sözlükler `Company` · `Title` · `Skill` · `Sector` (+ `UnmatchedValue`
-yönetici kuyruğu) · `ExperienceInvitation`. Bunlar `User`'a bağlıdır (`Profile`'a değil); beceri `Tag(SKILL)` değil
-`Skill`/`UserSkill`'dir (BACKLOG TD-010).
+profil kalemleri `Education` · `Position` · `Language` · `Certification` (`source`: `CV`/`MANUAL`,
+`manuallyEdited` korumalı kalemdir); beceri `Tag(SKILL)` + `ProfileTag`'tir (`Tag.label` zorunlu, `curated = false`
+kişisel/serbest metin etiketidir ve öneri listesinde yer almaz; eski `UserSkill` BACKLOG TD-013) · sözlükler `Company` · `Title` · `Skill` · `Sector` (+ `UnmatchedValue`
+yönetici kuyruğu) · `ExperienceInvitation`. Kalemler `User`'a bağlıdır (`Profile`'a değil). `Skill` sözlüğü yalnız beceri adı eşleme/standartlaştırma içindir.
+`Profile.manualFields` kullanıcının elle düzenlediği başlık/özet/şehirdir; yeni CV bunları sessizce ezmez.
 
 **Profil (P1-04 şemasında):** `Profile`, `Tag`, `ProfileTag`; kullanıcı ve etiket ilişkileri için
 kanonik kaynak Prisma şemasıdır. Profil içeriğinin hesap silmeye ve veri dökümüne bağlanması servis

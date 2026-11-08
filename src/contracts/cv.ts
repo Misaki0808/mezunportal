@@ -190,10 +190,25 @@ export type ParsedCertification = z.output<typeof parsedCertificationSchema>;
 export const parsedSkillSchema = text(CV_LIMITS.shortName);
 
 /**
+ * Profil üst alanları (başlık, özet, şehir). Bağlantılar (LinkedIn, sosyal) ve iletişim bilgisi BİLEREK yoktur:
+ * LLM çıktısı güvenilmezdir; bağlantıyı kullanıcı izinli alan adı listesiyle elle ekler.
+ */
+export const CV_PROFILE_LIMITS = { headline: 120, summary: 1500, city: 80 } as const;
+export const PROFILE_FIELDS = ['headline', 'summary', 'city'] as const;
+export type ProfileField = (typeof PROFILE_FIELDS)[number];
+export const parsedProfileSchema = z.object({
+  headline: optionalText(CV_PROFILE_LIMITS.headline).default(null),
+  summary: optionalText(CV_PROFILE_LIMITS.summary).default(null),
+  city: optionalText(CV_PROFILE_LIMITS.city).default(null),
+});
+export type ParsedProfile = z.output<typeof parsedProfileSchema>;
+
+/**
  * Bilinmeyen alanlar (`role`, `userId`, `isAdmin` …) sessizce atılır; yetki/kimlik alanı şemada yoktur.
  * Boş bölümler atlanabilir (varsayılan `[]`).
  */
 export const parsedCvSchema = z.object({
+  profile: parsedProfileSchema.default({ headline: null, summary: null, city: null }),
   education: z.array(parsedEducationSchema).max(CV_LIMITS.education).default([]),
   positions: z.array(parsedPositionSchema).max(CV_LIMITS.positions).default([]),
   skills: z.array(parsedSkillSchema).max(CV_LIMITS.skills).default([]),
@@ -211,7 +226,9 @@ export function parsedCvJsonSchema(): Record<string, unknown> {
 }
 
 export function parsedCvItemCount(cv: ParsedCv): number {
+  const profileFilled = PROFILE_FIELDS.some((field) => cv.profile[field] !== null);
   return (
+    (profileFilled ? 1 : 0) +
     cv.education.length +
     cv.positions.length +
     cv.skills.length +
@@ -290,7 +307,14 @@ export type CvStatusOutput = z.infer<typeof cvStatusOutputSchema>;
 // Onay ekranı: mevcut profille fark (rules/cvDiff)
 // ---------------------------------------------------------------------------------------------
 
-export const CV_SECTIONS = ['EDUCATION', 'POSITION', 'LANGUAGE', 'CERTIFICATION', 'SKILL'] as const;
+export const CV_SECTIONS = [
+  'PROFILE',
+  'EDUCATION',
+  'POSITION',
+  'LANGUAGE',
+  'CERTIFICATION',
+  'SKILL',
+] as const;
 export type CvSection = (typeof CV_SECTIONS)[number];
 
 /**
@@ -316,6 +340,12 @@ type ItemBase = {
   standardized: CvStandardized;
 };
 export type CvReviewItem =
+  | (ItemBase & {
+      /** Başlık/özet/şehir tek kalemdir; `changedFields` farklı olan alanlardır. */
+      section: 'PROFILE';
+      proposed: ParsedProfile;
+      current: ParsedProfile | null;
+    })
   | (ItemBase & {
       section: 'EDUCATION';
       proposed: ParsedEducation;
@@ -360,6 +390,11 @@ const decisionBase = {
  * kalem elle düzeltilmiş sayılır. Kararı olmayan kalem YAZILMAZ; `CONFLICT` kalem de açık seçim olmadan yazılmaz.
  */
 export const cvDecisionSchema = z.discriminatedUnion('section', [
+  z.object({
+    ...decisionBase,
+    section: z.literal('PROFILE'),
+    values: parsedProfileSchema.optional(),
+  }),
   z.object({
     ...decisionBase,
     section: z.literal('EDUCATION'),

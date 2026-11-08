@@ -28,6 +28,9 @@ const norm = (value: string | null) => (value ? normalizeName(value) : '');
 
 function facts(cv: ParsedCv): Set<string> {
   const out = new Set<string>();
+  for (const [field, value] of Object.entries(cv.profile)) {
+    if (value !== null) out.add(`PROFILE|-|${field}=${String(value)}`);
+  }
   const add = (section: string, key: string, field: string, value: unknown) => {
     if (value === null || value === undefined || value === false || value === '') return;
     out.add(`${section}|${key}|${field}=${String(value)}`);
@@ -64,9 +67,18 @@ export async function profileAsParsedCv(db: PrismaClient, userId: string): Promi
     db.position.findMany({ where: { userId } }),
     db.language.findMany({ where: { userId } }),
     db.certification.findMany({ where: { userId } }),
-    db.userSkill.findMany({ where: { userId } }),
+    db.profileTag.findMany({
+      where: { profile: { userId }, tag: { kind: 'SKILL' } },
+      select: { tag: { select: { label: true } } },
+    }),
   ]);
+  const profile = await db.profile.findUnique({ where: { userId } });
   return {
+    profile: {
+      headline: profile?.headline ?? null,
+      summary: profile?.summary ?? null,
+      city: profile?.city ?? null,
+    },
     education: education.map((row) => ({
       institution: row.institution,
       level: row.level,
@@ -90,7 +102,7 @@ export async function profileAsParsedCv(db: PrismaClient, userId: string): Promi
       issuer: row.issuer,
       issuedDate: ym(row.issuedYear, row.issuedMonth),
     })),
-    skills: skills.map((row) => row.name),
+    skills: skills.map((row) => row.tag.label ?? ''),
   };
 }
 
