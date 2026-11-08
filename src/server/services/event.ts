@@ -114,7 +114,7 @@ export function emitEvent(
 }
 
 /**
- * Profil tamamlama eşiklerini yukarı yönlü geçişte BİR KEZ yayar (kullanıcı başına eşik başına). Çağıran işlem bittikten
+ * Profil tamamlama eşiklerini yukarı yönlü geçişte 24 AYLIK PENCEREDE BİR KEZ yayar. Çağıran işlem bittikten
  * sonra çağırır; önceki ve yeni yüzde profil yazımından gelir.
  */
 export function emitProfileThresholds(
@@ -124,8 +124,8 @@ export function emitProfileThresholds(
   after: number,
 ): void {
   for (const threshold of crossedThresholds(before, after, PROFILE_THRESHOLDS)) {
-    const work = db
-      .$transaction(async (tx) => {
+    const work = (async () =>
+      db.$transaction(async (tx) => {
         // Aynı kullanıcının eşik geçişleri ve hesap silme aynı kilitte sıralanır.
         await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR UPDATE`;
         const user = await tx.user.findUnique({
@@ -133,9 +133,12 @@ export function emitProfileThresholds(
           select: { deletedAt: true },
         });
         if (!user || user.deletedAt) return;
+        const cutoff = new Date();
+        cutoff.setUTCMonth(cutoff.getUTCMonth() - EVENT_RETENTION_MONTHS);
         const exists = await tx.event.count({
           where: {
             userId,
+            createdAt: { gte: cutoff },
             type: 'PROFILE_THRESHOLD',
             props: { path: ['threshold'], equals: threshold },
           },
@@ -151,8 +154,7 @@ export function emitProfileThresholds(
             props: { threshold },
           },
         });
-      })
-      .catch(() => undefined);
+      }))().catch(() => undefined);
     pending.add(work);
     void work.finally(() => pending.delete(work));
   }

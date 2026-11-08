@@ -9,7 +9,7 @@ import {
 } from '@/test/fixtures';
 import { isCodedError } from '@/lib/errors';
 import { getUsageMetrics, exportUsageMetrics } from './usage-metrics';
-import { emitProfileThresholds, recordEvent, settleEvents } from './event';
+import { detachOldEvents, emitProfileThresholds, recordEvent, settleEvents } from './event';
 import { deleteAccount } from './accountDeletion';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -119,5 +119,29 @@ describe('bağımsız KVKK incelemesi', () => {
     for (let i = 0; i < 12; i++) emitProfileThresholds(db, userId, 40, 60);
     await settleEvents();
     expect(await db.event.count({ where: { userId, type: 'PROFILE_THRESHOLD' } })).toBe(1);
+  });
+  it('24 ayı aşan eşik bağı kopunca aynı eşiğin yeni geçişi yazılabilir', async () => {
+    const { inst } = await setup();
+    const userId = await createUser(db);
+    await addMembership(db, {
+      userId,
+      departmentId: inst.deptA1,
+      role: 'STUDENT',
+      entryYear: 2024,
+    });
+    emitProfileThresholds(db, userId, 40, 60);
+    await settleEvents();
+    const prior = await db.event.findFirstOrThrow({ where: { userId, type: 'PROFILE_THRESHOLD' } });
+    const old = new Date();
+    old.setUTCMonth(old.getUTCMonth() - 25);
+    await db.event.update({ where: { id: prior.id }, data: { createdAt: old } });
+    await detachOldEvents(db, new Date());
+    expect((await db.event.findUniqueOrThrow({ where: { id: prior.id } })).userId).toBeNull();
+    emitProfileThresholds(db, userId, 40, 60);
+    await settleEvents();
+    expect(await db.event.count({ where: { userId, type: 'PROFILE_THRESHOLD' } })).toBe(1);
+    expect(
+      await db.event.count({ where: { departmentId: inst.deptA1, type: 'PROFILE_THRESHOLD' } }),
+    ).toBe(2);
   });
 });

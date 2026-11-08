@@ -216,7 +216,7 @@ Uygulama (P1-13): Katalog ve tür başına `props` şemaları `src/contracts/met
 yok, arama olayında yalnız süzgeç TÜRLERİ). Yazım `services/event.ts`: `emitEvent` ateşle-ve-unut, hata yutar, işlem
 (transaction) dışından çağrılır; olay, kullanıcının o anki birincil doğrulanmış üyeliğinin rolünü ve bölümünü saklar. Panel
 sorgusu `services/usage-metrics.ts`: yönetici kapsamıyla kesişir, (tür × rol × bölüm) hücreleri ayrı kullanıcı sayısı 3'ün
-altındaysa `OTHER`'da birleşir; Excel aynı kuralı kullanır. Anonim deneyim yayın olayı kullanıcıya, role ve bölüme
+altındaysa `OTHER`'da birleşir; bastırılmış hücre varsa tür toplamı da gizlenir. Excel aynı kuralı kullanır. Anonim deneyim yayın olayı kullanıcıya, role ve bölüme
 bağlanmaz.
 
 ## Bağımlılık kesintileri

@@ -1,4 +1,5 @@
 import 'server-only';
+import { emitEvent } from './event';
 
 import {
   APPOINTMENT_REQUEST_RATE_LIMIT,
@@ -559,6 +560,7 @@ export async function requestAppointment(
     notices = [noticeFor('requested', row, 'MENTOR', { expiresAt: row.expiresAt })];
     return toView(row, userId, now, new Set());
   }, TX);
+  emitEvent(deps.db, userId, { type: 'APPOINTMENT_REQUESTED', props: { mode: view.mode } });
   await dispatchNotices(deps, notices);
   return view;
 }
@@ -646,6 +648,8 @@ export async function respondAppointment(
     ];
     return toView(next, userId, now, new Set());
   }, TX);
+  if (view.status === 'CONFIRMED')
+    emitEvent(deps.db, userId, { type: 'APPOINTMENT_CONFIRMED', props: { mode: view.mode } });
   await dispatchNotices(deps, notices);
   return view;
 }

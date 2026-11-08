@@ -45,7 +45,7 @@ export type EventType = (typeof EVENT_TYPES)[number];
 export const EVENT_ROLES = ['STUDENT', 'ALUMNI', 'ACADEMIC'] as const;
 /** Olay `Event.createdAt`'ten 24 ay sonra kullanıcıdan koparılır. */
 export const EVENT_RETENTION_MONTHS = 24;
-/** Profil tamamlama eşikleri; her eşik kullanıcı başına bir kez yazılır (yukarı yönlü geçişte). */
+/** Profil eşikleri; her eşik kullanıcı başına 24 aylık pencerede bir kez yazılır. */
 export const PROFILE_THRESHOLDS = [50, 80, 100] as const;
 
 /** Arama olaylarına yalnız hangi süzgeç TÜRÜ kullanıldığı girer; süzgeç değeri ve sorgu metni asla. */

@@ -53,7 +53,7 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 - P1-13 kullanım metrikleri servisi: `Event` tablosu, tür başına strict `props` (kişisel veri yok), olay kancaları (giriş,
   profil eşiği, CV yükle/uygula, deneyim yayın, arama, mentor arama/görüntüleme, iletişim talebi), kapsamlı panel sorgusu
   (rol × bölüm, küçük hücre bastırma) ve Excel (`/api/yonetim/rapor/kullanim`) hazır. Randevu, SSS ve CV inceleme olayları
-  için yalnız tür var; kancalar o servisler main'e girince bağlanır. Ekran W2'de.
+  için yalnız tür var; tamamlanan görüşme, SSS ve CV inceleme kancaları ilgili servislerle bağlanacak. Ekran W2'de.
 
 - P1-10 randevu motoru servisi: mentor ayarları (kapasite, süre, haftalık müsaitlik, müsait değilim), slot üretimi
   (21 gün, 24 saat öncesi, İstanbul saati), talep → onay/ret/iptal, D11 zaman aşımı (`EXPIRED`), kapasite denetimi,
@@ -145,8 +145,8 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   Ne: `detachOldEvents` (userId → null) yazıldı ve testli; periyodik çalıştıran pg-boss işi yok.
   Neden borç: 24 ayı geçen olaylar kullanıcıya bağlı kalır (hesap silmede bağ zaten hemen kopar).
   Kapanış ölçütü: günlük zamanlı iş (`files.purge` ile birlikte) + worker kaydı.
-- [ ] **TD-015** · P2 · Randevu / SSS / CV inceleme kullanım olayları bağlanmadı
-  Ne: `APPOINTMENT_*`, `FAQ_*`, `CV_REVIEW_REQUESTED` olay türleri katalogda; ilgili servisler henüz main'de değil.
+- [ ] **TD-015** · P2 · Görüşme tamamlanması / SSS / CV inceleme kullanım olayları bağlanmadı
+  Ne: `APPOINTMENT_COMPLETED`, `FAQ_*`, `CV_REVIEW_REQUESTED` olay türleri katalogda; ilgili servisler henüz main'de değil.
   Kapanış ölçütü: servis main'e girince `emitEvent` kancaları eklenir (test: olay + kişisel veri yok).
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
   Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği

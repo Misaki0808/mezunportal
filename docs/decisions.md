@@ -643,7 +643,7 @@ role ve bölüme bağlanmaz (anonimlik sızmasın); küçük hücre gizleniyorsa
 
 Panel ve Excel işlemleri işlem içinde zorunlu rızayı kontrol eder. Gizlenen küçük hücre varsa tür toplamı da gizlenir;
 böylece gösterilen hücrelerin toplamdan çıkarılmasıyla küçük grubun sayısı açığa çıkmaz. Olay yazımı kullanıcı satırıyla
-silinmeye karşı sıralanır ve silinmiş hesap tekrar bağlanmaz; eşzamanlı profil eşiği yazımları tekilleştirilir.
+silinmeye karşı sıralanır ve silinmiş hesap tekrar bağlanmaz; eşzamanlı profil eşiği yazımları tekilleştirilir. CV uygulamasında eşik için skorlar işlem içinde alınır; işlemden sonra başarısız ek sorgu kullanıcıya yanlış hata döndürmez.
 
 ## 2026-11-08 · Randevu motoru: veritabanı kısıtı, takvim süpürmesi, kapasite tanımı (P1-10)
 Çakışma kuralı iki exclusion constraint'tir (mentor ve öğrenci için, yalnız `REQUESTED`/`CONFIRMED`) ve aynı öğrencinin aynı
@@ -667,3 +667,10 @@ Randevu mutasyonları yetki okunmadan önce User satırını paylaşılmış kil
 Randevu talebinde slotun zaman/biçim geçerliliği doluluk süzülmeden doğrulanır; dolu geçerli slotun son kararı exclusion constraint'e bırakılır. Böylece kazanan önce commit ettiğinde de, çağrılar aynı anda yazdığında da kullanıcıya aynı SLOT_TAKEN sebebi döner; liste dolu slotları göstermemeye devam eder.
 
 Bağımsız worker React server koşuluyla çalıştığından randevu e-posta kataloğundaki basit adlandırılmış alanlar React/Next içe aktarmadan doldurulur. Randevunun kullandığı profil kuralı da oturum bağlayan permissions giriş noktası yerine doğrudan actor/guards yardımcılarını alır. Böylece takvim süpürmesi e-posta worker'ının başlamasını engellemez; ayrı Node sürecinde gerçek iş modülü içe aktarma ve metin üretimi testlidir.
+
+
+### PM kararı · Profil eşikleri ve veri saklama
+
+`PROFILE_THRESHOLD` eşik başına kullanıcıyla bağlı son 24 aylık pencerede bir kez yazılır; bağ koparıldıktan veya pencere
+dolduktan sonra yeniden geçişte yeni olay yazılabilir. KVKK veri en aza indirme için daha uzun süre yaşayan ayrı kullanıcı
+işaretçisi tutulmaz.

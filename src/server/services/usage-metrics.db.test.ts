@@ -243,6 +243,7 @@ describe('olay yazımı', () => {
     expect(() =>
       emitEvent(broken, userId, { type: 'LOGIN', props: { method: 'x' } } as never),
     ).not.toThrow();
+    expect(() => emitProfileThresholds(broken, userId, 0, 100)).not.toThrow();
     await expect(settleEvents()).resolves.toBeUndefined();
     emitEvent(db, userId, { type: 'FAQ_REQUESTED', props: {} });
     await settleEvents();
