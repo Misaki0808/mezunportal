@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 
 import type { VerificationState } from '@/contracts/auth';
 import { ActionLink } from '../action-link';
+import { PageHeader } from '@/components/ui';
 
 export async function VerificationPanel({ state }: { state: VerificationState }) {
   const t = await getTranslations('authScreens.verification');
@@ -23,8 +24,7 @@ export async function VerificationPanel({ state }: { state: VerificationState })
 
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-12 sm:pt-20">
-      <p className="mb-2 text-base font-semibold text-primary">{t('eyebrow')}</p>
-      <h1 className="text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} />
       <section aria-live="polite" className="mt-8 rounded-card border border-border bg-surface p-5">
         <h2 className="text-xl font-semibold text-fg">{title}</h2>
         <p className="mt-2 text-base leading-relaxed text-fg-muted">{description}</p>

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -81,5 +81,55 @@ describe.each([
     rerender(<Harness open={false} />);
 
     expect(opener).toHaveFocus();
+  });
+
+  it('Tab pencere içinde döner: sondan ilke, ilkten Shift+Tab ile sona (odak dışarı kaçmaz)', async () => {
+    const { user } = renderUi(
+      <>
+        <button type="button">Dışarıdaki</button>
+        <Component
+          open
+          onClose={() => undefined}
+          title="Başlık"
+          footer={
+            <>
+              <button type="button">Vazgeç</button>
+              <button type="button">Onayla</button>
+            </>
+          }
+        >
+          <input aria-label="Gerekçe" />
+        </Component>
+      </>,
+    );
+    const dialog = screen.getByRole('dialog');
+    const close = within(dialog).getByRole('button', { name: 'Kapat' });
+    const confirm = within(dialog).getByRole('button', { name: 'Onayla' });
+    confirm.focus();
+    await user.tab();
+    expect(close).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(confirm).toHaveFocus();
+    // aradaki öğeler doğal sırada ilerler
+    close.focus();
+    await user.tab();
+    expect(within(dialog).getByLabelText('Gerekçe')).toHaveFocus();
+  });
+
+  it('odak pencerenin dışına düşmüşse Tab içeri alır; odaklanabilir öğe yoksa Tab odağı bırakmaz', async () => {
+    const { user } = renderUi(
+      <>
+        <button type="button">Dışarıdaki</button>
+        <Component open onClose={() => undefined} title="Başlık">
+          <p>İçerik</p>
+        </Component>
+      </>,
+    );
+    const dialog = screen.getByRole('dialog');
+    screen.getByRole('button', { name: 'Dışarıdaki' }).focus();
+    // olay pencereye ulaştığında (tarayıcıda odak dialog'tayken) ilk öğeye alınır
+    dialog.focus();
+    await user.tab();
+    expect(within(dialog).getByRole('button', { name: 'Kapat' })).toHaveFocus();
   });
 });

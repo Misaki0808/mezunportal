@@ -15,14 +15,15 @@ import {
   type SimilarMentors,
 } from '@/contracts/mentor-directory';
 import {
+  Button,
   Checkbox,
   EmptyState,
   Field,
   Input,
+  PageHeader,
   Pagination,
   Select,
   Switch,
-  Button,
 } from '@/components/ui';
 import { FilterShell, type ActiveFilter } from '@/components/directory/filter-shell';
 
@@ -218,11 +219,7 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
   const hasFilter = active.length > 0;
   return (
     <div className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:pt-14">
-      <header className="max-w-2xl">
-        <p className="font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t('title')}</h1>
-        <p className="mt-3 text-fg-muted">{t('description')}</p>
-      </header>
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       <FilterShell
         active={active}
         total={results.total}

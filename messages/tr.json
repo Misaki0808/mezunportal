@@ -290,6 +290,9 @@
     "button": {
       "loading": "Yükleniyor"
     },
+    "page": {
+      "loading": "Sayfa yükleniyor"
+    },
     "field": {
       "required": "zorunlu",
       "toggleHelp": "Açıklamayı göster ya da gizle"
@@ -974,6 +977,13 @@
       "successTitle": "Doğrulama tamamlandı"
     },
     "account": {
+      "groups": {
+        "profile": "PROFİL VE DOĞRULAMA",
+        "activity": "GÖRÜŞMELER VE İÇERİKLER",
+        "settings": "BİLDİRİM, GİZLİLİK VE VERİLER",
+        "admin": "YÖNETİM",
+        "session": "OTURUM"
+      },
       "eyebrow": "HESABIM",
       "title": "Hesabın",
       "description": "Doğrulama ve hesap ayarlarını buradan yönet.",
@@ -1147,7 +1157,8 @@
       "noDepartmentAction": "Doğrulamaya git",
       "notEditableTitle": "Bu deneyim düzenlenemez",
       "notEditableDescription": "İncelemedeki ya da yayındaki deneyim düzenlenemez.",
-      "fixErrors": "Kırmızı alanları düzeltip tekrar dene."
+      "fixErrors": "Hatalı alanları düzeltip tekrar dene.",
+      "goToFirstError": "İlk hatalı alana git"
     },
     "fieldErrors": {
       "required": "Bu alan zorunlu.",
@@ -1612,6 +1623,7 @@
     "name": "Ad",
     "status": "Durum",
     "details": "Ayrıntıyı aç",
+    "detailsFor": "Ayrıntıyı aç: {name}",
     "actions": "İşlemler",
     "created": "Tarih",
     "level": "Yetki kapsamı",
