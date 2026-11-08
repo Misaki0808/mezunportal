@@ -30,6 +30,7 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
   page,
   browser,
 }) => {
+  test.setTimeout(60_000); // İki oturum ve veri dökümü paralel derlemede 30 saniyeyi aşabilir.
   const student = await db.user.findUniqueOrThrow({
     where: { email: 'student@test.mezunportal.local' },
   });
