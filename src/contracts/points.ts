@@ -34,10 +34,11 @@ export const POINT_ACTIONS = [
   'FAQ_QUESTION_PUBLISHED',
   'FAQ_ANSWER_SELECTED',
   'FAQ_ANSWER_PARTICIPATION',
-  'JOB_POSTING_PUBLISHED',
   'CV_REVIEW_HELPFUL',
   'SESSION_ONLINE',
   'SESSION_IN_PERSON',
+  /** Veritabanı enum sırası ekleme sırasıdır: yeni eylemler sona eklenir (P2-04). */
+  'JOB_POSTING_PUBLISHED',
 ] as const;
 export type PointAction = (typeof POINT_ACTIONS)[number];
 

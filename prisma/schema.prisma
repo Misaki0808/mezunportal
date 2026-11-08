@@ -1214,10 +1214,11 @@ enum PointAction {
   FAQ_QUESTION_PUBLISHED
   FAQ_ANSWER_SELECTED
   FAQ_ANSWER_PARTICIPATION
-  JOB_POSTING_PUBLISHED
   CV_REVIEW_HELPFUL
   SESSION_ONLINE
   SESSION_IN_PERSON
+  /// P2-04: veritabanı enum sırası ekleme sırasıdır (sona eklenir); `POINT_ACTIONS` sırası aynıdır.
+  JOB_POSTING_PUBLISHED
 }
 
 enum PointSourceType {
