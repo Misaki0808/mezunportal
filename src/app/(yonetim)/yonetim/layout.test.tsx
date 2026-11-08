@@ -26,6 +26,8 @@ it.each([
   ['eslesmeyenler', 'unmatchedValues'],
   ['yetkiler', 'adminGrants'],
   ['islem-kaydi', 'auditLog'],
+  ['puan', 'adminGrants'],
+  ['davetler', 'dictionaries'],
 ] as const)('inceleyici: %s izni loading başlamadan reddedilir', async (path, capability) => {
   mocks.headers.mockResolvedValue(new Headers({ [REQUEST_PATH_HEADER]: '/yonetim/' + path }));
   mocks.access.mockResolvedValue({ ok: false, errorCode: 'AUTH_FORBIDDEN' });
