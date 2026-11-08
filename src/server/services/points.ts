@@ -22,6 +22,7 @@ import {
   sessionActionFor,
   sessionMultiplierPercent,
 } from '../rules/points';
+import { jobPostingMultiplierPercent } from '../rules/jobPosting';
 import { idCursorWhere, toPage } from './admin-access';
 
 /**
@@ -316,6 +317,83 @@ export async function awardForFaq(deps: PointDeps, requestId: string): Promise<A
 }
 
 /**
+ * İlan yayını (P2-04) → yazara 5 puan (`JOB_POSTING_PUBLISHED`, 7 gün gecikmeli). Puan yalnız yayınlanmış ilandan (yayın anı
+ * var; süresi dolmuş ama yayınlanmış ilan da puanı korur) yazılır ve ilan başına bir kez. AYLIK TAVAN: yazarın aynı İstanbul takvim
+ * ayında geri alınmamış ve çarpanı > 0 olan 3 ilan puanı varsa çarpan 0 ile kaydedilir (geri alınan ilan hakkı serbest bırakır).
+ * Aynı yazarın eşzamanlı yayınları advisory kilidiyle sıralanır. Yayın işlemiyle AYNI işlemde çağrılır; uzlaştırma güvenlik ağıdır.
+ */
+export async function awardJobPostingInTx(
+  tx: Tx,
+  postingId: string,
+  now: Date,
+): Promise<AwardResult | null> {
+  const row = await tx.jobPosting.findUnique({
+    where: { id: postingId },
+    select: { authorId: true, status: true, publishedAt: true },
+  });
+  if (!row || !row.publishedAt || !['PUBLISHED', 'EXPIRED'].includes(row.status)) return null;
+  const publishedAt = row.publishedAt;
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`points:job:${row.authorId}`}, 0))::text`;
+  return awardPoint(
+    tx,
+    {
+      userId: row.authorId,
+      action: 'JOB_POSTING_PUBLISHED',
+      sourceType: 'JOB_POSTING',
+      sourceId: postingId,
+      eventAt: publishedAt,
+      multiplierPercent: async (inner) => {
+        const scored = await inner.pointEntry.findMany({
+          where: {
+            userId: row.authorId,
+            action: 'JOB_POSTING_PUBLISHED',
+            status: { not: 'REVOKED' },
+            multiplierPercent: { gt: 0 },
+            sourceId: { not: postingId },
+          },
+          select: { eventAt: true },
+        });
+        return jobPostingMultiplierPercent(
+          publishedAt,
+          scored.map((entry) => entry.eventAt),
+        );
+      },
+    },
+    now,
+  );
+}
+
+/** Uzlaştırma ve geri doldurma için bağımsız işlem. */
+export async function awardForJobPosting(
+  deps: PointDeps,
+  postingId: string,
+): Promise<AwardResult | null> {
+  const now = nowOf(deps);
+  return deps.db.$transaction((tx) => awardJobPostingInTx(tx, postingId, now), TX_OPTIONS);
+}
+
+/**
+ * İlan kesinleşmeden geri çekildi ya da kaldırıldı → kesinleşmemiş (`PENDING`) ilan puanı geri alınır (`POSTING_WITHDRAWN`).
+ * Kesinleşmiş (`FINAL`) puan kalır: süre dolumu geri alma sayılmaz, yayında kalan ilan puanını kazanmıştır. Çağıranın işleminde çalışır.
+ */
+export async function withdrawJobPostingPoints(
+  tx: Tx,
+  postingId: string,
+  now: Date,
+): Promise<number> {
+  const { count } = await tx.pointEntry.updateMany({
+    where: {
+      action: 'JOB_POSTING_PUBLISHED',
+      sourceType: 'JOB_POSTING',
+      sourceId: postingId,
+      status: 'PENDING',
+    },
+    data: { status: 'REVOKED', revokedAt: now, revokedReason: 'POSTING_WITHDRAWN' },
+  });
+  return count;
+}
+
+/**
  * Gecikmesi dolan `PENDING` kayıtları kesinleştirir (`points.finalize`). Karar bekleyen (`OPEN`) şüphe işareti olan
  * kullanıcının bekleyen puanı kesinleşmez: işaret karara bağlanınca bir sonraki çalıştırmada kesinleşir.
  */
@@ -337,6 +415,7 @@ export type BackfillResult = {
   sessions: number;
   cvReviews: number;
   faqs: number;
+  jobPostings: number;
   created: number;
   failed: number;
 };
@@ -356,11 +435,12 @@ export async function runPointBackfill(
     sessions: 0,
     cvReviews: 0,
     faqs: 0,
+    jobPostings: 0,
     created: 0,
     failed: 0,
   };
   const apply = async (
-    kind: 'experiences' | 'sessions' | 'cvReviews' | 'faqs',
+    kind: 'experiences' | 'sessions' | 'cvReviews' | 'faqs' | 'jobPostings',
     run: () => Promise<AwardResult | null>,
   ) => {
     try {
@@ -434,6 +514,22 @@ export async function runPointBackfill(
       select: { id: true },
     });
     for (const row of rows) await apply('faqs', () => awardForFaq(deps, row.id));
+    cursor = rows.at(-1)?.id;
+    if (rows.length < BACKFILL_PAGE) break;
+  }
+  // İlanlar yayın sırasıyla (aylık tavan olay sırasına bağlıdır); geri çekilen/kaldırılan (CLOSED) ilan puan üretmez.
+  for (let cursor: string | undefined; ;) {
+    const rows = await deps.db.jobPosting.findMany({
+      where: {
+        status: { in: ['PUBLISHED', 'EXPIRED'] },
+        publishedAt: since ? { gte: since } : { not: null },
+      },
+      orderBy: [{ publishedAt: 'asc' }, { id: 'asc' }],
+      take: BACKFILL_PAGE,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      select: { id: true },
+    });
+    for (const row of rows) await apply('jobPostings', () => awardForJobPosting(deps, row.id));
     cursor = rows.at(-1)?.id;
     if (rows.length < BACKFILL_PAGE) break;
   }
