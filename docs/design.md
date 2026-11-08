@@ -5,11 +5,21 @@ belge görsel niyeti ve kullanım kurallarını açıklar, CSS değerini ikinci 
 
 ## Yön
 
-Güven veren, sakin, akademik ama resmî olmayan bir ürün. Açık yüzey, koyu nötr metin, tek marka
-rengi ve yalnız anlam taşıyan başarı/uyarı/hata renkleri. Kullanıcı çoğunlukla telefondan,
+Canlı ama güven veren, akademik ve resmî olmayan bir ürün. Sıcak nötr yüzey, koyu metin, **İris** ana renk,
+**Mercan** vurgu, **Nane** destek; uyarı/hata renkleri yalnız anlam taşır. Kullanıcı çoğunlukla telefondan,
 kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
 
-- Tek marka rengi `--primary`; rastgele ikinci vurgu, neon, gereksiz gradyan yok.
+- Marka paleti **İris + Mercan** (kullanıcı kararı; İstanbul Üniversitesi renkleri kullanılmaz, `docs/decisions.md`).
+  Ana eylem, bağlantı, odak ve seçili durum İris (`primary`). Mercan (`accent`) **az** kullanılır: öne çıkan rozet/sayı,
+  ikincil müjde; sayfada birincil eylem rengi olamaz. Nane = başarı/“müsait” (`success`).
+- **Geçiş** (`--gradient-brand`: İris → mor → Mercan) yalnız tanıtım/büyük dekoratif alanda; üzerine metin konmaz, düğme,
+  rozet ve kartta kullanılmaz.
+- **Mercan kuralı:** mercan zeminde metin koyudur (`on-accent`); beyaz metin AA değildir. Mercanı metin/ikon olarak
+  beyaz üstünde kullanma — `accent-strong` (AA) kullan.
+- **Koyu tema** `prefers-color-scheme` ile gelir; aynı token adları yeniden tanımlanır (`globals.css`), bileşende
+  sabit renk yazılmaz (`text-white`, `#hex` yok; yalnız token). Koyu temada ana renk açılır, üstündeki metin koyudur.
+- **Yazı tipi:** başlıklar (h1–h3) Plus Jakarta Sans, metin Inter; `next/font/google` ile derlemede indirilip kendinden
+  barındırılır, `latin-ext` alt kümesi Türkçe harfler içindir (CSP `font-src 'self'` ile uyumlu).
 - Panel ve formlar yoğun olabilir; giriş/tanıtım sayfası biraz daha anlatısal olabilir, ama aynı
   token ve bileşenleri kullanır.
 - Gölge işlevseldir, hiyerarşinin yerine geçmez. Radius ölçeği kart/input/buton arasında tutarlı.
@@ -25,6 +35,32 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
   gönder düğmesi görünür kalır.
 - Yatay kaydırma yok. Uzun metin “devamını göster” ile kısalır.
 - Web app manifest ve ikon: kullanıcı “ana ekrana ekle” ile uygulama gibi açabilir.
+
+### Kontrast tablosu (WCAG AA)
+
+Kanonik koruma `src/lib/contrast.test.ts` (her çift her iki temada; normal metin ≥ 4.5, sınır ≥ 3). Seçilmiş çiftler:
+
+| Çift | Kullanım | Açık | Koyu |
+|---|---|---|---|
+| `fg` / `bg` | Metin | 17.3 | 17.2 |
+| `fg-muted` / `surface` | İkincil metin | 6.3 | 8.7 |
+| `fg-subtle` / `surface-strong` | Soluk metin | 4.5 | 5.2 |
+| `primary` / `bg` | Bağlantı / İris metin | 4.8 | 6.6 |
+| `on-primary` / `primary` | Birincil düğme | 4.9 | 6.6 |
+| `on-primary-soft` / `primary-soft` | Soft rozet | 10.1 | 9.5 |
+| `on-accent` / `accent` | Mercan zemin | 6.8 | 7.8 |
+| `accent-strong` / `bg` | Mercan metin | 5.5 | 8.6 |
+| `on-accent-soft` / `accent-soft` | Mercan soft | 7.4 | 8.5 |
+| `on-success-soft` / `success-soft` | Başarı rozeti | 7.1 | 11.0 |
+| `success` / `bg` | Nane sınır/simge (3:1) | 3.2 | 10.6 |
+| `on-warning-soft` / `warning-soft` | Uyarı | 8.7 | 11.5 |
+| `on-danger` / `danger` | Yıkıcı düğme | 6.5 | 7.6 |
+| `on-danger-soft` / `danger-soft` | Hata | 9.2 | 10.3 |
+| `border-control` / `bg` | Kontrol sınırı (3:1) | 4.1 | 4.8 |
+
+Bilinen sınırlar: `primary` metni `primary-soft` üstünde AA değildir (4.3) → soft zeminde `on-primary-soft` kullan;
+Mercan (`accent`) beyaz zeminde 3:1'in altındadır → sınır/ikon için `accent-strong`; Nane metin için değil, simge/sınır içindir
+(metin `on-success-soft`).
 
 ## Bileşen kuralları
 

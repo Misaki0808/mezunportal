@@ -3,7 +3,7 @@
 İstanbul Üniversitesi öğrencilerinin staj ve kariyer yolculuğunu, o yoldan geçmiş mezunların,
 üst sınıfların ve akademisyenlerin deneyimiyle yapılandıran kapalı ve doğrulanmış platform.
 Bitirme projesidir; pilot bölüm Yönetim Bilişim Sistemleri. Mobil uyumlu web uygulaması.
-Çalışma adı “MezunPortal”dır; kesin ad `BACKLOG.md` K-01'dedir.
+Çalışma adı “MezunPortal”dır; ad kararı `docs/decisions.md`'dedir (K-01: repo adı `mezunportal`).
 
 Bu belge ürünün amacını ve dayanıklı iş kurallarını tanımlar (ürün çerçevesi). Güncel durum ve
 açık işler `BACKLOG.md`'de, iş sırası faz planlarında (`docs/fazN-plan.md`), ajan kuralları
