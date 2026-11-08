@@ -117,6 +117,7 @@ const appointmentSelect = {
   meetUrl: true,
   calendarEventId: true,
   calendarFailedAt: true,
+  reminderSentAt: true,
   cancelledById: true,
   cancelledBySystem: true,
   cancelReason: true,
