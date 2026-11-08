@@ -46,7 +46,7 @@ import { listEntryViews } from './points';
 
 export type PointAdminDeps = AdminDeps & {
   /** `points.backfill` işini kuyruğa yazar; ulaşılamazsa fırlatır. */
-  enqueueBackfill?: () => Promise<void>;
+  enqueueBackfill: () => Promise<void>;
 };
 
 const RULE_SELECT = {
@@ -292,7 +292,6 @@ export async function requestPointBackfill(
       targetId: 'backfill',
     });
   }, TX_OPTIONS);
-  if (!deps.enqueueBackfill) throw codedConflict('POINT_BACKFILL_UNAVAILABLE');
   try {
     await deps.enqueueBackfill();
   } catch {

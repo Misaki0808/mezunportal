@@ -501,6 +501,41 @@ describe('CV incelemesi puanı', () => {
     await markHelpful({ db, storage: createMemoryStorage(), now: () => now }, student, row.id);
     expect(await entriesOf(mentor)).toMatchObject([{ action: 'CV_REVIEW_HELPFUL', points: 3 }]);
   });
+
+  it('aynı ikilinin CV incelemesi puanı görüşme çarpanını etkilemez', async () => {
+    const { mentor, student } = await pair();
+    const cv = await db.cvUpload.create({
+      data: {
+        userId: student,
+        storageKey: `cv/${student}/x.pdf`,
+        byteSize: 9,
+        pageCount: 1,
+        status: 'APPLIED',
+        appliedAt: now,
+      },
+    });
+    const request = await db.cvReviewRequest.create({
+      data: {
+        studentId: student,
+        mentorId: mentor,
+        cvUploadId: cv.id,
+        note: 'Bakar mısın',
+        comment: 'Şunu ekle',
+        status: 'COMPLETED',
+        expiresAt: new Date(now.getTime() + DAY),
+        answeredAt: now,
+        helpfulAt: new Date('2030-06-05T10:00:00Z'),
+      },
+    });
+    await awardForCvReview(deps, request.id);
+    const s = await completedSession(mentor, student, new Date('2030-06-10T10:00:00Z'));
+    await awardForSession(deps, s.id);
+    const rows = await entriesOf(mentor);
+    expect(rows.map((r) => [r.action, r.multiplierPercent, r.points])).toEqual([
+      ['CV_REVIEW_HELPFUL', 100, 3],
+      ['SESSION_ONLINE', 100, 10],
+    ]);
+  });
 });
 
 describe('kural tablosu ve alıcı uygunluğu', () => {
@@ -642,21 +677,24 @@ describe('geriye dönük hesaplama ve günlük uzlaştırma', () => {
 
   it('günlük iş: kaçırılan puanı tamamlar ve bekleyeni kesinleştirir', async () => {
     const { mentor, student } = await pair();
+    const second_student = await member();
+    const third_student = await member();
     const recent = await completedSession(
       mentor,
       student,
       new Date(now.getTime() - 2 * DAY),
       'IN_PERSON',
     );
-    const old = await completedSession(mentor, student, new Date(now.getTime() - 40 * DAY));
+    const mid = await completedSession(mentor, second_student, new Date(now.getTime() - 12 * DAY));
+    await completedSession(mentor, third_student, new Date(now.getTime() - 20 * DAY));
     const first = await runDailyPoints(deps);
     expect(first.reconcile.failed).toBe(0);
-    expect((await entriesOf(mentor)).map((r) => r.sourceId)).toEqual([recent.id]); // 14 gün dışı eski olay uzlaştırılmaz
+    // 14 günden eski olay uzlaştırılmaz (yalnız backfill alır)
+    expect((await entriesOf(mentor)).map((r) => r.sourceId)).toEqual([mid.id, recent.id]);
     const later = { ...deps, now: () => new Date(now.getTime() + 6 * DAY) };
     const second = await runDailyPoints(later);
     expect(second.finalized).toBeGreaterThanOrEqual(1);
     expect((await entriesOf(mentor))[0]!.status).toBe('FINAL');
-    void old;
   });
 });
 
@@ -722,6 +760,21 @@ describe('katkı özeti ve geçmiş (yalnız sahibi)', () => {
     await db.userBadge.updateMany({ where: { userId: author }, data: { revokedAt: now } });
     expect((await getMyContribution(deps, author, {})).summary.badges).toEqual([]);
     await expect(getMyContribution(deps, author, { limit: 51 })).rejects.toThrow();
+  });
+
+  it('kesinleşmiş gecikmeli kayıtta kesinleşme anı gösterilmez (yalnız PENDING gösterir)', async () => {
+    const { mentor, student } = await pair();
+    const s = await completedSession(
+      mentor,
+      student,
+      new Date(now.getTime() - 30 * DAY),
+      'IN_PERSON',
+    );
+    await awardForSession(deps, s.id);
+    const stored = (await entriesOf(mentor))[0]!;
+    expect(stored.finalizesAt).not.toBeNull();
+    const view = (await getMyContribution(deps, mentor, {})).history.items[0]!;
+    expect(view).toMatchObject({ status: 'FINAL', finalizesAt: null });
   });
 });
 
