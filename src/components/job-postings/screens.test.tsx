@@ -72,8 +72,10 @@ it('eksik form hatası özetlenir ve odaklanır, işlem çağrılmaz', async () 
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
   fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
-  const alert = await screen.findByText('Lütfen işaretli alanları kontrol et.');
+  const message = await screen.findByText('Lütfen işaretli alanları kontrol et.');
+  const alert = message.closest('[role=alert]');
   await waitFor(() => expect(alert).toHaveFocus());
+  expect(alert).toHaveTextContent('Pozisyon adı');
   expect(save).not.toHaveBeenCalled();
 });
 it('iletişim eylemi yazar kimliği taşımadan ilan üzerinden açılır', () => {

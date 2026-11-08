@@ -111,6 +111,16 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
     });
   }
   const bad = (field: string) => (invalid.has(field) ? t('requiredError') : undefined);
+  const fieldNames: Record<string, string> = {
+    title: t('titleLabel'),
+    organizationName: t('organization'),
+    departmentId: t('authorDepartment'),
+    description: t('descriptionLabel'),
+    location: t('locationLabel'),
+    deadlineOn: t('deadline'),
+    targetDepartmentIds: t('targetDepartments'),
+    applyUrl: t('applyUrl'),
+  };
   return (
     <div
       data-hydrated={hydrated ? 'true' : undefined}
@@ -147,7 +157,16 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
           role="alert"
           className="mb-5 rounded-control border border-danger bg-surface p-4 font-medium text-danger"
         >
-          {error}
+          <p>{error}</p>
+          {invalid.size > 0 && (
+            <ul className="mt-2 list-inside list-disc text-sm">
+              {[...invalid]
+                .filter((field) => fieldNames[field])
+                .map((field) => (
+                  <li key={field}>{fieldNames[field]}</li>
+                ))}
+            </ul>
+          )}
         </div>
       )}
       {notice && (
