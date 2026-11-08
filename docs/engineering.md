@@ -171,6 +171,10 @@ son adımıdır (P1-18).
 
 ### Yerel geliştirme
 
+Makinede aynı anda yalnız bir ağır iş çalıştırılır; `pm-handoff/araclar/agir-is.sh` ile sıraya girer.
+Vitest ve Playwright en çok iki işçi kullanır; Playwright yalnız ilgili senaryolarda koşulur.
+Watch modu kullanma; iş bitince açtığın geliştirme sunucusunu, worker ve tarayıcı süreçlerini kapat.
+
 ```bash
 pnpm install --frozen-lockfile
 docker compose up -d             # PostgreSQL + Mailpit (yalnız 127.0.0.1)
