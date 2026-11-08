@@ -3,6 +3,7 @@ import 'server-only';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 import { getEnv } from '@/lib/env';
+import { PRISMA_OMIT } from '@/lib/prisma-options';
 import { PrismaClient } from '@/generated/prisma/client';
 
 // Prisma 7: istemci driver adapter ile kurulur. `pg` bağlantı zaman aşımı varsayılanı Prisma 6'dan
@@ -19,7 +20,7 @@ const globalForDb = globalThis as unknown as { __mezunPrisma?: PrismaClient };
 export function getDb(): PrismaClient {
   if (!globalForDb.__mezunPrisma) {
     const adapter = new PrismaPg({ connectionString: getEnv().DATABASE_URL, ...POOL_OPTIONS });
-    globalForDb.__mezunPrisma = new PrismaClient({ adapter });
+    globalForDb.__mezunPrisma = new PrismaClient({ adapter, omit: PRISMA_OMIT });
   }
   return globalForDb.__mezunPrisma;
 }

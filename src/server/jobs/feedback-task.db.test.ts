@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import { addMembership, createInstitution, createUser } from '@/test/fixtures';
 const send = vi.hoisted(() =>
@@ -11,6 +11,13 @@ vi.mock('./email', () => ({ enqueueEmail: send }));
 import { scheduleFeedbackPrompts } from './feedback-task';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.stubEnv('APP_ENV', 'test');
+  vi.stubEnv('APP_URL', 'https://feedback.example.invalid');
+  vi.stubEnv('DATABASE_URL', 'postgresql://test:test@localhost:5432/feedback_test');
+});
+afterEach(() => vi.unstubAllEnvs());
 describe('form bildirim işi', () => {
   it('bir saat dolmadan göndermez; iki taraf için anahtar sabittir ve kapalı tercihi atlar', async () => {
     const inst = await createInstitution(db);

@@ -16,7 +16,7 @@ import {
   type SearchExperiencesInput,
   type SearchPage,
 } from '@/contracts/search';
-import { FilterChip } from './filter-chip';
+import { FilterShell, type ActiveFilter } from '@/components/directory/filter-shell';
 import {
   Badge,
   Button,
@@ -25,8 +25,6 @@ import {
   Input,
   Pagination,
   Select,
-  Sheet,
-  Skeleton,
   buttonClasses,
 } from '@/components/ui';
 
@@ -40,27 +38,27 @@ export function SearchScreen({ filter, results, sectors }: Props) {
   const t = useTranslations('search');
   const router = useRouter();
   const [draft, setDraft] = useState<Filter>(filter);
-  const [open, setOpen] = useState(false);
   const [invalid, setInvalid] = useState(false);
   const [pending, startTransition] = useTransition();
   const href = (next: Filter) => {
     const params = searchFilterToParams(next).toString();
     return `/deneyimler${params ? `?${params}` : ''}`;
   };
-  function go(next: Filter) {
-    if (pending) return;
+  /** Geçerliyse URL'e yazar (`true`); geçersizse alan hatasını gösterir ve `false` döner (alt sayfa açık kalır). */
+  function go(next: Filter): boolean {
+    if (pending) return false;
     const parsed = searchExperiencesSchema.safeParse(next);
     if (!parsed.success) {
       setInvalid(true);
-      return;
+      return false;
     }
     setInvalid(false);
-    setOpen(false);
     startTransition(() => router.push(href(parsed.data)));
+    return true;
   }
   const update = (next: Partial<Filter>) =>
     setDraft((previous) => ({ ...previous, ...next, page: 1 }));
-  const active = [
+  const chips = [
     ...(filter.types ?? []).map((value) => ({
       key: `type-${value}`,
       label: t(`types.${value}`),
@@ -99,6 +97,11 @@ export function SearchScreen({ filter, results, sectors }: Props) {
       ? [{ key: 'pay', label: t(`payments.${filter.pay}`), remove: { pay: undefined } }]
       : []),
   ];
+  const active: ActiveFilter[] = chips.map((chip) => ({
+    key: chip.key,
+    label: chip.label,
+    onRemove: () => go({ ...filter, ...chip.remove, page: 1 }),
+  }));
   const filters = (
     <div className="flex flex-col gap-5">
       <Field label={t('type')}>
@@ -283,75 +286,15 @@ export function SearchScreen({ filter, results, sectors }: Props) {
           {t('submit')}
         </Button>
       </form>
-      <div className="mt-6 lg:hidden">
-        <Button variant="secondary" onClick={() => setOpen(true)}>
-          {t('filters')}
-          {active.length ? ` (${active.length})` : ''}
-        </Button>
-      </div>
-      <Sheet
-        open={open}
-        onClose={() => {
-          setDraft(filter);
-          setOpen(false);
-        }}
-        title={t('filters')}
-        footer={
-          <>
-            <Button onClick={() => go({ ...draft, page: 1 })}>{t('apply')}</Button>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setDraft(filter);
-                setOpen(false);
-              }}
-            >
-              {t('cancel')}
-            </Button>
-          </>
-        }
-      >
-        {filters}
-      </Sheet>
-      <div className="mt-6 grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <aside className="hidden rounded-card border border-border p-5 lg:block">
-          <h2 className="mb-5 text-lg font-semibold">{t('filters')}</h2>
-          {filters}
-          <div className="mt-6">
-            <Button fullWidth onClick={() => go({ ...draft, page: 1 })}>
-              {t('apply')}
-            </Button>
-          </div>
-        </aside>
-        <section aria-busy={pending} className="min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="font-semibold" aria-live="polite">
-              {t('resultCount', { count: results.total })}
-            </p>
-            {active.length > 0 && (
-              <Button variant="secondary" onClick={() => go({ q: filter.q, page: 1 })}>
-                {t('clear')}
-              </Button>
-            )}
-          </div>
-          {active.length > 0 && (
-            <div aria-label={t('active')} className="mt-4 flex flex-wrap gap-2">
-              {active.map((chip) => (
-                <FilterChip
-                  key={chip.key}
-                  label={chip.label}
-                  onRemove={() => go({ ...filter, ...chip.remove, page: 1 })}
-                />
-              ))}
-            </div>
-          )}
-          {pending ? (
-            <div className="mt-5 space-y-4" role="status">
-              <span className="sr-only">{t('loading')}</span>
-              <Skeleton className="h-40" />
-              <Skeleton className="h-40" />
-            </div>
-          ) : results.items.length === 0 ? (
+      <FilterShell
+        active={active}
+        total={results.total}
+        pending={pending}
+        onApply={() => go({ ...draft, page: 1 })}
+        onReset={() => setDraft(filter)}
+        onClear={() => go({ q: filter.q, page: 1 })}
+        results={
+          results.items.length === 0 ? (
             <EmptyState
               title={t('emptyTitle')}
               description={t('emptyDescription')}
@@ -393,15 +336,19 @@ export function SearchScreen({ filter, results, sectors }: Props) {
                 </li>
               ))}
             </ul>
-          )}
+          )
+        }
+        pagination={
           <Pagination
             className="mt-6"
             page={results.page}
             pageCount={Math.ceil(results.total / results.pageSize)}
             hrefFor={(page) => href({ ...filter, page })}
           />
-        </section>
-      </div>
+        }
+      >
+        {filters}
+      </FilterShell>
     </div>
   );
 }

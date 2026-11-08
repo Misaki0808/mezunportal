@@ -154,6 +154,91 @@
       "retry": "Tekrar dene"
     }
   },
+  "directory": {
+    "filters": "Filtreler",
+    "apply": "Uygula",
+    "cancel": "Vazgeç",
+    "clear": "Filtreleri temizle",
+    "active": "Etkin filtreler",
+    "resultCount": "{count} sonuç",
+    "loading": "Sonuçlar yükleniyor"
+  },
+  "mentors": {
+    "eyebrow": "MENTORLAR",
+    "title": "Mentor bul",
+    "description": "Mezun, akademisyen ve üst sınıf mentorlarla tanış. Müsait olanları filtreleyip iletişim kurabilirsin.",
+    "filters": {
+      "mentorTypes": "Mentor türü",
+      "sector": "Sektör",
+      "company": "Şirket",
+      "title": "Unvan",
+      "experienceTypes": "Deneyim türü",
+      "meetingModes": "Görüşme biçimi",
+      "onlyAvailable": "Yalnız müsait olanlar",
+      "onlyAvailableHint": "Ara vermiş ya da bu ay kapasitesi dolan mentorlar gizlenir.",
+      "all": "Tümü",
+      "noSectors": "Henüz seçilebilir sektör yok.",
+      "invalid": "En az 2 karakter yaz."
+    },
+    "types": {
+      "ALUMNI": "Mezun",
+      "ACADEMIC": "Akademisyen",
+      "STUDENT": "Üst sınıf öğrencisi"
+    },
+    "modes": {
+      "ONLINE": "Çevrimiçi",
+      "IN_PERSON": "Yüz yüze"
+    },
+    "card": {
+      "graduated": "{year} mezunu",
+      "department": "Bölüm: {name}",
+      "sector": "Sektör: {name}",
+      "available": "Müsait",
+      "paused": "Ara verdi",
+      "pausedUntil": "Ara verdi · {date} tarihine kadar",
+      "full": "Bu ay dolu",
+      "capacity": "Bu ay {remaining}/{monthly} görüşme hakkı kaldı",
+      "session": "{minutes} dk görüşme",
+      "cvReview": "CV incelemesi yapıyor",
+      "profile": "Profili gör",
+      "contact": "İletişim iste",
+      "skillsLabel": "Beceriler",
+      "topicsLabel": "İlgi alanları"
+    },
+    "similar": {
+      "title": "Sana benzer yol izleyenler",
+      "description": "Senin sektörün, ilgilerin ve becerilerinle örtüşen mentorlar.",
+      "reasons": {
+        "SAME_SECTOR": "Aynı sektör",
+        "SHARED_INTEREST": "Ortak ilgi",
+        "SHARED_SKILL": "Ortak beceri",
+        "SHARED_GOAL": "Ortak hedef",
+        "SAME_DEPARTMENT": "Aynı bölüm"
+      },
+      "because": "Neden önerildi?"
+    },
+    "empty": {
+      "title": "Bu filtrelerle mentor bulunamadı",
+      "description": "Filtreleri gevşetmeyi ya da müsait olanlar seçeneğini kapatmayı dene.",
+      "none": "Henüz listelenecek mentor yok",
+      "noneDescription": "Mentorlar profillerini etkinleştirdikçe burada görünür."
+    },
+    "entry": {
+      "title": "Mentorla bağlantı",
+      "contact": "İletişim iste",
+      "contactBlocked": "Bu kişiye şu anda iletişim talebi gönderemezsin.",
+      "appointmentBlocked": "Randevu şu an alınamıyor.",
+      "cvBlocked": "CV incelemesi şu an istenemiyor.",
+      "reasons": {
+        "NOT_MENTOR": "Bu kişi mentor olarak listelenmiyor.",
+        "SELF": "Bu senin kendi profilin.",
+        "PAUSED": "Mentor şu an ara vermiş.",
+        "CAPACITY_FULL": "Mentorun bu ayki kapasitesi dolu.",
+        "CV_REVIEW_DISABLED": "Bu mentor CV incelemesi yapmıyor.",
+        "CV_REVIEW_MONTHLY_LIMIT": "Mentorun bu ayki CV inceleme sınırı doldu."
+      }
+    }
+  },
   "gallery": {
     "title": "Arayüz örnekleri",
     "intro": "Tasarım sisteminin bileşenleri. Bu sayfa yalnız yerel ve test ortamında açılır.",
@@ -1498,9 +1583,6 @@
     "query": "Deneyim ara",
     "queryHint": "Kurum, konu veya anahtar kelime",
     "submit": "Ara",
-    "filters": "Filtreler",
-    "apply": "Filtreleri uygula",
-    "cancel": "Vazgeç",
     "clear": "Filtreleri temizle",
     "all": "Tümü",
     "type": "Deneyim türü",
@@ -1511,7 +1593,6 @@
     "year": "Yıl",
     "season": "Dönem",
     "pay": "Ücret",
-    "resultCount": "{count} deneyim bulundu",
     "emptyTitle": "Bu filtrelerle deneyim bulunamadı",
     "emptyDescription": "Filtreleri gevşet veya ilk deneyimi sen paylaş.",
     "write": "Deneyim yaz",
@@ -1519,7 +1600,6 @@
     "by": "{name} tarafından paylaşıldı",
     "open": "Deneyimi incele",
     "loading": "Deneyimler yükleniyor",
-    "active": "Etkin filtreler",
     "invalid": "En az 2 karakter gir veya alanı boş bırak.",
     "yearInvalid": "1900 ile 2100 arasında bir yıl gir.",
     "types": {
