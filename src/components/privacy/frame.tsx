@@ -6,20 +6,24 @@ export async function PrivacyFrame({
   title,
   description,
   children,
+  showBack = true,
 }: {
   title: string;
   description: string;
   children: ReactNode;
+  showBack?: boolean;
 }) {
   const t = await getTranslations('privacyScreens.common');
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-8 sm:py-12">
-      <Link
-        href="/hesap"
-        className="press-row mb-6 inline-flex min-h-11 items-center text-base font-medium text-primary"
-      >
-        ← {t('back')}
-      </Link>
+      {showBack && (
+        <Link
+          href="/hesap"
+          className="press-row mb-6 inline-flex min-h-11 items-center text-base font-medium text-primary"
+        >
+          ← {t('back')}
+        </Link>
+      )}
       <p className="text-sm font-semibold tracking-wider text-primary">{t('eyebrow')}</p>
       <h1 className="mt-3 text-3xl font-semibold tracking-tight text-fg sm:text-4xl">{title}</h1>
       <p className="mt-3 text-base leading-relaxed text-fg-muted">{description}</p>

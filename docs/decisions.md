@@ -483,6 +483,13 @@ tüm sorgu üzerinde değil SÖZCÜK başınadır: tüm sorguya benzerlik “mar
 Yazarı silinmiş, askıdaki ya da yazar bağı kopmuş (K-09 anonimleştirme) deneyim içeriği korur ama yazarsız görünür.
 
 
+## 2026-11-08 · İlk giriş adımlarına dönüş
+
+Hesabım'daki Profilim / Başlangıç adımları satırı ilk giriş tercihlerini yeniden açar;
+atlanan uygulanabilir ilk adım öne gelir. Geri düğmesi kullanıcıyı önceki uygulanabilir
+adıma taşır ve bu oturumda seçilmiş değerleri korur. Gerekçe: atlanan seçimler sonradan
+tamamlanabilir ve kullanıcı adımlar arasında veri kaybetmeden gezinebilir.
+
 ## 2026-11-08 · Tur düzeltmesi: dönüş yolu, yönetimde rıza, geliştirme günlüğü (PM kararı)
 
 Faz 1 ekran turunun güvenlik/KVKK bulguları için:

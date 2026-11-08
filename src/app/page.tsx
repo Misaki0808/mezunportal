@@ -27,16 +27,26 @@ export default async function HomePage() {
       : null;
   const showOnboarding = onboarding?.ok && onboarding.data.step !== 'COMPLETE';
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6 px-5 py-12">
+    <div
+      className={`mx-auto flex max-w-xl flex-col gap-6 px-5 py-12 ${!actor ? 'min-h-[calc(100dvh-8rem)]' : ''}`}
+    >
       {needsVerification && (
         <Link
           href="/dogrulama"
           className="press-row flex min-h-20 flex-col gap-2 rounded-card border border-primary bg-primary-soft p-5 text-on-primary-soft"
         >
-          <span className="text-lg font-semibold">{auth('verificationTitle')}</span>
-          <span className="text-base">{auth('verificationDescription')}</span>
+          <span className="text-lg font-semibold">
+            {auth(state.data.status === 'AWAITING_REVIEW' ? 'reviewTitle' : 'verificationTitle')}
+          </span>
+          <span className="text-base">
+            {auth(
+              state.data.status === 'AWAITING_REVIEW'
+                ? 'reviewDescription'
+                : 'verificationDescription',
+            )}
+          </span>
           <span className="text-base font-semibold underline underline-offset-4">
-            {auth('verificationAction')}
+            {auth(state.data.status === 'AWAITING_REVIEW' ? 'reviewAction' : 'verificationAction')}
           </span>
         </Link>
       )}
@@ -54,6 +64,14 @@ export default async function HomePage() {
       )}
       <h1 className="text-3xl font-semibold">{t('title')}</h1>
       <p className="text-base leading-relaxed">{t('tagline')}</p>
+      {!actor && (
+        <Link
+          href="/giris"
+          className="press-control mt-auto inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-5 font-semibold text-white"
+        >
+          {auth('signIn')}
+        </Link>
+      )}
     </div>
   );
 }

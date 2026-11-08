@@ -11,7 +11,12 @@ import { OnboardingFlow } from './onboarding-flow';
 
 export const dynamic = 'force-dynamic';
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ duzenle?: string }>;
+}) {
+  const query = await searchParams;
   const results = await Promise.all([
     getOnboardingState(),
     listProfileTags({ kind: 'INTEREST' }),
@@ -27,6 +32,7 @@ export default async function OnboardingPage() {
   return (
     <OnboardingFlow
       initialState={state.data}
+      editInitially={query.duzenle === '1'}
       interests={interests.data.tags}
       goals={goals.data.tags}
       initialVisibility={visibility.data}

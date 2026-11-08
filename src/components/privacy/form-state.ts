@@ -25,6 +25,7 @@ export function usePrivacyForm() {
     action: () => Promise<ActionResult<T>>,
     success: (data: T) => void | Promise<void>,
     message?: string,
+    onFailure?: (failure: ActionFailure) => void,
   ) {
     if (lock.current) return;
     lock.current = true;
@@ -34,6 +35,7 @@ export function usePrivacyForm() {
       const result = await action();
       if (!result.ok) {
         setFailure(result);
+        onFailure?.(result);
         return;
       }
       await success(result.data);

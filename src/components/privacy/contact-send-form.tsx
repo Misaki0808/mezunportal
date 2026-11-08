@@ -8,7 +8,13 @@ import { sendContactRequest } from '@/server/actions/contact-request';
 import { Button, Card, Checkbox, Field, Textarea, buttonClasses } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
 
-export function ContactSendForm({ targetUserId }: { targetUserId: string }) {
+export function ContactSendForm({
+  targetUserId,
+  requestableFields,
+}: {
+  targetUserId: string;
+  requestableFields: ContactField[];
+}) {
   const t = useTranslations('privacyScreens.contacts');
   const common = useTranslations('privacyScreens.common');
   const labels = useTranslations('privacyScreens.fields');
@@ -45,15 +51,26 @@ export function ContactSendForm({ targetUserId }: { targetUserId: string }) {
           <p className="mb-3 text-base text-fg-muted">{t('requestableHelp')}</p>
           <legend className="mb-3 text-lg font-semibold">{t('fieldLegend')}</legend>
           {CONTACT_FIELDS.map((field) => (
-            <Checkbox
-              key={field}
-              label={labels(field)}
-              checked={fields.includes(field)}
-              disabled={form.busy}
-              onChange={(e) =>
-                setFields(e.target.checked ? [...fields, field] : fields.filter((f) => f !== field))
-              }
-            />
+            <div key={field}>
+              <Checkbox
+                label={labels(field)}
+                checked={fields.includes(field)}
+                disabled={form.busy || !requestableFields.includes(field)}
+                aria-describedby={
+                  !requestableFields.includes(field) ? `${field}-unavailable` : undefined
+                }
+                onChange={(e) =>
+                  setFields(
+                    e.target.checked ? [...fields, field] : fields.filter((f) => f !== field),
+                  )
+                }
+              />
+              {!requestableFields.includes(field) && (
+                <p id={`${field}-unavailable`} className="pl-9 text-base text-fg-muted">
+                  {t('fieldUnavailable')}
+                </p>
+              )}
+            </div>
           ))}
           {form.fieldError('fields') && (
             <p role="alert" className="mt-2 text-base text-danger">
