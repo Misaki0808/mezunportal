@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { FieldVisibilitySettings } from '@/contracts/privacy';
@@ -8,6 +9,7 @@ import { Badge, Button, Card, Field, Select } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
 
 export function VisibilityForm({ initial }: { initial: FieldVisibilitySettings }) {
+  const hydrated = useHydrated();
   const [settings, setSettings] = useState(initial);
   const [saved, setSaved] = useState(initial);
   const [partial, setPartial] = useState(false);
@@ -39,6 +41,7 @@ export function VisibilityForm({ initial }: { initial: FieldVisibilitySettings }
   }, [dirty, t]);
   return (
     <form
+      data-hydrated={hydrated ? 'true' : undefined}
       className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault();

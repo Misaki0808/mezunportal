@@ -25,7 +25,8 @@ const message = (): QueuedEmail => ({
   template: 'test.delivery',
   idempotencyKey: randomUUID(),
 });
-async function settled(id: string, status: 'SENT' | 'FAILED') {
+async function settled(id: string | null, status: 'SENT' | 'FAILED') {
+  if (!id) throw new Error('Beklenen e-posta kuyruğa alınmadı');
   for (let i = 0; i < 150; i++) {
     const row = await db.emailLog.findUniqueOrThrow({ where: { id } });
     if (row.status === status) return row;

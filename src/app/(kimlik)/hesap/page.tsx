@@ -21,12 +21,13 @@ export const dynamic = 'force-dynamic';
 export default async function AccountPage() {
   const actor = await requireUser().catch(() => null);
   if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
-  const [state, showAdmin, t, verification, entry] = await Promise.all([
+  const [state, showAdmin, t, verification, entry, notifications] = await Promise.all([
     getVerificationState().catch(() => null),
     hasAdminAccess(),
     getTranslations('authScreens.account'),
     getTranslations('authScreens.verification'),
     getTranslations('experiences.entry'),
+    getTranslations('notifications'),
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -38,7 +39,7 @@ export default async function AccountPage() {
   }[state.data.status];
   const links = [
     {
-      href: '/baslangic?duzenle=1',
+      href: '/profil',
       title: t('profile'),
       description: t('profileDescription'),
       icon: UserIcon,
@@ -60,6 +61,12 @@ export default async function AccountPage() {
         ]
       : []),
     {
+      href: '/hesap/bildirimler',
+      title: notifications('accountTitle'),
+      description: notifications('accountDescription'),
+      icon: MailIcon,
+    },
+    {
       href: '/hesap/e-posta',
       title: t('email'),
       description: t('emailDescription'),
@@ -68,7 +75,7 @@ export default async function AccountPage() {
     ...(showAdmin
       ? [
           {
-            href: '/yonetim/belge-kuyrugu',
+            href: '/yonetim',
             title: t('admin'),
             description: t('adminDescription'),
             icon: InboxIcon,

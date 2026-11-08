@@ -275,10 +275,15 @@ describe('.ics', () => {
       location: 'Bina; kat 2',
       url: 'https://x.com/a\r\nBEGIN:VEVENT',
     });
-    expect(text).toContain('SUMMARY:A\;B\\,C\\\\D\\nSONRAKI');
+    expect(text).toContain('SUMMARY:A\\;B\\,C\\\\D\\nSONRAKI');
     expect(text.split('\r\n').filter((line) => line === 'END:VEVENT')).toHaveLength(1);
     expect(text.split('\r\n').filter((line) => line === 'BEGIN:VEVENT')).toHaveLength(1);
-    expect(text).toContain('LOCATION:Bina\; kat 2');
+    expect(text).toContain('LOCATION:Bina\\; kat 2');
+  });
+  it('inceleyici: tek CR de satır enjeksiyonuna dönüşmeden kaçırılır', () => {
+    const text = ics({ description: 'x\rEND:VEVENT\rBEGIN:VEVENT' });
+    expect(text.replaceAll('\r\n', '')).not.toContain('\r');
+    expect(text).toContain('DESCRIPTION:x\\nEND:VEVENT\\nBEGIN:VEVENT');
   });
   it('75 oktetten uzun satır katlanır, çok baytlı karakter bölünmez', () => {
     const folded = foldLine('SUMMARY:' + 'ğ'.repeat(80));

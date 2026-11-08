@@ -15,7 +15,9 @@ import {
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { codedValidation } from '@/lib/errors';
 
-import { errorForDenyReason, loadActor } from '../permissions';
+import { errorForDenyReason } from '../permissions/guards';
+import { loadActor } from '../permissions/actor';
+import { emitProfileThresholds } from './event';
 import { evaluateAccess } from '../rules/authorization';
 import { computeClassStanding } from '../rules/classYear';
 import {
@@ -114,9 +116,12 @@ async function runOnboarding(
   change?: Change,
   now: Date = new Date(),
 ): Promise<OnboardingState> {
-  return db.$transaction(async (tx) => {
+  let before = 0;
+  let after = 0;
+  const state = await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
     await requireCurrentUser(tx, userId, now);
+    before = await storedScore(tx, userId);
     const facts = await membershipFacts(tx, userId, now);
     let profile = await tx.profile.upsert({
       where: { userId },
@@ -182,9 +187,11 @@ async function runOnboarding(
       select: profileSelect,
     });
     const state = stateOf(profile, facts);
-    await syncCompletionScore(tx, userId, now, snapshotOf(state, facts));
+    after = (await syncCompletionScore(tx, userId, now, snapshotOf(state, facts))).percent;
     return state;
   });
+  emitProfileThresholds(db, userId, before, after);
+  return state;
 }
 
 export async function getOnboardingState(db: PrismaClient, userId: string, now?: Date) {
@@ -292,6 +299,17 @@ export async function loadProfileCompletion(
     skillCount,
     cvApplied: profile?.cvUpdatedAt != null,
   });
+}
+
+/** Kalıcı profil tamamlama yüzdesi (satır yoksa 0); eşik olayları için önceki/sonraki karşılaştırması. */
+export async function storedScore(
+  db: Pick<PrismaClient, 'profile'>,
+  userId: string,
+): Promise<number> {
+  return (
+    (await db.profile.findUnique({ where: { userId }, select: { completionScore: true } }))
+      ?.completionScore ?? 0
+  );
 }
 
 /**

@@ -110,6 +110,24 @@ mezun belgesi onay/ret, rol düzeltme, askıya alma/kaldırma, moderasyon kararl
 şüphe kararı, yönetici atama/kaldırma, sözlük değişikliği, eşleşmeyen değer çözümü, dışa aktarma.
 Kayıt yalnız eklenir; kişisel veri içermez (yalnız kimlikler). Sistem yöneticisi panelden görür.
 
+### Kullanım metrikleri (P1-13)
+
+Olay yazımı kişisel veri taşımaz: `props` tür başına `strict` Zod şemasından geçer (enum/sayı/mantıksal; serbest metin yok,
+arama olayında süzgeç değeri ve sorgu metni asla), veritabanı CHECK'i ek ağdır. Panel ve Excel yalnız yönetici kapsamındaki
+bölümlerin olaylarını gösterir (`departmentId`/`facultyId` süzgeçleri yetki vermez); ayrı kullanıcı sayısı 3'ün altındaki
+hücreler gösterilmez; gizli hücre varsa tür toplamı da gizlenir. Anonim deneyim yayın olayı yazarla ilişkilendirilmez. Olay `userId`'si hesap silmede hemen, 24 ay sonra
+koparılır. Excel: yetki + saatte 10 sınırı + `DATA_EXPORT` kaydı (hedef `USAGE_METRICS`) tek işlemde; dosyada kişi satırı yok.
+
+### Randevu motoru (P1-10)
+
+Randevu eylemleri yalnız doğrulanmış üyeye açıktır; kimlik oturumdan gelir, yetki işlemin içinde yeniden yüklenir. Talep
+yalnız görünür mentora (dizinle aynı görünürlük) ve yalnız sunucunun ürettiği slota yapılır; çakışmanın son sözü
+veritabanı exclusion constraint'idir. Randevuyu yalnız iki katılımcı görür (yabancıya `RESOURCE_NOT_FOUND`); `.ics` yalnız
+onaylı randevuda ve katılımcı e-postası içermez. Onayda iki tarafın e-postası takvim davetinde paylaşılır (talep ekranı
+önceden söyler, `SlotList.emailShared`). Yurt dışı aktarım rızası olmayan taraflı randevuda takvim çağrısı yapılmaz.
+Talep hız sınırı 24 saatte 10. Hesap silmede açık randevular sistem tarafından iptal edilir, öğrenci notu/yer notu/link/ret
+notu temizlenir; veri dökümü randevuları kapsar (öğrenci notu yalnız yazanın dökümünde).
+
 ### Mentor dizini (P1-09)
 
 Dizin ve öneri yalnız doğrulanmış üyeye açıktır; kapsam (K-07) oturumdaki kullanıcıdan sunucuda çözülür. Askıdaki,
@@ -134,6 +152,16 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
   gerekçe zorunludur. Maske yalnız alan adı değildir: çıktı şeması ham telefon/e-posta değerini reddeder.
 - **Askı:** ban alanları yazılır ve oturumlar aynı işlemde silinir; kullanıcı yeni oturum açamaz. Süreli askı en fazla
   365 gün. Son sistem yöneticisi yetkisi kaldırılamaz.
+- **Okuma servisleri** (`services/admin-panel.ts`) yetkiyi işlemin içinde yeniden yükler ve sonucu sözleşme şemasından
+  geçirir (şemalar `strict`: ham alan çıktıya giremez). Kapsam dışı bölüm süzgeci boş sonuç verir. Bölüm yöneticisinde var
+  olmayan ile kapsam dışı kullanıcı ayırt edilmez (`AUTH_FORBIDDEN`). Kullanıcı araması ad/e-postada çalışır ama çıktı
+  maskelidir; arama yalnız yöneticinin kendi kapsamındaki kullanıcıları tarar (kapsam dışı e-posta varlığı sızmaz) ve
+  `LIKE` özel karakterleri kaçırılır. İşlem kaydı görüntülemede kişisel veri gibi görünen metin okuma anında da gizlenir
+  (`[gizlendi]`); yazım yolu zaten reddeder, bu son ağdır.
+- **Excel dışa aktarma** yetki kontrollü rotadır (`/api/yonetim/rapor/istihdam`, oturum + kapsamı olan doğrulanmış
+  yönetici): saatte 10 sınırı, `DATA_EXPORT` kaydı ve dosya üretimi tek işlemdedir; hata hiçbir şey teslim etmez.
+  Hücreler düz metindir (formül değil). Bilinen sınır: gösterilen kovalar toplamı ile `alumniWithPosition` farkı,
+  bastırılan grupların toplamını verir; kişi ya da grup kimliği bu farktan çıkmaz (pilot ölçeği).
 - **Toplu rapor ve Excel kişi satırı içermez:** mezun istihdam dağılımları sözlükle eşleşen adlarla ve küçük hücre
   bastırmayla (`REPORT_MIN_GROUP_SIZE` = 3) verilir; her dışa aktarma `DATA_EXPORT` kaydı yazar ve hız sınırlıdır.
 

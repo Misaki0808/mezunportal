@@ -47,6 +47,7 @@ export const AUDIT_TARGET_TYPES = [
   'DICTIONARY_ENTRY',
   'UNMATCHED_VALUE',
   'EMPLOYMENT_REPORT',
+  'USAGE_METRICS',
 ] as const;
 
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];

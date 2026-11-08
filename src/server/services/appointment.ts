@@ -1,4 +1,5 @@
 import 'server-only';
+import { emitEvent } from './event';
 
 import {
   APPOINTMENT_REQUEST_RATE_LIMIT,
@@ -80,6 +81,11 @@ const PAUSE_MAX_DAYS = 365;
 // Ortak yardımcılar
 // ---------------------------------------------------------------------------------------------
 
+/** Askı/hesap silme/üyelik yazımları User satırını kilitler. Çoklu hedefte sıra sabittir. */
+async function lockUsers(tx: Tx, userIds: readonly string[]) {
+  await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" IN (${Prisma.join([...new Set(userIds)])}) ORDER BY "id" FOR SHARE`;
+}
+
 async function requireMember(tx: Tx, userId: string, now: Date): Promise<Actor> {
   const actor = await loadActor(tx, userId, now);
   const access = evaluateAccess(actor?.facts ?? null, { action: 'directoryUse' });
@@ -117,6 +123,7 @@ const appointmentSelect = {
   meetUrl: true,
   calendarEventId: true,
   calendarFailedAt: true,
+  calendarAttempts: true,
   reminderSentAt: true,
   cancelledById: true,
   cancelledBySystem: true,
@@ -404,17 +411,24 @@ async function loadVisibleMentor(tx: Tx, actor: Actor, mentorId: string, now: Da
   return mentor;
 }
 
-async function slotsOf(tx: Tx, mentor: Awaited<ReturnType<typeof loadVisibleMentor>>, now: Date) {
+async function slotsOf(
+  tx: Tx,
+  mentor: Awaited<ReturnType<typeof loadVisibleMentor>>,
+  now: Date,
+  excludeBusy = true,
+) {
   const [rules, busy, fullMonths] = await Promise.all([
     tx.availabilityRule.findMany({ where: { mentorId: mentor.userId } }),
-    tx.appointment.findMany({
-      where: {
-        mentorId: mentor.userId,
-        status: { in: ['REQUESTED', 'CONFIRMED'] },
-        endsAt: { gt: now },
-      },
-      select: { startsAt: true, endsAt: true },
-    }),
+    excludeBusy
+      ? tx.appointment.findMany({
+          where: {
+            mentorId: mentor.userId,
+            status: { in: ['REQUESTED', 'CONFIRMED'] },
+            endsAt: { gt: now },
+          },
+          select: { startsAt: true, endsAt: true },
+        })
+      : Promise.resolve([]),
     fullMonthsOf(tx, mentor.userId, mentor.monthlyCapacity, now),
   ]);
   return {
@@ -484,8 +498,10 @@ export async function requestAppointment(
   const now = nowOf(deps);
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
+    await lockUsers(tx, [userId, parsed.mentorId]);
     const actor = await requireMember(tx, userId, now);
+    // Onayla ortak kapasite kilidi: aynı mentorun exclusion yazımlarını serileştirir.
+    await tx.$queryRaw`SELECT "userId" FROM "MentorProfile" WHERE "userId" = ${parsed.mentorId} FOR UPDATE`;
     const mentor = await loadVisibleMentor(tx, actor, parsed.mentorId, now);
     if (
       mentor.pausedUntil !== null &&
@@ -503,7 +519,9 @@ export async function requestAppointment(
     ) {
       throw codedConflict('APPOINTMENT_CAPACITY_FULL');
     }
-    const { slots } = await slotsOf(tx, mentor, now);
+    // Doluluk slotun zaman/biçim geçerliliğini değiştirmez; dolu slot exclusion'dan SLOT_TAKEN alır.
+    const { slots, fullMonths } = await slotsOf(tx, mentor, now, false);
+    if (fullMonths.has(monthKey(parsed.startsAt))) throw codedConflict('APPOINTMENT_CAPACITY_FULL');
     const slot = findSlot(slots, parsed.startsAt, parsed.mode);
     if (!slot) throw codedConflict('APPOINTMENT_SLOT_INVALID');
     await consumeRateLimit(
@@ -542,6 +560,7 @@ export async function requestAppointment(
     notices = [noticeFor('requested', row, 'MENTOR', { expiresAt: row.expiresAt })];
     return toView(row, userId, now, new Set());
   }, TX);
+  emitEvent(deps.db, userId, { type: 'APPOINTMENT_REQUESTED', props: { mode: view.mode } });
   await dispatchNotices(deps, notices);
   return view;
 }
@@ -559,6 +578,7 @@ export async function respondAppointment(
   const now = nowOf(deps);
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
+    await lockUsers(tx, [userId]);
     await requireMember(tx, userId, now);
     const peek = await tx.appointment.findUnique({
       where: { id: parsed.appointmentId },
@@ -628,6 +648,8 @@ export async function respondAppointment(
     ];
     return toView(next, userId, now, new Set());
   }, TX);
+  if (view.status === 'CONFIRMED')
+    emitEvent(deps.db, userId, { type: 'APPOINTMENT_CONFIRMED', props: { mode: view.mode } });
   await dispatchNotices(deps, notices);
   return view;
 }
@@ -641,6 +663,7 @@ export async function cancelAppointment(
   const now = nowOf(deps);
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
+    await lockUsers(tx, [userId]);
     await requireMember(tx, userId, now);
     await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${parsed.appointmentId} FOR UPDATE`;
     const row = await tx.appointment.findUnique({
@@ -705,6 +728,7 @@ export async function setMeetLink(
   const now = nowOf(deps);
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
+    await lockUsers(tx, [userId]);
     await requireMember(tx, userId, now);
     await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${parsed.appointmentId} FOR UPDATE`;
     const row = await tx.appointment.findUnique({

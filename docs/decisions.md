@@ -588,6 +588,26 @@ sıralar. Hedef kullanıcı kilidi atama ve üyelik düzeltmesinden önce alın�
 mezun geçişiyle ortak sıra User → Membership'tir. Silme ile yarışan atama silinmiş hesapta
 etkin yetki bırakamaz ve ters satır kilidi sırası oluşmaz.
 
+## 2026-11-08 · Yönetim paneli servis payı: eşleşmeyen değer çözümü, istihdam raporu, Excel
+`UnmatchedValue.dismissedAt` (ekleyici migration): "at" kararı sütunla tutulur; çözülmüş ya da atılmış değer yeniden
+gelirse yalnız sayaç artar, kuyruk yeniden açılmaz (CHECK: ikisi birden olamaz). "Bağla" değeri kaydın takma adı yapar ve
+sözlük bağı boş profil kalemlerini bağlar (kalem metni değişmez; tarama pilot ölçeğinde 5.000 pozisyonla sınırlıdır, kalanı
+sonraki CV ile bağlanır). Sektörde takma ad yoktur: sektöre "bağla" geçersiz, "yeni kayıt" geçerlidir. Sözlük yazmaları tür
+başına danışma kilidiyle (`pg_advisory_xact_lock`) serileşir: ad/takma ad çakışma denetimi yarış altında da doğrudur;
+kilit sırası her yerde tür kilidi → satır kilididir. Silinen kayda bağlı eşleşmeyen değerler kuyruğa döner.
+İstihdam raporu: kişi başına tek temsilci pozisyon (güncel > en son biten), yalnız sözlükle eşleşen adlar; küçük gruplar
+(< 3) `Diğer`'de birleşir, o da < 3 ise hiç gösterilmez. Excel için ExcelJS kullanıldı (`docs/engineering.md` yığınında,
+onaylı); dosya bellekte üretilir, işlem kaydı ve hız sınırıyla aynı işlemdedir. Kullanıcı aramasında `LIKE` özel karakterleri
+kaçırılır (Prisma `contains` kaçırmaz).
+
+Panelde SKILL kullanım sayısı ve bağlama `Tag(SKILL)`/`ProfileTag` üzerinden yürür; eski
+`UserSkill` aktif kullanım sayılmaz. Profil yazımıyla aynı etiket anahtarı kullanılır; kişisel
+bağlar kurallı etikete çiftlemeden taşınır, yeniden adlandırma bağları korur, sözlük silinince
+kullanıcının metni kişisel beceri olarak kalır. Excel rotası sayfa kapısına güvenmez: yetki
+sonrası zorunlu onay transaction içinde, hız sayacı ve dosyadan önce doğrulanır. Audit okuması
+eski metadata'nın iç içe değer/anahtarlarında da kişisel veriyi gizler. Üyelikler yetki
+hesabından önce sunum amacıyla kesilmez; eski ama etkin kapsam üyeliği kaybolmamalıdır.
+
 ## 2026-11-08 · Mentor dizini: görünürlük, müsaitlik ve benzer yol kuralı (P1-09)
 Dizinde yalnız görünür mentor vardır: etkin `MentorProfile`, silinmemiş ve askıda olmayan hesap, doğrulanmış etkin
 üyelik, arayanla aynı üniversite (K-07); arayan kendini görmez. Süzgeçler yalnız daraltır, kapsam oturumdan gelir.
@@ -607,3 +627,77 @@ değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki y�
 Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
 kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 
+## 2026-11-08 · Üretilmiş arama sütunları ve GIN indeksleri şemada modellenir
+`prisma migrate dev`, şemada olmayan GENERATED ALWAYS arama sütunları (`Experience.searchVector`/`searchKeys`) ve 6 GIN
+indeksi için sonraki her migration'a yanlış `ALTER`/`DROP INDEX` yazıyordu; uygulanırsa arama bozulurdu. İndeksler
+`@@index(type: Gin, ops: raw("gin_trgm_ops"))`, sütunlar `@default(dbgenerated())` ile modellenince `migrate diff` boş
+çıktı. Bedel: `searchKeys` istemcide sıradan `String?` görünür; Prisma istemcisinde global `omit`
+(`src/lib/prisma-options.ts`) ile hiçbir sorguda varsayılan dönmez, ham SQL arama yine okur (`searchVector`
+`Unsupported` olduğundan istemcide zaten yoktur). Migration bekçi testi (`prisma/migration-guard.test.ts`) ikinci kemer
+olarak kalır. Reddedilen: yalnız elle düzeltme notu (insan hatasına açık).
+## 2026-11-08 · Bildirim tercihleri ve yıllık doğrulama (P1-12)
+
+Zorunlu hesap/güvenlik iletileri kapatılamaz; diğer türler varsayılan açık olup hem kuyruğa alınırken hem de teslimden
+önce güncel tercihle denetlenir. İşler İstanbul saatiyle günlük çalışır ve dönem/olay anahtarıyla yinelenir. Öğrenci
+posta geçişi için doğrulanmış üyeliğin üniversitesindeki öğrenci alan adı ve mevcut sınıf hesabının dördüncü yılı
+kullanılır. Mezun yanıtları seçime bağlı HMAC, 30 günlük süre ve veritabanında koşullu tek kullanım taşır; kimlik
+oturumdan doğrulanır. E-posta tarayıcılarının bağlantıyı açması yanıt kaydetmez: kullanıcı ayrıca onaylar. Jeton URL
+parçasında taşınır (sunucu istek günlüğüne gitmez); e-posta ile açılan farklı sekmeden dönüş için tarayıcıda geçici tutulur ve sonuçta silinir.
+Bağlı olmayan mezun belgesi artıkları, yeni yükleme olasılığına karşı en az bir saat sonra taranır.
+## 2026-11-08 · Kullanım metrikleri: kişisel veri içermeyen olay, bastırılmış panel (P1-13)
+Kendi `Event` tablomuz; üçüncü taraf analitik yok. Kişisel veri koruması üç katmanlıdır: tür başına `strict` Zod şeması (serbest
+metin alanı hiç yok, arama olayında yalnız süzgeç TÜRÜ ve sonuç kovası), veritabanı CHECK'i (düz nesne, kısa, `@`/uzun rakam
+yok) ve panelde küçük hücre bastırma (ayrı kullanıcı < 3 → `OTHER`, o da < 3 ise gizli). Olay yazımı işlem dışından, ateşle-ve-unut
+yapılır: başarısız ekleme açık işlemi bozmaz ve hata kullanıcı akışına yansımaz; profil eşiği olayı yazım işlemi bittikten sonra
+önceki/sonraki skor karşılaştırmasıyla bir kez yazılır. Rol ve bölüm olay anındaki birincil üyelikten (akademisyen > mezun >
+öğrenci) anlık görüntü olarak saklanır; sonradan rol değişse de geçmiş sayı kayar. Anonim deneyim yayın olayı kullanıcıya,
+role ve bölüme bağlanmaz (anonimlik sızmasın); küçük hücre gizleniyorsa tür toplamı da gizlenir. Saklama: hesap silmede `userId` hemen,
+24 ay sonra `detachOldEvents` ile kopar (zamanlı iş TD-014). Panel kapsamı `admin-access` yardımcılarıyla yüklenir (yetki işlemin içinde yeniden okunur). Excel ExcelJS ile (#32 ile aynı sürüm), `DATA_EXPORT` kaydı hedefi `USAGE_METRICS`.
+
+
+
+### P1-13 bağımsız inceleme düzeltmesi
+
+Panel ve Excel işlemleri işlem içinde zorunlu rızayı kontrol eder. Gizlenen küçük hücre varsa tür toplamı da gizlenir;
+böylece gösterilen hücrelerin toplamdan çıkarılmasıyla küçük grubun sayısı açığa çıkmaz. Olay yazımı kullanıcı satırıyla
+silinmeye karşı sıralanır ve silinmiş hesap tekrar bağlanmaz; eşzamanlı profil eşiği yazımları tekilleştirilir. CV uygulamasında eşik için skorlar işlem içinde alınır; işlemden sonra başarısız ek sorgu kullanıcıya yanlış hata döndürmez.
+
+## 2026-11-08 · Randevu motoru: veritabanı kısıtı, takvim süpürmesi, kapasite tanımı (P1-10)
+Çakışma kuralı iki exclusion constraint'tir (mentor ve öğrenci için, yalnız `REQUESTED`/`CONFIRMED`) ve aynı öğrencinin aynı
+mentora yanıt bekleyen tek talebi kısmi benzersiz indeksle sınırlanır; servis önce slotu yeniden üretip doğrular, eşzamanlı
+yarışta kaybeden `APPOINTMENT_SLOT_TAKEN` alır. Onayda kapasite, mentor profili satırı kilitlenerek serileştirilir: kapasite 1
+iken eşzamanlı iki onaydan yalnız biri geçer. Kapasiteyi `CONFIRMED`, `COMPLETED` ve `NO_SHOW` harcar (İstanbul takvim ayı);
+dizin ve randevu aynı tanımı kullanır (`services/mentor-load.ts`). Zaman aşımı D11: talepten 72 saat sonra ya da başlangıçtan
+12 saat önce, hangisi erkense; süpürme ve yanıt satır kilidiyle yarışır, tek sonuç doğar.
+Takvim çağrısı istekte değil `appointment.sweep` süpürmesinde yapılır: dış servis çökse de onay bozulmaz, en çok 3 deneme,
+sonra (ya da adaptör kapalı / yurt dışı aktarım rızası yok) `calendarFailedAt` dolar ve mentor linki elle ekler. Gerçek Google
+adaptörü kullanıcı onayını bekler (E4); arayüz, sahte adaptör ve elle link yolu tamamdır. Bildirimler commit sonrası, en iyi
+gayretle ve idempotent anahtarla e-posta kuyruğuna gider (e-posta hatası randevuyu geri almaz). Hesap silmede açık randevular
+sistem iptali olur ve kişisel serbest metin temizlenir. Bulgu (düzeltildi): `.ics` metin kaçışında `\;` yanlışlıkla `;`
+yazılmıştı (testin beklentisi de aynı hatayı taşıyordu); mutasyon testi yakaladı.
+
+
+### P1-10 incelemesi: randevu yazımında güncel hesap ve sınırlı takvim denemesi
+
+Randevu mutasyonları yetki okunmadan önce User satırını paylaşılmış kilitle tutar; talep iki tarafı kimlik sırasıyla kilitler. Böylece askı/hesap silme yazımı beklenirken eski yetkiyle işlem tamamlanmaz ve karşılıklı taleplerde ters kilit sırası oluşmaz. Kapasite için MentorProfile, durum için Appointment kilidi korunur. Üst üste binen takvim işleri deneme hakkını satır kilidi altında ayırır; toplam üç hakkın üstüne çağrı yapmaz. Dış çağrı transaction dışında ve aynı iş anahtarıyla idempotent kalır. Hesap silme, kişinin daha önce yazdığı iptal gerekçesini de temizler; ICS metninde CR/LF'nin her biçimi kaçırılır.
+
+Randevu talebinde slotun zaman/biçim geçerliliği doluluk süzülmeden doğrulanır; dolu geçerli slotun son kararı exclusion constraint'e bırakılır. Böylece kazanan önce commit ettiğinde de, çağrılar aynı anda yazdığında da kullanıcıya aynı SLOT_TAKEN sebebi döner; liste dolu slotları göstermemeye devam eder.
+
+Bağımsız worker React server koşuluyla çalıştığından randevu e-posta kataloğundaki basit adlandırılmış alanlar React/Next içe aktarmadan doldurulur. Randevunun kullandığı profil kuralı da oturum bağlayan permissions giriş noktası yerine doğrudan actor/guards yardımcılarını alır. Böylece takvim süpürmesi e-posta worker'ının başlamasını engellemez; ayrı Node sürecinde gerçek iş modülü içe aktarma ve metin üretimi testlidir.
+
+### P1-11 incelemesi: yönetim sayfasında yanıt başlamadan kapsam denetimi
+
+App Router yükleme sınırı yanıtı başlattıktan sonra sayfadaki red HTTP 200 kalabildiği için yönetim layout'u mevcut yetki kapısını önce çalıştırır. Proxy'nin kendisinin yazdığı istek yolu yalnız doğru yeteneği seçer; yetki yine sunucu servisinden gelir. Kapsam dışı sayfa ve kullanıcı ayrıntısı üst grup hata sınırıyla Türkçe 404 döner; eylemlerin kendi yetki denetimleri de korunur. Ortak yönetim listeleri izin verilen uzun, boşluksuz değerleri hücre içinde böler; mobil kart ve masaüstü tablo sayfayı genişletmez.
+
+### PM kararı · Profil eşikleri ve veri saklama
+
+`PROFILE_THRESHOLD` eşik başına kullanıcıyla bağlı son 24 aylık pencerede bir kez yazılır; bağ koparıldıktan veya pencere
+dolduktan sonra yeniden geçişte yeni olay yazılabilir. KVKK veri en aza indirme için daha uzun süre yaşayan ayrı kullanıcı
+işaretçisi tutulmaz.
+
+### P1-09 incelemesi: ortak filtre gönderimi ve profil girişleri
+
+Mentor dizini ve arama aynı filtre kabuğunu kullanır. Bekleyen gezinme sırasında Uygula yerel disabled taşır; mentor dizini de çip kaldırma/temizleme kaynaklı ikinci gezinmeyi reddeder. Uzun beceriler kartta erişilebilir tam başlıkla kısalır, öneri gerekçeleri satıra bölünür. Profil görünürlüğü denetimi geçtikten sonra mevcut mentor uygunluk servisiyle iletişim ve kapalı girişlerin nedenleri bağlanır; görünmeyen profilde ek sorgu yapılmaz. Randevu/CV incelemesi eylem ekranları kendi kartlarındadır; uygunluk bayrağı yeni yetki vermez.
+### P1-12 incelemesi: ortak hesaplı uçtan uca testler
+
+Bildirim bağlantısı testi seed öğrencisinin pozisyonuna bağlı kayıt oluşturur; profil/CV testi aynı öğrencinin pozisyonlarını temizler. Bu nedenle ortak hesap kullanan uçtan uca dosyalar tek işçiyle koşar. Her şablonun güncel tercihe uyması ve bağlantının hesap/imza/süre/tek kullanım sınırları bağımsız negatif testlerle korunur. Olay commit edildikten sonra kuyruğa yazım başarısızsa otomatik telafi bu pakette yoktur; ana işlemin başarısı korunur.

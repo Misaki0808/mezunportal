@@ -28,6 +28,7 @@ import { accountStatusOf, evaluateAccess } from '../rules/authorization';
 import { normalizeName } from '../rules/dictionary';
 import { effectiveLevel, fieldAccess, type ViewerRelation } from '../rules/visibility';
 import { matchDictionaryName, recordUnmatched } from './cv-dictionary';
+import { emitProfileThresholds } from './event';
 import { loadProfileCompletion, syncCompletionScore } from './profile';
 import { attachSkill, ensureProfile, pruneOrphanSkillTags } from './profile-skills';
 import { loadVisibilityLevels } from './privacy';
@@ -200,14 +201,24 @@ async function mutate(
   change: (tx: Tx, profileId: string, now: Date) => Promise<void>,
 ): Promise<MyProfile> {
   const now = nowOf(deps);
-  return deps.db.$transaction(async (tx) => {
+  let before = 0;
+  let after = 0;
+  const view = await deps.db.$transaction(async (tx) => {
     await lockCurrentUser(tx, userId, now);
     const profile = await ensureProfile(tx, userId);
+    before = (
+      await tx.profile.findUniqueOrThrow({
+        where: { id: profile.id },
+        select: { completionScore: true },
+      })
+    ).completionScore;
     await change(tx, profile.id, now);
     await tx.profile.update({ where: { id: profile.id }, data: { updatedAt: now } });
-    await syncCompletionScore(tx, userId, now);
+    after = (await syncCompletionScore(tx, userId, now)).percent;
     return buildMyProfile(tx, userId, now);
   }, TX);
+  emitProfileThresholds(deps.db, userId, before, after);
+  return view;
 }
 
 export function updateProfileBasics(

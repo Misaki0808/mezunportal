@@ -17,6 +17,7 @@ import { codedConflict, codedNotFound, codedValidation } from '@/lib/errors';
 
 import { effectiveLevel, fieldAccess } from '../rules/visibility';
 import { loadVisibilityLevels } from './privacy';
+import { emitEvent } from './event';
 import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
 
 /**
@@ -66,6 +67,10 @@ export async function sendContactRequest(
         message: input.message ?? null,
       },
       select: { id: true },
+    });
+    emitEvent(db, requesterId, {
+      type: 'CONTACT_REQUESTED',
+      props: { fieldCount: input.fields.length },
     });
     return { requestId: created.id, status: 'PENDING' };
   } catch (error) {

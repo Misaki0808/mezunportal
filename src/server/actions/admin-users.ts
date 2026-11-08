@@ -20,15 +20,18 @@ import type {
 } from '@/contracts/admin-users';
 import {
   correctMembershipSchema,
+  getUserDetailSchema,
   grantAdminSchema,
+  listAdminGrantsSchema,
   revokeAdminSchema,
+  searchUsersSchema,
   suspendUserSchema,
   unsuspendUserSchema,
 } from '@/contracts/admin-users';
 import type { ActionResult } from '@/contracts/result';
 import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
-import { NotImplementedError } from '@/lib/not-implemented';
 import { requireAdmin, requireAnyAdmin } from '../permissions';
+import * as panel from '../services/admin-panel';
 import * as users from '../services/admin-users';
 import { adminUserDeps } from './deps';
 
@@ -36,23 +39,33 @@ import { adminUserDeps } from './deps';
  * Yönetim paneli — kullanıcılar, askıya alma, üyelik düzeltme, yönetici atama (P1-11).
  * Sunucu kuralları `src/contracts/admin-users.ts` başındadır (kapsam, kendi üzerinde işlem yok, yetkili
  * kullanıcıyı yalnız sistem yöneticisi yönetir, tek işlemde yetki + değişiklik + işlem kaydı).
- * Gövdesi YAZILMIŞ olanlar: `suspendUser`, `unsuspendUser`, `correctMembership`, `grantAdmin`, `revokeAdmin`
- * (sıra: koruma → Zod → servis; hatalar `ActionResult` olarak döner). Sorgu eylemleri (`searchUsers`,
- * `getUserDetail`, `listAdminGrants`) panel servisi (W2) gövdesini bekler.
+ * Sıra: koruma → Zod → servis; hatalar `ActionResult` olarak döner. Sorgu eylemleri (`searchUsers`,
+ * `getUserDetail`, `listAdminGrants`) `services/admin-panel.ts`'tedir: telefon/e-posta çıktıda yalnız maskeli.
  */
 
+/** Kapsamdaki kullanıcıları arar; telefon/e-posta maskeli. */
 export async function searchUsers(input: SearchUsersInput): Promise<ActionResult<AdminUserPage>> {
-  void input;
-  await requireAnyAdmin();
-  throw new NotImplementedError('searchUsers');
+  try {
+    const admin = await requireAnyAdmin();
+    const parsed = parseInput(searchUsersSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await panel.searchUsers(adminUserDeps(), admin.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
 
 export async function getUserDetail(
   input: GetUserDetailInput,
 ): Promise<ActionResult<AdminUserDetail>> {
-  void input;
-  await requireAnyAdmin();
-  throw new NotImplementedError('getUserDetail');
+  try {
+    const admin = await requireAnyAdmin();
+    const parsed = parseInput(getUserDetailSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await panel.getUserDetail(adminUserDeps(), admin.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
 
 /** `USER_SUSPEND` (gerekçe zorunlu): ban alanlarını yazar ve oturumları aynı işlemde siler. */
@@ -100,9 +113,14 @@ export async function correctMembership(
 export async function listAdminGrants(
   input: ListAdminGrantsInput,
 ): Promise<ActionResult<AdminGrantPage>> {
-  void input;
-  await requireAdmin({ kind: 'SYSTEM' });
-  throw new NotImplementedError('listAdminGrants');
+  try {
+    const admin = await requireAdmin({ kind: 'SYSTEM' });
+    const parsed = parseInput(listAdminGrantsSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await panel.listAdminGrants(adminUserDeps(), admin.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
 }
 
 /** `ADMIN_GRANT` (yalnız sistem yöneticisi). */

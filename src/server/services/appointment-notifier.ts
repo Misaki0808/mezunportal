@@ -2,8 +2,6 @@ import 'server-only';
 
 import { createHash } from 'node:crypto';
 
-import { createTranslator } from 'next-intl';
-
 import messages from '../../../messages/tr.json';
 
 /**
@@ -52,7 +50,10 @@ export interface AppointmentNotifier {
   notify(notice: AppointmentNotice): Promise<void>;
 }
 
-const t = createTranslator({ locale: 'tr', messages, namespace: 'emails.appointment' });
+const catalog = messages.emails.appointment;
+/** Bu e-posta kataloğu yalnız adlandırılmış düz metin alanları taşır; React/Next çalışma zamanı istemez. */
+const formatText = (template: string, values: Record<string, string> = {}) =>
+  template.replace(/\{(\w+)\}/g, (placeholder, key: string) => values[key] ?? placeholder);
 
 const formatWhen = (date: Date) =>
   new Intl.DateTimeFormat('tr-TR', {
@@ -62,9 +63,10 @@ const formatWhen = (date: Date) =>
   }).format(date);
 
 function detailsOf(notice: AppointmentNotice): string {
-  if (notice.mode === 'ONLINE' && notice.meetUrl) return t('detailsLink', { url: notice.meetUrl });
+  if (notice.mode === 'ONLINE' && notice.meetUrl)
+    return formatText(catalog.detailsLink, { url: notice.meetUrl });
   if (notice.mode === 'IN_PERSON' && notice.location)
-    return t('detailsPlace', { place: notice.location });
+    return formatText(catalog.detailsPlace, { place: notice.location });
   return '';
 }
 
@@ -77,41 +79,42 @@ export function buildAppointmentEmail(notice: AppointmentNotice): {
   const common = {
     name: notice.counterpartName,
     when: formatWhen(notice.startsAt),
-    mode: notice.mode === 'ONLINE' ? t('modeOnline') : t('modeInPerson'),
+    mode:
+      notice.mode === 'ONLINE' ? formatText(catalog.modeOnline) : formatText(catalog.modeInPerson),
   };
-  const reason = notice.reason ? t('reasonLine', { reason: notice.reason }) : '';
+  const reason = notice.reason ? formatText(catalog.reasonLine, { reason: notice.reason }) : '';
   let text: string;
   switch (notice.event) {
     case 'requested':
-      text = t('requested.text', {
+      text = formatText(catalog.requested.text, {
         ...common,
         deadline: notice.expiresAt ? formatWhen(notice.expiresAt) : '',
       });
       break;
     case 'confirmed':
-      text = t('confirmed.text', {
+      text = formatText(catalog.confirmed.text, {
         ...common,
         details: detailsOf(notice),
-        reminder: notice.withReminder ? t('reminderLine') : '',
+        reminder: notice.withReminder ? formatText(catalog.reminderLine) : '',
       });
       break;
     case 'declined':
-      text = t('declined.text', { ...common, reason });
+      text = formatText(catalog.declined.text, { ...common, reason });
       break;
     case 'cancelled':
-      text = t('cancelled.text', { ...common, reason });
+      text = formatText(catalog.cancelled.text, { ...common, reason });
       break;
     case 'expired':
-      text = t('expired.text', common);
+      text = formatText(catalog.expired.text, common);
       break;
     case 'reminder':
-      text = t('reminder.text', { ...common, details: detailsOf(notice) });
+      text = formatText(catalog.reminder.text, { ...common, details: detailsOf(notice) });
       break;
     case 'linkNeeded':
-      text = t('linkNeeded.text', common);
+      text = formatText(catalog.linkNeeded.text, common);
       break;
     case 'linkAdded':
-      text = t('linkAdded.text', { ...common, url: notice.meetUrl ?? '' });
+      text = formatText(catalog.linkAdded.text, { ...common, url: notice.meetUrl ?? '' });
       break;
   }
   const digest = createHash('sha256')
@@ -119,7 +122,7 @@ export function buildAppointmentEmail(notice: AppointmentNotice): {
     .digest('hex')
     .slice(0, 40);
   return {
-    subject: t(`${notice.event}.subject`),
+    subject: catalog[notice.event].subject,
     text,
     template: `appointment.${notice.event}`,
     idempotencyKey: `appointment.${notice.event}:${digest}`,
