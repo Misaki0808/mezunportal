@@ -16,10 +16,9 @@ import {
 import { REPORT_MIN_GROUP_SIZE } from '@/contracts/admin';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 
-import { loadActor, type Actor } from '../permissions/actor';
-import { errorForDenyReason } from '../permissions/guards';
+import type { Actor } from '../permissions/actor';
 import { listManagedDepartmentIds } from '../permissions/scope';
-import { describeManagedScope, evaluateAccess } from '../rules/authorization';
+import { isSystem, loadAdmin } from './admin-access';
 import { recordAdminAction } from './audit';
 import { consumeRateLimit, type RateLimitRule } from './rateLimit';
 
@@ -27,7 +26,6 @@ import { consumeRateLimit, type RateLimitRule } from './rateLimit';
  * Kullanım metrikleri panel sorguları ve Excel (P1-13). Yetki işlemin içinde güncel veriyle yeniden yüklenir; her sorgu
  * yöneticinin kapsamıyla KESİŞİR (`departmentId`/`facultyId` süzgeçleri yetki vermez; kapsam dışı bölümün olayı yoktur).
  * Küçük hücre bastırma: ayrı kullanıcı sayısı eşiğin altındaki (tür × rol × bölüm) hücreler tür başına `OTHER`'da birleşir.
- * Yönetici yardımcıları (#32 `admin-access`) main'e girince `readScoped` oraya bağlanır; davranış aynıdır.
  */
 export type UsageDeps = { db: PrismaClient; now?: () => Date };
 type Tx = Prisma.TransactionClient;
@@ -36,15 +34,12 @@ const TX = { timeout: 20_000, maxWait: 10_000 } as const;
 
 type Scope = { actor: Actor; system: boolean; departmentIds: string[] };
 
-async function loadScope(tx: Tx, adminUserId: string, now: Date): Promise<Scope> {
-  const actor = await loadActor(tx, adminUserId, now);
-  const decision = evaluateAccess(actor?.facts ?? null, { action: 'adminAny' });
-  if (!decision.allowed || !actor) {
-    throw errorForDenyReason(decision.allowed ? 'UNAUTHENTICATED' : decision.reason);
-  }
+async function loadScope(tx: Tx, adminUserId: string, now: Date, lock = false): Promise<Scope> {
+  // Yetki işlemin içinde güncel veriyle yeniden yüklenir (`admin-access`: bayat Actor yetki vermez).
+  const actor = await loadAdmin(tx, adminUserId, now, 'ANY_ADMIN', { lock });
   return {
     actor,
-    system: describeManagedScope(actor.facts.grants).system,
+    system: isSystem(actor),
     departmentIds: await listManagedDepartmentIds(tx, actor.facts),
   };
 }
@@ -303,7 +298,7 @@ export async function exportUsageMetrics(
   const filter = usageMetricsFilterSchema.parse(input);
   const now = nowOf(deps);
   return deps.db.$transaction(async (tx) => {
-    const scope = await loadScope(tx, adminUserId, now);
+    const scope = await loadScope(tx, adminUserId, now, true);
     await consumeRateLimit(tx, USAGE_EXPORT_RULE, adminUserId, now);
     const { metrics, scopeDepartmentCount } = await computeUsage(tx, scope, filter);
     const label = scopeDepartmentCount === null ? 'Tüm kurum' : `${scopeDepartmentCount} bölüm`;

@@ -635,6 +635,5 @@ yapılır: başarısız ekleme açık işlemi bozmaz ve hata kullanıcı akış�
 önceki/sonraki skor karşılaştırmasıyla bir kez yazılır. Rol ve bölüm olay anındaki birincil üyelikten (akademisyen > mezun >
 öğrenci) anlık görüntü olarak saklanır; sonradan rol değişse de geçmiş sayı kayar. Anonim deneyim yayın olayı kullanıcıya,
 role ve bölüme bağlanmaz (anonimlik sızmasın); sayısı yalnız toplamlarda görünür. Saklama: hesap silmede `userId` hemen,
-24 ay sonra `detachOldEvents` ile kopar (zamanlı iş TD-014). Panel kapsam yardımcıları yerel (`loadScope`); #32 `admin-access`
-main'e girince oraya bağlanır. Excel ExcelJS ile (#32 ile aynı sürüm), `DATA_EXPORT` kaydı hedefi `USAGE_METRICS`.
+24 ay sonra `detachOldEvents` ile kopar (zamanlı iş TD-014). Panel kapsamı `admin-access` yardımcılarıyla yüklenir (yetki işlemin içinde yeniden okunur). Excel ExcelJS ile (#32 ile aynı sürüm), `DATA_EXPORT` kaydı hedefi `USAGE_METRICS`.
 
