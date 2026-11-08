@@ -207,6 +207,15 @@ describe('arama, moderasyon ve şikâyet girdileri', () => {
     expect(searchJobPostingsSchema.safeParse({ pageSize: 51 }).success).toBe(false);
     expect(searchJobPostingsSchema.safeParse({ kind: 'JOB', extra: 1 }).success).toBe(false);
     expect(getJobPostingSchema.safeParse({ id: '' }).success).toBe(false);
+    // kurum süzgeci: serbest ad XOR sözlük şirketi
+    expect(
+      searchJobPostingsSchema.parse({ organizationName: ' Örnek Teknoloji ' }).organizationName,
+    ).toBe('Örnek Teknoloji');
+    expect(searchJobPostingsSchema.safeParse({ organizationName: 'a' }).success).toBe(false);
+    expect(searchJobPostingsSchema.safeParse({ companyId: 'c1' }).success).toBe(true);
+    const both = searchJobPostingsSchema.safeParse({ companyId: 'c1', organizationName: 'Örnek' });
+    expect(both.success).toBe(false);
+    expect(both.error?.issues[0]?.path).toEqual(['organizationName']);
     // konum süzgeci: metin, 2-100 karakter
     expect(searchJobPostingsSchema.parse({ location: '  İstanbul ' }).location).toBe('İstanbul');
     expect(searchJobPostingsSchema.safeParse({ location: 'a' }).success).toBe(false);
@@ -338,7 +347,9 @@ describe('süzgeç seçenekleri', () => {
     expect(getJobPostingFilterOptionsSchema.safeParse({}).success).toBe(true);
     expect(getJobPostingFilterOptionsSchema.safeParse({ userId: 'u1' }).success).toBe(false);
     const ok = {
-      organizations: [{ companyId: null, name: 'Örnek Teknoloji', count: 2 }],
+      organizations: [
+        { key: 'Örnek Teknoloji', companyId: null, name: 'Örnek Teknoloji', count: 2 },
+      ],
       departments: [{ id: 'd1', name: 'Yönetim Bilişim Sistemleri', count: 3 }],
       locations: [{ name: 'İstanbul', count: 4 }],
       remoteCount: 1,
