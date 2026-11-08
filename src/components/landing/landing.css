@@ -572,7 +572,7 @@
   color: #086b60;
 }
 .landing-step-number {
-  color: #77758b;
+  color: var(--color-fg-muted);
   font-size: 0.8rem;
   font-weight: 700;
 }

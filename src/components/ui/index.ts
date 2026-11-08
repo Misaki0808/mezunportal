@@ -19,6 +19,8 @@ export type { ErrorStateProps } from './error-state';
 export { Field } from './field';
 export type { FieldControlProps, FieldProps } from './field';
 export { IconButton } from './icon-button';
+export { IconChip } from './icon-chip';
+export type { IconChipTone } from './icon-chip';
 export type { IconButtonProps } from './icon-button';
 export * from './icons';
 export { Input } from './input';
