@@ -1759,6 +1759,10 @@
         "label": "Randevular",
         "description": "Randevu bildirimleri bu özellik açıldığında kullanılır."
       },
+      "FAQ": {
+        "label": "Sık sorulan sorular",
+        "description": "SSS talebinin sonucu ve cevabının yayınlanması."
+      },
       "CV_REVIEW": {
         "label": "CV incelemeleri",
         "description": "CV inceleme talepleri, yanıtları ve süre dolumu."
@@ -1770,6 +1774,14 @@
       "moderationApprovedText": "Deneyimin incelendi ve yayınlandı. Ayrıntıyı görüntüle: {url}",
       "moderationRejectedSubject": "Deneyimin hakkında",
       "moderationRejectedText": "Deneyimin incelendi. Gerekçeyi görmek ve düzenlemek için: {url}",
+      "faqPublishedSubject": "Sorun SSS'de yayınlandı",
+      "faqPublishedText": "Sorduğun soru incelendi ve sık sorulan sorulara eklendi. Görüntüle: {url}",
+      "faqRejectedSubject": "SSS talebin hakkında",
+      "faqRejectedText": "SSS talebin incelendi ve yayınlanmadı. Gerekçeyi görmek için: {url}",
+      "faqRedirectedSubject": "SSS talebin mentora yönlendirildi",
+      "faqRedirectedText": "Sorun herkese açık bir soru olmadığı için bir mentorla görüşmeni öneriyoruz. Ayrıntı için: {url}",
+      "faqAnswerPublishedSubject": "Cevabın SSS'de kullanıldı",
+      "faqAnswerPublishedText": "Yazdığın cevap sık sorulan sorulara katkı sağladı. Görüntüle: {url}",
       "contactSubject": "Yeni iletişim talebin var",
       "contactText": "Bir üye seninle iletişim kurmak istiyor. Talebi incele: {url}",
       "invitationSubject": "Deneyimini paylaşmak ister misin?",

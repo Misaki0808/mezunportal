@@ -10,7 +10,11 @@ type Event =
   | 'contact'
   | 'invitation'
   | 'freshness'
-  | 'migration';
+  | 'migration'
+  | 'faqPublished'
+  | 'faqRejected'
+  | 'faqRedirected'
+  | 'faqAnswerPublished';
 const templates = {
   moderationApproved: 'experience.moderation-approved',
   moderationRejected: 'experience.moderation-rejected',
@@ -18,6 +22,10 @@ const templates = {
   invitation: 'cv.invitation',
   freshness: 'profile.freshness',
   migration: 'student.email-migration',
+  faqPublished: 'faq.published',
+  faqRejected: 'faq.rejected',
+  faqRedirected: 'faq.redirected',
+  faqAnswerPublished: 'faq.answerPublished',
 } as const satisfies Record<Event, string>;
 
 /** Kişisel içerik günlüklenmez; idempotency anahtarı olayın sabit kimliğidir. */

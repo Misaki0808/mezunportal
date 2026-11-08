@@ -137,6 +137,7 @@ export async function buildDataExport(
   const cv = await loadCvExport(db, userId, iso);
   const appointments = await loadAppointmentExport(db, userId);
   const contribution = await loadContributionExport(db, userId, iso);
+  const faq = await loadFaqExport(db, userId, iso);
   const cvReviews = await db.cvReviewRequest.findMany({
     where: { OR: [{ studentId: userId }, { mentorId: userId }] },
     orderBy: { id: 'asc' },
@@ -204,6 +205,7 @@ export async function buildDataExport(
     cv,
     appointments,
     contribution,
+    faq,
     cvReviewRequests: cvReviews.map((row) => ({
       id: row.id,
       role: row.studentId === userId ? ('STUDENT' as const) : ('MENTOR' as const),
@@ -412,5 +414,40 @@ async function loadContributionExport(
       createdAt: row.createdAt.toISOString(),
       decidedAt: iso(row.decidedAt),
     })),
+  };
+}
+
+/** SSS: yalnız kullanıcının kendi soruları ve cevapları (karşı tarafın kimliği ya da diğer cevaplar çıkmaz). */
+async function loadFaqExport(
+  db: PrismaClient,
+  userId: string,
+  iso: (date: Date | null) => string | null,
+): Promise<DataExport['faq']> {
+  const [requests, answers] = await Promise.all([
+    db.faqRequest.findMany({
+      where: { askerId: userId },
+      orderBy: { id: 'asc' },
+      select: {
+        id: true,
+        question: true,
+        status: true,
+        decisionNote: true,
+        createdAt: true,
+        decidedAt: true,
+      },
+    }),
+    db.faqAnswer.findMany({
+      where: { mentorId: userId },
+      orderBy: { id: 'asc' },
+      select: { id: true, body: true, isSelected: true, createdAt: true },
+    }),
+  ]);
+  return {
+    requests: requests.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+      decidedAt: iso(row.decidedAt),
+    })),
+    answers: answers.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() })),
   };
 }
