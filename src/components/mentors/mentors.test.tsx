@@ -77,7 +77,7 @@ describe('mentor kartı', () => {
   it('eylem önceliği: uygunsa "Randevu iste" birincil (dolgulu, tam genişlik), "Profili gör" ve "İletişim iste" ikincil', () => {
     renderUi(<MentorCard mentor={mentor()} />);
     const appointment = screen.getByRole('link', { name: 'Randevu iste' });
-    expect(appointment).toHaveClass('bg-primary', 'w-full');
+    expect(appointment).toHaveClass('bg-primary', 'w-full', 'sm:w-auto');
     for (const name of ['Profili gör', 'İletişim iste']) {
       const link = screen.getByRole('link', { name });
       expect(link).not.toHaveClass('bg-primary');

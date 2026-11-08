@@ -2,7 +2,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 import type { MentorCard as MentorCardData } from '@/contracts/mentor-directory';
-import { Badge, buttonClasses } from '@/components/ui';
+import { Badge, buttonClasses, cn } from '@/components/ui';
 import { withReturnPath } from '@/lib/return-path';
 
 import type messages from '../../../messages/tr.json';
@@ -119,22 +119,22 @@ export function MentorCard({
           );
         if (availability.available)
           return (
-            <div className="mt-4 flex flex-col gap-2">
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <Link
-                className={buttonClasses({ fullWidth: true })}
+                className={cn(buttonClasses({}), 'w-full sm:w-auto')}
                 href={`/randevu-al/${mentor.userId}`}
               >
                 {t('card.appointment')}
               </Link>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:contents">
                 <Link
-                  className={buttonClasses({ variant: 'secondary', fullWidth: true })}
+                  className={cn(buttonClasses({ variant: 'secondary' }), 'w-full sm:w-auto')}
                   href={profileHref}
                 >
                   {t('card.profile')}
                 </Link>
                 <Link
-                  className={buttonClasses({ variant: 'secondary', fullWidth: true })}
+                  className={cn(buttonClasses({ variant: 'secondary' }), 'w-full sm:w-auto')}
                   href={contactHref}
                 >
                   {t('card.contact')}
