@@ -20,6 +20,8 @@ export const ADMIN_ACTIONS = {
   USER_UNSUSPEND: { reasonRequired: true },
   MODERATION_PUBLISH: { reasonRequired: false },
   MODERATION_REJECT: { reasonRequired: true },
+  /** SSS talebini mentor dizinine yönlendirme (kişisel/tek seferlik soru). */
+  MODERATION_REDIRECT: { reasonRequired: true },
   REPORT_RESOLVE: { reasonRequired: true },
   POINTS_REVOKE: { reasonRequired: true },
   /** Puan kuralı (değer, gecikme, etkinlik) değişikliği (sistem yöneticisi). */

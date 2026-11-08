@@ -139,9 +139,9 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   Ne: `detachOldEvents` (userId → null) yazıldı ve testli; periyodik çalıştıran pg-boss işi yok.
   Neden borç: 24 ayı geçen olaylar kullanıcıya bağlı kalır (hesap silmede bağ zaten hemen kopar).
   Kapanış ölçütü: günlük zamanlı iş (`files.purge` ile birlikte) + worker kaydı.
-- [ ] **TD-015** · P2 · Görüşme tamamlanması / SSS / CV inceleme kullanım olayları bağlanmadı
-  Ne: `APPOINTMENT_COMPLETED`, `FAQ_*`, `CV_REVIEW_REQUESTED` olay türleri katalogda; ilgili servisler henüz main'de değil.
-  Kapanış ölçütü: servis main'e girince `emitEvent` kancaları eklenir (test: olay + kişisel veri yok).
+- [ ] **TD-015** · P2 · Görüşme tamamlanması kullanım olayı bağlanmadı
+  Ne: `APPOINTMENT_COMPLETED` olay türü katalogda; iki taraf onaylı tamamlanma `submitFeedback`'te olur ama olay yazılmaz.
+  Kapanış ölçütü: `emitEvent` kancası eklenir (test: olay + kişisel veri yok).
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
   Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
   yerinde duruyor (hesap silme hâlâ eski satırları siler).

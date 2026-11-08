@@ -7,9 +7,18 @@ import type { AppointmentNotice } from './appointment-notifier';
 const generic = z
   .object({
     type: z.literal('generic'),
-    event: z.enum(['moderationApproved', 'moderationRejected', 'contact', 'invitation']),
+    event: z.enum([
+      'moderationApproved',
+      'moderationRejected',
+      'contact',
+      'invitation',
+      'faqPublished',
+      'faqRejected',
+      'faqRedirected',
+      'faqAnswerPublished',
+    ]),
     eventId: z.string().min(1).max(160),
-    path: z.enum(['/deneyimlerim', '/hesap/iletisim']),
+    path: z.enum(['/deneyimlerim', '/hesap/iletisim', '/hesap/sss']),
   })
   .strict();
 const appointment = z

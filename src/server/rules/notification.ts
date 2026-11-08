@@ -38,6 +38,11 @@ export function notificationTypeForTemplate(template: string): NotificationType 
     case 'appointment.linkAdded':
     case 'appointment.placeholder':
       return 'APPOINTMENT';
+    case 'faq.published':
+    case 'faq.rejected':
+    case 'faq.redirected':
+    case 'faq.answerPublished':
+      return 'FAQ';
     default:
       return null;
   }

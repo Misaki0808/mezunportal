@@ -24,6 +24,10 @@ export const RATE_LIMITS = {
   accountDeletion: { name: 'account-deletion', limit: 5, windowMs: 60 * 60 * 1000 },
   /** İletişim hedefi önizlemesi: kullanıcı kimliklerini taramayı yavaşlatır; saatte 60. */
   contactPreview: { name: 'contact-preview', limit: 60, windowMs: 60 * 60 * 1000 },
+  /** SSS talebi (P1-17): kullanıcı başına günde 3. */
+  faqRequest: { name: 'faq-request', limit: 3, windowMs: 24 * 60 * 60 * 1000 },
+  /** SSS benzer soru önerisi (yazarken): kullanıcı başına saatte 60. */
+  faqSuggest: { name: 'faq-suggest', limit: 60, windowMs: 60 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export type RateLimitClient = Pick<Prisma.TransactionClient, '$queryRaw'>;

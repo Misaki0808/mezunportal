@@ -1,7 +1,7 @@
 /**
  * Prisma istemcisi seçenekleri (uygulama ve testler AYNI değeri kullanır).
  *
- * `Experience.searchVector`/`searchKeys` veritabanında GENERATED ALWAYS arama sütunlarıdır; şemada `migrate dev`
+ * `Experience` ve `FaqItem` için `searchVector`/`searchKeys` veritabanında GENERATED ALWAYS arama sütunlarıdır; şemada `migrate dev`
  * sürüklenmesin diye modellidir (docs/decisions.md). `searchVector` `Unsupported` olduğundan istemcide zaten yoktur.
  * `searchKeys` ise sıradan `String?` görünür: global `omit` varsayılan Prisma yanıtından çıkarır.
  * Yazma denemesini veritabanının GENERATED ALWAYS kısıtı reddeder.
@@ -9,4 +9,5 @@
  */
 export const PRISMA_OMIT = {
   experience: { searchKeys: true },
+  faqItem: { searchKeys: true },
 } as const;

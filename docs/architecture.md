@@ -186,7 +186,8 @@ verme oranı → `Yeni` · `Güvenilir` · `Dikkat`. Öğrenci kendi göstergesi
 Öğrenci “SSS talebi gönder” ile yazar; yazarken benzer SSS'ler gösterilir. Mentorlar cevap yazar.
 Moderatör en iyi cevabı seçip soruyu düzenleyerek yayımlar (isimler kaldırılır) **ya da**
 gerekçeyle reddeder **ya da** kişisel/tek seferlik ise mentorluk talebine yönlendirir. Puanlar
-yalnız yayında yazılır.
+yalnız yayında yazılır. Ayrıntılar (gizlilik, benzer soru kapısı, puan, hesap silme) `docs/decisions.md` “SSS akışı”nda; servis
+`src/server/services/faq*.ts`, arama deposu `src/server/repositories/faq.ts`.
 
 ### Bildirimler ve zamanlanmış işler (pg-boss)
 
