@@ -1,10 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
-// Next.js 16: `middleware.ts` yerine `proxy.ts`. Şimdilik iskelet; kimlik/oturum yönlendirmeleri
-// Faz 1'de (P1-02) buraya gelir. Yetkilendirme proxy'de değil, her sunucu eyleminde ve rotada
-// yapılır (`src/server/permissions`).
-export function proxy() {
-  return NextResponse.next();
+import { REQUEST_PATH_HEADER } from '@/lib/return-path';
+
+// Next.js 16: `middleware.ts` yerine `proxy.ts`. Yetkilendirme proxy'de değil, her sunucu eyleminde ve
+// rotada yapılır (`src/server/permissions`). Proxy yalnız istenen yolu sunucu düzenlerine taşır: oturumsuz
+// ya da onayı eksik kullanıcı girişe/onaya yönlenirken dönüş yolu (`?donus=`) bundan üretilir.
+export function proxy(request: NextRequest) {
+  const headers = new Headers(request.headers);
+  // İstemcinin aynı adla gönderdiği değer her zaman ezilir.
+  headers.set(REQUEST_PATH_HEADER, request.nextUrl.pathname + request.nextUrl.search);
+  return NextResponse.next({ request: { headers } });
 }
 
 export const config = {

@@ -15,6 +15,7 @@ import { createPermissions } from '../permissions';
 import { DELETED_USER_NAME, deleteAccount, deletedEmailFor } from './accountDeletion';
 import {
   listContactRequests,
+  previewContactTarget,
   respondToContactRequest,
   revokeContactRequest,
   sendContactRequest,
@@ -525,4 +526,40 @@ it('gerçek oturum ve yerel belge: silme hatası geri alınır; yeniden denemede
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+describe('iletişim hedefi önizlemesi (tur bulgusu #9): kullanıcı varlığı sızmaz', () => {
+  it('yok, silinmiş, askıda, kendisi ve talep alanı olmayan hedef AYNI genel yanıtı alır; uygun hedef ad + alan alır', async () => {
+    const requester = await person();
+    const ok = await person();
+    const deleted = await person();
+    await prisma.user.update({ where: { id: deleted.id }, data: { deletedAt: new Date() } });
+    const banned = await person();
+    await prisma.user.update({ where: { id: banned.id }, data: { banned: true } });
+    const closed = await person();
+    for (const field of ['EMAIL', 'PHONE'] as const) {
+      await setFieldVisibility(prisma, closed.id, { field, level: 'PRIVATE' });
+    }
+    const generic = { canRequest: false, displayName: null, requestableFields: [] };
+    for (const targetUserId of [randomUUID(), deleted.id, banned.id, requester.id, closed.id]) {
+      expect(await previewContactTarget(prisma, requester.id, { targetUserId })).toEqual(generic);
+    }
+    const preview = await previewContactTarget(prisma, requester.id, { targetUserId: ok.id });
+    expect(preview).toMatchObject({ canRequest: true, requestableFields: ['EMAIL', 'PHONE'] });
+    expect(JSON.stringify(preview)).not.toContain(ok.email);
+    expect(JSON.stringify(preview)).not.toContain(ok.phone);
+  });
+
+  it('hız sınırı: saatte 60 önizleme, 61.si RATE_LIMITED (kimlik taraması yavaşlar)', async () => {
+    const requester = await person();
+    const now = new Date('2026-11-08T10:00:00Z');
+    for (let i = 0; i < 60; i += 1) {
+      await previewContactTarget(prisma, requester.id, { targetUserId: randomUUID() }, now);
+    }
+    expect(
+      await errorCode(
+        previewContactTarget(prisma, requester.id, { targetUserId: randomUUID() }, now),
+      ),
+    ).toBe('RATE_LIMITED');
+  });
 });

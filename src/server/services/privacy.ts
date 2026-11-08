@@ -10,7 +10,7 @@ import {
   type VisibilityLevel,
 } from '@/contracts/privacy';
 import type { Prisma } from '@/generated/prisma/client';
-import { codedValidation } from '@/lib/errors';
+import { codedForbidden, codedValidation } from '@/lib/errors';
 
 import { computeConsentState, consentDecisionError, type ConsentVersions } from '../rules/consent';
 
@@ -53,6 +53,22 @@ export async function recordConsents(
 /** Uygulama kullanımı için zorunlu onaylar tamam mı? (Proxy/yerleşim yeniden onaya yönlendirir.) */
 export async function needsConsent(db: PrivacyClient, userId: string): Promise<boolean> {
   return (await getConsentState(db, userId)).blocking;
+}
+
+/**
+ * Kişisel veri işleyen yönetim işleri (belge kuyruğu, belge dosyası, karar) zorunlu onayı güncel olmayan
+ * kullanıcıya kapalıdır (tur bulgusu #11): `CONSENT_REQUIRED`. Sayfa düzeyi kapı `PrivacyGuard`'dır; bu
+ * ikinci kilit, sayfayı atlayıp eylemi doğrudan çağırana karşıdır.
+ */
+export async function requireConsent(db: Pick<PrivacyClient, 'consent'>, userId: string) {
+  const records = await db.consent.findMany({
+    where: { userId },
+    select: { documentType: true, version: true, granted: true, createdAt: true },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (computeConsentState(records, CURRENT_CONSENT_VERSIONS).blocking) {
+    throw codedForbidden('CONSENT_REQUIRED');
+  }
 }
 
 export async function loadVisibilityLevels(
