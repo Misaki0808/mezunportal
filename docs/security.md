@@ -185,6 +185,8 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
 - **Merkezi zorunlu onay kapısı:** ürün ve yönetim okuma/yazmaları sunucu tarafında kimlik ve rol
   yetkisinden sonra güncel zorunlu onayı denetler; eksik onay `CONSENT_REQUIRED` döndürür. Sunucu
   eylemlerinin otomatik envanter testi yeni eylemin de kapıdan geçmesini veya açık istisnaya alınmasını ister.
+  Envanter bütün `src` ağacını AST ile tarar; davranışla sınanan eylem kataloğu dışındaki modül/inline
+  eylemi reddeder. Tek inline istisna, prod kapılı kimlik eylemine devreden test giriş formudur.
   İstisnalar: giriş/çıkış ve kayıt/doğrulama beyanı; onay durumunu görme ve verme; kişinin kendi
   görünürlük ayarları, veri dökümü ve hesap silme/geri çekme işlemleri. Bu istisnalar başkasının
   verisine erişim yetkisi vermez. Sayfa koruması ek yönlendirme sağlar; veri güvenliği sunucu kapısındadır.

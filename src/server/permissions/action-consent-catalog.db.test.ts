@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
 import ts from 'typescript';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { createTestPrisma } from '@/test/db';
@@ -68,6 +68,60 @@ const catalog = readdirSync(dir)
       return names.map((name) => ({ actionFile, name, key: `${actionFile}.${name}` }));
     });
   });
+
+// Katalog dışındaki bir dosyaya taşınan/yeni eklenen eylem sessizce atlanamaz.
+// Tek inline istisna giriş formudur; imzalı persona ile prod kapılı kimlik eylemine devreder.
+const inlineExceptions = new Set(['app/(kimlik)/giris/test/page.tsx#submit']);
+it('bütün kaynak ağacındaki sunucu eylemleri katalogda veya gerekçeli inline istisnadadır', () => {
+  const src = resolve(process.cwd(), 'src');
+  const foundInline = new Set<string>();
+  const unlisted: string[] = [];
+  function hasDirective(statements: ts.NodeArray<ts.Statement>) {
+    for (const statement of statements) {
+      if (!ts.isExpressionStatement(statement) || !ts.isStringLiteral(statement.expression))
+        return false;
+      if (statement.expression.text === 'use server') return true;
+    }
+    return false;
+  }
+  function walk(path: string) {
+    for (const entry of readdirSync(path, { withFileTypes: true })) {
+      const file = resolve(path, entry.name);
+      if (entry.isDirectory()) {
+        walk(file);
+        continue;
+      }
+      if (!/\.[cm]?[jt]sx?$/.test(entry.name) || /\.(?:test|spec)\./.test(entry.name)) continue;
+      const source = ts.createSourceFile(
+        file,
+        readFileSync(file, 'utf8'),
+        ts.ScriptTarget.Latest,
+        true,
+      );
+      const name = relative(src, file);
+      if (hasDirective(source.statements)) {
+        const actionFile = relative(dir, file).replace(/\.ts$/, '');
+        if (!catalog.some((item) => item.actionFile === actionFile)) unlisted.push(name);
+      }
+      function visit(node: ts.Node) {
+        if (ts.isBlock(node) && hasDirective(node.statements)) {
+          const parent = node.parent;
+          const key = `${name}#${ts.isFunctionDeclaration(parent) ? parent.name?.text : '<inline>'}`;
+          foundInline.add(key);
+          if (!inlineExceptions.has(key)) unlisted.push(key);
+        }
+        ts.forEachChild(node, visit);
+      }
+      ts.forEachChild(source, visit);
+    }
+  }
+  walk(src);
+  expect(
+    unlisted,
+    'Eylemi davranışla sınanan kataloğa taşı veya dar istisnayı gerekçelendir.',
+  ).toEqual([]);
+  expect([...foundInline].sort()).toEqual([...inlineExceptions].sort());
+});
 
 beforeAll(async () => {
   const institution = await createInstitution(db);
