@@ -4,7 +4,13 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { dataExportSchema } from '@/contracts/privacy';
 import { experienceDetailSchema, type ExperienceDraftTemplate } from '@/contracts/experience';
 import { createTestPrisma } from '@/test/db';
-import { addGrant, addMembership, createInstitution, createUser } from '@/test/fixtures';
+import {
+  addGrant,
+  addMembership,
+  createInstitution,
+  createUser,
+  grantRequiredConsents,
+} from '@/test/fixtures';
 
 const session = vi.hoisted(() => ({ userId: null as string | null }));
 vi.mock('../db', () => ({ getDb: () => db }));
@@ -25,6 +31,7 @@ beforeAll(async () => {
   otherInstitution = await createInstitution(db);
   moderator = await member(institution.deptA1);
   await addGrant(db, { userId: moderator, scope: 'DEPARTMENT', departmentId: institution.deptA1 });
+  await grantRequiredConsents(db, moderator);
 });
 afterAll(() => db.$disconnect());
 async function member(departmentId: string, status: 'PENDING' | 'VERIFIED' = 'VERIFIED') {
@@ -101,6 +108,58 @@ function allActions() {
 }
 
 describe('gerçek oturum koruması ve deneyim servisleri', () => {
+  it('rızasız moderatör dört eylem ve ayrıcalıklı detay yolunu doğrudan çağıramaz; yetki önce gelir', async () => {
+    const author = await member(institution.deptA1);
+    const reporter = await member(institution.deptA1);
+    const unconsented = await member(institution.deptA1);
+    const ordinary = await member(institution.deptA1);
+    await addGrant(db, {
+      userId: unconsented,
+      scope: 'DEPARTMENT',
+      departmentId: institution.deptA1,
+    });
+    const pending = await draft(author);
+    await service.submitExperience(db, author, { experienceId: pending.id }, NOW);
+    const publishedId = await published(author);
+    const report = await service.reportExperience(
+      db,
+      reporter,
+      { experienceId: publishedId, reason: 'İnceleme gerekçesi' },
+      NOW,
+    );
+    session.userId = unconsented;
+    const calls = [
+      () => actions.listModerationQueue({}),
+      () => actions.listExperienceReports({}),
+      () => actions.reviewExperience({ experienceId: pending.id, decision: 'PUBLISH' }),
+      () =>
+        actions.resolveExperienceReport({
+          reportId: report.reportId,
+          decision: 'DISMISSED',
+          reason: 'İhlal bulunamadı',
+        }),
+      () => actions.getExperienceDetail({ experienceId: pending.id }),
+    ];
+    for (const call of calls)
+      expect(await call()).toMatchObject({ ok: false, errorCode: 'CONSENT_REQUIRED' });
+    expect((await db.experience.findUniqueOrThrow({ where: { id: pending.id } })).status).toBe(
+      'PENDING',
+    );
+    expect((await db.report.findUniqueOrThrow({ where: { id: report.reportId } })).status).toBe(
+      'OPEN',
+    );
+    session.userId = ordinary;
+    expect(await actions.listModerationQueue({})).toMatchObject({
+      ok: false,
+      errorCode: 'AUTH_FORBIDDEN',
+    });
+    expect(
+      await actions.reviewExperience({ experienceId: pending.id, decision: 'PUBLISH' }),
+    ).toMatchObject({ ok: false, errorCode: 'AUTH_FORBIDDEN' });
+    await grantRequiredConsents(db, unconsented);
+    session.userId = unconsented;
+    for (const call of calls) expect(await call()).toMatchObject({ ok: true });
+  });
   it.each(['unverified', 'suspended', 'deleted', 'anonymous'] as const)(
     'dokuz eylem %s kullanıcıya kapalıdır',
     async (kind) => {
@@ -234,6 +293,7 @@ describe('gerçek oturum koruması ve deneyim servisleri', () => {
     const author = await member(institution.deptA1),
       wrong = await member(institution.deptA2);
     await addGrant(db, { userId: wrong, scope: 'DEPARTMENT', departmentId: institution.deptA2 });
+    await grantRequiredConsents(db, wrong);
     const row = await draft(author);
     await service.submitExperience(db, author, { experienceId: row.id }, NOW);
     await expect(
@@ -260,7 +320,9 @@ describe('gerçek oturum koruması ve deneyim servisleri', () => {
       faculty = await member(institution.deptA2),
       system = await member(otherInstitution.deptA1);
     await addGrant(db, { userId: faculty, scope: 'FACULTY', facultyId: institution.facultyA });
+    await grantRequiredConsents(db, faculty);
     await addGrant(db, { userId: system, scope: 'SYSTEM' });
+    await grantRequiredConsents(db, system);
     const row = await draft(author);
     await service.submitExperience(db, author, { experienceId: row.id }, NOW);
     await db.membership.updateMany({ where: { userId: author }, data: { endedAt: NOW } });
@@ -343,6 +405,7 @@ describe('gerçek oturum koruması ve deneyim servisleri', () => {
     const author = await member(institution.deptA1),
       second = await member(institution.deptA1);
     await addGrant(db, { userId: second, scope: 'DEPARTMENT', departmentId: institution.deptA1 });
+    await grantRequiredConsents(db, second);
     const row = await draft(author);
     await service.submitExperience(db, author, { experienceId: row.id }, NOW);
     const results = await Promise.allSettled([
@@ -518,6 +581,7 @@ it('şikâyet hız sınırı, tek açık kayıt, kapsamlı kuyruk ve atomik çö
     reporter = await member(institution.deptB1),
     wrong = await member(institution.deptA2);
   await addGrant(db, { userId: wrong, scope: 'DEPARTMENT', departmentId: institution.deptA2 });
+  await grantRequiredConsents(db, wrong);
   const ids: string[] = [];
   for (let i = 0; i < 11; i++) ids.push(await published(author));
   const reports = [];

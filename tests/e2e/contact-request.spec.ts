@@ -126,7 +126,8 @@ test('zorunlu metin sürümü değişince hesap yeniden onaya yönlenir; isteğe
     await rm(evidenceRoot, { recursive: true, force: true });
   }
   await page.goto('/hesap/gizlilik');
-  await expect(page).toHaveURL(/\/onay$/);
+  // Gidilmek istenen yol dönüş için taşınır (tur #10).
+  await expect(page).toHaveURL(/\/onay\?donus=%2Fhesap%2Fgizlilik$/);
   await expect(page.getByRole('heading', { name: 'Onaylarını yenile', exact: true })).toBeVisible();
   await page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true }).nth(1).check();
   await page

@@ -473,6 +473,19 @@ Yayın/ret kararına ait alanlar SQL CHECK'le birlikte tutulur; yayınlama yetki
 servis kartında zorlanır. CV davetinin isteğe bağlı Position kimliği yalnız girdidedir; sahipliği
 P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK'sı P1-08'e bırakıldı.
 
+
+## 2026-11-08 · Tur düzeltmesi: dönüş yolu, yönetimde rıza, geliştirme günlüğü (PM kararı)
+
+Faz 1 ekran turunun güvenlik/KVKK bulguları için:
+- Oturumsuz kullanıcı hata ekranı yerine girişe yönlenir; gitmek istediği yol `?donus=` ile taşınır ve
+  yalnız site içi göreli yol kabul edilir (açık yönlendirme yerine sessizce ana sayfa).
+- Rıza kapısı yönetim sayfalarını ve eylemlerini de kapsar; kontrol yetkiden sonradır.
+  Deneyim moderasyonunda kuyruk, şikâyet listesi, kararlar ve yalnız moderatör yetkisiyle
+  görülen detaylar da bu kapıdadır; yazarın kendi kaydına ve üyenin normal yayın erişimine ek kısıt getirilmez.
+- `next dev` günlüğünde sunucu eylemi argümanları ve istek URL günlükleri kapalıdır; URL’lerde kodlanmış kişisel veri bulunabilir. Telefon testi geliştirme
+  sunucusuyla yapıldığı için geliştirme günlüğü de kişisel veri kuralına tabidir.
+- İletişim hedefi önizlemesi talep edilemeyen her hedefe aynı yanıtı verir.
+
 ## 2026-11-08 · Deneyim servisi: anonim çıktı, atomik moderasyon ve K-09
 
 Detay, deneyimlerim ve moderasyon kuyruğu tek kapalı çıktı dönüştürücüsünden geçer; anonim yazar

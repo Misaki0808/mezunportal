@@ -42,6 +42,7 @@
       "CONTACT_REQUEST_NOT_APPROVED": "Yalnız onayladığın bir talebi geri alabilirsin.",
       "CONTACT_FIELD_NOT_REQUESTABLE": "İstediğin bilgilerden biri talep edilemiyor. Seçimini değiştirip tekrar dene.",
       "ACCOUNT_DELETE_CONFIRMATION_MISMATCH": "Yazdığın e-posta hesabının e-postasıyla aynı değil.",
+      "EMAIL_CHANGE_SAME_ADDRESS": "Bu zaten kullandığın adres. Farklı bir e-posta adresi yaz.",
       "CV_PDF_UNREADABLE": "Bu PDF açılamadı ya da şifreli. Şifresiz bir PDF yükle ya da bilgilerini elle gir.",
       "CV_TOO_MANY_PAGES": "CV en fazla 6 sayfa olabilir. Daha kısa bir sürümünü yükle.",
       "CV_PROVIDER_NOT_CONFIGURED": "CV okuma şu an kapalı. Bilgilerini elle girebilirsin.",

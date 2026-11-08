@@ -68,7 +68,11 @@ export async function requestSignInLink(
     if (!parsed.ok) return parsed.failure;
     const context = await getRequestContext();
     return actionOk(
-      await authFlow.requestSignInLink(authFlowDeps(), { email: parsed.data.email, ...context }),
+      await authFlow.requestSignInLink(authFlowDeps(), {
+        email: parsed.data.email,
+        returnTo: parsed.data.returnTo,
+        ...context,
+      }),
     );
   } catch (error) {
     return actionFailure(error);
