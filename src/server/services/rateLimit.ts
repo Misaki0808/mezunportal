@@ -15,6 +15,7 @@ export type RateLimitRule = {
 };
 
 export const RATE_LIMITS = {
+  bulkInvitation: { name: 'bulk-invitation', limit: 5, windowMs: 24 * 60 * 60 * 1000 },
   /** İletişim talebi: kullanıcı başına günde 10. */
   contactRequest: { name: 'contact-request', limit: 10, windowMs: 24 * 60 * 60 * 1000 },
   /** Veri dökümü: kullanıcı başına saatte 5. */

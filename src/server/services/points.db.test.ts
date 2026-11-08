@@ -740,6 +740,65 @@ describe('geriye dönük hesaplama ve günlük uzlaştırma', () => {
   });
 });
 
+describe('eşzamanlı aynı olay (deneyim, CV): tek kayıt', () => {
+  it('aynı deneyim için iki eşzamanlı yazım tek kayıt bırakır ve ikincisi hata fırlatmaz', async () => {
+    const author = await member();
+    const moderator = await member('ALUMNI');
+    const experience = await publishedExperience(author, moderator, new Date(now.getTime() - DAY));
+    const results = await Promise.allSettled([
+      awardForExperience(deps, experience.id),
+      awardForExperience(deps, experience.id),
+      awardForExperience(deps, experience.id),
+    ]);
+    expect(await db.pointEntry.count({ where: { userId: author } })).toBe(1);
+    expect(results.filter((r) => r.status === 'rejected')).toHaveLength(0);
+  });
+});
+
+describe('uzlaştırma: geç tamamlanan görüşme (puan yazımı düşmüş)', () => {
+  it('görüşmesi 25 gün önce, SON FORM bugün olan görüşmenin kaybolan puanını günlük iş yakalar', async () => {
+    const { mentor, student } = await pair();
+    const start = new Date(now.getTime() - 25 * DAY);
+    const row = await db.appointment.create({
+      data: {
+        mentorId: mentor,
+        menteeId: student,
+        startsAt: start,
+        endsAt: new Date(start.getTime() + HOUR),
+        expiresAt: new Date(start.getTime() - DAY),
+        decidedAt: new Date(start.getTime() - DAY),
+        mode: 'ONLINE',
+        status: 'CONFIRMED',
+      },
+    });
+    const input = { appointmentId: row.id, happened: true, helpful: true, note: null };
+    // Öğrenci hemen, mentor 25 gün sonra "bugün" yanıtlar → COMPLETED bugün olur.
+    await submitFeedback(db, student, input, new Date(start.getTime() + 3 * HOUR));
+    await submitFeedback(db, mentor, input, new Date(now.getTime() - HOUR));
+    expect((await db.appointment.findUniqueOrThrow({ where: { id: row.id } })).status).toBe(
+      'COMPLETED',
+    );
+    // `createdAt` veritabanı saatiyle yazılır; testin sahte saatine hizala (mentor son formu "1 saat önce").
+    await db.sessionFeedback.updateMany({
+      where: { appointmentId: row.id, authorId: mentor },
+      data: { createdAt: new Date(now.getTime() - HOUR) },
+    });
+    await db.sessionFeedback.updateMany({
+      where: { appointmentId: row.id, authorId: student },
+      data: { createdAt: new Date(start.getTime() + 3 * HOUR) },
+    });
+    // Puan yazımını DÜŞÜR (süreç kesildi): kancanın yazdığı kaydı sil.
+    await db.pointEntry.deleteMany({ where: { userId: mentor } });
+    expect(await entriesOf(mentor)).toHaveLength(0);
+    const first = await runDailyPoints(deps);
+    expect(first.reconcile.failed).toBe(0);
+    expect((await entriesOf(mentor)).map((r) => r.sourceId)).toEqual([row.id]);
+    // İdempotent: ikinci günlük iş yeni kayıt eklemez.
+    await runDailyPoints(deps);
+    expect(await entriesOf(mentor)).toHaveLength(1);
+  });
+});
+
 describe('katkı özeti ve geçmiş (yalnız sahibi)', () => {
   it('toplam yalnız FINAL; bekleyen ayrı; geri alınmış sayılmaz; çıktıda kaynak/karşı taraf yok', async () => {
     const { mentor, student } = await pair();
