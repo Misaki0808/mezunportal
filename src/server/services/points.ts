@@ -100,21 +100,30 @@ export async function awardPoint(tx: Tx, input: AwardInput, now: Date): Promise<
       ? await input.multiplierPercent(tx)
       : (input.multiplierPercent ?? 100);
   const { status, finalizesAt } = awardStatus(rule.delayDays, input.eventAt, now);
-  const created = await tx.pointEntry.create({
-    data: {
-      ...key,
-      counterpartId: input.counterpartId ?? null,
-      basePoints: rule.points,
-      multiplierPercent,
-      points: pointsOf(rule.points, multiplierPercent),
-      status,
-      eventAt: input.eventAt,
-      finalizesAt,
-      finalizedAt: status === 'FINAL' && finalizesAt ? now : null,
-    },
+  // `skipDuplicates` (ON CONFLICT DO NOTHING): aynı olayın eşzamanlı ikinci yazımı benzersiz-anahtar hatasıyla işlemi
+  // bozmaz; kazanan işlemin kaydı kalır, kaybeden `DUPLICATE` döner (yutulan hata/`failed` gürültüsü yok).
+  const { count } = await tx.pointEntry.createMany({
+    data: [
+      {
+        ...key,
+        counterpartId: input.counterpartId ?? null,
+        basePoints: rule.points,
+        multiplierPercent,
+        points: pointsOf(rule.points, multiplierPercent),
+        status,
+        eventAt: input.eventAt,
+        finalizesAt,
+        finalizedAt: status === 'FINAL' && finalizesAt ? now : null,
+      },
+    ],
+    skipDuplicates: true,
+  });
+  const row = await tx.pointEntry.findUnique({
+    where: { userId_action_sourceType_sourceId: key },
     select: { id: true },
   });
-  return { created: true, entryId: created.id, skipped: null };
+  if (count === 0) return { created: false, entryId: row?.id ?? null, skipped: 'DUPLICATE' };
+  return { created: true, entryId: row?.id ?? null, skipped: null };
 }
 
 /** Puan yazımı olay akışını ASLA bozmaz: hata yutulur (sabit metin), eksik puan uzlaştırmada tamamlanır. */
@@ -327,7 +336,19 @@ export async function runPointBackfill(
   }
   for (let cursor: string | undefined; ;) {
     const rows = await deps.db.appointment.findMany({
-      where: { status: 'COMPLETED', ...(since ? { startsAt: { gte: since } } : {}) },
+      where: {
+        status: 'COMPLETED',
+        // Uzlaştırmada tamamlanma anı SON FORM zamanıdır (görüşme tarihi değil): eski bir görüşmenin son formu geç
+        // gelirse ve puan yazımı düşerse kayıp puan pencerenin dışında kalmasın.
+        ...(since
+          ? {
+              OR: [
+                { startsAt: { gte: since } },
+                { feedbacks: { some: { createdAt: { gte: since } } } },
+              ],
+            }
+          : {}),
+      },
       orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
       take: BACKFILL_PAGE,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
