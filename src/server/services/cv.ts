@@ -54,7 +54,8 @@ import {
   type CvDeps,
   type Tx,
 } from './cv-shared';
-import { syncCompletionScore } from './profile';
+import { emitEvent, emitProfileThresholds, subjectFromActor } from './event';
+import { storedScore, syncCompletionScore } from './profile';
 import { attachSkill, ensureProfile } from './profile-skills';
 import { consumeRateLimit, peekRateLimit } from './rateLimit';
 
@@ -142,7 +143,7 @@ export async function uploadCv(
 
   const key = newCvKey(actor.userId);
   try {
-    return await db.$transaction(
+    const output = await db.$transaction(
       async (tx) => {
         await lockUser(tx, actor.userId, nowOf(deps));
         // Rıza kilit altında yeniden okunur: geri çekilmiş rızayla dosya kabul edilmez.
@@ -182,6 +183,8 @@ export async function uploadCv(
       },
       { timeout: 30_000, maxWait: 10_000 },
     );
+    emitEvent(db, actor.userId, { type: 'CV_UPLOADED', props: {} }, subjectFromActor(actor));
+    return output;
   } catch (error) {
     await storage.delete(key).catch(() => logCv('upload_cleanup_failed', 'STORAGE'));
     // Kullanıcı başına tek işlenen CV (kısmi benzersiz indeks) yarışı.
@@ -545,7 +548,8 @@ export async function applyCv(
 ): Promise<ApplyCvOutput> {
   const { db, storage } = deps;
   const now = nowOf(deps);
-  return db.$transaction(
+  const scoreBefore = await storedScore(db, actor.userId);
+  const applied = await db.$transaction(
     async (tx) => {
       await lockUser(tx, actor.userId, nowOf(deps));
       const upload = await findParsedUpload(tx, actor.userId, input.cvUploadId);
@@ -776,6 +780,18 @@ export async function applyCv(
     },
     { timeout: 30_000, maxWait: 10_000 },
   );
+  const subject = subjectFromActor(actor);
+  emitEvent(
+    db,
+    actor.userId,
+    {
+      type: 'CV_APPLIED',
+      props: { created: Math.min(applied.created, 1000), updated: Math.min(applied.updated, 1000) },
+    },
+    subject,
+  );
+  emitProfileThresholds(db, actor.userId, scoreBefore, await storedScore(db, actor.userId));
+  return applied;
 }
 
 // `Language`/`UserSkill` benzersizliği normalleştirilmiş ada göredir.

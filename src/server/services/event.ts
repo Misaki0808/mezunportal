@@ -8,7 +8,12 @@ import {
 } from '@/contracts/metrics';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 
-import { crossedThresholds, pickEventSubject, type EventSubject } from '../rules/eventSubject';
+import {
+  crossedThresholds,
+  pickEventSubject,
+  type EventSubject,
+  type MembershipFacts,
+} from '../rules/eventSubject';
 
 /**
  * Kullanım olayı yazımı (P1-13). `props` yalnız sözleşmedeki strict şemalardan geçer (kişisel veri alanı yoktur);
@@ -52,6 +57,29 @@ export async function recordEvent(
       departmentId: owner?.departmentId ?? null,
       props: parsed.props as Prisma.InputJsonValue,
     },
+  });
+}
+
+/** Etkin oturumdaki aktörden olay sahibi (ek sorgu yok). */
+export function subjectFromActor(actor: {
+  facts: { memberships: readonly MembershipFacts[] };
+}): EventSubject | null {
+  return pickEventSubject(actor.facts.memberships);
+}
+
+/** Kullanılan süzgeç TÜRLERİ (değerler asla): tanımlı ve boş olmayan alan adları. */
+export function usedFilterKeys<K extends string>(
+  filter: Record<string, unknown>,
+  keys: readonly K[],
+): K[] {
+  return keys.filter((key) => {
+    const value = filter[key];
+    return (
+      value !== undefined &&
+      value !== null &&
+      value !== false &&
+      !(Array.isArray(value) && value.length === 0)
+    );
   });
 }
 
