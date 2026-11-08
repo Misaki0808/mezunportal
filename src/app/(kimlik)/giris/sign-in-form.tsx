@@ -19,11 +19,18 @@ import type { ErrorCode } from '@/lib/errors';
 type Props = {
   options: SignInOptions;
   callbackError?: ErrorCode;
+  returnTo?: string;
   requestLink: (input: RequestSignInLinkInput) => Promise<ActionResult<CheckEmailResponse>>;
   startLinkedIn: () => Promise<ActionResult<StartLinkedInSignInOutput>>;
 };
 
-export function SignInForm({ options, callbackError, requestLink, startLinkedIn }: Props) {
+export function SignInForm({
+  options,
+  callbackError,
+  returnTo,
+  requestLink,
+  startLinkedIn,
+}: Props) {
   const t = useTranslations('authScreens.signIn');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -38,7 +45,7 @@ export function SignInForm({ options, callbackError, requestLink, startLinkedIn 
     if (locked.current) return;
     setError(undefined);
     setFieldError(undefined);
-    const parsed = requestSignInLinkSchema.safeParse({ email });
+    const parsed = requestSignInLinkSchema.safeParse({ email, ...(returnTo ? { returnTo } : {}) });
     if (!parsed.success) {
       setFieldError('VALIDATION_INVALID');
       return;

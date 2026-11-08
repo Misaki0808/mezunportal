@@ -1,5 +1,12 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import {
+  ClipboardCheckIcon,
+  DownloadIcon,
+  ShieldIcon,
+  TrashIcon,
+  UsersIcon,
+} from '@/components/ui';
 
 export async function PrivacyAccountLinks() {
   const t = await getTranslations('privacyScreens.account');
@@ -10,27 +17,37 @@ export async function PrivacyAccountLinks() {
     ['export', '/hesap/veriler'],
     ['delete', '/hesap/hesabi-sil'],
   ] as const;
+  const icons = {
+    consent: ClipboardCheckIcon,
+    visibility: ShieldIcon,
+    contacts: UsersIcon,
+    export: DownloadIcon,
+    delete: TrashIcon,
+  };
   return (
     <>
-      <section className="mt-8" aria-labelledby="privacy-account-heading">
-        <h2 id="privacy-account-heading" className="text-xl font-semibold">
-          {t('title')}
-        </h2>
-        <p className="mt-2 text-base text-fg-muted">{t('description')}</p>
-        <ul className="mt-4 divide-y divide-border rounded-card border border-border bg-bg">
-          {links.map(([id, href]) => (
-            <li key={id}>
-              <Link
-                href={href}
-                className="press-row flex min-h-14 items-center justify-between gap-3 px-5 py-3 text-base font-medium text-primary"
-              >
-                <span>{t(id)}</span>
-                <span aria-hidden="true">›</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {links.map(([id, href]) => {
+        const Icon = icons[id];
+        return (
+          <li key={id}>
+            <Link
+              href={href}
+              className="press-row flex min-h-20 items-center gap-4 rounded-card border border-border bg-bg p-5 text-fg"
+            >
+              <span className="text-primary">
+                <Icon />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-lg font-semibold">{t(id)}</span>
+                <span className="mt-1 block text-base text-fg-muted">{t(`${id}Description`)}</span>
+              </span>
+              <span aria-hidden="true" className="text-xl text-primary">
+                ›
+              </span>
+            </Link>
+          </li>
+        );
+      })}
     </>
   );
 }

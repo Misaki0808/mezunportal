@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 import { dataExportSchema } from '@/contracts/privacy';
 import { applyCvSchema, type CvDecisionInput } from '@/contracts/cv';
-import { cvKit, cvUser, pdfForm } from '@/test/cv';
+import { cvKit, cvUser, pdfForm, skillCount } from '@/test/cv';
 import { createTestPrisma } from '@/test/db';
 
 import { deleteAccount } from './accountDeletion';
@@ -113,7 +113,7 @@ describe('hesap silme', () => {
       db.position.count({ where: { userId: mine.userId } }),
       db.language.count({ where: { userId: mine.userId } }),
       db.certification.count({ where: { userId: mine.userId } }),
-      db.userSkill.count({ where: { userId: mine.userId } }),
+      skillCount(db, mine.userId),
       db.experienceInvitation.count({ where: { userId: mine.userId } }),
     ]);
     expect(gone).toEqual([0, 0, 0, 0, 0, 0, 0]);

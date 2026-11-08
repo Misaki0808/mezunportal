@@ -216,7 +216,11 @@ async function loadCvExport(
       db.position.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
       db.language.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
       db.certification.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
-      db.userSkill.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
+      db.profileTag.findMany({
+        where: { profile: { userId }, tag: { kind: 'SKILL' } },
+        orderBy: { createdAt: 'asc' },
+        select: { tagId: true, tag: { select: { label: true } } },
+      }),
       db.experienceInvitation.findMany({
         where: { userId },
         orderBy: { createdAt: 'asc' },
@@ -272,7 +276,7 @@ async function loadCvExport(
       issuedDate: toYearMonth(row.issuedYear, row.issuedMonth),
       ...entry(row),
     })),
-    skills: skills.map((row) => ({ id: row.id, name: row.name, ...entry(row) })),
+    skills: skills.map((row) => ({ id: row.tagId, name: row.tag.label })),
     experienceInvitations: invitations,
   };
 }

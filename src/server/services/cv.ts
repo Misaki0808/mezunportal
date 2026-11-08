@@ -15,6 +15,7 @@ import {
   type ExperienceInvitationsOutput,
   type ParsedCv,
   type ParsedPosition,
+  PROFILE_FIELDS,
 } from '@/contracts/cv';
 import { Prisma } from '@/generated/prisma/client';
 import {
@@ -53,6 +54,7 @@ import {
   type CvDeps,
   type Tx,
 } from './cv-shared';
+import { attachSkill, ensureProfile } from './profile-skills';
 import { consumeRateLimit, peekRateLimit } from './rateLimit';
 
 /**
@@ -242,16 +244,36 @@ function splitYearMonth(prefix: 'start' | 'end' | 'issued', value: string | null
 }
 
 async function loadSnapshot(tx: Tx, userId: string): Promise<CvSnapshot> {
-  const [education, positions, languages, certifications, skills] = await Promise.all([
+  const [education, positions, languages, certifications, profile] = await Promise.all([
     tx.education.findMany({ where: { userId } }),
     tx.position.findMany({ where: { userId } }),
     tx.language.findMany({ where: { userId } }),
     tx.certification.findMany({ where: { userId } }),
-    tx.userSkill.findMany({ where: { userId } }),
+    tx.profile.findUnique({
+      where: { userId },
+      select: {
+        id: true,
+        headline: true,
+        summary: true,
+        city: true,
+        manualFields: true,
+        tags: {
+          where: { tag: { kind: 'SKILL' } },
+          select: { tagId: true, tag: { select: { label: true } } },
+        },
+      },
+    }),
   ]);
   const protectedRow = (row: { manuallyEdited: boolean; source: 'CV' | 'MANUAL' }) =>
     row.manuallyEdited || row.source === 'MANUAL';
   return {
+    profile: profile
+      ? {
+          id: profile.id,
+          value: { headline: profile.headline, summary: profile.summary, city: profile.city },
+          manualFields: PROFILE_FIELDS.filter((field) => profile.manualFields.includes(field)),
+        }
+      : null,
     education: education.map((row) => ({
       id: row.id,
       protected: protectedRow(row),
@@ -293,16 +315,17 @@ async function loadSnapshot(tx: Tx, userId: string): Promise<CvSnapshot> {
         issuedDate: toYearMonth(row.issuedYear, row.issuedMonth),
       },
     })),
-    skills: skills.map((row) => ({
-      id: row.id,
-      protected: protectedRow(row),
-      value: { name: row.name, skillId: row.skillId },
+    skills: (profile?.tags ?? []).map((row) => ({
+      id: row.tagId,
+      protected: false,
+      value: { name: row.tag.label ?? '', skillId: null },
     })),
   };
 }
 
 function proposalFrom(parsed: ParsedCv, lookup: DictionaryLookup): CvProposal {
   return {
+    profile: parsed.profile,
     education: parsed.education,
     positions: parsed.positions.map((position) => ({
       ...position,
@@ -362,6 +385,14 @@ function withoutDictionaryIds(entry: PositionEntry): ParsedPosition {
 function reviewItem(item: DiffItem, lookup: DictionaryLookup): CvReviewItem {
   const base = { key: item.key, status: item.status, changedFields: item.changedFields };
   switch (item.section) {
+    case 'PROFILE':
+      return {
+        ...base,
+        section: 'PROFILE',
+        proposed: item.proposed,
+        current: item.current,
+        standardized: {},
+      };
     case 'POSITION': {
       const proposed = withoutDictionaryIds(item.proposed);
       const current = item.current ? withoutDictionaryIds(item.current) : null;
@@ -543,6 +574,30 @@ export async function applyCv(
           const fields = decision.values ? 'ALL' : item.changedFields;
           const editedFlag = edited ? { manuallyEdited: true } : {};
           switch (item.section) {
+            case 'PROFILE': {
+              const value = (decision.section === 'PROFILE' && decision.values) || item.proposed;
+              const profile = await ensureProfile(tx, actor.userId);
+              const current = await tx.profile.findUniqueOrThrow({
+                where: { id: profile.id },
+                select: { manualFields: true },
+              });
+              // Yalnız CV'nin sağladığı (dolu) alanlar ve — kullanıcı düzeltmediyse — farklı olanlar yazılır.
+              const written = PROFILE_FIELDS.filter(
+                (field) =>
+                  value[field] !== null &&
+                  (decision.values ? true : item.changedFields.includes(field)),
+              );
+              const data = Object.fromEntries(written.map((field) => [field, value[field]]));
+              const manual = new Set(current.manualFields);
+              if (edited) for (const field of written) manual.add(field);
+              await tx.profile.update({
+                where: { id: profile.id },
+                data: { ...data, manualFields: [...manual] },
+              });
+              updated += item.existingId === null ? 0 : 1;
+              created += item.existingId === null ? 1 : 0;
+              break;
+            }
             case 'EDUCATION': {
               const value = (decision.section === 'EDUCATION' && decision.values) || item.proposed;
               if (item.existingId === null) {
@@ -661,18 +716,13 @@ export async function applyCv(
               const name =
                 (decision.section === 'SKILL' && decision.values?.name) || item.proposed.name;
               const skill = lookupMatch(lookup.skill, 'SKILL', name);
-              // Beceri kalemi yalnız yeni olabilir (karşılaştırılacak alanı yoktur).
-              await tx.userSkill.create({
-                data: {
-                  userId: actor.userId,
-                  skillId: skill?.id ?? null,
-                  name,
-                  normalizedName: normalizedOf(name),
-                  source: 'CV',
-                  manuallyEdited: edited,
-                },
+              // Beceri `Tag(SKILL)` + profil bağıdır; sözlükte yoksa kişisel etiket açılır ve yönetici kuyruğuna düşer.
+              const profile = await ensureProfile(tx, actor.userId);
+              const attached = await attachSkill(tx, profile.id, {
+                name,
+                canonicalName: skill?.name ?? null,
               });
-              created += 1;
+              if (attached.created) created += 1;
               if (!skill) await recordUnmatched(tx, 'SKILL', name);
               break;
             }
@@ -704,6 +754,9 @@ export async function applyCv(
         where: { id: upload.id },
         data: { status: 'APPLIED', appliedAt: now, parsedJson: DbNull },
       });
+      // Son CV uygulama anı profilde durur ("CV" tamamlama adımı ve tazelik hatırlatması bunu okur).
+      const applied = await ensureProfile(tx, actor.userId);
+      await tx.profile.update({ where: { id: applied.id }, data: { cvUpdatedAt: now } });
 
       // Saklama: son dosya (bu CV) kalır; eski dosyalar silinir (açık incelemeye bağlı olan hariç).
       // Silme işlemin SON adımıdır: hata fırlatırsa işlem geri alınır.

@@ -483,6 +483,13 @@ tüm sorgu üzerinde değil SÖZCÜK başınadır: tüm sorguya benzerlik “mar
 Yazarı silinmiş, askıdaki ya da yazar bağı kopmuş (K-09 anonimleştirme) deneyim içeriği korur ama yazarsız görünür.
 
 
+## 2026-11-08 · İlk giriş adımlarına dönüş
+
+Hesabım'daki Profilim / Başlangıç adımları satırı ilk giriş tercihlerini yeniden açar;
+atlanan uygulanabilir ilk adım öne gelir. Geri düğmesi kullanıcıyı önceki uygulanabilir
+adıma taşır ve bu oturumda seçilmiş değerleri korur. Gerekçe: atlanan seçimler sonradan
+tamamlanabilir ve kullanıcı adımlar arasında veri kaybetmeden gezinebilir.
+
 ## 2026-11-08 · Tur düzeltmesi: dönüş yolu, yönetimde rıza, geliştirme günlüğü (PM kararı)
 
 Faz 1 ekran turunun güvenlik/KVKK bulguları için:
@@ -553,6 +560,24 @@ veri sızıntısını engellemez. P1-11 kartına göre yıkıcı/yetki değişti
 confirmed:true ister; askı kaldırma da gerekçelidir. Sözlük silme ve eşleşmeyeni atmada onay/gerekçe
 sözleşmede zorunludur. Excel bağlantısı yalnız filtre şemasından geçen alanları taşır; kişisel ya da
 bilinmeyen URL parametresi eklenmez. Bu alanlar ekranın onay penceresi ile sunucu doğrulamasını bağlar.
+
+## 2026-11-08 · Profil içeriği: beceri = Tag, görünürlük sunucuda, bağlantılar izinli listeyle
+Beceri modeli (TD-010) PM kararıyla `Tag` (tür SKILL) + kullanıcı-etiket bağıdır; böylece benzer yol önerisi ve dizin
+tek sözlükle çalışır. Serbest yazılan beceri normalleştirilip kişisel etiket (`curated = false`) olarak açılır,
+yönetici kuyruğuna düşer ve başkalarına ASLA önerilmez (başkasının metni sızmasın); hesap silinince ya da son bağı
+kalkınca silinir. Eski `UserSkill` verisi taşındı, tablo daraltma migration'ına bırakıldı (TD-013). Başkasının
+profilinde gizli alan yanıttan çıkarılır, `null` yazılmaz (anahtar bile sızdırmaz); hedef silinmiş/askıda/doğrulanmamış
+ya da ortak üniversite yoksa varlığı sızmayan `RESOURCE_NOT_FOUND`. Sosyal bağlantılar yalnız `https` ve sabit alan adı
+listesindedir (sorgu/parça atılır, IDN/alt alan benzerleri geçmez); saklı veri okunurken de yeniden doğrulanır.
+CV onayına başlık/özet/şehir kalemi eklendi (bağlantı ve iletişim bilgisi LLM'den alınmaz); elle yazılan alan
+çakışma olarak sorulur. "Reddet" ayrı eylem değildir: kalem için karar vermemek yazmamaktır (onaysız yazma yok).
+Tamamlama göstergesi okuma anında hesaplanır (ilk giriş adımları + başlık/şehir, eğitim, ≥ 3 beceri, uygulanmış CV).
+
+Kişisel beceri koruması yalnız yeni öneri ucunda değil ilk girişin eski SKILL liste ucunda da
+uygulanır. LinkedIn kullanıcı adı yüzde kodlaması çözüldükten sonra tek ad olarak doğrulanır;
+kodlanmış ayraç/kontrol ve bozuk/çift kodlama profil yolu olamaz. Beceri migration'ının geri
+alması önce yeni becerileri eski modele taşır, önceki kurallı etiket/bağları korur. Yeniden
+uygulama görünür adı kaybetmez ve kurallı etiketi kişisele düşürmez.
 
 ## 2026-11-08 · Yönetim yazımları yetki iptali ve hesap silmeyle sıralanır
 

@@ -3,8 +3,15 @@ import { getConsentState } from '@/server/actions/privacy';
 import { ErrorState } from '@/components/ui';
 import { PrivacyFrame } from '@/components/privacy/frame';
 import { ConsentForm } from '@/components/privacy/consent-form';
+import { RETURN_PATH_PARAM, safeReturnPath } from '@/lib/return-path';
 export const dynamic = 'force-dynamic';
-export default async function ConsentPage() {
+export default async function ConsentPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const query = await searchParams;
+  const returnTo = safeReturnPath(query[RETURN_PATH_PARAM]);
   const [result, t] = await Promise.all([
     getConsentState(),
     getTranslations('privacyScreens.consent'),
@@ -17,8 +24,12 @@ export default async function ConsentPage() {
     ? t(renew ? 'renewDescription' : 'description')
     : t('manageDescription');
   return (
-    <PrivacyFrame title={title} description={description}>
-      <ConsentForm key={state.documents.map((d) => d.currentVersion).join(':')} state={state} />
+    <PrivacyFrame title={title} description={description} showBack={!state.blocking}>
+      <ConsentForm
+        key={state.documents.map((d) => d.currentVersion).join(':')}
+        state={state}
+        returnTo={returnTo}
+      />
     </PrivacyFrame>
   );
 }
