@@ -21,6 +21,8 @@ export const RATE_LIMITS = {
   dataExport: { name: 'data-export', limit: 5, windowMs: 60 * 60 * 1000 },
   /** Hesap silme denemesi (e-posta onayı yanlış yazılabilir): saatte 5. */
   accountDeletion: { name: 'account-deletion', limit: 5, windowMs: 60 * 60 * 1000 },
+  /** İletişim hedefi önizlemesi: kullanıcı kimliklerini taramayı yavaşlatır; saatte 60. */
+  contactPreview: { name: 'contact-preview', limit: 60, windowMs: 60 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export type RateLimitClient = Pick<Prisma.TransactionClient, '$queryRaw'>;
