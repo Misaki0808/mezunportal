@@ -146,6 +146,7 @@ export function PostingList({
         </div>
       </header>
       <form
+        role="search"
         action="/ilanlar"
         className="mb-8 rounded-3xl border border-border bg-surface p-4 shadow-sm sm:p-5"
       >

@@ -43,6 +43,7 @@ it('öğrenciye ilan verme sunulmaz; süzgeçler ve sonraki sayfa URL taşır', 
     />,
   );
   expect(screen.queryByRole('link', { name: 'İlan ver' })).not.toBeInTheDocument();
+  expect(screen.getByRole('search')).toHaveAttribute('action', '/ilanlar');
   expect(screen.getByText(/doğrulanmış mezunlar/)).toBeVisible();
   expect(screen.getByRole('option', { name: 'Örnek Kurum' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /Sonraki/ }).getAttribute('href')).toContain(
