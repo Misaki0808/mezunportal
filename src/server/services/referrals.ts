@@ -1,6 +1,7 @@
 import 'server-only';
 
 import {
+  REFERRAL_DELAY_DAYS,
   listReferralCandidatesSchema,
   listReferralsSchema,
   referralPageSchema,
@@ -329,7 +330,12 @@ export async function cancelReferral(
     if (row.alumnusId !== userId) throw codedNotFound('RESOURCE_NOT_FOUND');
     if (['CANCELLED', 'REJECTED'].includes(row.status))
       throw codedConflict('REFERRAL_INVALID_STATE');
-    if (row.approvedAt && now.getTime() >= row.approvedAt.getTime() + 14 * 86400000)
+    // Kabul onayı ilk referanstan haftalar sonra gelebilir; her onayın kendi bekleme süresi vardır.
+    const latestApprovalAt = row.acceptanceApprovedAt ?? row.approvedAt;
+    if (
+      latestApprovalAt &&
+      now.getTime() >= latestApprovalAt.getTime() + REFERRAL_DELAY_DAYS * 86400000
+    )
       throw codedConflict('REFERRAL_CANCEL_WINDOW_CLOSED');
     await tx.referralClaim.update({
       where: { id: row.id },

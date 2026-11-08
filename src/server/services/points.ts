@@ -486,14 +486,19 @@ export async function awardReferralInTx(
   );
 }
 
-/** İptal edilen beyanın yalnız henüz kesinleşmemiş puanlarını geri alır. */
+/** İptal edilen beyanın yalnız bekleme süresi dolmamış puanlarını geri alır (geciken görevden bağımsız). */
 export async function revokePendingReferralPoints(
   tx: Tx,
   referralId: string,
   now: Date,
 ): Promise<number> {
   const { count } = await tx.pointEntry.updateMany({
-    where: { sourceType: 'REFERRAL', sourceId: referralId, status: 'PENDING' },
+    where: {
+      sourceType: 'REFERRAL',
+      sourceId: referralId,
+      status: 'PENDING',
+      finalizesAt: { gt: now },
+    },
     data: { status: 'REVOKED', revokedAt: now, revokedReason: 'REFERRAL_CANCELLED' },
   });
   return count;
