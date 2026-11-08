@@ -828,14 +828,15 @@ form sonuna almak — mobilde eylem çubuğunun hızlı erişimini kaybettirir; 
 görünümü küçülmediği için çubuk klavyenin ARKASINDA kalır; (c) seçilen: klavye açıkken akışa dön, kapalıyken yapışkan kal. Gerçek
 cihaz doğrulaması telefon testine yazıldı (`docs/engineering.md`).
 
-**SSS kimlik denetimi: engel ve uyarı (kart 122).** Önceki denetim 4+ harfli adları önek olarak eşleştirdiği için "sisteme",
-"denizcilik" gibi sıradan sözcükler yayını engelliyordu. Şimdi: **engel** (`FAQ_IDENTITY_LEAK`, onayla aşılamaz) = adın tam
-sözcüğü (kesmeli "Deniz'in" dahil), `rules/faq.ts` `BLOCKING_NAME_SUFFIXES` tablosundaki Türkçe ekli hali ("Denizin", "denizden",
-"denizler"), harfleri boşluk/noktalamayla bölünmüş ad, e-posta/telefon/kimlik biçimi, kullanıcı/kayıt kimliği; **uyarı**
-(`FAQ_IDENTITY_WARNING`) = yalnız ad önekiyle başlayan başka sözcük ("denizcilik"). Uyarıda moderatör eşleşen sözcükleri görür
-(en çok 5) ve "Kişisel bilgi değil, yayımla" ile `confirmNotPersonal` gönderir; yayın olur ve `MODERATION_PUBLISH` işlem kaydına sabit
-gerekçe + `identityWarningConfirmed`/`warnedWordCount` (sözcükler kaydedilmez) düşer. Seçenekler: (a) tümünü engel bırakmak —
-yanlış alarm; (b) önek denetimini kaldırmak — "denizcilik" ile gerçek ad sızıntısı ayırt edilemez, kaçak artar; (c) seçilen: ad
-tablosuyla engel + önek için onaylı uyarı. Bilinen sınır: ek tablosu PM kararındaki kesmesiz ekleri (-e/-a, -de/-da, -le/-la …)
-engel sayar, bu yüzden "sisteme" (ad "Sistem" iken) ENGELDİR; ad sıradan bir sözcükse yanlış alarm sürer (moderatör metni
-değiştirir). Bir ek uyarıya indirilecekse tablodan çıkarılır. Moderatör ekranı (uyarı + onay düğmesi) #54 main'e girince bağlanır.
+**SSS kimlik denetimi: engel ve uyarı (kart 122, PM kararıyla).** Önceki denetim 4+ harfli adları önek olarak eşleştirdiği için
+"sisteme", "denizcilik" gibi sıradan sözcükler yayını engelliyordu. Türkçe yazım kuralı: özel isim ek alınca kesme alır
+("Deniz'in"); kesmesiz ekli biçim ("denize", "sisteme", "Ahmete") çoğunlukla cins isimdir. Şimdi: **engel**
+(`FAQ_IDENTITY_LEAK`, onayla aşılamaz) = adın tam sözcüğü (kesmeli ekli biçimler dahil: kesmede sözcük bölündüğü için tam eşleşir),
+harfleri boşluk/noktalamayla bölünmüş ad, e-posta/telefon/kimlik biçimi, kullanıcı/kayıt kimliği; **uyarı**
+(`FAQ_IDENTITY_WARNING`) = ad ile başlayan başka sözcük (kesmesiz ekli biçim ve önek: "sisteme", "Ahmete", "denizcilik").
+Uyarıda moderatör eşleşen sözcükleri görür (en çok 5) ve "Kişisel bilgi değil, yayımla" ile `confirmNotPersonal` gönderir; yayın
+olur ve `MODERATION_PUBLISH` işlem kaydına sabit gerekçe + `identityWarningConfirmed`/`warnedWordCount` (sözcükler kaydedilmez)
+düşer. Seçenekler: (a) tümünü engel bırakmak — yanlış alarm; (b) önek ve ekli biçim denetimini kaldırmak — gerçek ad sızıntısı
+ayırt edilemez; (c) seçilen: kesmeyle ayrılan/bölünmüş/tam ad engel, geri kalanı onaylı uyarı. Bilinen sınır: kesmesiz yazılmış
+gerçek ad ("Ahmete sordum") artık engel değil uyarıdır; moderatör ad olduğunu ayırt edebilmelidir (ad moderatöre gösterilmez, yalnız
+metindeki sözcük). Moderatör ekranı (uyarı + onay düğmesi) #54 main'e girince bağlanır.

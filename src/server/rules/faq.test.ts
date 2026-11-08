@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   analyzeIdentity,
-  BLOCKING_NAME_SUFFIXES,
   findIdentityLeak,
   foldTr,
   hasPersonalDataPattern,
@@ -33,7 +32,7 @@ describe('findIdentityLeak', () => {
     ['Ahmet bana şunu söyledi', true],
     ['ahmet', true],
     ["Ahmet'e sordum", true],
-    ['Ahmete sordum', true],
+    ['Ahmete sordum', false], // kesmesiz ekli biçim: uyarı (cins isim olabilir)
     ['AHMET YILMAZ mentörüm', true],
     ['yilmaz hoca', true],
     ['Zeynep Hanım önermişti', true],
@@ -80,11 +79,6 @@ describe('analyzeIdentity: engel ve uyarı (kart 122)', () => {
     ['Deniz', 'tam sözcük'],
     ["Deniz'in tavsiyesi", 'kesmeli tamlayan'],
     ["Deniz'e sordum", 'kesmeli yönelme'],
-    ['Denizin tavsiyesi', 'kesmesiz tamlayan'],
-    ['Denize sordum', 'kesmesiz yönelme'],
-    ['denizden duydum', 'çıkma'],
-    ['denizle konuştum', 'vasıta'],
-    ['denizler', 'çoğul'],
     ['DENİZ hoca', 'büyük harf + noktalı İ'],
     ["DENİZ'İN", 'büyük harf kesmeli'],
     ['deniz\u200b in', 'görünmez karakter'],
@@ -92,7 +86,6 @@ describe('analyzeIdentity: engel ve uyarı (kart 122)', () => {
     ['D-e-n-i-z yazdı', 'noktalamayla bölünmüş'],
     ['D e n i z c i l i k', 'harfleri bölünmüş (sonrası ayrı harfler)'],
     ['Aksoy hocaya sor', 'soyad'],
-    ['aksoyun görüşü', 'soyad + tamlayan'],
   ])('ENGEL: %s (%s)', (text) => {
     const found = analyzeIdentity(text, names);
     expect(found.blocked).toBe(true);
@@ -101,6 +94,12 @@ describe('analyzeIdentity: engel ve uyarı (kart 122)', () => {
 
   it.each([
     ['denizcilik sektörü', ['denizcilik']],
+    ['Denizin tavsiyesi', ['Denizin']], // kesmesiz ekli biçimler (cins isim olabilir)
+    ['Denize sordum', ['Denize']],
+    ['denizden duydum', ['denizden']],
+    ['denizle konuştum', ['denizle']],
+    ['sisteme girdim', ['sisteme']],
+    ['aksoyun görüşü', ['aksoyun']],
     ['Denizli şehrinde staj', ['Denizli']],
     ['sistematik yaklaşım', ['sistematik']],
     ['Aksoyluk yok', ['Aksoyluk']],
@@ -165,9 +164,19 @@ describe('analyzeIdentity: engel ve uyarı (kart 122)', () => {
     expect(analyzeIdentity('Ali ile', ['Ali Veli']).blocked).toBe(true);
   });
 
-  it('kimlik ve kişisel veri biçimi her zaman engeldir; ek tablosu katlanmış biçimdedir', () => {
+  it('kimlik ve kişisel veri biçimi her zaman engeldir', () => {
     expect(analyzeIdentity('ornek@okul.edu.tr', []).blocked).toBe(true);
     expect(analyzeIdentity('kod abc123', [], ['abc123']).blocked).toBe(true);
-    for (const suffix of BLOCKING_NAME_SUFFIXES) expect(foldTr(suffix)).toBe(suffix);
+  });
+
+  it('Türkçe yazım kuralı: kesmeli ekli biçim ENGEL, aynı ek kesmesiz UYARI (her ek türü)', () => {
+    for (const suffix of ['in', 'ın', 'e', 'a', 'i', 'de', 'den', 'le', 'ler', 'lerin'])
+      expect(analyzeIdentity(`Deniz'${suffix} dedi`, names).blocked, `Deniz'${suffix}`).toBe(true);
+    for (const suffix of ['in', 'e', 'i', 'de', 'den', 'le', 'ler', 'lerin'])
+      expect(analyzeIdentity(`deniz${suffix} dedi`, names), `deniz${suffix}`).toEqual({
+        blocked: false,
+        warnings: [`deniz${suffix}`],
+      });
+    expect(analyzeIdentity('DENİZ’İN sözü', names).blocked).toBe(true); // tipografik kesme
   });
 });

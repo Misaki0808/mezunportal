@@ -418,7 +418,6 @@ describe('yayında ad ÖNEKİ uyarısı (kart 122): engel değil, moderatör ona
     const r = await requestWithAnswers(w);
     for (const answer of [
       `${publishInput(r).answer} Selin'in önerisi.`,
-      `${publishInput(r).answer} Selinin önerisi.`,
       `${publishInput(r).answer} Selinay ve Burak önerdi.`,
       `${publishInput(r).answer} Selinay: ornek@okul.edu.tr`,
     ])
@@ -428,6 +427,26 @@ describe('yayında ad ÖNEKİ uyarısı (kart 122): engel değil, moderatör ona
         ),
       ).toBe('FAQ_IDENTITY_LEAK');
     expect(await db.faqItem.count({ where: { sourceRequestId: r.requestId } })).toBe(0);
+  });
+
+  it('kesmesiz ekli ad ("Selinin") uyarıdır, kesmeli ("Selin\'in") engeldir; onayla yalnız uyarı geçer', async () => {
+    const w = await world();
+    const r = await requestWithAnswers(w);
+    const base = publishInput(r);
+    const kesmesiz = { ...base, answer: `${base.answer} Selinin dediğine göre yeterli olur.` };
+    const error = await lastError(publishFaq(deps, w.moderator, kesmesiz));
+    expect(error).toMatchObject({ code: 'FAQ_IDENTITY_WARNING', params: { matches: 'Selinin' } });
+    expect(
+      await code(
+        publishFaq(deps, w.moderator, {
+          ...base,
+          answer: `${base.answer} Selin'in dediğine göre yeterli olur.`,
+          confirmNotPersonal: true,
+        }),
+      ),
+    ).toBe('FAQ_IDENTITY_LEAK');
+    await publishFaq(deps, w.moderator, { ...kesmesiz, confirmNotPersonal: true });
+    expect(await db.faqItem.count({ where: { sourceRequestId: r.requestId } })).toBe(1);
   });
 
   it('uyarı yokken onay bayrağı işlem kaydına yansımaz; soru metnindeki önek de uyarır', async () => {
@@ -581,7 +600,6 @@ describe('moderasyon: yayın', () => {
       { question: 'Elif için staj belgeleri nelerdir diye sordum' },
       { answer: 'Burak Soylu ile konuşun, sana yardım eder.' },
       { answer: 'Selin hanıma sorun; özgeçmiş ve transkript yeterli olur.' },
-      { answer: 'Selinin dediğine göre özgeçmiş ve transkript yeterli olur.' },
       { answer: 'Bana ornek@okul.edu.tr adresinden yazın, hepsini anlatayım.' },
       { answer: 'Beni 0532 123 45 67 numarasından arayın, anlatayım hepsini.' },
     ];

@@ -3,7 +3,7 @@ import { looksLikePersonalData } from './adminAudit';
 /**
  * SSS gizlilik kuralları (saf). Yayında hiçbir isim/kimlik olmamalıdır: yayın metni, talebe dahil herkesin
  * (soran, cevap yazanlar) adını/soyadını ve e-posta/telefon/kimlik numarası biçimini içeremez. Denetim bilinçli olarak
- * katıdır (sızıntı geri alınamaz); yalnız ad ÖNEKİ eşleşmesi engel değil uyarıdır (moderatör onayı + işlem kaydı).
+ * katıdır (sızıntı geri alınamaz); kesmesiz ekli biçim ve ad önekiyle eşleşen sözcük engel değil uyarıdır (moderatör onayı + işlem kaydı).
  */
 
 /** Türkçe katlama: İ→i, I→ı, aksanlar düşer; karşılaştırma büyük/küçük harf ve aksandan bağımsızdır. */
@@ -25,64 +25,6 @@ const SUFFIX_MIN_LENGTH = 4;
 const WARNING_LIMIT = 5;
 const WARNING_WORD_MAX = 40;
 
-/**
- * Adın ENGEL sayılan Türkçe ekli halleri (kesmesiz). Katlanmış yazımla (`foldTr`: ı→i, ü→u, ö→o) tutulur; kesmeli biçimler
- * ("Deniz'in") sözcük bölünmesiyle zaten tam eşleşmedir. Liste dışı her ad-öneki eşleşmesi ("denizcilik") ENGEL DEĞİL,
- * UYARIDIR (moderatör onayıyla yayınlanır). Tablo veridir: bir ek uyarıya inecekse buradan çıkarılır.
- */
-export const BLOCKING_NAME_SUFFIXES: readonly string[] = [
-  // tamlayan (-in/-ın/-un/-ün, ünlü sonrası -nin/-nın/-nun/-nün)
-  'in',
-  'un',
-  'nin',
-  'nun',
-  // yönelme (-e/-a, ünlü sonrası -ye/-ya)
-  'e',
-  'a',
-  'ye',
-  'ya',
-  // belirtme (-i/-ı/-u/-ü, ünlü sonrası -yi/-yı/-yu/-yü)
-  'i',
-  'u',
-  'yi',
-  'yu',
-  // bulunma (-de/-da/-te/-ta)
-  'de',
-  'da',
-  'te',
-  'ta',
-  // çıkma (-den/-dan/-ten/-tan)
-  'den',
-  'dan',
-  'ten',
-  'tan',
-  // vasıta (-le/-la, ünlü sonrası -yle/-yla)
-  'le',
-  'la',
-  'yle',
-  'yla',
-  // iyelik (-im/-um, -imiz/-umuz, -iniz/-unuz)
-  'im',
-  'um',
-  'imiz',
-  'umuz',
-  'iniz',
-  'unuz',
-  // çoğul ve çoğul + durum eki
-  'ler',
-  'lar',
-  'leri',
-  'lari',
-  'lerin',
-  'larin',
-  'lere',
-  'lara',
-  'lerde',
-  'larda',
-  'lerden',
-  'lardan',
-];
-
 export function nameTokens(names: readonly string[]): string[] {
   const tokens = new Set<string>();
   for (const name of names)
@@ -99,11 +41,15 @@ export type IdentityFinding = {
 };
 
 type WordMatch = 'exact' | 'prefix' | 'none';
-/** Katlanmış sözcüğün ad sözcüğüyle ilişkisi: tam/ekli (engel), önek (uyarı), ilgisiz. */
+/**
+ * Katlanmış sözcüğün ad sözcüğüyle ilişkisi: tam sözcük (engel), ad ile BAŞLAYAN başka sözcük (uyarı), ilgisiz.
+ * Türkçe yazım kuralı: özel isim ek alınca kesme alır ("Deniz'in" → sözcüklere "deniz" + "in" bölünür = tam eşleşme, ENGEL);
+ * kesmesiz ekli biçim ("denize", "sisteme", "Ahmete") çoğunlukla cins isimdir → UYARI (moderatör onayı + işlem kaydı).
+ */
 function matchWord(word: string, token: string): WordMatch {
   if (word === token) return 'exact';
   if (token.length < SUFFIX_MIN_LENGTH || !word.startsWith(token)) return 'none';
-  return BLOCKING_NAME_SUFFIXES.includes(word.slice(token.length)) ? 'exact' : 'prefix';
+  return 'prefix';
 }
 
 function addWarning(warnings: string[], word: string): void {
@@ -113,8 +59,8 @@ function addWarning(warnings: string[], word: string): void {
 
 /**
  * Metni verilen adlara, kimliklere ve e-posta/telefon/kimlik numarası biçimine göre inceler. **Engel:** adın tam sözcüğü
- * ("Deniz", kesmeli "Deniz'in" dahil), `BLOCKING_NAME_SUFFIXES` ekli hali ("Denizin"), harfleri boşluk/noktalamayla bölünmüş
- * ad, kişisel veri biçimi, kullanıcı/kayıt kimliği. **Uyarı:** yalnız ad önekiyle başlayan başka sözcük ("denizcilik").
+ * (kesmeli ekli biçim "Deniz'in" dahil), harfleri boşluk/noktalamayla bölünmüş ad, kişisel veri biçimi, kullanıcı/kayıt
+ * kimliği. **Uyarı:** ad ile başlayan başka sözcük: kesmesiz ekli biçim ("denize", "Ahmete") ve önek eşleşmesi ("denizcilik").
  */
 export function analyzeIdentity(
   text: string,
@@ -154,8 +100,7 @@ export function analyzeIdentity(
     for (const found of normalized.matchAll(split)) {
       const [, hit = '', tail = ''] = found;
       if (hit === token) continue; // ayırıcısız: yukarıdaki sözcük denetimi karar verdi
-      if (tail === '' || BLOCKING_NAME_SUFFIXES.includes(tail))
-        return { blocked: true, warnings: [] };
+      if (tail === '') return { blocked: true, warnings: [] };
       addWarning(warnings, `${hit}${tail}`);
     }
   }
