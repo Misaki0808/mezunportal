@@ -145,7 +145,7 @@ PR'da bu bölüme yazılır. Faz kapanışında kayıtsız kalmış borçlar bu 
 
 ## Ertelenmiş — Faz 2 (aktif iş değil)
 
-Faz 1 kapanınca `docs/faz2-plan.md` bu listeden yazılır.
+Taslak plan: `docs/faz2-plan.md` (adım ayrıntıları, dalga sırası, onay noktaları). Bu liste adımların kısa kaydıdır; plan ile çeliştiğinde plan kazanır.
 
 - **P2-01 · Yılın Mezunu ve LinkedIn rozeti** — puan aday listesi, kararı bölüm verir; LinkedIn
   “Add to Profile” bağlantısı (sertifika adı, kurum, tarih, doğrulama adresi), hazır metinli
