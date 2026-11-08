@@ -304,7 +304,13 @@ export const searchJobPostingsSchema = z
     q: text(JOB_POSTING_SEARCH_MIN, JOB_POSTING_SEARCH_MAX).optional(),
     departmentId: deptId.optional(),
     kind: z.enum(JOB_POSTING_KINDS, { error: INVALID }).optional(),
+    /** Sözlük şirketi. `organizationName` ile BİRLİKTE gönderilemez (ya biri ya öteki; `VALIDATION_INVALID`). */
     companyId: adminId.optional(),
+    /**
+     * Sözlüğe bağlı OLMAYAN (serbest adlı) kurum: tam eşleşme, tr-TR küçük harf + ASCII katlama ("Örnek Teknoloji" = "ORNEK TEKNOLOJI").
+     * Süzgeç seçeneklerinde `companyId` boş olan kurum satırının `name` değeridir.
+     */
+    organizationName: text(JOB_POSTING_ORGANIZATION_MIN, JOB_POSTING_ORGANIZATION_MAX).optional(),
     /** Konum metni (içerir; tr-TR küçük harf + ASCII katlama: "İstanbul" = "istanbul" = "ISTANBUL"). */
     location: text(JOB_POSTING_LOCATION_MIN, JOB_POSTING_LOCATION_MAX).optional(),
     remote: z.boolean({ error: INVALID }).optional(),
@@ -323,7 +329,11 @@ export const searchJobPostingsSchema = z
       .max(JOB_POSTING_PAGE_SIZE_MAX)
       .default(JOB_POSTING_PAGE_SIZE_DEFAULT),
   })
-  .strict();
+  .strict()
+  .refine((value) => !(value.companyId && value.organizationName), {
+    error: INVALID,
+    path: ['organizationName'],
+  });
 export type SearchJobPostingsInput = z.input<typeof searchJobPostingsSchema>;
 
 /** Okuyucu kartı: yazar adı/kimliği YOK (yalnız rol türü). `daysLeft`: bugünden (İstanbul) son güne kalan gün (0 = bugün son gün). */
@@ -368,6 +378,8 @@ export const jobPostingFilterOptionsSchema = z
       .array(
         z
           .object({
+            /** Satırı tekil tanıtır: `companyId` varsa o, yoksa kurum adı (liste anahtarı olarak kullanılır). */
+            key: z.string(),
             companyId: z.string().nullable(),
             name: z.string(),
             count: z.number().int().min(1),

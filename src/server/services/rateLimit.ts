@@ -28,6 +28,10 @@ export const RATE_LIMITS = {
   faqRequest: { name: 'faq-request', limit: 3, windowMs: 24 * 60 * 60 * 1000 },
   /** SSS benzer soru önerisi (yazarken): kullanıcı başına saatte 60. */
   faqSuggest: { name: 'faq-suggest', limit: 60, windowMs: 60 * 60 * 1000 },
+  /** İlan gönderimi (P2-04): yazar başına 30 günde 5. */
+  jobPostingSubmit: { name: 'job-posting-submit', limit: 5, windowMs: 30 * 24 * 60 * 60 * 1000 },
+  /** İlan şikâyeti (P2-04): kullanıcı başına günde 10. */
+  jobPostingReport: { name: 'job-posting-report', limit: 10, windowMs: 24 * 60 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export type RateLimitClient = Pick<Prisma.TransactionClient, '$queryRaw'>;
