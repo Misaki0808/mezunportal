@@ -393,6 +393,22 @@ describe('talep', () => {
     await expectCode(ask(h, await person(), mentor), 'APPOINTMENT_MENTOR_UNAVAILABLE');
   });
 
+  it('ayın kapasitesi dolduysa o aya talep APPOINTMENT_CAPACITY_FULL (slot da listelenmez)', async () => {
+    const h = harness();
+    const mentor = await mentorWith({ capacity: 1 });
+    const first = await ask(h, await person(), mentor, NEXT_WED_10);
+    await respondAppointment(h.deps, mentor, { decision: 'CONFIRM', appointmentId: first.id });
+    const other = await person();
+    const later = new Date(NEXT_WED_10.getTime() + 30 * 60_000);
+    await expectCode(ask(h, other, mentor, later), 'APPOINTMENT_CAPACITY_FULL');
+    const listed = (await listSlots(h.deps, other, { mentorId: mentor })).slots.map((slot) =>
+      slot.startsAt.getTime(),
+    );
+    expect(listed).not.toContain(later.getTime());
+    // Temmuz ayı henüz boş
+    expect(listed).toContain(new Date('2030-07-03T07:00:00Z').getTime());
+  });
+
   it('aynı mentora yanıt bekleyen ikinci talep reddedilir; sonuçlanınca yenisi açılabilir', async () => {
     const h = harness();
     const mentor = await mentorWith();

@@ -275,10 +275,10 @@ describe('.ics', () => {
       location: 'Bina; kat 2',
       url: 'https://x.com/a\r\nBEGIN:VEVENT',
     });
-    expect(text).toContain('SUMMARY:A\;B\\,C\\\\D\\nSONRAKI');
+    expect(text).toContain('SUMMARY:A\\;B\\,C\\\\D\\nSONRAKI');
     expect(text.split('\r\n').filter((line) => line === 'END:VEVENT')).toHaveLength(1);
     expect(text.split('\r\n').filter((line) => line === 'BEGIN:VEVENT')).toHaveLength(1);
-    expect(text).toContain('LOCATION:Bina\; kat 2');
+    expect(text).toContain('LOCATION:Bina\\; kat 2');
   });
   it('75 oktetten uzun satır katlanır, çok baytlı karakter bölünmez', () => {
     const folded = foldLine('SUMMARY:' + 'ğ'.repeat(80));
