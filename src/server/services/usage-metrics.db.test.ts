@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import ExcelJS from 'exceljs';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 
 import { EVENT_TYPES, USAGE_EXPORT_SHEETS, type EventType } from '@/contracts/metrics';
 import { isCodedError } from '@/lib/errors';
