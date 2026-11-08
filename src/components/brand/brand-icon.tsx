@@ -8,7 +8,7 @@ export function BrandIcon({ size }: { size: number }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#1d4ed8',
+        background: '#5b5bf6',
         color: '#ffffff',
         fontSize: Math.round(size * 0.62),
         fontWeight: 700,

@@ -836,6 +836,19 @@ işarete katıp onayda hepsini geri almak — yönetici görmediği kaydı geri 
 kullanıcının eyleminde `AUTH_UNAUTHENTICATED` her formda ayrı ele alınmaz; sunucu eylemlerinin ortak çıkışı `failAction` girişe
 `?donus=` ile yönlendirir (`safeReturnPath`), `ErrorState`'in "Giriş yap" bağlantısı da aynı yolu taşır.
 
+**Marka paleti: İris + Mercan (kullanıcı isteği ve açık onayı, 8 Kas).** Önceki mavi/gri palet "çok sıkıcı" bulundu; İstanbul Üniversitesi
+renklerine dayanmama kararı verildi. Seçilen: İris `#5B5BF6` ana, Mercan `#FF7A59` vurgu, Nane `#0F9F8F` destek, sıcak nötrler,
+yalnız büyük alanda marka geçişi, `prefers-color-scheme` ile koyu tema; başlık Plus Jakarta Sans, metin Inter
+(`next/font/google`, kendinden barındırılır; yeni npm bağımlılığı yok). Mercan zeminde metin koyu (beyaz AA değil), `primary`
+metni `primary-soft` üstünde AA değil (soft zeminde `on-primary-soft`). Seçenekler: (a) yalnız İris + nötr — canlılık yok;
+(b) Mercan'ı ana renk yapmak — beyaz metinle AA sağlanamaz; (c) seçilen: İris ana, Mercan az kullanılan vurgu. Kontrast
+testi iki temayı da korur (`src/lib/contrast.test.ts`). Risk: ilk derleme ağa muhtaç (Google Fonts indirmesi).
+
+**Girişsiz tanıtım sayfası (kullanıcı isteği, 8 Kas).** Girişsiz ana sayfada deneyim, mentor ve gerçekleşen görüşme için yalnız
+sunucuda hesaplanan toplu sayılar gösterilir; üçten küçük toplam sayı yerine “Yeni başladık” görünür. Veri kaynağına ulaşılamazsa
+ayrı bir belirsiz durum gösterilir. Örnek kartlar sentetiktir ve etkileşim almaz. Kahraman metni ilk HTML'de ve sabit koyu zeminde;
+marka geçişi dekoratiftir. Hareket azaltma tercihinde içerik korunur ve hareket durur.
+
 **SSS kimlik denetimi: engel ve uyarı (kart 122, PM kararıyla).** Önceki denetim 4+ harfli adları önek olarak eşleştirdiği için
 "sisteme", "denizcilik" gibi sıradan sözcükler yayını engelliyordu. Türkçe yazım kuralı: özel isim ek alınca kesme alır
 ("Deniz'in"); kesmesiz ekli biçim ("denize", "sisteme", "Ahmete") çoğunlukla cins isimdir. Şimdi: **engel**
