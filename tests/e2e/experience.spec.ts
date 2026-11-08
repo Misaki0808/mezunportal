@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
+import { waitForHydratedForm } from './hydration';
 
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
@@ -14,6 +15,7 @@ async function login(page: Page, persona: Persona) {
   await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
   await page.waitForURL(/\/(hesap|onay)$/);
   await page.goto('/onay');
+  await waitForHydratedForm(page, 'Seçimlerimi kaydet');
   const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
   await required.nth(0).check();
   await required.nth(1).check();
@@ -68,15 +70,31 @@ test('deneyim: yaz → moderasyon → yayın → okuyucu anonim yazarı görmez'
     await expect(page.getByText('Yayında', { exact: true }).first()).toBeVisible();
 
     await login(reader, 'alumniMentor');
-    const responses: Promise<string>[] = [];
+    // APIResponse, sayfa başka bir yere geçse de gövdesini korur; goto yanıtının
+    // gövdesini sonraki gezinme sırasında okumak Playwright'ta yarış oluşturur.
+    const document = await reader.request.get(`/deneyim/${row.id}`);
+    expect(document.ok()).toBe(true);
+    expect(new URL(document.url()).pathname).toBe(`/deneyim/${row.id}`);
+    const source = await document.text();
+    const responses: Promise<{ body?: string; failed?: true }>[] = [];
     reader.on('response', (response) => {
       const type = response.headers()['content-type'] ?? '';
-      if (type.includes('text/') || type.includes('json')) {
-        responses.push(response.text().catch(() => ''));
+      const status = response.status();
+      if (
+        (type.includes('text/') || type.includes('json')) &&
+        status >= 200 &&
+        status < 300 &&
+        status !== 204
+      ) {
+        responses.push(
+          response.text().then(
+            (body) => ({ body }),
+            () => ({ failed: true as const }),
+          ),
+        );
       }
     });
-    const document = await reader.goto(`/deneyim/${row.id}`);
-    const source = await document!.text();
+    await reader.goto(`/deneyim/${row.id}`, { waitUntil: 'networkidle' });
     const flight = await reader.evaluate(async (id) => {
       const response = await fetch(`/deneyim/${id}`, { headers: { RSC: '1' } });
       return response.text();
@@ -84,7 +102,9 @@ test('deneyim: yaz → moderasyon → yayın → okuyucu anonim yazarı görmez'
     await expect(reader.getByRole('heading', { name: 'E2E Teknoloji A.Ş.' })).toBeVisible();
     await expect(reader.getByText('Anonim paylaşıldı')).toBeVisible();
     const html = await reader.content();
-    for (const body of [html, source, flight, ...(await Promise.all(responses))]) {
+    const captured = await Promise.all(responses);
+    expect(captured.some((response) => response.failed)).toBe(false);
+    for (const body of [html, source, flight, ...captured.map((response) => response.body ?? '')]) {
       expect(body).not.toContain(student.name);
       expect(body).not.toContain(student.email);
       expect(body).not.toContain(student.id);

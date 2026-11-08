@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
+import { waitForHydratedForm } from './hydration';
 import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
@@ -18,7 +19,7 @@ async function login(page: Page, persona: 'student' | 'alumniMentor') {
   await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
   await page.waitForURL(/\/(hesap|onay)$/);
   await page.goto('/onay');
-  await page.waitForLoadState('networkidle');
+  await waitForHydratedForm(page, 'Seçimlerimi kaydet');
   const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
   await required.nth(0).check();
   await required.nth(1).check();
@@ -71,7 +72,7 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     await page.waitForLoadState('networkidle');
     await expect(page.getByText('İletişim talebi gönderilemiyor')).toBeVisible();
     await page.goto(`/iletisim-iste/${alumni.id}`);
-    await page.waitForLoadState('networkidle');
+    await waitForHydratedForm(page, 'Talep gönder');
     await expect(page.getByRole('heading', { name: new RegExp(alumni.name) })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'Sosyal bağlantılar' })).toBeDisabled();
     await page.getByRole('checkbox', { name: 'E-posta', exact: true }).check();
@@ -147,6 +148,7 @@ test('zorunlu metin sürümü değişince hesap yeniden onaya yönlenir; isteğe
   await page.waitForLoadState('networkidle');
   // Gidilmek istenen yol dönüş için taşınır (tur #10).
   await expect(page).toHaveURL(/\/onay\?donus=%2Fhesap%2Fgizlilik$/);
+  await waitForHydratedForm(page, 'Seçimlerimi kaydet');
   await expect(page.getByRole('heading', { name: 'Onaylarını yenile', exact: true })).toBeVisible();
   await page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true }).nth(1).check();
   await page

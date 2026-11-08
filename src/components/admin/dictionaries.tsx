@@ -35,6 +35,7 @@ export function Dictionaries({ initial, sectors, list, create, update, remove }:
   const [kind, setKind] = useState<DictionaryKind>('COMPANY');
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
+  const [sectorItems, setSectorItems] = useState(sectors);
   const [choice, setChoice] = useState<
     { kind: 'create' } | { kind: 'edit' | 'delete'; entry: Entry }
   >();
@@ -132,6 +133,7 @@ export function Dictionaries({ initial, sectors, list, create, update, remove }:
       }
       setItems(refreshed.data.items);
       setCursor(refreshed.data.nextCursor);
+      if (kind === 'SECTOR') setSectorItems(refreshed.data.items);
       setChoice(undefined);
       setNotice(true);
     } catch {
@@ -172,11 +174,7 @@ export function Dictionaries({ initial, sectors, list, create, update, remove }:
       )}
       <div className="mt-6" aria-busy={pending}>
         {items.length === 0 ? (
-          <EmptyState
-            title={t('empty')}
-            description={t('emptyDescription')}
-            action={<Button onClick={() => start()}>{t('add')}</Button>}
-          />
+          <EmptyState title={t('empty')} description={t('dictionary.emptyDescription')} />
         ) : (
           <ResponsiveRows
             headers={[t('name'), t('dictionary.aliases'), t('dictionary.sector'), t('actions')]}
@@ -285,7 +283,7 @@ export function Dictionaries({ initial, sectors, list, create, update, remove }:
                 {(props) => (
                   <Select {...props} value={sector} onChange={(e) => setSector(e.target.value)}>
                     <option value="">{t('none')}</option>
-                    {sectors.map((s) => (
+                    {sectorItems.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
                       </option>

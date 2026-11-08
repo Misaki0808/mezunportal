@@ -3,6 +3,9 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import {
   resolveUnmatchedValueSchema,
+  listDictionaryEntriesSchema,
+  type ListDictionaryEntriesInput,
+  type DictionaryEntryPage,
   type ListUnmatchedValuesInput,
   type UnmatchedValuePage,
   type ResolveUnmatchedValueInput,
@@ -16,18 +19,21 @@ import { ResponsiveRows } from './responsive-rows';
 type Entry = UnmatchedValuePage['items'][number];
 type Props = {
   initial: UnmatchedValuePage;
+  searchEntries: (input: ListDictionaryEntriesInput) => Promise<ActionResult<DictionaryEntryPage>>;
   list: (input: ListUnmatchedValuesInput) => Promise<ActionResult<UnmatchedValuePage>>;
   resolve: (
     input: ResolveUnmatchedValueInput,
   ) => Promise<ActionResult<ResolveUnmatchedValueOutput>>;
 };
-export function UnmatchedValues({ initial, list, resolve }: Props) {
+export function UnmatchedValues({ initial, list, resolve, searchEntries }: Props) {
   const t = useTranslations('admin');
   const errors = useTranslations('errors.codes');
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
   const [choice, setChoice] = useState<{ entry: Entry; kind: 'LINK' | 'CREATE' | 'DISMISS' }>();
   const [entryId, setEntryId] = useState('');
+  const [query, setQuery] = useState('');
+  const [candidates, setCandidates] = useState<{ id: string; name: string }[]>([]);
   const [name, setName] = useState('');
   const [reason, setReason] = useState('');
   const [pending, setPending] = useState(false);
@@ -37,6 +43,8 @@ export function UnmatchedValues({ initial, list, resolve }: Props) {
   function start(entry: Entry, kind: 'LINK' | 'CREATE' | 'DISMISS') {
     setChoice({ entry, kind });
     setEntryId(entry.suggestions[0]?.id ?? '');
+    setCandidates(entry.suggestions);
+    setQuery('');
     setName(entry.rawValue);
     setReason('');
     setInvalid(false);
@@ -47,6 +55,30 @@ export function UnmatchedValues({ initial, list, resolve }: Props) {
     setChoice(undefined);
     setError(undefined);
     setInvalid(false);
+  }
+  async function searchDictionary() {
+    if (!choice || pending) return;
+    const parsed = listDictionaryEntriesSchema.safeParse({ kind: choice.entry.kind, query });
+    if (!parsed.success || !query.trim()) {
+      setInvalid(true);
+      return;
+    }
+    setPending(true);
+    setInvalid(false);
+    setError(undefined);
+    try {
+      const result = await searchEntries(parsed.data);
+      if (!result.ok) {
+        setError(result.errorCode);
+        return;
+      }
+      setCandidates(result.data.items);
+      setEntryId(result.data.items[0]?.id ?? '');
+    } catch {
+      setError('SERVER_UNEXPECTED');
+    } finally {
+      setPending(false);
+    }
   }
   async function submit() {
     if (!choice || pending) return;
@@ -119,11 +151,9 @@ export function UnmatchedValues({ initial, list, resolve }: Props) {
               t(`dictionary.${entry.kind}`),
               String(entry.count),
               <div key="actions" className="flex flex-wrap gap-2">
-                {entry.suggestions.length > 0 && (
-                  <Button variant="secondary" onClick={() => start(entry, 'LINK')}>
-                    {t('dictionary.link')}
-                  </Button>
-                )}
+                <Button variant="secondary" onClick={() => start(entry, 'LINK')}>
+                  {t('dictionary.link')}
+                </Button>
                 <Button variant="secondary" onClick={() => start(entry, 'CREATE')}>
                   {t('dictionary.create')}
                 </Button>
@@ -171,17 +201,31 @@ export function UnmatchedValues({ initial, list, resolve }: Props) {
         }
       >
         {choice?.kind === 'LINK' && (
-          <Field label={t('dictionary.entry')} required>
-            {(props) => (
-              <Select {...props} value={entryId} onChange={(e) => setEntryId(e.target.value)}>
-                {choice.entry.suggestions.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </Select>
+          <div className="space-y-4">
+            <Field label={t('dictionary.searchEntry')} hint={t('users.searchHint')}>
+              {(props) => (
+                <Input {...props} value={query} onChange={(e) => setQuery(e.target.value)} />
+              )}
+            </Field>
+            <Button variant="secondary" loading={pending} onClick={() => void searchDictionary()}>
+              {t('search')}
+            </Button>
+            {candidates.length > 0 ? (
+              <Field label={t('dictionary.entry')} required>
+                {(props) => (
+                  <Select {...props} value={entryId} onChange={(e) => setEntryId(e.target.value)}>
+                    {candidates.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            ) : (
+              <p>{t('dictionary.noSuggestions')}</p>
             )}
-          </Field>
+          </div>
         )}
         {choice?.kind === 'CREATE' && (
           <Field label={t('name')} required>

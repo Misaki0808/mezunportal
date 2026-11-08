@@ -1,7 +1,11 @@
 import { adminAccess } from '@/components/admin/access';
 import { UnmatchedValues } from '@/components/admin/unmatched';
 import { ErrorState } from '@/components/ui';
-import { listUnmatchedValues, resolveUnmatchedValue } from '@/server/actions/admin';
+import {
+  listDictionaryEntries,
+  listUnmatchedValues,
+  resolveUnmatchedValue,
+} from '@/server/actions/admin';
 export const dynamic = 'force-dynamic';
 export default async function UnmatchedPage() {
   const access = await adminAccess('unmatchedValues');
@@ -12,6 +16,7 @@ export default async function UnmatchedPage() {
   return (
     <UnmatchedValues
       initial={result.data}
+      searchEntries={listDictionaryEntries}
       list={listUnmatchedValues}
       resolve={resolveUnmatchedValue}
     />

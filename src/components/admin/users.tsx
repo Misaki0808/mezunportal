@@ -153,7 +153,7 @@ export function AdminUsers({ initial, search }: Props) {
                     <td className="p-3">
                       <Link
                         href={`/yonetim/kullanicilar/${item.id}`}
-                        className={buttonClasses({ variant: 'secondary' })}
+                        className={`${buttonClasses({ variant: 'secondary' })} whitespace-nowrap`}
                       >
                         {t('details')}
                       </Link>

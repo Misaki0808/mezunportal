@@ -280,7 +280,8 @@
       "oldVerifiedTitle": "Mevcut adresin doğrulandı",
       "oldVerifiedDescription": "Şimdi yeni adresine gelen bağlantıyı açarak değişikliği tamamla.",
       "completeTitle": "E-posta adresin güncellendi",
-      "completeDescription": "Yeni adresinle giriş yapabilirsin."
+      "completeDescription": "Yeni adresinle giriş yapabilirsin.",
+      "invalidEmail": "Geçerli bir e-posta adresi yaz."
     },
     "signOut": {
       "title": "Çıkış yap",
@@ -391,7 +392,7 @@
       "signOut": "Çıkış yap",
       "signOutDescription": "Bu cihazdaki oturumunu kapat.",
       "admin": "Yönetim",
-      "adminDescription": "Mezun belgesi başvurularını incele.",
+      "adminDescription": "Yönetim panelini aç ve yetki alanındaki işlemleri incele.",
       "profile": "Profilim / Başlangıç adımları",
       "profileDescription": "İlgi alanlarını, hedeflerini ve tercihlerini tamamla."
     },
@@ -787,7 +788,9 @@
       "deleted": "Hesabın silindi",
       "deletedDescription": "Oturumların kapatıldı ve kişisel verilerin temizlendi.",
       "home": "Ana sayfaya dön",
-      "emailMismatch": "Yazdığın e-posta hesabındaki adresle eşleşmiyor."
+      "emailMismatch": "Yazdığın e-posta hesabındaki adresle eşleşmiyor.",
+      "emailRequired": "E-posta adresini yaz.",
+      "emailInvalid": "Geçerli bir e-posta adresi yaz."
     },
     "export": {
       "title": "Verilerinin bir kopyası sende olsun",
@@ -1087,7 +1090,9 @@
       "entry": "Sözlük kaydı",
       "noSuggestions": "Önerilen kayıt yok.",
       "sector": "Sektör",
-      "usageLabel": "Onay sayısı"
+      "usageLabel": "Onay sayısı",
+      "searchEntry": "Sözlükte ara",
+      "emptyDescription": "Yukarıdaki Ekle düğmesiyle ilk kaydı oluştur."
     },
     "grants": {
       "title": "Yönetici yetkileri",
@@ -1102,7 +1107,10 @@
       "confirmDescription": "Yetki değişikliği işlem kaydına eklenir.",
       "SYSTEM": "Sistem",
       "FACULTY": "Fakülte",
-      "DEPARTMENT": "Bölüm"
+      "DEPARTMENT": "Bölüm",
+      "user": "Kullanıcı",
+      "faculty": "Fakülte",
+      "noUsers": "Kullanıcı bulunamadı. Adı veya e-posta adresini değiştirip yeniden ara."
     },
     "audit": {
       "title": "İşlem kaydı",
