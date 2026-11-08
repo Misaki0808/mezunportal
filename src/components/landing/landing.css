@@ -152,7 +152,9 @@
   margin: 1.55rem 0 0;
   font-size: clamp(3rem, 5.7vw, 5.7rem);
   line-height: 1.04;
-  letter-spacing: -0.067em;
+  /* Çok sıkı iz sözcükleri birbirine yapıştırıyordu ("Yolundahayeni"); iz yumuşatıldı, sözcük aralığı korunur. */
+  letter-spacing: -0.035em;
+  word-spacing: 0.08em;
   font-weight: 800;
 }
 .landing-title-accent {
@@ -515,7 +517,8 @@
   font-size: clamp(2.3rem, 4.2vw, 4rem);
   font-weight: 800;
   line-height: 1.08;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.03em;
+  word-spacing: 0.06em;
 }
 .landing-section h2 span {
   color: var(--color-primary);
@@ -639,7 +642,7 @@
 .landing-ybs-disk span {
   font-size: 4.5rem;
   font-weight: 850;
-  letter-spacing: -0.08em;
+  letter-spacing: -0.05em;
 }
 .landing-ybs-disk small {
   position: absolute;
