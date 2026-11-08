@@ -241,6 +241,9 @@ export function SearchScreen({ filter, results, sectors }: Props) {
         <p className="font-semibold text-primary">{t('eyebrow')}</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="mt-3 text-fg-muted">{t('description')}</p>
+        <Link href="/deneyimlerim" className={`${buttonClasses({ variant: 'secondary' })} mt-4`}>
+          {t('mine')}
+        </Link>
       </header>
       <form
         className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-end"

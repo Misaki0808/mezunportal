@@ -14,12 +14,15 @@ test('mobil filtreli aramanın paylaşılan bağlantısı aynı sonucu açar', a
   const student = await db.user.findUniqueOrThrow({
     where: { email: 'student@test.mezunportal.local' },
   });
+  const author = await db.user.findUniqueOrThrow({
+    where: { email: 'alumni-mentor@test.mezunportal.local' },
+  });
   const membership = await db.membership.findFirstOrThrow({
     where: { userId: student.id, verificationStatus: 'VERIFIED', endedAt: null },
   });
   const row = await db.experience.create({
     data: {
-      authorId: student.id,
+      authorId: author.id,
       departmentIdAtWrite: membership.departmentId,
       type: 'INTERNSHIP',
       organizationName: 'KutupTeknoloji',
@@ -41,6 +44,7 @@ test('mobil filtreli aramanın paylaşılan bağlantısı aynı sonucu açar', a
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/giris/test?persona=student');
     await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
+    await page.waitForURL(/\/(hesap|onay)$/);
     await page.goto('/onay');
     const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
     await consent.nth(0).check();
