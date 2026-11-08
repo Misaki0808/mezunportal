@@ -15,7 +15,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('next/headers', () => ({
-  headers: async () => new Headers({ 'x-forwarded-for': '203.0.113.9' }),
+  headers: async () =>
+    new Headers({ 'x-forwarded-for': '203.0.113.9', 'x-mezun-path': '/dogrulama/uyelik?adim=2' }),
 }));
 vi.mock('../permissions', () => ({ requireUser: mocks.requireUser }));
 vi.mock('../auth', () => ({ getAuth: mocks.getAuth, getAuthEmailPort: () => ({}) }));
@@ -168,10 +169,12 @@ describe('giriş eylemleri', () => {
 
   it('beyan: oturum önce, doğrulama sonra; oturumsuzda AUTH_UNAUTHENTICATED ve servis çağrılmaz', async () => {
     mocks.requireUser.mockRejectedValue(codedUnauthenticated('AUTH_UNAUTHENTICATED'));
-    expect(await declareMembership({ role: 'ACADEMIC', departmentId: 'd1' })).toEqual({
-      ok: false,
-      errorCode: 'AUTH_UNAUTHENTICATED',
-    });
+    // Oturum düşmüş: ortak işleyici girişe, dönüş yoluyla yönlendirir (hata değeri dönmez).
+    await expect(declareMembership({ role: 'ACADEMIC', departmentId: 'd1' })).rejects.toMatchObject(
+      {
+        digest: expect.stringContaining('/giris?donus=%2Fdogrulama%2Fuyelik%3Fadim%3D2'),
+      },
+    );
     expect(mocks.declareService).not.toHaveBeenCalled();
 
     mocks.requireUser.mockResolvedValue(ACTOR);
@@ -203,10 +206,11 @@ describe('mezun belgesi eylemleri', () => {
 
   it('yükleme: oturumsuz istekte gövde İŞLENMEZ (kimlik önce)', async () => {
     mocks.requireUser.mockRejectedValue(codedUnauthenticated('AUTH_UNAUTHENTICATED'));
-    const result = await uploadGraduationDocument(
-      formWith({ departmentId: 'd', graduationYear: '2025', file: pdf() }),
-    );
-    expect(result).toEqual({ ok: false, errorCode: 'AUTH_UNAUTHENTICATED' });
+    await expect(
+      uploadGraduationDocument(
+        formWith({ departmentId: 'd', graduationYear: '2025', file: pdf() }),
+      ),
+    ).rejects.toMatchObject({ digest: expect.stringContaining('/giris?donus=') });
     expect(mocks.uploadService).not.toHaveBeenCalled();
   });
 
