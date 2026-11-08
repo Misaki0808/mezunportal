@@ -528,6 +528,15 @@ istihdam raporu ve Excel yalnız toplu sayı verir: kişi satırı yok, yalnız 
 gruplar bastırılır — serbest metin ve tek kişilik gruplar kimliği ele verirdi. Excel `.xlsx`tir (Türkçe karakterler için
 UTF-8, CSV'nin BOM sorunu yok). Sözleşme iki dosyadır: panel sorguları (W2) ve kullanıcı/yetki eylemleri.
 
+## 2026-11-08 · Yönetici atama/kaldırma tek kilitle sıralanır; üyelik düzeltmede geçmiş korunur
+İki sistem yöneticisi aynı anda birbirini kaldırırsa yetki yüklemesi ve yazma sıralanmadığında ikisi de başarılı olup
+sistemde yönetici kalmayabilirdi. Atama/kaldırma tek bir tavsiye kilidiyle sıralanır ve yetki kilitten SONRA yüklenir:
+ikinci istek güncel durumda yetkisizdir. Üyelik düzeltmede bölüm/rol değişirse eski satır silinmez, kapatılır ve
+yöneticice doğrulanmış yenisi açılır; yalnız yıl düzeltmesi yerinde yapılır. Bekleyen/reddedilen üyelik düzeltilmez
+(kendi akışı vardır: belge onayı/ret); düzeltme rolün yıl kısıtlarına (öğrenci giriş, mezun mezuniyet, akademisyen
+hiçbiri) uymak zorundadır. Rol düzeltmesinde mentor uygunluğunun yeniden hesabı bu adımda yoktur: mentor profili
+yetki anında okunur, K-08 eşiği yalnız mentor olma isteğinde denetlenir.
+
 ## 2026-11-08 · Yönetim sözleşmesinde değer maskesi ve açık onay
 
 Maskeli telefon/e-posta çıktı alanları maske biçimini doğrular; yalnız alanı masked diye adlandırmak ham
@@ -536,3 +545,11 @@ confirmed:true ister; askı kaldırma da gerekçelidir. Sözlük silme ve eşle�
 sözleşmede zorunludur. Excel bağlantısı yalnız filtre şemasından geçen alanları taşır; kişisel ya da
 bilinmeyen URL parametresi eklenmez. Bu alanlar ekranın onay penceresi ile sunucu doğrulamasını bağlar.
 
+## 2026-11-08 · Yönetim yazımları yetki iptali ve hesap silmeyle sıralanır
+
+Askı ve üyelik düzeltmesi de atama/kaldırmanın aynı tavsiye kilidini alır; güncel yetki
+kilitten sonra okunur. Böylece yetkisi kaldırılan yöneticinin bekleyen yazımı sonradan
+uygulanmaz. Aktörün kullanıcı satırındaki paylaşım kilidi askı/silmeyle yetki okumasını
+sıralar. Hedef kullanıcı kilidi atama ve üyelik düzeltmesinden önce alınır; hesap silme ve
+mezun geçişiyle ortak sıra User → Membership'tir. Silme ile yarışan atama silinmiş hesapta
+etkin yetki bırakamaz ve ters satır kilidi sırası oluşmaz.

@@ -273,8 +273,9 @@ describe('transitionStudentToAlumni: satır kilidi (deterministik yarış)', () 
     const lockedSignal = new Promise<void>((resolve) => (locked = resolve));
     const releaseSignal = new Promise<void>((resolve) => (release = resolve));
 
-    // “Kazanan” işlem: üyelik satırlarını kilitler, geçişi kendisi uygular, sonra bırakır.
+    // “Kazanan” işlem: üretimdeki User → Membership kilit sırasıyla geçişi uygular.
     const winner = prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
       await tx.$queryRaw`SELECT "id" FROM "Membership" WHERE "userId" = ${userId} FOR UPDATE`;
       locked();
       await releaseSignal;
