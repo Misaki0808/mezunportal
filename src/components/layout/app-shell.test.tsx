@@ -46,8 +46,17 @@ describe('AppShell', () => {
     renderUi(<AppShell>x</AppShell>);
 
     const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });
-    expect(within(bottom).queryByRole('link', { name: /Mentorlar/ })).not.toBeInTheDocument();
-    expect(within(bottom).getByText(/Mentorlar/)).toHaveTextContent('yakında');
+    expect(within(bottom).queryByRole('link', { name: /Randevular/ })).not.toBeInTheDocument();
+    expect(within(bottom).getByText(/Randevular/)).toHaveTextContent('yakında');
+  });
+
+  it('Mentorlar sekmesi mentor dizinine bağlanır', () => {
+    renderUi(<AppShell>x</AppShell>);
+    const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });
+    expect(within(bottom).getByRole('link', { name: /Mentorlar/ })).toHaveAttribute(
+      'href',
+      '/mentorlar',
+    );
   });
 });
 

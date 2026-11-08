@@ -13,8 +13,11 @@ type Props = {
   /** Etkin filtreler çip olarak listelenir; her çip tek dokunuşla kaldırılır. */
   active: readonly ActiveFilter[];
   total: number;
-  /** Filtreler uygulanır (URL'e yazılır); alt sayfa kapanır. */
-  onApply: () => void;
+  /**
+   * Filtreler uygulanır (URL'e yazılır). Geçersiz girdi `false` döner: alt sayfa AÇIK kalır ve alan hatası görünür
+   * (kullanıcı hatayı göremeden sayfa kapanmaz).
+   */
+  onApply: () => boolean | void;
   /** Taslak seçimleri uygulanmış filtreye geri al (alt sayfa Vazgeç/kapat). */
   onReset: () => void;
   onClear: () => void;
@@ -67,8 +70,7 @@ export function FilterShell({
           <>
             <Button
               onClick={() => {
-                setOpen(false);
-                onApply();
+                if (onApply() !== false) setOpen(false);
               }}
             >
               {t('apply')}

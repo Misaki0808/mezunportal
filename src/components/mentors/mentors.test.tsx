@@ -212,6 +212,9 @@ describe('mentor dizini', () => {
     await user.type(sheet.getByLabelText('Şirket'), 'a');
     await user.click(sheet.getByRole('button', { name: 'Uygula' }));
     expect(router.push).not.toHaveBeenCalled();
+    // Alt sayfa açık kalır ve hata alanın altında görünür.
+    expect(screen.getByRole('dialog')).toHaveAttribute('open');
+    expect(sheet.getByText('En az 2 karakter yaz.')).toBeInTheDocument();
   });
 
   it('sonuç yoksa yönlendirici boş durum: filtre varken temizle, filtre yokken bilgi', async () => {

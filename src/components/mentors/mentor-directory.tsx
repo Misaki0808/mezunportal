@@ -56,14 +56,16 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
     return `${BASE_PATH}${params ? `?${params}` : ''}`;
   };
 
-  function go(next: Filter) {
+  /** Geçerliyse URL'e yazar (`true`); geçersizse alan hatasını gösterir ve `false` döner. */
+  function go(next: Filter): boolean {
     const parsed = searchMentorsSchema.safeParse(next);
     if (!parsed.success) {
       setInvalid(true);
-      return;
+      return false;
     }
     setInvalid(false);
     startTransition(() => router.push(href(parsed.data)));
+    return true;
   }
 
   const update = (patch: Partial<Filter>) =>
