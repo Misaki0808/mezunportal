@@ -7,6 +7,7 @@ import { admin } from 'better-auth/plugins/admin';
 import { createAccessControl } from 'better-auth/plugins/access';
 import { magicLink } from 'better-auth/plugins/magic-link';
 
+import { EMAIL_CHANGE_RETURN_PATHS } from '@/contracts/auth';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { isLinkedInConfigured, type AuthEnv } from '@/lib/env';
 import { isDevToolsEnabled } from '@/lib/app-env';
@@ -19,6 +20,16 @@ import {
 } from './hooks';
 import { SIGN_IN_LINK_MINUTES, type AuthEmailPort } from './email-port';
 import { testLoginPlugin } from './test-login-plugin';
+
+/**
+ * Better Auth doğrulama bağlantısının `callbackURL` sorgusunu SABİT site içi yolla değiştirir (yalnız
+ * bizim ürettiğimiz bağlantıda; istemciden yol alınmaz).
+ */
+export function withCallbackPath(url: string, path: string): string {
+  const parsed = new URL(url);
+  parsed.searchParams.set('callbackURL', path);
+  return parsed.toString();
+}
 
 export const SESSION_EXPIRES_IN_SECONDS = 14 * 24 * 3600;
 export const SESSION_UPDATE_AGE_SECONDS = 24 * 3600;
@@ -105,7 +116,13 @@ export function buildAuthOptions(deps: AuthDeps) {
       sendOnSignIn: false,
       // Yalnız e-posta değiştirmenin 2. adımında kullanılır: `user.email` YENİ adrestir.
       sendVerificationEmail: async ({ user, url, token }) => {
-        await email.sendChangeEmailVerification({ to: user.email, url, token, userId: user.id });
+        // 2. adımın bağlantısı ayrı ekrana döner (`?adim=tamamlandi`); 1. adımınki `eski-onaylandi`.
+        await email.sendChangeEmailVerification({
+          to: user.email,
+          url: withCallbackPath(url, EMAIL_CHANGE_RETURN_PATHS.completed),
+          token,
+          userId: user.id,
+        });
       },
     },
 

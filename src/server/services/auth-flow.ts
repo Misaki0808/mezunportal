@@ -3,6 +3,7 @@ import 'server-only';
 import {
   AUTH_PATHS,
   CHECK_EMAIL_RESPONSE,
+  EMAIL_CHANGE_RETURN_PATHS,
   type CheckEmailResponse,
   type DeclareMembershipInput,
   type DeclareMembershipOutput,
@@ -19,7 +20,9 @@ import {
   codedForbidden,
   codedNotFound,
   codedRateLimited,
+  codedValidation,
 } from '@/lib/errors';
+import { safeReturnPath } from '@/lib/return-path';
 
 import { AUTH_LIMITS } from '../auth/limits';
 import { logAuthFailure } from '../auth/log';
@@ -71,7 +74,7 @@ export function getSignInOptions(
  */
 export async function requestSignInLink(
   deps: AuthFlowDeps,
-  input: { email: string; headers: Headers; clientIp: string | null },
+  input: { email: string; headers: Headers; clientIp: string | null; returnTo?: string },
 ): Promise<CheckEmailResponse> {
   await enforceLimit(deps, 'magic-link:email', input.email, AUTH_LIMITS.magicLinkPerEmail);
   if (input.clientIp) {
@@ -81,7 +84,8 @@ export async function requestSignInLink(
     await deps.auth.api.signInMagicLink({
       body: {
         email: input.email,
-        callbackURL: AUTH_PATHS.afterSignIn,
+        // Dönüş yolu yalnız site içi (açık yönlendirme yok); güvensizse varsayılan.
+        callbackURL: safeReturnPath(input.returnTo) ?? AUTH_PATHS.afterSignIn,
         errorCallbackURL: AUTH_PATHS.signIn,
       },
       headers: input.headers,
@@ -122,18 +126,30 @@ export async function startLinkedInSignIn(
 }
 
 /**
- * E-posta değiştirme isteği (oturum zorunlu — çağıran `requireUser` yapar). Yeni adres başkasına aitse
- * ya da aynıysa bile yanıt aynıdır (`CHECK_EMAIL`): Better Auth bu durumları sessizce yutar, biz de hataları.
+ * E-posta değiştirme isteği (oturum zorunlu — çağıran `requireUser` yapar). Kullanıcının KENDİ mevcut
+ * adresi `EMAIL_CHANGE_SAME_ADDRESS` ile reddedilir (kendi adresi, sızıntı değil; tur bulgusu #4). Yeni adres
+ * başkasına aitse yanıt yine `CHECK_EMAIL`'dir (kayıt durumu sızmaz). Eski adres onayı
+ * `EMAIL_CHANGE_RETURN_PATHS.oldAddressConfirmed`'a döner; yeni adres doğrulaması `completed`'a (config).
  */
 export async function requestEmailChange(
   deps: AuthFlowDeps,
   actor: Actor,
   input: { newEmail: string; headers: Headers },
 ): Promise<CheckEmailResponse> {
+  const current = await deps.db.user.findUnique({
+    where: { id: actor.userId },
+    select: { email: true },
+  });
+  if (current && current.email.trim().toLowerCase() === input.newEmail.trim().toLowerCase()) {
+    throw codedValidation('EMAIL_CHANGE_SAME_ADDRESS');
+  }
   await enforceLimit(deps, 'email-change:user', actor.userId, AUTH_LIMITS.emailChangePerUser);
   try {
     await deps.auth.api.changeEmail({
-      body: { newEmail: input.newEmail, callbackURL: AUTH_PATHS.afterSignIn },
+      body: {
+        newEmail: input.newEmail,
+        callbackURL: EMAIL_CHANGE_RETURN_PATHS.oldAddressConfirmed,
+      },
       headers: input.headers,
     });
   } catch (error) {

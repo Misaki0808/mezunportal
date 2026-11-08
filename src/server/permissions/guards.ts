@@ -115,6 +115,16 @@ export function createPermissions(deps: PermissionDeps) {
     return enforce(actor, { action: 'adminScope', target });
   }
 
+  /**
+   * Panele giriş: kapsamı olan herhangi bir etkin yönetici yetkisi + doğrulanmış üyelik. Hangi veriyi
+   * göreceği ayrıca `managedDepartmentIds(actor)` ile süzülür; bu koruma tek başına bir kaydı açmaz.
+   */
+  async function requireAnyAdmin(): Promise<Actor> {
+    const actor = await currentActor();
+    enforce(actor, { action: 'selfProfile' });
+    return enforce(actor, { action: 'adminAny' });
+  }
+
   /** Bölümdeki içeriği/şikâyeti/doğrulamayı yönetebilir mi? (İçeriğin yazıldığı andaki bölüm verilir.) */
   async function requireModerator(departmentId: string): Promise<Actor> {
     return requireAdmin({ kind: 'DEPARTMENT', departmentId });
@@ -139,6 +149,7 @@ export function createPermissions(deps: PermissionDeps) {
     requireVerifiedMember,
     requireMentor,
     requireAdmin,
+    requireAnyAdmin,
     requireModerator,
     canModerate,
     managedDepartmentIds,

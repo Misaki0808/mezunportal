@@ -3,12 +3,15 @@
 import {
   closeContactRequestSchema,
   listContactRequestsSchema,
+  previewContactTargetSchema,
   respondToContactRequestSchema,
   sendContactRequestSchema,
   type CloseContactRequestInput,
   type ContactRequestPage,
+  type ContactTargetPreview,
   type ContactRequestStatusOutput,
   type ListContactRequestsInput,
+  type PreviewContactTargetInput,
   type RespondToContactRequestInput,
   type SendContactRequestInput,
   type SendContactRequestOutput,
@@ -85,6 +88,23 @@ export async function listContactRequests(
     const parsed = parseInput(listContactRequestsSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.listContactRequests(getDb(), actor.userId, parsed.data));
+  } catch (error) {
+    return actionFailure(error);
+  }
+}
+
+/**
+ * Talep formundan önce hedef önizlemesi: doğrulanmış üye ister, hız sınırlıdır; talep edilemeyen her
+ * hedef (yok, silinmiş, askıda, kendisi, talep alanı yok) için aynı genel yanıt döner.
+ */
+export async function previewContactTarget(
+  input: PreviewContactTargetInput,
+): Promise<ActionResult<ContactTargetPreview>> {
+  try {
+    const actor = await requireVerifiedMember();
+    const parsed = parseInput(previewContactTargetSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await service.previewContactTarget(getDb(), actor.userId, parsed.data));
   } catch (error) {
     return actionFailure(error);
   }

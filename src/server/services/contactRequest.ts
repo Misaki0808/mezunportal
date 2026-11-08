@@ -1,5 +1,9 @@
 import 'server-only';
 
+import {
+  CONTACT_TARGET_NOT_REQUESTABLE,
+  type ContactTargetPreview,
+} from '@/contracts/contact-request';
 import type {
   ContactRequestItem,
   ContactRequestPage,
@@ -7,7 +11,7 @@ import type {
   ContactRequestStatusOutput,
   SendContactRequestOutput,
 } from '@/contracts/contact-request';
-import type { ContactField, VisibilityLevel } from '@/contracts/privacy';
+import { CONTACT_FIELDS, type ContactField, type VisibilityLevel } from '@/contracts/privacy';
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { codedConflict, codedNotFound, codedValidation } from '@/lib/errors';
 
@@ -68,6 +72,34 @@ export async function sendContactRequest(
     if (isOpenPairViolation(error)) throw codedConflict('CONTACT_REQUEST_ALREADY_OPEN');
     throw error;
   }
+}
+
+/**
+ * Talep formu önizlemesi. Talep edilemeyen her durum (yok, silinmiş, askıda, kendisi, talep alanı yok)
+ * TEK genel yanıta düşer; ayrım yalnız sunucudadır. Hız sınırı önce: kimlik taraması yavaşlar.
+ */
+export async function previewContactTarget(
+  db: PrismaClient,
+  requesterId: string,
+  input: { targetUserId: string },
+  now: Date = new Date(),
+): Promise<ContactTargetPreview> {
+  await consumeRateLimit(db, RATE_LIMITS.contactPreview, requesterId, now);
+  const target = await db.user.findUnique({
+    where: { id: input.targetUserId },
+    select: { id: true, name: true, deletedAt: true, banned: true },
+  });
+  // Olumsuz durumlarda aynı sorgu akışını uygula; erken çıkışlar kullanıcı varlığı hakkında
+  // gözlenebilir süre farkı oluşturabilir. Bu, sabit süre garantisi değil, kaba farkı azaltır.
+  const levels =
+    (await loadVisibilityLevels(db, [input.targetUserId])).get(input.targetUserId) ?? new Map();
+  if (input.targetUserId === requesterId || !target || target.deletedAt || target.banned)
+    return CONTACT_TARGET_NOT_REQUESTABLE;
+  const requestableFields = CONTACT_FIELDS.filter(
+    (field) => effectiveLevel(field, levels) === 'ON_APPROVED_REQUEST',
+  );
+  if (requestableFields.length === 0) return CONTACT_TARGET_NOT_REQUESTABLE;
+  return { canRequest: true, displayName: target.name, requestableFields };
 }
 
 type Transition = {

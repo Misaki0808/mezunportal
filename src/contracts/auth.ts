@@ -84,7 +84,14 @@ export type StartLinkedInSignInOutput = z.infer<typeof startLinkedInSignInOutput
 // E-posta bağlantısıyla giriş ve e-posta değiştirme (aynı nötr yanıt)
 // ---------------------------------------------------------------------------------------------
 
-export const requestSignInLinkSchema = z.object({ email: emailSchema });
+/**
+ * `returnTo`: girişten sonra dönülecek site içi yol (`?donus=`). Güvensiz/yabancı değer HATA DEĞİLDİR,
+ * sessizce yok sayılır (varsayılan `AUTH_PATHS.afterSignIn`); doğrulama `src/lib/return-path.ts`.
+ */
+export const requestSignInLinkSchema = z.object({
+  email: emailSchema,
+  returnTo: z.string().max(2048).optional().catch(undefined),
+});
 export type RequestSignInLinkInput = z.input<typeof requestSignInLinkSchema>;
 
 /** Her durumda dönen tek yanıt: “e-postanı kontrol et”. */
@@ -93,6 +100,24 @@ export type CheckEmailResponse = z.infer<typeof checkEmailResponseSchema>;
 export const CHECK_EMAIL_RESPONSE: CheckEmailResponse = { status: 'CHECK_EMAIL' };
 
 export const requestEmailChangeSchema = z.object({ newEmail: emailSchema });
+
+/**
+ * E-posta değiştirmenin iki bağlantısı ayrı ekrana döner (tur bulgusu #27): eski adres onayı →
+ * `eski-onaylandi`, yeni adres doğrulandı → `tamamlandi`. Sorgu değeri yalnız bu beyaz listeden okunur.
+ */
+export const EMAIL_CHANGE_STEP_PARAM = 'adim';
+export const EMAIL_CHANGE_STEPS = ['eski-onaylandi', 'tamamlandi'] as const;
+export type EmailChangeStep = (typeof EMAIL_CHANGE_STEPS)[number];
+export const EMAIL_CHANGE_RETURN_PATHS = {
+  oldAddressConfirmed: '/hesap/e-posta?adim=eski-onaylandi',
+  completed: '/hesap/e-posta?adim=tamamlandi',
+} as const;
+/** Sayfa sorgusundan adım; beyaz liste dışı her değer null. */
+export function parseEmailChangeStep(value: unknown): EmailChangeStep | null {
+  return typeof value === 'string' && (EMAIL_CHANGE_STEPS as readonly string[]).includes(value)
+    ? (value as EmailChangeStep)
+    : null;
+}
 export type RequestEmailChangeInput = z.input<typeof requestEmailChangeSchema>;
 
 // ---------------------------------------------------------------------------------------------
@@ -238,6 +263,7 @@ export const AUTH_ACTION_ERRORS = {
   requestSignInLink: ['VALIDATION_INVALID', 'RATE_LIMITED'],
   requestEmailChange: [
     'VALIDATION_INVALID',
+    'EMAIL_CHANGE_SAME_ADDRESS',
     'RATE_LIMITED',
     'AUTH_UNAUTHENTICATED',
     'AUTH_ACCOUNT_SUSPENDED',
