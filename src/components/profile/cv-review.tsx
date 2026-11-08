@@ -303,7 +303,11 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
         );
       })}
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 flex flex-col gap-2 bg-bg pt-4 pb-2 lg:static">
+      <Button variant="ghost" fullWidth onClick={() => setDiscardOpen(true)}>
+        {t('discard')}
+      </Button>
+
+      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 flex flex-col gap-2 bg-bg pt-3 pb-2 lg:static">
         {error && (
           <div role="alert" className="text-base text-danger">
             <p>{errors(error)}</p>
@@ -319,12 +323,8 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
             {t('noneSelected')}
           </p>
         )}
-        <p className="text-sm text-fg-muted">{t('selected', { count: accepted.length })}</p>
         <Button size="lg" fullWidth loading={pending === 'apply'} onClick={() => void submit()}>
-          {pending === 'apply' ? t('applying') : t('apply')}
-        </Button>
-        <Button variant="ghost" fullWidth onClick={() => setDiscardOpen(true)}>
-          {t('discard')}
+          {pending === 'apply' ? t('applying') : `${t('apply')} (${accepted.length})`}
         </Button>
       </div>
 

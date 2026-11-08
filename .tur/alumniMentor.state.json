@@ -1,0 +1,15 @@
+{
+  "cookies": [
+    {
+      "name": "mezun.session_token",
+      "value": "Cc8mK3QkzltbgY0nDa06W3SYTIZxX7w1.Spheij6atgYF0Ar%2Fm8bDsGakpheFmr9LnIBZgB8bN%2FU%3D",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1795311443.655922,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

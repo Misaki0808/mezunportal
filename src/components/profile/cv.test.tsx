@@ -110,7 +110,7 @@ describe('CV onay ekranı', () => {
 
   it('karar verilmeyen kalem gönderilmez; hiç kabul yoksa sunucuya gitmez', async () => {
     const { user, apply } = setupReview();
-    await user.click(screen.getByRole('button', { name: 'Seçilenleri uygula' }));
+    await user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
     expect(apply).not.toHaveBeenCalled();
     expect(screen.getByText('Uygulamak için en az bir kalemi kabul et.')).toBeInTheDocument();
   });
@@ -121,7 +121,7 @@ describe('CV onay ekranı', () => {
     await user.click(within(edu).getByRole('button', { name: 'Kabul et' }));
     const pos = screen.getByText('Yazılım Stajyeri').closest('li')!;
     await user.click(within(pos).getByRole('button', { name: 'Reddet' }));
-    await user.click(screen.getByRole('button', { name: 'Seçilenleri uygula' }));
+    await user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
     expect(apply).toHaveBeenCalledWith({
       cvUploadId: 'cv1',
       decisions: [{ key: 'k-edu', section: 'EDUCATION', overwriteMine: false }],
@@ -141,7 +141,7 @@ describe('CV onay ekranı', () => {
       within(lang).getByRole('checkbox', { name: /Elle yazdığım değerin üzerine yaz/ }),
     );
     await user.click(within(lang).getByRole('button', { name: 'Kabul et' }));
-    await user.click(screen.getByRole('button', { name: 'Seçilenleri uygula' }));
+    await user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
     expect(apply.mock.calls[0]![0].decisions).toEqual([
       { key: 'k-lang', section: 'LANGUAGE', overwriteMine: true },
     ]);
@@ -150,7 +150,7 @@ describe('CV onay ekranı', () => {
   it('“Yeni ve değişenlerin hepsini kabul et” çakışmayı kabul etmez', async () => {
     const { user, apply } = setupReview();
     await user.click(screen.getByRole('button', { name: /hepsini kabul et/ }));
-    await user.click(screen.getByRole('button', { name: 'Seçilenleri uygula' }));
+    await user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
     const keys = apply.mock.calls[0]![0].decisions.map((d: { key: string }) => d.key);
     expect(keys.sort()).toEqual(['k-edu', 'k-pos']);
   });
@@ -166,7 +166,7 @@ describe('CV onay ekranı', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Kabul et' }));
     expect(screen.getByText('Marmara Üniversitesi')).toBeInTheDocument();
     expect(screen.getByText('Düzeltilip kabul edildi')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Seçilenleri uygula' }));
+    await user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
     const sent = apply.mock.calls[0]![0].decisions[0];
     expect(sent.values).toMatchObject({ institution: 'Marmara Üniversitesi' });
   });
@@ -187,7 +187,7 @@ describe('CV onay ekranı', () => {
       apply: vi.fn().mockResolvedValue({ ok: false, errorCode: 'CV_REVIEW_STALE' }) as never,
     });
     await user.click(screen.getByRole('button', { name: /hepsini kabul et/ }));
-    await user.click(screen.getByRole('button', { name: 'Seçilenleri uygula' }));
+    await user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
     const alert = await screen.findByText(/Profilin ya da CV sonucu değişti/);
     expect(alert).not.toHaveTextContent('CV_REVIEW_STALE');
     expect(screen.getByRole('button', { name: 'Sayfayı yenile' })).toBeInTheDocument();

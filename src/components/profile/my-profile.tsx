@@ -43,6 +43,14 @@ import { EntryEditor } from './entry-editor';
 import { EntrySummary } from './entry-summary';
 
 type Values = Record<string, unknown>;
+/** İlk giriş adımları `/baslangic` ekranında tamamlanır. */
+const ONBOARDING_FIELDS: readonly string[] = [
+  'MEMBERSHIP',
+  'INTERESTS',
+  'GOALS',
+  'MENTOR_PREFERENCE',
+  'VISIBILITY',
+];
 type Result = Promise<ActionResult<MyProfileData>>;
 
 export type MyProfileActions = {
@@ -177,6 +185,14 @@ export function MyProfile({ initial, actions }: Props) {
                 <li key={field}>{label(field)}</li>
               ))}
             </ul>
+            {missing.some((field) => ONBOARDING_FIELDS.includes(field)) && (
+              <Link
+                className={buttonClasses({ variant: 'secondary' }) + ' mt-3'}
+                href="/baslangic?duzenle=1"
+              >
+                {t('onboardingLink')}
+              </Link>
+            )}
           </>
         )}
       </section>

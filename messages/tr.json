@@ -341,7 +341,6 @@
         },
         "overwrite": "Elle yazdığım değerin üzerine yaz",
         "overwriteNeeded": "Üzerine yazmak için kutuyu işaretle.",
-        "selected": "{count} kalem uygulanacak",
         "apply": "Seçilenleri uygula",
         "applying": "Uygulanıyor…",
         "acceptAll": "Yeni ve değişen kalemlerin hepsini kabul et",
@@ -400,6 +399,7 @@
       "description": "Bilgilerini güncel tut. Kimlerin görebileceğini Gizlilik ayarlarından seçersin.",
       "completion": "Profilin %{percent} tamamlandı",
       "missingTitle": "Tamamlayabileceklerin",
+      "onboardingLink": "Başlangıç adımlarına git",
       "missing": {
         "MEMBERSHIP": "Üyeliğini doğrula",
         "INTERESTS": "İlgi alanlarını seç",
