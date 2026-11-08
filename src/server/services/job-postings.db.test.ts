@@ -1108,6 +1108,28 @@ describe('D7 sızıntı bekçisi: ilan kaynaklı talepte hedef kimliği onaydan 
     ).toMatchObject({
       targetId: w.academic,
     });
+    // onay geri alınınca / ret / geri çekme sonrası da hedef kimliği dökümde yok (yalnız APPROVED'da açılır)
+    await revokeContactRequest(db, w.academic, { requestId });
+    expect(
+      (await buildDataExport(db, w.student)).contactRequests.sent.find((r) => r.id === requestId),
+    ).toMatchObject({
+      status: 'REVOKED',
+      targetId: null,
+    });
+    const second = await contactPosting(w);
+    const rejected = await requestJobPostingContact(deps, w.otherStudent, {
+      jobPostingId: second,
+      fields: ['EMAIL'],
+    });
+    await respondToContactRequest(db, w.academic, {
+      requestId: rejected.requestId,
+      decision: 'REJECT',
+    });
+    expect(
+      (await buildDataExport(db, w.otherStudent)).contactRequests.sent.find(
+        (r) => r.id === rejected.requestId,
+      ),
+    ).toMatchObject({ status: 'REJECTED', targetId: null });
     // yazarın kendi dökümü: gelen talepte talep eden görünür (kendi verisi)
     expect((await buildDataExport(db, w.academic)).contactRequests.received[0]).toMatchObject({
       requesterId: w.student,
