@@ -28,7 +28,18 @@ const appointment = z
     withReminder: z.boolean().optional(),
   })
   .strict();
-export const notificationIntentPayload = z.discriminatedUnion('type', [generic, appointment]);
+const cvReview = z
+  .object({
+    type: z.literal('cvReview'),
+    event: z.enum(['requested', 'answered', 'expired']),
+    requestId: z.string().min(1).max(64),
+  })
+  .strict();
+export const notificationIntentPayload = z.discriminatedUnion('type', [
+  generic,
+  appointment,
+  cvReview,
+]);
 export type NotificationIntentPayload = z.infer<typeof notificationIntentPayload>;
 
 type IntentWriter = Pick<Prisma.TransactionClient, 'notificationIntent'>;
@@ -39,7 +50,12 @@ export async function stageNotification(
   input: NotificationIntentPayload,
 ) {
   const payload = notificationIntentPayload.parse(input);
-  const eventId = payload.type === 'generic' ? payload.eventId : payload.appointmentId;
+  const eventId =
+    payload.type === 'generic'
+      ? payload.eventId
+      : payload.type === 'appointment'
+        ? payload.appointmentId
+        : payload.requestId;
   const key = `${payload.type}:${payload.event}:${eventId}:${userId}`;
   await tx.notificationIntent.upsert({
     where: { key },

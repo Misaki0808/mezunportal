@@ -58,8 +58,6 @@
       "CV_PARSE_EMPTY": "CV'nden bilgi çıkaramadık. Boş ya da okunamayan bir dosya olabilir; bilgilerini elle girebilirsin.",
       "PROFILE_TAG_INVALID": "Seçtiğin etiketlerden biri geçerli değil. Seçimini yenile.",
       "MENTOR_NOT_ELIGIBLE": "Mentorluk için koşullar henüz tamamlanmadı.",
-      "FEEDBACK_NOT_READY": "Form, görüşme bittikten bir saat sonra açılır.",
-      "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin.",
       "APPOINTMENT_SLOT_INVALID": "Bu saat artık seçilemiyor. Müsait saatleri yenile.",
       "APPOINTMENT_SLOT_TAKEN": "Bu saat az önce başkası tarafından alındı. Başka bir saat seç.",
       "APPOINTMENT_MENTOR_UNAVAILABLE": "Bu mentor şu an randevu almıyor.",
@@ -92,7 +90,15 @@
       "PROFILE_LINK_INVALID": "Bu bağlantı geçerli bir adres değil. Tam adresi yapıştır.",
       "PROFILE_LINK_NOT_HTTPS": "Bağlantı https ile başlamalı.",
       "PROFILE_LINK_HOST_NOT_ALLOWED": "Bu site için bağlantı eklenemiyor. Listedeki sitelerden birini seç.",
-      "PROFILE_LIMIT_REACHED": "Bu bölüm için ekleyebileceğin üst sınıra ulaştın. Önce birini sil."
+      "PROFILE_LIMIT_REACHED": "Bu bölüm için ekleyebileceğin üst sınıra ulaştın. Önce birini sil.",
+      "FEEDBACK_NOT_READY": "Form, görüşme bittikten bir saat sonra açılır.",
+      "CV_REVIEW_UNAVAILABLE": "Mentor şu anda CV incelemesi almıyor.",
+      "CV_REVIEW_MONTHLY_LIMIT": "Mentorun bu ayki CV inceleme sınırı doldu.",
+      "CV_REVIEW_NO_CV": "Önce bir CV yükleyip profiline uygula.",
+      "CV_REVIEW_OPEN_EXISTS": "Bu mentora açık bir talebin var.",
+      "CV_REVIEW_CLOSED": "Bu CV inceleme talebi artık açık değil.",
+      "CV_REVIEW_ALREADY_HELPFUL": "Bu yorumu zaten faydalı olarak işaretledin.",
+      "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin."
     }
   },
   "nav": {
@@ -228,7 +234,8 @@
         "SELF": "Bu senin kendi profilin.",
         "PAUSED": "Mentor şu an ara vermiş.",
         "CAPACITY_FULL": "Mentorun bu ayki kapasitesi dolu.",
-        "CV_REVIEW_DISABLED": "Bu mentor CV incelemesi yapmıyor."
+        "CV_REVIEW_DISABLED": "Bu mentor CV incelemesi yapmıyor.",
+        "CV_REVIEW_MONTHLY_LIMIT": "Mentorun bu ayki CV inceleme sınırı doldu."
       },
       "appointment": "Randevu al"
     }
@@ -1364,87 +1371,6 @@
     },
     "back": "Geri"
   },
-  "notifications": {
-    "title": "Bildirim tercihlerin",
-    "description": "Hangi e-postaları almak istediğini seç. Hesap güvenliği iletileri her zaman gönderilir.",
-    "back": "Hesabıma dön",
-    "accountTitle": "Bildirim tercihleri",
-    "accountDescription": "Almak istediğin e-postaları seç.",
-    "mandatory": "Hesap güvenliği için bu bildirim kapatılamaz.",
-    "save": "Tercihleri kaydet",
-    "saving": "Kaydediliyor…",
-    "saved": "Bildirim tercihlerin kaydedildi.",
-    "unsaved": "Kaydedilmemiş değişikliklerin var.",
-    "loading": "Tercihler yükleniyor.",
-    "types": {
-      "ACCOUNT_SECURITY": {
-        "label": "Hesap ve güvenlik",
-        "description": "Giriş ve e-posta adresi doğrulama bağlantıları."
-      },
-      "GRADUATION_DECISION": {
-        "label": "Mezun belgesi sonucu",
-        "description": "Mezun belgesi inceleme sonucu."
-      },
-      "EXPERIENCE_MODERATION": {
-        "label": "Deneyim sonucu",
-        "description": "Paylaşımının moderasyon sonucu."
-      },
-      "CONTACT_REQUEST": {
-        "label": "İletişim talepleri",
-        "description": "Sana gelen iletişim talepleri."
-      },
-      "CV_INVITATION": {
-        "label": "Deneyim davetleri",
-        "description": "CV’ndeki stajlar için deneyim yazma daveti."
-      },
-      "PROFILE_FRESHNESS": {
-        "label": "Profil hatırlatmaları",
-        "description": "Profilini güncel tutman için hatırlatmalar."
-      },
-      "ALUMNI_STILL_THERE": {
-        "label": "İş bilgisi kontrolü",
-        "description": "Çalışma bilgilerinin güncelliği hakkında yıllık soru."
-      },
-      "STUDENT_EMAIL_MIGRATION": {
-        "label": "E-posta geçişi",
-        "description": "Mezuniyet yılında kişisel adrese geçiş hatırlatması."
-      },
-      "APPOINTMENT": {
-        "label": "Randevular",
-        "description": "Randevu bildirimleri bu özellik açıldığında kullanılır."
-      }
-    },
-    "email": {
-      "footer": "Bildirim tercihlerin: {url}",
-      "moderationApprovedSubject": "Deneyimin yayınlandı",
-      "moderationApprovedText": "Deneyimin incelendi ve yayınlandı. Ayrıntıyı görüntüle: {url}",
-      "moderationRejectedSubject": "Deneyimin hakkında",
-      "moderationRejectedText": "Deneyimin incelendi. Gerekçeyi görmek ve düzenlemek için: {url}",
-      "contactSubject": "Yeni iletişim talebin var",
-      "contactText": "Bir üye seninle iletişim kurmak istiyor. Talebi incele: {url}",
-      "invitationSubject": "Deneyimini paylaşmak ister misin?",
-      "invitationText": "CV’ndeki bir staj için deneyim paylaşabilirsin. Davetlerini görüntüle: {url}",
-      "freshnessSubject": "Profilini gözden geçir",
-      "freshnessText": "Profilini gözden geçirerek bilgilerini güncel tutabilirsin: {url}",
-      "stillThereSubject": "Çalışma bilgin güncel mi?",
-      "stillThereText": "Hâlâ {company} bünyesinde misin? Evet: {yesUrl} Hayır: {noUrl}",
-      "migrationSubject": "E-posta adresini güncel tut",
-      "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}"
-    },
-    "stillThere": {
-      "title": "Çalışma bilgini doğrula",
-      "loading": "Bağlantın kontrol ediliyor…",
-      "loginNeeded": "Yanıtlamak için önce hesabına giriş yap.",
-      "login": "Giriş yap",
-      "yes": "Evet, hâlâ çalışıyorum",
-      "no": "Hayır, artık çalışmıyorum",
-      "description": "Yanıtını onayla. Bu bağlantı yalnız bir kez kullanılabilir.",
-      "successYes": "Çalışma bilgin için yanıtın kaydedildi.",
-      "successNo": "Yanıtın kaydedildi. İstersen profilindeki çalışma bilgilerini güncelle.",
-      "invalid": "Bu bağlantı geçersiz, kullanılmış veya süresi dolmuş.",
-      "profile": "Profiline git"
-    }
-  },
   "admin": {
     "eyebrow": "YÖNETİM",
     "title": "Yönetim paneli",
@@ -1773,6 +1699,91 @@
     "invalidFiltersTitle": "Filtre bağlantısı geçersiz",
     "invalidFiltersDescription": "Filtreleri temizleyip yeniden arayabilirsin."
   },
+  "notifications": {
+    "title": "Bildirim tercihlerin",
+    "description": "Hangi e-postaları almak istediğini seç. Hesap güvenliği iletileri her zaman gönderilir.",
+    "back": "Hesabıma dön",
+    "accountTitle": "Bildirim tercihleri",
+    "accountDescription": "Almak istediğin e-postaları seç.",
+    "mandatory": "Hesap güvenliği için bu bildirim kapatılamaz.",
+    "save": "Tercihleri kaydet",
+    "saving": "Kaydediliyor…",
+    "saved": "Bildirim tercihlerin kaydedildi.",
+    "unsaved": "Kaydedilmemiş değişikliklerin var.",
+    "loading": "Tercihler yükleniyor.",
+    "types": {
+      "ACCOUNT_SECURITY": {
+        "label": "Hesap ve güvenlik",
+        "description": "Giriş ve e-posta adresi doğrulama bağlantıları."
+      },
+      "GRADUATION_DECISION": {
+        "label": "Mezun belgesi sonucu",
+        "description": "Mezun belgesi inceleme sonucu."
+      },
+      "EXPERIENCE_MODERATION": {
+        "label": "Deneyim sonucu",
+        "description": "Paylaşımının moderasyon sonucu."
+      },
+      "CONTACT_REQUEST": {
+        "label": "İletişim talepleri",
+        "description": "Sana gelen iletişim talepleri."
+      },
+      "CV_INVITATION": {
+        "label": "Deneyim davetleri",
+        "description": "CV’ndeki stajlar için deneyim yazma daveti."
+      },
+      "PROFILE_FRESHNESS": {
+        "label": "Profil hatırlatmaları",
+        "description": "Profilini güncel tutman için hatırlatmalar."
+      },
+      "ALUMNI_STILL_THERE": {
+        "label": "İş bilgisi kontrolü",
+        "description": "Çalışma bilgilerinin güncelliği hakkında yıllık soru."
+      },
+      "STUDENT_EMAIL_MIGRATION": {
+        "label": "E-posta geçişi",
+        "description": "Mezuniyet yılında kişisel adrese geçiş hatırlatması."
+      },
+      "APPOINTMENT": {
+        "label": "Randevular",
+        "description": "Randevu bildirimleri bu özellik açıldığında kullanılır."
+      },
+      "CV_REVIEW": {
+        "label": "CV incelemeleri",
+        "description": "CV inceleme talepleri, yanıtları ve süre dolumu."
+      }
+    },
+    "email": {
+      "footer": "Bildirim tercihlerin: {url}",
+      "moderationApprovedSubject": "Deneyimin yayınlandı",
+      "moderationApprovedText": "Deneyimin incelendi ve yayınlandı. Ayrıntıyı görüntüle: {url}",
+      "moderationRejectedSubject": "Deneyimin hakkında",
+      "moderationRejectedText": "Deneyimin incelendi. Gerekçeyi görmek ve düzenlemek için: {url}",
+      "contactSubject": "Yeni iletişim talebin var",
+      "contactText": "Bir üye seninle iletişim kurmak istiyor. Talebi incele: {url}",
+      "invitationSubject": "Deneyimini paylaşmak ister misin?",
+      "invitationText": "CV’ndeki bir staj için deneyim paylaşabilirsin. Davetlerini görüntüle: {url}",
+      "freshnessSubject": "Profilini gözden geçir",
+      "freshnessText": "Profilini gözden geçirerek bilgilerini güncel tutabilirsin: {url}",
+      "stillThereSubject": "Çalışma bilgin güncel mi?",
+      "stillThereText": "Hâlâ {company} bünyesinde misin? Evet: {yesUrl} Hayır: {noUrl}",
+      "migrationSubject": "E-posta adresini güncel tut",
+      "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}"
+    },
+    "stillThere": {
+      "title": "Çalışma bilgini doğrula",
+      "loading": "Bağlantın kontrol ediliyor…",
+      "loginNeeded": "Yanıtlamak için önce hesabına giriş yap.",
+      "login": "Giriş yap",
+      "yes": "Evet, hâlâ çalışıyorum",
+      "no": "Hayır, artık çalışmıyorum",
+      "description": "Yanıtını onayla. Bu bağlantı yalnız bir kez kullanılabilir.",
+      "successYes": "Çalışma bilgin için yanıtın kaydedildi.",
+      "successNo": "Yanıtın kaydedildi. İstersen profilindeki çalışma bilgilerini güncelle.",
+      "invalid": "Bu bağlantı geçersiz, kullanılmış veya süresi dolmuş.",
+      "profile": "Profiline git"
+    }
+  },
   "feedback": {
     "emailSubject": "Görüşmeni değerlendir",
     "emailText": "Görüşmen hakkındaki kısa formu doldur: {url}",
@@ -1806,6 +1817,69 @@
     "mentorRequests": "Sana gelen talepler",
     "requestBadge": "Bekleyen randevu talebi",
     "studentReliability": "Öğrencinin güvenilirliği"
+  },
+  "cvReview": {
+    "email": {
+      "requested": {
+        "subject": "Yeni CV inceleme talebi",
+        "text": "Yeni bir CV inceleme talebin var. Görüntüle: {url}"
+      },
+      "answered": {
+        "subject": "CV incelemen yanıtlandı",
+        "text": "CV inceleme talebine yanıt verildi. Görüntüle: {url}"
+      },
+      "expired": {
+        "subject": "CV inceleme talebinin süresi doldu",
+        "text": "CV inceleme talebinin yanıt süresi doldu. Talebini görüntüle: {url}"
+      }
+    },
+    "title": "CV incelemeleri",
+    "accountDescription": "Taleplerini ve mentor yanıtlarını takip et.",
+    "back": "Hesabıma dön",
+    "requestTitle": "CV incelemesi iste",
+    "requestDescription": "Son uyguladığın CV bu mentora açık talep süresince gösterilir.",
+    "note": "Mentora notun",
+    "noteHint": "Neyi geliştirmek istediğini kısaca anlat.",
+    "send": "Talep gönder",
+    "sending": "Gönderiliyor…",
+    "sent": "Talebin gönderildi.",
+    "toInbox": "Taleplerime git",
+    "viewCv": "CV’yi aç",
+    "comment": "Yazılı yorumun",
+    "answer": "Yorumu gönder",
+    "answered": "Yorum gönderildi.",
+    "helpful": "Faydalı buldum",
+    "marked": "Faydalı olarak işaretlendi.",
+    "studentHeading": "Gönderdiğim talepler",
+    "mentorHeading": "Gelen talepler",
+    "emptyStudent": "Henüz bir talebin yok. Mentorları keşfederek başlayabilirsin.",
+    "emptyMentor": "Henüz gelen bir CV inceleme talebin yok.",
+    "findMentor": "Mentorları keşfet",
+    "settings": "CV inceleme tercihlerin",
+    "enabled": "CV inceleme talebi al",
+    "limit": "Aylık talep sınırı",
+    "save": "Tercihleri kaydet",
+    "saving": "Kaydediliyor…",
+    "saved": "Tercihlerin kaydedildi.",
+    "status": {
+      "OPEN": "Yanıt bekliyor",
+      "COMPLETED": "Yanıtlandı",
+      "EXPIRED": "Süresi doldu"
+    },
+    "unavailable": {
+      "NOT_MENTOR": "Bu mentora şu anda talep gönderilemiyor.",
+      "SELF": "Kendine talep gönderemezsin.",
+      "DISABLED": "Mentor CV inceleme talebi almıyor.",
+      "MONTHLY_LIMIT": "Mentorun bu ayki CV inceleme sınırı doldu.",
+      "NO_CV": "Önce bir CV yükleyip profiline uygula.",
+      "OPEN_REQUEST_EXISTS": "Bu mentora açık bir talebin var."
+    },
+    "required": "Lütfen bu alanı doldur.",
+    "toCv": "CV yükle",
+    "loading": "Yükleniyor…",
+    "more": "Daha fazla göster",
+    "requestLink": "CV incelemesi iste",
+    "backProfile": "Mentor profiline dön"
   },
   "appointments": {
     "status": {

@@ -248,8 +248,8 @@ export async function purgeCvFiles(
     await failUpload(deps, row.id, 'CV_PARSE_UNAVAILABLE', ['QUEUED', 'PARSING'], row.attempts);
   }
 
-  const candidates = await deps.db.$queryRaw<{ id: string; storageKey: string }[]>`
-    SELECT c."id", c."storageKey" FROM "CvUpload" c
+  const candidates = await deps.db.$queryRaw<{ id: string; userId: string; storageKey: string }[]>`
+    SELECT c."id", c."userId", c."storageKey" FROM "CvUpload" c
     WHERE c."storageKey" IS NOT NULL AND c."updatedAt" < ${grace}
       AND (
         c."status" IN ('FAILED', 'DISCARDED')
@@ -260,18 +260,38 @@ export async function purgeCvFiles(
       )
     ORDER BY c."updatedAt" ASC
     LIMIT ${PURGE_BATCH}`;
-  const held = await heldUploadIds(
-    deps.db,
-    candidates.map((row) => row.id),
-    deps.holds,
-  );
   let filesRemoved = 0;
   for (const row of candidates) {
-    if (held.has(row.id)) continue;
     try {
-      await deps.storage.delete(row.storageKey);
-      await deps.db.cvUpload.update({ where: { id: row.id }, data: { storageKey: null } });
-      filesRemoved += 1;
+      const removed = await deps.db.$transaction(
+        async (tx) => {
+          // Talep oluşturma ve yeni CV uygulama da aynı kullanıcı satırını kilitler.
+          await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${row.userId} FOR UPDATE`;
+          const current = await tx.cvUpload.findUnique({ where: { id: row.id } });
+          if (
+            !current ||
+            !current.storageKey ||
+            current.storageKey !== row.storageKey ||
+            current.updatedAt >= grace
+          )
+            return false;
+          if (current.status === 'APPLIED') {
+            const latest = await tx.cvUpload.findFirst({
+              where: { userId: row.userId, status: 'APPLIED' },
+              orderBy: [{ appliedAt: 'desc' }, { id: 'desc' }],
+              select: { id: true },
+            });
+            if (latest?.id === current.id) return false;
+          } else if (!['FAILED', 'DISCARDED'].includes(current.status)) return false;
+          const held = await heldUploadIds(tx, [row.id], deps.holds);
+          if (held.has(row.id)) return false;
+          await deps.storage.delete(current.storageKey);
+          await tx.cvUpload.update({ where: { id: row.id }, data: { storageKey: null } });
+          return true;
+        },
+        { timeout: 30000 },
+      );
+      if (removed) filesRemoved += 1;
     } catch {
       logCv('purge_failed', 'STORAGE');
     }

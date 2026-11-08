@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { DeleteAccountOutput } from '@/contracts/privacy';
-import type { PrismaClient } from '@/generated/prisma/client';
+import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { codedNotFound, codedValidation } from '@/lib/errors';
 
 import { pruneOrphanSkillTags } from './profile-skills';
@@ -87,6 +87,45 @@ export async function deleteAccount(
     await tx.language.deleteMany({ where: { userId } });
     await tx.certification.deleteMany({ where: { userId } });
     await tx.userSkill.deleteMany({ where: { userId } }); // eski tablo (TD-013)
+    // Öğrencinin CV ilişkileri ve her iki tarafın kişisel serbest metni hesap silmeyle kalkar.
+    await tx.cvReviewRequest.deleteMany({ where: { studentId: userId } });
+    const mentorRequests = await tx.cvReviewRequest.findMany({
+      where: { mentorId: userId, status: 'OPEN' },
+      select: { studentId: true, cvUploadId: true },
+    });
+    const otherStudents = [...new Set(mentorRequests.map((row) => row.studentId))].sort();
+    if (otherStudents.length) {
+      await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" IN (${Prisma.join(otherStudents)}) ORDER BY "id" FOR UPDATE`;
+    }
+    await tx.cvReviewRequest.updateMany({
+      where: { mentorId: userId },
+      data: { comment: null },
+    });
+    await tx.cvReviewRequest.updateMany({
+      where: { mentorId: userId, status: 'OPEN' },
+      data: { status: 'EXPIRED' },
+    });
+    for (const row of mentorRequests) {
+      const open = await tx.cvReviewRequest.count({
+        where: { cvUploadId: row.cvUploadId, status: 'OPEN' },
+      });
+      if (open) continue;
+      const latest = await tx.cvUpload.findFirst({
+        where: { userId: row.studentId, status: 'APPLIED' },
+        orderBy: [{ appliedAt: 'desc' }, { id: 'desc' }],
+        select: { id: true },
+      });
+      if (latest?.id === row.cvUploadId) continue;
+      const upload = await tx.cvUpload.findUnique({
+        where: { id: row.cvUploadId },
+        select: { storageKey: true },
+      });
+      if (!upload?.storageKey) continue;
+      if (!deps.removeStoredFiles)
+        throw new Error('Dosya silme bağlı değil; hesap silme başlatılmadı');
+      fileKeys.push(upload.storageKey);
+      await tx.cvUpload.update({ where: { id: row.cvUploadId }, data: { storageKey: null } });
+    }
     await tx.cvUpload.deleteMany({ where: { userId } });
 
     // Açık iletişim talepleri kapanır; kapalı satırlar geçmiş olarak kalır (karşı tarafın kutusunda).
