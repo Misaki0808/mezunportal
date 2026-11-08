@@ -1,7 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createTestPrisma } from '@/test/db';
-import { addGrant, addMembership, createInstitution, createUser } from '@/test/fixtures';
+import {
+  addGrant,
+  addMembership,
+  createInstitution,
+  createUser,
+  grantRequiredConsents,
+} from '@/test/fixtures';
 
 import * as service from './experience';
 
@@ -28,6 +34,7 @@ beforeAll(async () => {
   inst = await createInstitution(db);
   reader = await student();
   moderator = await student();
+  await grantRequiredConsents(db, moderator);
   await addGrant(db, { userId: moderator, scope: 'DEPARTMENT', departmentId: inst.deptA1 });
 });
 
