@@ -11,6 +11,7 @@ import {
   addMembership,
   createInstitution,
   createUser,
+  grantRequiredConsents,
   type Institution,
 } from '@/test/fixtures';
 
@@ -47,6 +48,7 @@ async function adminOf(
     ...(scope.kind === 'DEPARTMENT' ? { departmentId: scope.departmentId } : {}),
     ...(scope.kind === 'FACULTY' ? { facultyId: scope.facultyId } : {}),
   });
+  await grantRequiredConsents(db, userId);
   return userId;
 }
 

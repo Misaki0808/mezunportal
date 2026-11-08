@@ -623,10 +623,19 @@ describe('reviewGraduationDocument', () => {
     });
     await addGrant(prisma, { userId: unverified, scope: 'DEPARTMENT', departmentId: inst.deptA1 });
 
-    expect(await codeOf(approve(h, otherDeptAdmin))).toBe('AUTH_FORBIDDEN');
-    expect(await codeOf(approve(h, otherFacultyAdmin))).toBe('AUTH_FORBIDDEN');
-    expect(await codeOf(approve(h, student))).toBe('AUTH_FORBIDDEN');
-    expect(await codeOf(approve(h, h.userId))).toBe('AUTH_FORBIDDEN'); // başvuran kendi belgesini onaylayamaz
+    expect(await codeOf(approve(h, otherDeptAdmin))).toBe('RESOURCE_NOT_FOUND');
+    expect(
+      await codeOf(
+        reviewGraduationDocument(
+          h.deps,
+          { userId: otherDeptAdmin },
+          { decision: 'APPROVE', documentId: 'missing' },
+        ),
+      ),
+    ).toBe('RESOURCE_NOT_FOUND');
+    expect(await codeOf(approve(h, otherFacultyAdmin))).toBe('RESOURCE_NOT_FOUND');
+    expect(await codeOf(approve(h, student))).toBe('RESOURCE_NOT_FOUND');
+    expect(await codeOf(approve(h, h.userId))).toBe('RESOURCE_NOT_FOUND'); // başvuran kendi belgesini onaylayamaz
     expect(await codeOf(approve(h, suspended))).toBe('AUTH_ACCOUNT_SUSPENDED');
     expect(await codeOf(approve(h, unverified))).toBe('AUTH_NOT_VERIFIED');
     expect(await codeOf(approve(h, 'yok-yok'))).toBe('AUTH_FORBIDDEN');

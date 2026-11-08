@@ -208,7 +208,7 @@ export async function reviewExperience(
       const parsed = reviewExperienceSchema.parse(input);
       const row = await loadExperience(tx, parsed.experienceId, true);
       if (!(await permissions.canModerate(actor, row.departmentIdAtWrite)))
-        throw codedForbidden('AUTH_FORBIDDEN');
+        throw codedNotFound('RESOURCE_NOT_FOUND');
       await requireConsent(tx, userId);
       if (row.status !== 'PENDING') throw codedConflict('EXPERIENCE_NOT_PENDING');
       const status = parsed.decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED';

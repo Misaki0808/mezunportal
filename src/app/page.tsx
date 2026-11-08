@@ -11,7 +11,7 @@ import type { Metadata } from 'next';
 import { ErrorState } from '@/components/ui';
 
 import { getVerificationState } from '@/server/actions/auth';
-import { requireUser } from '@/server/permissions';
+import { requireUserWithoutConsent } from '@/server/permissions';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('landing');
@@ -27,7 +27,7 @@ export default async function HomePage() {
     getTranslations('home'),
     getTranslations('authScreens.home'),
   ]);
-  const actor = await requireUser().catch(() => null);
+  const actor = await requireUserWithoutConsent().catch(() => null);
   if (!actor) return <Landing stats={await getLandingStats()} />;
   if (actor) {
     const consent = await getConsentState();

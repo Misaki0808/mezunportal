@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { isCodedError } from '@/lib/errors';
 import { getDb } from '@/server/db';
-import { requireUser } from '@/server/permissions';
+import { requireUserWithoutConsent } from '@/server/permissions';
 import { buildDataExport } from '@/server/services/dataExport';
 import { RATE_LIMITS, consumeRateLimit } from '@/server/services/rateLimit';
 
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const actor = await requireUser();
+    const actor = await requireUserWithoutConsent();
     const db = getDb();
     await consumeRateLimit(db, RATE_LIMITS.dataExport, actor.userId);
     const data = await buildDataExport(db, actor.userId);

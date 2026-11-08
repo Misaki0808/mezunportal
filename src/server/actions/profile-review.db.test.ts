@@ -1,6 +1,11 @@
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { createTestPrisma } from '@/test/db';
-import { addMembership, createInstitution, createUser } from '@/test/fixtures';
+import {
+  addMembership,
+  createInstitution,
+  createUser,
+  grantRequiredConsents,
+} from '@/test/fixtures';
 
 const actor = vi.hoisted(() => ({ userId: '' }));
 vi.mock('../permissions/session', () => ({ getSessionUserId: async () => actor.userId }));
@@ -16,6 +21,7 @@ afterAll(() => db.$disconnect());
 
 it('istemci rol ve deneyim uydursa da doğrudan eylem K-08 eşiğini sunucuda uygular', async () => {
   actor.userId = await createUser(db);
+  await grantRequiredConsents(db, actor.userId);
   await addMembership(db, {
     userId: actor.userId,
     departmentId,

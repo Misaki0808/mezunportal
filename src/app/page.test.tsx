@@ -13,7 +13,10 @@ const mocks = vi.hoisted(() => ({
   getSuggestedJobs: vi.fn(),
   getLandingStats: vi.fn(),
 }));
-vi.mock('@/server/permissions', () => ({ requireUser: mocks.requireUser }));
+vi.mock('@/server/permissions', () => ({
+  requireUser: mocks.requireUser,
+  requireUserWithoutConsent: mocks.requireUser,
+}));
 vi.mock('@/server/actions/auth', () => ({ getVerificationState: mocks.getVerificationState }));
 vi.mock('@/server/actions/privacy', () => ({ getConsentState: mocks.getConsentState }));
 vi.mock('@/server/actions/profile', () => ({ getOnboardingState: mocks.getOnboardingState }));
