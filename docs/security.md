@@ -187,6 +187,8 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
   eylemlerinin otomatik envanter testi yeni eylemin de kapıdan geçmesini veya açık istisnaya alınmasını ister.
   Envanter bütün `src` ağacını AST ile tarar; davranışla sınanan eylem kataloğu dışındaki modül/inline
   eylemi reddeder. Tek inline istisna, prod kapılı kimlik eylemine devreden test giriş formudur.
+  Yönetim menüsüne uygunluk yalnız doğrulanmış rol/kapsamı gösterir; eksik rıza rol reddine çevrilmez.
+  Veriyi yükleyen eylem yine rıza kapısından geçer ve gerekirse onay ekranına çağrı gösterilir.
   İstisnalar: giriş/çıkış ve kayıt/doğrulama beyanı; onay durumunu görme ve verme; kişinin kendi
   görünürlük ayarları, veri dökümü ve hesap silme/geri çekme işlemleri. Bu istisnalar başkasının
   verisine erişim yetkisi vermez. Sayfa koruması ek yönlendirme sağlar; veri güvenliği sunucu kapısındadır.
