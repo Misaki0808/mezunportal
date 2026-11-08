@@ -21,12 +21,19 @@ async function login(page: Page, persona: 'student' | 'alumniMentor' | 'systemAd
 test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browser }) => {
   test.setTimeout(120_000);
   const title = `Staj ${randomUUID().replaceAll('-', '').slice(0, 10)}`;
+  const originalWriter = await db.user.findUniqueOrThrow({
+    where: { email: 'alumni-mentor@test.mezunportal.local' },
+  });
   const contexts = await Promise.all(
     [0, 1, 2].map(() => browser.newContext({ viewport: { width: 390, height: 844 } })),
   );
   const [alumni, admin, student] = await Promise.all(contexts.map((c) => c.newPage()));
   let postingId: string | undefined;
   try {
+    await db.user.update({
+      where: { id: originalWriter.id },
+      data: { name: `İlanYazarı ${randomUUID().replaceAll('-', '')}` },
+    });
     await login(alumni!, 'alumniMentor');
     await alumni!.goto('/ilanlar/yeni');
     await waitForHydratedControl(alumni!, 'Devam et');
@@ -51,13 +58,18 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     await alumni!.getByRole('button', { name: 'İncelemeye gönder' }).click();
     await alumni!.waitForURL('**/ilanlarim');
     await expect(alumni!.getByText(title)).toBeVisible();
-    await expect(alumni!.getByText('İncelemede')).toBeVisible();
+    await expect(
+      alumni!.locator('li').filter({ hasText: title }).getByText('İncelemede', { exact: true }),
+    ).toBeVisible();
     const record = await db.jobPosting.findFirstOrThrow({ where: { title } });
     postingId = record.id;
     await login(admin!, 'systemAdmin');
     await admin!.goto('/yonetim/ilanlar');
-    await waitForHydratedControl(admin!, 'Yayımla');
     const card = admin!.locator('li').filter({ hasText: title });
+    await expect(card.locator('xpath=ancestor::*[@data-hydrated][1]')).toHaveAttribute(
+      'data-hydrated',
+      'true',
+    );
     await card.getByRole('button', { name: 'Yayımla' }).click();
     await admin!.getByRole('dialog').getByRole('button', { name: 'Onayla' }).click();
     await expect(card).toHaveCount(0);
@@ -130,11 +142,82 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     expect(await student!.content()).not.toContain(writer.name);
   } finally {
     await Promise.all(contexts.map((c) => c.close()));
+    await db.user.update({ where: { id: originalWriter.id }, data: { name: originalWriter.name } });
     postingId ??= (await db.jobPosting.findFirst({ where: { title }, select: { id: true } }))?.id;
     if (postingId) {
       await db.contactRequest.deleteMany({ where: { message: { contains: title } } });
       await db.pointEntry.deleteMany({ where: { sourceType: 'JOB_POSTING', sourceId: postingId } });
       await db.jobPosting.deleteMany({ where: { id: postingId } });
     }
+  }
+});
+
+test('mobil ilk ekranda iki ilan kartı ve erişilebilir süzgeç alt sayfası görünür', async ({
+  page,
+}) => {
+  const author = await db.user.findUniqueOrThrow({
+    where: { email: 'alumni-mentor@test.mezunportal.local' },
+  });
+  const moderator = await db.user.findUniqueOrThrow({
+    where: { email: 'system-admin@test.mezunportal.local' },
+  });
+  const membership = await db.membership.findFirstOrThrow({
+    where: { userId: author.id, endedAt: null },
+  });
+  const ids: string[] = [];
+  try {
+    for (const title of ['Yazılım stajyeri', 'Veri analizi stajyeri']) {
+      const at = new Date();
+      const deadline = new Date(at);
+      deadline.setUTCDate(deadline.getUTCDate() + 5);
+      const posting = await db.jobPosting.create({
+        data: {
+          authorId: author.id,
+          departmentIdAtWrite: membership.departmentId,
+          title,
+          organizationName: 'Örnek Teknoloji',
+          location: 'İstanbul',
+          isRemote: true,
+          description: 'Ekip çalışması ve gerçek projelerle öğrenme fırsatı sunan bir staj ilanı.',
+          applyMethod: 'URL',
+          applyUrl: 'https://example.org/staj',
+          deadlineOn: deadline,
+          status: 'PUBLISHED',
+          submittedAt: at,
+          moderatedAt: at,
+          moderatedById: moderator.id,
+          publishedAt: at,
+          targets: { create: { departmentId: membership.departmentId } },
+        },
+      });
+      ids.push(posting.id);
+    }
+    await login(page, 'student');
+    for (const [width, height] of [
+      [360, 780],
+      [390, 844],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await page.goto('/ilanlar');
+      await page.waitForLoadState('networkidle');
+      const nav = await page.locator('[data-bottom-nav]').boundingBox();
+      for (const id of ids) {
+        const article = page
+          .locator('article')
+          .filter({ has: page.locator(`a[href="/ilanlar/${id}"]`) });
+        await expect(article).toBeInViewport({ ratio: 1 });
+        const box = await article.boundingBox();
+        expect(box!.y + box!.height).toBeLessThanOrEqual(nav!.y);
+      }
+      const filters = page.getByRole('button', { name: 'Süzgeçler', exact: true });
+      await expect(filters).toBeInViewport({ ratio: 1 });
+      await filters.click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(page.getByRole('dialog').getByLabel('Konum', { exact: true })).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(filters).toBeFocused();
+    }
+  } finally {
+    await db.jobPosting.deleteMany({ where: { id: { in: ids } } });
   }
 });

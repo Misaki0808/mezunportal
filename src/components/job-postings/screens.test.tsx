@@ -297,7 +297,7 @@ it('mobil süzgeçler alt sayfada uygulanır ve arama metni korunur', async () =
       page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
     />,
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Süzgeçler', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: 'Süzgeçler' }));
   const dialog = screen.getByRole('dialog');
   expect(dialog).toHaveTextContent('Konum');
   const apply = screen.getByRole('button', { name: 'Süzgeçleri uygula' });

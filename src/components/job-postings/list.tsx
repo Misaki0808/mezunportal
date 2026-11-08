@@ -12,6 +12,8 @@ import type {
 import {
   Button,
   Card,
+  Badge,
+  IconChip,
   EmptyState,
   Input,
   Pagination,
@@ -36,12 +38,12 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
       className="group flex min-w-0 flex-col gap-2 rounded-2xl border border-border bg-surface p-3 shadow-sm sm:gap-5 sm:rounded-3xl transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:transform-none sm:p-6"
     >
       <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-        <div
-          aria-hidden="true"
-          className="flex size-10 shrink-0 sm:size-14 items-center justify-center rounded-2xl bg-primary-soft text-lg font-bold text-on-primary-soft"
+        <IconChip
+          tone={posting.kind === 'JOB' ? 'success' : 'primary'}
+          className="rounded-2xl font-bold sm:size-14 sm:text-lg"
         >
           {initials}
-        </div>
+        </IconChip>
         <div className="min-w-0">
           <p
             className="truncate text-xs font-semibold text-fg-muted sm:whitespace-normal sm:text-sm"
@@ -54,32 +56,23 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
               className="press-control flex min-h-11 items-center rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
               href={`/ilanlar/${encodeURIComponent(posting.id)}`}
             >
-              {posting.title}
+              <span className="line-clamp-2 sm:line-clamp-none">{posting.title}</span>
+              <span aria-hidden="true" className="ml-auto pl-2 text-primary sm:hidden">
+                →
+              </span>
             </Link>
           </h2>
         </div>
       </div>
-      <div className="flex flex-wrap gap-1.5 text-xs sm:gap-2 sm:text-sm">
-        <span className="max-w-full truncate rounded-full bg-surface-strong px-2 py-1 text-fg sm:break-words sm:px-3 sm:py-1.5 sm:whitespace-normal sm:[overflow-wrap:anywhere]">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+        <Badge title={posting.location ?? undefined} className="max-w-full truncate">
           {posting.location ?? (posting.isRemote ? t('remoteLabel') : t('unknownLocation'))}
-        </span>
-        {posting.location && posting.isRemote && (
-          <span className="rounded-full bg-surface-strong px-2 py-1 text-fg sm:px-3 sm:py-1.5">
-            {t('remoteLabel')}
-          </span>
-        )}
-        <span
-          className={
-            posting.daysLeft <= 7
-              ? 'rounded-full bg-accent-soft px-2 py-1 sm:px-3 sm:py-1.5 font-semibold text-on-accent-soft'
-              : 'rounded-full bg-primary-soft px-2 py-1 sm:px-3 sm:py-1.5 text-on-primary-soft'
-          }
-        >
+        </Badge>
+        {posting.location && posting.isRemote && <Badge tone="category">{t('remoteLabel')}</Badge>}
+        <Badge tone={posting.daysLeft <= 7 ? 'accent' : 'info'}>
           {posting.daysLeft === 0 ? t('today') : t('daysLeft', { count: posting.daysLeft })}
-        </span>
-        <span className="max-w-full truncate rounded-full bg-surface-strong px-2 py-1 text-fg sm:break-words sm:px-3 sm:py-1.5 sm:whitespace-normal sm:[overflow-wrap:anywhere]">
-          {t(posting.kind)}
-        </span>
+        </Badge>
+        <Badge tone="category">{t(posting.kind)}</Badge>
       </div>
       <div className="mt-auto flex min-w-0 items-end justify-between gap-3 border-t border-border pt-2 sm:pt-4">
         <p
