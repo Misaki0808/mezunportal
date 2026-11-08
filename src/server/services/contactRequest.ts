@@ -39,7 +39,9 @@ function isOpenPairViolation(error: unknown): boolean {
 }
 
 /** İlan kaynaklı talep (P2-04, D7): yalnız sunucu içi (ilan üzerinden iletişim servisi) verir; istemci girdisinden gelmez. */
-export type ContactRequestOrigin = { jobPostingId: string; title: string; organization: string };
+export type ContactRequestOrigin =
+  | { source: 'JOB_POSTING'; jobPostingId: string; title: string; organization: string }
+  | { source: 'SEEKER_PROFILE'; title: string; organization: string };
 
 export async function sendContactRequest(
   db: PrismaClient,
@@ -73,8 +75,8 @@ export async function sendContactRequest(
           message: input.message ?? null,
           ...(origin
             ? {
-                source: 'JOB_POSTING' as const,
-                jobPostingId: origin.jobPostingId,
+                source: origin.source,
+                jobPostingId: origin.source === 'JOB_POSTING' ? origin.jobPostingId : null,
                 sourceTitle: origin.title,
                 sourceOrganization: origin.organization,
               }

@@ -81,6 +81,7 @@ export async function requestJobPostingContact(
     nowOf(deps),
     // D7: kaynak sunucuda yazılır; talep eden onaydan önce yazarın adını/kimliğini görmez.
     {
+      source: 'JOB_POSTING',
       jobPostingId: parsed.jobPostingId,
       title: target.title,
       organization: target.organizationName,

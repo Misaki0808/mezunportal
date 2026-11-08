@@ -30,6 +30,10 @@ export const RATE_LIMITS = {
   faqSuggest: { name: 'faq-suggest', limit: 60, windowMs: 60 * 60 * 1000 },
   /** İlan gönderimi (P2-04): yazar başına 30 günde 5. */
   jobPostingSubmit: { name: 'job-posting-submit', limit: 5, windowMs: 30 * 24 * 60 * 60 * 1000 },
+  /** Aday arama (P2-06): mezun başına günde 50 aday kartı (sayaç dönen kart sayısı kadar artar). */
+  seekerCards: { name: 'seeker-cards', limit: 50, windowMs: 24 * 60 * 60 * 1000 },
+  /** Aday kartı üzerinden iletişim talebi (P2-06): mezun başına 30 günde 20. */
+  seekerContact: { name: 'seeker-contact', limit: 20, windowMs: 30 * 24 * 60 * 60 * 1000 },
   /** İlan şikâyeti (P2-04): kullanıcı başına günde 10. */
   jobPostingReport: { name: 'job-posting-report', limit: 10, windowMs: 24 * 60 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitRule>;
@@ -43,14 +47,30 @@ export async function consumeRateLimit(
   subjectId: string,
   now: Date = new Date(),
 ): Promise<void> {
+  await consumeRateLimitBy(db, rule, subjectId, 1, now);
+}
+
+/**
+ * Sayacı `cost` kadar artırır (ör. bir yanıtta dönen kart sayısı); sınır aşılırsa `RATE_LIMITED` (artış geri alınmaz: çağıran işlemi
+ * geri sarar). `cost` 1..`rule.limit` aralığında tam sayıdır.
+ */
+export async function consumeRateLimitBy(
+  db: RateLimitClient,
+  rule: RateLimitRule,
+  subjectId: string,
+  cost: number,
+  now: Date = new Date(),
+): Promise<void> {
+  if (!Number.isInteger(cost) || cost < 1 || cost > rule.limit)
+    throw new RangeError('invalid cost');
   const key = `app:${rule.name}:${subjectId}`;
   const nowMs = BigInt(now.getTime());
   const windowStart = nowMs - BigInt(rule.windowMs);
   const rows = await db.$queryRaw<{ count: number }[]>`
     INSERT INTO "RateLimit" ("id", "key", "count", "lastRequest")
-    VALUES (gen_random_uuid()::text, ${key}, 1, ${nowMs})
+    VALUES (gen_random_uuid()::text, ${key}, ${cost}, ${nowMs})
     ON CONFLICT ("key") DO UPDATE SET
-      "count" = CASE WHEN "RateLimit"."lastRequest" < ${windowStart} THEN 1 ELSE "RateLimit"."count" + 1 END,
+      "count" = CASE WHEN "RateLimit"."lastRequest" < ${windowStart} THEN ${cost} ELSE "RateLimit"."count" + ${cost} END,
       "lastRequest" = CASE WHEN "RateLimit"."lastRequest" < ${windowStart} THEN ${nowMs} ELSE "RateLimit"."lastRequest" END
     RETURNING "count"`;
   const count = Number(rows[0]?.count ?? 0);
