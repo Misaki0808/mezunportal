@@ -13,6 +13,7 @@ import {
 } from '@/components/ui';
 import type { LandingStats } from '@/server/services/landing';
 import { CountUp, Reveal } from './motion';
+import { MentorPreview } from './mentor-preview';
 import './landing.css';
 
 export async function Landing({ stats }: { stats: LandingStats }) {
@@ -85,7 +86,7 @@ export async function Landing({ stats }: { stats: LandingStats }) {
                 {t('trust')}
               </p>
             </div>
-            <div className="landing-stage" aria-hidden="true">
+            <div className="landing-stage" aria-hidden="true" inert>
               <svg className="landing-doodle" viewBox="0 0 300 300" aria-hidden="true">
                 <path
                   d="M20 190 C 55 90, 90 275, 145 140 S 230 45, 280 125"
@@ -111,22 +112,7 @@ export async function Landing({ stats }: { stats: LandingStats }) {
                     <p className="landing-preview-muted">{t('previewExperienceMeta')}</p>
                     <span className="landing-preview-arrow">↗</span>
                   </Card>
-                  <Card className="landing-preview-card landing-preview-mentor">
-                    <div className="landing-preview-row">
-                      <span className="landing-preview-avatar">
-                        <UsersIcon />
-                      </span>
-                      <span>
-                        <strong>{t('previewMentor')}</strong>
-                        <small>{t('previewMentorMeta')}</small>
-                      </span>
-                      <span className="landing-preview-spark">✳</span>
-                    </div>
-                    <div className="landing-preview-tags">
-                      <Badge tone="success">{t('previewAvailable')}</Badge>
-                      <Badge tone="neutral">{t('previewTopic')}</Badge>
-                    </div>
-                  </Card>
+                  <MentorPreview />
                 </div>
                 <div className="landing-phone-bar" />
               </div>
@@ -160,7 +146,7 @@ export async function Landing({ stats }: { stats: LandingStats }) {
         <section className="landing-stats" aria-label={t('statsLabel')}>
           <div className="landing-content landing-stats-inner">
             <p className="landing-stats-intro">
-              {t('statsIntro')} <span>✳</span>
+              {t('statsIntro')} <span aria-hidden="true">✳</span>
             </p>
             <dl>
               {numbers.map(({ key, value }) => (

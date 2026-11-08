@@ -32,6 +32,7 @@
     "previewExperienceMeta": "Örnek deneyim · YBS",
     "previewMentor": "Bir mentorla tanış",
     "previewMentorMeta": "Deneyimlerinden öğren",
+    "previewDepartment": "Yönetim Bilişim Sistemleri",
     "previewAvailable": "Görüşmeye açık",
     "previewTopic": "Kariyer",
     "previewMeeting": "Bir görüşme planla",
@@ -43,7 +44,7 @@
     "statsLabel": "Topluluğun sayıları",
     "statsIntro": "Birlikte büyüyen bir topluluk.",
     "newCommunity": "Yeni başladık",
-    "statsUnavailable": "Şu anda gösterilemiyor",
+    "statsUnavailable": "Bilgi yok",
     "stats": {
       "experiences": "Paylaşılan deneyim",
       "mentors": "Aktif mentor",

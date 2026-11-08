@@ -25,14 +25,16 @@ async function login(page: Page, persona: Persona) {
 const noHorizontalScroll = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
 
-test('ana sayfa oturumsuzken tanıtım ve "Giriş yap" gösterir; "Çok yakında" yoktur', async ({
+test('ana sayfa oturumsuzken tanıtım ve giriş eylemini gösterir; "Çok yakında" yoktur', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1, name: 'MezunPortal' })).toBeVisible();
   await expect(
-    page.locator('#main-content').getByRole('link', { name: 'Giriş yap' }),
+    page.getByRole('heading', { level: 1, name: /Yolun daha yeni başlıyor/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('main').getByRole('link', { name: 'İÜ e-postanla başla' }).first(),
   ).toBeVisible();
   await expect(page.getByText('Çok yakında')).toHaveCount(0);
 });

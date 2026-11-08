@@ -835,3 +835,8 @@ yalnız büyük alanda marka geçişi, `prefers-color-scheme` ile koyu tema; ba�
 metni `primary-soft` üstünde AA değil (soft zeminde `on-primary-soft`). Seçenekler: (a) yalnız İris + nötr — canlılık yok;
 (b) Mercan'ı ana renk yapmak — beyaz metinle AA sağlanamaz; (c) seçilen: İris ana, Mercan az kullanılan vurgu. Kontrast
 testi iki temayı da korur (`src/lib/contrast.test.ts`). Risk: ilk derleme ağa muhtaç (Google Fonts indirmesi).
+
+**Girişsiz tanıtım sayfası (kullanıcı isteği, 8 Kas).** Girişsiz ana sayfada deneyim, mentor ve gerçekleşen görüşme için yalnız
+sunucuda hesaplanan toplu sayılar gösterilir; üçten küçük toplam sayı yerine “Yeni başladık” görünür. Veri kaynağına ulaşılamazsa
+ayrı bir belirsiz durum gösterilir. Örnek kartlar sentetiktir ve etkileşim almaz. Kahraman metni ilk HTML'de ve sabit koyu zeminde;
+marka geçişi dekoratiftir. Hareket azaltma tercihinde içerik korunur ve hareket durur.

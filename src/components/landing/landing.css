@@ -1,10 +1,10 @@
 /* Tanıtım alanına özel yüzeyler; marka renkleri ortak tokenlardan gelir. */
 .landing {
-  --landing-ink: #17162a;
-  --landing-muted: #5a5870;
-  --landing-paper: #fcfcfd;
-  --landing-soft: #f6f5fa;
-  --landing-border: #e7e5ef;
+  --landing-ink: var(--color-fg);
+  --landing-muted: var(--color-fg-muted);
+  --landing-paper: var(--color-bg);
+  --landing-soft: var(--color-surface);
+  --landing-border: var(--color-border);
   color: var(--landing-ink);
   background: var(--landing-paper);
   overflow: clip;
@@ -47,7 +47,7 @@
   font-size: 1.22rem;
   font-weight: 800;
   letter-spacing: -0.055em;
-  color: #17162a;
+  color: var(--landing-ink);
   text-decoration: none;
 }
 .landing-brand-mark {
@@ -57,7 +57,7 @@
   width: 34px;
   height: 34px;
   border-radius: 11px;
-  color: white;
+  color: var(--color-on-primary, #fff);
   background: var(--color-primary, #5b5bf6);
   font-size: 1.4rem;
   line-height: 1;
@@ -74,14 +74,14 @@
   margin: auto;
   font-size: 0.88rem;
   font-weight: 650;
-  color: #5a5870;
+  color: var(--landing-muted);
 }
 .landing-header-links a,
 .landing-header-login {
   text-decoration: none;
 }
 .landing-header-links a:hover {
-  color: #17162a;
+  color: var(--landing-ink);
 }
 .landing-header-login {
   display: inline-flex;
@@ -90,7 +90,7 @@
   min-height: 44px;
   font-size: 0.9rem;
   font-weight: 750;
-  color: #17162a;
+  color: var(--landing-ink);
 }
 .landing-header-login svg {
   width: 16px;
@@ -115,12 +115,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(
-    90deg,
-    rgba(12, 10, 29, 0.82) 0%,
-    rgba(12, 10, 29, 0.72) 48%,
-    rgba(12, 10, 29, 0.36) 100%
-  );
+  background: linear-gradient(90deg, #17162a 0%, #17162a 48%, rgba(12, 10, 29, 0.36) 100%);
 }
 .landing-hero-inner {
   max-width: 1440px;
@@ -485,8 +480,11 @@
   gap: clamp(2rem, 5vw, 6rem);
 }
 .landing-stats dl div {
+  min-width: 0;
+  overflow-wrap: anywhere;
   display: flex;
   flex-direction: column-reverse;
+  justify-content: flex-end;
   gap: 0.25rem;
 }
 .landing-stats dt {
@@ -501,7 +499,7 @@
   letter-spacing: -0.05em;
 }
 .landing-stats .landing-new {
-  color: #4d48bd;
+  color: var(--color-on-primary-soft);
   font-size: 1rem;
   letter-spacing: 0;
 }
@@ -509,7 +507,7 @@
   padding: clamp(5rem, 9vw, 9rem) 0;
 }
 .landing-section-kicker {
-  color: #504acb;
+  color: var(--color-on-primary-soft);
 }
 .landing-section h2,
 .landing-closing h2 {
@@ -520,7 +518,7 @@
   letter-spacing: -0.06em;
 }
 .landing-section h2 span {
-  color: #5b5bf6;
+  color: var(--color-primary);
 }
 .landing-section-head {
   display: flex;
@@ -546,7 +544,7 @@
   padding: 1.75rem;
   border: 1px solid var(--landing-border);
   border-radius: 22px;
-  background: #fff;
+  background: var(--color-bg);
 }
 .landing-step-top {
   display: flex;
@@ -559,8 +557,8 @@
   width: 50px;
   height: 50px;
   border-radius: 16px;
-  background: #eef0ff;
-  color: #4848d8;
+  background: var(--color-primary-soft);
+  color: var(--color-on-primary-soft);
 }
 .landing-step-icon-1 {
   background: #fff1ec;
@@ -596,7 +594,7 @@
   font-size: 1.2rem;
 }
 .landing-ybs {
-  background: #f1effa;
+  background: var(--color-surface);
 }
 .landing-ybs-grid {
   display: grid;
@@ -677,7 +675,7 @@
   gap: 0.4rem;
   min-height: 48px;
   margin-top: 1rem;
-  color: #4848b4;
+  color: var(--color-on-primary-soft);
   font-weight: 800;
   text-decoration: none;
 }
@@ -734,24 +732,24 @@
   overflow: hidden;
   padding: clamp(3rem, 6vw, 6rem);
   border-radius: 30px;
-  background: #eae8ff;
+  background: var(--color-primary-soft);
 }
 .landing-closing h2 {
   max-width: 750px;
 }
 .landing-closing h2 span {
-  color: #504acb;
+  color: var(--color-on-primary-soft);
 }
 .landing-closing p:not(.landing-section-kicker) {
   max-width: 500px;
   margin-top: 1.3rem;
-  color: #504e68;
+  color: var(--landing-muted);
   line-height: 1.7;
 }
 .landing-primary-dark {
   margin-top: 2rem;
-  color: #fff;
-  background: #33308f;
+  color: var(--color-primary-soft);
+  background: var(--color-on-primary-soft);
   box-shadow: none;
 }
 .landing-closing-spark {
@@ -870,12 +868,7 @@
 }
 @media (max-width: 700px) {
   .landing-hero-shade {
-    background: linear-gradient(
-      180deg,
-      rgba(12, 10, 29, 0.82) 0%,
-      rgba(12, 10, 29, 0.78) 53%,
-      rgba(12, 10, 29, 0.38) 100%
-    );
+    background: linear-gradient(180deg, #17162a 0%, #17162a 53%, rgba(12, 10, 29, 0.38) 100%);
   }
   .landing-header {
     height: 64px;
@@ -1040,4 +1033,78 @@
 }
 .landing-count-placeholder {
   visibility: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .landing-header-login,
+  .landing-brand,
+  .landing-header-links a:hover {
+    color: var(--color-fg);
+  }
+  .landing-section-kicker,
+  .landing-stats .landing-new,
+  .landing-text-link {
+    color: var(--color-on-primary-soft);
+  }
+  .landing-step {
+    background: var(--color-surface);
+  }
+  .landing-step-number {
+    color: var(--color-fg-muted);
+  }
+  .landing-ybs {
+    background: var(--color-surface);
+  }
+  .landing-closing-inner {
+    background: var(--color-primary-soft);
+  }
+  .landing-closing h2 span {
+    color: var(--color-on-primary-soft);
+  }
+  .landing-closing p:not(.landing-section-kicker) {
+    color: var(--color-fg-muted);
+  }
+  .landing-footer-links a {
+    color: var(--color-fg);
+  }
+  .landing-primary-dark {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+}
+
+.landing-real-mentor {
+  --color-bg: #fcfcfd;
+  --color-fg: #17162a;
+  --color-fg-muted: #5a5870;
+  --color-border: #e7e5ef;
+  --color-primary: #5b5bf6;
+  --color-on-primary: #fff;
+  --color-primary-soft: #eef0ff;
+  --color-on-primary-soft: #2e2a8f;
+  --color-success-soft: #e7faf7;
+  --color-on-success-soft: #0b5e55;
+  margin-top: 10px;
+  zoom: 0.69;
+}
+.landing-real-mentor article {
+  border-radius: 18px;
+  box-shadow: 0 5px 18px rgba(23, 22, 42, 0.06);
+}
+.landing-real-mentor h3 {
+  font-size: 1rem;
+}
+.landing-real-mentor a {
+  font-size: 0.8rem;
+}
+
+/* Metin, hareketli geçiş yerine sabit koyu yüzey üzerinde okunur. */
+.landing-hero-bottom span {
+  background: #17162a;
+  border-radius: 0.4rem;
+  padding: 0.2rem 0.35rem;
+}
+
+.landing-ybs h2 span {
+  color: var(--color-on-primary-soft);
 }
