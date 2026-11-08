@@ -144,13 +144,13 @@ test('sözlük kaydı eklenir, düzenlenir ve gerekçeyle silinir', async ({ pag
     await page.getByLabel('Sözlük').selectOption('SECTOR');
     await page.getByRole('button', { name: 'Ekle', exact: true }).click();
     let dialog = page.getByRole('dialog');
-    await dialog.getByLabel('Ad').fill(initial);
+    await dialog.getByRole('textbox', { name: /^Ad \(zorunlu\)$/ }).fill(initial);
     await dialog.getByRole('button', { name: 'Kaydet' }).click();
     let card = page.locator('li').filter({ hasText: initial });
     await expect(card).toBeVisible();
     await card.getByRole('button', { name: 'Düzenle' }).click();
     dialog = page.getByRole('dialog');
-    await dialog.getByLabel('Ad').fill(changed);
+    await dialog.getByRole('textbox', { name: /^Ad \(zorunlu\)$/ }).fill(changed);
     await dialog.getByRole('button', { name: 'Kaydet' }).click();
     card = page.locator('li').filter({ hasText: changed });
     await expect(card).toBeVisible();
