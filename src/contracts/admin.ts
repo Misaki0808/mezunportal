@@ -36,6 +36,14 @@ export const adminReason = z
   .min(ADMIN_REASON_MIN, { error: INVALID })
   .max(ADMIN_REASON_MAX, { error: INVALID });
 
+/** Açık kullanıcı onayı; eksik/false değer sessizce kabul edilmez. */
+export const adminConfirmation = z.literal(true, { error: INVALID });
+/** Çıktıda ad değil değer de maskeli olmalıdır; maskEmail/maskPhone biçimleriyle uyumludur. */
+export const maskedAdminEmailSchema = z
+  .string()
+  .regex(/^(?:\*{3}|[^@\s*]\*{3}@(?:[^@\s*]\*{3}\.)?[^@\s*]+(?:\.[^@\s*]+)*)$/);
+export const maskedAdminPhoneSchema = z.string().regex(/^(?:\*{3}|\*{3} \*{3} \*{2} \d{2})$/);
+
 export const ADMIN_PAGE_SIZE_DEFAULT = 20;
 export const ADMIN_PAGE_SIZE_MAX = 50;
 export const adminPageInput = {
@@ -278,7 +286,12 @@ export type UpdateDictionaryEntryInput = z.input<typeof updateDictionaryEntrySch
 
 /** Silinen kaydı kullanan profil kalemlerinin bağı boşalır, ham metinleri kalır. */
 export const deleteDictionaryEntrySchema = z
-  .object({ kind: z.enum(DICTIONARY_KINDS, { error: INVALID }), id: adminId })
+  .object({
+    kind: z.enum(DICTIONARY_KINDS, { error: INVALID }),
+    id: adminId,
+    reason: adminReason,
+    confirmed: adminConfirmation,
+  })
   .strict();
 export type DeleteDictionaryEntryInput = z.input<typeof deleteDictionaryEntrySchema>;
 
@@ -342,7 +355,9 @@ export const resolveUnmatchedValueSchema = z
             sectorId: adminId.optional(),
           })
           .strict(),
-        z.object({ type: z.literal('DISMISS') }).strict(),
+        z
+          .object({ type: z.literal('DISMISS'), reason: adminReason, confirmed: adminConfirmation })
+          .strict(),
       ],
       { error: INVALID },
     ),
@@ -376,6 +391,7 @@ export const AUDIT_ACTION_NAMES = [
   'USER_UNSUSPEND',
   'MODERATION_PUBLISH',
   'MODERATION_REJECT',
+  'REPORT_RESOLVE',
   'POINTS_REVOKE',
   'SUSPICION_DECIDE',
   'ADMIN_GRANT',
@@ -544,7 +560,7 @@ export const EMPLOYMENT_EXPORT_RATE_LIMIT = { maxRequests: 10, windowSeconds: 36
 /** `href`: süzgeçli dışa aktarma bağlantısı (yalnız tanımlı alanlar eklenir). */
 export function employmentExportHref(filter: EmploymentReportFilter = {}): string {
   const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(filter)) {
+  for (const [key, value] of Object.entries(employmentReportFilterSchema.parse(filter))) {
     if (value !== undefined && value !== null && value !== '') query.set(key, String(value));
   }
   const text = query.toString();

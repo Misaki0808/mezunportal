@@ -62,3 +62,18 @@ export function consentDecisionError(
   if (isRequired(decision.documentType) && !decision.granted) return 'CONSENT_REQUIRED';
   return null;
 }
+
+/**
+ * Bu belge için GEÇERLİ onay var mı? Son karar onay ve sürüm güncel olmalı (metin değişince kullanıcı yeniden
+ * onaylayana kadar rıza yok sayılır). Yurt dışına aktarım gibi isteğe bağlı rızaya bağlı işlemler bunu sorar.
+ */
+export function hasActiveConsent(
+  records: readonly ConsentDecisionRecord[],
+  documentType: ConsentDocument,
+  versions: ConsentVersions = CURRENT_CONSENT_VERSIONS,
+): boolean {
+  const last = computeConsentState(records, versions).documents.find(
+    (doc) => doc.documentType === documentType,
+  )?.lastDecision;
+  return last != null && last.granted && last.version === versions[documentType];
+}

@@ -185,3 +185,45 @@ export function parseStorageEnv(source: Readonly<Record<string, string | undefin
 export function getStorageEnv(): StorageEnv {
   return parseStorageEnv(process.env);
 }
+
+// ---------------------------------------------------------------------------------------------
+// CV ayrıştırma / LLM (P1-05)
+// ---------------------------------------------------------------------------------------------
+
+const llmEnvSchema = z
+  .object({
+    APP_ENV: z.enum(['local', 'test', 'prod']),
+    /**
+     * Sağlayıcı seçimi. BOŞSA CV ayrıştırma KAPALIDIR (ekranda sebebi gösterilir, elle giriş açık).
+     * `fake`: deterministik sahte adaptör; yalnız `local`/`test` (canlıda env doğrulamasını düşürür).
+     * Gerçek sağlayıcı K-04 cevaplanınca ayrı kartla eklenir; `LLM_API_KEY`/`LLM_MODEL` o zaman okunur.
+     */
+    LLM_PROVIDER: z.preprocess(blankToUndefined, z.enum(['fake']).optional()),
+    LLM_API_KEY: optionalText,
+    LLM_MODEL: optionalText,
+    /** Kullanıcı başına günlük ayrıştırma sınırı (docs/security.md "Kötüye kullanım sınırları"). */
+    CV_PARSE_DAILY_LIMIT: z.preprocess(
+      blankToUndefined,
+      z.coerce.number().int().min(1).max(50).default(5),
+    ),
+  })
+  .superRefine((env, ctx) => {
+    if (env.APP_ENV === 'prod' && env.LLM_PROVIDER === 'fake') {
+      ctx.addIssue({ code: 'custom', path: ['LLM_PROVIDER'], message: 'LLM_PROVIDER' });
+    }
+  });
+
+export type LlmEnv = z.infer<typeof llmEnvSchema>;
+
+export function parseLlmEnv(source: Readonly<Record<string, string | undefined>>): LlmEnv {
+  const result = llmEnvSchema.safeParse(source);
+  if (!result.success) {
+    const keys = new Set(result.error.issues.map((issue) => String(issue.path[0] ?? '(kök)')));
+    throw new EnvValidationError([...keys]);
+  }
+  return result.data;
+}
+
+export function getLlmEnv(): LlmEnv {
+  return parseLlmEnv(process.env);
+}

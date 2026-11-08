@@ -34,6 +34,6 @@ describe('deneyim sözleşmesi eylemleri oturumsuz kapalıdır', () => {
       () => resolveExperienceReport({ reportId: 'r', decision: 'DISMISSED', reason: 'Gerekçe' }),
     ],
   ] as const)('%s → AUTH_UNAUTHENTICATED', async (_name, call) => {
-    await expect(call()).rejects.toMatchObject({ code: 'AUTH_UNAUTHENTICATED' });
+    expect(await call()).toEqual({ ok: false, errorCode: 'AUTH_UNAUTHENTICATED' });
   });
 });

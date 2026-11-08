@@ -4,6 +4,9 @@ import type { ErrorCode } from '@/lib/errors';
 
 import {
   ADMIN_LEVELS,
+  adminConfirmation,
+  maskedAdminEmailSchema,
+  maskedAdminPhoneSchema,
   INVALID,
   adminId,
   adminPageInput,
@@ -17,7 +20,7 @@ import {
  * Çıktılarda telefon ve e-posta YALNIZ maskelidir (ham değer alanı yoktur).
  *
  * Sunucu kuralları (servis payı uygular, ekran ipucu olarak `manageable` alanını kullanır):
- *  1. Kapsam: yönetici, hedef kullanıcının BÜTÜN üyeliklerinin bölümlerini kapsamalıdır. Askıya alma hesap
+ *  1. Kapsam: yönetici, hedef kullanıcının BÜTÜN ETKİN üyeliklerinin bölümlerini kapsamalıdır. Askıya alma hesap
  *     geneli olduğundan kısmen kapsanan kullanıcıyı yalnız kapsamı genişleten (ör. sistem) yönetici askıya alır.
  *     Hiç üyeliği olmayan kullanıcıyı yalnız sistem yöneticisi yönetir.
  *  2. Kendi hesabı/yetkisi üzerinde işlem yapılamaz (`ADMIN_SELF_ACTION`).
@@ -77,9 +80,9 @@ export const adminUserSummarySchema = z
     id: z.string(),
     displayName: z.string(),
     /** `ayse@ogr.iu.edu.tr` → `a***@o***.iu.edu.tr` (`rules/maskEmail`). */
-    maskedEmail: z.string(),
+    maskedEmail: maskedAdminEmailSchema,
     /** `*** *** ** 67` (`rules/maskPhone`); telefon yoksa `null`. */
-    maskedPhone: z.string().nullable(),
+    maskedPhone: maskedAdminPhoneSchema.nullable(),
     status: z.enum(USER_STATUSES),
     memberships: z.array(adminMembershipViewSchema),
     /** Etkin yönetici yetkisi var (askıya alma/düzeltme için sistem yöneticisi gerekir). */
@@ -129,6 +132,7 @@ export const suspendUserSchema = z
   .object({
     userId: adminId,
     reason: adminReason,
+    confirmed: adminConfirmation,
     expiresAt: z.coerce.date({ error: INVALID }).optional(),
   })
   .strict()
@@ -156,9 +160,9 @@ export const suspendUserOutputSchema = z
   .strict();
 export type SuspendUserOutput = z.infer<typeof suspendUserOutputSchema>;
 
-/** Gerekçe isteğe bağlıdır (`USER_UNSUSPEND`). */
+/** Askıyı kaldırmada da gerekçe ve açık onay zorunludur (P1-11 kartı). */
 export const unsuspendUserSchema = z
-  .object({ userId: adminId, reason: adminReason.optional() })
+  .object({ userId: adminId, reason: adminReason, confirmed: adminConfirmation })
   .strict();
 export type UnsuspendUserInput = z.input<typeof unsuspendUserSchema>;
 
@@ -181,6 +185,7 @@ export const correctMembershipSchema = z
   .object({
     membershipId: adminId,
     reason: adminReason,
+    confirmed: adminConfirmation,
     changes: z
       .object({
         departmentId: adminId.optional(),
@@ -220,7 +225,7 @@ export const adminGrantViewSchema = z
     id: z.string(),
     userId: z.string(),
     userDisplayName: z.string(),
-    maskedEmail: z.string(),
+    maskedEmail: maskedAdminEmailSchema,
     scope: z.enum(ADMIN_LEVELS),
     facultyId: z.string().nullable(),
     facultyName: z.string().nullable(),
@@ -241,11 +246,17 @@ export const grantAdminSchema = z.discriminatedUnion(
   'scope',
   [
     z
-      .object({ scope: z.literal('SYSTEM'), userId: adminId, reason: adminReason.optional() })
+      .object({
+        scope: z.literal('SYSTEM'),
+        userId: adminId,
+        reason: adminReason.optional(),
+        confirmed: adminConfirmation,
+      })
       .strict(),
     z
       .object({
         scope: z.literal('FACULTY'),
+        confirmed: adminConfirmation,
         userId: adminId,
         facultyId: adminId,
         reason: adminReason.optional(),
@@ -254,6 +265,7 @@ export const grantAdminSchema = z.discriminatedUnion(
     z
       .object({
         scope: z.literal('DEPARTMENT'),
+        confirmed: adminConfirmation,
         userId: adminId,
         departmentId: adminId,
         reason: adminReason.optional(),
@@ -268,7 +280,9 @@ export const grantAdminOutputSchema = z.object({ grantId: z.string() }).strict()
 export type GrantAdminOutput = z.infer<typeof grantAdminOutputSchema>;
 
 /** Gerekçe zorunludur. Kendi yetkini ve son sistem yöneticisi yetkisini kaldıramazsın. */
-export const revokeAdminSchema = z.object({ grantId: adminId, reason: adminReason }).strict();
+export const revokeAdminSchema = z
+  .object({ grantId: adminId, reason: adminReason, confirmed: adminConfirmation })
+  .strict();
 export type RevokeAdminInput = z.input<typeof revokeAdminSchema>;
 
 export const revokeAdminOutputSchema = z
