@@ -36,7 +36,11 @@ describe('searchExperiences eylemi', () => {
       { q: 'a' },
       { types: ['ROCKET'] },
       { page: 0 },
+      { page: -1 },
+      { page: Number.MAX_SAFE_INTEGER },
       { pageSize: 500 },
+      { pageSize: -1 },
+      { pageSize: Number.MAX_SAFE_INTEGER },
       { universityId: 'baska-uni' },
       { authorId: 'x' },
     ]) {

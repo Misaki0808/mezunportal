@@ -483,6 +483,17 @@ tüm sorgu üzerinde değil SÖZCÜK başınadır: tüm sorguya benzerlik “mar
 Yazarı silinmiş, askıdaki ya da yazar bağı kopmuş (K-09 anonimleştirme) deneyim içeriği korur ama yazarsız görünür.
 
 
+## 2026-11-08 · Tur düzeltmesi: dönüş yolu, yönetimde rıza, geliştirme günlüğü (PM kararı)
+
+Faz 1 ekran turunun güvenlik/KVKK bulguları için:
+- Oturumsuz kullanıcı hata ekranı yerine girişe yönlenir; gitmek istediği yol `?donus=` ile taşınır ve
+  yalnız site içi göreli yol kabul edilir (açık yönlendirme yerine sessizce ana sayfa).
+- Rıza kapısı yönetim sayfalarını ve eylemlerini de kapsar; kontrol yetkiden sonradır.
+  Deneyim moderasyonunda kuyruk, şikâyet listesi, kararlar ve yalnız moderatör yetkisiyle
+  görülen detaylar da bu kapıdadır; yazarın kendi kaydına ve üyenin normal yayın erişimine ek kısıt getirilmez.
+- `next dev` günlüğünde sunucu eylemi argümanları ve istek URL günlükleri kapalıdır; URL’lerde kodlanmış kişisel veri bulunabilir. Telefon testi geliştirme
+  sunucusuyla yapıldığı için geliştirme günlüğü de kişisel veri kuralına tabidir.
+- İletişim hedefi önizlemesi talep edilemeyen her hedefe aynı yanıtı verir.
 
 ## 2026-11-08 · Deneyim servisi: anonim çıktı, atomik moderasyon ve K-09
 
@@ -506,3 +517,38 @@ sonuç/yeniden deneme yalnız o nesli günceller. Hata temizliği satırı kilit
 kontrol etmeden PDF silmez: eski işin geç hatası yeni PARSED/APPLIED dosyasını yok edemez. Onaylanan
 ad düzeltmeleri mevcut eğitim/dil/sertifika kalemlerine de uygulanır; CV yazımı User kilidi altında
 kanonik askı/silinme kontrolünü yeniden yapar. Çıktı üst sınırı UTF-8 baytlarıyla ölçülür.
+
+## 2026-11-08 · Yönetim paneli: kapsam, askı ve toplu rapor kuralları
+Askıya alma Better Auth ban alanlarına yazılır ama eklentinin HTTP ucu kapalı olduğundan kendi servisimiz yazar (oturumlar
+aynı işlemde silinir). Askı hesap geneli olduğu için hedefin bütün etkin üyelikleri yöneticinin kapsamında olmalıdır; aksi
+halde yalnız sistem yöneticisi yapar. Yetkili kullanıcıyı yalnız sistem yöneticisi askıya alır (bölüm yöneticisi
+üstünü susturamasın), kimse kendi hesabı/yetkisi üzerinde işlem yapamaz ve son sistem yetkisi kaldırılamaz. Mezun
+istihdam raporu ve Excel yalnız toplu sayı verir: kişi satırı yok, yalnız sözlükle eşleşen adlar, üç kişiden küçük
+gruplar bastırılır — serbest metin ve tek kişilik gruplar kimliği ele verirdi. Excel `.xlsx`tir (Türkçe karakterler için
+UTF-8, CSV'nin BOM sorunu yok). Sözleşme iki dosyadır: panel sorguları (W2) ve kullanıcı/yetki eylemleri.
+
+## 2026-11-08 · Yönetici atama/kaldırma tek kilitle sıralanır; üyelik düzeltmede geçmiş korunur
+İki sistem yöneticisi aynı anda birbirini kaldırırsa yetki yüklemesi ve yazma sıralanmadığında ikisi de başarılı olup
+sistemde yönetici kalmayabilirdi. Atama/kaldırma tek bir tavsiye kilidiyle sıralanır ve yetki kilitten SONRA yüklenir:
+ikinci istek güncel durumda yetkisizdir. Üyelik düzeltmede bölüm/rol değişirse eski satır silinmez, kapatılır ve
+yöneticice doğrulanmış yenisi açılır; yalnız yıl düzeltmesi yerinde yapılır. Bekleyen/reddedilen üyelik düzeltilmez
+(kendi akışı vardır: belge onayı/ret); düzeltme rolün yıl kısıtlarına (öğrenci giriş, mezun mezuniyet, akademisyen
+hiçbiri) uymak zorundadır. Rol düzeltmesinde mentor uygunluğunun yeniden hesabı bu adımda yoktur: mentor profili
+yetki anında okunur, K-08 eşiği yalnız mentor olma isteğinde denetlenir.
+
+## 2026-11-08 · Yönetim sözleşmesinde değer maskesi ve açık onay
+
+Maskeli telefon/e-posta çıktı alanları maske biçimini doğrular; yalnız alanı masked diye adlandırmak ham
+veri sızıntısını engellemez. P1-11 kartına göre yıkıcı/yetki değiştiren kullanıcı işlemleri açık
+confirmed:true ister; askı kaldırma da gerekçelidir. Sözlük silme ve eşleşmeyeni atmada onay/gerekçe
+sözleşmede zorunludur. Excel bağlantısı yalnız filtre şemasından geçen alanları taşır; kişisel ya da
+bilinmeyen URL parametresi eklenmez. Bu alanlar ekranın onay penceresi ile sunucu doğrulamasını bağlar.
+
+## 2026-11-08 · Yönetim yazımları yetki iptali ve hesap silmeyle sıralanır
+
+Askı ve üyelik düzeltmesi de atama/kaldırmanın aynı tavsiye kilidini alır; güncel yetki
+kilitten sonra okunur. Böylece yetkisi kaldırılan yöneticinin bekleyen yazımı sonradan
+uygulanmaz. Aktörün kullanıcı satırındaki paylaşım kilidi askı/silmeyle yetki okumasını
+sıralar. Hedef kullanıcı kilidi atama ve üyelik düzeltmesinden önce alınır; hesap silme ve
+mezun geçişiyle ortak sıra User → Membership'tir. Silme ile yarışan atama silinmiş hesapta
+etkin yetki bırakamaz ve ters satır kilidi sırası oluşmaz.

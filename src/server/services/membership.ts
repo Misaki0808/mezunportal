@@ -55,7 +55,8 @@ export async function transitionStudentToAlumni(
     });
     if (!decision.allowed) throw errorForDenyReason(decision.reason);
 
-    // 2) Hedef kullanıcı var ve silinmemiş.
+    // 2) Hedef kullanıcı var ve silinmemiş. Yönetim düzeltmesi/hesap silmeyle aynı kilit sırası.
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${input.userId} FOR UPDATE`;
     const target = await tx.user.findUnique({
       where: { id: input.userId },
       select: { deletedAt: true },

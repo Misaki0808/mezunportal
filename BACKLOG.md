@@ -35,6 +35,10 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 - P1-08 arama servisi: Türkçe tam metin + yazım hatası toleransı, tür/şirket/kanal/dönem/ücret süzgeçleri,
   sayfalama, K-07 görünürlüğü ve anonim çıktı hazır (1.000 deneyimde tipik sorgu ~10 ms); ekran W2'de.
 
+- P1-11 yönetim paneli sözleşmesi: panel sorguları, kullanıcı/askı/üyelik düzeltme/yönetici atama, sözlük ve
+  eşleşmeyen değer, işlem kaydı görüntüleme ve toplu mezun istihdam raporu imzaları, `requireAnyAdmin` koruması ve
+  hata kodları hazır. Askıya alma/kaldırma (oturumlar aynı işlemde düşer), üyelik düzeltme ve yönetici atama/kaldırma
+  servisi tamam (kapsam, kendi üzerinde işlem yok, işlem kaydı aynı işlemde); panel sorguları ve kalanı W2'de.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -104,11 +108,7 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   Ne: `Session` ve `Verification` tablolarında süresi geçen satırlar birikir (indeksler hazır: `expiresAt`).
   Neden borç: veri en azlığı (KVKK) ve tablo büyümesi.
   Kapanış ölçütü: zamanlanmış pg-boss işi süresi geçmiş satırları siler (idempotent, testli).
-- [ ] **TD-007** · P1 · Askıya alma servisi oturumları düşürmüyor
-  Ne: yetki katmanı askıdaki kullanıcıyı zaten reddeder; ancak askıya alma eylemi (yönetim adımı) `Session`
-  satırlarını da silmeli ki kullanıcı çerezle bile oturum görmesin.
-  Neden borç: derinlemesine savunma; Better Auth `banUser` HTTP ucu kapalı olduğundan eylem kendi yazılmalı.
-  Kapanış ölçütü: askıya alma servisi ban alanlarını yazar, oturumları siler ve `USER_SUSPEND` kaydı tutar.
+
 - [ ] **TD-008** · P1 · `files.purge` zamanlanmamış
   Ne: `purgeCvFiles` (bağlı olmayan eski CV dosyaları, 24 saatten uzun takılı `cv.parse` işleri, 7 günden uzun onay
   bekleyen ayrıştırma çıktısı) hazır ve testli
@@ -131,6 +131,7 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   (`resolvedToId`, takma ad ekleme) yok.
   Neden borç: eşleme olmadan her değer ham kalır; kuyruk büyür.
   Kapanış ölçütü: pilot sözlük seed'i + yönetici çözümleme ekranı.
+
 
 ### Bilinçli kabul edilen sınırlar
 
