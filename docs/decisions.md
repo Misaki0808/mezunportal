@@ -742,6 +742,15 @@ Gün sonu müsaitliği sözleşmede 1440 dakikadır; yerel saat alanı 24:00 kab
 
 CV talep, yanıt ve süre dolumu bildirimleri #45'in niyet kaydını aynı veritabanı işleminde oluşturur. Hızlı kuyruk denemesi başarısız olsa da niyet kalır; ortak aktarım işi aynı iş anahtarıyla mevcut CV bildirim kapısına döner. Niyette yalnız talep kimliği ve olay türü bulunur; alıcı talebin taraflarıyla yeniden eşleştirilir, not/CV/e-posta kopyalanmaz. Metinleri ve CV dosyasını temizleyen hesap silme, artık bulunmayan talebin bekleyen bildirimini de gönderimsiz sonlandırır.
 
+### TD-017 — bildirim niyetinde sınırlı tekrar ve kalıcı hata
+
+Çözülemeyen davet dahil aktarım hataları beş denemeyle sınırlıdır; üstel bekleme niyetin kilitli
+işleminde saklanır ve kilitten sonra yeniden kontrol edilir. Son hatada yük temizlenir, sabit kodlu
+kalıcı hata kaydı tutulur ve operatör günlüğüne kişisel veri içermeyen tek uyarı yazılır. Bu işletim
+kaydı otomatik işin sonucudur; insan yönetici eylemi olarak kaydedilmez. Kalıcı hata aynı iş
+anahtarının tekrar sahnelenmesiyle canlanmaz; diğer niyetler ve hesap silme ilerler. Geçici kuyruk
+kesintilerinde aynı idempotency anahtarıyla teslim güvencesi korunur.
+
 ## 2026-11-08 · Puan motoru ve hile önleme (P1-16)
 
 **Yazım yolu.** Puan, olayı üreten işlemin DIŞINDA ve kendi işleminde yazılır (deneyim yayını, iki tarafın onayıyla `COMPLETED`
@@ -770,6 +779,35 @@ tarafın görüşme yanıtı ≤ 60 sn arayla ≥ 3 kez, 180 günde (`SYNC_FEEDB
 verilene dek kullanıcının BEKLEYEN puanı kesinleşmez. Aynı kanıt (`evidenceKey`) iki kez, aynı (kullanıcı, kural) için iki açık işaret
 olmaz. Sistem yöneticisi onaylarsa işarete bağlı kayıtlar `FRAUD_CONFIRMED` ile geri alınır; reddederse puana dokunulmaz.
 
+
+
+### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
+
+Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun kişi sayısı toplamdan çıkarılarak küçük grup hesaplanamaz. Aynı servis izdüşümü panelin HTML/RSC verisine ve Excel özetine uygulanır. Kullanım sayfasında zorunlu rıza ve yönetici yetkisi loading başlamadan kontrol edilir; rızasız/yetkisiz erişim gerçek 404, dosya rotası 403 döner. Diğer sayfaların yeniden onay akışı korunur.
+
+## 2026-11-08 · SSS akışı: kimliksiz yayın, benzer soru kapısı, puan yayınla birlikte (P1-17)
+
+**Gizlilik.** Soran mentora ve moderatöre, cevap yazanlar birbirine ve moderatöre hiç görünmez; yayın çıktısı yalnız soru,
+cevap ve tarihtir. Moderatörün düzenlediği yayın metni soran ve TÜM cevap yazanların ad/soyadını (ek almış biçimler dahil:
+“Ahmet'e”, “ahmete”) ve e-posta/telefon/kimlik numarası biçimini içeremez; denetim yayın anında sunucudadır
+(`FAQ_IDENTITY_LEAK`) ve bilerek katıdır (yanlış alarm metni düzeltmekle çözülür, sızıntı geri alınamaz). Soru ve cevap
+gönderiminde e-posta/telefon biçimi de erken reddedilir. Yayın, kaynak talebin bölümünün üniversitesindeki doğrulanmış
+üyelere açıktır (K-07). Karar notu (ret gerekçesi, yönlendirme notu) yalnız soran öğrenciye görünür; bildirim e-postası notu
+taşımaz.
+
+**Benzer soru kapısı.** Yazarken `suggestSimilarFaqs` (saatte 60) en çok 5 öneri verir: tam soruda `pg_trgm` benzerliği ≥ 0,35
+ya da bütün sözcüklerin tam metinde eşleşmesi. Gönderim aynı işlevi kullanır; öneri varken onaysız gönderim
+`FAQ_SIMILAR_EXISTS` ile reddedilir, öğrenci önerileri gördüğünü `similarAcknowledged` ile onaylayınca geçer. Talep hız sınırı
+günde 3; reddedilen deneme sayaç tüketmez (sayaç kayıtla aynı işlemdedir).
+
+**Puan.** Yalnız yayında ve `docs/data.md` gereği yayınla AYNI işlemde yazılır (soran 2, seçilen cevap 5, seçilmeyen her cevap
+1); kaynak anahtarı (talep / cevap kimliği) çift yazımı önler ve günlük uzlaştırma ile `points.backfill` aynı kuralı kullanır.
+Karşı taraf kaydedilmez: soran ve cevap yazanlar birbirini tanımaz, bu da karşılıklı puan anlaşmasını zorlaştırır.
+
+**Moderasyon.** Yayın/ret/yönlendirme talebin YAZILDIĞI bölümün kapsamıyla işlem içinde doğrulanır ve `MODERATION_PUBLISH`,
+`MODERATION_REJECT`, `MODERATION_REDIRECT` ile aynı işlemde kaydedilir. Yönlendirilen öğrenci mentor dizini bağlantısını görür.
+Hesap silinince yayınlanmamış talepler (cevaplarıyla) silinir, yayınlanmışta soran bağı kopar; yazılan cevaplar silinir, seçilmiş
+cevap kimliksiz kalır; yayınlanan SSS kimlik taşımadığı için kalır.
 
 ## 2026-11-08 · Tur 2 düzeltmeleri: beklenen durumlar, panolu ana sayfa, ekran klavyesi
 

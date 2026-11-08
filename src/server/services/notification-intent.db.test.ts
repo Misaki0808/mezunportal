@@ -99,7 +99,11 @@ describe('işlemsel bildirim niyeti', () => {
     // Kuyruk başarılı, ama niyet silinmeden süreç öldü: sonraki koşu aynı anahtarla devam eder.
     const source = await db.notificationIntent.findFirstOrThrow({ where: { userId: user } });
     await sender(source);
-    await Promise.all([relayNotificationIntents(db, sender), relayNotificationIntents(db, sender)]);
+    const retry = { now: () => new Date(Date.now() + 60_000) };
+    await Promise.all([
+      relayNotificationIntents(db, sender, retry),
+      relayNotificationIntents(db, sender, retry),
+    ]);
     expect(await db.notificationIntent.count({ where: { userId: user } })).toBe(0);
     expect(await db.emailLog.count({ where: { idempotencyKey: key } })).toBe(1);
     const jobs = await boss.findJobs(EMAIL_QUEUE, { data: { idempotencyKey: key } });

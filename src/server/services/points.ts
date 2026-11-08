@@ -263,6 +263,58 @@ export async function awardForCvReview(
 }
 
 /**
+ * SSS yayını (P1-17; docs/data.md: yayın puanlarla birlikte tek işlemde) → soran 2 (`FAQ_QUESTION_PUBLISHED`), seçilen cevabın mentoru 5 (`FAQ_ANSWER_SELECTED`), seçilmeyen
+ * her cevabın yazarı 1 (`FAQ_ANSWER_PARTICIPATION`). Puan YALNIZ yayında yazılır; hepsi idempotenttir (kaynak anahtarı:
+ * soran için talep, mentor için cevap kimliği). Karşı taraf kaydedilmez: soran ve cevap verenler birbirini tanımaz.
+ * Kullanıcılar sabit sırayla (kimlik) işlenir.
+ */
+export async function awardFaqInTx(
+  tx: Tx,
+  requestId: string,
+  now: Date,
+): Promise<AwardResult | null> {
+  const row = await tx.faqRequest.findUnique({
+    where: { id: requestId },
+    select: {
+      askerId: true,
+      item: { select: { publishedAt: true } },
+      answers: { select: { id: true, mentorId: true, isSelected: true } },
+    },
+  });
+  // Yayın = SSS kaydı vardır (talep durumu ve kayıt aynı işlemde yazılır).
+  if (!row || !row.item) return null;
+  const eventAt = row.item.publishedAt;
+  const awards: AwardInput[] = [];
+  if (row.askerId)
+    awards.push({
+      userId: row.askerId,
+      action: 'FAQ_QUESTION_PUBLISHED',
+      sourceType: 'FAQ_REQUEST',
+      sourceId: requestId,
+      eventAt,
+    });
+  for (const answer of row.answers)
+    if (answer.mentorId)
+      awards.push({
+        userId: answer.mentorId,
+        action: answer.isSelected ? 'FAQ_ANSWER_SELECTED' : 'FAQ_ANSWER_PARTICIPATION',
+        sourceType: 'FAQ_ANSWER',
+        sourceId: answer.id,
+        eventAt,
+      });
+  awards.sort((a, b) => a.userId.localeCompare(b.userId));
+  let created = false;
+  for (const award of awards) created = (await awardPoint(tx, award, now)).created || created;
+  return { created, entryId: null, skipped: null };
+}
+
+/** Uzlaştırma ve geri doldurma için bağımsız işlem; yayın anında `awardFaqInTx` yayınla AYNI işlemde çağrılır. */
+export async function awardForFaq(deps: PointDeps, requestId: string): Promise<AwardResult | null> {
+  const now = nowOf(deps);
+  return deps.db.$transaction((tx) => awardFaqInTx(tx, requestId, now), TX_OPTIONS);
+}
+
+/**
  * Gecikmesi dolan `PENDING` kayıtları kesinleştirir (`points.finalize`). Karar bekleyen (`OPEN`) şüphe işareti olan
  * kullanıcının bekleyen puanı kesinleşmez: işaret karara bağlanınca bir sonraki çalıştırmada kesinleşir.
  */
@@ -283,6 +335,7 @@ export type BackfillResult = {
   experiences: number;
   sessions: number;
   cvReviews: number;
+  faqs: number;
   created: number;
   failed: number;
 };
@@ -301,11 +354,12 @@ export async function runPointBackfill(
     experiences: 0,
     sessions: 0,
     cvReviews: 0,
+    faqs: 0,
     created: 0,
     failed: 0,
   };
   const apply = async (
-    kind: 'experiences' | 'sessions' | 'cvReviews',
+    kind: 'experiences' | 'sessions' | 'cvReviews' | 'faqs',
     run: () => Promise<AwardResult | null>,
   ) => {
     try {
@@ -367,6 +421,18 @@ export async function runPointBackfill(
       select: { id: true },
     });
     for (const row of rows) await apply('cvReviews', () => awardForCvReview(deps, row.id));
+    cursor = rows.at(-1)?.id;
+    if (rows.length < BACKFILL_PAGE) break;
+  }
+  for (let cursor: string | undefined; ;) {
+    const rows = await deps.db.faqRequest.findMany({
+      where: { status: 'PUBLISHED', decidedAt: since ? { gte: since } : { not: null } },
+      orderBy: [{ decidedAt: 'asc' }, { id: 'asc' }],
+      take: BACKFILL_PAGE,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      select: { id: true },
+    });
+    for (const row of rows) await apply('faqs', () => awardForFaq(deps, row.id));
     cursor = rows.at(-1)?.id;
     if (rows.length < BACKFILL_PAGE) break;
   }

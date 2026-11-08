@@ -88,6 +88,10 @@ yalnız `DATABASE_URL_TEST` veritabanını kullanır. Adı `_test` ile bitmeyen 
 başlamadan önce o veritabanının `public` şeması düşürülür ve bütün migration'lar boş veritabanına
 uygulanır. `DATABASE_URL_TEST` yoksa `pnpm test` gürültülü düşer (sessiz atlama yok); veritabanı
 gerekmeyen kontrol için `pnpm test:unit`.
+DB projesinde ortak makine yükü için test başına süre sınırı 15 saniye, birim testlerinde 5 saniyedir.
+Vitest 5 saniyeyi aşan yavaş testleri raporlar; sürekli yavaşlayan testi düzeltmek gerekir.
+Standart raporlayıcı açıkça seçilidir; ajan ortamının otomatik minimal raporu yavaş testin
+adını ve süresini gizleyemez.
 
 Kapsam yüzdesi için test yazılmaz; yanlış aktör, yanlış durum, tekrar ve hata yolları kanıtlanır.
 **Ekran kaynağını tarayan test yazılmaz** (bileşen dosyasını metin olarak okuyup desen arayan
@@ -306,7 +310,13 @@ ve işletim kararı kullanıcıya aittir. Bu depo hesap açmaz veya dış servis
   5 işlem sınırı vardır. Kayıtlı adresler atlanır; işlem kaydında adres tutulmaz. Davet adresi
   bekleyen bildirim niyetinde şifreli tutulur, kuyruk kabulünde silinir; worker kesintiden sonra
   yeniden dener. Uygulama sırrını değiştirmeden önce bekleyen davetleri boşaltın; aksi halde eski
-  adresler çözülemez. SMTP teslimi ayrıca worker ve sağlayıcıya bağlıdır.
+  adresler çözülemez. Aktarım beş başarısız denemeyle sınırlıdır; aralarda 1, 2, 4, 8 dakika
+  bekler. Son deneme niyeti `FAILED` yapar ve yükü temizler; bu durum tekrar sahnelenince de
+  yeniden denenmez. Operatör `notification.intent: RETRY_EXHAUSTED` uyarısını izler; kalıcı
+  hata kaydında yalnız sabit hata kodu, deneme sayısı ve hata zamanı bulunur, sağlayıcı hata
+  metni veya şifreli yük yoktur. Yönetici nedeni giderdikten sonra gerekirse yeni davet gönderir;
+  önceki kayıt otomatik canlandırılmaz. Hesap silme kalıcı hatalı niyetleri de kaldırır.
+  SMTP teslimi ayrıca worker ve sağlayıcıya bağlıdır.
 
 ## Git ve PR
 

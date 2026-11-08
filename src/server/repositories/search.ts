@@ -52,7 +52,7 @@ export type SearchRow = {
 };
 
 /** Yazım hatası eşiği (0–1): "Istnbul" → "istanbul". */
-const WORD_SIMILARITY_THRESHOLD = '0.45';
+export const WORD_SIMILARITY_THRESHOLD = '0.45';
 
 const withoutTotal = (row: SearchRow & { total: bigint }): SearchRow => {
   const { total, ...rest } = row;
@@ -61,16 +61,16 @@ const withoutTotal = (row: SearchRow & { total: bigint }): SearchRow => {
 };
 
 /** Yazım hatası toleransı bu uzunluktan kısa sözcüklerde kapalıdır (“bir”, “ve” gibi sözcükler her şeye benzemesin). */
-const FUZZY_MIN_LENGTH = 4;
+export const FUZZY_MIN_LENGTH = 4;
 const MAX_TOKENS = 8;
 
 /** Sorgudan harf/rakam sözcükleri (tırnak, işleç ve noktalama atılır); en fazla `MAX_TOKENS`. */
-function tokensOf(text: string | undefined): string[] {
+export function tokensOf(text: string | undefined): string[] {
   return (text?.match(/[\p{L}\p{N}]+/gu) ?? []).slice(0, MAX_TOKENS);
 }
 
 /** `tr_ascii` SQL işlevinin JS karşılığı (LIKE kalıbı için; ikisi aynı katlamayı yapar). */
-function asciiFold(value: string): string {
+export function asciiFold(value: string): string {
   return value
     .replace(/İ/g, 'i')
     .replace(/I/g, 'ı')

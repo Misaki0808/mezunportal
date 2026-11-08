@@ -144,6 +144,11 @@
       "POINT_ALREADY_REVOKED": "Bu puan kaydı zaten geri alınmış.",
       "SUSPICION_ALREADY_DECIDED": "Bu şüphe işareti için karar zaten verilmiş.",
       "POINT_BACKFILL_UNAVAILABLE": "Geriye dönük puan hesaplaması şu an başlatılamıyor. Biraz sonra yeniden dene.",
+      "FAQ_SIMILAR_EXISTS": "Benzer sorular zaten yayında. Önce onlara göz at; yine de sormak istiyorsan onaylayıp gönder.",
+      "FAQ_TEXT_PERSONAL_DATA": "Metinde e-posta adresi ya da telefon numarası var. Kişisel bilgileri çıkarıp yeniden dene.",
+      "FAQ_REQUEST_CLOSED": "Bu soru için karar zaten verilmiş.",
+      "FAQ_OWN_REQUEST": "Kendi sorduğun soruya cevap yazamazsın.",
+      "FAQ_IDENTITY_LEAK": "Yayınlanacak metinde ad, e-posta ya da telefon var. Kimliği belli eden bilgileri çıkar.",
       "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin."
     }
   },
@@ -266,6 +271,7 @@
       "cvReview": "CV incelemesi yapıyor",
       "profile": "Profili gör",
       "contact": "İletişim iste",
+      "appointment": "Randevu iste",
       "skillsLabel": "Beceriler",
       "topicsLabel": "İlgi alanları"
     },
@@ -301,7 +307,7 @@
         "CV_REVIEW_DISABLED": "Bu mentor CV incelemesi yapmıyor.",
         "CV_REVIEW_MONTHLY_LIMIT": "Mentorun bu ayki CV inceleme sınırı doldu."
       },
-      "appointment": "Randevu al"
+      "appointment": "Randevu iste"
     }
   },
   "gallery": {
@@ -1603,8 +1609,9 @@
         "ROLE_TRANSITION": "Rol geçişi",
         "USER_SUSPEND": "Hesabı askıya alma",
         "USER_UNSUSPEND": "Askıyı kaldırma",
-        "MODERATION_PUBLISH": "Deneyim yayını",
-        "MODERATION_REJECT": "Deneyim reddi",
+        "MODERATION_PUBLISH": "İçerik yayını",
+        "MODERATION_REJECT": "İçerik reddi",
+        "MODERATION_REDIRECT": "Mentorluğa yönlendirme",
         "REPORT_RESOLVE": "Şikâyet kararı",
         "POINTS_REVOKE": "Puan geri alma",
         "POINT_RULE_CHANGE": "Puan kuralı değişikliği",
@@ -1820,7 +1827,11 @@
       },
       "APPOINTMENT": {
         "label": "Randevular",
-        "description": "Randevu bildirimleri bu özellik açıldığında kullanılır."
+        "description": "Randevu talepleri, onaylar, değişiklikler ve yaklaşan görüşme hatırlatmaları."
+      },
+      "FAQ": {
+        "label": "Sık sorulan sorular",
+        "description": "SSS talebinin sonucu ve cevabının yayınlanması."
       },
       "CV_REVIEW": {
         "label": "CV incelemeleri",
@@ -1833,6 +1844,14 @@
       "moderationApprovedText": "Deneyimin incelendi ve yayınlandı. Ayrıntıyı görüntüle: {url}",
       "moderationRejectedSubject": "Deneyimin hakkında",
       "moderationRejectedText": "Deneyimin incelendi. Gerekçeyi görmek ve düzenlemek için: {url}",
+      "faqPublishedSubject": "Sorun SSS'de yayınlandı",
+      "faqPublishedText": "Sorduğun soru incelendi ve sık sorulan sorulara eklendi. Görüntüle: {url}",
+      "faqRejectedSubject": "SSS talebin hakkında",
+      "faqRejectedText": "SSS talebin incelendi ve yayınlanmadı. Gerekçeyi görmek için: {url}",
+      "faqRedirectedSubject": "SSS talebin mentora yönlendirildi",
+      "faqRedirectedText": "Sorun herkese açık bir soru olmadığı için bir mentorla görüşmeni öneriyoruz. Ayrıntı için: {url}",
+      "faqAnswerPublishedSubject": "Cevabın SSS'de kullanıldı",
+      "faqAnswerPublishedText": "Yazdığın cevap sık sorulan sorulara katkı sağladı. Görüntüle: {url}",
       "contactSubject": "Yeni iletişim talebin var",
       "contactText": "Bir üye seninle iletişim kurmak istiyor. Talebi incele: {url}",
       "invitationSubject": "Deneyimini paylaşmak ister misin?",
@@ -1969,6 +1988,12 @@
     "backProfile": "Mentor profiline dön"
   },
   "appointments": {
+    "account": {
+      "title": "Randevularım",
+      "description": "Açık taleplerini ve onaylı randevularını gör.",
+      "settingsTitle": "Müsaitliğim",
+      "settingsDescription": "Görüşme saatlerini, kapasiteni ve ara verme durumunu düzenle."
+    },
     "status": {
       "REQUESTED": "Yanıt bekliyor",
       "CONFIRMED": "Onaylandı",

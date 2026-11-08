@@ -5,6 +5,7 @@ import type { ErrorCode } from '@/lib/errors';
 import { emailSchema } from './auth';
 import { ONBOARDING_STEPS, profileTagSchema } from './profile';
 import { EXPERIENCE_STATUSES, experienceDraftTemplateSchema } from './experience';
+import { FAQ_STATUSES } from './faq';
 import {
   BADGE_KINDS,
   POINT_ACTIONS,
@@ -337,6 +338,33 @@ export const dataExportSchema = z.object({
       })
       .strict(),
   ),
+  /** SSS (P1-17): kendi soruların ve yazdığın cevaplar. Başka kullanıcıya ait hiçbir alan yok. */
+  faq: z
+    .object({
+      requests: z.array(
+        z
+          .object({
+            id: z.string(),
+            question: z.string(),
+            status: z.enum(FAQ_STATUSES),
+            decisionNote: z.string().nullable(),
+            createdAt: z.string(),
+            decidedAt: z.string().nullable(),
+          })
+          .strict(),
+      ),
+      answers: z.array(
+        z
+          .object({
+            id: z.string(),
+            body: z.string(),
+            isSelected: z.boolean(),
+            createdAt: z.string(),
+          })
+          .strict(),
+      ),
+    })
+    .strict(),
   /** Katkı puanı (P1-16): kaynak içerik ve karşı taraf kimliği YOK (anonim deneyim bağı ve üçüncü kişi sızmaz). */
   contribution: z
     .object({
