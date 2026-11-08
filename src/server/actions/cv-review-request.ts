@@ -15,9 +15,7 @@ import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
 import { requireVerifiedMember } from '../permissions';
 import { getDb } from '../db';
 import { getStorage } from '../external/storage';
-import { enqueueEmail } from '../jobs/email';
-import { getEnv } from '@/lib/env';
-import messages from '../../../messages/tr.json';
+import { createCvReviewNotifier } from '../services/cv-review-notifier';
 import * as service from '../services/cv-review-request';
 
 function deps(): service.CvReviewDeps {
@@ -25,20 +23,7 @@ function deps(): service.CvReviewDeps {
   return {
     db,
     storage: getStorage(),
-    async notify(userId, event, id) {
-      const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
-      if (!user) return;
-      const copy = messages.cvReview.email[event];
-      const url = new URL('/hesap/cv-inceleme', getEnv().APP_URL).href;
-      await enqueueEmail({
-        to: user.email,
-        recipientUserId: userId,
-        template: `cv.review.${event}`,
-        idempotencyKey: `cv.review.${event}:${id}`,
-        subject: copy.subject,
-        text: copy.text.replace('{url}', url),
-      });
-    },
+    notify: createCvReviewNotifier(db),
   };
 }
 export async function getCvReviewSettings() {

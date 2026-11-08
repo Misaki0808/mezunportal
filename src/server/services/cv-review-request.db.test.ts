@@ -73,8 +73,8 @@ async function setup(limit = 3) {
     db,
     storage,
     now: () => now,
-    notify: async (_id: string, event: 'requested' | 'answered') => {
-      notices.push(event);
+    notify: async (_id: string, event: 'requested' | 'answered' | 'expired', requestId: string) => {
+      notices.push(`${event}:${requestId}`);
     },
   };
   return { student, mentor, storage, key, cv, deps, notices };
@@ -121,7 +121,7 @@ describe('CV inceleme', () => {
     await expect(markHelpful(h.deps, h.student, request.id)).rejects.toMatchObject({
       code: 'CV_REVIEW_ALREADY_HELPFUL',
     });
-    expect(h.notices).toEqual(['requested', 'answered']);
+    expect(h.notices).toEqual([`requested:${request.id}`, `answered:${request.id}`]);
     expect((await buildDataExport(db, h.student)).cvReviewRequests).toMatchObject([
       { id: request.id, note: 'Öneri lütfen', comment: 'Bir örnek ekle.' },
     ]);
@@ -218,6 +218,7 @@ describe('CV inceleme', () => {
     });
     await expireRequests(later);
     await expireRequests(later);
+    expect(h.notices.filter((value) => value === `expired:${req.id}`)).toHaveLength(1);
     expect((await db.cvReviewRequest.findUniqueOrThrow({ where: { id: req.id } })).status).toBe(
       'EXPIRED',
     );

@@ -1605,6 +1605,10 @@
       "APPOINTMENT": {
         "label": "Randevular",
         "description": "Randevu bildirimleri bu özellik açıldığında kullanılır."
+      },
+      "CV_REVIEW": {
+        "label": "CV incelemeleri",
+        "description": "CV inceleme talepleri, yanıtları ve süre dolumu."
       }
     },
     "email": {
@@ -1681,6 +1685,10 @@
       "answered": {
         "subject": "CV incelemen yanıtlandı",
         "text": "CV inceleme talebine yanıt verildi. Görüntüle: {url}"
+      },
+      "expired": {
+        "subject": "CV inceleme talebinin süresi doldu",
+        "text": "CV inceleme talebinin yanıt süresi doldu. Talebini görüntüle: {url}"
       }
     },
     "title": "CV incelemeleri",

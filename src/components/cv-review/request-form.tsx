@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Button, Field, Textarea } from '@/components/ui';
@@ -24,13 +24,15 @@ export function RequestForm({
     [error, setError] = useState(''),
     [success, setSuccess] = useState(false),
     [invalid, setInvalid] = useState(false);
+  const lock = useRef(false);
   async function submit() {
     const p = createCvReviewRequestSchema.safeParse({ mentorId, note });
     if (!p.success) {
       setInvalid(true);
       return;
     }
-    if (pending) return;
+    if (lock.current) return;
+    lock.current = true;
     setPending(true);
     setError('');
     try {
@@ -41,6 +43,7 @@ export function RequestForm({
       setError(errors('SERVER_UNEXPECTED'));
     } finally {
       setPending(false);
+      lock.current = false;
     }
   }
   return (

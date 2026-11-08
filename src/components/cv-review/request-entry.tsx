@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Button, Sheet } from '@/components/ui';
 import type { CvReviewAvailability } from '@/contracts/cv-review-request';
@@ -15,9 +16,16 @@ export function ReviewRequestEntry({
   const [open, setOpen] = useState(false);
   if (!availability.available)
     return (
-      <Button disabled disabledReason={t(`unavailable.${availability.reason ?? 'NOT_MENTOR'}`)}>
-        {t('requestLink')}
-      </Button>
+      <div>
+        <Button disabled disabledReason={t(`unavailable.${availability.reason ?? 'NOT_MENTOR'}`)}>
+          {t('requestLink')}
+        </Button>
+        {availability.reason === 'NO_CV' && (
+          <Link href="/profil/cv" className="mt-2 inline-flex min-h-11 items-center text-primary">
+            {t('toCv')} →
+          </Link>
+        )}
+      </div>
     );
   return (
     <>

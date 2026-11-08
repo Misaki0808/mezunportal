@@ -4,6 +4,7 @@ import { getEnv } from '@/lib/env';
 import { getDb } from '../db';
 import { getStorage } from '../external/storage';
 import { expireRequests } from '../services/cv-review-request';
+import { createCvReviewNotifier } from '../services/cv-review-notifier';
 import { purgeFiles } from '../services/files-purge';
 import { scheduleFeedbackPrompts } from './feedback-task';
 import { alumniStillThere, profileFreshness, studentEmailMigration } from './notification-tasks';
@@ -22,7 +23,12 @@ export async function createNotificationRuntime() {
     'profile.freshness': () => profileFreshness(getDb()),
     'alumni.stillThere': () => alumniStillThere(getDb()),
     'student.emailMigration': () => studentEmailMigration(getDb()),
-    'cvReview.expire': () => expireRequests({ db: getDb(), storage: getStorage() }),
+    'cvReview.expire': () =>
+      expireRequests({
+        db: getDb(),
+        storage: getStorage(),
+        notify: createCvReviewNotifier(getDb()),
+      }),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
     'appointment.feedback': () => scheduleFeedbackPrompts(getDb()),
   };

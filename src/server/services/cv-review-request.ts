@@ -20,7 +20,11 @@ export type CvReviewDeps = {
   db: PrismaClient;
   storage: StorageAdapter;
   now?: () => Date;
-  notify?: (userId: string, event: 'requested' | 'answered', id: string) => Promise<void>;
+  notify?: (
+    userId: string,
+    event: 'requested' | 'answered' | 'expired',
+    id: string,
+  ) => Promise<void>;
 };
 const nowOf = (deps: CvReviewDeps) => deps.now?.() ?? new Date();
 async function lockUsers(tx: Db, ids: string[]) {
@@ -291,19 +295,26 @@ export async function expireRequests(deps: CvReviewDeps) {
     where: { status: 'OPEN', expiresAt: { lte: now } },
     select: { id: true, studentId: true, mentorId: true },
   });
-  for (const ref of rows)
-    await deps.db.$transaction(
+  let expired = 0;
+  for (const ref of rows) {
+    const changed = await deps.db.$transaction(
       async (tx) => {
         await lockUsers(tx, [ref.studentId, ref.mentorId]);
         await tx.$queryRaw`SELECT "id" FROM "CvReviewRequest" WHERE "id" = ${ref.id} FOR UPDATE`;
         const row = await tx.cvReviewRequest.findUnique({ where: { id: ref.id } });
-        if (!row || row.status !== 'OPEN' || row.expiresAt > now) return;
+        if (!row || row.status !== 'OPEN' || row.expiresAt > now) return false;
         await tx.cvReviewRequest.update({ where: { id: row.id }, data: { status: 'EXPIRED' } });
         await releaseOldFile(tx, deps.storage, row);
+        return true;
       },
       { timeout: 30000 },
     );
-  return rows.length;
+    if (changed) {
+      expired++;
+      await deps.notify?.(ref.studentId, 'expired', ref.id).catch(() => undefined);
+    }
+  }
+  return expired;
 }
 
 export async function getSettings(deps: CvReviewDeps, userId: string) {

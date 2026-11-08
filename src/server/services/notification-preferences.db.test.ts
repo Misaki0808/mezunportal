@@ -80,4 +80,30 @@ describe('bildirim tercihi', () => {
       ).toBe(false);
     }
   });
+  it('CV inceleme ve deneyim daveti tercihleri birbirinden bağımsızdır', async () => {
+    const user = await db.user.create({
+      data: { name: 'Test', email: `${randomUUID()}@example.invalid` },
+    });
+    const msg = {
+      to: user.email,
+      subject: 'Örnek',
+      text: 'Örnek',
+      template: 'cv.review.requested',
+      idempotencyKey: randomUUID(),
+      recipientUserId: user.id,
+    };
+    await setNotificationPreferences(db, user.id, {
+      items: [{ type: 'CV_REVIEW', enabled: false }],
+    });
+    expect(await maySendNotification(db, msg)).toBe(false);
+    expect(await maySendNotification(db, { ...msg, template: 'cv.invitation' })).toBe(true);
+    await setNotificationPreferences(db, user.id, {
+      items: [
+        { type: 'CV_REVIEW', enabled: true },
+        { type: 'CV_INVITATION', enabled: false },
+      ],
+    });
+    expect(await maySendNotification(db, msg)).toBe(true);
+    expect(await maySendNotification(db, { ...msg, template: 'cv.invitation' })).toBe(false);
+  });
 });
