@@ -39,12 +39,21 @@ beforeEach(() => {
 });
 
 const anyAdminCalls: [string, () => Promise<unknown>, keyof typeof mocks.service][] = [
-  ['suspendUser', () => suspendUser({ userId: 'u', reason: 'Kural ihlali' }), 'suspendUser'],
-  ['unsuspendUser', () => unsuspendUser({ userId: 'u' }), 'unsuspendUser'],
+  [
+    'suspendUser',
+    () => suspendUser({ confirmed: true, userId: 'u', reason: 'Kural ihlali' }),
+    'suspendUser',
+  ],
+  [
+    'unsuspendUser',
+    () => unsuspendUser({ confirmed: true, reason: 'İnceleme tamamlandı', userId: 'u' }),
+    'unsuspendUser',
+  ],
   [
     'correctMembership',
     () =>
       correctMembership({
+        confirmed: true,
         membershipId: 'm',
         reason: 'Yanlış beyan',
         changes: { entryYear: 2022 },
@@ -53,8 +62,12 @@ const anyAdminCalls: [string, () => Promise<unknown>, keyof typeof mocks.service
   ],
 ];
 const systemCalls: [string, () => Promise<unknown>, keyof typeof mocks.service][] = [
-  ['grantAdmin', () => grantAdmin({ scope: 'SYSTEM', userId: 'u' }), 'grantAdmin'],
-  ['revokeAdmin', () => revokeAdmin({ grantId: 'g', reason: 'Görev bitti' }), 'revokeAdmin'],
+  ['grantAdmin', () => grantAdmin({ confirmed: true, scope: 'SYSTEM', userId: 'u' }), 'grantAdmin'],
+  [
+    'revokeAdmin',
+    () => revokeAdmin({ confirmed: true, grantId: 'g', reason: 'Görev bitti' }),
+    'revokeAdmin',
+  ],
 ];
 
 describe('koruma her şeyden önce gelir', () => {
@@ -91,29 +104,39 @@ describe('koruma her şeyden önce gelir', () => {
 
 describe('girdi doğrulanır; yönetici kimliği yalnız oturumdan gelir', () => {
   it('geçersiz girdi servise ulaşmaz', async () => {
-    expect(await suspendUser({ userId: 'u', reason: '' })).toMatchObject({
+    expect(await suspendUser({ confirmed: true, userId: 'u', reason: '' })).toMatchObject({
       ok: false,
       errorCode: 'VALIDATION_INVALID',
     });
-    expect(await suspendUser({ userId: '', reason: 'Kural ihlali' })).toMatchObject({
+    expect(
+      await suspendUser({ confirmed: true, userId: '', reason: 'Kural ihlali' }),
+    ).toMatchObject({
       errorCode: 'VALIDATION_INVALID',
     });
     expect(
       await suspendUser({
+        confirmed: true,
         userId: 'u',
         reason: 'Kural ihlali',
         expiresAt: new Date(Date.now() - 1000),
       }),
     ).toMatchObject({ errorCode: 'VALIDATION_INVALID' });
     expect(
-      await correctMembership({ membershipId: 'm', reason: 'Yanlış', changes: {} }),
+      await correctMembership({
+        confirmed: true,
+        membershipId: 'm',
+        reason: 'Yanlış',
+        changes: {},
+      }),
     ).toMatchObject({
       errorCode: 'VALIDATION_INVALID',
     });
-    expect(await grantAdmin({ scope: 'FACULTY', userId: 'u' } as never)).toMatchObject({
+    expect(
+      await grantAdmin({ confirmed: true, scope: 'FACULTY', userId: 'u' } as never),
+    ).toMatchObject({
       errorCode: 'VALIDATION_INVALID',
     });
-    expect(await revokeAdmin({ grantId: 'g', reason: 'ab' })).toMatchObject({
+    expect(await revokeAdmin({ confirmed: true, grantId: 'g', reason: 'ab' })).toMatchObject({
       errorCode: 'VALIDATION_INVALID',
     });
     for (const fn of Object.values(mocks.service)) expect(fn).not.toHaveBeenCalled();
@@ -122,6 +145,7 @@ describe('girdi doğrulanır; yönetici kimliği yalnız oturumdan gelir', () =>
   it('istemcinin eklediği yönetici/rol/kapsam alanları reddedilir; servis oturumdaki kimlikle çağrılır', async () => {
     expect(
       await suspendUser({
+        confirmed: true,
         userId: 'u',
         reason: 'Kural ihlali',
         adminId: 'baska',
@@ -134,28 +158,34 @@ describe('girdi doğrulanır; yönetici kimliği yalnız oturumdan gelir', () =>
       expiresAt: null,
       sessionsRevoked: 0,
     });
-    await suspendUser({ userId: 'u', reason: 'Kural ihlali' });
+    await suspendUser({ confirmed: true, userId: 'u', reason: 'Kural ihlali' });
     const [deps, adminUserId, input] = mocks.service.suspendUser.mock.calls[0]!;
     expect(deps).toEqual({ marker: 'deps' });
     expect(adminUserId).toBe('oturum-yoneticisi');
-    expect(input).toEqual({ userId: 'u', reason: 'Kural ihlali' });
+    expect(input).toEqual({ userId: 'u', reason: 'Kural ihlali', confirmed: true });
   });
 });
 
 describe('sonuç biçimi', () => {
   it('başarı ActionResult olarak sarılır; kodlu hata kararlı kodla döner; beklenmeyen hata ayrıntı sızdırmaz', async () => {
     mocks.service.unsuspendUser.mockResolvedValueOnce({ userId: 'u', status: 'ACTIVE' });
-    expect(await unsuspendUser({ userId: 'u' })).toEqual({
+    expect(
+      await unsuspendUser({ confirmed: true, reason: 'İnceleme tamamlandı', userId: 'u' }),
+    ).toEqual({
       ok: true,
       data: { userId: 'u', status: 'ACTIVE' },
     });
     mocks.service.unsuspendUser.mockRejectedValueOnce(codedForbidden('ADMIN_SELF_ACTION'));
-    expect(await unsuspendUser({ userId: 'u' })).toEqual({
+    expect(
+      await unsuspendUser({ confirmed: true, reason: 'İnceleme tamamlandı', userId: 'u' }),
+    ).toEqual({
       ok: false,
       errorCode: 'ADMIN_SELF_ACTION',
     });
     mocks.service.unsuspendUser.mockRejectedValueOnce(new Error('postgres://gizli@host/db'));
-    expect(await unsuspendUser({ userId: 'u' })).toEqual({
+    expect(
+      await unsuspendUser({ confirmed: true, reason: 'İnceleme tamamlandı', userId: 'u' }),
+    ).toEqual({
       ok: false,
       errorCode: 'SERVER_UNEXPECTED',
     });

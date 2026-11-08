@@ -465,10 +465,15 @@ describe('suspendUser', () => {
 // Askıyı kaldırma
 // =============================================================================================
 describe('unsuspendUser', () => {
-  it('askıyı kaldırır, ban alanlarını temizler, işlem kaydı yazar; gerekçe isteğe bağlı', async () => {
+  it('askıyı kaldırır, ban alanlarını temizler, işlem kaydı yazar; gerekçe zorunlu', async () => {
     const target = await student(inst.deptA1);
     await suspendUser(deps, admins.deptA1, { userId: target.userId, reason: REASON });
-    expect(await unsuspendUser(deps, admins.deptA1, { userId: target.userId })).toEqual({
+    expect(
+      await unsuspendUser(deps, admins.deptA1, {
+        reason: 'İnceleme tamamlandı',
+        userId: target.userId,
+      }),
+    ).toEqual({
       userId: target.userId,
       status: 'ACTIVE',
     });
@@ -486,7 +491,7 @@ describe('unsuspendUser', () => {
   it('askıda olmayan kullanıcı USER_NOT_SUSPENDED; verilen gerekçede kişisel veri reddedilir', async () => {
     const target = await student(inst.deptA1);
     await expectCode(
-      unsuspendUser(deps, admins.deptA1, { userId: target.userId }),
+      unsuspendUser(deps, admins.deptA1, { reason: 'İnceleme tamamlandı', userId: target.userId }),
       'USER_NOT_SUSPENDED',
     );
     await suspendUser(deps, admins.deptA1, { userId: target.userId, reason: REASON });
@@ -504,12 +509,12 @@ describe('unsuspendUser', () => {
     const target = await student(inst.deptA2);
     await suspendUser(deps, admins.facultyA, { userId: target.userId, reason: REASON });
     await expectCode(
-      unsuspendUser(deps, admins.deptA1, { userId: target.userId }),
+      unsuspendUser(deps, admins.deptA1, { reason: 'İnceleme tamamlandı', userId: target.userId }),
       'AUTH_FORBIDDEN',
     );
     expect((await userRow(target.userId)).banned).toBe(true);
     await expectCode(
-      unsuspendUser(deps, admins.deptA2, { userId: admins.deptA2 }),
+      unsuspendUser(deps, admins.deptA2, { reason: 'İnceleme tamamlandı', userId: admins.deptA2 }),
       'ADMIN_SELF_ACTION',
     );
   });
@@ -524,6 +529,7 @@ describe('unsuspendUser', () => {
     });
     await expectCode(
       unsuspendUser({ db, now: () => new Date(start.getTime() + 2 * 86_400_000) }, admins.deptA1, {
+        reason: 'İnceleme tamamlandı',
         userId: target.userId,
       }),
       'USER_NOT_SUSPENDED',
@@ -581,7 +587,7 @@ describe('askı ve gerçek oturum (Better Auth)', () => {
     expect(await db.session.count({ where: { userId } })).toBe(0);
 
     // 4) Askı kalkınca yeniden girer.
-    await unsuspendUser(deps, admins.deptA1, { userId });
+    await unsuspendUser(deps, admins.deptA1, { reason: 'İnceleme tamamlandı', userId });
     const again = await signInWithMagicLink(auth, sent, address);
     expect((await auth.api.getSession({ headers: again.headers }))?.user.id).toBe(userId);
   });

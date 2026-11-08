@@ -50,6 +50,8 @@ function assertReason(action: AdminActionName, reason: string | undefined) {
 
 /** Kilit altında güncel olgularla: panele girebilen (kapsamı olan, doğrulanmış) yönetici. */
 async function loadAnyAdmin(tx: Tx, adminUserId: string, now: Date): Promise<Actor> {
+  // SHARE hesap silme/askıyı bekletir, audit'in aktör FK okumasıyla uyumludur.
+  await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${adminUserId} FOR SHARE`;
   const actor = await loadActor(tx, adminUserId, now);
   const decision = evaluateAccess(actor?.facts ?? null, { action: 'adminAny' });
   if (!decision.allowed || !actor) {
@@ -59,6 +61,8 @@ async function loadAnyAdmin(tx: Tx, adminUserId: string, now: Date): Promise<Act
 }
 
 async function loadSystemAdmin(tx: Tx, adminUserId: string, now: Date): Promise<Actor> {
+  // SHARE hesap silme/askıyı bekletir, audit'in aktör FK okumasıyla uyumludur.
+  await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${adminUserId} FOR SHARE`;
   const actor = await loadActor(tx, adminUserId, now);
   const decision = evaluateAccess(actor?.facts ?? null, {
     action: 'adminScope',
@@ -143,6 +147,7 @@ export async function suspendUser(
   }
 
   return deps.db.$transaction(async (tx) => {
+    await lockAdminGrants(tx);
     const actor = await loadAnyAdmin(tx, adminUserId, now);
     const target = await lockAndAuthorizeTarget(tx, actor, input.userId);
     if (accountStatusOf(target, now) === 'SUSPENDED') throw codedConflict('USER_ALREADY_SUSPENDED');
@@ -179,12 +184,13 @@ export async function suspendUser(
 export async function unsuspendUser(
   deps: AdminUserDeps,
   adminUserId: string,
-  input: { userId: string; reason?: string },
+  input: { userId: string; reason: string },
 ): Promise<UnsuspendUserOutput> {
   const now = nowOf(deps);
   assertReason('USER_UNSUSPEND', input.reason);
 
   return deps.db.$transaction(async (tx) => {
+    await lockAdminGrants(tx);
     const actor = await loadAnyAdmin(tx, adminUserId, now);
     const target = await lockAndAuthorizeTarget(tx, actor, input.userId);
     if (accountStatusOf(target, now) !== 'SUSPENDED') throw codedConflict('USER_NOT_SUSPENDED');
@@ -234,11 +240,19 @@ export async function correctMembership(
   assertReason('ROLE_CORRECT', input.reason);
 
   return deps.db.$transaction(async (tx) => {
+    await lockAdminGrants(tx);
     const actor = await loadAnyAdmin(tx, adminUserId, now);
     const system = isSystem(actor);
     const forbidden = () =>
       system ? codedNotFound('RESOURCE_NOT_FOUND') : codedForbidden('AUTH_FORBIDDEN');
 
+    const identity = await tx.membership.findUnique({
+      where: { id: input.membershipId },
+      select: { userId: true },
+    });
+    if (!identity) throw forbidden();
+    // Hesap silme ve üyelik geçişiyle aynı sıra: User → Membership.
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${identity.userId} FOR UPDATE`;
     await tx.$queryRaw`SELECT "id" FROM "Membership" WHERE "id" = ${input.membershipId} FOR UPDATE`;
     const membership = await tx.membership.findUnique({
       where: { id: input.membershipId },
@@ -370,6 +384,7 @@ export async function grantAdmin(
     const actor = await loadSystemAdmin(tx, adminUserId, now);
     if (input.userId === actor.userId) throw codedForbidden('ADMIN_SELF_ACTION');
 
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${input.userId} FOR UPDATE`;
     const user = await tx.user.findUnique({
       where: { id: input.userId },
       select: { deletedAt: true },
@@ -428,6 +443,12 @@ export async function revokeAdmin(
     await lockAdminGrants(tx);
     const actor = await loadSystemAdmin(tx, adminUserId, now);
 
+    const identity = await tx.adminGrant.findUnique({
+      where: { id: input.grantId },
+      select: { userId: true },
+    });
+    if (!identity) throw codedNotFound('RESOURCE_NOT_FOUND');
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${identity.userId} FOR UPDATE`;
     const grant = await tx.adminGrant.findUnique({
       where: { id: input.grantId },
       select: {
