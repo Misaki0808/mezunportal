@@ -5,6 +5,7 @@ import type { PrismaClient } from '@/generated/prisma/client';
 import { codedNotFound, codedValidation } from '@/lib/errors';
 
 import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
+import { eraseExperienceContent } from './experiencePrivacy';
 
 /**
  * Hesap silme (P1-03, K-09). Kullanıcı satırı SİLİNMEZ, anonimleştirilir: rıza ve işlem kaydı hukuki
@@ -22,18 +23,19 @@ export type PublishedContentChoice = 'DELETE' | 'ANONYMIZE';
 
 /**
  * Yayınlanmış içerik işleyicileri (K-09). Deneyim (P1-07), SSS cevabı (P1-12) gibi adımlar burada kendi
- * işleyicisini kaydeder; şu an yayınlanabilen içerik yoktur.
+ * işleyicisini kaydeder; yayınlanmamış kişisel içerik her iki seçimde de silinir.
  */
 export type PublishedContentHandler = (
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
   userId: string,
   choice: PublishedContentChoice,
 ) => Promise<void>;
-export const PUBLISHED_CONTENT_HANDLERS: PublishedContentHandler[] = [];
+export const PUBLISHED_CONTENT_HANDLERS: PublishedContentHandler[] = [eraseExperienceContent];
 
 export type AccountDeletionDeps = {
   /** Depolamadan dosya siler (idempotent: olmayan dosya hata değildir). Bağlı değilse `null`. */
   removeStoredFiles: ((keys: readonly string[]) => Promise<void>) | null;
+  /** Ek işleyiciler; zorunlu kişisel veri temizliğinin yerine geçmez. */
   handlers?: readonly PublishedContentHandler[];
 };
 
@@ -57,7 +59,7 @@ export async function deleteAccount(
       throw codedValidation('ACCOUNT_DELETE_CONFIRMATION_MISMATCH');
     }
     await tx.user.update({ where: { id: userId }, data: { deletedAt: now } });
-    for (const handler of deps.handlers ?? PUBLISHED_CONTENT_HANDLERS) {
+    for (const handler of [...PUBLISHED_CONTENT_HANDLERS, ...(deps.handlers ?? [])]) {
       await handler(tx, userId, input.publishedContent);
     }
     const pendingFiles = await tx.graduationDocument.findMany({

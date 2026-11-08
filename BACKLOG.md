@@ -22,9 +22,9 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   veri indirme ekranları hazır; bağımsız inceleme ve ekran kabulü bekliyor.
 - P1-04 servisi: kalıcı ilk giriş adımları, açık atlama ve profil yüzdesi; K-08 sunucu reddi,
   profilin hesap silme ve kişisel veri dökümüne bağlantısı hazır. Ekran akışı ayrı karttadır.
-- P1-07 deneyim/moderasyon sözleşmesi hazır: tür bazlı taslaklar, anonim çıktı ayrımı ve şikâyet
-  şeması. Yayınlanmış içerik aynı üniversitedeki tüm doğrulanmış üyelere açık (K-07); servis ve
-  ekran uygulaması ayrı kartlarda.
+- P1-07 servisi: tür bazlı taslak, anonim çıktı, kapsamlı moderasyon/audit, şikâyet sınırı/kuyruğu,
+  K-07 üniversite görünürlüğü hazır. Deneyimler hesap silme ve kişisel döküme bağlı; K-08 gerçek
+  yayınlanmış deneyim sayısını okur. Ekran akışı/kabulü ayrı kartta.
 
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).

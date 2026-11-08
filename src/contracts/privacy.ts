@@ -4,6 +4,7 @@ import type { ErrorCode } from '@/lib/errors';
 
 import { emailSchema } from './auth';
 import { ONBOARDING_STEPS, profileTagSchema } from './profile';
+import { EXPERIENCE_STATUSES, experienceDraftTemplateSchema } from './experience';
 
 /**
  * KVKK sözleşmesi (P1-03; docs/security.md “KVKK”, docs/legal-drafts.md). Servis (W1) ve ekran (W2) bunu
@@ -217,6 +218,21 @@ export const exportedProfileSchema = z
   })
   .strict();
 
+/** Kendi deneyim dökümü; anonim içerikle yazar/moderatör kimliği birlikte taşınmaz. */
+export const exportedExperienceSchema = z
+  .object({
+    id: z.string(),
+    departmentIdAtWrite: z.string(),
+    content: experienceDraftTemplateSchema,
+    isAnonymous: z.boolean(),
+    status: z.enum(EXPERIENCE_STATUSES),
+    moderationNote: z.string().nullable(),
+    publishedAt: z.string().nullable(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .strict();
+
 export const dataExportSchema = z.object({
   formatVersion: z.literal(DATA_EXPORT_FORMAT_VERSION),
   exportedAt: z.string(),
@@ -228,6 +244,7 @@ export const dataExportSchema = z.object({
     createdAt: z.string(),
   }),
   profile: exportedProfileSchema.nullable(),
+  experiences: z.array(exportedExperienceSchema),
   memberships: z.array(z.record(z.string(), z.unknown())),
   consents: z.array(
     z.object({
