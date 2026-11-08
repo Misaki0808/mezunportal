@@ -262,6 +262,9 @@
       "JOB_POSTING_NOT_OPEN": "Bu ilan artık açık değil.",
       "JOB_POSTING_URL_INVALID": "Başvuru bağlantısı https:// ile başlayan, geçerli bir adres olmalı.",
       "JOB_POSTING_DEADLINE_INVALID": "Son başvuru tarihi bugünden önce olamaz ve yayından en çok 60 gün sonrası olabilir.",
+      "SEEKER_CONSENT_REQUIRED": "Staj arıyorum görünürlüğünü açmak için önce görünürlük rızası vermelisin.",
+      "SEEKER_TERM_INVALID": "Hedef dönem için hem yıl hem mevsim seç ya da ikisini de boş bırak.",
+      "SEEKER_HIRING_DECLARATION_REQUIRED": "Aday aramak için profilinde \"işe alım yapıyorum\" beyanını açmalısın.",
       "JOB_POSTING_TARGET_INVALID": "Hedef bölümler en az bir, en çok on tane ve kendi üniversiten içinden olmalı.",
       "FAQ_IDENTITY_WARNING": "Bu sözcükler bir katılımcının adıyla başlıyor: {matches}. Kişisel bilgi değilse onaylayıp yayımla.",
       "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin."
@@ -1293,6 +1296,7 @@
       "PRIVACY_NOTICE": "Aydınlatma metni",
       "TERMS_OF_USE": "Kullanım şartları",
       "CROSS_BORDER_TRANSFER": "Yurt dışına aktarım açık rızası",
+      "JOB_SEEKER_VISIBILITY": "Staj arayan olarak görünürlük rızası",
       "updated": "Güncellendi"
     },
     "visibility": {
@@ -1461,6 +1465,27 @@
           "section2": {
             "title": "2. Online randevu davetleri",
             "body": "Online randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz Google LLC'ye aktarılır. Rıza vermezseniz mentor görüşme bağlantısını kendisi paylaşır. Rızanızı istediğiniz an gizlilik ayarlarından geri alabilirsiniz; geri alma ileriye dönük işler."
+          }
+        }
+      },
+      "JOB_SEEKER_VISIBILITY": {
+        "slug": "staj-arayan-gorunurlugu",
+        "sections": {
+          "section0": {
+            "title": "Rıza tercihiniz",
+            "body": "Bu rıza isteğe bağlıdır ve istediğiniz an geri alınabilir. Vermezseniz platformu kullanmaya devam edersiniz; yalnız işe alım yapan mezunların sizi bulması çalışmaz. [TASLAK: hoca/hukuki onay bekliyor]"
+          },
+          "section1": {
+            "title": "1. Neyi paylaşırsınız",
+            "body": "\"Staj arıyorum\" dediğinizde, doğrulanmış ve işe alım yaptığını beyan eden mezunlar sizi bölümünüz, sınıfınız, seçtiğiniz ilgi alanları ve başlık satırınızla bulabilir. Adınız, fotoğrafınız, e-posta ve telefonunuz görünmez."
+          },
+          "section2": {
+            "title": "2. İletişim",
+            "body": "Bir mezun sizinle iletişime geçmek isterse size talep gönderir; talebi siz onaylayana kadar kimliğiniz mezuna açılmaz. Onayladığınızda yalnız izin verdiğiniz alanlar paylaşılır."
+          },
+          "section3": {
+            "title": "3. Geri alma",
+            "body": "Rızanızı veya görünürlüğünüzü geri aldığınızda kartınız hemen aramalardan kalkar ve bekleyen talepler kapanır. Kaç kez görüntülendiğinizi görürsünüz; kimin baktığı tutulmaz."
           }
         }
       },
@@ -1838,7 +1863,8 @@
         "CONTACT_REQUESTED": "İletişim talebi",
         "JOB_POSTING_PUBLISHED": "İlan yayınlandı",
         "JOB_POSTING_VIEWED": "İlan görüntülendi",
-        "JOB_POSTING_SEARCH": "İlan araması"
+        "JOB_POSTING_SEARCH": "İlan araması",
+        "JOB_SEEKER_SEARCH": "Aday araması"
       }
     }
   },

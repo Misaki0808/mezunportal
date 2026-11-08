@@ -143,7 +143,11 @@ export const contactRequestItemSchema = z
      * hangi ilan için istendiğini görür. Doğrudan profil talebinde `null`.
      */
     origin: z
-      .object({ kind: z.literal('JOB_POSTING'), title: z.string(), organization: z.string() })
+      .object({
+        kind: z.enum(['JOB_POSTING', 'SEEKER_PROFILE']),
+        title: z.string(),
+        organization: z.string(),
+      })
       .strict()
       .nullable(),
     fields: z.array(z.enum(CONTACT_FIELDS)),

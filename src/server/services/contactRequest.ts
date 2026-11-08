@@ -278,13 +278,13 @@ export async function listContactRequests(
     sourceOrganization: true,
   } as const;
   const originOf = (row: {
-    source: 'PROFILE' | 'JOB_POSTING';
+    source: 'PROFILE' | 'JOB_POSTING' | 'SEEKER_PROFILE';
     sourceTitle: string | null;
     sourceOrganization: string | null;
   }) =>
-    row.source === 'JOB_POSTING' && row.sourceTitle !== null && row.sourceOrganization !== null
+    row.source !== 'PROFILE' && row.sourceTitle !== null && row.sourceOrganization !== null
       ? {
-          kind: 'JOB_POSTING' as const,
+          kind: row.source,
           title: row.sourceTitle,
           organization: row.sourceOrganization,
         }
@@ -314,9 +314,9 @@ export async function listContactRequests(
     const levels = await loadVisibilityLevels(db, approvedTargets);
     items = rows.map(({ target, source, sourceTitle, sourceOrganization, ...row }) => ({
       ...row,
-      // D7: ilan kaynaklı talepte hedefin kimliği/adı yalnız `APPROVED`'da açılır; ilan silinse/kapansa da kaynak işareti kalır.
+      // D7: ilan ya da aday kartı kaynaklı talepte hedefin kimliği/adı yalnız `APPROVED`'da açılır; kaynak kapansa/silinse de işaret kalır.
       counterpart:
-        source === 'JOB_POSTING' && row.status !== 'APPROVED'
+        source !== 'PROFILE' && row.status !== 'APPROVED'
           ? null
           : { userId: target.id, name: target.name },
       origin: originOf({ source, sourceTitle, sourceOrganization }),

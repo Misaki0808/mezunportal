@@ -890,3 +890,15 @@ düşer. Seçenekler: (a) tümünü engel bırakmak — yanlış alarm; (b) öne
 ayırt edilemez; (c) seçilen: kesmeyle ayrılan/bölünmüş/tam ad engel, geri kalanı onaylı uyarı. Bilinen sınır: kesmesiz yazılmış
 gerçek ad ("Ahmete sordum") artık engel değil uyarıdır; moderatör ad olduğunu ayırt edebilmelidir (ad moderatöre gösterilmez, yalnız
 metindeki sözcük). Moderatör ekranı (uyarı + onay düğmesi) #54 main'e girince bağlanır.
+
+**Ters yönlü arama ("staj arıyorum"): sözleşme ve veri modeli (P2-06, kart 140; D20/D28).** Seçimler: (1) **Rıza** yeni isteğe bağlı sürümlü belge `JOB_SEEKER_VISIBILITY`
+(genel onay ekranında sorulmaz; kendi ayar ekranında önizlemeyle istenir); görünürlük **sorgu anında** son rıza satırına bakılarak denetlenir, bu yüzden geri alma
+anında etkilidir (gecikmeli temizlik yok); geri alınca bekleyen talepler kapanır. (2) **Aday kimliği opaktır:** `Profile.seekerRef` rastgele (UUIDv4), kullanıcı
+kimliği değildir; görünürlük kapanınca silinir, açılınca yenilenir (eski bağlantı geçersiz); `CHECK` bayrak ↔ ref tutarlılığını zorlar. Seçenekler: (a) kullanıcı
+kimliğini döndürmek — uuid7 hesap zamanını sızdırır; (b) kullanıcı başına HMAC — çözümlenemez; (c) seçilen: saklanan rastgele ref. (3) **Kart beyaz listedir**
+(bölüm, sınıf, ilgi etiketleri, dönem, kişisel veri biçimi ayıklanmış başlık satırı); ad/fotoğraf/e-posta/telefon/kullanıcı kimliği yoktur (şema testi
+anahtar adlarını korur). (4) **D7 genelleştirildi:** `ContactRequestSource.SEEKER_PROFILE`; ilan ve aday kaynaklı taleplerde hedefin kimliği/adı yalnız `APPROVED`'da açılır
+(`source !== PROFILE` kuralı; giden liste, döküm). (5) **Beyan:** mezunun "işe alım yapıyorum" beyanı `Profile.hiringDeclaredAt` (D28); aramayı yalnız doğrulanmış
+etkin `ALUMNI` + beyan yapar. (6) **Hız:** günde 50 kart, ayda 20 talep; görüntülenme sayacı `Profile.seekerViewCount` (kim baktığı tutulmaz). Enum değerlerini
+KULLANAN CHECK ayrı migration'dadır (PostgreSQL: yeni enum değeri aynı işlemde kullanılamaz). Rıza ve aydınlatma eki metni `docs/legal-drafts.md` §4 (taslak ⏸).
+

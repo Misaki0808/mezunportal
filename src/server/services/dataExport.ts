@@ -20,7 +20,7 @@ type RequestRow = {
   id: string;
   requesterId: string;
   targetId: string;
-  source: 'PROFILE' | 'JOB_POSTING';
+  source: 'PROFILE' | 'JOB_POSTING' | 'SEEKER_PROFILE';
   sourceTitle: string | null;
   sourceOrganization: string | null;
   fields: DataExport['contactRequests']['sent'][number]['fields'];
@@ -38,13 +38,12 @@ function exportRequest(
   userId: string,
 ): DataExport['contactRequests']['sent'][number] {
   const { source, sourceTitle, sourceOrganization, ...rest } = row;
-  const hidden =
-    source === 'JOB_POSTING' && row.requesterId === userId && row.status !== 'APPROVED';
+  const hidden = source !== 'PROFILE' && row.requesterId === userId && row.status !== 'APPROVED';
   return {
     ...rest,
     targetId: hidden ? null : row.targetId,
     origin:
-      source === 'JOB_POSTING' && sourceTitle !== null && sourceOrganization !== null
+      source !== 'PROFILE' && sourceTitle !== null && sourceOrganization !== null
         ? { title: sourceTitle, organization: sourceOrganization }
         : null,
     createdAt: row.createdAt.toISOString(),

@@ -31,6 +31,8 @@ export const CONSENT_DOCUMENTS = [
   'PRIVACY_NOTICE',
   'TERMS_OF_USE',
   'CROSS_BORDER_TRANSFER',
+  /** P2-06 (D20): "staj arıyorum" görünürlüğü; İSTEĞE BAĞLI, her an geri alınır (görünürlük hemen kalkar). */
+  'JOB_SEEKER_VISIBILITY',
 ] as const;
 export type ConsentDocument = (typeof CONSENT_DOCUMENTS)[number];
 
@@ -49,6 +51,7 @@ export const CURRENT_CONSENT_VERSIONS = {
   PRIVACY_NOTICE: 'taslak-1',
   TERMS_OF_USE: 'taslak-1',
   CROSS_BORDER_TRANSFER: 'taslak-1',
+  JOB_SEEKER_VISIBILITY: 'taslak-1',
 } as const satisfies Record<ConsentDocument, string>;
 
 /** Veritabanı CHECK'iyle aynı biçim (`Consent_version_check`). */

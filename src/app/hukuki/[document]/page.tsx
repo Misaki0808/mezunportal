@@ -7,6 +7,7 @@ const documents = {
   aydinlatma: 'PRIVACY_NOTICE',
   'kullanim-sartlari': 'TERMS_OF_USE',
   'yurt-disi-aktarim': 'CROSS_BORDER_TRANSFER',
+  'staj-arayan-gorunurlugu': 'JOB_SEEKER_VISIBILITY',
 } as const;
 export default async function LegalPage({ params }: { params: Promise<{ document: string }> }) {
   const slug = (await params).document;
