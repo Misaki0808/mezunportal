@@ -35,12 +35,15 @@ export type AppointmentActions = {
 export function AppointmentDetail({
   appointment,
   actions,
+  feedbackAvailable = false,
 }: {
   appointment: AppointmentView;
   actions: AppointmentActions;
+  feedbackAvailable?: boolean;
 }) {
   const t = useTranslations('appointments.detail');
   const modes = useTranslations('appointments.modes');
+  const feedback = useTranslations('feedback');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
   const [dialog, setDialog] = useState<'decline' | 'cancel'>();
@@ -97,7 +100,7 @@ export function AppointmentDetail({
   const confirmBlocked = !a.actions.canConfirm && a.actions.confirmBlockedReason !== null;
 
   return (
-    <article className="mx-auto flex w-full max-w-lg flex-col gap-6 px-5 pb-10 pt-10 sm:pt-16">
+    <article className="[&_.text-sm]:text-base mx-auto flex w-full max-w-lg flex-col gap-6 px-5 pb-10 pt-10 sm:pt-16">
       <div>
         <Link
           href="/randevular"
@@ -130,31 +133,33 @@ export function AppointmentDetail({
 
       <dl className="flex flex-col gap-3">
         <div>
-          <dt className="text-sm text-fg-muted">{t('when')}</dt>
+          <dt className="text-base text-fg-muted">{t('when')}</dt>
           <dd className="text-base text-fg">
             {fullLabel(a.startsAt)}
-            <span className="block text-sm text-fg-muted">{rangeLabel(a.startsAt, a.endsAt)}</span>
+            <span className="block text-base text-fg-muted">
+              {rangeLabel(a.startsAt, a.endsAt)}
+            </span>
           </dd>
         </div>
         <div>
-          <dt className="text-sm text-fg-muted">{t('mode')}</dt>
+          <dt className="text-base text-fg-muted">{t('mode')}</dt>
           <dd className="text-base text-fg">{modes(a.mode)}</dd>
         </div>
         {a.mode === 'IN_PERSON' && a.location && (
           <div>
-            <dt className="text-sm text-fg-muted">{t('location')}</dt>
+            <dt className="text-base text-fg-muted">{t('location')}</dt>
             <dd className="whitespace-pre-line break-words text-base text-fg">{a.location}</dd>
           </div>
         )}
         <div>
-          <dt className="text-sm text-fg-muted">{t('note')}</dt>
+          <dt className="text-base text-fg-muted">{t('note')}</dt>
           <dd className="whitespace-pre-line break-words text-base text-fg">
             {a.note ?? t('noteNone')}
           </dd>
         </div>
         {a.status === 'REQUESTED' && a.expiresAt && (
           <div>
-            <dd className="text-sm text-fg-muted">
+            <dd className="text-base text-fg-muted">
               {t('expiresAt', { date: fullLabel(a.expiresAt) })}
             </dd>
           </div>
@@ -165,7 +170,7 @@ export function AppointmentDetail({
               <dd className="text-base text-fg">{t(`cancelledBy.${a.cancelledBy}`)}</dd>
             )}
             {a.cancelReason && (
-              <dd className="whitespace-pre-line break-words text-sm text-fg-muted">
+              <dd className="whitespace-pre-line break-words text-base text-fg-muted">
                 {t('cancelReasonShown', { reason: a.cancelReason })}
               </dd>
             )}
@@ -222,6 +227,14 @@ export function AppointmentDetail({
       )}
 
       <div className="flex flex-col gap-3">
+        {feedbackAvailable && (
+          <Link
+            className={buttonClasses({ fullWidth: true })}
+            href={`/hesap/gorusme/${encodeURIComponent(a.id)}`}
+          >
+            {feedback('open')}
+          </Link>
+        )}
         {confirmBlocked && (
           <Button
             size="lg"
@@ -267,7 +280,7 @@ export function AppointmentDetail({
             {t('cancel')}
           </Button>
         )}
-        {a.status === 'CONFIRMED' && <p className="text-sm text-fg-muted">{t('emailShared')}</p>}
+        {a.status === 'CONFIRMED' && <p className="text-base text-fg-muted">{t('emailShared')}</p>}
       </div>
 
       <Modal

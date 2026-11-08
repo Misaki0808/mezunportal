@@ -1,3 +1,4 @@
+import { getFeedbackView } from '@/server/actions/feedback';
 import { notFound } from 'next/navigation';
 
 import { AppointmentDetail } from '@/components/appointments/appointment-detail';
@@ -19,9 +20,11 @@ export default async function AppointmentPage({ params }: { params: Promise<{ id
     if (result.errorCode === 'RESOURCE_NOT_FOUND') notFound();
     return <ErrorState errorCode={result.errorCode} />;
   }
+  const feedback = await getFeedbackView(id).catch(() => null);
   return (
     <AppointmentDetail
       appointment={result.data}
+      feedbackAvailable={Boolean(feedback?.ok && !feedback.data.submitted)}
       actions={{ respond: respondAppointment, cancel: cancelAppointment, setMeetLink }}
     />
   );

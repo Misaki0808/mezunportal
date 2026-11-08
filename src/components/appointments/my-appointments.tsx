@@ -44,6 +44,7 @@ export function MyAppointments({ initial, initialRole, showSettings, list }: Pro
         setError(result.errorCode);
         return;
       }
+      setRole(next);
       setItems((current) => (after ? [...current, ...result.data.items] : result.data.items));
       setCursor(result.data.nextCursor);
     } catch {
@@ -81,15 +82,15 @@ export function MyAppointments({ initial, initialRole, showSettings, list }: Pro
             <li key={item.id} className="rounded-card border border-border bg-bg p-5 shadow-card">
               <div className="flex flex-wrap items-center gap-2">
                 <AppointmentStatusBadge status={item.status} />
-                <span className="text-sm text-fg-muted">{modes(item.mode)}</span>
+                <span className="text-base text-fg-muted">{modes(item.mode)}</span>
               </div>
               <h2 className="mt-3 break-words text-lg font-semibold text-fg">
                 {item.counterpart.displayName}
               </h2>
               <p className="mt-1 text-base text-fg">{fullLabel(item.startsAt)}</p>
-              <p className="text-sm text-fg-muted">{rangeLabel(item.startsAt, item.endsAt)}</p>
+              <p className="text-base text-fg-muted">{rangeLabel(item.startsAt, item.endsAt)}</p>
               {item.status === 'REQUESTED' && item.expiresAt && (
-                <p className="mt-1 text-sm text-fg-muted">
+                <p className="mt-1 text-base text-fg-muted">
                   {t('expires', { date: fullLabel(item.expiresAt) })}
                 </p>
               )}
@@ -115,7 +116,7 @@ export function MyAppointments({ initial, initialRole, showSettings, list }: Pro
   );
 
   return (
-    <div className="mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16">
+    <div className="[&_.text-sm]:text-base mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16">
       <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
       <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
@@ -129,7 +130,6 @@ export function MyAppointments({ initial, initialRole, showSettings, list }: Pro
         label={t('tabs.label')}
         value={role}
         onValueChange={(id) => {
-          setRole(id as Role);
           void load(id as Role);
         }}
         items={(['MENTOR', 'MENTEE'] as const).map((id) => ({

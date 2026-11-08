@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppointmentView, MentorSettingsView, SlotList } from '@/contracts/appointment';
@@ -450,4 +450,72 @@ describe('randevularım', () => {
     expect(await screen.findByText('Henüz randevu istemedin')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Mentor bul' })).toHaveAttribute('href', '/mentorlar');
   });
+});
+
+it('inceleyici: SLOT_TAKEN sonrası eski seçimi bırakır ve sunucunun slot listesini yeniler', async () => {
+  const request = vi.fn().mockResolvedValue({ ok: false, errorCode: 'APPOINTMENT_SLOT_TAKEN' });
+  const { user } = renderUi(<SlotPicker list={slotList()} request={request} />);
+  await user.click(screen.getByRole('radio', { name: '11:00 saatini seç' }));
+  await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('başkası tarafından alındı');
+  expect(router.refresh).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole('radio', { name: '11:00 saatini seç' })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
+  expect(request).toHaveBeenCalledTimes(1);
+  expect(screen.getByText('Önce bir saat seç.')).toBeVisible();
+});
+it('inceleyici: bekleyen sekme geçişinde ikinci tıklama listeyi yanlış rolle etiketleyemez', async () => {
+  let release!: (value: unknown) => void;
+  const list = vi.fn().mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
+  const { user } = renderUi(
+    <MyAppointments
+      initial={{ items: [view()], nextCursor: null }}
+      initialRole="MENTOR"
+      showSettings
+      list={list}
+    />,
+  );
+  await user.click(screen.getByRole('tab', { name: 'Giden' }));
+  await user.click(screen.getByRole('tab', { name: 'Gelen' }));
+  await act(async () =>
+    release({
+      ok: true,
+      data: { items: [view({ role: 'MENTEE', status: 'CONFIRMED' })], nextCursor: null },
+    }),
+  );
+  expect(list).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole('tab', { name: 'Giden' })).toHaveAttribute('aria-selected', 'true');
+  expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Giden');
+  expect(screen.getByText('Onaylandı')).toBeVisible();
+});
+it('inceleyici: sekme yükleme hatasında eski liste kendi başlığıyla kalır', async () => {
+  const { user } = renderUi(
+    <MyAppointments
+      initial={{ items: [view()], nextCursor: null }}
+      initialRole="MENTOR"
+      showSettings
+      list={vi.fn().mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' })}
+    />,
+  );
+  await user.click(screen.getByRole('tab', { name: 'Giden' }));
+  await screen.findByRole('alert');
+  expect(screen.getByRole('tab', { name: 'Gelen' })).toHaveAttribute('aria-selected', 'true');
+});
+it('inceleyici: sunucu uygun gördüğünde randevu detayında görüşme formuna giriş vardır', () => {
+  renderUi(
+    <AppointmentDetail
+      appointment={view({ status: 'COMPLETED' })}
+      actions={detailActions()}
+      feedbackAvailable
+    />,
+  );
+  expect(screen.getByRole('link', { name: 'Formu doldur' })).toHaveAttribute(
+    'href',
+    '/hesap/gorusme/a1',
+  );
 });

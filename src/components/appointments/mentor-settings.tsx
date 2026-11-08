@@ -201,7 +201,7 @@ export function MentorSettings({
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-8 px-5 pb-10 pt-10 sm:pt-16">
+    <div className="[&_.text-sm]:text-base mx-auto flex w-full max-w-lg flex-col gap-8 px-5 pb-10 pt-10 sm:pt-16">
       <header>
         <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
@@ -263,7 +263,7 @@ export function MentorSettings({
             />
           ))}
           {fieldErrors.modes && (
-            <p role="alert" className="text-sm text-danger">
+            <p role="alert" className="text-base text-danger">
               {fieldErrors.modes}
             </p>
           )}
@@ -292,7 +292,13 @@ export function MentorSettings({
           checked={isActive}
           onChange={(event) => setIsActive(event.target.checked)}
         />
-        <Button size="lg" fullWidth loading={pending === 'general'} onClick={saveGeneral}>
+        <Button
+          variant="secondary"
+          size="lg"
+          fullWidth
+          loading={pending === 'general'}
+          onClick={saveGeneral}
+        >
           {t('saveGeneral')}
         </Button>
       </section>
@@ -421,7 +427,7 @@ export function MentorSettings({
                       </div>
                     ))}
                     {fieldErrors[`d${weekday}`] && (
-                      <p role="alert" className="text-sm text-danger">
+                      <p role="alert" className="text-base text-danger">
                         {fieldErrors[`d${weekday}`]}
                       </p>
                     )}
@@ -444,11 +450,11 @@ export function MentorSettings({
           })}
         </ul>
         {fieldErrors.weekly && (
-          <p role="alert" className="text-sm text-danger">
+          <p role="alert" className="text-base text-danger">
             {fieldErrors.weekly}
           </p>
         )}
-        <p className="text-sm text-fg-muted">{t('summary', { count: ruleCount })}</p>
+        <p className="text-base text-fg-muted">{t('summary', { count: ruleCount })}</p>
         <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 bg-bg pt-2 pb-2 lg:static">
           <Button size="lg" fullWidth loading={pending === 'weekly'} onClick={saveWeekly}>
             {t('saveWeekly')}

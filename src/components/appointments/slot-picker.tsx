@@ -2,10 +2,11 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import type { RequestAppointmentInput, SlotList } from '@/contracts/appointment';
-import { requestAppointmentSchema } from '@/contracts/appointment';
+import { APPOINTMENT_NOTE_MAX, requestAppointmentSchema } from '@/contracts/appointment';
 import type { ActionResult } from '@/contracts/result';
 import { Button, buttonClasses, EmptyState, Field, RadioGroup, Textarea } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
@@ -25,7 +26,9 @@ export function SlotPicker({ list, request }: Props) {
   const t = useTranslations('appointments.request');
   const modesT = useTranslations('appointments.modes');
   const errors = useTranslations('errors.codes');
-  const groups = groupSlotsByDay(list.slots);
+  const router = useRouter();
+  const [slots, setSlots] = useState(list.slots);
+  const groups = groupSlotsByDay(slots);
   const [dayKeySelected, setDayKey] = useState(groups[0]?.key);
   const [startsAt, setStartsAt] = useState<string>();
   const [mode, setMode] = useState<string>();
@@ -40,8 +43,13 @@ export function SlotPicker({ list, request }: Props) {
     if (done) doneRef.current?.focus();
   }, [done]);
 
-  const day = groups.find((group) => group.key === dayKeySelected);
-  const slot = list.slots.find((item) => new Date(item.startsAt).toISOString() === startsAt);
+  useEffect(() => {
+    setSlots(list.slots);
+    setStartsAt(undefined);
+    setMode(undefined);
+  }, [list.slots]);
+  const day = groups.find((group) => group.key === dayKeySelected) ?? groups[0];
+  const slot = slots.find((item) => new Date(item.startsAt).toISOString() === startsAt);
   const modes = slot?.modes ?? [];
   const effectiveMode =
     mode && modes.includes(mode as 'ONLINE') ? mode : modes.length === 1 ? modes[0] : undefined;
@@ -70,7 +78,17 @@ export function SlotPicker({ list, request }: Props) {
     try {
       const result = await request(input as RequestAppointmentInput);
       if (result.ok) setDone(true);
-      else setError(result.errorCode);
+      else {
+        setError(result.errorCode);
+        if (['APPOINTMENT_SLOT_TAKEN', 'APPOINTMENT_SLOT_INVALID'].includes(result.errorCode)) {
+          setSlots((current) =>
+            current.filter((item) => new Date(item.startsAt).toISOString() !== startsAt),
+          );
+          setStartsAt(undefined);
+          setMode(undefined);
+          router.refresh();
+        }
+      }
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -112,6 +130,11 @@ export function SlotPicker({ list, request }: Props) {
     return (
       <div className="mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16">
         {header}
+        {error && (
+          <p role="alert" className="mt-4 text-base text-danger">
+            {errors(error)}
+          </p>
+        )}
         <EmptyState
           title={t('unavailableTitle')}
           description={t(`unavailable.${list.unavailableReason}`)}
@@ -129,6 +152,11 @@ export function SlotPicker({ list, request }: Props) {
     return (
       <div className="mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16">
         {header}
+        {error && (
+          <p role="alert" className="mt-4 text-base text-danger">
+            {errors(error)}
+          </p>
+        )}
         <EmptyState
           title={t('unavailableTitle')}
           description={t('noSlots')}
@@ -149,11 +177,11 @@ export function SlotPicker({ list, request }: Props) {
         event.preventDefault();
         void submit();
       }}
-      className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16"
+      className="[&_.text-sm]:text-base mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16"
     >
       {header}
       <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
-      <p className="mt-1 text-sm text-fg-muted">{t('timezone')}</p>
+      <p className="mt-1 text-base text-fg-muted">{t('timezone')}</p>
 
       <fieldset className="mt-6 min-w-0">
         <legend className="mb-2 font-medium text-fg">{t('pickDay')}</legend>
@@ -163,7 +191,7 @@ export function SlotPicker({ list, request }: Props) {
           aria-label={t('pickDay')}
         >
           {groups.map((group) => {
-            const selected = group.key === dayKeySelected;
+            const selected = group.key === day?.key;
             return (
               <button
                 key={group.key}
@@ -231,7 +259,7 @@ export function SlotPicker({ list, request }: Props) {
           <RadioGroup
             legend={t('mode')}
             name="mode"
-            value={effectiveMode}
+            value={effectiveMode ?? ''}
             onValueChange={setMode}
             options={modes.map((value) => ({ value, label: modesT(value) }))}
           />
@@ -254,13 +282,13 @@ export function SlotPicker({ list, request }: Props) {
           <Textarea
             {...control}
             rows={4}
-            maxLength={600}
+            maxLength={APPOINTMENT_NOTE_MAX}
             value={note}
             onChange={(event) => setNote(event.target.value)}
           />
         )}
       </Field>
-      <p className="mt-3 text-sm text-fg-muted">{t('emailShared')}</p>
+      <p className="mt-3 text-base text-fg-muted">{t('emailShared')}</p>
 
       <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto space-y-2 bg-bg pt-4 pb-2 lg:static lg:pt-8">
         {needSlot && (
