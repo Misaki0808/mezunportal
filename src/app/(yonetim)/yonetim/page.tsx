@@ -13,6 +13,7 @@ export default async function AdminOverviewPage() {
   const t = await getTranslations('admin');
   const { capabilities } = overview.data;
   const links = [
+    { key: 'usageMetrics', href: '/yonetim/kullanim', visible: true },
     { key: 'users', href: '/yonetim/kullanicilar', visible: capabilities.users },
     { key: 'reports', href: '/yonetim/sikayetler', visible: capabilities.reports },
     { key: 'employmentReport', href: '/yonetim/istihdam', visible: capabilities.employmentReport },
