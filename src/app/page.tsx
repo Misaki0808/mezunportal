@@ -5,10 +5,22 @@ import { getConsentState } from '@/server/actions/privacy';
 import { getOnboardingState } from '@/server/actions/profile';
 import { getHomeSummary } from '@/server/actions/home';
 import { HomeDashboard } from '@/components/home/dashboard';
+import { Landing } from '@/components/landing/landing';
+import { getLandingStats } from '@/server/services/landing';
+import type { Metadata } from 'next';
 import { ErrorState } from '@/components/ui';
 
 import { getVerificationState } from '@/server/actions/auth';
 import { requireUser } from '@/server/permissions';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('landing');
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+    openGraph: { title: t('metaTitle'), description: t('metaDescription'), type: 'website' },
+  };
+}
 
 export default async function HomePage() {
   const [t, auth] = await Promise.all([
@@ -16,6 +28,7 @@ export default async function HomePage() {
     getTranslations('authScreens.home'),
   ]);
   const actor = await requireUser().catch(() => null);
+  if (!actor) return <Landing stats={await getLandingStats()} />;
   if (actor) {
     const consent = await getConsentState();
     if (!consent.ok) return <ErrorState errorCode={consent.errorCode} />;

@@ -1,4 +1,110 @@
 {
+  "landing": {
+    "metaTitle": "MezunPortal | Birlikte yolunu bul",
+    "metaDescription": "İstanbul Üniversitesi öğrencileri ve mezunları için deneyimler, mentorluk ve kariyer yolculuğu bir arada.",
+    "skip": "İçeriğe geç",
+    "brand": "MezunPortal ana sayfa",
+    "brandWord": "mezunportal",
+    "navigation": "Tanıtım gezinmesi",
+    "navHow": "Nasıl çalışır?",
+    "navYbs": "YBS topluluğu",
+    "navLogin": "Giriş yap",
+    "eyebrow": "İstanbul Üniversitesi topluluğu",
+    "heroStart": "Yolun daha yeni",
+    "heroEnd": "başlıyor.",
+    "heroDescription": "Senden önce bu yollardan geçenlerle tanış. Deneyimleri keşfet, sorularını sor, kendi yolunu çiz.",
+    "rotatingLead": "Birlikte daha çok",
+    "rotatingAccessible": "staj, mentor, deneyim ve kariyer",
+    "rotating": {
+      "internship": "staj",
+      "mentor": "mentor",
+      "experience": "deneyim",
+      "career": "kariyer"
+    },
+    "primary": "İÜ e-postanla başla",
+    "secondary": "Nasıl çalışır?",
+    "trust": "Doğrulanmış üniversite topluluğu",
+    "previewBrand": "mezunportal.",
+    "previewKicker": "SENİN İÇİN",
+    "previewHeading": "Birlikte keşfet.",
+    "previewExperienceTag": "Staj deneyimi",
+    "previewExperience": "İlk stajına hazırlanırken",
+    "previewExperienceMeta": "Örnek deneyim · YBS",
+    "previewMentor": "Bir mentorla tanış",
+    "previewMentorMeta": "Deneyimlerinden öğren",
+    "previewDepartment": "Yönetim Bilişim Sistemleri",
+    "previewAvailable": "Görüşmeye açık",
+    "previewTopic": "Kariyer",
+    "previewMeeting": "Bir görüşme planla",
+    "previewMeetingMeta": "Sana uygun bir zaman seç",
+    "previewOpportunity": "Yeni bir bakış açısı",
+    "previewOpportunityMeta": "Topluluğunla keşfet",
+    "heroBottom": "Aynı üniversite, farklı yollar.",
+    "scroll": "Keşfet",
+    "statsLabel": "Topluluğun sayıları",
+    "statsIntro": "Birlikte büyüyen bir topluluk.",
+    "newCommunity": "Yeni başladık",
+    "statsUnavailable": "Bilgi yok",
+    "stats": {
+      "experiences": "Paylaşılan deneyim",
+      "mentors": "Aktif mentor",
+      "meetings": "Gerçekleşen görüşme"
+    },
+    "howKicker": "NASIL ÇALIŞIR?",
+    "howTitle": "Kendi yolunu çizmek",
+    "howAccent": "üç adım kadar yakın.",
+    "howDescription": "İster ilk stajını arıyor ol, ister deneyimlerini paylaşmak iste. Burada bir sonraki adımı birlikte düşünürüz.",
+    "steps": {
+      "verify": {
+        "title": "Topluluğa katıl",
+        "description": "Üniversite üyeliğini doğrula, sana ait bir alan oluştur."
+      },
+      "explore": {
+        "title": "Deneyimleri keşfet",
+        "description": "Staj, eğitim ve kariyer hikâyelerinde sana yol gösterecek ayrıntıları bul."
+      },
+      "connect": {
+        "title": "Birlikte ilerle",
+        "description": "Bir mentorla tanış, görüşme iste ve aklındaki soruları paylaş."
+      }
+    },
+    "ybsKicker": "ÖNCE YAKININDAN",
+    "ybsTitle": "YBS ile başlıyor,",
+    "ybsAccent": "birlikte büyüyoruz.",
+    "ybsDescription": "MezunPortal pilot yolculuğuna İstanbul Üniversitesi Yönetim Bilişim Sistemleri topluluğuyla başlıyor. Tanıdık bir yerden, farklı deneyimlere açılan bir alan.",
+    "ybsAction": "Topluluğa katıl",
+    "ybsArt": "İstanbul Üniversitesi · YBS",
+    "faqKicker": "AKLINDA KALMASIN",
+    "faqTitle": "Merak ettiklerine",
+    "faqAccent": "kısa cevaplar.",
+    "faqDescription": "Başlamadan önce bilmek isteyebileceğin birkaç şey.",
+    "questions": {
+      "who": {
+        "question": "MezunPortal kimler için?",
+        "answer": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için. Pilot çalışma YBS topluluğuyla başlıyor."
+      },
+      "cost": {
+        "question": "Başlamak için neye ihtiyacım var?",
+        "answer": "Üniversite üyeliğini doğrulayarak profilini oluşturabilir ve topluluğu keşfetmeye başlayabilirsin."
+      },
+      "privacy": {
+        "question": "Bilgilerimi kimler görebilir?",
+        "answer": "Profilindeki alanların görünürlüğünü sen belirlersin. İletişim bilgilerin ancak onayladığın taleplerde paylaşılır."
+      },
+      "mentor": {
+        "question": "Bir mentordan nasıl destek alırım?",
+        "answer": "Doğrulamanı tamamladıktan sonra mentorları keşfedebilir, uygun bir zaman için görüşme talebi gönderebilirsin."
+      }
+    },
+    "closingKicker": "BİR SONRAKİ ADIM",
+    "closingTitle": "Yalnız yürümek",
+    "closingAccent": "zorunda değilsin.",
+    "closingDescription": "Merak ettiklerin, paylaşacakların ve keşfedeceklerin için topluluğun burada.",
+    "footerDescription": "Aynı üniversiteden, birbirinden farklı yollara.",
+    "footerPrivacy": "Aydınlatma metni",
+    "footerTerms": "Kullanım şartları",
+    "footerNote": "İstanbul Üniversitesi topluluğu için tasarlandı."
+  },
   "metadata": {
     "title": "MezunPortal",
     "description": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için doğrulanmış, staj odaklı kariyer platformu."
