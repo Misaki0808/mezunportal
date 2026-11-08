@@ -160,7 +160,10 @@ describe('analyzeIdentity: engel ve uyarı (kart 122)', () => {
   });
 
   it('3 harfli ad yalnız tam eşleşmeyle engel; ek ve önek yok sayılır', () => {
-    expect(analyzeIdentity('Alim ve aliye', ['Ali Veli']).blocked).toBe(false);
+    expect(analyzeIdentity('Alim ve aliye', ['Ali Veli'])).toEqual({
+      blocked: false,
+      warnings: [],
+    });
     expect(analyzeIdentity('Ali ile', ['Ali Veli']).blocked).toBe(true);
   });
 
