@@ -6,6 +6,7 @@ import { createPermissions } from '../permissions/guards';
 import { reliability, reliabilitySince } from '../rules/reliability';
 import { awardForSession, awardSafely } from './points';
 import { requireConsent } from './privacy';
+import { emitEvent } from './event';
 
 const HOUR = 60 * 60 * 1000;
 export async function submitFeedback(
@@ -15,7 +16,6 @@ export async function submitFeedback(
   now = new Date(),
 ) {
   const parsed = feedbackInputSchema.parse(input);
-  let completed = false;
   const result = await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR SHARE`;
     await createPermissions({
@@ -39,6 +39,7 @@ export async function submitFeedback(
     )
       throw codedConflict('FEEDBACK_NOT_READY');
     await tx.sessionFeedback.create({ data: { ...parsed, authorId: userId } });
+    let completed = false;
     if (userId === row.mentorId && !parsed.happened) {
       await tx.appointment.update({ where: { id: row.id }, data: { status: 'NO_SHOW' } });
     } else if (
@@ -49,12 +50,13 @@ export async function submitFeedback(
       await tx.appointment.update({ where: { id: row.id }, data: { status: 'COMPLETED' } });
       completed = true;
     }
-    return { submitted: true };
+    return { completed, menteeId: row.menteeId, mode: row.mode };
   });
-  // Puan (P1-16): iki taraf "gerçekleşti" dedi ve görüşme TAMAMLANDI; yazım işlem dışında, hatası akışı bozmaz.
-  if (completed)
+  if (result.completed) {
+    emitEvent(db, result.menteeId, { type: 'APPOINTMENT_COMPLETED', props: { mode: result.mode } });
     await awardSafely(() => awardForSession({ db, now: () => now }, parsed.appointmentId));
-  return result;
+  }
+  return { submitted: true };
 }
 export async function feedbackView(
   db: PrismaClient,

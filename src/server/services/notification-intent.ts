@@ -1,7 +1,8 @@
 import 'server-only';
 import { createCipheriv, createDecipheriv, createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import type { Prisma, PrismaClient } from '@/generated/prisma/client';
+import { Prisma, type PrismaClient } from '@/generated/prisma/client';
+import { notificationRetry } from '../rules/notification-retry';
 import type { AppointmentNotice } from './appointment-notifier';
 
 const generic = z
@@ -129,14 +130,19 @@ export async function stageAppointmentNotices(
 }
 export type IntentRecord = { id: string; userId: string; payload: Prisma.JsonValue };
 export type IntentSender = (row: IntentRecord) => Promise<void>;
-/** Her kayıt ayrı kilitlenir; kuyruk kesintisi kaydı korur, eşzamanlı işçiler çakışmaz. */
-export async function relayNotificationIntents(db: PrismaClient, send: IntentSender) {
+/** Her kayıt ayrı kilitlenir; hata denemesi ve bekleme aynı işlemde saklanır. FAILED yeniden seçilmez. */
+export async function relayNotificationIntents(
+  db: PrismaClient,
+  send: IntentSender,
+  options: { now?: () => Date } = {},
+) {
+  const now = (options.now ?? (() => new Date()))();
   let after = '',
     sent = 0,
     failed = 0;
   for (;;) {
     const rows = await db.notificationIntent.findMany({
-      where: { id: { gt: after } },
+      where: { id: { gt: after }, status: 'PENDING', nextAttemptAt: { lte: now } },
       orderBy: { id: 'asc' },
       take: 100,
       select: { id: true, userId: true },
@@ -151,19 +157,51 @@ export async function relayNotificationIntents(db: PrismaClient, send: IntentSen
             const locked = await tx.$queryRaw<
               { id: string }[]
             >`SELECT "id" FROM "NotificationIntent" WHERE "id"=${id} FOR UPDATE SKIP LOCKED`;
-            if (!locked.length) return false;
+            if (!locked.length) return 'SKIPPED';
             const intent = await tx.notificationIntent.findUnique({
               where: { id },
-              select: { id: true, userId: true, payload: true },
+              select: {
+                id: true,
+                userId: true,
+                payload: true,
+                status: true,
+                attemptCount: true,
+                nextAttemptAt: true,
+              },
             });
-            if (!intent) return false;
-            await send(intent);
+            // Başka işçi bu kaydı az önce ertelemiş veya kalıcı hataya almış olabilir.
+            if (
+              !intent ||
+              intent.status !== 'PENDING' ||
+              !intent.nextAttemptAt ||
+              intent.nextAttemptAt > now
+            )
+              return 'SKIPPED';
+            try {
+              await send(intent);
+            } catch {
+              const retry = notificationRetry(intent.attemptCount + 1, now);
+              await tx.notificationIntent.update({
+                where: { id },
+                data: {
+                  ...retry,
+                  // Kalıcı hatada adresi/şifreli yükü saklamanın amacı kalmaz.
+                  ...(retry.status === 'FAILED' ? { payload: Prisma.JsonNull } : {}),
+                },
+              });
+              return retry.status;
+            }
             await tx.notificationIntent.delete({ where: { id } });
-            return true;
+            return 'SENT';
           },
           { timeout: 30000, maxWait: 10000 },
         );
-        if (changed) sent++;
+        if (changed === 'SENT') sent++;
+        else if (changed === 'PENDING' || changed === 'FAILED') {
+          failed++;
+          // Operatör uyarısı: kimlik, sağlayıcı hatası, adres veya şifreli yük taşınmaz.
+          if (changed === 'FAILED') process.stderr.write('notification.intent: RETRY_EXHAUSTED\n');
+        }
       } catch {
         failed++;
       }
