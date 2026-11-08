@@ -10,6 +10,8 @@ import { isCodedError } from '@/lib/errors';
 import { feedbackView, studentReliability, submitFeedback } from './feedback';
 import { buildDataExport } from './dataExport';
 import { reliabilitySince } from '../rules/reliability';
+import { settleEvents } from './event';
+import { seedPointRules } from '../../../prisma/seed-points';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
 const now = new Date('2030-06-20T12:00:00Z');
@@ -134,18 +136,49 @@ it.each([false, true])(
     );
   },
 );
-it('inceleyici: iki tarafın eşzamanlı tekrarlarından yalnız iki kayıt ve tek tamamlanma çıkar', async () => {
-  const { mentor, student, appointment } = await setup();
-  const input = { appointmentId: appointment.id, happened: true, helpful: true, note: null };
-  const results = await Promise.allSettled(
-    Array.from({ length: 12 }, (_, i) => submitFeedback(db, i % 2 ? mentor : student, input, now)),
-  );
-  expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(2);
-  expect(await db.sessionFeedback.count({ where: { appointmentId: appointment.id } })).toBe(2);
-  expect((await db.appointment.findUniqueOrThrow({ where: { id: appointment.id } })).status).toBe(
-    'COMPLETED',
-  );
-}, 15000);
+it.each(['ONLINE', 'IN_PERSON'] as const)(
+  'inceleyici: %s eşzamanlı tekrarında tek olay ve tek puan çıkar',
+  async (mode) => {
+    const { mentor, student, appointment } = await setup();
+    await seedPointRules(db);
+    await db.appointment.update({ where: { id: appointment.id }, data: { mode } });
+    const input = {
+      appointmentId: appointment.id,
+      happened: true,
+      helpful: true,
+      note: 'Olay yüküne taşınmayan özel not',
+    };
+    const results = await Promise.allSettled(
+      Array.from({ length: 12 }, (_, i) =>
+        submitFeedback(db, i % 2 ? mentor : student, input, now),
+      ),
+    );
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(2);
+    expect(await db.sessionFeedback.count({ where: { appointmentId: appointment.id } })).toBe(2);
+    await settleEvents();
+    const events = await db.event.findMany({
+      where: { userId: student, type: 'APPOINTMENT_COMPLETED' },
+      select: { props: true },
+    });
+    expect(events).toEqual([{ props: { mode } }]);
+    expect(
+      await db.pointEntry.findMany({
+        where: { userId: mentor, sourceId: appointment.id },
+        select: { action: true, points: true, status: true },
+      }),
+    ).toEqual([
+      {
+        action: mode === 'ONLINE' ? 'SESSION_ONLINE' : 'SESSION_IN_PERSON',
+        points: mode === 'ONLINE' ? 10 : 15,
+        status: mode === 'ONLINE' ? 'FINAL' : 'PENDING',
+      },
+    ]);
+    expect((await db.appointment.findUniqueOrThrow({ where: { id: appointment.id } })).status).toBe(
+      'COMPLETED',
+    );
+  },
+  15000,
+);
 it('inceleyici: yıl sınırı dahil, önceki an/future/iptal hariç; gösterge yalnız kendi hesap ve talep mentorunda', async () => {
   const { mentor, student, stranger } = await setup();
   const cutoff = reliabilitySince(now);

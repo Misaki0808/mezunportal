@@ -88,6 +88,10 @@ yalnız `DATABASE_URL_TEST` veritabanını kullanır. Adı `_test` ile bitmeyen 
 başlamadan önce o veritabanının `public` şeması düşürülür ve bütün migration'lar boş veritabanına
 uygulanır. `DATABASE_URL_TEST` yoksa `pnpm test` gürültülü düşer (sessiz atlama yok); veritabanı
 gerekmeyen kontrol için `pnpm test:unit`.
+DB projesinde ortak makine yükü için test başına süre sınırı 15 saniye, birim testlerinde 5 saniyedir.
+Vitest 5 saniyeyi aşan yavaş testleri raporlar; sürekli yavaşlayan testi düzeltmek gerekir.
+Standart raporlayıcı açıkça seçilidir; ajan ortamının otomatik minimal raporu yavaş testin
+adını ve süresini gizleyemez.
 
 Kapsam yüzdesi için test yazılmaz; yanlış aktör, yanlış durum, tekrar ve hata yolları kanıtlanır.
 **Ekran kaynağını tarayan test yazılmaz** (bileşen dosyasını metin olarak okuyup desen arayan
