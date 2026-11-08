@@ -709,6 +709,9 @@ Mentor dizini ve arama aynı filtre kabuğunu kullanır. Bekleyen gezinme sıras
 
 Bildirim bağlantısı testi seed öğrencisinin pozisyonuna bağlı kayıt oluşturur; profil/CV testi aynı öğrencinin pozisyonlarını temizler. Bu nedenle ortak hesap kullanan uçtan uca dosyalar tek işçiyle koşar. Her şablonun güncel tercihe uyması ve bağlantının hesap/imza/süre/tek kullanım sınırları bağımsız negatif testlerle korunur. Olay commit edildikten sonra kuyruğa yazım başarısızsa otomatik telafi bu pakette yoktur; ana işlemin başarısı korunur.
 
+### Bildirim niyeti ve kuyruk telafisi
+
+Moderasyon, iletişim, CV daveti ve randevu bildirimlerinde olayın niyeti iş değişikliğiyle aynı veritabanı işlemine yazılır. Niyet yalnız tür, alıcı ve kaynak kimlikleri taşır; ad, e-posta, serbest metin ve bağlantı saklamaz. Dakikalık pg-boss aktarıcısı kaydı kilitleyip mevcut tercih denetimli e-posta kapısına aynı tekilleştirme anahtarıyla yollar; başarısızlıkta kayıt kalır, başarılı kuyruk yazımından sonra silinir. Kuyruk kabulü sonrası kesintide tekrar aynı anahtar kullanılır. Randevu metni güncel kayıttan hazırlanır, silinmiş hesaplara gönderilmez.
 ### P1-14 incelemesi: form erişimi ve yalıtılmış iş testi
 
 Formun taraf denetimi hesap layout'unda loading başlamadan yapılır; yabancı kullanıcı gerçek, Türkçe 404 alır. Sayfa ve gönderim eylemi kendi denetimini korur. İstek yolu yalnız proxy'nin yazdığı başlıktan seçilir, erişim kararı katılımcı servisinindir. Görüşme işi testi bağlantı ayarlarını sahte değerlerle kurup temizler; rolün yerel env dosyasına dayanmaz. İki tarafın onayı, tek yanıt ve gösterge kapsamı bağımsız yarış/negatif testleriyle korunur.

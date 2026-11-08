@@ -56,6 +56,7 @@ import {
 } from './cv-shared';
 import { emitEvent, emitProfileThresholds, subjectFromActor } from './event';
 import { storedScore, syncCompletionScore } from './profile';
+import { stageNotification } from './notification-intent';
 import { attachSkill, ensureProfile } from './profile-skills';
 import { consumeRateLimit, peekRateLimit } from './rateLimit';
 
@@ -749,11 +750,19 @@ export async function applyCv(
           select: { id: true },
         });
         if (internships.length > 0) {
-          const result = await tx.experienceInvitation.createMany({
+          const created = await tx.experienceInvitation.createManyAndReturn({
             data: internships.map((row) => ({ userId: actor.userId, positionId: row.id })),
             skipDuplicates: true,
+            select: { id: true },
           });
-          invitations = result.count;
+          invitations = created.length;
+          for (const invitation of created)
+            await stageNotification(tx, actor.userId, {
+              type: 'generic',
+              event: 'invitation',
+              eventId: invitation.id,
+              path: '/deneyimlerim',
+            });
         }
       }
 
