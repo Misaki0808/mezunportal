@@ -96,6 +96,10 @@ ve akademisyen açabilir; öğrenci eşiği K-08. Yönetici yetkisi ayrı tablod
   kapsamı servis sorgusunda doğrulanır; genel `requireVerifiedMember` tek başına yeterli değildir.
 - **Anonim deneyim:** yazar kimliği kendi listesi ve moderasyon dahil hiçbir çıktı şemasında yoktur;
   sunucudaki sahiplik bağı istemciye verilmez. Şikâyet çıktısı da raportör kimliği taşımaz.
+  Servis yanıtı tek kapalı dönüştürücüden geçer; moderasyon audit metadata'sına yazar kimliği yazılmaz.
+- Deneyimde yayın/ret ve şikâyet çözümü kapsamı işlem içinde yeniden denetler; karar ile audit aynı
+  transaction'dadır. Yayınlanmış içerik yazarınca değiştirilemez; reddedilen içerik yeniden taslağa
+  alınarak gönderilir. Şikâyet sınırı sözleşmedeki kullanıcı başına 10/24 saattir (DB sayacı).
 - Her yetkili eylemin negatif testi vardır (başka bölüm, yetkisiz rol, doğrulanmamış, askıda).
 
 ## Yönetici işlem kaydı
@@ -128,8 +132,12 @@ kimlikler). Sistem yöneticisi panelden görür.
   yayınlanmış içerik kullanıcının seçimine göre silinir (varsayılan) ya da anonimleştirilir (K-09,
   `docs/decisions.md`). Kişisel profil ve etiket ilişkileri her iki seçimde de silinir; ortak etiket
   sözlüğü korunur. Profil yazımı aynı kullanıcı kilidi altında hesap durumunu yeniden doğrular.
+  Deneyim taslak/bekleyen/ret kayıtları her iki seçimde silinir; anonimleştirme yalnız yayınlanmış
+  deneyimi yazar bağı kopuk bırakır. Kişinin şikâyet metinleri silinir. Deneyim yazımı aynı User kilidini alır.
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11); kendi profilinin
   kişisel alanları, ilk giriş adım durumları ve etiketleri dahildir. Profil yoksa `profile: null` döner.
+  Deneyimler bütün durumlarıyla yalnız kendi içeriklerinden oluşur; yazar/moderatör kimlikleri deneyim
+  döküm nesnesine eklenmez.
 - **Çerezler:** yalnız zorunlu oturum çerezi; üçüncü taraf analitik ve reklam çerezi yok
   (metrikler kendi tablomuzda). Çerez bandı yerine aydınlatma metninde çerez bölümü yeterli
   görünür; son değerlendirme hukuki metin onayıyla (PILOT-LEGAL).
@@ -147,6 +155,13 @@ kimlikler). Sistem yöneticisi panelden görür.
   sınırlıdır; çıktı yalnız **öneri** olarak onay ekranına gelir, kullanıcı onaylamadan
   uygulanmaz; rol, yetki, doğrulama durumu ve başka kullanıcıya ait veri **hiçbir zaman** LLM
   çıktısından yazılmaz; modele araç/çağrı yetkisi verilmez.
+- **Yükleme denetimi içeriğe bakar:** şifreli PDF ve 6 sayfadan uzun PDF reddedilir; maliyet sınırları (5 MB,
+  günlük hak, sağlayıcı harcama sınırı) sayfa sayımının sezgisel olmasını telafi eder.
+- **Çıktı temizliği:** `ParsedCv` bilinmeyen alanları atar (rol/kullanıcı kimliği şemada yok), görünmez ve çift
+  yönlü biçim karakterlerini siler, liste ve metin uzunluklarını sınırlar; saklı çıktı uygulamada yeniden
+  doğrulanır. Veritabanı kısıtları da metin uzunluğu ve tarih tutarlılığını zorlar.
+- **Modele yalnız PDF gider:** kullanıcı kimliği, e-posta, rol ve başka kullanıcı verisi isteğe girmez; yurt dışı
+  rızası yüklemede ve iş başında denetlenir.
 - LLM girdisi ve çıktısı loglanmaz.
 
 ## Kötüye kullanım sınırları

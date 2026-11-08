@@ -18,3 +18,10 @@ export function newGraduationDocumentKey(userId: string): string {
   assertValidStorageKey(key);
   return key;
 }
+
+/** Yeni CV anahtarı: `cv/<userId>/<uuid>.pdf`. */
+export function newCvKey(userId: string): string {
+  const key = `cv/${userId}/${randomUUID()}.pdf`;
+  assertValidStorageKey(key);
+  return key;
+}

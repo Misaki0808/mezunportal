@@ -20,6 +20,7 @@ export const ADMIN_ACTIONS = {
   USER_UNSUSPEND: { reasonRequired: false },
   MODERATION_PUBLISH: { reasonRequired: false },
   MODERATION_REJECT: { reasonRequired: true },
+  REPORT_RESOLVE: { reasonRequired: true },
   POINTS_REVOKE: { reasonRequired: true },
   SUSPICION_DECIDE: { reasonRequired: true },
   ADMIN_GRANT: { reasonRequired: false },

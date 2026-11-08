@@ -47,3 +47,19 @@ export async function consumeRateLimit(
   const count = Number(rows[0]?.count ?? 0);
   if (count > rule.limit) throw codedRateLimited('RATE_LIMITED');
 }
+
+/** Sayacı ARTIRMADAN kalan hakkı okur (ekran "bugün kaç hakkın kaldı" göstersin diye). */
+export async function peekRateLimit(
+  db: RateLimitClient,
+  rule: RateLimitRule,
+  subjectId: string,
+  now: Date = new Date(),
+): Promise<{ used: number; remaining: number }> {
+  const key = `app:${rule.name}:${subjectId}`;
+  const windowStart = BigInt(now.getTime()) - BigInt(rule.windowMs);
+  const rows = await db.$queryRaw<{ count: number; lastRequest: bigint }[]>`
+    SELECT "count", "lastRequest" FROM "RateLimit" WHERE "key" = ${key}`;
+  const row = rows[0];
+  const used = row && row.lastRequest >= windowStart ? Number(row.count) : 0;
+  return { used, remaining: Math.max(0, rule.limit - used) };
+}

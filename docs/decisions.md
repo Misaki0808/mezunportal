@@ -436,6 +436,30 @@ yalnız kullanıcının kendi profilini açık alan seçimiyle içerir. Mentor i
 doğrulamaz ve etkin mentor profili açmaz. P1-07 deneyim verisi gelene kadar öğrencinin mentor adımı
 güvenli biçimde kapalıdır; sınıf düzeltmesi sunucudaki üyelikten hesaplanır.
 
+## 2026-11-08 · CV hattı: kullanıcıya bağlı tablolar, sağlayıcıdan bağımsız LLM
+CV'den gelen kalemler (eğitim, pozisyon, dil, sertifika, beceri) `Profile`'a değil doğrudan `User`'a bağlıdır:
+P1-05'in bağımlılığı P1-03'tür, `Profile` P1-04'te gelir ve iki adım birbirini beklemesin. Beceri, `data.md`
+taslağındaki `Tag(SKILL)` yerine `Skill` sözlüğü + `UserSkill` olarak kuruldu (şirket/unvanla aynı eşleme yolu;
+birleştirme TD-010). LLM sağlayıcısı K-04'te açık olduğundan arayüz yalnız PDF, talimat ve JSON Şeması alır, ham
+`unknown` döner; doğrulama servistedir. Sahte adaptör `local`/`test`'te çalışır ve `prod`'da env doğrulamasını
+düşürür. Reddedilen: sağlayıcı SDK'sına bağlı arayüz (K-04 cevabı hattı yeniden yazdırırdı).
+
+## 2026-11-08 · CV önerisi yalnız açık kararla yazılır
+Fark üç sonuç verir: yeni, değişen, çakışan (elle düzeltilmiş kalem). Uygulama yalnız kullanıcının kalem kalem
+kabul ettiği anahtarları yazar; çakışan kalem ayrıca `overwriteMine` ister; kullanıcı öneriyi onay ekranında
+düzeltirse kalem "elle düzeltilmiş" olur ve sonraki CV'de çakışma olarak çıkar. CV'de olmayan değer fark sayılmaz
+(eksik bilgi profildekini silmez). Kalem anahtarı yalnız öneriden türer; profil/CV değişmişse karar reddedilir
+(`CV_REVIEW_STALE`) ve hiçbir şey yazılmaz. Sözlükte eşleşmeyen değer yalnız kullanıcı onaylayınca yönetici
+kuyruğuna girer (atılan CV kuyruğu kirletmez).
+
+## 2026-11-08 · CV yükleme sınırları ve saklama
+Sayfa sayımı bağımlılıksız ve sezgiseldir (sayfa nesneleri ile `/Pages` `/Count`'unun büyüğü; sıkıştırılmış nesne
+akışları açılır, ad kaçışları çözülür); asıl maliyet sınırı 5 MB + günlük sınır + sağlayıcı harcama sınırıdır.
+Günlük hak yalnız doğrulamayı geçen yüklemede harcanır (sabit 24 saatlik pencere, mevcut sayaçla). Kullanıcı başına
+tek işlenen ve tek onay bekleyen CV vardır (kısmi benzersiz indeks); yeni yükleme eski bekleyen sonucu atar. Yurt
+dışı rızası hem yüklemede hem iş başında okunur. Son uygulanan CV dosyası kalır; uygulamada/atmada eski dosyalar,
+hatada ise dosya hemen silinir; açık inceleme talebine bağlı dosya silinmez (kayıt kancası `CV_FILE_HOLDS`).
+
 ## 2026-11-08 · Deneyim görünürlüğü ve anonim çıktı sınırı (K-07, P1-07)
 
 PM kararı: yayınlanmış içerik üniversitedeki tüm doğrulanmış üyelere görünür; bölüm/fakülte ayrımıyla
@@ -459,3 +483,26 @@ Faz 1 ekran turunun güvenlik/KVKK bulguları için:
 - `next dev` günlüğünde sunucu eylemi argümanları ve istek URL günlükleri kapalıdır; URL’lerde kodlanmış kişisel veri bulunabilir. Telefon testi geliştirme
   sunucusuyla yapıldığı için geliştirme günlüğü de kişisel veri kuralına tabidir.
 - İletişim hedefi önizlemesi talep edilemeyen her hedefe aynı yanıtı verir.
+
+## 2026-11-08 · Deneyim servisi: anonim çıktı, atomik moderasyon ve K-09
+
+Detay, deneyimlerim ve moderasyon kuyruğu tek kapalı çıktı dönüştürücüsünden geçer; anonim yazar
+kimliği audit metadata'sına da girmez. K-07 sorgusu doğrulanmış etkin üyeliğin üniversitesine bakar;
+yetkili moderatör kendi yönetim kapsamını kullanır. Yazım anındaki bölüm sonradan değişmez.
+Deneyim/şikâyet işlemleri User → Experience kilit sırasını hesap silmeyle paylaşır; hesap durumu ve
+yetki işlem içinde güncel veriden tekrar okunur. Karar ile audit aynı transaction'dadır.
+
+Yayınlanmış deneyim doğrudan düzenlenmez; ret sonrası düzenleme taslağa döner ve yeniden moderasyon
+ister. Şikâyet DB sayacı 10/24 saat ve tek açık kişi/hedef kaydıyla sınırlıdır. K-09'un iki seçiminde
+kişisel/yayınlanmamış içerik ve kişinin şikâyet metinleri silinir; anonimleştirme yayınlanmış deneyimde
+yazar bağını koparır. Zorunlu temizleme işleyicileri ek test/özellik işleyicileriyle devre dışı kalmaz.
+Kendi JSON dökümü deneyimleri bütün durumlarıyla içerir; başka kullanıcının deneyimi/kimliği eklenmez.
+K-08 artık yalnız kullanıcının kendi yayınlanmış deneyimlerini sayar; sınıf eşiği ayrıca korunur.
+
+## 2026-11-08 · CV iş denemelerinin nesli ve son dosyanın korunması
+
+Aynı CV işi yeniden teslim edilirse attempts sayacı atomik UPDATE RETURNING ile deneme nesli olur;
+sonuç/yeniden deneme yalnız o nesli günceller. Hata temizliği satırı kilitleyip güncel durum/nesli
+kontrol etmeden PDF silmez: eski işin geç hatası yeni PARSED/APPLIED dosyasını yok edemez. Onaylanan
+ad düzeltmeleri mevcut eğitim/dil/sertifika kalemlerine de uygulanır; CV yazımı User kilidi altında
+kanonik askı/silinme kontrolünü yeniden yapar. Çıktı üst sınırı UTF-8 baytlarıyla ölçülür.

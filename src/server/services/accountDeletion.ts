@@ -5,6 +5,7 @@ import type { PrismaClient } from '@/generated/prisma/client';
 import { codedNotFound, codedValidation } from '@/lib/errors';
 
 import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
+import { eraseExperienceContent } from './experiencePrivacy';
 
 /**
  * Hesap silme (P1-03, K-09). Kullanıcı satırı SİLİNMEZ, anonimleştirilir: rıza ve işlem kaydı hukuki
@@ -12,7 +13,8 @@ import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
  * e-posta geri dönüşsüz bir yer tutucuya döner (eski e-postayla bu hesaba giriş yok), oturumlar ve sağlayıcı
  * bağlantıları silinir, açık iletişim talepleri kapanır, görünürlük ayarları, üyelikler, mentor profili ve
  * yönetici yetkileri sonlanır, bekleyen belgeler silinir. Dosyalar işlem commit edilmeden silinir; dosya silme
- * bağlanmamışken silinecek dosya varsa işlem hiç başlamaz (yarım silme yok).
+ * bağlanmamışken silinecek dosya varsa işlem hiç başlamaz (yarım silme yok). CV yüklemeleri, ayrıştırma çıktısı ve
+ * profil kalemleri (eğitim, pozisyon, dil, sertifika, beceri, staj davetleri) de aynı işlemde silinir (P1-05).
  */
 
 export const DELETED_USER_NAME = 'Silinmiş kullanıcı';
@@ -22,18 +24,19 @@ export type PublishedContentChoice = 'DELETE' | 'ANONYMIZE';
 
 /**
  * Yayınlanmış içerik işleyicileri (K-09). Deneyim (P1-07), SSS cevabı (P1-12) gibi adımlar burada kendi
- * işleyicisini kaydeder; şu an yayınlanabilen içerik yoktur.
+ * işleyicisini kaydeder; yayınlanmamış kişisel içerik her iki seçimde de silinir.
  */
 export type PublishedContentHandler = (
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
   userId: string,
   choice: PublishedContentChoice,
 ) => Promise<void>;
-export const PUBLISHED_CONTENT_HANDLERS: PublishedContentHandler[] = [];
+export const PUBLISHED_CONTENT_HANDLERS: PublishedContentHandler[] = [eraseExperienceContent];
 
 export type AccountDeletionDeps = {
   /** Depolamadan dosya siler (idempotent: olmayan dosya hata değildir). Bağlı değilse `null`. */
   removeStoredFiles: ((keys: readonly string[]) => Promise<void>) | null;
+  /** Ek işleyiciler; zorunlu kişisel veri temizliğinin yerine geçmez. */
   handlers?: readonly PublishedContentHandler[];
 };
 
@@ -57,20 +60,33 @@ export async function deleteAccount(
       throw codedValidation('ACCOUNT_DELETE_CONFIRMATION_MISMATCH');
     }
     await tx.user.update({ where: { id: userId }, data: { deletedAt: now } });
-    for (const handler of deps.handlers ?? PUBLISHED_CONTENT_HANDLERS) {
+    for (const handler of [...PUBLISHED_CONTENT_HANDLERS, ...(deps.handlers ?? [])]) {
       await handler(tx, userId, input.publishedContent);
     }
     const pendingFiles = await tx.graduationDocument.findMany({
       where: { userId, status: 'PENDING' },
       select: { storageKey: true },
     });
-    const fileKeys = pendingFiles
+    // CV dosyaları (P1-05): yüklemeler, ayrıştırma çıktısı ve CV'den gelen profil kalemleri kişiye aittir;
+    // hesap silmede hepsi silinir (işlemdeki ayrıştırma işi satırı bulamaz ve atlanır).
+    const cvFiles = await tx.cvUpload.findMany({
+      where: { userId, storageKey: { not: null } },
+      select: { storageKey: true },
+    });
+    const fileKeys = [...pendingFiles, ...cvFiles]
       .map((row) => row.storageKey)
       .filter((key): key is string => key !== null);
     if (fileKeys.length > 0 && !deps.removeStoredFiles) {
       throw new Error('Dosya silme bağlı değil; hesap silme başlatılmadı');
     }
     await tx.graduationDocument.deleteMany({ where: { userId, status: 'PENDING' } });
+    await tx.experienceInvitation.deleteMany({ where: { userId } });
+    await tx.position.deleteMany({ where: { userId } });
+    await tx.education.deleteMany({ where: { userId } });
+    await tx.language.deleteMany({ where: { userId } });
+    await tx.certification.deleteMany({ where: { userId } });
+    await tx.userSkill.deleteMany({ where: { userId } });
+    await tx.cvUpload.deleteMany({ where: { userId } });
 
     // Açık iletişim talepleri kapanır; kapalı satırlar geçmiş olarak kalır (karşı tarafın kutusunda).
     await tx.contactRequest.updateMany({
