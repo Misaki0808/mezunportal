@@ -4,6 +4,9 @@ import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 
 import type { LlmAdapter } from '../external/llm';
 import type { StorageAdapter } from '../external/storage';
+import { loadActor } from '../permissions/actor';
+import { errorForDenyReason } from '../permissions/guards';
+import { evaluateAccess } from '../rules/authorization';
 
 export type Tx = Prisma.TransactionClient;
 
@@ -45,9 +48,11 @@ export async function heldUploadIds(
 }
 
 /** Hesap silme ile aynı kullanıcı satırı kilidi: yükleme, uygulama ve silme birbirini sıralar. */
-export async function lockUser(tx: Tx, userId: string): Promise<{ deletedAt: Date | null } | null> {
+export async function lockUser(tx: Tx, userId: string, now: Date = new Date()): Promise<void> {
   await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
-  return tx.user.findUnique({ where: { id: userId }, select: { deletedAt: true } });
+  const actor = await loadActor(tx, userId, now);
+  const decision = evaluateAccess(actor?.facts ?? null, { action: 'selfProfile' });
+  if (!decision.allowed) throw errorForDenyReason(decision.reason);
 }
 
 /**

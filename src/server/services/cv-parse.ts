@@ -64,7 +64,8 @@ async function callWithTimeout(deps: CvParseDeps, pdf: Uint8Array): Promise<unkn
 function validateOutput(raw: unknown): ParsedCv | null {
   const result = parsedCvSchema.safeParse(raw);
   if (!result.success) return null;
-  if (JSON.stringify(result.data).length > CV_PARSED_JSON_MAX_BYTES) return null;
+  if (Buffer.byteLength(JSON.stringify(result.data), 'utf8') > CV_PARSED_JSON_MAX_BYTES)
+    return null;
   return result.data;
 }
 
@@ -84,29 +85,45 @@ function failureOf(error: unknown): Failure {
 async function failUpload(
   deps: CvParseDeps,
   id: string,
-  storageKey: string | null,
   code: CvParseFailureCode,
   from: readonly ('QUEUED' | 'PARSING')[] = ['PARSING'],
-): Promise<void> {
-  let deleted = storageKey === null;
-  if (storageKey) {
-    try {
-      await deps.storage.delete(storageKey);
-      deleted = true;
-    } catch {
-      logCv('file_delete_failed', 'STORAGE');
+  attempt?: number,
+): Promise<boolean> {
+  // Eski bir iş denemesi PARSED/APPLIED dosyasını silemez. Durum ve deneme nesli dosya silmeden
+  // ÖNCE satır kilidi altında doğrulanır; hesap silme de aynı CvUpload satırını kilitler.
+  const failed = await deps.db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "CvUpload" WHERE "id"=${id} FOR UPDATE`;
+    const row = await tx.cvUpload.findFirst({
+      where: {
+        id,
+        status: { in: [...from] },
+        ...(attempt === undefined ? {} : { attempts: attempt }),
+      },
+      select: { storageKey: true },
+    });
+    if (!row) return false;
+    let deleted = row.storageKey === null;
+    if (row.storageKey) {
+      try {
+        await deps.storage.delete(row.storageKey);
+        deleted = true;
+      } catch {
+        logCv('file_delete_failed', 'STORAGE');
+      }
     }
-  }
-  await deps.db.cvUpload.updateMany({
-    where: { id, status: { in: [...from] } },
-    data: {
-      status: 'FAILED',
-      errorCode: code,
-      parsedJson: DbNull,
-      ...(deleted ? { storageKey: null } : {}),
-    },
+    await tx.cvUpload.update({
+      where: { id },
+      data: {
+        status: 'FAILED',
+        errorCode: code,
+        parsedJson: DbNull,
+        ...(deleted ? { storageKey: null } : {}),
+      },
+    });
+    return true;
   });
-  logCv('failed', code);
+  if (failed) logCv('failed', code);
+  return failed;
 }
 
 export async function processCvParse(
@@ -115,28 +132,26 @@ export async function processCvParse(
   context: CvParseContext,
 ): Promise<CvParseOutcome> {
   const { db, storage } = deps;
-  const claimed = await db.cvUpload.updateMany({
+  // Atomik UPDATE RETURNING benzersiz deneme neslini verir; okuma aralığında başka işin
+  // attempts değerini sahiplenmeyiz. Bütün sonuç/dosya geçişleri bu nesle bağlıdır.
+  const [upload] = await db.cvUpload.updateManyAndReturn({
     where: { id: cvUploadId, status: { in: ['QUEUED', 'PARSING'] } },
     data: { status: 'PARSING', attempts: { increment: 1 } },
-  });
-  // Satır yok (hesap silindi), ya da zaten sonuçlanmış: iş tekrar teslimi güvenle atlanır.
-  if (claimed.count === 0) return 'SKIPPED';
-
-  const upload = await db.cvUpload.findUnique({
-    where: { id: cvUploadId },
-    select: { userId: true, storageKey: true },
+    select: { userId: true, storageKey: true, attempts: true },
   });
   if (!upload) return 'SKIPPED';
   const fail = async (code: CvParseFailureCode): Promise<CvParseOutcome> => {
-    await failUpload(deps, cvUploadId, upload.storageKey, code);
-    return 'FAILED';
+    return (await failUpload(deps, cvUploadId, code, ['PARSING'], upload.attempts))
+      ? 'FAILED'
+      : 'SKIPPED';
   };
   const retryOrFail = async (failure: Failure): Promise<CvParseOutcome> => {
     if (failure.retryable && context.retryCount < context.retryLimit) {
-      await db.cvUpload.updateMany({
-        where: { id: cvUploadId, status: 'PARSING' },
+      const retried = await db.cvUpload.updateMany({
+        where: { id: cvUploadId, status: 'PARSING', attempts: upload.attempts },
         data: { status: 'QUEUED' },
       });
+      if (retried.count === 0) return 'SKIPPED';
       logCv('retry', failure.code);
       return 'RETRY';
     }
@@ -176,7 +191,7 @@ export async function processCvParse(
   if (parsedCvItemCount(parsed) === 0) return fail('CV_PARSE_EMPTY');
 
   const saved = await db.cvUpload.updateMany({
-    where: { id: cvUploadId, status: 'PARSING' },
+    where: { id: cvUploadId, status: 'PARSING', attempts: upload.attempts },
     data: { status: 'PARSED', parsedJson: parsed as Prisma.InputJsonValue, errorCode: null },
   });
   if (saved.count === 0) return 'SKIPPED';
@@ -188,10 +203,10 @@ export async function processCvParse(
 export async function markCvParseExhausted(deps: CvParseDeps, cvUploadId: string): Promise<void> {
   const row = await deps.db.cvUpload.findFirst({
     where: { id: cvUploadId, status: { in: ['QUEUED', 'PARSING'] } },
-    select: { storageKey: true },
+    select: { storageKey: true, attempts: true },
   });
   if (!row) return;
-  await failUpload(deps, cvUploadId, row.storageKey, 'CV_PARSE_UNAVAILABLE', ['QUEUED', 'PARSING']);
+  await failUpload(deps, cvUploadId, 'CV_PARSE_UNAVAILABLE', ['QUEUED', 'PARSING'], row.attempts);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -226,11 +241,11 @@ export async function purgeCvFiles(
 
   const stuck = await deps.db.cvUpload.findMany({
     where: { status: { in: ['QUEUED', 'PARSING'] }, updatedAt: { lt: stuckBefore } },
-    select: { id: true, storageKey: true },
+    select: { id: true, storageKey: true, attempts: true },
     take: PURGE_BATCH,
   });
   for (const row of stuck) {
-    await failUpload(deps, row.id, row.storageKey, 'CV_PARSE_UNAVAILABLE', ['QUEUED', 'PARSING']);
+    await failUpload(deps, row.id, 'CV_PARSE_UNAVAILABLE', ['QUEUED', 'PARSING'], row.attempts);
   }
 
   const candidates = await deps.db.$queryRaw<{ id: string; storageKey: string }[]>`

@@ -21,7 +21,6 @@ import {
   codedConflict,
   codedNotFound,
   codedRateLimited,
-  codedUnauthenticated,
   codedValidation,
   isCodedError,
 } from '@/lib/errors';
@@ -142,8 +141,7 @@ export async function uploadCv(
   try {
     return await db.$transaction(
       async (tx) => {
-        const user = await lockUser(tx, actor.userId);
-        if (!user || user.deletedAt) throw codedUnauthenticated('AUTH_UNAUTHENTICATED');
+        await lockUser(tx, actor.userId, nowOf(deps));
         // Rıza kilit altında yeniden okunur: geri çekilmiş rızayla dosya kabul edilmez.
         if (!(await transferConsentGranted(tx, actor.userId))) {
           throw codedValidation('CV_TRANSFER_CONSENT_REQUIRED');
@@ -469,6 +467,7 @@ function educationPatch(
   fields: readonly string[] | 'ALL',
 ): Patch {
   return {
+    ...(pick(fields, 'institution') ? { institution: value.institution } : {}),
     ...(pick(fields, 'level') ? { level: value.level } : {}),
     ...(pick(fields, 'fieldOfStudy') ? { fieldOfStudy: value.fieldOfStudy } : {}),
     ...(pick(fields, 'startDate') ? splitYearMonth('start', value.startDate) : {}),
@@ -516,8 +515,7 @@ export async function applyCv(
   const now = nowOf(deps);
   return db.$transaction(
     async (tx) => {
-      const user = await lockUser(tx, actor.userId);
-      if (!user || user.deletedAt) throw codedUnauthenticated('AUTH_UNAUTHENTICATED');
+      await lockUser(tx, actor.userId, nowOf(deps));
       const upload = await findParsedUpload(tx, actor.userId, input.cvUploadId);
       const parsed = readParsed(upload.parsedJson);
       const lookup = await buildDictionaryLookup(tx, namesOf(parsed, input.decisions));
@@ -618,7 +616,13 @@ export async function applyCv(
               } else {
                 await tx.language.update({
                   where: { id: item.existingId },
-                  data: { ...(pick(fields, 'level') ? { level: value.level } : {}), ...editedFlag },
+                  data: {
+                    ...(pick(fields, 'name')
+                      ? { name: value.name, normalizedName: normalizedOf(value.name) }
+                      : {}),
+                    ...(pick(fields, 'level') ? { level: value.level } : {}),
+                    ...editedFlag,
+                  },
                 });
                 updated += 1;
               }
@@ -628,6 +632,7 @@ export async function applyCv(
               const value =
                 (decision.section === 'CERTIFICATION' && decision.values) || item.proposed;
               const patch = {
+                ...(pick(fields, 'name') ? { name: value.name } : {}),
                 ...(pick(fields, 'issuer') ? { issuer: value.issuer } : {}),
                 ...(pick(fields, 'issuedDate') ? splitYearMonth('issued', value.issuedDate) : {}),
               };
@@ -733,8 +738,7 @@ export async function discardCv(
 ): Promise<DiscardCvOutput> {
   await deps.db.$transaction(
     async (tx) => {
-      const user = await lockUser(tx, actor.userId);
-      if (!user || user.deletedAt) throw codedUnauthenticated('AUTH_UNAUTHENTICATED');
+      await lockUser(tx, actor.userId, nowOf(deps));
       const upload = await findParsedUpload(tx, actor.userId, cvUploadId);
       await tx.cvUpload.update({
         where: { id: upload.id },

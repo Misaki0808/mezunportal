@@ -474,3 +474,12 @@ servis kartında zorlanır. CV davetinin isteğe bağlı Position kimliği yaln�
 P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK'sı P1-08'e bırakıldı.
 
 
+
+
+## 2026-11-08 · CV iş denemelerinin nesli ve son dosyanın korunması
+
+Aynı CV işi yeniden teslim edilirse attempts sayacı atomik UPDATE RETURNING ile deneme nesli olur;
+sonuç/yeniden deneme yalnız o nesli günceller. Hata temizliği satırı kilitleyip güncel durum/nesli
+kontrol etmeden PDF silmez: eski işin geç hatası yeni PARSED/APPLIED dosyasını yok edemez. Onaylanan
+ad düzeltmeleri mevcut eğitim/dil/sertifika kalemlerine de uygulanır; CV yazımı User kilidi altında
+kanonik askı/silinme kontrolünü yeniden yapar. Çıktı üst sınırı UTF-8 baytlarıyla ölçülür.
