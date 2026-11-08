@@ -80,4 +80,23 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
     expect(await screen.findByRole('alert')).not.toHaveTextContent('RATE_LIMITED');
   });
+  it('giriş sonrası güvenli dönüş yolunu e-posta bağlantısı isteğine taşır', async () => {
+    const request = vi.fn().mockResolvedValue({ ok: true, data: { status: 'CHECK_EMAIL' } });
+    const { user } = renderUi(
+      <SignInForm
+        options={disabledOptions}
+        returnTo="/hesap/gizlilik"
+        requestLink={request}
+        startLinkedIn={startLinkedIn}
+      />,
+    );
+    await user.type(screen.getByLabelText(/E-posta adresi/), 'test@example.test');
+    await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
+    await waitFor(() =>
+      expect(request).toHaveBeenCalledWith({
+        email: 'test@example.test',
+        returnTo: '/hesap/gizlilik',
+      }),
+    );
+  });
 });

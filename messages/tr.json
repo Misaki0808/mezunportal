@@ -51,7 +51,8 @@
       "EXPERIENCE_NOT_PENDING": "Bu deneyim artık moderasyon beklemiyor. Listeyi yenile.",
       "EXPERIENCE_NOT_PUBLISHED": "Yalnız yayınlanmış deneyimleri şikâyet edebilirsin.",
       "REPORT_ALREADY_OPEN": "Bu deneyim için açık bir şikâyetin var. Yeni şikâyet göndermene gerek yok.",
-      "REPORT_NOT_OPEN": "Bu şikâyet daha önce sonuçlandırılmış. Listeyi yenile."
+      "REPORT_NOT_OPEN": "Bu şikâyet daha önce sonuçlandırılmış. Listeyi yenile.",
+      "EMAIL_CHANGE_SAME_ADDRESS": "Bu zaten kullandığın adres. Farklı bir e-posta adresi yaz."
     }
   },
   "nav": {
@@ -336,7 +337,8 @@
       "divider": "veya",
       "linkedin": "LinkedIn ile devam et",
       "redirecting": "Yönlendiriliyor…",
-      "emailHint": "Öğrenci veya akademisyensen üniversite adresini, mezunsan kişisel e-posta adresini kullan."
+      "emailHint": "Öğrenci veya akademisyensen üniversite adresini, mezunsan kişisel e-posta adresini kullan.",
+      "continueTitle": "Devam etmek için giriş yap"
     },
     "membership": {
       "eyebrow": "ÜYELİK DOĞRULAMA",
@@ -366,7 +368,9 @@
       "signOut": "Çıkış yap",
       "signOutDescription": "Bu cihazdaki oturumunu kapat.",
       "admin": "Yönetim",
-      "adminDescription": "Mezun belgesi başvurularını incele."
+      "adminDescription": "Mezun belgesi başvurularını incele.",
+      "profile": "Profilim / Başlangıç adımları",
+      "profileDescription": "İlgi alanlarını, hedeflerini ve tercihlerini tamamla."
     },
     "home": {
       "verificationTitle": "Doğrulamanı tamamla",
@@ -462,7 +466,8 @@
       "ON_APPROVED_REQUEST": "Talep ve onayla",
       "MEMBERS": "Doğrulanmış üyeler",
       "updated": "{field} görünürlüğü kaydedildi.",
-      "unsaved": "Kaydedilmemiş değişikliklerin var. Ayrılmadan önce kaydet."
+      "unsaved": "Kaydedilmemiş değişikliklerin var. Ayrılmadan önce kaydet.",
+      "partialSave": "Bazı değişiklikler kaydedildi. Kalanları yeniden kaydet."
     },
     "fields": {
       "EMAIL": "E-posta",
@@ -505,7 +510,12 @@
       "sendDone": "Taleplerime git",
       "notePlaceholder": "Örneğin, staj deneyimin hakkında danışmak istiyorum.",
       "requestableHelp": "Bir alan zaten üyelere açıksa veya sahibi paylaşımı kapattıysa o alan için talep gönderilemez.",
-      "unavailableFields": "{fields} paylaşılmadı veya bu bilgi henüz eklenmemiş."
+      "unavailableFields": "{fields} paylaşılmadı veya bu bilgi henüz eklenmemiş.",
+      "sendTitleTo": "{name} ile iletişim kur",
+      "targetUnavailable": "İletişim talebi gönderilemiyor",
+      "targetUnavailableDescription": "Bu kişiye şu anda iletişim talebi gönderemezsin.",
+      "targetBack": "Taleplerime dön",
+      "fieldUnavailable": "Bu alan için talep gönderilemiyor."
     },
     "delete": {
       "title": "Hesabını silmeden önce",
@@ -705,6 +715,7 @@
       "GOALS": "Hedefler",
       "MENTOR_PREFERENCE": "Mentorluk tercihi",
       "VISIBILITY": "Gizlilik tercihleri"
-    }
+    },
+    "back": "Geri"
   }
 }

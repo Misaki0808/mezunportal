@@ -52,6 +52,13 @@ describe('HomePage', () => {
     renderUi(await HomePage());
     expect(screen.queryByRole('link', { name: /verificationTitle/ })).not.toBeInTheDocument();
   });
+  it('inceleme bekleyen belgeyi doğrulamaya başlamamış gibi göstermez', async () => {
+    mocks.requireUser.mockResolvedValue({});
+    mocks.getVerificationState.mockResolvedValue({ ok: true, data: { status: 'AWAITING_REVIEW' } });
+    renderUi(await HomePage());
+    expect(screen.getByRole('link', { name: /reviewTitle/ })).toHaveAttribute('href', '/dogrulama');
+    expect(screen.queryByRole('link', { name: /verificationTitle/ })).not.toBeInTheDocument();
+  });
 });
 
 it('giriş sonrası zorunlu onay eksikse doğrulamadan önce onaya gider', async () => {

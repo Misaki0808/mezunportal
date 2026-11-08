@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 import { requestEmailChange } from '@/server/actions/auth';
+import { parseEmailChangeStep } from '@/contracts/auth';
 
 import { EmailChangeForm } from './email-change-form';
 
@@ -12,7 +13,7 @@ export default async function EmailChangePage({
 }) {
   const t = await getTranslations('authScreens.emailChange');
   const { adim } = await searchParams;
-  const step = adim === 'eski-onaylandi' || adim === 'tamamlandi' ? adim : undefined;
+  const step = parseEmailChangeStep(adim);
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-12 sm:pt-20">
       {!step && (

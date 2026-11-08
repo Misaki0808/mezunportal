@@ -27,6 +27,12 @@ export default async function AccountPage() {
     REJECTED: verification('rejected'),
   }[state.data.status];
   const links = [
+    {
+      href: '/baslangic?duzenle=1',
+      title: t('profile'),
+      description: t('profileDescription'),
+      icon: CheckIcon,
+    },
     { href: '/dogrulama', title: t('verification'), description: statusLabel, icon: CheckIcon },
     {
       href: '/hesap/e-posta',

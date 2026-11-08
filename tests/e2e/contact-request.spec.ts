@@ -54,7 +54,13 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     await expect(
       target.getByRole('status').filter({ hasText: 'Değişikliklerin kaydedildi.' }),
     ).toBeVisible();
+    await page.goto(`/iletisim-iste/${student.id}`);
+    await expect(page.getByText('İletişim talebi gönderilemiyor')).toBeVisible();
+    await page.goto('/iletisim-iste/olmayan-kisi');
+    await expect(page.getByText('İletişim talebi gönderilemiyor')).toBeVisible();
     await page.goto(`/iletisim-iste/${alumni.id}`);
+    await expect(page.getByRole('heading', { name: new RegExp(alumni.name) })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: 'Sosyal bağlantılar' })).toBeDisabled();
     await page.getByRole('checkbox', { name: 'E-posta', exact: true }).check();
     await page.getByRole('checkbox', { name: 'Telefon', exact: true }).check();
     await page.getByLabel('Kısa not').fill('Staj deneyimin hakkında danışmak istiyorum.');

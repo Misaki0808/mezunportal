@@ -64,6 +64,19 @@ it('zorunlu kutular seçilmeden kayıt göndermez; isteğe bağlı kutuyu zorlam
     ).granted,
   ).toBe(false);
 });
+it('zorunlu onaydan sonra verilen hedefe döner', async () => {
+  const { user } = renderUi(
+    <ToastProvider>
+      <ConsentForm state={state} returnTo="/hesap/gizlilik" />
+    </ToastProvider>,
+  );
+  const boxes = screen.getAllByRole('checkbox');
+  await user.click(boxes[0]!);
+  await user.click(boxes[1]!);
+  mocks.record.mockResolvedValue({ ok: true, data: { ...state, blocking: false } });
+  await user.click(screen.getByRole('button', { name: 'Seçimlerimi kaydet' }));
+  await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/hesap/gizlilik'));
+});
 it('eski sürüm hatası yenileme eylemi sunar; ham hata metni göstermez', async () => {
   const accepted = {
     ...state,
@@ -144,4 +157,43 @@ it('gizlilikte değişiklikler tek kaydet ile gönderilir, kaydedilmemiş durum 
   await waitFor(() => expect(mocks.setVisibility).toHaveBeenCalledTimes(2));
   expect(await screen.findByText('Değişikliklerin kaydedildi.')).toBeVisible();
   expect(screen.queryByText(/Kaydedilmemiş değişikliklerin var/)).not.toBeInTheDocument();
+});
+it('tek kaydet sırasında kısmi hata kaydedilenleri belirtir ve yalnız kalanı yeniden dener', async () => {
+  const initial = {
+    fields: [
+      { field: 'EMAIL' as const, level: 'ON_APPROVED_REQUEST' as const, isDefault: true },
+      { field: 'PHONE' as const, level: 'ON_APPROVED_REQUEST' as const, isDefault: true },
+    ],
+  };
+  const partial = {
+    fields: [
+      { ...initial.fields[0]!, level: 'PRIVATE' as const, isDefault: false },
+      initial.fields[1]!,
+    ],
+  };
+  const done = {
+    fields: partial.fields.map((field) => ({
+      ...field,
+      level: 'PRIVATE' as const,
+      isDefault: false,
+    })),
+  };
+  mocks.setVisibility
+    .mockResolvedValueOnce({ ok: true, data: partial })
+    .mockResolvedValueOnce({ ok: false, errorCode: 'SERVER_UNEXPECTED' })
+    .mockResolvedValueOnce({ ok: true, data: done });
+  const { user } = renderUi(
+    <ToastProvider>
+      <VisibilityForm initial={initial} />
+    </ToastProvider>,
+  );
+  await user.selectOptions(screen.getByLabelText('E-posta'), 'PRIVATE');
+  await user.selectOptions(screen.getByLabelText('Telefon'), 'PRIVATE');
+  await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+  expect(
+    await screen.findByText('Bazı değişiklikler kaydedildi. Kalanları yeniden kaydet.'),
+  ).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+  await waitFor(() => expect(mocks.setVisibility).toHaveBeenCalledTimes(3));
+  expect(mocks.setVisibility).toHaveBeenLastCalledWith({ field: 'PHONE', level: 'PRIVATE' });
 });

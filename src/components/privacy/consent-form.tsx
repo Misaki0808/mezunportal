@@ -14,7 +14,13 @@ export const LEGAL_PATHS = {
   TERMS_OF_USE: '/hukuki/kullanim-sartlari',
   CROSS_BORDER_TRANSFER: '/hukuki/yurt-disi-aktarim',
 } as const;
-export function ConsentForm({ state }: { state: ConsentState }) {
+export function ConsentForm({
+  state,
+  returnTo = null,
+}: {
+  state: ConsentState;
+  returnTo?: string | null;
+}) {
   const t = useTranslations('privacyScreens.consent');
   const common = useTranslations('privacyScreens.common');
   const router = useRouter();
@@ -50,7 +56,7 @@ export function ConsentForm({ state }: { state: ConsentState }) {
           void form.run(
             () => recordConsents(input),
             () => {
-              if (state.blocking) router.replace('/hesap');
+              if (state.blocking) router.replace(returnTo ?? '/hesap');
               router.refresh();
             },
             t('saved'),

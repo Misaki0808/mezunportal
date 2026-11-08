@@ -10,6 +10,7 @@ import { usePrivacyForm } from './form-state';
 export function VisibilityForm({ initial }: { initial: FieldVisibilitySettings }) {
   const [settings, setSettings] = useState(initial);
   const [saved, setSaved] = useState(initial);
+  const [partial, setPartial] = useState(false);
   const t = useTranslations('privacyScreens.visibility');
   const fields = useTranslations('privacyScreens.fields');
   const common = useTranslations('privacyScreens.common');
@@ -46,13 +47,20 @@ export function VisibilityForm({ initial }: { initial: FieldVisibilitySettings }
           form.parse(setFieldVisibilitySchema, { field, level }),
         );
         if (inputs.some((input) => !input)) return;
+        setPartial(false);
         void form.run(
           async () => {
             let result: Awaited<ReturnType<typeof setFieldVisibility>> | undefined;
+            let updated = false;
             for (const input of inputs) {
               if (!input) continue;
               result = await setFieldVisibility(input);
-              if (!result.ok) return result;
+              if (!result.ok) {
+                setPartial(updated);
+                return result;
+              }
+              updated = true;
+              setSaved(result.data);
             }
             return result ?? { ok: true as const, data: saved };
           },
@@ -98,6 +106,11 @@ export function VisibilityForm({ initial }: { initial: FieldVisibilitySettings }
       {form.error && (
         <p role="alert" className="text-base text-danger">
           {form.error}
+        </p>
+      )}
+      {partial && (
+        <p role="status" className="text-base text-fg-muted">
+          {t('partialSave')}
         </p>
       )}
       {dirty && (
