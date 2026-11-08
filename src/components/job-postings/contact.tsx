@@ -52,7 +52,9 @@ export function PostingContactForm({
           return;
         }
         start(async () => {
-          const result = await send({ jobPostingId: postingId, fields, message });
+          const result = await send({ jobPostingId: postingId, fields, message }).catch(
+            () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
+          );
           if (!result.ok) {
             setError(errors(result.errorCode));
             return;

@@ -39,7 +39,9 @@ export function MyPostings({
   function loadMore() {
     if (!cursor) return;
     start(async () => {
-      const result = await list({ cursor });
+      const result = await list({ cursor }).catch(
+        () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
+      );
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;
@@ -51,7 +53,9 @@ export function MyPostings({
   function confirm() {
     if (!choice) return;
     start(async () => {
-      const result = await close({ postingId: choice });
+      const result = await close({ postingId: choice }).catch(
+        () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
+      );
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;
@@ -200,7 +204,9 @@ export function PostingModeration({
   function loadMore() {
     if (!cursor) return;
     start(async () => {
-      const result = await list({ cursor });
+      const result = await list({ cursor }).catch(
+        () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
+      );
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;
@@ -221,7 +227,9 @@ export function PostingModeration({
       return;
     }
     start(async () => {
-      const result = await review(parsed.data);
+      const result = await review(parsed.data).catch(
+        () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
+      );
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;

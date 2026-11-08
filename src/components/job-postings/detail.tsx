@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { parseApplyUrl, type JobPostingDetail } from '@/contracts/job-postings';
-import { buttonClasses } from '@/components/ui';
+import { Card, buttonClasses } from '@/components/ui';
 
 export function PostingDetail({
   posting,
@@ -26,7 +26,11 @@ export function PostingDetail({
       >
         ← {t('back')}
       </Link>
-      <article className="mt-3 rounded-3xl border border-border bg-surface p-5 sm:p-8">
+      <Card
+        as="article"
+        padding="none"
+        className="mt-3 rounded-3xl border border-border bg-surface p-5 sm:p-8"
+      >
         <header>
           <p className="break-words font-semibold text-accent-strong">{posting.organizationName}</p>
           <h1 className="mt-2 break-words text-3xl font-bold sm:text-4xl">{posting.title}</h1>
@@ -76,7 +80,7 @@ export function PostingDetail({
             </Link>
           )}
         </div>
-      </article>
+      </Card>
     </div>
   );
 }

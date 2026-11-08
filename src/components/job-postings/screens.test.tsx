@@ -236,3 +236,17 @@ it('düzenlemede değiştirilmemiş sözlük kurumu korunur', async () => {
     ),
   );
 });
+it('ağ hatasında ham hata metni gösterilmez, kullanıcıya kararlı hata sunulur', async () => {
+  const { PostingContactForm } = await import('./contact');
+  renderUi(
+    <PostingContactForm
+      postingId="ilan-123"
+      requestableFields={['EMAIL']}
+      send={vi.fn().mockRejectedValue(new Error('gizli ağ ayrıntısı'))}
+    />,
+  );
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Talep gönder' }));
+  expect(await screen.findByRole('alert')).toBeVisible();
+  expect(document.body.textContent).not.toContain('gizli ağ ayrıntısı');
+});

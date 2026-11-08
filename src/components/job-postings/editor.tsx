@@ -93,7 +93,9 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
       }
     }
     start(async () => {
-      const result = await save({ ...(id ? { postingId: id } : {}), departmentId, content });
+      const result = await save({ ...(id ? { postingId: id } : {}), departmentId, content }).catch(
+        () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
+      );
       if (!result.ok) {
         showError(errors(result.errorCode));
         return;
@@ -103,7 +105,9 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
         setNotice(t('saved'));
         return;
       }
-      const sent = await submit({ postingId: result.data.id });
+      const sent = await submit({ postingId: result.data.id }).catch(
+        () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
+      );
       if (!sent.ok) {
         showError(errors(sent.errorCode));
         return;

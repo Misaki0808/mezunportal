@@ -8,7 +8,15 @@ import type {
   SearchJobPostingsInput,
   JobPostingFilterOptions,
 } from '@/contracts/job-postings';
-import { Button, EmptyState, Input, Pagination, Select, buttonClasses } from '@/components/ui';
+import {
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  Pagination,
+  Select,
+  buttonClasses,
+} from '@/components/ui';
 
 export function PostingCard({ posting }: { posting: JobPostingCard }) {
   const t = useTranslations('jobs');
@@ -20,7 +28,11 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
     .join('')
     .toLocaleUpperCase('tr-TR');
   return (
-    <article className="group flex min-w-0 flex-col gap-5 rounded-3xl border border-border bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:transform-none sm:p-6">
+    <Card
+      as="article"
+      padding="none"
+      className="group flex min-w-0 flex-col gap-5 rounded-3xl border border-border bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:transform-none sm:p-6"
+    >
       <div className="flex min-w-0 items-start gap-4">
         <div
           aria-hidden="true"
@@ -74,7 +86,7 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
           {t('open')} <span aria-hidden="true">→</span>
         </Link>
       </div>
-    </article>
+    </Card>
   );
 }
 export function PostingList({
