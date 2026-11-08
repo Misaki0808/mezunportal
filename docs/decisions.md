@@ -721,8 +721,10 @@ Formun taraf denetimi hesap layout'unda loading başlamadan yapılır; yabancı 
 İşletim sağlayıcısı seçilmeden aynı imaj ayrı web ve worker süreçleri olarak çalışır; web
 başlangıcı yalnız `migrate deploy` yapar, seed üretime taşınmaz. Yedek DB ile dosyayı tutarlı
 almak için süreçlerin durdurulmasını, geri yükleme boş ayrı hedefi gerektirir. Toplu davet yalnız
-sistem yöneticisine açılır; kayıtlı hesaplara bildirim tercihini aşarak gönderilmez. Kuyruğa alma
-sonuçları gösterilir; SMTP teslimi ve altyapı seçimi ayrıca işletim kararına bağlıdır.
+sistem yöneticisine açılır; kayıtlı hesaplara bildirim tercihini aşarak gönderilmez. Henüz hesabı
+olmayan alıcının adresi outbox içinde uygulama sırrından türetilen anahtarla kimliği doğrulanmış
+şifreli tutulur; iş kaydı ve niyet aynı işlemde yazılır, başarılı aktarımdan sonra niyet silinir.
+SMTP teslimi ve altyapı seçimi ayrıca işletim kararına bağlıdır.
 
 ### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
 

@@ -294,8 +294,10 @@ ve işletim kararı kullanıcıya aittir. Bu depo hesap açmaz veya dış servis
   veriyi silmez; başarısız işlem kısmi hedef bırakabilir. Yedekler kişisel veri içerir, erişimi
   sınırlandırın, şifreli saklayın ve geri yüklemeyi düzenli olarak ayrı ortamda sınayın.
 - Toplu davet yalnız rızalı sistem yöneticisine açıktır; 100 adres/işlem ve yönetici başına günde
-  5 işlem sınırı vardır. Kayıtlı adresler atlanır; işlem kaydında adres tutulmaz. Kuyruğa alınamayan
-  sayısı gösterilir. SMTP teslimi ayrıca worker ve sağlayıcıya bağlıdır.
+  5 işlem sınırı vardır. Kayıtlı adresler atlanır; işlem kaydında adres tutulmaz. Davet adresi
+  bekleyen bildirim niyetinde şifreli tutulur, kuyruk kabulünde silinir; worker kesintiden sonra
+  yeniden dener. Uygulama sırrını değiştirmeden önce bekleyen davetleri boşaltın; aksi halde eski
+  adresler çözülemez. SMTP teslimi ayrıca worker ve sağlayıcıya bağlıdır.
 
 ## Git ve PR
 

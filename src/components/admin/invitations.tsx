@@ -10,9 +10,7 @@ export function Invitations() {
   const [text, setText] = useState('');
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ queued: number; failed: number; skipped: number } | null>(
-    null,
-  );
+  const [result, setResult] = useState<{ queued: number; skipped: number } | null>(null);
   const [pending, start] = useTransition();
   return (
     <AdminFrame title={t('title')} description={t('description')}>

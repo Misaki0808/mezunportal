@@ -1,14 +1,13 @@
 import 'server-only';
-import { createHmac, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { codedValidation } from '@/lib/errors';
-import type { QueuedEmail } from '../jobs/email-core';
 import { loadSystemAdmin, TX_OPTIONS } from './admin-access';
 import { recordAdminAction } from './audit';
 import { requireConsent } from './privacy';
 import { consumeRateLimit, RATE_LIMITS } from './rateLimit';
-import messages from '../../../messages/tr.json';
+import { stagePilotInvitation } from './notification-intent';
 
 export const INVITATION_MAX = 100;
 export function parseInvitations(input: string): string[] {
@@ -27,12 +26,7 @@ export function parseInvitations(input: string): string[] {
 }
 
 export async function inviteUsers(
-  deps: {
-    db: PrismaClient;
-    secret: string;
-    appUrl: string;
-    enqueue: (input: QueuedEmail) => Promise<{ emailLogId: string | null }>;
-  },
+  deps: { db: PrismaClient; secret: string },
   adminId: string,
   input: string,
 ) {
@@ -50,6 +44,7 @@ export async function inviteUsers(
     });
     const present = new Set(existing.map((user) => user.email.toLowerCase()));
     const list = addresses.filter((address) => !present.has(address));
+    for (const address of list) await stagePilotInvitation(tx, adminId, address, deps.secret);
     await recordAdminAction(tx, {
       actor,
       action: 'BULK_INVITATION',
@@ -57,26 +52,7 @@ export async function inviteUsers(
       targetId: batch,
       metadata: { count: list.length, skippedCount: addresses.length - list.length },
     });
-    return list;
+    return { queued: list.length, skipped: addresses.length - list.length };
   }, TX_OPTIONS);
-  let queued = 0;
-  let failed = 0;
-  for (const address of eligible) {
-    try {
-      const result = await deps.enqueue({
-        to: address,
-        subject: messages.invitations.emailSubject,
-        text: messages.invitations.emailBody.replace('{url}', new URL('/giris', deps.appUrl).href),
-        template: 'pilot.invitation',
-        idempotencyKey: createHmac('sha256', deps.secret)
-          .update(`${batch}:${address}`)
-          .digest('hex'),
-      });
-      if (result.emailLogId) queued++;
-      else failed++;
-    } catch {
-      failed++;
-    }
-  }
-  return { queued, failed, skipped: addresses.length - eligible.length };
+  return eligible;
 }

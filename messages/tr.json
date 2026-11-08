@@ -1818,7 +1818,7 @@
     "file": "CSV veya metin dosyası yükle",
     "submit": "Davetleri gönder",
     "sending": "Kuyruğa ekleniyor…",
-    "result": "Kuyruğa eklenen: {queued} · mevcut hesap: {skipped} · eklenemeyen: {failed}",
+    "result": "Gönderilmek üzere kaydedilen: {queued} · mevcut hesap: {skipped}",
     "emailSubject": "MezunPortal’a davet",
     "emailBody": "MezunPortal’a davetlisiniz. Başlamak için giriş sayfasını ziyaret edin: {url}"
   }
