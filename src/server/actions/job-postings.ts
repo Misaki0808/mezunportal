@@ -2,6 +2,8 @@
 
 import {
   getJobPostingSchema,
+  previewJobPostingContactSchema,
+  requestJobPostingContactSchema,
   jobPostingIdSchema,
   listJobPostingModerationQueueSchema,
   listJobPostingReportsSchema,
@@ -15,6 +17,10 @@ import {
   type GetJobPostingInput,
   type JobPostingDetail,
   type JobPostingFilterOptions,
+  type JobPostingContactPreview,
+  type PreviewJobPostingContactInput,
+  type RequestJobPostingContactInput,
+  type RequestJobPostingContactOutput,
   type JobPostingFormContext,
   type JobPostingIdInput,
   type JobPostingModerationPage,
@@ -42,6 +48,7 @@ import { getDb } from '../db';
 import { failAction } from '../fail-action';
 import { requireAnyAdmin, requireVerifiedMember } from '../permissions';
 import * as jobPostings from '../services/job-postings';
+import * as contact from '../services/job-posting-contact';
 import * as moderation from '../services/job-posting-moderation';
 
 /**
@@ -209,6 +216,34 @@ export async function resolveJobPostingReport(
     const parsed = parseInput(resolveJobPostingReportSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await moderation.resolveJobPostingReport(deps(), actor.userId, parsed.data));
+  } catch (error) {
+    return failAction(error);
+  }
+}
+
+/** İlan üzerinden iletişim önizlemesi (D7): girdi ilan kimliği; çıktıda yazarın adı/kimliği yok. */
+export async function previewJobPostingContact(
+  input: PreviewJobPostingContactInput,
+): Promise<ActionResult<JobPostingContactPreview>> {
+  try {
+    const actor = await requireVerifiedMember();
+    const parsed = parseInput(previewJobPostingContactSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await contact.previewJobPostingContact(deps(), actor.userId, parsed.data));
+  } catch (error) {
+    return failAction(error);
+  }
+}
+
+/** İlanın yazarına iletişim talebi (D7): sunucu yazarı ilandan çözer; mevcut iletişim talebi akışı. */
+export async function requestJobPostingContact(
+  input: RequestJobPostingContactInput,
+): Promise<ActionResult<RequestJobPostingContactOutput>> {
+  try {
+    const actor = await requireVerifiedMember();
+    const parsed = parseInput(requestJobPostingContactSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await contact.requestJobPostingContact(deps(), actor.userId, parsed.data));
   } catch (error) {
     return failAction(error);
   }

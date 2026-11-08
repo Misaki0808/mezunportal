@@ -32,6 +32,11 @@ import {
   resolveJobPostingReport,
   reviewJobPosting,
 } from './job-posting-moderation';
+import {
+  contactNoteFor,
+  previewJobPostingContact,
+  requestJobPostingContact,
+} from './job-posting-contact';
 import { runPointBackfill } from './points';
 
 const db = createTestPrisma();
@@ -655,13 +660,14 @@ describe('okuyucu: arama, detay, süzgeçler (K-07)', () => {
       applyUrl: null,
     });
     const viaUrl = await getJobPosting(deps, w.student, { id: url });
-    expect(viaUrl).toMatchObject({
-      applyUrl: 'https://kariyer.example.com/ilan/1',
-      contactUserId: null,
-    });
+    expect(viaUrl).toMatchObject({ applyUrl: 'https://kariyer.example.com/ilan/1' });
     expect(viaUrl.description).toContain('stajyer');
     const viaContact = await getJobPosting(deps, w.student, { id: contact });
-    expect(viaContact).toMatchObject({ applyUrl: null, contactUserId: w.academic });
+    expect(viaContact).toMatchObject({ applyUrl: null });
+    // D7: yazar kimliği/adı hiçbir okuyucu çıktısında yok (iletişim talebi ilan üzerinden)
+    expect(JSON.stringify(viaContact)).not.toContain(w.academic);
+    expect(JSON.stringify(viaContact)).not.toContain('Selin');
+    expect(Object.keys(viaContact)).not.toContain('contactUserId');
     expect(JSON.stringify(viaUrl)).not.toContain(w.alumni);
     await settleEvents();
     expect(await db.event.count({ where: { userId: w.student, type: 'JOB_POSTING_VIEWED' } })).toBe(
@@ -750,6 +756,199 @@ describe('kurum süzgeci: sözlük şirketi ve serbest ad ayrı satırlardır', 
         searchJobPostings(deps, w.student, { companyId: company.id, organizationName: 'x y' }),
       ),
     ).toBe('ZodError');
+  });
+});
+
+describe('K-07 servis kapısı: hedef bölümler yazarın üniversitesinden', () => {
+  it('başka üniversitenin bölümü taslakta ve (veritabanına doğrudan bağlanmış olsa da) gönderimde reddedilir', async () => {
+    const w = await world();
+    expect(await code(draft(w, w.alumni, { targetDepartmentIds: [w.foreign.deptA1] }))).toBe(
+      'JOB_POSTING_TARGET_INVALID',
+    );
+    expect(
+      await code(draft(w, w.alumni, { targetDepartmentIds: [w.inst.deptA1, w.foreign.deptA2] })),
+    ).toBe('JOB_POSTING_TARGET_INVALID');
+    // 11 bölüm sınırı (sözleşme)
+    expect(
+      await code(
+        draft(w, w.alumni, { targetDepartmentIds: Array.from({ length: 11 }, (_, i) => `d${i}`) }),
+      ),
+    ).toBe('ZodError');
+    // veritabanı kapısı yok: yanlış bağ doğrudan eklenirse servis gönderimde yakalar
+    const d = await draft(w, w.alumni);
+    await db.jobPostingDepartment.create({
+      data: { postingId: d.id, departmentId: w.foreign.deptA1 },
+    });
+    expect(await code(submitJobPosting(deps, w.alumni, { postingId: d.id }))).toBe(
+      'JOB_POSTING_TARGET_INVALID',
+    );
+    expect((await db.jobPosting.findUniqueOrThrow({ where: { id: d.id } })).status).toBe('DRAFT');
+    // yazarın üyeliği dışındaki bölüm kapsam (moderasyon) olarak seçilemez
+    expect(
+      await code(
+        saveJobPostingDraft(deps, w.alumni, { departmentId: w.foreign.deptA1, content: {} }),
+      ),
+    ).toBe('AUTH_FORBIDDEN');
+  });
+
+  it('başka üniversitede üyeliği olan yazarın ilanı kendi üniversitesine hedeflenir; ilk üniversitedeki hedef geçersizdir', async () => {
+    const w = await world();
+    const foreignAlumni = await w.make('ALUMNI', 'Yabancı Mezun', w.foreign.deptA1);
+    const d = await saveJobPostingDraft(deps, foreignAlumni, {
+      departmentId: w.foreign.deptA1,
+      content: content(w, { targetDepartmentIds: [w.foreign.deptA2] }),
+    });
+    expect(d.targetDepartments.map((t) => t.id)).toEqual([w.foreign.deptA2]);
+    expect(
+      await code(
+        saveJobPostingDraft(deps, foreignAlumni, {
+          departmentId: w.foreign.deptA1,
+          content: content(w, { targetDepartmentIds: [w.inst.deptA1] }),
+        }),
+      ),
+    ).toBe('JOB_POSTING_TARGET_INVALID');
+  });
+});
+
+describe('ilan üzerinden iletişim (D7)', () => {
+  const contactPosting = (w: World) =>
+    published(w, w.academic, { applyMethod: 'CONTACT_REQUEST', applyUrl: null });
+  const generic = {
+    canRequest: false,
+    postingTitle: null,
+    organizationName: null,
+    requestableFields: [],
+  };
+
+  it('önizleme ilan başlığı/kurum ve açık alanları verir; yazar adı/kimliği yoktur', async () => {
+    const w = await world();
+    const id = await contactPosting(w);
+    const preview = await previewJobPostingContact(deps, w.student, { jobPostingId: id });
+    expect(preview).toEqual({
+      canRequest: true,
+      postingTitle: 'Veri analisti stajyeri',
+      organizationName: 'Örnek Teknoloji',
+      requestableFields: ['EMAIL', 'PHONE'],
+    });
+    const text = JSON.stringify(preview);
+    for (const secret of [w.academic, 'Selin', 'Kaya', '@']) expect(text).not.toContain(secret);
+  });
+
+  it('talep edilemeyen her durum tek genel yanıttır: yok, kapsam dışı, URL yöntemi, kendi ilanı, süresi dolmuş, yazar askıda, alan yok', async () => {
+    const w = await world();
+    const contact = await contactPosting(w);
+    const urlPosting = await published(w, w.alumni);
+    const cases: [string, string, string][] = [
+      ['olmayan ilan', w.student, 'yok'],
+      ['URL yöntemi', w.student, urlPosting],
+      ['başka üniversite', w.foreignStudent, contact],
+      ['kendi ilanı', w.academic, contact],
+    ];
+    for (const [name, user, id] of cases)
+      expect(await previewJobPostingContact(deps, user, { jobPostingId: id }), name).toEqual(
+        generic,
+      );
+    expect(
+      await previewJobPostingContact(at('2030-07-20T09:00:00Z'), w.student, {
+        jobPostingId: contact,
+      }),
+    ).toEqual(generic);
+    await db.user.update({ where: { id: w.academic }, data: { banned: true } });
+    expect(await previewJobPostingContact(deps, w.student, { jobPostingId: contact })).toEqual(
+      generic,
+    );
+    await db.user.update({ where: { id: w.academic }, data: { banned: false } });
+    await db.fieldVisibility.createMany({
+      data: [
+        { userId: w.academic, field: 'EMAIL', level: 'PRIVATE' },
+        { userId: w.academic, field: 'PHONE', level: 'PRIVATE' },
+      ],
+    });
+    expect(await previewJobPostingContact(deps, w.student, { jobPostingId: contact })).toEqual(
+      generic,
+    );
+  });
+
+  it('talep gönderir: kayıt ilan bağlamıyla, yazara bildirim; çıktıda yazar kimliği yoktur', async () => {
+    const w = await world();
+    const id = await contactPosting(w);
+    const out = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: id,
+      fields: ['EMAIL'],
+      message: 'Merhaba, başvurmak istiyorum.',
+    });
+    expect(out).toMatchObject({ status: 'PENDING' });
+    expect(Object.keys(out).sort()).toEqual(['requestId', 'status']);
+    const row = await db.contactRequest.findUniqueOrThrow({ where: { id: out.requestId } });
+    expect(row).toMatchObject({
+      requesterId: w.student,
+      targetId: w.academic,
+      status: 'PENDING',
+      message: 'İlan: Veri analisti stajyeri — Merhaba, başvurmak istiyorum.',
+    });
+    expect(row.fields).toEqual(['EMAIL']);
+    expect(JSON.stringify(out)).not.toContain(w.academic);
+    const intents = await db.notificationIntent.findMany({ where: { userId: w.academic } });
+    expect(intents.map((i) => i.payload)).toContainEqual({
+      type: 'generic',
+      event: 'contact',
+      eventId: out.requestId,
+      path: '/hesap/iletisim',
+    });
+    expect(
+      await code(
+        requestJobPostingContact(deps, w.student, { jobPostingId: id, fields: ['PHONE'] }),
+      ),
+    ).toBe('CONTACT_REQUEST_ALREADY_OPEN');
+  });
+
+  it('hatalar: görünmez/URL yöntemi/başka üniversite NOT_FOUND, kendi ilanı SELF, açık olmayan alan reddedilir', async () => {
+    const w = await world();
+    const id = await contactPosting(w);
+    const urlPosting = await published(w, w.alumni);
+    for (const [user, jobPostingId] of [
+      [w.student, 'yok'],
+      [w.student, urlPosting],
+      [w.foreignStudent, id],
+    ] as const)
+      expect(
+        await code(requestJobPostingContact(deps, user, { jobPostingId, fields: ['EMAIL'] })),
+      ).toBe('RESOURCE_NOT_FOUND');
+    expect(
+      await code(
+        requestJobPostingContact(deps, w.academic, { jobPostingId: id, fields: ['EMAIL'] }),
+      ),
+    ).toBe('CONTACT_REQUEST_SELF');
+    expect(
+      await code(
+        requestJobPostingContact(deps, w.student, { jobPostingId: id, fields: ['LINKEDIN'] }),
+      ),
+    ).toBe('CONTACT_FIELD_NOT_REQUESTABLE');
+    expect(await db.contactRequest.count({ where: { requesterId: w.student } })).toBe(0);
+    expect(await code(previewJobPostingContact(deps, w.unverified, { jobPostingId: id }))).toMatch(
+      /AUTH_/,
+    );
+  });
+
+  it('önizleme hız sınırı: saatte 60; aşınca RATE_LIMITED', async () => {
+    const w = await world();
+    const id = await contactPosting(w);
+    const viewer = await w.make('STUDENT', 'Hız Sınırı Öğrencisi');
+    for (let i = 0; i < 60; i += 1)
+      await previewJobPostingContact(deps, viewer, { jobPostingId: id });
+    expect(await code(previewJobPostingContact(deps, viewer, { jobPostingId: id }))).toBe(
+      'RATE_LIMITED',
+    );
+  });
+
+  it('contactNoteFor: bağlam + not; uzun başlık kısalır, uzun not 500 karaktere sığar', () => {
+    expect(contactNoteFor('Stajyer', null)).toBe('İlan: Stajyer');
+    expect(contactNoteFor('Stajyer', '   ')).toBe('İlan: Stajyer');
+    expect(contactNoteFor('Stajyer', ' Merhaba ')).toBe('İlan: Stajyer — Merhaba');
+    expect(contactNoteFor('a'.repeat(200), null)).toBe(`İlan: ${'a'.repeat(80)}…`);
+    const long = contactNoteFor('Stajyer', 'b'.repeat(500));
+    expect(long.length).toBe(500);
+    expect(long.startsWith('İlan: Stajyer — b')).toBe(true);
   });
 });
 
