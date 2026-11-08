@@ -607,3 +607,17 @@ değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki y�
 Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
 kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 
+## 2026-11-08 · Randevu motoru: veritabanı kısıtı, takvim süpürmesi, kapasite tanımı (P1-10)
+Çakışma kuralı iki exclusion constraint'tir (mentor ve öğrenci için, yalnız `REQUESTED`/`CONFIRMED`) ve aynı öğrencinin aynı
+mentora yanıt bekleyen tek talebi kısmi benzersiz indeksle sınırlanır; servis önce slotu yeniden üretip doğrular, eşzamanlı
+yarışta kaybeden `APPOINTMENT_SLOT_TAKEN` alır. Onayda kapasite, mentor profili satırı kilitlenerek serileştirilir: kapasite 1
+iken eşzamanlı iki onaydan yalnız biri geçer. Kapasiteyi `CONFIRMED`, `COMPLETED` ve `NO_SHOW` harcar (İstanbul takvim ayı);
+dizin ve randevu aynı tanımı kullanır (`services/mentor-load.ts`). Zaman aşımı D11: talepten 72 saat sonra ya da başlangıçtan
+12 saat önce, hangisi erkense; süpürme ve yanıt satır kilidiyle yarışır, tek sonuç doğar.
+Takvim çağrısı istekte değil `appointment.sweep` süpürmesinde yapılır: dış servis çökse de onay bozulmaz, en çok 3 deneme,
+sonra (ya da adaptör kapalı / yurt dışı aktarım rızası yok) `calendarFailedAt` dolar ve mentor linki elle ekler. Gerçek Google
+adaptörü kullanıcı onayını bekler (E4); arayüz, sahte adaptör ve elle link yolu tamamdır. Bildirimler commit sonrası, en iyi
+gayretle ve idempotent anahtarla e-posta kuyruğuna gider (e-posta hatası randevuyu geri almaz). Hesap silmede açık randevular
+sistem iptali olur ve kişisel serbest metin temizlenir. Bulgu (düzeltildi): `.ics` metin kaçışında `\;` yanlışlıkla `;`
+yazılmıştı (testin beklentisi de aynı hatayı taşıyordu); mutasyon testi yakaladı.
+
