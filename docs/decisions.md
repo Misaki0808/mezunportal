@@ -449,3 +449,10 @@ Yayın/ret kararına ait alanlar SQL CHECK'le birlikte tutulur; yayınlama yetki
 servis kartında zorlanır. CV davetinin isteğe bağlı Position kimliği yalnız girdidedir; sahipliği
 P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK'sı P1-08'e bırakıldı.
 
+
+## 2026-11-08 · İlk giriş adımlarına dönüş
+
+Hesabım'daki Profilim / Başlangıç adımları satırı ilk giriş tercihlerini yeniden açar;
+atlanan uygulanabilir ilk adım öne gelir. Geri düğmesi kullanıcıyı önceki uygulanabilir
+adıma taşır ve bu oturumda seçilmiş değerleri korur. Gerekçe: atlanan seçimler sonradan
+tamamlanabilir ve kullanıcı adımlar arasında veri kaybetmeden gezinebilir.

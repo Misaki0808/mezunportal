@@ -7,10 +7,12 @@ import { useEffect, useRef, useState } from 'react';
 import {
   saveOnboardingStepSchema,
   skipOnboardingStepSchema,
+  ONBOARDING_STEPS,
   type OnboardingState,
   type ProfileTagsOutput,
   type SaveOnboardingStepInput,
   type SkipOnboardingStepInput,
+  type OnboardingStepName,
 } from '@/contracts/profile';
 import type { ActionResult } from '@/contracts/result';
 import {
@@ -34,6 +36,7 @@ export function OnboardingFlow({
   skip,
   initialVisibility,
   saveVisibility,
+  editInitially = false,
 }: {
   initialState: OnboardingState;
   interests: Tag[];
@@ -44,14 +47,21 @@ export function OnboardingFlow({
   saveVisibility: (
     input: SetFieldVisibilityInput,
   ) => Promise<ActionResult<FieldVisibilitySettings>>;
+  editInitially?: boolean;
 }) {
   const t = useTranslations('onboarding');
   const tags = useTranslations('profileTags');
   const errors = useTranslations('errors.codes');
-  const [state, setState] = useState(initialState);
-  const [selected, setSelected] = useState<string[]>(
-    initialState.step === 'GOALS' ? initialState.goalTagIds : initialState.interestTagIds,
-  );
+  const [state, setState] = useState(() => {
+    if (!editInitially || initialState.step === 'MEMBERSHIP') return initialState;
+    const missing = initialState.steps.find(
+      (item) => item.step !== 'MEMBERSHIP' && item.applicable && item.status !== 'COMPLETED',
+    );
+    return { ...initialState, step: missing?.step ?? 'INTERESTS' };
+  });
+  const [interestDraft, setInterestDraft] = useState(initialState.interestTagIds);
+  const [goalDraft, setGoalDraft] = useState(initialState.goalTagIds);
+  const editing = useRef(editInitially);
   const [error, setError] = useState<ErrorCode>();
   const [emptySelection, setEmptySelection] = useState(false);
   const [pending, setPending] = useState(false);
@@ -60,6 +70,21 @@ export function OnboardingFlow({
   const locked = useRef(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const previousStep = useRef(initialState.step);
+  function availableSteps(data: OnboardingState): OnboardingStepName[] {
+    return ONBOARDING_STEPS.filter(
+      (step) =>
+        step !== 'MEMBERSHIP' &&
+        (step === 'COMPLETE' || data.steps.some((item) => item.step === step && item.applicable)),
+    );
+  }
+  function updateAfterChange(data: OnboardingState, current: OnboardingStepName) {
+    if (!editing.current || current === 'COMPLETE') {
+      setState(data);
+      return;
+    }
+    const steps = availableSteps(data);
+    setState({ ...data, step: steps[steps.indexOf(current) + 1] ?? 'COMPLETE' });
+  }
   useEffect(() => {
     if (previousStep.current !== state.step) {
       heading.current?.focus();
@@ -91,11 +116,8 @@ export function OnboardingFlow({
         setError(result.errorCode);
         return;
       }
-      setState(result.data);
+      updateAfterChange(result.data, input.step);
       if (input.step === 'COMPLETE') setFinished(true);
-      setSelected(
-        result.data.step === 'GOALS' ? result.data.goalTagIds : result.data.interestTagIds,
-      );
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -120,10 +142,7 @@ export function OnboardingFlow({
         setError(result.errorCode);
         return;
       }
-      setState(result.data);
-      setSelected(
-        result.data.step === 'GOALS' ? result.data.goalTagIds : result.data.interestTagIds,
-      );
+      updateAfterChange(result.data, input.step);
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -153,6 +172,10 @@ export function OnboardingFlow({
     }
   }
   const step = state.step;
+  const selected = step === 'GOALS' ? goalDraft : interestDraft;
+  const setSelected = step === 'GOALS' ? setGoalDraft : setInterestDraft;
+  const steps = availableSteps(state);
+  const previous = steps.indexOf(step) > 0 ? steps[steps.indexOf(step) - 1] : undefined;
   const showTags = step === 'INTERESTS' || step === 'GOALS';
   const choices = step === 'INTERESTS' ? interests : goals;
   const availableChoices = choices
@@ -334,48 +357,67 @@ export function OnboardingFlow({
             {t('chooseOrSkip')}
           </p>
         )}
-        {step === 'MEMBERSHIP' && (
-          <Link className={buttonClasses({ fullWidth: true, size: 'lg' })} href="/dogrulama">
-            {t('membershipAction')}
-          </Link>
-        )}
-        {showTags && availableChoices.length > 0 && (
-          <>
+        <div className="flex items-stretch gap-3">
+          {previous && (
             <Button
-              size="lg"
-              fullWidth
+              variant="secondary"
               loading={pending}
-              onClick={() => void submit({ step, tagIds: selected })}
+              onClick={() => {
+                editing.current = true;
+                setFinished(false);
+                setError(undefined);
+                setEmptySelection(false);
+                setState((current) => ({ ...current, step: previous }));
+              }}
             >
-              {pending ? t('saving') : t('next')}
+              {t('back')}
             </Button>
-          </>
-        )}
-        {step === 'VISIBILITY' && (
-          <Button
-            size="lg"
-            fullWidth
-            loading={pending}
-            onClick={() => void submit({ step: 'VISIBILITY', confirmed: true })}
-          >
-            {pending ? t('saving') : t('visibilityConfirm')}
-          </Button>
-        )}
-        {step === 'COMPLETE' && !done && (
-          <Button
-            size="lg"
-            fullWidth
-            loading={pending}
-            onClick={() => void submit({ step: 'COMPLETE' })}
-          >
-            {pending ? t('saving') : t('finish')}
-          </Button>
-        )}
-        {step === 'COMPLETE' && done && (
-          <Link className={buttonClasses({ fullWidth: true, size: 'lg' })} href="/">
-            {t('home')}
-          </Link>
-        )}
+          )}
+          <div className="min-w-0 flex-1">
+            {step === 'MEMBERSHIP' && (
+              <Link className={buttonClasses({ fullWidth: true, size: 'lg' })} href="/dogrulama">
+                {t('membershipAction')}
+              </Link>
+            )}
+            {showTags && availableChoices.length > 0 && (
+              <>
+                <Button
+                  size="lg"
+                  fullWidth
+                  loading={pending}
+                  onClick={() => void submit({ step, tagIds: selected })}
+                >
+                  {pending ? t('saving') : t('next')}
+                </Button>
+              </>
+            )}
+            {step === 'VISIBILITY' && (
+              <Button
+                size="lg"
+                fullWidth
+                loading={pending}
+                onClick={() => void submit({ step: 'VISIBILITY', confirmed: true })}
+              >
+                {pending ? t('saving') : t('visibilityConfirm')}
+              </Button>
+            )}
+            {step === 'COMPLETE' && !done && (
+              <Button
+                size="lg"
+                fullWidth
+                loading={pending}
+                onClick={() => void submit({ step: 'COMPLETE' })}
+              >
+                {pending ? t('saving') : t('finish')}
+              </Button>
+            )}
+            {step === 'COMPLETE' && done && (
+              <Link className={buttonClasses({ fullWidth: true, size: 'lg' })} href="/">
+                {t('home')}
+              </Link>
+            )}
+          </div>
+        </div>
         {skippable &&
           (step === 'INTERESTS' ||
             step === 'GOALS' ||

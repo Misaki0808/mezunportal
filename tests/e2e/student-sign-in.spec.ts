@@ -101,6 +101,10 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Birlikte neyi hedefleyelim?' })).toBeVisible();
     await page.getByRole('checkbox', { name: 'Staj bulmak' }).check();
+    await page.getByRole('button', { name: 'Geri' }).click();
+    await expect(page.getByRole('checkbox', { name: 'Yazılım geliştirme' })).toBeChecked();
+    await page.getByRole('button', { name: 'Devam et' }).click();
+    await expect(page.getByRole('checkbox', { name: 'Staj bulmak' })).toBeChecked();
     await page.getByRole('button', { name: 'Devam et' }).click();
     await expect(
       page.getByRole('heading', { name: 'Gizlilik tercihlerini gözden geçir' }),
@@ -123,6 +127,14 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
         where: { userId_field: { userId: user.id, field: 'LINKEDIN' } },
       }),
     ).toMatchObject({ level: 'PRIVATE' });
+    await page.goto('/hesap');
+    await page.getByRole('link', { name: /Profilim \/ Başlangıç adımları/ }).click();
+    await expect(page.getByRole('checkbox', { name: 'Yazılım geliştirme' })).toBeChecked();
+    await page.getByRole('button', { name: 'Şimdilik atla' }).click();
+    await expect(page.getByRole('heading', { name: 'Birlikte neyi hedefleyelim?' })).toBeVisible();
+    await page.goto('/hesap');
+    await page.getByRole('link', { name: /Profilim \/ Başlangıç adımları/ }).click();
+    await expect(page.getByRole('checkbox', { name: 'Yazılım geliştirme' })).toBeChecked();
   } finally {
     worker.kill('SIGTERM');
     await db.$disconnect();
