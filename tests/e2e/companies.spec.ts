@@ -74,6 +74,10 @@ test('şirketi takma adla bulur; anonim deneyim ve güvenli boş dönem görün�
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    await page.goto(`/sirketler/${company.id}`);
+    await page.waitForLoadState('networkidle');
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(page.getByRole('tab', { name: 'Deneyimler' })).toBeInViewport();
   } finally {
     await db.experience.deleteMany({ where: { companyId: company.id } });
     await db.company.deleteMany({ where: { id: company.id } });

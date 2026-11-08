@@ -10,6 +10,7 @@ import {
   grantRequiredConsents,
 } from '@/test/fixtures';
 import { companySlug, getCompany, mergeCompanies, searchCompanies } from './companies';
+import { companyDetailSchema } from '@/contracts/companies';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -95,14 +96,39 @@ it('arama takma adı bulur; k<3 sayı ve dönem döndürülmez; üniversite dı�
   expect(page.experiences).toHaveLength(3);
   const c = await alumni(w.company.id, w.institution.deptA1, 'Mezun C');
   await published(w.company.id, w.institution.deptA1, c, false);
+  const posting = await db.jobPosting.create({
+    data: {
+      authorId: c,
+      departmentIdAtWrite: w.institution.deptA1,
+      companyId: w.company.id,
+      title: 'Staj ilanı',
+      organizationName: 'Örnek',
+      description: 'Öğrenciler için örnek bir staj pozisyonu açıklaması.',
+      isRemote: true,
+      applyMethod: 'URL',
+      applyUrl: 'https://example.org',
+      status: 'PUBLISHED',
+      submittedAt: new Date(),
+      moderatedAt: new Date(),
+      moderatedById: w.viewer,
+      publishedAt: new Date(),
+      deadlineOn: new Date(Date.now() + 86400 * 14 * 1000),
+      targets: { create: [{ departmentId: w.institution.deptA1 }] },
+    },
+    select: { id: true },
+  });
   page = await getCompany({ db }, w.viewer, w.slug);
   expect(page.alumni.current).toBe(3);
+  expect(page.postings.map((p) => p.id)).toContain(posting.id);
+  expect(companyDetailSchema.safeParse({ ...page, rating: 5 }).success).toBe(false);
   expect(page.periods).toEqual([{ season: 'SUMMER', count: 4 }]);
   expect(
     (await searchCompanies({ db }, w.viewer, `takma ${w.key}`)).companies.map((x) => x.id),
   ).toContain(w.company.id);
   await db.user.update({ where: { id: c }, data: { banned: true } });
-  expect((await getCompany({ db }, w.viewer, w.slug)).alumni.current).toBeNull();
+  page = await getCompany({ db }, w.viewer, w.slug);
+  expect(page.alumni.current).toBeNull();
+  expect(page.postings.map((p) => p.id)).not.toContain(posting.id);
 });
 it('anonim yazar kesişimi: diğer tüm adaylar bilinse de dönem, sayı ve mentor kümesi yazarı ele vermez', async () => {
   const w = await setup();
