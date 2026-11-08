@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import { createInstitution } from '@/test/fixtures';
+import { INSECURE_DEV_AUTH_SECRET } from '@/lib/env';
 const mocks = vi.hoisted(() => ({
   send: vi.fn(async (item: { userId: string; eventId: string }) => {
     void item;
@@ -19,7 +20,27 @@ vi.mock('./email', () => ({ enqueueEmail: mocks.enqueue }));
 import { profileFreshness, alumniStillThere, studentEmailMigration } from './notification-tasks';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  // Yalnız bağlantı üretimini doğruluyoruz; kimlik ve SMTP yerel ayardan gelmez.
+  // Gerçek PostgreSQL istemcisi yalnız DATABASE_URL_TEST ile yukarıda kurulmuştur.
+  const env = {
+    APP_ENV: 'test',
+    APP_URL: 'https://notifications.example.invalid',
+    DATABASE_URL: 'postgresql://test:test@localhost:5432/notification_test',
+    BETTER_AUTH_SECRET: INSECURE_DEV_AUTH_SECRET,
+    SMTP_HOST: 'smtp.example.invalid',
+    SMTP_PORT: '1025',
+    SMTP_SECURE: 'false',
+    EMAIL_FROM: 'test@example.invalid',
+    SMTP_USER: undefined,
+    SMTP_PASSWORD: undefined,
+    LINKEDIN_CLIENT_ID: undefined,
+    LINKEDIN_CLIENT_SECRET: undefined,
+  };
+  for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+});
+afterEach(() => vi.unstubAllEnvs());
 describe('bildirim işleri', () => {
   it('eski profili bir kez hatırlatır ve altı ay dolmadan tekrarlamaz', async () => {
     const now = new Date('2026-11-08T12:00:00Z');
@@ -94,6 +115,6 @@ describe('bildirim işleri', () => {
       .filter((item) => item.recipientUserId === user.id);
     expect(calls).toHaveLength(2);
     expect(calls[0]!.idempotencyKey).toBe(calls[1]!.idempotencyKey);
-    expect(calls[0]!.text).toContain('#token=');
+    expect(calls[0]!.text).toContain('https://notifications.example.invalid/bildirim-yanit#token=');
   });
 });
