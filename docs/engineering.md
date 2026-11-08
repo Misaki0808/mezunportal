@@ -244,6 +244,11 @@ sahte adaptördür ve yalnız `local`/`test`'te kabul edilir (`prod`'da env doğ
 (K-04) ayrı kartla gelir; `LLM_API_KEY` ve `LLM_MODEL` o zamana kadar okunmaz. `CV_PARSE_DAILY_LIMIT`
 (1–50, varsayılan 5) kullanıcı başına günlük ayrıştırma sınırıdır. Adaptörler `src/server/external/llm/`. Worker (`pnpm dev:all`) `cv.parse` kuyruğunu yalnız `LLM_PROVIDER` doluyken dinler.
 
+**Takvim / Meet grubu** (`getCalendarEnv()`, varsayılanlı): `CALENDAR_PROVIDER` boşsa takvim KAPALIDIR (online randevu
+yine onaylanır; mentor görüşme linkini elle ekler); `fake` deterministik sahte adaptördür ve yalnız `local`/`test`'te
+kabul edilir (`prod`'da env doğrulamasını düşürür). Gerçek Google adaptörü ve `GOOGLE_*` değişkenleri kullanıcı onayından
+(E4) sonra ayrı kartla gelir. Adaptörler `src/server/external/calendar/`.
+
 ### Telefon testi (faz sonu)
 
 Her faz bitince kullanıcı telefondan test eder; faz içinde telefon testi yoktur.

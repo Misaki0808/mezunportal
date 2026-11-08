@@ -19,7 +19,7 @@ export type EnqueueEmail = (input: {
   template: string;
   idempotencyKey: string;
   recipientUserId?: string;
-}) => Promise<{ emailLogId: string }>;
+}) => Promise<{ emailLogId: string | null }>;
 
 export type AuthEmailPort = {
   sendSignInLink(input: { to: string; url: string; token: string }): Promise<void>;

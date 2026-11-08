@@ -24,7 +24,7 @@ type NavId = 'home' | 'experiences' | 'mentors' | 'appointments' | 'profile';
  */
 const NAV_ITEMS: readonly { id: NavId; href?: string; icon: ReactNode }[] = [
   { id: 'home', href: '/', icon: <HomeIcon /> },
-  { id: 'experiences', href: '/deneyimlerim', icon: <BriefcaseIcon /> },
+  { id: 'experiences', href: '/deneyimler', icon: <BriefcaseIcon /> },
   { id: 'mentors', icon: <UsersIcon /> },
   { id: 'appointments', icon: <CalendarIcon /> },
   { id: 'profile', href: '/hesap', icon: <UserIcon /> },
@@ -151,7 +151,7 @@ export function AppShellClient({
             {showAdmin && (
               <li>
                 <Link
-                  href="/yonetim/belge-kuyrugu"
+                  href="/yonetim"
                   aria-current={isCurrent(pathname, '/yonetim') ? 'page' : undefined}
                   className={cn(
                     'press-control inline-flex min-h-11 w-full items-center gap-1 rounded-control px-3 text-base font-medium',

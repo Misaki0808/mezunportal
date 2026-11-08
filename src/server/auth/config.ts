@@ -18,6 +18,7 @@ import {
   sessionCreateBefore,
   userCreateBefore,
 } from './hooks';
+import { emitEvent } from '../services/event';
 import { SIGN_IN_LINK_MINUTES, type AuthEmailPort } from './email-port';
 import { testLoginPlugin } from './test-login-plugin';
 
@@ -160,7 +161,19 @@ export function buildAuthOptions(deps: AuthDeps) {
 
     databaseHooks: {
       user: { create: { before: async (user) => userCreateBefore(user) } },
-      session: { create: { before: async (session) => sessionCreateBefore(session) } },
+      session: {
+        create: {
+          before: async (session) => sessionCreateBefore(session),
+          // Kullanım olayı (P1-13): oturum açıldıktan sonra, ateşle-ve-unut (giriş yanıtını yavaşlatmaz ya da bozmaz).
+          after: async (session, context) => {
+            const path = (context as { path?: string } | null | undefined)?.path ?? '';
+            emitEvent(db, session.userId, {
+              type: 'LOGIN',
+              props: { method: path.includes('linkedin') ? 'LINKEDIN' : 'EMAIL_LINK' },
+            });
+          },
+        },
+      },
       account: {
         create: { before: async (account) => accountTokensStripped(account) },
         update: { before: async (account) => accountTokensStripped(account) },

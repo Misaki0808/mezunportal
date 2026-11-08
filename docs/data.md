@@ -109,8 +109,10 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
   satırı kişisel alan içermediği için kalır). İkisi için de bu, veritabanı tetikleyicisiyle
   zorlanır (UPDATE, DELETE ve TRUNCATE reddedilir); `recordAdminAction` ise eylemle aynı işlemde yazar.
 - `GraduationDocument.storageKey` karar verilen satırda `null`'dır ve dosya depoda yoktur.
-- Aynı mentor için `REQUESTED`/`CONFIRMED` randevuların zaman aralıkları çakışamaz
-  (exclusion constraint, `btree_gist`, ham SQL migration).
+- Aynı mentor için `REQUESTED`/`CONFIRMED` randevuların zaman aralıkları çakışamaz; aynı öğrenci için de
+  (exclusion constraint, `btree_gist`, ham SQL migration). Aynı öğrencinin aynı mentora yanıt bekleyen en fazla bir
+  talebi olur (kısmi benzersiz indeks). `AvailabilityRule` aralıkları aynı mentor+gün için çakışamaz (exclusion).
+  `Appointment.expiresAt` yalnız `REQUESTED` için anlamlıdır (D11); `calendarFailedAt` doluysa mentor linki elle ekler.
 - `PointEntry` (userId, action, sourceType, sourceId) benzersizdir; aynı olay iki kez puan
   üretemez.
 - `SessionFeedback` (appointmentId, authorId) benzersizdir.
@@ -119,7 +121,9 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
 - Açık bir `CvReviewRequest`'in bağlı olduğu `CvUpload` dosyası silinmez.
 - Sınıf saklanmaz; `entryYear` + `classOffset`'ten hesaplanır (`src/server/rules/classYear.ts`: akademik yıl
   Eylül'de başlar, düzeltme −3…+3, hazırlık/uzatma ayrı durum).
-- `Event.props` ve `AdminAuditLog.metadata` kişisel veri içermez.
+- `Event.props` ve `AdminAuditLog.metadata` kişisel veri içermez. `Event.props` ek olarak veritabanı CHECK'iyle sınırlıdır
+  (düz nesne, ≤ 500 karakter, `@` ve 10+ ardışık rakam yok). `Event.role`/`departmentId` olay anının anlık görüntüsüdür;
+  `userId` hesap silmede hemen, 24 ay sonra (`detachOldEvents`) `null` olur, satırlar ve sayılar kalır.
 
 ## Transaction ve eşzamanlılık
 

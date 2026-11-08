@@ -1,0 +1,407 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState, useTransition } from 'react';
+import {
+  APPLICATION_CHANNELS,
+  EXPERIENCE_PAY,
+  EXPERIENCE_TYPES,
+  TERM_SEASONS,
+} from '@/contracts/experience';
+import {
+  searchExperiencesSchema,
+  searchFilterToParams,
+  type SearchExperiencesInput,
+  type SearchPage,
+} from '@/contracts/search';
+import { FilterChip } from './filter-chip';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Field,
+  Input,
+  Pagination,
+  Select,
+  Sheet,
+  Skeleton,
+  buttonClasses,
+} from '@/components/ui';
+
+type Filter = SearchExperiencesInput;
+type Props = {
+  filter: Filter;
+  results: SearchPage;
+  sectors: { id: string; name: string }[];
+};
+export function SearchScreen({ filter, results, sectors }: Props) {
+  const t = useTranslations('search');
+  const router = useRouter();
+  const [draft, setDraft] = useState<Filter>(filter);
+  const [open, setOpen] = useState(false);
+  const [invalid, setInvalid] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const href = (next: Filter) => {
+    const params = searchFilterToParams(next).toString();
+    return `/deneyimler${params ? `?${params}` : ''}`;
+  };
+  function go(next: Filter) {
+    if (pending) return;
+    const parsed = searchExperiencesSchema.safeParse(next);
+    if (!parsed.success) {
+      setInvalid(true);
+      return;
+    }
+    setInvalid(false);
+    setOpen(false);
+    startTransition(() => router.push(href(parsed.data)));
+  }
+  const update = (next: Partial<Filter>) =>
+    setDraft((previous) => ({ ...previous, ...next, page: 1 }));
+  const active = [
+    ...(filter.types ?? []).map((value) => ({
+      key: `type-${value}`,
+      label: t(`types.${value}`),
+      remove: { types: filter.types?.filter((v) => v !== value) },
+    })),
+    ...(filter.channels ?? []).map((value) => ({
+      key: `channel-${value}`,
+      label: t(`channels.${value}`),
+      remove: { channels: filter.channels?.filter((v) => v !== value) },
+    })),
+    ...(filter.company
+      ? [{ key: 'company', label: filter.company, remove: { company: undefined } }]
+      : []),
+    ...(filter.sectorId
+      ? [
+          {
+            key: 'sector',
+            label: sectors.find((s) => s.id === filter.sectorId)?.name ?? filter.sectorId,
+            remove: { sectorId: undefined },
+          },
+        ]
+      : []),
+    ...(filter.termYear
+      ? [{ key: 'year', label: String(filter.termYear), remove: { termYear: undefined } }]
+      : []),
+    ...(filter.termSeason
+      ? [
+          {
+            key: 'season',
+            label: t(`seasons.${filter.termSeason}`),
+            remove: { termSeason: undefined },
+          },
+        ]
+      : []),
+    ...(filter.pay
+      ? [{ key: 'pay', label: t(`payments.${filter.pay}`), remove: { pay: undefined } }]
+      : []),
+  ];
+  const filters = (
+    <div className="flex flex-col gap-5">
+      <Field label={t('type')}>
+        {(props) => (
+          <Select
+            {...props}
+            value={draft.types?.[0] ?? ''}
+            onChange={(e) =>
+              update({
+                types: e.target.value
+                  ? [e.target.value as (typeof EXPERIENCE_TYPES)[number]]
+                  : undefined,
+              })
+            }
+          >
+            <option value="">{t('all')}</option>
+            {EXPERIENCE_TYPES.map((v) => (
+              <option key={v} value={v}>
+                {t(`types.${v}`)}
+              </option>
+            ))}
+          </Select>
+        )}
+      </Field>
+      <Field
+        label={t('company')}
+        error={
+          invalid && draft.company && draft.company.trim().length < 2 ? t('invalid') : undefined
+        }
+      >
+        {(props) => (
+          <Input
+            {...props}
+            value={draft.company ?? ''}
+            onChange={(e) => update({ company: e.target.value || undefined })}
+            maxLength={100}
+          />
+        )}
+      </Field>
+      {sectors.length > 0 ? (
+        <Field label={t('sector')}>
+          {(props) => (
+            <Select
+              {...props}
+              value={draft.sectorId ?? ''}
+              onChange={(e) => update({ sectorId: e.target.value || undefined })}
+            >
+              <option value="">{t('all')}</option>
+              {sectors.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+      ) : (
+        <p className="text-sm text-fg-muted">{t('noSectors')}</p>
+      )}
+      <Field label={t('channel')}>
+        {(props) => (
+          <Select
+            {...props}
+            value={draft.channels?.[0] ?? ''}
+            onChange={(e) =>
+              update({
+                channels: e.target.value
+                  ? [e.target.value as (typeof APPLICATION_CHANNELS)[number]]
+                  : undefined,
+              })
+            }
+          >
+            <option value="">{t('all')}</option>
+            {APPLICATION_CHANNELS.map((v) => (
+              <option key={v} value={v}>
+                {t(`channels.${v}`)}
+              </option>
+            ))}
+          </Select>
+        )}
+      </Field>
+      <Field
+        label={t('year')}
+        error={
+          invalid &&
+          draft.termYear !== undefined &&
+          (draft.termYear < 1900 || draft.termYear > 2100 || !Number.isInteger(draft.termYear))
+            ? t('yearInvalid')
+            : undefined
+        }
+      >
+        {(props) => (
+          <Input
+            {...props}
+            inputMode="numeric"
+            type="number"
+            min={1900}
+            max={2100}
+            value={draft.termYear ?? ''}
+            onChange={(e) =>
+              update({ termYear: e.target.value ? Number(e.target.value) : undefined })
+            }
+          />
+        )}
+      </Field>
+      <Field label={t('season')}>
+        {(props) => (
+          <Select
+            {...props}
+            value={draft.termSeason ?? ''}
+            onChange={(e) =>
+              update({ termSeason: (e.target.value || undefined) as Filter['termSeason'] })
+            }
+          >
+            <option value="">{t('all')}</option>
+            {TERM_SEASONS.map((v) => (
+              <option key={v} value={v}>
+                {t(`seasons.${v}`)}
+              </option>
+            ))}
+          </Select>
+        )}
+      </Field>
+      <Field label={t('pay')}>
+        {(props) => (
+          <Select
+            {...props}
+            value={draft.pay ?? ''}
+            onChange={(e) => update({ pay: (e.target.value || undefined) as Filter['pay'] })}
+          >
+            <option value="">{t('all')}</option>
+            {EXPERIENCE_PAY.map((v) => (
+              <option key={v} value={v}>
+                {t(`payments.${v}`)}
+              </option>
+            ))}
+          </Select>
+        )}
+      </Field>
+    </div>
+  );
+  return (
+    <div className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:pt-14">
+      <header className="max-w-2xl">
+        <p className="font-semibold text-primary">{t('eyebrow')}</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t('title')}</h1>
+        <p className="mt-3 text-fg-muted">{t('description')}</p>
+        <Link href="/deneyimlerim" className={`${buttonClasses({ variant: 'secondary' })} mt-4`}>
+          {t('mine')}
+        </Link>
+      </header>
+      <form
+        className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-end"
+        onSubmit={(event) => {
+          event.preventDefault();
+          go({ ...draft, page: 1 });
+        }}
+      >
+        <Field
+          className="flex-1"
+          label={t('query')}
+          hint={t('queryHint')}
+          error={invalid && draft.q && draft.q.trim().length < 2 ? t('invalid') : undefined}
+        >
+          {(props) => (
+            <Input
+              {...props}
+              type="search"
+              maxLength={100}
+              value={draft.q ?? ''}
+              onChange={(e) => update({ q: e.target.value || undefined, sort: undefined })}
+            />
+          )}
+        </Field>
+        <Button
+          type="submit"
+          loading={pending}
+          {...(pending
+            ? { disabled: true as const, disabledReason: t('loading') }
+            : { disabled: false as const })}
+        >
+          {t('submit')}
+        </Button>
+      </form>
+      <div className="mt-6 lg:hidden">
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          {t('filters')}
+          {active.length ? ` (${active.length})` : ''}
+        </Button>
+      </div>
+      <Sheet
+        open={open}
+        onClose={() => {
+          setDraft(filter);
+          setOpen(false);
+        }}
+        title={t('filters')}
+        footer={
+          <>
+            <Button onClick={() => go({ ...draft, page: 1 })}>{t('apply')}</Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDraft(filter);
+                setOpen(false);
+              }}
+            >
+              {t('cancel')}
+            </Button>
+          </>
+        }
+      >
+        {filters}
+      </Sheet>
+      <div className="mt-6 grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
+        <aside className="hidden rounded-card border border-border p-5 lg:block">
+          <h2 className="mb-5 text-lg font-semibold">{t('filters')}</h2>
+          {filters}
+          <div className="mt-6">
+            <Button fullWidth onClick={() => go({ ...draft, page: 1 })}>
+              {t('apply')}
+            </Button>
+          </div>
+        </aside>
+        <section aria-busy={pending} className="min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="font-semibold" aria-live="polite">
+              {t('resultCount', { count: results.total })}
+            </p>
+            {active.length > 0 && (
+              <Button variant="secondary" onClick={() => go({ q: filter.q, page: 1 })}>
+                {t('clear')}
+              </Button>
+            )}
+          </div>
+          {active.length > 0 && (
+            <div aria-label={t('active')} className="mt-4 flex flex-wrap gap-2">
+              {active.map((chip) => (
+                <FilterChip
+                  key={chip.key}
+                  label={chip.label}
+                  onRemove={() => go({ ...filter, ...chip.remove, page: 1 })}
+                />
+              ))}
+            </div>
+          )}
+          {pending ? (
+            <div className="mt-5 space-y-4" role="status">
+              <span className="sr-only">{t('loading')}</span>
+              <Skeleton className="h-40" />
+              <Skeleton className="h-40" />
+            </div>
+          ) : results.items.length === 0 ? (
+            <EmptyState
+              title={t('emptyTitle')}
+              description={t('emptyDescription')}
+              action={
+                <div className="flex flex-col gap-3">
+                  <Button variant="secondary" onClick={() => go({})}>
+                    {t('clear')}
+                  </Button>
+                  <Link href="/deneyim/yeni" className={buttonClasses({ variant: 'secondary' })}>
+                    {t('write')}
+                  </Link>
+                </div>
+              }
+            />
+          ) : (
+            <ul className="mt-5 flex flex-col gap-4">
+              {results.items.map((item) => (
+                <li key={item.id} className="rounded-card border border-border p-5 shadow-card">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge tone="info">{t(`types.${item.type}`)}</Badge>
+                    {item.termYear && <Badge>{String(item.termYear)}</Badge>}
+                  </div>
+                  <h2 className="mt-3 break-words text-xl font-semibold">
+                    {item.organizationName ?? item.departmentName}
+                  </h2>
+                  <p className="mt-1 text-sm text-fg-muted">
+                    {item.isAnonymous ? t('anonymous') : t('by', { name: item.author.displayName })}
+                  </p>
+                  <p className="mt-1 text-sm text-fg-muted">{item.departmentName}</p>
+                  {item.snippet && (
+                    <p className="mt-4 whitespace-pre-line break-words">{item.snippet}</p>
+                  )}
+                  <Link
+                    className={`${buttonClasses({ variant: 'secondary' })} mt-4`}
+                    href={`/deneyim/${item.id}`}
+                  >
+                    {t('open')}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Pagination
+            className="mt-6"
+            page={results.page}
+            pageCount={Math.ceil(results.total / results.pageSize)}
+            hrefFor={(page) => href({ ...filter, page })}
+          />
+        </section>
+      </div>
+    </div>
+  );
+}

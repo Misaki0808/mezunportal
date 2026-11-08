@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -15,6 +16,7 @@ export function ContactSendForm({
   targetUserId: string;
   requestableFields: ContactField[];
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('privacyScreens.contacts');
   const common = useTranslations('privacyScreens.common');
   const labels = useTranslations('privacyScreens.fields');
@@ -35,6 +37,7 @@ export function ContactSendForm({
     );
   return (
     <form
+      data-hydrated={hydrated ? 'true' : undefined}
       className="space-y-5"
       onSubmit={(e) => {
         e.preventDefault();
