@@ -103,6 +103,9 @@ export async function deleteAccount(
       data: { status: 'REVOKED', closedAt: now },
     });
 
+    // Kullanım olayları (P1-13): sayılar kalır, kullanıcıyla bağ hemen kopar.
+    await tx.event.updateMany({ where: { userId }, data: { userId: null } });
+
     // Randevular (P1-10): açık olanlar sistem tarafından iptal edilir (takvim etkinliği süpürmede silinir); kişiye ait
     // serbest metin (öğrenci notu, yer notu, görüşme bağlantısı, ret notu) temizlenir. Satır, karşı tarafın geçmişi için kalır.
     await tx.appointment.updateMany({

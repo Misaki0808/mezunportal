@@ -39,7 +39,7 @@ export default async function AccountPage() {
   }[state.data.status];
   const links = [
     {
-      href: '/baslangic?duzenle=1',
+      href: '/profil',
       title: t('profile'),
       description: t('profileDescription'),
       icon: UserIcon,
