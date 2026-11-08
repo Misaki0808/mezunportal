@@ -82,11 +82,39 @@ test('inceleyici: uzun beceri/gerekçe taşmaz ve bekleyen filtre isteği tekrar
   });
   const { randomUUID } = await import('node:crypto');
   const student = await db.user.findUniqueOrThrow({
-      where: { email: TEST_PERSONA_EMAILS.student },
-    }),
-    mentor = await db.user.findUniqueOrThrow({
-      where: { email: TEST_PERSONA_EMAILS.alumniMentor },
-    });
+    where: { email: TEST_PERSONA_EMAILS.student },
+  });
+  const membership = await db.membership.findFirstOrThrow({
+    where: { userId: student.id, endedAt: null },
+  });
+  const mentor = await db.user.create({
+    data: {
+      name: 'Uzun Mentor ' + randomUUID().slice(0, 8),
+      email: `${randomUUID()}@example.invalid`,
+      profile: { create: { headline: 'H'.repeat(120) } },
+    },
+  });
+  await db.membership.create({
+    data: {
+      userId: mentor.id,
+      departmentId: membership.departmentId,
+      role: 'ALUMNI',
+      verificationStatus: 'VERIFIED',
+      verifiedAt: new Date(),
+      verificationMethod: 'ADMIN',
+      verifiedById: mentor.id,
+    },
+  });
+  await db.mentorProfile.create({
+    data: {
+      userId: mentor.id,
+      isActive: true,
+      monthlyCapacity: 4,
+      sessionMinutes: 30,
+      meetingModes: ['ONLINE'],
+      cvReviewEnabled: false,
+    },
+  });
   const label = 'W'.repeat(72) + randomUUID().slice(0, 8),
     tag = await db.tag.create({
       data: { kind: 'SKILL', slug: label.toLowerCase(), label, curated: false },
@@ -169,6 +197,10 @@ test('inceleyici: uzun beceri/gerekçe taşmaz ve bekleyen filtre isteği tekrar
     await db.position.delete({ where: { id: position.id } });
     await db.profileTag.deleteMany({ where: { tagId: tag.id } });
     await db.tag.delete({ where: { id: tag.id } });
+    await db.mentorProfile.delete({ where: { userId: mentor.id } });
+    await db.membership.deleteMany({ where: { userId: mentor.id } });
+    await db.profile.delete({ where: { userId: mentor.id } });
+    await db.user.delete({ where: { id: mentor.id } });
     await db.$disconnect();
   }
 });
