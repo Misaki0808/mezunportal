@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { ActionLink } from '../../action-link';
+import { PageHeader } from '@/components/ui';
 
 /** Kayıtlı ve kayıtsız adresler aynı yönlendirmeyi ve metni görür. */
 export default async function CheckEmailPage() {
@@ -24,18 +25,19 @@ export default async function CheckEmailPage() {
             <path d="m4 7 8 6 8-6" />
           </svg>
         </div>
-        <p className="mb-2 text-base font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-fg">
-          {t.rich('title', {
+        <PageHeader
+          eyebrow={t('eyebrow')}
+          title={t.rich('title', {
             email: (chunks) => <span className="whitespace-nowrap">{chunks}</span>,
           })}
-        </h1>
-        <p className="mt-4 max-w-md text-base leading-relaxed text-fg-muted">
-          {t.rich('description', {
+          description={t.rich('description', {
             email: (chunks) => <span className="whitespace-nowrap">{chunks}</span>,
           })}
-        </p>
-        <p className="mt-6 rounded-card bg-surface p-4 text-base text-fg-muted">{t('security')}</p>
+        >
+          <p className="mt-6 rounded-card bg-surface p-4 text-base text-fg-muted">
+            {t('security')}
+          </p>
+        </PageHeader>
       </div>
       <ActionLink href="/giris" secondary>
         {t('back')}

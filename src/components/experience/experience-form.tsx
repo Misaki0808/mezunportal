@@ -17,13 +17,14 @@ import {
 import type { ActionResult } from '@/contracts/result';
 import {
   Button,
-  buttonClasses,
   Field,
   Input,
   Modal,
+  PageHeader,
   RadioGroup,
   Select,
   Textarea,
+  buttonClasses,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
@@ -477,11 +478,11 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
       }}
       className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16"
     >
-      <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">
-        {initial ? t('form.editTitle') : t('form.newTitle')}
-      </h1>
-      <p className="mt-3 text-base leading-relaxed text-fg-muted">{t('form.description')}</p>
+      <PageHeader
+        eyebrow={t('eyebrow')}
+        title={initial ? t('form.editTitle') : t('form.newTitle')}
+        description={t('form.description')}
+      />
 
       {initial?.moderationNote && (
         <section className="mt-6 rounded-card border border-danger bg-danger-soft p-4 text-on-danger-soft">

@@ -21,6 +21,7 @@ import {
   EmptyState,
   Field,
   Input,
+  PageHeader,
   RadioGroup,
   Switch,
   Textarea,
@@ -203,11 +204,7 @@ export function MentorSettings({
 
   return (
     <div className="[&_.text-sm]:text-base mx-auto flex w-full max-w-lg flex-col gap-8 px-5 pb-10 pt-10 sm:pt-16">
-      <header>
-        <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
-        <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
-      </header>
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
 
       {(notice || error) && (
         <p

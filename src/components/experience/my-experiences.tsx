@@ -10,7 +10,7 @@ import {
   type ListMyExperiencesInput,
 } from '@/contracts/experience';
 import type { ActionResult } from '@/contracts/result';
-import { Badge, Button, buttonClasses, EmptyState, Tabs } from '@/components/ui';
+import { Badge, Button, EmptyState, PageHeader, Tabs, buttonClasses } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { StatusBadge } from './status-badge';
@@ -141,9 +141,11 @@ export function MyExperiences({ initial, list }: Props) {
   const filters: Filter[] = ['ALL', ...EXPERIENCE_STATUSES];
   return (
     <div className="mx-auto w-full max-w-lg px-5 pb-8 pt-10 sm:pt-16">
-      <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{t('mine.title')}</h1>
-      <p className="mt-3 text-base text-fg-muted">{t('mine.description')}</p>
+      <PageHeader
+        eyebrow={t('eyebrow')}
+        title={t('mine.title')}
+        description={t('mine.description')}
+      />
       <Tabs
         className="mt-6 [&_[role=tablist]]:flex-wrap [&_[role=tablist]]:overflow-visible"
         label={t('mine.tabs.label')}

@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { hasAdminAccess } from '@/components/layout/admin-access';
-import { ErrorState } from '@/components/ui';
+import { ErrorState, PageHeader } from '@/components/ui';
 import { getAdminOverview } from '@/server/actions/admin';
 
 export const dynamic = 'force-dynamic';
@@ -32,9 +32,7 @@ export default async function AdminOverviewPage() {
   ] as const;
   return (
     <div className="mx-auto max-w-4xl px-5 pb-12 pt-10 sm:pt-14">
-      <p className="font-semibold text-primary">{t('eyebrow')}</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t('title')}</h1>
-      <p className="mt-3 text-fg-muted">{t('description')}</p>
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       <ul className="mt-7 grid gap-3 sm:grid-cols-2">
         {links
           .filter((link) => link.visible)

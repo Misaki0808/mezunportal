@@ -14,7 +14,15 @@ import {
   type SelectableDepartment,
 } from '@/contracts/auth';
 import type { ActionResult, FieldErrors } from '@/contracts/result';
-import { Button, EmptyState, Field, Input, Select, buttonClasses } from '@/components/ui';
+import {
+  Button,
+  EmptyState,
+  Field,
+  Input,
+  PageHeader,
+  Select,
+  buttonClasses,
+} from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 export function MembershipForm({
@@ -97,11 +105,12 @@ export function MembershipForm({
       onSubmit={handleSubmit}
       className="flex flex-1 flex-col gap-5"
     >
-      <header className="mb-5">
-        <p className="mb-2 text-base font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
-        <p className="mt-4 text-base text-fg-muted">{t('description')}</p>
-      </header>
+      <PageHeader
+        className="mb-5"
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
+      />
       <Field
         className="[&_p]:text-base"
         label={t('department')}

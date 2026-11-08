@@ -10,6 +10,7 @@ import {
   InboxIcon,
   LogOutIcon,
   MailIcon,
+  PageHeader,
   ShieldCheckIcon,
   UserIcon,
 } from '@/components/ui';
@@ -168,9 +169,7 @@ export default async function AccountPage() {
   ];
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:py-16">
-      <p className="mb-2 text-base font-semibold text-primary">{t('eyebrow')}</p>
-      <h1 className="text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
-      <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       <ul className="mt-8 flex flex-col gap-3">
         {links.map((link) => (
           <li key={link.href}>

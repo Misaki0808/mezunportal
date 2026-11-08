@@ -23,6 +23,8 @@ export type { IconButtonProps } from './icon-button';
 export * from './icons';
 export { Input } from './input';
 export type { InputProps } from './input';
+export { PageHeader } from './page-header';
+export type { PageHeaderProps } from './page-header';
 export { Pagination } from './pagination';
 export type { PaginationProps } from './pagination';
 export { RadioGroup } from './radio-group';
