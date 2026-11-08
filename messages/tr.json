@@ -1423,7 +1423,8 @@
       "auditLog": "İşlem kaydı",
       "documents": "Mezun belgeleri",
       "experiences": "Deneyim moderasyonu",
-      "usageMetrics": "Kullanım"
+      "usageMetrics": "Kullanım",
+      "points": "Puan yönetimi"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1435,7 +1436,8 @@
       "auditLog": "Yönetici işlemlerini incele.",
       "documents": "Mezun belgelerini incele.",
       "experiences": "Deneyim başvurularını değerlendir.",
-      "usageMetrics": "Toplu kullanım raporunu incele."
+      "usageMetrics": "Toplu kullanım raporunu incele.",
+      "points": "Puan kurallarını, kayıtları ve şüpheli işaretleri yönet."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1885,5 +1887,129 @@
     "more": "Daha fazla göster",
     "requestLink": "CV incelemesi iste",
     "backProfile": "Mentor profiline dön"
+  },
+  "points": {
+    "title": "Katkı puanın",
+    "description": "Platforma katkından kazandığın puanlar. Bu bilgiyi yalnız sen görürsün.",
+    "total": "Toplam puan",
+    "pending": "Bekleyen puan",
+    "pendingHint": "Bekleyen puanlar gecikme süresi dolunca kesinleşir ve toplamına eklenir.",
+    "badges": "Rozetlerin",
+    "badge": {
+      "FOUNDING_MEMBER": "Kurucu üye"
+    },
+    "badgeSince": "{date} tarihinde kazanıldı",
+    "history": "Puan geçmişi",
+    "empty": "Henüz puan kaydı yok.",
+    "emptyDescription": "Deneyim yayınladıkça, görüşme yaptıkça ve CV incelemesine yardım ettikçe puan kazanırsın.",
+    "more": "Daha fazla göster",
+    "pointsValue": "{count} puan",
+    "finalizesAt": "{date} tarihinde kesinleşir",
+    "multiplier": "Çarpan %{percent} (taban {base} puan)",
+    "actions": {
+      "EXPERIENCE_PUBLISHED": "Deneyim yayınlandı",
+      "FAQ_QUESTION_PUBLISHED": "Soru yayınlandı",
+      "FAQ_ANSWER_SELECTED": "Cevabın en iyi cevap seçildi",
+      "FAQ_ANSWER_PARTICIPATION": "Soruya cevap verdin",
+      "CV_REVIEW_HELPFUL": "CV incelemen faydalı bulundu",
+      "SESSION_ONLINE": "Çevrimiçi görüşme",
+      "SESSION_IN_PERSON": "Yüz yüze görüşme"
+    },
+    "status": {
+      "PENDING": "Bekliyor",
+      "FINAL": "Kesinleşti",
+      "REVOKED": "Geri alındı"
+    },
+    "revoked": {
+      "ADMIN_CANCEL": "Yönetici iptal etti",
+      "FRAUD_CONFIRMED": "Kuralları ihlal eden işlem olarak doğrulandı"
+    },
+    "admin": {
+      "title": "Puan yönetimi",
+      "description": "Puan kuralları, puan kayıtları, şüpheli işaretler ve geriye dönük hesaplama.",
+      "tabsLabel": "Puan yönetimi bölümleri",
+      "tabs": {
+        "rules": "Kurallar",
+        "flags": "Şüpheli işaretler",
+        "entries": "Puan kayıtları",
+        "backfill": "Geriye dönük hesaplama"
+      },
+      "cancel": "Vazgeç",
+      "more": "Daha fazla göster",
+      "actions": "İşlemler",
+      "action": "Eylem",
+      "edit": "Düzenle",
+      "reason": "Gerekçe",
+      "reasonHint": "En az 3 karakter. Kişisel veri yazma.",
+      "reasonInvalid": "Gerekçe 3–1000 karakter olmalı.",
+      "fieldsInvalid": "Alanları kontrol et: tam sayı ve izin verilen aralıkta olmalı.",
+      "rulesHint": "Kural değişikliği yalnız bundan sonra oluşacak puan kayıtlarını etkiler; mevcut kayıtlar eski puanıyla kalır.",
+      "ruleFutureOnly": "Bu değişiklik yalnız gelecekteki kayıtları etkiler. İşlem kaydına gerekçenle yazılır.",
+      "editRule": "Kuralı düzenle: {action}",
+      "saveRule": "Kuralı kaydet",
+      "ruleSaved": "Kural kaydedildi.",
+      "rulePoints": "Puan",
+      "ruleDelay": "Gecikme (gün)",
+      "ruleActive": "Kural etkin",
+      "rangeHint": "0 ile {max} arasında tam sayı.",
+      "days": "{count} gün",
+      "active": "Etkin",
+      "inactive": "Kapalı",
+      "updatedAt": "Güncelleme",
+      "flagsHint": "Şüpheli işaret ceza değildir. Onaylanana kadar yalnız bekleyen puanlar kesinleşmez; onaylarsan bağlı puanlar geri alınır.",
+      "flagStatus": "Durum",
+      "flagStatuses": {
+        "OPEN": "Açık",
+        "CONFIRMED": "Onaylandı",
+        "DISMISSED": "Reddedildi"
+      },
+      "flagsEmpty": "Bu durumda işaret yok.",
+      "flagsEmptyDescription": "Yeni şüpheli işaretler burada görünecek.",
+      "user": "Kullanıcı",
+      "rule": "Kural",
+      "details": "Ayrıntı",
+      "rules": {
+        "BURST": "Kısa sürede çok puan",
+        "SINGLE_COUNTERPART": "Puanların çoğu tek kişiden",
+        "SYNC_FEEDBACK": "Aynı dakikada karşılıklı onay"
+      },
+      "detailCounts": "{entries} kayıt · {points} puan",
+      "detailShare": "Tek karşı tarafın payı: %{percent}",
+      "detailSynced": "Aynı dakikada yanıtlanan görüşme: {count}",
+      "confirmFlag": "Onayla",
+      "dismissFlag": "Reddet",
+      "decideTitle": {
+        "CONFIRM": "Şüpheyi onayla",
+        "DISMISS": "Şüpheyi reddet"
+      },
+      "decideDescription": {
+        "CONFIRM": "İşarete bağlı puanlar geri alınır ve bu puanlardan gelen rozet kaldırılır. Bu işlem geri alınamaz.",
+        "DISMISS": "İşaret kapanır ve bekleyen puanlar normal akışla kesinleşir."
+      },
+      "decideConfirm": {
+        "CONFIRM": "Onayla ve geri al",
+        "DISMISS": "Reddet"
+      },
+      "decided": "Karar kaydedildi. Geri alınan kayıt sayısı: {count}.",
+      "userId": "Kullanıcı kimliği",
+      "userIdHint": "Kullanıcı yönetimi ekranındaki kimlik.",
+      "userIdInvalid": "Kullanıcı kimliği gerekli.",
+      "entryStatus": "Durum",
+      "allStatuses": "Tümü",
+      "list": "Listele",
+      "entriesHint": "Bir kullanıcının puan kayıtlarını listele. İptal geri alınamaz ve gerekçe işlem kaydına yazılır.",
+      "entriesEmpty": "Kayıt bulunamadı.",
+      "entry": "Kayıt",
+      "cancelEntry": "Puanı iptal et",
+      "revokeEntry": "Puanı geri al",
+      "revokeDescription": "Bu işlem geri alınamaz. Kullanıcının toplamı ve gerekirse rozeti güncellenir.",
+      "revoked": "Puan kaydı geri alındı.",
+      "backfillHint": "Mevcut yayınlanmış deneyimler ve tamamlanmış görüşmeler için puanları geriye dönük hesaplar. İki kez çalışmak sonucu değiştirmez.",
+      "backfillTitle": "Geriye dönük hesaplama",
+      "backfillConfirm": "Hesaplama arka planda çalışır; bitene kadar tekrar başlatılamaz. Başlatılsın mı?",
+      "backfillStart": "Hesaplamayı başlat",
+      "backfillQueued": "Hesaplama sıraya alındı. Sonuçlar puan kayıtlarında görünür.",
+      "backfillLocked": "Hesaplama zaten sıraya alındı; bu sayfayı yenileyince yeniden başlatılabilir."
+    }
   }
 }
