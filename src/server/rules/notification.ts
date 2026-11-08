@@ -15,6 +15,10 @@ export function notificationTypeForTemplate(template: string): NotificationType 
       return 'EXPERIENCE_MODERATION';
     case 'contact.requested':
       return 'CONTACT_REQUEST';
+    case 'cv.review.requested':
+    case 'cv.review.answered':
+    case 'cv.review.expired':
+      return 'CV_REVIEW';
     case 'cv.invitation':
       return 'CV_INVITATION';
     case 'profile.freshness':

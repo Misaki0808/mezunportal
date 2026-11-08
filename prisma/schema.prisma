@@ -143,6 +143,8 @@ model User {
   receivedContactRequests     ContactRequest[]         @relation("ContactRequestTarget")
   profile                     Profile?
   cvUploads                   CvUpload[]
+  requestedCvReviews          CvReviewRequest[]        @relation("CvReviewStudent")
+  receivedCvReviews           CvReviewRequest[]        @relation("CvReviewMentor")
   educations                  Education[]
   positions                   Position[]
   languages                   Language[]
@@ -182,6 +184,7 @@ enum NotificationType {
   EXPERIENCE_MODERATION
   CONTACT_REQUEST
   CV_INVITATION
+  CV_REVIEW
   PROFILE_FRESHNESS
   ALUMNI_STILL_THERE
   STUDENT_EMAIL_MIGRATION
@@ -697,9 +700,39 @@ model CvUpload {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  reviewRequests CvReviewRequest[]
 
   @@index([userId, createdAt])
+}
+
+enum CvReviewRequestStatus {
+  OPEN
+  COMPLETED
+  EXPIRED
+}
+
+/// İnceleme kapandığında mentor dosya yetkisi biter; kullanıcı silinince kişisel metin temizlenir.
+model CvReviewRequest {
+  id         String                @id @default(uuid(7))
+  studentId  String
+  mentorId   String
+  cvUploadId String
+  status     CvReviewRequestStatus @default(OPEN)
+  note       String
+  comment    String?
+  createdAt  DateTime              @default(now())
+  expiresAt  DateTime
+  answeredAt DateTime?
+  helpfulAt  DateTime?
+  student    User                  @relation("CvReviewStudent", fields: [studentId], references: [id], onDelete: Restrict)
+  mentor     User                  @relation("CvReviewMentor", fields: [mentorId], references: [id], onDelete: Restrict)
+  cvUpload   CvUpload              @relation(fields: [cvUploadId], references: [id], onDelete: Restrict)
+
+  @@index([mentorId, createdAt])
+  @@index([studentId, createdAt])
+  @@index([status, expiresAt])
+  @@index([cvUploadId, status])
 }
 
 /// Sözlükler (sistem yöneticisinin): `normalizedName` benzersiz, `aliases` normalleştirilmiş takma adlar.

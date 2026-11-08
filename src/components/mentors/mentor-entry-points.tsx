@@ -5,19 +5,29 @@ import Link from 'next/link';
 
 import type { MentorEntryPoints as EntryPoints } from '@/contracts/mentor-directory';
 import { buttonClasses } from '@/components/ui';
+import { ReviewRequestEntry } from '@/components/cv-review/request-entry';
+import type { CvReviewAvailability } from '@/contracts/cv-review-request';
 
 /**
  * Profildeki giriş noktaları. Yalnız uygunluk bayrağından çizilir: kapalı olan giriş sebebiyle açıklanır; randevu ve
  * CV incelemesi eylemleri kendi kartlarında (P1-10, P1-15) gelene kadar açık bayraklar için düğme çizilmez
  * (“yakında” yazısı yok); iletişim talebi mevcut akıştır.
  */
-export function MentorEntryPoints({ userId, entry }: { userId: string; entry: EntryPoints }) {
+export function MentorEntryPoints({
+  userId,
+  entry,
+  cvAvailability = null,
+}: {
+  userId: string;
+  entry: EntryPoints;
+  cvAvailability?: CvReviewAvailability | null;
+}) {
   const t = useTranslations('mentors.entry');
   // Mentor değilse bölüm hiç çizilmez (varlık/rol ayrımı sızmaz).
   if (entry.contact.reason === 'NOT_MENTOR' || entry.contact.reason === 'SELF') return null;
   const blocked = [
     entry.appointment.available ? null : ['appointment', entry.appointment.reason],
-    entry.cvReview.available ? null : ['cv', entry.cvReview.reason],
+    cvAvailability || entry.cvReview.available ? null : ['cv', entry.cvReview.reason],
   ].filter(
     (item): item is [string, NonNullable<typeof entry.appointment.reason>] =>
       item !== null && item[1] !== null,
@@ -39,6 +49,7 @@ export function MentorEntryPoints({ userId, entry }: { userId: string; entry: En
           {entry.contact.reason ? t(`reasons.${entry.contact.reason}`) : t('contactBlocked')}
         </p>
       )}
+      {cvAvailability && <ReviewRequestEntry mentorId={userId} availability={cvAvailability} />}
       {blocked.length > 0 && (
         <ul className="flex flex-col gap-1 text-base text-fg-muted">
           {blocked.map(([kind, reason]) => (
