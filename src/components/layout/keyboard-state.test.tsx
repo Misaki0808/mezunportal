@@ -5,15 +5,23 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { KeyboardState, isEditing } from './keyboard-state';
 
 type Listener = () => void;
-function fakeViewport(initialHeight: number) {
+function fakeViewport(initialHeight: number, layoutResizes = false) {
   const listeners = new Set<Listener>();
   const viewport = {
     height: initialHeight,
+    width: 390,
+    scale: 1,
     addEventListener: (_: string, fn: Listener) => listeners.add(fn),
     removeEventListener: (_: string, fn: Listener) => listeners.delete(fn),
     resize(height: number) {
       viewport.height = height;
+      // Android Chrome: klavye yerleşim görünümünü de küçültür (innerHeight görsel alanla birlikte düşer).
+      if (layoutResizes)
+        Object.defineProperty(window, 'innerHeight', { value: height, configurable: true });
       listeners.forEach((fn) => fn());
+    },
+    setWidth(width: number) {
+      viewport.width = width;
     },
     listenerCount: () => listeners.size,
   };
@@ -42,6 +50,55 @@ describe('KeyboardState', () => {
     act(() => viewport.resize(480));
     expect(keyboard()).toBe('open');
     act(() => viewport.resize(800));
+    expect(keyboard()).toBeUndefined();
+  });
+
+  it('Android Chrome: klavye yerleşim görünümünü de küçültse (innerHeight düşer) klavye açık sayılır', () => {
+    const viewport = fakeViewport(800, true);
+    document.body.innerHTML = '<input id="i" />';
+    render(<KeyboardState />);
+    act(() => (document.getElementById('i') as HTMLInputElement).focus());
+    act(() => viewport.resize(470));
+    expect(window.innerHeight).toBe(470);
+    expect(keyboard()).toBe('open');
+    act(() => viewport.resize(800));
+    expect(keyboard()).toBeUndefined();
+  });
+
+  it('odak alanlar arasında geçerken (focusout → focusin) klavye açık kalır; çimdikle yakınlaştırma klavye sayılmaz', () => {
+    const viewport = fakeViewport(800, true);
+    document.body.innerHTML = '<input id="a" /><input id="b" />';
+    render(<KeyboardState />);
+    const a = document.getElementById('a') as HTMLInputElement;
+    const b = document.getElementById('b') as HTMLInputElement;
+    act(() => a.focus());
+    act(() => viewport.resize(470));
+    expect(keyboard()).toBe('open');
+    act(() => b.focus());
+    expect(keyboard()).toBe('open');
+    act(() => viewport.resize(800));
+    expect(keyboard()).toBeUndefined();
+    viewport.scale = 2.5;
+    act(() => viewport.resize(300));
+    expect(keyboard()).toBeUndefined();
+  });
+
+  it('klavye açıkken küçülme taban sayılmaz; kapanınca ve çevirmede taban yeniden alınır', () => {
+    const viewport = fakeViewport(800, true);
+    document.body.innerHTML = '<input id="i" /><button id="b">x</button>';
+    render(<KeyboardState />);
+    const input = document.getElementById('i') as HTMLInputElement;
+    act(() => input.focus());
+    act(() => viewport.resize(470));
+    act(() => viewport.resize(465));
+    expect(keyboard()).toBe('open');
+    // Yatay çevirme: genişlik değişir, yeni (kısa) yükseklik yeni taban olur; klavye sanılmaz.
+    act(() => {
+      viewport.setWidth(844);
+      viewport.resize(390);
+    });
+    expect(keyboard()).toBeUndefined();
+    act(() => (document.getElementById('b') as HTMLButtonElement).focus());
     expect(keyboard()).toBeUndefined();
   });
 

@@ -2,6 +2,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
+import type { AdminUserSummary } from '@/contracts/admin-users';
 import type {
   ContributionOverview,
   PointEntryView,
@@ -11,7 +12,7 @@ import type {
 import { renderUi } from '@/test/render';
 
 import { AdminPoints, type AdminPointsActions } from './admin-points';
-import { Contribution } from './contribution';
+import { Contribution, ContributionSummary } from './contribution';
 
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function showModal() {
@@ -147,6 +148,26 @@ const flag = (over: Partial<SuspicionFlagView> = {}): SuspicionFlagView => ({
   decidedAt: null,
   ...over,
 });
+const person = (over: Partial<AdminUserSummary> = {}): AdminUserSummary => ({
+  id: 'u1',
+  displayName: 'Deniz Aksoy',
+  maskedEmail: 'd***@o***.iu.edu.tr',
+  maskedPhone: null,
+  status: 'ACTIVE',
+  memberships: [],
+  isAdmin: false,
+  mentorActive: false,
+  manageable: false,
+  ...over,
+});
+/** Kayıt sekmesi: kimlik yazdırmadan ad ile arayıp sonuçtan seçer (seçince kayıtlar yüklenir). */
+function pickPerson(name = 'Deniz Aksoy') {
+  fireEvent.change(screen.getByLabelText(/Kullanıcı ara/), { target: { value: 'deniz' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Ara' }));
+  return screen
+    .findByRole('button', { name: `Seç: ${name}` })
+    .then((button) => fireEvent.click(button));
+}
 const actions = (over: Partial<AdminPointsActions> = {}): AdminPointsActions => ({
   updateRule: vi.fn(async (input) => ({ ok: true as const, data: { ...rule(), ...input } })),
   listEntries: vi.fn(async () => ({
@@ -158,6 +179,10 @@ const actions = (over: Partial<AdminPointsActions> = {}): AdminPointsActions => 
     data: { entryId: 'e1', badgeRevoked: false },
   })),
   listFlags: vi.fn(async () => ({ ok: true as const, data: { items: [], nextCursor: null } })),
+  searchUsers: vi.fn(async () => ({
+    ok: true as const,
+    data: { items: [person()], nextCursor: null },
+  })),
   decide: vi.fn(async () => ({
     ok: true as const,
     data: { flagId: 'f1', status: 'CONFIRMED' as const, revokedCount: 3 },
@@ -170,7 +195,89 @@ function dialog() {
   return within(screen.getByRole('dialog'));
 }
 
+describe('katkı puanı özeti (profilde üstte)', () => {
+  it('özet tek başına toplam, bekleyen ve rozeti gösterir; geçmiş bağlantısı geçmişe iner', () => {
+    renderUi(<ContributionSummary summary={overview([]).summary} />);
+    expect(screen.getByText('Toplam puan').nextElementSibling).toHaveTextContent('12');
+    expect(screen.getByText('Bekleyen puan').nextElementSibling).toHaveTextContent('15');
+    expect(screen.getByText('Kurucu üye')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Puan geçmişine git' })).toHaveAttribute(
+      'href',
+      '#points-history',
+    );
+  });
+
+  it('yalnız geçmiş varyantı özeti ikinci kez çizmez', () => {
+    renderUi(<Contribution initial={overview([entry()])} list={vi.fn()} variant="history" />);
+    expect(screen.queryByText('Toplam puan')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Puan geçmişi' })).toBeVisible();
+    expect(screen.getByText('Deneyim yayınlandı')).toBeVisible();
+  });
+});
+
 describe('puan yönetimi (sistem yöneticisi)', () => {
+  it('kayıt yanıtı beklenirken kullanıcı değişmez; yanıt başka kişi altında çizilmez', async () => {
+    const gate = Promise.withResolvers<{
+      ok: true;
+      data: { items: PointEntryView[]; nextCursor: null };
+    }>();
+    const a = actions({ listEntries: vi.fn(() => gate.promise) });
+    renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Kayıt' }));
+    await pickPerson();
+    const change = screen.getByRole('button', { name: 'Başka kullanıcı seç' });
+    try {
+      fireEvent.click(change);
+      expect(screen.queryByLabelText(/Kullanıcı ara/)).not.toBeInTheDocument();
+      expect(change).toBeDisabled();
+    } finally {
+      gate.resolve({ ok: true, data: { items: [entry()], nextCursor: null } });
+    }
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Başka kullanıcı seç' })).toBeEnabled(),
+    );
+    expect(screen.getByText('Seçili kullanıcı').nextElementSibling).toHaveTextContent(
+      'Deniz Aksoy',
+    );
+  });
+
+  it('arama metni değişince eski sonuç ve eski imleçle daha fazla çağrısı kalmaz', async () => {
+    const a = actions({
+      searchUsers: vi.fn(async () => ({
+        ok: true as const,
+        data: { items: [person()], nextCursor: 'previous-query-cursor' },
+      })),
+    });
+    renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Kayıt' }));
+    fireEvent.change(screen.getByLabelText(/Kullanıcı ara/), { target: { value: 'deniz' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ara' }));
+    await screen.findByRole('button', { name: 'Seç: Deniz Aksoy' });
+    expect(screen.getByRole('button', { name: 'Daha fazla sonuç' })).toBeVisible();
+    fireEvent.change(screen.getByLabelText(/Kullanıcı ara/), { target: { value: 'selin' } });
+    expect(screen.queryByRole('button', { name: 'Daha fazla sonuç' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Seç: Deniz Aksoy' })).not.toBeInTheDocument();
+  });
+
+  it('arama sürerken metin değişip eski yanıtın yeni sorguyla karışması engellenir', async () => {
+    const gate = Promise.withResolvers<{
+      ok: true;
+      data: { items: AdminUserSummary[]; nextCursor: null };
+    }>();
+    const a = actions({ searchUsers: vi.fn(() => gate.promise) });
+    renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Kayıt' }));
+    const input = screen.getByLabelText(/Kullanıcı ara/);
+    fireEvent.change(input, { target: { value: 'deniz' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ara' }));
+    try {
+      expect(input).toBeDisabled();
+    } finally {
+      gate.resolve({ ok: true, data: { items: [], nextCursor: null } });
+    }
+    await waitFor(() => expect(input).toBeEnabled());
+  });
+
   it('kural değişikliği gerekçesiz gönderilmez; gerekçeyle sayılar sözleşmeye uygun gider', async () => {
     const a = actions();
     renderUi(<AdminPoints rules={[rule()]} flags={{ items: [], nextCursor: null }} actions={a} />);
@@ -242,11 +349,11 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Şüpheli' }));
     expect(screen.getAllByText('Deniz Aksoy').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Tek karşı tarafın payı: %90').length).toBeGreaterThan(0);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Onayla' })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Şüpheyi doğrula' })[0]!);
     fireEvent.change(dialog().getByLabelText(/Gerekçe/), {
       target: { value: 'Tek kişiden tekrar' },
     });
-    fireEvent.click(dialog().getByRole('button', { name: 'Onayla ve geri al' }));
+    fireEvent.click(dialog().getByRole('button', { name: 'Doğrula ve puanı geri al' }));
     await waitFor(() =>
       expect(a.decide).toHaveBeenCalledWith({
         flagId: 'f1',
@@ -267,10 +374,13 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
     });
     renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Kayıt' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Listele' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ara' }));
+    expect(screen.getByText('En az 2 karakter yaz.')).toBeVisible();
+    expect(a.searchUsers).not.toHaveBeenCalled();
     expect(a.listEntries).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByLabelText(/Kullanıcı kimliği/), { target: { value: 'u1' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Listele' }));
+    expect(screen.queryByLabelText(/kimliği/i)).not.toBeInTheDocument();
+    await pickPerson();
+    expect(a.searchUsers).toHaveBeenCalledWith(expect.objectContaining({ query: 'deniz' }));
     await waitFor(() => expect(a.listEntries).toHaveBeenCalledWith({ userId: 'u1' }));
     fireEvent.click((await screen.findAllByRole('button', { name: 'Puanı geri al' }))[0]!);
     fireEvent.change(dialog().getByLabelText(/Gerekçe/), { target: { value: 'Hatalı kayıt' } });
@@ -294,8 +404,7 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
     });
     renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Kayıt' }));
-    fireEvent.change(screen.getByLabelText(/Kullanıcı kimliği/), { target: { value: 'u1' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Listele' }));
+    await pickPerson();
     await screen.findAllByRole('button', { name: 'Puanı geri al' });
     // Satırlar mobil kart + masaüstü tablo olarak iki kez çizilir (`ResponsiveRows`): kayıt başına iki düğme.
     expect(screen.getAllByRole('button', { name: 'Puanı geri al' })).toHaveLength(2);
@@ -318,11 +427,13 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
     });
     renderUi(<AdminPoints rules={[]} flags={{ items: [flag()], nextCursor: null }} actions={a} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Şüpheli' }));
-    fireEvent.click(screen.getAllByRole('button', { name: 'Reddet' })[0]!);
-    expect(dialog().getByRole('button', { name: 'Reddet' })).not.toHaveClass('text-danger');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Şüpheyi kaldır' })[0]!);
+    expect(dialog().getByRole('button', { name: 'Kaldır, puan kalsın' })).not.toHaveClass(
+      'text-danger',
+    );
     fireEvent.click(dialog().getByRole('button', { name: 'Vazgeç' }));
-    fireEvent.click(screen.getAllByRole('button', { name: 'Onayla' })[0]!);
-    const confirm = dialog().getByRole('button', { name: 'Onayla ve geri al' });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Şüpheyi doğrula' })[0]!);
+    const confirm = dialog().getByRole('button', { name: 'Doğrula ve puanı geri al' });
     expect(confirm).toHaveClass('text-danger');
     fireEvent.change(dialog().getByLabelText(/Gerekçe/), { target: { value: 'Tekrarlı kayıt' } });
     fireEvent.click(confirm);
@@ -341,5 +452,25 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
     await waitFor(() => expect(a.backfill).toHaveBeenCalledWith({}));
     expect(await screen.findByRole('status')).toHaveTextContent('sıraya alındı');
     expect(screen.getByRole('button', { name: 'Hesaplamayı başlat' })).toBeDisabled();
+  });
+});
+
+describe('şüphe etiketleri ne onaylandığını söyler', () => {
+  it('düğmeler ve pencere sonucu açıkça yazar; belirsiz "Onayla/Reddet" kalmadı', () => {
+    const a = actions();
+    renderUi(<AdminPoints rules={[]} flags={{ items: [flag()], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Şüpheli' }));
+    expect(screen.queryByRole('button', { name: 'Onayla' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reddet' })).not.toBeInTheDocument();
+    expect(screen.getByText(/işarete bağlı puanlar geri alınır/)).toBeVisible();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Şüpheyi doğrula' })[0]!);
+    expect(dialog().getByText('Şüpheyi doğrula — puanı geri al')).toBeVisible();
+    expect(
+      dialog().getByText(/puanlar geri alınır ve bu puanlardan gelen rozet kaldırılır/),
+    ).toBeVisible();
+    fireEvent.click(dialog().getByRole('button', { name: 'Vazgeç' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Şüpheyi kaldır' })[0]!);
+    expect(dialog().getByText('Şüpheyi kaldır — puan kalsın')).toBeVisible();
+    expect(dialog().getByRole('button', { name: 'Kaldır, puan kalsın' })).toBeVisible();
   });
 });
