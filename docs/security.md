@@ -110,6 +110,14 @@ mezun belgesi onay/ret, rol düzeltme, askıya alma/kaldırma, moderasyon kararl
 şüphe kararı, yönetici atama/kaldırma, sözlük değişikliği, eşleşmeyen değer çözümü, dışa aktarma.
 Kayıt yalnız eklenir; kişisel veri içermez (yalnız kimlikler). Sistem yöneticisi panelden görür.
 
+### Kullanım metrikleri (P1-13)
+
+Olay yazımı kişisel veri taşımaz: `props` tür başına `strict` Zod şemasından geçer (enum/sayı/mantıksal; serbest metin yok,
+arama olayında süzgeç değeri ve sorgu metni asla), veritabanı CHECK'i ek ağdır. Panel ve Excel yalnız yönetici kapsamındaki
+bölümlerin olaylarını gösterir (`departmentId`/`facultyId` süzgeçleri yetki vermez); ayrı kullanıcı sayısı 3'ün altındaki
+hücreler gösterilmez. Anonim deneyim yayın olayı yazarla ilişkilendirilmez. Olay `userId`'si hesap silmede hemen, 24 ay sonra
+koparılır. Excel: yetki + saatte 10 sınırı + `DATA_EXPORT` kaydı (hedef `USAGE_METRICS`) tek işlemde; dosyada kişi satırı yok.
+
 ### Mentor dizini (P1-09)
 
 Dizin ve öneri yalnız doğrulanmış üyeye açıktır; kapsam (K-07) oturumdaki kullanıcıdan sunucuda çözülür. Askıdaki,

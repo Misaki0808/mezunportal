@@ -48,6 +48,10 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   yazımında `rules/profileCompletion` kuralından güncellenir. Kapasite doluluğu onaylı randevu sayacına bağlıdır: P1-10
   gelene kadar sayaç 0 (`services/mentor-load.ts`, P1-10 gerçek sayımı bağlar). Pilot sözlük başlangıç seti
   (sektör, unvan, beceri; şirket yok) seed'de. Ekran W2'de.
+- P1-13 kullanım metrikleri servisi: `Event` tablosu, tür başına strict `props` (kişisel veri yok), olay kancaları (giriş,
+  profil eşiği, CV yükle/uygula, deneyim yayın, arama, mentor arama/görüntüleme, iletişim talebi), kapsamlı panel sorgusu
+  (rol × bölüm, küçük hücre bastırma) ve Excel (`/api/yonetim/rapor/kullanim`) hazır. Randevu, SSS ve CV inceleme olayları
+  için yalnız tür var; kancalar o servisler main'e girince bağlanır. Ekran W2'de.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -129,6 +133,13 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).
   Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
   Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
+- [ ] **TD-014** · P2 · `Event` 24 ay saklama işi zamanlanmamış
+  Ne: `detachOldEvents` (userId → null) yazıldı ve testli; periyodik çalıştıran pg-boss işi yok.
+  Neden borç: 24 ayı geçen olaylar kullanıcıya bağlı kalır (hesap silmede bağ zaten hemen kopar).
+  Kapanış ölçütü: günlük zamanlı iş (`files.purge` ile birlikte) + worker kaydı.
+- [ ] **TD-015** · P2 · Randevu / SSS / CV inceleme kullanım olayları bağlanmadı
+  Ne: `APPOINTMENT_*`, `FAQ_*`, `CV_REVIEW_REQUESTED` olay türleri katalogda; ilgili servisler henüz main'de değil.
+  Kapanış ölçütü: servis main'e girince `emitEvent` kancaları eklenir (test: olay + kişisel veri yok).
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
   Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
   yerinde duruyor (hesap silme hâlâ eski satırları siler).

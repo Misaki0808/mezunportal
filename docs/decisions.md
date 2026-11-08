@@ -607,3 +607,14 @@ değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki y�
 Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
 kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 
+## 2026-11-08 · Kullanım metrikleri: kişisel veri içermeyen olay, bastırılmış panel (P1-13)
+Kendi `Event` tablomuz; üçüncü taraf analitik yok. Kişisel veri koruması üç katmanlıdır: tür başına `strict` Zod şeması (serbest
+metin alanı hiç yok, arama olayında yalnız süzgeç TÜRÜ ve sonuç kovası), veritabanı CHECK'i (düz nesne, kısa, `@`/uzun rakam
+yok) ve panelde küçük hücre bastırma (ayrı kullanıcı < 3 → `OTHER`, o da < 3 ise gizli). Olay yazımı işlem dışından, ateşle-ve-unut
+yapılır: başarısız ekleme açık işlemi bozmaz ve hata kullanıcı akışına yansımaz; profil eşiği olayı yazım işlemi bittikten sonra
+önceki/sonraki skor karşılaştırmasıyla bir kez yazılır. Rol ve bölüm olay anındaki birincil üyelikten (akademisyen > mezun >
+öğrenci) anlık görüntü olarak saklanır; sonradan rol değişse de geçmiş sayı kayar. Anonim deneyim yayın olayı kullanıcıya,
+role ve bölüme bağlanmaz (anonimlik sızmasın); sayısı yalnız toplamlarda görünür. Saklama: hesap silmede `userId` hemen,
+24 ay sonra `detachOldEvents` ile kopar (zamanlı iş TD-014). Panel kapsam yardımcıları yerel (`loadScope`); #32 `admin-access`
+main'e girince oraya bağlanır. Excel ExcelJS ile (#32 ile aynı sürüm), `DATA_EXPORT` kaydı hedefi `USAGE_METRICS`.
+
