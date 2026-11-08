@@ -335,7 +335,7 @@ it('inceleyici: kuyruk kesilince CV talebi ve kişisel verisiz niyet kalır; tel
     if (row.userId !== h.mentor) throw new Error('Başka örnek veri');
     delivered++;
   };
-  await relayNotificationIntents(db, send);
+  await relayNotificationIntents(db, send, { now: () => new Date(Date.now() + 60_000) });
   await relayNotificationIntents(db, send);
   expect(delivered).toBe(1);
   expect(await db.notificationIntent.count({ where: { userId: h.mentor } })).toBe(0);

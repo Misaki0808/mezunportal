@@ -742,6 +742,15 @@ Gün sonu müsaitliği sözleşmede 1440 dakikadır; yerel saat alanı 24:00 kab
 
 CV talep, yanıt ve süre dolumu bildirimleri #45'in niyet kaydını aynı veritabanı işleminde oluşturur. Hızlı kuyruk denemesi başarısız olsa da niyet kalır; ortak aktarım işi aynı iş anahtarıyla mevcut CV bildirim kapısına döner. Niyette yalnız talep kimliği ve olay türü bulunur; alıcı talebin taraflarıyla yeniden eşleştirilir, not/CV/e-posta kopyalanmaz. Metinleri ve CV dosyasını temizleyen hesap silme, artık bulunmayan talebin bekleyen bildirimini de gönderimsiz sonlandırır.
 
+### TD-017 — bildirim niyetinde sınırlı tekrar ve kalıcı hata
+
+Çözülemeyen davet dahil aktarım hataları beş denemeyle sınırlıdır; üstel bekleme niyetin kilitli
+işleminde saklanır ve kilitten sonra yeniden kontrol edilir. Son hatada yük temizlenir, sabit kodlu
+kalıcı hata kaydı tutulur ve operatör günlüğüne kişisel veri içermeyen tek uyarı yazılır. Bu işletim
+kaydı otomatik işin sonucudur; insan yönetici eylemi olarak kaydedilmez. Kalıcı hata aynı iş
+anahtarının tekrar sahnelenmesiyle canlanmaz; diğer niyetler ve hesap silme ilerler. Geçici kuyruk
+kesintilerinde aynı idempotency anahtarıyla teslim güvencesi korunur.
+
 ## 2026-11-08 · Puan motoru ve hile önleme (P1-16)
 
 **Yazım yolu.** Puan, olayı üreten işlemin DIŞINDA ve kendi işleminde yazılır (deneyim yayını, iki tarafın onayıyla `COMPLETED`

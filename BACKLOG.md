@@ -120,10 +120,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 ```
 
 ### Açık borçlar
-- [ ] **TD-017** · P2 · Çözülemeyen outbox niyeti için kalıcı hata durumu
-  Ne: Bekleyen şifreli davet niyetinin anahtarı değişirse içerik çözülemez.
-  Neden borç: Anahtar döndürme sonrasında niyet her aktarımda sonsuz yeniden denenir.
-  Kapanış ölçütü: Sınırlı deneme, kalıcı hata durumu ve kişisel veri içermeyen işlem kaydı uygulanır.
 
 - [ ] **TD-009** · P1 · CV doğruluk tablosu sahte adaptörle, gerçek LLM ile değil
   Ne: 5 sentetik örnek CV + ölçüm düzeneği (`src/test/cv-accuracy.ts`) hazır; sahte adaptörde sonuç hat
