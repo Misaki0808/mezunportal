@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import { parsedCvSchema } from '@/contracts/cv';
-import { cvKit, cvUser, grantTransferConsent, pdfForm } from '@/test/cv';
+import { cvKit, cvUser, grantTransferConsent, pdfForm, skillCount } from '@/test/cv';
 import { CV_SAMPLES } from '@/test/cv-samples';
 import { createTestPrisma } from '@/test/db';
 import { createFakeLlm } from '@/server/external/llm/fake';
@@ -31,7 +31,7 @@ const profileRows = (userId: string) =>
     db.position.count({ where: { userId } }),
     db.language.count({ where: { userId } }),
     db.certification.count({ where: { userId } }),
-    db.userSkill.count({ where: { userId } }),
+    skillCount(db, userId),
     db.unmatchedValue.count(),
   ]);
 
@@ -281,6 +281,10 @@ describe('processCvParse — çıktı doğrulaması (güvenilmeyen girdi)', () =
           ? Object.entries(value).flatMap(([key, inner]) => [key, ...keysOf(inner)])
           : [];
     const allowed = new Set([
+      'profile',
+      'headline',
+      'summary',
+      'city',
       'education',
       'positions',
       'skills',

@@ -28,6 +28,7 @@ const sample = (
   kind,
   pdf: { ...pdf, scenario: id },
   expected: {
+    profile: { headline: null, summary: null, city: null },
     education: [],
     positions: [],
     skills: [],

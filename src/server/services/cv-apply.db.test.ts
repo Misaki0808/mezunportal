@@ -5,7 +5,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import type { CvDecisionInput } from '@/contracts/cv';
 import { applyCvSchema, type ParsedCv } from '@/contracts/cv';
 import { isCodedError } from '@/lib/errors';
-import { cvKit, cvUser, pdfForm, type CvTestKit } from '@/test/cv';
+import { cvKit, cvUser, pdfForm, type CvTestKit, skillCount, skillLabels } from '@/test/cv';
 import { createTestPrisma } from '@/test/db';
 import { createFakeLlm } from '@/server/external/llm/fake';
 import { normalizeName } from '../rules/dictionary';
@@ -38,6 +38,7 @@ async function expectCode(promise: Promise<unknown>, code: string) {
 
 const suffix = () => randomUUID().slice(0, 8);
 const cv = (overrides: Partial<ParsedCv> = {}): ParsedCv => ({
+  profile: { headline: null, summary: null, city: null },
   education: [],
   positions: [],
   skills: [],
@@ -90,7 +91,7 @@ const counts = (userId: string) =>
     db.position.count({ where: { userId } }),
     db.language.count({ where: { userId } }),
     db.certification.count({ where: { userId } }),
-    db.userSkill.count({ where: { userId } }),
+    skillCount(db, userId),
   ]);
 
 describe('getCvReview', () => {
@@ -198,9 +199,7 @@ describe('applyCv — kullanıcı onayı olmadan yazılmaz', () => {
     expect(
       (await db.position.findMany({ where: { userId } })).map((row) => row.companyRaw),
     ).toEqual([companyA]);
-    expect((await db.userSkill.findMany({ where: { userId } })).map((row) => row.name)).toEqual([
-      'SQL',
-    ]);
+    expect(await skillLabels(db, userId)).toEqual(['SQL']);
     expect(await db.language.count({ where: { userId } })).toBe(0);
     expect(await counts(userId)).toEqual([0, 1, 0, 0, 1]);
   });
@@ -351,7 +350,7 @@ describe('applyCv — elle düzeltilen kalem sessizce ezilmez', () => {
     await applyCv(kit.deps, mine.actor, parseApply(id, accept(fresh)));
     const row = await db.position.findUniqueOrThrow({ where: { id: mine.rowId } });
     expect(row).toMatchObject({ titleRaw: 'Benim yazdığım unvan', manuallyEdited: true });
-    expect(await db.userSkill.count({ where: { userId: mine.userId } })).toBe(1);
+    expect(await skillCount(db, mine.userId)).toBe(1);
   });
 
   it('overwriteMine ile açıkça seçilirse YALNIZ değişen alanlar güncellenir; kalem korumalı kalır', async () => {
@@ -731,12 +730,12 @@ describe('Saklama kuralları', () => {
     kit.storage.failures.delete = true;
     await expect(applyCv(kit.deps, user.actor, input)).rejects.toBeDefined();
     kit.storage.failures.delete = false;
-    expect(await db.userSkill.count({ where: { userId: user.userId } })).toBe(1);
+    expect(await skillCount(db, user.userId)).toBe(1);
     expect((await db.cvUpload.findUniqueOrThrow({ where: { id: upload.id } })).status).toBe(
       'PARSED',
     );
     await applyCv(kit.deps, user.actor, input);
-    expect(await db.userSkill.count({ where: { userId: user.userId } })).toBe(3);
+    expect(await skillCount(db, user.userId)).toBe(3);
   });
 
   it('atma: çıktı temizlenir, dosya silinir; ikinci atma ve atılan CV’nin uygulanması CV_NOT_READY', async () => {
@@ -768,5 +767,184 @@ describe('Saklama kuralları', () => {
     await discardCv({ ...kit.deps, holds: [held as never] }, actor, id);
     expect(kit.storage.files.has(key)).toBe(true);
     expect((await db.cvUpload.findUniqueOrThrow({ where: { id } })).status).toBe('DISCARDED');
+  });
+});
+
+describe('PROFILE kalemi (başlık, özet, şehir)', () => {
+  const profileOf = (
+    headline: string | null,
+    summary: string | null = null,
+    city: string | null = null,
+  ) => ({
+    headline,
+    summary,
+    city,
+  });
+
+  it('boş profile NEW gelir; uygulanınca alanlar yazılır, profil açılır ve cvUpdatedAt işaretlenir', async () => {
+    const { userId, actor, kit, id } = await parsedUpload(
+      cv({ profile: profileOf('Veri Analisti', 'Kısa özet', 'İstanbul'), skills: ['SQL'] }),
+    );
+    const review = await getCvReview(kit.deps, actor, id);
+    const item = review.items.find((entry) => entry.section === 'PROFILE')!;
+    expect(item).toMatchObject({
+      status: 'NEW',
+      changedFields: ['headline', 'summary', 'city'],
+      current: null,
+    });
+    expect(await db.profile.findUnique({ where: { userId } })).toBeNull();
+    await applyCv(kit.deps, actor, parseApply(id, accept([item.key])));
+    const row = await db.profile.findUniqueOrThrow({ where: { userId } });
+    expect(row).toMatchObject({
+      headline: 'Veri Analisti',
+      summary: 'Kısa özet',
+      city: 'İstanbul',
+      manualFields: [],
+    });
+    expect(row.cvUpdatedAt).toBeInstanceOf(Date);
+  });
+
+  it('CV’de olmayan alan fark sayılmaz; aynı değer listelenmez', async () => {
+    const user = await cvUser(db);
+    await db.profile.create({ data: { userId: user.userId, headline: 'Aynı', city: 'Ankara' } });
+    const { actor, kit, id } = await parsedUpload(
+      cv({ profile: profileOf('aynı', null, null), skills: ['SQL'] }),
+      user,
+    );
+    const review = await getCvReview(kit.deps, actor, id);
+    expect(review.items.some((entry) => entry.section === 'PROFILE')).toBe(false);
+    expect(review.unchangedCount).toBe(1);
+  });
+
+  it('elle yazılan alan çakışmadır: açık seçim olmadan yazılmaz; hiç seçilmezse aynen kalır', async () => {
+    const user = await cvUser(db);
+    await db.profile.create({
+      data: {
+        userId: user.userId,
+        headline: 'Benim başlığım',
+        city: 'Ankara',
+        manualFields: ['headline'],
+      },
+    });
+    const { actor, kit, id } = await parsedUpload(
+      cv({ profile: profileOf('CV başlığı', null, 'İzmir'), skills: ['SQL'] }),
+      user,
+    );
+    const review = await getCvReview(kit.deps, actor, id);
+    const item = review.items.find((entry) => entry.section === 'PROFILE')!;
+    expect(item).toMatchObject({ status: 'CONFLICT', changedFields: ['headline', 'city'] });
+    await expectCode(
+      applyCv(kit.deps, actor, parseApply(id, accept([item.key]))),
+      'CV_CONFLICT_UNRESOLVED',
+    );
+    // Hiç seçmeden yalnız beceriyi uygula: profil değişmez.
+    const skill = review.items.find((entry) => entry.section === 'SKILL')!;
+    await applyCv(kit.deps, actor, parseApply(id, accept([skill.key])));
+    expect(await db.profile.findUniqueOrThrow({ where: { userId: user.userId } })).toMatchObject({
+      headline: 'Benim başlığım',
+      city: 'Ankara',
+    });
+  });
+
+  it('overwriteMine ile yazılır ve alan korumalı kalır; kullanıcı düzeltirse (values) alan elle yazılmış sayılır', async () => {
+    const user = await cvUser(db);
+    await db.profile.create({
+      data: { userId: user.userId, headline: 'Eski', manualFields: ['headline'] },
+    });
+    const first = await parsedUpload(cv({ profile: profileOf('Yeni CV başlığı') }), user);
+    const review = await getCvReview(first.kit.deps, user.actor, first.id);
+    const item = review.items[0]!;
+    await applyCv(
+      first.kit.deps,
+      user.actor,
+      parseApply(first.id, accept([item.key], { overwriteMine: true })),
+    );
+    expect(await db.profile.findUniqueOrThrow({ where: { userId: user.userId } })).toMatchObject({
+      headline: 'Yeni CV başlığı',
+      manualFields: ['headline'],
+    });
+
+    const clean = await cvUser(db);
+    const second = await parsedUpload(cv({ profile: profileOf(null, 'Özet', 'Bursa') }), clean);
+    const r2 = await getCvReview(second.kit.deps, clean.actor, second.id);
+    const it2 = r2.items[0]!;
+    if (it2.section !== 'PROFILE') throw new Error('beklenmeyen bölüm');
+    await applyCv(
+      second.kit.deps,
+      clean.actor,
+      parseApply(second.id, [
+        { key: it2.key, section: 'PROFILE', values: { ...it2.proposed, city: 'Düzeltilmiş' } },
+      ]),
+    );
+    expect(await db.profile.findUniqueOrThrow({ where: { userId: clean.userId } })).toMatchObject({
+      summary: 'Özet',
+      city: 'Düzeltilmiş',
+      manualFields: expect.arrayContaining(['city']),
+    });
+  });
+
+  it('elle düzenleme sonrası (updateProfileBasics yolu) yeni CV çakışma gösterir', async () => {
+    const user = await cvUser(db);
+    await db.profile.create({
+      data: { userId: user.userId, summary: 'Elle özet', manualFields: ['summary'] },
+    });
+    const { actor, kit, id } = await parsedUpload(
+      cv({ profile: profileOf(null, 'Farklı özet') }),
+      user,
+    );
+    expect((await getCvReview(kit.deps, actor, id)).items[0]).toMatchObject({
+      section: 'PROFILE',
+      status: 'CONFLICT',
+    });
+  });
+});
+
+describe('beceriler Tag (SKILL) olarak yazılır', () => {
+  it('sözlükteki beceri kurallı etiket olur; sözlükte yoksa kişisel etiket ve yönetici kuyruğu; yeniden uygulanınca çiftlenmez', async () => {
+    const tagName = suffix();
+    const canonical = `Python${tagName}`;
+    await db.skill.create({
+      data: { name: canonical, normalizedName: canonical.toLowerCase(), aliases: [] },
+    });
+    const custom = `ozelbeceri${tagName}`;
+    const user = await cvUser(db);
+    const first = await parsedUpload(cv({ skills: [canonical.toUpperCase(), custom] }), user);
+    const review = await getCvReview(first.kit.deps, user.actor, first.id);
+    await applyCv(
+      first.kit.deps,
+      user.actor,
+      parseApply(first.id, accept(review.items.map((item) => item.key))),
+    );
+    expect((await skillLabels(db, user.userId)).sort()).toEqual([canonical, custom].sort());
+    expect(
+      await db.tag.findFirstOrThrow({ where: { kind: 'SKILL', label: canonical } }),
+    ).toMatchObject({ curated: true });
+    expect(
+      await db.tag.findFirstOrThrow({ where: { kind: 'SKILL', label: custom } }),
+    ).toMatchObject({ curated: false });
+    expect(await db.unmatchedValue.count({ where: { kind: 'SKILL', rawValue: custom } })).toBe(1);
+
+    const second = await parsedUpload(
+      cv({ skills: [canonical, custom.toUpperCase(), `yeni${tagName}`] }),
+      user,
+      first.kit,
+    );
+    const r2 = await getCvReview(second.kit.deps, user.actor, second.id);
+    expect(
+      r2.items.map((item) => (item.section === 'SKILL' ? item.proposed.name : item.section)),
+    ).toEqual([`yeni${tagName}`]);
+    expect(r2.unchangedCount).toBe(2);
+  });
+
+  it('kullanıcının profilden eklediği beceri CV onayında yeniden önerilmez', async () => {
+    const user = await cvUser(db);
+    const name = `elle${suffix()}`;
+    const profile = await db.profile.create({ data: { userId: user.userId } });
+    const created = await db.tag.create({
+      data: { kind: 'SKILL', slug: name, label: name, curated: false },
+    });
+    await db.profileTag.create({ data: { profileId: profile.id, tagId: created.id } });
+    const { actor, kit, id } = await parsedUpload(cv({ skills: [name.toUpperCase()] }), user);
+    expect((await getCvReview(kit.deps, actor, id)).items).toEqual([]);
   });
 });

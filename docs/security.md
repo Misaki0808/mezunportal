@@ -187,6 +187,11 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
   çıktısından yazılmaz; modele araç/çağrı yetkisi verilmez.
 - **Yükleme denetimi içeriğe bakar:** şifreli PDF ve 6 sayfadan uzun PDF reddedilir; maliyet sınırları (5 MB,
   günlük hak, sağlayıcı harcama sınırı) sayfa sayımının sezgisel olmasını telafi eder.
+- **Başkasının profili:** görünürlük kararı `rules/visibility.ts` tablosundadır ve yanıt sunucuda süzülür: gizli
+  e-posta/telefon/sosyal bağlantı/LinkedIn alanının anahtarı bile yanıtta yoktur (rastgele işaretli sızıntı testi).
+  Hedef silinmiş/askıda/doğrulanmamışsa ya da bakanla ortak üniversite yoksa `RESOURCE_NOT_FOUND`. Sosyal bağlantılar
+  yalnız `https` ve izinli alan adlarıdır (`SOCIAL_LINK_HOSTS`); kimlik bilgisi, özel port, IP adresi ve benzer alan adı
+  reddedilir.
 - **Çıktı temizliği:** `ParsedCv` bilinmeyen alanları atar (rol/kullanıcı kimliği şemada yok), görünmez ve çift
   yönlü biçim karakterlerini siler, liste ve metin uzunluklarını sınırlar; saklı çıktı uygulamada yeniden
   doğrulanır. Veritabanı kısıtları da metin uzunluğu ve tarih tutarlılığını zorlar.

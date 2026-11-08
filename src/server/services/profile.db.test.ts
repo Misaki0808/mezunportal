@@ -35,7 +35,8 @@ async function person(role: 'STUDENT' | 'ALUMNI' | 'ACADEMIC' = 'STUDENT', entry
   return userId;
 }
 async function tag(kind: 'INTEREST' | 'GOAL' | 'SKILL' = 'INTEREST') {
-  return db.tag.create({ data: { kind, slug: unique('tag') } });
+  const slug = unique('tag');
+  return db.tag.create({ data: { kind, slug, ...(kind === 'SKILL' ? { label: slug } : {}) } });
 }
 const status = (state: Awaited<ReturnType<typeof getOnboardingState>>, step: string) =>
   state.steps.find((item) => item.step === step)?.status;
