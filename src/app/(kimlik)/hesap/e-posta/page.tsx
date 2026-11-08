@@ -48,7 +48,7 @@ export default async function EmailChangePage({
       {step ? (
         <Link
           href="/hesap"
-          className="press-control inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-5 font-semibold text-white"
+          className="press-control inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-5 font-semibold text-on-primary"
         >
           {t('back')}
         </Link>
