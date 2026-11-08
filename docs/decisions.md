@@ -856,3 +856,17 @@ için `contactUserId` döner (D7), moderatör kuyruğunda görünen ad vardır. 
 değerleri (`PointAction`, `PointSourceType`, `PointRevokeReason`, `NotificationType`, `EventType`) PostgreSQL'de kaldırılamaz (geri alma notu
 migration'da). (e) `PENDING` ilan son günü geçerse `EXPIRED` olur (kuyrukta bekletilmez). Hız sınırı: 30 günde 5 gönderim. Bildirim, servis ve
 ekran ayrı kartlardadır (bu PR yalnız sözleşme, şema ve migration).
+
+**Mezun ilanları: servis, D7 ve K-07 kararları (P2-04, kart 129).** (1) **D7 (PM):** `CONTACT_REQUEST` ilanında yazar kimliği okuyucuya HİÇ gitmez. `/iletisim-iste`
+önizlemesi görünen ad döndürdüğü için ilan→yazar adı sızardı (ayrıca uuid7 hesap zamanını sızdırır); bu yüzden `contactUserId` sözleşmeden
+kaldırıldı, iletişim talebi ilan üzerinden gider (`previewJobPostingContact`/`requestJobPostingContact`, girdi `jobPostingId`; sunucu yazarı çözer,
+mevcut `ContactRequest` kaydı/bildirimi/hız sınırı). Önizleme ilan başlığı/kurum gösterir, olumsuz durumların hepsi tek genel yanıttır; talep notuna
+"İlan: <başlık>" bağlamı eklenir; ad yalnız onayda açılır. Seçenekler: (a) uuid'siz takma ad — yeni tablo gerektirir; (b) mevcut `/iletisim-iste` — ad
+sızar; (c) seçilen: ilan üzerinden, sunucuda çözümleme. (2) **K-07 (PM):** başka üniversitenin bölümü `JobPostingDepartment`'a veritabanında
+bağlanabilir; kapı SERVİS katmanındadır (hedef bölümler ve kapsam bölümü yazarın üniversitesinden; gönderimde yeniden denetlenir, gerçek DB testi +
+mutasyon). Tetikleyici bilerek yok: mevcut modüllerle tutarlı (kapsam servis katmanında). (3) **Süzgeç:** `organizationName` yalnız sözlüğe bağlı OLMAYAN
+(serbest adlı) kurumu eşler; sözlük şirketi `companyId` ile seçilir, ikisi birlikte gönderilemez; süzgeç seçenekleri iki grubu ayrı satır verir. (4) **Puan:**
+yalnız yayınlanmış (`PUBLISHED`/`EXPIRED`) ilana; ay tavanı yazar başına advisory kilidiyle sıralanır; süre dolumu puanı geri almaz, çekme/kaldırma
+kesinleşmemiş puanı geri alır (`POSTING_WITHDRAWN`); `points.backfill` ilanı da işler. (5) **Süre dolumu:** `PENDING` ilan son günü geçerse
+`EXPIRED` olur; taslak ve reddedilmiş ilan dokunulmaz. (6) Hesap silme yazarın ilanlarını (hedef bölüm ve şikâyetleriyle) siler; veri dökümü yalnız kendi
+ilanlarını içerir.

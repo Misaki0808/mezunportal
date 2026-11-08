@@ -37,7 +37,7 @@ import {
   previewJobPostingContact,
   requestJobPostingContact,
 } from './job-posting-contact';
-import { runPointBackfill } from './points';
+import { awardForJobPosting, runPointBackfill } from './points';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -518,6 +518,22 @@ describe('ilan puanı: gecikme, aylık tavan, geri çekme', () => {
     });
     await closeJobPosting(deps, w.alumni, { postingId: id });
     expect((await pointsOf(w.alumni))[0]).toMatchObject({ status: 'FINAL' });
+  });
+
+  it('yalnız yayınlanmış (PUBLISHED/EXPIRED) ilana puan yazılır: taslak, bekleyen, reddedilen ve geri çekilen ilana yazılmaz', async () => {
+    const w = await world();
+    const pending = await submitted(w);
+    const closed = await published(w, w.academic);
+    await closeJobPosting(deps, w.academic, { postingId: closed });
+    await db.pointEntry.deleteMany({ where: { sourceId: closed } });
+    const d = await draft(w, w.alumni);
+    for (const id of [pending, closed, d.id, 'yok'])
+      expect(await awardForJobPosting({ db, now: () => NOW }, id), id).toBeNull();
+    expect(
+      await db.pointEntry.count({
+        where: { sourceType: 'JOB_POSTING', sourceId: { in: [pending, closed, d.id] } },
+      }),
+    ).toBe(0);
   });
 
   it('süre dolumu puanı geri almaz; geri doldurma (backfill) idempotenttir ve CLOSED ilana puan yazmaz', async () => {
