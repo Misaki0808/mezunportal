@@ -566,6 +566,12 @@ CV onayına başlık/özet/şehir kalemi eklendi (bağlantı ve iletişim bilgis
 çakışma olarak sorulur. "Reddet" ayrı eylem değildir: kalem için karar vermemek yazmamaktır (onaysız yazma yok).
 Tamamlama göstergesi okuma anında hesaplanır (ilk giriş adımları + başlık/şehir, eğitim, ≥ 3 beceri, uygulanmış CV).
 
+Kişisel beceri koruması yalnız yeni öneri ucunda değil ilk girişin eski SKILL liste ucunda da
+uygulanır. LinkedIn kullanıcı adı yüzde kodlaması çözüldükten sonra tek ad olarak doğrulanır;
+kodlanmış ayraç/kontrol ve bozuk/çift kodlama profil yolu olamaz. Beceri migration'ının geri
+alması önce yeni becerileri eski modele taşır, önceki kurallı etiket/bağları korur. Yeniden
+uygulama görünür adı kaybetmez ve kurallı etiketi kişisele düşürmez.
+
 ## 2026-11-08 · Yönetim yazımları yetki iptali ve hesap silmeyle sıralanır
 
 Askı ve üyelik düzeltmesi de atama/kaldırmanın aynı tavsiye kilidini alır; güncel yetki

@@ -146,7 +146,17 @@ export function normalizeLinkedinUrl(
   }
   const match = /^\/in\/([\p{L}\p{N}_%-]{3,100})\/?$/u.exec(parsed.url.pathname);
   if (!match?.[1]) return { ok: false, problem: 'PROFILE_LINK_INVALID' };
-  return { ok: true, url: `https://www.linkedin.com/in/${match[1]}` };
+  let username: string;
+  try {
+    username = decodeURIComponent(match[1]);
+  } catch {
+    return { ok: false, problem: 'PROFILE_LINK_INVALID' };
+  }
+  // Kodlanmış ayraç/kontrol ve çift kodlama kullanıcı adı olamaz; Unicode harfler korunur.
+  if (!/^[\p{L}\p{N}_-]{3,100}$/u.test(username)) {
+    return { ok: false, problem: 'PROFILE_LINK_INVALID' };
+  }
+  return { ok: true, url: `https://www.linkedin.com/in/${encodeURIComponent(username)}` };
 }
 
 const linkUrl = (check: (raw: string) => ReturnType<typeof normalizeLinkedinUrl>) =>

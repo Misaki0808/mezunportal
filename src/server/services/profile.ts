@@ -218,7 +218,7 @@ export async function listProfileTags(
     const { kind } = listProfileTagsSchema.parse(input);
     return {
       tags: await tx.tag.findMany({
-        where: { kind },
+        where: { kind, ...(kind === 'SKILL' ? { curated: true } : {}) },
         select: { id: true, kind: true, slug: true },
         orderBy: { slug: 'asc' },
       }),
