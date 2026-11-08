@@ -236,7 +236,8 @@
         "CAPACITY_FULL": "Mentorun bu ayki kapasitesi dolu.",
         "CV_REVIEW_DISABLED": "Bu mentor CV incelemesi yapmıyor.",
         "CV_REVIEW_MONTHLY_LIMIT": "Mentorun bu ayki CV inceleme sınırı doldu."
-      }
+      },
+      "appointment": "Randevu al"
     }
   },
   "gallery": {
@@ -1895,5 +1896,163 @@
     "more": "Daha fazla göster",
     "requestLink": "CV incelemesi iste",
     "backProfile": "Mentor profiline dön"
+  },
+  "appointments": {
+    "status": {
+      "REQUESTED": "Yanıt bekliyor",
+      "CONFIRMED": "Onaylandı",
+      "DECLINED": "Reddedildi",
+      "CANCELLED": "İptal edildi",
+      "EXPIRED": "Süresi doldu",
+      "COMPLETED": "Tamamlandı",
+      "NO_SHOW": "Gelinmedi"
+    },
+    "modes": {
+      "ONLINE": "Çevrimiçi",
+      "IN_PERSON": "Yüz yüze"
+    },
+    "weekdays": {
+      "1": "Pazartesi",
+      "2": "Salı",
+      "3": "Çarşamba",
+      "4": "Perşembe",
+      "5": "Cuma",
+      "6": "Cumartesi",
+      "7": "Pazar"
+    },
+    "settings": {
+      "eyebrow": "MENTOR AYARLARI",
+      "title": "Mentorluk ayarların",
+      "description": "Kapasiteni, görüşme süreni ve haftalık müsait saatlerini belirle. Öğrenciler yalnız seçtiğin saatlere talep gönderir.",
+      "notEligibleTitle": "Mentor olmak için henüz uygun değilsin",
+      "notEligibleDescription": "Mezunlar ve akademisyenler doğrudan, öğrenciler ise 3. sınıftan sonra ve yayınlanmış bir deneyimle mentor olabilir.",
+      "general": "Genel ayarlar",
+      "capacity": "Aylık görüşme kapasitesi",
+      "capacityHint": "Bir ayda onaylayabileceğin en fazla görüşme sayısı (1–40).",
+      "session": "Görüşme süresi",
+      "sessionOption": "{minutes} dakika",
+      "modes": "Görüşme biçimleri",
+      "inPersonNote": "Yüz yüze görüşme yeri",
+      "inPersonNoteHint": "Örneğin kampüste bir buluşma noktası. Yüz yüze seçiliyse zorunlu.",
+      "active": "Mentor listesinde görün",
+      "activeHint": "Kapalıyken mentor dizininde görünmez ve talep almazsın.",
+      "saveGeneral": "Ayarları kaydet",
+      "pause": "Müsait değilim",
+      "pauseHint": "Seçtiğin tarihe kadar yeni talep almazsın.",
+      "pauseUntil": "Şu tarihe kadar",
+      "pauseSave": "Kaydet",
+      "pausedNow": "{date} tarihine kadar yeni talep almıyorsun.",
+      "weekly": "Haftalık müsaitlik",
+      "weeklyHint": "Her gün için açıp saat aralıkları ekle. Saatler İstanbul saatidir.",
+      "dayOn": "{day} günü müsait",
+      "addRange": "Saat aralığı ekle",
+      "removeRange": "Aralığı sil",
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "rangeMode": "Biçim",
+      "rangeModeAny": "İkisi de",
+      "saveWeekly": "Müsaitliği kaydet",
+      "saved": "Kaydedildi.",
+      "summary": "Bu hafta {count} aralık açık.",
+      "errors": {
+        "capacity": "1 ile 40 arasında bir sayı gir.",
+        "modes": "En az bir görüşme biçimi seç.",
+        "note": "Yüz yüze için yer notu yaz.",
+        "order": "Bitiş, başlangıçtan sonra olmalı.",
+        "overlap": "Aynı gündeki aralıklar çakışamaz.",
+        "step": "Saatleri 5 dakikalık adımlarla gir.",
+        "pauseDate": "Geçerli bir tarih seç."
+      },
+      "midnightHint": "00:00, bu günün sonunu ifade eder."
+    },
+    "request": {
+      "eyebrow": "RANDEVU",
+      "title": "{name} ile randevu al",
+      "description": "Müsait bir gün ve saat seç. Mentor onaylayınca randevu kesinleşir.",
+      "pickDay": "Gün seç",
+      "pickTime": "Saat seç",
+      "timeLabel": "{time} saatini seç",
+      "timezone": "Saatler İstanbul saatidir.",
+      "mode": "Görüşme biçimi",
+      "place": "Buluşma yeri: {note}",
+      "note": "Mentora not (isteğe bağlı)",
+      "noteHint": "Ne konuşmak istediğini kısaca yaz. En fazla 500 karakter.",
+      "emailShared": "Randevu onaylanınca takvim daveti için e-posta adresin mentorla paylaşılır.",
+      "submit": "Randevu talep et",
+      "submitting": "Gönderiliyor…",
+      "chooseSlot": "Önce bir saat seç.",
+      "sent": "Talebin gönderildi",
+      "sentDescription": "Mentor 72 saat içinde yanıt vermezse ya da görüşmeye 12 saatten az kalırsa talep süresi dolar.",
+      "sentAction": "Randevularıma git",
+      "unavailable": {
+        "PAUSED": "Bu mentor şu an ara vermiş; yeni talep almıyor.",
+        "CAPACITY_FULL": "Bu mentorun bu ayki kapasitesi dolu.",
+        "NO_AVAILABILITY": "Bu mentor henüz müsait saat eklememiş."
+      },
+      "unavailableTitle": "Şu an randevu alınamıyor",
+      "back": "Mentorlara dön",
+      "noSlots": "Önümüzdeki 3 hafta için müsait saat yok."
+    },
+    "mine": {
+      "eyebrow": "RANDEVULARIM",
+      "title": "Randevularım",
+      "description": "Gelen talepleri yanıtla, istediğin randevuların durumunu izle.",
+      "tabs": {
+        "label": "Randevu türü",
+        "MENTOR": "Gelen",
+        "MENTEE": "Giden"
+      },
+      "emptyIncoming": "Gelen talep yok",
+      "emptyIncomingDescription": "Öğrenciler randevu istediğinde burada görünür.",
+      "emptyOutgoing": "Henüz randevu istemedin",
+      "emptyOutgoingDescription": "Bir mentor seçip müsait bir saat için talep gönder.",
+      "findMentor": "Mentor bul",
+      "open": "Aç",
+      "more": "Daha fazla göster",
+      "settings": "Mentor ayarlarım",
+      "expires": "Yanıt son tarihi: {date}"
+    },
+    "detail": {
+      "eyebrow": "RANDEVU",
+      "back": "Randevularım",
+      "with": "{name} ile",
+      "when": "Zaman",
+      "mode": "Biçim",
+      "location": "Yer",
+      "note": "Not",
+      "noteNone": "Not yazılmamış.",
+      "meet": "Görüşme bağlantısı",
+      "meetOpen": "Görüşmeye katıl",
+      "meetNone": "Bağlantı henüz yok.",
+      "linkNeeded": "Çevrimiçi görüşme bağlantısı oluşturulamadı. Bağlantıyı kendin ekleyebilirsin.",
+      "linkWaiting": "Mentor görüşme bağlantısını ekleyecek.",
+      "linkLabel": "Görüşme bağlantısı",
+      "linkHint": "https ile başlayan bir adres (örn. Meet, Zoom, Teams).",
+      "linkSave": "Bağlantıyı kaydet",
+      "confirm": "Onayla",
+      "decline": "Reddet",
+      "cancel": "Randevuyu iptal et",
+      "ics": "Takvime ekle (.ics)",
+      "capacityFull": "Bu ayki kapasiten dolu; onaylayamazsın.",
+      "expired": "Bu talebin yanıt süresi doldu.",
+      "declineTitle": "Talep reddedilsin mi?",
+      "declineDescription": "Gerekçe yazarsan talep edene gösterilir (isteğe bağlı).",
+      "declineReason": "Ret gerekçesi (isteğe bağlı)",
+      "declineConfirm": "Reddet",
+      "cancelTitle": "Randevu iptal edilsin mi?",
+      "cancelDescription": "İptal edilen randevu geri alınamaz. Karşı taraf bilgilendirilir.",
+      "cancelReason": "İptal nedeni (isteğe bağlı)",
+      "cancelConfirm": "Evet, iptal et",
+      "keep": "Vazgeç",
+      "cancelledBy": {
+        "MENTOR": "Mentor iptal etti",
+        "MENTEE": "Talep eden iptal etti",
+        "SYSTEM": "Süre dolduğu için kapandı"
+      },
+      "cancelReasonShown": "Neden: {reason}",
+      "expiresAt": "Yanıt son tarihi: {date}",
+      "done": "İşlem kaydedildi.",
+      "emailShared": "Takvim davetinde iki tarafın e-posta adresi paylaşılır."
+    }
   }
 }
