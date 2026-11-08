@@ -600,3 +600,10 @@ kilit sırası her yerde tür kilidi → satır kilididir. Silinen kayda bağlı
 onaylı); dosya bellekte üretilir, işlem kaydı ve hız sınırıyla aynı işlemdedir. Kullanıcı aramasında `LIKE` özel karakterleri
 kaçırılır (Prisma `contains` kaçırmaz).
 
+Panelde SKILL kullanım sayısı ve bağlama `Tag(SKILL)`/`ProfileTag` üzerinden yürür; eski
+`UserSkill` aktif kullanım sayılmaz. Profil yazımıyla aynı etiket anahtarı kullanılır; kişisel
+bağlar kurallı etikete çiftlemeden taşınır, yeniden adlandırma bağları korur, sözlük silinince
+kullanıcının metni kişisel beceri olarak kalır. Excel rotası sayfa kapısına güvenmez: yetki
+sonrası zorunlu onay transaction içinde, hız sayacı ve dosyadan önce doğrulanır. Audit okuması
+eski metadata'nın iç içe değer/anahtarlarında da kişisel veriyi gizler. Üyelikler yetki
+hesabından önce sunum amacıyla kesilmez; eski ama etkin kapsam üyeliği kaybolmamalıdır.

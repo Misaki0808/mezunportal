@@ -17,6 +17,7 @@ import {
   addMembership,
   createInstitution,
   createUser,
+  grantRequiredConsents,
   type Institution,
 } from '@/test/fixtures';
 
@@ -42,6 +43,7 @@ let inst: Institution;
 async function adminOf(scope: 'DEPARTMENT' | 'FACULTY' | 'SYSTEM', institution: Institution) {
   const userId = await createUser(db);
   await addMembership(db, { userId, departmentId: institution.deptA1, role: 'ACADEMIC' });
+  await grantRequiredConsents(db, userId);
   await addGrant(db, {
     userId,
     scope,

@@ -40,6 +40,7 @@ import {
 } from './admin-access';
 import { openUnmatchedWhere } from './admin-panel';
 import { recordAdminAction } from './audit';
+import { pruneOrphanSkillTags, skillTagIdentity } from './profile-skills';
 
 /**
  * Sözlük yönetimi ve eşleşmeyen değerler (P1-11; yalnız SİSTEM yöneticisi). Her değişiklik `DICTIONARY_CHANGE` /
@@ -145,14 +146,22 @@ async function usageCounts(
       }))
         add(group.titleId, group._count._all);
       break;
-    case 'SKILL':
-      for (const group of await tx.userSkill.groupBy({
-        by: ['skillId'],
-        where: { skillId: { in: ids } },
-        _count: { _all: true },
-      }))
-        add(group.skillId, group._count._all);
+    case 'SKILL': {
+      const skills = await tx.skill.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, name: true },
+      });
+      const tags = await tx.tag.findMany({
+        where: {
+          kind: 'SKILL',
+          slug: { in: skills.map((skill) => skillTagIdentity(skill.name).slug) },
+        },
+        select: { slug: true, _count: { select: { profiles: true } } },
+      });
+      const bySlug = new Map(tags.map((tag) => [tag.slug, tag._count.profiles]));
+      for (const skill of skills) add(skill.id, bySlug.get(skillTagIdentity(skill.name).slug) ?? 0);
       break;
+    }
     case 'SECTOR':
       for (const group of await tx.position.groupBy({
         by: ['sectorId'],
@@ -400,9 +409,13 @@ async function writeEntry(
     case 'TITLE':
       await tx.title.update({ where: { id }, data: { ...names, aliases } });
       return;
-    case 'SKILL':
+    case 'SKILL': {
+      const previous = await tx.skill.findUniqueOrThrow({ where: { id }, select: { name: true } });
       await tx.skill.update({ where: { id }, data: { ...names, aliases } });
+      if (names.name !== undefined)
+        await relinkSkillTag(tx, id, skillTagIdentity(previous.name).slug);
       return;
+    }
     case 'SECTOR':
       await tx.sector.update({ where: { id }, data: names });
       return;
@@ -457,9 +470,16 @@ async function deleteEntry(tx: Tx, kind: DictionaryKind, id: string) {
     case 'TITLE':
       await tx.title.delete({ where: { id } });
       return;
-    case 'SKILL':
+    case 'SKILL': {
+      const previous = await tx.skill.findUniqueOrThrow({ where: { id }, select: { name: true } });
       await tx.skill.delete({ where: { id } });
+      await tx.tag.updateMany({
+        where: { kind: 'SKILL', slug: skillTagIdentity(previous.name).slug },
+        data: { curated: false },
+      });
+      await pruneOrphanSkillTags(tx);
       return;
+    }
     case 'SECTOR':
       await tx.sector.delete({ where: { id } });
       return;
@@ -553,6 +573,41 @@ export async function listUnmatchedValues(
   });
 }
 
+/** Kişisel/önceki etiketi sözlüğün kurallı etiketine taşır; çift bağ ve eski öneri bırakmaz. */
+async function relinkSkillTag(tx: Tx, entryId: string, sourceSlug: string): Promise<number> {
+  // FK ile aynı satır: bağlar kopyalanırken eski etikete yeni bağ eklenip kaybolamaz.
+  await tx.$queryRaw`SELECT "id" FROM "Tag" WHERE "kind"='SKILL' AND "slug"=${sourceSlug} FOR UPDATE`;
+  const skill = await tx.skill.findUniqueOrThrow({
+    where: { id: entryId },
+    select: { name: true },
+  });
+  const source = await tx.tag.findUnique({
+    where: { kind_slug: { kind: 'SKILL', slug: sourceSlug } },
+    select: {
+      id: true,
+      curated: true,
+      profiles: { select: { profileId: true, createdAt: true, updatedAt: true } },
+    },
+  });
+  const identity = skillTagIdentity(skill.name);
+  const target = await tx.tag.upsert({
+    where: { kind_slug: { kind: 'SKILL', slug: identity.slug } },
+    create: { kind: 'SKILL', ...identity, curated: true },
+    update: { label: identity.label, curated: true },
+    select: { id: true },
+  });
+  if (!source) return 0;
+  if (source.id === target.id) return source.curated ? 0 : source.profiles.length;
+  if (source.profiles.length > 0)
+    await tx.profileTag.createMany({
+      data: source.profiles.map((link) => ({ ...link, tagId: target.id })),
+      skipDuplicates: true,
+    });
+  await tx.profileTag.deleteMany({ where: { tagId: source.id } });
+  await tx.tag.deleteMany({ where: { id: source.id, profiles: { none: {} } } });
+  return source.profiles.length;
+}
+
 /** Her çözümde taranacak en fazla boş-bağlı pozisyon sayısı (pilot ölçeği; aşılırsa kalanı sonraki CV ile bağlanır). */
 const RELINK_SCAN_LIMIT = 5000;
 
@@ -566,13 +621,7 @@ async function relinkProfileItems(
   entryId: string,
   normalizedValue: string,
 ): Promise<number> {
-  if (kind === 'SKILL') {
-    const result = await tx.userSkill.updateMany({
-      where: { skillId: null, normalizedName: normalizedValue },
-      data: { skillId: entryId },
-    });
-    return result.count;
-  }
+  if (kind === 'SKILL') return relinkSkillTag(tx, entryId, normalizedValue);
   if (kind !== 'COMPANY' && kind !== 'TITLE') return 0;
   const rawField = kind === 'COMPANY' ? 'companyRaw' : 'titleRaw';
   const linkField = kind === 'COMPANY' ? 'companyId' : 'titleId';
