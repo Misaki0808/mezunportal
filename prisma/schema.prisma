@@ -54,6 +54,7 @@ model Department {
   adminGrants         AdminGrant[]
   experiences         Experience[]
   graduationDocuments GraduationDocument[]
+  events              Event[]
 
   @@unique([facultyId, code])
   @@unique([facultyId, name])
@@ -148,6 +149,7 @@ model User {
   experiences          Experience[] @relation("ExperienceAuthor")
   moderatedExperiences Experience[] @relation("ExperienceModerator")
   reports              Report[]     @relation("ReportReporter")
+  events               Event[]
   reviewedReports      Report[]     @relation("ReportReviewer")
 }
 
@@ -931,4 +933,41 @@ model Report {
   @@index([targetId, status])
   @@index([status, createdAt])
   @@index([reporterId])
+}
+
+enum EventType {
+  LOGIN
+  PROFILE_THRESHOLD
+  CV_UPLOADED
+  CV_APPLIED
+  EXPERIENCE_PUBLISHED
+  SEARCH
+  MENTOR_SEARCH
+  MENTOR_VIEWED
+  APPOINTMENT_REQUESTED
+  APPOINTMENT_CONFIRMED
+  APPOINTMENT_COMPLETED
+  FAQ_REQUESTED
+  FAQ_PUBLISHED
+  CV_REVIEW_REQUESTED
+  CONTACT_REQUESTED
+}
+
+/// Kullanım metrikleri (P1-13). `props` KİŞİSEL VERİ taşımaz (Zod strict + veritabanı CHECK). `role` ve `departmentId`
+/// olay anındaki üyelik anlık görüntüsüdür. `userId` 24 ay sonra ve hesap silmede `null` yapılır; sayılar kalır.
+model Event {
+  id           String          @id @default(uuid(7))
+  type         EventType
+  userId       String?
+  role         MembershipRole?
+  departmentId String?
+  props        Json            @default("{}")
+  createdAt    DateTime        @default(now())
+
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+
+  @@index([type, createdAt])
+  @@index([departmentId, createdAt])
+  @@index([userId, createdAt])
 }
