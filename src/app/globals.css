@@ -117,3 +117,21 @@
     transform: scale(1.01);
   }
 }
+
+/* Yapışkan eylem çubuğu (form altında alt gezinmenin üstünde). Masaüstünde ve ekran klavyesi açıkken (KeyboardState)
+   akışa döner: klavye + gezinme + çubuk yazma alanını ezmez, eylemler formun sonunda kalır. */
+@utility sticky-actions {
+  position: sticky;
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  @media (min-width: 64rem) {
+    position: static;
+  }
+  :root[data-keyboard='open'] & {
+    position: static;
+  }
+}
+
+/* Ekran klavyesi açıkken alt gezinme gizlenir. */
+:root[data-keyboard='open'] [data-bottom-nav] {
+  display: none;
+}

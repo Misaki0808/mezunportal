@@ -121,7 +121,7 @@ export function VisibilityForm({ initial }: { initial: FieldVisibilitySettings }
           {t('unsaved')}
         </p>
       )}
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] rounded-control border border-border bg-bg p-3 shadow-card lg:static">
+      <div className="sticky-actions rounded-control border border-border bg-bg p-3 shadow-card">
         <Button type="submit" fullWidth loading={form.busy}>
           {form.busy ? common('saving') : common('save')}
         </Button>

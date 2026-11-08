@@ -32,6 +32,7 @@ import {
 } from './admin-access';
 import { recordAdminAction } from './audit';
 import { emitEvent } from './event';
+import { requireConsent } from './privacy';
 import { stageNotification } from './notification-intent';
 import { awardFaqInTx } from './points';
 
@@ -82,6 +83,7 @@ export async function listFaqModerationQueue(
 ): Promise<FaqModerationPage> {
   const parsed = listFaqModerationQueueSchema.parse(input);
   return readAsAdmin(deps, adminId, 'ANY_ADMIN', async ({ tx, departmentIds }) => {
+    await requireConsent(tx, adminId);
     const rows = await tx.faqRequest.findMany({
       where: {
         status: 'OPEN',
@@ -116,14 +118,29 @@ export async function publishFaq(
   let asker: string | null = null;
   const output = await deps.db.$transaction(async (tx) => {
     const admin = await loadAnyAdmin(tx, adminId, now);
+    await requireConsent(tx, adminId);
     const request = await requireOpenInScope(tx, admin, parsed.requestId);
     const selected = request.answers.find((answer) => answer.id === parsed.selectedAnswerId);
     if (!selected) throw codedNotFound('RESOURCE_NOT_FOUND');
+    const moderator = await tx.user.findUniqueOrThrow({
+      where: { id: adminId },
+      select: { name: true },
+    });
     const names = [
+      moderator.name,
       request.asker?.name,
       ...request.answers.map((answer) => answer.mentor?.name),
     ].filter((name): name is string => typeof name === 'string');
-    if (findIdentityLeak(parsed.question, names) || findIdentityLeak(parsed.answer, names))
+    const identifiers = [
+      adminId,
+      request.id,
+      request.askerId,
+      ...request.answers.flatMap((answer) => [answer.id, answer.mentorId]),
+    ].filter((id): id is string => typeof id === 'string');
+    if (
+      findIdentityLeak(parsed.question, names, identifiers) ||
+      findIdentityLeak(parsed.answer, names, identifiers)
+    )
       throw codedValidation('FAQ_IDENTITY_LEAK');
     const item = await tx.faqItem.create({
       data: {
@@ -184,6 +201,7 @@ async function decide(
   const now = nowOf(deps);
   return deps.db.$transaction(async (tx) => {
     const admin = await loadAnyAdmin(tx, adminId, now);
+    await requireConsent(tx, adminId);
     const request = await requireOpenInScope(tx, admin, requestId);
     await tx.faqRequest.update({
       where: { id: request.id },

@@ -2,7 +2,8 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 import type { MentorCard as MentorCardData } from '@/contracts/mentor-directory';
-import { Badge, buttonClasses } from '@/components/ui';
+import { Badge, buttonClasses, cn } from '@/components/ui';
+import { withReturnPath } from '@/lib/return-path';
 
 import type messages from '../../../messages/tr.json';
 
@@ -12,9 +13,12 @@ type TopicKey = keyof typeof messages.profileTags;
 export function MentorCard({
   mentor,
   compact = false,
+  returnTo,
 }: {
   mentor: MentorCardData;
   compact?: boolean;
+  /** Kartın bulunduğu sayfa (yol + sorgu): "İletişim iste" sayfasının geri bağlantısı buraya döner (`?donus=`). */
+  returnTo?: string;
 }) {
   const t = useTranslations('mentors');
   const tags = useTranslations('profileTags');
@@ -100,19 +104,55 @@ export function MentorCard({
         </>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Link className={buttonClasses({})} href={`/uye/${mentor.userId}`}>
-          {t('card.profile')}
-        </Link>
-        {!compact && (
-          <Link
-            className={buttonClasses({ variant: 'secondary' })}
-            href={`/iletisim-iste/${mentor.userId}`}
-          >
-            {t('card.contact')}
-          </Link>
-        )}
-      </div>
+      {/* Eylem önceliği: uygunluk açıksa birincil "Randevu iste" tam genişlikte, "Profili gör" ve "İletişim iste" altında iki eşit
+          sütunda ikincil; uygun değilse (ya da kompakt kartta) "Profili gör" birincildir. 360–390 px'te üç düğme düzgün iki satır. */}
+      {(() => {
+        const profileHref = `/uye/${mentor.userId}`;
+        const contactHref = withReturnPath(`/iletisim-iste/${mentor.userId}`, returnTo);
+        if (compact)
+          return (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link className={buttonClasses({})} href={profileHref}>
+                {t('card.profile')}
+              </Link>
+            </div>
+          );
+        if (availability.available)
+          return (
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Link
+                className={cn(buttonClasses({}), 'w-full sm:w-auto')}
+                href={`/randevu-al/${mentor.userId}`}
+              >
+                {t('card.appointment')}
+              </Link>
+              <div className="grid grid-cols-2 gap-2 sm:contents">
+                <Link
+                  className={cn(buttonClasses({ variant: 'secondary' }), 'w-full sm:w-auto')}
+                  href={profileHref}
+                >
+                  {t('card.profile')}
+                </Link>
+                <Link
+                  className={cn(buttonClasses({ variant: 'secondary' }), 'w-full sm:w-auto')}
+                  href={contactHref}
+                >
+                  {t('card.contact')}
+                </Link>
+              </div>
+            </div>
+          );
+        return (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link className={buttonClasses({})} href={profileHref}>
+              {t('card.profile')}
+            </Link>
+            <Link className={buttonClasses({ variant: 'secondary' })} href={contactHref}>
+              {t('card.contact')}
+            </Link>
+          </div>
+        );
+      })()}
     </article>
   );
 }

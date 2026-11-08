@@ -9,6 +9,8 @@ import { looksLikePersonalData } from './adminAudit';
 /** Türkçe katlama: İ→i, I→ı, aksanlar düşer; karşılaştırma büyük/küçük harf ve aksandan bağımsızdır. */
 export function foldTr(value: string): string {
   return value
+    .normalize('NFKC')
+    .replace(/\p{Cf}/gu, '')
     .replace(/İ/g, 'i')
     .replace(/I/g, 'ı')
     .toLowerCase()
@@ -32,14 +34,31 @@ export function nameTokens(names: readonly string[]): string[] {
  * Metin, verilen adlardan birini ("Ahmet", "Ahmet'e", "ahmete") ya da e-posta/telefon/kimlik numarası biçimini içeriyorsa
  * `true`. Ek almış biçim, 4+ harfli ad sözcüğü için önek eşleşmesiyle yakalanır.
  */
-export function findIdentityLeak(text: string, names: readonly string[]): boolean {
-  if (looksLikePersonalData(text)) return true;
-  const words = foldTr(text).match(WORD) ?? [];
-  return nameTokens(names).some((token) =>
-    words.some(
-      (word) => word === token || (token.length >= SUFFIX_MIN_LENGTH && word.startsWith(token)),
-    ),
-  );
+export function findIdentityLeak(
+  text: string,
+  names: readonly string[],
+  identifiers: readonly string[] = [],
+): boolean {
+  const normalized = foldTr(text);
+  if (looksLikePersonalData(normalized)) return true;
+  if (identifiers.some((id) => id.length > 0 && normalized.includes(foldTr(id)))) return true;
+  // İsim içine noktalama eklenmesi kelime bölerek denetimi aşmasın.
+  const words = [
+    ...(normalized.match(WORD) ?? []),
+    ...(normalized.replace(/[\p{P}\p{S}]+/gu, '').match(WORD) ?? []),
+  ];
+  return nameTokens(names).some((token) => {
+    if (
+      words.some(
+        (word) => word === token || (token.length >= SUFFIX_MIN_LENGTH && word.startsWith(token)),
+      )
+    )
+      return true;
+    if (token.length < SUFFIX_MIN_LENGTH) return false;
+    // Harfler arasına boşluk veya noktalama konarak adın bölünmesini de yakala.
+    const spaced = [...token].join('[\\s\\p{P}\\p{S}]*');
+    return new RegExp(`(?:^|[^\\p{L}\\p{N}])${spaced}`, 'u').test(normalized);
+  });
 }
 
 /** Talep/cevap metninde yayına girmeden önce reddedilen kişisel veri biçimleri (e-posta, telefon, kimlik numarası). */

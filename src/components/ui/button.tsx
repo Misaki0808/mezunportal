@@ -6,7 +6,7 @@ import type { ComponentProps, MouseEvent, ReactNode } from 'react';
 
 import { cn } from './cn';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-outline';
 export type ButtonSize = 'md' | 'lg';
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
@@ -14,6 +14,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   secondary: 'border border-border-control bg-bg text-fg hover:bg-surface-strong',
   ghost: 'bg-transparent text-primary hover:bg-primary-soft',
   danger: 'bg-danger text-on-danger hover:bg-danger-hover',
+  // Yıkıcı ama ikincil eylem (örn. listede "Sil"): çerçeve ve yazı tehlike renginde; onay penceresi birincil yıkıcı düğmedir.
+  'danger-outline': 'border border-danger bg-bg text-danger hover:bg-surface-strong',
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {

@@ -267,7 +267,10 @@ Her faz bitince kullanıcı telefondan test eder; faz içinde telefon testi yokt
    O aşamadan sonra telefonda test girişiyle rol hesaplarına girilir (giriş bağlantısı ve LinkedIn yerel adrese
    bağlı olduğu için telefonda test girişi kullanılır).
 4. “Ana ekrana ekle” ile uygulama gibi açılabilir.
-5. Kontrol listesi faz kapanış paketindedir (`faz-kapanis` skill'i).
+5. Gerçek cihazda ayrıca doğrulanır (tarayıcı turunda ekran klavyesi denenemez): form ekranlarında (deneyim yaz,
+   bildirim tercihleri, CV onayı) bir alana dokununca klavye açılırken alt gezinme gizlenmeli, eylem çubuğu formun
+   sonunda kalmalı ve klavye kapanınca eski düzene dönmelidir (`KeyboardState`, `docs/decisions.md` tur 2).
+6. Kontrol listesi faz kapanış paketindedir (`faz-kapanis` skill'i).
 
 Hocaya gösterim de aynı yolla, bilgisayardan ya da telefondan, sahte veriyle yapılır.
 
@@ -303,7 +306,13 @@ ve işletim kararı kullanıcıya aittir. Bu depo hesap açmaz veya dış servis
   5 işlem sınırı vardır. Kayıtlı adresler atlanır; işlem kaydında adres tutulmaz. Davet adresi
   bekleyen bildirim niyetinde şifreli tutulur, kuyruk kabulünde silinir; worker kesintiden sonra
   yeniden dener. Uygulama sırrını değiştirmeden önce bekleyen davetleri boşaltın; aksi halde eski
-  adresler çözülemez. SMTP teslimi ayrıca worker ve sağlayıcıya bağlıdır.
+  adresler çözülemez. Aktarım beş başarısız denemeyle sınırlıdır; aralarda 1, 2, 4, 8 dakika
+  bekler. Son deneme niyeti `FAILED` yapar ve yükü temizler; bu durum tekrar sahnelenince de
+  yeniden denenmez. Operatör `notification.intent: RETRY_EXHAUSTED` uyarısını izler; kalıcı
+  hata kaydında yalnız sabit hata kodu, deneme sayısı ve hata zamanı bulunur, sağlayıcı hata
+  metni veya şifreli yük yoktur. Yönetici nedeni giderdikten sonra gerekirse yeni davet gönderir;
+  önceki kayıt otomatik canlandırılmaz. Hesap silme kalıcı hatalı niyetleri de kaldırır.
+  SMTP teslimi ayrıca worker ve sağlayıcıya bağlıdır.
 
 ## Git ve PR
 

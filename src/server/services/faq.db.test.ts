@@ -368,6 +368,51 @@ describe('mentor cevapları', () => {
   });
 });
 
+describe('inceleyici: yayında moderatör ve parçalanmış kimlikler', () => {
+  it('moderatör adı, görünmez karakterle bölünmüş ad ve katılımcı kimliği reddedilir', async () => {
+    const w = await world();
+    const r = await requestWithAnswers(w);
+    for (const leak of [
+      'Moderatör önerdi',
+      'Bu\u200brak önerdi',
+      w.student,
+      w.mentorA,
+      w.moderator,
+      r.requestId,
+      r.answerA,
+      r.answerB,
+    ]) {
+      expect(
+        await code(publishFaq(deps, w.moderator, { ...publishInput(r), answer: `Yanıt: ${leak}` })),
+      ).toBe('FAQ_IDENTITY_LEAK');
+    }
+    expect((await db.faqRequest.findUniqueOrThrow({ where: { id: r.requestId } })).status).toBe(
+      'OPEN',
+    );
+  });
+});
+
+describe('inceleyici: rızasız moderatör', () => {
+  it('doğrudan kuyruk, yayın, ret ve yönlendirme çağrıları reddedilir', async () => {
+    const w = await world();
+    const r = await requestWithAnswers(w);
+    const admin = await createUser(db, { name: 'Rızasız Görevli' });
+    await addMembership(db, { userId: admin, role: 'ACADEMIC', departmentId: w.inst.deptA1 });
+    await addGrant(db, { userId: admin, scope: 'DEPARTMENT', departmentId: w.inst.deptA1 });
+    expect(await code(listFaqModerationQueue(deps, admin, {}))).toBe('CONSENT_REQUIRED');
+    expect(await code(publishFaq(deps, admin, publishInput(r)))).toBe('CONSENT_REQUIRED');
+    expect(
+      await code(rejectFaq(deps, admin, { requestId: r.requestId, reason: 'Uygun değil' })),
+    ).toBe('CONSENT_REQUIRED');
+    expect(
+      await code(redirectFaq(deps, admin, { requestId: r.requestId, note: 'Mentorla görüş' })),
+    ).toBe('CONSENT_REQUIRED');
+    expect((await db.faqRequest.findUniqueOrThrow({ where: { id: r.requestId } })).status).toBe(
+      'OPEN',
+    );
+  });
+});
+
 describe('moderasyon: yayın', () => {
   it('kuyruk kapsamlıdır ve kimliksizdir; yayın düzenlenmiş metni yazar, puanlar 2/5/1 ve tek kez yazılır', async () => {
     const w = await world();
@@ -763,6 +808,28 @@ describe('puan geri doldurma, hesap silme ve veri dökümü', () => {
     expect(mentor.faq.answers).toHaveLength(1);
     expect(mentor.faq.answers[0]).toMatchObject({ id: r.answerB, isSelected: false });
     expect(JSON.stringify(mentor.faq)).not.toContain(w.student);
+  });
+
+  it('moderatör hesabını silince SSS karar ve yayın kayıtlarındaki kimlik bağı kopar', async () => {
+    const w = await world();
+    const r = await requestWithAnswers(w);
+    const { faqItemId } = await publishFaq(deps, w.moderator, publishInput(r));
+    const { email } = await db.user.findUniqueOrThrow({
+      where: { id: w.moderator },
+      select: { email: true },
+    });
+    await deleteAccount(
+      db,
+      w.moderator,
+      { publishedContent: 'DELETE', confirmEmail: email },
+      { removeStoredFiles: null },
+    );
+    expect(
+      (await db.faqRequest.findUniqueOrThrow({ where: { id: r.requestId } })).decidedById,
+    ).toBeNull();
+    expect(
+      (await db.faqItem.findUniqueOrThrow({ where: { id: faqItemId } })).publishedById,
+    ).toBeNull();
   });
 
   it('soran hesabını silince açık talebi silinir, yayınlanmışın bağı kopar ve yayın kalır', async () => {

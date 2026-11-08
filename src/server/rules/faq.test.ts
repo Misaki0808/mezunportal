@@ -44,6 +44,15 @@ describe('findIdentityLeak', () => {
     expect(findIdentityLeak('kimlik 12345678901', [])).toBe(true);
     expect(findIdentityLeak('CV için hangi sertifikalar işe yarar', [])).toBe(false);
   });
+  it('görünmez karakter, birleşik aksan ve kullanıcı kimliğiyle saklama girişimini yakalar', () => {
+    expect(findIdentityLeak('Bu\u200brak önerdi', ['Burak Soylu'])).toBe(true);
+    expect(findIdentityLeak('Bu-rak önerdi', ['Burak Soylu'])).toBe(true);
+    expect(findIdentityLeak('Bu rak önerdi', ['Burak Soylu'])).toBe(true);
+    expect(findIdentityLeak('B u r a k önerdi', ['Burak Soylu'])).toBe(true);
+    expect(findIdentityLeak('Moderato\u0308r dedi', ['Moderatör Hoca'])).toBe(true);
+    expect(findIdentityLeak('ilgili: abc123-4def', [], ['abc123-4def'])).toBe(true);
+    expect(findIdentityLeak('staj başvurusu', ['Burak Soylu'], ['abc123-4def'])).toBe(false);
+  });
   it('kısa (3 harf) ad yalnız tam eşleşmeyle yakalanır', () => {
     expect(findIdentityLeak('Ali ile konuştum', ['Ali Veli'])).toBe(true);
     expect(findIdentityLeak('alım satım işlemleri', ['Ali Veli'])).toBe(false);

@@ -103,7 +103,7 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
             {errors(error)}
           </p>
         )}
-        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto bg-bg pt-5 pb-2 lg:static">
+        <div className="sticky-actions z-20 mt-auto bg-bg pt-5 pb-2">
           <Button type="submit" fullWidth size="lg" loading={pending}>
             {pending ? t('saving') : t('save')}
           </Button>
