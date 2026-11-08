@@ -1,6 +1,7 @@
 import type { PrismaClient } from '../src/generated/prisma/client';
 import { seedAccounts } from './seed-accounts';
 import { seedDictionary } from './seed-dictionary';
+import { seedFeedback } from './seed-feedback';
 import { seedInstitutions } from './seed-institutions';
 import { seedProfileTags } from './seed-profile-tags';
 
@@ -23,6 +24,7 @@ export const SEED_MODULES = [
   { name: 'accounts', run: seedAccounts },
   { name: 'profileTags', run: seedProfileTags },
   { name: 'dictionary', run: seedDictionary },
+  { name: 'feedback', run: seedFeedback },
 ] as const;
 
 export async function runSeedModules(prisma: PrismaClient) {
