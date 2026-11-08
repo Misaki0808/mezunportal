@@ -272,7 +272,10 @@
       "SEEKER_HIRING_DECLARATION_REQUIRED": "Aday aramak için profilinde \"işe alım yapıyorum\" beyanını açmalısın.",
       "JOB_POSTING_TARGET_INVALID": "Hedef bölümler en az bir, en çok on tane ve kendi üniversiten içinden olmalı.",
       "FAQ_IDENTITY_WARNING": "Bu sözcükler bir katılımcının adıyla başlıyor: {matches}. Kişisel bilgi değilse onaylayıp yayımla.",
-      "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin."
+      "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin.",
+      "REFERRAL_NOT_ELIGIBLE": "Yalnız onaylı iletişim kurduğun veya tamamlanmış görüşmen olan öğrenciyi seçebilirsin.",
+      "REFERRAL_INVALID_STATE": "Referansın durumu bu işleme uygun değil.",
+      "REFERRAL_CANCEL_WINDOW_CLOSED": "Bu referansın iptal süresi doldu."
     }
   },
   "nav": {
@@ -1665,7 +1668,8 @@
       "usageMetrics": "Kullanım",
       "points": "Puan yönetimi",
       "faq": "SSS moderasyonu",
-      "jobPostings": "İlan inceleme"
+      "jobPostings": "İlan inceleme",
+      "referrals": "Referans inceleme"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1681,7 +1685,8 @@
       "usageMetrics": "Toplu kullanım raporunu incele.",
       "points": "Puan kurallarını, kayıtları ve şüpheli işaretleri yönet.",
       "faq": "SSS taleplerini incele, yayımla, reddet ya da mentorluğa yönlendir.",
-      "jobPostings": "Topluluğun paylaştığı ilanları incele."
+      "jobPostings": "Topluluğun paylaştığı ilanları incele.",
+      "referrals": "Referans ve işe kabul beyanlarını incele."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1804,6 +1809,7 @@
         "EXPERIENCE": "Deneyim",
         "FAQ_REQUEST": "SSS talebi",
         "JOB_POSTING": "İlan",
+        "REFERRAL": "Referans",
         "POINT_ENTRY": "Puan kaydı",
         "POINT_RULE": "Puan kuralı",
         "SUSPICION_FLAG": "Şüphe kaydı",
@@ -2019,6 +2025,10 @@
         "label": "CV incelemeleri",
         "description": "CV inceleme talepleri, yanıtları ve süre dolumu."
       },
+      "REFERRAL": {
+        "label": "Referanslar",
+        "description": "Referans ve kabul sürecindeki kararlar."
+      },
       "JOB_MATCH": {
         "label": "İlan eşleşmeleri",
         "description": "Profiline uyan ilanların özeti."
@@ -2038,6 +2048,8 @@
       "faqRedirectedText": "Sorun herkese açık bir soru olmadığı için bir mentorla görüşmeni öneriyoruz. Ayrıntı için: {url}",
       "faqAnswerPublishedSubject": "Cevabın SSS'de kullanıldı",
       "faqAnswerPublishedText": "Yazdığın cevap sık sorulan sorulara katkı sağladı. Görüntüle: {url}",
+      "referralUpdatedSubject": "Referansın hakkında",
+      "referralUpdatedText": "Referans akışında bir güncelleme var. Ayrıntı için: {url}",
       "jobPostingPublishedSubject": "İlanın yayınlandı",
       "jobPostingPublishedText": "Verdiğin ilan incelendi ve yayınlandı; öğrenciler artık görebilir. Görüntüle: {url}",
       "jobPostingRejectedSubject": "İlanın hakkında",
@@ -2375,7 +2387,9 @@
       "JOB_POSTING_PUBLISHED": "İlanın yayınlandı",
       "CV_REVIEW_HELPFUL": "CV incelemen faydalı bulundu",
       "SESSION_ONLINE": "Çevrimiçi görüşme",
-      "SESSION_IN_PERSON": "Yüz yüze görüşme"
+      "SESSION_IN_PERSON": "Yüz yüze görüşme",
+      "REFERRAL_GIVEN": "Referans onaylandı",
+      "REFERRAL_ACCEPTED": "Referansla kabul onaylandı"
     },
     "status": {
       "PENDING": "Bekliyor",
@@ -2385,7 +2399,8 @@
     "revoked": {
       "ADMIN_CANCEL": "Yönetici iptal etti",
       "FRAUD_CONFIRMED": "Kuralları ihlal eden işlem olarak doğrulandı",
-      "POSTING_WITHDRAWN": "İlan kesinleşmeden geri çekildi ya da kaldırıldı"
+      "POSTING_WITHDRAWN": "İlan kesinleşmeden geri çekildi ya da kaldırıldı",
+      "REFERRAL_CANCELLED": "Referans geri çekildi"
     },
     "admin": {
       "title": "Puan yönetimi",
@@ -2434,7 +2449,9 @@
       "rules": {
         "BURST": "Kısa sürede çok puan",
         "SINGLE_COUNTERPART": "Puanların çoğu tek kişiden",
-        "SYNC_FEEDBACK": "Aynı dakikada karşılıklı onay"
+        "SYNC_FEEDBACK": "Aynı dakikada karşılıklı onay",
+        "REFERRAL_REPEAT": "Aynı öğrenciye tekrarlanan referans",
+        "REFERRAL_BURST": "Kısa sürede çok referans"
       },
       "detailCounts": "{entries} kayıt · {points} puan",
       "detailShare": "Tek karşı tarafın payı: %{percent}",
@@ -2867,5 +2884,52 @@
     "share": "Deneyim paylaş",
     "tab": "Mülakat",
     "link": "Mülakat sorularını keşfet"
+  },
+  "referrals": {
+    "title": "Referanslarım",
+    "description": "Referans beyanlarını ve onay durumlarını buradan takip et.",
+    "create": "Referans verdim",
+    "createTitle": "Referans verdiğini bildir",
+    "createDescription": "Yalnız onaylı iletişim kurduğun veya görüşmeni tamamladığın öğrenciyi seçebilirsin.",
+    "student": "Öğrenci",
+    "choose": "Seçiniz",
+    "organization": "Kurum adı",
+    "note": "Kısa not",
+    "noteHint": "Telefon, e-posta, kimlik bilgisi gibi kişisel verileri yazma.",
+    "send": "Beyan gönder",
+    "empty": "Henüz gösterilecek referans yok.",
+    "emptyCandidates": "Şu anda seçebileceğin öğrenci yok. Önce bir iletişim isteği veya görüşme tamamla.",
+    "moderationTitle": "Referans inceleme",
+    "moderationDescription": "Öğrenci ve mezunun beyanlarını incele.",
+    "approve": "Onayla",
+    "reject": "Reddet",
+    "cancel": "Beyanı iptal et",
+    "acceptance": "İşe kabul edildim",
+    "reason": "Ret gerekçesi",
+    "reasonHint": "Ret için gerekçe zorunludur; kişisel veri yazma.",
+    "acceptanceNote": "Kabul hakkında kısa not",
+    "studentLabel": "Öğrenci",
+    "alumniLabel": "Mezun",
+    "sent": "İşlem tamamlandı.",
+    "loadMore": "Daha fazla göster",
+    "status": {
+      "PROPOSED": "Öğrenci onayı bekleniyor",
+      "STUDENT_CONFIRMED": "Yönetici onayı bekleniyor",
+      "APPROVED": "Onaylandı",
+      "REJECTED": "Reddedildi",
+      "CANCELLED": "İptal edildi",
+      "ACCEPTED_PROPOSED": "Mezun onayı bekleniyor",
+      "ACCEPTED_ALUMNI_CONFIRMED": "Kabul için yönetici onayı bekleniyor",
+      "ACCEPTED_APPROVED": "İşe kabul onaylandı",
+      "ACCEPTED_REJECTED": "İşe kabul reddedildi"
+    },
+    "profileCount": "Referans verdi: {count}",
+    "accountDescription": "Beyanlarını ve bekleyen onaylarını gör.",
+    "posting": "İlan (isteğe bağlı)",
+    "noPosting": "İlan seçmeden kurum adı gir",
+    "cancelConfirm": "Beyanı iptal etmek istediğinden emin misin? Bekleyen puanlar geri alınır.",
+    "goBack": "Vazgeç",
+    "reviewApproveConfirm": "Bu beyanı onaylamak istiyor musun?",
+    "reviewRejectConfirm": "Bu beyanı reddetmek istiyor musun? Gerekçe taraflara gösterilir."
   }
 }

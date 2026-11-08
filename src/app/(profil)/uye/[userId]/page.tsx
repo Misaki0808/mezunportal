@@ -1,3 +1,6 @@
+import { getTranslations } from 'next-intl/server';
+import { getDb } from '@/server/db';
+import { Badge } from '@/components/ui';
 import { MentorEntryPoints } from '@/components/mentors/mentor-entry-points';
 import { getMentorEntryPoints } from '@/server/actions/mentor-directory';
 import { ProfileView } from '@/components/profile/profile-view';
@@ -19,8 +22,21 @@ export default async function MemberProfilePage({
     getMentorEntryPoints({ userId }).catch(() => null),
     getCvReviewAvailability({ mentorId: userId }).catch(() => null),
   ]);
+  const [count, t] = await Promise.all([
+    getDb().referralClaim.count({
+      where: {
+        alumnusId: userId,
+        approvedAt: { not: null },
+        status: { notIn: ['CANCELLED', 'REJECTED'] },
+      },
+    }),
+    getTranslations('referrals'),
+  ]);
   return (
     <>
+      <div className="mx-auto max-w-2xl px-5 pt-4">
+        <Badge>{t('profileCount', { count })}</Badge>
+      </div>
       <ProfileView profile={result.data} />
       {entry?.ok && (
         <div className="mx-auto max-w-2xl px-5 pb-28">
