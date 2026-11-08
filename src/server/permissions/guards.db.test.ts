@@ -376,6 +376,27 @@ describe('requireAdmin / requireModerator', () => {
     },
   );
 
+  it.each([
+    ['deptAdminA1', 'OK'],
+    ['deptAdminA2', 'OK'],
+    ['facultyAdminA', 'OK'],
+    ['systemAdmin', 'OK'],
+    ['revokedAdmin', 'F'],
+    ['student', 'F'],
+    ['mentor', 'F'],
+    ['noMembership', 'F'],
+    ['unverifiedAdmin', 'V'],
+    ['adminWithoutMembership', 'V'],
+    ['suspendedAdmin', 'S'],
+    ['deleted', 'U'],
+    ['anonymous', 'U'],
+    ['vanished', 'U'],
+  ] as const)('requireAnyAdmin: %s → %s', async (persona, expected) => {
+    expect(await as(persona, () => outcome(() => permissions.requireAnyAdmin()))).toBe(
+      CODE[expected],
+    );
+  });
+
   it('var olmayan bölüm, yetkisiz kullanıcının aldığı yanıtın aynısını verir (kimlik avı yok)', async () => {
     const missing = () => permissions.requireAdmin({ kind: 'DEPARTMENT', departmentId: 'yok-yok' });
     const uncovered = () =>

@@ -64,7 +64,17 @@
       "EXPERIENCE_NOT_PENDING": "Bu deneyim artık moderasyon beklemiyor. Listeyi yenile.",
       "EXPERIENCE_NOT_PUBLISHED": "Yalnız yayınlanmış deneyimleri şikâyet edebilirsin.",
       "REPORT_ALREADY_OPEN": "Bu deneyim için açık bir şikâyetin var. Yeni şikâyet göndermene gerek yok.",
-      "REPORT_NOT_OPEN": "Bu şikâyet daha önce sonuçlandırılmış. Listeyi yenile."
+      "REPORT_NOT_OPEN": "Bu şikâyet daha önce sonuçlandırılmış. Listeyi yenile.",
+      "ADMIN_SELF_ACTION": "Bu işlemi kendi hesabın ya da kendi yetkin üzerinde yapamazsın.",
+      "ADMIN_TARGET_PRIVILEGED": "Yönetici yetkisi olan bir kullanıcı üzerinde bu işlemi yalnız sistem yöneticisi yapabilir.",
+      "USER_ALREADY_SUSPENDED": "Bu kullanıcı zaten askıda.",
+      "USER_NOT_SUSPENDED": "Bu kullanıcı askıda değil.",
+      "MEMBERSHIP_CORRECTION_INVALID": "Üyelik düzeltmesi geçersiz. Bölümü, rolü ve yılları kontrol et.",
+      "ADMIN_GRANT_EXISTS": "Bu kullanıcının bu kapsamda zaten yönetici yetkisi var.",
+      "ADMIN_GRANT_NOT_ACTIVE": "Bu yönetici yetkisi zaten kaldırılmış.",
+      "ADMIN_LAST_SYSTEM_GRANT": "Son sistem yöneticisi yetkisi kaldırılamaz.",
+      "DICTIONARY_ENTRY_EXISTS": "Bu ada sahip bir kayıt zaten var.",
+      "UNMATCHED_NOT_OPEN": "Bu değer için karar zaten verilmiş."
     }
   },
   "nav": {

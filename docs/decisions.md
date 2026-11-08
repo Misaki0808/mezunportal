@@ -473,8 +473,6 @@ Yayın/ret kararına ait alanlar SQL CHECK'le birlikte tutulur; yayınlama yetki
 servis kartında zorlanır. CV davetinin isteğe bağlı Position kimliği yalnız girdidedir; sahipliği
 P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK'sı P1-08'e bırakıldı.
 
-
-
 ## 2026-11-08 · Deneyim servisi: anonim çıktı, atomik moderasyon ve K-09
 
 Detay, deneyimlerim ve moderasyon kuyruğu tek kapalı çıktı dönüştürücüsünden geçer; anonim yazar
@@ -497,3 +495,21 @@ sonuç/yeniden deneme yalnız o nesli günceller. Hata temizliği satırı kilit
 kontrol etmeden PDF silmez: eski işin geç hatası yeni PARSED/APPLIED dosyasını yok edemez. Onaylanan
 ad düzeltmeleri mevcut eğitim/dil/sertifika kalemlerine de uygulanır; CV yazımı User kilidi altında
 kanonik askı/silinme kontrolünü yeniden yapar. Çıktı üst sınırı UTF-8 baytlarıyla ölçülür.
+
+## 2026-11-08 · Yönetim paneli: kapsam, askı ve toplu rapor kuralları
+Askıya alma Better Auth ban alanlarına yazılır ama eklentinin HTTP ucu kapalı olduğundan kendi servisimiz yazar (oturumlar
+aynı işlemde silinir). Askı hesap geneli olduğu için hedefin bütün etkin üyelikleri yöneticinin kapsamında olmalıdır; aksi
+halde yalnız sistem yöneticisi yapar. Yetkili kullanıcıyı yalnız sistem yöneticisi askıya alır (bölüm yöneticisi
+üstünü susturamasın), kimse kendi hesabı/yetkisi üzerinde işlem yapamaz ve son sistem yetkisi kaldırılamaz. Mezun
+istihdam raporu ve Excel yalnız toplu sayı verir: kişi satırı yok, yalnız sözlükle eşleşen adlar, üç kişiden küçük
+gruplar bastırılır — serbest metin ve tek kişilik gruplar kimliği ele verirdi. Excel `.xlsx`tir (Türkçe karakterler için
+UTF-8, CSV'nin BOM sorunu yok). Sözleşme iki dosyadır: panel sorguları (W2) ve kullanıcı/yetki eylemleri.
+
+## 2026-11-08 · Yönetim sözleşmesinde değer maskesi ve açık onay
+
+Maskeli telefon/e-posta çıktı alanları maske biçimini doğrular; yalnız alanı masked diye adlandırmak ham
+veri sızıntısını engellemez. P1-11 kartına göre yıkıcı/yetki değiştiren kullanıcı işlemleri açık
+confirmed:true ister; askı kaldırma da gerekçelidir. Sözlük silme ve eşleşmeyeni atmada onay/gerekçe
+sözleşmede zorunludur. Excel bağlantısı yalnız filtre şemasından geçen alanları taşır; kişisel ya da
+bilinmeyen URL parametresi eklenmez. Bu alanlar ekranın onay penceresi ile sunucu doğrulamasını bağlar.
+
