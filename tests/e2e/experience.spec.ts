@@ -27,6 +27,7 @@ test('deneyim: yaz → moderasyon → yayın → okuyucu anonim yazarı görmez'
   page,
   browser,
 }) => {
+  test.setTimeout(60_000); // Üç oturumlu akış paralel derlemede 30 saniyeyi aşabilir.
   const student = await db.user.findUniqueOrThrow({
     where: { email: 'student@test.mezunportal.local' },
   });
