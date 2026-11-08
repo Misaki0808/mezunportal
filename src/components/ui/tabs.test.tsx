@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
@@ -47,5 +47,53 @@ describe('Tabs', () => {
     expect(screen.getByRole('tab', { name: 'Eğitim' })).toHaveFocus();
     await user.keyboard('{Home}');
     expect(screen.getByRole('tab', { name: 'Hakkında' })).toHaveFocus();
+  });
+
+  it('şerit sığmayınca kenar ipucu çizilir; seçilen sekme görünür alana kaydırılır', async () => {
+    const scrolled: string[] = [];
+    Element.prototype.scrollIntoView = function scrollIntoView(this: Element) {
+      scrolled.push(this.textContent ?? '');
+    };
+    const { user } = renderUi(<Tabs label="Profil" items={items} />);
+    const list = screen.getByRole('tablist');
+    // jsdom'da ölçü yok: taşan şerit taklidi (içerik 400, görünen 200, başta).
+    Object.defineProperty(list, 'scrollWidth', { value: 400, configurable: true });
+    Object.defineProperty(list, 'clientWidth', { value: 200, configurable: true });
+    list.dispatchEvent(new Event('scroll'));
+    expect(await screen.findByText('', { selector: '[data-tabs-fade="end"]' })).toBeInTheDocument();
+    expect(document.querySelector('[data-tabs-fade="start"]')).toBeNull();
+    await user.click(screen.getByRole('tab', { name: 'Eğitim' }));
+    expect(scrolled).toContain('Eğitim');
+    Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+  });
+
+  it('genişlik değişince seçim değişmeden etkin sekmeyi yeniden görünür alana alır', () => {
+    let resize: ResizeObserverCallback | undefined;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resize = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const previous = Element.prototype.scrollIntoView;
+    const visible: string[] = [];
+    Element.prototype.scrollIntoView = function scrollIntoView() {
+      visible.push(this.textContent ?? '');
+    };
+    try {
+      renderUi(<Tabs label="Profil" items={items} defaultId="c" />);
+      visible.length = 0;
+      act(() => resize?.([], {} as ResizeObserver));
+      expect(visible).toContain('Eğitim');
+      expect(screen.getByRole('tab', { name: 'Eğitim' })).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      vi.unstubAllGlobals();
+      if (previous) Element.prototype.scrollIntoView = previous;
+      else Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    }
   });
 });

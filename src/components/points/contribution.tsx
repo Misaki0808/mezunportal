@@ -17,11 +17,13 @@ import { formatDate } from './format';
 
 type Props = {
   initial: ContributionOverview;
+  /** `history`: yalnız geçmiş (özet profilde üstte `ContributionSummary` ile gösterilir). */
+  variant?: 'full' | 'history';
   list: (input: GetMyContributionInput) => Promise<ActionResult<ContributionOverview>>;
 };
 
 /** Profilde katkı puanı: toplam, bekleyen, rozet ve geçmiş. Yalnız sahibi görür (sunucu zorlar). */
-export function Contribution({ initial, list }: Props) {
+export function Contribution({ initial, list, variant = 'full' }: Props) {
   const t = useTranslations('points');
   const errors = useTranslations('errors.codes');
   const [items, setItems] = useState<PointEntryView[]>(initial.history.items);
@@ -50,38 +52,26 @@ export function Contribution({ initial, list }: Props) {
   }
 
   return (
-    <section aria-labelledby="points-title" className="flex min-w-0 flex-col gap-5">
-      <div>
+    <section
+      id="points-history"
+      aria-labelledby="points-title"
+      className="flex min-w-0 flex-col gap-5"
+    >
+      {variant === 'full' ? (
+        <div>
+          <h2 id="points-title" className="text-2xl font-semibold text-fg">
+            {t('title')}
+          </h2>
+          <p className="mt-1 text-base text-fg-muted">{t('description')}</p>
+        </div>
+      ) : (
         <h2 id="points-title" className="text-2xl font-semibold text-fg">
-          {t('title')}
+          {t('history')}
         </h2>
-        <p className="mt-1 text-base text-fg-muted">{t('description')}</p>
-      </div>
-      <dl className="grid grid-cols-2 gap-3">
-        <div className="rounded-card border border-border p-4">
-          <dt className="text-sm font-medium text-fg-muted">{t('total')}</dt>
-          <dd className="mt-1 text-3xl font-semibold text-fg">{summary.total}</dd>
-        </div>
-        <div className="rounded-card border border-border p-4">
-          <dt className="text-sm font-medium text-fg-muted">{t('pending')}</dt>
-          <dd className="mt-1 text-3xl font-semibold text-fg">{summary.pending}</dd>
-        </div>
-      </dl>
-      {summary.pending > 0 && <p className="text-sm text-fg-muted">{t('pendingHint')}</p>}
-      {summary.badges.length > 0 && (
-        <ul className="flex flex-col gap-2" aria-label={t('badges')}>
-          {summary.badges.map((badge) => (
-            <li key={badge.kind} className="flex flex-wrap items-center gap-2">
-              <Badge tone="info">{t(`badge.${badge.kind}`)}</Badge>
-              <span className="text-sm text-fg-muted">
-                {t('badgeSince', { date: formatDate(badge.awardedAt) })}
-              </span>
-            </li>
-          ))}
-        </ul>
       )}
+      {variant === 'full' && <ContributionSummary summary={summary} bare />}
       <div>
-        <h3 className="text-lg font-semibold text-fg">{t('history')}</h3>
+        {variant === 'full' && <h3 className="text-lg font-semibold text-fg">{t('history')}</h3>}
         {items.length === 0 ? (
           <EmptyState title={t('empty')} description={t('emptyDescription')} />
         ) : (
@@ -109,6 +99,67 @@ export function Contribution({ initial, list }: Props) {
           </Button>
         )}
       </div>
+    </section>
+  );
+}
+
+/**
+ * Katkı puanı özeti (toplam, bekleyen, rozet). Profilde tamamlama bölümünün hemen üstünde, ilk ekranda görünür;
+ * "Puan geçmişi" bağlantısı sayfanın altındaki geçmişe iner.
+ */
+export function ContributionSummary({
+  summary,
+  bare = false,
+}: {
+  summary: ContributionOverview['summary'];
+  /** Başlıksız ve çerçevesiz: tam bölümün içinde (başlığı zaten var) kullanılır. */
+  bare?: boolean;
+}) {
+  const t = useTranslations('points');
+  return (
+    <section
+      aria-labelledby={bare ? undefined : 'points-summary'}
+      aria-label={bare ? t('title') : undefined}
+      className={
+        bare ? 'flex flex-col gap-3' : 'flex flex-col gap-3 rounded-card border border-border p-4'
+      }
+    >
+      {!bare && (
+        <h2 id="points-summary" className="text-base font-semibold text-fg">
+          {t('title')}
+        </h2>
+      )}
+      <dl className="grid grid-cols-2 gap-3">
+        <div className="rounded-control bg-surface-strong p-3">
+          <dt className="text-sm font-medium text-fg-muted">{t('total')}</dt>
+          <dd className="mt-1 text-3xl font-semibold text-fg">{summary.total}</dd>
+        </div>
+        <div className="rounded-control bg-surface-strong p-3">
+          <dt className="text-sm font-medium text-fg-muted">{t('pending')}</dt>
+          <dd className="mt-1 text-3xl font-semibold text-fg">{summary.pending}</dd>
+        </div>
+      </dl>
+      {summary.pending > 0 && <p className="text-sm text-fg-muted">{t('pendingHint')}</p>}
+      {summary.badges.length > 0 && (
+        <ul className="flex flex-col gap-2" aria-label={t('badges')}>
+          {summary.badges.map((badge) => (
+            <li key={badge.kind} className="flex flex-wrap items-center gap-2">
+              <Badge tone="info">{t(`badge.${badge.kind}`)}</Badge>
+              <span className="text-sm text-fg-muted">
+                {t('badgeSince', { date: formatDate(badge.awardedAt) })}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {!bare && (
+        <a
+          href="#points-history"
+          className="press-row inline-flex min-h-11 items-center font-medium text-primary"
+        >
+          {t('historyLink')}
+        </a>
+      )}
     </section>
   );
 }
