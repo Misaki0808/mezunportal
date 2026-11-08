@@ -336,6 +336,7 @@ export async function searchSeekers(
         viewerId: userId,
         universityIds,
         consentVersion: CURRENT_CONSENT_VERSIONS[DOC],
+        now,
         departmentId: parsed.departmentId,
         tagSlugs: parsed.tags,
         termYear: parsed.termYear,
@@ -370,10 +371,11 @@ export async function searchSeekers(
 // Mezun: kart üzerinden iletişim (D7)
 // ---------------------------------------------------------------------------------------------
 
-const queryFor = (userId: string, universityIds: string[]) => ({
+const queryFor = (userId: string, universityIds: string[], now: Date) => ({
   viewerId: userId,
   universityIds,
   consentVersion: CURRENT_CONSENT_VERSIONS[DOC],
+  now,
 });
 
 /**
@@ -388,7 +390,7 @@ export async function previewSeekerContact(
   const parsed = previewSeekerContactSchema.parse(input);
   return asHiringAlumni(deps, userId, async (tx, universityIds, now) => {
     await consumeRateLimit(tx, RATE_LIMITS.contactPreview, userId, now);
-    const row = await findSeekerByRef(tx, queryFor(userId, universityIds), parsed.ref);
+    const row = await findSeekerByRef(tx, queryFor(userId, universityIds, now), parsed.ref);
     // Olumsuz durumlarda da aynı sorgu akışı (kaba süre farkı azaltılır; sabit süre garantisi değildir).
     const fields = await requestableFieldsOf(tx, row?.userId ?? userId);
     if (!row || fields.length === 0) return SEEKER_CONTACT_NOT_REQUESTABLE;
@@ -412,7 +414,7 @@ export async function requestSeekerContact(
   const parsed = requestSeekerContactSchema.parse(input);
   const found = await asHiringAlumni(deps, userId, async (tx, universityIds, now) => {
     await consumeRateLimit(tx, RATE_LIMITS.seekerContact, userId, now);
-    const row = await findSeekerByRef(tx, queryFor(userId, universityIds), parsed.ref);
+    const row = await findSeekerByRef(tx, queryFor(userId, universityIds, now), parsed.ref);
     return row ? { universityIds, targetUserId: row.userId, card: toCard(row, now) } : null;
   });
   if (!found) throw codedNotFound('RESOURCE_NOT_FOUND');
@@ -432,7 +434,7 @@ export async function requestSeekerContact(
   // Çözümleme ile yazma arasında rıza geri alınmış olabilir (ayrı işlemler): görünürlük yeniden doğrulanır; kalkmışsa talep kapatılır.
   const stillVisible = await findSeekerByRef(
     deps.db,
-    { ...queryFor(userId, found.universityIds), keepOpenRequests: true },
+    { ...queryFor(userId, found.universityIds, now), keepOpenRequests: true },
     parsed.ref,
   );
   if (!stillVisible) {

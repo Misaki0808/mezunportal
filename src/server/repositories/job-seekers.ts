@@ -33,6 +33,7 @@ export type SeekerQuery = {
   /** Arayan (kendisi ve açık talebi olduğu kişiler hariç tutulur). */
   viewerId: string;
   universityIds: readonly string[];
+  now: Date;
   /** Güncel `JOB_SEEKER_VISIBILITY` sürümü. */
   consentVersion: string;
   departmentId?: string | undefined;
@@ -62,7 +63,7 @@ function conditions(q: SeekerQuery, extra: Prisma.Sql[] = []): Prisma.Sql {
     Prisma.sql`p."seekerRef" IS NOT NULL`,
     Prisma.sql`p."userId" <> ${q.viewerId}`,
     Prisma.sql`u."deletedAt" IS NULL`,
-    Prisma.sql`u."banned" = false`,
+    Prisma.sql`(u."banned" = false OR (u."banExpires" IS NOT NULL AND u."banExpires" <= ${q.now}))`,
     CONSENT_OK(q.consentVersion),
     ...extra,
   ];

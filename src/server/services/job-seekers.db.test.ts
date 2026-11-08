@@ -840,3 +840,21 @@ it('147 iki yön: bekleyen profil talebi anonim aday isteği yanıtını etkilem
   const b = await code(requestSeekerContact(deps, alumnus, { ref: other.ref!, fields: ['EMAIL'] }));
   expect([a, b]).toEqual([null, null]);
 });
+
+it('R2 süresi dolan askı tam sınır anında aday görünürlüğünü geri açar', async () => {
+  const student = await makeStudent(),
+    alumnus = await makeAlumnus(),
+    now = new Date();
+  const fixed = { db, now: () => now };
+  await db.user.update({
+    where: { id: student.userId },
+    data: { banned: true, banExpires: new Date(+now + 1) },
+  });
+  expect(refsOf(await searchSeekers(fixed, alumnus, {}))).not.toContain(student.ref);
+  await db.user.update({ where: { id: student.userId }, data: { banExpires: now } });
+  expect((await getMySeekerSettings(fixed, student.userId)).visible).toBe(true);
+  expect(refsOf(await searchSeekers(fixed, alumnus, {}))).toContain(student.ref);
+  expect(await previewSeekerContact(fixed, alumnus, { ref: student.ref! })).toMatchObject({
+    canRequest: true,
+  });
+});
