@@ -139,8 +139,8 @@ ALTER TABLE "PointEntry" ADD CONSTRAINT "PointEntry_points_check" CHECK (
   AND "points" = ("basePoints" * "multiplierPercent") / 100
 );
 
--- 2) Durum tutarlılığı: PENDING bir kesinleşme anı taşır; REVOKED geri alma anı + nedeni taşır, diğerleri taşımaz;
---    FINAL'in kesinleşme anı yoktur ya da geçmişte kalmıştır (finalizedAt yalnız FINAL/REVOKED olmuş kayıtta).
+-- 2) Durum tutarlılığı: PENDING bir kesinleşme anı taşır (henüz kesinleşmemiştir, geri alınmamıştır); FINAL geri alma
+--    bilgisi taşımaz; REVOKED geri alma anı + nedeni taşır.
 ALTER TABLE "PointEntry" ADD CONSTRAINT "PointEntry_state_check" CHECK (
   ("status" = 'PENDING' AND "finalizesAt" IS NOT NULL AND "finalizedAt" IS NULL AND "revokedAt" IS NULL AND "revokedReason" IS NULL)
   OR ("status" = 'FINAL' AND "revokedAt" IS NULL AND "revokedReason" IS NULL)
