@@ -50,9 +50,11 @@ async function membershipFacts(tx: Prisma.TransactionClient, userId: string, now
     select: { role: true, entryYear: true, classOffset: true },
   });
   const students = memberships.filter((membership) => membership.role === 'STUDENT');
-  // P1-07 henüz yok: yayınlanmış deneyim sayısı bilinmiyorsa K-08 güvenli biçimde kapalıdır.
+  const publishedExperienceCount = await tx.experience.count({
+    where: { authorId: userId, status: 'PUBLISHED' },
+  });
   const eligibilities = students.map((membership) =>
-    studentMentorEligibility(computeClassStanding(membership, now), null),
+    studentMentorEligibility(computeClassStanding(membership, now), publishedExperienceCount),
   );
   const studentEligibility =
     eligibilities.find((eligibility) => eligibility.eligible) ??

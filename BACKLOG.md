@@ -27,9 +27,10 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   dökümü bağlantısı tamam. Gerçek LLM sağlayıcısı K-04 ile gelir; o zamana kadar `LLM_PROVIDER` boşsa özellik
   kapalı, `fake` yalnız local/test.
 
-- P1-07 deneyim/moderasyon sözleşmesi hazır: tür bazlı taslaklar, anonim çıktı ayrımı ve şikâyet
-  şeması. Yayınlanmış içerik aynı üniversitedeki tüm doğrulanmış üyelere açık (K-07); servis ve
-  ekran uygulaması ayrı kartlarda.
+- P1-07 servisi: tür bazlı taslak, anonim çıktı, kapsamlı moderasyon/audit, şikâyet sınırı/kuyruğu,
+  K-07 üniversite görünürlüğü hazır (yayınlanmış içerik aynı üniversitedeki tüm doğrulanmış üyelere açık).
+  Deneyimler hesap silme ve kişisel döküme bağlı; K-08 gerçek yayınlanmış deneyim sayısını okur. Ekran
+  akışı/kabulü ayrı kartta.
 
 
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
