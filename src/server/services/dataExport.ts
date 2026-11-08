@@ -20,6 +20,9 @@ type RequestRow = {
   id: string;
   requesterId: string;
   targetId: string;
+  source: 'PROFILE' | 'JOB_POSTING';
+  sourceTitle: string | null;
+  sourceOrganization: string | null;
   fields: DataExport['contactRequests']['sent'][number]['fields'];
   message: string | null;
   status: DataExport['contactRequests']['sent'][number]['status'];
@@ -29,9 +32,21 @@ type RequestRow = {
   closedAt: Date | null;
 };
 
-function exportRequest(row: RequestRow): DataExport['contactRequests']['sent'][number] {
+/** D7: ilan kaynaklı ve `APPROVED` olmayan GİDEN talepte hedef kimliği dökülmez (onaydan önce açılmaz). */
+function exportRequest(
+  row: RequestRow,
+  userId: string,
+): DataExport['contactRequests']['sent'][number] {
+  const { source, sourceTitle, sourceOrganization, ...rest } = row;
+  const hidden =
+    source === 'JOB_POSTING' && row.requesterId === userId && row.status !== 'APPROVED';
   return {
-    ...row,
+    ...rest,
+    targetId: hidden ? null : row.targetId,
+    origin:
+      source === 'JOB_POSTING' && sourceTitle !== null && sourceOrganization !== null
+        ? { title: sourceTitle, organization: sourceOrganization }
+        : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     decidedAt: row.decidedAt ? row.decidedAt.toISOString() : null,
@@ -105,6 +120,9 @@ export async function buildDataExport(
           id: true,
           requesterId: true,
           targetId: true,
+          source: true,
+          sourceTitle: true,
+          sourceOrganization: true,
           fields: true,
           message: true,
           status: true,
@@ -120,6 +138,9 @@ export async function buildDataExport(
           id: true,
           requesterId: true,
           targetId: true,
+          source: true,
+          sourceTitle: true,
+          sourceOrganization: true,
           fields: true,
           message: true,
           status: true,
@@ -200,8 +221,8 @@ export async function buildDataExport(
     })),
     fieldVisibility: [...levels].map(([field, level]) => ({ field, level })),
     contactRequests: {
-      sent: user.sentContactRequests.map(exportRequest),
-      received: user.receivedContactRequests.map(exportRequest),
+      sent: user.sentContactRequests.map((row) => exportRequest(row, userId)),
+      received: user.receivedContactRequests.map((row) => exportRequest(row, userId)),
     },
     cv,
     appointments,

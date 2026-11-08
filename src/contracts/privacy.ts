@@ -192,7 +192,10 @@ export const exportedContactRequestSchema = z
   .object({
     id: z.string(),
     requesterId: z.string(),
-    targetId: z.string(),
+    /** İlan kaynaklı ve `APPROVED` olmayan GİDEN talepte `null` (D7: hedef kimliği onaydan önce açılmaz). */
+    targetId: z.string().nullable(),
+    /** İlan kaynaklı talepte talep anındaki ilan başlığı ve kurum; doğrudan talepte `null`. */
+    origin: z.object({ title: z.string(), organization: z.string() }).strict().nullable(),
     fields: z.array(z.enum(CONTACT_FIELDS)),
     message: z.string().nullable(),
     status: z.enum(CONTACT_REQUEST_STATUSES),

@@ -117,7 +117,24 @@ export function ContactList({
           <Card key={item.id} className="space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="break-words text-lg font-semibold">{item.counterpart.name}</h2>
+                <h2 className="break-words text-lg font-semibold">
+                  {item.counterpart
+                    ? item.counterpart.name
+                    : item.origin
+                      ? item.origin.title
+                      : null}
+                </h2>
+                {item.origin && (
+                  <p className="mt-1 break-words text-base text-fg-muted">
+                    {t('originJobPosting', {
+                      title: item.origin.title,
+                      organization: item.origin.organization,
+                    })}
+                  </p>
+                )}
+                {!item.counterpart && (
+                  <p className="mt-1 text-base text-fg-muted">{t('originHidden')}</p>
+                )}
                 <p className="mt-1 text-base text-fg-muted">
                   {format.dateTime(item.createdAt, {
                     dateStyle: 'medium',

@@ -790,7 +790,7 @@ Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun 
 **Gizlilik.** Soran mentora ve moderatöre, cevap yazanlar birbirine ve moderatöre hiç görünmez; yayın çıktısı yalnız soru,
 cevap ve tarihtir. Moderatörün düzenlediği yayın metni soran ve TÜM cevap yazanların ad/soyadını (ek almış biçimler dahil:
 “Ahmet'e”, “ahmete”) ve e-posta/telefon/kimlik numarası biçimini içeremez; denetim yayın anında sunucudadır
-(`FAQ_IDENTITY_LEAK`) ve bilerek katıdır (yanlış alarm metni düzeltmekle çözülür, sızıntı geri alınamaz). Soru ve cevap
+(`FAQ_IDENTITY_LEAK`) ve bilerek katıdır (sızıntı geri alınamaz); yalnız ad ÖNEKİ eşleşmesi engel değil moderatör onaylı uyarıdır (kart 122, aşağıda). Soru ve cevap
 gönderiminde e-posta/telefon biçimi de erken reddedilir. Yayın, kaynak talebin bölümünün üniversitesindeki doğrulanmış
 üyelere açıktır (K-07). Karar notu (ret gerekçesi, yönlendirme notu) yalnız soran öğrenciye görünür; bildirim e-postası notu
 taşımaz.
@@ -856,3 +856,34 @@ için `contactUserId` döner (D7), moderatör kuyruğunda görünen ad vardır. 
 değerleri (`PointAction`, `PointSourceType`, `PointRevokeReason`, `NotificationType`, `EventType`) PostgreSQL'de kaldırılamaz (geri alma notu
 migration'da). (e) `PENDING` ilan son günü geçerse `EXPIRED` olur (kuyrukta bekletilmez). Hız sınırı: 30 günde 5 gönderim. Bildirim, servis ve
 ekran ayrı kartlardadır (bu PR yalnız sözleşme, şema ve migration).
+
+**Mezun ilanları: servis, D7 ve K-07 kararları (P2-04, kart 129).** (1) **D7 (PM):** `CONTACT_REQUEST` ilanında yazar kimliği okuyucuya HİÇ gitmez. `/iletisim-iste`
+önizlemesi görünen ad döndürdüğü için ilan→yazar adı sızardı (ayrıca uuid7 hesap zamanını sızdırır); bu yüzden `contactUserId` sözleşmeden
+kaldırıldı, iletişim talebi ilan üzerinden gider (`previewJobPostingContact`/`requestJobPostingContact`, girdi `jobPostingId`; sunucu yazarı çözer,
+mevcut `ContactRequest` kaydı/bildirimi/hız sınırı). Önizleme ilan başlığı/kurum gösterir, olumsuz durumların hepsi tek genel yanıttır; talep notuna
+"İlan: <başlık>" bağlamı eklenir; ad yalnız onayda açılır. Seçenekler: (a) uuid'siz takma ad — yeni tablo gerektirir; (b) mevcut `/iletisim-iste` — ad
+sızar; (c) seçilen: ilan üzerinden, sunucuda çözümleme. (2) **K-07 (PM):** başka üniversitenin bölümü `JobPostingDepartment`'a veritabanında
+bağlanabilir; kapı SERVİS katmanındadır (hedef bölümler ve kapsam bölümü yazarın üniversitesinden; gönderimde yeniden denetlenir, gerçek DB testi +
+mutasyon). Tetikleyici bilerek yok: mevcut modüllerle tutarlı (kapsam servis katmanında). (3) **Süzgeç:** `organizationName` yalnız sözlüğe bağlı OLMAYAN
+(serbest adlı) kurumu eşler; sözlük şirketi `companyId` ile seçilir, ikisi birlikte gönderilemez; süzgeç seçenekleri iki grubu ayrı satır verir. (4) **Puan:**
+yalnız yayınlanmış (`PUBLISHED`/`EXPIRED`) ilana; ay tavanı yazar başına advisory kilidiyle sıralanır; süre dolumu puanı geri almaz, çekme/kaldırma
+kesinleşmemiş puanı geri alır (`POSTING_WITHDRAWN`); `points.backfill` ilanı da işler. (5) **Süre dolumu:** `PENDING` ilan son günü geçerse
+`EXPIRED` olur; taslak ve reddedilmiş ilan dokunulmaz. (6) Hesap silme yazarın ilanlarını (hedef bölüm ve şikâyetleriyle) siler; veri dökümü yalnız kendi
+ilanlarını içerir.
+**Girişsiz tanıtım sayfası (kullanıcı isteği, 8 Kas).** Girişsiz ana sayfada deneyim, mentor ve gerçekleşen görüşme için yalnız
+sunucuda hesaplanan toplu sayılar gösterilir; üçten küçük toplam sayı yerine “Yeni başladık” görünür. Veri kaynağına ulaşılamazsa
+ayrı bir belirsiz durum gösterilir. Örnek kartlar sentetiktir ve etkileşim almaz. Kahraman metni ilk HTML'de ve sabit koyu zeminde;
+marka geçişi dekoratiftir. Hareket azaltma tercihinde içerik korunur ve hareket durur.
+
+**SSS kimlik denetimi: engel ve uyarı (kart 122, PM kararıyla).** Önceki denetim 4+ harfli adları önek olarak eşleştirdiği için
+"sisteme", "denizcilik" gibi sıradan sözcükler yayını engelliyordu. Türkçe yazım kuralı: özel isim ek alınca kesme alır
+("Deniz'in"); kesmesiz ekli biçim ("denize", "sisteme", "Ahmete") çoğunlukla cins isimdir. Şimdi: **engel**
+(`FAQ_IDENTITY_LEAK`, onayla aşılamaz) = adın tam sözcüğü (kesmeli ekli biçimler dahil: kesmede sözcük bölündüğü için tam eşleşir),
+harfleri boşluk/noktalamayla bölünmüş ad, e-posta/telefon/kimlik biçimi, kullanıcı/kayıt kimliği; **uyarı**
+(`FAQ_IDENTITY_WARNING`) = ad ile başlayan başka sözcük (kesmesiz ekli biçim ve önek: "sisteme", "Ahmete", "denizcilik").
+Uyarıda moderatör eşleşen sözcükleri görür (en çok 5) ve "Kişisel bilgi değil, yayımla" ile `confirmNotPersonal` gönderir; yayın
+olur ve `MODERATION_PUBLISH` işlem kaydına sabit gerekçe + `identityWarningConfirmed`/`warnedWordCount` (sözcükler kaydedilmez)
+düşer. Seçenekler: (a) tümünü engel bırakmak — yanlış alarm; (b) önek ve ekli biçim denetimini kaldırmak — gerçek ad sızıntısı
+ayırt edilemez; (c) seçilen: kesmeyle ayrılan/bölünmüş/tam ad engel, geri kalanı onaylı uyarı. Bilinen sınır: kesmesiz yazılmış
+gerçek ad ("Ahmete sordum") artık engel değil uyarıdır; moderatör ad olduğunu ayırt edebilmelidir (ad moderatöre gösterilmez, yalnız
+metindeki sözcük). Moderatör ekranı (uyarı + onay düğmesi) #54 main'e girince bağlanır.

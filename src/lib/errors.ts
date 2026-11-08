@@ -114,6 +114,7 @@ export const ERROR_CODES = [
   'JOB_POSTING_URL_INVALID',
   'JOB_POSTING_DEADLINE_INVALID',
   'JOB_POSTING_TARGET_INVALID',
+  'FAQ_IDENTITY_WARNING',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
