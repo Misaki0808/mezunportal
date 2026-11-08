@@ -290,7 +290,7 @@ describe('saklama ve hesap silme', () => {
         userId,
         departmentId: inst.deptA1,
         role: 'STUDENT',
-        at: new Date('2031-02-01T00:00:00Z'),
+        at: new Date('2031-01-10T00:00:00Z'),
       }, // eski (> 24 ay)
       {
         type: 'LOGIN',
