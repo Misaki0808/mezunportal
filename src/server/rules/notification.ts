@@ -23,6 +23,7 @@ export function notificationTypeForTemplate(template: string): NotificationType 
       return 'ALUMNI_STILL_THERE';
     case 'student.email-migration':
       return 'STUDENT_EMAIL_MIGRATION';
+    case 'appointment.feedback':
     case 'appointment.requested':
     case 'appointment.confirmed':
     case 'appointment.declined':

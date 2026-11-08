@@ -58,6 +58,8 @@
       "CV_PARSE_EMPTY": "CV'nden bilgi çıkaramadık. Boş ya da okunamayan bir dosya olabilir; bilgilerini elle girebilirsin.",
       "PROFILE_TAG_INVALID": "Seçtiğin etiketlerden biri geçerli değil. Seçimini yenile.",
       "MENTOR_NOT_ELIGIBLE": "Mentorluk için koşullar henüz tamamlanmadı.",
+      "FEEDBACK_NOT_READY": "Form, görüşme bittikten bir saat sonra açılır.",
+      "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin.",
       "APPOINTMENT_SLOT_INVALID": "Bu saat artık seçilemiyor. Müsait saatleri yenile.",
       "APPOINTMENT_SLOT_TAKEN": "Bu saat az önce başkası tarafından alındı. Başka bir saat seç.",
       "APPOINTMENT_MENTOR_UNAVAILABLE": "Bu mentor şu an randevu almıyor.",
@@ -218,7 +220,6 @@
     "entry": {
       "title": "Mentorla bağlantı",
       "contact": "İletişim iste",
-      "appointment": "Randevu al",
       "contactBlocked": "Bu kişiye şu anda iletişim talebi gönderemezsin.",
       "appointmentBlocked": "Randevu şu an alınamıyor.",
       "cvBlocked": "CV incelemesi şu an istenemiyor.",
@@ -228,7 +229,8 @@
         "PAUSED": "Mentor şu an ara vermiş.",
         "CAPACITY_FULL": "Mentorun bu ayki kapasitesi dolu.",
         "CV_REVIEW_DISABLED": "Bu mentor CV incelemesi yapmıyor."
-      }
+      },
+      "appointment": "Randevu al"
     }
   },
   "gallery": {
@@ -1709,6 +1711,40 @@
     "mine": "Deneyimlerim",
     "invalidFiltersTitle": "Filtre bağlantısı geçersiz",
     "invalidFiltersDescription": "Filtreleri temizleyip yeniden arayabilirsin."
+  },
+  "feedback": {
+    "emailSubject": "Görüşmeni değerlendir",
+    "emailText": "Görüşmen hakkındaki kısa formu doldur: {url}",
+    "title": "Görüşmen nasıldı?",
+    "description": "Kısa yanıtın görüşmelerin daha iyi olmasına yardımcı olur.",
+    "happened": "Görüşme gerçekleşti mi?",
+    "yes": "Evet, gerçekleşti",
+    "no": "Hayır, gerçekleşmedi",
+    "noMentor": "Öğrenci katılmadı",
+    "helpful": "Görüşme faydalı oldu mu?",
+    "helpfulYes": "Evet, faydalıydı",
+    "helpfulNo": "Hayır",
+    "note": "Eklemek istediğin bir şey var mı?",
+    "optional": "İsteğe bağlı",
+    "submit": "Yanıtı gönder",
+    "sending": "Gönderiliyor…",
+    "success": "Yanıtın kaydedildi. Teşekkür ederiz.",
+    "already": "Bu görüşme için yanıtını gönderdin.",
+    "back": "Hesabıma dön",
+    "reliability": "Güvenilirlik göstergen",
+    "reliabilityDescription": "Son 12 aydaki görüşme katılımına göre hesaplanır.",
+    "NEW": "Yeni",
+    "RELIABLE": "Güvenilir",
+    "CAUTION": "Dikkat",
+    "reason": "Son 12 ayda {total} görüşmenin {noShow} tanesine katılım olmadı.",
+    "reasonNew": "Gösterge en az 3 görüşmeden sonra hesaplanır. Son 12 ayda {total} görüşmen var.",
+    "backToSessions": "Görüşmelerime dön",
+    "pendingTitle": "Görüşme formların",
+    "pendingEmpty": "Şu anda yanıtlaman gereken bir görüşme yok.",
+    "open": "Formu doldur",
+    "mentorRequests": "Sana gelen talepler",
+    "requestBadge": "Bekleyen randevu talebi",
+    "studentReliability": "Öğrencinin güvenilirliği"
   },
   "appointments": {
     "status": {

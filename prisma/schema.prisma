@@ -135,6 +135,7 @@ model User {
   emailLogs                   EmailLog[]
   notificationPreferences     NotificationPreference[]
   notificationActions         NotificationAction[]
+  sessionFeedbacks            SessionFeedback[]
   consents                    Consent[]
   fieldVisibilities           FieldVisibility[]
   sentContactRequests         ContactRequest[]         @relation("ContactRequestRequester")
@@ -1098,11 +1099,28 @@ model Appointment {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
-  mentor      User  @relation("AppointmentMentor", fields: [mentorId], references: [id], onDelete: Restrict)
-  mentee      User  @relation("AppointmentMentee", fields: [menteeId], references: [id], onDelete: Restrict)
-  cancelledBy User? @relation("AppointmentCanceller", fields: [cancelledById], references: [id], onDelete: Restrict)
+  mentor      User              @relation("AppointmentMentor", fields: [mentorId], references: [id], onDelete: Restrict)
+  mentee      User              @relation("AppointmentMentee", fields: [menteeId], references: [id], onDelete: Restrict)
+  cancelledBy User?             @relation("AppointmentCanceller", fields: [cancelledById], references: [id], onDelete: Restrict)
+  feedbacks   SessionFeedback[]
 
   @@index([mentorId, status, startsAt])
   @@index([menteeId, status, startsAt])
   @@index([status, expiresAt])
+}
+
+/// Görüşme sonu yanıtı: her katılımcı aynı randevu için yalnız bir kez yanıtlar.
+model SessionFeedback {
+  id            String      @id @default(uuid(7))
+  appointmentId String
+  authorId      String
+  happened      Boolean
+  helpful       Boolean?
+  note          String?
+  createdAt     DateTime    @default(now())
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  author        User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([appointmentId, authorId])
+  @@index([authorId, createdAt])
 }
