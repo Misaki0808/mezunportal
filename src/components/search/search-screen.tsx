@@ -254,7 +254,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
         </Link>
       </header>
       <form
-        className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-end"
+        className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-start"
         onSubmit={(event) => {
           event.preventDefault();
           go({ ...draft, page: 1 });
@@ -276,15 +276,18 @@ export function SearchScreen({ filter, results, sectors }: Props) {
             />
           )}
         </Field>
-        <Button
-          type="submit"
-          loading={pending}
-          {...(pending
-            ? { disabled: true as const, disabledReason: t('loading') }
-            : { disabled: false as const })}
-        >
-          {t('submit')}
-        </Button>
+        {/* Düğme girdiyle hizalı: etiket satırı (1,75 rem) + boşluk (0,375 rem) kadar aşağıda; ipucu satırı hizayı bozmaz. */}
+        <div className="sm:mt-[2.125rem]">
+          <Button
+            type="submit"
+            loading={pending}
+            {...(pending
+              ? { disabled: true as const, disabledReason: t('loading') }
+              : { disabled: false as const })}
+          >
+            {t('submit')}
+          </Button>
+        </div>
       </form>
       <FilterShell
         active={active}

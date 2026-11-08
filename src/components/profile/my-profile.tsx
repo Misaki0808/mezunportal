@@ -274,7 +274,10 @@ export function MyProfile({ initial, actions }: Props) {
                     >
                       {t('edit')}
                     </Button>
-                    <Button variant="ghost" onClick={() => setDeleting({ section, id: entry.id })}>
+                    <Button
+                      variant="danger-outline"
+                      onClick={() => setDeleting({ section, id: entry.id })}
+                    >
                       {t('delete')}
                     </Button>
                   </div>

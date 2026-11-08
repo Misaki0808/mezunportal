@@ -58,6 +58,49 @@ const page = (items: MentorCardData[], total = items.length): MentorPage => ({
 const sectors = [{ id: 's1', name: 'Yazılım' }];
 
 describe('mentor kartı', () => {
+  it('dizinden açılan "İletişim iste" kaynağa dönüş yolunu taşır; güvensiz yol eklenmez', () => {
+    const { unmount } = renderUi(
+      <MentorCard mentor={mentor()} returnTo="/mentorlar?mentorTypes=ALUMNI&page=2" />,
+    );
+    expect(screen.getByRole('link', { name: 'İletişim iste' })).toHaveAttribute(
+      'href',
+      '/iletisim-iste/m1?donus=%2Fmentorlar%3FmentorTypes%3DALUMNI%26page%3D2',
+    );
+    unmount();
+    renderUi(<MentorCard mentor={mentor()} returnTo="https://kotu.example/x" />);
+    expect(screen.getByRole('link', { name: 'İletişim iste' })).toHaveAttribute(
+      'href',
+      '/iletisim-iste/m1',
+    );
+  });
+
+  it('eylem önceliği: uygunsa "Randevu iste" birincil (dolgulu, tam genişlik), "Profili gör" ve "İletişim iste" ikincil', () => {
+    renderUi(<MentorCard mentor={mentor()} />);
+    const appointment = screen.getByRole('link', { name: 'Randevu iste' });
+    expect(appointment).toHaveClass('bg-primary', 'w-full');
+    for (const name of ['Profili gör', 'İletişim iste']) {
+      const link = screen.getByRole('link', { name });
+      expect(link).not.toHaveClass('bg-primary');
+      expect(link).toHaveClass('border');
+    }
+  });
+
+  it('uygun değilse "Profili gör" birincil kalır ve randevu bağlantısı yoktur; kompakt kartta yalnız profil', () => {
+    const { unmount } = renderUi(
+      <MentorCard
+        mentor={mentor({
+          availability: { available: false, reason: 'CAPACITY_FULL', pausedUntil: null },
+        })}
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Profili gör' })).toHaveClass('bg-primary');
+    expect(screen.queryByRole('link', { name: 'Randevu iste' })).not.toBeInTheDocument();
+    unmount();
+    renderUi(<MentorCard mentor={mentor()} compact />);
+    expect(screen.getAllByRole('link')).toHaveLength(1);
+    expect(screen.getByRole('link', { name: 'Profili gör' })).toHaveClass('bg-primary');
+  });
+
   it('başlık, şirket/unvan, konular, müsaitlik ve kapasite; e-posta/telefon yok', () => {
     renderUi(<MentorCard mentor={mentor()} />);
     expect(screen.getByRole('heading', { name: 'Mert Yıldız' })).toBeInTheDocument();
@@ -147,7 +190,7 @@ describe('giriş noktaları', () => {
     );
     expect(screen.getByRole('link', { name: 'İletişim iste' })).toHaveAttribute(
       'href',
-      '/iletisim-iste/m1',
+      '/iletisim-iste/m1?donus=%2Fuye%2Fm1',
     );
     expect(screen.getByText('Mentorun bu ayki kapasitesi dolu.')).toBeInTheDocument();
     expect(screen.getByText('Bu mentor CV incelemesi yapmıyor.')).toBeInTheDocument();

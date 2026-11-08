@@ -4,6 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
+const path = vi.hoisted(() => ({ current: '/' }));
+vi.mock('next/navigation', () => ({ usePathname: () => path.current }));
+
 import { Avatar, initialsOf } from './avatar';
 import { ErrorState } from './error-state';
 import { Pagination } from './pagination';
@@ -82,6 +85,58 @@ describe('ErrorState', () => {
 
     await user.click(screen.getByRole('button', { name: 'Tekrar dene' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('beklenen durum alarm değildir: h1 durum başlığı + tek eylem, kırmızı uyarı yok', () => {
+    path.current = '/hesap/gorusme/x';
+    renderUi(<ErrorState errorCode="FEEDBACK_NOT_READY" />);
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Form henüz açılmadı' })).toBeVisible();
+    expect(screen.queryByText('Bir sorun oluştu')).not.toBeInTheDocument();
+    expect(screen.getByText('Form, görüşme bittikten bir saat sonra açılır.')).toBeVisible();
+    const links = screen.getAllByRole('link');
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAccessibleName('Görüşmelerime dön');
+    expect(links[0]).toHaveAttribute('href', '/hesap/gorusmeler');
+  });
+
+  it.each([
+    ['AUTH_FORBIDDEN', 'Bu sayfa senin rolün için değil', 'Ana sayfaya dön', '/'],
+    ['AUTH_UNAUTHENTICATED', 'Giriş yapman gerekiyor', 'Giriş yap', '/giris'],
+    ['AUTH_NOT_VERIFIED', 'Üyeliğini doğrulaman gerekiyor', 'Doğrulamaya git', '/dogrulama'],
+    ['CONSENT_REQUIRED', 'Önce metinleri onaylaman gerekiyor', 'Onay ekranına git', '/onay'],
+    ['RESOURCE_NOT_FOUND', 'Aradığın sayfa bulunamadı', 'Ana sayfaya dön', '/'],
+  ] as const)('%s → durum başlığı ve eylem', (code, title, label, href) => {
+    path.current = '/';
+    renderUi(<ErrorState errorCode={code} />);
+    expect(screen.getByRole('heading', { level: 1, name: title })).toBeVisible();
+    expect(screen.getByRole('link', { name: label })).toHaveAttribute('href', href);
+  });
+
+  it('yönetim alt sayfasında rol dışı durum panele döndürür; açık eylem öncelik alır', () => {
+    path.current = '/yonetim/sozlukler';
+    const { unmount } = renderUi(<ErrorState errorCode="AUTH_FORBIDDEN" />);
+    expect(screen.getByRole('link', { name: 'Yönetim paneline dön' })).toHaveAttribute(
+      'href',
+      '/yonetim',
+    );
+    unmount();
+    renderUi(
+      <ErrorState errorCode="AUTH_FORBIDDEN" action={{ href: '/hesap', label: 'Hesabıma dön' }} />,
+    );
+    expect(screen.getByRole('link', { name: 'Hesabıma dön' })).toHaveAttribute('href', '/hesap');
+  });
+
+  it('gerçek hata ve onRetry verilen kullanım alarm olarak kalır', () => {
+    path.current = '/';
+    renderUi(<ErrorState errorCode="SERVER_UNEXPECTED" />);
+    expect(screen.getByRole('alert')).toBeVisible();
+    expect(screen.getByRole('heading', { level: 2, name: 'Bir sorun oluştu' })).toBeVisible();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    renderUi(<ErrorState errorCode="AUTH_FORBIDDEN" onRetry={() => undefined} />);
+    expect(screen.getAllByRole('alert')).toHaveLength(2);
   });
 
   it('onRetry yoksa düğme yoktur', () => {
