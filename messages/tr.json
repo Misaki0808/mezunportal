@@ -101,6 +101,11 @@
       "POINT_ALREADY_REVOKED": "Bu puan kaydı zaten geri alınmış.",
       "SUSPICION_ALREADY_DECIDED": "Bu şüphe işareti için karar zaten verilmiş.",
       "POINT_BACKFILL_UNAVAILABLE": "Geriye dönük puan hesaplaması şu an başlatılamıyor. Biraz sonra yeniden dene.",
+      "FAQ_SIMILAR_EXISTS": "Benzer sorular zaten yayında. Önce onlara göz at; yine de sormak istiyorsan onaylayıp gönder.",
+      "FAQ_TEXT_PERSONAL_DATA": "Metinde e-posta adresi ya da telefon numarası var. Kişisel bilgileri çıkarıp yeniden dene.",
+      "FAQ_REQUEST_CLOSED": "Bu soru için karar zaten verilmiş.",
+      "FAQ_OWN_REQUEST": "Kendi sorduğun soruya cevap yazamazsın.",
+      "FAQ_IDENTITY_LEAK": "Yayınlanacak metinde ad, e-posta ya da telefon var. Kimliği belli eden bilgileri çıkar.",
       "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin."
     }
   },
@@ -1536,8 +1541,9 @@
         "ROLE_TRANSITION": "Rol geçişi",
         "USER_SUSPEND": "Hesabı askıya alma",
         "USER_UNSUSPEND": "Askıyı kaldırma",
-        "MODERATION_PUBLISH": "Deneyim yayını",
-        "MODERATION_REJECT": "Deneyim reddi",
+        "MODERATION_PUBLISH": "İçerik yayını",
+        "MODERATION_REJECT": "İçerik reddi",
+        "MODERATION_REDIRECT": "Mentorluğa yönlendirme",
         "REPORT_RESOLVE": "Şikâyet kararı",
         "POINTS_REVOKE": "Puan geri alma",
         "POINT_RULE_CHANGE": "Puan kuralı değişikliği",
