@@ -324,6 +324,23 @@ function FlagsPanel({
                 {flag.details.syncedCount !== null && (
                   <li>{t('admin.detailSynced', { count: flag.details.syncedCount })}</li>
                 )}
+                {flag.details.recurrenceCount > 0 && flag.details.lastSeenAt && (
+                  <li className="font-medium text-on-warning-soft">
+                    {t('admin.detailRecurrence', {
+                      count: flag.details.recurrenceCount,
+                      date: formatDateTime(flag.details.lastSeenAt),
+                    })}
+                  </li>
+                )}
+                {flag.details.recentEvidence.map((evidence) => (
+                  <li key={evidence.at.toISOString()} className="text-fg-muted">
+                    {t('admin.detailRecurrenceItem', {
+                      date: formatDateTime(evidence.at),
+                      entries: evidence.entryCount,
+                      points: evidence.points,
+                    })}
+                  </li>
+                ))}
               </ul>,
               <Badge key="s" tone={FLAG_TONE[flag.status]}>
                 {t(`admin.flagStatuses.${flag.status}`)}
