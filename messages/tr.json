@@ -282,7 +282,15 @@
       "jobs": "İlanlar"
     },
     "admin": "Yönetim",
-    "signIn": "Giriş yap"
+    "signIn": "Giriş yap",
+    "shortItems": {
+      "home": "Ana",
+      "experiences": "Deneyim",
+      "jobs": "İlanlar",
+      "mentors": "Mentor",
+      "appointments": "Randevu",
+      "profile": "Hesabım"
+    }
   },
   "ui": {
     "button": {

@@ -77,12 +77,13 @@ export function AppShellClient({
   }
 
   function renderItem(item: (typeof NAV_ITEMS)[number], layout: 'bottom' | 'side') {
-    const label = t(`items.${item.id}`);
+    const fullLabel = t(`items.${item.id}`);
+    const label = layout === 'bottom' ? t(`shortItems.${item.id}`) : fullLabel;
     const current = item.href ? isCurrent(pathname, item.href) : false;
     const shared = cn(
       'inline-flex items-center gap-1 rounded-control font-medium',
       layout === 'bottom'
-        ? 'min-h-14 w-full flex-col justify-center px-1 py-1 text-[0.6875rem]'
+        ? 'min-h-14 w-full flex-col justify-center px-1 py-1 text-xs'
         : 'min-h-11 w-full flex-row px-3 text-base',
     );
 
@@ -104,6 +105,7 @@ export function AppShellClient({
     return (
       <Link
         href={item.href}
+        aria-label={fullLabel}
         aria-current={current ? 'page' : undefined}
         className={cn(
           shared,
