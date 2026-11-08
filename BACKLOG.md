@@ -142,11 +142,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 - [ ] **TD-015** · P2 · Görüşme tamamlanması / SSS / CV inceleme kullanım olayları bağlanmadı
   Ne: `APPOINTMENT_COMPLETED`, `FAQ_*`, `CV_REVIEW_REQUESTED` olay türleri katalogda; ilgili servisler henüz main'de değil.
   Kapanış ölçütü: servis main'e girince `emitEvent` kancaları eklenir (test: olay + kişisel veri yok).
-- [ ] **TD-016** · P2 · `alumniStillThere` testi kalıcı test veritabanında yük altında 5 sn'yi aşabiliyor
-  Ne: `src/server/jobs/notification-tasks.db.test.ts` "mezun hatırlatmasının iş tekrarında anahtarı değişmez" bütün test
-  veritabanındaki doğrulanmış mezun konumlarını iki kez dolaşır; yerel veritabanı birikince (≈1100 konum) ve dosyalar paralel
-  koşarken zaman aşımına düşebilir (tek başına geçer; temiz veritabanında geçer).
-  Kapanış ölçütü: test yalnız kendi kullanıcısına daralan bir çalıştırma ya da zaman aşımı yükseltmesiyle kararlı hale gelir.
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
   Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
   yerinde duruyor (hesap silme hâlâ eski satırları siler).
