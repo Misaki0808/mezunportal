@@ -473,6 +473,15 @@ Yayın/ret kararına ait alanlar SQL CHECK'le birlikte tutulur; yayınlama yetki
 servis kartında zorlanır. CV davetinin isteğe bağlı Position kimliği yalnız girdidedir; sahipliği
 P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK'sı P1-08'e bırakıldı.
 
+## 2026-11-08 · Arama: ASCII katlamalı çift indeks ve sözcük bazlı yazım hatası toleransı
+“ISTANBUL” tr-TR kuralıyla “ıstanbul” olur ve “İstanbul” kaydını bulamazdı; kullanıcı ise noktasız I'yı da noktalı
+yazar. Bu yüzden üretilmiş sütun her alanı hem tr-TR küçük harf + Türkçe gövdeleme hem ASCII katlanmış basit sözlükle
+indeksler (işlevler yerelden bağımsızdır; `lower()` veritabanı yerel ayarına bağlı olurdu). Yazım hatası toleransı
+tüm sorgu üzerinde değil SÖZCÜK başınadır: tüm sorguya benzerlik “marker staj” gibi sorguda tek ortak sözcükle her
+şeyi eşleştiriyordu. Gövde metninde yazım hatası aranmaz (ağır ve gürültülü); şirket, şehir, ülke ve tür adı
+üzerinde yapılır. Sektör süzgeci şirket sözlüğü üzerindendir (`companyId` → `Company.sectorId`); şirketi sözlüğe bağlı olmayan deneyim sektör süzgecinde çıkmaz.
+Yazarı silinmiş, askıdaki ya da yazar bağı kopmuş (K-09 anonimleştirme) deneyim içeriği korur ama yazarsız görünür.
+
 
 ## 2026-11-08 · Tur düzeltmesi: dönüş yolu, yönetimde rıza, geliştirme günlüğü (PM kararı)
 
@@ -508,6 +517,16 @@ sonuç/yeniden deneme yalnız o nesli günceller. Hata temizliği satırı kilit
 kontrol etmeden PDF silmez: eski işin geç hatası yeni PARSED/APPLIED dosyasını yok edemez. Onaylanan
 ad düzeltmeleri mevcut eğitim/dil/sertifika kalemlerine de uygulanır; CV yazımı User kilidi altında
 kanonik askı/silinme kontrolünü yeniden yapar. Çıktı üst sınırı UTF-8 baytlarıyla ölçülür.
+
+## 2026-11-08 · Deneyim ekranları: rotalar ve anonimlik sınırı (P1-07)
+
+Deneyim yazma ve yönetimi `/deneyimlerim`, `/deneyim/yeni`, `/deneyim/[id]` (+ `/duzenle`) ve
+`/yonetim/deneyimler` altındadır; `/deneyimler` yolu P1-08 akışı için boş bırakıldı. Form alanları tür
+şablonundan okunur (`experienceTemplateSchema`): sözleşme değişince ekran kendiliğinden değişir, tür değişince
+yeni türde sorulmayan alan içeriğe girmez ve kullanıcıya söylenir. Anonim deneyimde ekran yazar bilgisini hiç
+çizmez; anonim yanıtta yazar alanı olmadığı için sahibin kendi anonim deneyimini şikâyet edememesi kullanıcının
+kendi listesinden anlaşılır (ilk 50 yayınlanmış kayıt; kaçırılırsa yalnız fazladan bir düğme görünür, yetki
+sunucudadır). Moderasyon kuyruğu içeriği açılır bölümde gösterir; karar ve şikâyet çözümü gerekçeli penceredir.
 
 ## 2026-11-08 · Yönetim paneli: kapsam, askı ve toplu rapor kuralları
 Askıya alma Better Auth ban alanlarına yazılır ama eklentinin HTTP ucu kapalı olduğundan kendi servisimiz yazar (oturumlar
