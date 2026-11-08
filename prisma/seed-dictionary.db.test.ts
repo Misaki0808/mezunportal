@@ -90,19 +90,25 @@ describe('pilot sözlük seed’i (TD-011)', () => {
     });
   });
 
-  it('yöneticinin sildiği kayıt yeniden eklenir, ama başkasının takma adıyla çakışan takma ad açılmaz', async () => {
+  it('yöneticinin sildiği kayıt yeniden eklenir; başka kaydın takma adıyla çakışan takma ad açılmaz', async () => {
     await seedDictionary(db);
+    const js = await db.skill.findUniqueOrThrow({ where: { normalizedName: 'javascript' } });
+    expect(js.aliases).toContain('js');
+    await db.skill.delete({ where: { id: js.id } });
     const mine = await db.skill.create({
       data: {
-        name: `Özel ${randomUUID().slice(0, 6)}`,
-        normalizedName: `ozel-${randomUUID().slice(0, 6)}`,
-        aliases: ['scrum master'],
+        name: `Betik ${randomUUID().slice(0, 6)}`,
+        normalizedName: `betik-${randomUUID().slice(0, 6)}`,
+        aliases: ['js'],
       },
     });
-    expect(mine.id).toBeTruthy();
-    const tableau = await db.skill.findUniqueOrThrow({ where: { normalizedName: 'tableau' } });
-    await db.skill.delete({ where: { id: tableau.id } });
     await seedDictionary(db);
-    expect(await db.skill.count({ where: { normalizedName: 'tableau' } })).toBe(1);
+    const recreated = await db.skill.findUniqueOrThrow({ where: { normalizedName: 'javascript' } });
+    expect(recreated.aliases).not.toContain('js');
+    expect((await db.skill.findUniqueOrThrow({ where: { id: mine.id } })).aliases).toEqual(['js']);
+    expect((await matchDictionaryName(db, 'SKILL', 'js'))?.id).toBe(mine.id);
+    // Sonraki testler için seed durumunu geri kur.
+    await db.skill.delete({ where: { id: mine.id } });
+    await db.skill.update({ where: { id: recreated.id }, data: { aliases: ['js'] } });
   });
 });

@@ -258,7 +258,10 @@ describe('görünürlük', () => {
     });
     const selfMentor = await mentor();
 
-    const list = ids(await search(viewer));
+    const everyone = await search(viewer);
+    // Toplam, görünür mentor sayısıdır (doğrulanmamış üyelik kartı düşse bile toplamı şişirmemeli).
+    expect(everyone.total).toBe(everyone.items.length);
+    const list = ids(everyone);
     expect(list).toEqual(expect.arrayContaining([visible, expiredBan]));
     for (const hidden of [
       inactive,

@@ -110,6 +110,13 @@ mezun belgesi onay/ret, rol düzeltme, askıya alma/kaldırma, moderasyon kararl
 şüphe kararı, yönetici atama/kaldırma, sözlük değişikliği, eşleşmeyen değer çözümü, dışa aktarma.
 Kayıt yalnız eklenir; kişisel veri içermez (yalnız kimlikler). Sistem yöneticisi panelden görür.
 
+### Mentor dizini (P1-09)
+
+Dizin ve öneri yalnız doğrulanmış üyeye açıktır; kapsam (K-07) oturumdaki kullanıcıdan sunucuda çözülür. Askıdaki,
+silinmiş, doğrulanmamış ya da başka üniversitedeki kullanıcı dizinde yoktur; mentor kendini görmez. Kartta e-posta/telefon
+yoktur. Deneyim türü süzgeci anonim deneyimi saymaz. Benzer yol gerekçesi yalnız ortak öğeleri gösterir. Giriş noktası
+bayrakları görünmeyen hedef için "mentor değil" der (varlık ayrımı yok).
+
 ### Yönetim paneli kuralları (P1-11)
 
 Sözleşme `src/contracts/admin.ts` ve `admin-users.ts`'tedir; hangi eylemin kime açık olduğu `ADMIN_ACTION_ACCESS`

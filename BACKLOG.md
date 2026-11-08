@@ -42,6 +42,12 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 - P1-06 profil servisi: kendi profilini görüntüle/düzenle (temel alanlar, eğitim, pozisyon, dil, sertifika, beceri,
   izinli https bağlantılar, LinkedIn), başkasının profili görünürlük süzgeçli, tamamlama göstergesi; CV onayına profil
   başlığı/özeti/şehri kalemi eklendi; beceri modeli `Tag(SKILL)` + profil bağı. Ekranlar sonra.
+- P1-09 mentor dizini servisi: görünür mentor (etkin profil, geçerli hesap, doğrulanmış üyelik, K-07), tür/sektör/
+  şirket/unvan/deneyim türü/görüşme biçimi/yalnız müsait süzgeçleri, mentor kartı, "benzer yol izleyenler" (en çok 5,
+  gerekçeli, `rules/similarity`) ve profilden giriş uygunluk bayrakları hazır; `Profile.completionScore` her profil
+  yazımında `rules/profileCompletion` kuralından güncellenir. Kapasite doluluğu onaylı randevu sayacına bağlıdır: P1-10
+  gelene kadar sayaç 0 (`services/mentor-load.ts`, P1-10 gerçek sayımı bağlar). Pilot sözlük başlangıç seti
+  (sektör, unvan, beceri; şirket yok) seed'de. Ekran W2'de.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -123,11 +129,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).
   Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
   Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
-- [ ] **TD-011** · P2 · Sözlük içeriği ve yönetici çözümü yok
-  Ne: `Company`/`Title`/`Skill`/`Sector` boş; `UnmatchedValue` kuyruğu yazılıyor ama yönetici ekranı ve çözüm
-  (`resolvedToId`, takma ad ekleme) yok.
-  Neden borç: eşleme olmadan her değer ham kalır; kuyruk büyür.
-  Kapanış ölçütü: pilot sözlük seed'i + yönetici çözümleme ekranı.
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
   Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
   yerinde duruyor (hesap silme hâlâ eski satırları siler).

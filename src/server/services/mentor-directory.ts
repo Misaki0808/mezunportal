@@ -97,7 +97,6 @@ function visibleMentorWhere(
     isActive: true,
     userId: { not: viewerId },
     ...(filter.meetingModes ? { meetingModes: { hasSome: filter.meetingModes } } : {}),
-    ...(filter.onlyAvailable ? { OR: [{ pausedUntil: null }, { pausedUntil: { lte: now } }] } : {}),
     user: {
       deletedAt: null,
       ...notSuspended(now),
