@@ -12,6 +12,13 @@ import {
 } from '@/test/fixtures';
 
 import { deleteAccount } from './accountDeletion';
+import {
+  listContactRequests,
+  respondToContactRequest,
+  revokeContactRequest,
+  sendContactRequest,
+  withdrawContactRequest,
+} from './contactRequest';
 import { buildDataExport } from './dataExport';
 import { settleEvents } from './event';
 import {
@@ -965,6 +972,168 @@ describe('ilan üzerinden iletişim (D7)', () => {
     const long = contactNoteFor('Stajyer', 'b'.repeat(500));
     expect(long.length).toBe(500);
     expect(long.startsWith('İlan: Stajyer — b')).toBe(true);
+  });
+});
+
+describe('D7 sızıntı bekçisi: ilan kaynaklı talepte hedef kimliği onaydan önce açılmaz', () => {
+  const contactPosting = (w: World) =>
+    published(w, w.academic, { applyMethod: 'CONTACT_REQUEST', applyUrl: null });
+  const outgoing = (user: string, status?: 'PENDING') =>
+    listContactRequests(db, user, { box: 'OUTGOING', limit: 50, ...(status ? { status } : {}) });
+  const noAuthorTrace = (w: World, value: unknown) => {
+    const text = JSON.stringify(value);
+    for (const secret of [w.academic, 'Selin', 'Kaya', 'selin']) expect(text).not.toContain(secret);
+  };
+
+  it('PENDING / REJECTED / WITHDRAWN: counterpart null, yalnız ilan başlığı + kurum; kullanıcı kimliği ve adı yok', async () => {
+    const w = await world();
+    const ids: Record<string, string> = {};
+    for (const [label, requester] of [
+      ['pending', w.student],
+      ['rejected', w.otherStudent],
+      ['withdrawn', await w.make('STUDENT', 'Üçüncü Öğrenci')],
+    ] as const) {
+      const id = await contactPosting(w);
+      const out = await requestJobPostingContact(deps, requester, {
+        jobPostingId: id,
+        fields: ['EMAIL'],
+      });
+      ids[label] = out.requestId;
+      if (label === 'rejected')
+        await respondToContactRequest(db, w.academic, {
+          requestId: out.requestId,
+          decision: 'REJECT',
+        });
+      if (label === 'withdrawn')
+        await withdrawContactRequest(db, requester, { requestId: out.requestId });
+      const page = await outgoing(requester);
+      expect(page.items).toHaveLength(1);
+      expect(page.items[0]).toMatchObject({
+        id: out.requestId,
+        counterpart: null,
+        origin: {
+          kind: 'JOB_POSTING',
+          title: 'Veri analisti stajyeri',
+          organization: 'Örnek Teknoloji',
+        },
+        revealed: null,
+      });
+      noAuthorTrace(w, page);
+    }
+    expect(Object.keys(ids)).toHaveLength(3);
+  });
+
+  it('ilan kapanınca, süresi dolunca ve silinince de sızmaz (kaynak işareti ve özet talepte kalır)', async () => {
+    const w = await world();
+    const id = await contactPosting(w);
+    const { requestId } = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: id,
+      fields: ['EMAIL'],
+    });
+    await closeJobPosting(deps, w.academic, { postingId: id });
+    expect((await outgoing(w.student)).items[0]).toMatchObject({ counterpart: null });
+    await db.jobPosting.delete({ where: { id } }); // yazar hesabı silinince olduğu gibi: FK SET NULL
+    const row = await db.contactRequest.findUniqueOrThrow({ where: { id: requestId } });
+    expect(row).toMatchObject({
+      source: 'JOB_POSTING',
+      jobPostingId: null,
+      sourceTitle: 'Veri analisti stajyeri',
+    });
+    const page = await outgoing(w.student);
+    expect(page.items[0]).toMatchObject({
+      counterpart: null,
+      origin: { title: 'Veri analisti stajyeri', organization: 'Örnek Teknoloji' },
+    });
+    noAuthorTrace(w, page);
+  });
+
+  it('APPROVED: kimlik ve ad açılır, istenen alan paylaşılır, kaynak kalır; onay geri alınınca (REVOKED) yeniden gizlenir', async () => {
+    const w = await world();
+    const id = await contactPosting(w);
+    const { requestId } = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: id,
+      fields: ['EMAIL'],
+    });
+    await respondToContactRequest(db, w.academic, { requestId, decision: 'APPROVE' });
+    const approved = (await outgoing(w.student)).items[0]!;
+    expect(approved.counterpart).toEqual({ userId: w.academic, name: 'Dr. Selin Kaya' });
+    expect(approved.origin).toMatchObject({ title: 'Veri analisti stajyeri' });
+    expect(approved.revealed?.EMAIL).toBeTruthy();
+    await revokeContactRequest(db, w.academic, { requestId });
+    const revoked = (await outgoing(w.student)).items[0]!;
+    expect(revoked).toMatchObject({ status: 'REVOKED', counterpart: null, revealed: null });
+    noAuthorTrace(w, revoked);
+  });
+
+  it('gelen kutusu: yazar talep edeni ve ilanı görür; doğrudan profil talebi bugünkü gibi hedefi gösterir', async () => {
+    const w = await world();
+    const id = await contactPosting(w);
+    await requestJobPostingContact(deps, w.student, { jobPostingId: id, fields: ['EMAIL'] });
+    const incoming = await listContactRequests(db, w.academic, { box: 'INCOMING', limit: 50 });
+    expect(incoming.items[0]).toMatchObject({
+      counterpart: { userId: w.student, name: 'Elif Demirtaş' },
+      origin: { kind: 'JOB_POSTING', title: 'Veri analisti stajyeri' },
+    });
+    // doğrudan profil talebi (kişiyi kendisi seçmiş): hedef PENDING'de de görünür, origin null
+    await sendContactRequest(db, w.otherStudent, { targetUserId: w.alumni, fields: ['EMAIL'] });
+    const direct = (await outgoing(w.otherStudent)).items[0]!;
+    expect(direct).toMatchObject({
+      counterpart: { userId: w.alumni, name: 'Mert Yıldız' },
+      origin: null,
+    });
+    expect(
+      await db.contactRequest.findFirstOrThrow({ where: { requesterId: w.otherStudent } }),
+    ).toMatchObject({ source: 'PROFILE', jobPostingId: null, sourceTitle: null });
+  });
+
+  it('veri dökümü: ilan kaynaklı onaysız giden talepte hedef kimliği yok; onayda açılır; doğrudan talepte bugünkü gibi', async () => {
+    const w = await world();
+    const id = await contactPosting(w);
+    const { requestId } = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: id,
+      fields: ['EMAIL'],
+    });
+    await sendContactRequest(db, w.student, { targetUserId: w.alumni, fields: ['EMAIL'] });
+    const dump = await buildDataExport(db, w.student);
+    const job = dump.contactRequests.sent.find((r) => r.id === requestId)!;
+    expect(job).toMatchObject({ targetId: null, origin: { title: 'Veri analisti stajyeri' } });
+    noAuthorTrace(w, job);
+    expect(dump.contactRequests.sent.find((r) => r.id !== requestId)).toMatchObject({
+      targetId: w.alumni,
+      origin: null,
+    });
+    await respondToContactRequest(db, w.academic, { requestId, decision: 'APPROVE' });
+    expect(
+      (await buildDataExport(db, w.student)).contactRequests.sent.find((r) => r.id === requestId),
+    ).toMatchObject({
+      targetId: w.academic,
+    });
+    // yazarın kendi dökümü: gelen talepte talep eden görünür (kendi verisi)
+    expect((await buildDataExport(db, w.academic)).contactRequests.received[0]).toMatchObject({
+      requesterId: w.student,
+      origin: { title: 'Veri analisti stajyeri' },
+    });
+  });
+
+  it('veritabanı değişmezi: JOB_POSTING kaynağı başlık/kurum özetsiz yazılamaz; PROFILE ilan izi taşıyamaz', async () => {
+    const w = await world();
+    const base = { requesterId: w.student, targetId: w.academic, fields: ['EMAIL' as const] };
+    await expect(
+      db.contactRequest.create({ data: { ...base, source: 'JOB_POSTING' } }),
+    ).rejects.toThrow();
+    await expect(
+      db.contactRequest.create({
+        data: { ...base, source: 'JOB_POSTING', sourceTitle: 'x', sourceOrganization: ' ' },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      db.contactRequest.create({ data: { ...base, sourceTitle: 'x' } }),
+    ).rejects.toThrow();
+    await expect(
+      db.contactRequest.create({
+        data: { ...base, source: 'JOB_POSTING', sourceTitle: 'x', sourceOrganization: 'y' },
+      }),
+    ).resolves.toBeTruthy();
   });
 });
 

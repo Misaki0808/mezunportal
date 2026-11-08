@@ -38,11 +38,15 @@ function isOpenPairViolation(error: unknown): boolean {
   );
 }
 
+/** İlan kaynaklı talep (P2-04, D7): yalnız sunucu içi (ilan üzerinden iletişim servisi) verir; istemci girdisinden gelmez. */
+export type ContactRequestOrigin = { jobPostingId: string; title: string; organization: string };
+
 export async function sendContactRequest(
   db: PrismaClient,
   requesterId: string,
   input: { targetUserId: string; fields: ContactField[]; message?: string | null },
   now: Date = new Date(),
+  origin?: ContactRequestOrigin,
 ): Promise<SendContactRequestOutput> {
   if (input.targetUserId === requesterId) throw codedValidation('CONTACT_REQUEST_SELF');
   await consumeRateLimit(db, RATE_LIMITS.contactRequest, requesterId, now);
@@ -67,6 +71,14 @@ export async function sendContactRequest(
           targetId: target.id,
           fields: input.fields,
           message: input.message ?? null,
+          ...(origin
+            ? {
+                source: 'JOB_POSTING' as const,
+                jobPostingId: origin.jobPostingId,
+                sourceTitle: origin.title,
+                sourceOrganization: origin.organization,
+              }
+            : {}),
         },
         select: { id: true },
       });
@@ -261,7 +273,22 @@ export async function listContactRequests(
     createdAt: true,
     decidedAt: true,
     closedAt: true,
+    source: true,
+    sourceTitle: true,
+    sourceOrganization: true,
   } as const;
+  const originOf = (row: {
+    source: 'PROFILE' | 'JOB_POSTING';
+    sourceTitle: string | null;
+    sourceOrganization: string | null;
+  }) =>
+    row.source === 'JOB_POSTING' && row.sourceTitle !== null && row.sourceOrganization !== null
+      ? {
+          kind: 'JOB_POSTING' as const,
+          title: row.sourceTitle,
+          organization: row.sourceOrganization,
+        }
+      : null;
 
   let items: ContactRequestItem[];
   if (input.box === 'INCOMING') {
@@ -270,9 +297,10 @@ export async function listContactRequests(
       ...base,
       select: { ...common, requester: { select: { id: true, name: true } } },
     });
-    items = rows.map(({ requester, ...row }) => ({
+    items = rows.map(({ requester, source, sourceTitle, sourceOrganization, ...row }) => ({
       ...row,
       counterpart: { userId: requester.id, name: requester.name },
+      origin: originOf({ source, sourceTitle, sourceOrganization }),
       revealed: null,
     }));
   } else {
@@ -284,9 +312,14 @@ export async function listContactRequests(
       .filter((row) => row.status === 'APPROVED')
       .map((row) => row.target.id);
     const levels = await loadVisibilityLevels(db, approvedTargets);
-    items = rows.map(({ target, ...row }) => ({
+    items = rows.map(({ target, source, sourceTitle, sourceOrganization, ...row }) => ({
       ...row,
-      counterpart: { userId: target.id, name: target.name },
+      // D7: ilan kaynaklı talepte hedefin kimliği/adı yalnız `APPROVED`'da açılır; ilan silinse/kapansa da kaynak işareti kalır.
+      counterpart:
+        source === 'JOB_POSTING' && row.status !== 'APPROVED'
+          ? null
+          : { userId: target.id, name: target.name },
+      origin: originOf({ source, sourceTitle, sourceOrganization }),
       revealed:
         row.status === 'APPROVED'
           ? revealFor(row.fields, levels.get(target.id) ?? new Map(), target)

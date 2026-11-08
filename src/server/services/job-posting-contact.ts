@@ -79,6 +79,12 @@ export async function requestJobPostingContact(
       message: contactNoteFor(target.title, parsed.message),
     },
     nowOf(deps),
+    // D7: kaynak sunucuda yazılır; talep eden onaydan önce yazarın adını/kimliğini görmez.
+    {
+      jobPostingId: parsed.jobPostingId,
+      title: target.title,
+      organization: target.organizationName,
+    },
   );
   return requestJobPostingContactOutputSchema.parse({
     requestId: sent.requestId,

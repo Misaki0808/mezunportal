@@ -624,26 +624,41 @@ enum ContactRequestStatus {
 
 /// İletişim talebi: onaylanınca istenen alanlar YALNIZ talep edene açılır (görünürlük kuralı bunu okur).
 /// Aynı ikili için aynı anda en fazla bir açık (bekleyen ya da onaylı) talep olur.
-model ContactRequest {
-  id          String               @id @default(uuid(7))
-  requesterId String
-  targetId    String
-  fields      ContactField[]
-  /// İsteğe bağlı kısa not (≤ 500 karakter); hedefe görünür.
-  message     String?
-  status      ContactRequestStatus @default(PENDING)
-  /// Onay ya da ret anı.
-  decidedAt   DateTime?
-  /// Geri çekme (`WITHDRAWN`) ya da geri alma (`REVOKED`) anı.
-  closedAt    DateTime?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+enum ContactRequestSource {
+  PROFILE
+  JOB_POSTING
+}
 
-  requester User @relation("ContactRequestRequester", fields: [requesterId], references: [id], onDelete: Restrict)
-  target    User @relation("ContactRequestTarget", fields: [targetId], references: [id], onDelete: Restrict)
+model ContactRequest {
+  id                 String               @id @default(uuid(7))
+  requesterId        String
+  targetId           String
+  fields             ContactField[]
+  /// İsteğe bağlı kısa not (≤ 500 karakter); hedefe görünür.
+  message            String?
+  status             ContactRequestStatus @default(PENDING)
+  /// Onay ya da ret anı.
+  decidedAt          DateTime?
+  /// Geri çekme (`WITHDRAWN`) ya da geri alma (`REVOKED`) anı.
+  closedAt           DateTime?
+  /// Talebin KAYNAĞI (P2-04, D7): `JOB_POSTING` ise talep ilan üzerinden gönderilmiştir; sunucu yazar ve doldurur (istemciden alınmaz).
+  /// İlan kaynaklı talepte hedefin kimliği/adı talep edene YALNIZ `APPROVED`'da açılır; o zamana dek ilan başlığı ve kurum
+  /// (`sourceTitle`/`sourceOrganization`, talep anındaki özet: ilan silinse/kapansa da kalır) gösterilir. `jobPostingId` yalnız bağlantıdır
+  /// (ilan silinirse `SET NULL`; kaynak işareti `source` ve özet kalır).
+  source             ContactRequestSource @default(PROFILE)
+  jobPostingId       String?
+  sourceTitle        String?
+  sourceOrganization String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  requester  User        @relation("ContactRequestRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  target     User        @relation("ContactRequestTarget", fields: [targetId], references: [id], onDelete: Restrict)
+  jobPosting JobPosting? @relation(fields: [jobPostingId], references: [id], onDelete: SetNull)
 
   @@index([targetId, status, createdAt])
   @@index([requesterId, status, createdAt])
+  @@index([jobPostingId])
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1484,13 +1499,14 @@ model JobPosting {
   createdAt           DateTime                 @default(now())
   updatedAt           DateTime                 @updatedAt
 
-  author      User                   @relation("JobPostingAuthor", fields: [authorId], references: [id], onDelete: Restrict)
-  department  Department             @relation(fields: [departmentIdAtWrite], references: [id], onDelete: Restrict)
-  company     Company?               @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  moderatedBy User?                  @relation("JobPostingModerator", fields: [moderatedById], references: [id], onDelete: Restrict)
-  endedBy     User?                  @relation("JobPostingEnder", fields: [endedById], references: [id], onDelete: Restrict)
-  targets     JobPostingDepartment[]
-  reports     JobPostingReport[]
+  author          User                   @relation("JobPostingAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  department      Department             @relation(fields: [departmentIdAtWrite], references: [id], onDelete: Restrict)
+  company         Company?               @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  moderatedBy     User?                  @relation("JobPostingModerator", fields: [moderatedById], references: [id], onDelete: Restrict)
+  endedBy         User?                  @relation("JobPostingEnder", fields: [endedById], references: [id], onDelete: Restrict)
+  targets         JobPostingDepartment[]
+  reports         JobPostingReport[]
+  contactRequests ContactRequest[]
 
   @@index([authorId, updatedAt])
   @@index([departmentIdAtWrite, status, createdAt])

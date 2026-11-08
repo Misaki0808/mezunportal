@@ -1330,6 +1330,8 @@
       "requested": "İstenen bilgiler",
       "shared": "Seninle paylaşılan bilgiler",
       "message": "Kısa not",
+      "originJobPosting": "İlan: {title} · {organization}",
+      "originHidden": "Kişi bilgisi, talebin onaylanınca açılır.",
       "PENDING": "Onay bekliyor",
       "APPROVED": "Onaylandı",
       "REJECTED": "Reddedildi",
