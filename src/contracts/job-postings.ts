@@ -207,11 +207,11 @@ export const jobPostingDraftContentSchema = z
     isRemote: z.boolean({ error: INVALID }).optional(),
     description: draftText(JOB_POSTING_DESCRIPTION_MAX),
     applyMethod: z.enum(JOB_APPLY_METHODS, { error: INVALID }).nullable().optional(),
-    applyUrl: z
-      .union([z.literal(''), applyUrl])
-      .transform((value) => (value === '' ? null : value))
-      .nullable()
-      .optional(),
+    // Boş metin "yok" sayılır; dolu değer https bağlantısı olmalı (hata kodu `JOB_POSTING_URL_INVALID`).
+    applyUrl: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
+      applyUrl.nullable().optional(),
+    ),
     deadlineOn: isoDay.nullable().optional(),
     targetDepartmentIds: targetIds.optional(),
   })
