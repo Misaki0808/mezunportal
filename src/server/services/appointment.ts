@@ -58,6 +58,7 @@ import { CAPACITY_STATUSES } from './mentor-load';
 import { onboardingSnapshot } from './profile';
 import { consumeRateLimit } from './rateLimit';
 import { visibleMentorWhere } from './mentor-directory';
+import { requireConsent } from './privacy';
 
 /**
  * Randevu motoru (P1-10). Kimlik yalnız `userId`'dir (oturumdan); yetki işlemin içinde güncel veriyle yeniden yüklenir.
@@ -865,6 +866,7 @@ export async function getAppointmentIcs(
   const now = nowOf(deps);
   return deps.db.$transaction(async (tx) => {
     await requireMember(tx, userId, now);
+    await requireConsent(tx, userId);
     const row = await loadParticipantRow(tx, userId, parsed.appointmentId);
     if (row.status !== 'CONFIRMED') throw codedNotFound('RESOURCE_NOT_FOUND');
     const counterpart = nameOf(row, userId);
