@@ -86,8 +86,9 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 | K-04 | LLM sağlayıcısı | Kullanıcı | PDF girdisi + yapılandırılmış çıktı + API verisini eğitimde kullanmama politikası olan ücretli API | P1-05 |
 | K-05 | E-posta sağlayıcısı (canlı) | Kullanıcı | Üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | P1-18 |
 | K-06 | İÜ personel e-posta alanı, YBS'nin fakültesi ve program dili | PM ölçer, kullanıcı teyit eder | Geçici değerler `prisma/seed-data.ts`'te (`ogr.iu.edu.tr`, `istanbul.edu.tr`, İktisat Fakültesi); öğrenci alanı ölçüldü; kalanlar teyit bekler | P1-02 |
+| K-11 | Şüphe eşiklerinin sayısal değerleri (ağırlıklar kararlı) | PM | `SUSPICION_THRESHOLDS` (40 puan/24 saat; 90 günde ≥ 15 puanın ≥ %60'ı ve ≥ 3 kaydı tek karşı taraftan; ≤ 60 sn eşzamanlı yanıt ≥ 3) | Pilot öncesi |
 | K-12 | Pilot: kimler, ne zaman, başarı ölçütleri | Hoca | Hocayla | P1-18 |
-| K-14 | GitHub Actions CI kullanılsın mı | Kullanıcı | Public repoda standart çalıştırıcılarla hazırlanan PR #6 hakkında karar | P0-03 |
+| K-14 | GitHub Actions CI kullanılsın mı | Kullanıcı | Public repoda standart çalıştırıcılarla hazırlanan taslak CI değişikliği hakkında karar | P0-03 |
 | K-15 | Gelecekteki commit e-posta gizliliği | Kullanıcı | GitHub gizli adresi veya mevcut ayar | Yeni commit yapılandırması |
 
 ## Pilot öncesi kapılar
@@ -120,9 +121,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).
   Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
   Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
-- [ ] **TD-015** · P2 · SSS kullanım olayları
-  Görüşme tamamlanma ve CV inceleme olayları bağlandı; SSS talep ve yayın olayları P1-17 servisinde bağlandı.
-  Kapanış ölçütü: SSS olaylarının uçtan uca ve kişisel veri içermeden ölçüldüğü doğrulanır.
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
   Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
   yerinde duruyor (hesap silme hâlâ eski satırları siler).
