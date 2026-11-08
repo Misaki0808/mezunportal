@@ -627,6 +627,14 @@ değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki y�
 Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
 kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 
+## 2026-11-08 · Üretilmiş arama sütunları ve GIN indeksleri şemada modellenir
+`prisma migrate dev`, şemada olmayan GENERATED ALWAYS arama sütunları (`Experience.searchVector`/`searchKeys`) ve 6 GIN
+indeksi için sonraki her migration'a yanlış `ALTER`/`DROP INDEX` yazıyordu; uygulanırsa arama bozulurdu. İndeksler
+`@@index(type: Gin, ops: raw("gin_trgm_ops"))`, sütunlar `@default(dbgenerated())` ile modellenince `migrate diff` boş
+çıktı. Bedel: `searchKeys` istemcide sıradan `String?` görünür; Prisma istemcisinde global `omit`
+(`src/lib/prisma-options.ts`) ile hiçbir sorguda varsayılan dönmez, ham SQL arama yine okur (`searchVector`
+`Unsupported` olduğundan istemcide zaten yoktur). Migration bekçi testi (`prisma/migration-guard.test.ts`) ikinci kemer
+olarak kalır. Reddedilen: yalnız elle düzeltme notu (insan hatasına açık).
 ## 2026-11-08 · Bildirim tercihleri ve yıllık doğrulama (P1-12)
 
 Zorunlu hesap/güvenlik iletileri kapatılamaz; diğer türler varsayılan açık olup hem kuyruğa alınırken hem de teslimden
@@ -694,6 +702,9 @@ App Router yükleme sınırı yanıtı başlattıktan sonra sayfadaki red HTTP 2
 dolduktan sonra yeniden geçişte yeni olay yazılabilir. KVKK veri en aza indirme için daha uzun süre yaşayan ayrı kullanıcı
 işaretçisi tutulmaz.
 
+### P1-09 incelemesi: ortak filtre gönderimi ve profil girişleri
+
+Mentor dizini ve arama aynı filtre kabuğunu kullanır. Bekleyen gezinme sırasında Uygula yerel disabled taşır; mentor dizini de çip kaldırma/temizleme kaynaklı ikinci gezinmeyi reddeder. Uzun beceriler kartta erişilebilir tam başlıkla kısalır, öneri gerekçeleri satıra bölünür. Profil görünürlüğü denetimi geçtikten sonra mevcut mentor uygunluk servisiyle iletişim ve kapalı girişlerin nedenleri bağlanır; görünmeyen profilde ek sorgu yapılmaz. Randevu/CV incelemesi eylem ekranları kendi kartlarındadır; uygunluk bayrağı yeni yetki vermez.
 ### P1-12 incelemesi: ortak hesaplı uçtan uca testler
 
 Bildirim bağlantısı testi seed öğrencisinin pozisyonuna bağlı kayıt oluşturur; profil/CV testi aynı öğrencinin pozisyonlarını temizler. Bu nedenle ortak hesap kullanan uçtan uca dosyalar tek işçiyle koşar. Her şablonun güncel tercihe uyması ve bağlantının hesap/imza/süre/tek kullanım sınırları bağımsız negatif testlerle korunur. Olay commit edildikten sonra kuyruğa yazım başarısızsa otomatik telafi bu pakette yoktur; ana işlemin başarısı korunur.
