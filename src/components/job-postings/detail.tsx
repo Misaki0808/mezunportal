@@ -9,8 +9,8 @@ export function PostingDetail({ posting }: { posting: JobPostingDetail }) {
   const url =
     posting.applyMethod === 'URL' && posting.applyUrl ? parseApplyUrl(posting.applyUrl) : null;
   const contact =
-    posting.applyMethod === 'CONTACT_REQUEST' && posting.contactUserId
-      ? `/iletisim-iste/${encodeURIComponent(posting.contactUserId)}`
+    posting.applyMethod === 'CONTACT_REQUEST'
+      ? `/ilanlar/${encodeURIComponent(posting.id)}/iletisim`
       : null;
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">

@@ -18,3 +18,15 @@ it('yalnız etkin doğrulanmış mezun ve akademisyen ilan verebilir', () => {
   expect(mayPost([{ role: 'ALUMNI', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(true);
   expect(mayPost([{ role: 'ACADEMIC', verificationStatus: 'PENDING', endedAt: null }])).toBe(false);
 });
+it('serbest ve sözlük kurum seçimi aynı URL ile doğru alana çevrilir', () => {
+  const options = [
+    { key: 'abc', companyId: 'abc', name: 'Kurum' },
+    { key: 'Bağımsız Kurum', companyId: null, name: 'Bağımsız Kurum' },
+  ];
+  expect(
+    parseJobFilters(new URLSearchParams('organization=abc&location=İstanbul'), options),
+  ).toMatchObject({ companyId: 'abc', location: 'İstanbul' });
+  expect(
+    parseJobFilters(new URLSearchParams('organization=Bağımsız+Kurum'), options),
+  ).toMatchObject({ organizationName: 'Bağımsız Kurum' });
+});

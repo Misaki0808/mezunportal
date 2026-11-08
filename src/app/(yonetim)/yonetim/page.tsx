@@ -30,6 +30,7 @@ export default async function AdminOverviewPage() {
     { key: 'documents', href: '/yonetim/belge-kuyrugu', visible: true },
     { key: 'experiences', href: '/yonetim/deneyimler', visible: true },
     { key: 'faq', href: '/yonetim/sss', visible: true },
+    { key: 'jobPostings', href: '/yonetim/ilanlar', visible: true },
   ] as const;
   return (
     <div className="mx-auto max-w-4xl px-5 pb-12 pt-10 sm:pt-14">

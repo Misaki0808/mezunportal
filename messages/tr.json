@@ -1504,7 +1504,8 @@
       "invitations": "Toplu davet",
       "usageMetrics": "Kullanım",
       "points": "Puan yönetimi",
-      "faq": "SSS moderasyonu"
+      "faq": "SSS moderasyonu",
+      "jobPostings": "İlan inceleme"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1519,7 +1520,8 @@
       "invitations": "E-posta listesiyle davet gönder.",
       "usageMetrics": "Toplu kullanım raporunu incele.",
       "points": "Puan kurallarını, kayıtları ve şüpheli işaretleri yönet.",
-      "faq": "SSS taleplerini incele, yayımla, reddet ya da mentorluğa yönlendir."
+      "faq": "SSS taleplerini incele, yayımla, reddet ya da mentorluğa yönlendir.",
+      "jobPostings": "Topluluğun paylaştığı ilanları incele."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -2524,6 +2526,7 @@
     "noTargets": "Bölüm seçeneği bulunamadı.",
     "allTypes": "Tüm ilan türleri",
     "closeDone": "İlan kapatıldı.",
-    "edit": "Düzenle"
+    "edit": "Düzenle",
+    "loadMore": "Daha fazla göster"
   }
 }

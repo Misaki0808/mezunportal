@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export default async function MyPostingsPage() {
   const result = await listMyJobPostings({});
   return result.ok ? (
-    <MyPostings initial={result.data} close={closeJobPosting} />
+    <MyPostings initial={result.data} close={closeJobPosting} list={listMyJobPostings} />
   ) : (
     <ErrorState errorCode={result.errorCode} />
   );

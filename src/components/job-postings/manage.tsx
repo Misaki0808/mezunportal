@@ -7,6 +7,8 @@ import type {
   CloseJobPostingOutput,
   JobPostingIdInput,
   MyJobPostingPage,
+  ListMyJobPostingsInput,
+  ListJobPostingModerationQueueInput,
   JobPostingModerationPage,
   ReviewJobPostingInput,
   ReviewJobPostingOutput,
@@ -17,17 +19,32 @@ import { Button, EmptyState, Field, Modal, Textarea, buttonClasses } from '@/com
 export function MyPostings({
   initial,
   close,
+  list,
 }: {
   initial: MyJobPostingPage;
+  list: (input: ListMyJobPostingsInput) => Promise<ActionResult<MyJobPostingPage>>;
   close: (input: JobPostingIdInput) => Promise<ActionResult<CloseJobPostingOutput>>;
 }) {
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
   const [items, setItems] = useState(initial.items);
+  const [cursor, setCursor] = useState(initial.nextCursor);
   const [choice, setChoice] = useState<string>();
   const [error, setError] = useState('');
   const [pending, start] = useTransition();
+  function loadMore() {
+    if (!cursor) return;
+    start(async () => {
+      const result = await list({ cursor });
+      if (!result.ok) {
+        setError(errors(result.errorCode));
+        return;
+      }
+      setItems((items) => [...items, ...result.data.items]);
+      setCursor(result.data.nextCursor);
+    });
+  }
   function confirm() {
     if (!choice) return;
     start(async () => {
@@ -118,6 +135,16 @@ export function MyPostings({
           }
         />
       )}
+      {cursor && (
+        <Button variant="secondary" loading={pending} onClick={loadMore}>
+          {t('loadMore')}
+        </Button>
+      )}
+      {error && !choice && (
+        <p role="alert" className="text-danger">
+          {error}
+        </p>
+      )}
       <Modal
         open={!!choice}
         onClose={() => setChoice(undefined)}
@@ -146,18 +173,35 @@ export function MyPostings({
 export function PostingModeration({
   initial,
   review,
+  list,
 }: {
   initial: JobPostingModerationPage;
+  list: (
+    input: ListJobPostingModerationQueueInput,
+  ) => Promise<ActionResult<JobPostingModerationPage>>;
   review: (input: ReviewJobPostingInput) => Promise<ActionResult<ReviewJobPostingOutput>>;
 }) {
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
   const [items, setItems] = useState(initial.items);
+  const [cursor, setCursor] = useState(initial.nextCursor);
   const [choice, setChoice] = useState<{ id: string; decision: 'PUBLISH' | 'REJECT' }>();
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
   const [pending, start] = useTransition();
+  function loadMore() {
+    if (!cursor) return;
+    start(async () => {
+      const result = await list({ cursor });
+      if (!result.ok) {
+        setError(errors(result.errorCode));
+        return;
+      }
+      setItems((items) => [...items, ...result.data.items]);
+      setCursor(result.data.nextCursor);
+    });
+  }
   function confirm() {
     if (!choice) return;
     if (choice.decision === 'REJECT' && reason.trim().length < 10) {
@@ -219,6 +263,16 @@ export function PostingModeration({
         </ul>
       ) : (
         <EmptyState title={t('moderationEmpty')} />
+      )}
+      {cursor && (
+        <Button variant="secondary" loading={pending} onClick={loadMore}>
+          {t('loadMore')}
+        </Button>
+      )}
+      {error && !choice && (
+        <p role="alert" className="text-danger">
+          {error}
+        </p>
       )}
       <Modal
         open={!!choice}

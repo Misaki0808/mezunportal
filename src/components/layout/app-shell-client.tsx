@@ -78,7 +78,7 @@ export function AppShellClient({
     const shared = cn(
       'inline-flex items-center gap-1 rounded-control font-medium',
       layout === 'bottom'
-        ? 'min-h-14 w-full flex-col justify-center px-1 py-1 text-xs'
+        ? 'min-h-14 w-full flex-col justify-center px-1 py-1 text-[0.6875rem]'
         : 'min-h-11 w-full flex-row px-3 text-base',
     );
 

@@ -8,7 +8,7 @@ import type {
   SearchJobPostingsInput,
   JobPostingFilterOptions,
 } from '@/contracts/job-postings';
-import { Button, EmptyState, Input, Select, buttonClasses } from '@/components/ui';
+import { Button, EmptyState, Input, Pagination, Select, buttonClasses } from '@/components/ui';
 
 export function PostingCard({ posting }: { posting: JobPostingCard }) {
   const t = useTranslations('jobs');
@@ -34,7 +34,7 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
           </p>
           <h2 className="mt-1 break-words text-xl font-bold leading-tight text-fg">
             <Link
-              className="rounded-sm after:absolute focus-visible:outline-2 focus-visible:outline-primary"
+              className="rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
               href={`/ilanlar/${encodeURIComponent(posting.id)}`}
             >
               {posting.title}
@@ -90,11 +90,21 @@ export function PostingList({
     filters.q ||
     filters.departmentId ||
     filters.companyId ||
+    filters.organizationName ||
     filters.location ||
     filters.kind ||
     filters.remote ||
     filters.withinDays,
   );
+  function pageHref(target: number) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (key !== 'page' && key !== 'pageSize' && value !== undefined && value !== false)
+        params.set(key, String(value));
+    }
+    if (target > 1) params.set('page', String(target));
+    return `/ilanlar${params.size ? `?${params}` : ''}`;
+  }
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -137,7 +147,7 @@ export function PostingList({
           />
           <Button type="submit">{t('searchButton')}</Button>
         </div>
-        <details className="mt-4">
+        <details className="mt-4" open={filtered}>
           <summary className="press-control flex min-h-11 cursor-pointer items-center font-semibold text-primary">
             {t('filters')}
           </summary>
@@ -155,15 +165,22 @@ export function PostingList({
             </label>
             <label className="grid gap-2 font-medium">
               {t('company')}
-              <Select name="companyId" defaultValue={filters.companyId ?? ''}>
+              <Select
+                name="organization"
+                defaultValue={
+                  options.organizations.find((c) =>
+                    c.companyId
+                      ? c.companyId === filters.companyId
+                      : c.name === filters.organizationName,
+                  )?.key ?? ''
+                }
+              >
                 <option value="">{t('all')}</option>
-                {options.organizations
-                  .filter((c) => c.companyId)
-                  .map((c) => (
-                    <option key={c.companyId} value={c.companyId ?? ''}>
-                      {c.name}
-                    </option>
-                  ))}
+                {options.organizations.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.name}
+                  </option>
+                ))}
               </Select>
             </label>
             <label className="grid gap-2 font-medium">
@@ -232,6 +249,12 @@ export function PostingList({
           />
         </div>
       )}
+      <Pagination
+        className="mt-6"
+        page={page.page}
+        pageCount={Math.ceil(page.total / page.pageSize)}
+        hrefFor={pageHref}
+      />
     </div>
   );
 }

@@ -16,15 +16,16 @@ export default async function PostingsPage({
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw))
     if (typeof value === 'string') params.set(key, value);
-  const filters = parseJobFilters(params);
-  const [actor, result, options] = await Promise.all([
+  const [actor, options] = await Promise.all([
     requireVerifiedMember().catch(() => null),
-    searchJobPostings(filters).catch(() => null),
     getJobPostingFilterOptions().catch(() => null),
   ]);
-  if (!actor || !result || !options) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
-  if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
+  if (!actor || !options) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!options.ok) return <ErrorState errorCode={options.errorCode} />;
+  const filters = parseJobFilters(params, options.data.organizations);
+  const result = await searchJobPostings(filters).catch(() => null);
+  if (!result) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
+  if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   return (
     <PostingList
       page={result.data}

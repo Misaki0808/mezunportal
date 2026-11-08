@@ -10,7 +10,11 @@ export default async function PostingQueuePage() {
   if (!(await hasAdminAccess())) return <ErrorState errorCode="AUTH_FORBIDDEN" />;
   const result = await listJobPostingModerationQueue({});
   return result.ok ? (
-    <PostingModeration initial={result.data} review={reviewJobPosting} />
+    <PostingModeration
+      initial={result.data}
+      review={reviewJobPosting}
+      list={listJobPostingModerationQueue}
+    />
   ) : (
     <ErrorState errorCode={result.errorCode} />
   );

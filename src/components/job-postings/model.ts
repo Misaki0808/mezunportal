@@ -19,11 +19,23 @@ export function daysRemaining(deadline: string, now = new Date()): number {
     (Date.parse(`${deadline}T00:00:00Z`) - Date.parse(`${istanbulDay(now)}T00:00:00Z`)) / 86400000,
   );
 }
-export function parseJobFilters(params: URLSearchParams): SearchJobPostingsInput {
+export function parseJobFilters(
+  params: URLSearchParams,
+  organizations: readonly { key: string; companyId: string | null; name: string }[] = [],
+): SearchJobPostingsInput {
+  const selected = organizations.find((item) => item.key === params.get('organization'));
   const candidate = {
     ...(params.get('q') ? { q: params.get('q') } : {}),
     ...(params.get('departmentId') ? { departmentId: params.get('departmentId') } : {}),
-    ...(params.get('companyId') ? { companyId: params.get('companyId') } : {}),
+    ...(selected
+      ? selected.companyId
+        ? { companyId: selected.companyId }
+        : { organizationName: selected.name }
+      : params.get('companyId')
+        ? { companyId: params.get('companyId') }
+        : params.get('organizationName')
+          ? { organizationName: params.get('organizationName') }
+          : {}),
     ...(params.get('location') ? { location: params.get('location') } : {}),
     ...(params.get('kind') ? { kind: params.get('kind') } : {}),
     ...(params.get('remote') === 'true' ? { remote: true } : {}),
