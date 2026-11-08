@@ -16,6 +16,7 @@ import {
   type SearchExperiencesInput,
   type SearchPage,
 } from '@/contracts/search';
+import { FilterChip } from './filter-chip';
 import {
   Badge,
   Button,
@@ -26,13 +27,17 @@ import {
   Select,
   Sheet,
   Skeleton,
-  Tag,
   buttonClasses,
 } from '@/components/ui';
 
 type Filter = SearchExperiencesInput;
-type Props = { filter: Filter; results: SearchPage; sectors: { id: string; name: string }[] };
-export function SearchScreen({ filter, results, sectors }: Props) {
+type Props = {
+  filter: Filter;
+  results: SearchPage;
+  sectors: { id: string; name: string }[];
+  filtersReset?: boolean;
+};
+export function SearchScreen({ filter, results, sectors, filtersReset = false }: Props) {
   const t = useTranslations('search');
   const router = useRouter();
   const [draft, setDraft] = useState<Filter>(filter);
@@ -44,6 +49,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
     return `/deneyimler${params ? `?${params}` : ''}`;
   };
   function go(next: Filter) {
+    if (pending) return;
     const parsed = searchExperiencesSchema.safeParse(next);
     if (!parsed.success) {
       setInvalid(true);
@@ -245,6 +251,14 @@ export function SearchScreen({ filter, results, sectors }: Props) {
           {t('mine')}
         </Link>
       </header>
+      {filtersReset && (
+        <p
+          role="status"
+          className="mt-6 rounded-control border border-border bg-surface p-4 text-base text-fg"
+        >
+          {t('invalidFiltersReset')}
+        </p>
+      )}
       <form
         className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-end"
         onSubmit={(event) => {
@@ -268,7 +282,15 @@ export function SearchScreen({ filter, results, sectors }: Props) {
             />
           )}
         </Field>
-        <Button type="submit">{t('submit')}</Button>
+        <Button
+          type="submit"
+          loading={pending}
+          {...(pending
+            ? { disabled: true as const, disabledReason: t('loading') }
+            : { disabled: false as const })}
+        >
+          {t('submit')}
+        </Button>
       </form>
       <div className="mt-6 lg:hidden">
         <Button variant="secondary" onClick={() => setOpen(true)}>
@@ -310,7 +332,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
             </Button>
           </div>
         </aside>
-        <section aria-busy={pending}>
+        <section aria-busy={pending} className="min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="font-semibold" aria-live="polite">
               {t('resultCount', { count: results.total })}
@@ -324,7 +346,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
           {active.length > 0 && (
             <div aria-label={t('active')} className="mt-4 flex flex-wrap gap-2">
               {active.map((chip) => (
-                <Tag
+                <FilterChip
                   key={chip.key}
                   label={chip.label}
                   onRemove={() => go({ ...filter, ...chip.remove, page: 1 })}

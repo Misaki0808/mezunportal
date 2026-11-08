@@ -1030,6 +1030,7 @@
       "UNPAID": "Ücretsiz",
       "NOT_DISCLOSED": "Belirtilmedi"
     },
-    "mine": "Deneyimlerim"
+    "mine": "Deneyimlerim",
+    "invalidFiltersReset": "Geçersiz filtreler temizlendi. Yeniden arayabilirsin."
   }
 }
