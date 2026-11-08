@@ -112,6 +112,23 @@ describe('analyzeIdentity: engel ve uyarı (kart 122)', () => {
     expect(findIdentityLeak(text, names)).toBe(false);
   });
 
+  it('noktalamayla bölünmüş ad başka sözcüğe uzanıyorsa UYARI, tek başına ya da ekli ise ENGEL', () => {
+    expect(analyzeIdentity('D.enizcilik alanı', names)).toMatchObject({ blocked: false });
+    expect(analyzeIdentity('D.enizcilik alanı', names).warnings.length).toBeGreaterThan(0);
+    expect(analyzeIdentity('De nizcilik alanı', names)).toEqual({
+      blocked: false,
+      warnings: ['de nizcilik'],
+    });
+    expect(analyzeIdentity('D.eniz alanı', names).blocked).toBe(true);
+    expect(analyzeIdentity('D.eniz in alanı', names).blocked).toBe(true);
+  });
+
+  it('aynı uyarı sözcüğü bir kez listelenir', () => {
+    expect(analyzeIdentity('denizcilik denizcilik denizcilik', names).warnings).toEqual([
+      'denizcilik',
+    ]);
+  });
+
   it('ilgisiz metin: engel de uyarı da yok', () => {
     expect(analyzeIdentity('Staj başvurusunda neleri hazırlamalıyım', names)).toEqual({
       blocked: false,
