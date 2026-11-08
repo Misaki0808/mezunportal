@@ -218,6 +218,7 @@
     "entry": {
       "title": "Mentorla bağlantı",
       "contact": "İletişim iste",
+      "appointment": "Randevu al",
       "contactBlocked": "Bu kişiye şu anda iletişim talebi gönderemezsin.",
       "appointmentBlocked": "Randevu şu an alınamıyor.",
       "cvBlocked": "CV incelemesi şu an istenemiyor.",

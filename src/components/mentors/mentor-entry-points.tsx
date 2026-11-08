@@ -8,8 +8,8 @@ import { buttonClasses } from '@/components/ui';
 
 /**
  * Profildeki giriş noktaları. Yalnız uygunluk bayrağından çizilir: kapalı olan giriş sebebiyle açıklanır; randevu ve
- * CV incelemesi eylemleri kendi kartlarında (P1-10, P1-15) gelene kadar açık bayraklar için düğme çizilmez
- * (“yakında” yazısı yok); iletişim talebi mevcut akıştır.
+ * CV incelemesi eylemi kendi kartında (P1-15) gelene kadar açık bayrak için düğme çizilmez (“yakında” yazısı
+ * yok); iletişim talebi ve randevu al (P1-10) bağlıdır.
  */
 export function MentorEntryPoints({ userId, entry }: { userId: string; entry: EntryPoints }) {
   const t = useTranslations('mentors.entry');
@@ -38,6 +38,11 @@ export function MentorEntryPoints({ userId, entry }: { userId: string; entry: En
         <p className="text-base text-fg-muted">
           {entry.contact.reason ? t(`reasons.${entry.contact.reason}`) : t('contactBlocked')}
         </p>
+      )}
+      {entry.appointment.available && (
+        <Link className={buttonClasses({ fullWidth: true })} href={`/randevu-al/${userId}`}>
+          {t('appointment')}
+        </Link>
       )}
       {blocked.length > 0 && (
         <ul className="flex flex-col gap-1 text-base text-fg-muted">
