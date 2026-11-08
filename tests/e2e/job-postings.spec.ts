@@ -81,6 +81,14 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
       data: { applyMethod: 'CONTACT_REQUEST', applyUrl: null },
     });
     await student!.reload();
+    await alumni!.goto(`/ilanlar/${postingId}`);
+    await expect(
+      alumni!.getByText('Bu ilan için şu anda iletişim talebi oluşturulamıyor.'),
+    ).toBeVisible();
+    await alumni!.goto(`/ilanlar/${postingId}/iletisim`);
+    await expect(
+      alumni!.getByText('Bu ilan için şu anda iletişim talebi oluşturulamıyor.'),
+    ).toBeVisible();
     const html = await student!.content();
     expect(html).not.toContain(writer.id);
     expect(html).not.toContain(writer.name);

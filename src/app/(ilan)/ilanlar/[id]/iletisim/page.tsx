@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { PostingContactForm } from '@/components/job-postings/contact';
-import { EmptyState, ErrorState, buttonClasses } from '@/components/ui';
+import { EmptyState, ErrorState } from '@/components/ui';
 import { previewJobPostingContact, requestJobPostingContact } from '@/server/actions/job-postings';
 export const dynamic = 'force-dynamic';
 export default async function PostingContactPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,7 +15,10 @@ export default async function PostingContactPage({ params }: { params: Promise<{
         <EmptyState
           title={t('contactUnavailable')}
           action={
-            <Link href="/ilanlar" className={buttonClasses({ variant: 'secondary' })}>
+            <Link
+              href="/ilanlar"
+              className="press-control inline-flex min-h-11 items-center justify-center rounded-control border border-border-control bg-bg px-4 font-medium text-fg"
+            >
               {t('back')}
             </Link>
           }
