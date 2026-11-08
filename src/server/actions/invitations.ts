@@ -1,5 +1,6 @@
 'use server';
-import { actionFailure, actionOk } from '@/lib/action-result';
+import { actionOk } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 import { getAuthEnv } from '@/lib/env';
 import { getDb } from '../db';
 import { requireAdmin } from '../permissions';
@@ -13,6 +14,6 @@ export async function sendInvitations(input: string) {
       await inviteUsers({ db: getDb(), secret: env.BETTER_AUTH_SECRET }, actor.userId, input),
     );
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

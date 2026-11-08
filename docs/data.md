@@ -119,7 +119,9 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
 - `PointEntry` (userId, action, sourceType, sourceId) benzersizdir; aynı olay iki kez puan
   üretemez.
   Puan = taban × çarpan / 100 (CHECK); durum alanları tutarlıdır (PENDING → `finalizesAt`, REVOKED → neden + an; CHECK).
-  Aynı (kullanıcı, kural) için en çok bir `OPEN` `SuspicionFlag` vardır (kısmi benzersiz indeks). `sourceId` ve karşı taraf hiçbir
+  Aynı (kullanıcı, kural) için en çok bir `OPEN` `SuspicionFlag` vardır (kısmi benzersiz indeks); işaret açıkken aynı kural için
+  görülen YENİ kanıt yeni işaret açmaz, işarete `recurrenceCount` + `lastSeenAt` (+ en çok 5 sayısal özet, en çok 20 tekrar anahtarı)
+  olarak eklenir. `sourceId` ve karşı taraf hiçbir
   istemci çıktısına girmez.
 - `SessionFeedback` (appointmentId, authorId) benzersizdir.
 - Anonim `Experience`'ın yazarı kendi listesi ve moderasyon dahil hiçbir istemci yanıtına çıkmaz.
