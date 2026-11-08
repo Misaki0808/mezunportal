@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { hasAdminAccess } from '@/components/layout/admin-access';
 import {
   BadgeCheckIcon,
+  BriefcaseIcon,
   CalendarIcon,
   ErrorState,
   FileTextIcon,
@@ -39,6 +40,7 @@ export default async function AccountPage() {
     faq,
     appointments,
     mentor,
+    jobs,
   ] = await Promise.all([
     getVerificationState().catch(() => null),
     hasAdminAccess(),
@@ -52,6 +54,7 @@ export default async function AccountPage() {
     getTranslations('faq.entry'),
     getTranslations('appointments.account'),
     getMyMentorSettings().catch(() => null),
+    getTranslations('jobs'),
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -99,6 +102,21 @@ export default async function AccountPage() {
                 },
               ]
             : []),
+        ]
+      : []),
+    ...(actor.facts.memberships.some(
+      (m) =>
+        (m.role === 'ALUMNI' || m.role === 'ACADEMIC') &&
+        m.verificationStatus === 'VERIFIED' &&
+        m.endedAt === null,
+    )
+      ? [
+          {
+            href: '/ilanlarim',
+            title: jobs('mine'),
+            description: jobs('mineDescription'),
+            icon: BriefcaseIcon,
+          },
         ]
       : []),
     ...(state.data.status === 'VERIFIED'
@@ -224,6 +242,7 @@ export default async function AccountPage() {
         '/randevular',
         '/mentor/ayarlar',
         '/deneyimlerim',
+        '/ilanlarim',
         '/hesap/gorusmeler',
         '/hesap/guvenilirlik',
         '/hesap/cv-inceleme',

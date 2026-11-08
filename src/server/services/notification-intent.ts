@@ -56,11 +56,19 @@ const cvReview = z
     requestId: z.string().min(1).max(64),
   })
   .strict();
+const jobMatch = z
+  .object({
+    type: z.literal('jobMatch'),
+    event: z.literal('digest'),
+    day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })
+  .strict();
 export const notificationIntentPayload = z.discriminatedUnion('type', [
   generic,
   appointment,
   pilotInvitation,
   cvReview,
+  jobMatch,
 ]);
 export type NotificationIntentPayload = z.infer<typeof notificationIntentPayload>;
 
@@ -70,6 +78,7 @@ export async function stageNotification(
   tx: IntentWriter,
   userId: string,
   input: NotificationIntentPayload,
+  notBefore?: Date,
 ) {
   const payload = notificationIntentPayload.parse(input);
   const eventId =
@@ -79,12 +88,20 @@ export async function stageNotification(
         ? payload.appointmentId
         : payload.type === 'pilotInvitation'
           ? payload.invitationId
-          : payload.requestId;
+          : payload.type === 'jobMatch'
+            ? payload.day
+            : payload.requestId;
   const event = payload.type === 'pilotInvitation' ? 'invitation' : payload.event;
   const key = `${payload.type}:${event}:${eventId}:${userId}`;
   await tx.notificationIntent.upsert({
     where: { key },
-    create: { key, userId, kind: payload.type, payload },
+    create: {
+      key,
+      userId,
+      kind: payload.type,
+      payload,
+      ...(notBefore ? { nextAttemptAt: notBefore } : {}),
+    },
     update: {},
   });
 }

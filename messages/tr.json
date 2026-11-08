@@ -154,6 +154,11 @@
       "title": "Yönetim",
       "pending": "{count} iş inceleme bekliyor",
       "none": "Bekleyen iş yok"
+    },
+    "jobMatches": {
+      "title": "Sana uyan ilanlar",
+      "empty": "Henüz sana uygun ilan yok. İlgi alanlarını ekleyerek yeni fırsatları keşfedebilirsin.",
+      "profile": "Profilini düzenle"
     }
   },
   "errors": {
@@ -1986,6 +1991,10 @@
       "CV_REVIEW": {
         "label": "CV incelemeleri",
         "description": "CV inceleme talepleri, yanıtları ve süre dolumu."
+      },
+      "JOB_MATCH": {
+        "label": "İlan eşleşmeleri",
+        "description": "Profiline uyan ilanların özeti."
       }
     },
     "email": {
@@ -2017,7 +2026,9 @@
       "stillThereSubject": "Çalışma bilgin güncel mi?",
       "stillThereText": "Hâlâ {company} bünyesinde misin? Evet: {yesUrl} Hayır: {noUrl}",
       "migrationSubject": "E-posta adresini güncel tut",
-      "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}"
+      "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}",
+      "jobMatchSubject": "Sana uyan yeni fırsatlar",
+      "jobMatchText": "Sana uygun yeni ilanları bir arada incele: {url}"
     },
     "stillThere": {
       "title": "Çalışma bilgini doğrula",
@@ -2031,6 +2042,10 @@
       "successNo": "Yanıtın kaydedildi. İstersen profilindeki çalışma bilgilerini güncelle.",
       "invalid": "Bu bağlantı geçersiz, kullanılmış veya süresi dolmuş.",
       "profile": "Profiline git"
+    },
+    "jobMatches": {
+      "title": "Sana uyan ilan bildirimleri",
+      "empty": "Henüz ilan eşleşmesi bildirimin yok."
     }
   },
   "feedback": {
@@ -2676,6 +2691,15 @@
     "contactSubtitle": "Talebin ilanı paylaşan kişiye iletilir. İletişim bilgileri yalnız onay verildiğinde açılır.",
     "targetLimit": "En fazla {count} bölüm seçebilirsin.",
     "newTab": "(yeni sekmede açılır)",
+    "matchTags": "İlan etiketleri (isteğe bağlı)",
+    "matchTagsHint": "En fazla 5 etiket seçebilirsin. Etiketsiz ilanlar eşleşme bildirimi göndermez.",
+    "matchGrades": "Hedef sınıflar (isteğe bağlı)",
+    "matchGradesHint": "Seçim yapmazsan tüm sınıflar uygundur.",
+    "matchGrade": "{grade}. sınıf",
+    "reachFew": "3'ten az kişiye ulaştı",
+    "reachCount": "{count} kişiye ulaştı",
+    "whyMatch": "Neden sana uygun?",
+    "mineDescription": "Paylaştığın ilanların durumunu takip et.",
     "compactTitle": "Staj ve iş ilanları",
     "searchPlaceholder": "İlan ara",
     "applyFilters": "Süzgeçleri uygula"

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import messages from '../../../messages/tr.json';
 import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type {
@@ -25,6 +26,7 @@ import {
 
 export function PostingCard({ posting }: { posting: JobPostingCard }) {
   const t = useTranslations('jobs');
+  const tagLabels = useTranslations('profileTags');
   const initials = posting.organizationName
     .trim()
     .split(/\s+/)
@@ -75,6 +77,21 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
         </Badge>
         <Badge tone="category">{t(posting.kind)}</Badge>
       </div>
+      {!!posting.matchTags?.length && (
+        <div className="flex min-w-0 items-center gap-1.5 text-xs sm:flex-col sm:items-start sm:gap-2">
+          <p className="shrink-0 font-semibold">{t('whyMatch')}</p>
+          <div className="flex min-w-0 gap-1 overflow-x-auto sm:flex-wrap sm:gap-2">
+            {posting.matchTags.map((tag) => (
+              <Badge key={tag.slug} tone="info" className="max-w-full shrink-0">
+                {tag.label ??
+                  (tag.slug in messages.profileTags
+                    ? tagLabels(tag.slug as keyof typeof messages.profileTags)
+                    : tag.slug)}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="mt-auto flex min-w-0 items-end justify-between gap-3 border-t border-border pt-2 sm:pt-4">
         <p
           className="min-w-0 truncate text-xs text-fg-muted sm:break-words sm:whitespace-normal sm:text-sm"

@@ -9,6 +9,7 @@ import {
 } from '@/contracts/notifications';
 import type { QueuedEmail } from '@/server/jobs/email-core';
 import { notificationTypeForTemplate } from '@/server/rules/notification';
+import { addDays, istanbulDay } from '@/server/rules/jobPosting';
 
 export async function getNotificationPreferences(
   db: PrismaClient,
@@ -75,6 +76,21 @@ export async function maySendNotification(
     user.email.toLowerCase() !== message.to.toLowerCase()
   )
     return false;
+  if (type === 'JOB_MATCH') {
+    const day = message.idempotencyKey.split(':').at(-1);
+    if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;
+    const dayStart = new Date(`${day}T00:00:00+03:00`);
+    const dayEnd = new Date(`${addDays(day, 1)}T00:00:00+03:00`);
+    const today = istanbulDay(new Date());
+    const hasOpenMatch = await db.jobMatch.count({
+      where: {
+        userId: message.recipientUserId,
+        createdAt: { gte: dayStart, lt: dayEnd },
+        posting: { status: 'PUBLISHED', deadlineOn: { gte: new Date(`${today}T00:00:00Z`) } },
+      },
+    });
+    if (!hasOpenMatch) return false;
+  }
   const preference = await db.notificationPreference.findUnique({
     where: { userId_type: { userId: message.recipientUserId, type } },
     select: { enabled: true },
