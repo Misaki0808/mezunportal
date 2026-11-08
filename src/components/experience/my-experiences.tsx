@@ -145,7 +145,7 @@ export function MyExperiences({ initial, list }: Props) {
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{t('mine.title')}</h1>
       <p className="mt-3 text-base text-fg-muted">{t('mine.description')}</p>
       <Tabs
-        className="mt-6"
+        className="mt-6 [&_[role=tablist]]:flex-wrap [&_[role=tablist]]:overflow-visible"
         label={t('mine.tabs.label')}
         value={filter}
         onValueChange={(id) => {
