@@ -58,7 +58,7 @@ test('mobil filtreli aramanın paylaşılan bağlantısı aynı sonucu açar', a
     await page.getByRole('button', { name: /Filtreler/ }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('Deneyim türü').selectOption('INTERNSHIP');
-    await dialog.getByRole('button', { name: 'Filtreleri uygula' }).click();
+    await dialog.getByRole('button', { name: 'Uygula', exact: true }).click();
     await expect(page).toHaveURL(/types=INTERNSHIP/);
     await expect(page.getByRole('heading', { name: 'KutupTeknoloji' })).toBeVisible();
     const shared = page.url();

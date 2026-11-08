@@ -687,6 +687,9 @@ App Router yükleme sınırı yanıtı başlattıktan sonra sayfadaki red HTTP 2
 dolduktan sonra yeniden geçişte yeni olay yazılabilir. KVKK veri en aza indirme için daha uzun süre yaşayan ayrı kullanıcı
 işaretçisi tutulmaz.
 
+### P1-09 incelemesi: ortak filtre gönderimi ve profil girişleri
+
+Mentor dizini ve arama aynı filtre kabuğunu kullanır. Bekleyen gezinme sırasında Uygula yerel disabled taşır; mentor dizini de çip kaldırma/temizleme kaynaklı ikinci gezinmeyi reddeder. Uzun beceriler kartta erişilebilir tam başlıkla kısalır, öneri gerekçeleri satıra bölünür. Profil görünürlüğü denetimi geçtikten sonra mevcut mentor uygunluk servisiyle iletişim ve kapalı girişlerin nedenleri bağlanır; görünmeyen profilde ek sorgu yapılmaz. Randevu/CV incelemesi eylem ekranları kendi kartlarındadır; uygunluk bayrağı yeni yetki vermez.
 ### P1-12 incelemesi: ortak hesaplı uçtan uca testler
 
 Bildirim bağlantısı testi seed öğrencisinin pozisyonuna bağlı kayıt oluşturur; profil/CV testi aynı öğrencinin pozisyonlarını temizler. Bu nedenle ortak hesap kullanan uçtan uca dosyalar tek işçiyle koşar. Her şablonun güncel tercihe uyması ve bağlantının hesap/imza/süre/tek kullanım sınırları bağımsız negatif testlerle korunur. Olay commit edildikten sonra kuyruğa yazım başarısızsa otomatik telafi bu pakette yoktur; ana işlemin başarısı korunur.
