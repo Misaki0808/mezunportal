@@ -115,6 +115,19 @@ describe('ErrorState', () => {
     expect(screen.getByRole('link', { name: label })).toHaveAttribute('href', href);
   });
 
+  it('giriş gerektiren durumda "Giriş yap" bulunulan sayfayı ?donus ile taşır (güvensiz/ana sayfada düz)', () => {
+    path.current = '/hesap/cv-inceleme';
+    const { unmount } = renderUi(<ErrorState errorCode="AUTH_UNAUTHENTICATED" />);
+    expect(screen.getByRole('link', { name: 'Giriş yap' })).toHaveAttribute(
+      'href',
+      '/giris?donus=%2Fhesap%2Fcv-inceleme',
+    );
+    unmount();
+    path.current = '/';
+    renderUi(<ErrorState errorCode="AUTH_UNAUTHENTICATED" />);
+    expect(screen.getByRole('link', { name: 'Giriş yap' })).toHaveAttribute('href', '/giris');
+  });
+
   it('yönetim alt sayfasında rol dışı durum panele döndürür; açık eylem öncelik alır', () => {
     path.current = '/yonetim/sozlukler';
     const { unmount } = renderUi(<ErrorState errorCode="AUTH_FORBIDDEN" />);

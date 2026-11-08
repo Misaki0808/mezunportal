@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 
 import type { ErrorCode } from '@/lib/errors';
 import { EXPECTED_STATES, isExpectedState } from '@/lib/expected-states';
+import { withReturnPath } from '@/lib/return-path';
 
 import { Button, buttonClasses } from './button';
 import { cn } from './cn';
@@ -38,7 +39,13 @@ export function ErrorState({ errorCode, onRetry, className, action }: ErrorState
     // Yönetim alt sayfalarında "ana sayfa" yerine panele dönülür (kapsam dışı sayfa bağlamı).
     const inAdmin = expected.action === 'home' && pathname.startsWith('/yonetim/');
     const target = action ?? {
-      href: inAdmin ? '/yonetim' : expected.href,
+      // Giriş gerekiyorsa bulunulan sayfa `?donus=` ile taşınır (güvenli yol değilse eklenmez); diğer durumlar sabit hedefe.
+      href:
+        errorCode === 'AUTH_UNAUTHENTICATED'
+          ? withReturnPath(expected.href, pathname)
+          : inAdmin
+            ? '/yonetim'
+            : expected.href,
       label: t(`actions.${inAdmin ? 'admin' : expected.action}`),
     };
     return (

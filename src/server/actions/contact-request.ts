@@ -17,7 +17,8 @@ import {
   type SendContactRequestOutput,
 } from '@/contracts/contact-request';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 
 import { getDb } from '../db';
 import { requireUser, requireVerifiedMember } from '../permissions';
@@ -38,7 +39,7 @@ export async function sendContactRequest(
     const result = await service.sendContactRequest(getDb(), actor.userId, parsed.data);
     return actionOk(result);
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -51,7 +52,7 @@ export async function respondToContactRequest(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.respondToContactRequest(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -64,7 +65,7 @@ export async function withdrawContactRequest(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.withdrawContactRequest(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -77,7 +78,7 @@ export async function revokeContactRequest(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.revokeContactRequest(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -90,7 +91,7 @@ export async function listContactRequests(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.listContactRequests(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -107,6 +108,6 @@ export async function previewContactTarget(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.previewContactTarget(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

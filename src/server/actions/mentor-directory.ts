@@ -10,7 +10,8 @@ import {
   type SimilarMentors,
 } from '@/contracts/mentor-directory';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 
 import { getDb } from '../db';
 import { requireVerifiedMember } from '../permissions';
@@ -27,7 +28,7 @@ export async function searchMentors(input: SearchMentorsInput): Promise<ActionRe
     if (!parsed.ok) return parsed.failure;
     return actionOk(await directory.searchMentors({ db: getDb() }, actor, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -37,7 +38,7 @@ export async function getSimilarMentors(): Promise<ActionResult<SimilarMentors>>
     const actor = await requireVerifiedMember();
     return actionOk(await directory.getSimilarMentors({ db: getDb() }, actor));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -51,6 +52,6 @@ export async function getMentorEntryPoints(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await directory.getMentorEntryPoints({ db: getDb() }, actor, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

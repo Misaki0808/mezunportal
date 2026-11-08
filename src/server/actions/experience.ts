@@ -26,7 +26,8 @@ import {
   type SaveExperienceDraftInput,
 } from '@/contracts/experience';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 import { getDb } from '../db';
 import * as experience from '../services/experience';
 import { requireVerifiedMember } from '../permissions';
@@ -41,7 +42,7 @@ export async function saveExperienceDraft(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.saveExperienceDraft(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function submitExperience(
@@ -53,7 +54,7 @@ export async function submitExperience(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.submitExperience(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 /** canModerate(actor, departmentIdAtWrite) ve recordAdminAction aynı işlemde uygulanır. */
@@ -68,7 +69,7 @@ export async function reviewExperience(
     const result = await experience.reviewExperience(db, actor.userId, parsed.data);
     return actionOk(result);
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 /** Kullanıcı başına EXPERIENCE_REPORT_RATE_LIMIT; yayımlanmış, aynı üniversitede görünür hedef. */
@@ -81,7 +82,7 @@ export async function reportExperience(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.reportExperience(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function listMyExperiences(
@@ -93,7 +94,7 @@ export async function listMyExperiences(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.listMyExperiences(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 /** Yayınlanmış: K-07 üniversite sınırı; diğer durumlar yalnız sahibi/kapsayan moderatör. Anonim kimlik yok. */
@@ -106,7 +107,7 @@ export async function getExperienceDetail(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.getExperienceDetail(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function listModerationQueue(
@@ -118,7 +119,7 @@ export async function listModerationQueue(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.listModerationQueue(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function listExperienceReports(
@@ -130,7 +131,7 @@ export async function listExperienceReports(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.listExperienceReports(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function resolveExperienceReport(
@@ -142,6 +143,6 @@ export async function resolveExperienceReport(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await experience.resolveExperienceReport(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

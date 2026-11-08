@@ -1,6 +1,7 @@
 'use server';
 
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 import type { ActionResult } from '@/contracts/result';
 import {
   graduationDocumentFormInput,
@@ -36,7 +37,7 @@ export async function uploadGraduationDocument(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await documents.uploadGraduationDocument(documentDeps(), actor, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -52,7 +53,7 @@ export async function listPendingGraduationDocuments(
       await documents.listPendingGraduationDocuments({ db: getDb() }, actor, parsed.data),
     );
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -66,6 +67,6 @@ export async function reviewGraduationDocument(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await documents.reviewGraduationDocument(documentDeps(), actor, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

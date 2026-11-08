@@ -139,6 +139,9 @@ const flag = (over: Partial<SuspicionFlagView> = {}): SuspicionFlagView => ({
     points: 40,
     sharePercent: 90,
     syncedCount: null,
+    recurrenceCount: 0,
+    lastSeenAt: null,
+    recentEvidence: [],
   },
   createdAt: new Date('2026-11-08T09:00:00Z'),
   decidedAt: null,
@@ -199,6 +202,38 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
     fireEvent.click(dialog().getByRole('button', { name: 'Kuralı kaydet' }));
     expect(a.updateRule).not.toHaveBeenCalled();
     expect(dialog().getByText(/izin verilen aralıkta/)).toBeVisible();
+  });
+
+  it('açık işarette yeni kanıt sayacı, son görülme ve özetler görünür; sayaç 0 ise görünmez', () => {
+    const seen = new Date('2026-11-09T10:30:00Z');
+    const { unmount } = renderUi(
+      <AdminPoints
+        rules={[]}
+        flags={{
+          items: [
+            flag({
+              details: {
+                ...flag().details,
+                recurrenceCount: 3,
+                lastSeenAt: seen,
+                recentEvidence: [{ at: seen, entryCount: 5, points: 52 }],
+              },
+            }),
+          ],
+          nextCursor: null,
+        }}
+        actions={actions()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Şüpheli' }));
+    expect(screen.getAllByText(/İşaret açıkken 3 yeni kanıt görüldü/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/5 kayıt · 52 puan/).length).toBeGreaterThan(0);
+    unmount();
+    renderUi(
+      <AdminPoints rules={[]} flags={{ items: [flag()], nextCursor: null }} actions={actions()} />,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Şüpheli' }));
+    expect(screen.queryByText(/yeni kanıt görüldü/)).toBeNull();
   });
 
   it('şüphe onayı gerekçeyle gider, geri alınan sayıyı bildirir ve satırı kuyruktan çıkarır', async () => {
