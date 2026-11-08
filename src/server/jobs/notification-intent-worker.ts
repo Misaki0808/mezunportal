@@ -86,9 +86,7 @@ export async function sendNotificationIntent(db: PrismaClient, row: IntentRecord
         template: 'jobMatch.digest',
         idempotencyKey: `job-match:${row.userId}:${today}:${payload.day}`,
         subject: messages.notifications.email.jobMatchSubject,
-        text: messages.notifications.email.jobMatchText
-          .replace('{url}', url)
-          .replace('{count}', String(active)),
+        text: messages.notifications.email.jobMatchText.replace('{url}', url),
       });
       if (result.emailLogId)
         await tx.jobMatchDigest.create({ data: { userId: row.userId, day: today } });

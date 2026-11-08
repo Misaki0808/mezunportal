@@ -53,6 +53,12 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
   });
   try {
     await login(alumni!, 'alumniMentor');
+    await alumni!.goto('/hesap');
+    await expect(
+      alumni!
+        .getByRole('region', { name: 'GÖRÜŞMELER VE İÇERİKLER' })
+        .getByRole('link', { name: /İlanlarım/ }),
+    ).toBeVisible();
     await alumni!.goto('/ilanlar/yeni');
     await waitForHydratedControl(alumni!, 'Devam et');
     await alumni!.getByLabel('Pozisyon adı').fill(title);
@@ -110,8 +116,9 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     );
     await student!.setViewportSize({ width: 390, height: 844 });
     await student!.getByRole('heading', { name: title }).getByRole('link').click();
+    await student!.waitForURL(`**/ilanlar/${postingId}`);
     await expect(student!.getByText('Neden sana uygun?')).toBeVisible();
-    await expect(student!.getByText('Yazılım geliştirme')).toBeVisible();
+    await expect(student!.getByText('Yazılım geliştirme', { exact: true })).toBeVisible();
     const apply = student!.getByRole('link', { name: /Başvur/ });
     await expect(apply).toHaveAttribute('href', 'https://example.org/staj');
     await expect(apply).toHaveAttribute('rel', 'noopener noreferrer');

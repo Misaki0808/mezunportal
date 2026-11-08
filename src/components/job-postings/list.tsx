@@ -11,6 +11,8 @@ import type {
 } from '@/contracts/job-postings';
 import {
   Button,
+  Badge,
+  IconChip,
   Card,
   EmptyState,
   Input,
@@ -36,12 +38,7 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
       className="group flex min-w-0 flex-col gap-5 rounded-3xl border border-border bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:transform-none sm:p-6"
     >
       <div className="flex min-w-0 items-start gap-4">
-        <div
-          aria-hidden="true"
-          className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-lg font-bold text-on-primary-soft"
-        >
-          {initials}
-        </div>
+        <IconChip className="size-14 rounded-2xl text-lg font-bold">{initials}</IconChip>
         <div className="min-w-0">
           <p className="break-words text-sm font-semibold text-fg-muted">
             {posting.organizationName}
@@ -72,9 +69,12 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
         >
           {posting.daysLeft === 0 ? t('today') : t('daysLeft', { count: posting.daysLeft })}
         </span>
-        <span className="max-w-full break-words rounded-full bg-surface-strong px-3 py-1.5 text-fg [overflow-wrap:anywhere]">
+        <Badge
+          tone="category"
+          className="max-w-full break-words px-3 py-1.5 [overflow-wrap:anywhere]"
+        >
           {t(posting.kind)}
-        </span>
+        </Badge>
       </div>
       {!!posting.matchTags?.length && (
         <div>

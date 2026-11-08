@@ -2028,7 +2028,7 @@
       "migrationSubject": "E-posta adresini güncel tut",
       "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}",
       "jobMatchSubject": "Sana uyan yeni fırsatlar",
-      "jobMatchText": "Sana uygun {count} yeni ilan var. Eşleşmelerini incele: {url}"
+      "jobMatchText": "Sana uygun yeni ilanları bir arada incele: {url}"
     },
     "stillThere": {
       "title": "Çalışma bilgini doğrula",
@@ -2698,6 +2698,7 @@
     "matchGrade": "{grade}. sınıf",
     "reachFew": "3'ten az kişiye ulaştı",
     "reachCount": "{count} kişiye ulaştı",
-    "whyMatch": "Neden sana uygun?"
+    "whyMatch": "Neden sana uygun?",
+    "mineDescription": "Paylaştığın ilanların durumunu takip et."
   }
 }
