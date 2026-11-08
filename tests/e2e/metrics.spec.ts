@@ -10,7 +10,15 @@ test.afterAll(() => db.$disconnect());
 test('yönetici küçük grubu gizli görür ve aynı korumayla Excel indirir', async ({ page }) => {
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 390, height: 844 });
-  const department = await db.department.findFirstOrThrow({ where: { code: 'YBS' } });
+  const pilot = await db.department.findFirstOrThrow({ where: { code: 'YBS' } });
+  // Aynı yerel veritabanındaki eski profil olayları küçük grubu büyütmesin.
+  const department = await db.department.create({
+    data: {
+      facultyId: pilot.facultyId,
+      name: 'Sentetik metrik grubu',
+      code: `metrics-${randomUUID()}`,
+    },
+  });
   const users = await Promise.all(
     Array.from({ length: 6 }, () =>
       db.user.create({
@@ -46,6 +54,7 @@ test('yönetici küçük grubu gizli görür ve aynı korumayla Excel indirir', 
     await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
     await page.goto('/yonetim/kullanim');
     await page.waitForLoadState('networkidle');
+    await page.getByLabel('Bölüm', { exact: true }).selectOption(department.id);
     await page.getByLabel('Olay türü').selectOption('PROFILE_THRESHOLD');
     await page.getByRole('button', { name: 'Raporu göster' }).click();
     const totals = page.getByRole('heading', { name: 'Olay türleri' }).locator('..');
@@ -83,6 +92,7 @@ test('yönetici küçük grubu gizli görür ve aynı korumayla Excel indirir', 
   } finally {
     await db.event.deleteMany({ where: { userId: { in: ids } } });
     await db.user.deleteMany({ where: { id: { in: ids } } });
+    await db.department.delete({ where: { id: department.id } });
   }
 });
 
