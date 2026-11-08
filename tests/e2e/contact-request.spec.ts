@@ -137,8 +137,7 @@ test('zorunlu metin sürümü değişince hesap yeniden onaya yönlenir; isteğe
     .getByRole('checkbox', { name: 'Yurt dışına aktarım için açık rıza veriyorum.' })
     .uncheck();
   await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page).toHaveURL(/\/hesap$/);
-  await page.goto('/hesap/gizlilik');
+  await expect(page).toHaveURL(/\/hesap\/gizlilik$/);
   await expect(
     page.getByRole('heading', { name: 'İletişim bilgilerin, senin kararın' }),
   ).toBeVisible();

@@ -4,7 +4,7 @@ import { PrivacyGuard } from '@/components/privacy/server-guard';
 import { PrivacyFrame } from '@/components/privacy/frame';
 import { ContactSendForm } from '@/components/privacy/contact-send-form';
 import { previewContactTarget } from '@/server/actions/contact-request';
-import { EmptyState, ErrorState, buttonClasses } from '@/components/ui';
+import { EmptyState, ErrorState } from '@/components/ui';
 export const dynamic = 'force-dynamic';
 export default async function ContactSendPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params;
@@ -19,7 +19,10 @@ export default async function ContactSendPage({ params }: { params: Promise<{ us
             title={t('targetUnavailable')}
             description={t('targetUnavailableDescription')}
             action={
-              <Link href="/hesap/iletisim" className={buttonClasses({ variant: 'secondary' })}>
+              <Link
+                href="/hesap/iletisim"
+                className="press-control inline-flex min-h-11 items-center justify-center rounded-control border border-border px-4 font-medium text-fg"
+              >
                 {t('targetBack')}
               </Link>
             }
