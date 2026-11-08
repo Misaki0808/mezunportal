@@ -1,19 +1,10 @@
 -- P1-12 ekleyici migration. Geri alma (yalnız açık onayla): NotificationAction ve
 -- NotificationPreference tablolarını, ardından StillThereChoice ve NotificationType enumlarını kaldır.
 -- CreateEnum
-DO $$ BEGIN CREATE TYPE "NotificationType" AS ENUM ('ACCOUNT_SECURITY', 'GRADUATION_DECISION', 'EXPERIENCE_MODERATION', 'CONTACT_REQUEST', 'CV_INVITATION', 'PROFILE_FRESHNESS', 'ALUMNI_STILL_THERE', 'STUDENT_EMAIL_MIGRATION', 'APPOINTMENT'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+CREATE TYPE "NotificationType" AS ENUM ('ACCOUNT_SECURITY', 'GRADUATION_DECISION', 'EXPERIENCE_MODERATION', 'CONTACT_REQUEST', 'CV_INVITATION', 'PROFILE_FRESHNESS', 'ALUMNI_STILL_THERE', 'STUDENT_EMAIL_MIGRATION', 'APPOINTMENT');
 
 -- CreateEnum
-DO $$ BEGIN CREATE TYPE "StillThereChoice" AS ENUM ('YES', 'NO'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
--- Prisma üreticisi üretilmiş arama sütunlarını ve altı GIN indeksini yanlışlıkla kaldırmayı önerir.
--- Bu migration yalnız ekleyicidir. IF NOT EXISTS, yerel yarım uygulamadan kalan indeksleri de onarır.
-CREATE INDEX IF NOT EXISTS "Company_normalizedName_trgm" ON "Company" USING gin ("normalizedName" gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS "Title_normalizedName_trgm" ON "Title" USING gin ("normalizedName" gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS "Skill_normalizedName_trgm" ON "Skill" USING gin ("normalizedName" gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS "Sector_normalizedName_trgm" ON "Sector" USING gin ("normalizedName" gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS "Experience_searchVector_idx" ON "Experience" USING gin ("searchVector");
-CREATE INDEX IF NOT EXISTS "Experience_searchKeys_trgm" ON "Experience" USING gin ("searchKeys" gin_trgm_ops);
+CREATE TYPE "StillThereChoice" AS ENUM ('YES', 'NO');
 
 -- CreateTable
 CREATE TABLE "NotificationPreference" (
