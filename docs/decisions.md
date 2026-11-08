@@ -475,6 +475,20 @@ P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK
 
 
 
+## 2026-11-08 · Deneyim servisi: anonim çıktı, atomik moderasyon ve K-09
+
+Detay, deneyimlerim ve moderasyon kuyruğu tek kapalı çıktı dönüştürücüsünden geçer; anonim yazar
+kimliği audit metadata'sına da girmez. K-07 sorgusu doğrulanmış etkin üyeliğin üniversitesine bakar;
+yetkili moderatör kendi yönetim kapsamını kullanır. Yazım anındaki bölüm sonradan değişmez.
+Deneyim/şikâyet işlemleri User → Experience kilit sırasını hesap silmeyle paylaşır; hesap durumu ve
+yetki işlem içinde güncel veriden tekrar okunur. Karar ile audit aynı transaction'dadır.
+
+Yayınlanmış deneyim doğrudan düzenlenmez; ret sonrası düzenleme taslağa döner ve yeniden moderasyon
+ister. Şikâyet DB sayacı 10/24 saat ve tek açık kişi/hedef kaydıyla sınırlıdır. K-09'un iki seçiminde
+kişisel/yayınlanmamış içerik ve kişinin şikâyet metinleri silinir; anonimleştirme yayınlanmış deneyimde
+yazar bağını koparır. Zorunlu temizleme işleyicileri ek test/özellik işleyicileriyle devre dışı kalmaz.
+Kendi JSON dökümü deneyimleri bütün durumlarıyla içerir; başka kullanıcının deneyimi/kimliği eklenmez.
+K-08 artık yalnız kullanıcının kendi yayınlanmış deneyimlerini sayar; sınıf eşiği ayrıca korunur.
 
 ## 2026-11-08 · CV iş denemelerinin nesli ve son dosyanın korunması
 

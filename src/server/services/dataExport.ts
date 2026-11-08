@@ -10,6 +10,7 @@ import { codedNotFound } from '@/lib/errors';
 
 import { toYearMonth } from './cv-shared';
 import { loadVisibilityLevels } from './privacy';
+import { experienceFields, experienceSelect } from './experienceProjection';
 
 /**
  * Veri dökümü (KVKK m. 11): YALNIZ kullanıcının kendi verisi. İletişim taleplerinde karşı taraf yalnız
@@ -52,6 +53,7 @@ export async function buildDataExport(
       phone: true,
       createdAt: true,
       deletedAt: true,
+      experiences: { select: experienceSelect, orderBy: { id: 'asc' } },
       profile: {
         select: {
           id: true,
@@ -145,6 +147,12 @@ export async function buildDataExport(
       phone: user.phone,
       createdAt: user.createdAt.toISOString(),
     },
+    experiences: user.experiences.map((row) => ({
+      ...experienceFields(row),
+      publishedAt: iso(row.publishedAt),
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    })),
     profile: user.profile
       ? exportedProfileSchema.parse({
           ...user.profile,
