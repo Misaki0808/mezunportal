@@ -125,23 +125,14 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   `APP_ENV=prod` ile alınan build'de çıkar (`next.config.ts`).
   Neden borç: canlı build yanlış env'le alınırsa HSTS sessizce düşer.
   Kapanış ölçütü: P1-18 dağıtım betiği build'i `APP_ENV=prod` ile alır ve başlık kanıtlanır.
-- [ ] **TD-006** · P1 · Süresi geçmiş oturum ve doğrulama kayıtları temizlenmiyor
-  Ne: `Session` ve `Verification` tablolarında süresi geçen satırlar birikir (indeksler hazır: `expiresAt`).
-  Neden borç: veri en azlığı (KVKK) ve tablo büyümesi.
-  Kapanış ölçütü: zamanlanmış pg-boss işi süresi geçmiş satırları siler (idempotent, testli).
-
 - [ ] **TD-009** · P1 · CV doğruluk tablosu sahte adaptörle, gerçek LLM ile değil
   Ne: 5 sentetik örnek CV + ölçüm düzeneği (`src/test/cv-accuracy.ts`) hazır; sahte adaptörde sonuç hat
   bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).
   Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
   Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
-- [ ] **TD-014** · P2 · `Event` 24 ay saklama işi zamanlanmamış
-  Ne: `detachOldEvents` (userId → null) yazıldı ve testli; periyodik çalıştıran pg-boss işi yok.
-  Neden borç: 24 ayı geçen olaylar kullanıcıya bağlı kalır (hesap silmede bağ zaten hemen kopar).
-  Kapanış ölçütü: günlük zamanlı iş (`files.purge` ile birlikte) + worker kaydı.
-- [ ] **TD-015** · P2 · Görüşme tamamlanması / SSS / CV inceleme kullanım olayları bağlanmadı
-  Ne: `APPOINTMENT_COMPLETED`, `FAQ_*`, `CV_REVIEW_REQUESTED` olay türleri katalogda; ilgili servisler henüz main'de değil.
-  Kapanış ölçütü: servis main'e girince `emitEvent` kancaları eklenir (test: olay + kişisel veri yok).
+- [ ] **TD-015** · P2 · SSS ve CV inceleme kullanım olayları
+  Görüşme tamamlanma olayı bağlandı; CV inceleme olayı #44'te, SSS olayları P1-17'de.
+  Kapanış ölçütü: ilgili servisler birleştiğinde olaylar ve kişisel veri içermeyen ölçüm doğrulanır.
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
   Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
   yerinde duruyor (hesap silme hâlâ eski satırları siler).

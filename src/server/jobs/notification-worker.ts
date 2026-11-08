@@ -5,6 +5,8 @@ import { getDb } from '../db';
 import { getStorage } from '../external/storage';
 import { relayPendingNotifications } from './notification-intent-worker';
 import { purgeFiles } from '../services/files-purge';
+import { purgeExpiredAuth } from '../services/auth-cleanup';
+import { detachOldEvents } from '../services/event';
 import { scheduleFeedbackPrompts } from './feedback-task';
 import { alumniStillThere, profileFreshness, studentEmailMigration } from './notification-tasks';
 
@@ -24,6 +26,8 @@ export async function createNotificationRuntime() {
     'student.emailMigration': () => studentEmailMigration(getDb()),
     'notification.relay': () => relayPendingNotifications(),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
+    'auth.purge': () => purgeExpiredAuth(getDb()),
+    'events.detach': () => detachOldEvents(getDb(), new Date()),
     'appointment.feedback': () => scheduleFeedbackPrompts(getDb()),
   };
   try {

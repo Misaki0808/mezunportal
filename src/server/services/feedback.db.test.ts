@@ -10,6 +10,7 @@ import { isCodedError } from '@/lib/errors';
 import { feedbackView, studentReliability, submitFeedback } from './feedback';
 import { buildDataExport } from './dataExport';
 import { reliabilitySince } from '../rules/reliability';
+import { settleEvents } from './event';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
 const now = new Date('2030-06-20T12:00:00Z');
@@ -142,6 +143,12 @@ it('inceleyici: iki tarafın eşzamanlı tekrarlarından yalnız iki kayıt ve t
   );
   expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(2);
   expect(await db.sessionFeedback.count({ where: { appointmentId: appointment.id } })).toBe(2);
+  await settleEvents();
+  const events = await db.event.findMany({
+    where: { userId: student, type: 'APPOINTMENT_COMPLETED' },
+    select: { props: true },
+  });
+  expect(events).toEqual([{ props: { mode: 'ONLINE' } }]);
   expect((await db.appointment.findUniqueOrThrow({ where: { id: appointment.id } })).status).toBe(
     'COMPLETED',
   );

@@ -5,6 +5,7 @@ import { codedConflict, codedNotFound } from '@/lib/errors';
 import { createPermissions } from '../permissions/guards';
 import { reliability, reliabilitySince } from '../rules/reliability';
 import { requireConsent } from './privacy';
+import { emitEvent } from './event';
 
 const HOUR = 60 * 60 * 1000;
 export async function submitFeedback(
@@ -14,7 +15,7 @@ export async function submitFeedback(
   now = new Date(),
 ) {
   const parsed = feedbackInputSchema.parse(input);
-  return db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR SHARE`;
     await createPermissions({
       db: () => tx,
@@ -37,6 +38,7 @@ export async function submitFeedback(
     )
       throw codedConflict('FEEDBACK_NOT_READY');
     await tx.sessionFeedback.create({ data: { ...parsed, authorId: userId } });
+    let completed = false;
     if (userId === row.mentorId && !parsed.happened) {
       await tx.appointment.update({ where: { id: row.id }, data: { status: 'NO_SHOW' } });
     } else if (
@@ -45,9 +47,13 @@ export async function submitFeedback(
       row.feedbacks.some((f) => f.authorId !== userId && f.happened)
     ) {
       await tx.appointment.update({ where: { id: row.id }, data: { status: 'COMPLETED' } });
+      completed = true;
     }
-    return { submitted: true };
+    return { completed, menteeId: row.menteeId, mode: row.mode };
   });
+  if (result.completed)
+    emitEvent(db, result.menteeId, { type: 'APPOINTMENT_COMPLETED', props: { mode: result.mode } });
+  return { submitted: true };
 }
 export async function feedbackView(
   db: PrismaClient,
