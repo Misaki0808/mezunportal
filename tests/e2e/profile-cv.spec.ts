@@ -103,7 +103,7 @@ test('CV onayı: kalem kalem kabul → profile yazılır; elle ekleme ve düzelt
   const linkDialog = page.getByRole('dialog');
   await linkDialog.getByRole('button', { name: 'Bağlantı ekle' }).click();
   await linkDialog.getByLabel('Site').selectOption('GITHUB');
-  await linkDialog.getByLabel('Adres').fill('http://github.com/e2e');
+  await linkDialog.getByLabel('Adres', { exact: true }).fill('http://github.com/e2e');
   await linkDialog.getByRole('button', { name: 'Kaydet' }).click();
   await expect(linkDialog.getByText('Adres https ile başlamalı.')).toBeVisible();
 });
