@@ -163,18 +163,29 @@ model User {
   cancelledAppointments Appointment[]      @relation("AppointmentCanceller")
 }
 
-/// İşlemle aynı anda kaydedilen, gönderim kuyruğu kapanırsa tekrar taşınacak bildirim niyeti.
-/// Yük yalnız olay kimlikleri taşır; e-posta, metin, ad ve belge içermez.
+enum NotificationIntentStatus {
+  PENDING
+  FAILED
+}
+
+/// İşlemle aynı anda kaydedilen bildirim niyeti. Davet adresi yalnız geçici şifreli yükte tutulur.
+/// Sınırlı deneme sonunda FAILED kalır; yük temizlenir, sabit hata kodu ve deneme sayısı saklanır.
 model NotificationIntent {
-  id        String   @id @default(uuid(7))
-  key       String   @unique
-  userId    String
-  kind      String
-  payload   Json
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String                   @id @default(uuid(7))
+  key           String                   @unique
+  userId        String
+  kind          String
+  payload       Json
+  status        NotificationIntentStatus @default(PENDING)
+  attemptCount  Int                      @default(0)
+  nextAttemptAt DateTime?                @default(now())
+  failedAt      DateTime?
+  failureCode   String?
+  createdAt     DateTime                 @default(now())
+  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt, id])
+  @@index([status, nextAttemptAt, id])
 }
 
 /// Bildirim türleri; güvenlik bildirimleri daima açıktır.

@@ -120,11 +120,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 ```
 
 ### Açık borçlar
-- [ ] **TD-017** · P2 · Çözülemeyen outbox niyeti için kalıcı hata durumu
-  Ne: Bekleyen şifreli davet niyetinin anahtarı değişirse içerik çözülemez.
-  Neden borç: Anahtar döndürme sonrasında niyet her aktarımda sonsuz yeniden denenir.
-  Kapanış ölçütü: Sınırlı deneme, kalıcı hata durumu ve kişisel veri içermeyen işlem kaydı uygulanır.
-
 - [ ] **TD-006** · P1 · Süresi geçmiş oturum ve doğrulama kayıtları temizlenmiyor
   Ne: `Session` ve `Verification` tablolarında süresi geçen satırlar birikir (indeksler hazır: `expiresAt`).
   Neden borç: veri en azlığı (KVKK) ve tablo büyümesi.
