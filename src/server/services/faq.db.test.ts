@@ -9,7 +9,6 @@ import {
   createInstitution,
   createUser,
   grantRequiredConsents,
-  type Institution,
 } from '@/test/fixtures';
 
 import { deleteAccount } from './accountDeletion';
