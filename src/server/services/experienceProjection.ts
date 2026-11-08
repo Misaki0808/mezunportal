@@ -7,6 +7,8 @@ import {
 } from '@/contracts/experience';
 import type { Prisma } from '@/generated/prisma/client';
 
+import { isAuthorVisible } from '../rules/authorVisibility';
+
 /** Yazarın yalnız zaten açık ad/kimliği seçilir; iletişim/oturum/CV nesnesi asla yüklenmez. */
 export const experienceSelect = {
   id: true,
@@ -32,7 +34,7 @@ export const experienceSelect = {
   publishedAt: true,
   createdAt: true,
   updatedAt: true,
-  author: { select: { id: true, name: true } },
+  author: { select: { id: true, name: true, deletedAt: true, banned: true, banExpires: true } },
   department: { select: { faculty: { select: { universityId: true } } } },
 } satisfies Prisma.ExperienceSelect;
 export type ExperienceRow = Prisma.ExperienceGetPayload<{ select: typeof experienceSelect }>;
@@ -104,15 +106,17 @@ export function experienceFields(row: ExperienceRow) {
     updatedAt: row.updatedAt,
   };
 }
-export function projectExperience(row: ExperienceRow) {
+/**
+ * Yazar yalnız adlı deneyimde ve yazar GEÇERLİYSE (silinmemiş, askıda değil) görünür; aksi halde içerik yazarsız
+ * (anonim biçimde) döner. Kural `rules/authorVisibility` ile aramayla ortaktır.
+ */
+export function projectExperience(row: ExperienceRow, now: Date = new Date()) {
   const fields = experienceFields(row);
+  const author = !row.isAnonymous && isAuthorVisible(row.author, now) ? row.author : null;
   return experienceDetailSchema.parse(
-    row.isAnonymous
-      ? fields
-      : {
-          ...fields,
-          author: row.author ? { id: row.author.id, displayName: row.author.name } : undefined,
-        },
+    author
+      ? { ...fields, author: { id: author.id, displayName: author.name } }
+      : { ...fields, isAnonymous: true },
   );
 }
 
