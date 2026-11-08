@@ -295,6 +295,10 @@ async function loadAppointmentExport(
       id: true,
       mentorId: true,
       menteeId: true,
+      feedbacks: {
+        where: { authorId: userId },
+        select: { happened: true, helpful: true, note: true, createdAt: true },
+      },
       startsAt: true,
       endsAt: true,
       mode: true,
@@ -313,6 +317,9 @@ async function loadAppointmentExport(
       id: row.id,
       role,
       counterpartId: role === 'MENTOR' ? row.menteeId : row.mentorId,
+      feedback: row.feedbacks[0]
+        ? { ...row.feedbacks[0], createdAt: row.feedbacks[0].createdAt.toISOString() }
+        : null,
       startsAt: row.startsAt.toISOString(),
       endsAt: row.endsAt.toISOString(),
       mode: row.mode,

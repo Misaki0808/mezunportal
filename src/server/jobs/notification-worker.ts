@@ -5,6 +5,7 @@ import { getDb } from '../db';
 import { getStorage } from '../external/storage';
 import { relayPendingNotifications } from './notification-intent-worker';
 import { purgeFiles } from '../services/files-purge';
+import { scheduleFeedbackPrompts } from './feedback-task';
 import { alumniStillThere, profileFreshness, studentEmailMigration } from './notification-tasks';
 
 /** Görev adları dışında kişi, bağlantı ve sağlayıcı hata bilgisi günlüğe yazılmaz. */
@@ -23,6 +24,7 @@ export async function createNotificationRuntime() {
     'student.emailMigration': () => studentEmailMigration(getDb()),
     'notification.relay': () => relayPendingNotifications(),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
+    'appointment.feedback': () => scheduleFeedbackPrompts(getDb()),
   };
   try {
     await boss.start();
@@ -33,7 +35,7 @@ export async function createNotificationRuntime() {
       });
       await boss.schedule(
         name,
-        name === 'notification.relay' ? '* * * * *' : '0 3 * * *',
+        ['notification.relay', 'appointment.feedback'].includes(name) ? '* * * * *' : '0 3 * * *',
         {},
         { tz: 'Europe/Istanbul', missed: 'once' },
       );

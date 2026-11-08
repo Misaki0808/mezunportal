@@ -685,6 +685,13 @@ Randevu talebinde slotun zaman/biçim geçerliliği doluluk süzülmeden doğrul
 
 Bağımsız worker React server koşuluyla çalıştığından randevu e-posta kataloğundaki basit adlandırılmış alanlar React/Next içe aktarmadan doldurulur. Randevunun kullandığı profil kuralı da oturum bağlayan permissions giriş noktası yerine doğrudan actor/guards yardımcılarını alır. Böylece takvim süpürmesi e-posta worker'ının başlamasını engellemez; ayrı Node sürecinde gerçek iş modülü içe aktarma ve metin üretimi testlidir.
 
+## 2026-11-08 · Görüşme sonrası yanıt ve güvenilirlik (P1-14)
+
+PM kararı: son 12 ayda `COMPLETED` ve `NO_SHOW` sayılır; iptaller ve geri bildirim verme oranı paydaya girmez. Üçten az
+görüşme Yeni, en az üçte katılım oranı %80 veya üzeri Güvenilir, diğerleri Dikkat'tir; kullanıcıya sayı ile nedeni
+gösterilir. Gerçekleşme için iki tarafın olumlu yanıtı gerekir; mentor öğrencinin katılmadığını bildirirse `NO_SHOW`
+olur. Her taraf yalnız bir kez yanıtlar ve diğer tarafın özel notu veri dökümüne girmez.
+
 ### P1-11 incelemesi: yönetim sayfasında yanıt başlamadan kapsam denetimi
 
 App Router yükleme sınırı yanıtı başlattıktan sonra sayfadaki red HTTP 200 kalabildiği için yönetim layout'u mevcut yetki kapısını önce çalıştırır. Proxy'nin kendisinin yazdığı istek yolu yalnız doğru yeteneği seçer; yetki yine sunucu servisinden gelir. Kapsam dışı sayfa ve kullanıcı ayrıntısı üst grup hata sınırıyla Türkçe 404 döner; eylemlerin kendi yetki denetimleri de korunur. Ortak yönetim listeleri izin verilen uzun, boşluksuz değerleri hücre içinde böler; mobil kart ve masaüstü tablo sayfayı genişletmez.
@@ -705,3 +712,6 @@ Bildirim bağlantısı testi seed öğrencisinin pozisyonuna bağlı kayıt olu�
 ### Bildirim niyeti ve kuyruk telafisi
 
 Moderasyon, iletişim, CV daveti ve randevu bildirimlerinde olayın niyeti iş değişikliğiyle aynı veritabanı işlemine yazılır. Niyet yalnız tür, alıcı ve kaynak kimlikleri taşır; ad, e-posta, serbest metin ve bağlantı saklamaz. Dakikalık pg-boss aktarıcısı kaydı kilitleyip mevcut tercih denetimli e-posta kapısına aynı tekilleştirme anahtarıyla yollar; başarısızlıkta kayıt kalır, başarılı kuyruk yazımından sonra silinir. Kuyruk kabulü sonrası kesintide tekrar aynı anahtar kullanılır. Randevu metni güncel kayıttan hazırlanır, silinmiş hesaplara gönderilmez.
+### P1-14 incelemesi: form erişimi ve yalıtılmış iş testi
+
+Formun taraf denetimi hesap layout'unda loading başlamadan yapılır; yabancı kullanıcı gerçek, Türkçe 404 alır. Sayfa ve gönderim eylemi kendi denetimini korur. İstek yolu yalnız proxy'nin yazdığı başlıktan seçilir, erişim kararı katılımcı servisinindir. Görüşme işi testi bağlantı ayarlarını sahte değerlerle kurup temizler; rolün yerel env dosyasına dayanmaz. İki tarafın onayı, tek yanıt ve gösterge kapsamı bağımsız yarış/negatif testleriyle korunur.
