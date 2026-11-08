@@ -37,6 +37,11 @@ describe('SSS sözleşmesi', () => {
     expect(publishFaqSchema.safeParse(publish).success).toBe(true);
     expect(publishFaqSchema.safeParse({ ...publish, publishedById: 'x' }).success).toBe(false);
     expect(publishFaqSchema.safeParse({ ...publish, selectedAnswerId: '' }).success).toBe(false);
+    expect(publishFaqSchema.safeParse({ ...publish, confirmNotPersonal: true }).success).toBe(true);
+    expect(publishFaqSchema.parse(publish).confirmNotPersonal).toBeUndefined();
+    expect(publishFaqSchema.safeParse({ ...publish, confirmNotPersonal: 'evet' }).success).toBe(
+      false,
+    );
     expect(rejectFaqSchema.safeParse({ requestId: 'r', reason: 'x' }).success).toBe(false);
     expect(
       redirectFaqSchema.safeParse({ requestId: 'r', note: 'Mentorluk talebi aç' }).success,
