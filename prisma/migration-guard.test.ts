@@ -4,8 +4,9 @@ import { describe, expect, it } from 'vitest';
 /**
  * Migration bekçisi — üretilmiş arama sütunları tuzağı (docs/engineering.md "Sürüm tuzakları").
  *
- * `Experience.searchVector` / `searchKeys` veritabanında GENERATED ALWAYS sütundur ve 6 GIN indeksi vardır (4 sözlük
- * trgm indeksi P1-05'te, 2 arama indeksi P1-08'de). Prisma bunları şemada tam modelleyemediği için `prisma migrate dev`
+ * `Experience.searchVector` / `searchKeys` (ve P1-17'den beri `FaqItem` için aynı ad) veritabanında GENERATED ALWAYS
+ * sütundur ve 8 GIN indeksi vardır (4 sözlük trgm indeksi P1-05'te, 2 deneyim arama indeksi P1-08'de, 2 SSS arama
+ * indeksi P1-17'de). Prisma bunları şemada tam modelleyemediği için `prisma migrate dev`
  * sonraki HER migration'a bunlar için yanlış `ALTER COLUMN`/`DROP INDEX` yazar; olduğu gibi uygulanırsa arama bozulur.
  * Bu test, onları yaratan migration’lar dışında bunlara dokunan migration’ı reddeder. Artık şemada modelli olduğundan
  * `migrate dev` normalde sürüklenmez; bu test İKİNCİ KEMERDİR (docs/decisions.md).
@@ -14,6 +15,12 @@ const MIGRATIONS = new URL('./migrations/', import.meta.url);
 
 /** Sütunları ve indeksleri bilerek yaratan migration'lar (yalnız bunlar dokunabilir). */
 const CREATOR = '20261108010000_p1_08_search';
+const FAQ_CREATOR = '20261108160100_p1_17_faq';
+/** Her oluşturucu yalnız kendi tablosuna GENERATED sütunu ekleyebilir. */
+const COLUMN_CREATORS: Record<string, string> = {
+  [CREATOR]: 'Experience',
+  [FAQ_CREATOR]: 'FaqItem',
+};
 const GUARDED_INDEXES: Record<string, string> = {
   Company_normalizedName_trgm: '20261107234822_p1_05_cv',
   Title_normalizedName_trgm: '20261107234822_p1_05_cv',
@@ -21,6 +28,8 @@ const GUARDED_INDEXES: Record<string, string> = {
   Sector_normalizedName_trgm: '20261107234822_p1_05_cv',
   Experience_searchVector_idx: CREATOR,
   Experience_searchKeys_trgm: CREATOR,
+  FaqItem_searchVector_idx: FAQ_CREATOR,
+  FaqItem_searchKeys_trgm: FAQ_CREATOR,
 };
 const GUARDED_COLUMNS = ['searchVector', 'searchKeys'];
 
@@ -38,15 +47,24 @@ function violations(migration: string, sql: string): string[] {
     const statement = raw.replace(/\s+/g, ' ').trim();
     if (!statement) continue;
     if (/^DROP INDEX\b/i.test(statement)) {
-      for (const [index, creator] of Object.entries(GUARDED_INDEXES)) {
-        if (migration !== creator && new RegExp(`"?${index}"?`).test(statement))
+      for (const index of Object.keys(GUARDED_INDEXES)) {
+        if (new RegExp(`"?${index}"?`).test(statement))
           found.push(`${migration}: ${index} indeksine DROP INDEX`);
       }
     }
-    if (/^ALTER TABLE\b/i.test(statement) && migration !== CREATOR) {
+    if (/^ALTER TABLE\b/i.test(statement)) {
       for (const column of GUARDED_COLUMNS) {
-        if (new RegExp(`"${column}"`).test(statement))
-          found.push(`${migration}: ${column} sütununa ALTER TABLE`);
+        if (!new RegExp(`"${column}"`).test(statement)) continue;
+        const creatorTable = COLUMN_CREATORS[migration];
+        const ownAdd =
+          creatorTable &&
+          new RegExp(`^ALTER TABLE "${creatorTable}" ADD COLUMN "${column}"\\s`, 'i').test(
+            statement,
+          ) &&
+          /\bGENERATED ALWAYS AS\b/i.test(statement) &&
+          /\bSTORED$/i.test(statement) &&
+          !/,\s*(?:ALTER|DROP|ADD|RENAME)\s+(?:COLUMN|CONSTRAINT)\b/i.test(statement);
+        if (!ownAdd) found.push(`${migration}: ${column} sütununa ALTER TABLE`);
       }
     }
   }
@@ -80,6 +98,30 @@ describe('migration bekçisi: üretilmiş arama sütunları ve GIN indeksleri', 
         readFileSync(new URL('20261107234822_p1_05_cv/migration.sql', MIGRATIONS), 'utf8'),
       ),
     ).toEqual([]);
+  });
+
+  it('SSS arama sütunları/indeksleri de korunur; yaratıcı migration geçerlidir', () => {
+    const sql = readFileSync(new URL(`${FAQ_CREATOR}/migration.sql`, MIGRATIONS), 'utf8');
+    expect(violations(FAQ_CREATOR, sql)).toEqual([]);
+    expect(
+      violations(
+        '20990101000000_x',
+        'ALTER TABLE "FaqItem" ALTER COLUMN "searchVector" DROP DEFAULT; DROP INDEX "FaqItem_searchKeys_trgm";',
+      ),
+    ).toHaveLength(2);
+  });
+
+  it('oluşturucu istisnası farklı tabloyu ve kendi sütununun ALTER/DROP işlemini kapsamaz', () => {
+    expect(
+      violations(FAQ_CREATOR, 'ALTER TABLE "Experience" ALTER COLUMN "searchKeys" DROP DEFAULT;'),
+    ).toHaveLength(1);
+    expect(
+      violations(CREATOR, 'ALTER TABLE "FaqItem" ALTER COLUMN "searchVector" DROP DEFAULT;'),
+    ).toHaveLength(1);
+    expect(
+      violations(FAQ_CREATOR, 'ALTER TABLE "FaqItem" ALTER COLUMN "searchKeys" DROP DEFAULT;'),
+    ).toHaveLength(1);
+    expect(violations(FAQ_CREATOR, 'DROP INDEX "FaqItem_searchKeys_trgm";')).toHaveLength(1);
   });
 
   it('Prisma’nın gerçek çıktısı yakalanır (bekçi kendini sınar)', () => {

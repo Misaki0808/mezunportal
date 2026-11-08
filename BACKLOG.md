@@ -8,7 +8,7 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 ## Güncel durum
 
 Faz 0 (iskelet, veritabanı, yerel ortam, tasarım sistemi, ekip araçları) ve Faz 1'in çekirdek ile
-tamamlayıcı adımları main'dedir; **P1-17 (SSS) hariç** her adımın servisi ve ekranı vardır. Canlı ortam yoktur
+tamamlayıcı adımları main'dedir; **P1-17 (SSS) yalnız servis olarak** (ekranı yok), diğer her adımın servisi ve ekranı vardır. Canlı ortam yoktur
 ve bilinçli ertelenmiştir: geliştirme, test ve ekran doğrulaması yerelde, birleştirme kapıları yerelde
 (CI yok, K-14). Ürün özellikleri aşağıdaki gibi çalışır; ayrıntı ve gerekçe `docs/decisions.md`'dedir.
 
@@ -40,7 +40,8 @@ ve bilinçli ertelenmiştir: geliştirme, test ve ekran doğrulaması yerelde, b
   yedek ve geri yükleme betikleri; canlıda test girişi ve `/ui-ornekleri` kapalıdır.
 - **Ana sayfa ve ortak ekran davranışları:** girişli kullanıcıya rol bazlı kişisel pano; beklenen durumlar için ortak durum
   ekranı; ekran klavyesi açıkken alt gezinme/eylem çubuğu davranışı.
-- **P1-17 (SSS) main'de değildir:** servis ve ekran bağımsız incelemede; puan ve kullanım olayı kancaları onunla gelir.
+- **SSS servisi (P1-17):** talep (hız sınırlı, benzer soru kapısı), mentor cevabı, moderatör yayın/ret/yönlendirme (yayında kimlik yok),
+  arama, yayında puan ve bildirim; kullanım olayları bağlı. **SSS ekranları (sayfa/arama, talep, mentor cevabı, moderasyon) main'de yoktur.**
 
 ### Dış bağımlılık bekleyenler
 
@@ -57,7 +58,7 @@ Hiçbiri kodla çözülemez; her biri aşağıdaki işi engeller. Kullanıcı/ho
 
 ### Yakın hedef
 
-Faz 1'i kapatmak: P1-17'yi main'e almak; kullanıcının faz sonu telefon denemesi (aynı Wi-Fi, `docs/engineering.md`
+Faz 1'i kapatmak: SSS ekranlarını (P1-17) main'e almak; kullanıcının faz sonu telefon denemesi (aynı Wi-Fi, `docs/engineering.md`
 "Telefon testi") ve bulguların kapatılması ya da bu belgeye borç olarak yazılması; PILOT-TEST planının
 `docs/faz1-plan.md` sonuna yazılması; canlıya alım kararlarının (K-02, K-05, K-03, K-12) kullanıcı ve hocadan
 alınması; sonra `faz-kapanis` kapanış paketi.
@@ -134,9 +135,8 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   Kapanış ölçütü: günlük zamanlı iş (`files.purge` ile birlikte) + worker kaydı.
 
 - [ ] **TD-015** · P2 · Tamamlanan görüşme için kullanım olayı bağlanmadı
-  Ne: `APPOINTMENT_COMPLETED` olay türü katalogda; iki taraflı tamamlanma (`submitFeedback`) olay yazmaz. `FAQ_*` türleri
-  SSS servisiyle birlikte bağlanacak.
-  Kapanış ölçütü: `emitEvent` kancaları eklenir (test: olay + kişisel veri yok).
+  Ne: `APPOINTMENT_COMPLETED` olay türü katalogda; iki taraf onaylı tamamlanma `submitFeedback`'te olur ama olay yazılmaz.
+  Kapanış ölçütü: `emitEvent` kancası eklenir (test: olay + kişisel veri yok).
 
 - [ ] **TD-017** · P2 · Çözülemeyen outbox niyeti için kalıcı hata durumu
   Ne: Bekleyen şifreli davet niyetinin anahtarı değişirse içerik çözülemez.

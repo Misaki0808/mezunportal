@@ -53,6 +53,8 @@ model Department {
   memberships         Membership[]
   adminGrants         AdminGrant[]
   experiences         Experience[]
+  faqRequests         FaqRequest[]
+  faqItems            FaqItem[]
   graduationDocuments GraduationDocument[]
   events              Event[]
 
@@ -165,6 +167,8 @@ model User {
   counterpartPoints     PointEntry[]       @relation("PointCounterpart")
   suspicionFlags        SuspicionFlag[]
   badges                UserBadge[]
+  faqRequests           FaqRequest[]       @relation("FaqAsker")
+  faqAnswers            FaqAnswer[]
 }
 
 /// İşlemle aynı anda kaydedilen, gönderim kuyruğu kapanırsa tekrar taşınacak bildirim niyeti.
@@ -193,6 +197,7 @@ enum NotificationType {
   ALUMNI_STILL_THERE
   STUDENT_EMAIL_MIGRATION
   APPOINTMENT
+  FAQ
 }
 
 enum StillThereChoice {
@@ -1310,4 +1315,79 @@ model UserBadge {
   sourceEntry PointEntry? @relation(fields: [sourceEntryId], references: [id], onDelete: SetNull)
 
   @@unique([userId, kind])
+}
+
+// ---------------------------------------------------------------------------------------------
+// SSS akışı (P1-17; docs/architecture.md "SSS akışı")
+// ---------------------------------------------------------------------------------------------
+
+enum FaqStatus {
+  OPEN
+  PUBLISHED
+  REJECTED
+  REDIRECTED
+}
+
+/// Öğrencinin SSS talebi. `askerId` yalnız sahiplik/hesap silme içindir ve HİÇBİR çıktıya (mentor, moderatör, yayın) girmez;
+/// hesap silmede yayınlanmamış talepler silinir, yayınlanmışta bağ koparılır. `departmentIdAtWrite` moderasyon kapsamını
+/// ve yayının görünürlüğünü (K-07) belirler. Karar alanları CHECK ile tutarlıdır (ham SQL migration).
+model FaqRequest {
+  id                  String    @id @default(uuid(7))
+  askerId             String?
+  departmentIdAtWrite String
+  question            String
+  status              FaqStatus @default(OPEN)
+  /// REJECTED: ret gerekçesi; REDIRECTED: yönlendirme notu (soran öğrenciye gösterilir).
+  decisionNote        String?
+  decidedById         String?
+  decidedAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  asker      User?       @relation("FaqAsker", fields: [askerId], references: [id], onDelete: Restrict)
+  department Department  @relation(fields: [departmentIdAtWrite], references: [id], onDelete: Restrict)
+  answers    FaqAnswer[]
+  item       FaqItem?
+
+  @@index([status, departmentIdAtWrite, createdAt])
+  @@index([askerId, createdAt])
+}
+
+/// Mentor cevabı: talep başına mentor başına bir cevap. Yayında en çok bir cevap `isSelected` olur (kısmi benzersiz indeks).
+/// `mentorId` yalnız sahiplik içindir (hesap silmede yayınlanmışta koparılır) ve hiçbir çıktıya girmez.
+model FaqAnswer {
+  id         String   @id @default(uuid(7))
+  requestId  String
+  mentorId   String?
+  body       String
+  isSelected Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  request FaqRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  mentor  User?      @relation(fields: [mentorId], references: [id], onDelete: Restrict)
+
+  @@unique([requestId, mentorId])
+  @@index([mentorId, createdAt])
+}
+
+/// Yayınlanan SSS: moderatörün düzenlediği metin; hiçbir kimlik taşımaz. `publishedById` yalnız iç kayıttır.
+/// Arama sütunları üretilmiştir (GENERATED ALWAYS; ham SQL migration) ve Experience ile aynı kuralla modellenir.
+model FaqItem {
+  id                  String                   @id @default(uuid(7))
+  sourceRequestId     String                   @unique
+  departmentIdAtWrite String
+  question            String
+  answer              String
+  publishedById       String?
+  publishedAt         DateTime                 @default(now())
+  searchVector        Unsupported("tsvector")? @default(dbgenerated())
+  searchKeys          String?                  @default(dbgenerated())
+
+  request    FaqRequest @relation(fields: [sourceRequestId], references: [id], onDelete: Restrict)
+  department Department @relation(fields: [departmentIdAtWrite], references: [id], onDelete: Restrict)
+
+  @@index([publishedAt(sort: Desc), id])
+  @@index([searchVector], type: Gin, map: "FaqItem_searchVector_idx")
+  @@index([searchKeys(ops: raw("gin_trgm_ops"))], type: Gin, map: "FaqItem_searchKeys_trgm")
 }
