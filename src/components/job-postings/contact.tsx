@@ -24,6 +24,7 @@ export function PostingContactForm({
 }) {
   const hydrated = useHydrated();
   const t = useTranslations('privacyScreens.contacts');
+  const jobs = useTranslations('jobs');
   const labels = useTranslations('privacyScreens.fields');
   const errors = useTranslations('errors.codes');
   const [fields, setFields] = useState<ContactField[]>([]);
@@ -34,9 +35,9 @@ export function PostingContactForm({
   if (sent)
     return (
       <div className="space-y-5 rounded-3xl border border-border bg-surface p-5">
-        <p role="status">{t('sent')}</p>
-        <Link href="/hesap/iletisim?box=OUTGOING" className={buttonClasses({ fullWidth: true })}>
-          {t('sendDone')}
+        <p role="status">{jobs('contactSent')}</p>
+        <Link href="/ilanlar" className={buttonClasses({ fullWidth: true })}>
+          {jobs('back')}
         </Link>
       </div>
     );

@@ -76,6 +76,8 @@ it('eksik form hatası özetlenir ve odaklanır, işlem çağrılmaz', async () 
   const alert = message.closest('[role=alert]');
   await waitFor(() => expect(alert).toHaveFocus());
   expect(alert).toHaveTextContent('Pozisyon adı');
+  fireEvent.click(screen.getByRole('button', { name: 'Açıklama' }));
+  await waitFor(() => expect(screen.getByLabelText(/Açıklama/)).toHaveFocus());
   expect(save).not.toHaveBeenCalled();
 });
 it('iletişim eylemi yazar kimliği taşımadan ilan üzerinden açılır', () => {
@@ -200,5 +202,37 @@ it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () =>
   fireEvent.click(screen.getByRole('button', { name: 'Onayla' }));
   await waitFor(() =>
     expect(review).toHaveBeenCalledWith({ postingId: 'job-1', decision: 'REJECT', reason: 'abc' }),
+  );
+});
+it('düzenlemede değiştirilmemiş sözlük kurumu korunur', async () => {
+  const initial = {
+    id: 'job-1',
+    status: 'DRAFT' as const,
+    kind: 'INTERNSHIP' as const,
+    title: 'Staj',
+    organizationName: 'Kurum',
+    companyId: 'company-1',
+    location: 'İstanbul',
+    isRemote: false,
+    description: null,
+    applyMethod: null,
+    applyUrl: null,
+    deadlineOn: null,
+    departmentId: 'dep',
+    targetDepartments: [],
+    moderationNote: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    submittedAt: null,
+    publishedAt: null,
+    endedAt: null,
+  };
+  const save = vi.fn().mockResolvedValue({ ok: true, data: initial });
+  renderUi(<PostingEditor context={context} initial={initial} save={save} submit={vi.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+  await waitFor(() =>
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.objectContaining({ companyId: 'company-1' }) }),
+    ),
   );
 });

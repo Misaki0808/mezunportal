@@ -44,8 +44,11 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
       </div>
       <div className="flex flex-wrap gap-2 text-sm">
         <span className="rounded-full bg-surface-strong px-3 py-1.5 text-fg">
-          {posting.isRemote ? t('remoteLabel') : (posting.location ?? t('unknownLocation'))}
+          {posting.location ?? (posting.isRemote ? t('remoteLabel') : t('unknownLocation'))}
         </span>
+        {posting.location && posting.isRemote && (
+          <span className="rounded-full bg-surface-strong px-3 py-1.5">{t('remoteLabel')}</span>
+        )}
         <span
           className={
             posting.daysLeft <= 7
@@ -94,7 +97,7 @@ export function PostingList({
     filters.location ||
     filters.kind ||
     filters.remote ||
-    filters.withinDays,
+    filters.withinDays !== undefined,
   );
   function pageHref(target: number) {
     const params = new URLSearchParams();
@@ -197,6 +200,7 @@ export function PostingList({
               {t('withinDays')}
               <Select name="withinDays" defaultValue={filters.withinDays?.toString() ?? ''}>
                 <option value="">{t('anyTime')}</option>
+                <option value="0">{t('today')}</option>
                 <option value="7">{t('sevenDays')}</option>
                 <option value="14">{t('fourteenDays')}</option>
               </Select>

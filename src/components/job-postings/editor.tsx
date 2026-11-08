@@ -56,6 +56,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
     kind,
     title,
     organizationName: organization,
+    companyId:
+      initial?.companyId && organization === initial.organizationName ? initial.companyId : null,
     location: location || null,
     isRemote: remote,
     description,
@@ -163,7 +165,24 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               {[...invalid]
                 .filter((field) => fieldNames[field])
                 .map((field) => (
-                  <li key={field}>{fieldNames[field]}</li>
+                  <li key={field}>
+                    <button
+                      type="button"
+                      className="min-h-11 text-left underline"
+                      onClick={() => {
+                        setStep(
+                          ['title', 'organizationName', 'departmentId'].includes(field) ? 0 : 1,
+                        );
+                        requestAnimationFrame(() =>
+                          document
+                            .querySelector<HTMLElement>(`[data-error-field="${field}"]`)
+                            ?.focus(),
+                        );
+                      }}
+                    >
+                      {fieldNames[field]}
+                    </button>
+                  </li>
                 ))}
             </ul>
           )}
@@ -196,6 +215,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               {(p) => (
                 <Input
                   {...p}
+                  data-error-field="title"
                   value={title}
                   maxLength={120}
                   onChange={(e) => setTitle(e.target.value)}
@@ -206,6 +226,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               {(p) => (
                 <Input
                   {...p}
+                  data-error-field="organizationName"
                   value={organization}
                   maxLength={120}
                   onChange={(e) => setOrganization(e.target.value)}
@@ -215,7 +236,12 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
             </Field>
             <Field label={t('authorDepartment')} required error={bad('departmentId')}>
               {(p) => (
-                <Select {...p} value={departmentId} onChange={(e) => setDepartment(e.target.value)}>
+                <Select
+                  {...p}
+                  data-error-field="departmentId"
+                  value={departmentId}
+                  onChange={(e) => setDepartment(e.target.value)}
+                >
                   {context.authorDepartments.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.name}
@@ -232,6 +258,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               {(p) => (
                 <Textarea
                   {...p}
+                  data-error-field="description"
                   value={description}
                   maxLength={3000}
                   rows={6}
@@ -243,6 +270,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               {(p) => (
                 <Input
                   {...p}
+                  data-error-field="location"
                   value={location}
                   maxLength={100}
                   onChange={(e) => setLocation(e.target.value)}
@@ -267,6 +295,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               {(p) => (
                 <Input
                   {...p}
+                  data-error-field="deadlineOn"
                   type="date"
                   min={today}
                   max={max}
@@ -275,8 +304,11 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 />
               )}
             </Field>
-            <fieldset>
+            <fieldset tabIndex={-1} data-error-field="targetDepartmentIds">
               <legend className="font-semibold">{t('targetDepartments')}</legend>
+              <p className="mt-1 text-sm text-fg-muted">
+                {t('targetLimit', { count: context.limits.maxTargets })}
+              </p>
               {bad('targetDepartmentIds') && (
                 <p className="text-danger">{bad('targetDepartmentIds')}</p>
               )}
@@ -290,6 +322,9 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                       type="checkbox"
                       className="size-5 accent-primary"
                       checked={targets.includes(d.id)}
+                      disabled={
+                        !targets.includes(d.id) && targets.length >= context.limits.maxTargets
+                      }
                       onChange={(e) =>
                         setTargets((old) =>
                           e.target.checked
@@ -322,6 +357,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 {(p) => (
                   <Input
                     {...p}
+                    data-error-field="applyUrl"
                     type="url"
                     inputMode="url"
                     value={url}

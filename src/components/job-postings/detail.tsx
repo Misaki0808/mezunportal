@@ -35,8 +35,11 @@ export function PostingDetail({
               {t(posting.kind)}
             </span>
             <span className="rounded-full bg-surface-strong px-3 py-2">
-              {posting.isRemote ? t('remoteLabel') : (posting.location ?? t('unknownLocation'))}
+              {posting.location ?? (posting.isRemote ? t('remoteLabel') : t('unknownLocation'))}
             </span>
+            {posting.location && posting.isRemote && (
+              <span className="rounded-full bg-surface-strong px-3 py-1.5">{t('remoteLabel')}</span>
+            )}
             <span
               className={
                 posting.daysLeft <= 7

@@ -90,9 +90,10 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     await waitForHydratedForm(student!, 'Talep gönder');
     await student!.getByRole('checkbox', { name: 'E-posta' }).check();
     await student!.getByRole('button', { name: 'Talep gönder' }).click();
-    await expect(student!.getByRole('status')).toContainText('Talebin gönderildi');
+    await expect(student!.getByText('Talebin gönderildi.', { exact: true })).toBeVisible();
   } finally {
     await Promise.all(contexts.map((c) => c.close()));
+    postingId ??= (await db.jobPosting.findFirst({ where: { title }, select: { id: true } }))?.id;
     if (postingId) {
       await db.contactRequest.deleteMany({ where: { message: { contains: title } } });
       await db.pointEntry.deleteMany({ where: { sourceType: 'JOB_POSTING', sourceId: postingId } });
