@@ -27,15 +27,28 @@ import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
  * varlığı sızmaz). Durum geçişleri koşullu güncellemeyle yapılır: eşzamanlı iki istekten yalnız biri geçer.
  */
 
-const OPEN_PAIR_INDEX = 'ContactRequest_open_pair_key';
+const OPEN_REQUEST_INDEXES = [
+  'ContactRequest_open_context_key',
+  'ContactRequest_approved_pair_key',
+];
 
 function isOpenPairViolation(error: unknown): boolean {
   return (
     (error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === 'P2002' &&
-      JSON.stringify(error.meta ?? {}).includes(OPEN_PAIR_INDEX)) ||
-    (error instanceof Error && error.message.includes(OPEN_PAIR_INDEX))
+      OPEN_REQUEST_INDEXES.some((index) => JSON.stringify(error.meta ?? {}).includes(index))) ||
+    (error instanceof Error && OPEN_REQUEST_INDEXES.some((index) => error.message.includes(index)))
   );
+}
+
+/** Gönderim ve onay aynı yönlü çiftte sıralanır; bekleyen kaynaklar birbirinden bağımsızdır. */
+async function lockContactPair(
+  tx: Prisma.TransactionClient,
+  requesterId: string,
+  targetId: string,
+) {
+  const key = JSON.stringify(['contact-pair', requesterId, targetId]);
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))::text`;
 }
 
 /** İlan kaynaklı talep (P2-04, D7): yalnız sunucu içi (ilan üzerinden iletişim servisi) verir; istemci girdisinden gelmez. */
@@ -67,6 +80,15 @@ export async function sendContactRequest(
 
   try {
     const created = await db.$transaction(async (tx) => {
+      await lockContactPair(tx, requesterId, target.id);
+      // Onaylı çiftte kimlik zaten açık; yeni bağlamdan ikinci açık ilişki kurulmaz.
+      if (
+        await tx.contactRequest.findFirst({
+          where: { requesterId, targetId: target.id, status: 'APPROVED' },
+          select: { id: true },
+        })
+      )
+        throw codedConflict('CONTACT_REQUEST_ALREADY_OPEN');
       const row = await tx.contactRequest.create({
         data: {
           requesterId,
@@ -141,7 +163,7 @@ type Transition = {
 };
 
 async function transition(
-  db: PrismaClient,
+  db: Pick<PrismaClient, 'contactRequest'>,
   actorId: string,
   requestId: string,
   rule: Transition,
@@ -166,19 +188,33 @@ export function respondToContactRequest(
   input: { requestId: string; decision: 'APPROVE' | 'REJECT' },
   now: Date = new Date(),
 ): Promise<ContactRequestStatusOutput> {
-  return transition(
-    db,
-    targetId,
-    input.requestId,
-    {
-      side: 'targetId',
-      from: 'PENDING',
-      to: input.decision === 'APPROVE' ? 'APPROVED' : 'REJECTED',
-      stamp: 'decidedAt',
-      wrongStateCode: 'CONTACT_REQUEST_NOT_PENDING',
-    },
-    now,
-  );
+  const rule: Transition = {
+    side: 'targetId',
+    from: 'PENDING',
+    to: input.decision === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+    stamp: 'decidedAt',
+    wrongStateCode: 'CONTACT_REQUEST_NOT_PENDING',
+  };
+  if (input.decision === 'REJECT') return transition(db, targetId, input.requestId, rule, now);
+  return db.$transaction(async (tx) => {
+    const own = await tx.contactRequest.findFirst({
+      where: { id: input.requestId, targetId },
+      select: { requesterId: true },
+    });
+    if (!own) throw codedNotFound('RESOURCE_NOT_FOUND');
+    await lockContactPair(tx, own.requesterId, targetId);
+    const result = await transition(tx, targetId, input.requestId, rule, now);
+    await tx.contactRequest.updateMany({
+      where: {
+        requesterId: own.requesterId,
+        targetId,
+        status: 'PENDING',
+        id: { not: input.requestId },
+      },
+      data: { status: 'REJECTED', decidedAt: now },
+    });
+    return result;
+  });
 }
 
 export function withdrawContactRequest(

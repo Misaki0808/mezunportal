@@ -902,3 +902,5 @@ anahtar adlarını korur). (4) **D7 genelleştirildi:** `ContactRequestSource.SE
 etkin `ALUMNI` + beyan yapar. (6) **Hız:** günde 50 kart, ayda 20 talep; görüntülenme sayacı `Profile.seekerViewCount` (kim baktığı tutulmaz). Enum değerlerini
 KULLANAN CHECK ayrı migration'dadır (PostgreSQL: yeni enum değeri aynı işlemde kullanılamaz). Rıza ve aydınlatma eki metni `docs/legal-drafts.md` §4 (taslak ⏸).
 
+
+**D7 kaynaklar arası kimlik bağı (PM, kart 143).** Bekleyen iletişim talepleri kaynak ve bağlam başına tektir: PROFILE ve SEEKER_PROFILE ayrı, JOB_POSTING ilan başına ayrıdır. Böylece anonim aday/ilan talebi, bilinen profile gönderimde ALREADY_OPEN veya ortak requestId ile eşlenmez. Aday aramasını yalnız aynı SEEKER_PROFILE kaynağındaki açık talep etkiler. Bir çiftte tek APPROVED kalır; onay çift kilidiyle sıralanır ve aynı işlemde diğer bekleyenleri kapatır. İlan silinince kaynak anahtarı yetim kayıt id'siyle ayrılır. İndeks migration'ı veri silmez; geri almada bir çiftte birden fazla açık bağlam varsa durur (silerek çözmez), ileri onarım veya açık kullanıcı kararları gerekir.

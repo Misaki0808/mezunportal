@@ -7,7 +7,7 @@ import { Prisma, type PrismaClient } from '@/generated/prisma/client';
  *  - Görünürlük BU SORGUDA, sorgu anında hesaplanır: bayrak AND opak kimlik AND `JOB_SEEKER_VISIBILITY` için kullanıcının SON rıza satırı
  *    `granted` ve güncel sürüm AND hesap silinmemiş/askıda değil AND doğrulanmış etkin ÖĞRENCİ üyeliği AND arayanın üniversitesi (K-07).
  *    Rıza geri alındığı an satır sonuç kümesinden düşer; temizlik (`revokeSeekerVisibility`) buna ek bir katmandır.
- *  - Arayanın kendisi ve arayanla AÇIK (bekleyen/onaylı) iletişim talebi olan kişi sonuçta YOKTUR (kimlik eşleştirme yan kanalını kapatır).
+ *  - Arayanın kendisi ve arayanla aynı SEEKER_PROFILE kaynağından AÇIK iletişim talebi olan kişi sonuçta YOKTUR (kimlik eşleştirme yan kanalını kapatır).
  *  - Çıktı yalnız kart alanlarıdır; sahibin adı/e-postası yalnız başlık satırının kimlik denetimi için okunur ve servis katmanında bırakılır.
  *    Kart etiketleri yalnız `curated` olanlardır (serbest yazılmış beceri kişisel veri taşıyabilir).
  *  - Sıralama opak kimliğe göredir: rastgele ama sayfalar arasında kararlı; kayıt/zaman sırası sızmaz. Kullanıcı girdisi yalnız bağlı parametredir.
@@ -40,7 +40,7 @@ export type SeekerQuery = {
   termYear?: number | undefined;
   termSeason?: 'SPRING' | 'SUMMER' | 'AUTUMN' | 'WINTER' | undefined;
   /**
-   * Arayanla açık talebi olan kişileri DIŞLAMA (yalnız talep gönderildikten sonraki yeniden doğrulama içindir: yeni bekleyen talep
+   * Arayanla aynı SEEKER_PROFILE kaynağından açık talebi olan kişileri DIŞLAMA (yalnız talep gönderildikten sonraki yeniden doğrulama içindir: yeni bekleyen talep
    * kişiyi zaten dışlar). Arama ve ilk çözümleme bunu KULLANMAZ.
    */
   keepOpenRequests?: boolean | undefined;
@@ -69,7 +69,7 @@ function conditions(q: SeekerQuery, extra: Prisma.Sql[] = []): Prisma.Sql {
   if (!q.keepOpenRequests)
     where.push(Prisma.sql`NOT EXISTS (
       SELECT 1 FROM "ContactRequest" r
-      WHERE r."requesterId" = ${q.viewerId} AND r."targetId" = p."userId" AND r."status" IN ('PENDING', 'APPROVED')
+      WHERE r."requesterId" = ${q.viewerId} AND r."targetId" = p."userId" AND r."source" = 'SEEKER_PROFILE' AND r."status" IN ('PENDING', 'APPROVED')
     )`);
   if (q.termYear !== undefined) where.push(Prisma.sql`p."seekingTermYear" = ${q.termYear}`);
   if (q.termSeason !== undefined)
