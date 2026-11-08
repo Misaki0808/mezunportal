@@ -154,6 +154,11 @@
       "title": "Yönetim",
       "pending": "{count} iş inceleme bekliyor",
       "none": "Bekleyen iş yok"
+    },
+    "jobMatches": {
+      "title": "Sana uyan ilanlar",
+      "empty": "Henüz sana uygun ilan yok. İlgi alanlarını ekleyerek yeni fırsatları keşfedebilirsin.",
+      "profile": "Profilini düzenle"
     }
   },
   "errors": {
@@ -278,10 +283,19 @@
       "experiences": "Deneyimler",
       "mentors": "Mentorlar",
       "appointments": "Randevular",
-      "profile": "Hesabım"
+      "profile": "Hesabım",
+      "jobs": "İlanlar"
     },
     "admin": "Yönetim",
-    "signIn": "Giriş yap"
+    "signIn": "Giriş yap",
+    "shortItems": {
+      "home": "Ana",
+      "experiences": "Deneyim",
+      "jobs": "İlanlar",
+      "mentors": "Mentor",
+      "appointments": "Randevu",
+      "profile": "Hesabım"
+    }
   },
   "ui": {
     "button": {
@@ -1624,7 +1638,8 @@
       "invitations": "Toplu davet",
       "usageMetrics": "Kullanım",
       "points": "Puan yönetimi",
-      "faq": "SSS moderasyonu"
+      "faq": "SSS moderasyonu",
+      "jobPostings": "İlan inceleme"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1639,7 +1654,8 @@
       "invitations": "E-posta listesiyle davet gönder.",
       "usageMetrics": "Toplu kullanım raporunu incele.",
       "points": "Puan kurallarını, kayıtları ve şüpheli işaretleri yönet.",
-      "faq": "SSS taleplerini incele, yayımla, reddet ya da mentorluğa yönlendir."
+      "faq": "SSS taleplerini incele, yayımla, reddet ya da mentorluğa yönlendir.",
+      "jobPostings": "Topluluğun paylaştığı ilanları incele."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1975,6 +1991,10 @@
       "CV_REVIEW": {
         "label": "CV incelemeleri",
         "description": "CV inceleme talepleri, yanıtları ve süre dolumu."
+      },
+      "JOB_MATCH": {
+        "label": "İlan eşleşmeleri",
+        "description": "Profiline uyan ilanların özeti."
       }
     },
     "email": {
@@ -2006,7 +2026,9 @@
       "stillThereSubject": "Çalışma bilgin güncel mi?",
       "stillThereText": "Hâlâ {company} bünyesinde misin? Evet: {yesUrl} Hayır: {noUrl}",
       "migrationSubject": "E-posta adresini güncel tut",
-      "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}"
+      "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}",
+      "jobMatchSubject": "Sana uyan yeni fırsatlar",
+      "jobMatchText": "Sana uygun yeni ilanları bir arada incele: {url}"
     },
     "stillThere": {
       "title": "Çalışma bilgini doğrula",
@@ -2020,6 +2042,10 @@
       "successNo": "Yanıtın kaydedildi. İstersen profilindeki çalışma bilgilerini güncelle.",
       "invalid": "Bu bağlantı geçersiz, kullanılmış veya süresi dolmuş.",
       "profile": "Profiline git"
+    },
+    "jobMatches": {
+      "title": "Sana uyan ilan bildirimleri",
+      "empty": "Henüz ilan eşleşmesi bildirimin yok."
     }
   },
   "feedback": {
@@ -2557,5 +2583,125 @@
       "emptyDescription": "Yeni talepler burada görünür.",
       "more": "Daha fazla göster"
     }
+  },
+  "jobs": {
+    "eyebrow": "Fırsatlar",
+    "title": "Bir sonraki adımın burada",
+    "subtitle": "Topluluğundan gelen staj ve iş fırsatlarını keşfet.",
+    "post": "İlan ver",
+    "mine": "İlanlarım",
+    "studentReason": "İlanları doğrulanmış mezunlar ve akademisyenler paylaşabilir.",
+    "search": "Pozisyon veya kurum ara",
+    "searchButton": "Ara",
+    "filters": "Süzgeçler",
+    "clear": "Süzgeçleri temizle",
+    "department": "Hedef bölüm",
+    "company": "Kurum",
+    "location": "Konum",
+    "all": "Tümü",
+    "kind": "İlan türü",
+    "INTERNSHIP": "Staj",
+    "JOB": "İş",
+    "remote": "Uzaktan çalışma",
+    "withinDays": "Kalan süre",
+    "anyTime": "Her zaman",
+    "sevenDays": "Son 7 gün",
+    "fourteenDays": "Son 14 gün",
+    "results": "{count} fırsat",
+    "emptyTitle": "Henüz ilan bulunamadı",
+    "emptyBody": "Yeni fırsatlar eklendiğinde burada göreceksin.",
+    "emptyFiltered": "Süzgeçleri değiştirerek yeniden deneyebilirsin.",
+    "today": "Bugün son gün",
+    "daysLeft": "Son {count} gün",
+    "remoteLabel": "Uzaktan",
+    "unknownLocation": "Konum belirtilmedi",
+    "target": "Hedef bölümler",
+    "open": "İncele",
+    "back": "İlanlara dön",
+    "description": "İlan hakkında",
+    "apply": "Başvur",
+    "contact": "İletişim iste",
+    "notFound": "İlan bulunamadı",
+    "listTitle": "İlanlarım",
+    "listEmpty": "Henüz bir ilan paylaşmadın.",
+    "newTitle": "Fırsatını paylaş",
+    "newSubtitle": "Topluluğumuzla paylaşacağın fırsatı birkaç adımda hazırla.",
+    "step": "Adım {current} / {total}",
+    "next": "Devam et",
+    "previous": "Geri",
+    "saveDraft": "Taslağı kaydet",
+    "preview": "Önizle",
+    "submit": "İncelemeye gönder",
+    "saving": "Kaydediliyor",
+    "formSummary": "Lütfen işaretli alanları kontrol et.",
+    "formBasics": "Fırsatı anlat",
+    "formDetails": "Ayrıntılar ve başvuru",
+    "formPreview": "İlan önizlemesi",
+    "titleLabel": "Pozisyon adı",
+    "organization": "Kurum adı",
+    "descriptionLabel": "Açıklama",
+    "locationLabel": "Konum",
+    "remoteQuestion": "Uzaktan çalışılabilir",
+    "deadline": "Son başvuru tarihi",
+    "deadlineHint": "Son tarih bugünden en fazla 60 gün sonrası olabilir.",
+    "authorDepartment": "İlanı paylaşacağın bölüm",
+    "targetDepartments": "Hedef bölümler",
+    "applyMethod": "Başvuru yolu",
+    "urlMethod": "Dış bağlantı",
+    "contactMethod": "İletişim talebi",
+    "applyUrl": "HTTPS başvuru bağlantısı",
+    "saved": "Taslağın kaydedildi.",
+    "submitted": "İlanın incelemeye gönderildi.",
+    "close": "İlanı kapat",
+    "closeConfirm": "Bu ilanı kapatmak istediğine emin misin?",
+    "cancel": "Vazgeç",
+    "moderationTitle": "İlan inceleme kuyruğu",
+    "moderationEmpty": "İncelenecek ilan yok.",
+    "publish": "Yayımla",
+    "reject": "Reddet",
+    "reason": "Ret gerekçesi",
+    "confirm": "Onayla",
+    "status": {
+      "DRAFT": "Taslak",
+      "PENDING": "İncelemede",
+      "PUBLISHED": "Yayında",
+      "REJECTED": "Reddedildi",
+      "EXPIRED": "Süresi doldu",
+      "CLOSED": "Kapatıldı"
+    },
+    "moderationReason": "Ret gerekçesi: {reason}",
+    "error": "Bir sorun oluştu. Tekrar dene.",
+    "requiredError": "Bu alanı kontrol et.",
+    "invalidDate": "Bugünden başlayarak en fazla 60 gün sonrası seçilebilir.",
+    "invalidUrl": "Geçerli bir HTTPS bağlantısı gir.",
+    "loading": "İlanlar yükleniyor",
+    "filterLocationPending": "Konum adı",
+    "draftEmpty": "Henüz başlık yok",
+    "previewHint": "İlan, yönetici onayından sonra yayımlanır.",
+    "published": "İlan yayımlandı.",
+    "rejected": "İlan reddedildi.",
+    "reviewedBy": "Paylaşan: {name}",
+    "noTargets": "Bölüm seçeneği bulunamadı.",
+    "allTypes": "Tüm ilan türleri",
+    "closeDone": "İlan kapatıldı.",
+    "edit": "Düzenle",
+    "loadMore": "Daha fazla göster",
+    "contactUnavailable": "Bu ilan için şu anda iletişim talebi oluşturulamıyor.",
+    "contactTitle": "İlan için iletişim iste",
+    "contactSubtitle": "Talebin ilanı paylaşan kişiye iletilir. İletişim bilgileri yalnız onay verildiğinde açılır.",
+    "targetLimit": "En fazla {count} bölüm seçebilirsin.",
+    "newTab": "(yeni sekmede açılır)",
+    "matchTags": "İlan etiketleri (isteğe bağlı)",
+    "matchTagsHint": "En fazla 5 etiket seçebilirsin. Etiketsiz ilanlar eşleşme bildirimi göndermez.",
+    "matchGrades": "Hedef sınıflar (isteğe bağlı)",
+    "matchGradesHint": "Seçim yapmazsan tüm sınıflar uygundur.",
+    "matchGrade": "{grade}. sınıf",
+    "reachFew": "3'ten az kişiye ulaştı",
+    "reachCount": "{count} kişiye ulaştı",
+    "whyMatch": "Neden sana uygun?",
+    "mineDescription": "Paylaştığın ilanların durumunu takip et.",
+    "compactTitle": "Staj ve iş ilanları",
+    "searchPlaceholder": "İlan ara",
+    "applyFilters": "Süzgeçleri uygula"
   }
 }

@@ -55,7 +55,7 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
     }
   }
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-2xl flex-col px-5 pb-8 pt-10 sm:pt-16">
+    <div className="mx-auto flex max-w-2xl flex-col px-5 pb-8 pt-10 sm:pt-16">
       <Link
         href="/hesap"
         className="press-row mb-5 inline-flex min-h-11 items-center font-medium text-primary"
