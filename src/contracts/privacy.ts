@@ -194,6 +194,29 @@ export const exportedContactRequestSchema = z
   })
   .strict();
 
+/** CV ve profil kalemleri (P1-05). Dosya anahtarı ve sözlük kimlikleri dökülmez; yalnız kullanıcının kendi verisi. */
+export const exportedCvSchema = z.object({
+  uploads: z.array(
+    z.object({
+      id: z.string(),
+      status: z.enum(['QUEUED', 'PARSING', 'PARSED', 'FAILED', 'APPLIED', 'DISCARDED']),
+      errorCode: z.string().nullable(),
+      pageCount: z.number().int(),
+      hasFile: z.boolean(),
+      createdAt: z.string(),
+      appliedAt: z.string().nullable(),
+      /** Onay bekleyen (uygulanmamış) ayrıştırma önerisi; uygulanınca/atılınca silinir. */
+      pendingParsedCv: z.unknown().nullable(),
+    }),
+  ),
+  education: z.array(z.record(z.string(), z.unknown())),
+  positions: z.array(z.record(z.string(), z.unknown())),
+  languages: z.array(z.record(z.string(), z.unknown())),
+  certifications: z.array(z.record(z.string(), z.unknown())),
+  skills: z.array(z.record(z.string(), z.unknown())),
+  experienceInvitations: z.array(z.object({ positionId: z.string(), status: z.string() })),
+});
+export type ExportedCv = z.infer<typeof exportedCvSchema>;
 /** Kullanıcının kendi profili; ilişkiler yalnız etiket sözlüğüne açılır, başka kullanıcıya değil. */
 export const exportedProfileSchema = z
   .object({
@@ -261,6 +284,7 @@ export const dataExportSchema = z.object({
     sent: z.array(exportedContactRequestSchema),
     received: z.array(exportedContactRequestSchema),
   }),
+  cv: exportedCvSchema,
 });
 export type DataExport = z.infer<typeof dataExportSchema>;
 

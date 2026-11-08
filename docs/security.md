@@ -144,6 +144,13 @@ kimlikler). Sistem yöneticisi panelden görür.
   sınırlıdır; çıktı yalnız **öneri** olarak onay ekranına gelir, kullanıcı onaylamadan
   uygulanmaz; rol, yetki, doğrulama durumu ve başka kullanıcıya ait veri **hiçbir zaman** LLM
   çıktısından yazılmaz; modele araç/çağrı yetkisi verilmez.
+- **Yükleme denetimi içeriğe bakar:** şifreli PDF ve 6 sayfadan uzun PDF reddedilir; maliyet sınırları (5 MB,
+  günlük hak, sağlayıcı harcama sınırı) sayfa sayımının sezgisel olmasını telafi eder.
+- **Çıktı temizliği:** `ParsedCv` bilinmeyen alanları atar (rol/kullanıcı kimliği şemada yok), görünmez ve çift
+  yönlü biçim karakterlerini siler, liste ve metin uzunluklarını sınırlar; saklı çıktı uygulamada yeniden
+  doğrulanır. Veritabanı kısıtları da metin uzunluğu ve tarih tutarlılığını zorlar.
+- **Modele yalnız PDF gider:** kullanıcı kimliği, e-posta, rol ve başka kullanıcı verisi isteğe girmez; yurt dışı
+  rızası yüklemede ve iş başında denetlenir.
 - LLM girdisi ve çıktısı loglanmaz.
 
 ## Kötüye kullanım sınırları

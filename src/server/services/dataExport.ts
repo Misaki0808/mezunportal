@@ -8,6 +8,7 @@ import {
 import type { PrismaClient } from '@/generated/prisma/client';
 import { codedNotFound } from '@/lib/errors';
 
+import { toYearMonth } from './cv-shared';
 import { loadVisibilityLevels } from './privacy';
 import { experienceFields, experienceSelect } from './experienceProjection';
 
@@ -133,6 +134,7 @@ export async function buildDataExport(
   });
   if (!user || user.deletedAt) throw codedNotFound('RESOURCE_NOT_FOUND');
   const iso = (date: Date | null) => (date ? date.toISOString() : null);
+  const cv = await loadCvExport(db, userId, iso);
   const levels = (await loadVisibilityLevels(db, [userId])).get(userId) ?? new Map();
 
   return {
@@ -181,5 +183,96 @@ export async function buildDataExport(
       sent: user.sentContactRequests.map(exportRequest),
       received: user.receivedContactRequests.map(exportRequest),
     },
+    cv,
+  };
+}
+
+/**
+ * CV ve profil kalemleri. Açık `select`: dosya anahtarı, sözlük kimlikleri ve başka kullanıcıya ait hiçbir alan
+ * dökülmez. Onay bekleyen ayrıştırma önerisi kullanıcının kendi CV'sinden türediği için dahildir.
+ */
+async function loadCvExport(
+  db: PrismaClient,
+  userId: string,
+  iso: (date: Date | null) => string | null,
+): Promise<DataExport['cv']> {
+  const [uploads, education, positions, languages, certifications, skills, invitations] =
+    await Promise.all([
+      db.cvUpload.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          status: true,
+          errorCode: true,
+          pageCount: true,
+          storageKey: true,
+          parsedJson: true,
+          createdAt: true,
+          appliedAt: true,
+        },
+      }),
+      db.education.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
+      db.position.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
+      db.language.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
+      db.certification.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
+      db.userSkill.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
+      db.experienceInvitation.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'asc' },
+        select: { positionId: true, status: true },
+      }),
+    ]);
+  const entry = <T extends { manuallyEdited: boolean; source: string }>(row: T) => ({
+    source: row.source,
+    manuallyEdited: row.manuallyEdited,
+  });
+  return {
+    uploads: uploads.map((row) => ({
+      id: row.id,
+      status: row.status,
+      errorCode: row.errorCode,
+      pageCount: row.pageCount,
+      hasFile: row.storageKey !== null,
+      createdAt: row.createdAt.toISOString(),
+      appliedAt: iso(row.appliedAt),
+      pendingParsedCv: row.parsedJson,
+    })),
+    education: education.map((row) => ({
+      id: row.id,
+      institution: row.institution,
+      level: row.level,
+      fieldOfStudy: row.fieldOfStudy,
+      startDate: toYearMonth(row.startYear, row.startMonth),
+      endDate: toYearMonth(row.endYear, row.endMonth),
+      isCurrent: row.isCurrent,
+      ...entry(row),
+    })),
+    positions: positions.map((row) => ({
+      id: row.id,
+      company: row.companyRaw,
+      title: row.titleRaw,
+      employmentType: row.employmentType,
+      startDate: toYearMonth(row.startYear, row.startMonth),
+      endDate: toYearMonth(row.endYear, row.endMonth),
+      isCurrent: row.isCurrent,
+      description: row.description,
+      ...entry(row),
+    })),
+    languages: languages.map((row) => ({
+      id: row.id,
+      name: row.name,
+      level: row.level,
+      ...entry(row),
+    })),
+    certifications: certifications.map((row) => ({
+      id: row.id,
+      name: row.name,
+      issuer: row.issuer,
+      issuedDate: toYearMonth(row.issuedYear, row.issuedMonth),
+      ...entry(row),
+    })),
+    skills: skills.map((row) => ({ id: row.id, name: row.name, ...entry(row) })),
+    experienceInvitations: invitations,
   };
 }

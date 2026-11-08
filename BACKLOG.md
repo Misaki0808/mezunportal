@@ -22,9 +22,16 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   veri indirme ekranları hazır; bağımsız inceleme ve ekran kabulü bekliyor.
 - P1-04 servisi: kalıcı ilk giriş adımları, açık atlama ve profil yüzdesi; K-08 sunucu reddi,
   profilin hesap silme ve kişisel veri dökümüne bağlantısı hazır. Ekran akışı ayrı karttadır.
+- P1-05 CV ayrıştırma hattı (sağlayıcıdan bağımsız): PDF denetimi, `cv.parse` işi, sahte LLM adaptörü, sözlük
+  eşleme, fark/onay, tek işlemde uygulama, staj davetleri, saklama kuralları, günlük sınır, hesap silme ve veri
+  dökümü bağlantısı tamam. Gerçek LLM sağlayıcısı K-04 ile gelir; o zamana kadar `LLM_PROVIDER` boşsa özellik
+  kapalı, `fake` yalnız local/test.
+
 - P1-07 servisi: tür bazlı taslak, anonim çıktı, kapsamlı moderasyon/audit, şikâyet sınırı/kuyruğu,
-  K-07 üniversite görünürlüğü hazır. Deneyimler hesap silme ve kişisel döküme bağlı; K-08 gerçek
-  yayınlanmış deneyim sayısını okur. Ekran akışı/kabulü ayrı kartta.
+  K-07 üniversite görünürlüğü hazır (yayınlanmış içerik aynı üniversitedeki tüm doğrulanmış üyelere açık).
+  Deneyimler hesap silme ve kişisel döküme bağlı; K-08 gerçek yayınlanmış deneyim sayısını okur. Ekran
+  akışı/kabulü ayrı kartta.
+
 
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
@@ -101,6 +108,28 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   satırlarını da silmeli ki kullanıcı çerezle bile oturum görmesin.
   Neden borç: derinlemesine savunma; Better Auth `banUser` HTTP ucu kapalı olduğundan eylem kendi yazılmalı.
   Kapanış ölçütü: askıya alma servisi ban alanlarını yazar, oturumları siler ve `USER_SUSPEND` kaydı tutar.
+- [ ] **TD-008** · P1 · `files.purge` zamanlanmamış
+  Ne: `purgeCvFiles` (bağlı olmayan eski CV dosyaları, 24 saatten uzun takılı `cv.parse` işleri, 7 günden uzun onay
+  bekleyen ayrıştırma çıktısı) hazır ve testli
+  ama pg-boss zamanlayıcısı kapalı (`schedule: false`); hiçbir yerden çağrılmıyor.
+  Neden borç: hata anında silinemeyen dosya ve takılı iş yalnız bu süpürmeyle temizlenir (KVKK saklama).
+  Kapanış ölçütü: günlük `files.purge` işi kayıtlı, mezun belgesi artıklarını da kapsar, testli.
+- [ ] **TD-009** · P1 · CV doğruluk tablosu sahte adaptörle, gerçek LLM ile değil
+  Ne: 5 sentetik örnek CV + ölçüm düzeneği (`src/test/cv-accuracy.ts`) hazır; sahte adaptörde sonuç hat
+  bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).
+  Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
+  Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
+- [ ] **TD-010** · P1 · CV profil üst alanları ve beceri modeli P1-04 ile hizalanmadı
+  Ne: `ParsedCv` yalnız listeleri (eğitim, pozisyon, beceri, dil, sertifika) taşır; başlık/özet/şehir/bağlantılar
+  `Profile` (P1-04) gelince eklenir. Beceri `Skill` sözlüğü + `UserSkill`'dir; `docs/data.md` taslağındaki
+  `Tag(kind=SKILL)` ile birleştirilecek mi karar bekler.
+  Neden borç: iki beceri modeli kalırsa arama ve profil ekranı çift kaynakla çalışır.
+  Kapanış ölçütü: P1-04 birleşince PM kararı; `ParsedCv.schemaVersion` ile genişletme ya da `Tag` birleştirmesi.
+- [ ] **TD-011** · P2 · Sözlük içeriği ve yönetici çözümü yok
+  Ne: `Company`/`Title`/`Skill`/`Sector` boş; `UnmatchedValue` kuyruğu yazılıyor ama yönetici ekranı ve çözüm
+  (`resolvedToId`, takma ad ekleme) yok.
+  Neden borç: eşleme olmadan her değer ham kalır; kuyruk büyür.
+  Kapanış ölçütü: pilot sözlük seed'i + yönetici çözümleme ekranı.
 
 ### Bilinçli kabul edilen sınırlar
 

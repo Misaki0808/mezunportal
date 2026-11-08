@@ -13,7 +13,8 @@ import { eraseExperienceContent } from './experiencePrivacy';
  * e-posta geri dönüşsüz bir yer tutucuya döner (eski e-postayla bu hesaba giriş yok), oturumlar ve sağlayıcı
  * bağlantıları silinir, açık iletişim talepleri kapanır, görünürlük ayarları, üyelikler, mentor profili ve
  * yönetici yetkileri sonlanır, bekleyen belgeler silinir. Dosyalar işlem commit edilmeden silinir; dosya silme
- * bağlanmamışken silinecek dosya varsa işlem hiç başlamaz (yarım silme yok).
+ * bağlanmamışken silinecek dosya varsa işlem hiç başlamaz (yarım silme yok). CV yüklemeleri, ayrıştırma çıktısı ve
+ * profil kalemleri (eğitim, pozisyon, dil, sertifika, beceri, staj davetleri) de aynı işlemde silinir (P1-05).
  */
 
 export const DELETED_USER_NAME = 'Silinmiş kullanıcı';
@@ -66,13 +67,26 @@ export async function deleteAccount(
       where: { userId, status: 'PENDING' },
       select: { storageKey: true },
     });
-    const fileKeys = pendingFiles
+    // CV dosyaları (P1-05): yüklemeler, ayrıştırma çıktısı ve CV'den gelen profil kalemleri kişiye aittir;
+    // hesap silmede hepsi silinir (işlemdeki ayrıştırma işi satırı bulamaz ve atlanır).
+    const cvFiles = await tx.cvUpload.findMany({
+      where: { userId, storageKey: { not: null } },
+      select: { storageKey: true },
+    });
+    const fileKeys = [...pendingFiles, ...cvFiles]
       .map((row) => row.storageKey)
       .filter((key): key is string => key !== null);
     if (fileKeys.length > 0 && !deps.removeStoredFiles) {
       throw new Error('Dosya silme bağlı değil; hesap silme başlatılmadı');
     }
     await tx.graduationDocument.deleteMany({ where: { userId, status: 'PENDING' } });
+    await tx.experienceInvitation.deleteMany({ where: { userId } });
+    await tx.position.deleteMany({ where: { userId } });
+    await tx.education.deleteMany({ where: { userId } });
+    await tx.language.deleteMany({ where: { userId } });
+    await tx.certification.deleteMany({ where: { userId } });
+    await tx.userSkill.deleteMany({ where: { userId } });
+    await tx.cvUpload.deleteMany({ where: { userId } });
 
     // Açık iletişim talepleri kapanır; kapalı satırlar geçmiş olarak kalır (karşı tarafın kutusunda).
     await tx.contactRequest.updateMany({
