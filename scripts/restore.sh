@@ -13,7 +13,7 @@ else
 fi
 [ "${DATABASE_URL:-}" != "$RESTORE_DATABASE_URL" ] || { echo 'Kaynak ve hedef veritabanı aynı' >&2; exit 1; }
 [ ! -e "$RESTORE_STORAGE_PATH" ] || { echo 'Hedef dosya yolu zaten var' >&2; exit 1; }
-count=$(psql "$RESTORE_DATABASE_URL" -Atqc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname NOT IN ('pg_catalog','information_schema') AND n.nspname NOT LIKE 'pg_toast%' AND c.relkind IN ('r','p','v','m','S','f')")
+count=$(node "$(dirname "$0")/postgres-connection.mjs" target psql -Atqc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname NOT IN ('pg_catalog','information_schema') AND n.nspname NOT LIKE 'pg_toast%' AND c.relkind IN ('r','p','v','m','S','f')")
 [ "$count" = 0 ] || { echo 'Hedef veritabanı boş değil' >&2; exit 1; }
 # Arşiv yolu kaçışları ve sembolik bağlar kabul edilmez.
 tar -tzf "$backup_dir/files.tar.gz" | awk '/^\// || /(^|\/)\.\.($|\/)/ { bad=1 } END { exit bad }'
@@ -26,5 +26,5 @@ trap 'rm -f "$restore_sql" "$restore_patched"' EXIT HUP INT TERM
 pg_restore --no-owner --no-acl -f - "$backup_dir/database.dump" > "$restore_sql"
 awk '{ print; if (!done && index($0, "SELECT pg_catalog.set_config(")) { print "SET search_path = public, pg_catalog;"; done=1 } } END { if (!done) exit 1 }' "$restore_sql" > "$restore_patched"
 mkdir -m 700 "$RESTORE_STORAGE_PATH"
-psql "$RESTORE_DATABASE_URL" -v ON_ERROR_STOP=1 -q < "$restore_patched"
+node "$(dirname "$0")/postgres-connection.mjs" target psql -v ON_ERROR_STOP=1 -q < "$restore_patched"
 tar -C "$RESTORE_STORAGE_PATH" -xzf "$backup_dir/files.tar.gz" --no-same-owner

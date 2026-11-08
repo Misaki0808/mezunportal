@@ -113,18 +113,18 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 ### Biçim
 
 ```text
-- [ ] **TD-001** · P1 · <kısa başlık>
+- [ ] **TD-XXX** · P1 · <kısa başlık>
   Ne: <somut durum, dosya/satır>
   Neden borç: <risk ya da maliyet>
   Kapanış ölçütü: <ne olunca silinir>
 ```
 
 ### Açık borçlar
-- [ ] **TD-001** · P1 · Güvenlik başlıkları build anında yazılıyor
-  Ne: başlıklar `next build` sırasında `.next/routes-manifest.json`'a yazılıyor; HSTS yalnız
-  `APP_ENV=prod` ile alınan build'de çıkar (`next.config.ts`).
-  Neden borç: canlı build yanlış env'le alınırsa HSTS sessizce düşer.
-  Kapanış ölçütü: P1-18 dağıtım betiği build'i `APP_ENV=prod` ile alır ve başlık kanıtlanır.
+- [ ] **TD-016** · P2 · Çözülemeyen outbox niyeti için kalıcı hata durumu
+  Ne: Bekleyen şifreli davet niyetinin anahtarı değişirse içerik çözülemez.
+  Neden borç: Anahtar döndürme sonrasında niyet her aktarımda sonsuz yeniden denenir.
+  Kapanış ölçütü: Sınırlı deneme, kalıcı hata durumu ve kişisel veri içermeyen işlem kaydı uygulanır.
+
 - [ ] **TD-006** · P1 · Süresi geçmiş oturum ve doğrulama kayıtları temizlenmiyor
   Ne: `Session` ve `Verification` tablolarında süresi geçen satırlar birikir (indeksler hazır: `expiresAt`).
   Neden borç: veri en azlığı (KVKK) ve tablo büyümesi.

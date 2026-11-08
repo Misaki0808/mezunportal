@@ -278,7 +278,7 @@ ve işletim kararı kullanıcıya aittir. Bu depo hesap açmaz veya dış servis
 - `web` başlangıcı `prisma migrate deploy` uygular ve seed çalıştırmaz. Birden çok web kopyası
   açmadan önce migration'ın tamamlanmasını bekleyin; `worker` komutunu ayrı süreçte çalıştırın.
   İkisinin aynı veritabanına ve `STORAGE_LOCAL_PATH` için kalıcı, yazılabilir ortak hacme erişmesi
-  gerekir. İmaj root olmayan kullanıcıyla çalışır. HTTPS, ters vekil, güvenli sırlar ve zamanlanmış
+  gerekir. Worker için en az 90 saniyelik kapanış süresi ayırın. İmaj root olmayan kullanıcıyla çalışır. HTTPS, ters vekil, güvenli sırlar ve zamanlanmış
   yedekleri seçilen işletim ortamında sağlayın. `/api/health` durum, ortam, commit ve DB erişimini
   döndürür; test girişi ve arayüz örnekleri üretimde kapalıdır.
 - Yerel imaj provası `docker-compose.image.yml` profilindedir; yalnız yerel PostgreSQL ve Mailpit
@@ -286,7 +286,9 @@ ve işletim kararı kullanıcıya aittir. Bu depo hesap açmaz veya dış servis
   `BETTER_AUTH_SECRET` sağlayın; `docker compose -f docker-compose.image.yml --profile image up --build`
   ile web ve worker başlar. Bu profil canlı dağıtım reçetesi veya gerçek SMTP değildir.
 - Yedek için PostgreSQL sunucusuyla uyumlu `pg_dump`, `pg_restore`, `psql`, `tar` ve SHA-256 aracı
-  gerekir. Web ve worker'ı durdurarak DB ile dosyaların tutarlı anını alın; `DATABASE_URL` ve
+  ve Node.js gerekir. Bağlantı URI’si komut argümanlarına konmaz; Prisma `schema` seçeneği yoksayılır (tüm DB yedeklenir),
+  desteklenmeyen diğer URI seçenekleri reddedilir.
+  Web ve worker'ı durdurarak DB ile dosyaların tutarlı anını alın; `DATABASE_URL` ve
   `STORAGE_LOCAL_PATH` tanımlıyken `sh scripts/backup.sh YENI_DIZIN` kullanın. Geri yükleme yalnız
   güvenilir yedekten, boş ayrı veritabanına ve henüz olmayan dosya yoluna yapılır:
   `RESTORE_DATABASE_URL=... RESTORE_STORAGE_PATH=... sh scripts/restore.sh YEDEK_DIZINI`.

@@ -24,6 +24,7 @@ services:
       - image-files:/app/.data/files
     networks: [local]
   worker:
+    stop_grace_period: 90s
     profiles: [image]
     image: mezunportal-p1-18:local
     command: [worker]
