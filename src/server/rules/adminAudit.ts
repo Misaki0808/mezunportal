@@ -22,10 +22,15 @@ export const ADMIN_ACTIONS = {
   MODERATION_REJECT: { reasonRequired: true },
   REPORT_RESOLVE: { reasonRequired: true },
   POINTS_REVOKE: { reasonRequired: true },
+  /** Puan kuralı (değer, gecikme, etkinlik) değişikliği (sistem yöneticisi). */
+  POINT_RULE_CHANGE: { reasonRequired: true },
+  /** Geriye dönük puan hesaplamasını başlatma (sistem yöneticisi). */
+  POINTS_BACKFILL: { reasonRequired: false },
   SUSPICION_DECIDE: { reasonRequired: true },
   ADMIN_GRANT: { reasonRequired: false },
   ADMIN_REVOKE: { reasonRequired: true },
   DATA_EXPORT: { reasonRequired: false },
+  BULK_INVITATION: { reasonRequired: false },
   /** Sözlük kaydı oluşturma/güncelleme/silme (sistem yöneticisi). */
   DICTIONARY_CHANGE: { reasonRequired: false },
   /** Eşleşmeyen CV değerinin çözümü (bağla/yeni kayıt/at). */
@@ -41,6 +46,7 @@ export const AUDIT_TARGET_TYPES = [
   'EXPERIENCE',
   'FAQ_REQUEST',
   'POINT_ENTRY',
+  'POINT_RULE',
   'SUSPICION_FLAG',
   'ADMIN_GRANT',
   'REPORT',
@@ -48,6 +54,7 @@ export const AUDIT_TARGET_TYPES = [
   'UNMATCHED_VALUE',
   'EMPLOYMENT_REPORT',
   'USAGE_METRICS',
+  'INVITATION_BATCH',
 ] as const;
 
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];

@@ -247,3 +247,22 @@ describe('Takvim ortamı (parseCalendarEnv)', () => {
     );
   });
 });
+
+describe('Puan ortamı (parsePointsEnv)', () => {
+  it('boşken pilot açık (bitiş yok)', async () => {
+    const { parsePointsEnv } = await import('./env');
+    expect(parsePointsEnv({}).FOUNDING_MEMBER_UNTIL).toBeUndefined();
+    expect(parsePointsEnv({ FOUNDING_MEMBER_UNTIL: '' }).FOUNDING_MEMBER_UNTIL).toBeUndefined();
+  });
+  it('tarih İstanbul gününün sonu olarak okunur', async () => {
+    const { parsePointsEnv } = await import('./env');
+    expect(parsePointsEnv({ FOUNDING_MEMBER_UNTIL: '2030-12-31' }).FOUNDING_MEMBER_UNTIL).toEqual(
+      new Date('2030-12-31T20:59:59.999Z'),
+    );
+  });
+  it('geçersiz biçim ve var olmayan tarih env doğrulamasını düşürür', async () => {
+    const { parsePointsEnv, EnvValidationError } = await import('./env');
+    for (const bad of ['31.12.2030', '2030-13-01', '2030-02-30', 'yarın'])
+      expect(() => parsePointsEnv({ FOUNDING_MEMBER_UNTIL: bad })).toThrow(EnvValidationError);
+  });
+});

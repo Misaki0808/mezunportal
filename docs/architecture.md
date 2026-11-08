@@ -174,6 +174,9 @@ Sıra korunur: yazılı < görüntülü < yüz yüze < referans (referans Faz 2)
 - Puan motoru devreye girdiğinde, önceden yayınlanmış deneyimler ve gerçekleşmiş görüşmeler için
   **tek seferlik geriye dönük hesaplama** çalışır (aynı kurallarla, idempotent).
 - Kurucu üye etiketi platform içidir (K-10). Ödüller (Faz 2) puanla otomatik verilmez.
+- Uygulama ayrıntıları (yazım yolu, olay anı, çarpan sırası, eşikler, gizlilik) `docs/decisions.md` “Puan motoru ve hile önleme”dedir;
+  kurallar `src/server/rules/points*.ts`, servis `src/server/services/points*.ts`. `points.finalize` günlük kesinleştirir ve son 14 günde
+  kaçan puanı tamamlar; `points.backfill` sistem yöneticisinin isteğiyle bir kez kuyruğa yazılır.
 
 **Öğrenci güvenilirlik göstergesi** (puan değil): son 12 ayda katılım oranı ve geri bildirim
 verme oranı → `Yeni` · `Güvenilir` · `Dikkat`. Öğrenci kendi göstergesini ve nedenini görür.

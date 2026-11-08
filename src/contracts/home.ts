@@ -24,8 +24,10 @@ export const homeSummarySchema = z
         cvReviewsToAnswer: z.number().int().min(0),
         /** Öğrenci olarak yorumu yanıtlanmış, "faydalı" işaretlenmemiş CV incelemeleri. */
         cvReviewsToRate: z.number().int().min(0),
-        /** Doldurulmayı bekleyen görüşme formları. Randevu talepleri (#43) gelince burada ayrıca sayılır. */
+        /** Doldurulmayı bekleyen görüşme formları. */
         feedbackForms: z.number().int().min(0),
+        /** Mentor olarak yanıt bekleyen randevu talepleri (`/randevular`). */
+        appointmentRequests: z.number().int().min(0),
       })
       .strict(),
     /** Yönetici değilse `null`; yöneticide kapsamındaki bekleyen deneyim + şikâyet + belge sayısı. */

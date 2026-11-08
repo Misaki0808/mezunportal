@@ -90,7 +90,13 @@ const summary = (over: object = {}) => ({
   data: {
     firstName: 'Deniz',
     role: 'STUDENT',
-    pending: { contactRequests: 2, cvReviewsToAnswer: 0, cvReviewsToRate: 0, feedbackForms: 1 },
+    pending: {
+      contactRequests: 2,
+      cvReviewsToAnswer: 0,
+      cvReviewsToRate: 0,
+      feedbackForms: 1,
+      appointmentRequests: 0,
+    },
     adminPending: null,
     ...over,
   },

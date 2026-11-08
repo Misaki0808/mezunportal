@@ -230,6 +230,8 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
   talebi, randevu talebi.
 - İmzalı bağlantılar (ör. “hâlâ orada mısın?”) süreli ve tek kullanımlıktır.
 - Puan hilesi kuralları `docs/architecture.md` “Puan motoru”nda.
+- Puan çıktısında kaynak (deneyim/randevu/CV) ve karşı taraf kimliği yoktur; katkı puanı ve geçmişi yalnız sahibine görünür. Anonim
+  deneyim puan verir ama kurucu üye etiketi vermez. Veri dökümü puanı kaynaksız içerir; hesap silme puan, etiket ve şüphe işaretlerini siler.
 
 ## Dış servisler
 

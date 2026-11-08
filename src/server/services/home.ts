@@ -55,6 +55,7 @@ export async function getHomeSummary(
       cvReviewsToAnswer,
       cvReviewsToRate,
       feedbackForms: forms.filter((item) => item.kind === 'FEEDBACK').length,
+      appointmentRequests: forms.filter((item) => item.kind === 'REQUEST').length,
     },
     adminPending,
   });

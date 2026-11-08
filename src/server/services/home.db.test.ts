@@ -65,7 +65,13 @@ describe('ana sayfa panosu sayıları', () => {
     expect(await getHomeSummary(deps, w.student)).toEqual({
       firstName: 'Deniz',
       role: 'STUDENT',
-      pending: { contactRequests: 0, cvReviewsToAnswer: 0, cvReviewsToRate: 0, feedbackForms: 0 },
+      pending: {
+        contactRequests: 0,
+        cvReviewsToAnswer: 0,
+        cvReviewsToRate: 0,
+        feedbackForms: 0,
+        appointmentRequests: 0,
+      },
       adminPending: null,
     });
     expect((await getHomeSummary(deps, w.mentor)).role).toBe('MENTOR');
@@ -113,12 +119,24 @@ describe('ana sayfa panosu sayıları', () => {
         status: 'CONFIRMED',
       },
     });
+    await db.appointment.create({
+      data: {
+        mentorId: w.mentor,
+        menteeId: w.student,
+        startsAt: new Date(now.getTime() + 30 * HOUR),
+        endsAt: new Date(now.getTime() + 31 * HOUR),
+        expiresAt: new Date(now.getTime() + 24 * HOUR),
+        mode: 'ONLINE',
+        status: 'REQUESTED',
+      },
+    });
     const mentorView = await getHomeSummary(deps, w.mentor);
     expect(mentorView.pending).toEqual({
       contactRequests: 1,
       cvReviewsToAnswer: 1,
       cvReviewsToRate: 0,
       feedbackForms: 1,
+      appointmentRequests: 1,
     });
     const studentView = await getHomeSummary(deps, w.student);
     expect(studentView.pending).toEqual({
@@ -126,6 +144,7 @@ describe('ana sayfa panosu sayıları', () => {
       cvReviewsToAnswer: 0,
       cvReviewsToRate: 1,
       feedbackForms: 1,
+      appointmentRequests: 0,
     });
     // başka çiftin verisi karışmaz
     expect((await getHomeSummary(deps, other.mentor)).pending.contactRequests).toBe(0);

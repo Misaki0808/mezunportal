@@ -42,12 +42,13 @@ describe('AppShell', () => {
     );
   });
 
-  it('henüz sayfası olmayan sekmeler bağlantı değildir ve “yakında” olarak duyurulur', () => {
+  it('Randevular sekmesi randevu listesine bağlanır', () => {
     renderUi(<AppShell>x</AppShell>);
-
     const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });
-    expect(within(bottom).queryByRole('link', { name: /Randevular/ })).not.toBeInTheDocument();
-    expect(within(bottom).getByText(/Randevular/)).toHaveTextContent('yakında');
+    expect(within(bottom).getByRole('link', { name: /Randevular/ })).toHaveAttribute(
+      'href',
+      '/randevular',
+    );
   });
 
   it('Mentorlar sekmesi mentor dizinine bağlanır', () => {

@@ -2,6 +2,7 @@ import { createEmailRuntime } from './email';
 import { createAppointmentRuntime } from './appointment';
 import { createCvRuntime } from './cv';
 import { createNotificationRuntime } from './notification-worker';
+import { createPointsRuntime } from './points';
 import { getDb } from '../db';
 import { isLlmConfigured } from '../external/llm';
 async function main() {
@@ -18,7 +19,14 @@ async function main() {
     await runtime.stop().catch(() => undefined);
     throw error;
   });
+  const pointsRuntime = await createPointsRuntime(true).catch(async (error: unknown) => {
+    await appointmentRuntime.stop().catch(() => undefined);
+    await cvRuntime?.stop().catch(() => undefined);
+    await runtime.stop().catch(() => undefined);
+    throw error;
+  });
   const notifications = await createNotificationRuntime().catch(async () => {
+    await pointsRuntime.stop().catch(() => undefined);
     await appointmentRuntime.stop().catch(() => undefined);
     await cvRuntime?.stop().catch(() => undefined);
     await runtime.stop().catch(() => undefined);
@@ -34,6 +42,7 @@ async function main() {
     clearInterval(timer);
     try {
       await notifications.stop();
+      await pointsRuntime.stop();
       await appointmentRuntime.stop();
       await cvRuntime?.stop();
       await runtime.stop();

@@ -34,6 +34,7 @@ const SHORTCUTS: Record<HomeSummary['role'], readonly Shortcut[]> = {
 };
 
 const PENDING_LINKS = [
+  { key: 'appointmentRequests', href: '/randevular' },
   { key: 'contactRequests', href: '/hesap/iletisim' },
   { key: 'cvReviewsToAnswer', href: '/hesap/cv-inceleme' },
   { key: 'cvReviewsToRate', href: '/hesap/cv-inceleme' },

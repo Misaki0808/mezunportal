@@ -10,7 +10,13 @@ import { HomeDashboard } from './dashboard';
 const base: HomeSummary = {
   firstName: 'Mert',
   role: 'STUDENT',
-  pending: { contactRequests: 0, cvReviewsToAnswer: 0, cvReviewsToRate: 0, feedbackForms: 0 },
+  pending: {
+    contactRequests: 0,
+    cvReviewsToAnswer: 0,
+    cvReviewsToRate: 0,
+    feedbackForms: 0,
+    appointmentRequests: 0,
+  },
   adminPending: null,
 };
 const hrefs = () =>
@@ -43,6 +49,7 @@ describe('ana sayfa panosu', () => {
             cvReviewsToAnswer: 3,
             cvReviewsToRate: 0,
             feedbackForms: 2,
+            appointmentRequests: 0,
           },
         }}
       />,

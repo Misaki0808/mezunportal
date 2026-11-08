@@ -5,6 +5,14 @@ import type { ErrorCode } from '@/lib/errors';
 import { emailSchema } from './auth';
 import { ONBOARDING_STEPS, profileTagSchema } from './profile';
 import { EXPERIENCE_STATUSES, experienceDraftTemplateSchema } from './experience';
+import {
+  BADGE_KINDS,
+  POINT_ACTIONS,
+  POINT_REVOKE_REASONS,
+  POINT_STATUSES,
+  SUSPICION_RULES,
+  SUSPICION_STATUSES,
+} from './points';
 
 /**
  * KVKK sözleşmesi (P1-03; docs/security.md “KVKK”, docs/legal-drafts.md). Servis (W1) ve ekran (W2) bunu
@@ -329,6 +337,45 @@ export const dataExportSchema = z.object({
       })
       .strict(),
   ),
+  /** Katkı puanı (P1-16): kaynak içerik ve karşı taraf kimliği YOK (anonim deneyim bağı ve üçüncü kişi sızmaz). */
+  contribution: z
+    .object({
+      entries: z.array(
+        z
+          .object({
+            action: z.enum(POINT_ACTIONS),
+            basePoints: z.number().int(),
+            multiplierPercent: z.number().int(),
+            points: z.number().int(),
+            status: z.enum(POINT_STATUSES),
+            eventAt: z.string(),
+            createdAt: z.string(),
+            revokedReason: z.enum(POINT_REVOKE_REASONS).nullable(),
+          })
+          .strict(),
+      ),
+      badges: z.array(
+        z
+          .object({
+            kind: z.enum(BADGE_KINDS),
+            awardedAt: z.string(),
+            revokedAt: z.string().nullable(),
+          })
+          .strict(),
+      ),
+      /** Şüphe işaretleri: yalnız kural, durum ve tarihler (eşikler ve kanıt kimlikleri çıkmaz). */
+      suspicionFlags: z.array(
+        z
+          .object({
+            rule: z.enum(SUSPICION_RULES),
+            status: z.enum(SUSPICION_STATUSES),
+            createdAt: z.string(),
+            decidedAt: z.string().nullable(),
+          })
+          .strict(),
+      ),
+    })
+    .strict(),
 });
 export type DataExport = z.infer<typeof dataExportSchema>;
 

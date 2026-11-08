@@ -719,13 +719,56 @@ Moderasyon, iletişim, CV daveti ve randevu bildirimlerinde olayın niyeti iş d
 
 Formun taraf denetimi hesap layout'unda loading başlamadan yapılır; yabancı kullanıcı gerçek, Türkçe 404 alır. Sayfa ve gönderim eylemi kendi denetimini korur. İstek yolu yalnız proxy'nin yazdığı başlıktan seçilir, erişim kararı katılımcı servisinindir. Görüşme işi testi bağlantı ayarlarını sahte değerlerle kurup temizler; rolün yerel env dosyasına dayanmaz. İki tarafın onayı, tek yanıt ve gösterge kapsamı bağımsız yarış/negatif testleriyle korunur.
 
+### P1-10 ekran incelemesi: yarış sonrası güncel slot ve doğru sekme
+
+Sunucu bir slotu dolu/bayat diye reddettiğinde ekran eski seçimi bırakır, o slotu geçici listeden çıkarır ve sunucu listesini yeniden ister; hata metni korunur. Randevu listesinin rol başlığı yalnız başarılı liste yanıtıyla birlikte değişir; bekleyen ikinci tıklama veya hata, eski veriyi başka rolün başlığı altında göstermez. Görüşme formuna giriş mevcut geri bildirim servisinin taraf/zaman/gönderim kontrolünden gelir.
+
+### P1-18 — dağıtım ve toplu davet sınırı
+
+İşletim sağlayıcısı seçilmeden aynı imaj ayrı web ve worker süreçleri olarak çalışır; web
+başlangıcı yalnız `migrate deploy` yapar, seed üretime taşınmaz. Yedek DB ile dosyayı tutarlı
+almak için süreçlerin durdurulmasını, geri yükleme boş ayrı hedefi gerektirir. Toplu davet yalnız
+sistem yöneticisine açılır; kayıtlı hesaplara bildirim tercihini aşarak gönderilmez. Henüz hesabı
+olmayan alıcının adresi outbox içinde uygulama sırrından türetilen anahtarla kimliği doğrulanmış
+şifreli tutulur; iş kaydı ve niyet aynı işlemde yazılır, başarılı aktarımdan sonra niyet silinir.
+SMTP teslimi ve altyapı seçimi ayrıca işletim kararına bağlıdır.
+
 ### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
 
 Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun kişi sayısı toplamdan çıkarılarak küçük grup hesaplanamaz. Aynı servis izdüşümü panelin HTML/RSC verisine ve Excel özetine uygulanır. Kullanım sayfasında zorunlu rıza ve yönetici yetkisi loading başlamadan kontrol edilir; rızasız/yetkisiz erişim gerçek 404, dosya rotası 403 döner. Diğer sayfaların yeniden onay akışı korunur.
 
+Gün sonu müsaitliği sözleşmede 1440 dakikadır; yerel saat alanı 24:00 kabul etmediği için bitişte 00:00 gösterilir ve sunucuya yine 1440 gider. Alan ipucu gün sonu anlamını açıklar.
 ### P1-15 incelemesi: CV bildiriminde işlemsel telafi
 
 CV talep, yanıt ve süre dolumu bildirimleri #45'in niyet kaydını aynı veritabanı işleminde oluşturur. Hızlı kuyruk denemesi başarısız olsa da niyet kalır; ortak aktarım işi aynı iş anahtarıyla mevcut CV bildirim kapısına döner. Niyette yalnız talep kimliği ve olay türü bulunur; alıcı talebin taraflarıyla yeniden eşleştirilir, not/CV/e-posta kopyalanmaz. Metinleri ve CV dosyasını temizleyen hesap silme, artık bulunmayan talebin bekleyen bildirimini de gönderimsiz sonlandırır.
+
+## 2026-11-08 · Puan motoru ve hile önleme (P1-16)
+
+**Yazım yolu.** Puan, olayı üreten işlemin DIŞINDA ve kendi işleminde yazılır (deneyim yayını, iki tarafın onayıyla `COMPLETED`
+olan görüşme, öğrencinin “faydalı” işareti). Gerekçe: moderasyon, form ve CV akışı puan hatasıyla bozulmasın; kaçan puanı günlük
+`points.finalize` işi son 14 günü aynı kurallarla yeniden tarayarak tamamlar, `points.backfill` ise tarihin tamamını. Her yazım
+`(userId, action, sourceType, sourceId)` anahtarıyla idempotenttir; hata sabit metinle yutulur (`points: award failed`).
+
+**Çarpanlar.** Puan = taban × yüzde / 100, tam sayı ve aşağı yuvarlanır (ör. 10 × %25 = 2). Olay anı görüşmenin başlangıcıdır
+(gecikme ve takvim ayı bundan hesaplanır). İkili tavanı sıradan bağımsızdır: aynı İstanbul ayında çarpanı > 0 başka görüşme varsa
+yeni görüşme 0 alır; yoksa son 180 günde ÖNCEKİ puanlı görüşme sayısına göre %100 → %50 → %25. Geri alınan görüşme ayın hakkını
+serbest bırakır; geri almak diğer kayıtları yeniden hesaplamaz. Eşzamanlı iki tamamlanma ikili advisory kilidiyle sıralanır.
+Kural değişikliği yalnız yeni kayıtları etkiler (`basePoints` kayıt anını saklar).
+
+**Gizlilik.** Hiçbir çıktıda kaynak (deneyim, randevu, CV) ya da karşı taraf kimliği yoktur: anonim deneyimin puanı yazar–içerik
+bağını sızdırmaz. Puan ve geçmiş yalnız sahibine görünür; yönetici ekranları yalnız sistem yöneticisine açıktır. Hesap silinince
+puan kayıtları, etiketler ve şüphe işaretleri silinir; başkalarının kayıtlarındaki karşı taraf bağı kopar.
+
+**Kurucu üye etiketi (K-10).** Pilot süresince ilk yayınlanan ADLI deneyim etiket verir; ANONİM deneyim puan verir ama etiket
+vermez (etiket herkese görünür, anonimlik sızmasın). Geri alınan etiket kendiliğinden yeniden verilmez. Pilot bitişi isteğe bağlı
+`FOUNDING_MEMBER_UNTIL` (`YYYY-MM-DD`, İstanbul günü dahil; boşsa pilot açık) env'inde; bitiş sonradan değişince verilmiş etiket
+korunur. Etiket, kaynağı olan puan kaydına bağlıdır: o kayıt geri alınırsa etiket düşer.
+
+**Şüphe taraması (K-11 eşikleri — PM teyidi bekler).** `rules/pointsSuspicion.ts` `SUSPICION_THRESHOLDS`: 24 saatte ≥ 40 puan
+(`BURST`); son 90 günde toplam ≥ 15 puanın ≥ %60'ı ve ≥ 3 kaydı tek karşı taraftan (`SINGLE_COUNTERPART`); aynı ikilide iki
+tarafın görüşme yanıtı ≤ 60 sn arayla ≥ 3 kez, 180 günde (`SYNC_FEEDBACK`). İşaret ceza değildir: puanı geri almaz; yalnız karar
+verilene dek kullanıcının BEKLEYEN puanı kesinleşmez. Aynı kanıt (`evidenceKey`) iki kez, aynı (kullanıcı, kural) için iki açık işaret
+olmaz. Sistem yöneticisi onaylarsa işarete bağlı kayıtlar `FRAUD_CONFIRMED` ile geri alınır; reddederse puana dokunulmaz.
 
 
 ## 2026-11-08 · Tur 2 düzeltmeleri: beklenen durumlar, panolu ana sayfa, ekran klavyesi
@@ -739,7 +782,7 @@ sayfalarında eylem "Yönetim paneline dön"dür (yol bağlamından).
 **Ana sayfa kişisel pano.** Girişli ve doğrulanmış kullanıcıya karşılama, bekleyen işler (yanıt bekleyen iletişim/CV talebi,
 doldurulacak görüşme formu, yöneticiye moderasyon sayısı; yalnız sıfırdan büyükler), rol bazlı 4 büyük kısayol ve yöneticiye
 "Yönetim". Sayılar sunucuda oturumdaki kullanıcının KENDİ kayıtlarından hesaplanır (`getHomeSummary`); yönetici sayısı panel
-servisinin kapsam kesişiminden gelir. SSS ve randevu kısayolu/sayısı ekranları main'e girince eklenir (kanca yorumlarda).
+servisinin kapsam kesişiminden gelir. Randevu talebi sayısı `/randevular`a gider; SSS kısayolu/sayısı ekranı main'e girince eklenir (kanca yorumlarda).
 
 **Ekran klavyesi.** Yapışkan eylem çubukları (`.sticky-actions`, 8 form) ve alt gezinme, ekran klavyesi açıkken (görsel görünüm
 alanı ≥ 140 px küçülür ve bir metin girişi odaktadır) gizlenir/akışa döner (`KeyboardState`). Seçenekler: (a) eylemleri her zaman

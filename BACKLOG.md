@@ -91,8 +91,7 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 | K-05 | E-posta sağlayıcısı (canlı) | Kullanıcı | Üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | P1-18 |
 | K-06 | İÜ personel e-posta alanı, YBS'nin fakültesi ve program dili | PM ölçer, kullanıcı teyit eder | Geçici değerler `prisma/seed-data.ts`'te (`ogr.iu.edu.tr`, `istanbul.edu.tr`, İktisat Fakültesi); öğrenci alanı ölçüldü; kalanlar teyit bekler | P1-02 |
 | K-08 | Öğrencinin mentor olma eşiği | PM | 3. sınıf ve üstü + en az bir yayınlanmış deneyim | P1-04 |
-| K-10 | Kurucu üye etiketi kuralı | PM | Pilot süresince ilk deneyimi yayınlanan herkes | P1-16 |
-| K-11 | Puan ağırlıkları ve şüphe eşikleri | PM | `docs/architecture.md` puan tablosu | P1-16 |
+| K-11 | Şüphe eşiklerinin sayısal değerleri (ağırlıklar kararlı) | PM | `SUSPICION_THRESHOLDS` (40 puan/24 saat; 90 günde ≥ 15 puanın ≥ %60'ı ve ≥ 3 kaydı tek karşı taraftan; ≤ 60 sn eşzamanlı yanıt ≥ 3) | Pilot öncesi |
 | K-12 | Pilot: kimler, ne zaman, başarı ölçütleri | Hoca | Hocayla | P1-18 |
 | K-14 | GitHub Actions CI kullanılsın mı | Kullanıcı | Public repoda standart çalıştırıcılarla hazırlanan PR #6 hakkında karar | P0-03 |
 | K-15 | Gelecekteki commit e-posta gizliliği | Kullanıcı | GitHub gizli adresi veya mevcut ayar | Yeni commit yapılandırması |
@@ -105,6 +104,7 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   `docs/faz1-plan.md` sonuna “Manuel test planı” bölümü olarak yazılır ve pilot öncesi bir kez
   koşulur.
 - [ ] **PILOT-DEPLOY** Canlıya alım (P1-18). Önkoşul K-02, K-05.
+- [ ] **PILOT-ROZET** Pilot bitince `FOUNDING_MEMBER_UNTIL` doldurulur (K-10; boşsa kurucu üye etiketi sürer).
 
 ## Teknik borç
 
@@ -113,18 +113,18 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 ### Biçim
 
 ```text
-- [ ] **TD-001** · P1 · <kısa başlık>
+- [ ] **TD-XXX** · P1 · <kısa başlık>
   Ne: <somut durum, dosya/satır>
   Neden borç: <risk ya da maliyet>
   Kapanış ölçütü: <ne olunca silinir>
 ```
 
 ### Açık borçlar
-- [ ] **TD-001** · P1 · Güvenlik başlıkları build anında yazılıyor
-  Ne: başlıklar `next build` sırasında `.next/routes-manifest.json`'a yazılıyor; HSTS yalnız
-  `APP_ENV=prod` ile alınan build'de çıkar (`next.config.ts`).
-  Neden borç: canlı build yanlış env'le alınırsa HSTS sessizce düşer.
-  Kapanış ölçütü: P1-18 dağıtım betiği build'i `APP_ENV=prod` ile alır ve başlık kanıtlanır.
+- [ ] **TD-017** · P2 · Çözülemeyen outbox niyeti için kalıcı hata durumu
+  Ne: Bekleyen şifreli davet niyetinin anahtarı değişirse içerik çözülemez.
+  Neden borç: Anahtar döndürme sonrasında niyet her aktarımda sonsuz yeniden denenir.
+  Kapanış ölçütü: Sınırlı deneme, kalıcı hata durumu ve kişisel veri içermeyen işlem kaydı uygulanır.
+
 - [ ] **TD-006** · P1 · Süresi geçmiş oturum ve doğrulama kayıtları temizlenmiyor
   Ne: `Session` ve `Verification` tablolarında süresi geçen satırlar birikir (indeksler hazır: `expiresAt`).
   Neden borç: veri en azlığı (KVKK) ve tablo büyümesi.
