@@ -24,6 +24,7 @@ import {
 } from './appointment';
 import { createRecordingNotifier } from './appointment-notifier';
 import { approvedCountsThisMonth } from './mentor-load';
+import { settleEvents } from './event';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -518,6 +519,30 @@ describe('yanıt', () => {
     );
     return { h, mentor, mentee, id: view.id };
   }
+
+  it('talep ve onay yalnız tür ve görüşme biçimiyle birer metrik olayı üretir', async () => {
+    const { h, mentor, mentee, id } = await requested();
+    await respondAppointment(h.deps, mentor, { decision: 'CONFIRM', appointmentId: id });
+    await expectCode(
+      respondAppointment(h.deps, mentor, { decision: 'CONFIRM', appointmentId: id }),
+      'APPOINTMENT_NOT_REQUESTED',
+    );
+    await settleEvents();
+    const events = await db.event.findMany({
+      where: {
+        userId: { in: [mentor, mentee] },
+        type: { in: ['APPOINTMENT_REQUESTED', 'APPOINTMENT_CONFIRMED'] },
+      },
+      select: { type: true, userId: true, props: true },
+    });
+    expect(events).toHaveLength(2);
+    expect(events).toEqual(
+      expect.arrayContaining([
+        { type: 'APPOINTMENT_REQUESTED', userId: mentee, props: { mode: 'ONLINE' } },
+        { type: 'APPOINTMENT_CONFIRMED', userId: mentor, props: { mode: 'ONLINE' } },
+      ]),
+    );
+  });
 
   it('onay: CONFIRMED, karar anı, öğrenciye bildirim; takvim açıkken link süpürmeyle gelir', async () => {
     const { h, mentor, id } = await requested();

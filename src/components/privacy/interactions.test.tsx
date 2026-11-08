@@ -115,6 +115,17 @@ it('hesap silme e-posta ve ikinci onay olmadan çağrılmaz; anonimleştirme ter
   });
   expect(await screen.findByRole('heading', { name: 'Hesabın silindi' })).toBeVisible();
 });
+it('hesap silmede boş e-posta alan yanında ne yapılacağını söyler', async () => {
+  const { user } = renderUi(
+    <ToastProvider>
+      <DeleteForm currentEmail="dogru@example.invalid" />
+    </ToastProvider>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Hesabımı sil' }));
+  expect(screen.getByText('E-posta adresini yaz.')).toBeVisible();
+  expect(screen.getByLabelText(/Onaylamak için/)).toHaveFocus();
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
 it('hesap silmede farklı adres onay penceresinden önce alan yanında açıklanır ve alana odaklanır', async () => {
   const { user } = renderUi(
     <ToastProvider>

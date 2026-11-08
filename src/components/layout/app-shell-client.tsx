@@ -151,7 +151,7 @@ export function AppShellClient({
             {showAdmin && (
               <li>
                 <Link
-                  href="/yonetim/belge-kuyrugu"
+                  href="/yonetim"
                   aria-current={isCurrent(pathname, '/yonetim') ? 'page' : undefined}
                   className={cn(
                     'press-control inline-flex min-h-11 w-full items-center gap-1 rounded-control px-3 text-base font-medium',
