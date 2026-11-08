@@ -111,6 +111,14 @@ export function RequestForm({
       ) : (
         <div className="mt-8">
           <p role="status">{t(`unavailable.${availability.reason ?? 'NOT_MENTOR'}`)}</p>
+          {availability.reason === 'OPEN_REQUEST_EXISTS' && (
+            <Link
+              className="mt-3 inline-flex min-h-11 items-center text-primary"
+              href="/hesap/cv-inceleme"
+            >
+              {t('viewRequest')} →
+            </Link>
+          )}
           {availability.reason === 'NO_CV' && (
             <Link className="mt-3 inline-flex min-h-11 items-center text-primary" href="/profil/cv">
               {t('toCv')} →

@@ -579,7 +579,7 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
         </section>
       </div>
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-8 space-y-2 bg-bg pt-4 pb-2 lg:static lg:pt-8">
+      <div className="sticky-actions z-20 mt-8 space-y-2 bg-bg pt-4 pb-2 lg:pt-8">
         {error && (
           <p role="alert" className="text-base text-danger">
             {errorsT(error)}

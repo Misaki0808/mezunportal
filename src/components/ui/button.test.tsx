@@ -13,6 +13,13 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Kaydet' })).toHaveAttribute('type', 'button');
   });
 
+  it('danger-outline: yıkıcı ikincil eylem tehlike renginde çerçeveli, dolgusuz', () => {
+    renderUi(<Button variant="danger-outline">Sil</Button>);
+    const button = screen.getByRole('button', { name: 'Sil' });
+    expect(button).toHaveClass('border-danger', 'text-danger');
+    expect(button).not.toHaveClass('bg-danger');
+  });
+
   it('devre dışı düğme sebebini görünür yazar ve aria-describedby ile bağlar', () => {
     renderUi(
       <Button disabled disabledReason="Bu ay kapasite doldu">

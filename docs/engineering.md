@@ -267,7 +267,10 @@ Her faz bitince kullanıcı telefondan test eder; faz içinde telefon testi yokt
    O aşamadan sonra telefonda test girişiyle rol hesaplarına girilir (giriş bağlantısı ve LinkedIn yerel adrese
    bağlı olduğu için telefonda test girişi kullanılır).
 4. “Ana ekrana ekle” ile uygulama gibi açılabilir.
-5. Kontrol listesi faz kapanış paketindedir (`faz-kapanis` skill'i).
+5. Gerçek cihazda ayrıca doğrulanır (tarayıcı turunda ekran klavyesi denenemez): form ekranlarında (deneyim yaz,
+   bildirim tercihleri, CV onayı) bir alana dokununca klavye açılırken alt gezinme gizlenmeli, eylem çubuğu formun
+   sonunda kalmalı ve klavye kapanınca eski düzene dönmelidir (`KeyboardState`, `docs/decisions.md` tur 2).
+6. Kontrol listesi faz kapanış paketindedir (`faz-kapanis` skill'i).
 
 Hocaya gösterim de aynı yolla, bilgisayardan ya da telefondan, sahte veriyle yapılır.
 

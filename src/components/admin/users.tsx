@@ -61,7 +61,7 @@ export function AdminUsers({ initial, search }: Props) {
   return (
     <AdminFrame title={t('users.title')}>
       <form
-        className="flex flex-col gap-3 sm:flex-row sm:items-end"
+        className="flex flex-col gap-3 sm:flex-row sm:items-start"
         onSubmit={(event) => {
           event.preventDefault();
           void load(query);
@@ -84,9 +84,12 @@ export function AdminUsers({ initial, search }: Props) {
             />
           )}
         </Field>
-        <Button type="submit" loading={pending}>
-          {t('search')}
-        </Button>
+        {/* Düğme girdiyle hizalı: etiket satırı (1,75 rem) + boşluk (0,375 rem) kadar aşağıda; ipucu satırı hizayı bozmaz. */}
+        <div className="sm:mt-[2.125rem]">
+          <Button type="submit" loading={pending}>
+            {t('search')}
+          </Button>
+        </div>
       </form>
       {error && (
         <p role="alert" className="mt-4 text-danger">

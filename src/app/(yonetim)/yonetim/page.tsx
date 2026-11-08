@@ -25,6 +25,7 @@ export default async function AdminOverviewPage() {
     },
     { key: 'invitations', href: '/yonetim/davetler', visible: capabilities.dictionaries },
     { key: 'adminGrants', href: '/yonetim/yetkiler', visible: capabilities.adminGrants },
+    { key: 'points', href: '/yonetim/puan', visible: capabilities.adminGrants },
     { key: 'auditLog', href: '/yonetim/islem-kaydi', visible: capabilities.auditLog },
     { key: 'documents', href: '/yonetim/belge-kuyrugu', visible: true },
     { key: 'experiences', href: '/yonetim/deneyimler', visible: true },

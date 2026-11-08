@@ -13,6 +13,10 @@ const capabilities: Record<string, keyof AdminOverview['capabilities']> = {
   sozlukler: 'dictionaries',
   eslesmeyenler: 'unmatchedValues',
   yetkiler: 'adminGrants',
+  // Yalnız sistem yöneticisi: haritada olmayan yol varsayılan 'users' izniyle (bölüm yöneticisi dahil) geçer ve
+  // sayfa içi ret 200 döner; 404 yalnız buradan gelir.
+  puan: 'adminGrants',
+  davetler: 'dictionaries',
   'islem-kaydi': 'auditLog',
   istihdam: 'employmentReport',
   sikayetler: 'reports',
