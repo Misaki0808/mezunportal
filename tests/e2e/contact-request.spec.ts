@@ -57,7 +57,7 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     await login(page, 'student');
     await login(target, 'alumniMentor');
     await target.goto('/hesap/gizlilik');
-    await target.waitForLoadState('networkidle');
+    await waitForHydratedForm(target, 'Kaydet');
     for (const label of ['E-posta', 'Telefon']) {
       await target.getByLabel(label, { exact: true }).selectOption('ON_APPROVED_REQUEST');
     }
@@ -83,7 +83,7 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     await page.getByRole('link', { name: 'Taleplerime git' }).click();
     await expect(page.locator('body')).not.toContainText(alumni.email);
     await target.goto('/hesap/iletisim');
-    await target.waitForLoadState('networkidle');
+    await waitForHydratedControl(target, 'Onayla');
     await target.getByRole('button', { name: 'Onayla', exact: true }).click();
     await expect(target.getByText('Talep güncellendi.').first()).toBeVisible();
     await expect(target.locator('body')).not.toContainText(student.email);

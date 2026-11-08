@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
-import { waitForHydratedForm } from './hydration';
+import { waitForHydratedControl, waitForHydratedForm } from './hydration';
 
 test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async ({ page, context }) => {
   test.setTimeout(90_000);
@@ -104,10 +104,12 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await page.goto('/');
     await page.getByRole('link', { name: /Profilini tamamla/ }).click();
     await expect(page).toHaveURL(/\/baslangic$/);
+    await waitForHydratedControl(page, 'Devam et');
     await page.getByRole('checkbox', { name: 'Yazılım geliştirme' }).check();
     await page.getByRole('button', { name: 'Devam et' }).click();
     await expect(page.getByRole('heading', { name: 'Birlikte neyi hedefleyelim?' })).toBeVisible();
     await page.reload();
+    await waitForHydratedControl(page, 'Devam et');
     await expect(page.getByRole('heading', { name: 'Birlikte neyi hedefleyelim?' })).toBeVisible();
     await page.getByRole('checkbox', { name: 'Staj bulmak' }).check();
     await page.getByRole('button', { name: 'Geri' }).click();
