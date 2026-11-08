@@ -52,6 +52,7 @@ model Department {
   faculty             Faculty              @relation(fields: [facultyId], references: [id], onDelete: Restrict)
   memberships         Membership[]
   adminGrants         AdminGrant[]
+  experiences         Experience[]
   graduationDocuments GraduationDocument[]
 
   @@unique([facultyId, code])
@@ -143,6 +144,11 @@ model User {
   certifications              Certification[]
   skills                      UserSkill[]
   experienceInvitations       ExperienceInvitation[]
+
+  experiences          Experience[] @relation("ExperienceAuthor")
+  moderatedExperiences Experience[] @relation("ExperienceModerator")
+  reports              Report[]     @relation("ReportReporter")
+  reviewedReports      Report[]     @relation("ReportReviewer")
 }
 
 /// İlk giriş adımı; atlanan ya da tamamlanan adımların kalıcı ilerleme noktası.
@@ -794,4 +800,124 @@ model ExperienceInvitation {
   position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
 
   @@index([userId, status])
+}
+
+// P1-07: tür bazlı deneyim ve şikâyet sözleşmesi. Yayın/erişim iş mantığı servis kartındadır.
+enum ExperienceType {
+  INTERNSHIP
+  ERASMUS
+  COMPETITION
+  HACKATHON
+  CLUB
+  CERTIFICATE
+  GRADUATE_STUDY
+  STUDY_ABROAD
+}
+
+enum ExperienceStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+enum TermSeason {
+  SPRING
+  SUMMER
+  AUTUMN
+  WINTER
+}
+
+enum ExperiencePay {
+  PAID
+  UNPAID
+  NOT_DISCLOSED
+}
+
+enum ApplicationChannel {
+  LINKEDIN_POST
+  CAREER_PLATFORM
+  COMPANY_SITE
+  REFERRAL
+  CAREER_FAIR
+  COLD_EMAIL
+  UNIVERSITY_ANNOUNCEMENT
+  OTHER
+}
+
+enum ReportTargetType {
+  EXPERIENCE
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+/// Taslak eksik olabilir; PENDING/PUBLISHED/REJECTED içerik tür şablonunu tamamlamış olmalıdır.
+/// Anonimlik çıktı sınırıdır: authorId sahiplik/hesap silme için depoda kalır, hiçbir anonim çıktıya girmez.
+model Experience {
+  id                  String              @id @default(uuid(7))
+  authorId            String?
+  /// Yazım anındaki doğrulanmış üyelikten; sonradan rol/bölüm değişimi moderasyon kapsamını değiştirmez.
+  departmentIdAtWrite String
+  type                ExperienceType
+  /// Company sözlüğü P1-05'te vardır; deneyim FK bağlantısı P1-08'de eklenir.
+  companyId           String?
+  organizationName    String?
+  country             String?
+  city                String?
+  termYear            Int?
+  termSeason          TermSeason?
+  durationWeeks       Int?
+  pay                 ExperiencePay?
+  applicationChannel  ApplicationChannel?
+  processSteps        Json                @default("[]")
+  interviewQuestions  String[]            @default([])
+  whatLearned         String              @default("")
+  advice              String              @default("")
+  isAnonymous         Boolean             @default(false)
+  status              ExperienceStatus    @default(DRAFT)
+  moderationNote      String?
+  moderatedById       String?
+  moderatedAt         DateTime?
+  publishedAt         DateTime?
+  /// searchVector ve arama indeksi P1-08'de eklenir.
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  author      User?      @relation("ExperienceAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  department  Department @relation(fields: [departmentIdAtWrite], references: [id], onDelete: Restrict)
+  moderatedBy User?      @relation("ExperienceModerator", fields: [moderatedById], references: [id], onDelete: Restrict)
+  reports     Report[]
+
+  @@index([authorId, updatedAt])
+  @@index([departmentIdAtWrite, status, createdAt])
+  @@index([status, publishedAt])
+  @@index([type, termYear])
+}
+
+/// Şimdilik tek hedef türü deneyimdir; hedef FK ile korunur. SSS kendi sözleşmesinde eklenir.
+/// Raportör kimliği hiçbir çıktı şemasında yoktur; hesap silmede koparılabilir.
+model Report {
+  id             String           @id @default(uuid(7))
+  targetType     ReportTargetType @default(EXPERIENCE)
+  targetId       String
+  reporterId     String?
+  reason         String
+  status         ReportStatus     @default(OPEN)
+  reviewedById   String?
+  reviewedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  target     Experience @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  reporter   User?      @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  reviewedBy User?      @relation("ReportReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([targetId, status])
+  @@index([status, createdAt])
+  @@index([reporterId])
 }

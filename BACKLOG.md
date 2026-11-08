@@ -26,6 +26,12 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   eşleme, fark/onay, tek işlemde uygulama, staj davetleri, saklama kuralları, günlük sınır, hesap silme ve veri
   dökümü bağlantısı tamam. Gerçek LLM sağlayıcısı K-04 ile gelir; o zamana kadar `LLM_PROVIDER` boşsa özellik
   kapalı, `fake` yalnız local/test.
+
+- P1-07 deneyim/moderasyon sözleşmesi hazır: tür bazlı taslaklar, anonim çıktı ayrımı ve şikâyet
+  şeması. Yayınlanmış içerik aynı üniversitedeki tüm doğrulanmış üyelere açık (K-07); servis ve
+  ekran uygulaması ayrı kartlarda.
+
+
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -56,7 +62,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 | K-04 | LLM sağlayıcısı | Kullanıcı | PDF girdisi + yapılandırılmış çıktı + API verisini eğitimde kullanmama politikası olan ücretli API | P1-05 |
 | K-05 | E-posta sağlayıcısı (canlı) | Kullanıcı | Üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | P1-18 |
 | K-06 | İÜ personel e-posta alanı, YBS'nin fakültesi ve program dili | PM ölçer, kullanıcı teyit eder | Geçici değerler `prisma/seed-data.ts`'te (`ogr.iu.edu.tr`, `istanbul.edu.tr`, İktisat Fakültesi); öğrenci alanı ölçüldü; kalanlar teyit bekler | P1-02 |
-| K-07 | Yayınlanmış içeriğin görünürlük kapsamı | PM | Üniversitedeki tüm doğrulanmış üyeler | P1-07 |
 | K-08 | Öğrencinin mentor olma eşiği | PM | 3. sınıf ve üstü + en az bir yayınlanmış deneyim | P1-04 |
 | K-10 | Kurucu üye etiketi kuralı | PM | Pilot süresince ilk deneyimi yayınlanan herkes | P1-16 |
 | K-11 | Puan ağırlıkları ve şüphe eşikleri | PM | `docs/architecture.md` puan tablosu | P1-16 |

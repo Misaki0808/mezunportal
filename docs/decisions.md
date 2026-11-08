@@ -75,7 +75,6 @@ dakikası sınırlıdır. Roller ekran görüntüsü almaz (makine yükü, çak�
 ara sıra yaptığı tarayıcı turu ve kullanıcının faz sonu telefon denemesi yapar. Ürün/UX
 kararlarını PM verir ve panoda gösterir; kullanıcıya yalnız onun verebileceği kararlar sorulur.
 
-
 ## 2026-11-07 · Repo adı `mezunportal` (K-01)
 Kullanıcı kararı: "Repo adı mezunportal; K-01 cevaplandı." Çalışma adı MezunPortal ürün adı olarak
 da kaldı; GitHub deposu `Misaki0808/mezunportal`.
@@ -460,4 +459,18 @@ Günlük hak yalnız doğrulamayı geçen yüklemede harcanır (sabit 24 saatlik
 tek işlenen ve tek onay bekleyen CV vardır (kısmi benzersiz indeks); yeni yükleme eski bekleyen sonucu atar. Yurt
 dışı rızası hem yüklemede hem iş başında okunur. Son uygulanan CV dosyası kalır; uygulamada/atmada eski dosyalar,
 hatada ise dosya hemen silinir; açık inceleme talebine bağlı dosya silinmez (kayıt kancası `CV_FILE_HOLDS`).
+
+## 2026-11-08 · Deneyim görünürlüğü ve anonim çıktı sınırı (K-07, P1-07)
+
+PM kararı: yayınlanmış içerik üniversitedeki tüm doğrulanmış üyelere görünür; bölüm/fakülte ayrımıyla
+kısıtlanmaz ve başka üniversiteye açılmaz. Moderasyon kapsamı yazım anındaki bölüme göre korunur.
+Anonim deneyimde yazar kendi listesi ve moderasyon dahil hiçbir çıktı şemasına girmez; eski veri
+belgesindeki moderatör istisnası kaldırıldı. Depodaki yazar bağı sahiplik/hesap silme içindir; K-09
+anonimleştirmede yayınlanmış içerikte boşaltılabilir. Şikâyetin raportörü de çıktıya taşınmaz.
+
+Sözleşme eksik taslağı tür bazlı tam şablondan ayırır; tür değişince ilgisiz alanlar reddedilir.
+Yayın/ret kararına ait alanlar SQL CHECK'le birlikte tutulur; yayınlama yetkisi ve durum geçişleri
+servis kartında zorlanır. CV davetinin isteğe bağlı Position kimliği yalnız girdidedir; sahipliği
+P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK'sı P1-08'e bırakıldı.
+
 
