@@ -65,12 +65,22 @@ export async function getInterviewQuestions(
       ]);
       const candidates = new Map<string, QuestionCandidate[]>();
       const authors = new Map<string, Set<string>>();
+      const companyNames = new Map<string, Set<string>>();
+      const companyIdentifiers = new Map<string, Set<string>>();
       for (const exp of experiences) {
         if (!exp.companyId || !exp.author) continue;
         const companyCandidates = candidates.get(exp.companyId) ?? [];
         const companyAuthors = authors.get(exp.companyId) ?? new Set<string>();
         companyAuthors.add(exp.author.id);
         authors.set(exp.companyId, companyAuthors);
+        const names = companyNames.get(exp.companyId) ?? new Set<string>();
+        names.add(exp.author.name);
+        companyNames.set(exp.companyId, names);
+        const identifiers = companyIdentifiers.get(exp.companyId) ?? new Set<string>();
+        identifiers.add(exp.author.id);
+        identifiers.add(exp.author.email);
+        identifiers.add(exp.id);
+        companyIdentifiers.set(exp.companyId, identifiers);
         const add = (text: unknown, category: QuestionCandidate['category']) => {
           if (typeof text !== 'string' || !text.trim()) return;
           const clean = text.trim();
@@ -98,7 +108,13 @@ export async function getInterviewQuestions(
       const needle = foldTr(filters.q);
       const groups = companies.flatMap((company) => {
         if ((authors.get(company.id)?.size ?? 0) < QUESTION_MIN_AUTHORS) return [];
-        const questions = groupQuestions(candidates.get(company.id) ?? []).filter(
+        const names = [...(companyNames.get(company.id) ?? [])];
+        const identifiers = [...(companyIdentifiers.get(company.id) ?? [])];
+        const safeCandidates = (candidates.get(company.id) ?? []).filter((candidate) => {
+          const identity = analyzeIdentity(candidate.text, names, identifiers);
+          return !identity.blocked && identity.warnings.length === 0;
+        });
+        const questions = groupQuestions(safeCandidates).filter(
           (question) =>
             !needle ||
             foldTr(question.text).includes(needle) ||

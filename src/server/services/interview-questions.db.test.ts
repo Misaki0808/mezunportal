@@ -137,6 +137,16 @@ it('trigram hesabı PostgreSQL pg_trgm ile aynı eşiği kullanır', async () =>
     expect(questionSimilarity(a!, b!)).toBeCloseTo(rows[0]!.value, 5);
   }
 });
+it('başka bir kaynak yazarın adını üç kişi tekrarlasa bile soru yayımlanmaz', async () => {
+  const w = await fixture();
+  const named = await createUser(db, { name: 'Nehir Akın' });
+  await addExperience(w, named, w.institution.deptA1, []);
+  for (const author of w.authors) {
+    await addExperience(w, author, w.institution.deptA1, ['Néhirʼin görüşü nedir?']);
+  }
+  const result = await getInterviewQuestions(db, w.viewer, filters(w.company.id));
+  expect(JSON.stringify(result)).not.toContain('Néhir');
+});
 it('1000 deneyimde sorgu yanıtı ölçülür', async () => {
   const w = await fixture();
   await db.experience.createMany({
