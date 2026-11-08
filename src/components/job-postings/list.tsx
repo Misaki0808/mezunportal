@@ -81,7 +81,7 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
         </p>
         <Link
           href={`/ilanlar/${encodeURIComponent(posting.id)}`}
-          className="press-control inline-flex min-h-11 shrink-0 items-center font-semibold text-primary hover:underline"
+          className="press-control inline-flex min-h-11 shrink-0 items-center gap-1 font-semibold text-primary hover:underline"
         >
           {t('open')} <span aria-hidden="true">→</span>
         </Link>
