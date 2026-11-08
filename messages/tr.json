@@ -1930,9 +1930,9 @@
       "tabsLabel": "Puan yönetimi bölümleri",
       "tabs": {
         "rules": "Kurallar",
-        "flags": "Şüpheli işaretler",
-        "entries": "Puan kayıtları",
-        "backfill": "Geriye dönük hesaplama"
+        "flags": "Şüpheli",
+        "entries": "Kayıt",
+        "backfill": "Hesaplama"
       },
       "cancel": "Vazgeç",
       "more": "Daha fazla göster",

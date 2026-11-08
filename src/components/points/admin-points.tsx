@@ -137,7 +137,6 @@ function RulesPanel({
           t('admin.rulePoints'),
           t('admin.ruleDelay'),
           t('admin.ruleActive'),
-          t('admin.updatedAt'),
           t('admin.actions'),
         ]}
         rows={rules.map((rule) => ({
@@ -149,7 +148,6 @@ function RulesPanel({
             <Badge key="a" tone={rule.isActive ? 'success' : 'neutral'}>
               {rule.isActive ? t('admin.active') : t('admin.inactive')}
             </Badge>,
-            formatDate(rule.updatedAt),
             <Button key="e" variant="secondary" onClick={() => start(rule)}>
               {t('admin.edit')}
             </Button>,

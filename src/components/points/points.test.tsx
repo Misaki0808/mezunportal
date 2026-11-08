@@ -188,7 +188,7 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
   it('şüphe onayı gerekçeyle gider, geri alınan sayıyı bildirir ve satırı kuyruktan çıkarır', async () => {
     const a = actions();
     renderUi(<AdminPoints rules={[]} flags={{ items: [flag()], nextCursor: null }} actions={a} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Şüpheli işaretler' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Şüpheli' }));
     expect(screen.getAllByText('Deniz Aksoy').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Tek karşı tarafın payı: %90').length).toBeGreaterThan(0);
     fireEvent.click(screen.getAllByRole('button', { name: 'Onayla' })[0]!);
@@ -215,7 +215,7 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
       })),
     });
     renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Puan kayıtları' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Kayıt' }));
     fireEvent.click(screen.getByRole('button', { name: 'Listele' }));
     expect(a.listEntries).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText(/Kullanıcı kimliği/), { target: { value: 'u1' } });
@@ -230,7 +230,7 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
   it('geriye dönük hesaplama onayla başlar, sonra sebebiyle kilitlenir', async () => {
     const a = actions();
     renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Geriye dönük hesaplama' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Hesaplama' }));
     fireEvent.click(screen.getByRole('button', { name: 'Hesaplamayı başlat' }));
     fireEvent.click(dialog().getByRole('button', { name: 'Hesaplamayı başlat' }));
     await waitFor(() => expect(a.backfill).toHaveBeenCalledWith({}));
