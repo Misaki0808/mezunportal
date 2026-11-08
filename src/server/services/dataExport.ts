@@ -135,6 +135,7 @@ export async function buildDataExport(
   if (!user || user.deletedAt) throw codedNotFound('RESOURCE_NOT_FOUND');
   const iso = (date: Date | null) => (date ? date.toISOString() : null);
   const cv = await loadCvExport(db, userId, iso);
+  const appointments = await loadAppointmentExport(db, userId);
   const levels = (await loadVisibilityLevels(db, [userId])).get(userId) ?? new Map();
 
   return {
@@ -184,6 +185,7 @@ export async function buildDataExport(
       received: user.receivedContactRequests.map(exportRequest),
     },
     cv,
+    appointments,
   };
 }
 
@@ -279,4 +281,47 @@ async function loadCvExport(
     skills: skills.map((row) => ({ id: row.tagId, name: row.tag.label })),
     experienceInvitations: invitations,
   };
+}
+
+/** Kendi randevuların (mentor ya da öğrenci olarak). Karşı taraf yalnız kimlik; öğrenci notu yalnız yazanda. */
+async function loadAppointmentExport(
+  db: PrismaClient,
+  userId: string,
+): Promise<DataExport['appointments']> {
+  const rows = await db.appointment.findMany({
+    where: { OR: [{ mentorId: userId }, { menteeId: userId }] },
+    orderBy: { id: 'asc' },
+    select: {
+      id: true,
+      mentorId: true,
+      menteeId: true,
+      startsAt: true,
+      endsAt: true,
+      mode: true,
+      status: true,
+      menteeNote: true,
+      location: true,
+      meetUrl: true,
+      decisionNote: true,
+      cancelReason: true,
+      createdAt: true,
+    },
+  });
+  return rows.map((row) => {
+    const role = row.mentorId === userId ? ('MENTOR' as const) : ('MENTEE' as const);
+    return {
+      id: row.id,
+      role,
+      counterpartId: role === 'MENTOR' ? row.menteeId : row.mentorId,
+      startsAt: row.startsAt.toISOString(),
+      endsAt: row.endsAt.toISOString(),
+      mode: row.mode,
+      status: row.status,
+      note: role === 'MENTEE' ? row.menteeNote : null,
+      location: row.location,
+      meetUrl: row.meetUrl,
+      reason: row.decisionNote ?? row.cancelReason,
+      createdAt: row.createdAt.toISOString(),
+    };
+  });
 }

@@ -110,6 +110,16 @@ mezun belgesi onay/ret, rol düzeltme, askıya alma/kaldırma, moderasyon kararl
 şüphe kararı, yönetici atama/kaldırma, sözlük değişikliği, eşleşmeyen değer çözümü, dışa aktarma.
 Kayıt yalnız eklenir; kişisel veri içermez (yalnız kimlikler). Sistem yöneticisi panelden görür.
 
+### Randevu motoru (P1-10)
+
+Randevu eylemleri yalnız doğrulanmış üyeye açıktır; kimlik oturumdan gelir, yetki işlemin içinde yeniden yüklenir. Talep
+yalnız görünür mentora (dizinle aynı görünürlük) ve yalnız sunucunun ürettiği slota yapılır; çakışmanın son sözü
+veritabanı exclusion constraint'idir. Randevuyu yalnız iki katılımcı görür (yabancıya `RESOURCE_NOT_FOUND`); `.ics` yalnız
+onaylı randevuda ve katılımcı e-postası içermez. Onayda iki tarafın e-postası takvim davetinde paylaşılır (talep ekranı
+önceden söyler, `SlotList.emailShared`). Yurt dışı aktarım rızası olmayan taraflı randevuda takvim çağrısı yapılmaz.
+Talep hız sınırı 24 saatte 10. Hesap silmede açık randevular sistem tarafından iptal edilir, öğrenci notu/yer notu/link/ret
+notu temizlenir; veri dökümü randevuları kapsar (öğrenci notu yalnız yazanın dökümünde).
+
 ### Mentor dizini (P1-09)
 
 Dizin ve öneri yalnız doğrulanmış üyeye açıktır; kapsam (K-07) oturumdaki kullanıcıdan sunucuda çözülür. Askıdaki,
