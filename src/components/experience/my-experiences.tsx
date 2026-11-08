@@ -154,7 +154,7 @@ export function MyExperiences({ initial, list }: Props) {
         }}
         items={filters.map((id) => ({ id, label: t(`mine.tabs.${id}`), content: body }))}
       />
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-6 bg-bg pt-4 pb-2 lg:static">
+      <div className="sticky-actions z-20 mt-6 bg-bg pt-4 pb-2">
         <Link className={buttonClasses({ size: 'lg', fullWidth: true })} href="/deneyim/yeni">
           {t('mine.write')}
         </Link>

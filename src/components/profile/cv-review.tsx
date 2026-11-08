@@ -317,7 +317,7 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
         {t('discard')}
       </Button>
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 flex flex-col gap-2 bg-bg pt-3 pb-2 lg:static">
+      <div className="sticky-actions z-20 flex flex-col gap-2 bg-bg pt-3 pb-2">
         {error && (
           <div role="alert" className="text-base text-danger">
             <p>{errors(error)}</p>

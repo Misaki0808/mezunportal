@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import type { MentorEntryPoints as EntryPoints } from '@/contracts/mentor-directory';
 import { buttonClasses } from '@/components/ui';
+import { withReturnPath } from '@/lib/return-path';
 import { ReviewRequestEntry } from '@/components/cv-review/request-entry';
 import type { CvReviewAvailability } from '@/contracts/cv-review-request';
 
@@ -41,7 +42,10 @@ export function MentorEntryPoints({
         {t('title')}
       </h2>
       {entry.contact.available ? (
-        <Link className={buttonClasses({ fullWidth: true })} href={`/iletisim-iste/${userId}`}>
+        <Link
+          className={buttonClasses({ fullWidth: true })}
+          href={withReturnPath(`/iletisim-iste/${userId}`, `/uye/${userId}`)}
+        >
           {t('contact')}
         </Link>
       ) : (

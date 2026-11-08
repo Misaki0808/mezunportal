@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getConsentState } from '@/server/actions/privacy';
 import { getOnboardingState } from '@/server/actions/profile';
+import { getHomeSummary } from '@/server/actions/home';
+import { HomeDashboard } from '@/components/home/dashboard';
 import { ErrorState } from '@/components/ui';
 
 import { getVerificationState } from '@/server/actions/auth';
@@ -26,9 +28,11 @@ export default async function HomePage() {
       ? await getOnboardingState().catch(() => null)
       : null;
   const showOnboarding = onboarding?.ok && onboarding.data.step !== 'COMPLETE';
+  const verified = actor && state?.ok && state.data.status === 'VERIFIED';
+  const summary = verified ? await getHomeSummary().catch(() => null) : null;
   return (
     <div
-      className={`mx-auto flex max-w-xl flex-col gap-6 px-5 py-12 ${!actor ? 'min-h-[calc(100dvh-8rem)]' : ''}`}
+      className={`mx-auto flex max-w-2xl flex-col gap-6 px-5 py-10 sm:py-12 ${!actor ? 'min-h-[calc(100dvh-8rem)]' : ''}`}
     >
       {needsVerification && (
         <Link
@@ -62,8 +66,14 @@ export default async function HomePage() {
           </span>
         </Link>
       )}
-      <h1 className="text-3xl font-semibold">{t('title')}</h1>
-      <p className="text-base leading-relaxed">{t('tagline')}</p>
+      {summary?.ok ? (
+        <HomeDashboard summary={summary.data} />
+      ) : (
+        <>
+          <h1 className="text-3xl font-semibold">{t('title')}</h1>
+          <p className="text-base leading-relaxed">{t('tagline')}</p>
+        </>
+      )}
       {!actor && (
         <Link
           href="/giris"
