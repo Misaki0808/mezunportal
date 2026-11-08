@@ -103,6 +103,9 @@ export async function deleteAccount(
       data: { status: 'REVOKED', closedAt: now },
     });
 
+    // Kullanım olayları (P1-13): sayılar kalır, kullanıcıyla bağ hemen kopar.
+    await tx.event.updateMany({ where: { userId }, data: { userId: null } });
+
     // Profil yayınlanmış içerik değildir: K-09'un her iki seçiminde de kişisel veri silinir.
     // ProfileTag ilişkileri ON DELETE CASCADE; ortak etiket sözlüğü korunur.
     await tx.profile.deleteMany({ where: { userId } });
