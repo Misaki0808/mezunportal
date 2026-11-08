@@ -760,3 +760,28 @@ olmaz. Sistem yöneticisi onaylarsa işarete bağlı kayıtlar `FRAUD_CONFIRMED`
 ### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
 
 Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun kişi sayısı toplamdan çıkarılarak küçük grup hesaplanamaz. Aynı servis izdüşümü panelin HTML/RSC verisine ve Excel özetine uygulanır. Kullanım sayfasında zorunlu rıza ve yönetici yetkisi loading başlamadan kontrol edilir; rızasız/yetkisiz erişim gerçek 404, dosya rotası 403 döner. Diğer sayfaların yeniden onay akışı korunur.
+
+## 2026-11-08 · SSS akışı: kimliksiz yayın, benzer soru kapısı, puan yayınla birlikte (P1-17)
+
+**Gizlilik.** Soran mentora ve moderatöre, cevap yazanlar birbirine ve moderatöre hiç görünmez; yayın çıktısı yalnız soru,
+cevap ve tarihtir. Moderatörün düzenlediği yayın metni soran ve TÜM cevap yazanların ad/soyadını (ek almış biçimler dahil:
+“Ahmet'e”, “ahmete”) ve e-posta/telefon/kimlik numarası biçimini içeremez; denetim yayın anında sunucudadır
+(`FAQ_IDENTITY_LEAK`) ve bilerek katıdır (yanlış alarm metni düzeltmekle çözülür, sızıntı geri alınamaz). Soru ve cevap
+gönderiminde e-posta/telefon biçimi de erken reddedilir. Yayın, kaynak talebin bölümünün üniversitesindeki doğrulanmış
+üyelere açıktır (K-07). Karar notu (ret gerekçesi, yönlendirme notu) yalnız soran öğrenciye görünür; bildirim e-postası notu
+taşımaz.
+
+**Benzer soru kapısı.** Yazarken `suggestSimilarFaqs` (saatte 60) en çok 5 öneri verir: tam soruda `pg_trgm` benzerliği ≥ 0,35
+ya da bütün sözcüklerin tam metinde eşleşmesi. Gönderim aynı işlevi kullanır; öneri varken onaysız gönderim
+`FAQ_SIMILAR_EXISTS` ile reddedilir, öğrenci önerileri gördüğünü `similarAcknowledged` ile onaylayınca geçer. Talep hız sınırı
+günde 3; reddedilen deneme sayaç tüketmez (sayaç kayıtla aynı işlemdedir).
+
+**Puan.** Yalnız yayında ve `docs/data.md` gereği yayınla AYNI işlemde yazılır (soran 2, seçilen cevap 5, seçilmeyen her cevap
+1); kaynak anahtarı (talep / cevap kimliği) çift yazımı önler ve günlük uzlaştırma ile `points.backfill` aynı kuralı kullanır.
+Karşı taraf kaydedilmez: soran ve cevap yazanlar birbirini tanımaz, bu da karşılıklı puan anlaşmasını zorlaştırır.
+
+**Moderasyon.** Yayın/ret/yönlendirme talebin YAZILDIĞI bölümün kapsamıyla işlem içinde doğrulanır ve `MODERATION_PUBLISH`,
+`MODERATION_REJECT`, `MODERATION_REDIRECT` ile aynı işlemde kaydedilir. Yönlendirilen öğrenci mentor dizini bağlantısını görür.
+Hesap silinince yayınlanmamış talepler (cevaplarıyla) silinir, yayınlanmışta soran bağı kopar; yazılan cevaplar silinir, seçilmiş
+cevap kimliksiz kalır; yayınlanan SSS kimlik taşımadığı için kalır.
+
