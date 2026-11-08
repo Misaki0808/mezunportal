@@ -32,6 +32,8 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   Deneyimler hesap silme ve kişisel döküme bağlı; K-08 gerçek yayınlanmış deneyim sayısını okur. Ekran
   akışı/kabulü ayrı kartta.
 
+- P1-08 arama servisi: Türkçe tam metin + yazım hatası toleransı, tür/şirket/kanal/dönem/ücret süzgeçleri,
+  sayfalama, K-07 görünürlüğü ve anonim çıktı hazır (1.000 deneyimde tipik sorgu ~10 ms); ekran W2'de.
 
 - P1-11 yönetim paneli sözleşmesi: panel sorguları, kullanıcı/askı/üyelik düzeltme/yönetici atama, sözlük ve
   eşleşmeyen değer, işlem kaydı görüntüleme ve toplu mezun istihdam raporu imzaları, `requireAnyAdmin` koruması ve
@@ -97,7 +99,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 ```
 
 ### Açık borçlar
-
 - [ ] **TD-001** · P1 · Güvenlik başlıkları build anında yazılıyor
   Ne: başlıklar `next build` sırasında `.next/routes-manifest.json`'a yazılıyor; HSTS yalnız
   `APP_ENV=prod` ile alınan build'de çıkar (`next.config.ts`).
