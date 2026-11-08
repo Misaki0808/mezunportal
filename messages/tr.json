@@ -1085,7 +1085,9 @@
       "create": "Yeni kayıt oluştur",
       "dismiss": "Değeri yok say",
       "entry": "Sözlük kaydı",
-      "noSuggestions": "Önerilen kayıt yok."
+      "noSuggestions": "Önerilen kayıt yok.",
+      "sector": "Sektör",
+      "usageLabel": "Onay sayısı"
     },
     "grants": {
       "title": "Yönetici yetkileri",
@@ -1110,7 +1112,39 @@
       "from": "Başlangıç tarihi",
       "to": "Bitiş tarihi",
       "targetId": "Hedef kimliği",
-      "actorId": "Yönetici kimliği"
+      "actorId": "Yönetici kimliği",
+      "actions": {
+        "DOCUMENT_APPROVE": "Belge onayı",
+        "DOCUMENT_REJECT": "Belge reddi",
+        "ROLE_CORRECT": "Üyelik düzeltmesi",
+        "ROLE_TRANSITION": "Rol geçişi",
+        "USER_SUSPEND": "Hesabı askıya alma",
+        "USER_UNSUSPEND": "Askıyı kaldırma",
+        "MODERATION_PUBLISH": "Deneyim yayını",
+        "MODERATION_REJECT": "Deneyim reddi",
+        "REPORT_RESOLVE": "Şikâyet kararı",
+        "POINTS_REVOKE": "Puan geri alma",
+        "SUSPICION_DECIDE": "Şüphe kararı",
+        "ADMIN_GRANT": "Yönetici atama",
+        "ADMIN_REVOKE": "Yönetici yetkisi kaldırma",
+        "DATA_EXPORT": "Veri dışa aktarma",
+        "DICTIONARY_CHANGE": "Sözlük değişikliği",
+        "UNMATCHED_RESOLVE": "Eşleşmeyen değer kararı"
+      },
+      "targets": {
+        "USER": "Kullanıcı",
+        "MEMBERSHIP": "Üyelik",
+        "GRADUATION_DOCUMENT": "Mezun belgesi",
+        "EXPERIENCE": "Deneyim",
+        "FAQ_REQUEST": "SSS talebi",
+        "POINT_ENTRY": "Puan kaydı",
+        "SUSPICION_FLAG": "Şüphe kaydı",
+        "ADMIN_GRANT": "Yönetici yetkisi",
+        "REPORT": "Şikâyet",
+        "DICTIONARY_ENTRY": "Sözlük kaydı",
+        "UNMATCHED_VALUE": "Eşleşmeyen değer",
+        "EMPLOYMENT_REPORT": "İstihdam raporu"
+      }
     },
     "employment": {
       "title": "Mezun istihdam raporu",
@@ -1124,7 +1158,10 @@
       "yearFrom": "Mezuniyet yılı başlangıcı",
       "yearTo": "Mezuniyet yılı sonu",
       "filter": "Raporu göster",
-      "groupEmpty": "Gösterilebilecek grup yok."
+      "groupEmpty": "Gösterilebilecek grup yok.",
+      "count": "Mezun sayısı",
+      "other": "Diğer",
+      "unknown": "Bilinmiyor"
     }
   }
 }
