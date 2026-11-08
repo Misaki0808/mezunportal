@@ -587,3 +587,43 @@ uygulanmaz. Aktörün kullanıcı satırındaki paylaşım kilidi askı/silmeyle
 sıralar. Hedef kullanıcı kilidi atama ve üyelik düzeltmesinden önce alınır; hesap silme ve
 mezun geçişiyle ortak sıra User → Membership'tir. Silme ile yarışan atama silinmiş hesapta
 etkin yetki bırakamaz ve ters satır kilidi sırası oluşmaz.
+
+## 2026-11-08 · Yönetim paneli servis payı: eşleşmeyen değer çözümü, istihdam raporu, Excel
+`UnmatchedValue.dismissedAt` (ekleyici migration): "at" kararı sütunla tutulur; çözülmüş ya da atılmış değer yeniden
+gelirse yalnız sayaç artar, kuyruk yeniden açılmaz (CHECK: ikisi birden olamaz). "Bağla" değeri kaydın takma adı yapar ve
+sözlük bağı boş profil kalemlerini bağlar (kalem metni değişmez; tarama pilot ölçeğinde 5.000 pozisyonla sınırlıdır, kalanı
+sonraki CV ile bağlanır). Sektörde takma ad yoktur: sektöre "bağla" geçersiz, "yeni kayıt" geçerlidir. Sözlük yazmaları tür
+başına danışma kilidiyle (`pg_advisory_xact_lock`) serileşir: ad/takma ad çakışma denetimi yarış altında da doğrudur;
+kilit sırası her yerde tür kilidi → satır kilididir. Silinen kayda bağlı eşleşmeyen değerler kuyruğa döner.
+İstihdam raporu: kişi başına tek temsilci pozisyon (güncel > en son biten), yalnız sözlükle eşleşen adlar; küçük gruplar
+(< 3) `Diğer`'de birleşir, o da < 3 ise hiç gösterilmez. Excel için ExcelJS kullanıldı (`docs/engineering.md` yığınında,
+onaylı); dosya bellekte üretilir, işlem kaydı ve hız sınırıyla aynı işlemdedir. Kullanıcı aramasında `LIKE` özel karakterleri
+kaçırılır (Prisma `contains` kaçırmaz).
+
+Panelde SKILL kullanım sayısı ve bağlama `Tag(SKILL)`/`ProfileTag` üzerinden yürür; eski
+`UserSkill` aktif kullanım sayılmaz. Profil yazımıyla aynı etiket anahtarı kullanılır; kişisel
+bağlar kurallı etikete çiftlemeden taşınır, yeniden adlandırma bağları korur, sözlük silinince
+kullanıcının metni kişisel beceri olarak kalır. Excel rotası sayfa kapısına güvenmez: yetki
+sonrası zorunlu onay transaction içinde, hız sayacı ve dosyadan önce doğrulanır. Audit okuması
+eski metadata'nın iç içe değer/anahtarlarında da kişisel veriyi gizler. Üyelikler yetki
+hesabından önce sunum amacıyla kesilmez; eski ama etkin kapsam üyeliği kaybolmamalıdır.
+
+## 2026-11-08 · Mentor dizini: görünürlük, müsaitlik ve benzer yol kuralı (P1-09)
+Dizinde yalnız görünür mentor vardır: etkin `MentorProfile`, silinmemiş ve askıda olmayan hesap, doğrulanmış etkin
+üyelik, arayanla aynı üniversite (K-07); arayan kendini görmez. Süzgeçler yalnız daraltır, kapsam oturumdan gelir.
+"Deneyim türü" süzgeci yalnız ADLI yayınlanmış deneyime bakar: anonim deneyim mentoru süzgeçle de ele vermez.
+Müsaitlik tek kuralda (`rules/mentorAvailability`): "müsait değilim" (`pausedUntil` gelecekte) ve bu ayki kapasitenin
+dolması; kapasite 0 olan mentor doludur. Doluluk veritabanı süzgecinde değil bellekte hesaplanır (kaynak enjekte edilir),
+bu yüzden "yalnız müsait" sayfalaması kapasite süzgecinden SONRA yapılır; tarama pilot ölçeğinde 500 mentorla sınırlıdır.
+Onaylı randevu sayacı P1-10'a kadar 0 döner (`services/mentor-load.ts`).
+"Sana benzer yol izleyenler" (`rules/similarity`, saf): sektör, ilgi, beceri, hedef, bölüm örtüşmesi puanlanır; en az bir
+GÜÇLÜ gerekçe (sektör/ilgi/beceri) şarttır, yalnız ortak hedef/bölüm öneri sebebi değildir. Gerekçe değerleri yalnız iki
+tarafın da sahip olduğu öğelerdir; öneri havuzu yalnız müsait görünür mentorlardır; en çok 5. Profilden giriş noktaları
+yalnız uygunluk bayrağı döner (randevu P1-10, CV incelemesi P1-15).
+`Profile.completionScore` tek kaynak: `loadProfileCompletion`/`syncCompletionScore` (`services/profile.ts`) profil
+sayfasındaki yüzdeyle aynı işlevdir; profil içeriği, ilk giriş adımı ve CV uygulama yazımları aynı işlemde günceller.
+İlk giriş ekranının kendi yüzdesi (yalnız ilk giriş adımları) ayrı bir göstergedir. Üyelik doğrulaması gibi profil dışı
+değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki yüzde her zaman güncel hesaplanır.
+Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
+kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
+

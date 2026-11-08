@@ -110,6 +110,13 @@ mezun belgesi onay/ret, rol düzeltme, askıya alma/kaldırma, moderasyon kararl
 şüphe kararı, yönetici atama/kaldırma, sözlük değişikliği, eşleşmeyen değer çözümü, dışa aktarma.
 Kayıt yalnız eklenir; kişisel veri içermez (yalnız kimlikler). Sistem yöneticisi panelden görür.
 
+### Mentor dizini (P1-09)
+
+Dizin ve öneri yalnız doğrulanmış üyeye açıktır; kapsam (K-07) oturumdaki kullanıcıdan sunucuda çözülür. Askıdaki,
+silinmiş, doğrulanmamış ya da başka üniversitedeki kullanıcı dizinde yoktur; mentor kendini görmez. Kartta e-posta/telefon
+yoktur. Deneyim türü süzgeci anonim deneyimi saymaz. Benzer yol gerekçesi yalnız ortak öğeleri gösterir. Giriş noktası
+bayrakları görünmeyen hedef için "mentor değil" der (varlık ayrımı yok).
+
 ### Yönetim paneli kuralları (P1-11)
 
 Sözleşme `src/contracts/admin.ts` ve `admin-users.ts`'tedir; hangi eylemin kime açık olduğu `ADMIN_ACTION_ACCESS`
@@ -127,6 +134,16 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
   gerekçe zorunludur. Maske yalnız alan adı değildir: çıktı şeması ham telefon/e-posta değerini reddeder.
 - **Askı:** ban alanları yazılır ve oturumlar aynı işlemde silinir; kullanıcı yeni oturum açamaz. Süreli askı en fazla
   365 gün. Son sistem yöneticisi yetkisi kaldırılamaz.
+- **Okuma servisleri** (`services/admin-panel.ts`) yetkiyi işlemin içinde yeniden yükler ve sonucu sözleşme şemasından
+  geçirir (şemalar `strict`: ham alan çıktıya giremez). Kapsam dışı bölüm süzgeci boş sonuç verir. Bölüm yöneticisinde var
+  olmayan ile kapsam dışı kullanıcı ayırt edilmez (`AUTH_FORBIDDEN`). Kullanıcı araması ad/e-postada çalışır ama çıktı
+  maskelidir; arama yalnız yöneticinin kendi kapsamındaki kullanıcıları tarar (kapsam dışı e-posta varlığı sızmaz) ve
+  `LIKE` özel karakterleri kaçırılır. İşlem kaydı görüntülemede kişisel veri gibi görünen metin okuma anında da gizlenir
+  (`[gizlendi]`); yazım yolu zaten reddeder, bu son ağdır.
+- **Excel dışa aktarma** yetki kontrollü rotadır (`/api/yonetim/rapor/istihdam`, oturum + kapsamı olan doğrulanmış
+  yönetici): saatte 10 sınırı, `DATA_EXPORT` kaydı ve dosya üretimi tek işlemdedir; hata hiçbir şey teslim etmez.
+  Hücreler düz metindir (formül değil). Bilinen sınır: gösterilen kovalar toplamı ile `alumniWithPosition` farkı,
+  bastırılan grupların toplamını verir; kişi ya da grup kimliği bu farktan çıkmaz (pilot ölçeği).
 - **Toplu rapor ve Excel kişi satırı içermez:** mezun istihdam dağılımları sözlükle eşleşen adlarla ve küçük hücre
   bastırmayla (`REPORT_MIN_GROUP_SIZE` = 3) verilir; her dışa aktarma `DATA_EXPORT` kaydı yazar ve hız sınırlıdır.
 

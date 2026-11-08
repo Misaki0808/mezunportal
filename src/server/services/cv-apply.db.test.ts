@@ -9,6 +9,7 @@ import { cvKit, cvUser, pdfForm, type CvTestKit, skillCount, skillLabels } from 
 import { createTestPrisma } from '@/test/db';
 import { createFakeLlm } from '@/server/external/llm/fake';
 import { normalizeName } from '../rules/dictionary';
+import { loadProfileCompletion } from './profile';
 
 import {
   applyCv,
@@ -802,6 +803,9 @@ describe('PROFILE kalemi (başlık, özet, şehir)', () => {
       manualFields: [],
     });
     expect(row.cvUpdatedAt).toBeInstanceOf(Date);
+    // CV uygulama da profil yazımıdır: saklı skor tamamlama kuralındaki yüzdeyle aynıdır.
+    expect(row.completionScore).toBe((await loadProfileCompletion(db, userId, new Date())).percent);
+    expect(row.completionScore).toBeGreaterThan(0);
   });
 
   it('CV’de olmayan alan fark sayılmaz; aynı değer listelenmez', async () => {
