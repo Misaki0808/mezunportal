@@ -1,5 +1,5 @@
 import { MyProfile } from '@/components/profile/my-profile';
-import { Contribution } from '@/components/points/contribution';
+import { Contribution, ContributionSummary } from '@/components/points/contribution';
 import { ErrorState } from '@/components/ui';
 import {
   addProfileSkill,
@@ -25,6 +25,9 @@ export default async function ProfilePage() {
     <>
       <MyProfile
         initial={result.data}
+        beforeCompletion={
+          points?.ok ? <ContributionSummary summary={points.data.summary} /> : undefined
+        }
         actions={{
           updateBasics: updateProfileBasics,
           setSocialLinks,
@@ -38,7 +41,7 @@ export default async function ProfilePage() {
       />
       {points?.ok && (
         <div className="mx-auto max-w-2xl px-5 pb-12">
-          <Contribution initial={points.data} list={getMyContribution} />
+          <Contribution initial={points.data} list={getMyContribution} variant="history" />
         </div>
       )}
     </>

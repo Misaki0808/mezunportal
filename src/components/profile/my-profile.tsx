@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import type { CvSection } from '@/contracts/cv';
 import {
@@ -64,7 +64,12 @@ export type MyProfileActions = {
   suggestSkills: (input: SuggestSkillsInput) => Promise<ActionResult<SkillSuggestions>>;
 };
 
-type Props = { initial: MyProfileData; actions: MyProfileActions };
+type Props = {
+  initial: MyProfileData;
+  actions: MyProfileActions;
+  /** Uzun eksik alan listesinden önce, ilk ekranda görünen ek bölüm (ör. katkı puanı özeti). */
+  beforeCompletion?: ReactNode;
+};
 
 const ENTRY_SECTIONS: readonly {
   section: ProfileEntrySection;
@@ -82,7 +87,7 @@ type Editing =
   | { kind: 'links' };
 
 /** Kendi profilim: bölüm bölüm görüntüle + alt sayfada düzenle. Her eylem güncel profili döner; ekran onu çizer. */
-export function MyProfile({ initial, actions }: Props) {
+export function MyProfile({ initial, actions, beforeCompletion }: Props) {
   const t = useTranslations('profile.my');
   const sections = useTranslations('profile.sections');
   const errors = useTranslations('errors.codes');
@@ -174,6 +179,8 @@ export function MyProfile({ initial, actions }: Props) {
           {error ? errors(error) : notice}
         </div>
       )}
+
+      {beforeCompletion}
 
       <section aria-labelledby="completion" className="rounded-card border border-border p-4">
         <h2 id="completion" className="text-base font-semibold text-fg">

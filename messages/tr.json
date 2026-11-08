@@ -2376,19 +2376,19 @@
       "detailSynced": "Aynı dakikada yanıtlanan görüşme: {count}",
       "detailRecurrence": "İşaret açıkken {count} yeni kanıt görüldü · son: {date}",
       "detailRecurrenceItem": "{date} · {entries} kayıt · {points} puan",
-      "confirmFlag": "Onayla",
-      "dismissFlag": "Reddet",
+      "confirmFlag": "Şüpheyi doğrula",
+      "dismissFlag": "Şüpheyi kaldır",
       "decideTitle": {
-        "CONFIRM": "Şüpheyi onayla",
-        "DISMISS": "Şüpheyi reddet"
+        "CONFIRM": "Şüpheyi doğrula — puanı geri al",
+        "DISMISS": "Şüpheyi kaldır — puan kalsın"
       },
       "decideDescription": {
-        "CONFIRM": "İşarete bağlı puanlar geri alınır ve bu puanlardan gelen rozet kaldırılır. Bu işlem geri alınamaz.",
-        "DISMISS": "İşaret kapanır ve bekleyen puanlar normal akışla kesinleşir."
+        "CONFIRM": "Şüphenin doğru olduğunu onaylıyorsun: işarete bağlı puanlar geri alınır ve bu puanlardan gelen rozet kaldırılır. Bu işlem geri alınamaz.",
+        "DISMISS": "Şüphenin yersiz olduğunu onaylıyorsun: işaret kapanır, puanlar olduğu gibi kalır ve bekleyenler normal akışla kesinleşir."
       },
       "decideConfirm": {
-        "CONFIRM": "Onayla ve geri al",
-        "DISMISS": "Reddet"
+        "CONFIRM": "Doğrula ve puanı geri al",
+        "DISMISS": "Kaldır, puan kalsın"
       },
       "decided": "Karar kaydedildi. Geri alınan kayıt sayısı: {count}.",
       "userId": "Kullanıcı kimliği",
@@ -2409,8 +2409,22 @@
       "backfillConfirm": "Hesaplama arka planda çalışır; bitene kadar tekrar başlatılamaz. Başlatılsın mı?",
       "backfillStart": "Hesaplamayı başlat",
       "backfillQueued": "Hesaplama sıraya alındı. Sonuçlar puan kayıtlarında görünür.",
-      "backfillLocked": "Hesaplama zaten sıraya alındı; bu sayfayı yenileyince yeniden başlatılabilir."
-    }
+      "backfillLocked": "Hesaplama zaten sıraya alındı; bu sayfayı yenileyince yeniden başlatılabilir.",
+      "flagConsequence": "“Şüpheyi doğrula” dersen işarete bağlı puanlar geri alınır. “Şüpheyi kaldır” dersen puan kalır ve işaret kapanır.",
+      "userSearch": "Kullanıcı ara",
+      "userSearchHint": "Ad ya da e-posta yaz (en az 2 karakter); sonuçtan seç.",
+      "userSearchInvalid": "En az 2 karakter yaz.",
+      "userSearchButton": "Ara",
+      "userPick": "Seç",
+      "userSelected": "Seçili kullanıcı",
+      "userChange": "Başka kullanıcı seç",
+      "waitForEntries": "Kayıtların yüklenmesini bekle.",
+      "userNone": "Kullanıcı bulunamadı.",
+      "userResults": "Arama sonuçları",
+      "userMore": "Daha fazla sonuç",
+      "userPickFirst": "Önce bir kullanıcı seç."
+    },
+    "historyLink": "Puan geçmişine git"
   },
   "faq": {
     "eyebrow": "SSS",
