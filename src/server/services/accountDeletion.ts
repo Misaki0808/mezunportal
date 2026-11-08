@@ -137,6 +137,7 @@ export async function deleteAccount(
     // Serbest metin (kişisel) beceri etiketi hiçbir profile bağlı kalmadıysa geride bırakılmaz.
     await pruneOrphanSkillTags(tx);
     await tx.fieldVisibility.deleteMany({ where: { userId } });
+    await tx.sessionFeedback.deleteMany({ where: { authorId: userId } });
     await tx.notificationPreference.deleteMany({ where: { userId } });
     await tx.notificationAction.deleteMany({ where: { userId } });
     await tx.session.deleteMany({ where: { userId } });

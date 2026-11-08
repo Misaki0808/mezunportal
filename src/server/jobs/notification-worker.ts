@@ -4,6 +4,7 @@ import { getEnv } from '@/lib/env';
 import { getDb } from '../db';
 import { getStorage } from '../external/storage';
 import { purgeFiles } from '../services/files-purge';
+import { scheduleFeedbackPrompts } from './feedback-task';
 import { alumniStillThere, profileFreshness, studentEmailMigration } from './notification-tasks';
 
 /** Görev adları dışında kişi, bağlantı ve sağlayıcı hata bilgisi günlüğe yazılmaz. */
@@ -21,6 +22,7 @@ export async function createNotificationRuntime() {
     'alumni.stillThere': () => alumniStillThere(getDb()),
     'student.emailMigration': () => studentEmailMigration(getDb()),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
+    'appointment.feedback': () => scheduleFeedbackPrompts(getDb()),
   };
   try {
     await boss.start();
@@ -29,7 +31,12 @@ export async function createNotificationRuntime() {
       await boss.work(name, { batchSize: 1 }, async () => {
         await task();
       });
-      await boss.schedule(name, '0 3 * * *', {}, { tz: 'Europe/Istanbul', missed: 'once' });
+      await boss.schedule(
+        name,
+        name === 'appointment.feedback' ? '* * * * *' : '0 3 * * *',
+        {},
+        { tz: 'Europe/Istanbul', missed: 'once' },
+      );
     }
     return { stop: () => boss.stop({ graceful: true, timeout: 15_000 }) };
   } catch {
