@@ -645,3 +645,5 @@ yazılmıştı (testin beklentisi de aynı hatayı taşıyordu); mutasyon testi 
 ### P1-10 incelemesi: randevu yazımında güncel hesap ve sınırlı takvim denemesi
 
 Randevu mutasyonları yetki okunmadan önce User satırını paylaşılmış kilitle tutar; talep iki tarafı kimlik sırasıyla kilitler. Böylece askı/hesap silme yazımı beklenirken eski yetkiyle işlem tamamlanmaz ve karşılıklı taleplerde ters kilit sırası oluşmaz. Kapasite için MentorProfile, durum için Appointment kilidi korunur. Üst üste binen takvim işleri deneme hakkını satır kilidi altında ayırır; toplam üç hakkın üstüne çağrı yapmaz. Dış çağrı transaction dışında ve aynı iş anahtarıyla idempotent kalır. Hesap silme, kişinin daha önce yazdığı iptal gerekçesini de temizler; ICS metninde CR/LF'nin her biçimi kaçırılır.
+
+Randevu talebinde slotun zaman/biçim geçerliliği doluluk süzülmeden doğrulanır; dolu geçerli slotun son kararı exclusion constraint'e bırakılır. Böylece kazanan önce commit ettiğinde de, çağrılar aynı anda yazdığında da kullanıcıya aynı SLOT_TAKEN sebebi döner; liste dolu slotları göstermemeye devam eder.

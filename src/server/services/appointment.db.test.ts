@@ -783,7 +783,7 @@ describe('iptal ve link', () => {
   it('dolu slot listede/talepte yok; iptal slotu serbest bırakır (exclusion yalnız bekleyen/onaylıyı tutar)', async () => {
     const a = await confirmed();
     const other = await person();
-    await expectCode(ask(a.h, other, a.mentor, NEXT_WED_10), 'APPOINTMENT_SLOT_INVALID');
+    await expectCode(ask(a.h, other, a.mentor, NEXT_WED_10), 'APPOINTMENT_SLOT_TAKEN');
     await cancelAppointment(a.h.deps, a.mentee, { appointmentId: a.id });
     await expect(ask(a.h, other, a.mentor, NEXT_WED_10)).resolves.toMatchObject({
       status: 'REQUESTED',
@@ -1041,3 +1041,27 @@ describe('mentor-load (gerçek kapasite sayımı)', () => {
     expect((await approvedCountsThisMonth(db, [], NOW)).size).toBe(0);
   });
 });
+
+it('inceleyici: dolan geçerli slot 20 yarışta ve kazanan commitinden sonra hep SLOT_TAKEN döner', async () => {
+  for (let round = 0; round < 20; round += 1) {
+    const h = harness();
+    const mentor = await mentorWith();
+    const students = await Promise.all(Array.from({ length: 6 }, () => person()));
+    const results = await Promise.allSettled(
+      students.map((student) => ask(h, student, mentor, WED_10)),
+    );
+    expect(
+      results.filter((result) => result.status === 'fulfilled'),
+      `tur ${round + 1}`,
+    ).toHaveLength(1);
+    for (const result of results) {
+      if (result.status === 'rejected')
+        expect((result.reason as { code: string }).code).toBe('APPOINTMENT_SLOT_TAKEN');
+    }
+    // Zamanlamaya bağlı olmayan uç: doğrulama, kazananın commitinden KESİN sonra başlar.
+    await expectCode(ask(h, await person(), mentor, WED_10), 'APPOINTMENT_SLOT_TAKEN');
+    expect(await db.appointment.count({ where: { mentorId: mentor, status: 'REQUESTED' } })).toBe(
+      1,
+    );
+  }
+}, 60_000);

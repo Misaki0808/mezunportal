@@ -410,17 +410,24 @@ async function loadVisibleMentor(tx: Tx, actor: Actor, mentorId: string, now: Da
   return mentor;
 }
 
-async function slotsOf(tx: Tx, mentor: Awaited<ReturnType<typeof loadVisibleMentor>>, now: Date) {
+async function slotsOf(
+  tx: Tx,
+  mentor: Awaited<ReturnType<typeof loadVisibleMentor>>,
+  now: Date,
+  excludeBusy = true,
+) {
   const [rules, busy, fullMonths] = await Promise.all([
     tx.availabilityRule.findMany({ where: { mentorId: mentor.userId } }),
-    tx.appointment.findMany({
-      where: {
-        mentorId: mentor.userId,
-        status: { in: ['REQUESTED', 'CONFIRMED'] },
-        endsAt: { gt: now },
-      },
-      select: { startsAt: true, endsAt: true },
-    }),
+    excludeBusy
+      ? tx.appointment.findMany({
+          where: {
+            mentorId: mentor.userId,
+            status: { in: ['REQUESTED', 'CONFIRMED'] },
+            endsAt: { gt: now },
+          },
+          select: { startsAt: true, endsAt: true },
+        })
+      : Promise.resolve([]),
     fullMonthsOf(tx, mentor.userId, mentor.monthlyCapacity, now),
   ]);
   return {
@@ -492,6 +499,8 @@ export async function requestAppointment(
   const view = await deps.db.$transaction(async (tx) => {
     await lockUsers(tx, [userId, parsed.mentorId]);
     const actor = await requireMember(tx, userId, now);
+    // Onayla ortak kapasite kilidi: aynı mentorun exclusion yazımlarını serileştirir.
+    await tx.$queryRaw`SELECT "userId" FROM "MentorProfile" WHERE "userId" = ${parsed.mentorId} FOR UPDATE`;
     const mentor = await loadVisibleMentor(tx, actor, parsed.mentorId, now);
     if (
       mentor.pausedUntil !== null &&
@@ -509,7 +518,9 @@ export async function requestAppointment(
     ) {
       throw codedConflict('APPOINTMENT_CAPACITY_FULL');
     }
-    const { slots } = await slotsOf(tx, mentor, now);
+    // Doluluk slotun zaman/biçim geçerliliğini değiştirmez; dolu slot exclusion'dan SLOT_TAKEN alır.
+    const { slots, fullMonths } = await slotsOf(tx, mentor, now, false);
+    if (fullMonths.has(monthKey(parsed.startsAt))) throw codedConflict('APPOINTMENT_CAPACITY_FULL');
     const slot = findSlot(slots, parsed.startsAt, parsed.mode);
     if (!slot) throw codedConflict('APPOINTMENT_SLOT_INVALID');
     await consumeRateLimit(
