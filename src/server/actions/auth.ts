@@ -22,7 +22,8 @@ import {
 } from '@/contracts/auth';
 import type { ActionResult } from '@/contracts/result';
 import { isDevToolsEnabled } from '@/lib/app-env';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 import { getAuthEnv } from '@/lib/env';
 import { codedForbidden } from '@/lib/errors';
 
@@ -45,7 +46,7 @@ export async function getSignInOptions(): Promise<ActionResult<SignInOptions>> {
   try {
     return actionOk(authFlow.getSignInOptions(getAuthEnv()));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -55,7 +56,7 @@ export async function startLinkedInSignIn(): Promise<ActionResult<StartLinkedInS
     const context = await getRequestContext();
     return actionOk(await authFlow.startLinkedInSignIn(authFlowDeps(), context));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -75,7 +76,7 @@ export async function requestSignInLink(
       }),
     );
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -95,7 +96,7 @@ export async function requestEmailChange(
       }),
     );
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -109,7 +110,7 @@ export async function declareMembership(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await authFlow.declareMembership(authFlowDeps(), actor, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -121,7 +122,7 @@ export async function listSelectableDepartments(): Promise<
     const actor = await requireUser();
     return actionOk(await authFlow.listSelectableDepartments(getDb(), actor));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -131,7 +132,7 @@ export async function getVerificationState(): Promise<ActionResult<VerificationS
     const actor = await requireUser();
     return actionOk(await authFlow.getVerificationState(getDb(), actor));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -166,6 +167,6 @@ export async function signInAsTestPersona(
     }
     return actionOk({ signedIn: true });
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

@@ -35,7 +35,8 @@ import {
   type SuggestSimilarFaqsInput,
 } from '@/contracts/faq';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 
 import { getDb } from '../db';
 import { requireAnyAdmin, requireMentor, requireVerifiedMember } from '../permissions';
@@ -57,7 +58,7 @@ export async function suggestSimilarFaqs(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await faq.suggestSimilarFaqs(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -70,7 +71,7 @@ export async function submitFaqRequest(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await faq.submitFaqRequest(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -83,7 +84,7 @@ export async function listMyFaqRequests(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await faq.listMyFaqRequests(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -96,7 +97,7 @@ export async function listFaqRequestsForMentor(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await faq.listFaqRequestsForMentor(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -109,7 +110,7 @@ export async function answerFaqRequest(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await faq.answerFaqRequest(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -122,7 +123,7 @@ export async function listFaqModerationQueue(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await moderation.listFaqModerationQueue(deps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -133,7 +134,7 @@ export async function publishFaq(input: PublishFaqInput): Promise<ActionResult<P
     if (!parsed.ok) return parsed.failure;
     return actionOk(await moderation.publishFaq(deps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -144,7 +145,7 @@ export async function rejectFaq(input: RejectFaqInput): Promise<ActionResult<Dec
     if (!parsed.ok) return parsed.failure;
     return actionOk(await moderation.rejectFaq(deps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -155,7 +156,7 @@ export async function redirectFaq(input: RedirectFaqInput): Promise<ActionResult
     if (!parsed.ok) return parsed.failure;
     return actionOk(await moderation.redirectFaq(deps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -166,7 +167,7 @@ export async function searchFaq(input: SearchFaqInput = {}): Promise<ActionResul
     if (!parsed.ok) return parsed.failure;
     return actionOk(await faq.searchFaq(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -177,6 +178,6 @@ export async function getFaqItem(input: GetFaqItemInput): Promise<ActionResult<F
     if (!parsed.ok) return parsed.failure;
     return actionOk(await faq.getFaqItem(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

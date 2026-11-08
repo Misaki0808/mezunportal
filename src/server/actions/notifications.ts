@@ -5,7 +5,8 @@ import {
   type SetNotificationPreferencesInput,
 } from '@/contracts/notifications';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 import { getDb } from '@/server/db';
 import { requireUser } from '@/server/permissions';
 import * as preferences from '@/server/services/notification-preferences';
@@ -20,7 +21,7 @@ export async function getMyNotificationPreferences(): Promise<
     const actor = await requireUser();
     return actionOk(await preferences.getNotificationPreferences(getDb(), actor.userId));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function updateMyNotificationPreferences(
@@ -34,7 +35,7 @@ export async function updateMyNotificationPreferences(
       await preferences.setNotificationPreferences(getDb(), actor.userId, parsed.data),
     );
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -52,6 +53,6 @@ export async function answerStillThere(
     );
     return actionOk(choice ? { choice } : null);
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

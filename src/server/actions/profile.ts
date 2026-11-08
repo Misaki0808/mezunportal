@@ -11,7 +11,8 @@ import {
   type SkipOnboardingStepInput,
 } from '@/contracts/profile';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 import { getDb } from '../db';
 import * as profile from '../services/profile';
 import { requireUser } from '../permissions';
@@ -22,7 +23,7 @@ export async function getOnboardingState(): Promise<ActionResult<OnboardingState
     const actor = await requireUser();
     return actionOk(await profile.getOnboardingState(getDb(), actor.userId));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function listProfileTags(
@@ -34,7 +35,7 @@ export async function listProfileTags(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await profile.listProfileTags(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function saveOnboardingStep(
@@ -46,7 +47,7 @@ export async function saveOnboardingStep(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await profile.saveOnboardingStep(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 export async function skipOnboardingStep(
@@ -58,6 +59,6 @@ export async function skipOnboardingStep(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await profile.skipOnboardingStep(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

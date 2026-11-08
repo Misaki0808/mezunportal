@@ -6,7 +6,8 @@ import {
   type UsageMetricsFilter,
 } from '@/contracts/metrics';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 
 import { getDb } from '../db';
 import { requireAnyAdmin } from '../permissions';
@@ -25,6 +26,6 @@ export async function getUsageMetrics(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await usage.getUsageMetrics({ db: getDb() }, admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
