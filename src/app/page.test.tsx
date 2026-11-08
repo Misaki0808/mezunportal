@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getConsentState: vi.fn(),
   getOnboardingState: vi.fn(),
   getHomeSummary: vi.fn(),
+  getLandingStats: vi.fn(),
 }));
 vi.mock('@/server/permissions', () => ({
   requireUser: mocks.requireUser,
@@ -19,6 +20,15 @@ vi.mock('@/server/actions/auth', () => ({ getVerificationState: mocks.getVerific
 vi.mock('@/server/actions/privacy', () => ({ getConsentState: mocks.getConsentState }));
 vi.mock('@/server/actions/profile', () => ({ getOnboardingState: mocks.getOnboardingState }));
 vi.mock('@/server/actions/home', () => ({ getHomeSummary: mocks.getHomeSummary }));
+vi.mock('@/server/services/landing', () => ({ getLandingStats: mocks.getLandingStats }));
+vi.mock('@/components/landing/landing', () => ({
+  Landing: () => (
+    <>
+      <h1>Karşılama</h1>
+      <a href="/giris">signIn</a>
+    </>
+  ),
+}));
 vi.mock('next/navigation', () => ({
   redirect: () => {
     throw new Error('onay-redirect');
@@ -35,6 +45,12 @@ describe('HomePage', () => {
     mocks.getVerificationState.mockReset();
     mocks.getOnboardingState.mockReset();
     mocks.getOnboardingState.mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+    mocks.getLandingStats.mockResolvedValue({
+      available: true,
+      experiences: null,
+      mentors: null,
+      meetings: null,
+    });
     mocks.getHomeSummary.mockReset();
     mocks.getHomeSummary.mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
   });

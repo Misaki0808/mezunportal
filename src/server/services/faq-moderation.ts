@@ -18,7 +18,7 @@ import {
 } from '@/contracts/faq';
 import { codedConflict, codedNotFound, codedValidation } from '@/lib/errors';
 
-import { findIdentityLeak } from '../rules/faq';
+import { analyzeIdentity } from '../rules/faq';
 import {
   covers,
   idCursorWhere,
@@ -41,6 +41,9 @@ import { awardFaqInTx } from './points';
  * (`loadAnyAdmin`) ve talebin YAZILDIĞI bölümün kapsamıyla doğrulanır. Karar ve işlem kaydı AYNI işlemde yazılır. Soran ve
  * cevap verenler moderatöre görünmez; yayın metninde bu kişilerin adı/kimliği bulunamaz (`FAQ_IDENTITY_LEAK`).
  */
+
+/** Ad önekiyle eşleşen sözcük moderatörce onaylanıp yayımlandığında işlem kaydının gerekçesi. */
+const IDENTITY_WARNING_REASON = 'Ad önekiyle eşleşen sözcük kişisel bilgi değil, yayımlandı';
 
 async function lockedOpenRequest(tx: Tx, requestId: string) {
   await tx.$queryRaw`SELECT "id" FROM "FaqRequest" WHERE "id"=${requestId} FOR UPDATE`;
@@ -137,11 +140,14 @@ export async function publishFaq(
       request.askerId,
       ...request.answers.flatMap((answer) => [answer.id, answer.mentorId]),
     ].filter((id): id is string => typeof id === 'string');
-    if (
-      findIdentityLeak(parsed.question, names, identifiers) ||
-      findIdentityLeak(parsed.answer, names, identifiers)
-    )
-      throw codedValidation('FAQ_IDENTITY_LEAK');
+    const question = analyzeIdentity(parsed.question, names, identifiers);
+    const answer = analyzeIdentity(parsed.answer, names, identifiers);
+    if (question.blocked || answer.blocked) throw codedValidation('FAQ_IDENTITY_LEAK');
+    // Yalnız ad ÖNEKİ eşleşmesi engel değildir: moderatör sözcükleri görüp "kişisel bilgi değil" diyene kadar uyarı döner.
+    const warnings = [...new Set([...question.warnings, ...answer.warnings])];
+    const confirmed = warnings.length > 0 && parsed.confirmNotPersonal === true;
+    if (warnings.length > 0 && !confirmed)
+      throw codedConflict('FAQ_IDENTITY_WARNING', { matches: warnings.join(', ') });
     const item = await tx.faqItem.create({
       data: {
         sourceRequestId: request.id,
@@ -163,7 +169,12 @@ export async function publishFaq(
       action: 'MODERATION_PUBLISH',
       targetType: 'FAQ_REQUEST',
       targetId: request.id,
-      metadata: { answerCount: request.answers.length },
+      // Onaylı uyarı: gerekçe sabit metindir, sözcükler kaydedilmez (yalnız sayı).
+      ...(confirmed ? { reason: IDENTITY_WARNING_REASON } : {}),
+      metadata: {
+        answerCount: request.answers.length,
+        ...(confirmed ? { identityWarningConfirmed: true, warnedWordCount: warnings.length } : {}),
+      },
     });
     // Bildirimler (outbox): soran ve cevabı bulunan mentorlar; metinlerde ad/içerik yok.
     if (request.askerId)
