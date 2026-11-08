@@ -10,6 +10,7 @@ import type { StorageAdapter } from '../external/storage';
 import { createPermissions } from '../permissions/guards';
 import { emitEvent, subjectFromActor } from './event';
 import { requireConsent } from './privacy';
+import { stageNotification } from './notification-intent';
 import { visibleMentorWhere } from './mentor-directory';
 import { viewerUniversityIds } from './search';
 import { monthRange } from '../rules/appointmentSlots';
@@ -157,6 +158,11 @@ export async function createRequest(
       },
       select,
     });
+    await stageNotification(tx, row.mentorId, {
+      type: 'cvReview',
+      event: 'requested',
+      requestId: row.id,
+    });
     return { row, subject: subjectFromActor(person) };
   });
   // Metrik kişisel içerik taşımaz; olay yazımı iş sonucunu etkileyemez.
@@ -210,6 +216,11 @@ export async function answerRequest(
         select,
       });
       await releaseOldFile(tx, deps.storage, updated);
+      await stageNotification(tx, updated.studentId, {
+        type: 'cvReview',
+        event: 'answered',
+        requestId: updated.id,
+      });
       return updated;
     },
     { timeout: 30000 },
@@ -305,6 +316,11 @@ export async function expireRequests(deps: CvReviewDeps) {
         if (!row || row.status !== 'OPEN' || row.expiresAt > now) return false;
         await tx.cvReviewRequest.update({ where: { id: row.id }, data: { status: 'EXPIRED' } });
         await releaseOldFile(tx, deps.storage, row);
+        await stageNotification(tx, row.studentId, {
+          type: 'cvReview',
+          event: 'expired',
+          requestId: row.id,
+        });
         return true;
       },
       { timeout: 30000 },

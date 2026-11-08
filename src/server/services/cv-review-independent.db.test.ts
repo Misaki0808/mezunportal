@@ -24,6 +24,7 @@ import {
 import { applyCv } from './cv';
 import { purgeFiles } from './files-purge';
 import { settleEvents } from './event';
+import { relayNotificationIntents, stageNotification } from './notification-intent';
 import { buildDataExport } from './dataExport';
 
 const db = createTestPrisma();
@@ -302,4 +303,76 @@ it('inceleyici: başka üniversite ve askıdaki/silinmiş mentor talep alamaz; g
     createRequest(h.deps, h.student, { mentorId: h.mentor, note: 'Yasak' }),
   ).rejects.toMatchObject({ code: 'AUTH_ACCOUNT_SUSPENDED' });
   expect(await db.cvReviewRequest.count({ where: { mentorId: h.mentor } })).toBe(0);
+});
+
+it('inceleyici: kuyruk kesilince CV talebi ve kişisel verisiz niyet kalır; telafi aynı iş anahtarıyla tekilleşir', async () => {
+  const h = await fixture(),
+    deps = {
+      ...h.deps,
+      notify: async () => {
+        throw new Error('Sahte kuyruk kesintisi');
+      },
+    };
+  const request = await createRequest(deps, h.student, {
+    mentorId: h.mentor,
+    note: 'Niyete yazılmayan kişisel not',
+  });
+  const payload = { type: 'cvReview' as const, event: 'requested' as const, requestId: request.id };
+  expect(await db.notificationIntent.count({ where: { userId: h.mentor } })).toBe(1);
+  const intent = await db.notificationIntent.findFirstOrThrow({ where: { userId: h.mentor } });
+  expect(intent.payload).toEqual(payload);
+  expect((await db.cvReviewRequest.findUniqueOrThrow({ where: { id: request.id } })).status).toBe(
+    'OPEN',
+  );
+  await db.$transaction((tx) => stageNotification(tx, h.mentor, payload));
+  expect(await db.notificationIntent.count({ where: { userId: h.mentor } })).toBe(1);
+  await relayNotificationIntents(db, async () => {
+    throw new Error('Sahte kuyruk kesintisi');
+  });
+  expect(await db.notificationIntent.count({ where: { userId: h.mentor } })).toBe(1);
+  let delivered = 0;
+  const send = async (row: { userId: string }) => {
+    if (row.userId !== h.mentor) throw new Error('Başka örnek veri');
+    delivered++;
+  };
+  await relayNotificationIntents(db, send);
+  await relayNotificationIntents(db, send);
+  expect(delivered).toBe(1);
+  expect(await db.notificationIntent.count({ where: { userId: h.mentor } })).toBe(0);
+  await answerRequest(deps, h.mentor, {
+    requestId: request.id,
+    comment: 'Niyete yazılmayan yanıt',
+  });
+  expect(
+    (await db.notificationIntent.findMany({ where: { userId: h.student } })).map(
+      (row) => row.payload,
+    ),
+  ).toEqual([{ type: 'cvReview', event: 'answered', requestId: request.id }]);
+  const second = await createRequest(deps, h.student, { mentorId: h.mentor, note: 'İkinci not' });
+  await expireRequests({ ...deps, now: () => new Date(now.getTime() + 14 * 86400000) });
+  expect(
+    await db.notificationIntent.count({
+      where: { userId: h.student, payload: { path: ['requestId'], equals: second.id } },
+    }),
+  ).toBe(1);
+});
+it('inceleyici: niyet yazımı geri alınırsa talep de kısmi oluşmaz', async () => {
+  const h = await fixture();
+  const broken = db.$extends({
+    query: {
+      notificationIntent: {
+        upsert: async () => {
+          throw new Error('Sahte niyet yazım hatası');
+        },
+      },
+    },
+  });
+  await expect(
+    createRequest({ ...h.deps, db: broken as unknown as typeof db }, h.student, {
+      mentorId: h.mentor,
+      note: 'Geri alınan not',
+    }),
+  ).rejects.toThrow('Sahte niyet yazım hatası');
+  expect(await db.cvReviewRequest.count({ where: { studentId: h.student } })).toBe(0);
+  expect(await db.notificationIntent.count({ where: { userId: h.mentor } })).toBe(0);
 });

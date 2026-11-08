@@ -2,6 +2,7 @@ import 'server-only';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { getDb } from '../db';
 import { enqueueEmail } from './email';
+import { createCvReviewNotifier } from '../services/cv-review-notifier';
 import {
   createAppointmentNotifier,
   type AppointmentNotice,
@@ -22,6 +23,19 @@ export async function sendNotificationIntent(db: PrismaClient, row: IntentRecord
       eventId: payload.eventId,
       path: payload.path,
     });
+    return;
+  }
+  if (payload.type === 'cvReview') {
+    const request = await db.cvReviewRequest.findUnique({
+      where: { id: payload.requestId },
+      select: { mentorId: true, studentId: true },
+    });
+    if (
+      !request ||
+      row.userId !== (payload.event === 'requested' ? request.mentorId : request.studentId)
+    )
+      return;
+    await createCvReviewNotifier(db)(row.userId, payload.event, payload.requestId);
     return;
   }
   const meeting = await db.appointment.findUnique({
