@@ -828,7 +828,15 @@ form sonuna almak — mobilde eylem çubuğunun hızlı erişimini kaybettirir; 
 görünümü küçülmediği için çubuk klavyenin ARKASINDA kalır; (c) seçilen: klavye açıkken akışa dön, kapalıyken yapışkan kal. Gerçek
 cihaz doğrulaması telefon testine yazıldı (`docs/engineering.md`).
 
-**Marka paleti: İris + Mercan (kullanıcı isteği, 8 Kas).** Önceki mavi/gri palet "çok sıkıcı" bulundu; İstanbul Üniversitesi
+**Açık şüpheye yeni kanıt ve oturumsuz eylemde dönüş (kart 116).** Karar bekleyen işaret varken aynı kural için bulunan yeni
+kanıt artık sessizce atlanmaz: işarete sayaç, son görülme ve en çok 5 sayısal özet eklenir (tekrar anahtarı listesiyle
+idempotent; asıl kanıt kimlikleri değişmez, böylece onay yalnız işaretin kanıtını geri alır, kalanı sonraki tarama yeni işaretle
+yakalar). Seçenekler: (a) her yeni kanıta ayrı işaret — kısmi benzersiz indeks "tek açık işaret" kuralını bozar; (b) kanıtı
+işarete katıp onayda hepsini geri almak — yönetici görmediği kaydı geri almış olur; (c) seçilen: sayaç + özet. Oturumu düşmüş
+kullanıcının eyleminde `AUTH_UNAUTHENTICATED` her formda ayrı ele alınmaz; sunucu eylemlerinin ortak çıkışı `failAction` girişe
+`?donus=` ile yönlendirir (`safeReturnPath`), `ErrorState`'in "Giriş yap" bağlantısı da aynı yolu taşır.
+
+**Marka paleti: İris + Mercan (kullanıcı isteği ve açık onayı, 8 Kas).** Önceki mavi/gri palet "çok sıkıcı" bulundu; İstanbul Üniversitesi
 renklerine dayanmama kararı verildi. Seçilen: İris `#5B5BF6` ana, Mercan `#FF7A59` vurgu, Nane `#0F9F8F` destek, sıcak nötrler,
 yalnız büyük alanda marka geçişi, `prefers-color-scheme` ile koyu tema; başlık Plus Jakarta Sans, metin Inter
 (`next/font/google`, kendinden barındırılır; yeni npm bağımlılığı yok). Mercan zeminde metin koyu (beyaz AA değil), `primary`

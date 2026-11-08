@@ -449,6 +449,256 @@ describe('şüphe taraması', () => {
   });
 });
 
+/** Aynı ikiliden doğrudan ek puan kaydı (yeni kanıt üretmek için; görüşme kurulumu gerekmez). */
+async function extraEntry(mentor: string, student: string, eventAt: Date, points = 4) {
+  return db.pointEntry.create({
+    data: {
+      userId: mentor,
+      action: 'SESSION_ONLINE',
+      sourceType: 'APPOINTMENT',
+      sourceId: `ek-${Math.random().toString(36).slice(2)}`,
+      counterpartId: student,
+      basePoints: points,
+      points,
+      status: 'FINAL',
+      eventAt,
+    },
+  });
+}
+
+describe('açık şüpheye yeni kanıt (kart 116)', () => {
+  it('açık işaret varken aynı kural için yeni kanıt sayaç + son görülme olarak eklenir; yeni işaret açılmaz', async () => {
+    const { mentor, student } = await repeatedPair();
+    await scan();
+    const [before] = await flagsOf(mentor);
+    expect(before).toMatchObject({ recurrenceCount: 0, lastSeenAt: null, recentEvidence: [] });
+
+    await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'), 4);
+    const out = await scan();
+    expect(out.flagged).toBe(0); // yeni işaret açılmadı
+    const flags = await flagsOf(mentor);
+    expect(flags).toHaveLength(1);
+    expect(flags[0]).toMatchObject({
+      id: before!.id,
+      status: 'OPEN',
+      recurrenceCount: 1,
+      lastSeenAt: now,
+      evidenceKey: before!.evidenceKey, // asıl kanıt değişmez
+      entryCount: 3,
+      points: 17,
+    });
+    expect(flags[0]!.entryIds).toEqual(before!.entryIds);
+    expect(flags[0]!.seenEvidenceKeys).toHaveLength(1);
+    expect(flags[0]!.recentEvidence).toEqual([
+      { at: now.toISOString(), entryCount: 4, points: 21 },
+    ]);
+  });
+
+  it('idempotent: aynı tarama iki kez sayacı bir kez artırır; her yeni kanıt bir artırır', async () => {
+    const { mentor, student } = await repeatedPair();
+    await scan();
+    await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
+    await scan();
+    await scan();
+    await scan();
+    expect((await flagsOf(mentor))[0]).toMatchObject({ recurrenceCount: 1 });
+    await extraEntry(mentor, student, new Date('2030-06-16T10:00:00Z'));
+    await scan();
+    await scan();
+    const [flag] = await flagsOf(mentor);
+    expect(flag).toMatchObject({ recurrenceCount: 2 });
+    expect(flag!.seenEvidenceKeys).toHaveLength(2);
+    // en yeni özet başta
+    expect(flag!.recentEvidence).toMatchObject([{ entryCount: 5 }, { entryCount: 4 }]);
+  });
+
+  it('eşzamanlı iki tarama aynı kanıtı bir kez sayar', async () => {
+    const { mentor, student } = await repeatedPair();
+    await scan();
+    await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
+    await Promise.all([scan(), scan()]);
+    expect((await flagsOf(mentor))[0]).toMatchObject({ recurrenceCount: 1 });
+  });
+
+  it('GERÇEK YARIŞ: iki tarama açık işareti aynı anda okur; satır kilidi ikincisini bekletir, kanıt bir kez sayılır', async () => {
+    const { mentor, student } = await repeatedPair();
+    await scan();
+    await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
+    // Bariyer: işaretin okunduğu noktada iki işlem de buraya gelirse (kilit yoksa) birlikte yazar. Kilit varsa ikincisi
+    // kilitte bekler; bariyer 400 ms sonra serbest kalır ve ikinci işlem birincinin yazdığını görür.
+    let arrived = 0;
+    let open: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => (open = resolve));
+    const raced = new Proxy(db, {
+      get(target, prop) {
+        const value = Reflect.get(target, prop, target) as unknown;
+        if (prop !== '$transaction')
+          return typeof value === 'function' ? value.bind(target) : value;
+        return (fn: (tx: unknown) => Promise<unknown>, options?: unknown) =>
+          (target.$transaction as (f: unknown, o?: unknown) => Promise<unknown>)(
+            async (tx: typeof db) =>
+              fn(
+                new Proxy(tx, {
+                  get(inner, name) {
+                    const member = Reflect.get(inner, name, inner) as unknown;
+                    if (name !== 'suspicionFlag') {
+                      return typeof member === 'function' ? member.bind(inner) : member;
+                    }
+                    return new Proxy(inner.suspicionFlag, {
+                      get(model, method) {
+                        const fnMember = Reflect.get(model, method, model) as unknown;
+                        if (method !== 'findUniqueOrThrow') {
+                          return typeof fnMember === 'function' ? fnMember.bind(model) : fnMember;
+                        }
+                        return async (...args: unknown[]) => {
+                          const row = await (
+                            fnMember as (...a: unknown[]) => Promise<unknown>
+                          ).apply(model, args);
+                          arrived += 1;
+                          if (arrived >= 2) open();
+                          await Promise.race([gate, new Promise((r) => setTimeout(r, 400))]);
+                          return row;
+                        };
+                      },
+                    });
+                  },
+                }),
+              ),
+            options,
+          );
+      },
+    }) as typeof db;
+    const racedDeps = { ...deps, db: raced };
+    await Promise.all([runSuspicionScan(racedDeps), runSuspicionScan(racedDeps)]);
+    const [flag] = await flagsOf(mentor);
+    expect(flag).toMatchObject({ recurrenceCount: 1 });
+    expect(flag!.seenEvidenceKeys).toHaveLength(1);
+    expect(flag!.recentEvidence as unknown[]).toHaveLength(1);
+  });
+
+  it('özet en çok 5, tekrar anahtarı en çok 20 tutulur; sayaç sınırsız artar', async () => {
+    const { mentor, student } = await repeatedPair();
+    await scan();
+    const [flag] = await flagsOf(mentor);
+    await db.suspicionFlag.update({
+      where: { id: flag!.id },
+      data: {
+        recurrenceCount: 40,
+        seenEvidenceKeys: Array.from({ length: 20 }, (_, i) => `eski-${i}`),
+        recentEvidence: Array.from({ length: 5 }, (_, i) => ({
+          at: new Date(now.getTime() - (i + 1) * DAY).toISOString(),
+          entryCount: i,
+          points: i,
+        })),
+      },
+    });
+    await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
+    await scan();
+    const [after] = await flagsOf(mentor);
+    expect(after!.recurrenceCount).toBe(41);
+    expect(after!.seenEvidenceKeys).toHaveLength(20);
+    expect(after!.seenEvidenceKeys).not.toContain('eski-0'); // en eski düştü
+    expect(after!.recentEvidence).toHaveLength(5);
+    expect((after!.recentEvidence as { entryCount: number }[]).map((e) => e.entryCount)).toEqual([
+      4, 0, 1, 2, 3,
+    ]); // yeni başta; en eski (4) düştü
+  });
+
+  it('karar verilmiş + açık işaret birlikteyken yeni kanıt YALNIZ açık işarete sayılır', async () => {
+    const { mentor, student } = await repeatedPair();
+    await scan();
+    const [first] = await flagsOf(mentor);
+    await decideSuspicion(deps, admin, {
+      flagId: first!.id,
+      decision: 'DISMISS',
+      reason: 'Gerçek',
+    });
+    await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
+    await scan(); // yeni açık işaret
+    await extraEntry(mentor, student, new Date('2030-06-16T10:00:00Z'));
+    await scan(); // açık işarete yeni kanıt
+    const flags = await flagsOf(mentor);
+    expect(flags).toHaveLength(2);
+    expect(flags.find((f) => f.id === first!.id)).toMatchObject({
+      status: 'DISMISSED',
+      recurrenceCount: 0,
+      lastSeenAt: null,
+    });
+    expect(flags.find((f) => f.id !== first!.id)).toMatchObject({
+      status: 'OPEN',
+      recurrenceCount: 1,
+    });
+  });
+
+  it('karardan sonra yeni kanıt YENİ işaret açar (karar verilmiş işarete sayaç eklenmez)', async () => {
+    const { mentor, student } = await repeatedPair();
+    await scan();
+    const [first] = await flagsOf(mentor);
+    await decideSuspicion(deps, admin, {
+      flagId: first!.id,
+      decision: 'DISMISS',
+      reason: 'Gerçek',
+    });
+    await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
+    const out = await scan();
+    expect(out.flagged).toBe(1);
+    const flags = await flagsOf(mentor);
+    expect(flags).toHaveLength(2);
+    expect(flags.find((f) => f.id === first!.id)).toMatchObject({
+      status: 'DISMISSED',
+      recurrenceCount: 0,
+    });
+    expect(flags.find((f) => f.id !== first!.id)).toMatchObject({
+      status: 'OPEN',
+      recurrenceCount: 0,
+      entryCount: 4,
+    });
+  });
+
+  it('aynı kanıt (değişmemiş) hiçbir şeyi artırmaz; farklı kural için ayrı işaret kendi sayacını tutar', async () => {
+    const { mentor, student } = await repeatedPair(10_000); // SINGLE_COUNTERPART + SYNC_FEEDBACK
+    await scan();
+    await scan();
+    expect((await flagsOf(mentor)).map((f) => f.recurrenceCount)).toEqual([0, 0]);
+    await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
+    await scan();
+    const flags = await flagsOf(mentor);
+    const single = flags.find((f) => f.rule === 'SINGLE_COUNTERPART')!;
+    const sync = flags.find((f) => f.rule === 'SYNC_FEEDBACK')!;
+    expect(single.recurrenceCount).toBe(1); // yeni giriş tek karşı tarafın payını değiştirdi
+    expect(sync.recurrenceCount).toBe(0); // senkron görüşme kanıtı değişmedi
+  });
+
+  it('yönetici listesi sayaç, son görülme ve özeti verir; kişisel veri/kimlik çıkmaz', async () => {
+    const { mentor, student } = await repeatedPair();
+    await scan();
+    await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
+    await scan();
+    const page = await listSuspicionFlags(deps, admin, { limit: 50 });
+    const mine = page.items.find((i) => i.userId === mentor)!;
+    expect(mine.details).toMatchObject({
+      recurrenceCount: 1,
+      lastSeenAt: now,
+      recentEvidence: [{ at: now, entryCount: 4, points: 21 }],
+    });
+    const text = JSON.stringify(page);
+    const flag = (await flagsOf(mentor))[0]!;
+    for (const secret of [...flag.seenEvidenceKeys, flag.evidenceKey, student])
+      expect(text).not.toContain(secret);
+  });
+
+  it('bozuk saklı özet listeyi bozmaz (boş liste sayılır)', async () => {
+    const { mentor } = await repeatedPair();
+    await scan();
+    await db.suspicionFlag.updateMany({
+      where: { userId: mentor },
+      data: { recentEvidence: [{ yanlis: true }] },
+    });
+    const page = await listSuspicionFlags(deps, admin, { limit: 50 });
+    expect(page.items.find((i) => i.userId === mentor)!.details.recentEvidence).toEqual([]);
+  });
+});
+
 describe('şüphe kararı', () => {
   it('işaret varken bekleyen puan kesinleşmez; ret sonrası kesinleşir, puana dokunulmaz, aynı kanıt yeniden işaretlenmez', async () => {
     const { mentor, student } = await repeatedPair();

@@ -7,7 +7,8 @@ import {
   type SearchSectors,
 } from '@/contracts/search';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 
 import { getDb } from '../db';
 import { requireVerifiedMember } from '../permissions';
@@ -26,7 +27,7 @@ export async function searchExperiences(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await search.searchExperiences({ db: getDb() }, actor, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -36,6 +37,6 @@ export async function listSearchSectors(): Promise<ActionResult<SearchSectors>> 
     const actor = await requireVerifiedMember();
     return actionOk(await search.listSearchSectors({ db: getDb() }, actor));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }

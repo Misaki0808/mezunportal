@@ -29,7 +29,8 @@ import {
   unsuspendUserSchema,
 } from '@/contracts/admin-users';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 import { requireAdmin, requireAnyAdmin } from '../permissions';
 import * as panel from '../services/admin-panel';
 import * as users from '../services/admin-users';
@@ -51,7 +52,7 @@ export async function searchUsers(input: SearchUsersInput): Promise<ActionResult
     if (!parsed.ok) return parsed.failure;
     return actionOk(await panel.searchUsers(adminUserDeps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -64,7 +65,7 @@ export async function getUserDetail(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await panel.getUserDetail(adminUserDeps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -78,7 +79,7 @@ export async function suspendUser(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await users.suspendUser(adminUserDeps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -92,7 +93,7 @@ export async function unsuspendUser(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await users.unsuspendUser(adminUserDeps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -106,7 +107,7 @@ export async function correctMembership(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await users.correctMembership(adminUserDeps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -119,7 +120,7 @@ export async function listAdminGrants(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await panel.listAdminGrants(adminUserDeps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -131,7 +132,7 @@ export async function grantAdmin(input: GrantAdminInput): Promise<ActionResult<G
     if (!parsed.ok) return parsed.failure;
     return actionOk(await users.grantAdmin(adminUserDeps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -145,6 +146,6 @@ export async function revokeAdmin(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await users.revokeAdmin(adminUserDeps(), admin.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
