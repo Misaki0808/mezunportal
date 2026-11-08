@@ -415,6 +415,7 @@ export const AUDIT_TARGET_TYPE_NAMES = [
   'DICTIONARY_ENTRY',
   'UNMATCHED_VALUE',
   'EMPLOYMENT_REPORT',
+  'USAGE_METRICS',
 ] as const;
 
 export const listAuditLogSchema = z

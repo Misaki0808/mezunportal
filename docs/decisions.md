@@ -627,6 +627,24 @@ değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki y�
 Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
 kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 
+## 2026-11-08 · Kullanım metrikleri: kişisel veri içermeyen olay, bastırılmış panel (P1-13)
+Kendi `Event` tablomuz; üçüncü taraf analitik yok. Kişisel veri koruması üç katmanlıdır: tür başına `strict` Zod şeması (serbest
+metin alanı hiç yok, arama olayında yalnız süzgeç TÜRÜ ve sonuç kovası), veritabanı CHECK'i (düz nesne, kısa, `@`/uzun rakam
+yok) ve panelde küçük hücre bastırma (ayrı kullanıcı < 3 → `OTHER`, o da < 3 ise gizli). Olay yazımı işlem dışından, ateşle-ve-unut
+yapılır: başarısız ekleme açık işlemi bozmaz ve hata kullanıcı akışına yansımaz; profil eşiği olayı yazım işlemi bittikten sonra
+önceki/sonraki skor karşılaştırmasıyla bir kez yazılır. Rol ve bölüm olay anındaki birincil üyelikten (akademisyen > mezun >
+öğrenci) anlık görüntü olarak saklanır; sonradan rol değişse de geçmiş sayı kayar. Anonim deneyim yayın olayı kullanıcıya,
+role ve bölüme bağlanmaz (anonimlik sızmasın); küçük hücre gizleniyorsa tür toplamı da gizlenir. Saklama: hesap silmede `userId` hemen,
+24 ay sonra `detachOldEvents` ile kopar (zamanlı iş TD-014). Panel kapsamı `admin-access` yardımcılarıyla yüklenir (yetki işlemin içinde yeniden okunur). Excel ExcelJS ile (#32 ile aynı sürüm), `DATA_EXPORT` kaydı hedefi `USAGE_METRICS`.
+
+
+
+### P1-13 bağımsız inceleme düzeltmesi
+
+Panel ve Excel işlemleri işlem içinde zorunlu rızayı kontrol eder. Gizlenen küçük hücre varsa tür toplamı da gizlenir;
+böylece gösterilen hücrelerin toplamdan çıkarılmasıyla küçük grubun sayısı açığa çıkmaz. Olay yazımı kullanıcı satırıyla
+silinmeye karşı sıralanır ve silinmiş hesap tekrar bağlanmaz; eşzamanlı profil eşiği yazımları tekilleştirilir. CV uygulamasında eşik için skorlar işlem içinde alınır; işlemden sonra başarısız ek sorgu kullanıcıya yanlış hata döndürmez.
+
 ## 2026-11-08 · Randevu motoru: veritabanı kısıtı, takvim süpürmesi, kapasite tanımı (P1-10)
 Çakışma kuralı iki exclusion constraint'tir (mentor ve öğrenci için, yalnız `REQUESTED`/`CONFIRMED`) ve aynı öğrencinin aynı
 mentora yanıt bekleyen tek talebi kısmi benzersiz indeksle sınırlanır; servis önce slotu yeniden üretip doğrular, eşzamanlı
@@ -653,3 +671,9 @@ Bağımsız worker React server koşuluyla çalıştığından randevu e-posta k
 ### P1-11 incelemesi: yönetim sayfasında yanıt başlamadan kapsam denetimi
 
 App Router yükleme sınırı yanıtı başlattıktan sonra sayfadaki red HTTP 200 kalabildiği için yönetim layout'u mevcut yetki kapısını önce çalıştırır. Proxy'nin kendisinin yazdığı istek yolu yalnız doğru yeteneği seçer; yetki yine sunucu servisinden gelir. Kapsam dışı sayfa ve kullanıcı ayrıntısı üst grup hata sınırıyla Türkçe 404 döner; eylemlerin kendi yetki denetimleri de korunur. Ortak yönetim listeleri izin verilen uzun, boşluksuz değerleri hücre içinde böler; mobil kart ve masaüstü tablo sayfayı genişletmez.
+
+### PM kararı · Profil eşikleri ve veri saklama
+
+`PROFILE_THRESHOLD` eşik başına kullanıcıyla bağlı son 24 aylık pencerede bir kez yazılır; bağ koparıldıktan veya pencere
+dolduktan sonra yeniden geçişte yeni olay yazılabilir. KVKK veri en aza indirme için daha uzun süre yaşayan ayrı kullanıcı
+işaretçisi tutulmaz.

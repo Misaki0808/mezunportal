@@ -12,9 +12,11 @@ import {
 import type { PrismaClient } from '@/generated/prisma/client';
 import type { Actor } from '../permissions/actor';
 import { errorForDenyReason } from '../permissions/guards';
+import { SEARCH_FILTER_KEYS, resultBucketOf } from '@/contracts/metrics';
 import { searchExperienceRows, type SearchRow } from '../repositories/search';
 import { isAuthorVisible } from '../rules/authorVisibility';
 import { evaluateAccess } from '../rules/authorization';
+import { emitEvent, subjectFromActor, usedFilterKeys } from './event';
 
 export type SearchDeps = { db: PrismaClient; now?: () => Date };
 
@@ -94,6 +96,18 @@ export async function searchExperiences(
     page: filter.page,
     pageSize: filter.pageSize,
   });
+  emitEvent(
+    deps.db,
+    actor.userId,
+    {
+      type: 'SEARCH',
+      props: {
+        filters: usedFilterKeys(filter, SEARCH_FILTER_KEYS),
+        results: resultBucketOf(total),
+      },
+    },
+    subjectFromActor(actor),
+  );
   return searchPageSchema.parse({
     items: rows.map((row) => toResult(row, now)),
     page: filter.page,
