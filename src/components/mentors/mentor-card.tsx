@@ -31,7 +31,7 @@ export function MentorCard({
   const topics = mentor.topics.filter((slug) => tags.has(slug as TopicKey));
 
   return (
-    <article className="rounded-card border border-border bg-bg p-5 shadow-card">
+    <article className="min-w-0 rounded-card border border-border bg-bg p-5 shadow-card [overflow-wrap:anywhere]">
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone={availability.available ? 'success' : 'warning'}>{availabilityText}</Badge>
         <Badge tone="info">{t(`types.${mentor.mentorType}`)}</Badge>
@@ -70,7 +70,8 @@ export function MentorCard({
               {mentor.skills.map((skill) => (
                 <li
                   key={skill}
-                  className="rounded-full bg-surface-strong px-3 py-1 text-sm text-fg"
+                  title={skill}
+                  className="max-w-full truncate rounded-full bg-surface-strong px-3 py-1 text-sm text-fg"
                 >
                   {skill}
                 </li>

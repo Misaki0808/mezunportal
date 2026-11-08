@@ -33,8 +33,8 @@ export function SimilarMentors({ data }: { data: SimilarMentorsData }) {
             <MentorCard mentor={item.mentor} compact />
             <ul aria-label={t('because')} className="mt-2 flex flex-wrap gap-2">
               {item.reasons.map((reason) => (
-                <li key={reason.code}>
-                  <Badge tone="info">
+                <li key={reason.code} className="min-w-0 max-w-full">
+                  <Badge tone="info" className="max-w-full [overflow-wrap:anywhere]">
                     {t(`reasons.${reason.code}`)}:{' '}
                     {reason.values.map((value) => valueOf(reason.code, value)).join(', ')}
                   </Badge>

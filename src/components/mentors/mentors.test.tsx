@@ -10,8 +10,12 @@ import { MentorDirectory } from './mentor-directory';
 import { MentorEntryPoints } from './mentor-entry-points';
 import { SimilarMentors } from './similar-mentors';
 
-const router = vi.hoisted(() => ({ push: vi.fn() }));
+const router = vi.hoisted(() => ({ push: vi.fn(), pending: false }));
 vi.mock('next/navigation', () => ({ useRouter: () => router }));
+vi.mock('react', async (original) => ({
+  ...(await original<typeof import('react')>()),
+  useTransition: () => [router.pending, (run: () => void) => run()],
+}));
 
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function showModal() {
@@ -21,7 +25,10 @@ beforeAll(() => {
     this.removeAttribute('open');
   };
 });
-beforeEach(() => router.push.mockReset());
+beforeEach(() => {
+  router.push.mockReset();
+  router.pending = false;
+});
 
 const mentor = (over: Partial<MentorCardData> = {}): MentorCardData => ({
   userId: 'm1',
@@ -252,4 +259,20 @@ describe('mentor dizini', () => {
     expect(screen.getByText('Aynı bölüm: Yönetim Bilişim Sistemleri')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Ayşe Demir' })).toBeInTheDocument();
   });
+});
+
+it('inceleyici: bekleyen gezinmede Uygula, çip kaldırma ve temizle ikinci gönderim yapmaz', async () => {
+  router.pending = true;
+  const { user } = renderUi(
+    <MentorDirectory
+      filter={{ company: 'Örnek' }}
+      results={page([mentor()])}
+      sectors={sectors}
+      similar={null}
+    />,
+  );
+  expect(screen.getByRole('button', { name: /^Uygula/ })).toBeDisabled();
+  await user.click(screen.getByRole('button', { name: 'Örnek etiketini kaldır' }));
+  await user.click(screen.getByRole('button', { name: 'Filtreleri temizle' }));
+  expect(router.push).not.toHaveBeenCalled();
 });

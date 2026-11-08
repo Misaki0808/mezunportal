@@ -58,6 +58,7 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
 
   /** Geçerliyse URL'e yazar (`true`); geçersizse alan hatasını gösterir ve `false` döner. */
   function go(next: Filter): boolean {
+    if (pending) return false;
     const parsed = searchMentorsSchema.safeParse(next);
     if (!parsed.success) {
       setInvalid(true);

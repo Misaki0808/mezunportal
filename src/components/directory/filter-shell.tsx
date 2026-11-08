@@ -50,6 +50,9 @@ export function FilterShell({
 }: Props) {
   const t = useTranslations('directory');
   const [open, setOpen] = useState(false);
+  const pendingState = pending
+    ? { disabled: true as const, disabledReason: t('loading') }
+    : { disabled: false as const };
 
   function close() {
     onReset();
@@ -72,6 +75,7 @@ export function FilterShell({
           <>
             <Button
               loading={pending}
+              {...pendingState}
               onClick={() => {
                 if (onApply() !== false) setOpen(false);
               }}
@@ -91,7 +95,7 @@ export function FilterShell({
           <h2 className="mb-5 text-lg font-semibold">{t('filters')}</h2>
           {children}
           <div className="mt-6">
-            <Button fullWidth loading={pending} onClick={onApply}>
+            <Button fullWidth loading={pending} {...pendingState} onClick={onApply}>
               {t('apply')}
             </Button>
           </div>
