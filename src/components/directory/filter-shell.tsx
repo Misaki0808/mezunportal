@@ -3,7 +3,9 @@
 import { useTranslations } from 'next-intl';
 import { useState, type ReactNode } from 'react';
 
-import { Button, Sheet, Skeleton, Tag } from '@/components/ui';
+import { Button, Sheet, Skeleton } from '@/components/ui';
+
+import { FilterChip } from './filter-chip';
 
 export type ActiveFilter = { key: string; label: string; onRemove: () => void };
 
@@ -69,6 +71,7 @@ export function FilterShell({
         footer={
           <>
             <Button
+              loading={pending}
               onClick={() => {
                 if (onApply() !== false) setOpen(false);
               }}
@@ -88,12 +91,12 @@ export function FilterShell({
           <h2 className="mb-5 text-lg font-semibold">{t('filters')}</h2>
           {children}
           <div className="mt-6">
-            <Button fullWidth onClick={onApply}>
+            <Button fullWidth loading={pending} onClick={onApply}>
               {t('apply')}
             </Button>
           </div>
         </aside>
-        <section aria-busy={pending}>
+        <section aria-busy={pending} className="min-w-0">
           {lead}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="font-semibold" aria-live="polite">
@@ -108,7 +111,7 @@ export function FilterShell({
           {active.length > 0 && (
             <div aria-label={t('active')} className="mt-4 flex flex-wrap gap-2">
               {active.map((chip) => (
-                <Tag key={chip.key} label={chip.label} onRemove={chip.onRemove} />
+                <FilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
               ))}
             </div>
           )}
