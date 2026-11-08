@@ -158,7 +158,7 @@
       "onlyAvailable": "Yalnız müsait olanlar",
       "onlyAvailableHint": "Ara vermiş ya da bu ay kapasitesi dolan mentorlar gizlenir.",
       "all": "Tümü",
-      "noSectors": "Sektör listesi şu an yüklenemedi.",
+      "noSectors": "Henüz seçilebilir sektör yok.",
       "invalid": "En az 2 karakter yaz."
     },
     "types": {
