@@ -59,6 +59,7 @@ model Department {
   events              Event[]
   jobPostings         JobPosting[]
   jobPostingTargets   JobPostingDepartment[]
+  referralClaims      ReferralClaim[]
 
   @@unique([facultyId, code])
   @@unique([facultyId, name])
@@ -179,6 +180,10 @@ model User {
   endedJobPostings      JobPosting[]       @relation("JobPostingEnder")
   jobPostingReports     JobPostingReport[] @relation("JobPostingReporter")
   reviewedJobReports    JobPostingReport[] @relation("JobPostingReportReviewer")
+  givenReferrals        ReferralClaim[]    @relation("ReferralAlumnus")
+  receivedReferrals     ReferralClaim[]    @relation("ReferralStudent")
+  reviewedReferrals     ReferralClaim[]    @relation("ReferralReviewer")
+  reviewedAcceptances   ReferralClaim[]    @relation("ReferralAcceptanceReviewer")
 }
 
 enum NotificationIntentStatus {
@@ -220,6 +225,7 @@ enum NotificationType {
   APPOINTMENT
   FAQ
   JOB_POSTING
+  REFERRAL
   JOB_MATCH
   APPLICATION_WINDOW
 }
@@ -1287,6 +1293,8 @@ enum PointAction {
   SESSION_IN_PERSON
   /// P2-04: veritabanı enum sırası ekleme sırasıdır (sona eklenir); `POINT_ACTIONS` sırası aynıdır.
   JOB_POSTING_PUBLISHED
+  REFERRAL_GIVEN
+  REFERRAL_ACCEPTED
 }
 
 enum PointSourceType {
@@ -1296,6 +1304,7 @@ enum PointSourceType {
   FAQ_REQUEST
   FAQ_ANSWER
   JOB_POSTING
+  REFERRAL
 }
 
 enum PointStatus {
@@ -1309,12 +1318,15 @@ enum PointRevokeReason {
   FRAUD_CONFIRMED
   /// Puanı doğuran ilan kesinleşmeden geri çekildi/kaldırıldı (P2-04).
   POSTING_WITHDRAWN
+  REFERRAL_CANCELLED
 }
 
 enum SuspicionRule {
   BURST
   SINGLE_COUNTERPART
   SYNC_FEEDBACK
+  REFERRAL_REPEAT
+  REFERRAL_BURST
 }
 
 enum SuspicionStatus {
@@ -1563,6 +1575,7 @@ model JobPosting {
   matches         JobMatch[]
   reports         JobPostingReport[]
   contactRequests ContactRequest[]
+  referrals       ReferralClaim[]
 
   @@index([authorId, updatedAt])
   @@index([departmentIdAtWrite, status, createdAt])
@@ -1637,4 +1650,55 @@ model JobPostingReport {
   @@index([postingId, status])
   @@index([status, createdAt])
   @@index([reporterId])
+}
+
+/// Referans kanıt zinciri: kimlikli belge yüklenmez, iki aşamanın kararları ayrı tutulur.
+enum ReferralStatus {
+  PROPOSED
+  STUDENT_CONFIRMED
+  APPROVED
+  REJECTED
+  CANCELLED
+  ACCEPTED_PROPOSED
+  ACCEPTED_ALUMNI_CONFIRMED
+  ACCEPTED_APPROVED
+  ACCEPTED_REJECTED
+}
+
+model ReferralClaim {
+  id                     String         @id @default(uuid(7))
+  alumnusId              String
+  studentId              String
+  departmentIdAtWrite    String
+  jobPostingId           String?
+  organizationName       String?
+  note                   String?
+  status                 ReferralStatus @default(PROPOSED)
+  studentConfirmedAt     DateTime?
+  reviewedById           String?
+  reviewedAt             DateTime?
+  decisionReason         String?
+  approvedAt             DateTime?
+  cancelledAt            DateTime?
+  acceptanceNote         String?
+  acceptanceProposedAt   DateTime?
+  alumniConfirmedAt      DateTime?
+  acceptanceReviewedById String?
+  acceptanceReviewedAt   DateTime?
+  acceptanceReason       String?
+  acceptanceApprovedAt   DateTime?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  alumnus            User        @relation("ReferralAlumnus", fields: [alumnusId], references: [id], onDelete: Restrict)
+  student            User        @relation("ReferralStudent", fields: [studentId], references: [id], onDelete: Restrict)
+  department         Department  @relation(fields: [departmentIdAtWrite], references: [id], onDelete: Restrict)
+  jobPosting         JobPosting? @relation(fields: [jobPostingId], references: [id], onDelete: SetNull)
+  reviewer           User?       @relation("ReferralReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  acceptanceReviewer User?       @relation("ReferralAcceptanceReviewer", fields: [acceptanceReviewedById], references: [id], onDelete: Restrict)
+
+  @@index([alumnusId, createdAt])
+  @@index([studentId, status, createdAt])
+  @@index([departmentIdAtWrite, status, createdAt])
+  @@index([jobPostingId])
 }

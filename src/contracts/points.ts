@@ -39,6 +39,8 @@ export const POINT_ACTIONS = [
   'SESSION_IN_PERSON',
   /** Veritabanı enum sırası ekleme sırasıdır: yeni eylemler sona eklenir (P2-04). */
   'JOB_POSTING_PUBLISHED',
+  'REFERRAL_GIVEN',
+  'REFERRAL_ACCEPTED',
 ] as const;
 export type PointAction = (typeof POINT_ACTIONS)[number];
 
@@ -50,6 +52,7 @@ export const POINT_SOURCE_TYPES = [
   'FAQ_REQUEST',
   'FAQ_ANSWER',
   'JOB_POSTING',
+  'REFERRAL',
 ] as const;
 export type PointSourceType = (typeof POINT_SOURCE_TYPES)[number];
 
@@ -62,6 +65,7 @@ export const POINT_REVOKE_REASONS = [
   'ADMIN_CANCEL',
   'FRAUD_CONFIRMED',
   'POSTING_WITHDRAWN',
+  'REFERRAL_CANCELLED',
 ] as const;
 export type PointRevokeReason = (typeof POINT_REVOKE_REASONS)[number];
 
@@ -74,7 +78,13 @@ export const SESSION_POINT_ACTIONS = [
 export const BADGE_KINDS = ['FOUNDING_MEMBER'] as const;
 export type BadgeKind = (typeof BADGE_KINDS)[number];
 
-export const SUSPICION_RULES = ['BURST', 'SINGLE_COUNTERPART', 'SYNC_FEEDBACK'] as const;
+export const SUSPICION_RULES = [
+  'BURST',
+  'SINGLE_COUNTERPART',
+  'SYNC_FEEDBACK',
+  'REFERRAL_REPEAT',
+  'REFERRAL_BURST',
+] as const;
 export type SuspicionRule = (typeof SUSPICION_RULES)[number];
 export const SUSPICION_STATUSES = ['OPEN', 'CONFIRMED', 'DISMISSED'] as const;
 export type SuspicionStatus = (typeof SUSPICION_STATUSES)[number];
@@ -91,6 +101,8 @@ export const DEFAULT_POINT_RULES: Readonly<
   FAQ_ANSWER_PARTICIPATION: { points: 1, delayDays: 0 },
   /** İlan (P2-04, PM kararı): 5 puan, yayından 7 gün sonra kesinleşir; ayda en çok 3 ilan puan getirir (`rules/points`). */
   JOB_POSTING_PUBLISHED: { points: 5, delayDays: 7 },
+  REFERRAL_GIVEN: { points: 20, delayDays: 14 },
+  REFERRAL_ACCEPTED: { points: 30, delayDays: 14 },
   CV_REVIEW_HELPFUL: { points: 3, delayDays: 0 },
   SESSION_ONLINE: { points: 10, delayDays: 0 },
   SESSION_IN_PERSON: { points: 15, delayDays: 7 },

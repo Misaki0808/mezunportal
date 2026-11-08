@@ -14,6 +14,7 @@ export const NOTIFICATION_TYPES = [
   'APPOINTMENT',
   'FAQ',
   'JOB_POSTING',
+  'REFERRAL',
   'JOB_MATCH',
   'APPLICATION_WINDOW',
 ] as const;
@@ -31,6 +32,7 @@ export const NOTIFICATION_CATALOG = {
   APPOINTMENT: { mandatory: false },
   FAQ: { mandatory: false },
   JOB_POSTING: { mandatory: false },
+  REFERRAL: { mandatory: false },
   JOB_MATCH: { mandatory: false },
   APPLICATION_WINDOW: { mandatory: false },
 } as const satisfies Record<NotificationType, { mandatory: boolean }>;

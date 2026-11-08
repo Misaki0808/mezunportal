@@ -13,6 +13,7 @@ import {
   detectBurst,
   detectSingleCounterpart,
   detectSyncFeedback,
+  detectReferralPatterns,
   SUSPICION_THRESHOLDS,
   type ScanEntry,
   type SuspicionFinding,
@@ -56,7 +57,12 @@ export async function runSuspicionScan(
   let flagged = 0;
   for (let after: string | undefined; ;) {
     const users = await deps.db.pointEntry.findMany({
-      where: { ...live, ...(after ? { userId: { gt: after } } : {}) },
+      where: {
+        status: live.status,
+        eventAt: live.eventAt,
+        OR: [{ points: { gt: 0 } }, { action: 'REFERRAL_GIVEN' }],
+        ...(after ? { userId: { gt: after } } : {}),
+      },
       distinct: ['userId'],
       orderBy: { userId: 'asc' },
       take: USER_PAGE,
@@ -96,7 +102,11 @@ async function scanUser(
     eventAt,
     counterpartId,
   }));
-  const findings: SuspicionFinding[] = [];
+  const referralEntries = await deps.db.pointEntry.findMany({
+    where: { userId, status: live.status, eventAt: live.eventAt, action: 'REFERRAL_GIVEN' },
+    select: { id: true, points: true, eventAt: true, counterpartId: true },
+  });
+  const findings: SuspicionFinding[] = detectReferralPatterns(referralEntries, now);
   const burst = detectBurst(entries);
   if (burst) findings.push(burst);
   const single = detectSingleCounterpart(entries, now);
