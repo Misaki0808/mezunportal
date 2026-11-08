@@ -147,8 +147,15 @@ test('zorunlu metin sürümü değişince hesap yeniden onaya yönlenir; isteğe
   }
   await page.goto('/hesap/gizlilik');
   await page.waitForLoadState('networkidle');
+  // Kendi KVKK hakları güncel zorunlu onay olmadan da erişilebilir.
+  await expect(page).toHaveURL(/\/hesap\/gizlilik$/);
+  await expect(
+    page.getByRole('heading', { name: 'İletişim bilgilerin, senin kararın' }),
+  ).toBeVisible();
+  await page.goto('/hesap');
+  await page.waitForLoadState('networkidle');
   // Gidilmek istenen yol dönüş için taşınır (tur #10).
-  await expect(page).toHaveURL(/\/onay\?donus=%2Fhesap%2Fgizlilik$/);
+  await expect(page).toHaveURL(/\/onay\?donus=%2Fhesap$/);
   await waitForHydratedForm(page, 'Seçimlerimi kaydet');
   await expect(page.getByRole('heading', { name: 'Onaylarını yenile', exact: true })).toBeVisible();
   await page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true }).nth(1).check();
@@ -156,8 +163,6 @@ test('zorunlu metin sürümü değişince hesap yeniden onaya yönlenir; isteğe
     .getByRole('checkbox', { name: 'Yurt dışına aktarım için açık rıza veriyorum.' })
     .uncheck();
   await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page).toHaveURL(/\/hesap\/gizlilik$/);
-  await expect(
-    page.getByRole('heading', { name: 'İletişim bilgilerin, senin kararın' }),
-  ).toBeVisible();
+  await expect(page).toHaveURL(/\/hesap$/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
