@@ -239,8 +239,9 @@ export default async function AccountPage() {
       hrefs: ['/yonetim/kullanim', '/yonetim', '/yonetim/sss', '/yonetim/deneyimler'],
     },
   ] as const;
+  // Gruba yazılmamış bağlantı (ör. yeni eklenen sayfa) sessizce düşmez: "Görüşmeler ve içerikler" grubunda görünür.
   const groupOf = (href: string) =>
-    GROUPS.find((group) => (group.hrefs as readonly string[]).includes(href));
+    GROUPS.find((group) => (group.hrefs as readonly string[]).includes(href)) ?? GROUPS[1];
   const linkClasses =
     'press-row flex min-h-20 items-center gap-4 rounded-card border border-border bg-bg p-4 text-fg';
   return (
