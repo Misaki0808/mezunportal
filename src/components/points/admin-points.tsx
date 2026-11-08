@@ -605,6 +605,7 @@ function EntriesPanel({ actions }: { actions: AdminPointsActions }) {
                     </span>
                     <Button
                       variant="secondary"
+                      className="shrink-0 whitespace-nowrap"
                       aria-label={`${t('admin.userPick')}: ${user.displayName}`}
                       onClick={() => pick(user)}
                     >
