@@ -14,6 +14,12 @@ type Tx = Prisma.TransactionClient;
  */
 export const SKILL_SLUG_MAX = 200;
 
+/** Sözlük ve profil yazımları aynı etiket anahtarını kullanır. */
+export function skillTagIdentity(name: string) {
+  const label = name.slice(0, 80);
+  return { label, slug: normalizeName(label).slice(0, SKILL_SLUG_MAX) };
+}
+
 /** Profil satırı yoksa açar (ilk giriş akışıyla aynı varsayılanlar). */
 export async function ensureProfile(tx: Tx, userId: string): Promise<{ id: string }> {
   return tx.profile.upsert({
@@ -38,8 +44,7 @@ export async function attachSkill(
   input: SkillInput,
 ): Promise<{ tagId: string; created: boolean; slug: string }> {
   const curated = Boolean(input.canonicalName);
-  const label = (input.canonicalName ?? input.name).slice(0, 80);
-  const slug = normalizeName(label).slice(0, SKILL_SLUG_MAX);
+  const { label, slug } = skillTagIdentity(input.canonicalName ?? input.name);
   const tag = await tx.tag.upsert({
     where: { kind_slug: { kind: 'SKILL', slug } },
     create: { kind: 'SKILL', slug, label, curated },
