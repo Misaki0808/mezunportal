@@ -2,6 +2,7 @@ import { PostingList } from '@/components/job-postings/list';
 import { mayPost, parseJobFilters } from '@/components/job-postings/model';
 import { ErrorState } from '@/components/ui';
 import { requireVerifiedMember } from '@/server/permissions';
+import { isCodedError } from '@/lib/errors';
 import { getJobPostingFilterOptions, searchJobPostings } from '@/server/actions/job-postings';
 export const dynamic = 'force-dynamic';
 export default async function PostingsPage({
@@ -14,10 +15,17 @@ export default async function PostingsPage({
   for (const [key, value] of Object.entries(raw))
     if (typeof value === 'string') params.set(key, value);
   const [actor, options] = await Promise.all([
-    requireVerifiedMember().catch(() => null),
+    requireVerifiedMember().then(
+      (value) => ({ ok: true as const, value }),
+      (error: unknown) => ({
+        ok: false as const,
+        errorCode: isCodedError(error) ? error.code : ('SERVER_UNEXPECTED' as const),
+      }),
+    ),
     getJobPostingFilterOptions().catch(() => null),
   ]);
-  if (!actor || !options) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
+  if (!actor.ok) return <ErrorState errorCode={actor.errorCode} />;
+  if (!options) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!options.ok) return <ErrorState errorCode={options.errorCode} />;
   const filters = parseJobFilters(params, options.data.organizations);
   const result = await searchJobPostings(filters).catch(() => null);
@@ -28,7 +36,7 @@ export default async function PostingsPage({
       page={result.data}
       filters={filters}
       options={options.data}
-      canPost={mayPost(actor.facts.memberships)}
+      canPost={mayPost(actor.value.facts.memberships)}
     />
   );
 }

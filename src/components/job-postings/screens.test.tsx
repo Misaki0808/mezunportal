@@ -251,3 +251,57 @@ it('ağ hatasında ham hata metni gösterilmez, kullanıcıya kararlı hata sunu
   expect(await screen.findByRole('alert')).toBeVisible();
   expect(document.body.textContent).not.toContain('gizli ağ ayrıntısı');
 });
+
+it.each(['http://example.org/staj', 'javascript:alert(1)', 'data:text/html,example'])(
+  'okuyucuya güvenli olmayan %s başvuru bağlantısı sunulmaz',
+  (applyUrl) => {
+    renderUi(<PostingDetail posting={{ ...posting, description: 'Açıklama', applyUrl }} />);
+    expect(screen.queryByRole('link', { name: /Başvur/ })).not.toBeInTheDocument();
+  },
+);
+it('60 gün sınırındaki taslak kaydedilir, 61. gün istemcide reddedilir', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-11-08T12:00:00Z'));
+  try {
+    const { addDays, istanbulDay } = await import('./model');
+    const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'date-boundary' } });
+    renderUi(<PostingEditor context={context} save={save} submit={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+    const date = screen.getByLabelText(/Son başvuru tarihi/);
+    expect(date).toHaveAttribute('max', addDays(istanbulDay(), 60));
+    fireEvent.change(date, { target: { value: addDays(istanbulDay(), 61) } });
+    fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+    expect(
+      await screen.findByText('Bugünden başlayarak en fazla 60 gün sonrası seçilebilir.'),
+    ).toBeVisible();
+    expect(save).not.toHaveBeenCalled();
+    fireEvent.change(date, { target: { value: addDays(istanbulDay(), 60) } });
+    fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  } finally {
+    vi.useRealTimers();
+  }
+});
+it('mobil süzgeçler alt sayfada uygulanır ve arama metni korunur', async () => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute('open');
+  };
+  renderUi(
+    <PostingList
+      canPost={false}
+      filters={{ q: 'tasarım' }}
+      options={options}
+      page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
+    />,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Süzgeçler', exact: true }));
+  const dialog = screen.getByRole('dialog');
+  expect(dialog).toHaveTextContent('Konum');
+  const apply = screen.getByRole('button', { name: 'Süzgeçleri uygula' });
+  const form = document.getElementById(apply.getAttribute('form')!);
+  expect(form).toHaveAttribute('action', '/ilanlar');
+  expect(new FormData(form as HTMLFormElement).get('q')).toBe('tasarım');
+});
