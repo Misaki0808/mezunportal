@@ -1461,7 +1461,8 @@
         "REPORT": "Şikâyet",
         "DICTIONARY_ENTRY": "Sözlük kaydı",
         "UNMATCHED_VALUE": "Eşleşmeyen değer",
-        "EMPLOYMENT_REPORT": "İstihdam raporu"
+        "EMPLOYMENT_REPORT": "İstihdam raporu",
+        "USAGE_METRICS": "Kullanım metrikleri"
       }
     },
     "employment": {

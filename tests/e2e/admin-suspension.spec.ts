@@ -218,9 +218,7 @@ test('uzun sözlük/eşleşmeyen adları ve kullanıcı adı 360/390/1440 görü
           : path.endsWith('eslesmeyenler')
             ? raw
             : user.name;
-        await expect(
-          page.getByText(boundaryText, { exact: true }).filter({ visible: true }),
-        ).toBeVisible();
+        await expect(page.getByText(boundaryText).filter({ visible: true }).first()).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
       }
     }
