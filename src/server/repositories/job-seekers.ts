@@ -39,6 +39,11 @@ export type SeekerQuery = {
   tagSlugs?: readonly string[] | undefined;
   termYear?: number | undefined;
   termSeason?: 'SPRING' | 'SUMMER' | 'AUTUMN' | 'WINTER' | undefined;
+  /**
+   * Arayanla açık talebi olan kişileri DIŞLAMA (yalnız talep gönderildikten sonraki yeniden doğrulama içindir: yeni bekleyen talep
+   * kişiyi zaten dışlar). Arama ve ilk çözümleme bunu KULLANMAZ.
+   */
+  keepOpenRequests?: boolean | undefined;
 };
 
 type Client = Pick<PrismaClient, '$queryRaw'>;
@@ -59,12 +64,13 @@ function conditions(q: SeekerQuery, extra: Prisma.Sql[] = []): Prisma.Sql {
     Prisma.sql`u."deletedAt" IS NULL`,
     Prisma.sql`u."banned" = false`,
     CONSENT_OK(q.consentVersion),
-    Prisma.sql`NOT EXISTS (
-      SELECT 1 FROM "ContactRequest" r
-      WHERE r."requesterId" = ${q.viewerId} AND r."targetId" = p."userId" AND r."status" IN ('PENDING', 'APPROVED')
-    )`,
     ...extra,
   ];
+  if (!q.keepOpenRequests)
+    where.push(Prisma.sql`NOT EXISTS (
+      SELECT 1 FROM "ContactRequest" r
+      WHERE r."requesterId" = ${q.viewerId} AND r."targetId" = p."userId" AND r."status" IN ('PENDING', 'APPROVED')
+    )`);
   if (q.termYear !== undefined) where.push(Prisma.sql`p."seekingTermYear" = ${q.termYear}`);
   if (q.termSeason !== undefined)
     where.push(Prisma.sql`p."seekingTermSeason" = ${q.termSeason}::"TermSeason"`);

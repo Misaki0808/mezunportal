@@ -432,7 +432,7 @@ export async function requestSeekerContact(
   // Çözümleme ile yazma arasında rıza geri alınmış olabilir (ayrı işlemler): görünürlük yeniden doğrulanır; kalkmışsa talep kapatılır.
   const stillVisible = await findSeekerByRef(
     deps.db,
-    queryFor(userId, found.universityIds),
+    { ...queryFor(userId, found.universityIds), keepOpenRequests: true },
     parsed.ref,
   );
   if (!stillVisible) {
