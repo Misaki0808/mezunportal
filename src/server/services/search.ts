@@ -13,6 +13,7 @@ import type { PrismaClient } from '@/generated/prisma/client';
 import type { Actor } from '../permissions/actor';
 import { errorForDenyReason } from '../permissions/guards';
 import { searchExperienceRows, type SearchRow } from '../repositories/search';
+import { isAuthorVisible } from '../rules/authorVisibility';
 import { evaluateAccess } from '../rules/authorization';
 
 export type SearchDeps = { db: PrismaClient; now?: () => Date };
@@ -35,7 +36,7 @@ export async function viewerUniversityIds(db: PrismaClient, actor: Actor): Promi
   return [...new Set(rows.map((row) => row.faculty.universityId))];
 }
 
-function toResult(row: SearchRow): SearchResult {
+function toResult(row: SearchRow, now: Date): SearchResult {
   const base = {
     id: row.id,
     type: row.type,
@@ -53,7 +54,16 @@ function toResult(row: SearchRow): SearchResult {
   };
   // Yazar yalnız geçerli adlı deneyimde dolu gelir; aksi halde anonim biçimde (yazar alanı hiç yok).
   return searchResultSchema.parse(
-    row.authorId && row.authorName
+    row.authorId &&
+      row.authorName &&
+      isAuthorVisible(
+        {
+          deletedAt: row.authorDeletedAt,
+          banned: row.authorBanned === true,
+          banExpires: row.authorBanExpires,
+        },
+        now,
+      )
       ? { ...base, isAnonymous: false, author: { id: row.authorId, displayName: row.authorName } }
       : { ...base, isAnonymous: true },
   );
@@ -68,6 +78,7 @@ export async function searchExperiences(
   // Derinlemesine savunma: koruma çağıranda da çalışır, burada olgularla yeniden doğrulanır.
   const access = evaluateAccess(actor.facts, { action: 'contentRead' });
   if (!access.allowed) throw errorForDenyReason(access.reason);
+  const now = (deps.now ?? (() => new Date()))();
   const sort = filter.sort ?? (filter.q ? 'RELEVANCE' : 'NEWEST');
   const { rows, total } = await searchExperienceRows(deps.db, {
     universityIds: await viewerUniversityIds(deps.db, actor),
@@ -82,10 +93,9 @@ export async function searchExperiences(
     sort,
     page: filter.page,
     pageSize: filter.pageSize,
-    now: (deps.now ?? (() => new Date()))(),
   });
   return searchPageSchema.parse({
-    items: rows.map(toResult),
+    items: rows.map((row) => toResult(row, now)),
     page: filter.page,
     pageSize: filter.pageSize,
     total,

@@ -219,7 +219,7 @@ export async function getExperienceDetail(
     const parsed = experienceIdSchema.parse(input);
     const row = await loadExperience(tx, parsed.experienceId);
     await requireReadable(tx, actor, permissions, row);
-    return projectExperience(row);
+    return projectExperience(row, now);
   });
 }
 export async function listMyExperiences(
@@ -241,7 +241,7 @@ export async function listMyExperiences(
       take: parsed.limit + 1,
     });
     const result = page(rows, parsed.limit);
-    return { ...result, items: result.items.map(projectExperience) };
+    return { ...result, items: result.items.map((item) => projectExperience(item, now)) };
   });
 }
 export async function listModerationQueue(
@@ -260,7 +260,7 @@ export async function listModerationQueue(
       take: parsed.limit + 1,
     });
     const result = page(rows, parsed.limit);
-    return { ...result, items: result.items.map(projectExperience) };
+    return { ...result, items: result.items.map((item) => projectExperience(item, now)) };
   });
 }
 const reportSelect = {
