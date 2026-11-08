@@ -11,11 +11,14 @@ const db = new PrismaClient({
 });
 test.afterAll(() => db.$disconnect());
 test.describe.configure({ mode: 'serial' });
+/** Sayfa yüklenince hidratasyon biter (ağ durulur); öncesinde tıklanan form/düğme sessizce işlevsiz kalır. */
 async function login(page: Page, persona: 'student' | 'alumniMentor') {
   await page.goto(`/giris/test?persona=${persona}`);
+  await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
   await page.waitForURL(/\/(hesap|onay)$/);
   await page.goto('/onay');
+  await page.waitForLoadState('networkidle');
   const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
   await required.nth(0).check();
   await required.nth(1).check();
@@ -45,12 +48,15 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
   const target = await second.newPage();
   try {
     await page.goto('/iletisim-iste/olmayan-kisi');
+    await page.waitForLoadState('networkidle');
     await expect(page).toHaveURL(/\/giris\?donus=/);
     await page.goto('/hesap/hesabi-sil');
+    await page.waitForLoadState('networkidle');
     await expect(page).toHaveURL(/\/giris\?donus=/);
     await login(page, 'student');
     await login(target, 'alumniMentor');
     await target.goto('/hesap/gizlilik');
+    await target.waitForLoadState('networkidle');
     for (const label of ['E-posta', 'Telefon']) {
       await target.getByLabel(label, { exact: true }).selectOption('ON_APPROVED_REQUEST');
     }
@@ -59,10 +65,13 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
       target.getByRole('status').filter({ hasText: 'Değişikliklerin kaydedildi.' }),
     ).toBeVisible();
     await page.goto(`/iletisim-iste/${student.id}`);
+    await page.waitForLoadState('networkidle');
     await expect(page.getByText('İletişim talebi gönderilemiyor')).toBeVisible();
     await page.goto('/iletisim-iste/olmayan-kisi');
+    await page.waitForLoadState('networkidle');
     await expect(page.getByText('İletişim talebi gönderilemiyor')).toBeVisible();
     await page.goto(`/iletisim-iste/${alumni.id}`);
+    await page.waitForLoadState('networkidle');
     await expect(page.getByRole('heading', { name: new RegExp(alumni.name) })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'Sosyal bağlantılar' })).toBeDisabled();
     await page.getByRole('checkbox', { name: 'E-posta', exact: true }).check();
@@ -73,6 +82,7 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     await page.getByRole('link', { name: 'Taleplerime git' }).click();
     await expect(page.locator('body')).not.toContainText(alumni.email);
     await target.goto('/hesap/iletisim');
+    await target.waitForLoadState('networkidle');
     await target.getByRole('button', { name: 'Onayla', exact: true }).click();
     await expect(target.getByText('Talep güncellendi.').first()).toBeVisible();
     await expect(target.locator('body')).not.toContainText(student.email);
@@ -91,6 +101,7 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     await expect(page.locator('body')).not.toContainText('+90 555 123 45 67');
     // Veri dökümü karşı tarafın gizli iletişimini taşımaz.
     await page.goto('/hesap/veriler');
+    await page.waitForLoadState('networkidle');
     const downloaded = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Verilerimi indir' }).click();
     const file = await (await downloaded).path();
@@ -133,6 +144,7 @@ test('zorunlu metin sürümü değişince hesap yeniden onaya yönlenir; isteğe
     await rm(evidenceRoot, { recursive: true, force: true });
   }
   await page.goto('/hesap/gizlilik');
+  await page.waitForLoadState('networkidle');
   // Gidilmek istenen yol dönüş için taşınır (tur #10).
   await expect(page).toHaveURL(/\/onay\?donus=%2Fhesap%2Fgizlilik$/);
   await expect(page.getByRole('heading', { name: 'Onaylarını yenile', exact: true })).toBeVisible();

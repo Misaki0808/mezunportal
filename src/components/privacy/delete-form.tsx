@@ -25,13 +25,15 @@ export function DeleteForm({ currentEmail }: { currentEmail: string }) {
   const emailInput = useRef<HTMLInputElement>(null);
   if (deleted)
     return (
-      <Card className="mx-auto mt-10 max-w-2xl space-y-4">
-        <h1 className="text-3xl font-semibold">{t('deleted')}</h1>
-        <p role="status">{t('deletedDescription')}</p>
-        <Link href="/" className={buttonClasses({ variant: 'secondary' })}>
-          {t('home')}
-        </Link>
-      </Card>
+      <div className="mx-auto w-full max-w-2xl px-5 py-10">
+        <Card className="space-y-4">
+          <h1 className="text-3xl font-semibold">{t('deleted')}</h1>
+          <p role="status">{t('deletedDescription')}</p>
+          <Link href="/" className={buttonClasses({ variant: 'secondary' })}>
+            {t('home')}
+          </Link>
+        </Card>
+      </div>
     );
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-8 sm:py-12">

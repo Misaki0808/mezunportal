@@ -34,6 +34,9 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await page.goto('/hesap/gizlilik');
     await expect(page).toHaveURL(/\/giris\?donus=/);
     await expect(page.getByRole('heading', { name: 'Devam etmek için giriş yap' })).toBeVisible();
+    // Yönlendirmeyle gelinen sayfa yüklenip sonra hidratlanır; hidratasyondan önce tıklamak formu yerel (GET)
+    // gönderir. Ağ durulunca form etkileşime hazırdır.
+    await page.waitForLoadState('networkidle');
     await page.getByLabel('E-posta adresi').fill(email);
     await page.getByRole('button', { name: 'Giriş bağlantısı gönder' }).click();
     await expect(page).toHaveURL(/\/giris\/epostani-kontrol-et$/);
