@@ -233,7 +233,7 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
                             {t('changedFields', {
                               fields: item.changedFields
                                 .map((field) =>
-                                  fields.has(field)
+                                  fields.has(field as 'headline')
                                     ? fields(field as 'headline')
                                     : sections(item.section),
                                 )
