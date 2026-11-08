@@ -67,6 +67,9 @@ export function ConsentForm({ state }: { state: ConsentState }) {
             <Badge tone={d.required ? 'info' : 'neutral'}>
               {t(d.required ? 'required' : 'optional')}
             </Badge>
+            {d.lastDecision && d.lastDecision.version !== d.currentVersion && (
+              <Badge tone="warning">{t('updated')}</Badge>
+            )}
           </div>
           <div className="flex items-center justify-between gap-3">
             <span className="text-base text-fg-muted">
@@ -74,11 +77,9 @@ export function ConsentForm({ state }: { state: ConsentState }) {
             </span>
             <Link
               href={LEGAL_PATHS[d.documentType]}
-              target="_blank"
-              rel="noopener noreferrer"
               className="press-row inline-flex min-h-11 items-center font-medium text-primary"
             >
-              {common('read')} ↗
+              {common('read')}
             </Link>
           </div>
           <Checkbox
@@ -109,7 +110,7 @@ export function ConsentForm({ state }: { state: ConsentState }) {
           {common('retry')}
         </Button>
       )}
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] -mx-1 rounded-control border border-border bg-bg p-3 shadow-card lg:bottom-3">
+      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] rounded-control border border-border bg-bg p-3 shadow-card lg:static">
         <Button type="submit" fullWidth loading={form.busy}>
           {form.busy ? common('saving') : t('submit')}
         </Button>

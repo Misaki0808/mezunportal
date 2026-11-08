@@ -6,15 +6,18 @@ import { ToastProvider } from '@/components/ui';
 import { CONSENT_DOCUMENTS, type ConsentState } from '@/contracts/privacy';
 import { ConsentForm } from './consent-form';
 import { DeleteForm } from './delete-form';
+import { VisibilityForm } from './visibility-form';
 const mocks = vi.hoisted(() => ({
   record: vi.fn(),
   remove: vi.fn(),
   replace: vi.fn(),
   refresh: vi.fn(),
+  setVisibility: vi.fn(),
 }));
 vi.mock('@/server/actions/privacy', () => ({
   recordConsents: mocks.record,
   deleteAccount: mocks.remove,
+  setFieldVisibility: mocks.setVisibility,
 }));
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mocks.replace, refresh: mocks.refresh }),
@@ -82,7 +85,7 @@ it('eski sürüm hatası yenileme eylemi sunar; ham hata metni göstermez', asyn
 it('hesap silme e-posta ve ikinci onay olmadan çağrılmaz; anonimleştirme tercihini aynen iletir', async () => {
   const { user } = renderUi(
     <ToastProvider>
-      <DeleteForm />
+      <DeleteForm currentEmail="sahte@example.invalid" />
     </ToastProvider>,
   );
   await user.click(screen.getByRole('radio', { name: /Adımı kaldırıp içerikleri bırak/ }));
@@ -98,4 +101,47 @@ it('hesap silme e-posta ve ikinci onay olmadan çağrılmaz; anonimleştirme ter
     confirmEmail: 'sahte@example.invalid',
   });
   expect(await screen.findByRole('heading', { name: 'Hesabın silindi' })).toBeVisible();
+});
+it('hesap silmede farklı adres onay penceresinden önce alan yanında açıklanır ve alana odaklanır', async () => {
+  const { user } = renderUi(
+    <ToastProvider>
+      <DeleteForm currentEmail="dogru@example.invalid" />
+    </ToastProvider>,
+  );
+  const email = screen.getByLabelText(/Onaylamak için/);
+  await user.type(email, 'yanlis@example.invalid');
+  await user.click(screen.getByRole('button', { name: 'Hesabımı sil' }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByText('Yazdığın e-posta hesabındaki adresle eşleşmiyor.')).toBeVisible();
+  expect(email).toHaveFocus();
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
+it('gizlilikte değişiklikler tek kaydet ile gönderilir, kaydedilmemiş durum duyurulur', async () => {
+  const initial = {
+    fields: [
+      { field: 'EMAIL' as const, level: 'ON_APPROVED_REQUEST' as const, isDefault: true },
+      { field: 'PHONE' as const, level: 'ON_APPROVED_REQUEST' as const, isDefault: true },
+    ],
+  };
+  const result = {
+    fields: initial.fields.map((item) => ({
+      ...item,
+      level: 'PRIVATE' as const,
+      isDefault: false,
+    })),
+  };
+  mocks.setVisibility.mockResolvedValue({ ok: true, data: result });
+  const { user } = renderUi(
+    <ToastProvider>
+      <VisibilityForm initial={initial} />
+    </ToastProvider>,
+  );
+  await user.selectOptions(screen.getByLabelText('E-posta'), 'PRIVATE');
+  await user.selectOptions(screen.getByLabelText('Telefon'), 'PRIVATE');
+  expect(screen.getByText(/Kaydedilmemiş değişikliklerin var/)).toBeVisible();
+  expect(mocks.setVisibility).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+  await waitFor(() => expect(mocks.setVisibility).toHaveBeenCalledTimes(2));
+  expect(await screen.findByText('Değişikliklerin kaydedildi.')).toBeVisible();
+  expect(screen.queryByText(/Kaydedilmemiş değişikliklerin var/)).not.toBeInTheDocument();
 });

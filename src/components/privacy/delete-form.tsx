@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
@@ -13,7 +13,7 @@ import { deleteAccount } from '@/server/actions/privacy';
 import { Button, Card, Field, Input, Modal, RadioGroup, buttonClasses } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
 
-export function DeleteForm() {
+export function DeleteForm({ currentEmail }: { currentEmail: string }) {
   const t = useTranslations('privacyScreens.delete');
   const common = useTranslations('privacyScreens.common');
   const form = usePrivacyForm();
@@ -21,10 +21,19 @@ export function DeleteForm() {
   const [email, setEmail] = useState('');
   const [confirmed, setConfirmed] = useState<DeleteAccountInput | null>(null);
   const [deleted, setDeleted] = useState(false);
+  const [emailMismatch, setEmailMismatch] = useState(false);
+  const emailInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (confirmed && form.failure?.errorCode === 'ACCOUNT_DELETE_CONFIRMATION_MISMATCH') {
+      setConfirmed(null);
+      setEmailMismatch(true);
+      requestAnimationFrame(() => emailInput.current?.focus());
+    }
+  }, [confirmed, form.failure?.errorCode]);
   if (deleted)
     return (
-      <Card className="space-y-4">
-        <h2 className="text-xl font-semibold">{t('deleted')}</h2>
+      <Card className="mx-auto mt-10 max-w-2xl space-y-4">
+        <h1 className="text-3xl font-semibold">{t('deleted')}</h1>
         <p role="status">{t('deletedDescription')}</p>
         <Link href="/" className={buttonClasses({ variant: 'secondary' })}>
           {t('home')}
@@ -32,7 +41,22 @@ export function DeleteForm() {
       </Card>
     );
   return (
-    <>
+    <div className="mx-auto w-full max-w-2xl px-5 py-8 sm:py-12">
+      <Link
+        href="/hesap"
+        className="press-row mb-6 inline-flex min-h-11 items-center font-medium text-primary"
+      >
+        ← {common('back')}
+      </Link>
+      <p className="text-sm font-semibold tracking-wider text-primary">{common('eyebrow')}</p>
+      <h1 className="mt-3 text-3xl font-semibold">{t('title')}</h1>
+      <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
+      <Link
+        href="/hesap/veriler"
+        className="press-row my-5 inline-flex min-h-11 items-center font-medium text-primary"
+      >
+        {t('download')}
+      </Link>
       <form
         noValidate
         className="space-y-5"
@@ -42,7 +66,17 @@ export function DeleteForm() {
             publishedContent: choice,
             confirmEmail: email,
           });
-          if (input) setConfirmed(input);
+          if (!input) {
+            emailInput.current?.focus();
+            return;
+          }
+          if (input.confirmEmail.trim().toLowerCase() !== currentEmail.trim().toLowerCase()) {
+            setEmailMismatch(true);
+            emailInput.current?.focus();
+            return;
+          }
+          setEmailMismatch(false);
+          setConfirmed(input);
         }}
       >
         <Card className="space-y-4">
@@ -71,21 +105,25 @@ export function DeleteForm() {
             label={t('email')}
             hint={t('emailHint')}
             required
-            error={form.fieldError('confirmEmail')}
+            error={emailMismatch ? t('emailMismatch') : form.fieldError('confirmEmail')}
           >
             {(control) => (
               <Input
                 {...control}
+                ref={emailInput}
                 type="email"
                 inputMode="email"
                 autoComplete="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailMismatch(false);
+                }}
               />
             )}
           </Field>
         </Card>
-        {form.error && !confirmed && (
+        {form.error && !confirmed && !emailMismatch && !form.fieldError('confirmEmail') && (
           <p role="alert" className="text-base text-danger">
             {form.error}
           </p>
@@ -145,6 +183,6 @@ export function DeleteForm() {
           </p>
         )}
       </Modal>
-    </>
+    </div>
   );
 }

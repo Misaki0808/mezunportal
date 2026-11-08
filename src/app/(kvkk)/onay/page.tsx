@@ -17,7 +17,7 @@ export default async function ConsentPage() {
     ? t(renew ? 'renewDescription' : 'description')
     : t('manageDescription');
   return (
-    <PrivacyFrame title={title} description={description}>
+    <PrivacyFrame title={title} description={description} showBack={!state.blocking}>
       <ConsentForm key={state.documents.map((d) => d.currentVersion).join(':')} state={state} />
     </PrivacyFrame>
   );

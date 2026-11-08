@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 import { hasAdminAccess } from '@/components/layout/admin-access';
-import { ErrorState } from '@/components/ui';
+import { BriefcaseIcon, CheckIcon, CloseIcon, ErrorState, InboxIcon } from '@/components/ui';
 import { PrivacyAccountLinks } from '@/components/privacy/account-links';
 import { getVerificationState } from '@/server/actions/auth';
 import { requireUser } from '@/server/permissions';
@@ -27,12 +27,23 @@ export default async function AccountPage() {
     REJECTED: verification('rejected'),
   }[state.data.status];
   const links = [
-    { href: '/dogrulama', title: t('verification'), description: statusLabel },
-    { href: '/hesap/e-posta', title: t('email'), description: t('emailDescription') },
+    { href: '/dogrulama', title: t('verification'), description: statusLabel, icon: CheckIcon },
+    {
+      href: '/hesap/e-posta',
+      title: t('email'),
+      description: t('emailDescription'),
+      icon: InboxIcon,
+    },
     ...(showAdmin
-      ? [{ href: '/yonetim/belge-kuyrugu', title: t('admin'), description: t('adminDescription') }]
+      ? [
+          {
+            href: '/yonetim/belge-kuyrugu',
+            title: t('admin'),
+            description: t('adminDescription'),
+            icon: BriefcaseIcon,
+          },
+        ]
       : []),
-    { href: '/cikis', title: t('signOut'), description: t('signOutDescription') },
   ];
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:py-16">
@@ -46,7 +57,10 @@ export default async function AccountPage() {
               href={link.href}
               className="press-row flex min-h-20 items-center justify-between gap-4 rounded-card border border-border bg-bg p-5 text-fg"
             >
-              <span>
+              <span className="text-primary">
+                <link.icon />
+              </span>
+              <span className="min-w-0 flex-1">
                 <span className="block text-lg font-semibold">{link.title}</span>
                 <span className="mt-1 block text-base text-fg-muted">{link.description}</span>
               </span>
@@ -56,8 +70,25 @@ export default async function AccountPage() {
             </Link>
           </li>
         ))}
+        <PrivacyAccountLinks />
+        <li>
+          <Link
+            href="/cikis"
+            className="press-row flex min-h-20 items-center gap-4 rounded-card border border-border bg-bg p-5 text-fg"
+          >
+            <span className="text-primary">
+              <CloseIcon />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-semibold">{t('signOut')}</span>
+              <span className="mt-1 block text-base text-fg-muted">{t('signOutDescription')}</span>
+            </span>
+            <span aria-hidden="true" className="text-xl text-primary">
+              ›
+            </span>
+          </Link>
+        </li>
       </ul>
-      <PrivacyAccountLinks />
     </div>
   );
 }

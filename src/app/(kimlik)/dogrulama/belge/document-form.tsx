@@ -96,7 +96,7 @@ export function DocumentForm({
             <option value="">{t('departmentPlaceholder')}</option>
             {departments.map((department) => (
               <option key={department.id} value={department.id}>
-                {department.universityName} · {department.facultyName} · {department.name}
+                {department.name} · {department.facultyName} · {department.universityName}
               </option>
             ))}
           </Select>

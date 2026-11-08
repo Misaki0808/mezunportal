@@ -48,15 +48,12 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     await login(target, 'alumniMentor');
     await target.goto('/hesap/gizlilik');
     for (const label of ['E-posta', 'Telefon']) {
-      const form = target
-        .locator('form')
-        .filter({ has: target.getByLabel(label, { exact: true }) });
-      await form.getByLabel(label, { exact: true }).selectOption('ON_APPROVED_REQUEST');
-      await form.getByRole('button', { name: 'Kaydet', exact: true }).click();
-      await expect(
-        target.getByRole('status').filter({ hasText: `${label} görünürlüğü kaydedildi.` }),
-      ).toBeVisible();
+      await target.getByLabel(label, { exact: true }).selectOption('ON_APPROVED_REQUEST');
     }
+    await target.getByRole('button', { name: 'Kaydet', exact: true }).click();
+    await expect(
+      target.getByRole('status').filter({ hasText: 'Değişikliklerin kaydedildi.' }),
+    ).toBeVisible();
     await page.goto(`/iletisim-iste/${alumni.id}`);
     await page.getByRole('checkbox', { name: 'E-posta', exact: true }).check();
     await page.getByRole('checkbox', { name: 'Telefon', exact: true }).check();
@@ -85,7 +82,7 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     // Veri dökümü karşı tarafın gizli iletişimini taşımaz.
     await page.goto('/hesap/veriler');
     const downloaded = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'JSON dosyamı indir' }).click();
+    await page.getByRole('button', { name: 'Verilerimi indir' }).click();
     const file = await (await downloaded).path();
     expect(file).toBeTruthy();
     const json = await readFile(file!, 'utf8');
