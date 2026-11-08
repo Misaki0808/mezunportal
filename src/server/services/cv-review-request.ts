@@ -8,6 +8,7 @@ import {
 import { codedConflict, codedForbidden, codedNotFound } from '@/lib/errors';
 import type { StorageAdapter } from '../external/storage';
 import { createPermissions } from '../permissions/guards';
+import { emitEvent, subjectFromActor } from './event';
 import { requireConsent } from './privacy';
 import { visibleMentorWhere } from './mentor-directory';
 import { viewerUniversityIds } from './search';
@@ -126,8 +127,9 @@ export async function createRequest(
   input: { mentorId: string; note: string },
 ) {
   const now = nowOf(deps);
-  const row = await deps.db.$transaction(async (tx) => {
+  const { row, subject } = await deps.db.$transaction(async (tx) => {
     await lockUsers(tx, [userId, input.mentorId]);
+    const person = await actor(tx, userId, now);
     const result = await availability(tx, userId, input.mentorId, now);
     if (!result.available) {
       if (result.reason === 'MONTHLY_LIMIT') throw codedConflict('CV_REVIEW_MONTHLY_LIMIT');
@@ -140,7 +142,7 @@ export async function createRequest(
       orderBy: [{ appliedAt: 'desc' }, { id: 'desc' }],
       select: { id: true },
     });
-    return tx.cvReviewRequest.create({
+    const row = await tx.cvReviewRequest.create({
       data: {
         studentId: userId,
         mentorId: input.mentorId,
@@ -151,7 +153,10 @@ export async function createRequest(
       },
       select,
     });
+    return { row, subject: subjectFromActor(person) };
   });
+  // Metrik kişisel içerik taşımaz; olay yazımı iş sonucunu etkileyemez.
+  emitEvent(deps.db, userId, { type: 'CV_REVIEW_REQUESTED', props: {} }, subject);
   await deps.notify?.(row.mentorId, 'requested', row.id).catch(() => undefined);
   return view(row, userId, now);
 }

@@ -55,7 +55,9 @@ test('CV talebi → yorum → faydalı; kapalı dosya erişimi 403', async ({ pa
     });
     await login(page, 'student');
     await login(mentorPage, 'alumniMentor');
-    await page.goto(`/cv-inceleme/${mentor.id}`);
+    await page.goto(`/uye/${mentor.id}`);
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: 'CV incelemesi iste' }).click();
     await page.waitForLoadState('networkidle');
     await page.getByLabel('Mentora notun').fill('Staj başvurum için görüşünü alabilir miyim?');
     await page.getByRole('button', { name: 'Talep gönder' }).click();

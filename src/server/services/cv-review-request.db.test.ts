@@ -18,6 +18,7 @@ import {
 } from './cv-review-request';
 import { removeUploadFiles } from './cv-shared';
 import { buildDataExport } from './dataExport';
+import { settleEvents } from './event';
 import { deleteAccount } from './accountDeletion';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -85,6 +86,12 @@ describe('CV inceleme', () => {
       mentorId: h.mentor,
       note: 'Öneri lütfen',
     });
+    await settleEvents();
+    const events = await db.event.findMany({
+      where: { userId: h.student, type: 'CV_REVIEW_REQUESTED' },
+    });
+    expect(events).toHaveLength(1);
+    expect(events[0]?.props).toEqual({});
     expect(await readFile(h.deps, h.mentor, request.id)).toBeTruthy();
     await expect(readFile(h.deps, h.student, request.id)).rejects.toMatchObject({
       code: 'AUTH_FORBIDDEN',

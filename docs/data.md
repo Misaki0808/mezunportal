@@ -121,7 +121,9 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
 - Açık bir `CvReviewRequest`'in bağlı olduğu `CvUpload` dosyası silinmez.
 - Sınıf saklanmaz; `entryYear` + `classOffset`'ten hesaplanır (`src/server/rules/classYear.ts`: akademik yıl
   Eylül'de başlar, düzeltme −3…+3, hazırlık/uzatma ayrı durum).
-- `Event.props` ve `AdminAuditLog.metadata` kişisel veri içermez.
+- `Event.props` ve `AdminAuditLog.metadata` kişisel veri içermez. `Event.props` ek olarak veritabanı CHECK'iyle sınırlıdır
+  (düz nesne, ≤ 500 karakter, `@` ve 10+ ardışık rakam yok). `Event.role`/`departmentId` olay anının anlık görüntüsüdür;
+  `userId` hesap silmede hemen, 24 ay sonra (`detachOldEvents`) `null` olur, satırlar ve sayılar kalır.
 
 ## Transaction ve eşzamanlılık
 

@@ -11,9 +11,11 @@ import { createCvReviewRequest } from '@/server/actions/cv-review-request';
 export function RequestForm({
   mentorId,
   availability,
+  embedded = false,
 }: {
   mentorId: string;
   availability: CvReviewAvailability;
+  embedded?: boolean;
 }) {
   const t = useTranslations('cvReview'),
     errors = useTranslations('errors.codes');
@@ -42,14 +44,20 @@ export function RequestForm({
     }
   }
   return (
-    <main className="mx-auto max-w-2xl px-5 py-10 pb-28">
-      <Link
-        className="inline-flex min-h-11 items-center text-primary"
-        href={`/uye/${encodeURIComponent(mentorId)}`}
-      >
-        ← {t('backProfile')}
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold">{t('requestTitle')}</h1>
+    <div
+      className={
+        embedded ? 'pb-[env(safe-area-inset-bottom)]' : 'mx-auto max-w-2xl px-5 py-10 pb-28'
+      }
+    >
+      {!embedded && (
+        <Link
+          className="inline-flex min-h-11 items-center text-primary"
+          href={`/uye/${encodeURIComponent(mentorId)}`}
+        >
+          ← {t('backProfile')}
+        </Link>
+      )}
+      {!embedded && <h1 className="mt-3 text-3xl font-semibold">{t('requestTitle')}</h1>}
       <p className="mt-3 text-base text-fg-muted">{t('requestDescription')}</p>
       {success ? (
         <div role="status" className="mt-8">
@@ -102,6 +110,6 @@ export function RequestForm({
           )}
         </div>
       )}
-    </main>
+    </div>
   );
 }

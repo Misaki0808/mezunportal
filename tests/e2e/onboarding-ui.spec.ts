@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { waitForHydratedControl, waitForHydratedForm } from './hydration';
 
 test('öğrenci oturumuyla ilk giriş ekranları 390 px’te tamamlanır (sahte servis)', async ({
   page,
@@ -8,12 +9,14 @@ test('öğrenci oturumuyla ilk giriş ekranları 390 px’te tamamlanır (sahte 
   await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
   await page.waitForURL(/\/(hesap|onay)$/);
   await page.goto('/onay');
+  await waitForHydratedForm(page, 'Seçimlerimi kaydet');
   const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
   await required.nth(0).check();
   await required.nth(1).check();
   await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
   await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
   await page.goto('/baslangic/test');
+  await waitForHydratedControl(page, 'Devam et');
   await page.getByRole('checkbox', { name: 'Yazılım geliştirme' }).check();
   await page.getByRole('checkbox', { name: 'Akademik kariyer' }).check();
   await page.getByRole('button', { name: 'Devam et' }).click();

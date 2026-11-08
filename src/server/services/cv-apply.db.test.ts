@@ -176,6 +176,34 @@ describe('getCvReview', () => {
 });
 
 describe('applyCv — kullanıcı onayı olmadan yazılmaz', () => {
+  it('metrik için işlem dışı skor okuması başarısız olsa da CV uygulaması etkilenmez', async () => {
+    const { actor, kit, id } = await parsedUpload(cv({ skills: ['SQL'] }));
+    const review = await getCvReview(kit.deps, actor, id);
+    const isolated = new Proxy(db, {
+      get(target, property) {
+        if (property === 'profile')
+          return new Proxy(target.profile, {
+            get(delegate, key) {
+              if (key === 'findUnique')
+                return async () => {
+                  throw new Error('metrik okuma hatası');
+                };
+              return Reflect.get(delegate, key);
+            },
+          });
+        const value = Reflect.get(target, property);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    const output = await applyCv(
+      { ...kit.deps, db: isolated },
+      actor,
+      parseApply(id, accept(review.items.map((item) => item.key))),
+    );
+    expect(output.created).toBe(1);
+    expect((await db.cvUpload.findUniqueOrThrow({ where: { id } })).status).toBe('APPLIED');
+  });
+
   it('yalnız kabul edilen kalemler yazılır; kararı olmayan kalem profile GİRMEZ', async () => {
     const companyA = `A-${suffix()}`;
     const companyB = `B-${suffix()}`;
