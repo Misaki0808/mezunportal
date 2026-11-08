@@ -6,13 +6,10 @@ import type {
   JobPostingCard,
   JobPostingPage,
   SearchJobPostingsInput,
+  JobPostingFilterOptions,
 } from '@/contracts/job-postings';
 import { Button, EmptyState, Input, Select, buttonClasses } from '@/components/ui';
 
-export type FilterOptions = {
-  departments: { id: string; name: string }[];
-  companies: { id: string; name: string }[];
-};
 export function PostingCard({ posting }: { posting: JobPostingCard }) {
   const t = useTranslations('jobs');
   const initials = posting.organizationName
@@ -85,7 +82,7 @@ export function PostingList({
 }: {
   page: JobPostingPage;
   filters: SearchJobPostingsInput;
-  options: FilterOptions;
+  options: JobPostingFilterOptions;
   canPost: boolean;
 }) {
   const t = useTranslations('jobs');
@@ -93,6 +90,7 @@ export function PostingList({
     filters.q ||
     filters.departmentId ||
     filters.companyId ||
+    filters.location ||
     filters.kind ||
     filters.remote ||
     filters.withinDays,
@@ -159,11 +157,13 @@ export function PostingList({
               {t('company')}
               <Select name="companyId" defaultValue={filters.companyId ?? ''}>
                 <option value="">{t('all')}</option>
-                {options.companies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+                {options.organizations
+                  .filter((c) => c.companyId)
+                  .map((c) => (
+                    <option key={c.companyId} value={c.companyId ?? ''}>
+                      {c.name}
+                    </option>
+                  ))}
               </Select>
             </label>
             <label className="grid gap-2 font-medium">
@@ -180,6 +180,17 @@ export function PostingList({
                 <option value="">{t('anyTime')}</option>
                 <option value="7">{t('sevenDays')}</option>
                 <option value="14">{t('fourteenDays')}</option>
+              </Select>
+            </label>
+            <label className="grid gap-2 font-medium">
+              {t('location')}
+              <Select name="location" defaultValue={filters.location ?? ''}>
+                <option value="">{t('all')}</option>
+                {options.locations.map((location) => (
+                  <option key={location.name} value={location.name}>
+                    {location.name}
+                  </option>
+                ))}
               </Select>
             </label>
             <label className="flex min-h-11 items-center gap-3 font-medium">

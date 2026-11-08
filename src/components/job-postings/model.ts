@@ -24,6 +24,7 @@ export function parseJobFilters(params: URLSearchParams): SearchJobPostingsInput
     ...(params.get('q') ? { q: params.get('q') } : {}),
     ...(params.get('departmentId') ? { departmentId: params.get('departmentId') } : {}),
     ...(params.get('companyId') ? { companyId: params.get('companyId') } : {}),
+    ...(params.get('location') ? { location: params.get('location') } : {}),
     ...(params.get('kind') ? { kind: params.get('kind') } : {}),
     ...(params.get('remote') === 'true' ? { remote: true } : {}),
     ...(params.get('withinDays') ? { withinDays: Number(params.get('withinDays')) } : {}),

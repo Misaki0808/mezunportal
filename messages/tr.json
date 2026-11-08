@@ -2517,6 +2517,7 @@
     "reviewedBy": "Paylaşan: {name}",
     "noTargets": "Bölüm seçeneği bulunamadı.",
     "allTypes": "Tüm ilan türleri",
-    "closeDone": "İlan kapatıldı."
+    "closeDone": "İlan kapatıldı.",
+    "edit": "Düzenle"
   }
 }
