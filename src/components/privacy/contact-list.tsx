@@ -118,7 +118,8 @@ export function ContactList({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="break-words text-lg font-semibold">
-                  {item.counterpart
+                  {item.counterpart &&
+                  !(box === 'OUTGOING' && item.origin && item.status !== 'APPROVED')
                     ? item.counterpart.name
                     : item.origin
                       ? item.origin.title
@@ -137,7 +138,8 @@ export function ContactList({
                     )}
                   </p>
                 )}
-                {!item.counterpart && (
+                {(!item.counterpart ||
+                  (box === 'OUTGOING' && item.origin && item.status !== 'APPROVED')) && (
                   <p className="mt-1 text-base text-fg-muted">{t('originHidden')}</p>
                 )}
                 <p className="mt-1 text-base text-fg-muted">
