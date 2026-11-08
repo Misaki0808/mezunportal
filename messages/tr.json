@@ -5,7 +5,35 @@
   },
   "home": {
     "title": "MezunPortal",
-    "tagline": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için staj odaklı kariyer platformu. Çok yakında."
+    "tagline": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için staj odaklı kariyer platformu. Deneyimleri keşfet, mentorlarla tanış.",
+    "greeting": "Merhaba, {name}",
+    "greetingPlain": "Merhaba",
+    "pendingTitle": "Bekleyen işlerin",
+    "pendingNone": "Şu an bekleyen bir işin yok.",
+    "pending": {
+      "appointmentRequests": "{count} randevu talebi yanıtını bekliyor",
+      "contactRequests": "{count} iletişim talebi yanıtını bekliyor",
+      "cvReviewsToAnswer": "{count} CV inceleme talebi yanıtını bekliyor",
+      "cvReviewsToRate": "{count} CV incelemesi değerlendirmeni bekliyor",
+      "feedbackForms": "{count} görüşme formu seni bekliyor"
+    },
+    "shortcutsTitle": "Kısayollar",
+    "shortcuts": {
+      "search": { "title": "Deneyim ara", "description": "Staj ve Erasmus deneyimlerini incele." },
+      "mentors": { "title": "Mentor bul", "description": "Mezun ve mentorlarla tanış." },
+      "cvReview": {
+        "title": "CV incelemesi",
+        "description": "Özgeçmişin için mentordan yorum iste."
+      },
+      "cvInbox": { "title": "CV incelemeleri", "description": "Gelen talepleri yanıtla." },
+      "write": { "title": "Deneyim yaz", "description": "Kendi deneyimini paylaş." },
+      "profile": { "title": "Profilim", "description": "Bilgilerini güncel tut." }
+    },
+    "admin": {
+      "title": "Yönetim",
+      "pending": "{count} iş inceleme bekliyor",
+      "none": "Bekleyen iş yok"
+    }
   },
   "errors": {
     "codes": {
@@ -154,7 +182,25 @@
     },
     "errorState": {
       "title": "Bir sorun oluştu",
-      "retry": "Tekrar dene"
+      "retry": "Tekrar dene",
+      "expected": {
+        "AUTH_FORBIDDEN": "Bu sayfa senin rolün için değil",
+        "AUTH_UNAUTHENTICATED": "Giriş yapman gerekiyor",
+        "AUTH_NOT_VERIFIED": "Üyeliğini doğrulaman gerekiyor",
+        "AUTH_ACCOUNT_SUSPENDED": "Hesabın askıda",
+        "CONSENT_REQUIRED": "Önce metinleri onaylaman gerekiyor",
+        "RESOURCE_NOT_FOUND": "Aradığın sayfa bulunamadı",
+        "FEEDBACK_NOT_READY": "Form henüz açılmadı",
+        "FEEDBACK_ALREADY_SUBMITTED": "Bu formu zaten gönderdin"
+      },
+      "actions": {
+        "home": "Ana sayfaya dön",
+        "signIn": "Giriş yap",
+        "verify": "Doğrulamaya git",
+        "consent": "Onay ekranına git",
+        "meetings": "Görüşmelerime dön",
+        "admin": "Yönetim paneline dön"
+      }
     }
   },
   "directory": {
@@ -1064,6 +1110,7 @@
   "privacyScreens": {
     "common": {
       "back": "Hesabıma dön",
+      "backReturn": "Geri dön",
       "eyebrow": "HESABIN SENİN KONTROLÜNDE",
       "save": "Kaydet",
       "saving": "Kaydediliyor…",
@@ -1868,6 +1915,7 @@
     "sending": "Gönderiliyor…",
     "sent": "Talebin gönderildi.",
     "toInbox": "Taleplerime git",
+    "viewRequest": "Talebini gör",
     "viewCv": "CV’yi aç",
     "comment": "Yazılı yorumun",
     "answer": "Yorumu gönder",

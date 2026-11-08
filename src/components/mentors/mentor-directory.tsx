@@ -251,7 +251,7 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
             <ul className="mt-5 flex flex-col gap-4">
               {results.items.map((mentor) => (
                 <li key={mentor.userId}>
-                  <MentorCard mentor={mentor} />
+                  <MentorCard mentor={mentor} returnTo={href(filter)} />
                 </li>
               ))}
             </ul>

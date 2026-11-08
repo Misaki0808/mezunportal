@@ -26,7 +26,7 @@ it('inceleyici: görünür mentor profilinde iletişim ve kapalı girişlerin ne
   expect(mocks.entry).toHaveBeenCalledWith({ userId: 'mentor' });
   expect(screen.getByRole('link', { name: 'İletişim iste' })).toHaveAttribute(
     'href',
-    '/iletisim-iste/mentor',
+    '/iletisim-iste/mentor?donus=%2Fuye%2Fmentor',
   );
   expect(screen.getByText('Mentorun bu ayki kapasitesi dolu.')).toBeVisible();
   expect(screen.getByText('Bu mentor CV incelemesi yapmıyor.')).toBeVisible();

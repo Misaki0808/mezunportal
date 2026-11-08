@@ -7,21 +7,24 @@ export async function PrivacyFrame({
   description,
   children,
   showBack = true,
+  back,
 }: {
   title: string;
   description: string;
   children: ReactNode;
   showBack?: boolean;
+  /** Geri bağlantısı kaynağa dönsün (varsayılan: Hesabım). `href` güvenli site içi yol olmalıdır (`safeReturnPath`). */
+  back?: { href: string };
 }) {
   const t = await getTranslations('privacyScreens.common');
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-8 sm:py-12">
       {showBack && (
         <Link
-          href="/hesap"
+          href={back?.href ?? '/hesap'}
           className="press-row mb-6 inline-flex min-h-11 items-center text-base font-medium text-primary"
         >
-          ← {t('back')}
+          ← {back ? t('backReturn') : t('back')}
         </Link>
       )}
       <p className="text-sm font-semibold tracking-wider text-primary">{t('eyebrow')}</p>
