@@ -117,6 +117,10 @@ export async function deleteAccount(
         cancelReason: null,
       },
     });
+    await tx.appointment.updateMany({
+      where: { cancelledById: userId },
+      data: { cancelReason: null },
+    });
     await tx.appointment.updateMany({ where: { menteeId: userId }, data: { menteeNote: null } });
     await tx.appointment.updateMany({
       where: { mentorId: userId },

@@ -80,6 +80,11 @@ const PAUSE_MAX_DAYS = 365;
 // Ortak yardımcılar
 // ---------------------------------------------------------------------------------------------
 
+/** Askı/hesap silme/üyelik yazımları User satırını kilitler. Çoklu hedefte sıra sabittir. */
+async function lockUsers(tx: Tx, userIds: readonly string[]) {
+  await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" IN (${Prisma.join([...new Set(userIds)])}) ORDER BY "id" FOR SHARE`;
+}
+
 async function requireMember(tx: Tx, userId: string, now: Date): Promise<Actor> {
   const actor = await loadActor(tx, userId, now);
   const access = evaluateAccess(actor?.facts ?? null, { action: 'directoryUse' });
@@ -117,6 +122,7 @@ const appointmentSelect = {
   meetUrl: true,
   calendarEventId: true,
   calendarFailedAt: true,
+  calendarAttempts: true,
   reminderSentAt: true,
   cancelledById: true,
   cancelledBySystem: true,
@@ -484,7 +490,7 @@ export async function requestAppointment(
   const now = nowOf(deps);
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
+    await lockUsers(tx, [userId, parsed.mentorId]);
     const actor = await requireMember(tx, userId, now);
     const mentor = await loadVisibleMentor(tx, actor, parsed.mentorId, now);
     if (
@@ -559,6 +565,7 @@ export async function respondAppointment(
   const now = nowOf(deps);
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
+    await lockUsers(tx, [userId]);
     await requireMember(tx, userId, now);
     const peek = await tx.appointment.findUnique({
       where: { id: parsed.appointmentId },
@@ -641,6 +648,7 @@ export async function cancelAppointment(
   const now = nowOf(deps);
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
+    await lockUsers(tx, [userId]);
     await requireMember(tx, userId, now);
     await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${parsed.appointmentId} FOR UPDATE`;
     const row = await tx.appointment.findUnique({
@@ -705,6 +713,7 @@ export async function setMeetLink(
   const now = nowOf(deps);
   let notices: AppointmentNotice[] = [];
   const view = await deps.db.$transaction(async (tx) => {
+    await lockUsers(tx, [userId]);
     await requireMember(tx, userId, now);
     await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${parsed.appointmentId} FOR UPDATE`;
     const row = await tx.appointment.findUnique({

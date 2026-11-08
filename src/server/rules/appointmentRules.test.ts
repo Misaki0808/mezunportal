@@ -280,6 +280,11 @@ describe('.ics', () => {
     expect(text.split('\r\n').filter((line) => line === 'BEGIN:VEVENT')).toHaveLength(1);
     expect(text).toContain('LOCATION:Bina\\; kat 2');
   });
+  it('inceleyici: tek CR de satır enjeksiyonuna dönüşmeden kaçırılır', () => {
+    const text = ics({ description: 'x\rEND:VEVENT\rBEGIN:VEVENT' });
+    expect(text.replaceAll('\r\n', '')).not.toContain('\r');
+    expect(text).toContain('DESCRIPTION:x\\nEND:VEVENT\\nBEGIN:VEVENT');
+  });
   it('75 oktetten uzun satır katlanır, çok baytlı karakter bölünmez', () => {
     const folded = foldLine('SUMMARY:' + 'ğ'.repeat(80));
     expect(folded.length).toBeGreaterThan(1);

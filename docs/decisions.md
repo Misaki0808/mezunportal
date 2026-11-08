@@ -641,3 +641,7 @@ gayretle ve idempotent anahtarla e-posta kuyruğuna gider (e-posta hatası rande
 sistem iptali olur ve kişisel serbest metin temizlenir. Bulgu (düzeltildi): `.ics` metin kaçışında `\;` yanlışlıkla `;`
 yazılmıştı (testin beklentisi de aynı hatayı taşıyordu); mutasyon testi yakaladı.
 
+
+### P1-10 incelemesi: randevu yazımında güncel hesap ve sınırlı takvim denemesi
+
+Randevu mutasyonları yetki okunmadan önce User satırını paylaşılmış kilitle tutar; talep iki tarafı kimlik sırasıyla kilitler. Böylece askı/hesap silme yazımı beklenirken eski yetkiyle işlem tamamlanmaz ve karşılıklı taleplerde ters kilit sırası oluşmaz. Kapasite için MentorProfile, durum için Appointment kilidi korunur. Üst üste binen takvim işleri deneme hakkını satır kilidi altında ayırır; toplam üç hakkın üstüne çağrı yapmaz. Dış çağrı transaction dışında ve aynı iş anahtarıyla idempotent kalır. Hesap silme, kişinin daha önce yazdığı iptal gerekçesini de temizler; ICS metninde CR/LF'nin her biçimi kaçırılır.

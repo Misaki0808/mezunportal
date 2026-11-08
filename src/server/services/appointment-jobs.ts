@@ -111,7 +111,7 @@ export async function syncCalendarEvents(
     take: BATCH,
   });
   for (const { id } of pending) {
-    // 1) Talep: satırı kilitleyip deneme sayısını artır (aynı randevuyu iki işçi birden denemez).
+    // 1) Satır kilidiyle toplam deneme hakkını ayır; dış çağrılar aynı iş anahtarıyla idempotenttir.
     const claimed = await deps.db.$transaction(async (tx) => {
       const locked = await tx.$queryRaw<{ id: string }[]>`
         SELECT "id" FROM "Appointment" WHERE "id" = ${id} FOR UPDATE SKIP LOCKED`;
@@ -126,15 +126,23 @@ export async function syncCalendarEvents(
       ) {
         return null;
       }
+      if (row.calendarAttempts >= CALENDAR_MAX_ATTEMPTS) {
+        return { row, attempts: row.calendarAttempts, exhausted: true };
+      }
       const updated = await tx.appointment.update({
         where: { id },
         data: { calendarAttempts: { increment: 1 } },
         select: { calendarAttempts: true },
       });
-      return { row, attempts: updated.calendarAttempts };
+      return { row, attempts: updated.calendarAttempts, exhausted: false };
     });
     if (!claimed) continue;
     const { row, attempts } = claimed;
+    if (claimed.exhausted) {
+      await giveUpOnCalendar(deps, id, now, attempts);
+      result.failed += 1;
+      continue;
+    }
 
     // Yurt dışına aktarım rızası yoksa takvim çağrısı yapılmaz; mentor kendi linkini girer.
     if (!(await bothTransferConsents(deps, row))) {

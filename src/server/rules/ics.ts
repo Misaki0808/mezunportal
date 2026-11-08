@@ -3,7 +3,11 @@
  * (dosya yalnız iki katılımcıya iner; kişisel veri gerekmez). Zamanlar UTC (`Z`).
  */
 const escapeText = (value: string) =>
-  value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  value
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r\n|[\r\n]/g, '\\n');
 
 const stamp = (date: Date) =>
   date
