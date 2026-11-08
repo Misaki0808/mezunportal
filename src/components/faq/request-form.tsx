@@ -149,7 +149,7 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
       )}
       {error && (
         <p role="alert" className="text-danger">
-          {errors(error)}
+          {error === 'RATE_LIMITED' ? t('dailyLimit') : errors(error)}
         </p>
       )}
       {sent && (

@@ -2311,6 +2311,7 @@
       "similarDescription": "Göndermeden önce bunlara göz at; cevabın orada olabilir.",
       "acknowledge": "Benzer soruları gördüm, yine de göndermek istiyorum.",
       "acknowledgeFirst": "Önce benzer soruları gördüğünü onayla.",
+      "dailyLimit": "Günde en fazla 3 talep gönderebilirsin. Günlük sınır yenilenince tekrar dene.",
       "submit": "Talebi gönder",
       "sent": "Talebin alındı. Durumunu aşağıdan izleyebilirsin."
     },

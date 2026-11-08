@@ -164,7 +164,9 @@ describe('SSS talebi gönder (öğrenci)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Talebi gönder/ }));
     expect(submit).toHaveBeenCalledTimes(1);
     gate.resolve({ ok: false, errorCode: 'RATE_LIMITED' });
-    expect(await screen.findByRole('alert')).toBeVisible();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Günde en fazla 3 talep gönderebilirsin. Günlük sınır yenilenince tekrar dene.',
+    );
   });
 
   it('taleplerim: durum, ret gerekçesi, yönlendirmede mentor dizini ve yayında SSS bağlantısı', () => {
@@ -208,6 +210,27 @@ const mentorItem = (over: Partial<MentorFaqRequestView> = {}): MentorFaqRequestV
 });
 
 describe('mentor cevap formu', () => {
+  it('yalnız cevapsızlar açıkken kaydedilen cevabı sonuçtan çıkarır', async () => {
+    const answer = vi.fn(async () => ({ ok: true as const, data: { answerId: 'a1' } }));
+    renderUi(
+      <MentorRequests
+        initial={{ items: [mentorItem()], nextCursor: null }}
+        list={vi.fn(async () => ({
+          ok: true as const,
+          data: { items: [mentorItem()], nextCursor: null },
+        }))}
+        answer={answer}
+      />,
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Yalnız cevapsızlar' }));
+    await waitFor(() => expect(screen.getByRole('switch')).toBeEnabled());
+    fireEvent.change(screen.getByLabelText(/Cevabın/), {
+      target: { value: 'Gerekli belgeleri hazırlayıp başvuru takvimini izle.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Cevabı gönder' }));
+    expect(await screen.findByText('Cevaplanacak soru yok.')).toBeVisible();
+    expect(answer).toHaveBeenCalledTimes(1);
+  });
   it('cevapsız süzgeci yüklenirken yeni seçim kilitlenir', async () => {
     const gate = Promise.withResolvers<{
       ok: true;

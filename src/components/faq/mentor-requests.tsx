@@ -182,18 +182,20 @@ export function MentorRequests({ initial, list, answer }: Props) {
               answer={answer}
               onSaved={(body) =>
                 setItems((old) =>
-                  old.map((row) =>
-                    row.id === item.id
-                      ? {
-                          ...row,
-                          myAnswer: {
-                            id: row.myAnswer?.id ?? 'saved',
-                            body,
-                            updatedAt: new Date(),
-                          },
-                        }
-                      : row,
-                  ),
+                  onlyUnanswered
+                    ? old.filter((row) => row.id !== item.id)
+                    : old.map((row) =>
+                        row.id === item.id
+                          ? {
+                              ...row,
+                              myAnswer: {
+                                id: row.myAnswer?.id ?? 'saved',
+                                body,
+                                updatedAt: new Date(),
+                              },
+                            }
+                          : row,
+                      ),
                 )
               }
             />
