@@ -17,11 +17,18 @@ import {
 } from '@/components/ui';
 import * as actions from '@/server/actions/referrals';
 
-export function ReferralCreate({ candidates }: { candidates: ReferralCandidates }) {
+export function ReferralCreate({
+  candidates,
+  postings,
+}: {
+  candidates: ReferralCandidates;
+  postings: { id: string; title: string; organization: string }[];
+}) {
   const t = useTranslations('referrals');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
   const [studentId, setStudent] = useState('');
+  const [postingId, setPosting] = useState('');
   const [organizationName, setOrganization] = useState('');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +36,11 @@ export function ReferralCreate({ candidates }: { candidates: ReferralCandidates 
   function submit(event: FormEvent) {
     event.preventDefault();
     start(async () => {
-      const result = await actions.proposeReferral({ studentId, organizationName, note });
+      const result = await actions.proposeReferral({
+        studentId,
+        ...(postingId ? { jobPostingId: postingId } : { organizationName }),
+        note,
+      });
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;
@@ -59,17 +70,33 @@ export function ReferralCreate({ candidates }: { candidates: ReferralCandidates 
               </Select>
             )}
           </Field>
-          <Field label={t('organization')} required>
-            {(p) => (
-              <Input
-                {...p}
-                autoComplete="organization"
-                maxLength={120}
-                value={organizationName}
-                onChange={(e) => setOrganization(e.target.value)}
-              />
-            )}
-          </Field>
+          {postings.length > 0 && (
+            <Field label={t('posting')}>
+              {(p) => (
+                <Select {...p} value={postingId} onChange={(e) => setPosting(e.target.value)}>
+                  <option value="">{t('noPosting')}</option>
+                  {postings.map((posting) => (
+                    <option key={posting.id} value={posting.id}>
+                      {posting.title} · {posting.organization}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+          )}
+          {!postingId && (
+            <Field label={t('organization')} required>
+              {(p) => (
+                <Input
+                  {...p}
+                  autoComplete="organization"
+                  maxLength={120}
+                  value={organizationName}
+                  onChange={(e) => setOrganization(e.target.value)}
+                />
+              )}
+            </Field>
+          )}
           <Field label={t('note')} hint={t('noteHint')}>
             {(p) => (
               <Textarea

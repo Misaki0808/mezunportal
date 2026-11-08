@@ -1276,6 +1276,8 @@ enum SuspicionRule {
   BURST
   SINGLE_COUNTERPART
   SYNC_FEEDBACK
+  REFERRAL_REPEAT
+  REFERRAL_BURST
 }
 
 enum SuspicionStatus {

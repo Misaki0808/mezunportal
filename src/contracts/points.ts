@@ -78,7 +78,13 @@ export const SESSION_POINT_ACTIONS = [
 export const BADGE_KINDS = ['FOUNDING_MEMBER'] as const;
 export type BadgeKind = (typeof BADGE_KINDS)[number];
 
-export const SUSPICION_RULES = ['BURST', 'SINGLE_COUNTERPART', 'SYNC_FEEDBACK'] as const;
+export const SUSPICION_RULES = [
+  'BURST',
+  'SINGLE_COUNTERPART',
+  'SYNC_FEEDBACK',
+  'REFERRAL_REPEAT',
+  'REFERRAL_BURST',
+] as const;
 export type SuspicionRule = (typeof SUSPICION_RULES)[number];
 export const SUSPICION_STATUSES = ['OPEN', 'CONFIRMED', 'DISMISSED'] as const;
 export type SuspicionStatus = (typeof SUSPICION_STATUSES)[number];

@@ -41,6 +41,7 @@ export default async function AccountPage() {
     appointments,
     mentor,
     jobs,
+    referrals,
   ] = await Promise.all([
     getVerificationState().catch(() => null),
     hasAdminAccess(),
@@ -55,6 +56,7 @@ export default async function AccountPage() {
     getTranslations('appointments.account'),
     getMyMentorSettings().catch(() => null),
     getTranslations('jobs'),
+    getTranslations('referrals'),
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -116,6 +118,16 @@ export default async function AccountPage() {
             title: jobs('mine'),
             description: jobs('mineDescription'),
             icon: BriefcaseIcon,
+          },
+        ]
+      : []),
+    ...(state.data.status === 'VERIFIED'
+      ? [
+          {
+            href: '/hesap/referanslar',
+            title: referrals('title'),
+            description: referrals('accountDescription'),
+            icon: FileTextIcon,
           },
         ]
       : []),
@@ -242,6 +254,7 @@ export default async function AccountPage() {
         '/randevular',
         '/mentor/ayarlar',
         '/deneyimlerim',
+        '/hesap/referanslar',
         '/ilanlarim',
         '/hesap/gorusmeler',
         '/hesap/guvenilirlik',

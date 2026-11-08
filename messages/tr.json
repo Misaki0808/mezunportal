@@ -2421,7 +2421,9 @@
       "rules": {
         "BURST": "Kısa sürede çok puan",
         "SINGLE_COUNTERPART": "Puanların çoğu tek kişiden",
-        "SYNC_FEEDBACK": "Aynı dakikada karşılıklı onay"
+        "SYNC_FEEDBACK": "Aynı dakikada karşılıklı onay",
+        "REFERRAL_REPEAT": "Aynı öğrenciye tekrarlanan referans",
+        "REFERRAL_BURST": "Kısa sürede çok referans"
       },
       "detailCounts": "{entries} kayıt · {points} puan",
       "detailShare": "Tek karşı tarafın payı: %{percent}",
@@ -2757,6 +2759,8 @@
       "ACCEPTED_REJECTED": "İşe kabul reddedildi"
     },
     "profileCount": "Referans verdi: {count}",
-    "accountDescription": "Beyanlarını ve bekleyen onaylarını gör."
+    "accountDescription": "Beyanlarını ve bekleyen onaylarını gör.",
+    "posting": "İlan (isteğe bağlı)",
+    "noPosting": "İlan seçmeden kurum adı gir"
   }
 }

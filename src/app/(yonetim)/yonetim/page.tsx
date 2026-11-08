@@ -40,6 +40,7 @@ export default async function AdminOverviewPage() {
     { key: 'experiences', href: '/yonetim/deneyimler', visible: true },
     { key: 'faq', href: '/yonetim/sss', visible: true },
     { key: 'jobPostings', href: '/yonetim/ilanlar', visible: true },
+    { key: 'referrals', href: '/yonetim/referanslar', visible: true },
   ] as const;
   // Renk dağılımı: moderasyon/kişi işleri İris, veri ve raporlar Nane, sistem ayarları Mercan (anlam taşımaz; metin asıl sinyaldir).
   const TONE = {
@@ -49,6 +50,7 @@ export default async function AdminOverviewPage() {
     experiences: 'primary',
     faq: 'primary',
     jobPostings: 'primary',
+    referrals: 'primary',
     unmatchedValues: 'primary',
     usageMetrics: 'success',
     employmentReport: 'success',
@@ -65,6 +67,7 @@ export default async function AdminOverviewPage() {
     experiences: <FileTextIcon width={22} height={22} />,
     faq: <ClipboardCheckIcon width={22} height={22} />,
     jobPostings: <ClipboardCheckIcon width={22} height={22} />,
+    referrals: <ClipboardCheckIcon width={22} height={22} />,
     unmatchedValues: <ClipboardCheckIcon width={22} height={22} />,
     usageMetrics: <BadgeCheckIcon width={22} height={22} />,
     employmentReport: <BadgeCheckIcon width={22} height={22} />,
