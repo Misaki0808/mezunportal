@@ -96,6 +96,8 @@ Standart raporlayıcı açıkça seçilidir; ajan ortamının otomatik minimal r
 adını ve süresini gizleyemez.
 
 Kapsam yüzdesi için test yazılmaz; yanlış aktör, yanlış durum, tekrar ve hata yolları kanıtlanır.
+Ekran kaynağı deseni testle değil lint kuralıyla korunur.
+
 **Ekran kaynağını tarayan test yazılmaz** (bileşen dosyasını metin olarak okuyup desen arayan
 test); kural saf işleve çıkarılır, test onu sınar. Vitest eşzamanlılığı `--maxWorkers=4`.
 

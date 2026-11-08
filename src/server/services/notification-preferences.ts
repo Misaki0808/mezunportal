@@ -9,7 +9,8 @@ import {
 } from '@/contracts/notifications';
 import type { QueuedEmail } from '@/server/jobs/email-core';
 import { notificationTypeForTemplate } from '@/server/rules/notification';
-import { addDays, istanbulDay } from '@/server/rules/jobPosting';
+import { addDays } from '@/server/rules/jobPosting';
+import { visibleJobPostingIds } from '../repositories/job-postings';
 
 export async function getNotificationPreferences(
   db: PrismaClient,
@@ -81,15 +82,39 @@ export async function maySendNotification(
     if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;
     const dayStart = new Date(`${day}T00:00:00+03:00`);
     const dayEnd = new Date(`${addDays(day, 1)}T00:00:00+03:00`);
-    const today = istanbulDay(new Date());
-    const hasOpenMatch = await db.jobMatch.count({
+    const matches = await db.jobMatch.findMany({
       where: {
         userId: message.recipientUserId,
         createdAt: { gte: dayStart, lt: dayEnd },
-        posting: { status: 'PUBLISHED', deadlineOn: { gte: new Date(`${today}T00:00:00Z`) } },
+        posting: {
+          targets: {
+            some: {
+              department: {
+                memberships: {
+                  some: {
+                    userId: message.recipientUserId,
+                    role: 'STUDENT',
+                    verificationStatus: 'VERIFIED',
+                    endedAt: null,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
+      select: { postingId: true },
     });
-    if (!hasOpenMatch) return false;
+    if (
+      !(
+        await visibleJobPostingIds(
+          db,
+          matches.map((match) => match.postingId),
+          new Date(),
+        )
+      ).length
+    )
+      return false;
   }
   const preference = await db.notificationPreference.findUnique({
     where: { userId_type: { userId: message.recipientUserId, type } },

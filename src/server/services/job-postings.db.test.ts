@@ -45,6 +45,7 @@ import {
   requestJobPostingContact,
 } from './job-posting-contact';
 import { awardForJobPosting, runPointBackfill } from './points';
+import { visibleJobPostingIds } from '../repositories/job-postings';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -1523,6 +1524,95 @@ describe('P2-04 R2 çapraz kaynak D7 regresyonu', () => {
   });
 });
 
+describe('okuma anında ilan görünürlüğü', () => {
+  it('askı ve yazar üyeliği listeden, detaydan, süzgeçten ve doğrudan şikâyetten anında kaldırır; süresi dolan askı geri açar', async () => {
+    const w = await world();
+    const id = await published(w, w.alumni, {
+      organizationName: 'Erişim Test Kurumu',
+      location: 'Erişim Şehri',
+      isRemote: true,
+    });
+    const visible = async () =>
+      (await searchJobPostings(deps, w.student, {})).items.some((item) => item.id === id);
+    const options = () => getJobPostingFilterOptions(deps, w.student);
+    expect(await visible()).toBe(true);
+    expect(await visibleJobPostingIds(db, [id], NOW)).toEqual([id]);
+    await db.user.update({ where: { id: w.alumni }, data: { banned: true, banExpires: null } });
+    expect(await visible()).toBe(false);
+    expect(await visibleJobPostingIds(db, [id], NOW)).toEqual([]);
+    expect(await code(getJobPosting(deps, w.student, { id }))).toBe('RESOURCE_NOT_FOUND');
+    expect((await options()).organizations.some((item) => item.name === 'Erişim Test Kurumu')).toBe(
+      false,
+    );
+    expect((await options()).locations.some((item) => item.name === 'Erişim Şehri')).toBe(false);
+    expect((await options()).remoteCount).toBe(0);
+    expect(
+      await code(reportJobPosting(deps, w.student, { postingId: id, reason: 'Sahte içerik' })),
+    ).toBe('RESOURCE_NOT_FOUND');
+    await db.user.update({
+      where: { id: w.alumni },
+      data: { banExpires: new Date('2030-06-20T09:00:01Z') },
+    });
+    expect(await visible()).toBe(false);
+    await db.user.update({ where: { id: w.alumni }, data: { banExpires: NOW } });
+    expect(await visible()).toBe(true);
+    const membership = await db.membership.findFirstOrThrow({
+      where: { userId: w.alumni, departmentId: w.inst.deptA1, role: 'ALUMNI', endedAt: null },
+    });
+    await db.membership.update({ where: { id: membership.id }, data: { endedAt: NOW } });
+    expect(await visible()).toBe(false);
+    expect(await code(getJobPosting(deps, w.student, { id }))).toBe('RESOURCE_NOT_FOUND');
+    await db.membership.update({
+      where: { id: membership.id },
+      data: { endedAt: null, verificationStatus: 'REJECTED', verifiedAt: null },
+    });
+    expect(await visible()).toBe(false);
+  });
+  it('yabancı hedef bölüm veya eksik hedef, ilanı tüm okuyucu yüzeylerinden gizler', async () => {
+    const w = await world();
+    const id = await published(w, w.alumni, { organizationName: 'Hedef Kapısı Kurumu' });
+    await db.jobPostingDepartment.create({
+      data: { postingId: id, departmentId: w.foreign.deptA1 },
+    });
+    expect(
+      (await searchJobPostings(deps, w.student, {})).items.some((item) => item.id === id),
+    ).toBe(false);
+    expect(await code(getJobPosting(deps, w.student, { id }))).toBe('RESOURCE_NOT_FOUND');
+    const filters = await getJobPostingFilterOptions(deps, w.student);
+    expect(filters.organizations.some((item) => item.name === 'Hedef Kapısı Kurumu')).toBe(false);
+    expect(filters.departments.some((item) => item.id === w.foreign.deptA1)).toBe(false);
+    await db.jobPostingDepartment.deleteMany({ where: { postingId: id } });
+    expect(
+      (await searchJobPostings(deps, w.student, {})).items.some((item) => item.id === id),
+    ).toBe(false);
+  });
+  it('hiç yayımlanmadan kapatılan ve süresi dolan ilanların varlığı şikâyet yoluyla sızmaz', async () => {
+    const w = await world();
+    const id = await submitted(w);
+    await closeJobPosting(deps, w.alumni, { postingId: id });
+    expect(
+      await code(reportJobPosting(deps, w.student, { postingId: id, reason: 'Sahte içerik' })),
+    ).toBe('RESOURCE_NOT_FOUND');
+    const expired = await submitted(w, w.academic);
+    await expireJobPostings(at('2030-07-20T09:00:00Z'));
+    expect(
+      await code(
+        reportJobPosting(at('2030-07-20T09:00:00Z'), w.student, {
+          postingId: expired,
+          reason: 'Sahte içerik',
+        }),
+      ),
+    ).toBe('RESOURCE_NOT_FOUND');
+    const publishedId = await published(w, w.alumni);
+    await closeJobPosting(deps, w.alumni, { postingId: publishedId });
+    expect(
+      await code(
+        reportJobPosting(deps, w.student, { postingId: publishedId, reason: 'Sahte içerik' }),
+      ),
+    ).toBe('JOB_POSTING_NOT_OPEN');
+  });
+});
+
 describe('ilan eşleşmeleri', () => {
   it('açık etiket ve uygun bölümde yayında öğrenciye eşleşme ve aynı işlemde günlük niyet yazar', async () => {
     const w = await world();
@@ -1569,6 +1659,33 @@ describe('ilan eşleşmeleri', () => {
     expect(
       await db.notificationIntent.count({ where: { userId: w.student, kind: 'jobMatch' } }),
     ).toBe(0);
+  });
+  it('yayın anında askıdaki yazar eşleşme ve bildirim üretmez; sonradan askıda görünür eşleşme kalmaz', async () => {
+    const w = await world();
+    const tag = await db.tag.create({
+      data: { kind: 'INTEREST', slug: `suspended-${w.student}`, curated: true },
+    });
+    const profile = await db.profile.create({ data: { userId: w.student } });
+    await db.profileTag.create({ data: { profileId: profile.id, tagId: tag.id } });
+    const id = await submitted(w, w.alumni, { tagIds: [tag.id], targetGrades: [] });
+    await db.user.update({ where: { id: w.alumni }, data: { banned: true, banExpires: null } });
+    await reviewJobPosting(deps, w.moderator, { postingId: id, decision: 'PUBLISH' });
+    expect(await db.jobMatch.count({ where: { postingId: id } })).toBe(0);
+    expect(
+      await db.notificationIntent.count({ where: { userId: w.student, kind: 'jobMatch' } }),
+    ).toBe(0);
+    const match = await import('./job-match');
+    expect(
+      (await match.listSuggestedJobMatches(db, w.student, NOW)).map((p) => p.id),
+    ).not.toContain(id);
+    await db.user.update({ where: { id: w.alumni }, data: { banned: false } });
+    await db.$transaction((tx) => match.stageJobMatches(tx, id, NOW));
+    expect(await db.jobMatch.count({ where: { postingId: id } })).toBe(1);
+    await db.user.update({ where: { id: w.alumni }, data: { banned: true, banExpires: null } });
+    expect(
+      (await match.listMyJobMatchNotifications(db, w.student, NOW)).map((p) => p.id),
+    ).not.toContain(id);
+    expect((await match.sharedJobMatchTags(db, w.student, [id], NOW)).has(id)).toBe(false);
   });
   it('etiketsiz ilan öğrenci panosunda yer alır ama bildirim niyeti oluşturmaz', async () => {
     const w = await world();
