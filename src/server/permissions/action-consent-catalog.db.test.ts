@@ -132,6 +132,12 @@ beforeAll(async () => {
     role: 'STUDENT',
     entryYear: 2024,
   });
+  // İlan yazarlığı mezun/akademisyen ister; rol reddi yerine rıza kapısını ölç.
+  await addMembership(db, {
+    userId: session.userId,
+    departmentId: institution.deptA2,
+    role: 'ACADEMIC',
+  });
   await addMentorProfile(db, session.userId);
   await addGrant(db, { userId: session.userId, scope: 'SYSTEM' });
 });
