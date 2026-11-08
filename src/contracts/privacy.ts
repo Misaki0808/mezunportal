@@ -6,6 +6,7 @@ import { emailSchema } from './auth';
 import { ONBOARDING_STEPS, profileTagSchema } from './profile';
 import { EXPERIENCE_STATUSES, experienceDraftTemplateSchema } from './experience';
 import { FAQ_STATUSES } from './faq';
+import { JOB_APPLY_METHODS, JOB_POSTING_KINDS, JOB_POSTING_STATUSES } from './job-postings';
 import {
   BADGE_KINDS,
   POINT_ACTIONS,
@@ -365,6 +366,27 @@ export const dataExportSchema = z.object({
       ),
     })
     .strict(),
+  /** İlanlar (P2-04): yalnız kendi yazdığın ilanlar. Moderatör, şikâyet eden ve başka kullanıcıya ait alan yok. */
+  jobPostings: z.array(
+    z
+      .object({
+        id: z.string(),
+        kind: z.enum(JOB_POSTING_KINDS),
+        title: z.string().nullable(),
+        organizationName: z.string().nullable(),
+        location: z.string().nullable(),
+        isRemote: z.boolean(),
+        description: z.string().nullable(),
+        applyMethod: z.enum(JOB_APPLY_METHODS).nullable(),
+        applyUrl: z.string().nullable(),
+        deadlineOn: z.string().nullable(),
+        status: z.enum(JOB_POSTING_STATUSES),
+        moderationNote: z.string().nullable(),
+        createdAt: z.string(),
+        publishedAt: z.string().nullable(),
+      })
+      .strict(),
+  ),
   /** Katkı puanı (P1-16): kaynak içerik ve karşı taraf kimliği YOK (anonim deneyim bağı ve üçüncü kişi sızmaz). */
   contribution: z
     .object({

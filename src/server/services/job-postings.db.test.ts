@@ -11,6 +11,8 @@ import {
   grantRequiredConsents,
 } from '@/test/fixtures';
 
+import { deleteAccount } from './accountDeletion';
+import { buildDataExport } from './dataExport';
 import { settleEvents } from './event';
 import {
   closeJobPosting,
@@ -935,5 +937,76 @@ describe('postings.expire', () => {
       expired: expect.any(Number),
     });
     expect((await db.jobPosting.findUniqueOrThrow({ where: { id } })).status).toBe('EXPIRED');
+  });
+});
+
+describe('hesap silme ve veri dökümü', () => {
+  const erase = async (userId: string) => {
+    const { email } = await db.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { email: true },
+    });
+    await deleteAccount(
+      db,
+      userId,
+      { publishedContent: 'DELETE', confirmEmail: email },
+      { removeStoredFiles: null },
+    );
+  };
+
+  it('veri dökümü yalnız kendi ilanlarını içerir (moderatör, raportör ve başkasının ilanı yok)', async () => {
+    const w = await world();
+    const mine = await published(w);
+    const other = await published(w, w.academic);
+    await reportJobPosting(deps, w.student, { postingId: mine, reason: 'Sahte ilan görünüyor' });
+    const dump = await buildDataExport(db, w.alumni);
+    expect(dump.jobPostings).toHaveLength(1);
+    expect(dump.jobPostings[0]).toMatchObject({
+      id: mine,
+      status: 'PUBLISHED',
+      title: 'Veri analisti stajyeri',
+      deadlineOn: '2030-07-15',
+      applyUrl: 'https://kariyer.example.com/ilan/1',
+    });
+    const text = JSON.stringify(dump.jobPostings);
+    for (const secret of [w.moderator, w.student, w.academic, other, 'Sahte ilan'])
+      expect(text).not.toContain(secret);
+    expect((await buildDataExport(db, w.student)).jobPostings).toEqual([]);
+  });
+
+  it('yazar hesabını silince ilanları (hedef bölüm ve şikâyetleriyle) silinir; puanlar silinir; başkasının ilanı kalır', async () => {
+    const w = await world();
+    const mine = await published(w);
+    const other = await published(w, w.academic);
+    await reportJobPosting(deps, w.student, { postingId: mine, reason: 'Sahte ilan görünüyor' });
+    await erase(w.alumni);
+    expect(await db.jobPosting.count({ where: { authorId: w.alumni } })).toBe(0);
+    expect(await db.jobPostingDepartment.count({ where: { postingId: mine } })).toBe(0);
+    expect(await db.jobPostingReport.count({ where: { postingId: mine } })).toBe(0);
+    expect(await db.pointEntry.count({ where: { userId: w.alumni } })).toBe(0);
+    expect(await db.jobPosting.findUnique({ where: { id: other } })).toMatchObject({
+      status: 'PUBLISHED',
+    });
+    expect((await searchJobPostings(deps, w.student, {})).items.map((i) => i.id)).toEqual([other]);
+  });
+
+  it('raportör hesabını silince şikâyet kalır, raportör bağı kopar; moderatör silince ilan kalır', async () => {
+    const w = await world();
+    const id = await published(w);
+    const report = await reportJobPosting(deps, w.student, {
+      postingId: id,
+      reason: 'Sahte ilan görünüyor',
+    });
+    await erase(w.student);
+    expect(
+      await db.jobPostingReport.findUniqueOrThrow({ where: { id: report.reportId } }),
+    ).toMatchObject({
+      reporterId: null,
+      status: 'OPEN',
+    });
+    await erase(w.moderator);
+    expect(await db.jobPosting.findUniqueOrThrow({ where: { id } })).toMatchObject({
+      status: 'PUBLISHED',
+    });
   });
 });

@@ -138,6 +138,7 @@ export async function buildDataExport(
   const appointments = await loadAppointmentExport(db, userId);
   const contribution = await loadContributionExport(db, userId, iso);
   const faq = await loadFaqExport(db, userId, iso);
+  const jobPostings = await loadJobPostingExport(db, userId, iso);
   const cvReviews = await db.cvReviewRequest.findMany({
     where: { OR: [{ studentId: userId }, { mentorId: userId }] },
     orderBy: { id: 'asc' },
@@ -206,6 +207,7 @@ export async function buildDataExport(
     appointments,
     contribution,
     faq,
+    jobPostings,
     cvReviewRequests: cvReviews.map((row) => ({
       id: row.id,
       role: row.studentId === userId ? ('STUDENT' as const) : ('MENTOR' as const),
@@ -450,4 +452,38 @@ async function loadFaqExport(
     })),
     answers: answers.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() })),
   };
+}
+
+/** İlanlar (P2-04): yalnız kullanıcının KENDİ ilanları (içerik, durum, ret gerekçesi). Moderatör, raportör ve başkası yok. */
+async function loadJobPostingExport(
+  db: PrismaClient,
+  userId: string,
+  iso: (date: Date | null) => string | null,
+): Promise<DataExport['jobPostings']> {
+  const rows = await db.jobPosting.findMany({
+    where: { authorId: userId },
+    orderBy: { id: 'asc' },
+    select: {
+      id: true,
+      kind: true,
+      title: true,
+      organizationName: true,
+      location: true,
+      isRemote: true,
+      description: true,
+      applyMethod: true,
+      applyUrl: true,
+      deadlineOn: true,
+      status: true,
+      moderationNote: true,
+      createdAt: true,
+      publishedAt: true,
+    },
+  });
+  return rows.map((row) => ({
+    ...row,
+    deadlineOn: row.deadlineOn ? row.deadlineOn.toISOString().slice(0, 10) : null,
+    createdAt: row.createdAt.toISOString(),
+    publishedAt: iso(row.publishedAt),
+  }));
 }
