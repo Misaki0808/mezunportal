@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -31,6 +32,7 @@ export function SignInForm({
   requestLink,
   startLinkedIn,
 }: Props) {
+  const hydrated = useHydrated();
   const t = useTranslations('authScreens.signIn');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -114,7 +116,12 @@ export function SignInForm({
           </>
         )}
       </div>
-      <form noValidate onSubmit={handleSubmit} className="mt-4 flex flex-1 flex-col gap-6">
+      <form
+        data-hydrated={hydrated ? 'true' : undefined}
+        noValidate
+        onSubmit={handleSubmit}
+        className="mt-4 flex flex-1 flex-col gap-6"
+      >
         <Field
           className="[&_p]:text-base"
           label={t('email')}

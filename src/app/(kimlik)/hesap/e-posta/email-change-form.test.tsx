@@ -12,7 +12,7 @@ describe('EmailChangeForm', () => {
     const { user } = renderUi(<EmailChangeForm submit={submit} />);
     await user.type(screen.getByLabelText(/Yeni e-posta adresi/), 'hata');
     await user.click(screen.getByRole('button', { name: 'Doğrulama bağlantısı gönder' }));
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText('Geçerli bir e-posta adresi yaz.')).toBeVisible();
     expect(submit).not.toHaveBeenCalled();
   });
   it('nötr başarılı yanıtı ve kişisel veri içermeyen mesajı gösterir', async () => {

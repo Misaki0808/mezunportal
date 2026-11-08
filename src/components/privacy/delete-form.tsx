@@ -100,7 +100,15 @@ export function DeleteForm({ currentEmail }: { currentEmail: string }) {
             label={t('email')}
             hint={t('emailHint')}
             required
-            error={emailMismatch ? t('emailMismatch') : form.fieldError('confirmEmail')}
+            error={
+              emailMismatch
+                ? t('emailMismatch')
+                : form.fieldError('confirmEmail')
+                  ? email.trim()
+                    ? t('emailInvalid')
+                    : t('emailRequired')
+                  : undefined
+            }
           >
             {(control) => (
               <Input

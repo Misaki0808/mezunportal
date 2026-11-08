@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -25,6 +26,7 @@ export function MembershipForm({
   departments: SelectableDepartment[];
   submit: (input: DeclareMembershipInput) => Promise<ActionResult<DeclareMembershipOutput>>;
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('authScreens.membership');
   const errors = useTranslations('errors.codes');
   const [fields, setFields] = useState<FieldErrors>({});
@@ -89,7 +91,12 @@ export function MembershipForm({
   if (!departments.length)
     return <EmptyState title={t('emptyTitle')} description={t('emptyDescription')} />;
   return (
-    <form noValidate onSubmit={handleSubmit} className="flex flex-1 flex-col gap-5">
+    <form
+      data-hydrated={hydrated ? 'true' : undefined}
+      noValidate
+      onSubmit={handleSubmit}
+      className="flex flex-1 flex-col gap-5"
+    >
       <header className="mb-5">
         <p className="mb-2 text-base font-semibold text-primary">{t('eyebrow')}</p>
         <h1 className="text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
