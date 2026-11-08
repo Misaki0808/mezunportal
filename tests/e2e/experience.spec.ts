@@ -68,12 +68,27 @@ test('deneyim: yaz → moderasyon → yayın → okuyucu anonim yazarı görmez'
     await expect(page.getByText('Yayında', { exact: true }).first()).toBeVisible();
 
     await login(reader, 'alumniMentor');
-    await reader.goto(`/deneyim/${row.id}`);
+    const responses: Promise<string>[] = [];
+    reader.on('response', (response) => {
+      const type = response.headers()['content-type'] ?? '';
+      if (type.includes('text/') || type.includes('json')) {
+        responses.push(response.text().catch(() => ''));
+      }
+    });
+    const document = await reader.goto(`/deneyim/${row.id}`);
+    const source = await document!.text();
+    const flight = await reader.evaluate(async (id) => {
+      const response = await fetch(`/deneyim/${id}`, { headers: { RSC: '1' } });
+      return response.text();
+    }, row.id);
     await expect(reader.getByRole('heading', { name: 'E2E Teknoloji A.Ş.' })).toBeVisible();
     await expect(reader.getByText('Anonim paylaşıldı')).toBeVisible();
     const html = await reader.content();
-    expect(html).not.toContain(student.name);
-    expect(html).not.toContain(student.email);
+    for (const body of [html, source, flight, ...(await Promise.all(responses))]) {
+      expect(body).not.toContain(student.name);
+      expect(body).not.toContain(student.email);
+      expect(body).not.toContain(student.id);
+    }
     expect(
       await reader.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);

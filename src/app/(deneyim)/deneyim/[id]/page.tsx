@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
+import { findAnonymousOwnership } from '@/components/experience/anonymous-ownership';
 import { ExperienceContent } from '@/components/experience/experience-content';
 import { ReportExperience } from '@/components/experience/report-sheet';
 import { StatusBadge } from '@/components/experience/status-badge';
@@ -31,12 +32,9 @@ export default async function ExperienceDetailPage({
   const content = experience.content as { organizationName?: string };
   // Adlı deneyimde yazar sunucu yanıtındadır; anonimde yanıtta yazar alanı hiç yoktur.
   const author = experience.isAnonymous ? null : experience.author;
-  let isOwner = author !== null && actor?.userId === author.id;
-  if (!isOwner && experience.isAnonymous && experience.status === 'PUBLISHED') {
-    // Anonim yanıtta yazar alanı yoktur: sahiplik, kullanıcının kendi listesinden anlaşılır (şikâyet düğmesi gizlenir).
-    const mine = await listMyExperiences({ status: 'PUBLISHED', limit: 50 }).catch(() => null);
-    isOwner = Boolean(mine?.ok && mine.data.items.some((item) => item.id === experience.id));
-  }
+  const isOwner = experience.isAnonymous
+    ? await findAnonymousOwnership(experience, listMyExperiences)
+    : author !== null && actor?.userId === author.id;
   const editable = isOwner && (experience.status === 'DRAFT' || experience.status === 'REJECTED');
   const date = (value: Date) =>
     new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(value));
@@ -82,7 +80,7 @@ export default async function ExperienceDetailPage({
             {t('detail.edit')}
           </Link>
         )}
-        {experience.status === 'PUBLISHED' && !isOwner && (
+        {experience.status === 'PUBLISHED' && isOwner === false && (
           <ReportExperience experienceId={experience.id} report={reportExperience} />
         )}
       </div>
