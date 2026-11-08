@@ -14,6 +14,7 @@ import { runDailyPoints } from '../services/points';
 import { runSuspicionScan } from '../services/points-scan';
 import { scheduleFeedbackPrompts } from './feedback-task';
 import { alumniStillThere, profileFreshness, studentEmailMigration } from './notification-tasks';
+import { scheduleApplicationWindows } from './application-window-task';
 
 /** Görev adları dışında kişi, bağlantı ve sağlayıcı hata bilgisi günlüğe yazılmaz. */
 export async function createNotificationRuntime() {
@@ -45,6 +46,7 @@ export async function createNotificationRuntime() {
     'points.suspicionScan': () => runSuspicionScan({ db: getDb() }),
     // İlanlar (P2-04): son başvuru günü geçen ilanı kapat (günlük, İstanbul; idempotent).
     'postings.expire': () => expireJobPostings({ db: getDb() }),
+    'applications.remind': () => scheduleApplicationWindows(getDb()),
   };
   try {
     await boss.start();
@@ -55,9 +57,11 @@ export async function createNotificationRuntime() {
       });
       await boss.schedule(
         name,
-        ['notification.relay', 'appointment.feedback', 'cvReview.expire'].includes(name)
-          ? '* * * * *'
-          : '0 3 * * *',
+        name === 'applications.remind'
+          ? '0 9 1 * *'
+          : ['notification.relay', 'appointment.feedback', 'cvReview.expire'].includes(name)
+            ? '* * * * *'
+            : '0 3 * * *',
         {},
         { tz: 'Europe/Istanbul', missed: 'once' },
       );

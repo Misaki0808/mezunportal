@@ -44,6 +44,7 @@ export type InitialExperience = {
   state: FormState;
   isAnonymous: boolean;
   moderationNote: string | null;
+  appliedMonth?: number | null;
 };
 
 type Props = {
@@ -60,6 +61,8 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
   const t = useTranslations('experiences');
   const errorsT = useTranslations('errors.codes');
   const [state, setState] = useState<FormState>(initial?.state ?? emptyState());
+  const [appliedMonth, setAppliedMonth] = useState(initial?.appliedMonth?.toString() ?? '');
+  const calendar = useTranslations('applicationCalendar');
   const [departmentId, setDepartmentId] = useState(
     initial?.departmentId ?? (departments.length === 1 ? departments[0]!.id : ''),
   );
@@ -131,6 +134,7 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
       departmentId,
       content: validation.content,
       isAnonymous,
+      appliedMonth: state.type === 'INTERNSHIP' && appliedMonth ? Number(appliedMonth) : null,
     });
     if (!result.ok) {
       setError(result.errorCode);
@@ -560,6 +564,25 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
             </section>
           );
         })}
+
+        {type === 'INTERNSHIP' && (
+          <Field label={calendar('monthLabel')} hint={calendar('monthHint')}>
+            {(control) => (
+              <Select
+                {...control}
+                value={appliedMonth}
+                onChange={(event) => setAppliedMonth(event.target.value)}
+              >
+                <option value="">{calendar('monthUnknown')}</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                  <option key={month} value={month}>
+                    {calendar(`months.${month as 1}`)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        )}
 
         <section className="flex flex-col gap-3">
           <h2 className="text-xl font-semibold text-fg">{t('form.sections.privacy')}</h2>

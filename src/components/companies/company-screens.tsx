@@ -19,6 +19,8 @@ import {
 } from '@/components/ui';
 import { MentorCard } from '@/components/mentors/mentor-card';
 import { mergeCompanies, searchCompanies } from '@/server/actions/companies';
+import type { ApplicationCalendar } from '@/contracts/application-window';
+import { CalendarView } from '@/components/application-window/calendar';
 
 function CompanyCard({ company }: { company: CompanySummary }) {
   const t = useTranslations('companies');
@@ -79,7 +81,13 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
     </main>
   );
 }
-export function CompanyScreen({ company }: { company: CompanyDetail }) {
+export function CompanyScreen({
+  company,
+  calendar,
+}: {
+  company: CompanyDetail;
+  calendar: ApplicationCalendar;
+}) {
   const t = useTranslations('companies');
   const experience = useTranslations('experiences');
   const jobs = useTranslations('jobs');
@@ -125,40 +133,7 @@ export function CompanyScreen({ company }: { company: CompanyDetail }) {
     {
       id: 'periods',
       label: t('periods'),
-      content: company.periods.length ? (
-        <div className="grid gap-4">
-          <table className="w-full text-left">
-            <caption className="sr-only">{t('periods')}</caption>
-            <thead>
-              <tr>
-                <th>{t('tableSeason')}</th>
-                <th>{t('tableCount')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {company.periods.map((period) => (
-                <tr key={period.season}>
-                  <th scope="row" className="py-3 font-medium">
-                    {t(`season.${period.season}`)}
-                  </th>
-                  <td>
-                    <span className="font-semibold">{period.count}</span>
-                    <span
-                      aria-hidden="true"
-                      className="ml-3 inline-block h-2 max-w-40 rounded-full bg-primary"
-                      style={{
-                        width: `${Math.max(10, (100 * period.count) / Math.max(...company.periods.map((x) => x.count)))}%`,
-                      }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <EmptyState title={t('emptyPeriods')} />
-      ),
+      content: <CalendarView scope={{ kind: 'COMPANY', id: company.id }} data={calendar} />,
     },
     {
       id: 'mentors',

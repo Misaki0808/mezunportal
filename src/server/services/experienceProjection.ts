@@ -21,6 +21,7 @@ export const experienceSelect = {
   city: true,
   termYear: true,
   termSeason: true,
+  appliedMonth: true,
   durationWeeks: true,
   pay: true,
   applicationChannel: true,

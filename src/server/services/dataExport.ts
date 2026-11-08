@@ -68,6 +68,10 @@ export async function buildDataExport(
       createdAt: true,
       deletedAt: true,
       experiences: { select: experienceSelect, orderBy: { id: 'asc' } },
+      companyFollows: {
+        select: { companyId: true, sectorId: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      },
       profile: {
         select: {
           id: true,
@@ -203,9 +207,14 @@ export async function buildDataExport(
     },
     experiences: user.experiences.map((row) => ({
       ...experienceFields(row),
+      appliedMonth: row.appliedMonth,
       publishedAt: iso(row.publishedAt),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
+    })),
+    companyFollows: user.companyFollows.map((follow) => ({
+      ...follow,
+      createdAt: follow.createdAt.toISOString(),
     })),
     profile: user.profile
       ? exportedProfileSchema.parse({

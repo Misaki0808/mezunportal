@@ -116,6 +116,12 @@ export async function maySendNotification(
     )
       return false;
   }
+  if (type === 'APPLICATION_WINDOW') {
+    const cycle = message.idempotencyKey.split(':').at(-1);
+    if (!cycle || !/^\d{4}-\d{2}$/.test(cycle)) return false;
+    const { hasCurrentApplicationWindow } = await import('./application-window');
+    if (!(await hasCurrentApplicationWindow(db, message.recipientUserId, cycle))) return false;
+  }
   const preference = await db.notificationPreference.findUnique({
     where: { userId_type: { userId: message.recipientUserId, type } },
     select: { enabled: true },

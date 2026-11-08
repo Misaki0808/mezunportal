@@ -12,6 +12,7 @@ import {
   type AppointmentNotice,
 } from '../services/appointment-notifier';
 import { sendNotification } from '../services/notification-email';
+import { hasCurrentApplicationWindow } from '../services/application-window';
 import {
   notificationIntentPayload,
   openPilotInvitation,
@@ -113,6 +114,42 @@ export async function sendNotificationIntent(db: PrismaClient, row: IntentRecord
         idempotencyKey: `job-match:${row.userId}:${today}:${payload.day}`,
         subject: messages.notifications.email.jobMatchSubject,
         text: messages.notifications.email.jobMatchText.replace('{url}', url),
+      });
+      if (result.emailLogId)
+        await tx.jobMatchDigest.create({ data: { userId: row.userId, day: today } });
+    });
+    return;
+  }
+  if (payload.type === 'applicationWindow') {
+    const now = new Date();
+    if (!(await hasCurrentApplicationWindow(db, row.userId, payload.cycle, now))) return;
+    const today = istanbulDay(now);
+    await db.$transaction(async (tx) => {
+      // İlan özetiyle aynı kullanıcı/gün kilidi ve 1/gün, 3/7 gün kotası.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`job-match:${row.userId}`}, 0))::text`;
+      const user = await tx.user.findUnique({
+        where: { id: row.userId },
+        select: { email: true, deletedAt: true },
+      });
+      if (!user || user.deletedAt) return;
+      if (
+        await tx.jobMatchDigest.findUnique({
+          where: { userId_day: { userId: row.userId, day: today } },
+        })
+      )
+        return;
+      const recent = await tx.jobMatchDigest.count({
+        where: { userId: row.userId, day: { gte: addDays(today, -6), lte: today } },
+      });
+      if (recent >= 3) return;
+      const url = new URL('/basvuru-takvimi', getAuthEnv().APP_URL).href;
+      const result = await enqueueEmail({
+        to: user.email,
+        recipientUserId: row.userId,
+        template: 'applicationWindow.reminder',
+        idempotencyKey: `application-window:${row.userId}:${payload.cycle}`,
+        subject: messages.notifications.email.applicationWindowSubject,
+        text: messages.notifications.email.applicationWindowText.replace('{url}', url),
       });
       if (result.emailLogId)
         await tx.jobMatchDigest.create({ data: { userId: row.userId, day: today } });

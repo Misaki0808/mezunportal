@@ -157,6 +157,7 @@ model User {
   certifications              Certification[]
   skills                      UserSkill[]
   experienceInvitations       ExperienceInvitation[]
+  companyFollows              CompanyFollow[]
 
   experiences           Experience[]       @relation("ExperienceAuthor")
   moderatedExperiences  Experience[]       @relation("ExperienceModerator")
@@ -220,6 +221,7 @@ enum NotificationType {
   FAQ
   JOB_POSTING
   JOB_MATCH
+  APPLICATION_WINDOW
 }
 
 enum StillThereChoice {
@@ -807,6 +809,7 @@ model Sector {
   updatedAt      DateTime   @updatedAt
   companies      Company[]
   positions      Position[]
+  followers      CompanyFollow[]
 
   @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "Sector_normalizedName_trgm")
 }
@@ -822,6 +825,7 @@ model Company {
   updatedAt      DateTime     @updatedAt
   sector         Sector?      @relation(fields: [sectorId], references: [id], onDelete: SetNull)
   positions      Position[]
+  followers      CompanyFollow[]
   jobPostings    JobPosting[]
 
   @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "Company_normalizedName_trgm")
@@ -835,6 +839,23 @@ model CompanyMerge {
   createdAt DateTime @default(now())
 
   @@index([targetId])
+}
+
+/// Exactly one of companyId and sectorId is set; the database enforces this invariant.
+model CompanyFollow {
+  id        String   @id @default(uuid(7))
+  userId    String
+  companyId String?
+  sectorId  String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sector    Sector?  @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@unique([userId, sectorId])
+  @@index([companyId])
+  @@index([sectorId])
 }
 
 model Title {
@@ -1069,6 +1090,7 @@ model Experience {
   city                String?
   termYear            Int?
   termSeason          TermSeason?
+  appliedMonth        Int?
   durationWeeks       Int?
   pay                 ExperiencePay?
   applicationChannel  ApplicationChannel?

@@ -7,6 +7,7 @@ import { loadVerifiedDepartments } from '@/components/experience/verified-depart
 import { buttonClasses, EmptyState, ErrorState } from '@/components/ui';
 import {
   getExperienceDetail,
+  getOwnAppliedMonth,
   saveExperienceDraft,
   submitExperience,
 } from '@/server/actions/experience';
@@ -40,6 +41,8 @@ export default async function EditExperiencePage({ params }: { params: Promise<{
       </div>
     );
   }
+  const month = await getOwnAppliedMonth({ experienceId: id });
+  if (!month.ok) return <ErrorState errorCode={month.errorCode} />;
   return (
     <ExperienceForm
       departments={loaded.departments}
@@ -49,6 +52,7 @@ export default async function EditExperiencePage({ params }: { params: Promise<{
         state: stateFromContent(experience.content),
         isAnonymous: experience.isAnonymous,
         moderationNote: experience.moderationNote,
+        appliedMonth: month.data.appliedMonth,
       }}
       save={saveExperienceDraft}
       submit={submitExperience}

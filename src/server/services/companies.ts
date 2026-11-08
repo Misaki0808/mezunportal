@@ -312,6 +312,15 @@ export async function mergeCompanies(
         where: { companyId: sourceId },
         data: { companyId: resolvedTarget },
       });
+      const followers = await tx.companyFollow.findMany({
+        where: { companyId: sourceId },
+        select: { userId: true, createdAt: true },
+      });
+      if (followers.length)
+        await tx.companyFollow.createMany({
+          data: followers.map((follow) => ({ ...follow, companyId: resolvedTarget })),
+          skipDuplicates: true,
+        });
       await tx.unmatchedValue.updateMany({
         where: { kind: 'COMPANY', resolvedToId: sourceId },
         data: { resolvedToId: resolvedTarget },
