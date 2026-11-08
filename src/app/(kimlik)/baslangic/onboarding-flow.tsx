@@ -155,8 +155,9 @@ export function OnboardingFlow({
   const availableChoices = choices.filter((tag) =>
     tags.has(tag.slug as keyof typeof messages.profileTags),
   );
-  const mentorAvailable =
-    !state.studentMentorEligibility || state.studentMentorEligibility.eligible;
+  const mentorAvailable = state.steps.some(
+    (item) => item.step === 'MENTOR_PREFERENCE' && item.applicable,
+  );
   const skippable = state.steps.some(
     (item) => item.step === step && item.skippable && item.applicable,
   );

@@ -33,6 +33,27 @@ const goals = [{ id: 'g', kind: 'GOAL' as const, slug: 'internship' }];
 const saveVisibility = vi.fn();
 
 describe('ilk giriş akışı', () => {
+  it('öğrenci eşiği kapalı olsa da sunucunun uygulanabilir dediği çok rollü mentor adımını gösterir', () => {
+    const multipleRoles = {
+      ...initial,
+      step: 'MENTOR_PREFERENCE' as const,
+      steps: initial.steps.map((item) =>
+        item.step === 'MENTOR_PREFERENCE' ? { ...item, applicable: true } : item,
+      ),
+    };
+    renderUi(
+      <OnboardingFlow
+        initialState={multipleRoles}
+        interests={interests}
+        goals={goals}
+        initialVisibility={{ fields: [...visibility.fields] }}
+        save={vi.fn()}
+        skip={vi.fn()}
+        saveVisibility={saveVisibility}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Evet, ilgileniyorum' })).toBeInTheDocument();
+  });
   it('boş seçimi kaydetmez, kullanıcıya atlama seçeneğini gösterir', async () => {
     const save = vi.fn();
     const { user } = renderUi(
