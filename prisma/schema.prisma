@@ -185,6 +185,8 @@ model Profile {
   mentorInterested      Boolean?
   /// Adım durumu açıkça tutulur: listede yoksa PENDING. İki liste ayrıktır; MEMBERSHIP ve COMPLETE
   /// atlanamaz (ham SQL CHECK). Atlama veriyi silmez (ilgi/hedef/mentor tercihi olduğu gibi kalır).
+  /// Kullanıcının kendi düzenlediği temel alanlar (`headline`/`summary`/`city`); yeni CV bunları sessizce ezmez.
+  manualFields          String[]         @default([])
   completedSteps        OnboardingStep[] @default([])
   skippedSteps          OnboardingStep[] @default([])
   createdAt             DateTime         @default(now())
@@ -199,6 +201,11 @@ model Tag {
   id        String   @id @default(uuid(7))
   kind      TagKind
   slug      String
+  /// Görünen ad: sabit etiketlerde (ilgi/hedef) boş, metin mesaj kataloğundadır; `SKILL` etiketinde zorunlu
+  /// (veritabanı kısıtı). Kullanıcının serbest yazdığı beceri `curated = false` ile açılır ve başkalarına
+  /// öneri olarak listelenmez.
+  label     String?
+  curated   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -769,6 +776,8 @@ model Certification {
   @@index([userId])
 }
 
+/// ESKİ (P1-06 ile bırakıldı): beceriler artık `Tag(SKILL)` + `ProfileTag`'tir. Veri taşındı; tablo ekleyici
+/// politikası gereği bir sonraki daraltma migration'ında kaldırılır (BACKLOG TD-013).
 model UserSkill {
   id             String             @id @default(uuid(7))
   userId         String

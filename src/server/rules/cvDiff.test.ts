@@ -13,6 +13,7 @@ import {
 } from './cvDiff';
 
 const EMPTY_SNAPSHOT: CvSnapshot = {
+  profile: null,
   education: [],
   positions: [],
   languages: [],
@@ -20,6 +21,7 @@ const EMPTY_SNAPSHOT: CvSnapshot = {
   skills: [],
 };
 const EMPTY_PROPOSAL: CvProposal = {
+  profile: { headline: null, summary: null, city: null },
   education: [],
   positions: [],
   languages: [],
@@ -58,6 +60,7 @@ describe('computeCvDiff', () => {
   it('boş profile her kalem NEW olur', () => {
     const diff = computeCvDiff(
       {
+        profile: { headline: null, summary: null, city: null },
         education: [education()],
         positions: [position()],
         languages: [{ name: 'İngilizce', level: 'B2' }],
@@ -299,5 +302,77 @@ describe('computeCvDiff — rastgele veriyle değişmezler', () => {
       expect(open.items.some((item) => item.status === 'CONFLICT')).toBe(false);
       expect(locked.items.some((item) => item.status === 'CHANGED')).toBe(false);
     }
+  });
+});
+
+describe('PROFILE kalemi (başlık, özet, şehir)', () => {
+  const profile = (
+    headline: string | null,
+    summary: string | null = null,
+    city: string | null = null,
+  ) => ({
+    headline,
+    summary,
+    city,
+  });
+  const run = (
+    proposed: ReturnType<typeof profile>,
+    existingValue: ReturnType<typeof profile> | null,
+    manual: ('headline' | 'summary' | 'city')[] = [],
+  ) =>
+    computeCvDiff(
+      { ...EMPTY_PROPOSAL, profile: proposed },
+      {
+        ...EMPTY_SNAPSHOT,
+        profile: existingValue ? { id: 'p1', value: existingValue, manualFields: manual } : null,
+      },
+    );
+
+  it('CV’de hiç alan yoksa kalem yok', () => {
+    expect(run(profile(null), profile('X'))).toEqual({ items: [], unchangedCount: 0 });
+  });
+
+  it('profil satırı yoksa ya da alan boşsa NEW; dolu ve farklıysa CHANGED; elle yazılmışsa CONFLICT', () => {
+    expect(run(profile('A', null, 'B'), null).items[0]).toMatchObject({
+      status: 'NEW',
+      changedFields: ['headline', 'city'],
+      existingId: null,
+    });
+    expect(run(profile('A'), profile(null)).items[0]).toMatchObject({
+      status: 'NEW',
+      existingId: 'p1',
+    });
+    expect(run(profile('Yeni'), profile('Eski')).items[0]).toMatchObject({
+      status: 'CHANGED',
+      changedFields: ['headline'],
+    });
+    expect(run(profile('Yeni'), profile('Eski'), ['headline']).items[0]).toMatchObject({
+      status: 'CONFLICT',
+    });
+  });
+
+  it('kalem durumu en ağır alanın durumudur; elle yazılmış ama CV’yle aynı alan çakışma yaratmaz', () => {
+    expect(
+      run(profile('A', 'Yeni özet'), profile('A', 'Eski özet'), ['headline']).items[0],
+    ).toMatchObject({
+      status: 'CHANGED',
+      changedFields: ['summary'],
+    });
+    expect(run(profile('A', 'S', null), profile('A', null), ['headline']).items[0]).toMatchObject({
+      status: 'NEW',
+      changedFields: ['summary'],
+    });
+    expect(run(profile('A', 'Yeni'), profile(null, 'Eski'), ['summary']).items[0]).toMatchObject({
+      status: 'CONFLICT',
+    });
+  });
+
+  it('büyük/küçük harf ve Türkçe harf farkı değişiklik sayılmaz; kalem anahtarı profilden bağımsız', () => {
+    const same = run(profile('İSTANBUL Analisti'), profile('istanbul analisti'));
+    expect(same).toEqual({ items: [], unchangedCount: 1 });
+    expect(run(profile('A'), null).items[0]?.key).toBe(
+      run(profile('A'), profile('Z')).items[0]?.key,
+    );
+    expect(run(profile('A'), null).items[0]?.key).toMatch(/^PROFILE:[0-9a-f]{20}$/);
   });
 });

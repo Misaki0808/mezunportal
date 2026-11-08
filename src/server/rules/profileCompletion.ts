@@ -1,4 +1,9 @@
 import {
+  PROFILE_COMPLETION_FIELDS,
+  SKILLS_MIN_FOR_COMPLETION,
+  type ProfileContentCompletion,
+} from '@/contracts/profile-content';
+import {
   COMPLETION_FIELDS,
   ONBOARDING_STEPS,
   REQUIRED_STEPS,
@@ -104,4 +109,39 @@ export function studentMentorEligibility(
   if (!Number.isInteger(publishedExperienceCount) || publishedExperienceCount < 1)
     return { eligible: false, reason: 'PUBLISHED_EXPERIENCE_REQUIRED' };
   return { eligible: true, reason: null };
+}
+
+/**
+ * Profil tamamlama göstergesi (ilk giriş adımları + profil içeriği): uygulanabilir adımların eşit ağırlıklı oranı.
+ * İçerik adımları: `BASICS` (başlık + şehir), `EDUCATION` (≥ 1 kayıt), `SKILLS` (≥ `SKILLS_MIN_FOR_COMPLETION`),
+ * `CV` (en az bir CV uygulanmış). Açık olmayan mentor adımı paydaya girmez.
+ */
+export function computeProfileContentCompletion(input: {
+  onboarding: Readonly<Record<CompletionField, StepStatus>>;
+  mentorStepAvailable: boolean;
+  headline: string | null;
+  city: string | null;
+  educationCount: number;
+  skillCount: number;
+  cvApplied: boolean;
+}): ProfileContentCompletion {
+  const done: Record<(typeof PROFILE_COMPLETION_FIELDS)[number], boolean> = {
+    MEMBERSHIP: input.onboarding.MEMBERSHIP === 'COMPLETED',
+    INTERESTS: input.onboarding.INTERESTS === 'COMPLETED',
+    GOALS: input.onboarding.GOALS === 'COMPLETED',
+    MENTOR_PREFERENCE: input.onboarding.MENTOR_PREFERENCE === 'COMPLETED',
+    VISIBILITY: input.onboarding.VISIBILITY === 'COMPLETED',
+    BASICS: Boolean(input.headline) && Boolean(input.city),
+    EDUCATION: input.educationCount >= 1,
+    SKILLS: input.skillCount >= SKILLS_MIN_FOR_COMPLETION,
+    CV: input.cvApplied,
+  };
+  const applicable = PROFILE_COMPLETION_FIELDS.filter(
+    (field) => field !== 'MENTOR_PREFERENCE' || input.mentorStepAvailable,
+  );
+  const missing = applicable.filter((field) => !done[field]);
+  return {
+    percent: Math.round(((applicable.length - missing.length) / applicable.length) * 100),
+    missing,
+  };
 }

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, expect, it, vi } from 'vitest';
 import { applyCvSchema, parsedCvSchema } from '@/contracts/cv';
-import { cvKit, cvUser, pdfForm } from '@/test/cv';
+import { cvKit, cvUser, pdfForm, skillCount } from '@/test/cv';
 import { createTestPrisma } from '@/test/db';
 import { createFakeLlm, LlmError } from '../external/llm';
 import { applyCv, discardCv, getCvReview, uploadCv } from './cv';
@@ -105,7 +105,7 @@ it.each(['upload', 'apply', 'discard'] as const)(
               );
     await expect(call()).rejects.toMatchObject({ code: 'AUTH_ACCOUNT_SUSPENDED' });
     expect((await db.cvUpload.findUniqueOrThrow({ where: { id: u.id } })).status).toBe('PARSED');
-    expect(await db.userSkill.count({ where: { userId: u.userId } })).toBe(0);
+    expect(await skillCount(db, u.userId)).toBe(0);
   },
 );
 it('eski ayrıştırma denemesinin geç hatası yeni PARSED sonucunun dosyasını silemez', async () => {
@@ -163,7 +163,7 @@ it('bağımsız düşmanca CV: rol/yetki sızmaz, onaysız yazmaz; logda girdi/�
     const row = await db.cvUpload.findUniqueOrThrow({ where: { id: u.id } });
     expect(JSON.stringify(row.parsedJson)).not.toContain(victim.userId);
     expect(parsedCvSchema.safeParse(row.parsedJson).success).toBe(true);
-    expect(await db.userSkill.count({ where: { userId: u.userId } })).toBe(0);
+    expect(await skillCount(db, u.userId)).toBe(0);
     expect(await db.position.count({ where: { userId: u.userId } })).toBe(0);
     const review = await getCvReview(u.kit.deps, u.actor, u.id);
     const skill = review.items.find(
@@ -180,7 +180,7 @@ it('bağımsız düşmanca CV: rol/yetki sızmaz, onaysız yazmaz; logda girdi/�
       u.actor,
       applyCvSchema.parse({ cvUploadId: u.id, decisions: [{ key: skill.key, section: 'SKILL' }] }),
     );
-    expect(await db.userSkill.count({ where: { userId: u.userId } })).toBe(1);
+    expect(await skillCount(db, u.userId)).toBe(1);
     expect(await db.position.count({ where: { userId: u.userId } })).toBe(0);
     expect(await db.adminGrant.count()).toBe(grants);
     expect(await db.membership.count()).toBe(memberships);

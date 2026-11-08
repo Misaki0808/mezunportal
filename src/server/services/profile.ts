@@ -225,3 +225,27 @@ export async function listProfileTags(
     };
   });
 }
+
+/** Salt-okunur ilk giriş özeti (adım durumları + mentor adımı uygulanabilirliği); profil satırı açmaz. */
+export async function onboardingSnapshot(tx: Prisma.TransactionClient, userId: string, now: Date) {
+  const facts = await membershipFacts(tx, userId, now);
+  const profile = await tx.profile.findUnique({ where: { userId }, select: profileSelect });
+  const state = stateOf(
+    profile ?? {
+      id: '',
+      onboardingStep: 'MEMBERSHIP',
+      completedSteps: [],
+      skippedSteps: [],
+      mentorInterested: null,
+      tags: [],
+    },
+    facts,
+  );
+  return {
+    statuses: Object.fromEntries(state.steps.map((step) => [step.step, step.status])) as Record<
+      CompletionField,
+      'COMPLETED' | 'SKIPPED' | 'PENDING'
+    >,
+    mentorStepAvailable: facts.mentorStepAvailable,
+  };
+}

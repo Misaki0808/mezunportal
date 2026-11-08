@@ -75,7 +75,11 @@
       "ADMIN_GRANT_NOT_ACTIVE": "Bu yönetici yetkisi zaten kaldırılmış.",
       "ADMIN_LAST_SYSTEM_GRANT": "Son sistem yöneticisi yetkisi kaldırılamaz.",
       "DICTIONARY_ENTRY_EXISTS": "Bu ada sahip bir kayıt zaten var.",
-      "UNMATCHED_NOT_OPEN": "Bu değer için karar zaten verilmiş."
+      "UNMATCHED_NOT_OPEN": "Bu değer için karar zaten verilmiş.",
+      "PROFILE_LINK_INVALID": "Bu bağlantı geçerli bir adres değil. Tam adresi yapıştır.",
+      "PROFILE_LINK_NOT_HTTPS": "Bağlantı https ile başlamalı.",
+      "PROFILE_LINK_HOST_NOT_ALLOWED": "Bu site için bağlantı eklenemiyor. Listedeki sitelerden birini seç.",
+      "PROFILE_LIMIT_REACHED": "Bu bölüm için ekleyebileceğin üst sınıra ulaştın. Önce birini sil."
     }
   },
   "nav": {
