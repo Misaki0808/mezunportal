@@ -15,7 +15,8 @@ import {
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { codedValidation } from '@/lib/errors';
 
-import { errorForDenyReason, loadActor } from '../permissions';
+import { errorForDenyReason } from '../permissions/guards';
+import { loadActor } from '../permissions/actor';
 import { evaluateAccess } from '../rules/authorization';
 import { computeClassStanding } from '../rules/classYear';
 import {

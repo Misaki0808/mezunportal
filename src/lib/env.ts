@@ -227,3 +227,40 @@ export function parseLlmEnv(source: Readonly<Record<string, string | undefined>>
 export function getLlmEnv(): LlmEnv {
   return parseLlmEnv(process.env);
 }
+
+// ---------------------------------------------------------------------------------------------
+// Takvim / Meet (P1-10)
+// ---------------------------------------------------------------------------------------------
+
+const calendarEnvSchema = z
+  .object({
+    APP_ENV: z.enum(['local', 'test', 'prod']),
+    /**
+     * Sağlayıcı seçimi. BOŞSA takvim KAPALIDIR: online randevu yine onaylanır, mentor görüşme linkini elle ekler.
+     * `fake`: deterministik sahte adaptör; yalnız `local`/`test` (canlıda env doğrulamasını düşürür). Gerçek Google
+     * adaptörü kullanıcı onayıyla (E4: bulut projesi, OAuth, yenileme jetonu) ayrı kartla eklenir.
+     */
+    CALENDAR_PROVIDER: z.preprocess(blankToUndefined, z.enum(['fake']).optional()),
+  })
+  .superRefine((env, ctx) => {
+    if (env.APP_ENV === 'prod' && env.CALENDAR_PROVIDER === 'fake') {
+      ctx.addIssue({ code: 'custom', path: ['CALENDAR_PROVIDER'], message: 'CALENDAR_PROVIDER' });
+    }
+  });
+
+export type CalendarEnv = z.infer<typeof calendarEnvSchema>;
+
+export function parseCalendarEnv(
+  source: Readonly<Record<string, string | undefined>>,
+): CalendarEnv {
+  const result = calendarEnvSchema.safeParse(source);
+  if (!result.success) {
+    const keys = new Set(result.error.issues.map((issue) => String(issue.path[0] ?? '(kök)')));
+    throw new EnvValidationError([...keys]);
+  }
+  return result.data;
+}
+
+export function getCalendarEnv(): CalendarEnv {
+  return parseCalendarEnv(process.env);
+}

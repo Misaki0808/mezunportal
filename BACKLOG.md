@@ -47,9 +47,14 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 - P1-09 mentor dizini servisi: görünür mentor (etkin profil, geçerli hesap, doğrulanmış üyelik, K-07), tür/sektör/
   şirket/unvan/deneyim türü/görüşme biçimi/yalnız müsait süzgeçleri, mentor kartı, "benzer yol izleyenler" (en çok 5,
   gerekçeli, `rules/similarity`) ve profilden giriş uygunluk bayrakları hazır; `Profile.completionScore` her profil
-  yazımında `rules/profileCompletion` kuralından güncellenir. Kapasite doluluğu onaylı randevu sayacına bağlıdır: P1-10
-  gelene kadar sayaç 0 (`services/mentor-load.ts`, P1-10 gerçek sayımı bağlar). Pilot sözlük başlangıç seti
+  yazımında `rules/profileCompletion` kuralından güncellenir. Kapasite doluluğu onaylı randevu sayacına bağlıdır
+  (`services/mentor-load.ts`, P1-10 ile gerçek sayım). Pilot sözlük başlangıç seti
   (sektör, unvan, beceri; şirket yok) seed'de. Ekran W2'de.
+- P1-10 randevu motoru servisi: mentor ayarları (kapasite, süre, haftalık müsaitlik, müsait değilim), slot üretimi
+  (21 gün, 24 saat öncesi, İstanbul saati), talep → onay/ret/iptal, D11 zaman aşımı (`EXPIRED`), kapasite denetimi,
+  exclusion constraint, `.ics`, hatırlatma, elle link yolu, hesap silme/veri dökümü kapsamı hazır. Takvim adaptörü
+  arayüzü + sahtesi var (`CALENDAR_PROVIDER=fake`, boşsa kapalı: mentor linki elle ekler); **gerçek Google adaptörü
+  kullanıcı onayını bekler (E4: bulut projesi, OAuth, yenileme jetonu)**. Ekran W2'de.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
