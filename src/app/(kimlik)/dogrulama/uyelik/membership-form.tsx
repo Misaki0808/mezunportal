@@ -51,9 +51,8 @@ export function MembershipForm({
       }
       setFields(next);
       const first = Object.keys(next)[0];
-      if (first)
-        event.currentTarget.elements.namedItem(first) instanceof HTMLElement &&
-          (event.currentTarget.elements.namedItem(first) as HTMLElement).focus();
+      const control = first ? event.currentTarget.elements.namedItem(first) : null;
+      if (control instanceof HTMLElement) control.focus();
       return;
     }
     locked.current = true;
@@ -103,7 +102,18 @@ export function MembershipForm({
         required
       >
         {(control) => (
-          <Select {...control} name="departmentId" defaultValue="">
+          <Select
+            {...control}
+            name="departmentId"
+            defaultValue=""
+            onChange={() =>
+              setFields((current) => {
+                const next = { ...current };
+                delete next.departmentId;
+                return next;
+              })
+            }
+          >
             <option value="">{t('departmentPlaceholder')}</option>
             {departments.map((department) => (
               <option key={department.id} value={department.id}>
@@ -131,6 +141,13 @@ export function MembershipForm({
               type="number"
               inputMode="numeric"
               autoComplete="off"
+              onChange={() =>
+                setFields((current) => {
+                  const next = { ...current };
+                  delete next.entryYear;
+                  return next;
+                })
+              }
             />
           )}
         </Field>

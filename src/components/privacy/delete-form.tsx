@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
@@ -23,13 +23,6 @@ export function DeleteForm({ currentEmail }: { currentEmail: string }) {
   const [deleted, setDeleted] = useState(false);
   const [emailMismatch, setEmailMismatch] = useState(false);
   const emailInput = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (confirmed && form.failure?.errorCode === 'ACCOUNT_DELETE_CONFIRMATION_MISMATCH') {
-      setConfirmed(null);
-      setEmailMismatch(true);
-      requestAnimationFrame(() => emailInput.current?.focus());
-    }
-  }, [confirmed, form.failure?.errorCode]);
   if (deleted)
     return (
       <Card className="mx-auto mt-10 max-w-2xl space-y-4">
@@ -159,6 +152,14 @@ export function DeleteForm({ currentEmail }: { currentEmail: string }) {
                     () => {
                       setDeleted(true);
                       setConfirmed(null);
+                    },
+                    undefined,
+                    (failure) => {
+                      if (failure.errorCode === 'ACCOUNT_DELETE_CONFIRMATION_MISMATCH') {
+                        setConfirmed(null);
+                        setEmailMismatch(true);
+                        requestAnimationFrame(() => emailInput.current?.focus());
+                      }
                     },
                   );
               }}

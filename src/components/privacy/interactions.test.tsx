@@ -129,6 +129,21 @@ it('hesap silmede farklı adres onay penceresinden önce alan yanında açıklan
   expect(email).toHaveFocus();
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+it('adres sonradan değişmişse sunucu uyuşmazlığını da onay penceresinden alana taşır', async () => {
+  const { user } = renderUi(
+    <ToastProvider>
+      <DeleteForm currentEmail="eski@example.invalid" />
+    </ToastProvider>,
+  );
+  await user.type(screen.getByLabelText(/Onaylamak için/), 'eski@example.invalid');
+  await user.click(screen.getByRole('button', { name: 'Hesabımı sil' }));
+  mocks.remove.mockResolvedValue({ ok: false, errorCode: 'ACCOUNT_DELETE_CONFIRMATION_MISMATCH' });
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', { name: 'Hesabımı sil' }),
+  );
+  expect(await screen.findByText('Yazdığın e-posta hesabındaki adresle eşleşmiyor.')).toBeVisible();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
 it('gizlilikte değişiklikler tek kaydet ile gönderilir, kaydedilmemiş durum duyurulur', async () => {
   const initial = {
     fields: [
