@@ -143,6 +143,7 @@ export function PostingList({
             name="q"
             defaultValue={filters.q ?? ''}
             placeholder={t('search')}
+            minLength={2}
             maxLength={100}
           />
           <Button type="submit">{t('searchButton')}</Button>

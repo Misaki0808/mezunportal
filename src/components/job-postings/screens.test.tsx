@@ -79,6 +79,7 @@ it('eksik form hatası özetlenir ve odaklanır, işlem çağrılmaz', async () 
 it('iletişim eylemi yazar kimliği taşımadan ilan üzerinden açılır', () => {
   renderUi(
     <PostingDetail
+      canRequestContact
       posting={{
         ...posting,
         applyMethod: 'CONTACT_REQUEST',
@@ -90,4 +91,31 @@ it('iletişim eylemi yazar kimliği taşımadan ilan üzerinden açılır', () =
   const link = screen.getByRole('link', { name: 'İletişim iste' });
   expect(link).toHaveAttribute('href', '/ilanlar/job-1/iletisim');
   expect(document.body.innerHTML).not.toContain('gizli-yazar');
+});
+it('talep edilemeyen ilan için düğme yerine tek nötr açıklama gösterilir', () => {
+  renderUi(
+    <PostingDetail
+      posting={{
+        ...posting,
+        applyMethod: 'CONTACT_REQUEST',
+        description: 'Açıklama',
+        applyUrl: null,
+      }}
+    />,
+  );
+  expect(screen.queryByRole('link', { name: 'İletişim iste' })).not.toBeInTheDocument();
+  expect(screen.getByText('Bu ilan için şu anda iletişim talebi oluşturulamıyor.')).toBeVisible();
+});
+it('ilan iletişimi yalnız ilan kimliği ve seçilen alanlarla gönderilir', async () => {
+  const { PostingContactForm } = await import('./contact');
+  const send = vi
+    .fn()
+    .mockResolvedValue({ ok: true, data: { requestId: 'istek', status: 'PENDING' } });
+  renderUi(<PostingContactForm postingId="ilan-123" requestableFields={['EMAIL']} send={send} />);
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Talep gönder' }));
+  await waitFor(() =>
+    expect(send).toHaveBeenCalledWith({ jobPostingId: 'ilan-123', fields: ['EMAIL'], message: '' }),
+  );
+  expect(await screen.findByRole('status')).toHaveTextContent('Talebin gönderildi');
 });

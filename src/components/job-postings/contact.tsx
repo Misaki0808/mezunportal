@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { CONTACT_FIELDS, type ContactField } from '@/contracts/privacy';
@@ -21,6 +22,7 @@ export function PostingContactForm({
     message: string;
   }) => Promise<ActionResult<SendContactRequestOutput>>;
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('privacyScreens.contacts');
   const labels = useTranslations('privacyScreens.fields');
   const errors = useTranslations('errors.codes');
@@ -40,6 +42,7 @@ export function PostingContactForm({
     );
   return (
     <form
+      data-hydrated={hydrated ? 'true' : undefined}
       className="space-y-5"
       onSubmit={(event) => {
         event.preventDefault();
@@ -62,17 +65,26 @@ export function PostingContactForm({
         <legend className="font-semibold">{t('fieldLegend')}</legend>
         <p className="text-fg-muted">{t('requestableHelp')}</p>
         {CONTACT_FIELDS.map((field) => (
-          <Checkbox
-            key={field}
-            label={labels(field)}
-            checked={fields.includes(field)}
-            disabled={pending || !requestableFields.includes(field)}
-            onChange={(event) =>
-              setFields((old) =>
-                event.target.checked ? [...old, field] : old.filter((x) => x !== field),
-              )
-            }
-          />
+          <div key={field}>
+            <Checkbox
+              label={labels(field)}
+              checked={fields.includes(field)}
+              disabled={pending || !requestableFields.includes(field)}
+              aria-describedby={
+                !requestableFields.includes(field) ? `${field}-unavailable` : undefined
+              }
+              onChange={(event) =>
+                setFields((old) =>
+                  event.target.checked ? [...old, field] : old.filter((x) => x !== field),
+                )
+              }
+            />
+            {!requestableFields.includes(field) && (
+              <p id={`${field}-unavailable`} className="pl-9 text-sm text-fg-muted">
+                {t('fieldUnavailable')}
+              </p>
+            )}
+          </div>
         ))}
       </fieldset>
       <div className="rounded-3xl border border-border bg-surface p-5">

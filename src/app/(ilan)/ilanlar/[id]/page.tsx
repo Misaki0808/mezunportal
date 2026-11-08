@@ -1,6 +1,6 @@
 import { PostingDetail } from '@/components/job-postings/detail';
 import { ErrorState } from '@/components/ui';
-import { getJobPosting } from '@/server/actions/job-postings';
+import { getJobPosting, previewJobPostingContact } from '@/server/actions/job-postings';
 export const dynamic = 'force-dynamic';
 export default async function DetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,8 +24,13 @@ export default async function DetailPage({ params }: { params: Promise<{ id: str
     description,
     applyUrl,
   } = result.data;
+  const contact =
+    applyMethod === 'CONTACT_REQUEST'
+      ? await previewJobPostingContact({ jobPostingId: postingId }).catch(() => null)
+      : null;
   return (
     <PostingDetail
+      canRequestContact={contact?.ok === true && contact.data.canRequest}
       posting={{
         id: postingId,
         kind,

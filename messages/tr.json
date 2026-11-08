@@ -2527,6 +2527,9 @@
     "allTypes": "Tüm ilan türleri",
     "closeDone": "İlan kapatıldı.",
     "edit": "Düzenle",
-    "loadMore": "Daha fazla göster"
+    "loadMore": "Daha fazla göster",
+    "contactUnavailable": "Bu ilan için şu anda iletişim talebi oluşturulamıyor.",
+    "contactTitle": "İlan için iletişim iste",
+    "contactSubtitle": "Talebin ilanı paylaşan kişiye iletilir. İletişim bilgileri yalnız onay verildiğinde açılır."
   }
 }

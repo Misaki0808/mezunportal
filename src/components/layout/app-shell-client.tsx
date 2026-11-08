@@ -34,6 +34,7 @@ const NAV_ITEMS: readonly { id: NavId; href?: string; icon: ReactNode }[] = [
 ];
 
 function isCurrent(pathname: string, href: string): boolean {
+  if (href === '/ilanlar' && pathname === '/ilanlarim') return true;
   return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 }
 

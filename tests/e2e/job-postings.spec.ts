@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
-import { waitForHydratedControl } from './hydration';
+import { waitForHydratedControl, waitForHydratedForm } from './hydration';
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
@@ -74,9 +74,27 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     await expect(apply).toHaveAttribute('href', 'https://example.org/staj');
     await expect(apply).toHaveAttribute('rel', 'noopener noreferrer');
     await expect(student!.getByRole('link', { name: 'İlan ver' })).toHaveCount(0);
+    // Aynı yayın için D7 yöntemini sınayan sentetik senaryo: yazar kimliği HTML'e taşınmaz.
+    const writer = await db.user.findUniqueOrThrow({ where: { id: record.authorId } });
+    await db.jobPosting.update({
+      where: { id: postingId },
+      data: { applyMethod: 'CONTACT_REQUEST', applyUrl: null },
+    });
+    await student!.reload();
+    const html = await student!.content();
+    expect(html).not.toContain(writer.id);
+    expect(html).not.toContain(writer.name);
+    await student!.getByRole('link', { name: 'İletişim iste' }).click();
+    await expect(student!.getByText(title)).toBeVisible();
+    expect(await student!.content()).not.toContain(writer.id);
+    await waitForHydratedForm(student!, 'Talep gönder');
+    await student!.getByRole('checkbox', { name: 'E-posta' }).check();
+    await student!.getByRole('button', { name: 'Talep gönder' }).click();
+    await expect(student!.getByRole('status')).toContainText('Talebin gönderildi');
   } finally {
     await Promise.all(contexts.map((c) => c.close()));
     if (postingId) {
+      await db.contactRequest.deleteMany({ where: { message: { contains: title } } });
       await db.pointEntry.deleteMany({ where: { sourceType: 'JOB_POSTING', sourceId: postingId } });
       await db.jobPosting.deleteMany({ where: { id: postingId } });
     }

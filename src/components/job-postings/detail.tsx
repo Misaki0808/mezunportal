@@ -4,12 +4,18 @@ import { useTranslations } from 'next-intl';
 import { parseApplyUrl, type JobPostingDetail } from '@/contracts/job-postings';
 import { buttonClasses } from '@/components/ui';
 
-export function PostingDetail({ posting }: { posting: Omit<JobPostingDetail, 'contactUserId'> }) {
+export function PostingDetail({
+  posting,
+  canRequestContact = false,
+}: {
+  posting: JobPostingDetail;
+  canRequestContact?: boolean;
+}) {
   const t = useTranslations('jobs');
   const url =
     posting.applyMethod === 'URL' && posting.applyUrl ? parseApplyUrl(posting.applyUrl) : null;
   const contact =
-    posting.applyMethod === 'CONTACT_REQUEST'
+    posting.applyMethod === 'CONTACT_REQUEST' && canRequestContact
       ? `/ilanlar/${encodeURIComponent(posting.id)}/iletisim`
       : null;
   return (
@@ -57,6 +63,9 @@ export function PostingDetail({ posting }: { posting: Omit<JobPostingDetail, 'co
             <a href={url} target="_blank" rel="noopener noreferrer" className={buttonClasses()}>
               {t('apply')} ↗
             </a>
+          )}
+          {posting.applyMethod === 'CONTACT_REQUEST' && !canRequestContact && (
+            <p className="text-fg-muted">{t('contactUnavailable')}</p>
           )}
           {contact && (
             <Link href={contact} className={buttonClasses()}>

@@ -1,6 +1,12 @@
 import { expect, it, vi } from 'vitest';
 const actions = vi.hoisted(() => ({ get: vi.fn() }));
-vi.mock('@/server/actions/job-postings', () => ({ getJobPosting: actions.get }));
+vi.mock('@/server/actions/job-postings', () => ({
+  getJobPosting: actions.get,
+  previewJobPostingContact: async () => ({
+    ok: true,
+    data: { canRequest: false, postingTitle: null, organizationName: null, requestableFields: [] },
+  }),
+}));
 import DetailPage from './page';
 it('sunucu, geçiş servisinden gelen yazar kimliğini istemci bileşenine geçirmez', async () => {
   actions.get.mockResolvedValue({
