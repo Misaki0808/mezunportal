@@ -44,7 +44,14 @@
       "ACCOUNT_DELETE_CONFIRMATION_MISMATCH": "Yazdığın e-posta hesabının e-postasıyla aynı değil.",
       "PROFILE_TAG_INVALID": "Seçtiğin etiketlerden biri geçerli değil. Seçimini yenile.",
       "MENTOR_NOT_ELIGIBLE": "Mentorluk için koşullar henüz tamamlanmadı.",
-      "ONBOARDING_REQUIRED_STEP_PENDING": "Bitirmeden önce rolünü ve bölümünü seç."
+      "ONBOARDING_REQUIRED_STEP_PENDING": "Bitirmeden önce rolünü ve bölümünü seç.",
+      "EXPERIENCE_NOT_EDITABLE": "Bu deneyim şu an düzenlenemiyor. Taslak veya reddedilen deneyimini seç.",
+      "EXPERIENCE_INCOMPLETE": "Deneyimindeki eksik alanları tamamlayıp yeniden gönder.",
+      "EXPERIENCE_NOT_DRAFT": "Bu deneyim gönderime hazır bir taslak değil. Durumunu kontrol et.",
+      "EXPERIENCE_NOT_PENDING": "Bu deneyim artık moderasyon beklemiyor. Listeyi yenile.",
+      "EXPERIENCE_NOT_PUBLISHED": "Yalnız yayınlanmış deneyimleri şikâyet edebilirsin.",
+      "REPORT_ALREADY_OPEN": "Bu deneyim için açık bir şikâyetin var. Yeni şikâyet göndermene gerek yok.",
+      "REPORT_NOT_OPEN": "Bu şikâyet daha önce sonuçlandırılmış. Listeyi yenile."
     }
   },
   "nav": {

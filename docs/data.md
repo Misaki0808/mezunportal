@@ -45,14 +45,13 @@ parsedJson?, errorCode?, appliedAt?).
 **Sözlükler:** `Company` (name, normalizedName, aliases[], sectorId?) · `Sector` · `Title` ·
 `UnmatchedValue` (kind, rawValue, normalizedValue, count, resolvedToId?).
 
-**Deneyim:** `Experience` (authorId, departmentIdAtWrite, type, companyId?, organizationName?,
-country?, city?, termYear, termSeason, durationWeeks?, pay, applicationChannel, processSteps JSON,
-interviewQuestions[], whatLearned, advice, isAnonymous, status, moderationNote?, moderatedById?,
-publishedAt?, `searchVector`) · `Report` (targetType, targetId, reporterId, reason, status).
-
-Deneyim türleri: `INTERNSHIP`, `ERASMUS`, `COMPETITION`, `HACKATHON`, `CLUB`, `CERTIFICATE`,
-`GRADUATE_STUDY`, `STUDY_ABROAD`. Başvuru kanalları: `LINKEDIN_POST`, `CAREER_PLATFORM`,
-`COMPANY_SITE`, `REFERRAL`, `CAREER_FAIR`, `COLD_EMAIL`, `UNIVERSITY_ANNOUNCEMENT`, `OTHER`.
+**Deneyim ve şikâyet (P1-07 şemasında):** `Experience`, `Report`. Alan/enum/indekslerin tek kaynağı
+Prisma şemasıdır; tür bazlı alanlar ve taslak/yayına hazır ayrımı `src/contracts/experience.ts`'tedir.
+Taslak eksik olabilir; gönderimden itibaren türün zorunlu alanları ve moderasyon kararının tutarlılığı
+SQL CHECK'lerle korunur. `interviewQuestions` NULL olmayan tek boyutlu bir dizidir; JSON başvuru
+adımları kapalı nesnelerden oluşur. Aynı kişi/hedef için tek açık şikâyet kısmi benzersiz indeksle korunur.
+Şimdilik şikâyetin tek hedef türü deneyimdir ve FK ile bağlıdır; SSS kendi sözleşmesinde genişletir.
+`companyId` mevcut olmayan sözlüğü oluşturmaz; P1-08 bağlar. Arama vektörü/indeksi de P1-08'dedir.
 
 **Mentorluk:** `AvailabilityRule` (mentorId, weekday, startMinute, endMinute, mode) ·
 `Appointment` (mentorId, menteeId, startsAt, endsAt, mode, menteeNote, location?, status:
@@ -115,8 +114,8 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
 - `PointEntry` (userId, action, sourceType, sourceId) benzersizdir; aynı olay iki kez puan
   üretemez.
 - `SessionFeedback` (appointmentId, authorId) benzersizdir.
-- Anonim `Experience`'ın yazarı hiçbir istemci yanıtına çıkmaz; yalnız moderasyon ekranında
-  yöneticiye görünür.
+- Anonim `Experience`'ın yazarı kendi listesi ve moderasyon dahil hiçbir istemci yanıtına çıkmaz.
+  Sahiplik kimliği yalnız sunucuda saklanır; hesap anonimleştirmede yayınlanmış içerikten koparılabilir.
 - Açık bir `CvReviewRequest`'in bağlı olduğu `CvUpload` dosyası silinmez.
 - Sınıf saklanmaz; `entryYear` + `classOffset`'ten hesaplanır (`src/server/rules/classYear.ts`: akademik yıl
   Eylül'de başlar, düzeltme −3…+3, hazırlık/uzatma ayrı durum).
