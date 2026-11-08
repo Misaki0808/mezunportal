@@ -130,9 +130,9 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).
   Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
   Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
-- [ ] **TD-015** · P2 · SSS ve CV inceleme kullanım olayları
-  Görüşme tamamlanma olayı bağlandı; CV inceleme olayı #44'te, SSS olayları P1-17'de.
-  Kapanış ölçütü: ilgili servisler birleştiğinde olaylar ve kişisel veri içermeyen ölçüm doğrulanır.
+- [ ] **TD-015** · P2 · SSS kullanım olayları
+  Görüşme tamamlanma ve CV inceleme olayları bağlandı; SSS olayları P1-17'de.
+  Kapanış ölçütü: SSS servisi birleştiğinde olaylar ve kişisel veri içermeyen ölçüm doğrulanır.
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
   Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
   yerinde duruyor (hesap silme hâlâ eski satırları siler).

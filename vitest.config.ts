@@ -20,11 +20,14 @@ export default defineConfig({
     ],
   },
   test: {
+    // Vitest bu eşiği proje genelinde raporlar; 5 sn üzerindeki DB testleri görünür kalır.
+    slowTestThreshold: 5000,
     projects: [
       {
         extends: true,
         test: {
           name: 'unit',
+          testTimeout: 5000,
           environment: 'node',
           include: ['src/**/*.test.{ts,tsx}', 'prisma/**/*.test.ts'],
           exclude: ['**/*.db.test.ts', '**/node_modules/**'],
@@ -36,6 +39,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'db',
+          testTimeout: 15000,
           environment: 'node',
           include: ['src/**/*.db.test.ts', 'prisma/**/*.db.test.ts'],
           globalSetup: ['./src/test/db-global-setup.ts'],
