@@ -9,10 +9,11 @@ import { runPointBackfill } from '../services/points';
 
 /**
  * `points.backfill` (pg-boss): puan motoru devreye girdiğinde BİR KEZ çalışan geriye dönük hesaplama. Sistem yöneticisi
- * `requestPointBackfill` ile kuyruğa yazar; aynı anda en çok bir iş bekler (`singletonKey`). İş idempotenttir: tekrar
+ * `requestPointBackfill` ile kuyruğa yazar; aynı anda en çok bir iş bekler (`singletonKey` + 10 dakikalık pencere). İş idempotenttir: tekrar
  * çalışması yeni kayıt eklemez. Günlük işler (`points.finalize`, `points.suspicionScan`) bildirim worker'ındadır.
  */
 export const POINTS_BACKFILL_QUEUE = 'points.backfill';
+const BACKFILL_THROTTLE_SECONDS = 600;
 
 export async function createPointsRuntime(
   consume = false,
@@ -48,7 +49,12 @@ export async function createPointsRuntime(
   return {
     boss,
     async enqueueBackfill() {
-      await boss.send(POINTS_BACKFILL_QUEUE, {}, { singletonKey: 'backfill' });
+      // Çift tıklama / tekrar istek aynı pencerede tek iş üretir (iş zaten idempotent; bu yalnız boşa çalışmayı önler).
+      await boss.send(
+        POINTS_BACKFILL_QUEUE,
+        {},
+        { singletonKey: 'backfill', singletonSeconds: BACKFILL_THROTTLE_SECONDS },
+      );
     },
     async stop() {
       await boss.stop({ graceful: true, timeout: 15000 });
