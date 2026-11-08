@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getConsentState } from '@/server/actions/privacy';
 import { getOnboardingState } from '@/server/actions/profile';
-import { getHomeSummary } from '@/server/actions/home';
+import { getHomeSummary, getSuggestedJobs } from '@/server/actions/home';
 import { HomeDashboard } from '@/components/home/dashboard';
 import { Landing } from '@/components/landing/landing';
 import { getLandingStats } from '@/server/services/landing';
@@ -43,6 +43,10 @@ export default async function HomePage() {
   const showOnboarding = onboarding?.ok && onboarding.data.step !== 'COMPLETE';
   const verified = actor && state?.ok && state.data.status === 'VERIFIED';
   const summary = verified ? await getHomeSummary().catch(() => null) : null;
+  const suggestedJobs =
+    summary?.ok && summary.data.role === 'STUDENT'
+      ? await getSuggestedJobs().catch(() => null)
+      : null;
   return (
     <div
       className={`mx-auto flex max-w-2xl flex-col gap-6 px-5 py-10 sm:py-12 ${!actor ? 'min-h-[calc(100dvh-8rem)]' : ''}`}
@@ -86,6 +90,35 @@ export default async function HomePage() {
           <h1 className="text-3xl font-semibold">{t('title')}</h1>
           <p className="text-base leading-relaxed">{t('tagline')}</p>
         </>
+      )}
+      {suggestedJobs?.ok && (
+        <section aria-labelledby="home-job-matches" className="flex flex-col gap-3">
+          <h2 id="home-job-matches" className="text-xl font-semibold">
+            {t('jobMatches.title')}
+          </h2>
+          {suggestedJobs.data.length ? (
+            <ul className="flex flex-col gap-2">
+              {suggestedJobs.data.map((job) => (
+                <li key={job.id}>
+                  <Link
+                    href={`/ilanlar/${job.id}`}
+                    className="press-row flex min-h-14 flex-col rounded-card border border-border p-4"
+                  >
+                    <span className="font-semibold">{job.title}</span>
+                    <span className="text-fg-muted">{job.organizationName}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-fg-muted">
+              {t('jobMatches.empty')}{' '}
+              <Link className="font-semibold text-primary underline" href="/profil">
+                {t('jobMatches.profile')}
+              </Link>
+            </p>
+          )}
+        </section>
       )}
       {!actor && (
         <Link
