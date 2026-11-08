@@ -87,6 +87,10 @@ describe('SSS veritabanı değişmezleri', () => {
         answer: 'Özgeçmiş gerekir',
       },
     });
+    expect(item).not.toHaveProperty('searchKeys');
+    expect(await db.faqItem.findUniqueOrThrow({ where: { id: item.id } })).not.toHaveProperty(
+      'searchKeys',
+    );
     await expect(
       db.faqItem.create({
         data: {

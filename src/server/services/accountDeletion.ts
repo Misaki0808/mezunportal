@@ -148,6 +148,11 @@ export async function deleteAccount(
     await tx.faqRequest.updateMany({ where: { askerId: userId }, data: { askerId: null } });
     await tx.faqAnswer.deleteMany({ where: { mentorId: userId, isSelected: false } });
     await tx.faqAnswer.updateMany({ where: { mentorId: userId }, data: { mentorId: null } });
+    await tx.faqRequest.updateMany({ where: { decidedById: userId }, data: { decidedById: null } });
+    await tx.faqItem.updateMany({
+      where: { publishedById: userId },
+      data: { publishedById: null },
+    });
 
     // Katkı puanı (P1-16): kişiye ait puan kayıtları, etiketler ve şüphe işaretleri silinir; başkalarının kayıtlarındaki
     // karşı taraf bağı kopar (kayıt ve puan kalır). Önce etiket: kaynak kayıt silinmeden bağ düşer.
