@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import type { MentorCard as MentorCardData } from '@/contracts/mentor-directory';
 import { Badge, buttonClasses } from '@/components/ui';
+import { withReturnPath } from '@/lib/return-path';
 
 import type messages from '../../../messages/tr.json';
 
@@ -12,9 +13,12 @@ type TopicKey = keyof typeof messages.profileTags;
 export function MentorCard({
   mentor,
   compact = false,
+  returnTo,
 }: {
   mentor: MentorCardData;
   compact?: boolean;
+  /** Kartın bulunduğu sayfa (yol + sorgu): "İletişim iste" sayfasının geri bağlantısı buraya döner (`?donus=`). */
+  returnTo?: string;
 }) {
   const t = useTranslations('mentors');
   const tags = useTranslations('profileTags');
@@ -107,7 +111,7 @@ export function MentorCard({
         {!compact && (
           <Link
             className={buttonClasses({ variant: 'secondary' })}
-            href={`/iletisim-iste/${mentor.userId}`}
+            href={withReturnPath(`/iletisim-iste/${mentor.userId}`, returnTo)}
           >
             {t('card.contact')}
           </Link>

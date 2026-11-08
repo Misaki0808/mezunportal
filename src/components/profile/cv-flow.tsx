@@ -232,7 +232,7 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
                   {errors(error)}
                 </p>
               )}
-              <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 bg-bg pt-2 pb-2 lg:static">
+              <div className="sticky-actions z-20 bg-bg pt-2 pb-2">
                 <Button type="submit" size="lg" fullWidth loading={pending}>
                   {pending ? t('uploading') : t('submit')}
                 </Button>

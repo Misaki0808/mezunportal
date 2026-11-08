@@ -124,7 +124,7 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
               {errors(error)}
             </p>
           )}
-          <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] mt-auto bg-bg pb-2 pt-4 lg:static">
+          <div className="sticky-actions mt-auto bg-bg pb-2 pt-4">
             <Button type="submit" fullWidth size="lg" loading={pending}>
               {pending ? t('sending') : t('submit')}
             </Button>

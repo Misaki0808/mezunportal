@@ -15,6 +15,13 @@ type Props = {
   initial: NotificationPreferences;
   save: (input: SetNotificationPreferencesInput) => Promise<ActionResult<NotificationPreferences>>;
 };
+/**
+ * Ekranı henüz olmayan özelliğin bildirim türü listede gösterilmez (tur 2 bulgu #8). Tercih verisi korunur ve kayda dahildir;
+ * randevu ekranları (#43) main'e girince bu liste boşaltılır.
+ */
+const HIDDEN_UNTIL_SCREEN: readonly string[] = ['APPOINTMENT'];
+const isVisible = (item: { type: string }) => !HIDDEN_UNTIL_SCREEN.includes(item.type);
+
 export function NotificationPreferencesForm({ initial, save }: Props) {
   const t = useTranslations('notifications');
   const errors = useTranslations('errors.codes');
@@ -72,7 +79,7 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
         }}
       >
         <ul className="divide-y divide-border rounded-card border border-border px-5">
-          {items.map((item) => (
+          {items.filter(isVisible).map((item) => (
             <li key={item.type} className="py-2">
               <Switch
                 className="[&_.text-sm]:text-base"
@@ -103,7 +110,7 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
             {errors(error)}
           </p>
         )}
-        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto bg-bg pt-5 pb-2 lg:static">
+        <div className="sticky-actions z-20 mt-auto bg-bg pt-5 pb-2">
           <Button type="submit" fullWidth size="lg" loading={pending}>
             {pending ? t('saving') : t('save')}
           </Button>

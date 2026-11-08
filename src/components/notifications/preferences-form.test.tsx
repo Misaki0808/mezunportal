@@ -16,6 +16,19 @@ describe('bildirim tercih ekranı', () => {
     expect(screen.getByRole('switch', { name: /Hesap ve güvenlik/ })).toBeDisabled();
     expect(screen.getByText('Hesap güvenliği için bu bildirim kapatılamaz.')).toBeVisible();
   });
+  it('ekranı henüz olmayan randevu bildirimi listede gösterilmez ama kayıtta korunur', async () => {
+    const withAppointment = {
+      items: [...initial.items, { type: 'APPOINTMENT' as const, enabled: true, mandatory: false }],
+    };
+    const save = vi.fn().mockResolvedValue({ ok: true, data: withAppointment });
+    const { user } = renderUi(
+      <NotificationPreferencesForm initial={withAppointment} save={save} />,
+    );
+    expect(screen.queryByRole('switch', { name: /Randevular/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('switch', { name: /İletişim talepleri/ }));
+    await user.click(screen.getByRole('button', { name: 'Tercihleri kaydet' }));
+    expect(save.mock.calls[0]![0].items).toContainEqual({ type: 'APPOINTMENT', enabled: true });
+  });
   it('değişikliği kaydetmeden göndermez; kapalı tercihi açıkça iletir', async () => {
     const save = vi.fn().mockResolvedValue({
       ok: true,

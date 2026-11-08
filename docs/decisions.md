@@ -726,3 +726,24 @@ Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun 
 ### P1-15 incelemesi: CV bildiriminde işlemsel telafi
 
 CV talep, yanıt ve süre dolumu bildirimleri #45'in niyet kaydını aynı veritabanı işleminde oluşturur. Hızlı kuyruk denemesi başarısız olsa da niyet kalır; ortak aktarım işi aynı iş anahtarıyla mevcut CV bildirim kapısına döner. Niyette yalnız talep kimliği ve olay türü bulunur; alıcı talebin taraflarıyla yeniden eşleştirilir, not/CV/e-posta kopyalanmaz. Metinleri ve CV dosyasını temizleyen hesap silme, artık bulunmayan talebin bekleyen bildirimini de gönderimsiz sonlandırır.
+
+
+## 2026-11-08 · Tur 2 düzeltmeleri: beklenen durumlar, panolu ana sayfa, ekran klavyesi
+
+**Beklenen durumlar alarm değildir.** Rol dışı sayfa, henüz açılmayan form, giriş/doğrulama/onay gerektiren ekranlar gibi
+normal sonuçlar `ErrorState` içinde ortak bir durum görünümüyle çizilir (`src/lib/expected-states.ts`): nötr simge,
+`role="status"`, h1 durum başlığı ve TEK eylem. Başlık ve eylem metni katalogdadır; ham mesaj yoktur. Listede olmayan kod ya da
+`onRetry` verilen satır içi kullanım gerçek hata olarak kalır ("Bir sorun oluştu", kırmızı simge, `role="alert"`). Yönetim alt
+sayfalarında eylem "Yönetim paneline dön"dür (yol bağlamından).
+
+**Ana sayfa kişisel pano.** Girişli ve doğrulanmış kullanıcıya karşılama, bekleyen işler (yanıt bekleyen iletişim/CV talebi,
+doldurulacak görüşme formu, yöneticiye moderasyon sayısı; yalnız sıfırdan büyükler), rol bazlı 4 büyük kısayol ve yöneticiye
+"Yönetim". Sayılar sunucuda oturumdaki kullanıcının KENDİ kayıtlarından hesaplanır (`getHomeSummary`); yönetici sayısı panel
+servisinin kapsam kesişiminden gelir. SSS ve randevu kısayolu/sayısı ekranları main'e girince eklenir (kanca yorumlarda).
+
+**Ekran klavyesi.** Yapışkan eylem çubukları (`.sticky-actions`, 8 form) ve alt gezinme, ekran klavyesi açıkken (görsel görünüm
+alanı ≥ 140 px küçülür ve bir metin girişi odaktadır) gizlenir/akışa döner (`KeyboardState`). Seçenekler: (a) eylemleri her zaman
+form sonuna almak — mobilde eylem çubuğunun hızlı erişimini kaybettirir; (b) çubuğu klavyenin üstünde tutmak — iOS'ta layout
+görünümü küçülmediği için çubuk klavyenin ARKASINDA kalır; (c) seçilen: klavye açıkken akışa dön, kapalıyken yapışkan kal. Gerçek
+cihaz doğrulaması telefon testine yazıldı (`docs/engineering.md`).
+

@@ -20,6 +20,14 @@ export function ReviewRequestEntry({
         <Button disabled disabledReason={t(`unavailable.${availability.reason ?? 'NOT_MENTOR'}`)}>
           {t('requestLink')}
         </Button>
+        {availability.reason === 'OPEN_REQUEST_EXISTS' && (
+          <Link
+            href="/hesap/cv-inceleme"
+            className="mt-2 inline-flex min-h-11 items-center text-primary"
+          >
+            {t('viewRequest')} →
+          </Link>
+        )}
         {availability.reason === 'NO_CV' && (
           <Link href="/profil/cv" className="mt-2 inline-flex min-h-11 items-center text-primary">
             {t('toCv')} →

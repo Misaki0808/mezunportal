@@ -15,6 +15,8 @@ import {
   cn,
 } from '@/components/ui';
 
+import { KeyboardState } from './keyboard-state';
+
 type NavId = 'home' | 'experiences' | 'mentors' | 'appointments' | 'profile';
 
 /**
@@ -169,6 +171,7 @@ export function AppShellClient({
         </nav>
       </aside>
 
+      <KeyboardState />
       <main
         id="main-content"
         tabIndex={-1}
@@ -178,6 +181,7 @@ export function AppShellClient({
       </main>
 
       <nav
+        data-bottom-nav
         aria-label={t('labelBottom')}
         className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
