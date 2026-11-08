@@ -161,3 +161,43 @@ export function detectSyncFeedback(
     syncedCount: ordered.length,
   };
 }
+
+/** Referans iddiaları: 180 günde aynı öğrenciye üç veya 24 saatte toplam beş onay işaretlenir.
+ * Sıfır çarpanlı kayıtlar da sayılır; eşik puan verilmesini veya yaptırımı tek başına belirlemez. */
+export function detectReferralPatterns(
+  entries: readonly ScanEntry[],
+  now: Date,
+): SuspicionFinding[] {
+  const recent = entries
+    .filter((e) => e.eventAt <= now && e.eventAt.getTime() > now.getTime() - 180 * DAY)
+    .sort(byTime);
+  const groups = new Map<string, ScanEntry[]>();
+  for (const entry of recent)
+    if (entry.counterpartId)
+      groups.set(entry.counterpartId, [...(groups.get(entry.counterpartId) ?? []), entry]);
+  const result: SuspicionFinding[] = [];
+  const repeated = [...groups.values()]
+    .filter((g) => g.length >= 3)
+    .sort((a, b) => b.length - a.length)[0];
+  const finding = (
+    rule: 'REFERRAL_REPEAT' | 'REFERRAL_BURST',
+    group: ScanEntry[],
+  ): SuspicionFinding => ({
+    rule,
+    entryIds: group.map((e) => e.id),
+    ...spanOf(group.map((e) => e.eventAt)),
+    points: group.reduce((sum, e) => sum + e.points, 0),
+    sharePercent: null,
+    syncedCount: null,
+  });
+  if (repeated) result.push(finding('REFERRAL_REPEAT', repeated));
+  let best: ScanEntry[] = [];
+  recent.forEach((first, index) => {
+    const window = recent
+      .slice(index)
+      .filter((e) => e.eventAt.getTime() - first.eventAt.getTime() < DAY);
+    if (window.length > best.length) best = window;
+  });
+  if (best.length >= 5) result.push(finding('REFERRAL_BURST', best));
+  return result;
+}

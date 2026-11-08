@@ -393,6 +393,117 @@ export async function withdrawJobPostingPoints(
   return count;
 }
 
+/** Referans puanı yalnız üçlü onaydan sonra, onay işlemiyle aynı işlemde yazılır. */
+export async function awardReferralInTx(
+  tx: Tx,
+  referralId: string,
+  stage: 'REFERRAL' | 'ACCEPTANCE',
+  now: Date,
+): Promise<AwardResult | null> {
+  const row = await tx.referralClaim.findUnique({
+    where: { id: referralId },
+    select: {
+      alumnusId: true,
+      studentId: true,
+      status: true,
+      studentConfirmedAt: true,
+      approvedAt: true,
+      alumniConfirmedAt: true,
+      acceptanceApprovedAt: true,
+    },
+  });
+  if (
+    !row ||
+    row.alumnusId === row.studentId ||
+    !row.studentConfirmedAt ||
+    !row.approvedAt ||
+    row.status === 'CANCELLED' ||
+    row.status === 'REJECTED'
+  )
+    return null;
+  if (
+    stage === 'ACCEPTANCE' &&
+    (row.status !== 'ACCEPTED_APPROVED' || !row.alumniConfirmedAt || !row.acceptanceApprovedAt)
+  )
+    return null;
+
+  // Aylık ikili tavan eşzamanlı onaylarda da uygulanır.
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`points:referral:${row.alumnusId}:${row.studentId}`}, 0))::text`;
+  if (stage === 'ACCEPTANCE') {
+    const given = await tx.pointEntry.findUnique({
+      where: {
+        userId_action_sourceType_sourceId: {
+          userId: row.alumnusId,
+          action: 'REFERRAL_GIVEN',
+          sourceType: 'REFERRAL',
+          sourceId: referralId,
+        },
+      },
+      select: { multiplierPercent: true, status: true },
+    });
+    if (!given || given.status === 'REVOKED') return null;
+    return awardPoint(
+      tx,
+      {
+        userId: row.alumnusId,
+        action: 'REFERRAL_ACCEPTED',
+        sourceType: 'REFERRAL',
+        sourceId: referralId,
+        counterpartId: row.studentId,
+        eventAt: row.acceptanceApprovedAt!,
+        multiplierPercent: given.multiplierPercent,
+      },
+      now,
+    );
+  }
+  return awardPoint(
+    tx,
+    {
+      userId: row.alumnusId,
+      action: 'REFERRAL_GIVEN',
+      sourceType: 'REFERRAL',
+      sourceId: referralId,
+      counterpartId: row.studentId,
+      eventAt: row.approvedAt,
+      multiplierPercent: async (inner) => {
+        const scored = await inner.pointEntry.findMany({
+          where: {
+            userId: row.alumnusId,
+            counterpartId: row.studentId,
+            action: 'REFERRAL_GIVEN',
+            status: { not: 'REVOKED' },
+            multiplierPercent: { gt: 0 },
+          },
+          select: { eventAt: true },
+        });
+        return sessionMultiplierPercent(
+          row.approvedAt!,
+          scored.map((entry) => entry.eventAt),
+        );
+      },
+    },
+    now,
+  );
+}
+
+/** İptal edilen beyanın yalnız bekleme süresi dolmamış puanlarını geri alır (geciken görevden bağımsız). */
+export async function revokePendingReferralPoints(
+  tx: Tx,
+  referralId: string,
+  now: Date,
+): Promise<number> {
+  const { count } = await tx.pointEntry.updateMany({
+    where: {
+      sourceType: 'REFERRAL',
+      sourceId: referralId,
+      status: 'PENDING',
+      finalizesAt: { gt: now },
+    },
+    data: { status: 'REVOKED', revokedAt: now, revokedReason: 'REFERRAL_CANCELLED' },
+  });
+  return count;
+}
+
 /**
  * Gecikmesi dolan `PENDING` kayıtları kesinleştirir (`points.finalize`). Karar bekleyen (`OPEN`) şüphe işareti olan
  * kullanıcının bekleyen puanı kesinleşmez: işaret karara bağlanınca bir sonraki çalıştırmada kesinleşir.
@@ -416,6 +527,7 @@ export type BackfillResult = {
   cvReviews: number;
   faqs: number;
   jobPostings: number;
+  referrals: number;
   created: number;
   failed: number;
 };
@@ -436,11 +548,12 @@ export async function runPointBackfill(
     cvReviews: 0,
     faqs: 0,
     jobPostings: 0,
+    referrals: 0,
     created: 0,
     failed: 0,
   };
   const apply = async (
-    kind: 'experiences' | 'sessions' | 'cvReviews' | 'faqs' | 'jobPostings',
+    kind: 'experiences' | 'sessions' | 'cvReviews' | 'faqs' | 'jobPostings' | 'referrals',
     run: () => Promise<AwardResult | null>,
   ) => {
     try {
@@ -530,6 +643,40 @@ export async function runPointBackfill(
       select: { id: true },
     });
     for (const row of rows) await apply('jobPostings', () => awardForJobPosting(deps, row.id));
+    cursor = rows.at(-1)?.id;
+    if (rows.length < BACKFILL_PAGE) break;
+  }
+  // Onay sırası çarpanı belirler. Kabul olayı kendi referansının çarpanını kullanır.
+  for (let cursor: string | undefined; ;) {
+    const rows = await deps.db.referralClaim.findMany({
+      where: {
+        status: { notIn: ['CANCELLED', 'REJECTED'] },
+        approvedAt: { not: null },
+        ...(since
+          ? { OR: [{ approvedAt: { gte: since } }, { acceptanceApprovedAt: { gte: since } }] }
+          : {}),
+      },
+      orderBy: [{ approvedAt: 'asc' }, { id: 'asc' }],
+      take: BACKFILL_PAGE,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      select: { id: true },
+    });
+    for (const row of rows)
+      await apply('referrals', () =>
+        deps.db.$transaction(async (tx) => {
+          const claim = await tx.referralClaim.findUnique({
+            where: { id: row.id },
+            select: { alumnusId: true, studentId: true },
+          });
+          if (!claim) return null;
+          for (const id of [claim.alumnusId, claim.studentId].sort())
+            await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${id} FOR SHARE`;
+          await tx.$queryRaw`SELECT "id" FROM "ReferralClaim" WHERE "id"=${row.id} FOR UPDATE`;
+          const given = await awardReferralInTx(tx, row.id, 'REFERRAL', nowOf(deps));
+          const accepted = await awardReferralInTx(tx, row.id, 'ACCEPTANCE', nowOf(deps));
+          return { created: !!given?.created || !!accepted?.created, entryId: null, skipped: null };
+        }, TX_OPTIONS),
+      );
     cursor = rows.at(-1)?.id;
     if (rows.length < BACKFILL_PAGE) break;
   }

@@ -23,9 +23,13 @@ describe('puan sözleşmesi', () => {
     expect(POINT_ACTIONS.filter((a) => d[a].delayDays > 0)).toEqual([
       'SESSION_IN_PERSON',
       'JOB_POSTING_PUBLISHED',
+      'REFERRAL_GIVEN',
+      'REFERRAL_ACCEPTED',
     ]);
     // İlan (P2-04, PM kararı): 5 puan, yayından 7 gün sonra kesinleşir.
     expect(d.JOB_POSTING_PUBLISHED).toEqual({ points: 5, delayDays: 7 });
+    expect(d.REFERRAL_GIVEN).toEqual({ points: 20, delayDays: 14 });
+    expect(d.REFERRAL_ACCEPTED).toEqual({ points: 30, delayDays: 14 });
   });
 
   it('girdi şemaları strict: bilinmeyen alan ve aralık dışı değer reddedilir', () => {

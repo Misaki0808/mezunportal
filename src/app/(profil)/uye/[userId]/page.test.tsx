@@ -2,7 +2,15 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderUi } from '@/test/render';
-const mocks = vi.hoisted(() => ({ profile: vi.fn(), entry: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  profile: vi.fn(),
+  entry: vi.fn(),
+  count: vi.fn().mockResolvedValue(3),
+}));
+vi.mock('@/server/db', () => ({ getDb: () => ({ referralClaim: { count: mocks.count } }) }));
+vi.mock('next-intl/server', () => ({
+  getTranslations: async () => (key: string, value: { count: number }) => `${key}: ${value.count}`,
+}));
 vi.mock('@/server/actions/profile-content', () => ({ getProfile: mocks.profile }));
 vi.mock('@/server/actions/mentor-directory', () => ({ getMentorEntryPoints: mocks.entry }));
 vi.mock('@/components/profile/profile-view', () => ({
