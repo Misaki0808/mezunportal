@@ -34,6 +34,9 @@ const valid: Record<(typeof EVENT_TYPES)[number], unknown> = {
   FAQ_PUBLISHED: {},
   CV_REVIEW_REQUESTED: {},
   CONTACT_REQUESTED: { fieldCount: 2 },
+  JOB_POSTING_PUBLISHED: { kind: 'INTERNSHIP' },
+  JOB_POSTING_VIEWED: {},
+  JOB_POSTING_SEARCH: { results: 'FEW' },
 };
 
 describe('olay türü kataloğu', () => {

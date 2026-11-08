@@ -189,6 +189,15 @@ gerekçeyle reddeder **ya da** kişisel/tek seferlik ise mentorluk talebine yön
 yalnız yayında yazılır. Ayrıntılar (gizlilik, benzer soru kapısı, puan, hesap silme) `docs/decisions.md` “SSS akışı”nda; servis
 `src/server/services/faq*.ts`, arama deposu `src/server/repositories/faq.ts`.
 
+### Mezun ilanları (P2-04)
+
+Doğrulanmış mezun/akademisyen taslak yazar, incelemeye gönderir (30 günde 5); moderatör (yazarın yazım anındaki bölümünün kapsamı) yayımlar
+ya da gerekçeyle reddeder; `PUBLISHED` ilan son başvuru günü (İstanbul, en çok 60 gün) geçince `postings.expire` (günlük) ile `EXPIRED`
+olur. Okuyucular (K-07: aynı üniversite) yalnız açık ilanı görür; yazar adı çıkmaz. `CONTACT_REQUEST` yönteminde iletişim talebi İLAN
+üzerinden gider (sunucu yazarı çözer, mevcut `ContactRequest` akışı). Puan 5, 7 gün gecikmeli, ayda 3 ilan. Ayrıntı ve gerekçeler
+`docs/decisions.md` "Mezun staj/iş ilanları"; servis `src/server/services/job-posting*.ts`, arama deposu `src/server/repositories/job-postings.ts`,
+kurallar `src/server/rules/jobPosting.ts`.
+
 ### Bildirimler ve zamanlanmış işler (pg-boss)
 
 | İş | Ne zaman |

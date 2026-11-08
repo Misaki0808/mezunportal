@@ -28,7 +28,7 @@ const INVALID = 'VALIDATION_INVALID' satisfies ErrorCode;
 // Katalog
 // ---------------------------------------------------------------------------------------------
 
-/** Puan eylemleri (K-11 tablosu). Referans (Faz 2) bilinçli olarak yok. */
+/** Puan eylemleri (K-11 tablosu). İlan P2-04'te eklendi; referans (P2-03) ve etkinlik (P2-12) kendi adımlarında eklenir. */
 export const POINT_ACTIONS = [
   'EXPERIENCE_PUBLISHED',
   'FAQ_QUESTION_PUBLISHED',
@@ -37,6 +37,8 @@ export const POINT_ACTIONS = [
   'CV_REVIEW_HELPFUL',
   'SESSION_ONLINE',
   'SESSION_IN_PERSON',
+  /** Veritabanı enum sırası ekleme sırasıdır: yeni eylemler sona eklenir (P2-04). */
+  'JOB_POSTING_PUBLISHED',
 ] as const;
 export type PointAction = (typeof POINT_ACTIONS)[number];
 
@@ -47,6 +49,7 @@ export const POINT_SOURCE_TYPES = [
   'CV_REVIEW',
   'FAQ_REQUEST',
   'FAQ_ANSWER',
+  'JOB_POSTING',
 ] as const;
 export type PointSourceType = (typeof POINT_SOURCE_TYPES)[number];
 
@@ -55,7 +58,11 @@ export const POINT_STATUSES = ['PENDING', 'FINAL', 'REVOKED'] as const;
 export type PointStatus = (typeof POINT_STATUSES)[number];
 
 /** Kullanıcıya gösterilen geri alma nedeni; serbest gerekçe yalnız işlem kaydındadır. */
-export const POINT_REVOKE_REASONS = ['ADMIN_CANCEL', 'FRAUD_CONFIRMED'] as const;
+export const POINT_REVOKE_REASONS = [
+  'ADMIN_CANCEL',
+  'FRAUD_CONFIRMED',
+  'POSTING_WITHDRAWN',
+] as const;
 export type PointRevokeReason = (typeof POINT_REVOKE_REASONS)[number];
 
 /** Görüşme eylemleri: ikili tavanı ve azalan çarpan yalnız bunlara uygulanır. */
@@ -82,6 +89,8 @@ export const DEFAULT_POINT_RULES: Readonly<
   FAQ_QUESTION_PUBLISHED: { points: 2, delayDays: 0 },
   FAQ_ANSWER_SELECTED: { points: 5, delayDays: 0 },
   FAQ_ANSWER_PARTICIPATION: { points: 1, delayDays: 0 },
+  /** İlan (P2-04, PM kararı): 5 puan, yayından 7 gün sonra kesinleşir; ayda en çok 3 ilan puan getirir (`rules/points`). */
+  JOB_POSTING_PUBLISHED: { points: 5, delayDays: 7 },
   CV_REVIEW_HELPFUL: { points: 3, delayDays: 0 },
   SESSION_ONLINE: { points: 10, delayDays: 0 },
   SESSION_IN_PERSON: { points: 15, delayDays: 7 },

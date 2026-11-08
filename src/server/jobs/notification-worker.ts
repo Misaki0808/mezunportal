@@ -9,6 +9,7 @@ import { relayPendingNotifications } from './notification-intent-worker';
 import { purgeFiles } from '../services/files-purge';
 import { purgeExpiredAuth } from '../services/auth-cleanup';
 import { detachOldEvents } from '../services/event';
+import { expireJobPostings } from '../services/job-postings';
 import { runDailyPoints } from '../services/points';
 import { runSuspicionScan } from '../services/points-scan';
 import { scheduleFeedbackPrompts } from './feedback-task';
@@ -42,6 +43,8 @@ export async function createNotificationRuntime() {
     // Puan motoru (P1-16): gecikmesi dolanı kesinleştir + son 14 günde kaçırılan puanı tamamla; şüphe taraması.
     'points.finalize': () => runDailyPoints({ db: getDb() }),
     'points.suspicionScan': () => runSuspicionScan({ db: getDb() }),
+    // İlanlar (P2-04): son başvuru günü geçen ilanı kapat (günlük, İstanbul; idempotent).
+    'postings.expire': () => expireJobPostings({ db: getDb() }),
   };
   try {
     await boss.start();

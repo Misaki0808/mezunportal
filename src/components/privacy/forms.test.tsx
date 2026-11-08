@@ -69,6 +69,7 @@ describe('KVKK ekran sınırları', () => {
             {
               id: 'request',
               counterpart: { userId: 'member', name: 'Örnek Üye' },
+              origin: null,
               fields: ['EMAIL'],
               message: null,
               status: 'REVOKED',
