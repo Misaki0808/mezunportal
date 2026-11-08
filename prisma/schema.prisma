@@ -822,6 +822,7 @@ model Company {
   name           String
   normalizedName String       @unique
   aliases        String[]
+  searchKeys     String?      @default(dbgenerated())
   sectorId       String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -830,6 +831,16 @@ model Company {
   jobPostings    JobPosting[]
 
   @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "Company_normalizedName_trgm")
+  @@index([searchKeys(ops: raw("gin_trgm_ops"))], type: Gin, map: "Company_searchKeys_trgm")
+}
+
+/// Birleştirilen eski kimlik, hedefe yönlendirme ve idempotent tekrar için korunur.
+model CompanyMerge {
+  sourceId  String   @id
+  targetId  String
+  createdAt DateTime @default(now())
+
+  @@index([targetId])
 }
 
 model Title {

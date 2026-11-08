@@ -17,13 +17,16 @@ const MIGRATIONS = new URL('./migrations/', import.meta.url);
 const CREATOR = '20261108010000_p1_08_search';
 const FAQ_CREATOR = '20261108160100_p1_17_faq';
 const JOB_CREATOR = '20261109000000_p2_04_job_posting';
+const COMPANY_CREATOR = '20261109060000_p2_09_company_search';
 /** Her oluşturucu yalnız kendi tablosuna GENERATED sütunu ekleyebilir. */
 const COLUMN_CREATORS: Record<string, string> = {
   [CREATOR]: 'Experience',
   [FAQ_CREATOR]: 'FaqItem',
   [JOB_CREATOR]: 'JobPosting',
+  [COMPANY_CREATOR]: 'Company',
 };
 const GUARDED_INDEXES: Record<string, string> = {
+  Company_searchKeys_trgm: COMPANY_CREATOR,
   Company_normalizedName_trgm: '20261107234822_p1_05_cv',
   Title_normalizedName_trgm: '20261107234822_p1_05_cv',
   Skill_normalizedName_trgm: '20261107234822_p1_05_cv',
@@ -113,6 +116,23 @@ describe('migration bekçisi: üretilmiş arama sütunları ve GIN indeksleri', 
         'ALTER TABLE "FaqItem" ALTER COLUMN "searchVector" DROP DEFAULT; DROP INDEX "FaqItem_searchKeys_trgm";',
       ),
     ).toHaveLength(2);
+  });
+
+  it('şirket arama sütunu ve indeksi yalnız kendi migrationında oluşturulur', () => {
+    const sql = readFileSync(new URL(`${COMPANY_CREATOR}/migration.sql`, MIGRATIONS), 'utf8');
+    expect(violations(COMPANY_CREATOR, sql)).toEqual([]);
+    expect(
+      violations(
+        '20990101000000_x',
+        'ALTER TABLE "Company" ALTER COLUMN "searchKeys" DROP DEFAULT; DROP INDEX "Company_searchKeys_trgm";',
+      ),
+    ).toHaveLength(2);
+    expect(
+      violations(
+        COMPANY_CREATOR,
+        'ALTER TABLE "Experience" ALTER COLUMN "searchKeys" DROP DEFAULT;',
+      ),
+    ).toHaveLength(1);
   });
 
   it('ilan arama sütunları/indeksleri de korunur; yaratıcı migration geçerlidir', () => {

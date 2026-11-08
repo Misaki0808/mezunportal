@@ -52,7 +52,16 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
             className="truncate text-xs font-semibold text-fg-muted sm:whitespace-normal sm:text-sm"
             title={posting.organizationName}
           >
-            {posting.organizationName}
+            {posting.companyId ? (
+              <Link
+                className="inline-flex min-h-11 items-center underline decoration-border-control underline-offset-4"
+                href={`/sirketler/${posting.companyId}`}
+              >
+                {posting.organizationName}
+              </Link>
+            ) : (
+              posting.organizationName
+            )}
           </p>
           <h2 className="mt-0.5 break-words text-lg font-bold leading-tight text-fg sm:mt-1 sm:text-xl">
             <Link

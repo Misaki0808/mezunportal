@@ -33,6 +33,7 @@ export type SearchRow = {
   id: string;
   type: string;
   organizationName: string | null;
+  companyId?: string | null;
   departmentName: string;
   city: string | null;
   country: string | null;
@@ -151,7 +152,7 @@ export async function searchExperienceRows(
     // `<%` işleci bu eşiği okur; yalnız bu işlem için.
     await tx.$queryRaw`SELECT set_config('pg_trgm.word_similarity_threshold', ${WORD_SIMILARITY_THRESHOLD}, true)`;
     const rows = await tx.$queryRaw<(SearchRow & { total: bigint })[]>(Prisma.sql`
-      SELECT e."id", e."type"::text AS "type", e."organizationName", d."name" AS "departmentName",
+      SELECT e."id", e."type"::text AS "type", e."organizationName", e."companyId", d."name" AS "departmentName",
              e."city", e."country", e."termYear", e."termSeason"::text AS "termSeason", e."durationWeeks",
              e."pay"::text AS "pay", e."applicationChannel"::text AS "applicationChannel",
              left(e."whatLearned", 220) AS "snippet", e."publishedAt",

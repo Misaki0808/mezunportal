@@ -37,6 +37,7 @@ type Props = {
 };
 export function SearchScreen({ filter, results, sectors }: Props) {
   const t = useTranslations('search');
+  const companies = useTranslations('companies');
   const router = useRouter();
   const [draft, setDraft] = useState<Filter>(filter);
   const [invalid, setInvalid] = useState(false);
@@ -250,6 +251,9 @@ export function SearchScreen({ filter, results, sectors }: Props) {
         <Link href="/deneyimlerim" className={`${buttonClasses({ variant: 'secondary' })} mt-4`}>
           {t('mine')}
         </Link>
+        <Link href="/sirketler" className={`${buttonClasses({ variant: 'secondary' })} ml-2 mt-4`}>
+          {companies('title')}
+        </Link>
       </PageHeader>
       <form
         className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-start"
@@ -319,7 +323,16 @@ export function SearchScreen({ filter, results, sectors }: Props) {
                     {item.termYear && <Badge>{String(item.termYear)}</Badge>}
                   </div>
                   <h2 className="mt-3 break-words text-xl font-semibold">
-                    {item.organizationName ?? item.departmentName}
+                    {item.companyId ? (
+                      <Link
+                        className="inline-flex min-h-11 items-center underline decoration-border-control underline-offset-4"
+                        href={`/sirketler/${item.companyId}`}
+                      >
+                        {item.organizationName ?? item.departmentName}
+                      </Link>
+                    ) : (
+                      (item.organizationName ?? item.departmentName)
+                    )}
                   </h2>
                   <p className="mt-1 text-sm text-fg-muted">
                     {item.isAnonymous ? t('anonymous') : t('by', { name: item.author.displayName })}
