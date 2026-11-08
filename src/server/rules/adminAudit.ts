@@ -17,7 +17,7 @@ export const ADMIN_ACTIONS = {
   /** Rol geçişi (öğrenci → mezun). */
   ROLE_TRANSITION: { reasonRequired: false },
   USER_SUSPEND: { reasonRequired: true },
-  USER_UNSUSPEND: { reasonRequired: false },
+  USER_UNSUSPEND: { reasonRequired: true },
   MODERATION_PUBLISH: { reasonRequired: false },
   MODERATION_REJECT: { reasonRequired: true },
   POINTS_REVOKE: { reasonRequired: true },

@@ -243,9 +243,13 @@ describe('girdi şemaları katıdır ve kimlik/rol/kapsam alanı kabul etmez', (
     ['employmentReport', employmentReportFilterSchema, {}],
     ['searchUsers', searchUsersSchema, {}],
     ['getUserDetail', getUserDetailSchema, { userId: 'u' }],
-    ['suspendUser', suspendUserSchema, { userId: 'u', reason: 'Kural ihlali' }],
-    ['unsuspendUser', unsuspendUserSchema, { userId: 'u' }],
-    ['revokeAdmin', revokeAdminSchema, { grantId: 'g', reason: 'Görev bitti' }],
+    ['suspendUser', suspendUserSchema, { userId: 'u', reason: 'Kural ihlali', confirmed: true }],
+    [
+      'unsuspendUser',
+      unsuspendUserSchema,
+      { userId: 'u', reason: 'İnceleme tamamlandı', confirmed: true },
+    ],
+    ['revokeAdmin', revokeAdminSchema, { grantId: 'g', reason: 'Görev bitti', confirmed: true }],
     ['listAdminGrants', listAdminGrantsSchema, {}],
   ];
 
@@ -320,7 +324,7 @@ describe('sözlük ve eşleşmeyen değer girdileri', () => {
     expect(resolve({ type: 'LINK' })).toBe(false);
     expect(resolve({ type: 'CREATE', name: 'Yeni Şirket', sectorId: 's' })).toBe(true);
     expect(resolve({ type: 'CREATE' })).toBe(false);
-    expect(resolve({ type: 'DISMISS' })).toBe(true);
+    expect(resolve({ type: 'DISMISS', confirmed: true, reason: 'Geçersiz değer' })).toBe(true);
     expect(resolve({ type: 'DISMISS', entryId: 'e' })).toBe(false);
     expect(resolve({ type: 'DELETE' })).toBe(false);
   });
@@ -431,7 +435,7 @@ describe('genel bakış', () => {
 });
 
 describe('askıya alma girdisi', () => {
-  const base = { userId: 'u', reason: 'Kurallara aykırı davranış' };
+  const base = { userId: 'u', reason: 'Kurallara aykırı davranış', confirmed: true };
   const days = (n: number) => new Date(Date.now() + n * 86_400_000);
 
   it('gerekçe zorunlu (3–1000 karakter)', () => {
@@ -456,7 +460,7 @@ describe('üyelik düzeltme ve yönetici atama girdisi', () => {
     const change = (
       changes: unknown,
       input: { reason?: unknown } = { reason: 'Yanlış bölüm beyanı' },
-    ) => ok(correctMembershipSchema, { membershipId: 'm', ...input, changes });
+    ) => ok(correctMembershipSchema, { membershipId: 'm', confirmed: true, ...input, changes });
     expect(change({ departmentId: 'd' })).toBe(true);
     expect(change({ role: 'ALUMNI', graduationYear: 2024 })).toBe(true);
     expect(change({})).toBe(false);
@@ -471,17 +475,30 @@ describe('üyelik düzeltme ve yönetici atama girdisi', () => {
   });
 
   it('atama: kapsam kimliği yalnız ilgili kapsamda; yanlış kapsam alanı reddedilir', () => {
-    expect(ok(grantAdminSchema, { scope: 'SYSTEM', userId: 'u' })).toBe(true);
-    expect(ok(grantAdminSchema, { scope: 'SYSTEM', userId: 'u', facultyId: 'f' })).toBe(false);
-    expect(ok(grantAdminSchema, { scope: 'FACULTY', userId: 'u', facultyId: 'f' })).toBe(true);
-    expect(ok(grantAdminSchema, { scope: 'FACULTY', userId: 'u' })).toBe(false);
-    expect(ok(grantAdminSchema, { scope: 'FACULTY', userId: 'u', departmentId: 'd' })).toBe(false);
-    expect(ok(grantAdminSchema, { scope: 'DEPARTMENT', userId: 'u', departmentId: 'd' })).toBe(
-      true,
-    );
-    expect(ok(grantAdminSchema, { scope: 'DEPARTMENT', userId: 'u', facultyId: 'f' })).toBe(false);
-    expect(ok(grantAdminSchema, { scope: 'ROOT', userId: 'u' })).toBe(false);
-    expect(ok(grantAdminSchema, { userId: 'u' })).toBe(false);
+    expect(ok(grantAdminSchema, { confirmed: true, scope: 'SYSTEM', userId: 'u' })).toBe(true);
+    expect(
+      ok(grantAdminSchema, { confirmed: true, scope: 'SYSTEM', userId: 'u', facultyId: 'f' }),
+    ).toBe(false);
+    expect(
+      ok(grantAdminSchema, { confirmed: true, scope: 'FACULTY', userId: 'u', facultyId: 'f' }),
+    ).toBe(true);
+    expect(ok(grantAdminSchema, { confirmed: true, scope: 'FACULTY', userId: 'u' })).toBe(false);
+    expect(
+      ok(grantAdminSchema, { confirmed: true, scope: 'FACULTY', userId: 'u', departmentId: 'd' }),
+    ).toBe(false);
+    expect(
+      ok(grantAdminSchema, {
+        confirmed: true,
+        scope: 'DEPARTMENT',
+        userId: 'u',
+        departmentId: 'd',
+      }),
+    ).toBe(true);
+    expect(
+      ok(grantAdminSchema, { confirmed: true, scope: 'DEPARTMENT', userId: 'u', facultyId: 'f' }),
+    ).toBe(false);
+    expect(ok(grantAdminSchema, { confirmed: true, scope: 'ROOT', userId: 'u' })).toBe(false);
+    expect(ok(grantAdminSchema, { confirmed: true, userId: 'u' })).toBe(false);
   });
 
   it('kaldırmada gerekçe zorunlu', () => {

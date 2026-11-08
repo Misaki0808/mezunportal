@@ -458,3 +458,12 @@ istihdam raporu ve Excel yalnız toplu sayı verir: kişi satırı yok, yalnız 
 gruplar bastırılır — serbest metin ve tek kişilik gruplar kimliği ele verirdi. Excel `.xlsx`tir (Türkçe karakterler için
 UTF-8, CSV'nin BOM sorunu yok). Sözleşme iki dosyadır: panel sorguları (W2) ve kullanıcı/yetki eylemleri.
 
+
+
+## 2026-11-08 · Yönetim sözleşmesinde değer maskesi ve açık onay
+
+Maskeli telefon/e-posta çıktı alanları maske biçimini doğrular; yalnız alanı masked diye adlandırmak ham
+veri sızıntısını engellemez. P1-11 kartına göre yıkıcı/yetki değiştiren kullanıcı işlemleri açık
+confirmed:true ister; askı kaldırma da gerekçelidir. Sözlük silme ve eşleşmeyeni atmada onay/gerekçe
+sözleşmede zorunludur. Excel bağlantısı yalnız filtre şemasından geçen alanları taşır; kişisel ya da
+bilinmeyen URL parametresi eklenmez. Bu alanlar ekranın onay penceresi ile sunucu doğrulamasını bağlar.
