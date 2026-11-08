@@ -83,7 +83,11 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
       `/randevu-al/${mentor.id}`,
     );
     await card.getByRole('link', { name: 'Profili gör' }).click();
-    await s.getByRole('link', { name: 'Randevu iste', exact: true }).click();
+    await expect(s).toHaveURL(new RegExp(`/uye/${mentor.id}$`));
+    await s
+      .getByRole('region', { name: 'Mentorla bağlantı' })
+      .getByRole('link', { name: 'Randevu iste', exact: true })
+      .click();
     await expect(s).toHaveURL(new RegExp(`/randevu-al/${mentor.id}$`));
     await s.waitForLoadState('networkidle');
     await expect(s.getByText('Saatler İstanbul saatidir.')).toBeVisible();
