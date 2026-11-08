@@ -90,7 +90,30 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     await waitForHydratedForm(student!, 'Talep gönder');
     await student!.getByRole('checkbox', { name: 'E-posta' }).check();
     await student!.getByRole('button', { name: 'Talep gönder' }).click();
-    await expect(student!.getByText('Talebin gönderildi.', { exact: true })).toBeVisible();
+    await expect(
+      student!.getByRole('status').filter({ hasText: 'Talebin gönderildi' }),
+    ).toBeVisible();
+    await student!.getByRole('link', { name: 'Taleplerime git' }).click();
+    await expect(student!.getByText(title).first()).toBeVisible();
+    expect(await student!.content()).not.toContain(writer.id);
+    expect(await student!.content()).not.toContain(writer.name);
+    await alumni!.goto('/hesap/iletisim?box=INCOMING');
+    const requestCard = alumni!.locator('div.rounded-card').filter({ hasText: title });
+    await expect(requestCard).toBeVisible();
+    await expect(requestCard.locator('xpath=ancestor::*[@data-hydrated][1]')).toHaveAttribute(
+      'data-hydrated',
+      'true',
+    );
+    await requestCard.getByRole('button', { name: 'Onayla' }).click();
+    await expect(requestCard.getByRole('button', { name: 'Onayı geri al' })).toBeVisible();
+    await student!.reload();
+    await expect(student!.getByRole('heading', { name: writer.name })).toBeVisible();
+    await requestCard.getByRole('button', { name: 'Onayı geri al' }).click();
+    await alumni!.getByRole('dialog').getByRole('button', { name: 'Onayı geri al' }).click();
+    await expect(requestCard.getByText('Onay geri alındı')).toBeVisible();
+    await student!.reload();
+    expect(await student!.content()).not.toContain(writer.id);
+    expect(await student!.content()).not.toContain(writer.name);
   } finally {
     await Promise.all(contexts.map((c) => c.close()));
     postingId ??= (await db.jobPosting.findFirst({ where: { title }, select: { id: true } }))?.id;
