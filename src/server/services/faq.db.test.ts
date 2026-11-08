@@ -368,6 +368,108 @@ describe('mentor cevapları', () => {
   });
 });
 
+describe('yayında ad ÖNEKİ uyarısı (kart 122): engel değil, moderatör onayı + işlem kaydı', () => {
+  const warned = (r: Awaited<ReturnType<typeof requestWithAnswers>>) => ({
+    ...publishInput(r),
+    answer: `${publishInput(r).answer} Selinay gibi sektörlerde de aynı belgeler istenir.`,
+  });
+  const lastError = async (promise: Promise<unknown>) => {
+    try {
+      await promise;
+      return null;
+    } catch (error) {
+      return isCodedError(error) ? error : error;
+    }
+  };
+
+  it('onaysız: FAQ_IDENTITY_WARNING + eşleşen sözcük; hiçbir şey yazılmaz', async () => {
+    const w = await world();
+    const r = await requestWithAnswers(w);
+    for (const input of [warned(r), { ...warned(r), confirmNotPersonal: false }]) {
+      const error = await lastError(publishFaq(deps, w.moderator, input));
+      expect(error).toMatchObject({ code: 'FAQ_IDENTITY_WARNING', params: { matches: 'Selinay' } });
+    }
+    expect(await db.faqItem.count({ where: { sourceRequestId: r.requestId } })).toBe(0);
+    expect((await db.faqRequest.findUniqueOrThrow({ where: { id: r.requestId } })).status).toBe(
+      'OPEN',
+    );
+    expect(await db.adminAuditLog.count({ where: { targetId: r.requestId } })).toBe(0);
+    expect(await pointsOf(w.student)).toEqual([]);
+  });
+
+  it('onaylı: yayınlanır; işlem kaydı sabit gerekçe + sayı taşır, sözcük taşımaz; puanlar yazılır', async () => {
+    const w = await world();
+    const r = await requestWithAnswers(w);
+    const out = await publishFaq(deps, w.moderator, { ...warned(r), confirmNotPersonal: true });
+    expect(out.faqItemId).toBeTruthy();
+    const logs = await db.adminAuditLog.findMany({ where: { targetId: r.requestId } });
+    expect(logs).toHaveLength(1);
+    expect(logs[0]).toMatchObject({
+      action: 'MODERATION_PUBLISH',
+      reason: 'Ad önekiyle eşleşen sözcük kişisel bilgi değil, yayımlandı',
+      metadata: { answerCount: 2, identityWarningConfirmed: true, warnedWordCount: 1 },
+    });
+    expect(JSON.stringify(logs[0])).not.toContain('Selinay');
+    expect((await pointsOf(w.student)).length).toBeGreaterThan(0);
+  });
+
+  it('onay, engeli AŞMAZ: adın tam/ekli hali ve kişisel veri onayla da reddedilir (uyarı + engel birlikteyse de)', async () => {
+    const w = await world();
+    const r = await requestWithAnswers(w);
+    for (const answer of [
+      `${publishInput(r).answer} Selin'in önerisi.`,
+      `${publishInput(r).answer} Selinay ve Burak önerdi.`,
+      `${publishInput(r).answer} Selinay: ornek@okul.edu.tr`,
+    ])
+      expect(
+        await code(
+          publishFaq(deps, w.moderator, { ...publishInput(r), answer, confirmNotPersonal: true }),
+        ),
+      ).toBe('FAQ_IDENTITY_LEAK');
+    expect(await db.faqItem.count({ where: { sourceRequestId: r.requestId } })).toBe(0);
+  });
+
+  it('kesmesiz ekli ad ("Selinin") uyarıdır, kesmeli ("Selin\'in") engeldir; onayla yalnız uyarı geçer', async () => {
+    const w = await world();
+    const r = await requestWithAnswers(w);
+    const base = publishInput(r);
+    const kesmesiz = { ...base, answer: `${base.answer} Selinin dediğine göre yeterli olur.` };
+    const error = await lastError(publishFaq(deps, w.moderator, kesmesiz));
+    expect(error).toMatchObject({ code: 'FAQ_IDENTITY_WARNING', params: { matches: 'Selinin' } });
+    expect(
+      await code(
+        publishFaq(deps, w.moderator, {
+          ...base,
+          answer: `${base.answer} Selin'in dediğine göre yeterli olur.`,
+          confirmNotPersonal: true,
+        }),
+      ),
+    ).toBe('FAQ_IDENTITY_LEAK');
+    await publishFaq(deps, w.moderator, { ...kesmesiz, confirmNotPersonal: true });
+    expect(await db.faqItem.count({ where: { sourceRequestId: r.requestId } })).toBe(1);
+  });
+
+  it('uyarı yokken onay bayrağı işlem kaydına yansımaz; soru metnindeki önek de uyarır', async () => {
+    const w = await world();
+    const r = await requestWithAnswers(w);
+    await publishFaq(deps, w.moderator, { ...publishInput(r), confirmNotPersonal: true });
+    const [log] = await db.adminAuditLog.findMany({ where: { targetId: r.requestId } });
+    expect(log).toMatchObject({ reason: null, metadata: { answerCount: 2 } });
+    expect(log!.metadata).not.toHaveProperty('identityWarningConfirmed');
+
+    const w2 = await world();
+    const r2 = await requestWithAnswers(w2);
+    expect(
+      await code(
+        publishFaq(deps, w2.moderator, {
+          ...publishInput(r2),
+          question: 'Selinay stajı için hangi belgeler gerekir?',
+        }),
+      ),
+    ).toBe('FAQ_IDENTITY_WARNING');
+  });
+});
+
 describe('inceleyici: yayında moderatör ve parçalanmış kimlikler', () => {
   it('moderatör adı, görünmez karakterle bölünmüş ad ve katılımcı kimliği reddedilir', async () => {
     const w = await world();
@@ -498,7 +600,6 @@ describe('moderasyon: yayın', () => {
       { question: 'Elif için staj belgeleri nelerdir diye sordum' },
       { answer: 'Burak Soylu ile konuşun, sana yardım eder.' },
       { answer: 'Selin hanıma sorun; özgeçmiş ve transkript yeterli olur.' },
-      { answer: 'Selinin dediğine göre özgeçmiş ve transkript yeterli olur.' },
       { answer: 'Bana ornek@okul.edu.tr adresinden yazın, hepsini anlatayım.' },
       { answer: 'Beni 0532 123 45 67 numarasından arayın, anlatayım hepsini.' },
     ];

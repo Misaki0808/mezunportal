@@ -233,7 +233,8 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
 - İmzalı bağlantılar (ör. “hâlâ orada mısın?”) süreli ve tek kullanımlıktır.
 - Puan hilesi kuralları `docs/architecture.md` “Puan motoru”nda.
 - SSS: soran, cevap yazan ve moderatör kimliği hiçbir çıktıda yoktur; yayın metni adları ve e-posta/telefon biçimini içeremez
-  (sunucuda, yayın anında). Karar notu yalnız soran öğrenciye görünür.
+  (sunucuda, yayın anında; adın tam hali ve kesmeli ekli biçimi engeldir; kesmesiz ekli biçim ve ad önekiyle eşleşen sözcük moderatör onaylı uyarıdır ve işlem
+  kaydına düşer). Karar notu yalnız soran öğrenciye görünür.
 - Puan çıktısında kaynak (deneyim/randevu/CV) ve karşı taraf kimliği yoktur; katkı puanı ve geçmişi yalnız sahibine görünür. Anonim
   deneyim puan verir ama kurucu üye etiketi vermez. Veri dökümü puanı kaynaksız içerir; hesap silme puan, etiket ve şüphe işaretlerini siler.
 

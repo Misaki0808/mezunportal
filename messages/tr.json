@@ -255,6 +255,7 @@
       "FAQ_REQUEST_CLOSED": "Bu soru için karar zaten verilmiş.",
       "FAQ_OWN_REQUEST": "Kendi sorduğun soruya cevap yazamazsın.",
       "FAQ_IDENTITY_LEAK": "Yayınlanacak metinde ad, e-posta ya da telefon var. Kimliği belli eden bilgileri çıkar.",
+      "FAQ_IDENTITY_WARNING": "Bu sözcükler bir katılımcının adıyla başlıyor: {matches}. Kişisel bilgi değilse onaylayıp yayımla.",
       "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin."
     }
   },
