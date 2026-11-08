@@ -1290,21 +1290,28 @@ model PointEntry {
 /// aynı kanıt iki kez işaretlenmez. Aynı (kullanıcı, kural) için en çok bir `OPEN` işaret vardır (kısmi benzersiz indeks,
 /// ham SQL migration). Yalnız sayılar ve kayıt kimlikleri saklanır; kişisel veri yok.
 model SuspicionFlag {
-  id           String          @id @default(uuid(7))
-  userId       String
-  rule         SuspicionRule
-  status       SuspicionStatus @default(OPEN)
-  evidenceKey  String
-  entryIds     String[]
-  windowStart  DateTime
-  windowEnd    DateTime
-  entryCount   Int
-  points       Int
-  sharePercent Int?
-  syncedCount  Int?
-  createdAt    DateTime        @default(now())
-  decidedAt    DateTime?
-  decidedById  String?
+  id               String          @id @default(uuid(7))
+  userId           String
+  rule             SuspicionRule
+  status           SuspicionStatus @default(OPEN)
+  evidenceKey      String
+  entryIds         String[]
+  windowStart      DateTime
+  windowEnd        DateTime
+  entryCount       Int
+  points           Int
+  sharePercent     Int?
+  syncedCount      Int?
+  createdAt        DateTime        @default(now())
+  decidedAt        DateTime?
+  decidedById      String?
+  /// Açıkken aynı kural için GÖRÜLEN YENİ kanıt sayısı (karar bekleyen işarete eklenir; yeni işaret açılmaz) ve son görülme.
+  /// `seenEvidenceKeys` tekrarı önler (aynı tarama iki kez sayacı bir kez artırır; en çok 20). `recentEvidence`: en çok 5
+  /// kanıt özeti `{at, entryCount, points}` (yalnız sayılar).
+  recurrenceCount  Int             @default(0)
+  lastSeenAt       DateTime?
+  seenEvidenceKeys String[]        @default([])
+  recentEvidence   Json            @default("[]")
 
   user User @relation(fields: [userId], references: [id], onDelete: Restrict)
 

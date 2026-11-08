@@ -24,7 +24,8 @@ import {
   type UpdatePointRuleInput,
 } from '@/contracts/points';
 import type { ActionResult } from '@/contracts/result';
-import { actionFailure, actionOk, parseInput } from '@/lib/action-result';
+import { actionOk, parseInput } from '@/lib/action-result';
+import { failAction } from '../fail-action';
 
 import { getDb } from '../db';
 import { enqueuePointBackfill } from '../jobs/points';
@@ -47,7 +48,7 @@ export async function getMyContribution(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await points.getMyContribution({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -56,7 +57,7 @@ export async function listPointRules(): Promise<ActionResult<PointRuleView[]>> {
     const actor = await requireAdmin({ kind: 'SYSTEM' });
     return actionOk(await admin.listPointRules({ db: getDb() }, actor.userId));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -69,7 +70,7 @@ export async function updatePointRule(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await admin.updatePointRule({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -82,7 +83,7 @@ export async function listPointEntries(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await admin.listPointEntries({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -95,7 +96,7 @@ export async function revokePointEntry(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await admin.revokePointEntry({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -108,7 +109,7 @@ export async function listSuspicionFlags(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await admin.listSuspicionFlags({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -121,7 +122,7 @@ export async function decideSuspicion(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await admin.decideSuspicion({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
 
@@ -140,6 +141,6 @@ export async function requestPointBackfill(
       ),
     );
   } catch (error) {
-    return actionFailure(error);
+    return failAction(error);
   }
 }
