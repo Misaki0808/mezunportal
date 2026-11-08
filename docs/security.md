@@ -110,8 +110,10 @@ kimlikler). Sistem yöneticisi panelden görür.
 - **Randevu onayında e-posta paylaşılır** (takvim daveti için); talep ekranında önceden yazılır.
 - **Hesap silme:** oturumlar düşer, kişisel alanlar anında temizlenir, dosyalar silinir;
   yayınlanmış içerik kullanıcının seçimine göre silinir (varsayılan) ya da anonimleştirilir (K-09,
-  `docs/decisions.md`).
-- **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11).
+  `docs/decisions.md`). Kişisel profil ve etiket ilişkileri her iki seçimde de silinir; ortak etiket
+  sözlüğü korunur. Profil yazımı aynı kullanıcı kilidi altında hesap durumunu yeniden doğrular.
+- **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11); kendi profilinin
+  kişisel alanları, ilk giriş adım durumları ve etiketleri dahildir. Profil yoksa `profile: null` döner.
 - **Çerezler:** yalnız zorunlu oturum çerezi; üçüncü taraf analitik ve reklam çerezi yok
   (metrikler kendi tablomuzda). Çerez bandı yerine aydınlatma metninde çerez bölümü yeterli
   görünür; son değerlendirme hukuki metin onayıyla (PILOT-LEGAL).
