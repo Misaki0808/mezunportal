@@ -349,6 +349,7 @@ export const EXPERIENCE_ACTION_ERRORS = {
   ],
   reviewExperience: [
     ...authErrors,
+    'CONSENT_REQUIRED',
     'AUTH_FORBIDDEN',
     'VALIDATION_INVALID',
     'RESOURCE_NOT_FOUND',
@@ -358,6 +359,7 @@ export const EXPERIENCE_ACTION_ERRORS = {
   ],
   reportExperience: [
     ...authErrors,
+    'CONSENT_REQUIRED',
     'AUTH_FORBIDDEN',
     'VALIDATION_INVALID',
     'RESOURCE_NOT_FOUND',
@@ -368,14 +370,21 @@ export const EXPERIENCE_ACTION_ERRORS = {
   listMyExperiences: [...authErrors, 'VALIDATION_INVALID'],
   getExperienceDetail: [
     ...authErrors,
+    'CONSENT_REQUIRED',
     'AUTH_FORBIDDEN',
     'VALIDATION_INVALID',
     'RESOURCE_NOT_FOUND',
   ],
-  listModerationQueue: [...authErrors, 'AUTH_FORBIDDEN', 'VALIDATION_INVALID'],
-  listExperienceReports: [...authErrors, 'AUTH_FORBIDDEN', 'VALIDATION_INVALID'],
+  listModerationQueue: [...authErrors, 'CONSENT_REQUIRED', 'AUTH_FORBIDDEN', 'VALIDATION_INVALID'],
+  listExperienceReports: [
+    ...authErrors,
+    'CONSENT_REQUIRED',
+    'AUTH_FORBIDDEN',
+    'VALIDATION_INVALID',
+  ],
   resolveExperienceReport: [
     ...authErrors,
+    'CONSENT_REQUIRED',
     'AUTH_FORBIDDEN',
     'VALIDATION_INVALID',
     'RESOURCE_NOT_FOUND',

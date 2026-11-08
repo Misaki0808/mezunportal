@@ -1,3 +1,4 @@
+import { CURRENT_CONSENT_VERSIONS, REQUIRED_CONSENT_DOCUMENTS } from '@/contracts/privacy';
 import type { PrismaClient } from '@/generated/prisma/client';
 
 /**
@@ -181,5 +182,17 @@ export async function addMentorProfile(
       sessionMinutes: 30,
       meetingModes: ['ONLINE'],
     },
+  });
+}
+
+/** Zorunlu onayları güncel sürümle verir (rıza kapısının arkasındaki işler için; yalnız test). */
+export async function grantRequiredConsents(db: PrismaClient, userId: string) {
+  await db.consent.createMany({
+    data: REQUIRED_CONSENT_DOCUMENTS.map((documentType) => ({
+      userId,
+      documentType,
+      version: CURRENT_CONSENT_VERSIONS[documentType],
+      granted: true,
+    })),
   });
 }

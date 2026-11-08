@@ -474,6 +474,17 @@ servis kartında zorlanır. CV davetinin isteğe bağlı Position kimliği yaln�
 P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK'sı P1-08'e bırakıldı.
 
 
+## 2026-11-08 · Tur düzeltmesi: dönüş yolu, yönetimde rıza, geliştirme günlüğü (PM kararı)
+
+Faz 1 ekran turunun güvenlik/KVKK bulguları için:
+- Oturumsuz kullanıcı hata ekranı yerine girişe yönlenir; gitmek istediği yol `?donus=` ile taşınır ve
+  yalnız site içi göreli yol kabul edilir (açık yönlendirme yerine sessizce ana sayfa).
+- Rıza kapısı yönetim sayfalarını ve eylemlerini de kapsar; kontrol yetkiden sonradır.
+  Deneyim moderasyonunda kuyruk, şikâyet listesi, kararlar ve yalnız moderatör yetkisiyle
+  görülen detaylar da bu kapıdadır; yazarın kendi kaydına ve üyenin normal yayın erişimine ek kısıt getirilmez.
+- `next dev` günlüğünde sunucu eylemi argümanları ve istek URL günlükleri kapalıdır; URL’lerde kodlanmış kişisel veri bulunabilir. Telefon testi geliştirme
+  sunucusuyla yapıldığı için geliştirme günlüğü de kişisel veri kuralına tabidir.
+- İletişim hedefi önizlemesi talep edilemeyen her hedefe aynı yanıtı verir.
 
 ## 2026-11-08 · Deneyim servisi: anonim çıktı, atomik moderasyon ve K-09
 
@@ -507,3 +518,21 @@ yeni türde sorulmayan alan içeriğe girmez ve kullanıcıya söylenir. Anonim 
 çizmez; anonim yanıtta yazar alanı olmadığı için sahibin kendi anonim deneyimini şikâyet edememesi kullanıcının
 kendi listesinden anlaşılır (ilk 50 yayınlanmış kayıt; kaçırılırsa yalnız fazladan bir düğme görünür, yetki
 sunucudadır). Moderasyon kuyruğu içeriği açılır bölümde gösterir; karar ve şikâyet çözümü gerekçeli penceredir.
+
+## 2026-11-08 · Yönetim paneli: kapsam, askı ve toplu rapor kuralları
+Askıya alma Better Auth ban alanlarına yazılır ama eklentinin HTTP ucu kapalı olduğundan kendi servisimiz yazar (oturumlar
+aynı işlemde silinir). Askı hesap geneli olduğu için hedefin bütün etkin üyelikleri yöneticinin kapsamında olmalıdır; aksi
+halde yalnız sistem yöneticisi yapar. Yetkili kullanıcıyı yalnız sistem yöneticisi askıya alır (bölüm yöneticisi
+üstünü susturamasın), kimse kendi hesabı/yetkisi üzerinde işlem yapamaz ve son sistem yetkisi kaldırılamaz. Mezun
+istihdam raporu ve Excel yalnız toplu sayı verir: kişi satırı yok, yalnız sözlükle eşleşen adlar, üç kişiden küçük
+gruplar bastırılır — serbest metin ve tek kişilik gruplar kimliği ele verirdi. Excel `.xlsx`tir (Türkçe karakterler için
+UTF-8, CSV'nin BOM sorunu yok). Sözleşme iki dosyadır: panel sorguları (W2) ve kullanıcı/yetki eylemleri.
+
+## 2026-11-08 · Yönetim sözleşmesinde değer maskesi ve açık onay
+
+Maskeli telefon/e-posta çıktı alanları maske biçimini doğrular; yalnız alanı masked diye adlandırmak ham
+veri sızıntısını engellemez. P1-11 kartına göre yıkıcı/yetki değiştiren kullanıcı işlemleri açık
+confirmed:true ister; askı kaldırma da gerekçelidir. Sözlük silme ve eşleşmeyeni atmada onay/gerekçe
+sözleşmede zorunludur. Excel bağlantısı yalnız filtre şemasından geçen alanları taşır; kişisel ya da
+bilinmeyen URL parametresi eklenmez. Bu alanlar ekranın onay penceresi ile sunucu doğrulamasını bağlar.
+

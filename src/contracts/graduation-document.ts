@@ -158,6 +158,7 @@ export const GRADUATION_DOCUMENT_ACTION_ERRORS = {
     'AUTH_ACCOUNT_SUSPENDED',
     'AUTH_NOT_VERIFIED',
     'AUTH_FORBIDDEN',
+    'CONSENT_REQUIRED',
   ],
   reviewGraduationDocument: [
     'VALIDATION_INVALID',
@@ -170,5 +171,6 @@ export const GRADUATION_DOCUMENT_ACTION_ERRORS = {
     'DOCUMENT_NOT_PENDING',
     'MEMBERSHIP_TRANSITION_INVALID',
     'RESOURCE_NOT_FOUND',
+    'CONSENT_REQUIRED',
   ],
 } as const satisfies Record<string, readonly ErrorCode[]>;

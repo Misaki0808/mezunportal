@@ -67,6 +67,37 @@ export type RespondToContactRequestInput = z.input<typeof respondToContactReques
 export const closeContactRequestSchema = z.object({ requestId: idSchema });
 export type CloseContactRequestInput = z.input<typeof closeContactRequestSchema>;
 
+/**
+ * Talep formu açılmadan önce hedef önizlemesi (tur bulgusu #9). KULLANICI VARLIĞI SIZMAZ: hedef yoksa,
+ * silinmiş/askıdaysa, kendisiyse ya da talep alabileceği alan yoksa yanıt AYNIDIR:
+ * `{ canRequest: false, displayName: null, requestableFields: [] }`. Hız sınırlı (tarama önlenir).
+ */
+export const previewContactTargetSchema = z.object({ targetUserId: idSchema });
+export type PreviewContactTargetInput = z.input<typeof previewContactTargetSchema>;
+export const contactTargetPreviewSchema = z.discriminatedUnion('canRequest', [
+  z
+    .object({
+      canRequest: z.literal(true),
+      displayName: z.string(),
+      /** Yalnız hedefin `ON_APPROVED_REQUEST` seviyesindeki alanları (en az bir). */
+      requestableFields: z.array(z.enum(CONTACT_FIELDS)).min(1),
+    })
+    .strict(),
+  z
+    .object({
+      canRequest: z.literal(false),
+      displayName: z.null(),
+      requestableFields: z.array(z.enum(CONTACT_FIELDS)).length(0),
+    })
+    .strict(),
+]);
+export type ContactTargetPreview = z.infer<typeof contactTargetPreviewSchema>;
+export const CONTACT_TARGET_NOT_REQUESTABLE: ContactTargetPreview = {
+  canRequest: false,
+  displayName: null,
+  requestableFields: [],
+};
+
 export const contactRequestStatusOutputSchema = z.object({
   requestId: z.string(),
   status: z.enum(CONTACT_REQUEST_STATUSES),
@@ -163,4 +194,5 @@ export const CONTACT_REQUEST_ACTION_ERRORS = {
     'RESOURCE_NOT_FOUND',
   ],
   listContactRequests: ['VALIDATION_INVALID', ...AUTHED],
+  previewContactTarget: ['VALIDATION_INVALID', ...AUTHED, 'AUTH_NOT_VERIFIED', 'RATE_LIMITED'],
 } as const satisfies Record<string, readonly ErrorCode[]>;

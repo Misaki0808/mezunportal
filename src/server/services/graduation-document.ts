@@ -36,6 +36,7 @@ import { maskEmail } from '../rules/maskEmail';
 import { planAlumniTransition } from '../rules/membershipTransition';
 import { applyAlumniTransitionPlan } from './membership';
 import { recordAdminAction } from './audit';
+import { requireConsent } from './privacy';
 
 export type GraduationDocumentDeps = {
   db: PrismaClient;
@@ -187,6 +188,8 @@ export async function listPendingGraduationDocuments(
     throw codedForbidden('AUTH_FORBIDDEN');
   }
   const departmentIds = input.departmentId !== undefined ? [input.departmentId] : scope;
+  // Yetkiden SONRA rıza: yetkisize rıza durumu söylenmez.
+  await requireConsent(db, actor.userId);
 
   if (input.cursor !== undefined) {
     const anchor = await db.graduationDocument.findFirst({
@@ -275,6 +278,7 @@ export async function reviewGraduationDocument(
       target: { kind: 'DEPARTMENT', department },
     });
     if (!decision.allowed) throw errorForDenyReason(decision.reason);
+    await requireConsent(tx, admin.userId);
 
     if (document.status !== 'PENDING') throw codedConflict('DOCUMENT_NOT_PENDING');
 
@@ -467,6 +471,7 @@ export async function readGraduationDocumentFile(
     target: { kind: 'DEPARTMENT', department },
   });
   if (!decision.allowed) throw errorForDenyReason(decision.reason);
+  await requireConsent(db, adminUserId);
 
   if (document.status !== 'PENDING' || !document.storageKey) {
     throw new CodedError('notFound', 'RESOURCE_NOT_FOUND');
