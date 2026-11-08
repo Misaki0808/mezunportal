@@ -533,6 +533,45 @@ describe('güvenli girdi', () => {
   });
 });
 
+describe('bağımsız inceleyici regresyonları', () => {
+  it('inceleyici: emoji içeren uzun metin arama yanıtını bozmaz', async () => {
+    const marker = tag();
+    await experience({ organizationName: marker, whatLearned: '🧪'.repeat(250) });
+    const item = (await run({ company: marker })).items[0]!;
+    expect(Array.from(item.snippet).length).toBeLessThanOrEqual(220);
+    expect(item.snippet.isWellFormed()).toBe(true);
+  });
+
+  it.each(["''", '%%', '__', String.raw`\\`, ':*', '&|!', "' OR 1=1 --"])(
+    'inceleyici: q/company işleçleri güvenli (%s)',
+    async (text) => {
+      const marker = tag();
+      await experience({ organizationName: marker });
+      for (const field of ['q', 'company'] as const) {
+        const page = await run({ [field]: text });
+        expect(page.items).toEqual([]);
+        expect(page.total).toBe(0);
+      }
+    },
+  );
+
+  it.each([{ banned: true }, { deletedAt: new Date() }])(
+    'inceleyici: askıdaki/silinmiş arayan reddedilir (%j)',
+    async (state) => {
+      const id = await createUser(db, state);
+      await addMembership(db, {
+        userId: id,
+        departmentId: inst.deptA1,
+        role: 'STUDENT',
+        entryYear: 2024,
+      });
+      await expect(run({}, id)).rejects.toMatchObject({
+        code: state.banned ? 'AUTH_ACCOUNT_SUSPENDED' : 'AUTH_UNAUTHENTICATED',
+      });
+    },
+  );
+});
+
 describe('başarım: 1.000 sahte deneyimle tipik sorgu', () => {
   it('tipik sorgular < 300 ms (ısınma sonrası ortanca)', async () => {
     const perf = await createInstitution(db);
