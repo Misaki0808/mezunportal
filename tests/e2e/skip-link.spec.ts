@@ -21,7 +21,9 @@ for (const width of [390, 1440]) {
     const skip = page.getByRole('link', { name: 'İçeriğe geç' });
     await expect(skip).toBeFocused();
     const skipBox = (await skip.boundingBox())!;
-    const brand = page.getByText('MezunPortal', { exact: true }).first();
+    // Marka iki yerde olabilir (mobil üst çubuk / masaüstü kenar çubuğu); görünür olan ölçülür.
+    const brand = page.getByText('MezunPortal', { exact: true }).locator('visible=true').first();
+    await expect(brand).toBeVisible();
     const brandBox = (await brand.boundingBox())!;
     expect(
       intersects(skipBox, brandBox),
