@@ -1,6 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import { contrastRatio, readColorTokens, readDarkColorTokens } from '@/lib/contrast';
@@ -28,7 +26,7 @@ const TEXT_PAIRS: readonly [string, string][] = [
   ['primary', 'bg'],
   ['primary', 'surface'],
   ['on-primary-soft', 'primary-soft'],
-  // Ghost düğme hover'ı: soft zeminde metin primary-hover (primary / primary-soft AA DEĞİLDİR, aşağıdaki bekçi kullanımı engeller).
+  // Ghost düğme hover'ı: soft zeminde metin primary-hover (primary / primary-soft AA DEĞİLDİR, lint kuralı kullanımı engeller).
   ['primary-hover', 'primary-soft'],
   ['on-accent', 'accent'],
   ['on-accent', 'accent-hover'],
@@ -94,32 +92,6 @@ describe('token tanımı', () => {
   it('açık temada mercan zeminde beyaz metin AA değildir (on-accent koyu) ve mercan beyaz üstünde sınır/metin olamaz (accent-strong)', () => {
     expect(contrastRatio('#ffffff', SCHEMES.açık.accent!)).toBeLessThan(4.5);
     expect(contrastRatio(SCHEMES.açık.accent!, SCHEMES.açık.bg!)).toBeLessThan(3);
-  });
-});
-
-describe('bekçi: primary metni primary-soft üstünde kullanılmaz (açık temada 4,34:1, AA değil)', () => {
-  function sourceFiles(dir: string): string[] {
-    return readdirSync(dir).flatMap((name) => {
-      const path = join(dir, name);
-      if (statSync(path).isDirectory()) return sourceFiles(path);
-      return /\.tsx?$/.test(name) && !/\.test\./.test(name) ? [path] : [];
-    });
-  }
-  it('aynı sınıf dizgesinde `*-primary-soft` zemin ile çıplak `text-primary` birlikte geçmez', () => {
-    const offenders: string[] = [];
-    for (const file of sourceFiles(fileURLToPath(new URL('..', import.meta.url)))) {
-      const source = readFileSync(file, 'utf8');
-      for (const match of source.matchAll(
-        /(['"`])((?:(?!\1)[^\n])*primary-soft(?:(?!\1)[^\n])*)\1/g,
-      )) {
-        const classes = match[2]!;
-        const bareText = /(^|\s)text-primary(?![-\w])/.test(classes);
-        const softAlways = /(^|\s)bg-primary-soft(?![-\w])/.test(classes);
-        const softOnHover = /hover:bg-primary-soft/.test(classes) && !/hover:text-/.test(classes);
-        if (bareText && (softAlways || softOnHover)) offenders.push(`${file}: ${classes}`);
-      }
-    }
-    expect(offenders).toEqual([]);
   });
 });
 

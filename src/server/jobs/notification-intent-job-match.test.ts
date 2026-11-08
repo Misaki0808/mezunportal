@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ enqueue: vi.fn() }));
+vi.mock('../repositories/job-postings', () => ({
+  visibleJobPostingIds: async (_db: unknown, ids: string[]) => ids,
+}));
 vi.mock('./email', () => ({ enqueueEmail: mocks.enqueue }));
 vi.mock('@/lib/env', () => ({ getAuthEnv: () => ({ APP_URL: 'https://example.org' }) }));
 import { sendNotificationIntent } from './notification-intent-worker';
@@ -18,7 +21,9 @@ function database(
     notificationPreference: {
       findUnique: vi.fn().mockResolvedValue({ enabled: options.enabled ?? true }),
     },
-    jobMatch: { count: vi.fn().mockResolvedValue(options.active ?? 1) },
+    jobMatch: {
+      findMany: vi.fn().mockResolvedValue((options.active ?? 1) ? [{ postingId: 'posting' }] : []),
+    },
     jobMatchDigest: {
       findUnique: vi.fn().mockResolvedValue(options.existing ? {} : null),
       count: vi.fn().mockResolvedValue(options.recent ?? 0),

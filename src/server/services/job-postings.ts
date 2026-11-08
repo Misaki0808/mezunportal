@@ -484,6 +484,7 @@ export async function searchJobPostings(
   const { rows, total } = await searchJobPostingRows(deps.db, {
     universityIds,
     today,
+    now,
     q: parsed.q,
     departmentId: parsed.departmentId,
     kind: parsed.kind,
@@ -526,19 +527,21 @@ export async function getJobPostingFilterOptions(
   input: GetJobPostingFilterOptionsInput = {},
 ): Promise<JobPostingFilterOptions> {
   getJobPostingFilterOptionsSchema.parse(input);
-  const today = istanbulDay(nowOf(deps));
+  const now = nowOf(deps);
+  const today = istanbulDay(now);
   const universityIds = await asMember(deps, userId, (tx, actor) => viewerUniversityIds(tx, actor));
   return jobPostingFilterOptionsSchema.parse(
     await jobPostingFilterOptionRows(deps.db, {
       universityIds,
       today,
+      now,
       limit: JOB_POSTING_FILTER_OPTIONS_LIMIT,
     }),
   );
 }
 
 /**
- * Okuyucu detayı. `applyUrl` yalnız `URL` yönteminde; `contactUserId` yalnız `CONTACT_REQUEST` yönteminde döner (D7). Kapsam dışı,
+ * Okuyucu detayı: `applyUrl` yalnız `URL` yönteminde döner; yazar kimliği okuyucuya verilmez (D7). Kapsam dışı,
  * yayında olmayan ya da süresi dolmuş ilan `RESOURCE_NOT_FOUND` (varlık sızmaz).
  */
 export async function getJobPosting(
@@ -553,6 +556,7 @@ export async function getJobPosting(
     findJobPostingRow(tx, {
       universityIds: await viewerUniversityIds(tx, actor),
       today,
+      now,
       id: parsed.id,
     }),
   );
@@ -581,6 +585,7 @@ export async function reportJobPosting(
       select: {
         status: true,
         deadlineOn: true,
+        publishedAt: true,
         department: { select: { faculty: { select: { universityId: true } } } },
       },
     });
@@ -589,6 +594,7 @@ export async function reportJobPosting(
     if (
       !posting ||
       !universityIds.includes(posting.department.faculty.universityId) ||
+      !posting.publishedAt ||
       ['DRAFT', 'PENDING', 'REJECTED'].includes(posting.status)
     )
       throw codedNotFound('RESOURCE_NOT_FOUND');
@@ -602,6 +608,15 @@ export async function reportJobPosting(
       )
     )
       throw codedConflict('JOB_POSTING_NOT_OPEN');
+    if (
+      !(await findJobPostingRow(tx, {
+        universityIds,
+        today: istanbulDay(now),
+        now,
+        id: parsed.postingId,
+      }))
+    )
+      throw codedNotFound('RESOURCE_NOT_FOUND');
     const existing = await tx.jobPostingReport.findFirst({
       where: { postingId: parsed.postingId, reporterId: userId, status: 'OPEN' },
       select: { id: true },
@@ -625,11 +640,13 @@ export async function resolveContactAuthor(
   userId: string,
   jobPostingId: string,
 ): Promise<{ authorId: string; title: string; organizationName: string } | null> {
-  const today = istanbulDay(nowOf(deps));
+  const now = nowOf(deps);
+  const today = istanbulDay(now);
   const row = await asMember(deps, userId, async (tx, actor) =>
     findJobPostingRow(tx, {
       universityIds: await viewerUniversityIds(tx, actor),
       today,
+      now,
       id: jobPostingId,
     }),
   );

@@ -1,11 +1,13 @@
 import 'server-only';
 import type { Prisma } from '@/generated/prisma/client';
 import { matchJobPosting } from '../rules/jobMatch';
+import { visibleJobPostingIds } from '../repositories/job-postings';
 import { addDays, istanbulDay } from '../rules/jobPosting';
 import { stageNotification } from './notification-intent';
 
 /** Yayınla aynı işlemde, yalnız doğrulanmış etkin öğrenciler için eşleşme ve günlük niyet. */
 export async function stageJobMatches(tx: Prisma.TransactionClient, postingId: string, now: Date) {
+  if (!(await visibleJobPostingIds(tx, [postingId], now)).length) return;
   const posting = await tx.jobPosting.findUniqueOrThrow({
     where: { id: postingId },
     select: {
@@ -110,7 +112,15 @@ export async function listSuggestedJobMatches(
     },
     orderBy: [{ publishedAt: 'desc' }, { id: 'asc' }],
   });
+  const visible = new Set(
+    await visibleJobPostingIds(
+      db,
+      postings.map((posting) => posting.id),
+      now,
+    ),
+  );
   return postings
+    .filter((posting) => visible.has(posting.id))
     .filter((posting) =>
       memberships.some(
         (member) =>
@@ -157,9 +167,11 @@ export async function sharedJobMatchTags(
       },
     }),
   ]);
+  const visible = new Set(await visibleJobPostingIds(db, postingIds, now));
   const tags = profile?.tags.map((tag) => tag.tagId) ?? [];
   const results = new Map<string, { slug: string; label: string | null }[]>();
   for (const posting of postings) {
+    if (!visible.has(posting.id)) continue;
     const match = memberships
       .map((m) =>
         matchJobPosting(
@@ -215,10 +227,19 @@ export async function listMyJobMatchNotifications(
     },
     orderBy: [{ createdAt: 'desc' }, { postingId: 'asc' }],
   });
-  return rows.map((row) => ({
-    day: istanbulDay(row.createdAt),
-    id: row.posting.id,
-    title: row.posting.title ?? '',
-    organizationName: row.posting.organizationName ?? '',
-  }));
+  const visible = new Set(
+    await visibleJobPostingIds(
+      db,
+      rows.map((row) => row.posting.id),
+      now,
+    ),
+  );
+  return rows
+    .filter((row) => visible.has(row.posting.id))
+    .map((row) => ({
+      day: istanbulDay(row.createdAt),
+      id: row.posting.id,
+      title: row.posting.title ?? '',
+      organizationName: row.posting.organizationName ?? '',
+    }));
 }

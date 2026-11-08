@@ -5,6 +5,7 @@ import { getAuthEnv } from '@/lib/env';
 import messages from '../../../messages/tr.json';
 import { enqueueEmail } from './email';
 import { addDays, istanbulDay } from '../rules/jobPosting';
+import { visibleJobPostingIds } from '../repositories/job-postings';
 import { createCvReviewNotifier } from '../services/cv-review-notifier';
 import {
   createAppointmentNotifier,
@@ -63,14 +64,39 @@ export async function sendNotificationIntent(db: PrismaClient, row: IntentRecord
         select: { enabled: true },
       });
       if (preference?.enabled === false) return;
-      const active = await tx.jobMatch.count({
+      const matches = await tx.jobMatch.findMany({
         where: {
           userId: row.userId,
           createdAt: { gte: dayStart, lt: dayEnd },
-          posting: { status: 'PUBLISHED', deadlineOn: { gte: new Date(`${today}T00:00:00Z`) } },
+          posting: {
+            targets: {
+              some: {
+                department: {
+                  memberships: {
+                    some: {
+                      userId: row.userId,
+                      role: 'STUDENT',
+                      verificationStatus: 'VERIFIED',
+                      endedAt: null,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
+        select: { postingId: true },
       });
-      if (!active) return;
+      if (
+        !(
+          await visibleJobPostingIds(
+            tx,
+            matches.map((match) => match.postingId),
+            new Date(),
+          )
+        ).length
+      )
+        return;
       const existing = await tx.jobMatchDigest.findUnique({
         where: { userId_day: { userId: row.userId, day: today } },
       });

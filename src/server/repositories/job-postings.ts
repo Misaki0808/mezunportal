@@ -3,6 +3,7 @@ import 'server-only';
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 
 import { FUZZY_MIN_LENGTH, WORD_SIMILARITY_THRESHOLD, tokensOf } from './search';
+import { istanbulDay } from '../rules/jobPosting';
 
 /**
  * İlan arama deposu — HAM SQL YALNIZ BURADADIR (docs/architecture.md "Arama"). Deneyim/SSS aramasıyla aynı Türkçe tam metin
@@ -48,10 +49,44 @@ const CARD_COLUMNS = Prisma.sql`i."id", i."kind", i."title", i."organizationName
     WHERE t."postingId" = i."id"), '[]'::json) AS "targetDepartments"`;
 
 /** Okuyucuya açık ilan koşulu: yayında, süresi dolmamış, arayanın üniversitelerinde. */
-function visible(universityIds: readonly string[], today: string): Prisma.Sql[] {
+/** Bütün ilan okuma ve eşleşme yüzeylerinin paylaştığı sunucu görünürlük kapısı. */
+function visiblePostingWhere(today: string, now: Date): Prisma.Sql[] {
   return [
     Prisma.sql`i."status" = 'PUBLISHED'`,
     Prisma.sql`i."deadlineOn" >= ${today}::date`,
+    Prisma.sql`EXISTS (SELECT 1 FROM "User" u WHERE u."id" = i."authorId" AND u."deletedAt" IS NULL
+      AND (NOT u."banned" OR (u."banExpires" IS NOT NULL AND u."banExpires" <= ${now})))`,
+    Prisma.sql`EXISTS (SELECT 1 FROM "Membership" m WHERE m."userId" = i."authorId"
+      AND m."departmentId" = i."departmentIdAtWrite" AND m."role" IN ('ALUMNI', 'ACADEMIC')
+      AND m."verificationStatus" = 'VERIFIED' AND m."endedAt" IS NULL)`,
+    Prisma.sql`(SELECT count(*) FROM "JobPostingDepartment" jt WHERE jt."postingId" = i."id") BETWEEN 1 AND 10`,
+    Prisma.sql`NOT EXISTS (SELECT 1 FROM "JobPostingDepartment" jt
+      JOIN "Department" target ON target."id" = jt."departmentId"
+      JOIN "Faculty" target_faculty ON target_faculty."id" = target."facultyId"
+      WHERE jt."postingId" = i."id" AND target_faculty."universityId" <> f."universityId")`,
+  ];
+}
+
+/** İç servislere, verilen kimliklerden yalnız hâlâ görünenleri döndürür; okuyucu kapsamı çağıranda ayrıca doğrulanır. */
+export async function visibleJobPostingIds(
+  db: Pick<PrismaClient, '$queryRaw'>,
+  ids: readonly string[],
+  now: Date,
+): Promise<string[]> {
+  if (!ids.length) return [];
+  const where = Prisma.join(
+    [...visiblePostingWhere(istanbulDay(now), now), Prisma.sql`i."id" = ANY(${[...ids]}::text[])`],
+    ' AND ',
+  );
+  const rows = await db.$queryRaw<{ id: string }[]>(
+    Prisma.sql`SELECT i."id" ${FROM} WHERE ${where}`,
+  );
+  return rows.map((row) => row.id);
+}
+
+function visible(universityIds: readonly string[], today: string, now: Date): Prisma.Sql[] {
+  return [
+    ...visiblePostingWhere(today, now),
     Prisma.sql`f."universityId" = ANY(${[...universityIds]}::text[])`,
   ];
 }
@@ -60,6 +95,7 @@ export type JobSearchQuery = {
   universityIds: readonly string[];
   /** İstanbul bugünü `YYYY-MM-DD`. */
   today: string;
+  now: Date;
   q?: string;
   departmentId?: string;
   kind?: 'INTERNSHIP' | 'JOB';
@@ -83,7 +119,7 @@ export async function searchJobPostingRows(
   const hasText = tokens.length > 0;
   // Metin verildi ama harf/rakam içermiyor: hiçbir şeyle eşleşmez (süzgeç sessizce düşmez).
   const emptyText = query.q !== undefined && query.q.trim() !== '' && !hasText;
-  const conditions = visible(query.universityIds, query.today);
+  const conditions = visible(query.universityIds, query.today, query.now);
   if (emptyText) conditions.push(Prisma.sql`FALSE`);
   if (query.departmentId)
     conditions.push(
@@ -157,11 +193,11 @@ export async function searchJobPostingRows(
 /** Bir ilanı okuyucu görünürlüğüyle getirir (kapsam dışı, yayında olmayan ya da süresi dolmuş → `null`; varlık sızmaz). */
 export async function findJobPostingRow(
   db: Pick<PrismaClient, '$queryRaw'>,
-  input: { universityIds: readonly string[]; today: string; id: string },
+  input: { universityIds: readonly string[]; today: string; now: Date; id: string },
 ): Promise<JobPostingDetailRow | null> {
   if (input.universityIds.length === 0) return null;
   const where = Prisma.join(
-    [...visible(input.universityIds, input.today), Prisma.sql`i."id" = ${input.id}`],
+    [...visible(input.universityIds, input.today, input.now), Prisma.sql`i."id" = ${input.id}`],
     ' AND ',
   );
   const rows = await db.$queryRaw<JobPostingDetailRow[]>(Prisma.sql`
@@ -183,11 +219,11 @@ export type JobFilterOptionRows = {
  */
 export async function jobPostingFilterOptionRows(
   db: Pick<PrismaClient, '$queryRaw'>,
-  input: { universityIds: readonly string[]; today: string; limit: number },
+  input: { universityIds: readonly string[]; today: string; now: Date; limit: number },
 ): Promise<JobFilterOptionRows> {
   if (input.universityIds.length === 0)
     return { organizations: [], departments: [], locations: [], remoteCount: 0 };
-  const where = Prisma.join(visible(input.universityIds, input.today), ' AND ');
+  const where = Prisma.join(visible(input.universityIds, input.today, input.now), ' AND ');
   const [organizations, departments, locations, remote] = await Promise.all([
     // Satır = sözlük şirketi (companyId) YA DA sözlüğe bağlı olmayan, ASCII katlanmış ada göre gruplu serbest kurum.
     db.$queryRaw<{ companyId: string | null; name: string; count: bigint }[]>(Prisma.sql`
