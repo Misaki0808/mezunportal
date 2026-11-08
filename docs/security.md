@@ -96,8 +96,25 @@ ve akademisyen açabilir; öğrenci eşiği K-08. Yönetici yetkisi ayrı tablod
 Her yönetici eylemi `AdminAuditLog`'a `recordAdminAction` ile, eylemle AYNI veritabanı işleminde yazılır: kim, ne yaptı, hangi kayıtta, gerekçe. Eylem adları ve gerekçe zorunluluğu `rules/adminAudit.ts`'tedir; gerekçe ve metadata
 kişisel veri (e-posta, telefon, kimlik numarası, ad alanları) içeremez ve yazılmadan reddedilir. Kapsam:
 mezun belgesi onay/ret, rol düzeltme, askıya alma/kaldırma, moderasyon kararları, puan iptali,
-şüphe kararı, yönetici atama, dışa aktarma. Kayıt yalnız eklenir; kişisel veri içermez (yalnız
-kimlikler). Sistem yöneticisi panelden görür.
+şüphe kararı, yönetici atama/kaldırma, sözlük değişikliği, eşleşmeyen değer çözümü, dışa aktarma.
+Kayıt yalnız eklenir; kişisel veri içermez (yalnız kimlikler). Sistem yöneticisi panelden görür.
+
+### Yönetim paneli kuralları (P1-11)
+
+Sözleşme `src/contracts/admin.ts` ve `admin-users.ts`'tedir; hangi eylemin kime açık olduğu `ADMIN_ACTION_ACCESS`
+tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + doğrulanmış üyelik); sistem yöneticisine
+özel eylemler (sözlük, eşleşmeyen değer, yönetici atama, işlem kaydı görüntüleme) `requireAdmin({ kind: 'SYSTEM' })`.
+- **Kapsam dışı görme yok:** her liste yöneticinin kapsamıyla kesişir; `departmentId`/`facultyId` süzgeçleri yetki
+  vermez. Telefon ve e-posta çıktı şemalarında yalnız maskelidir (`maskedEmail`, `maskedPhone`); şikâyet
+  çıktısında raportör, yazar ve moderatör kimliği yoktur.
+- **Askıya alma hesap geneli olduğundan** hedefin BÜTÜN üyelikleri yöneticinin kapsamında olmalıdır; üyeliği olmayan ya da
+  kısmen kapsanan kullanıcıyı yalnız sistem yöneticisi yönetir. Kendi hesabın/yetkin üzerinde işlem yapılamaz;
+  etkin yönetici yetkisi olan kullanıcıyı yalnız sistem yöneticisi askıya alır/düzeltir (bölüm yöneticisi üstündekini
+  askıya alamaz). Yetki işlemin İÇİNDE yeniden doğrulanır; değişiklik ve işlem kaydı aynı işlemdedir.
+- **Askı:** ban alanları yazılır ve oturumlar aynı işlemde silinir; kullanıcı yeni oturum açamaz. Süreli askı en fazla
+  365 gün. Son sistem yöneticisi yetkisi kaldırılamaz.
+- **Toplu rapor ve Excel kişi satırı içermez:** mezun istihdam dağılımları sözlükle eşleşen adlarla ve küçük hücre
+  bastırmayla (`REPORT_MIN_GROUP_SIZE` = 3) verilir; her dışa aktarma `DATA_EXPORT` kaydı yazar ve hız sınırlıdır.
 
 ## KVKK
 

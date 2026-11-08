@@ -26,6 +26,9 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   şeması. Yayınlanmış içerik aynı üniversitedeki tüm doğrulanmış üyelere açık (K-07); servis ve
   ekran uygulaması ayrı kartlarda.
 
+- P1-11 yönetim paneli sözleşmesi: panel sorguları, kullanıcı/askı/üyelik düzeltme/yönetici atama, sözlük ve
+  eşleşmeyen değer, işlem kaydı görüntüleme ve toplu mezun istihdam raporu imzaları, `requireAnyAdmin` koruması ve
+  hata kodları hazır. Servis gövdeleri sırada (askıya alma/rol/yönetici atama: W1, kalanı W2).
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
