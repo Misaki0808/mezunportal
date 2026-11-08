@@ -75,7 +75,6 @@ dakikası sınırlıdır. Roller ekran görüntüsü almaz (makine yükü, çak�
 ara sıra yaptığı tarayıcı turu ve kullanıcının faz sonu telefon denemesi yapar. Ürün/UX
 kararlarını PM verir ve panoda gösterir; kullanıcıya yalnız onun verebileceği kararlar sorulur.
 
-
 ## 2026-11-07 · Repo adı `mezunportal` (K-01)
 Kullanıcı kararı: "Repo adı mezunportal; K-01 cevaplandı." Çalışma adı MezunPortal ürün adı olarak
 da kaldı; GitHub deposu `Misaki0808/mezunportal`.
@@ -427,3 +426,16 @@ false`) bir cevaptır, atlama değildir, boş seçim de kaydetme sayılmaz. Atla
 adım yüzdede eksik kalır; ilerleme noktası kalıcıdır. Rol ve bölüm adımı atlanamaz; ilk girişi bitirmek
 kalan bekleyen adımları atlanmış sayar. Gerekçe: ekran ile servis aynı ayrımı tek yerden okur ve sonradan
 “eksik adımı tamamla” daveti yalnız gerçekten atlananı hedefler.
+
+## 2026-11-08 · Deneyim görünürlüğü ve anonim çıktı sınırı (K-07, P1-07)
+
+PM kararı: yayınlanmış içerik üniversitedeki tüm doğrulanmış üyelere görünür; bölüm/fakülte ayrımıyla
+kısıtlanmaz ve başka üniversiteye açılmaz. Moderasyon kapsamı yazım anındaki bölüme göre korunur.
+Anonim deneyimde yazar kendi listesi ve moderasyon dahil hiçbir çıktı şemasına girmez; eski veri
+belgesindeki moderatör istisnası kaldırıldı. Depodaki yazar bağı sahiplik/hesap silme içindir; K-09
+anonimleştirmede yayınlanmış içerikte boşaltılabilir. Şikâyetin raportörü de çıktıya taşınmaz.
+
+Sözleşme eksik taslağı tür bazlı tam şablondan ayırır; tür değişince ilgisiz alanlar reddedilir.
+Yayın/ret kararına ait alanlar SQL CHECK'le birlikte tutulur; yayınlama yetkisi ve durum geçişleri
+servis kartında zorlanır. CV davetinin isteğe bağlı Position kimliği yalnız girdidedir; sahipliği
+P1-05/06 bağlandığında sunucuda doğrulanır. Arama vektörü ve sözlük FK'sı P1-08'e bırakıldı.

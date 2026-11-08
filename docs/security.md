@@ -84,6 +84,11 @@ ve akademisyen açabilir; öğrenci eşiği K-08. Yönetici yetkisi ayrı tablod
   `requireModerator`, `canModerate`). Kimlik oturumdan gelir; oturum bağlantısı P1-02'ye kadar kapalıdır
   (fail-closed).
 - Moderasyon kapsamı içeriğin yazıldığı andaki bölümüne göre belirlenir.
+- **K-07:** yayınlanmış içerik, içeriğin yazıldığı bölümün üniversitesindeki bütün etkin ve
+  doğrulanmış üyelere açıktır; bölüm/fakülte sınırı yoktur. Başka üniversiteye açılmaz. Bu kaynak
+  kapsamı servis sorgusunda doğrulanır; genel `requireVerifiedMember` tek başına yeterli değildir.
+- **Anonim deneyim:** yazar kimliği kendi listesi ve moderasyon dahil hiçbir çıktı şemasında yoktur;
+  sunucudaki sahiplik bağı istemciye verilmez. Şikâyet çıktısı da raportör kimliği taşımaz.
 - Her yetkili eylemin negatif testi vardır (başka bölüm, yetkisiz rol, doğrulanmamış, askıda).
 
 ## Yönetici işlem kaydı
