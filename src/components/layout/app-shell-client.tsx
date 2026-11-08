@@ -52,6 +52,9 @@ export function AppShellClient({
   const t = useTranslations('nav');
   const pathname = usePathname();
 
+  // Girişsiz karşılama sayfası kendi gezinmesini ve ana içeriğini sunar.
+  if (!signedIn && pathname === '/') return <>{children}</>;
+
   // PM kararı: giriş ve bağlantı kontrol ekranları uygulama gezinmesinden ayrıdır.
   if (pathname === '/giris' || pathname.startsWith('/giris/')) {
     return (
