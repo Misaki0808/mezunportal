@@ -75,7 +75,7 @@ export function Invitations() {
         {result && <p role="status">{t('result', result)}</p>}
         <button
           disabled={pending}
-          className="min-h-11 rounded-lg bg-primary px-5 py-3 font-semibold text-white disabled:opacity-50"
+          className="min-h-11 rounded-lg bg-primary px-5 py-3 font-semibold text-on-primary disabled:opacity-50"
           type="submit"
         >
           {pending ? t('sending') : t('submit')}
