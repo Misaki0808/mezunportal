@@ -1,0 +1,45 @@
+# Yalnız yerel imaj kanıtı: mevcut postgres/Mailpit ağına katılır; ayrı DB ve dosya hacmi kullanır.
+name: mezunportal-p1-18
+services:
+  web:
+    profiles: [image]
+    build:
+      context: .
+      args:
+        GIT_SHA: ${GIT_SHA:?GIT_SHA gerekli}
+    image: mezunportal-p1-18:local
+    environment: &local-env
+      APP_ENV: prod
+      APP_URL: http://localhost:3257
+      DATABASE_URL: postgresql://mezun:mezun@postgres:5432/mezun_w2_p1_18_image
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?geçici yerel sır gerekli}
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      SMTP_SECURE: 'false'
+      EMAIL_FROM: no-reply@example.invalid
+      STORAGE_LOCAL_PATH: /app/.data/files
+    ports:
+      - '127.0.0.1:3257:3000'
+    volumes:
+      - image-files:/app/.data/files
+    networks: [local]
+  worker:
+    stop_grace_period: 90s
+    profiles: [image]
+    image: mezunportal-p1-18:local
+    command: [worker]
+    environment: *local-env
+    volumes:
+      - image-files:/app/.data/files
+    networks: [local]
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+volumes:
+  image-files:
+networks:
+  local:
+    external: true
+    name: mezunportal_default

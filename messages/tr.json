@@ -1421,6 +1421,7 @@
       "auditLog": "İşlem kaydı",
       "documents": "Mezun belgeleri",
       "experiences": "Deneyim moderasyonu",
+      "invitations": "Toplu davet",
       "usageMetrics": "Kullanım"
     },
     "intro": {
@@ -1433,6 +1434,7 @@
       "auditLog": "Yönetici işlemlerini incele.",
       "documents": "Mezun belgelerini incele.",
       "experiences": "Deneyim başvurularını değerlendir.",
+      "invitations": "E-posta listesiyle davet gönder.",
       "usageMetrics": "Toplu kullanım raporunu incele."
     },
     "users": {
@@ -1542,6 +1544,7 @@
         "ADMIN_GRANT": "Yönetici atama",
         "ADMIN_REVOKE": "Yönetici yetkisi kaldırma",
         "DATA_EXPORT": "Veri dışa aktarma",
+        "BULK_INVITATION": "Toplu davet",
         "DICTIONARY_CHANGE": "Sözlük değişikliği",
         "UNMATCHED_RESOLVE": "Eşleşmeyen değer kararı"
       },
@@ -1558,7 +1561,8 @@
         "DICTIONARY_ENTRY": "Sözlük kaydı",
         "UNMATCHED_VALUE": "Eşleşmeyen değer",
         "EMPLOYMENT_REPORT": "İstihdam raporu",
-        "USAGE_METRICS": "Kullanım metrikleri"
+        "USAGE_METRICS": "Kullanım metrikleri",
+        "INVITATION_BATCH": "Davet grubu"
       }
     },
     "employment": {
@@ -1817,6 +1821,18 @@
     "mentorRequests": "Sana gelen talepler",
     "requestBadge": "Bekleyen randevu talebi",
     "studentReliability": "Öğrencinin güvenilirliği"
+  },
+  "invitations": {
+    "title": "Toplu davet",
+    "description": "Hesabı olmayan kişileri MezunPortal’a davet et.",
+    "label": "E-posta adresleri",
+    "help": "En çok 100 adres gir. Satır, virgül veya noktalı virgül ile ayır; tekrarlar bir kez işlenir.",
+    "file": "CSV veya metin dosyası yükle",
+    "submit": "Davetleri gönder",
+    "sending": "Kuyruğa ekleniyor…",
+    "result": "Gönderilmek üzere kaydedilen: {queued} · mevcut hesap: {skipped}",
+    "emailSubject": "MezunPortal’a davet",
+    "emailBody": "MezunPortal’a davetlisiniz. Başlamak için giriş sayfasını ziyaret edin: {url}"
   },
   "cvReview": {
     "email": {

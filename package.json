@@ -39,9 +39,11 @@
     "nodemailer": "^10.3.1",
     "pg": "^8.23.1",
     "pg-boss": "12.38.1",
+    "prisma": "7.10.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "server-only": "^0.0.1",
+    "tsx": "^4.23.15",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -60,9 +62,7 @@
     "eslint-config-next": "^16.4.5",
     "jsdom": "^31.0.0",
     "prettier": "^3.9.10",
-    "prisma": "7.10.1",
     "tailwindcss": "^4.3.5",
-    "tsx": "^4.23.15",
     "typescript": "6.0.3",
     "vitest": "^5.1.0"
   }
