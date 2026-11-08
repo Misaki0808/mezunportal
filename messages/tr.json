@@ -429,6 +429,46 @@
     "documentRejected": {
       "subject": "Mezun belgen onaylanamadı",
       "text": "Merhaba,\n\nMezun belgen onaylanamadı. Gerekçe: {reason}\n\nYüklediğin belge dosyası silindi. Yeni bir belge yükleyerek yeniden başvurabilirsin."
+    },
+    "appointment": {
+      "requested": {
+        "subject": "Yeni randevu talebi",
+        "text": "Merhaba,\n\n{name} seninle {when} için {mode} görüşme talep etti. Talep {deadline} tarihine kadar yanıt bekliyor; süre dolarsa kendiliğinden kapanır.\n\nMezunPortal'da Randevularım bölümünden onaylayabilir ya da reddedebilirsin."
+      },
+      "confirmed": {
+        "subject": "Randevun onaylandı",
+        "text": "Merhaba,\n\n{name} ile {when} için {mode} görüşmen onaylandı.{details}{reminder}"
+      },
+      "declined": {
+        "subject": "Randevu talebin kabul edilmedi",
+        "text": "Merhaba,\n\n{name}, {when} için talebini kabul edemedi.{reason}\n\nBaşka bir saat ya da başka bir mentor seçebilirsin."
+      },
+      "cancelled": {
+        "subject": "Randevu iptal edildi",
+        "text": "Merhaba,\n\n{name} ile {when} için görüşme iptal edildi.{reason}"
+      },
+      "expired": {
+        "subject": "Randevu talebi yanıtsız kapandı",
+        "text": "Merhaba,\n\n{name} ile {when} için randevu talebi süresi içinde yanıtlanmadığından kapandı. Başka bir saat seçerek yeniden talep edebilirsin."
+      },
+      "reminder": {
+        "subject": "Yarınki görüşmeni unutma",
+        "text": "Merhaba,\n\n{name} ile {when} için {mode} görüşmen yaklaşıyor.{details}"
+      },
+      "linkNeeded": {
+        "subject": "Görüşme bağlantısını ekle",
+        "text": "Merhaba,\n\n{name} ile {when} için online görüşmenin bağlantısı otomatik oluşturulamadı. MezunPortal'da Randevularım bölümünden kendi görüşme bağlantını ekle; öğrenciye iletilecek."
+      },
+      "linkAdded": {
+        "subject": "Görüşme bağlantın hazır",
+        "text": "Merhaba,\n\n{name} ile {when} için online görüşmenin bağlantısı eklendi:\n{url}"
+      },
+      "modeOnline": "online",
+      "modeInPerson": "yüz yüze",
+      "detailsLink": "\n\nBağlantı: {url}",
+      "detailsPlace": "\n\nYer: {place}",
+      "reasonLine": "\nNot: {reason}",
+      "reminderLine": "\n\nGörüşme 24 saatten kısa süre içinde başlıyor; ayrıca hatırlatma gönderilmeyecek."
     }
   },
   "authScreens": {
