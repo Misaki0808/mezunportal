@@ -1,4 +1,110 @@
 {
+  "landing": {
+    "metaTitle": "MezunPortal | Birlikte yolunu bul",
+    "metaDescription": "İstanbul Üniversitesi öğrencileri ve mezunları için deneyimler, mentorluk ve kariyer yolculuğu bir arada.",
+    "skip": "İçeriğe geç",
+    "brand": "MezunPortal ana sayfa",
+    "brandWord": "mezunportal",
+    "navigation": "Tanıtım gezinmesi",
+    "navHow": "Nasıl çalışır?",
+    "navYbs": "YBS topluluğu",
+    "navLogin": "Giriş yap",
+    "eyebrow": "İstanbul Üniversitesi topluluğu",
+    "heroStart": "Yolun daha yeni",
+    "heroEnd": "başlıyor.",
+    "heroDescription": "Senden önce bu yollardan geçenlerle tanış. Deneyimleri keşfet, sorularını sor, kendi yolunu çiz.",
+    "rotatingLead": "Birlikte daha çok",
+    "rotatingAccessible": "staj, mentor, deneyim ve kariyer",
+    "rotating": {
+      "internship": "staj",
+      "mentor": "mentor",
+      "experience": "deneyim",
+      "career": "kariyer"
+    },
+    "primary": "İÜ e-postanla başla",
+    "secondary": "Nasıl çalışır?",
+    "trust": "Doğrulanmış üniversite topluluğu",
+    "previewBrand": "mezunportal.",
+    "previewKicker": "SENİN İÇİN",
+    "previewHeading": "Birlikte keşfet.",
+    "previewExperienceTag": "Staj deneyimi",
+    "previewExperience": "İlk stajına hazırlanırken",
+    "previewExperienceMeta": "Örnek deneyim · YBS",
+    "previewMentor": "Bir mentorla tanış",
+    "previewMentorMeta": "Deneyimlerinden öğren",
+    "previewDepartment": "Yönetim Bilişim Sistemleri",
+    "previewAvailable": "Görüşmeye açık",
+    "previewTopic": "Kariyer",
+    "previewMeeting": "Bir görüşme planla",
+    "previewMeetingMeta": "Sana uygun bir zaman seç",
+    "previewOpportunity": "Yeni bir bakış açısı",
+    "previewOpportunityMeta": "Topluluğunla keşfet",
+    "heroBottom": "Aynı üniversite, farklı yollar.",
+    "scroll": "Keşfet",
+    "statsLabel": "Topluluğun sayıları",
+    "statsIntro": "Birlikte büyüyen bir topluluk.",
+    "newCommunity": "Yeni başladık",
+    "statsUnavailable": "Bilgi yok",
+    "stats": {
+      "experiences": "Paylaşılan deneyim",
+      "mentors": "Aktif mentor",
+      "meetings": "Gerçekleşen görüşme"
+    },
+    "howKicker": "NASIL ÇALIŞIR?",
+    "howTitle": "Kendi yolunu çizmek",
+    "howAccent": "üç adım kadar yakın.",
+    "howDescription": "İster ilk stajını arıyor ol, ister deneyimlerini paylaşmak iste. Burada bir sonraki adımı birlikte düşünürüz.",
+    "steps": {
+      "verify": {
+        "title": "Topluluğa katıl",
+        "description": "Üniversite üyeliğini doğrula, sana ait bir alan oluştur."
+      },
+      "explore": {
+        "title": "Deneyimleri keşfet",
+        "description": "Staj, eğitim ve kariyer hikâyelerinde sana yol gösterecek ayrıntıları bul."
+      },
+      "connect": {
+        "title": "Birlikte ilerle",
+        "description": "Bir mentorla tanış, görüşme iste ve aklındaki soruları paylaş."
+      }
+    },
+    "ybsKicker": "ÖNCE YAKININDAN",
+    "ybsTitle": "YBS ile başlıyor,",
+    "ybsAccent": "birlikte büyüyoruz.",
+    "ybsDescription": "MezunPortal pilot yolculuğuna İstanbul Üniversitesi Yönetim Bilişim Sistemleri topluluğuyla başlıyor. Tanıdık bir yerden, farklı deneyimlere açılan bir alan.",
+    "ybsAction": "Topluluğa katıl",
+    "ybsArt": "İstanbul Üniversitesi · YBS",
+    "faqKicker": "AKLINDA KALMASIN",
+    "faqTitle": "Merak ettiklerine",
+    "faqAccent": "kısa cevaplar.",
+    "faqDescription": "Başlamadan önce bilmek isteyebileceğin birkaç şey.",
+    "questions": {
+      "who": {
+        "question": "MezunPortal kimler için?",
+        "answer": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için. Pilot çalışma YBS topluluğuyla başlıyor."
+      },
+      "cost": {
+        "question": "Başlamak için neye ihtiyacım var?",
+        "answer": "Üniversite üyeliğini doğrulayarak profilini oluşturabilir ve topluluğu keşfetmeye başlayabilirsin."
+      },
+      "privacy": {
+        "question": "Bilgilerimi kimler görebilir?",
+        "answer": "Profilindeki alanların görünürlüğünü sen belirlersin. İletişim bilgilerin ancak onayladığın taleplerde paylaşılır."
+      },
+      "mentor": {
+        "question": "Bir mentordan nasıl destek alırım?",
+        "answer": "Doğrulamanı tamamladıktan sonra mentorları keşfedebilir, uygun bir zaman için görüşme talebi gönderebilirsin."
+      }
+    },
+    "closingKicker": "BİR SONRAKİ ADIM",
+    "closingTitle": "Yalnız yürümek",
+    "closingAccent": "zorunda değilsin.",
+    "closingDescription": "Merak ettiklerin, paylaşacakların ve keşfedeceklerin için topluluğun burada.",
+    "footerDescription": "Aynı üniversiteden, birbirinden farklı yollara.",
+    "footerPrivacy": "Aydınlatma metni",
+    "footerTerms": "Kullanım şartları",
+    "footerNote": "İstanbul Üniversitesi topluluğu için tasarlandı."
+  },
   "metadata": {
     "title": "MezunPortal",
     "description": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için doğrulanmış, staj odaklı kariyer platformu."
@@ -1494,7 +1600,8 @@
       "experiences": "Deneyim moderasyonu",
       "invitations": "Toplu davet",
       "usageMetrics": "Kullanım",
-      "points": "Puan yönetimi"
+      "points": "Puan yönetimi",
+      "faq": "SSS moderasyonu"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1508,7 +1615,8 @@
       "experiences": "Deneyim başvurularını değerlendir.",
       "invitations": "E-posta listesiyle davet gönder.",
       "usageMetrics": "Toplu kullanım raporunu incele.",
-      "points": "Puan kurallarını, kayıtları ve şüpheli işaretleri yönet."
+      "points": "Puan kurallarını, kayıtları ve şüpheli işaretleri yönet.",
+      "faq": "SSS taleplerini incele, yayımla, reddet ya da mentorluğa yönlendir."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -2256,6 +2364,9 @@
         "DISMISS": "Kaldır, puan kalsın"
       },
       "decided": "Karar kaydedildi. Geri alınan kayıt sayısı: {count}.",
+      "userId": "Kullanıcı kimliği",
+      "userIdHint": "Kullanıcı yönetimi ekranındaki kimlik.",
+      "userIdInvalid": "Kullanıcı kimliği gerekli.",
       "entryStatus": "Durum",
       "allStatuses": "Tümü",
       "list": "Listele",
@@ -2287,5 +2398,125 @@
       "userPickFirst": "Önce bir kullanıcı seç."
     },
     "historyLink": "Puan geçmişine git"
+  },
+  "faq": {
+    "eyebrow": "SSS",
+    "title": "Sık sorulan sorular",
+    "description": "Mentorların cevapladığı, moderatörün yayımladığı sorular. Yayında kimsenin adı görünmez.",
+    "searchLabel": "SSS'te ara",
+    "search": "Ara",
+    "askLink": "Sorum yok mu? SSS talebi gönder",
+    "resultCount": "{count} soru",
+    "resultCountFor": "“{q}” için {count} soru",
+    "empty": "Soru bulunamadı.",
+    "emptySearch": "Başka sözcüklerle aramayı dene.",
+    "emptyAll": "Henüz yayınlanmış soru yok.",
+    "backToList": "Tüm sorulara dön",
+    "entry": {
+      "browse": "Sık sorulan sorular",
+      "browseDescription": "Yayınlanan soruları oku ve ara.",
+      "mine": "SSS taleplerim",
+      "mineDescription": "Soru gönder ve taleplerinin durumunu izle.",
+      "mentor": "Cevaplanacak sorular",
+      "mentorDescription": "Mentor olarak sana düşen SSS taleplerini cevapla.",
+      "moderation": "SSS moderasyonu",
+      "moderationDescription": "SSS taleplerini incele ve yayımla."
+    },
+    "request": {
+      "title": "SSS talebi gönder",
+      "description": "Aklındaki soruyu yaz. Mentorlar cevaplar, moderatör uygun bulursa kimlik belirtmeden yayımlar.",
+      "label": "Sorun",
+      "hint": "{min}–{max} karakter. Ad, e-posta ya da telefon yazma.",
+      "invalid": "Soru {min}–{max} karakter olmalı.",
+      "counter": "{count} / {max}",
+      "similarTitle": "Benzer sorular zaten var",
+      "similarDescription": "Göndermeden önce bunlara göz at; cevabın orada olabilir.",
+      "acknowledge": "Benzer soruları gördüm, yine de göndermek istiyorum.",
+      "acknowledgeFirst": "Önce benzer soruları gördüğünü onayla.",
+      "dailyLimit": "Günde en fazla 3 talep gönderebilirsin. Günlük sınır yenilenince tekrar dene.",
+      "submit": "Talebi gönder",
+      "sent": "Talebin alındı. Durumunu aşağıdan izleyebilirsin."
+    },
+    "mine": {
+      "title": "Taleplerim",
+      "empty": "Henüz talebin yok.",
+      "emptyDescription": "Gönderdiğin sorular burada görünür.",
+      "more": "Daha fazla göster",
+      "status": {
+        "OPEN": "Bekliyor",
+        "PUBLISHED": "Yayında",
+        "REJECTED": "Reddedildi",
+        "REDIRECTED": "Mentorluğa yönlendirildi"
+      },
+      "openHint": "Mentorların cevabı ve moderatör kararı bekleniyor.",
+      "rejectedReason": "Gerekçe: {reason}",
+      "rejectedNoReason": "Gerekçe yazılmamış.",
+      "redirectedText": "Sorun kişisel görüldü; bir mentorla doğrudan görüşmeni öneriyoruz.",
+      "toDirectory": "Mentor dizinine git",
+      "viewPublished": "Yayınlanan soruyu gör",
+      "moderatorNote": "Moderatör notu: {note}"
+    },
+    "mentor": {
+      "eyebrow": "SSS",
+      "title": "Cevaplanacak sorular",
+      "description": "Soran kişi görünmez. Cevabın yayımlanırsa adın da görünmez.",
+      "onlyUnanswered": "Yalnız cevapsızlar",
+      "answered": "Cevapladın",
+      "unanswered": "Cevap bekliyor",
+      "answerLabel": "Cevabın",
+      "answerHint": "{min}–{max} karakter. Ad, e-posta ya da telefon yazma.",
+      "answerInvalid": "Cevap {min}–{max} karakter olmalı.",
+      "send": "Cevabı gönder",
+      "update": "Cevabı güncelle",
+      "saved": "Cevabın kaydedildi.",
+      "empty": "Cevaplanacak soru yok.",
+      "emptyDescription": "Yeni sorular geldiğinde burada görünür.",
+      "more": "Daha fazla göster"
+    },
+    "moderation": {
+      "title": "SSS moderasyonu",
+      "description": "Cevapları karşılaştır, en iyisini seç ve yayımlamadan önce metni düzenle.",
+      "question": "Soru",
+      "answers": "Mentor cevapları",
+      "answerN": "Cevap {n}",
+      "noAnswers": "Henüz cevap yok.",
+      "publishedAnswer": "Yayınlanacak cevap",
+      "identityWarning": "Yayında hiçbir ad, e-posta ya da telefon kalmamalı. Kimliği belli eden bilgileri kaldır.",
+      "invalid": "Soru ve cevap izin verilen uzunlukta olmalı.",
+      "needsAnswer": "Yayımlamak için en az bir mentor cevabı gerekir.",
+      "publish": "Yayımla",
+      "redirect": "Mentorluğa yönlendir",
+      "reject": "Reddet",
+      "cancel": "Vazgeç",
+      "noteHint": "Öğrenciye gösterilir. Kişisel veri yazma.",
+      "noteInvalid": "En az 3 karakter yaz.",
+      "dialog": {
+        "PUBLISH": {
+          "title": "SSS'i yayımla",
+          "description": "Bu metin tüm doğrulanmış üyelere kimliksiz görünür. Yayımlanınca puanlar yazılır ve geri alınamaz.",
+          "confirm": "Yayımla"
+        },
+        "REJECT": {
+          "title": "Talebi reddet",
+          "description": "Gerekçe soran öğrenciye gösterilir.",
+          "noteLabel": "Gerekçe",
+          "confirm": "Reddet"
+        },
+        "REDIRECT": {
+          "title": "Mentorluğa yönlendir",
+          "description": "Öğrenci mentor dizinine yönlendirilir; notun ona gösterilir.",
+          "noteLabel": "Öğrenciye not",
+          "confirm": "Yönlendir"
+        }
+      },
+      "done": {
+        "PUBLISH": "SSS yayımlandı.",
+        "REJECT": "Talep reddedildi.",
+        "REDIRECT": "Öğrenci mentorluğa yönlendirildi."
+      },
+      "empty": "Bekleyen talep yok.",
+      "emptyDescription": "Yeni talepler burada görünür.",
+      "more": "Daha fazla göster"
+    }
   }
 }
