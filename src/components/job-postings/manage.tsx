@@ -16,7 +16,7 @@ import type {
   ReviewJobPostingOutput,
 } from '@/contracts/job-postings';
 import type { ActionResult } from '@/contracts/result';
-import { Button, EmptyState, Field, Modal, Textarea, buttonClasses } from '@/components/ui';
+import { Badge, Button, EmptyState, Field, Modal, Textarea, buttonClasses } from '@/components/ui';
 
 export function MyPostings({
   initial,
@@ -102,9 +102,19 @@ export function MyPostings({
                     {item.title ?? t('draftEmpty')}
                   </h2>
                 </div>
-                <span className="rounded-full bg-primary-soft px-3 py-1 text-sm font-semibold text-on-primary-soft">
+                <Badge
+                  tone={
+                    item.status === 'PUBLISHED'
+                      ? 'success'
+                      : item.status === 'REJECTED'
+                        ? 'danger'
+                        : item.status === 'PENDING'
+                          ? 'info'
+                          : 'neutral'
+                  }
+                >
                   {t(`status.${item.status}`)}
-                </span>
+                </Badge>
               </div>
               {item.publishedAt && item.matchReach && (
                 <p className="text-sm text-fg-muted">

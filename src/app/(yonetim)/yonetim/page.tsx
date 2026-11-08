@@ -64,7 +64,7 @@ export default async function AdminOverviewPage() {
     documents: <FileTextIcon width={22} height={22} />,
     experiences: <FileTextIcon width={22} height={22} />,
     faq: <ClipboardCheckIcon width={22} height={22} />,
-    jobPostings: <FileTextIcon width={22} height={22} />,
+    jobPostings: <ClipboardCheckIcon width={22} height={22} />,
     unmatchedValues: <ClipboardCheckIcon width={22} height={22} />,
     usageMetrics: <BadgeCheckIcon width={22} height={22} />,
     employmentReport: <BadgeCheckIcon width={22} height={22} />,

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import messages from '../../../messages/tr.json';
 import { useTranslations } from 'next-intl';
 import { parseApplyUrl, type JobPostingDetail } from '@/contracts/job-postings';
-import { Card, buttonClasses } from '@/components/ui';
+import { Badge, Card, buttonClasses } from '@/components/ui';
 
 export function PostingDetail({
   posting,
@@ -37,24 +37,16 @@ export function PostingDetail({
           <p className="break-words font-semibold text-accent-strong">{posting.organizationName}</p>
           <h1 className="mt-2 break-words text-3xl font-bold sm:text-4xl">{posting.title}</h1>
           <div className="mt-5 flex flex-wrap gap-2 text-sm">
-            <span className="rounded-full bg-primary-soft px-3 py-2 text-on-primary-soft">
-              {t(posting.kind)}
-            </span>
-            <span className="max-w-full break-words rounded-full bg-surface-strong px-3 py-2 [overflow-wrap:anywhere]">
+            <Badge tone="category">{t(posting.kind)}</Badge>
+            <Badge className="max-w-full break-words [overflow-wrap:anywhere]">
               {posting.location ?? (posting.isRemote ? t('remoteLabel') : t('unknownLocation'))}
-            </span>
+            </Badge>
             {posting.location && posting.isRemote && (
-              <span className="rounded-full bg-surface-strong px-3 py-1.5">{t('remoteLabel')}</span>
+              <Badge tone="category">{t('remoteLabel')}</Badge>
             )}
-            <span
-              className={
-                posting.daysLeft <= 7
-                  ? 'rounded-full bg-accent-soft px-3 py-2 font-semibold text-on-accent-soft'
-                  : 'max-w-full break-words rounded-full bg-surface-strong px-3 py-2 [overflow-wrap:anywhere]'
-              }
-            >
+            <Badge tone={posting.daysLeft <= 7 ? 'accent' : 'info'}>
               {posting.daysLeft === 0 ? t('today') : t('daysLeft', { count: posting.daysLeft })}
-            </span>
+            </Badge>
           </div>
         </header>
         {!!posting.matchTags?.length && (

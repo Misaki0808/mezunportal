@@ -2699,6 +2699,9 @@
     "reachFew": "3'ten az kişiye ulaştı",
     "reachCount": "{count} kişiye ulaştı",
     "whyMatch": "Neden sana uygun?",
-    "mineDescription": "Paylaştığın ilanların durumunu takip et."
+    "mineDescription": "Paylaştığın ilanların durumunu takip et.",
+    "compactTitle": "Staj ve iş ilanları",
+    "searchPlaceholder": "İlan ara",
+    "applyFilters": "Süzgeçleri uygula"
   }
 }
