@@ -38,7 +38,9 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 - P1-11 yönetim paneli sözleşmesi: panel sorguları, kullanıcı/askı/üyelik düzeltme/yönetici atama, sözlük ve
   eşleşmeyen değer, işlem kaydı görüntüleme ve toplu mezun istihdam raporu imzaları, `requireAnyAdmin` koruması ve
   hata kodları hazır. Askıya alma/kaldırma (oturumlar aynı işlemde düşer), üyelik düzeltme ve yönetici atama/kaldırma
-  servisi tamam (kapsam, kendi üzerinde işlem yok, işlem kaydı aynı işlemde); panel sorguları ve kalanı W2'de.
+  servisi tamam (kapsam, kendi üzerinde işlem yok, işlem kaydı aynı işlemde). Panel sorguları da hazır: genel bakış,
+  maskeli kullanıcı listesi/ayrıntı, şikâyet kuyruğu, yönetici atamaları, işlem kaydı görüntüleme, sözlük +
+  eşleşmeyen değer çözümü, mezun istihdam raporu ve Excel (`/api/yonetim/rapor/istihdam`). Kalan: panel ekranı (W2).
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -127,9 +129,9 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   Neden borç: iki beceri modeli kalırsa arama ve profil ekranı çift kaynakla çalışır.
   Kapanış ölçütü: P1-04 birleşince PM kararı; `ParsedCv.schemaVersion` ile genişletme ya da `Tag` birleştirmesi.
 - [ ] **TD-011** · P2 · Sözlük içeriği ve yönetici çözümü yok
-  Ne: `Company`/`Title`/`Skill`/`Sector` boş; `UnmatchedValue` kuyruğu yazılıyor ama yönetici ekranı ve çözüm
-  (`resolvedToId`, takma ad ekleme) yok.
-  Neden borç: eşleme olmadan her değer ham kalır; kuyruk büyür.
+  Ne: `Company`/`Title`/`Skill`/`Sector` boş. Yönetici çözüm servisi var (bağla / yeni kayıt / at, P1-11);
+  yönetici ekranı (W2) ve pilot başlangıç seti yok.
+  Neden borç: eşleme olmadan her değer ham kalır; kuyruk büyür, istihdam raporu hep `Bilinmeyen` gösterir.
   Kapanış ölçütü: pilot sözlük seed'i + yönetici çözümleme ekranı.
 
 
