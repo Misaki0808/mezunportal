@@ -21,15 +21,17 @@ export const dynamic = 'force-dynamic';
 export default async function AccountPage() {
   const actor = await requireUser().catch(() => null);
   if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
-  const [state, showAdmin, t, verification, entry, notifications, feedback] = await Promise.all([
-    getVerificationState().catch(() => null),
-    hasAdminAccess(),
-    getTranslations('authScreens.account'),
-    getTranslations('authScreens.verification'),
-    getTranslations('experiences.entry'),
-    getTranslations('notifications'),
-    getTranslations('feedback'),
-  ]);
+  const [state, showAdmin, t, verification, entry, notifications, feedback, cvReview] =
+    await Promise.all([
+      getVerificationState().catch(() => null),
+      hasAdminAccess(),
+      getTranslations('authScreens.account'),
+      getTranslations('authScreens.verification'),
+      getTranslations('experiences.entry'),
+      getTranslations('notifications'),
+      getTranslations('feedback'),
+      getTranslations('cvReview'),
+    ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
   const statusLabel = {
@@ -80,6 +82,16 @@ export default async function AccountPage() {
             title: feedback('reliability'),
             description: feedback('reliabilityDescription'),
             icon: BadgeCheckIcon,
+          },
+        ]
+      : []),
+    ...(state.data.status === 'VERIFIED'
+      ? [
+          {
+            href: '/hesap/cv-inceleme',
+            title: cvReview('title'),
+            description: cvReview('accountDescription'),
+            icon: FileTextIcon,
           },
         ]
       : []),

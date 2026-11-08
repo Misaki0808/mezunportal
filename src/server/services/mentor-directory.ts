@@ -23,6 +23,7 @@ import type { Actor } from '../permissions/actor';
 import { errorForDenyReason } from '../permissions/guards';
 import { evaluateAccess } from '../rules/authorization';
 import { normalizeName } from '../rules/dictionary';
+import { monthRange } from '../rules/appointmentSlots';
 import { computeMentorAvailability } from '../rules/mentorAvailability';
 import { rankSimilar, type PathItem, type PathSignals } from '../rules/similarity';
 import { approvedCountsThisMonth, type ApprovedCounts } from './mentor-load';
@@ -522,6 +523,10 @@ export async function getMentorEntryPoints(
       contact: open,
     });
   }
+  const { from, to } = monthRange(now);
+  const reviewCount = await deps.db.cvReviewRequest.count({
+    where: { mentorId: targetId, createdAt: { gte: from, lt: to } },
+  });
   const used = (await countsOf(deps)(deps.db, [targetId], now)).get(targetId) ?? 0;
   const availability = computeMentorAvailability({
     pausedUntil: mentor.pausedUntil,
@@ -532,9 +537,11 @@ export async function getMentorEntryPoints(
   return mentorEntryPointsSchema.parse({
     appointment: availability.available ? open : blocked(availability.reason!),
     cvReview:
-      mentor.cvReviewEnabled && mentor.cvReviewMonthlyLimit > 0
-        ? open
-        : blocked('CV_REVIEW_DISABLED'),
+      !mentor.cvReviewEnabled || mentor.cvReviewMonthlyLimit <= 0
+        ? blocked('CV_REVIEW_DISABLED')
+        : reviewCount >= mentor.cvReviewMonthlyLimit
+          ? blocked('CV_REVIEW_MONTHLY_LIMIT')
+          : open,
     contact: open,
   });
 }

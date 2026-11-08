@@ -666,3 +666,7 @@ PM kararı: son 12 ayda `COMPLETED` ve `NO_SHOW` sayılır; iptaller ve geri bil
 görüşme Yeni, en az üçte katılım oranı %80 veya üzeri Güvenilir, diğerleri Dikkat'tir; kullanıcıya sayı ile nedeni
 gösterilir. Gerçekleşme için iki tarafın olumlu yanıtı gerekir; mentor öğrencinin katılmadığını bildirirse `NO_SHOW`
 olur. Her taraf yalnız bir kez yanıtlar ve diğer tarafın özel notu veri dökümüne girmez.
+
+### CV incelemesi · talep sınırı ve dosya ömrü
+
+Mentorun aylık sınırı İstanbul takvim ayındaki oluşturulmuş talepleri sayar; kapanmış talepler de o ayın kapasitesini tüketir. Mentor ve öğrenci satırları kilitlenerek eşzamanlı talepler sınırı aşamaz. Talep yalnız son uygulanmış CV dosyasına bağlanır; açık talepler bu dosyayı saklama süpürgesinden korur. Yanıt veya 14 günlük süre sonunda erişim hemen kesilir; başka açık talebi olmayan eski dosya temizlenir, kişinin son uygulanmış CV’si korunur. Faydalı işareti tamamlanmış talep üzerinde bir kez kaydedilir; puan P1-16 tarafından işlenir.

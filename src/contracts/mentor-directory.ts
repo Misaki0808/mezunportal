@@ -244,6 +244,7 @@ export const ENTRY_POINT_BLOCK_REASONS = [
   'PAUSED',
   'CAPACITY_FULL',
   'CV_REVIEW_DISABLED',
+  'CV_REVIEW_MONTHLY_LIMIT',
 ] as const;
 export type EntryPointBlockReason = (typeof ENTRY_POINT_BLOCK_REASONS)[number];
 

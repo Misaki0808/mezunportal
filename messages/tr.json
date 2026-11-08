@@ -59,6 +59,12 @@
       "PROFILE_TAG_INVALID": "Seçtiğin etiketlerden biri geçerli değil. Seçimini yenile.",
       "MENTOR_NOT_ELIGIBLE": "Mentorluk için koşullar henüz tamamlanmadı.",
       "FEEDBACK_NOT_READY": "Form, görüşme bittikten bir saat sonra açılır.",
+      "CV_REVIEW_UNAVAILABLE": "Mentor şu anda CV incelemesi almıyor.",
+      "CV_REVIEW_MONTHLY_LIMIT": "Mentorun bu ayki CV inceleme sınırı doldu.",
+      "CV_REVIEW_NO_CV": "Önce bir CV yükleyip profiline uygula.",
+      "CV_REVIEW_OPEN_EXISTS": "Bu mentora açık bir talebin var.",
+      "CV_REVIEW_CLOSED": "Bu CV inceleme talebi artık açık değil.",
+      "CV_REVIEW_ALREADY_HELPFUL": "Bu yorumu zaten faydalı olarak işaretledin.",
       "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin.",
       "APPOINTMENT_SLOT_INVALID": "Bu saat artık seçilemiyor. Müsait saatleri yenile.",
       "APPOINTMENT_SLOT_TAKEN": "Bu saat az önce başkası tarafından alındı. Başka bir saat seç.",
@@ -1201,5 +1207,64 @@
     "mentorRequests": "Sana gelen talepler",
     "requestBadge": "Bekleyen randevu talebi",
     "studentReliability": "Öğrencinin güvenilirliği"
+  },
+  "cvReview": {
+    "email": {
+      "requested": {
+        "subject": "Yeni CV inceleme talebi",
+        "text": "Yeni bir CV inceleme talebin var. Görüntüle: {url}"
+      },
+      "answered": {
+        "subject": "CV incelemen yanıtlandı",
+        "text": "CV inceleme talebine yanıt verildi. Görüntüle: {url}"
+      }
+    },
+    "title": "CV incelemeleri",
+    "accountDescription": "Taleplerini ve mentor yanıtlarını takip et.",
+    "back": "Hesabıma dön",
+    "requestTitle": "CV incelemesi iste",
+    "requestDescription": "Son uyguladığın CV bu mentora açık talep süresince gösterilir.",
+    "note": "Mentora notun",
+    "noteHint": "Neyi geliştirmek istediğini kısaca anlat.",
+    "send": "Talep gönder",
+    "sending": "Gönderiliyor…",
+    "sent": "Talebin gönderildi.",
+    "toInbox": "Taleplerime git",
+    "viewCv": "CV’yi aç",
+    "comment": "Yazılı yorumun",
+    "answer": "Yorumu gönder",
+    "answered": "Yorum gönderildi.",
+    "helpful": "Faydalı buldum",
+    "marked": "Faydalı olarak işaretlendi.",
+    "studentHeading": "Gönderdiğim talepler",
+    "mentorHeading": "Gelen talepler",
+    "emptyStudent": "Henüz bir talebin yok. Mentorları keşfederek başlayabilirsin.",
+    "emptyMentor": "Henüz gelen bir CV inceleme talebin yok.",
+    "findMentor": "Mentorları keşfet",
+    "settings": "CV inceleme tercihlerin",
+    "enabled": "CV inceleme talebi al",
+    "limit": "Aylık talep sınırı",
+    "save": "Tercihleri kaydet",
+    "saving": "Kaydediliyor…",
+    "saved": "Tercihlerin kaydedildi.",
+    "status": {
+      "OPEN": "Yanıt bekliyor",
+      "COMPLETED": "Yanıtlandı",
+      "EXPIRED": "Süresi doldu"
+    },
+    "unavailable": {
+      "NOT_MENTOR": "Bu mentora şu anda talep gönderilemiyor.",
+      "SELF": "Kendine talep gönderemezsin.",
+      "DISABLED": "Mentor CV inceleme talebi almıyor.",
+      "MONTHLY_LIMIT": "Mentorun bu ayki CV inceleme sınırı doldu.",
+      "NO_CV": "Önce bir CV yükleyip profiline uygula.",
+      "OPEN_REQUEST_EXISTS": "Bu mentora açık bir talebin var."
+    },
+    "required": "Lütfen bu alanı doldur.",
+    "toCv": "CV yükle",
+    "loading": "Yükleniyor…",
+    "more": "Daha fazla göster",
+    "requestLink": "CV incelemesi iste",
+    "backProfile": "Mentor profiline dön"
   }
 }

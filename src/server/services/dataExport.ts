@@ -136,6 +136,22 @@ export async function buildDataExport(
   const iso = (date: Date | null) => (date ? date.toISOString() : null);
   const cv = await loadCvExport(db, userId, iso);
   const appointments = await loadAppointmentExport(db, userId);
+  const cvReviews = await db.cvReviewRequest.findMany({
+    where: { OR: [{ studentId: userId }, { mentorId: userId }] },
+    orderBy: { id: 'asc' },
+    select: {
+      id: true,
+      studentId: true,
+      mentorId: true,
+      status: true,
+      note: true,
+      comment: true,
+      createdAt: true,
+      expiresAt: true,
+      answeredAt: true,
+      helpfulAt: true,
+    },
+  });
   const levels = (await loadVisibilityLevels(db, [userId])).get(userId) ?? new Map();
 
   return {
@@ -186,6 +202,18 @@ export async function buildDataExport(
     },
     cv,
     appointments,
+    cvReviewRequests: cvReviews.map((row) => ({
+      id: row.id,
+      role: row.studentId === userId ? ('STUDENT' as const) : ('MENTOR' as const),
+      counterpartId: row.studentId === userId ? row.mentorId : row.studentId,
+      status: row.status,
+      note: row.note,
+      comment: row.comment,
+      createdAt: row.createdAt.toISOString(),
+      expiresAt: row.expiresAt.toISOString(),
+      answeredAt: iso(row.answeredAt),
+      helpfulAt: iso(row.helpfulAt),
+    })),
   };
 }
 

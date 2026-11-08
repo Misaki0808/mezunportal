@@ -9,7 +9,7 @@ import {
   type SearchSectors,
   type SearchResult,
 } from '@/contracts/search';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import type { Actor } from '../permissions/actor';
 import { errorForDenyReason } from '../permissions/guards';
 import { searchExperienceRows, type SearchRow } from '../repositories/search';
@@ -22,7 +22,10 @@ export type SearchDeps = { db: PrismaClient; now?: () => Date };
  * Arayanın K-07 kapsamı: doğrulanmış ETKİN üyeliklerinin bölümlerinin üniversiteleri. Kapsam sunucuda
  * oturumdaki kullanıcıdan hesaplanır; istemci süzgeci bunu genişletemez.
  */
-export async function viewerUniversityIds(db: PrismaClient, actor: Actor): Promise<string[]> {
+export async function viewerUniversityIds(
+  db: Pick<Prisma.TransactionClient, 'department'>,
+  actor: Actor,
+): Promise<string[]> {
   const departmentIds = actor.facts.memberships
     .filter(
       (membership) => membership.verificationStatus === 'VERIFIED' && membership.endedAt === null,
