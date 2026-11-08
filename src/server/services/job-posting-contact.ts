@@ -12,7 +12,7 @@ import {
   type RequestJobPostingContactOutput,
 } from '@/contracts/job-postings';
 import { CONTACT_MESSAGE_MAX } from '@/contracts/contact-request';
-import { codedNotFound, codedValidation } from '@/lib/errors';
+import { codedNotFound, codedValidation, isCodedError } from '@/lib/errors';
 
 import { requestableFieldsOf, sendContactRequest } from './contactRequest';
 import { resolveContactAuthor, type JobPostingDeps } from './job-postings';
@@ -85,7 +85,20 @@ export async function requestJobPostingContact(
       title: target.title,
       organization: target.organizationName,
     },
-  );
+  ).catch(async (error: unknown) => {
+    // D7 (bağlantı sızıntısı): aynı yazarın başka ilanına BEKLEYEN talep varken `ALREADY_OPEN` dönmek iki ilanın aynı yazara ait
+    // olduğunu ele verirdi. Bekleyen talep varsa aynı başarı yanıtı verilir (yeni kayıt/bildirim yok). Onaylı talepte yazar zaten
+    // bilinir; hata aynen kalır.
+    if (!isCodedError(error) || error.code !== 'CONTACT_REQUEST_ALREADY_OPEN') throw error;
+    const open = await deps.db.contactRequest.findFirst({
+      where: { requesterId: userId, targetId: target.authorId, status: 'PENDING' },
+      select: { id: true, source: true, jobPostingId: true },
+    });
+    // Aynı ilana tekrar talep ya da profil kaynaklı açık talep: kullanıcı zaten biliyor; hata aynen kalır.
+    if (!open || open.source !== 'JOB_POSTING' || open.jobPostingId === parsed.jobPostingId)
+      throw error;
+    return { requestId: open.id };
+  });
   return requestJobPostingContactOutputSchema.parse({
     requestId: sent.requestId,
     status: 'PENDING',

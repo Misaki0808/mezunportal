@@ -1416,3 +1416,58 @@ describe('hesap silme ve veri dökümü', () => {
     });
   });
 });
+
+describe('D7 bağlantı sızıntısı: aynı yazarın iki ilanı ayırt edilemez (kart 136)', () => {
+  const contactPosting = (w: World, author: string, title: string) =>
+    published(w, author, { applyMethod: 'CONTACT_REQUEST', applyUrl: null, title });
+
+  it('bekleyen talep varken aynı yazarın başka ilanına talep, başka yazarınkiyle aynı başarı yanıtıdır; yeni kayıt/bildirim yok', async () => {
+    const w = await world();
+    const a = await contactPosting(w, w.academic, 'İlan A ilanı');
+    const b = await contactPosting(w, w.academic, 'İlan B ilanı');
+    const c = await contactPosting(w, w.alumni, 'İlan C ilanı');
+    const first = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: a,
+      fields: ['EMAIL'],
+    });
+    const sameAuthor = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: b,
+      fields: ['EMAIL'],
+    });
+    const otherAuthor = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: c,
+      fields: ['EMAIL'],
+    });
+    expect(sameAuthor).toEqual({ requestId: first.requestId, status: 'PENDING' });
+    expect(otherAuthor.status).toBe('PENDING');
+    expect(otherAuthor.requestId).not.toBe(first.requestId);
+    expect(
+      await db.contactRequest.count({ where: { requesterId: w.student, targetId: w.academic } }),
+    ).toBe(1);
+    const contacts = (await db.notificationIntent.findMany({ where: { userId: w.academic } }))
+      .map((intent) => intent.payload as { event?: string })
+      .filter((payload) => payload.event === 'contact');
+    expect(contacts).toHaveLength(1);
+    // aynı ilana tekrar talep kullanıcıya zaten bilinir: hata aynen kalır
+    expect(
+      await code(requestJobPostingContact(deps, w.student, { jobPostingId: a, fields: ['EMAIL'] })),
+    ).toBe('CONTACT_REQUEST_ALREADY_OPEN');
+  });
+
+  it('onaylı talep varken yazar zaten bilinir: ALREADY_OPEN aynen kalır', async () => {
+    const w = await world();
+    const a = await contactPosting(w, w.academic, 'İlan A ilanı');
+    const b = await contactPosting(w, w.academic, 'İlan B ilanı');
+    const first = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: a,
+      fields: ['EMAIL'],
+    });
+    await respondToContactRequest(db, w.academic, {
+      requestId: first.requestId,
+      decision: 'APPROVE',
+    });
+    expect(
+      await code(requestJobPostingContact(deps, w.student, { jobPostingId: b, fields: ['EMAIL'] })),
+    ).toBe('CONTACT_REQUEST_ALREADY_OPEN');
+  });
+});
