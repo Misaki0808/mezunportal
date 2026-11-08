@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 import type {
   CvItemStatus,
   CvSection,
+  ParsedProfile,
+  ProfileField,
   ParsedCertification,
   ParsedEducation,
   ParsedLanguage,
@@ -32,6 +34,7 @@ export type ExistingEntry<T> = {
 };
 
 export type CvProposal = {
+  profile: ParsedProfile;
   education: readonly ParsedEducation[];
   positions: readonly PositionEntry[];
   languages: readonly ParsedLanguage[];
@@ -40,6 +43,8 @@ export type CvProposal = {
 };
 
 export type CvSnapshot = {
+  /** Profil satırı (yoksa `null`); `manualFields` kullanıcının elle düzenlediği alanlardır. */
+  profile: { id: string; value: ParsedProfile; manualFields: readonly ProfileField[] } | null;
   education: readonly ExistingEntry<ParsedEducation>[];
   positions: readonly ExistingEntry<PositionEntry>[];
   languages: readonly ExistingEntry<ParsedLanguage>[];
@@ -57,6 +62,7 @@ type DiffBase<S extends CvSection, T> = {
   changedFields: string[];
 };
 export type DiffItem =
+  | DiffBase<'PROFILE', ParsedProfile>
   | DiffBase<'EDUCATION', ParsedEducation>
   | DiffBase<'POSITION', PositionEntry>
   | DiffBase<'LANGUAGE', ParsedLanguage>
@@ -218,8 +224,50 @@ const skillConfig: Section<SkillEntry> = {
   changed: () => [],
 };
 
+const PROFILE_FIELD_NAMES = ['headline', 'summary', 'city'] as const;
+
+/**
+ * Profil üst alanları tek kalemdir. CV'de OLMAYAN alan fark sayılmaz; profilde boş olan alan YENİ, dolu ve farklı
+ * olan DEĞİŞEN, dolu + elle düzenlenmiş + farklı olan ÇAKIŞANdır. Kalem durumu en ağır alanın durumudur.
+ */
+function diffProfile(
+  proposed: ParsedProfile,
+  existing: CvSnapshot['profile'],
+): { item: DiffItem | null; unchanged: number } {
+  const touched = PROFILE_FIELD_NAMES.filter((field) => proposed[field] !== null);
+  if (touched.length === 0) return { item: null, unchanged: 0 };
+  const changedFields: string[] = [];
+  let conflict = false;
+  let changed = false;
+  for (const field of touched) {
+    const current = existing?.value[field] ?? null;
+    if (current !== null && norm(current) === norm(proposed[field])) continue;
+    changedFields.push(field);
+    if (current !== null) {
+      changed = true;
+      if (existing?.manualFields.includes(field)) conflict = true;
+    }
+  }
+  if (changedFields.length === 0) return { item: null, unchanged: 1 };
+  const status: CvItemStatus = conflict ? 'CONFLICT' : changed ? 'CHANGED' : 'NEW';
+  return {
+    item: {
+      section: 'PROFILE',
+      key: itemKey('PROFILE', 'profile'),
+      status,
+      proposed,
+      current: existing ? existing.value : null,
+      existingId: existing ? existing.id : null,
+      changedFields,
+    },
+    unchanged: 0,
+  };
+}
+
 export function computeCvDiff(proposal: CvProposal, snapshot: CvSnapshot): CvDiff {
+  const profile = diffProfile(proposal.profile, snapshot.profile);
   const parts: { items: readonly unknown[]; unchanged: number }[] = [
+    { items: profile.item ? [profile.item] : [], unchanged: profile.unchanged },
     diffSection(educationConfig, proposal.education, snapshot.education),
     diffSection(positionConfig, proposal.positions, snapshot.positions),
     diffSection(languageConfig, proposal.languages, snapshot.languages),

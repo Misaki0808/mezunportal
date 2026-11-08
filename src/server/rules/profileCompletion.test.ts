@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeProfileCompletion,
+  computeProfileContentCompletion,
   finishOnboarding,
   isSkippableStep,
   markCompleted,
@@ -121,5 +122,74 @@ describe('öğrenci mentor eşiği K-08', () => {
     [{ kind: 'GRADE', grade: 5, extended: true } as const, 1, true, null],
   ])('sınıf ve yayınlanmış deneyimi birlikte arar', (standing, count, eligible, reason) => {
     expect(studentMentorEligibility(standing, count)).toEqual({ eligible, reason });
+  });
+});
+
+describe('computeProfileContentCompletion', () => {
+  const done = {
+    MEMBERSHIP: 'COMPLETED',
+    INTERESTS: 'COMPLETED',
+    GOALS: 'COMPLETED',
+    MENTOR_PREFERENCE: 'COMPLETED',
+    VISIBILITY: 'COMPLETED',
+  } as const;
+  const full = {
+    onboarding: done,
+    mentorStepAvailable: true,
+    headline: 'A',
+    city: 'B',
+    educationCount: 1,
+    skillCount: 3,
+    cvApplied: true,
+  };
+
+  it('hepsi tamamsa %100 ve eksik yok', () => {
+    expect(computeProfileContentCompletion(full)).toEqual({ percent: 100, missing: [] });
+  });
+
+  it.each([
+    ['başlık yok', { headline: null }, 'BASICS'],
+    ['şehir yok', { city: null }, 'BASICS'],
+    ['eğitim yok', { educationCount: 0 }, 'EDUCATION'],
+    ['2 beceri', { skillCount: 2 }, 'SKILLS'],
+    ['CV yok', { cvApplied: false }, 'CV'],
+  ] as const)('%s → %s eksik', (_name, patch, missing) => {
+    const result = computeProfileContentCompletion({ ...full, ...patch });
+    expect(result.missing).toEqual([missing]);
+    expect(result.percent).toBe(89);
+  });
+
+  it('atlanan ya da bekleyen ilk giriş adımı eksiktir; mentor adımı açık değilse paydaya girmez', () => {
+    const skipped = { ...done, GOALS: 'SKIPPED' as const, VISIBILITY: 'PENDING' as const };
+    expect(computeProfileContentCompletion({ ...full, onboarding: skipped }).missing).toEqual([
+      'GOALS',
+      'VISIBILITY',
+    ]);
+    const noMentor = computeProfileContentCompletion({
+      ...full,
+      mentorStepAvailable: false,
+      onboarding: { ...done, MENTOR_PREFERENCE: 'PENDING' },
+    });
+    expect(noMentor).toEqual({ percent: 100, missing: [] });
+  });
+
+  it('hiçbir şey yokken %0’a yakın ve uygulanabilir adımlar eşit ağırlıklıdır', () => {
+    const empty = computeProfileContentCompletion({
+      onboarding: {
+        MEMBERSHIP: 'PENDING',
+        INTERESTS: 'PENDING',
+        GOALS: 'PENDING',
+        MENTOR_PREFERENCE: 'PENDING',
+        VISIBILITY: 'PENDING',
+      },
+      mentorStepAvailable: false,
+      headline: null,
+      city: null,
+      educationCount: 0,
+      skillCount: 0,
+      cvApplied: false,
+    });
+    expect(empty.percent).toBe(0);
+    expect(empty.missing).toHaveLength(8);
   });
 });

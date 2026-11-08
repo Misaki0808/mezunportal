@@ -16,6 +16,7 @@ describe('sahte veri çerçevesi', () => {
       'institutions',
       'accounts',
       'profileTags',
+      'dictionary',
     ]);
   });
 });

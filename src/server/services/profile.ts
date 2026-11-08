@@ -20,6 +20,7 @@ import { evaluateAccess } from '../rules/authorization';
 import { computeClassStanding } from '../rules/classYear';
 import {
   computeProfileCompletion,
+  computeProfileContentCompletion,
   finishOnboarding,
   nextOnboardingStep,
   stepStatuses,
@@ -181,10 +182,7 @@ async function runOnboarding(
       select: profileSelect,
     });
     const state = stateOf(profile, facts);
-    await tx.profile.update({
-      where: { id: profile.id },
-      data: { completionScore: state.completion.percent },
-    });
+    await syncCompletionScore(tx, userId, now, snapshotOf(state, facts));
     return state;
   });
 }
@@ -218,10 +216,99 @@ export async function listProfileTags(
     const { kind } = listProfileTagsSchema.parse(input);
     return {
       tags: await tx.tag.findMany({
-        where: { kind },
+        where: { kind, ...(kind === 'SKILL' ? { curated: true } : {}) },
         select: { id: true, kind: true, slug: true },
         orderBy: { slug: 'asc' },
       }),
     };
   });
+}
+
+type OnboardingSnapshot = {
+  statuses: Record<CompletionField, 'COMPLETED' | 'SKIPPED' | 'PENDING'>;
+  mentorStepAvailable: boolean;
+};
+
+function snapshotOf(
+  state: ReturnType<typeof stateOf>,
+  facts: { mentorStepAvailable: boolean },
+): OnboardingSnapshot {
+  return {
+    statuses: Object.fromEntries(state.steps.map((step) => [step.step, step.status])) as Record<
+      CompletionField,
+      'COMPLETED' | 'SKIPPED' | 'PENDING'
+    >,
+    mentorStepAvailable: facts.mentorStepAvailable,
+  };
+}
+
+/** Salt-okunur ilk giriş özeti (adım durumları + mentor adımı uygulanabilirliği); profil satırı açmaz. */
+export async function onboardingSnapshot(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  now: Date,
+): Promise<OnboardingSnapshot> {
+  const facts = await membershipFacts(tx, userId, now);
+  const profile = await tx.profile.findUnique({ where: { userId }, select: profileSelect });
+  const state = stateOf(
+    profile ?? {
+      id: '',
+      onboardingStep: 'MEMBERSHIP',
+      completedSteps: [],
+      skippedSteps: [],
+      mentorInterested: null,
+      tags: [],
+    },
+    facts,
+  );
+  return snapshotOf(state, facts);
+}
+
+/**
+ * Profil tamamlama yüzdesinin TEK kaynağı: ilk giriş adımları + profil içeriği, `rules/profileCompletion`. Profil
+ * sayfası (`MyProfile.completion`) ve kalıcı `Profile.completionScore` aynı işlevden gelir.
+ */
+export async function loadProfileCompletion(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  now: Date,
+  snapshot?: OnboardingSnapshot,
+) {
+  const [profile, educationCount, skillCount, onboarding] = await Promise.all([
+    tx.profile.findUnique({
+      where: { userId },
+      select: { headline: true, city: true, cvUpdatedAt: true },
+    }),
+    tx.education.count({ where: { userId } }),
+    tx.profileTag.count({ where: { profile: { userId }, tag: { kind: 'SKILL' } } }),
+    snapshot ?? onboardingSnapshot(tx, userId, now),
+  ]);
+  return computeProfileContentCompletion({
+    onboarding: onboarding.statuses,
+    mentorStepAvailable: onboarding.mentorStepAvailable,
+    headline: profile?.headline ?? null,
+    city: profile?.city ?? null,
+    educationCount,
+    skillCount,
+    cvApplied: profile?.cvUpdatedAt != null,
+  });
+}
+
+/**
+ * `Profile.completionScore`'u aynı kuraldan günceller. HER profil yazımı (profil içeriği, ilk giriş adımı, CV
+ * uygulama) aynı işlemde çağırır. Profil satırı yoksa açmaz. Üyelik doğrulaması gibi profil dışı değişimler
+ * bir sonraki profil yazımında yansır; okuma yolu (`MyProfile.completion`) her zaman güncel hesaplanır.
+ */
+export async function syncCompletionScore(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  now: Date,
+  snapshot?: OnboardingSnapshot,
+) {
+  const completion = await loadProfileCompletion(tx, userId, now, snapshot);
+  await tx.profile.updateMany({
+    where: { userId },
+    data: { completionScore: completion.percent, updatedAt: now },
+  });
+  return completion;
 }

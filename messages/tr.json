@@ -75,7 +75,11 @@
       "ADMIN_GRANT_NOT_ACTIVE": "Bu yönetici yetkisi zaten kaldırılmış.",
       "ADMIN_LAST_SYSTEM_GRANT": "Son sistem yöneticisi yetkisi kaldırılamaz.",
       "DICTIONARY_ENTRY_EXISTS": "Bu ada sahip bir kayıt zaten var.",
-      "UNMATCHED_NOT_OPEN": "Bu değer için karar zaten verilmiş."
+      "UNMATCHED_NOT_OPEN": "Bu değer için karar zaten verilmiş.",
+      "PROFILE_LINK_INVALID": "Bu bağlantı geçerli bir adres değil. Tam adresi yapıştır.",
+      "PROFILE_LINK_NOT_HTTPS": "Bağlantı https ile başlamalı.",
+      "PROFILE_LINK_HOST_NOT_ALLOWED": "Bu site için bağlantı eklenemiyor. Listedeki sitelerden birini seç.",
+      "PROFILE_LIMIT_REACHED": "Bu bölüm için ekleyebileceğin üst sınıra ulaştın. Önce birini sil."
     }
   },
   "nav": {
@@ -1171,5 +1175,71 @@
       "other": "Diğer",
       "unknown": "Bilinmiyor"
     }
+  },
+  "search": {
+    "eyebrow": "DENEYİMLER",
+    "title": "Deneyimleri keşfet",
+    "description": "Başka öğrencilerin ve mezunların deneyimlerinden yoluna ışık tutacak fikirler bul.",
+    "query": "Deneyim ara",
+    "queryHint": "Kurum, konu veya anahtar kelime",
+    "submit": "Ara",
+    "filters": "Filtreler",
+    "apply": "Filtreleri uygula",
+    "cancel": "Vazgeç",
+    "clear": "Filtreleri temizle",
+    "all": "Tümü",
+    "type": "Deneyim türü",
+    "company": "Şirket veya kurum",
+    "sector": "Sektör",
+    "noSectors": "Henüz sektör seçeneği yok.",
+    "channel": "Başvuru kanalı",
+    "year": "Yıl",
+    "season": "Dönem",
+    "pay": "Ücret",
+    "resultCount": "{count} deneyim bulundu",
+    "emptyTitle": "Bu filtrelerle deneyim bulunamadı",
+    "emptyDescription": "Filtreleri gevşet veya ilk deneyimi sen paylaş.",
+    "write": "Deneyim yaz",
+    "anonymous": "Anonim paylaşıldı",
+    "by": "{name} tarafından paylaşıldı",
+    "open": "Deneyimi incele",
+    "loading": "Deneyimler yükleniyor",
+    "active": "Etkin filtreler",
+    "invalid": "En az 2 karakter gir veya alanı boş bırak.",
+    "yearInvalid": "1900 ile 2100 arasında bir yıl gir.",
+    "types": {
+      "INTERNSHIP": "Staj",
+      "ERASMUS": "Erasmus",
+      "COMPETITION": "Yarışma",
+      "HACKATHON": "Hackathon",
+      "CLUB": "Kulüp",
+      "CERTIFICATE": "Sertifika",
+      "GRADUATE_STUDY": "Lisansüstü",
+      "STUDY_ABROAD": "Yurt dışında eğitim"
+    },
+    "channels": {
+      "LINKEDIN_POST": "LinkedIn ilanı",
+      "CAREER_PLATFORM": "Kariyer platformu",
+      "COMPANY_SITE": "Şirket sitesi",
+      "REFERRAL": "Referans",
+      "CAREER_FAIR": "Kariyer fuarı",
+      "COLD_EMAIL": "Doğrudan e-posta",
+      "UNIVERSITY_ANNOUNCEMENT": "Üniversite duyurusu",
+      "OTHER": "Diğer"
+    },
+    "seasons": {
+      "SPRING": "İlkbahar",
+      "SUMMER": "Yaz",
+      "AUTUMN": "Sonbahar",
+      "WINTER": "Kış"
+    },
+    "payments": {
+      "PAID": "Ücretli",
+      "UNPAID": "Ücretsiz",
+      "NOT_DISCLOSED": "Belirtilmedi"
+    },
+    "mine": "Deneyimlerim",
+    "invalidFiltersTitle": "Filtre bağlantısı geçersiz",
+    "invalidFiltersDescription": "Filtreleri temizleyip yeniden arayabilirsin."
   }
 }

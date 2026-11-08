@@ -41,6 +41,15 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   servisi tamam (kapsam, kendi üzerinde işlem yok, işlem kaydı aynı işlemde). Panel sorguları da hazır: genel bakış,
   maskeli kullanıcı listesi/ayrıntı, şikâyet kuyruğu, yönetici atamaları, işlem kaydı görüntüleme, sözlük +
   eşleşmeyen değer çözümü, mezun istihdam raporu ve Excel (`/api/yonetim/rapor/istihdam`). Kalan: panel ekranı (W2).
+- P1-06 profil servisi: kendi profilini görüntüle/düzenle (temel alanlar, eğitim, pozisyon, dil, sertifika, beceri,
+  izinli https bağlantılar, LinkedIn), başkasının profili görünürlük süzgeçli, tamamlama göstergesi; CV onayına profil
+  başlığı/özeti/şehri kalemi eklendi; beceri modeli `Tag(SKILL)` + profil bağı. Ekranlar sonra.
+- P1-09 mentor dizini servisi: görünür mentor (etkin profil, geçerli hesap, doğrulanmış üyelik, K-07), tür/sektör/
+  şirket/unvan/deneyim türü/görüşme biçimi/yalnız müsait süzgeçleri, mentor kartı, "benzer yol izleyenler" (en çok 5,
+  gerekçeli, `rules/similarity`) ve profilden giriş uygunluk bayrakları hazır; `Profile.completionScore` her profil
+  yazımında `rules/profileCompletion` kuralından güncellenir. Kapasite doluluğu onaylı randevu sayacına bağlıdır: P1-10
+  gelene kadar sayaç 0 (`services/mentor-load.ts`, P1-10 gerçek sayımı bağlar). Pilot sözlük başlangıç seti
+  (sektör, unvan, beceri; şirket yok) seed'de. Ekran W2'de.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -122,17 +131,11 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).
   Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
   Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
-- [ ] **TD-010** · P1 · CV profil üst alanları ve beceri modeli P1-04 ile hizalanmadı
-  Ne: `ParsedCv` yalnız listeleri (eğitim, pozisyon, beceri, dil, sertifika) taşır; başlık/özet/şehir/bağlantılar
-  `Profile` (P1-04) gelince eklenir. Beceri `Skill` sözlüğü + `UserSkill`'dir; `docs/data.md` taslağındaki
-  `Tag(kind=SKILL)` ile birleştirilecek mi karar bekler.
-  Neden borç: iki beceri modeli kalırsa arama ve profil ekranı çift kaynakla çalışır.
-  Kapanış ölçütü: P1-04 birleşince PM kararı; `ParsedCv.schemaVersion` ile genişletme ya da `Tag` birleştirmesi.
-- [ ] **TD-011** · P2 · Sözlük içeriği ve yönetici çözümü yok
-  Ne: `Company`/`Title`/`Skill`/`Sector` boş. Yönetici çözüm servisi var (bağla / yeni kayıt / at, P1-11);
-  yönetici ekranı (W2) ve pilot başlangıç seti yok.
-  Neden borç: eşleme olmadan her değer ham kalır; kuyruk büyür, istihdam raporu hep `Bilinmeyen` gösterir.
-  Kapanış ölçütü: pilot sözlük seed'i + yönetici çözümleme ekranı.
+- [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
+  Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
+  yerinde duruyor (hesap silme hâlâ eski satırları siler).
+  Neden borç: ölü tablo ve yanıltıcı model.
+  Kapanış ölçütü: daraltma migration'ı tabloyu kaldırır (geri alma adımıyla), `Skill` sözlüğü yalnız eşleme için kalır.
 
 
 ### Bilinçli kabul edilen sınırlar

@@ -175,7 +175,6 @@ const userSelect = {
       department: { select: { name: true } },
     },
     orderBy: { createdAt: 'desc' },
-    take: 20,
   },
   adminGrants: { where: { revokedAt: null }, select: { id: true } },
   mentorProfile: { select: { isActive: true } },
@@ -449,16 +448,22 @@ const REDACTED = '[gizlendi]';
 export function redactAuditText(value: string): string {
   return looksLikePersonalData(value) ? REDACTED : value;
 }
+function redactMetadataValue(value: unknown): unknown {
+  if (typeof value === 'string') return redactAuditText(value);
+  if (typeof value === 'number' && looksLikePersonalData(String(value))) return REDACTED;
+  if (Array.isArray(value)) return value.map(redactMetadataValue);
+  if (value !== null && typeof value === 'object')
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [
+        redactAuditText(key),
+        redactMetadataValue(entry),
+      ]),
+    );
+  return value;
+}
 function redactMetadata(metadata: unknown): Record<string, unknown> {
   if (metadata === null || typeof metadata !== 'object' || Array.isArray(metadata)) return {};
-  const clean: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(metadata)) {
-    if (typeof value === 'string') clean[key] = redactAuditText(value);
-    else if (Array.isArray(value))
-      clean[key] = value.map((item) => (typeof item === 'string' ? redactAuditText(item) : item));
-    else clean[key] = value;
-  }
-  return clean;
+  return redactMetadataValue(metadata) as Record<string, unknown>;
 }
 
 export async function listAuditLog(

@@ -561,6 +561,24 @@ confirmed:true ister; askı kaldırma da gerekçelidir. Sözlük silme ve eşle�
 sözleşmede zorunludur. Excel bağlantısı yalnız filtre şemasından geçen alanları taşır; kişisel ya da
 bilinmeyen URL parametresi eklenmez. Bu alanlar ekranın onay penceresi ile sunucu doğrulamasını bağlar.
 
+## 2026-11-08 · Profil içeriği: beceri = Tag, görünürlük sunucuda, bağlantılar izinli listeyle
+Beceri modeli (TD-010) PM kararıyla `Tag` (tür SKILL) + kullanıcı-etiket bağıdır; böylece benzer yol önerisi ve dizin
+tek sözlükle çalışır. Serbest yazılan beceri normalleştirilip kişisel etiket (`curated = false`) olarak açılır,
+yönetici kuyruğuna düşer ve başkalarına ASLA önerilmez (başkasının metni sızmasın); hesap silinince ya da son bağı
+kalkınca silinir. Eski `UserSkill` verisi taşındı, tablo daraltma migration'ına bırakıldı (TD-013). Başkasının
+profilinde gizli alan yanıttan çıkarılır, `null` yazılmaz (anahtar bile sızdırmaz); hedef silinmiş/askıda/doğrulanmamış
+ya da ortak üniversite yoksa varlığı sızmayan `RESOURCE_NOT_FOUND`. Sosyal bağlantılar yalnız `https` ve sabit alan adı
+listesindedir (sorgu/parça atılır, IDN/alt alan benzerleri geçmez); saklı veri okunurken de yeniden doğrulanır.
+CV onayına başlık/özet/şehir kalemi eklendi (bağlantı ve iletişim bilgisi LLM'den alınmaz); elle yazılan alan
+çakışma olarak sorulur. "Reddet" ayrı eylem değildir: kalem için karar vermemek yazmamaktır (onaysız yazma yok).
+Tamamlama göstergesi okuma anında hesaplanır (ilk giriş adımları + başlık/şehir, eğitim, ≥ 3 beceri, uygulanmış CV).
+
+Kişisel beceri koruması yalnız yeni öneri ucunda değil ilk girişin eski SKILL liste ucunda da
+uygulanır. LinkedIn kullanıcı adı yüzde kodlaması çözüldükten sonra tek ad olarak doğrulanır;
+kodlanmış ayraç/kontrol ve bozuk/çift kodlama profil yolu olamaz. Beceri migration'ının geri
+alması önce yeni becerileri eski modele taşır, önceki kurallı etiket/bağları korur. Yeniden
+uygulama görünür adı kaybetmez ve kurallı etiketi kişisele düşürmez.
+
 ## 2026-11-08 · Yönetim yazımları yetki iptali ve hesap silmeyle sıralanır
 
 Askı ve üyelik düzeltmesi de atama/kaldırmanın aynı tavsiye kilidini alır; güncel yetki
@@ -581,4 +599,31 @@ kilit sırası her yerde tür kilidi → satır kilididir. Silinen kayda bağlı
 (< 3) `Diğer`'de birleşir, o da < 3 ise hiç gösterilmez. Excel için ExcelJS kullanıldı (`docs/engineering.md` yığınında,
 onaylı); dosya bellekte üretilir, işlem kaydı ve hız sınırıyla aynı işlemdedir. Kullanıcı aramasında `LIKE` özel karakterleri
 kaçırılır (Prisma `contains` kaçırmaz).
+
+Panelde SKILL kullanım sayısı ve bağlama `Tag(SKILL)`/`ProfileTag` üzerinden yürür; eski
+`UserSkill` aktif kullanım sayılmaz. Profil yazımıyla aynı etiket anahtarı kullanılır; kişisel
+bağlar kurallı etikete çiftlemeden taşınır, yeniden adlandırma bağları korur, sözlük silinince
+kullanıcının metni kişisel beceri olarak kalır. Excel rotası sayfa kapısına güvenmez: yetki
+sonrası zorunlu onay transaction içinde, hız sayacı ve dosyadan önce doğrulanır. Audit okuması
+eski metadata'nın iç içe değer/anahtarlarında da kişisel veriyi gizler. Üyelikler yetki
+hesabından önce sunum amacıyla kesilmez; eski ama etkin kapsam üyeliği kaybolmamalıdır.
+
+## 2026-11-08 · Mentor dizini: görünürlük, müsaitlik ve benzer yol kuralı (P1-09)
+Dizinde yalnız görünür mentor vardır: etkin `MentorProfile`, silinmemiş ve askıda olmayan hesap, doğrulanmış etkin
+üyelik, arayanla aynı üniversite (K-07); arayan kendini görmez. Süzgeçler yalnız daraltır, kapsam oturumdan gelir.
+"Deneyim türü" süzgeci yalnız ADLI yayınlanmış deneyime bakar: anonim deneyim mentoru süzgeçle de ele vermez.
+Müsaitlik tek kuralda (`rules/mentorAvailability`): "müsait değilim" (`pausedUntil` gelecekte) ve bu ayki kapasitenin
+dolması; kapasite 0 olan mentor doludur. Doluluk veritabanı süzgecinde değil bellekte hesaplanır (kaynak enjekte edilir),
+bu yüzden "yalnız müsait" sayfalaması kapasite süzgecinden SONRA yapılır; tarama pilot ölçeğinde 500 mentorla sınırlıdır.
+Onaylı randevu sayacı P1-10'a kadar 0 döner (`services/mentor-load.ts`).
+"Sana benzer yol izleyenler" (`rules/similarity`, saf): sektör, ilgi, beceri, hedef, bölüm örtüşmesi puanlanır; en az bir
+GÜÇLÜ gerekçe (sektör/ilgi/beceri) şarttır, yalnız ortak hedef/bölüm öneri sebebi değildir. Gerekçe değerleri yalnız iki
+tarafın da sahip olduğu öğelerdir; öneri havuzu yalnız müsait görünür mentorlardır; en çok 5. Profilden giriş noktaları
+yalnız uygunluk bayrağı döner (randevu P1-10, CV incelemesi P1-15).
+`Profile.completionScore` tek kaynak: `loadProfileCompletion`/`syncCompletionScore` (`services/profile.ts`) profil
+sayfasındaki yüzdeyle aynı işlevdir; profil içeriği, ilk giriş adımı ve CV uygulama yazımları aynı işlemde günceller.
+İlk giriş ekranının kendi yüzdesi (yalnız ilk giriş adımları) ayrı bir göstergedir. Üyelik doğrulaması gibi profil dışı
+değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki yüzde her zaman güncel hesaplanır.
+Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
+kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 

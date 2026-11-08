@@ -34,6 +34,7 @@ describe('cleanCvText', () => {
 describe('parsedCvSchema (LLM çıktısı güvenilmez girdidir)', () => {
   it('boş nesne geçerlidir ve bölümler boş listeye döner', () => {
     expect(parsedCvSchema.parse({})).toEqual({
+      profile: { headline: null, summary: null, city: null },
       education: [],
       positions: [],
       skills: [],
@@ -55,6 +56,7 @@ describe('parsedCvSchema (LLM çıktısı güvenilmez girdidir)', () => {
       'education',
       'languages',
       'positions',
+      'profile',
       'skills',
     ]);
     expect(Object.keys(parsed.positions[0]!).sort()).toEqual([
@@ -176,9 +178,35 @@ describe('parsedCvSchema (LLM çıktısı güvenilmez girdidir)', () => {
       'education',
       'languages',
       'positions',
+      'profile',
       'skills',
     ]);
     expect(JSON.stringify(schema)).not.toMatch(/role|admin|permission|userId/i);
+  });
+});
+
+describe('parsedProfileSchema (başlık, özet, şehir)', () => {
+  it('metinler temizlenir, boş metin null olur, sınırlar uygulanır; bağlantı/iletişim alanı şemada yok', () => {
+    const parsed = parsedCvSchema.parse({
+      profile: {
+        headline: '  Veri\u200B Analisti ',
+        summary: '   ',
+        city: 'İstanbul',
+        linkedinUrl: 'https://evil.example',
+        email: 'a@b.co',
+        phone: '05321234567',
+      },
+    });
+    expect(parsed.profile).toEqual({ headline: 'Veri Analisti', summary: null, city: 'İstanbul' });
+    expect(parsedCvSchema.safeParse({ profile: { headline: 'x'.repeat(121) } }).success).toBe(
+      false,
+    );
+    expect(parsedCvSchema.safeParse({ profile: { summary: 'x'.repeat(1501) } }).success).toBe(
+      false,
+    );
+    expect(parsedCvSchema.safeParse({ profile: { city: 'x'.repeat(81) } }).success).toBe(false);
+    expect(parsedCvItemCount(parsedCvSchema.parse({ profile: { city: 'Ankara' } }))).toBe(1);
+    expect(parsedCvItemCount(parsedCvSchema.parse({}))).toBe(0);
   });
 });
 

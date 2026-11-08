@@ -10,6 +10,7 @@ import { deleteAccount } from './accountDeletion';
 import { buildDataExport } from './dataExport';
 import {
   getOnboardingState,
+  loadProfileCompletion,
   listProfileTags,
   saveOnboardingStep,
   skipOnboardingStep,
@@ -35,7 +36,8 @@ async function person(role: 'STUDENT' | 'ALUMNI' | 'ACADEMIC' = 'STUDENT', entry
   return userId;
 }
 async function tag(kind: 'INTEREST' | 'GOAL' | 'SKILL' = 'INTEREST') {
-  return db.tag.create({ data: { kind, slug: unique('tag') } });
+  const slug = unique('tag');
+  return db.tag.create({ data: { kind, slug, ...(kind === 'SKILL' ? { label: slug } : {}) } });
 }
 const status = (state: Awaited<ReturnType<typeof getOnboardingState>>, step: string) =>
   state.steps.find((item) => item.step === step)?.status;
@@ -85,7 +87,10 @@ it('yarıda kalan akış DB’den sürer; açık olmayan mentor adımı atlanır
   });
   const done = await saveOnboardingStep(db, userId, { step: 'VISIBILITY', confirmed: true }, NOW);
   expect(done.completion).toEqual({ percent: 100, missing: [] });
-  expect((await db.profile.findUniqueOrThrow({ where: { userId } })).completionScore).toBe(100);
+  // Kalıcı skor profil tamamlama kuralından gelir (ilk giriş 100 ama içerik adımları eksik → 4/8).
+  const stored = (await db.profile.findUniqueOrThrow({ where: { userId } })).completionScore;
+  expect(stored).toBe(50);
+  expect(stored).toBe((await loadProfileCompletion(db, userId, NOW)).percent);
   expect(onboardingStateSchema.safeParse(done).success).toBe(true);
 });
 

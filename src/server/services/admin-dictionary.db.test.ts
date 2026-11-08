@@ -614,26 +614,30 @@ describe('eşleşmeyen değerler', () => {
     expect(again.resolvedToId).toBe(title.id);
   });
 
-  it('LINK beceri: UserSkill bağı kurulur; sektöre LINK geçersiz; var olmayan kayıt RESOURCE_NOT_FOUND', async () => {
+  it('LINK beceri: ProfileTag bağı kurulur; sektöre LINK geçersiz; var olmayan kayıt RESOURCE_NOT_FOUND', async () => {
     const t = tag();
     const skill = await createDictionaryEntry(deps, system, { kind: 'SKILL', name: `Python ${t}` });
     const unmatched = await seed('SKILL', `Pyton ${t}`);
     const userId = await createUser(db);
-    const owned = await db.userSkill.create({
+    const profile = await db.profile.create({ data: { userId } });
+    const personal = await db.tag.create({
       data: {
-        userId,
-        name: `Pyton ${t}`,
-        normalizedName: normalizeName(`Pyton ${t}`, 'SKILL'),
-        source: 'CV',
+        kind: 'SKILL',
+        slug: normalizeName(`Pyton ${t}`, 'SKILL'),
+        label: `Pyton ${t}`,
+        curated: false,
       },
     });
+    await db.profileTag.create({ data: { profileId: profile.id, tagId: personal.id } });
     await resolveUnmatchedValue(deps, system, {
       id: unmatched.id,
       resolution: { type: 'LINK', entryId: skill.id },
     });
-    expect((await db.userSkill.findUniqueOrThrow({ where: { id: owned.id } })).skillId).toBe(
-      skill.id,
-    );
+    const links = await db.profileTag.findMany({
+      where: { profileId: profile.id },
+      select: { tag: { select: { label: true, curated: true } } },
+    });
+    expect(links).toEqual([{ tag: { label: `Python ${t}`, curated: true } }]);
 
     const sectorValue = await seed('SECTOR', `Sektör ${t}`);
     const sector = await createDictionaryEntry(deps, system, {

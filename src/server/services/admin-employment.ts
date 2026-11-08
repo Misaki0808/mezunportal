@@ -26,6 +26,7 @@ import {
 } from './admin-access';
 import { recordAdminAction } from './audit';
 import { buildEmploymentWorkbook } from './employment-workbook';
+import { requireConsent } from './privacy';
 import { consumeRateLimit, type RateLimitRule } from './rateLimit';
 import { listManagedDepartmentIds } from '../permissions/scope';
 
@@ -226,6 +227,7 @@ export async function exportEmploymentReport(
   const now = nowOf(deps);
   return deps.db.$transaction(async (tx) => {
     const actor = await loadAnyAdmin(tx, adminUserId, now);
+    await requireConsent(tx, adminUserId);
     await consumeRateLimit(tx, EMPLOYMENT_EXPORT_RULE, adminUserId, now);
     const managedIds = await listManagedDepartmentIds(tx, actor.facts);
     const scope = await resolveScope(tx, managedIds, filter);
