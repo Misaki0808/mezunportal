@@ -26,6 +26,12 @@ import {
   type SuspicionFlagView,
   type UpdatePointRuleInput,
 } from '@/contracts/points';
+import {
+  searchUsersSchema,
+  type AdminUserPage,
+  type AdminUserSummary,
+  type SearchUsersInput,
+} from '@/contracts/admin-users';
 import type { ActionResult } from '@/contracts/result';
 import {
   Badge,
@@ -51,6 +57,8 @@ export type AdminPointsActions = {
   listFlags: (input: ListSuspicionFlagsInput) => Promise<ActionResult<SuspicionFlagPage>>;
   decide: (input: DecideSuspicionInput) => Promise<ActionResult<DecideSuspicionOutput>>;
   backfill: (input: RequestPointBackfillInput) => Promise<ActionResult<RequestPointBackfillOutput>>;
+  /** Kullanıcı arama (#32 `searchUsers`): kayıt sekmesinde kimlik yazdırmak yerine ad/e-posta ile seçim. */
+  searchUsers: (input: SearchUsersInput) => Promise<ActionResult<AdminUserPage>>;
 };
 
 type Props = {
@@ -261,6 +269,7 @@ function FlagsPanel({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-base text-fg-muted">{t('admin.flagsHint')}</p>
+      <p className="text-base text-fg-muted">{t('admin.flagConsequence')}</p>
       <Field label={t('admin.flagStatus')}>
         {(f) => (
           <Select
@@ -385,7 +394,12 @@ function FlagsPanel({
 function EntriesPanel({ actions }: { actions: AdminPointsActions }) {
   const t = useTranslations('points');
   const errors = useTranslations('errors.codes');
-  const [userId, setUserId] = useState('');
+  const [selected, setSelected] = useState<AdminUserSummary>();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<AdminUserSummary[]>();
+  const [resultCursor, setResultCursor] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchInvalid, setSearchInvalid] = useState(false);
   const [status, setStatus] = useState('');
   const [items, setItems] = useState<PointEntryPage['items']>();
   const [cursor, setCursor] = useState<string | null>(null);
@@ -395,9 +409,47 @@ function EntriesPanel({ actions }: { actions: AdminPointsActions }) {
   const [target, setTarget] = useState<PointEntryPage['items'][number]>();
   const [notice, setNotice] = useState(false);
 
-  async function load(from?: string) {
+  async function searchPeople(from?: string) {
+    if (searching) return;
+    const parsed = searchUsersSchema.safeParse({
+      query: query.trim(),
+      ...(from ? { cursor: from } : {}),
+    });
+    if (!parsed.success) {
+      setSearchInvalid(true);
+      return;
+    }
+    setSearchInvalid(false);
+    setSearching(true);
+    setError(undefined);
+    try {
+      const result = await actions.searchUsers(parsed.data);
+      if (!result.ok) {
+        setError(result.errorCode);
+        return;
+      }
+      setResults((old) => (from && old ? [...old, ...result.data.items] : result.data.items));
+      setResultCursor(result.data.nextCursor);
+    } catch {
+      setError('SERVER_UNEXPECTED');
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  function pick(user: AdminUserSummary) {
+    setSelected(user);
+    setResults(undefined);
+    setItems(undefined);
+    setCursor(null);
+    setNotice(false);
+    void load(undefined, user.id);
+  }
+
+  async function load(from?: string, userOverride?: string) {
+    const userId = userOverride ?? selected?.id;
     if (pending) return;
-    if (!userId.trim()) {
+    if (!userId) {
       setInvalid(true);
       return;
     }
@@ -406,7 +458,7 @@ function EntriesPanel({ actions }: { actions: AdminPointsActions }) {
     setError(undefined);
     try {
       const result = await actions.listEntries({
-        userId: userId.trim(),
+        userId,
         ...(status ? { status: status as (typeof POINT_STATUSES)[number] } : {}),
         ...(from ? { cursor: from } : {}),
       });
@@ -426,38 +478,127 @@ function EntriesPanel({ actions }: { actions: AdminPointsActions }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-base text-fg-muted">{t('admin.entriesHint')}</p>
-      <form
-        className="flex flex-col gap-4 sm:max-w-md"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setNotice(false);
-          void load();
-        }}
-      >
-        <Field
-          label={t('admin.userId')}
-          hint={t('admin.userIdHint')}
-          required
-          error={invalid ? t('admin.userIdInvalid') : undefined}
-        >
-          {(f) => <Input {...f} value={userId} onChange={(e) => setUserId(e.target.value)} />}
-        </Field>
-        <Field label={t('admin.entryStatus')}>
-          {(f) => (
-            <Select {...f} value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">{t('admin.allStatuses')}</option>
-              {POINT_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {t(`status.${s}`)}
-                </option>
-              ))}
-            </Select>
+      {selected ? (
+        <div className="flex flex-col gap-4 sm:max-w-md">
+          <div className="rounded-card border border-border p-4">
+            <p className="text-sm font-medium text-fg-muted">{t('admin.userSelected')}</p>
+            <p className="mt-1 text-lg font-semibold text-fg [overflow-wrap:anywhere]">
+              {selected.displayName}
+            </p>
+            <p className="text-base text-fg-muted [overflow-wrap:anywhere]">
+              {selected.maskedEmail}
+            </p>
+            <Button
+              className="mt-3"
+              variant="secondary"
+              onClick={() => {
+                setSelected(undefined);
+                setItems(undefined);
+                setCursor(null);
+                setNotice(false);
+              }}
+            >
+              {t('admin.userChange')}
+            </Button>
+          </div>
+          <Field label={t('admin.entryStatus')}>
+            {(f) => (
+              <Select
+                {...f}
+                value={status}
+                onChange={(e) => {
+                  setStatus(e.target.value);
+                }}
+              >
+                <option value="">{t('admin.allStatuses')}</option>
+                {POINT_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {t(`status.${s}`)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+          <Button
+            loading={pending}
+            onClick={() => {
+              setNotice(false);
+              void load();
+            }}
+          >
+            {t('admin.list')}
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4 sm:max-w-md">
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void searchPeople();
+            }}
+          >
+            <Field
+              label={t('admin.userSearch')}
+              hint={t('admin.userSearchHint')}
+              error={searchInvalid ? t('admin.userSearchInvalid') : undefined}
+            >
+              {(f) => (
+                <Input
+                  {...f}
+                  type="search"
+                  autoComplete="off"
+                  maxLength={100}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              )}
+            </Field>
+            <Button type="submit" loading={searching}>
+              {t('admin.userSearchButton')}
+            </Button>
+          </form>
+          {invalid && <p className="text-danger">{t('admin.userPickFirst')}</p>}
+          {results &&
+            (results.length === 0 ? (
+              <EmptyState title={t('admin.userNone')} description={t('admin.userSearchHint')} />
+            ) : (
+              <ul aria-label={t('admin.userResults')} className="flex flex-col gap-2">
+                {results.map((user) => (
+                  <li
+                    key={user.id}
+                    className="flex min-w-0 items-center justify-between gap-3 rounded-card border border-border p-3"
+                  >
+                    <span className="min-w-0">
+                      <span className="block font-medium text-fg [overflow-wrap:anywhere]">
+                        {user.displayName}
+                      </span>
+                      <span className="block text-sm text-fg-muted [overflow-wrap:anywhere]">
+                        {user.maskedEmail}
+                      </span>
+                    </span>
+                    <Button
+                      variant="secondary"
+                      aria-label={`${t('admin.userPick')}: ${user.displayName}`}
+                      onClick={() => pick(user)}
+                    >
+                      {t('admin.userPick')}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            ))}
+          {resultCursor && (
+            <Button
+              variant="secondary"
+              loading={searching}
+              onClick={() => void searchPeople(resultCursor)}
+            >
+              {t('admin.userMore')}
+            </Button>
           )}
-        </Field>
-        <Button type="submit" loading={pending}>
-          {t('admin.list')}
-        </Button>
-      </form>
+        </div>
+      )}
       {notice && (
         <p role="status" className="text-on-success-soft">
           {t('admin.revoked')}

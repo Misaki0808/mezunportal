@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import type { CvSection } from '@/contracts/cv';
 import {
@@ -64,7 +64,12 @@ export type MyProfileActions = {
   suggestSkills: (input: SuggestSkillsInput) => Promise<ActionResult<SkillSuggestions>>;
 };
 
-type Props = { initial: MyProfileData; actions: MyProfileActions };
+type Props = {
+  initial: MyProfileData;
+  actions: MyProfileActions;
+  /** Tamamlama göstergesinin hemen altında gösterilen ek bölüm (ör. katkı puanı özeti). */
+  afterCompletion?: ReactNode;
+};
 
 const ENTRY_SECTIONS: readonly {
   section: ProfileEntrySection;
@@ -82,7 +87,7 @@ type Editing =
   | { kind: 'links' };
 
 /** Kendi profilim: bölüm bölüm görüntüle + alt sayfada düzenle. Her eylem güncel profili döner; ekran onu çizer. */
-export function MyProfile({ initial, actions }: Props) {
+export function MyProfile({ initial, actions, afterCompletion }: Props) {
   const t = useTranslations('profile.my');
   const sections = useTranslations('profile.sections');
   const errors = useTranslations('errors.codes');
@@ -207,6 +212,8 @@ export function MyProfile({ initial, actions }: Props) {
           {t('onboardingLink')}
         </Link>
       </section>
+
+      {afterCompletion}
 
       <section className="flex flex-col gap-3 rounded-card border border-primary bg-primary-soft p-4 text-on-primary-soft">
         <h2 className="text-lg font-semibold">{t('cvTitle')}</h2>

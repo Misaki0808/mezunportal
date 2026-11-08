@@ -61,14 +61,16 @@ test('profil: katkı puanı, bekleyen puan ve geçmiş görünür', async ({ pag
     await login(page, 'student');
     await page.goto('/profil');
     await page.waitForLoadState('networkidle');
-    const section = page.getByRole('region', { name: 'Katkı puanın' });
-    await expect(section).toBeVisible();
-    await expect(section.getByText('Deneyim yayınlandı').first()).toBeVisible();
-    await expect(section.getByText('Yüz yüze görüşme').first()).toBeVisible();
-    await expect(section.getByText(/tarihinde kesinleşir/).first()).toBeVisible();
+    // Özet tamamlama göstergesinin altında (ilk ekranda), geçmiş sayfanın altında ayrı bölümdür.
+    const summary = page.getByRole('region', { name: 'Katkı puanın' });
+    await expect(summary).toBeVisible();
     await expect(
-      section.getByText('Bekleyen puan').locator('xpath=following-sibling::dd'),
+      summary.getByText('Bekleyen puan').locator('xpath=following-sibling::dd'),
     ).toContainText(/[1-9]/);
+    const history = page.getByRole('region', { name: 'Puan geçmişi' });
+    await expect(history.getByText('Deneyim yayınlandı').first()).toBeVisible();
+    await expect(history.getByText('Yüz yüze görüşme').first()).toBeVisible();
+    await expect(history.getByText(/tarihinde kesinleşir/).first()).toBeVisible();
     // Kaynak kimliği ekrana sızmaz.
     await expect(page.locator('body')).not.toContainText('e2e-final');
   } finally {
@@ -210,8 +212,12 @@ test('yönetici: kayıt iptali gerekçe + onay penceresiyle yapılır ve işlem 
     await page.goto('/yonetim/puan');
     await page.waitForLoadState('networkidle');
     await page.getByRole('tab', { name: 'Kayıt' }).click();
-    await page.getByLabel(/Kullanıcı kimliği/).fill(student.id);
-    await page.getByRole('button', { name: 'Listele' }).click();
+    await page.getByLabel(/Kullanıcı ara/).fill(student.name.split(' ')[0]!);
+    await page.getByRole('button', { name: 'Ara', exact: true }).click();
+    await page
+      .getByRole('button', { name: `Seç: ${student.name}` })
+      .first()
+      .click();
     await page.getByRole('button', { name: 'Puanı geri al' }).first().click();
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: 'Puanı geri al' }).click();
