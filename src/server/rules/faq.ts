@@ -47,11 +47,18 @@ export function findIdentityLeak(
     ...(normalized.match(WORD) ?? []),
     ...(normalized.replace(/[\p{P}\p{S}]+/gu, '').match(WORD) ?? []),
   ];
-  return nameTokens(names).some((token) =>
-    words.some(
-      (word) => word === token || (token.length >= SUFFIX_MIN_LENGTH && word.startsWith(token)),
-    ),
-  );
+  return nameTokens(names).some((token) => {
+    if (
+      words.some(
+        (word) => word === token || (token.length >= SUFFIX_MIN_LENGTH && word.startsWith(token)),
+      )
+    )
+      return true;
+    if (token.length < SUFFIX_MIN_LENGTH) return false;
+    // Harfler arasına boşluk veya noktalama konarak adın bölünmesini de yakala.
+    const spaced = [...token].join('[\\s\\p{P}\\p{S}]*');
+    return new RegExp(`(?:^|[^\\p{L}\\p{N}])${spaced}`, 'u').test(normalized);
+  });
 }
 
 /** Talep/cevap metninde yayına girmeden önce reddedilen kişisel veri biçimleri (e-posta, telefon, kimlik numarası). */

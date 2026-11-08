@@ -47,6 +47,8 @@ describe('findIdentityLeak', () => {
   it('görünmez karakter, birleşik aksan ve kullanıcı kimliğiyle saklama girişimini yakalar', () => {
     expect(findIdentityLeak('Bu\u200brak önerdi', ['Burak Soylu'])).toBe(true);
     expect(findIdentityLeak('Bu-rak önerdi', ['Burak Soylu'])).toBe(true);
+    expect(findIdentityLeak('Bu rak önerdi', ['Burak Soylu'])).toBe(true);
+    expect(findIdentityLeak('B u r a k önerdi', ['Burak Soylu'])).toBe(true);
     expect(findIdentityLeak('Moderato\u0308r dedi', ['Moderatör Hoca'])).toBe(true);
     expect(findIdentityLeak('ilgili: abc123-4def', [], ['abc123-4def'])).toBe(true);
     expect(findIdentityLeak('staj başvurusu', ['Burak Soylu'], ['abc123-4def'])).toBe(false);
