@@ -127,10 +127,15 @@ export function ContactList({
                 </h2>
                 {item.origin && (
                   <p className="mt-1 break-words text-base text-fg-muted">
-                    {t('originJobPosting', {
-                      title: item.origin.title,
-                      organization: item.origin.organization,
-                    })}
+                    {t(
+                      item.origin.kind === 'SEEKER_PROFILE'
+                        ? 'originSeekerProfile'
+                        : 'originJobPosting',
+                      {
+                        title: item.origin.title,
+                        organization: item.origin.organization,
+                      },
+                    )}
                   </p>
                 )}
                 {(!item.counterpart ||

@@ -267,6 +267,9 @@
       "JOB_POSTING_NOT_OPEN": "Bu ilan artık açık değil.",
       "JOB_POSTING_URL_INVALID": "Başvuru bağlantısı https:// ile başlayan, geçerli bir adres olmalı.",
       "JOB_POSTING_DEADLINE_INVALID": "Son başvuru tarihi bugünden önce olamaz ve yayından en çok 60 gün sonrası olabilir.",
+      "SEEKER_CONSENT_REQUIRED": "Staj arıyorum görünürlüğünü açmak için önce görünürlük rızası vermelisin.",
+      "SEEKER_TERM_INVALID": "Hedef dönem için hem yıl hem mevsim seç ya da ikisini de boş bırak.",
+      "SEEKER_HIRING_DECLARATION_REQUIRED": "Aday aramak için profilinde \"işe alım yapıyorum\" beyanını açmalısın.",
       "JOB_POSTING_TARGET_INVALID": "Hedef bölümler en az bir, en çok on tane ve kendi üniversiten içinden olmalı.",
       "FAQ_IDENTITY_WARNING": "Bu sözcükler bir katılımcının adıyla başlıyor: {matches}. Kişisel bilgi değilse onaylayıp yayımla.",
       "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin.",
@@ -1321,6 +1324,7 @@
       "PRIVACY_NOTICE": "Aydınlatma metni",
       "TERMS_OF_USE": "Kullanım şartları",
       "CROSS_BORDER_TRANSFER": "Yurt dışına aktarım açık rızası",
+      "JOB_SEEKER_VISIBILITY": "Staj arayan olarak görünürlük rızası",
       "updated": "Güncellendi"
     },
     "visibility": {
@@ -1382,7 +1386,8 @@
       "targetUnavailable": "İletişim talebi gönderilemiyor",
       "targetUnavailableDescription": "Bu kişiye şu anda iletişim talebi gönderemezsin.",
       "targetBack": "Taleplerime dön",
-      "fieldUnavailable": "Bu alan için talep gönderilemiyor."
+      "fieldUnavailable": "Bu alan için talep gönderilemiyor.",
+      "originSeekerProfile": "Aday: {title} · {organization}"
     },
     "delete": {
       "title": "Hesabını silmeden önce",
@@ -1489,6 +1494,27 @@
           "section2": {
             "title": "2. Online randevu davetleri",
             "body": "Online randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz Google LLC'ye aktarılır. Rıza vermezseniz mentor görüşme bağlantısını kendisi paylaşır. Rızanızı istediğiniz an gizlilik ayarlarından geri alabilirsiniz; geri alma ileriye dönük işler."
+          }
+        }
+      },
+      "JOB_SEEKER_VISIBILITY": {
+        "slug": "staj-arayan-gorunurlugu",
+        "sections": {
+          "section0": {
+            "title": "Rıza tercihiniz",
+            "body": "Bu rıza isteğe bağlıdır ve istediğiniz an geri alınabilir. Vermezseniz platformu kullanmaya devam edersiniz; yalnız işe alım yapan mezunların sizi bulması çalışmaz. [TASLAK: hoca/hukuki onay bekliyor]"
+          },
+          "section1": {
+            "title": "1. Neyi paylaşırsınız",
+            "body": "\"Staj arıyorum\" dediğinizde, doğrulanmış ve işe alım yaptığını beyan eden mezunlar sizi bölümünüz, sınıfınız, seçtiğiniz ilgi alanları ve başlık satırınızla bulabilir. Adınız, fotoğrafınız, e-posta ve telefonunuz görünmez."
+          },
+          "section2": {
+            "title": "2. İletişim",
+            "body": "Bir mezun sizinle iletişime geçmek isterse size talep gönderir; talebi siz onaylayana kadar kimliğiniz mezuna açılmaz. Onayladığınızda yalnız izin verdiğiniz alanlar paylaşılır."
+          },
+          "section3": {
+            "title": "3. Geri alma",
+            "body": "Rızanızı veya görünürlüğünüzü geri aldığınızda kartınız hemen aramalardan kalkar ve bekleyen talepler kapanır. Kaç kez görüntülendiğinizi görürsünüz; kimin baktığı tutulmaz."
           }
         }
       },
@@ -1872,7 +1898,8 @@
         "CONTACT_REQUESTED": "İletişim talebi",
         "JOB_POSTING_PUBLISHED": "İlan yayınlandı",
         "JOB_POSTING_VIEWED": "İlan görüntülendi",
-        "JOB_POSTING_SEARCH": "İlan araması"
+        "JOB_POSTING_SEARCH": "İlan araması",
+        "JOB_SEEKER_SEARCH": "Aday araması"
       }
     }
   },
@@ -2600,6 +2627,77 @@
       "emptyDescription": "Yeni talepler burada görünür.",
       "more": "Daha fazla göster"
     }
+  },
+  "seekers": {
+    "eyebrow": "Fırsatlar",
+    "backAccount": "Hesabıma dön",
+    "settingsTitle": "İş arayanlara görün",
+    "settingsDescription": "Staj aradığında, işe alım yapan doğrulanmış mezunlar kimliğini görmeden sana ulaşma isteği gönderebilir.",
+    "visibility": "İş arayanlara görün",
+    "visibilityHint": "Kapatırsan kartın hemen aramadan kalkar ve bekleyen talepler kapanır.",
+    "consentTitle": "Açık rıza · taslak",
+    "consentText": "Bu isteğe bağlı rızayla aynı üniversitedeki işe alım beyanlı mezunlar bölümünü, sınıfını, ilgi alanlarını, hedef dönemini ve başlık satırını görür. Adın, fotoğrafın ve iletişim bilgilerin görünmez. İstediğin zaman geri alabilirsin.",
+    "consentLink": "Rıza metnini oku (taslak)",
+    "consentAgree": "Metni okudum; staj arayan kartımın gösterilmesine açık rıza veriyorum.",
+    "consentRequired": "Görünür olmak için açık rıza vermelisin.",
+    "termTitle": "Hedef dönem (isteğe bağlı)",
+    "termHint": "Yıl ve dönemi birlikte seçebilirsin.",
+    "termPair": "Yıl ve dönemi birlikte seç veya ikisini de boş bırak.",
+    "year": "Yıl",
+    "season": "Dönem",
+    "anyYear": "Tümü",
+    "anySeason": "Tümü",
+    "seasons": {
+      "SPRING": "İlkbahar",
+      "SUMMER": "Yaz",
+      "AUTUMN": "Sonbahar",
+      "WINTER": "Kış"
+    },
+    "previewTitle": "Mezunlar seni böyle görür",
+    "previewDescription": "Kartında adın veya iletişim bilgilerin yer almaz.",
+    "previewEmpty": "Önizleme için profilini tamamla.",
+    "editProfile": "Profilimi düzenle",
+    "viewCount": "Kartın {count} kez gösterildi.",
+    "save": "Kaydet",
+    "saved": "Tercihin kaydedildi.",
+    "grade": "{grade}. sınıf",
+    "preparatory": "Hazırlık",
+    "unknownGrade": "Sınıf belirtilmemiş",
+    "termValue": "Hedef dönem: {year} · {season}",
+    "tags": "İlgi alanları",
+    "searchTitle": "Aday bul",
+    "searchDescription": "İş arayan öğrencilerin kimliği gizli kartlarını incele; iletişim için öğrenciden izin iste.",
+    "hiring": "İşe alım yapıyorum",
+    "hiringHint": "Beyanını istediğin zaman kapatabilirsin.",
+    "hiringPrompt": "Aday aramak için işe alım yaptığını beyan et.",
+    "filters": "Süzgeçler",
+    "department": "Bölüm",
+    "allDepartments": "Tüm bölümler",
+    "interest": "İlgi alanı",
+    "allInterests": "Tüm ilgi alanları",
+    "search": "Aday ara",
+    "results": "Adaylar",
+    "remaining": "Bugün {count} kart görüntüleme hakkın kaldı.",
+    "empty": "Bu süzgeçlere uygun aday bulunamadı",
+    "emptyHint": "Süzgeçleri değiştirip yeniden deneyebilirsin.",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "contact": "İletişim iste",
+    "backSearch": "Adaylara dön",
+    "contactTitle": "İletişim iste",
+    "contactDescription": "İsteğin öğrenciye iletilir; öğrenci onaylayana kadar kimliği paylaşılmaz.",
+    "contactSent": "İletişim isteğin gönderildi.",
+    "requests": "Taleplerime git",
+    "contactUnavailable": "Bu aday için şu anda iletişim isteği gönderilemiyor.",
+    "fields": "İstediğin bilgiler",
+    "fieldsHint": "Yalnız öğrencinin talep edilebilmesine izin verdiği alanları seçebilirsin.",
+    "message": "Kısa not (isteğe bağlı)",
+    "selectField": "En az bir bilgi seçmelisin.",
+    "send": "İstek gönder",
+    "accountTitle": "İş arayanlara görün",
+    "accountDescription": "Görünürlüğünü ve hedef dönemini yönet.",
+    "searchAccountTitle": "Aday bul",
+    "searchAccountDescription": "İş arayan öğrencilerin anonim kartlarını incele."
   },
   "jobs": {
     "eyebrow": "Fırsatlar",

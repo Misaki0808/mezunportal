@@ -12,7 +12,7 @@ import {
   type RequestJobPostingContactOutput,
 } from '@/contracts/job-postings';
 import { CONTACT_MESSAGE_MAX } from '@/contracts/contact-request';
-import { codedNotFound, codedValidation, isCodedError } from '@/lib/errors';
+import { codedNotFound, codedValidation } from '@/lib/errors';
 
 import { requestableFieldsOf, sendContactRequest } from './contactRequest';
 import { resolveContactAuthor, type JobPostingDeps } from './job-postings';
@@ -49,7 +49,7 @@ export async function previewJobPostingContact(
   await consumeRateLimit(deps.db, RATE_LIMITS.contactPreview, userId, nowOf(deps));
   const target = await resolveContactAuthor(deps, userId, parsed.jobPostingId);
   // Olumsuz durumlarda da aynı sorgu akışını uygula (süre farkı kaba azaltılır; sabit süre garantisi değildir).
-  const fields = await requestableFieldsOf(deps.db, target?.authorId ?? userId);
+  const fields = await requestableFieldsOf(deps.db, target?.authorId ?? userId, nowOf(deps));
   if (!target || target.authorId === userId || fields.length === 0)
     return JOB_POSTING_CONTACT_NOT_REQUESTABLE;
   return jobPostingContactPreviewSchema.parse({
@@ -81,24 +81,12 @@ export async function requestJobPostingContact(
     nowOf(deps),
     // D7: kaynak sunucuda yazılır; talep eden onaydan önce yazarın adını/kimliğini görmez.
     {
+      source: 'JOB_POSTING',
       jobPostingId: parsed.jobPostingId,
       title: target.title,
       organization: target.organizationName,
     },
-  ).catch(async (error: unknown) => {
-    // D7 (bağlantı sızıntısı): aynı yazarın başka ilanına BEKLEYEN talep varken `ALREADY_OPEN` dönmek iki ilanın aynı yazara ait
-    // olduğunu ele verirdi. Bekleyen talep varsa aynı başarı yanıtı verilir (yeni kayıt/bildirim yok). Onaylı talepte yazar zaten
-    // bilinir; hata aynen kalır.
-    if (!isCodedError(error) || error.code !== 'CONTACT_REQUEST_ALREADY_OPEN') throw error;
-    const open = await deps.db.contactRequest.findFirst({
-      where: { requesterId: userId, targetId: target.authorId, status: 'PENDING' },
-      select: { id: true, source: true, jobPostingId: true },
-    });
-    // Aynı ilana tekrar talep ya da profil kaynaklı açık talep: kullanıcı zaten biliyor; hata aynen kalır.
-    if (!open || open.source !== 'JOB_POSTING' || open.jobPostingId === parsed.jobPostingId)
-      throw error;
-    return { requestId: open.id };
-  });
+  );
   return requestJobPostingContactOutputSchema.parse({
     requestId: sent.requestId,
     status: 'PENDING',

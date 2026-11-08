@@ -6,6 +6,7 @@ const V1 = {
   PRIVACY_NOTICE: 'taslak-1',
   TERMS_OF_USE: 'taslak-1',
   CROSS_BORDER_TRANSFER: 'taslak-1',
+  JOB_SEEKER_VISIBILITY: 'taslak-1',
 } as const;
 const V2 = { ...V1, PRIVACY_NOTICE: 'taslak-2' } as const;
 const at = (minute: number) => new Date(Date.UTC(2026, 10, 8, 0, minute));

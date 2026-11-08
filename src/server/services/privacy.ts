@@ -13,8 +13,12 @@ import type { Prisma } from '@/generated/prisma/client';
 import { codedForbidden, codedValidation } from '@/lib/errors';
 
 import { computeConsentState, consentDecisionError, type ConsentVersions } from '../rules/consent';
+import { revokeSeekerVisibility } from './seeker-visibility';
 
-export type PrivacyClient = Pick<Prisma.TransactionClient, 'consent' | 'fieldVisibility'>;
+export type PrivacyClient = Pick<
+  Prisma.TransactionClient,
+  'consent' | 'fieldVisibility' | 'profile' | 'contactRequest'
+>;
 
 export async function getConsentState(
   db: PrivacyClient,
@@ -47,6 +51,10 @@ export async function recordConsents(
   await db.consent.createMany({
     data: decisions.map((decision) => ({ userId, ...decision })),
   });
+  // P2-06 (D20): "staj arıyorum" rızası geri alınınca görünürlük HEMEN kalkar (görünürlük ayrıca sorgu anında son rıza satırından
+  // okunur; bu temizlik bayrağı/opak kimliği kapatır ve bekleyen aday talepleri kapatır).
+  if (decisions.some((d) => d.documentType === 'JOB_SEEKER_VISIBILITY' && !d.granted))
+    await revokeSeekerVisibility(db, userId, new Date());
   return getConsentState(db, userId, versions);
 }
 

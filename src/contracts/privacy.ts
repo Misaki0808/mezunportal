@@ -31,6 +31,8 @@ export const CONSENT_DOCUMENTS = [
   'PRIVACY_NOTICE',
   'TERMS_OF_USE',
   'CROSS_BORDER_TRANSFER',
+  /** P2-06 (D20): "staj arıyorum" görünürlüğü; İSTEĞE BAĞLI, her an geri alınır (görünürlük hemen kalkar). */
+  'JOB_SEEKER_VISIBILITY',
 ] as const;
 export type ConsentDocument = (typeof CONSENT_DOCUMENTS)[number];
 
@@ -49,6 +51,7 @@ export const CURRENT_CONSENT_VERSIONS = {
   PRIVACY_NOTICE: 'taslak-1',
   TERMS_OF_USE: 'taslak-1',
   CROSS_BORDER_TRANSFER: 'taslak-1',
+  JOB_SEEKER_VISIBILITY: 'taslak-1',
 } as const satisfies Record<ConsentDocument, string>;
 
 /** Veritabanı CHECK'iyle aynı biçim (`Consent_version_check`). */
@@ -244,6 +247,11 @@ export const exportedProfileSchema = z
     completedSteps: z.array(z.enum(ONBOARDING_STEPS)),
     skippedSteps: z.array(z.enum(ONBOARDING_STEPS)),
     mentorInterested: z.boolean().nullable(),
+    seekingInternship: z.boolean(),
+    seekingTermYear: z.number().int().nullable(),
+    seekingTermSeason: z.enum(['SPRING', 'SUMMER', 'AUTUMN', 'WINTER']).nullable(),
+    seekerViewCount: z.number().int().min(0),
+    hiringDeclaredAt: z.string().nullable(),
     cvUpdatedAt: z.string().nullable(),
     lastFreshnessPromptAt: z.string().nullable(),
     lastStillThereCheckAt: z.string().nullable(),

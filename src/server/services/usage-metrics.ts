@@ -254,6 +254,7 @@ export const EVENT_LABEL: Record<EventType, string> = {
   JOB_POSTING_PUBLISHED: 'İlan yayınlandı',
   JOB_POSTING_VIEWED: 'İlan görüntülendi',
   JOB_POSTING_SEARCH: 'İlan araması',
+  JOB_SEEKER_SEARCH: 'Aday araması',
 };
 
 /** Toplu rapor `.xlsx` olur; yalnız sayılar: kişi satırı, e-posta, ad ya da kimlik yoktur. Hücreler düz metin/sayıdır. */

@@ -14,7 +14,10 @@ export const LEGAL_PATHS = {
   PRIVACY_NOTICE: '/hukuki/aydinlatma',
   TERMS_OF_USE: '/hukuki/kullanim-sartlari',
   CROSS_BORDER_TRANSFER: '/hukuki/yurt-disi-aktarim',
+  JOB_SEEKER_VISIBILITY: '/hukuki/staj-arayan-gorunurlugu',
 } as const;
+/** "Staj arıyorum" rızası bu genel onay ekranında SORULMAZ: kendi ayar ekranında (anlamlı önizlemeyle) istenir (P2-06). */
+const SEPARATE_CONSENTS = ['JOB_SEEKER_VISIBILITY'] as const;
 export function ConsentForm({
   state,
   returnTo = null,
@@ -27,9 +30,12 @@ export function ConsentForm({
   const common = useTranslations('privacyScreens.common');
   const router = useRouter();
   const form = usePrivacyForm();
+  const documents = state.documents.filter(
+    (d) => !(SEPARATE_CONSENTS as readonly string[]).includes(d.documentType),
+  );
   const [choices, setChoices] = useState(() =>
     Object.fromEntries(
-      state.documents.map((d) => [
+      documents.map((d) => [
         d.documentType,
         d.lastDecision?.version === d.currentVersion && d.lastDecision.granted,
       ]),
@@ -43,13 +49,13 @@ export function ConsentForm({
       onSubmit={(e) => {
         e.preventDefault();
         if (form.busy) return;
-        const absent = state.documents
+        const absent = documents
           .filter((d) => d.required && !choices[d.documentType])
           .map((d) => d.documentType);
         setMissing(absent);
         if (absent.length) return;
         const input = form.parse(recordConsentsSchema, {
-          decisions: state.documents.map((d) => ({
+          decisions: documents.map((d) => ({
             documentType: d.documentType,
             version: d.currentVersion,
             granted: !!choices[d.documentType],
@@ -69,7 +75,7 @@ export function ConsentForm({
       <p className="rounded-control bg-warning-soft p-4 text-base text-on-warning-soft">
         {t('draft')}
       </p>
-      {state.documents.map((d) => (
+      {documents.map((d) => (
         <Card key={d.documentType} className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">{t(d.documentType)}</h2>
