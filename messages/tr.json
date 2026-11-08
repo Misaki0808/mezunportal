@@ -134,6 +134,14 @@
       "FAQ_REQUEST_CLOSED": "Bu soru için karar zaten verilmiş.",
       "FAQ_OWN_REQUEST": "Kendi sorduğun soruya cevap yazamazsın.",
       "FAQ_IDENTITY_LEAK": "Yayınlanacak metinde ad, e-posta ya da telefon var. Kimliği belli eden bilgileri çıkar.",
+      "JOB_POSTING_NOT_EDITABLE": "Bu ilan şu an düzenlenemez. Yalnız taslak ve reddedilmiş ilanlar düzenlenir.",
+      "JOB_POSTING_NOT_DRAFT": "Yalnız taslak ilan incelemeye gönderilir.",
+      "JOB_POSTING_INCOMPLETE": "İlanda eksik ya da hatalı alan var. Zorunlu alanları tamamlayıp tekrar dene.",
+      "JOB_POSTING_NOT_PENDING": "Bu ilan için karar zaten verilmiş ya da inceleme beklemiyor.",
+      "JOB_POSTING_NOT_OPEN": "Bu ilan artık açık değil.",
+      "JOB_POSTING_URL_INVALID": "Başvuru bağlantısı https:// ile başlayan, geçerli bir adres olmalı.",
+      "JOB_POSTING_DEADLINE_INVALID": "Son başvuru tarihi bugünden önce olamaz ve yayından en çok 60 gün sonrası olabilir.",
+      "JOB_POSTING_TARGET_INVALID": "Hedef bölümler en az bir, en çok on tane ve kendi üniversiten içinden olmalı.",
       "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin."
     }
   },
@@ -1615,6 +1623,7 @@
         "GRADUATION_DOCUMENT": "Mezun belgesi",
         "EXPERIENCE": "Deneyim",
         "FAQ_REQUEST": "SSS talebi",
+        "JOB_POSTING": "İlan",
         "POINT_ENTRY": "Puan kaydı",
         "POINT_RULE": "Puan kuralı",
         "SUSPICION_FLAG": "Şüphe kaydı",
@@ -1700,7 +1709,10 @@
         "FAQ_REQUESTED": "SSS talebi",
         "FAQ_PUBLISHED": "SSS yayınlandı",
         "CV_REVIEW_REQUESTED": "CV inceleme talebi",
-        "CONTACT_REQUESTED": "İletişim talebi"
+        "CONTACT_REQUESTED": "İletişim talebi",
+        "JOB_POSTING_PUBLISHED": "İlan yayınlandı",
+        "JOB_POSTING_VIEWED": "İlan görüntülendi",
+        "JOB_POSTING_SEARCH": "İlan araması"
       }
     }
   },
@@ -1817,6 +1829,10 @@
       "FAQ": {
         "label": "Sık sorulan sorular",
         "description": "SSS talebinin sonucu ve cevabının yayınlanması."
+      },
+      "JOB_POSTING": {
+        "label": "İlanlar",
+        "description": "İlanının onay, ret ya da süre dolumu sonucu."
       },
       "CV_REVIEW": {
         "label": "CV incelemeleri",
@@ -2159,6 +2175,7 @@
       "FAQ_QUESTION_PUBLISHED": "Soru yayınlandı",
       "FAQ_ANSWER_SELECTED": "Cevabın en iyi cevap seçildi",
       "FAQ_ANSWER_PARTICIPATION": "Soruya cevap verdin",
+      "JOB_POSTING_PUBLISHED": "İlanın yayınlandı",
       "CV_REVIEW_HELPFUL": "CV incelemen faydalı bulundu",
       "SESSION_ONLINE": "Çevrimiçi görüşme",
       "SESSION_IN_PERSON": "Yüz yüze görüşme"
@@ -2170,7 +2187,8 @@
     },
     "revoked": {
       "ADMIN_CANCEL": "Yönetici iptal etti",
-      "FRAUD_CONFIRMED": "Kuralları ihlal eden işlem olarak doğrulandı"
+      "FRAUD_CONFIRMED": "Kuralları ihlal eden işlem olarak doğrulandı",
+      "POSTING_WITHDRAWN": "İlan kesinleşmeden geri çekildi ya da kaldırıldı"
     },
     "admin": {
       "title": "Puan yönetimi",

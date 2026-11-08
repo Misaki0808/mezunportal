@@ -843,3 +843,16 @@ yalnız büyük alanda marka geçişi, `prefers-color-scheme` ile koyu tema; ba�
 metni `primary-soft` üstünde AA değil (soft zeminde `on-primary-soft`). Seçenekler: (a) yalnız İris + nötr — canlılık yok;
 (b) Mercan'ı ana renk yapmak — beyaz metinle AA sağlanamaz; (c) seçilen: İris ana, Mercan az kullanılan vurgu. Kontrast
 testi iki temayı da korur (`src/lib/contrast.test.ts`). Risk: ilk derleme ağa muhtaç (Google Fonts indirmesi).
+
+**Mezun staj/iş ilanları: sözleşme ve veri modeli (P2-04, kart 129).** Plan `docs/faz2-plan.md`, kararlar D19 (PM, 8 Kas). İlan yazarı doğrulanmış
+etkin üyelikli mezun/akademisyendir; moderasyon yazarın yazım anındaki bölümünün kapsamındadır (deneyimle aynı kalıp; `MODERATION_*`,
+hedef `JOB_POSTING`); görünürlük K-07 üniversite düzeyindedir, hedef bölümler süzgeç ve eşleştirme içindir. Seçenekler ve gerekçeler:
+(a) **Şikâyet:** plan "ReportTargetType genişler" diyordu, ama `Report` hedefe FK ile (Experience) bağlıdır; çok biçimli hedef için mevcut
+tabloyu daraltmak yerine ayrı `JobPostingReport` seçildi (ekleyici, SSS'nin deneyimi sokmamasıyla aynı mantık). (b) **Son tarih** takvim günüdür
+(`DATE`, İstanbul): ilan o günün sonuna kadar açıktır; "yayından en çok 60 gün" kuralı hem servis hem CHECK'tedir (yayın anı İstanbul gününe
+çevrilir; gün sınırı testli). (c) **Okuyucu çıktısında yazar adı yoktur** (yalnız `authorKind`); `CONTACT_REQUEST` ilanında iletişim talebi bağlantısı
+için `contactUserId` döner (D7), moderatör kuyruğunda görünen ad vardır. (d) **Puan:** `JOB_POSTING_PUBLISHED` 5 puan, 7 gün gecikmeli, ayda en çok
+3 ilan puan getirir (fazlası çarpan 0), kesinleşmeden geri çekilen/kaldırılan ilanın puanı `POSTING_WITHDRAWN` nedeniyle geri alınır; yeni enum
+değerleri (`PointAction`, `PointSourceType`, `PointRevokeReason`, `NotificationType`, `EventType`) PostgreSQL'de kaldırılamaz (geri alma notu
+migration'da). (e) `PENDING` ilan son günü geçerse `EXPIRED` olur (kuyrukta bekletilmez). Hız sınırı: 30 günde 5 gönderim. Bildirim, servis ve
+ekran ayrı kartlardadır (bu PR yalnız sözleşme, şema ve migration).

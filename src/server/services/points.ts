@@ -6,6 +6,7 @@ import {
   type ContributionOverview,
   type GetMyContributionInput,
   type PointAction,
+  type PointRevokeReason,
   type PointEntryView,
   type PointSourceType,
 } from '@/contracts/points';
@@ -462,7 +463,7 @@ const entryView = (row: {
   status: 'PENDING' | 'FINAL' | 'REVOKED';
   createdAt: Date;
   finalizesAt: Date | null;
-  revokedReason: 'ADMIN_CANCEL' | 'FRAUD_CONFIRMED' | null;
+  revokedReason: PointRevokeReason | null;
 }): PointEntryView => ({
   id: row.id,
   action: row.action,
