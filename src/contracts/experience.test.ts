@@ -17,6 +17,7 @@ import {
   REPORT_TARGET_TYPES,
   TERM_SEASONS,
   anonymousExperienceSchema,
+  namedExperienceSchema,
   experienceDetailSchema,
   experienceDraftTemplateSchema,
   experiencePageSchema,
@@ -179,6 +180,52 @@ describe('P1-07 sözleşmesi', () => {
         author: { id: 'public-id', displayName: 'Görünen Ad' },
       }).success,
     ).toBe(true);
+  });
+  it('anonim ve adlı çıktı alanları kesin izin listesidir: yeni bir alan (yazar adı dahil) bilinçli karar ister', () => {
+    // Bu liste değişirse anonimlik incelemesi yeniden yapılır (P1-07 · K-09).
+    const ANONYMOUS_OUTPUT_KEYS = [
+      'content',
+      'createdAt',
+      'departmentIdAtWrite',
+      'id',
+      'isAnonymous',
+      'moderationNote',
+      'publishedAt',
+      'status',
+      'updatedAt',
+    ];
+    expect(Object.keys(anonymousExperienceSchema.shape).sort()).toEqual(ANONYMOUS_OUTPUT_KEYS);
+    expect(Object.keys(namedExperienceSchema.shape).sort()).toEqual(
+      [...ANONYMOUS_OUTPUT_KEYS, 'author'].sort(),
+    );
+    expect(Object.keys(namedExperienceSchema.shape.author.shape).sort()).toEqual([
+      'displayName',
+      'id',
+    ]);
+  });
+  it('adlı çıktıda yazar nesnesi yalnız kimlik + görünen ad taşır (e-posta vb. reddedilir)', () => {
+    const named = {
+      ...anonymous,
+      isAnonymous: false,
+      author: { id: 'public-id', displayName: 'Görünen Ad' },
+    };
+    expect(experienceDetailSchema.safeParse(named).success).toBe(true);
+    for (const extra of [
+      { email: 'a@example.local' },
+      { phone: '+905550000000' },
+      { userId: 'x' },
+    ]) {
+      expect(
+        experienceDetailSchema.safeParse({ ...named, author: { ...named.author, ...extra } })
+          .success,
+      ).toBe(false);
+    }
+  });
+  it('sayfa boyu sınırları kararlı hata kodu döndürür', () => {
+    for (const limit of [0, 51, 1.5]) {
+      const result = listMyExperiencesSchema.safeParse({ limit });
+      expect(result.error?.issues[0]?.message).toBe('VALIDATION_INVALID');
+    }
   });
   it('taslak/kamuya açık çıktı ayrımı: yayınlanmış eksik içerik, sahte yayın tarihi ve ret notu geçmez', () => {
     expect(

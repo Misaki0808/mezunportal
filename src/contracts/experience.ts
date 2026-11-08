@@ -227,7 +227,12 @@ export const reportExperienceSchema = z.object({ experienceId: id, reason }).str
 export type ReportExperienceInput = z.input<typeof reportExperienceSchema>;
 const pageInput = {
   cursor: id.optional(),
-  limit: z.number({ error: INVALID }).int().min(1).max(50).default(20),
+  limit: z
+    .number({ error: INVALID })
+    .int({ error: INVALID })
+    .min(1, { error: INVALID })
+    .max(50, { error: INVALID })
+    .default(20),
 };
 export const listMyExperiencesSchema = z
   .object({ ...pageInput, status: z.enum(EXPERIENCE_STATUSES, { error: INVALID }).optional() })
