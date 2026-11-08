@@ -15,7 +15,7 @@ test('yönetici küçük grubu gizli görür ve aynı korumayla Excel indirir', 
   const department = await db.department.create({
     data: {
       facultyId: pilot.facultyId,
-      name: 'Sentetik metrik grubu',
+      name: `Sentetik metrik grubu ${randomUUID()}`,
       code: `metrics-${randomUUID()}`,
     },
   });
