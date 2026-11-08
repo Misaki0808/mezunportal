@@ -8,7 +8,10 @@ import { getLlm } from '../external/llm';
 import { getStorage } from '../external/storage';
 import { enqueueCvParse } from '../jobs/cv';
 import type { AuthFlowDeps } from '../services/auth-flow';
+import type { AdminUserDeps } from '../services/admin-users';
+
 import type { CvDeps } from '../services/cv-shared';
+
 import type { ReviewDeps } from '../services/graduation-document';
 
 /** Eylemlerin gerçek bağımlılıkları (tembel). Testler servisleri doğrudan, sahte bağımlılıkla çağırır. */
@@ -23,6 +26,11 @@ export function documentDeps(): ReviewDeps {
     secret: getAuthEnv().BETTER_AUTH_SECRET,
     email: getAuthEmailPort(),
   };
+}
+
+/** Yönetim paneli: yetki işlemin içinde yeniden yüklenir; yalnız veritabanı gerekir. */
+export function adminUserDeps(): AdminUserDeps {
+  return { db: getDb() };
 }
 
 /** CV ayrıştırma: sağlayıcı yoksa `llm: null` (özellik kapalı); iş yükü işlem içinde kuyruğa yazılır. */

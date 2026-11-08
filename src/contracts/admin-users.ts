@@ -333,6 +333,7 @@ export const ADMIN_USER_ACTION_ERRORS = {
     ...staffErrors,
     'VALIDATION_INVALID',
     'RESOURCE_NOT_FOUND',
+    'ADMIN_SELF_ACTION',
     'ADMIN_GRANT_EXISTS',
     ...reasonErrors,
   ],
