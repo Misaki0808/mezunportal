@@ -14,6 +14,7 @@ export const NOTIFICATION_TYPES = [
   'APPOINTMENT',
   'FAQ',
   'JOB_POSTING',
+  'REFERRAL',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 export const NOTIFICATION_CATALOG = {
@@ -29,6 +30,7 @@ export const NOTIFICATION_CATALOG = {
   APPOINTMENT: { mandatory: false },
   FAQ: { mandatory: false },
   JOB_POSTING: { mandatory: false },
+  REFERRAL: { mandatory: false },
 } as const satisfies Record<NotificationType, { mandatory: boolean }>;
 
 export const notificationPreferenceSchema = z

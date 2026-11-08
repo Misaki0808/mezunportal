@@ -890,3 +890,5 @@ düşer. Seçenekler: (a) tümünü engel bırakmak — yanlış alarm; (b) öne
 ayırt edilemez; (c) seçilen: kesmeyle ayrılan/bölünmüş/tam ad engel, geri kalanı onaylı uyarı. Bilinen sınır: kesmesiz yazılmış
 gerçek ad ("Ahmete sordum") artık engel değil uyarıdır; moderatör ad olduğunu ayırt edebilmelidir (ad moderatöre gösterilmez, yalnız
 metindeki sözcük). Moderatör ekranı (uyarı + onay düğmesi) #54 main'e girince bağlanır.
+
+**Referans kanıt zinciri (P2-03, PM kararı).** Mezun yalnız kendi onaylı iletişim talebi veya tamamlanmış görüşmesi bulunan öğrenciyi seçebilir; dosya/ekran görüntüsü alınmaz. Referans ve referansla kabul, öğrenci–mezun doğrulaması ardından kapsamlı yönetici kararıyla ilerler. Onaylanan referans 20, kabul 30 ek puandır; ikisi yönetici kararından 14 gün sonra kesinleşir ve bu sırada iptal edilebilir. Aynı ikilide aynı İstanbul ayında sonraki referanslar puan çarpanı 0 alır.

@@ -264,7 +264,10 @@
       "JOB_POSTING_DEADLINE_INVALID": "Son başvuru tarihi bugünden önce olamaz ve yayından en çok 60 gün sonrası olabilir.",
       "JOB_POSTING_TARGET_INVALID": "Hedef bölümler en az bir, en çok on tane ve kendi üniversiten içinden olmalı.",
       "FAQ_IDENTITY_WARNING": "Bu sözcükler bir katılımcının adıyla başlıyor: {matches}. Kişisel bilgi değilse onaylayıp yayımla.",
-      "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin."
+      "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin.",
+      "REFERRAL_NOT_ELIGIBLE": "Yalnız onaylı iletişim kurduğun veya tamamlanmış görüşmen olan öğrenciyi seçebilirsin.",
+      "REFERRAL_INVALID_STATE": "Referansın durumu bu işleme uygun değil.",
+      "REFERRAL_CANCEL_WINDOW_CLOSED": "Bu referansın iptal süresi doldu."
     }
   },
   "nav": {
@@ -1975,6 +1978,10 @@
       "CV_REVIEW": {
         "label": "CV incelemeleri",
         "description": "CV inceleme talepleri, yanıtları ve süre dolumu."
+      },
+      "REFERRAL": {
+        "label": "Referanslar",
+        "description": "Referans ve kabul sürecindeki kararlar."
       }
     },
     "email": {
@@ -2322,7 +2329,9 @@
       "JOB_POSTING_PUBLISHED": "İlanın yayınlandı",
       "CV_REVIEW_HELPFUL": "CV incelemen faydalı bulundu",
       "SESSION_ONLINE": "Çevrimiçi görüşme",
-      "SESSION_IN_PERSON": "Yüz yüze görüşme"
+      "SESSION_IN_PERSON": "Yüz yüze görüşme",
+      "REFERRAL_GIVEN": "Referans onaylandı",
+      "REFERRAL_ACCEPTED": "Referansla kabul onaylandı"
     },
     "status": {
       "PENDING": "Bekliyor",
@@ -2332,7 +2341,8 @@
     "revoked": {
       "ADMIN_CANCEL": "Yönetici iptal etti",
       "FRAUD_CONFIRMED": "Kuralları ihlal eden işlem olarak doğrulandı",
-      "POSTING_WITHDRAWN": "İlan kesinleşmeden geri çekildi ya da kaldırıldı"
+      "POSTING_WITHDRAWN": "İlan kesinleşmeden geri çekildi ya da kaldırıldı",
+      "REFERRAL_CANCELLED": "Referans geri çekildi"
     },
     "admin": {
       "title": "Puan yönetimi",
