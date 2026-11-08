@@ -24,7 +24,7 @@ import {
   suggestSimilarFaqs,
 } from './faq';
 import { listFaqModerationQueue, publishFaq, redirectFaq, rejectFaq } from './faq-moderation';
-import { runPointBackfill } from './points';
+import { awardForFaq, runPointBackfill } from './points';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -265,7 +265,7 @@ describe('benzer SSS gönderimden önce', () => {
 describe('mentor cevapları', () => {
   it('mentor açık talepleri soran kimliği olmadan görür; kendi cevabı dışını görmez; kapsam ve durum süzülür', async () => {
     const w = await world();
-    const { requestId, answerA } = await requestWithAnswers(w);
+    const { requestId, answerA, answerB } = await requestWithAnswers(w);
     const listA = await listFaqRequestsForMentor(deps, w.mentorA, {});
     expect(listA.items).toHaveLength(1);
     expect(listA.items[0]).toMatchObject({ id: requestId, question: QUESTION });
@@ -274,6 +274,11 @@ describe('mentor cevapları', () => {
     for (const secret of [w.student, NAMES.student, w.mentorB, NAMES.mentorB, 'Burak'])
       if (secret !== 'Burak') expect(text).not.toContain(secret);
     expect(listA.items[0]!.myAnswer!.body).not.toContain('Çoğu firma');
+    // her mentor yalnız KENDİ cevabını görür
+    const listB = await listFaqRequestsForMentor(deps, w.mentorB, {});
+    expect(listB.items[0]!.myAnswer!.id).toBe(answerB);
+    expect(listB.items[0]!.myAnswer!.body).toContain('Çoğu firma');
+    expect(listB.items[0]!.myAnswer!.body).not.toContain('staj komisyonuna');
     // cevaplanmamış süzgeci
     expect(
       (await listFaqRequestsForMentor(deps, w.mentorA, { onlyUnanswered: true })).items,
@@ -731,6 +736,16 @@ describe('puan geri doldurma, hesap silme ve veri dökümü', () => {
     const second = await runPointBackfill({ db, foundingUntil: null }, { since });
     expect(second.created).toBe(0);
     expect(await Promise.all(await snapshot())).toEqual(before);
+  });
+
+  it('yayınlanmamış (açık/reddedilmiş) talep puan üretmez; bilinmeyen talep yok sayılır', async () => {
+    const w = await world();
+    const r = await requestWithAnswers(w);
+    expect(await awardForFaq({ db }, r.requestId)).toBeNull();
+    await rejectFaq(deps, w.moderator, { requestId: r.requestId, reason: 'Tekrar niteliğinde' });
+    expect(await awardForFaq({ db }, r.requestId)).toBeNull();
+    expect(await awardForFaq({ db }, 'yok')).toBeNull();
+    expect(await pointsOf(w.student)).toEqual([]);
   });
 
   it('veri dökümü yalnız kendi soru/cevaplarını içerir', async () => {

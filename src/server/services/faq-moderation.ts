@@ -33,7 +33,7 @@ import {
 import { recordAdminAction } from './audit';
 import { emitEvent } from './event';
 import { stageNotification } from './notification-intent';
-import { awardForFaq, awardSafely } from './points';
+import { awardFaqInTx } from './points';
 
 /**
  * SSS moderasyonu (P1-17): kuyruk, yayın (düzenleyerek), ret, mentorluğa yönlendirme. Yetki işlemin içinde yeniden yüklenir
@@ -104,7 +104,7 @@ export async function listFaqModerationQueue(
 
 /**
  * Yayınlar: seçilen cevap bu talebe ait olmalı; moderatörün düzenlediği soru/cevap metni soran ve TÜM cevap verenlerin
- * adını, e-posta/telefon biçimini içeremez. Puanlar işlemden sonra yazılır (idempotent; kaçarsa günlük uzlaştırma tamamlar).
+ * adını, e-posta/telefon biçimini içeremez. Puanlar yayınla AYNI işlemde yazılır (idempotent).
  */
 export async function publishFaq(
   deps: AdminDeps,
@@ -164,10 +164,11 @@ export async function publishFaq(
           eventId: answer.id,
           path: '/hesap/sss',
         });
+    // Puanlar yayınla AYNI işlemde (docs/data.md); idempotent anahtar çift yazımı önler, uzlaştırma güvenlik ağıdır.
+    await awardFaqInTx(tx, request.id, now);
     asker = request.askerId;
     return publishFaqOutputSchema.parse({ faqItemId: item.id });
   }, TX_OPTIONS);
-  await awardSafely(() => awardForFaq({ db: deps.db, now: () => now }, parsed.requestId));
   if (asker) emitEvent(deps.db, asker, { type: 'FAQ_PUBLISHED', props: {} });
   return output;
 }

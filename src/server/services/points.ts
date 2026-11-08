@@ -254,48 +254,55 @@ export async function awardForCvReview(
 }
 
 /**
- * SSS yayını (P1-17) → soran 2 (`FAQ_QUESTION_PUBLISHED`), seçilen cevabın mentoru 5 (`FAQ_ANSWER_SELECTED`), seçilmeyen
+ * SSS yayını (P1-17; docs/data.md: yayın puanlarla birlikte tek işlemde) → soran 2 (`FAQ_QUESTION_PUBLISHED`), seçilen cevabın mentoru 5 (`FAQ_ANSWER_SELECTED`), seçilmeyen
  * her cevabın yazarı 1 (`FAQ_ANSWER_PARTICIPATION`). Puan YALNIZ yayında yazılır; hepsi idempotenttir (kaynak anahtarı:
  * soran için talep, mentor için cevap kimliği). Karşı taraf kaydedilmez: soran ve cevap verenler birbirini tanımaz.
  * Kullanıcılar sabit sırayla (kimlik) işlenir.
  */
-export async function awardForFaq(deps: PointDeps, requestId: string): Promise<AwardResult | null> {
-  const now = nowOf(deps);
-  return deps.db.$transaction(async (tx) => {
-    const row = await tx.faqRequest.findUnique({
-      where: { id: requestId },
-      select: {
-        status: true,
-        askerId: true,
-        item: { select: { publishedAt: true } },
-        answers: { select: { id: true, mentorId: true, isSelected: true } },
-      },
+export async function awardFaqInTx(
+  tx: Tx,
+  requestId: string,
+  now: Date,
+): Promise<AwardResult | null> {
+  const row = await tx.faqRequest.findUnique({
+    where: { id: requestId },
+    select: {
+      askerId: true,
+      item: { select: { publishedAt: true } },
+      answers: { select: { id: true, mentorId: true, isSelected: true } },
+    },
+  });
+  // Yayın = SSS kaydı vardır (talep durumu ve kayıt aynı işlemde yazılır).
+  if (!row || !row.item) return null;
+  const eventAt = row.item.publishedAt;
+  const awards: AwardInput[] = [];
+  if (row.askerId)
+    awards.push({
+      userId: row.askerId,
+      action: 'FAQ_QUESTION_PUBLISHED',
+      sourceType: 'FAQ_REQUEST',
+      sourceId: requestId,
+      eventAt,
     });
-    if (!row || row.status !== 'PUBLISHED' || !row.item) return null;
-    const eventAt = row.item.publishedAt;
-    const awards: AwardInput[] = [];
-    if (row.askerId)
+  for (const answer of row.answers)
+    if (answer.mentorId)
       awards.push({
-        userId: row.askerId,
-        action: 'FAQ_QUESTION_PUBLISHED',
-        sourceType: 'FAQ_REQUEST',
-        sourceId: requestId,
+        userId: answer.mentorId,
+        action: answer.isSelected ? 'FAQ_ANSWER_SELECTED' : 'FAQ_ANSWER_PARTICIPATION',
+        sourceType: 'FAQ_ANSWER',
+        sourceId: answer.id,
         eventAt,
       });
-    for (const answer of row.answers)
-      if (answer.mentorId)
-        awards.push({
-          userId: answer.mentorId,
-          action: answer.isSelected ? 'FAQ_ANSWER_SELECTED' : 'FAQ_ANSWER_PARTICIPATION',
-          sourceType: 'FAQ_ANSWER',
-          sourceId: answer.id,
-          eventAt,
-        });
-    awards.sort((a, b) => a.userId.localeCompare(b.userId));
-    let created = false;
-    for (const award of awards) created = (await awardPoint(tx, award, now)).created || created;
-    return { created, entryId: null, skipped: null };
-  }, TX_OPTIONS);
+  awards.sort((a, b) => a.userId.localeCompare(b.userId));
+  let created = false;
+  for (const award of awards) created = (await awardPoint(tx, award, now)).created || created;
+  return { created, entryId: null, skipped: null };
+}
+
+/** Uzlaştırma ve geri doldurma için bağımsız işlem; yayın anında `awardFaqInTx` yayınla AYNI işlemde çağrılır. */
+export async function awardForFaq(deps: PointDeps, requestId: string): Promise<AwardResult | null> {
+  const now = nowOf(deps);
+  return deps.db.$transaction((tx) => awardFaqInTx(tx, requestId, now), TX_OPTIONS);
 }
 
 /**
