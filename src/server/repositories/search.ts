@@ -27,7 +27,6 @@ export type SearchQuery = {
   sort: 'RELEVANCE' | 'NEWEST';
   page: number;
   pageSize: number;
-  now: Date;
 };
 
 export type SearchRow = {
@@ -44,9 +43,12 @@ export type SearchRow = {
   applicationChannel: string | null;
   snippet: string;
   publishedAt: Date;
-  /** Yazar yalnız adlı, yazarı geçerli deneyimlerde dolu. */
+  /** Yazar bilgisi yalnız ADLI deneyimde okunur (anonimde hiç okunmaz); görünürlük kuralı serviste. */
   authorId: string | null;
   authorName: string | null;
+  authorDeletedAt: Date | null;
+  authorBanned: boolean | null;
+  authorBanExpires: Date | null;
 };
 
 /** Yazım hatası eşiği (0–1): "Istnbul" → "istanbul". */
@@ -153,17 +155,17 @@ export async function searchExperienceRows(
              e."city", e."country", e."termYear", e."termSeason"::text AS "termSeason", e."durationWeeks",
              e."pay"::text AS "pay", e."applicationChannel"::text AS "applicationChannel",
              left(e."whatLearned", 220) AS "snippet", e."publishedAt",
-             CASE WHEN visible_author."id" IS NOT NULL THEN visible_author."id" END AS "authorId",
-             CASE WHEN visible_author."id" IS NOT NULL THEN visible_author."name" END AS "authorName",
+             named_author."id" AS "authorId", named_author."name" AS "authorName",
+             named_author."deletedAt" AS "authorDeletedAt", named_author."banned" AS "authorBanned",
+             named_author."banExpires" AS "authorBanExpires",
              count(*) OVER() AS "total"
       FROM "Experience" e
       JOIN "Department" d ON d."id" = e."departmentIdAtWrite"
       JOIN "Faculty" f ON f."id" = d."facultyId"
       LEFT JOIN LATERAL (
-        SELECT u."id", u."name" FROM "User" u
-        WHERE NOT e."isAnonymous" AND u."id" = e."authorId" AND u."deletedAt" IS NULL
-          AND NOT (u."banned" AND (u."banExpires" IS NULL OR u."banExpires" > ${query.now}))
-      ) visible_author ON TRUE
+        SELECT u."id", u."name", u."deletedAt", u."banned", u."banExpires" FROM "User" u
+        WHERE NOT e."isAnonymous" AND u."id" = e."authorId"
+      ) named_author ON TRUE
       WHERE ${where}
       ORDER BY ${rank} e."publishedAt" DESC, e."id" DESC
       LIMIT ${query.pageSize} OFFSET ${offset}`);
