@@ -49,7 +49,7 @@ export async function previewJobPostingContact(
   await consumeRateLimit(deps.db, RATE_LIMITS.contactPreview, userId, nowOf(deps));
   const target = await resolveContactAuthor(deps, userId, parsed.jobPostingId);
   // Olumsuz durumlarda da aynı sorgu akışını uygula (süre farkı kaba azaltılır; sabit süre garantisi değildir).
-  const fields = await requestableFieldsOf(deps.db, target?.authorId ?? userId);
+  const fields = await requestableFieldsOf(deps.db, target?.authorId ?? userId, nowOf(deps));
   if (!target || target.authorId === userId || fields.length === 0)
     return JOB_POSTING_CONTACT_NOT_REQUESTABLE;
   return jobPostingContactPreviewSchema.parse({

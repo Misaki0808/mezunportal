@@ -392,7 +392,7 @@ export async function previewSeekerContact(
     await consumeRateLimit(tx, RATE_LIMITS.contactPreview, userId, now);
     const row = await findSeekerByRef(tx, queryFor(userId, universityIds, now), parsed.ref);
     // Olumsuz durumlarda da aynı sorgu akışı (kaba süre farkı azaltılır; sabit süre garantisi değildir).
-    const fields = await requestableFieldsOf(tx, row?.userId ?? userId);
+    const fields = await requestableFieldsOf(tx, row?.userId ?? userId, now);
     if (!row || fields.length === 0) return SEEKER_CONTACT_NOT_REQUESTABLE;
     return seekerContactPreviewSchema.parse({
       canRequest: true,

@@ -857,4 +857,7 @@ it('R2 süresi dolan askı tam sınır anında aday görünürlüğünü geri a�
   expect(await previewSeekerContact(fixed, alumnus, { ref: student.ref! })).toMatchObject({
     canRequest: true,
   });
+  expect(
+    await requestSeekerContact(fixed, alumnus, { ref: student.ref!, fields: ['EMAIL'] }),
+  ).toMatchObject({ status: 'PENDING' });
 });

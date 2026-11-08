@@ -16,6 +16,7 @@ import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { codedConflict, codedNotFound, codedValidation } from '@/lib/errors';
 
 import { effectiveLevel, fieldAccess } from '../rules/visibility';
+import { accountStatusOf } from '../rules/authorization';
 import { loadVisibilityLevels } from './privacy';
 import { emitEvent } from './event';
 import { stageNotification } from './notification-intent';
@@ -55,9 +56,10 @@ export async function sendContactRequest(
 
   const target = await db.user.findUnique({
     where: { id: input.targetUserId },
-    select: { id: true, deletedAt: true, banned: true },
+    select: { id: true, deletedAt: true, banned: true, banExpires: true },
   });
-  if (!target || target.deletedAt || target.banned) throw codedNotFound('RESOURCE_NOT_FOUND');
+  if (!target || accountStatusOf(target, now) !== 'ACTIVE')
+    throw codedNotFound('RESOURCE_NOT_FOUND');
 
   // Yalnız “onaylı talebe açık” alanlar istenebilir: PRIVATE kimseye açılmaz, MEMBERS zaten görünür.
   const levels = (await loadVisibilityLevels(db, [target.id])).get(target.id) ?? new Map();
@@ -116,13 +118,13 @@ export async function previewContactTarget(
   await consumeRateLimit(db, RATE_LIMITS.contactPreview, requesterId, now);
   const target = await db.user.findUnique({
     where: { id: input.targetUserId },
-    select: { id: true, name: true, deletedAt: true, banned: true },
+    select: { id: true, name: true, deletedAt: true, banned: true, banExpires: true },
   });
   // Olumsuz durumlarda aynı sorgu akışını uygula; erken çıkışlar kullanıcı varlığı hakkında
   // gözlenebilir süre farkı oluşturabilir. Bu, sabit süre garantisi değil, kaba farkı azaltır.
   const levels =
     (await loadVisibilityLevels(db, [input.targetUserId])).get(input.targetUserId) ?? new Map();
-  if (input.targetUserId === requesterId || !target || target.deletedAt || target.banned)
+  if (input.targetUserId === requesterId || !target || accountStatusOf(target, now) !== 'ACTIVE')
     return CONTACT_TARGET_NOT_REQUESTABLE;
   const requestableFields = CONTACT_FIELDS.filter(
     (field) => effectiveLevel(field, levels) === 'ON_APPROVED_REQUEST',
@@ -336,12 +338,13 @@ export async function listContactRequests(
 export async function requestableFieldsOf(
   db: Pick<PrismaClient, 'user' | 'fieldVisibility'>,
   targetUserId: string,
+  now: Date = new Date(),
 ): Promise<ContactField[]> {
   const target = await db.user.findUnique({
     where: { id: targetUserId },
-    select: { id: true, deletedAt: true, banned: true },
+    select: { id: true, deletedAt: true, banned: true, banExpires: true },
   });
   const levels = (await loadVisibilityLevels(db, [targetUserId])).get(targetUserId) ?? new Map();
-  if (!target || target.deletedAt || target.banned) return [];
+  if (!target || accountStatusOf(target, now) !== 'ACTIVE') return [];
   return CONTACT_FIELDS.filter((field) => effectiveLevel(field, levels) === 'ON_APPROVED_REQUEST');
 }
