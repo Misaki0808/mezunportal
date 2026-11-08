@@ -305,6 +305,8 @@ export const searchJobPostingsSchema = z
     departmentId: deptId.optional(),
     kind: z.enum(JOB_POSTING_KINDS, { error: INVALID }).optional(),
     companyId: adminId.optional(),
+    /** Konum metni (içerir; tr-TR küçük harf + ASCII katlama: "İstanbul" = "istanbul" = "ISTANBUL"). */
+    location: text(JOB_POSTING_LOCATION_MIN, JOB_POSTING_LOCATION_MAX).optional(),
     remote: z.boolean({ error: INVALID }).optional(),
     /** Son başvuruya en çok bu kadar gün kalanlar ("son günler"). */
     withinDays: z
@@ -352,6 +354,40 @@ export const jobPostingPageSchema = z
   })
   .strict();
 export type JobPostingPage = z.infer<typeof jobPostingPageSchema>;
+
+/**
+ * Süzgeç seçenekleri (ekran açılır listeleri için): arayanın üniversitesindeki YAYINDA ve süresi dolmamış ilanlarda geçen kurumlar,
+ * hedef bölümler ve konumlar (K-07 kapsamı; ilan sayısıyla). Kişi verisi yoktur. Liste uzunlukları sınırlıdır (en çok sayıdan başlar).
+ */
+export const JOB_POSTING_FILTER_OPTIONS_LIMIT = 100;
+export const getJobPostingFilterOptionsSchema = z.object({}).strict();
+export type GetJobPostingFilterOptionsInput = z.input<typeof getJobPostingFilterOptionsSchema>;
+export const jobPostingFilterOptionsSchema = z
+  .object({
+    organizations: z
+      .array(
+        z
+          .object({
+            companyId: z.string().nullable(),
+            name: z.string(),
+            count: z.number().int().min(1),
+          })
+          .strict(),
+      )
+      .max(JOB_POSTING_FILTER_OPTIONS_LIMIT),
+    departments: z
+      .array(
+        z.object({ id: z.string(), name: z.string(), count: z.number().int().min(1) }).strict(),
+      )
+      .max(JOB_POSTING_FILTER_OPTIONS_LIMIT),
+    locations: z
+      .array(z.object({ name: z.string(), count: z.number().int().min(1) }).strict())
+      .max(JOB_POSTING_FILTER_OPTIONS_LIMIT),
+    /** Uzaktan çalışılabilen ilan sayısı ("Uzaktan" süzgeci için). */
+    remoteCount: z.number().int().min(0),
+  })
+  .strict();
+export type JobPostingFilterOptions = z.infer<typeof jobPostingFilterOptionsSchema>;
 
 export const getJobPostingSchema = z.object({ id: postingId }).strict();
 export type GetJobPostingInput = z.input<typeof getJobPostingSchema>;
@@ -474,6 +510,7 @@ export const JOB_POSTING_ACTION_ACCESS = {
   closeJobPosting: 'AUTHOR',
   listMyJobPostings: 'AUTHOR',
   searchJobPostings: 'VERIFIED_MEMBER',
+  getJobPostingFilterOptions: 'VERIFIED_MEMBER',
   getJobPosting: 'VERIFIED_MEMBER',
   reportJobPosting: 'VERIFIED_MEMBER',
   listJobPostingModerationQueue: 'MODERATOR',
@@ -521,6 +558,7 @@ export const JOB_POSTING_ACTION_ERRORS = {
   ],
   listMyJobPostings: [...AUTH_ERRORS, 'VALIDATION_INVALID'],
   searchJobPostings: [...AUTH_ERRORS, 'VALIDATION_INVALID'],
+  getJobPostingFilterOptions: [...AUTH_ERRORS],
   getJobPosting: [...AUTH_ERRORS, 'VALIDATION_INVALID', 'RESOURCE_NOT_FOUND'],
   reportJobPosting: [
     ...AUTH_ERRORS,
