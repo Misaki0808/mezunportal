@@ -133,8 +133,19 @@ export const revealedContactSchema = z
 export const contactRequestItemSchema = z
   .object({
     id: z.string(),
-    /** Karşı taraf: gelen kutusunda talep eden, giden kutusunda hedef. Yalnız kimlik + ad. */
-    counterpart: z.object({ userId: z.string(), name: z.string() }).strict(),
+    /**
+     * Karşı taraf: gelen kutusunda talep eden, giden kutusunda hedef. Yalnız kimlik + ad. `null`: İLAN kaynaklı giden talepte hedef
+     * `APPROVED` olana dek (ve onay geri alındıktan/ret/geri çekmeden sonra) kimlik ve ad AÇILMAZ (D7); o durumda `origin` doludur.
+     */
+    counterpart: z.object({ userId: z.string(), name: z.string() }).strict().nullable(),
+    /**
+     * İlan kaynaklı talep (P2-04): talep anındaki ilan başlığı ve kurum (ilan silinse/kapansa da kalır). Gelen kutusunda ilan sahibi de
+     * hangi ilan için istendiğini görür. Doğrudan profil talebinde `null`.
+     */
+    origin: z
+      .object({ kind: z.literal('JOB_POSTING'), title: z.string(), organization: z.string() })
+      .strict()
+      .nullable(),
     fields: z.array(z.enum(CONTACT_FIELDS)),
     message: z.string().nullable(),
     status: z.enum(CONTACT_REQUEST_STATUSES),
@@ -144,6 +155,9 @@ export const contactRequestItemSchema = z
     revealed: revealedContactSchema.nullable(),
   })
   .superRefine((item, ctx) => {
+    // D7: karşı taraf kimliği yalnız ilan kaynaklı OLMAYAN talepte ya da ilan kaynaklı talep `APPROVED` iken açılır.
+    if (item.counterpart === null && (item.origin === null || item.status === 'APPROVED'))
+      ctx.addIssue({ code: 'custom', path: ['counterpart'], message: 'VALIDATION_INVALID' });
     if (item.revealed === null) return;
     if (
       item.status !== 'APPROVED' ||

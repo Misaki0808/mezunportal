@@ -116,6 +116,10 @@ kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
   `Appointment.expiresAt` yalnız `REQUESTED` için anlamlıdır (D11); `calendarFailedAt` doluysa mentor linki elle ekler.
 - `FaqRequest` karar alanları durumla tutarlıdır (CHECK); bir talepte en çok bir seçilmiş `FaqAnswer` (kısmi benzersiz indeks); talep
   başına tek `FaqItem`. Arama sütunları `Experience` ile aynı kuralla üretilir (migration bekçisi izin listesinde).
+- `JobPosting` (P2-04; ilan): `departmentIdAtWrite` moderasyon kapsamıdır, hedef bölümler `JobPostingDepartment`'tadır. Durum ↔ karar/yayın/bitiş
+  alanları, DRAFT dışında tam içerik, https-yalnız başvuru bağlantısı ve "son başvuru yayın gününden (İstanbul) en çok 60 gün sonra" CHECK'lerle
+  zorlanır; aynı kullanıcı/ilan için tek AÇIK `JobPostingReport` vardır (kısmi benzersiz indeks). Arama sütunları `Experience` ile aynı kuralla
+  üretilir (migration bekçisi izin listesinde). Puan: `JOB_POSTING_PUBLISHED` (5 puan, 7 gün gecikmeli, ayda 3 ilan).
 - `PointEntry` (userId, action, sourceType, sourceId) benzersizdir; aynı olay iki kez puan
   üretemez.
   Puan = taban × çarpan / 100 (CHECK); durum alanları tutarlıdır (PENDING → `finalizesAt`, REVOKED → neden + an; CHECK).

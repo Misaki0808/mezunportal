@@ -251,6 +251,9 @@ export const EVENT_LABEL: Record<EventType, string> = {
   FAQ_PUBLISHED: 'SSS yayınlandı',
   CV_REVIEW_REQUESTED: 'CV inceleme talebi',
   CONTACT_REQUESTED: 'İletişim talebi',
+  JOB_POSTING_PUBLISHED: 'İlan yayınlandı',
+  JOB_POSTING_VIEWED: 'İlan görüntülendi',
+  JOB_POSTING_SEARCH: 'İlan araması',
 };
 
 /** Toplu rapor `.xlsx` olur; yalnız sayılar: kişi satırı, e-posta, ad ya da kimlik yoktur. Hücreler düz metin/sayıdır. */

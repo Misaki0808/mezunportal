@@ -154,6 +154,14 @@ export async function deleteAccount(
       data: { publishedById: null },
     });
 
+    // İlanlar (P2-04): yazdığı ilanlar (hedef bölümleri ve şikâyetleriyle) tamamen silinir; ilan metni kişiye ait içeriktir ve
+    // yazarsız yayında kalmaz. Raportör bağı (şikâyet satırı) `SET NULL` ile kopar; moderatör/kaldıran bağı kopar.
+    await tx.jobPosting.deleteMany({ where: { authorId: userId } });
+    await tx.jobPostingReport.updateMany({
+      where: { reporterId: userId },
+      data: { reporterId: null },
+    });
+
     // Katkı puanı (P1-16): kişiye ait puan kayıtları, etiketler ve şüphe işaretleri silinir; başkalarının kayıtlarındaki
     // karşı taraf bağı kopar (kayıt ve puan kalır). Önce etiket: kaynak kayıt silinmeden bağ düşer.
     await tx.userBadge.deleteMany({ where: { userId } });

@@ -20,7 +20,12 @@ describe('puan sözleşmesi', () => {
     expect(d.CV_REVIEW_HELPFUL.points).toBeLessThan(d.SESSION_ONLINE.points);
     expect(d.SESSION_ONLINE.points).toBeLessThan(d.SESSION_IN_PERSON.points);
     expect(d.SESSION_IN_PERSON.delayDays).toBe(7);
-    expect(POINT_ACTIONS.filter((a) => d[a].delayDays > 0)).toEqual(['SESSION_IN_PERSON']);
+    expect(POINT_ACTIONS.filter((a) => d[a].delayDays > 0)).toEqual([
+      'SESSION_IN_PERSON',
+      'JOB_POSTING_PUBLISHED',
+    ]);
+    // İlan (P2-04, PM kararı): 5 puan, yayından 7 gün sonra kesinleşir.
+    expect(d.JOB_POSTING_PUBLISHED).toEqual({ points: 5, delayDays: 7 });
   });
 
   it('girdi şemaları strict: bilinmeyen alan ve aralık dışı değer reddedilir', () => {

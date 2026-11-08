@@ -192,7 +192,10 @@ export const exportedContactRequestSchema = z
   .object({
     id: z.string(),
     requesterId: z.string(),
-    targetId: z.string(),
+    /** İlan kaynaklı ve `APPROVED` olmayan GİDEN talepte `null` (D7: hedef kimliği onaydan önce açılmaz). */
+    targetId: z.string().nullable(),
+    /** İlan kaynaklı talepte talep anındaki ilan başlığı ve kurum; doğrudan talepte `null`. */
+    origin: z.object({ title: z.string(), organization: z.string() }).strict().nullable(),
     fields: z.array(z.enum(CONTACT_FIELDS)),
     message: z.string().nullable(),
     status: z.enum(CONTACT_REQUEST_STATUSES),
@@ -365,6 +368,27 @@ export const dataExportSchema = z.object({
       ),
     })
     .strict(),
+  /** İlanlar (P2-04): yalnız kendi yazdığın ilanlar (değer kümeleri `contracts/job-postings` ile aynıdır; döngüsel içe aktarma olmasın diye burada yazılıdır, test eşitliği korur). Moderatör, şikâyet eden ve başka kullanıcıya ait alan yok. */
+  jobPostings: z.array(
+    z
+      .object({
+        id: z.string(),
+        kind: z.enum(['INTERNSHIP', 'JOB']),
+        title: z.string().nullable(),
+        organizationName: z.string().nullable(),
+        location: z.string().nullable(),
+        isRemote: z.boolean(),
+        description: z.string().nullable(),
+        applyMethod: z.enum(['URL', 'CONTACT_REQUEST']).nullable(),
+        applyUrl: z.string().nullable(),
+        deadlineOn: z.string().nullable(),
+        status: z.enum(['DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED', 'EXPIRED', 'CLOSED']),
+        moderationNote: z.string().nullable(),
+        createdAt: z.string(),
+        publishedAt: z.string().nullable(),
+      })
+      .strict(),
+  ),
   /** Katkı puanı (P1-16): kaynak içerik ve karşı taraf kimliği YOK (anonim deneyim bağı ve üçüncü kişi sızmaz). */
   contribution: z
     .object({
