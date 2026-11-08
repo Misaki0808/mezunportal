@@ -37,6 +37,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
   const [notice, setNotice] = useState(false);
   const [pending, setPending] = useState(false);
   const locked = useRef(false);
+  const reasonInput = useRef<HTMLTextAreaElement>(null);
 
   async function loadMore() {
     if (!cursor || locked.current) return;
@@ -81,6 +82,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
           ? 'AUDIT_REASON_REQUIRED'
           : 'AUDIT_REASON_INVALID',
       );
+      reasonInput.current?.focus();
       return;
     }
     locked.current = true;
@@ -92,8 +94,10 @@ export function ReviewQueue({ initial, list, review }: Props) {
         setSelection(undefined);
         setReason('');
         setNotice(true);
-      } else if (result.fieldErrors?.reason) setReasonError(result.fieldErrors.reason);
-      else setError(result.errorCode);
+      } else if (result.fieldErrors?.reason) {
+        setReasonError(result.fieldErrors.reason);
+        reasonInput.current?.focus();
+      } else setError(result.errorCode);
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -153,7 +157,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
                   }).format(new Date(item.submittedAt))}
                 </time>
               </div>
-              <div className="mt-5 flex flex-wrap gap-3">
+              <div className="mt-5 flex flex-col gap-3">
                 <a
                   href={graduationDocumentFileHref(item.id)}
                   target="_blank"
@@ -162,24 +166,25 @@ export function ReviewQueue({ initial, list, review }: Props) {
                 >
                   {t('view')}
                 </a>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setNotice(false);
-                    setSelection({ id: item.id, decision: 'APPROVE' });
-                  }}
-                >
-                  {t('approve')}
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    setNotice(false);
-                    setSelection({ id: item.id, decision: 'REJECT' });
-                  }}
-                >
-                  {t('reject')}
-                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    onClick={() => {
+                      setNotice(false);
+                      setSelection({ id: item.id, decision: 'APPROVE' });
+                    }}
+                  >
+                    {t('approve')}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setNotice(false);
+                      setSelection({ id: item.id, decision: 'REJECT' });
+                    }}
+                  >
+                    {t('reject')}
+                  </Button>
+                </div>
               </div>
             </li>
           ))}
@@ -216,6 +221,13 @@ export function ReviewQueue({ initial, list, review }: Props) {
           </>
         }
       >
+        {selection?.decision === 'APPROVE' && (
+          <p className="text-base">
+            {t('applicant', {
+              name: items.find((item) => item.id === selection.id)?.applicantName ?? '',
+            })}
+          </p>
+        )}
         {selection?.decision === 'REJECT' && (
           <Field
             className="[&_p]:text-base"
@@ -226,6 +238,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
             {(control) => (
               <Textarea
                 {...control}
+                ref={reasonInput}
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
               />

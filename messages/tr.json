@@ -91,7 +91,8 @@
       "appointments": "Randevular",
       "profile": "Hesabım"
     },
-    "admin": "Yönetim"
+    "admin": "Yönetim",
+    "signIn": "Giriş yap"
   },
   "ui": {
     "button": {
@@ -269,12 +270,17 @@
     "emailChange": {
       "eyebrow": "HESAP GÜVENLİĞİ",
       "title": "E-posta adresini değiştir",
-      "description": "Yeni adresini doğrulamak için sana bir bağlantı göndereceğiz.",
+      "description": "Önce mevcut adresini, ardından yeni adresini doğrulayacaksın.",
       "label": "Yeni e-posta adresi",
       "submit": "Doğrulama bağlantısı gönder",
       "sending": "Gönderiliyor…",
       "successTitle": "E-postanı kontrol et",
-      "success": "Yeni adresine gönderilen bağlantıyı kontrol et."
+      "success": "Önce şu anki adresine gelen bağlantıyla değişikliği onayla. Ardından yeni adresine gelen bağlantıyı doğrula.",
+      "back": "Hesabıma dön",
+      "oldVerifiedTitle": "Mevcut adresin doğrulandı",
+      "oldVerifiedDescription": "Şimdi yeni adresine gelen bağlantıyı açarak değişikliği tamamla.",
+      "completeTitle": "E-posta adresin güncellendi",
+      "completeDescription": "Yeni adresinle giriş yapabilirsin."
     },
     "signOut": {
       "title": "Çıkış yap",
@@ -341,7 +347,8 @@
       "cancel": "Vazgeç",
       "saving": "Kaydediliyor…",
       "next": "Sonraki başvurular",
-      "success": "Kararın kaydedildi."
+      "success": "Kararın kaydedildi.",
+      "applicant": "{name} için gönderilen başvuruyu onaylamak üzeresin."
     },
     "signIn": {
       "eyebrow": "MEZUNPORTAL’A HOŞ GELDİN",
@@ -353,7 +360,8 @@
       "divider": "veya",
       "linkedin": "LinkedIn ile devam et",
       "redirecting": "Yönlendiriliyor…",
-      "emailHint": "Öğrenci veya akademisyensen üniversite adresini, mezunsan kişisel e-posta adresini kullan."
+      "emailHint": "Öğrenci veya akademisyensen üniversite adresini, mezunsan kişisel e-posta adresini kullan.",
+      "continueTitle": "Devam etmek için giriş yap"
     },
     "membership": {
       "eyebrow": "ÜYELİK DOĞRULAMA",
@@ -367,7 +375,10 @@
       "success": "Üyeliğin doğrulandı.",
       "status": "Durumu gör",
       "emptyTitle": "Seçilebilir bölüm bulunamadı",
-      "emptyDescription": "Bölüm bilgisi için yöneticinle iletişime geç."
+      "emptyDescription": "Bölüm bilgisi için yöneticinle iletişime geç.",
+      "departmentError": "Devam etmek için bölümünü seç.",
+      "yearError": "Giriş yılını {min} ile {max} arasında yaz.",
+      "successTitle": "Doğrulama tamamlandı"
     },
     "account": {
       "eyebrow": "HESABIM",
@@ -380,12 +391,18 @@
       "signOut": "Çıkış yap",
       "signOutDescription": "Bu cihazdaki oturumunu kapat.",
       "admin": "Yönetim",
-      "adminDescription": "Mezun belgesi başvurularını incele."
+      "adminDescription": "Mezun belgesi başvurularını incele.",
+      "profile": "Profilim / Başlangıç adımları",
+      "profileDescription": "İlgi alanlarını, hedeflerini ve tercihlerini tamamla."
     },
     "home": {
       "verificationTitle": "Doğrulamanı tamamla",
       "verificationDescription": "Üyeliğini doğrulayarak devam et.",
       "verificationAction": "Doğrulamaya git",
+      "signIn": "Giriş yap",
+      "reviewTitle": "Belgen inceleniyor",
+      "reviewDescription": "Başvurunu incelemeye aldık. Sonucu buradan takip edebilirsin.",
+      "reviewAction": "Durumu gör",
       "onboardingTitle": "Profilini tamamla",
       "onboardingDescription": "İlgilerini ve hedeflerini seçerek başlayabilirsin.",
       "onboardingAction": "Başlangıca devam et"
@@ -657,7 +674,12 @@
       "visibility": "Gizlilik ayarları",
       "contacts": "İletişim talepleri",
       "export": "Verilerimi indir",
-      "delete": "Hesabımı sil"
+      "delete": "Hesabımı sil",
+      "consentDescription": "Metinleri ve izinlerini yönet.",
+      "visibilityDescription": "Bilgilerini kimlerin görebileceğini seç.",
+      "contactsDescription": "Gelen ve gönderilen talepleri gör.",
+      "exportDescription": "Hesap verilerinin bir kopyasını indir.",
+      "deleteDescription": "Hesabını ve kişisel verilerini sil."
     },
     "consent": {
       "title": "Başlamadan önce, haklarını bil",
@@ -679,7 +701,8 @@
       "requiredError": "Devam etmek için bu metni onayla.",
       "PRIVACY_NOTICE": "Aydınlatma metni",
       "TERMS_OF_USE": "Kullanım şartları",
-      "CROSS_BORDER_TRANSFER": "Yurt dışına aktarım açık rızası"
+      "CROSS_BORDER_TRANSFER": "Yurt dışına aktarım açık rızası",
+      "updated": "Güncellendi"
     },
     "visibility": {
       "title": "İletişim bilgilerin, senin kararın",
@@ -688,7 +711,9 @@
       "PRIVATE": "Yalnız ben",
       "ON_APPROVED_REQUEST": "Talep ve onayla",
       "MEMBERS": "Doğrulanmış üyeler",
-      "updated": "{field} görünürlüğü kaydedildi."
+      "updated": "{field} görünürlüğü kaydedildi.",
+      "unsaved": "Kaydedilmemiş değişikliklerin var. Ayrılmadan önce kaydet.",
+      "partialSave": "Bazı değişiklikler kaydedildi. Kalanları yeniden kaydet."
     },
     "fields": {
       "EMAIL": "E-posta",
@@ -730,7 +755,13 @@
       "sent": "Talebin gönderildi. Yanıtı Gönderilen kutusundan izleyebilirsin.",
       "sendDone": "Taleplerime git",
       "notePlaceholder": "Örneğin, staj deneyimin hakkında danışmak istiyorum.",
-      "requestableHelp": "Bir alan zaten üyelere açıksa veya sahibi paylaşımı kapattıysa o alan için talep gönderilemez."
+      "requestableHelp": "Bir alan zaten üyelere açıksa veya sahibi paylaşımı kapattıysa o alan için talep gönderilemez.",
+      "unavailableFields": "{fields} paylaşılmadı veya bu bilgi henüz eklenmemiş.",
+      "sendTitleTo": "{name} ile iletişim kur",
+      "targetUnavailable": "İletişim talebi gönderilemiyor",
+      "targetUnavailableDescription": "Bu kişiye şu anda iletişim talebi gönderemezsin.",
+      "targetBack": "Taleplerime dön",
+      "fieldUnavailable": "Bu alan için talep gönderilemiyor."
     },
     "delete": {
       "title": "Hesabını silmeden önce",
@@ -755,14 +786,15 @@
       "button": "Hesabımı sil",
       "deleted": "Hesabın silindi",
       "deletedDescription": "Oturumların kapatıldı ve kişisel verilerin temizlendi.",
-      "home": "Ana sayfaya dön"
+      "home": "Ana sayfaya dön",
+      "emailMismatch": "Yazdığın e-posta hesabındaki adresle eşleşmiyor."
     },
     "export": {
       "title": "Verilerinin bir kopyası sende olsun",
-      "description": "Hesabına ait bilgileri JSON dosyası olarak indir. Bu dosya kişisel veri içerir; güvenli bir yerde sakla.",
+      "description": "Hesabına ait bilgilerin bir kopyasını indir. Bu dosya kişisel veri içerir; güvenli bir yerde sakla.",
       "includes": "Dosyada neler var?",
       "details": "Profil bilgilerin, üyeliklerin, onayların, görünürlük seçimlerin ve iletişim taleplerin. Karşı tarafın gizli iletişim bilgileri bu döküme girmez.",
-      "download": "JSON dosyamı indir",
+      "download": "Verilerimi indir",
       "downloading": "Dosyan hazırlanıyor…",
       "done": "Veri dosyan indirilmeye hazır.",
       "fileName": "mezunportal-verilerim.json"
@@ -929,7 +961,8 @@
       "GOALS": "Hedefler",
       "MENTOR_PREFERENCE": "Mentorluk tercihi",
       "VISIBILITY": "Gizlilik tercihleri"
-    }
+    },
+    "back": "Geri"
   },
   "admin": {
     "eyebrow": "YÖNETİM",
