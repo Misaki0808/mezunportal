@@ -3,6 +3,7 @@ import { PgBoss } from 'pg-boss';
 import { getEnv } from '@/lib/env';
 import { getDb } from '../db';
 import { getStorage } from '../external/storage';
+import { relayPendingNotifications } from './notification-intent-worker';
 import { purgeFiles } from '../services/files-purge';
 import { scheduleFeedbackPrompts } from './feedback-task';
 import { alumniStillThere, profileFreshness, studentEmailMigration } from './notification-tasks';
@@ -21,6 +22,7 @@ export async function createNotificationRuntime() {
     'profile.freshness': () => profileFreshness(getDb()),
     'alumni.stillThere': () => alumniStillThere(getDb()),
     'student.emailMigration': () => studentEmailMigration(getDb()),
+    'notification.relay': () => relayPendingNotifications(),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
     'appointment.feedback': () => scheduleFeedbackPrompts(getDb()),
   };
@@ -33,7 +35,7 @@ export async function createNotificationRuntime() {
       });
       await boss.schedule(
         name,
-        name === 'appointment.feedback' ? '* * * * *' : '0 3 * * *',
+        ['notification.relay', 'appointment.feedback'].includes(name) ? '* * * * *' : '0 3 * * *',
         {},
         { tz: 'Europe/Istanbul', missed: 'once' },
       );

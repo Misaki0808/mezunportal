@@ -332,6 +332,52 @@ describe('slotlar', () => {
 });
 
 // =============================================================================================
+describe('bildirim ve hesap silme kilit sırası', () => {
+  it('karşı taraf silinirken yanıt kullanıcı kilidinde bekler ve randevuyu kilitlemez', async () => {
+    const h = harness(),
+      mentor = await mentorWith(),
+      student = await person();
+    const request = await ask(h, student, mentor, NEXT_WED_10);
+    const locked = Promise.withResolvers<void>(),
+      release = Promise.withResolvers<void>();
+    const deletion = db.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${student} FOR UPDATE`;
+        locked.resolve();
+        await release.promise;
+        await tx.appointment.update({
+          where: { id: request.id },
+          data: { status: 'CANCELLED', cancelledBySystem: true },
+        });
+      },
+      { timeout: 15000 },
+    );
+    await locked.promise;
+    const response = respondAppointment(h.deps, mentor, {
+      appointmentId: request.id,
+      decision: 'CONFIRM',
+    });
+    let waiting = false;
+    try {
+      for (let i = 0; i < 100; i++) {
+        const rows = await db.$queryRaw<
+          { waiting: boolean }[]
+        >`SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND pid <> pg_backend_pid() AND wait_event_type='Lock' AND query LIKE '%FROM "User"%' AND query LIKE '%FOR SHARE%') AS waiting`;
+        if (rows[0]?.waiting) {
+          waiting = true;
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+    } finally {
+      release.resolve();
+    }
+    expect(waiting).toBe(true);
+    await expect(deletion).resolves.toBeUndefined();
+    await expect(response).rejects.toMatchObject({ code: 'APPOINTMENT_NOT_REQUESTED' });
+  });
+});
+
 describe('talep', () => {
   it('slota talep: REQUESTED, D11 son tarihi, mentora bildirim; görünümde e-posta yok', async () => {
     const h = harness();
@@ -360,6 +406,15 @@ describe('talep', () => {
       canDownloadIcs: false,
     });
     expect(JSON.stringify(view)).not.toMatch(/@/);
+    const intent = await db.notificationIntent.findFirstOrThrow({
+      where: { userId: mentor, kind: 'appointment' },
+    });
+    expect(intent.payload).toMatchObject({
+      type: 'appointment',
+      event: 'requested',
+      appointmentId: view.id,
+    });
+    expect(JSON.stringify(intent.payload)).not.toContain('Öğrenci Ayşe');
     expect(h.notifier.notices).toHaveLength(1);
     expect(h.notifier.notices[0]).toMatchObject({
       event: 'requested',

@@ -279,6 +279,10 @@ describe('gerçek oturum koruması ve deneyim servisleri', () => {
       { experienceId: row.id, decision: 'PUBLISH' },
       NOW,
     );
+    const intent = await db.notificationIntent.findFirstOrThrow({
+      where: { userId: author, kind: 'generic' },
+    });
+    expect(intent.payload).toMatchObject({ type: 'generic', event: 'moderationApproved' });
     expect((await service.getExperienceDetail(db, same, { experienceId: row.id }, NOW)).id).toBe(
       row.id,
     );
