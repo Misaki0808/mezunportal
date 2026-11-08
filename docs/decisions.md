@@ -627,6 +627,15 @@ değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki y�
 Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
 kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 
+## 2026-11-08 · Bildirim tercihleri ve yıllık doğrulama (P1-12)
+
+Zorunlu hesap/güvenlik iletileri kapatılamaz; diğer türler varsayılan açık olup hem kuyruğa alınırken hem de teslimden
+önce güncel tercihle denetlenir. İşler İstanbul saatiyle günlük çalışır ve dönem/olay anahtarıyla yinelenir. Öğrenci
+posta geçişi için doğrulanmış üyeliğin üniversitesindeki öğrenci alan adı ve mevcut sınıf hesabının dördüncü yılı
+kullanılır. Mezun yanıtları seçime bağlı HMAC, 30 günlük süre ve veritabanında koşullu tek kullanım taşır; kimlik
+oturumdan doğrulanır. E-posta tarayıcılarının bağlantıyı açması yanıt kaydetmez: kullanıcı ayrıca onaylar. Jeton URL
+parçasında taşınır (sunucu istek günlüğüne gitmez); e-posta ile açılan farklı sekmeden dönüş için tarayıcıda geçici tutulur ve sonuçta silinir.
+Bağlı olmayan mezun belgesi artıkları, yeni yükleme olasılığına karşı en az bir saat sonra taranır.
 ## 2026-11-08 · Kullanım metrikleri: kişisel veri içermeyen olay, bastırılmış panel (P1-13)
 Kendi `Event` tablomuz; üçüncü taraf analitik yok. Kişisel veri koruması üç katmanlıdır: tür başına `strict` Zod şeması (serbest
 metin alanı hiç yok, arama olayında yalnız süzgeç TÜRÜ ve sonuç kovası), veritabanı CHECK'i (düz nesne, kısa, `@`/uzun rakam
@@ -677,3 +686,7 @@ App Router yükleme sınırı yanıtı başlattıktan sonra sayfadaki red HTTP 2
 `PROFILE_THRESHOLD` eşik başına kullanıcıyla bağlı son 24 aylık pencerede bir kez yazılır; bağ koparıldıktan veya pencere
 dolduktan sonra yeniden geçişte yeni olay yazılabilir. KVKK veri en aza indirme için daha uzun süre yaşayan ayrı kullanıcı
 işaretçisi tutulmaz.
+
+### P1-12 incelemesi: ortak hesaplı uçtan uca testler
+
+Bildirim bağlantısı testi seed öğrencisinin pozisyonuna bağlı kayıt oluşturur; profil/CV testi aynı öğrencinin pozisyonlarını temizler. Bu nedenle ortak hesap kullanan uçtan uca dosyalar tek işçiyle koşar. Her şablonun güncel tercihe uyması ve bağlantının hesap/imza/süre/tek kullanım sınırları bağımsız negatif testlerle korunur. Olay commit edildikten sonra kuyruğa yazım başarısızsa otomatik telafi bu pakette yoktur; ana işlemin başarısı korunur.
