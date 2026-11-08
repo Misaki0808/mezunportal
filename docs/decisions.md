@@ -458,3 +458,12 @@ istihdam raporu ve Excel yalnız toplu sayı verir: kişi satırı yok, yalnız 
 gruplar bastırılır — serbest metin ve tek kişilik gruplar kimliği ele verirdi. Excel `.xlsx`tir (Türkçe karakterler için
 UTF-8, CSV'nin BOM sorunu yok). Sözleşme iki dosyadır: panel sorguları (W2) ve kullanıcı/yetki eylemleri.
 
+## 2026-11-08 · Yönetici atama/kaldırma tek kilitle sıralanır; üyelik düzeltmede geçmiş korunur
+İki sistem yöneticisi aynı anda birbirini kaldırırsa yetki yüklemesi ve yazma sıralanmadığında ikisi de başarılı olup
+sistemde yönetici kalmayabilirdi. Atama/kaldırma tek bir tavsiye kilidiyle sıralanır ve yetki kilitten SONRA yüklenir:
+ikinci istek güncel durumda yetkisizdir. Üyelik düzeltmede bölüm/rol değişirse eski satır silinmez, kapatılır ve
+yöneticice doğrulanmış yenisi açılır; yalnız yıl düzeltmesi yerinde yapılır. Bekleyen/reddedilen üyelik düzeltilmez
+(kendi akışı vardır: belge onayı/ret); düzeltme rolün yıl kısıtlarına (öğrenci giriş, mezun mezuniyet, akademisyen
+hiçbiri) uymak zorundadır. Rol düzeltmesinde mentor uygunluğunun yeniden hesabı bu adımda yoktur: mentor profili
+yetki anında okunur, K-08 eşiği yalnız mentor olma isteğinde denetlenir.
+
