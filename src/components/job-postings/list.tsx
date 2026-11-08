@@ -140,6 +140,7 @@ export function PostingList({
           </label>
           <Input
             id="job-q"
+            type="search"
             name="q"
             defaultValue={filters.q ?? ''}
             placeholder={t('search')}

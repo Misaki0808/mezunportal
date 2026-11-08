@@ -121,3 +121,84 @@ it('ilan iletişimi yalnız ilan kimliği ve seçilen alanlarla gönderilir', as
   );
   expect(await screen.findByRole('status')).toHaveTextContent('Talebin gönderildi');
 });
+it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderilir', async () => {
+  const { addDays, istanbulDay } = await import('./model');
+  const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'draft-1' } });
+  const submit = vi
+    .fn()
+    .mockResolvedValue({ ok: true, data: { postingId: 'draft-1', status: 'PENDING' } });
+  renderUi(<PostingEditor context={context} save={save} submit={submit} />);
+  fireEvent.change(screen.getByLabelText(/Pozisyon adı/), {
+    target: { value: 'Yazılım stajyeri' },
+  });
+  fireEvent.change(screen.getByLabelText(/Kurum adı/), { target: { value: 'Örnek Kurum' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.change(screen.getByLabelText(/^Açıklama/), {
+    target: { value: 'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.' },
+  });
+  fireEvent.change(screen.getByLabelText(/^Konum/), { target: { value: 'İstanbul' } });
+  fireEvent.change(screen.getByLabelText(/Son başvuru tarihi/), {
+    target: { value: addDays(istanbulDay(), 14) },
+  });
+  fireEvent.click(screen.getByRole('checkbox', { name: /YBS/ }));
+  fireEvent.change(screen.getByLabelText(/HTTPS başvuru bağlantısı/), {
+    target: { value: 'https://example.org/staj' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  await waitFor(() => expect(submit).toHaveBeenCalledWith({ postingId: 'draft-1' }));
+  expect(save).toHaveBeenCalledWith(
+    expect.objectContaining({
+      departmentId: 'dep',
+      content: expect.objectContaining({ title: 'Yazılım stajyeri', targetDepartmentIds: ['dep'] }),
+    }),
+  );
+});
+it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute('open');
+  };
+  const { PostingModeration } = await import('./manage');
+  const review = vi
+    .fn()
+    .mockResolvedValue({ ok: true, data: { postingId: 'job-1', status: 'REJECTED' } });
+  const item = {
+    id: 'job-1',
+    status: 'PENDING' as const,
+    kind: 'INTERNSHIP' as const,
+    title: 'Staj',
+    organizationName: 'Kurum',
+    companyId: null,
+    location: 'İstanbul',
+    isRemote: false,
+    description: 'Örnek açıklama',
+    applyMethod: 'URL' as const,
+    applyUrl: 'https://example.org',
+    deadlineOn: '2027-01-01',
+    departmentId: 'dep',
+    targetDepartments: [{ id: 'dep', name: 'YBS' }],
+    moderationNote: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    submittedAt: new Date(),
+    publishedAt: null,
+    endedAt: null,
+    author: { displayName: 'Yetkili kişi', role: 'ALUMNI' as const },
+  };
+  renderUi(
+    <PostingModeration
+      initial={{ items: [item], nextCursor: null }}
+      review={review}
+      list={vi.fn()}
+    />,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Reddet' }));
+  fireEvent.change(screen.getByLabelText(/Ret gerekçesi/), { target: { value: 'abc' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Onayla' }));
+  await waitFor(() =>
+    expect(review).toHaveBeenCalledWith({ postingId: 'job-1', decision: 'REJECT', reason: 'abc' }),
+  );
+});

@@ -4,6 +4,7 @@ import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
+import { reviewJobPostingSchema } from '@/contracts/job-postings';
 import type {
   CloseJobPostingOutput,
   JobPostingIdInput,
@@ -210,16 +211,17 @@ export function PostingModeration({
   }
   function confirm() {
     if (!choice) return;
-    if (choice.decision === 'REJECT' && reason.trim().length < 10) {
+    const parsed = reviewJobPostingSchema.safeParse(
+      choice.decision === 'PUBLISH'
+        ? { postingId: choice.id, decision: 'PUBLISH' }
+        : { postingId: choice.id, decision: 'REJECT', reason },
+    );
+    if (!parsed.success) {
       setError(t('requiredError'));
       return;
     }
     start(async () => {
-      const result = await review(
-        choice.decision === 'PUBLISH'
-          ? { postingId: choice.id, decision: 'PUBLISH' }
-          : { postingId: choice.id, decision: 'REJECT', reason: reason.trim() },
-      );
+      const result = await review(parsed.data);
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;
