@@ -115,7 +115,7 @@ describe('D7 genelleştirmesi: aday kartı kaynaklı talepte hedef kimliği onay
           ...(['WITHDRAWN', 'REVOKED'].includes(status) ? { closedAt: new Date() } : {}),
         },
       });
-    // aynı ikili için aynı anda tek açık talep: durumları sırayla yaz
+    // aynı ikili ve kaynak bağlamı için aynı anda tek açık talep: durumları sırayla yaz
     for (const status of ['REJECTED', 'WITHDRAWN', 'REVOKED', 'PENDING'] as const)
       await make(status);
     const open = await listContactRequests(db, requester, { box: 'OUTGOING', limit: 50 });

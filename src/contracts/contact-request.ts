@@ -10,7 +10,8 @@ export { CONTACT_REQUEST_STATUSES } from './privacy';
  * iletişim talebi onaylanınca İSTENEN alanlar YALNIZ talep edene açılır; hedef istediği an geri alır.
  *
  * Durumlar: `PENDING` → `APPROVED` | `REJECTED` (hedef) · `PENDING` → `WITHDRAWN` (talep eden) ·
- * `APPROVED` → `REVOKED` (hedef). Aynı ikili için aynı anda tek açık (bekleyen/onaylı) talep.
+ * `APPROVED` → `REVOKED` (hedef). Aynı ikili ve kaynak/bağlam için aynı anda tek açık (bekleyen/onaylı) talep.
+ * Farklı kaynakların yaşam döngüleri bağımsızdır; birinin onayı diğer talebi kapatmaz.
  *
  * Yanıtlarda karşı taraf yalnız `{ userId, name }` ile görünür; e-posta/telefon YALNIZ onaylı talepte,
  * yalnız talep edene ve yalnız görünürlük kuralının (`rules/visibility`) izin verdiği alanlarla döner.
