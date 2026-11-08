@@ -1422,7 +1422,7 @@ describe('D7 bağlantı sızıntısı: aynı yazarın iki ilanı ayırt edilemez
   const contactPosting = (w: World, author: string, title: string) =>
     published(w, author, { applyMethod: 'CONTACT_REQUEST', applyUrl: null, title });
 
-  it('bekleyen talep varken aynı yazarın başka ilanına talep, başka yazarınkiyle aynı başarı yanıtıdır; yeni kayıt/bildirim yok', async () => {
+  it('bekleyen talep varken aynı yazarın başka ilanına talep, başka yazarınkiyle aynı başarı biçimindedir; bağımsız kayıt ve bildirim oluşur', async () => {
     const w = await world();
     const a = await contactPosting(w, w.academic, 'İlan A ilanı');
     const b = await contactPosting(w, w.academic, 'İlan B ilanı');
@@ -1439,23 +1439,24 @@ describe('D7 bağlantı sızıntısı: aynı yazarın iki ilanı ayırt edilemez
       jobPostingId: c,
       fields: ['EMAIL'],
     });
-    expect(sameAuthor).toEqual({ requestId: first.requestId, status: 'PENDING' });
+    expect(sameAuthor.status).toBe('PENDING');
+    expect(sameAuthor.requestId).not.toBe(first.requestId);
     expect(otherAuthor.status).toBe('PENDING');
     expect(otherAuthor.requestId).not.toBe(first.requestId);
     expect(
       await db.contactRequest.count({ where: { requesterId: w.student, targetId: w.academic } }),
-    ).toBe(1);
+    ).toBe(2);
     const contacts = (await db.notificationIntent.findMany({ where: { userId: w.academic } }))
       .map((intent) => intent.payload as { event?: string })
       .filter((payload) => payload.event === 'contact');
-    expect(contacts).toHaveLength(1);
+    expect(contacts).toHaveLength(2);
     // aynı ilana tekrar talep kullanıcıya zaten bilinir: hata aynen kalır
     expect(
       await code(requestJobPostingContact(deps, w.student, { jobPostingId: a, fields: ['EMAIL'] })),
     ).toBe('CONTACT_REQUEST_ALREADY_OPEN');
   });
 
-  it('onaylı talep varken yazar zaten bilinir: ALREADY_OPEN aynen kalır', async () => {
+  it('başka ilandaki onay yeni ilan talebinin sonucunu etkilemez', async () => {
     const w = await world();
     const a = await contactPosting(w, w.academic, 'İlan A ilanı');
     const b = await contactPosting(w, w.academic, 'İlan B ilanı');
@@ -1467,9 +1468,59 @@ describe('D7 bağlantı sızıntısı: aynı yazarın iki ilanı ayırt edilemez
       requestId: first.requestId,
       decision: 'APPROVE',
     });
+    const independent = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: b,
+      fields: ['EMAIL'],
+    });
+    expect(independent.status).toBe('PENDING');
+    expect(independent.requestId).not.toBe(first.requestId);
+  });
+});
+
+describe('P2-04 R2 çapraz kaynak D7 regresyonu', () => {
+  it('ilan talebinden sonra bilinen PROFILE yolu yazarı ALREADY_OPEN ile ele vermez', async () => {
+    const w = await world();
+    const p = await published(w, w.academic, { applyMethod: 'CONTACT_REQUEST', applyUrl: null });
+    const posting = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: p,
+      fields: ['EMAIL'],
+    });
+    const profile = await sendContactRequest(
+      db,
+      w.student,
+      { targetUserId: w.academic, fields: ['EMAIL'] },
+      NOW,
+    );
+    expect(profile.status).toBe('PENDING');
+    expect(profile.requestId).not.toBe(posting.requestId);
+    await respondToContactRequest(
+      db,
+      w.academic,
+      { requestId: profile.requestId, decision: 'APPROVE' },
+      NOW,
+    );
     expect(
-      await code(requestJobPostingContact(deps, w.student, { jobPostingId: b, fields: ['EMAIL'] })),
-    ).toBe('CONTACT_REQUEST_ALREADY_OPEN');
+      (await db.contactRequest.findUniqueOrThrow({ where: { id: posting.requestId } })).status,
+    ).toBe('PENDING');
+  });
+  it('aynı yazarın iki ilanı silinince yetim kaynaklar benzersizlik çakışması yaratmaz', async () => {
+    const w = await world();
+    const a = await published(w, w.academic, { applyMethod: 'CONTACT_REQUEST', applyUrl: null });
+    const b = await published(w, w.academic, { applyMethod: 'CONTACT_REQUEST', applyUrl: null });
+    const first = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: a,
+      fields: ['EMAIL'],
+    });
+    const second = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: b,
+      fields: ['EMAIL'],
+    });
+    await db.jobPosting.deleteMany({ where: { id: { in: [a, b] } } });
+    const rows = await db.contactRequest.findMany({
+      where: { id: { in: [first.requestId, second.requestId] } },
+    });
+    expect(rows).toHaveLength(2);
+    expect(rows.every((x) => x.jobPostingId === null && x.status === 'PENDING')).toBe(true);
   });
 });
 

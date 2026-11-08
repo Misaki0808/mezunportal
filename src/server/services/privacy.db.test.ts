@@ -31,6 +31,7 @@ const V1 = {
   PRIVACY_NOTICE: 'taslak-1',
   TERMS_OF_USE: 'taslak-1',
   CROSS_BORDER_TRANSFER: 'taslak-1',
+  JOB_SEEKER_VISIBILITY: 'taslak-1',
 } as const;
 
 async function errorCode(promise: Promise<unknown>): Promise<string> {
