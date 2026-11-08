@@ -497,3 +497,13 @@ sonuç/yeniden deneme yalnız o nesli günceller. Hata temizliği satırı kilit
 kontrol etmeden PDF silmez: eski işin geç hatası yeni PARSED/APPLIED dosyasını yok edemez. Onaylanan
 ad düzeltmeleri mevcut eğitim/dil/sertifika kalemlerine de uygulanır; CV yazımı User kilidi altında
 kanonik askı/silinme kontrolünü yeniden yapar. Çıktı üst sınırı UTF-8 baytlarıyla ölçülür.
+
+## 2026-11-08 · Deneyim ekranları: rotalar ve anonimlik sınırı (P1-07)
+
+Deneyim yazma ve yönetimi `/deneyimlerim`, `/deneyim/yeni`, `/deneyim/[id]` (+ `/duzenle`) ve
+`/yonetim/deneyimler` altındadır; `/deneyimler` yolu P1-08 akışı için boş bırakıldı. Form alanları tür
+şablonundan okunur (`experienceTemplateSchema`): sözleşme değişince ekran kendiliğinden değişir, tür değişince
+yeni türde sorulmayan alan içeriğe girmez ve kullanıcıya söylenir. Anonim deneyimde ekran yazar bilgisini hiç
+çizmez; anonim yanıtta yazar alanı olmadığı için sahibin kendi anonim deneyimini şikâyet edememesi kullanıcının
+kendi listesinden anlaşılır (ilk 50 yayınlanmış kayıt; kaçırılırsa yalnız fazladan bir düğme görünür, yetki
+sunucudadır). Moderasyon kuyruğu içeriği açılır bölümde gösterir; karar ve şikâyet çözümü gerekçeli penceredir.

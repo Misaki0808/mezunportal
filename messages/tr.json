@@ -386,6 +386,12 @@
   },
   "experiences": {
     "eyebrow": "DENEYİMLERİM",
+    "entry": {
+      "mine": "Deneyimlerim",
+      "mineDescription": "Yazdığın deneyimleri yönet ya da yeni bir tane yaz.",
+      "moderation": "Deneyim moderasyonu",
+      "moderationDescription": "Bekleyen deneyimleri ve şikâyetleri incele."
+    },
     "mine": {
       "title": "Deneyimlerim",
       "description": "Yazdıklarını buradan yönet. Yayınlanmadan önce bölüm yöneticisi inceler.",
@@ -556,6 +562,7 @@
       "description": "Yanıltıcı ya da uygunsuz bir içerik gördüysen bölüm yöneticisine bildir. Şikâyet eden kişi görünmez.",
       "reason": "Neden şikâyet ediyorsun?",
       "reasonHint": "En az 3 karakter yaz.",
+      "reasonInvalid": "Şikâyet gerekçesi en az 3 karakter olmalı.",
       "submit": "Şikâyeti gönder",
       "cancel": "Vazgeç",
       "sent": "Şikâyetin alındı. Teşekkürler.",
@@ -576,7 +583,7 @@
       "emptyReportsDescription": "Yeni şikâyetler burada görünecek.",
       "refresh": "Yenile",
       "more": "Daha fazla göster",
-      "view": "Aç",
+      "view": "İçeriği göster",
       "publish": "Yayınla",
       "reject": "Reddet",
       "publishTitle": "Deneyim yayınlansın mı?",
