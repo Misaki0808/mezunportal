@@ -292,7 +292,17 @@ export function PostingList({
           {filterFields}
         </form>
       </Sheet>
-      <p className="mb-3 font-semibold text-fg sm:mb-4">{t('results', { count: page.total })}</p>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
+        <p className="font-semibold text-fg">{t('results', { count: page.total })}</p>
+        {filtered && (
+          <Link
+            href="/ilanlar"
+            className="press-control inline-flex min-h-11 items-center font-medium text-primary hover:underline"
+          >
+            {t('clear')}
+          </Link>
+        )}
+      </div>
       {page.items.length ? (
         <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
           {page.items.map((posting) => (

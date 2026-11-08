@@ -33,6 +33,7 @@ export default async function PostingsPage({
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   return (
     <PostingList
+      key={JSON.stringify(filters)}
       page={result.data}
       filters={filters}
       options={options.data}
