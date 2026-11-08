@@ -37,6 +37,9 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
   eşleşmeyen değer, işlem kaydı görüntüleme ve toplu mezun istihdam raporu imzaları, `requireAnyAdmin` koruması ve
   hata kodları hazır. Askıya alma/kaldırma (oturumlar aynı işlemde düşer), üyelik düzeltme ve yönetici atama/kaldırma
   servisi tamam (kapsam, kendi üzerinde işlem yok, işlem kaydı aynı işlemde); panel sorguları ve kalanı W2'de.
+- P1-06 profil servisi: kendi profilini görüntüle/düzenle (temel alanlar, eğitim, pozisyon, dil, sertifika, beceri,
+  izinli https bağlantılar, LinkedIn), başkasının profili görünürlük süzgeçli, tamamlama göstergesi; CV onayına profil
+  başlığı/özeti/şehri kalemi eklendi; beceri modeli `Tag(SKILL)` + profil bağı. Ekranlar sonra.
 - Canlı ortam yok ve bilinçli olarak ertelendi; bütün geliştirme, test ve ekran doğrulaması yerelde.
   Canlıya alım Faz 1'in son adımıdır (P1-18).
 - Telefon testi her faz sonunda, aynı Wi-Fi üzerinden kullanıcı tarafından yapılır.
@@ -119,17 +122,16 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).
   Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
   Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
-- [ ] **TD-010** · P1 · CV profil üst alanları ve beceri modeli P1-04 ile hizalanmadı
-  Ne: `ParsedCv` yalnız listeleri (eğitim, pozisyon, beceri, dil, sertifika) taşır; başlık/özet/şehir/bağlantılar
-  `Profile` (P1-04) gelince eklenir. Beceri `Skill` sözlüğü + `UserSkill`'dir; `docs/data.md` taslağındaki
-  `Tag(kind=SKILL)` ile birleştirilecek mi karar bekler.
-  Neden borç: iki beceri modeli kalırsa arama ve profil ekranı çift kaynakla çalışır.
-  Kapanış ölçütü: P1-04 birleşince PM kararı; `ParsedCv.schemaVersion` ile genişletme ya da `Tag` birleştirmesi.
 - [ ] **TD-011** · P2 · Sözlük içeriği ve yönetici çözümü yok
   Ne: `Company`/`Title`/`Skill`/`Sector` boş; `UnmatchedValue` kuyruğu yazılıyor ama yönetici ekranı ve çözüm
   (`resolvedToId`, takma ad ekleme) yok.
   Neden borç: eşleme olmadan her değer ham kalır; kuyruk büyür.
   Kapanış ölçütü: pilot sözlük seed'i + yönetici çözümleme ekranı.
+- [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
+  Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
+  yerinde duruyor (hesap silme hâlâ eski satırları siler).
+  Neden borç: ölü tablo ve yanıltıcı model.
+  Kapanış ölçütü: daraltma migration'ı tabloyu kaldırır (geri alma adımıyla), `Skill` sözlüğü yalnız eşleme için kalır.
 
 
 ### Bilinçli kabul edilen sınırlar

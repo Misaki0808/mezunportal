@@ -535,6 +535,18 @@ confirmed:true ister; askı kaldırma da gerekçelidir. Sözlük silme ve eşle�
 sözleşmede zorunludur. Excel bağlantısı yalnız filtre şemasından geçen alanları taşır; kişisel ya da
 bilinmeyen URL parametresi eklenmez. Bu alanlar ekranın onay penceresi ile sunucu doğrulamasını bağlar.
 
+## 2026-11-08 · Profil içeriği: beceri = Tag, görünürlük sunucuda, bağlantılar izinli listeyle
+Beceri modeli (TD-010) PM kararıyla `Tag` (tür SKILL) + kullanıcı-etiket bağıdır; böylece benzer yol önerisi ve dizin
+tek sözlükle çalışır. Serbest yazılan beceri normalleştirilip kişisel etiket (`curated = false`) olarak açılır,
+yönetici kuyruğuna düşer ve başkalarına ASLA önerilmez (başkasının metni sızmasın); hesap silinince ya da son bağı
+kalkınca silinir. Eski `UserSkill` verisi taşındı, tablo daraltma migration'ına bırakıldı (TD-013). Başkasının
+profilinde gizli alan yanıttan çıkarılır, `null` yazılmaz (anahtar bile sızdırmaz); hedef silinmiş/askıda/doğrulanmamış
+ya da ortak üniversite yoksa varlığı sızmayan `RESOURCE_NOT_FOUND`. Sosyal bağlantılar yalnız `https` ve sabit alan adı
+listesindedir (sorgu/parça atılır, IDN/alt alan benzerleri geçmez); saklı veri okunurken de yeniden doğrulanır.
+CV onayına başlık/özet/şehir kalemi eklendi (bağlantı ve iletişim bilgisi LLM'den alınmaz); elle yazılan alan
+çakışma olarak sorulur. "Reddet" ayrı eylem değildir: kalem için karar vermemek yazmamaktır (onaysız yazma yok).
+Tamamlama göstergesi okuma anında hesaplanır (ilk giriş adımları + başlık/şehir, eğitim, ≥ 3 beceri, uygulanmış CV).
+
 ## 2026-11-08 · Yönetim yazımları yetki iptali ve hesap silmeyle sıralanır
 
 Askı ve üyelik düzeltmesi de atama/kaldırmanın aynı tavsiye kilidini alır; güncel yetki

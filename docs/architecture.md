@@ -87,7 +87,8 @@ ve kapsamlıdır (`SYSTEM`, `FACULTY`, `DEPARTMENT`).
    benzerliğiyle eşlenir (eşik `rules/dictionary.ts`; kısa adlarda yalnız tam eşleşme); eşik altı değerler ham
    kalır ve kullanıcı onaylarsa yönetici kuyruğuna (`UnmatchedValue`) düşer. Eşleme onay ekranında ve
    uygulamada yapılır (sözlük değişse de güncel kalır).
-4. **Onay ekranı:** mevcut profille fark (`rules/cvDiff`): yeni · değişen · çakışan. Kullanıcı
+4. **Onay ekranı:** mevcut profille fark (`rules/cvDiff`): yeni · değişen · çakışan. Kalemler: profil üst alanları
+   (başlık, özet, şehir), eğitim, pozisyon, dil, sertifika, beceri (`Tag` olarak yazılır). Kullanıcı
    kalem kalem kabul eder. Elle düzeltilmiş kalem sessizce ezilmez.
 5. **Uygulama:** tek işlemde; profil yüzdesi yeniden hesaplanır; deneyimi yazılmamış her staj
    için “bu stajı yazmak ister misin?” daveti oluşur.
