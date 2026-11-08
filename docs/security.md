@@ -239,6 +239,8 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
   ilan üzerinden gider ve ilan→yazar eşlemesi yalnız sunucudadır (önizleme ad değil ilan başlığı gösterir; ad onayda açılır, D7). Hedef bölümler ve
   kapsam bölümü servis kapısında yazarın üniversitesine bağlanır (K-07; veritabanında tetikleyici yoktur). Başvuru bağlantısı yalnız `https`
   (şema, kimlik bilgisi, iç adres yok). Veri dökümü yalnız kendi ilanlarını içerir; hesap silme ilanları siler.
+  (sunucuda, yayın anında; adın tam hali ve kesmeli ekli biçimi engeldir; kesmesiz ekli biçim ve ad önekiyle eşleşen sözcük moderatör onaylı uyarıdır ve işlem
+  kaydına düşer). Karar notu yalnız soran öğrenciye görünür.
 - Puan çıktısında kaynak (deneyim/randevu/CV) ve karşı taraf kimliği yoktur; katkı puanı ve geçmişi yalnız sahibine görünür. Anonim
   deneyim puan verir ama kurucu üye etiketi vermez. Veri dökümü puanı kaynaksız içerir; hesap silme puan, etiket ve şüphe işaretlerini siler.
 
