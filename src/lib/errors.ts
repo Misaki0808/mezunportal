@@ -106,6 +106,7 @@ export const ERROR_CODES = [
   'FAQ_REQUEST_CLOSED',
   'FAQ_OWN_REQUEST',
   'FAQ_IDENTITY_LEAK',
+  'FAQ_IDENTITY_WARNING',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { testLoginSchema } from '@/contracts/auth';
 import { Button } from '@/components/ui';
 import { isDevToolsEnabled } from '@/lib/app-env';
+import { RETURN_PATH_PARAM, safeReturnPath } from '@/lib/return-path';
 import { signInAsTestPersona } from '@/server/actions/auth';
 
 export const dynamic = 'force-dynamic';
@@ -11,10 +12,13 @@ export const dynamic = 'force-dynamic';
 export default async function TestSignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ persona?: string }>;
+  searchParams: Promise<{ persona?: string; donus?: string }>;
 }) {
   if (!isDevToolsEnabled()) notFound();
-  const parsed = testLoginSchema.safeParse({ persona: (await searchParams).persona });
+  const query = await searchParams;
+  // Gerçek giriş akışı gibi: güvenli dönüş yolu varsa girişten sonra oraya dönülür.
+  const returnTo = safeReturnPath(query[RETURN_PATH_PARAM]);
+  const parsed = testLoginSchema.safeParse({ persona: query.persona });
   if (!parsed.success) notFound();
   const persona = parsed.data.persona;
   const t = await getTranslations('authScreens.testSignIn');
@@ -22,7 +26,7 @@ export default async function TestSignInPage({
   async function submit() {
     'use server';
     const result = await signInAsTestPersona({ persona });
-    if (result.ok) redirect('/hesap');
+    if (result.ok) redirect(returnTo ?? '/hesap');
     redirect('/giris');
   }
 

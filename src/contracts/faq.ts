@@ -168,6 +168,12 @@ export const publishFaqSchema = z
     selectedAnswerId: faqId,
     question: text(FAQ_QUESTION_MIN, FAQ_QUESTION_MAX),
     answer: text(FAQ_ANSWER_MIN, FAQ_ANSWER_MAX),
+    /**
+     * Metinde yalnız ad ÖNEKİYLE eşleşen sözcük varsa (`FAQ_IDENTITY_WARNING`, ör. "denizcilik") yayın moderatörün "Kişisel
+     * bilgi değil, yayımla" onayıyla yapılır; onay işlem kaydına düşer. Adın tam/ekli hali ve e-posta/telefon HER ZAMAN
+     * `FAQ_IDENTITY_LEAK` olarak durdurulur (onayla aşılamaz).
+     */
+    confirmNotPersonal: z.boolean({ error: INVALID }).optional(),
   })
   .strict();
 export type PublishFaqInput = z.input<typeof publishFaqSchema>;
@@ -277,6 +283,7 @@ export const FAQ_ACTION_ERRORS = {
     'RESOURCE_NOT_FOUND',
     'FAQ_REQUEST_CLOSED',
     'FAQ_IDENTITY_LEAK',
+    'FAQ_IDENTITY_WARNING',
   ],
   rejectFaq: [
     ...AUTH_ERRORS,

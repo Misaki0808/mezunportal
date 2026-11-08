@@ -790,7 +790,7 @@ Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun 
 **Gizlilik.** Soran mentora ve moderatöre, cevap yazanlar birbirine ve moderatöre hiç görünmez; yayın çıktısı yalnız soru,
 cevap ve tarihtir. Moderatörün düzenlediği yayın metni soran ve TÜM cevap yazanların ad/soyadını (ek almış biçimler dahil:
 “Ahmet'e”, “ahmete”) ve e-posta/telefon/kimlik numarası biçimini içeremez; denetim yayın anında sunucudadır
-(`FAQ_IDENTITY_LEAK`) ve bilerek katıdır (yanlış alarm metni düzeltmekle çözülür, sızıntı geri alınamaz). Soru ve cevap
+(`FAQ_IDENTITY_LEAK`) ve bilerek katıdır (sızıntı geri alınamaz); yalnız ad ÖNEKİ eşleşmesi engel değil moderatör onaylı uyarıdır (kart 122, aşağıda). Soru ve cevap
 gönderiminde e-posta/telefon biçimi de erken reddedilir. Yayın, kaynak talebin bölümünün üniversitesindeki doğrulanmış
 üyelere açıktır (K-07). Karar notu (ret gerekçesi, yönlendirme notu) yalnız soran öğrenciye görünür; bildirim e-postası notu
 taşımaz.
@@ -828,10 +828,36 @@ form sonuna almak — mobilde eylem çubuğunun hızlı erişimini kaybettirir; 
 görünümü küçülmediği için çubuk klavyenin ARKASINDA kalır; (c) seçilen: klavye açıkken akışa dön, kapalıyken yapışkan kal. Gerçek
 cihaz doğrulaması telefon testine yazıldı (`docs/engineering.md`).
 
-**Marka paleti: İris + Mercan (kullanıcı isteği, 8 Kas).** Önceki mavi/gri palet "çok sıkıcı" bulundu; İstanbul Üniversitesi
+**Açık şüpheye yeni kanıt ve oturumsuz eylemde dönüş (kart 116).** Karar bekleyen işaret varken aynı kural için bulunan yeni
+kanıt artık sessizce atlanmaz: işarete sayaç, son görülme ve en çok 5 sayısal özet eklenir (tekrar anahtarı listesiyle
+idempotent; asıl kanıt kimlikleri değişmez, böylece onay yalnız işaretin kanıtını geri alır, kalanı sonraki tarama yeni işaretle
+yakalar). Seçenekler: (a) her yeni kanıta ayrı işaret — kısmi benzersiz indeks "tek açık işaret" kuralını bozar; (b) kanıtı
+işarete katıp onayda hepsini geri almak — yönetici görmediği kaydı geri almış olur; (c) seçilen: sayaç + özet. Oturumu düşmüş
+kullanıcının eyleminde `AUTH_UNAUTHENTICATED` her formda ayrı ele alınmaz; sunucu eylemlerinin ortak çıkışı `failAction` girişe
+`?donus=` ile yönlendirir (`safeReturnPath`), `ErrorState`'in "Giriş yap" bağlantısı da aynı yolu taşır.
+
+**Marka paleti: İris + Mercan (kullanıcı isteği ve açık onayı, 8 Kas).** Önceki mavi/gri palet "çok sıkıcı" bulundu; İstanbul Üniversitesi
 renklerine dayanmama kararı verildi. Seçilen: İris `#5B5BF6` ana, Mercan `#FF7A59` vurgu, Nane `#0F9F8F` destek, sıcak nötrler,
 yalnız büyük alanda marka geçişi, `prefers-color-scheme` ile koyu tema; başlık Plus Jakarta Sans, metin Inter
 (`next/font/google`, kendinden barındırılır; yeni npm bağımlılığı yok). Mercan zeminde metin koyu (beyaz AA değil), `primary`
 metni `primary-soft` üstünde AA değil (soft zeminde `on-primary-soft`). Seçenekler: (a) yalnız İris + nötr — canlılık yok;
 (b) Mercan'ı ana renk yapmak — beyaz metinle AA sağlanamaz; (c) seçilen: İris ana, Mercan az kullanılan vurgu. Kontrast
 testi iki temayı da korur (`src/lib/contrast.test.ts`). Risk: ilk derleme ağa muhtaç (Google Fonts indirmesi).
+
+**Girişsiz tanıtım sayfası (kullanıcı isteği, 8 Kas).** Girişsiz ana sayfada deneyim, mentor ve gerçekleşen görüşme için yalnız
+sunucuda hesaplanan toplu sayılar gösterilir; üçten küçük toplam sayı yerine “Yeni başladık” görünür. Veri kaynağına ulaşılamazsa
+ayrı bir belirsiz durum gösterilir. Örnek kartlar sentetiktir ve etkileşim almaz. Kahraman metni ilk HTML'de ve sabit koyu zeminde;
+marka geçişi dekoratiftir. Hareket azaltma tercihinde içerik korunur ve hareket durur.
+
+**SSS kimlik denetimi: engel ve uyarı (kart 122, PM kararıyla).** Önceki denetim 4+ harfli adları önek olarak eşleştirdiği için
+"sisteme", "denizcilik" gibi sıradan sözcükler yayını engelliyordu. Türkçe yazım kuralı: özel isim ek alınca kesme alır
+("Deniz'in"); kesmesiz ekli biçim ("denize", "sisteme", "Ahmete") çoğunlukla cins isimdir. Şimdi: **engel**
+(`FAQ_IDENTITY_LEAK`, onayla aşılamaz) = adın tam sözcüğü (kesmeli ekli biçimler dahil: kesmede sözcük bölündüğü için tam eşleşir),
+harfleri boşluk/noktalamayla bölünmüş ad, e-posta/telefon/kimlik biçimi, kullanıcı/kayıt kimliği; **uyarı**
+(`FAQ_IDENTITY_WARNING`) = ad ile başlayan başka sözcük (kesmesiz ekli biçim ve önek: "sisteme", "Ahmete", "denizcilik").
+Uyarıda moderatör eşleşen sözcükleri görür (en çok 5) ve "Kişisel bilgi değil, yayımla" ile `confirmNotPersonal` gönderir; yayın
+olur ve `MODERATION_PUBLISH` işlem kaydına sabit gerekçe + `identityWarningConfirmed`/`warnedWordCount` (sözcükler kaydedilmez)
+düşer. Seçenekler: (a) tümünü engel bırakmak — yanlış alarm; (b) önek ve ekli biçim denetimini kaldırmak — gerçek ad sızıntısı
+ayırt edilemez; (c) seçilen: kesmeyle ayrılan/bölünmüş/tam ad engel, geri kalanı onaylı uyarı. Bilinen sınır: kesmesiz yazılmış
+gerçek ad ("Ahmete sordum") artık engel değil uyarıdır; moderatör ad olduğunu ayırt edebilmelidir (ad moderatöre gösterilmez, yalnız
+metindeki sözcük). Moderatör ekranı (uyarı + onay düğmesi) #54 main'e girince bağlanır.

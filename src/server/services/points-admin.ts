@@ -7,6 +7,7 @@ import {
   listSuspicionFlagsSchema,
   pointRuleViewSchema,
   requestPointBackfillSchema,
+  storedRecurrenceEvidenceSchema,
   revokePointEntrySchema,
   updatePointRuleSchema,
   type DecideSuspicionInput,
@@ -202,6 +203,9 @@ export async function listSuspicionFlags(
         points: true,
         sharePercent: true,
         syncedCount: true,
+        recurrenceCount: true,
+        lastSeenAt: true,
+        recentEvidence: true,
         createdAt: true,
         decidedAt: true,
         user: { select: { name: true } },
@@ -222,6 +226,12 @@ export async function listSuspicionFlags(
           points: row.points,
           sharePercent: row.sharePercent,
           syncedCount: row.syncedCount,
+          recurrenceCount: row.recurrenceCount,
+          lastSeenAt: row.lastSeenAt,
+          recentEvidence: storedRecurrenceEvidenceSchema
+            .catch([])
+            .parse(row.recentEvidence)
+            .map((item) => ({ ...item, at: new Date(item.at) })),
         },
         createdAt: row.createdAt,
         decidedAt: row.decidedAt,

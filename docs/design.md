@@ -58,7 +58,8 @@ Kanonik koruma `src/lib/contrast.test.ts` (her çift her iki temada; normal meti
 | `on-danger-soft` / `danger-soft` | Hata | 9.2 | 10.3 |
 | `border-control` / `bg` | Kontrol sınırı (3:1) | 4.1 | 4.8 |
 
-Bilinen sınırlar: `primary` metni `primary-soft` üstünde AA değildir (4.3) → soft zeminde `on-primary-soft` kullan;
+Bilinen sınırlar: `primary` metni `primary-soft` üstünde AA değildir (4.3) → soft zeminde `on-primary-soft` kullan (ghost düğmenin
+hover'ında `primary-hover`, 5.8); `contrast.test.ts` bekçisi aynı sınıf dizgesinde `primary-soft` zemin + çıplak `text-primary`'yi yasaklar;
 Mercan (`accent`) beyaz zeminde 3:1'in altındadır → sınır/ikon için `accent-strong`; Nane metin için değil, simge/sınır içindir
 (metin `on-success-soft`).
 

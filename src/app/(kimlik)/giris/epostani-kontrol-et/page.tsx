@@ -11,7 +11,7 @@ export default async function CheckEmailPage() {
       <div className="flex-1">
         <div
           aria-hidden="true"
-          className="mb-7 grid size-16 place-items-center rounded-2xl bg-primary-soft text-primary"
+          className="mb-7 grid size-16 place-items-center rounded-2xl bg-primary-soft text-primary-hover"
         >
           <svg
             width="32"

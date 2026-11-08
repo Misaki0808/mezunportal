@@ -50,6 +50,8 @@ kural sunucuda zorlanır.
   taşınır ve magic-link geri çağrısına konur. **Açık yönlendirme yoktur:** yalnız `/` ile başlayan site içi
   yol (`//`, ters eğik çizgi, şema, kontrol karakteri yok; giriş/onay/çıkış/API yollarına dönülmez —
   `src/lib/return-path.ts`). Yol, `proxy.ts`'in sunucuda yazdığı başlıktan okunur (istemcinin gönderdiği ezilir).
+  Oturumu düşmüş kullanıcının sunucu eyleminde `AUTH_UNAUTHENTICATED` dönerse ortak hata çıkışı (`failAction`,
+  `src/server/fail-action.ts`) aynı kuralla `/giris?donus=<yol>` adresine yönlendirir; eylemler `actionFailure` yerine `failAction` kullanır.
 - **Alan adı doğrulaması** (D2) seçilen bölümün ÜNİVERSİTESİNİN `University` kaydındaki alan adı listesine
   göredir, tam eşleşmedir (alt alan adı/benzer alan adı eşleşmez); e-posta doğrulanmış olmalıdır; mezun alan
   adıyla doğrulanamaz.
@@ -231,7 +233,8 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
 - İmzalı bağlantılar (ör. “hâlâ orada mısın?”) süreli ve tek kullanımlıktır.
 - Puan hilesi kuralları `docs/architecture.md` “Puan motoru”nda.
 - SSS: soran, cevap yazan ve moderatör kimliği hiçbir çıktıda yoktur; yayın metni adları ve e-posta/telefon biçimini içeremez
-  (sunucuda, yayın anında). Karar notu yalnız soran öğrenciye görünür.
+  (sunucuda, yayın anında; adın tam hali ve kesmeli ekli biçimi engeldir; kesmesiz ekli biçim ve ad önekiyle eşleşen sözcük moderatör onaylı uyarıdır ve işlem
+  kaydına düşer). Karar notu yalnız soran öğrenciye görünür.
 - Puan çıktısında kaynak (deneyim/randevu/CV) ve karşı taraf kimliği yoktur; katkı puanı ve geçmişi yalnız sahibine görünür. Anonim
   deneyim puan verir ama kurucu üye etiketi vermez. Veri dökümü puanı kaynaksız içerir; hesap silme puan, etiket ve şüphe işaretlerini siler.
 
