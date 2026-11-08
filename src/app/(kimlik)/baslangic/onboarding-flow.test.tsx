@@ -33,6 +33,25 @@ const goals = [{ id: 'g', kind: 'GOAL' as const, slug: 'internship' }];
 const saveVisibility = vi.fn();
 
 describe('ilk giriş akışı', () => {
+  it('boş seçimi kaydetmez, kullanıcıya atlama seçeneğini gösterir', async () => {
+    const save = vi.fn();
+    const { user } = renderUi(
+      <OnboardingFlow
+        initialState={initial}
+        interests={interests}
+        goals={goals}
+        initialVisibility={{ fields: [...visibility.fields] }}
+        save={save}
+        skip={vi.fn()}
+        saveVisibility={saveVisibility}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Devam et' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'En az bir seçenek seç veya bu adımı şimdilik atla.',
+    );
+    expect(save).not.toHaveBeenCalled();
+  });
   it('ilgi seçimini kaydeder ve hedef atlamasını ayrı eyleme yollar', async () => {
     const save = vi.fn().mockResolvedValueOnce({
       ok: true,
@@ -115,4 +134,31 @@ describe('ilk giriş akışı', () => {
     expect(update).toHaveBeenCalledWith({ field: 'EMAIL', level: 'PRIVATE' });
     expect(screen.getByLabelText('E-posta')).toHaveValue('PRIVATE');
   });
+  it.each(['MENTOR_PREFERENCE', 'VISIBILITY'] as const)(
+    '%s adımını ayrı eylemle atlar',
+    async (step) => {
+      const skip = vi.fn().mockResolvedValue({ ok: true, data: { ...initial, step: 'COMPLETE' } });
+      const eligible = {
+        ...initial,
+        step,
+        studentMentorEligibility: { eligible: true as const, reason: null },
+        steps: initial.steps.map((item) =>
+          item.step === 'MENTOR_PREFERENCE' ? { ...item, applicable: true } : item,
+        ),
+      };
+      const { user } = renderUi(
+        <OnboardingFlow
+          initialState={eligible}
+          interests={interests}
+          goals={goals}
+          initialVisibility={{ fields: [...visibility.fields] }}
+          save={vi.fn()}
+          skip={skip}
+          saveVisibility={saveVisibility}
+        />,
+      );
+      await user.click(screen.getByRole('button', { name: 'Şimdilik atla' }));
+      expect(skip).toHaveBeenCalledWith({ step });
+    },
+  );
 });

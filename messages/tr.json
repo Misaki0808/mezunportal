@@ -354,7 +354,10 @@
     "home": {
       "verificationTitle": "Doğrulamanı tamamla",
       "verificationDescription": "Üyeliğini doğrulayarak devam et.",
-      "verificationAction": "Doğrulamaya git"
+      "verificationAction": "Doğrulamaya git",
+      "onboardingTitle": "Profilini tamamla",
+      "onboardingDescription": "İlgilerini ve hedeflerini seçerek başlayabilirsin.",
+      "onboardingAction": "Başlangıca devam et"
     },
     "testSignIn": {
       "title": "Yerel test girişi",

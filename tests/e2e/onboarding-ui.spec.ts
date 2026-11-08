@@ -6,7 +6,13 @@ test('öğrenci oturumuyla ilk giriş ekranları 390 px’te tamamlanır (sahte 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/giris/test?persona=student');
   await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await expect(page).toHaveURL(/\/hesap$/);
+  await page.waitForURL(/\/(hesap|onay)$/);
+  await page.goto('/onay');
+  const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
+  await required.nth(0).check();
+  await required.nth(1).check();
+  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
+  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
   await page.goto('/baslangic/test');
   await page.getByRole('checkbox', { name: 'Yazılım geliştirme' }).check();
   await page.getByRole('checkbox', { name: 'Akademik kariyer' }).check();
