@@ -33,6 +33,59 @@ const goals = [{ id: 'g', kind: 'GOAL' as const, slug: 'internship' }];
 const saveVisibility = vi.fn();
 
 describe('ilk giriş akışı', () => {
+  it('geri gidip dönünce kaydedilmiş ilgi ve henüz kaydedilmemiş hedef seçimlerini korur', async () => {
+    const save = vi
+      .fn()
+      .mockResolvedValue({ ok: true, data: { ...initial, step: 'GOALS', interestTagIds: ['i'] } });
+    const { user } = renderUi(
+      <OnboardingFlow
+        initialState={initial}
+        interests={interests}
+        goals={goals}
+        initialVisibility={{ fields: [...visibility.fields] }}
+        save={save}
+        skip={vi.fn()}
+        saveVisibility={saveVisibility}
+      />,
+    );
+    await user.click(screen.getByRole('checkbox', { name: 'Yazılım geliştirme' }));
+    await user.click(screen.getByRole('button', { name: 'Devam et' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'Staj bulmak' }));
+    await user.click(screen.getByRole('button', { name: 'Geri' }));
+    expect(screen.getByRole('checkbox', { name: 'Yazılım geliştirme' })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Devam et' }));
+    expect(await screen.findByRole('checkbox', { name: 'Staj bulmak' })).toBeChecked();
+  });
+  it('tamamlanmış akış düzenlemede atlanan ilk uygulanabilir adımdan açılır ve kayıt sonrası ilerler', async () => {
+    const complete = {
+      ...initial,
+      step: 'COMPLETE' as const,
+      steps: initial.steps.map((item) =>
+        item.step === 'INTERESTS' ? { ...item, status: 'SKIPPED' as const } : item,
+      ),
+    };
+    const save = vi
+      .fn()
+      .mockResolvedValue({ ok: true, data: { ...complete, interestTagIds: ['i'] } });
+    const { user } = renderUi(
+      <OnboardingFlow
+        initialState={complete}
+        editInitially
+        interests={interests}
+        goals={goals}
+        initialVisibility={{ fields: [...visibility.fields] }}
+        save={save}
+        skip={vi.fn()}
+        saveVisibility={saveVisibility}
+      />,
+    );
+    await user.click(screen.getByRole('checkbox', { name: 'Yazılım geliştirme' }));
+    await user.click(screen.getByRole('button', { name: 'Devam et' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Birlikte neyi hedefleyelim?' }),
+    ).toBeVisible();
+    expect(save).toHaveBeenCalledWith({ step: 'INTERESTS', tagIds: ['i'] });
+  });
   it('öğrenci eşiği kapalı olsa da sunucunun uygulanabilir dediği çok rollü mentor adımını gösterir', () => {
     const multipleRoles = {
       ...initial,

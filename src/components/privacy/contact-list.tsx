@@ -152,17 +152,35 @@ export function ContactList({
                         {fields(field as ContactRequestItem['fields'][number])}
                       </dt>
                       <dd className="break-all">
-                        {typeof value === 'object' && value !== null
-                          ? Object.entries(value)
-                              .map(([label, url]) => `${label}: ${url}`)
-                              .join(', ')
-                          : value}
+                        {typeof value === 'object' && value !== null ? (
+                          Object.entries(value)
+                            .map(([label, url]) => `${label}: ${url}`)
+                            .join(', ')
+                        ) : field === 'EMAIL' && typeof value === 'string' ? (
+                          <a className="underline" href={`mailto:${value}`}>
+                            {value}
+                          </a>
+                        ) : (
+                          value
+                        )}
                       </dd>
                     </div>
                   ))}
                 </dl>
               </div>
             )}
+            {box === 'OUTGOING' &&
+              item.status === 'APPROVED' &&
+              item.fields.some((field) => !item.revealed?.[field]) && (
+                <p className="text-base text-fg-muted">
+                  {t('unavailableFields', {
+                    fields: item.fields
+                      .filter((field) => !item.revealed?.[field])
+                      .map((field) => fields(field))
+                      .join(', '),
+                  })}
+                </p>
+              )}
             <div className="flex flex-wrap gap-3">
               {box === 'INCOMING' && item.status === 'PENDING' && (
                 <>

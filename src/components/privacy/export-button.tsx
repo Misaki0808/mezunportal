@@ -1,5 +1,4 @@
 'use client';
-import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { DATA_EXPORT_HREF, dataExportSchema } from '@/contracts/privacy';
 import { isErrorCode } from '@/lib/errors';
@@ -9,7 +8,6 @@ import { usePrivacyForm } from './form-state';
 export function ExportButton() {
   const t = useTranslations('privacyScreens.export');
   const form = usePrivacyForm();
-  const [done, setDone] = useState(false);
   return (
     <div className="space-y-3">
       <Button
@@ -44,7 +42,6 @@ export function ExportButton() {
               a.download = t('fileName');
               a.click();
               setTimeout(() => URL.revokeObjectURL(url), 1000);
-              setDone(true);
             },
             t('done'),
           );
@@ -55,11 +52,6 @@ export function ExportButton() {
       {form.error && (
         <p role="alert" className="text-base text-danger">
           {form.error}
-        </p>
-      )}
-      {done && (
-        <p role="status" className="text-base text-fg-muted">
-          {t('done')}
         </p>
       )}
     </div>
