@@ -34,7 +34,11 @@ export function EntrySummary({ section, value }: { section: CvSection; value: Va
     });
   };
   const lines: { text: string; strong?: boolean; muted?: boolean }[] = [];
-  if (section === 'EDUCATION') {
+  if (section === 'PROFILE') {
+    if (str(value.headline)) lines.push({ text: str(value.headline), strong: true });
+    if (str(value.city)) lines.push({ text: str(value.city) });
+    if (str(value.summary)) lines.push({ text: str(value.summary), muted: true });
+  } else if (section === 'EDUCATION') {
     lines.push({ text: str(value.institution), strong: true });
     const level = str(value.level);
     const detail = [

@@ -12,6 +12,7 @@ import {
   parsedEducationSchema,
   parsedLanguageSchema,
   parsedPositionSchema,
+  parsedProfileSchema,
   parsedSkillSchema,
   type CvSection,
 } from '@/contracts/cv';
@@ -19,6 +20,9 @@ import { Button, Checkbox, Field, Input, Select, Textarea } from '@/components/u
 
 type Values = Record<string, unknown>;
 type FieldKey =
+  | 'headline'
+  | 'summary'
+  | 'city'
   | 'institution'
   | 'level'
   | 'fieldOfStudy'
@@ -35,6 +39,7 @@ type FieldKey =
 
 /** Bölüm → forma giren alanlar (sırayla). Doğrulama CV hattıyla AYNI şemalardır (sözleşme). */
 const SECTION_FIELDS: Record<CvSection, readonly FieldKey[]> = {
+  PROFILE: ['headline', 'city', 'summary'],
   EDUCATION: ['institution', 'level', 'fieldOfStudy', 'startDate', 'endDate', 'isCurrent'],
   POSITION: [
     'title',
@@ -50,6 +55,7 @@ const SECTION_FIELDS: Record<CvSection, readonly FieldKey[]> = {
   SKILL: ['name'],
 };
 const REQUIRED: Record<CvSection, readonly FieldKey[]> = {
+  PROFILE: [],
   EDUCATION: ['institution'],
   POSITION: ['title', 'company'],
   LANGUAGE: ['name'],
@@ -68,6 +74,9 @@ function initialState(values: Values | undefined): State {
     return typeof value === 'string' ? value : '';
   };
   return {
+    headline: read('headline'),
+    summary: read('summary'),
+    city: read('city'),
     institution: read('institution'),
     level: read('level'),
     fieldOfStudy: read('fieldOfStudy'),
@@ -87,6 +96,13 @@ function initialState(values: Values | undefined): State {
 /** Boş metin `null` (şema `nullish` kabul eder); doldurulmuş metin olduğu gibi. */
 function candidate(section: CvSection, state: State): unknown {
   const orNull = (value: string) => (value.trim() === '' ? null : value);
+  if (section === 'PROFILE') {
+    return {
+      headline: orNull(state.headline),
+      summary: orNull(state.summary),
+      city: orNull(state.city),
+    };
+  }
   if (section === 'EDUCATION') {
     return {
       institution: state.institution,
@@ -116,6 +132,7 @@ function candidate(section: CvSection, state: State): unknown {
 }
 
 const SCHEMAS = {
+  PROFILE: parsedProfileSchema,
   EDUCATION: parsedEducationSchema,
   POSITION: parsedPositionSchema,
   LANGUAGE: parsedLanguageSchema,
@@ -285,7 +302,7 @@ export function EntryEditor({
             </Field>
           );
         }
-        if (key === 'description') {
+        if (key === 'description' || key === 'summary') {
           return (
             <Field key={key} label={label(key)} error={err(key)}>
               {(control) => (

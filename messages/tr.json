@@ -243,6 +243,7 @@
   "profile": {
     "eyebrow": "PROFİLİM",
     "sections": {
+      "PROFILE": "Profil bilgileri",
       "EDUCATION": "Eğitim",
       "POSITION": "Pozisyon",
       "LANGUAGE": "Dil",
@@ -374,6 +375,9 @@
       "dateOrder": "Bitiş, başlangıçtan önce olamaz."
     },
     "fields": {
+      "headline": "Başlık",
+      "summary": "Özet",
+      "city": "Şehir",
       "institution": "Kurum",
       "level": "Seviye",
       "fieldOfStudy": "Bölüm / alan",
