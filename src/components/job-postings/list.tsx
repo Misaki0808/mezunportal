@@ -55,7 +55,7 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
         </div>
       </div>
       <div className="flex flex-wrap gap-2 text-sm">
-        <span className="rounded-full bg-surface-strong px-3 py-1.5 text-fg">
+        <span className="max-w-full break-words rounded-full bg-surface-strong px-3 py-1.5 text-fg [overflow-wrap:anywhere]">
           {posting.location ?? (posting.isRemote ? t('remoteLabel') : t('unknownLocation'))}
         </span>
         {posting.location && posting.isRemote && (
@@ -70,7 +70,7 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
         >
           {posting.daysLeft === 0 ? t('today') : t('daysLeft', { count: posting.daysLeft })}
         </span>
-        <span className="rounded-full bg-surface-strong px-3 py-1.5 text-fg">
+        <span className="max-w-full break-words rounded-full bg-surface-strong px-3 py-1.5 text-fg [overflow-wrap:anywhere]">
           {t(posting.kind)}
         </span>
       </div>

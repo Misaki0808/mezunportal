@@ -38,7 +38,7 @@ export function PostingDetail({
             <span className="rounded-full bg-primary-soft px-3 py-2 text-on-primary-soft">
               {t(posting.kind)}
             </span>
-            <span className="rounded-full bg-surface-strong px-3 py-2">
+            <span className="max-w-full break-words rounded-full bg-surface-strong px-3 py-2 [overflow-wrap:anywhere]">
               {posting.location ?? (posting.isRemote ? t('remoteLabel') : t('unknownLocation'))}
             </span>
             {posting.location && posting.isRemote && (
@@ -48,7 +48,7 @@ export function PostingDetail({
               className={
                 posting.daysLeft <= 7
                   ? 'rounded-full bg-accent-soft px-3 py-2 font-semibold text-on-accent-soft'
-                  : 'rounded-full bg-surface-strong px-3 py-2'
+                  : 'max-w-full break-words rounded-full bg-surface-strong px-3 py-2 [overflow-wrap:anywhere]'
               }
             >
               {posting.daysLeft === 0 ? t('today') : t('daysLeft', { count: posting.daysLeft })}

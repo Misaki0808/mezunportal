@@ -65,10 +65,16 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
       'PUBLISHED',
     );
     await login(student!, 'student');
+    await db.jobPosting.update({ where: { id: postingId }, data: { location: 'K'.repeat(90) } });
+    await student!.setViewportSize({ width: 360, height: 780 });
     await student!.goto('/ilanlar');
     await student!.getByLabel('Pozisyon veya kurum ara').fill(title);
     await student!.getByRole('button', { name: 'Ara', exact: true }).click();
     await expect(student!.getByRole('heading', { name: title })).toBeVisible();
+    expect(await student!.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await student!.setViewportSize({ width: 390, height: 844 });
     await student!.getByRole('heading', { name: title }).getByRole('link').click();
     const apply = student!.getByRole('link', { name: /Başvur/ });
     await expect(apply).toHaveAttribute('href', 'https://example.org/staj');
