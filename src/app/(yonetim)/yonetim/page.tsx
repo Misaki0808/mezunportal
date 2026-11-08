@@ -23,6 +23,7 @@ export default async function AdminOverviewPage() {
       href: '/yonetim/eslesmeyenler',
       visible: capabilities.unmatchedValues,
     },
+    { key: 'invitations', href: '/yonetim/davetler', visible: capabilities.dictionaries },
     { key: 'adminGrants', href: '/yonetim/yetkiler', visible: capabilities.adminGrants },
     { key: 'auditLog', href: '/yonetim/islem-kaydi', visible: capabilities.auditLog },
     { key: 'documents', href: '/yonetim/belge-kuyrugu', visible: true },

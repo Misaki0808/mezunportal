@@ -719,6 +719,16 @@ Moderasyon, iletişim, CV daveti ve randevu bildirimlerinde olayın niyeti iş d
 
 Formun taraf denetimi hesap layout'unda loading başlamadan yapılır; yabancı kullanıcı gerçek, Türkçe 404 alır. Sayfa ve gönderim eylemi kendi denetimini korur. İstek yolu yalnız proxy'nin yazdığı başlıktan seçilir, erişim kararı katılımcı servisinindir. Görüşme işi testi bağlantı ayarlarını sahte değerlerle kurup temizler; rolün yerel env dosyasına dayanmaz. İki tarafın onayı, tek yanıt ve gösterge kapsamı bağımsız yarış/negatif testleriyle korunur.
 
+### P1-18 — dağıtım ve toplu davet sınırı
+
+İşletim sağlayıcısı seçilmeden aynı imaj ayrı web ve worker süreçleri olarak çalışır; web
+başlangıcı yalnız `migrate deploy` yapar, seed üretime taşınmaz. Yedek DB ile dosyayı tutarlı
+almak için süreçlerin durdurulmasını, geri yükleme boş ayrı hedefi gerektirir. Toplu davet yalnız
+sistem yöneticisine açılır; kayıtlı hesaplara bildirim tercihini aşarak gönderilmez. Henüz hesabı
+olmayan alıcının adresi outbox içinde uygulama sırrından türetilen anahtarla kimliği doğrulanmış
+şifreli tutulur; iş kaydı ve niyet aynı işlemde yazılır, başarılı aktarımdan sonra niyet silinir.
+SMTP teslimi ve altyapı seçimi ayrıca işletim kararına bağlıdır.
+
 ### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
 
 Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun kişi sayısı toplamdan çıkarılarak küçük grup hesaplanamaz. Aynı servis izdüşümü panelin HTML/RSC verisine ve Excel özetine uygulanır. Kullanım sayfasında zorunlu rıza ve yönetici yetkisi loading başlamadan kontrol edilir; rızasız/yetkisiz erişim gerçek 404, dosya rotası 403 döner. Diğer sayfaların yeniden onay akışı korunur.

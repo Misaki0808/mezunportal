@@ -1,4 +1,5 @@
 import 'server-only';
+import { createCipheriv, createDecipheriv, createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import type { AppointmentNotice } from './appointment-notifier';
@@ -28,6 +29,13 @@ const appointment = z
     withReminder: z.boolean().optional(),
   })
   .strict();
+const pilotInvitation = z
+  .object({
+    type: z.literal('pilotInvitation'),
+    invitationId: z.uuid(),
+    ciphertext: z.string().min(1).max(1024),
+  })
+  .strict();
 const cvReview = z
   .object({
     type: z.literal('cvReview'),
@@ -38,12 +46,13 @@ const cvReview = z
 export const notificationIntentPayload = z.discriminatedUnion('type', [
   generic,
   appointment,
+  pilotInvitation,
   cvReview,
 ]);
 export type NotificationIntentPayload = z.infer<typeof notificationIntentPayload>;
 
 type IntentWriter = Pick<Prisma.TransactionClient, 'notificationIntent'>;
-/** Yalnız olay/kimlik; e-posta adresi, not, ad veya görüşme bağlantısı kaydedilmez. */
+/** Hesaplı bildirimler yalnız olay/kimlik taşır; davet adresi yalnız geçici şifreli biçimde tutulur. */
 export async function stageNotification(
   tx: IntentWriter,
   userId: string,
@@ -55,13 +64,47 @@ export async function stageNotification(
       ? payload.eventId
       : payload.type === 'appointment'
         ? payload.appointmentId
-        : payload.requestId;
-  const key = `${payload.type}:${payload.event}:${eventId}:${userId}`;
+        : payload.type === 'pilotInvitation'
+          ? payload.invitationId
+          : payload.requestId;
+  const event = payload.type === 'pilotInvitation' ? 'invitation' : payload.event;
+  const key = `${payload.type}:${event}:${eventId}:${userId}`;
   await tx.notificationIntent.upsert({
     where: { key },
     create: { key, userId, kind: payload.type, payload },
     update: {},
   });
+}
+// Hesabı henüz olmayan alıcının adresi, niyet işlenene dek yalnız kimlik doğrulanmış
+// şifreli metin olarak tutulur. Anahtar uygulama sırrından ayrı amaç için türetilir.
+function invitationKey(secret: string) {
+  return createHmac('sha256', secret).update('mezunportal:pilot-invitation:v1').digest();
+}
+export async function stagePilotInvitation(
+  tx: IntentWriter,
+  actorId: string,
+  address: string,
+  secret: string,
+) {
+  const invitationId = randomUUID();
+  const nonce = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', invitationKey(secret), nonce);
+  cipher.setAAD(Buffer.from(`${actorId}:${invitationId}`));
+  const encrypted = Buffer.concat([cipher.update(address, 'utf8'), cipher.final()]);
+  const ciphertext = Buffer.concat([nonce, cipher.getAuthTag(), encrypted]).toString('base64url');
+  await stageNotification(tx, actorId, { type: 'pilotInvitation', invitationId, ciphertext });
+}
+export function openPilotInvitation(
+  payload: z.infer<typeof pilotInvitation>,
+  actorId: string,
+  secret: string,
+): string {
+  const packed = Buffer.from(payload.ciphertext, 'base64url');
+  if (packed.length < 29) throw new Error('INVITATION_CIPHERTEXT_INVALID');
+  const decipher = createDecipheriv('aes-256-gcm', invitationKey(secret), packed.subarray(0, 12));
+  decipher.setAAD(Buffer.from(`${actorId}:${payload.invitationId}`));
+  decipher.setAuthTag(packed.subarray(12, 28));
+  return Buffer.concat([decipher.update(packed.subarray(28)), decipher.final()]).toString('utf8');
 }
 export async function stageAppointmentNotices(
   tx: IntentWriter,

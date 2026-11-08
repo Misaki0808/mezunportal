@@ -51,6 +51,15 @@ export async function maySendNotification(
   db: PrismaClient,
   message: QueuedEmail,
 ): Promise<boolean> {
+  // Davet yalnız henüz hesabı olmayan adrese gider; mevcut hesap tercihleri atlanmaz.
+  if (message.template === 'pilot.invitation') {
+    if (message.recipientUserId) return false;
+    const existing = await db.user.findFirst({
+      where: { email: { equals: message.to, mode: 'insensitive' } },
+      select: { id: true },
+    });
+    return !existing;
+  }
   const type = notificationTypeForTemplate(message.template);
   if (!type) throw new Error('NOTIFICATION_TEMPLATE_UNKNOWN');
   if (NOTIFICATION_CATALOG[type].mandatory) return true;
