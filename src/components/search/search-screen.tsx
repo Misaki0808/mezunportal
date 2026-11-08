@@ -23,6 +23,7 @@ import {
   EmptyState,
   Field,
   Input,
+  PageHeader,
   Pagination,
   Select,
   buttonClasses,
@@ -245,14 +246,11 @@ export function SearchScreen({ filter, results, sectors }: Props) {
   );
   return (
     <div className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:pt-14">
-      <header className="max-w-2xl">
-        <p className="font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t('title')}</h1>
-        <p className="mt-3 text-fg-muted">{t('description')}</p>
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')}>
         <Link href="/deneyimlerim" className={`${buttonClasses({ variant: 'secondary' })} mt-4`}>
           {t('mine')}
         </Link>
-      </header>
+      </PageHeader>
       <form
         className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-start"
         onSubmit={(event) => {
@@ -317,7 +315,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
               {results.items.map((item) => (
                 <li key={item.id} className="rounded-card border border-border p-5 shadow-card">
                   <div className="flex flex-wrap gap-2">
-                    <Badge tone="info">{t(`types.${item.type}`)}</Badge>
+                    <Badge tone="category">{t(`types.${item.type}`)}</Badge>
                     {item.termYear && <Badge>{String(item.termYear)}</Badge>}
                   </div>
                   <h2 className="mt-3 break-words text-xl font-semibold">

@@ -49,7 +49,7 @@ export default async function ExperienceDetailPage({
       <p className="text-base font-semibold text-primary">{t('detail.eyebrow')}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <StatusBadge status={experience.status} />
-        <Badge tone="info">{t(`types.${experience.content.type}`)}</Badge>
+        <Badge tone="category">{t(`types.${experience.content.type}`)}</Badge>
       </div>
       <h1 className="mt-3 break-words text-3xl font-semibold tracking-tight text-fg">
         {content.organizationName ?? t('mine.untitled')}

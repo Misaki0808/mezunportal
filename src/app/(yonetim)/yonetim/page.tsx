@@ -1,7 +1,16 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { hasAdminAccess } from '@/components/layout/admin-access';
-import { ErrorState } from '@/components/ui';
+import {
+  BadgeCheckIcon,
+  ClipboardCheckIcon,
+  ErrorState,
+  FileTextIcon,
+  IconChip,
+  PageHeader,
+  ShieldCheckIcon,
+  UsersIcon,
+} from '@/components/ui';
 import { getAdminOverview } from '@/server/actions/admin';
 
 export const dynamic = 'force-dynamic';
@@ -31,11 +40,40 @@ export default async function AdminOverviewPage() {
     { key: 'experiences', href: '/yonetim/deneyimler', visible: true },
     { key: 'faq', href: '/yonetim/sss', visible: true },
   ] as const;
+  // Renk dağılımı: moderasyon/kişi işleri İris, veri ve raporlar Nane, sistem ayarları Mercan (anlam taşımaz; metin asıl sinyaldir).
+  const TONE = {
+    users: 'primary',
+    reports: 'primary',
+    documents: 'primary',
+    experiences: 'primary',
+    faq: 'primary',
+    unmatchedValues: 'primary',
+    usageMetrics: 'success',
+    employmentReport: 'success',
+    auditLog: 'success',
+    dictionaries: 'accent',
+    invitations: 'accent',
+    adminGrants: 'accent',
+    points: 'accent',
+  } as const;
+  const ICON = {
+    users: <UsersIcon width={22} height={22} />,
+    reports: <ClipboardCheckIcon width={22} height={22} />,
+    documents: <FileTextIcon width={22} height={22} />,
+    experiences: <FileTextIcon width={22} height={22} />,
+    faq: <ClipboardCheckIcon width={22} height={22} />,
+    unmatchedValues: <ClipboardCheckIcon width={22} height={22} />,
+    usageMetrics: <BadgeCheckIcon width={22} height={22} />,
+    employmentReport: <BadgeCheckIcon width={22} height={22} />,
+    auditLog: <ShieldCheckIcon width={22} height={22} />,
+    dictionaries: <FileTextIcon width={22} height={22} />,
+    invitations: <UsersIcon width={22} height={22} />,
+    adminGrants: <ShieldCheckIcon width={22} height={22} />,
+    points: <BadgeCheckIcon width={22} height={22} />,
+  } as const;
   return (
     <div className="mx-auto max-w-4xl px-5 pb-12 pt-10 sm:pt-14">
-      <p className="font-semibold text-primary">{t('eyebrow')}</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t('title')}</h1>
-      <p className="mt-3 text-fg-muted">{t('description')}</p>
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       <ul className="mt-7 grid gap-3 sm:grid-cols-2">
         {links
           .filter((link) => link.visible)
@@ -43,10 +81,17 @@ export default async function AdminOverviewPage() {
             <li key={link.key}>
               <Link
                 href={link.href}
-                className="press-row flex min-h-24 flex-col justify-center rounded-card border border-border px-5 py-4 shadow-card"
+                className="press-row flex min-h-24 items-center gap-4 rounded-card border border-border px-4 py-4 shadow-card"
               >
-                <span className="text-lg font-semibold text-fg">{t(`sections.${link.key}`)} →</span>
-                <span className="mt-1 text-base text-fg-muted">{t(`intro.${link.key}`)}</span>
+                <IconChip tone={TONE[link.key]}>{ICON[link.key]}</IconChip>
+                <span className="min-w-0">
+                  <span className="block text-lg font-semibold text-fg">
+                    {t(`sections.${link.key}`)} →
+                  </span>
+                  <span className="mt-1 block text-base text-fg-muted">
+                    {t(`intro.${link.key}`)}
+                  </span>
+                </span>
               </Link>
             </li>
           ))}

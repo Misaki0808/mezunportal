@@ -6,7 +6,7 @@ import { useRef, useState } from 'react';
 
 import type { AppointmentPage, ListMyAppointmentsInput } from '@/contracts/appointment';
 import type { ActionResult } from '@/contracts/result';
-import { Button, buttonClasses, EmptyState, Tabs } from '@/components/ui';
+import { Button, EmptyState, PageHeader, Tabs, buttonClasses } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { AppointmentStatusBadge } from './status-badge';
@@ -117,14 +117,16 @@ export function MyAppointments({ initial, initialRole, showSettings, list }: Pro
 
   return (
     <div className="[&_.text-sm]:text-base mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16">
-      <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
-      <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
-      {showSettings && (
-        <Link className={buttonClasses({ variant: 'secondary' }) + ' mt-4'} href="/mentor/ayarlar">
-          {t('settings')}
-        </Link>
-      )}
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')}>
+        {showSettings && (
+          <Link
+            className={buttonClasses({ variant: 'secondary' }) + ' mt-4'}
+            href="/mentor/ayarlar"
+          >
+            {t('settings')}
+          </Link>
+        )}
+      </PageHeader>
       <Tabs
         className="mt-6"
         label={t('tabs.label')}

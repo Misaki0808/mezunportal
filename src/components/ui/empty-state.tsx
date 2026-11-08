@@ -16,8 +16,11 @@ export type EmptyStateProps = {
 export function EmptyState({ title, description, icon, action, className }: EmptyStateProps) {
   return (
     <div className={cn('flex flex-col items-center gap-3 px-4 py-10 text-center', className)}>
-      <span className="text-fg-subtle">
-        {icon ?? <InboxIcon width={40} height={40} strokeWidth={1.5} />}
+      <span
+        aria-hidden="true"
+        className="inline-flex size-16 items-center justify-center rounded-full bg-primary-soft text-on-primary-soft"
+      >
+        {icon ?? <InboxIcon width={32} height={32} strokeWidth={1.5} />}
       </span>
       <h2 className="text-lg font-semibold text-fg">{title}</h2>
       {description && <p className="max-w-prose text-fg-muted">{description}</p>}

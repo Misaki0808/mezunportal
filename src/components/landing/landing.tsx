@@ -107,7 +107,7 @@ export async function Landing({ stats }: { stats: LandingStats }) {
                   <p className="landing-phone-kicker">{t('previewKicker')}</p>
                   <p className="landing-phone-heading">{t('previewHeading')}</p>
                   <Card className="landing-preview-card">
-                    <Badge tone="info">{t('previewExperienceTag')}</Badge>
+                    <Badge tone="category">{t('previewExperienceTag')}</Badge>
                     <p className="landing-preview-title">{t('previewExperience')}</p>
                     <p className="landing-preview-muted">{t('previewExperienceMeta')}</p>
                     <span className="landing-preview-arrow">↗</span>

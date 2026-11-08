@@ -5,6 +5,7 @@ import {
   DownloadIcon,
   ShieldIcon,
   TrashIcon,
+  IconChip,
   UsersIcon,
 } from '@/components/ui';
 
@@ -32,11 +33,11 @@ export async function PrivacyAccountLinks() {
           <li key={id}>
             <Link
               href={href}
-              className="press-row flex min-h-20 items-center gap-4 rounded-card border border-border bg-bg p-5 text-fg"
+              className="press-row flex min-h-20 items-center gap-4 rounded-card border border-border bg-bg p-4 text-fg"
             >
-              <span className="text-primary">
+              <IconChip tone={id === 'delete' ? 'accent' : 'success'}>
                 <Icon />
-              </span>
+              </IconChip>
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-semibold">{t(id)}</span>
                 <span className="mt-1 block text-base text-fg-muted">{t(`${id}Description`)}</span>

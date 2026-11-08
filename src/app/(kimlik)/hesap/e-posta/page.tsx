@@ -5,6 +5,7 @@ import { requestEmailChange } from '@/server/actions/auth';
 import { parseEmailChangeStep } from '@/contracts/auth';
 
 import { EmailChangeForm } from './email-change-form';
+import { PageHeader } from '@/components/ui';
 
 export default async function EmailChangePage({
   searchParams,
@@ -24,27 +25,24 @@ export default async function EmailChangePage({
           ← {t('back')}
         </Link>
       )}
-      <header className="mb-10">
-        <p className="mb-2 text-base font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-fg">
-          {t(
-            step === 'eski-onaylandi'
-              ? 'oldVerifiedTitle'
-              : step === 'tamamlandi'
-                ? 'completeTitle'
-                : 'title',
-          )}
-        </h1>
-        <p className="mt-4 text-base leading-relaxed text-fg-muted">
-          {t(
-            step === 'eski-onaylandi'
-              ? 'oldVerifiedDescription'
-              : step === 'tamamlandi'
-                ? 'completeDescription'
-                : 'description',
-          )}
-        </p>
-      </header>
+      <PageHeader
+        className="mb-10"
+        eyebrow={t('eyebrow')}
+        title={t(
+          step === 'eski-onaylandi'
+            ? 'oldVerifiedTitle'
+            : step === 'tamamlandi'
+              ? 'completeTitle'
+              : 'title',
+        )}
+        description={t(
+          step === 'eski-onaylandi'
+            ? 'oldVerifiedDescription'
+            : step === 'tamamlandi'
+              ? 'completeDescription'
+              : 'description',
+        )}
+      />
       {step ? (
         <Link
           href="/hesap"
