@@ -66,6 +66,9 @@ export function OnboardingFlow({
       previousStep.current = state.step;
     }
   }, [state.step]);
+  useEffect(() => {
+    if (finished) heading.current?.focus();
+  }, [finished]);
 
   async function submit(input: SaveOnboardingStepInput) {
     if (locked.current) return;
@@ -152,9 +155,21 @@ export function OnboardingFlow({
   const step = state.step;
   const showTags = step === 'INTERESTS' || step === 'GOALS';
   const choices = step === 'INTERESTS' ? interests : goals;
-  const availableChoices = choices.filter((tag) =>
-    tags.has(tag.slug as keyof typeof messages.profileTags),
-  );
+  const availableChoices = choices
+    .filter((tag) => tags.has(tag.slug as keyof typeof messages.profileTags))
+    .sort((a, b) =>
+      tags(a.slug as keyof typeof messages.profileTags).localeCompare(
+        tags(b.slug as keyof typeof messages.profileTags),
+        'tr',
+      ),
+    );
+  // Sayfaya geri dönen kullanıcı: sunucuda COMPLETE ve bekleyen uygulanabilir adım yok → tamamlandı
+  // görünümü (“Son bir adım” tekrar gösterilmez). Oturum içi akışta bitirme düğmesi korunur.
+  const done =
+    finished ||
+    (initialState.step === 'COMPLETE' &&
+      state.step === 'COMPLETE' &&
+      initialState.steps.every((item) => !item.applicable || item.status !== 'PENDING'));
   const mentorAvailable = state.steps.some(
     (item) => item.step === 'MENTOR_PREFERENCE' && item.applicable,
   );
@@ -172,7 +187,7 @@ export function OnboardingFlow({
             ? t('mentorTitle')
             : step === 'VISIBILITY'
               ? t('visibilityTitle')
-              : t(finished ? 'completeTitle' : 'readyTitle');
+              : t(done ? 'completeTitle' : 'readyTitle');
   const description =
     step === 'MEMBERSHIP'
       ? t('membershipDescription')
@@ -184,7 +199,7 @@ export function OnboardingFlow({
             ? t('mentorDescription')
             : step === 'VISIBILITY'
               ? t('visibilityDescription')
-              : t(finished ? 'completeDescription' : 'readyDescription');
+              : t(done ? 'completeDescription' : 'readyDescription');
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16">
       <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
@@ -296,17 +311,29 @@ export function OnboardingFlow({
           ))}
         </div>
       )}
-      {error && (
-        <p role="alert" className="mt-5 text-base text-danger">
-          {errors(error)}
-        </p>
-      )}
-      {emptySelection && (
-        <p role="alert" className="mt-5 text-base text-danger">
-          {t('chooseOrSkip')}
-        </p>
+      {step === 'COMPLETE' && state.completion.missing.length > 0 && (
+        <section className="mt-6 rounded-card border border-border p-4">
+          <h2 className="text-base font-semibold text-fg">{t('missingTitle')}</h2>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-base text-fg-muted">
+            {state.completion.missing.map((item) => (
+              <li key={item}>{t(`steps.${item}`)}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-sm text-fg-muted">{t('missingDescription')}</p>
+        </section>
       )}
       <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto space-y-2 bg-bg pt-4 pb-2 lg:static lg:pt-8">
+        {/* Hata, eylem düğmesinin hemen üstünde: 390'da uzun listenin altında görünmeden kalmaz. */}
+        {error && (
+          <p role="alert" className="text-base text-danger">
+            {errors(error)}
+          </p>
+        )}
+        {emptySelection && (
+          <p role="alert" className="text-base text-danger">
+            {t('chooseOrSkip')}
+          </p>
+        )}
         {step === 'MEMBERSHIP' && (
           <Link className={buttonClasses({ fullWidth: true, size: 'lg' })} href="/dogrulama">
             {t('membershipAction')}
@@ -334,7 +361,7 @@ export function OnboardingFlow({
             {pending ? t('saving') : t('visibilityConfirm')}
           </Button>
         )}
-        {step === 'COMPLETE' && !finished && (
+        {step === 'COMPLETE' && !done && (
           <Button
             size="lg"
             fullWidth
@@ -344,7 +371,7 @@ export function OnboardingFlow({
             {pending ? t('saving') : t('finish')}
           </Button>
         )}
-        {step === 'COMPLETE' && finished && (
+        {step === 'COMPLETE' && done && (
           <Link className={buttonClasses({ fullWidth: true, size: 'lg' })} href="/">
             {t('home')}
           </Link>

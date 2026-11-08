@@ -635,7 +635,7 @@
     "mentorTitle": "Mentor olmak ister misin?",
     "mentorDescription": "Deneyimlerini paylaşarak başkalarına destek olabilirsin.",
     "mentorYes": "Evet, ilgileniyorum",
-    "mentorNo": "Şimdilik düşünmüyorum",
+    "mentorNo": "Hayır, ilgilenmiyorum",
     "visibilityTitle": "Gizlilik tercihlerini gözden geçir",
     "visibilityDescription": "E-posta ve telefonun varsayılan olarak gizlidir. İstediğin zaman değiştirebilirsin.",
     "visibilityAction": "Gizlilik ayarlarına git",
@@ -659,13 +659,22 @@
       "LINKEDIN": "LinkedIn"
     },
     "levels": {
-      "PRIVATE": "Yalnızca ben",
-      "ON_APPROVED_REQUEST": "Onayladığım istekler",
+      "PRIVATE": "Yalnız ben",
+      "ON_APPROVED_REQUEST": "Talep ve onayla",
       "MEMBERS": "Doğrulanmış üyeler"
     },
     "chooseOrSkip": "En az bir seçenek seç veya bu adımı şimdilik atla.",
     "readyTitle": "Son bir adım",
     "readyDescription": "Hazırsan başlangıcı tamamlayıp devam edebilirsin.",
-    "finish": "Başlangıcı tamamla"
+    "finish": "Başlangıcı tamamla",
+    "missingTitle": "Eksik kalan adımlar",
+    "missingDescription": "Bunları daha sonra tamamlayabilirsin.",
+    "steps": {
+      "MEMBERSHIP": "Üyelik",
+      "INTERESTS": "İlgi alanları",
+      "GOALS": "Hedefler",
+      "MENTOR_PREFERENCE": "Mentorluk tercihi",
+      "VISIBILITY": "Gizlilik tercihleri"
+    }
   }
 }

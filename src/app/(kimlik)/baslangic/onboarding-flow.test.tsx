@@ -182,4 +182,66 @@ describe('ilk giriş akışı', () => {
       expect(skip).toHaveBeenCalledWith({ step });
     },
   );
+  it('bitirilmiş başlangıca dönen kullanıcı “Son bir adım” değil tamamlandı görünümünü ve eksikleri görür', () => {
+    const finishedState: OnboardingState = {
+      ...initial,
+      step: 'COMPLETE',
+      steps: initial.steps.map((item) => ({
+        ...item,
+        status:
+          item.step === 'GOALS' || item.step === 'MENTOR_PREFERENCE' ? 'SKIPPED' : 'COMPLETED',
+      })),
+      completion: { percent: 75, missing: ['GOALS'] },
+    };
+    renderUi(
+      <OnboardingFlow
+        initialState={finishedState}
+        interests={interests}
+        goals={goals}
+        initialVisibility={{ fields: [...visibility.fields] }}
+        save={vi.fn()}
+        skip={vi.fn()}
+        saveVisibility={saveVisibility}
+      />,
+    );
+    expect(screen.getByRole('heading', { level: 1, name: 'Hazırsın!' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Başlangıcı tamamla' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Eksik kalan adımlar' })).toBeInTheDocument();
+    expect(screen.getByRole('listitem')).toHaveTextContent('Hedefler');
+  });
+  it('bekleyen adım varken COMPLETE noktası bitirme düğmesini gösterir', () => {
+    renderUi(
+      <OnboardingFlow
+        initialState={{ ...initial, step: 'COMPLETE' }}
+        interests={interests}
+        goals={goals}
+        initialVisibility={{ fields: [...visibility.fields] }}
+        save={vi.fn()}
+        skip={vi.fn()}
+        saveVisibility={saveVisibility}
+      />,
+    );
+    expect(screen.getByRole('heading', { level: 1, name: 'Son bir adım' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Başlangıcı tamamla' })).toBeInTheDocument();
+  });
+  it('etiketler Türkçe adlarına göre sıralanır', () => {
+    renderUi(
+      <OnboardingFlow
+        initialState={initial}
+        interests={[
+          { id: 'a', kind: 'INTEREST', slug: 'software' },
+          { id: 'b', kind: 'INTEREST', slug: 'academic' },
+          { id: 'c', kind: 'INTEREST', slug: 'business' },
+        ]}
+        goals={goals}
+        initialVisibility={{ fields: [...visibility.fields] }}
+        save={vi.fn()}
+        skip={vi.fn()}
+        saveVisibility={saveVisibility}
+      />,
+    );
+    expect(screen.getAllByRole('checkbox').map((box) => box.closest('label')?.textContent)).toEqual(
+      ['Akademik kariyer', 'İş analizi', 'Yazılım geliştirme'],
+    );
+  });
 });
