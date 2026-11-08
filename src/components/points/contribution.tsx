@@ -144,7 +144,7 @@ export function ContributionSummary({
         <ul className="flex flex-col gap-2" aria-label={t('badges')}>
           {summary.badges.map((badge) => (
             <li key={badge.kind} className="flex flex-wrap items-center gap-2">
-              <Badge tone="info">{t(`badge.${badge.kind}`)}</Badge>
+              <Badge tone="accent">{t(`badge.${badge.kind}`)}</Badge>
               <span className="text-sm text-fg-muted">
                 {t('badgeSince', { date: formatDate(badge.awardedAt) })}
               </span>

@@ -2,11 +2,14 @@ import type { ComponentProps } from 'react';
 
 import { cn } from './cn';
 
-export type BadgeTone = 'neutral' | 'info' | 'accent' | 'success' | 'warning' | 'danger';
+export type BadgeTone =
+  'neutral' | 'info' | 'category' | 'accent' | 'success' | 'warning' | 'danger';
 
 const TONES: Record<BadgeTone, string> = {
   neutral: 'bg-surface-strong text-fg',
   info: 'bg-primary-soft text-on-primary-soft',
+  /** Kategori/tür etiketi (Staj, Mezun…): DURUM rozetinden ayrışır; nötr yüzey + çerçeve, renk tek sinyal değildir. */
+  category: 'border border-border bg-surface text-fg',
   /** Mercan: öne çıkan/yeni durumlar (az kullanılır). */
   accent: 'bg-accent-soft text-on-accent-soft',
   success: 'bg-success-soft text-on-success-soft',

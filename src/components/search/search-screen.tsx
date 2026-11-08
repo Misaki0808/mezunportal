@@ -315,7 +315,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
               {results.items.map((item) => (
                 <li key={item.id} className="rounded-card border border-border p-5 shadow-card">
                   <div className="flex flex-wrap gap-2">
-                    <Badge tone="info">{t(`types.${item.type}`)}</Badge>
+                    <Badge tone="category">{t(`types.${item.type}`)}</Badge>
                     {item.termYear && <Badge>{String(item.termYear)}</Badge>}
                   </div>
                   <h2 className="mt-3 break-words text-xl font-semibold">

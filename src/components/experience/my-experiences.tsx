@@ -89,7 +89,7 @@ export function MyExperiences({ initial, list }: Props) {
               <li key={item.id} className="rounded-card border border-border bg-bg p-5 shadow-card">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={item.status} />
-                  <Badge tone="info">{t(`types.${item.content.type}`)}</Badge>
+                  <Badge tone="category">{t(`types.${item.content.type}`)}</Badge>
                   {item.isAnonymous && <Badge>{t('mine.anonymousNote')}</Badge>}
                 </div>
                 <h2 className="mt-3 break-words text-lg font-semibold text-fg">
