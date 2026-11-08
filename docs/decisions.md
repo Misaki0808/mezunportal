@@ -569,3 +569,16 @@ uygulanmaz. Aktörün kullanıcı satırındaki paylaşım kilidi askı/silmeyle
 sıralar. Hedef kullanıcı kilidi atama ve üyelik düzeltmesinden önce alınır; hesap silme ve
 mezun geçişiyle ortak sıra User → Membership'tir. Silme ile yarışan atama silinmiş hesapta
 etkin yetki bırakamaz ve ters satır kilidi sırası oluşmaz.
+
+## 2026-11-08 · Yönetim paneli servis payı: eşleşmeyen değer çözümü, istihdam raporu, Excel
+`UnmatchedValue.dismissedAt` (ekleyici migration): "at" kararı sütunla tutulur; çözülmüş ya da atılmış değer yeniden
+gelirse yalnız sayaç artar, kuyruk yeniden açılmaz (CHECK: ikisi birden olamaz). "Bağla" değeri kaydın takma adı yapar ve
+sözlük bağı boş profil kalemlerini bağlar (kalem metni değişmez; tarama pilot ölçeğinde 5.000 pozisyonla sınırlıdır, kalanı
+sonraki CV ile bağlanır). Sektörde takma ad yoktur: sektöre "bağla" geçersiz, "yeni kayıt" geçerlidir. Sözlük yazmaları tür
+başına danışma kilidiyle (`pg_advisory_xact_lock`) serileşir: ad/takma ad çakışma denetimi yarış altında da doğrudur;
+kilit sırası her yerde tür kilidi → satır kilididir. Silinen kayda bağlı eşleşmeyen değerler kuyruğa döner.
+İstihdam raporu: kişi başına tek temsilci pozisyon (güncel > en son biten), yalnız sözlükle eşleşen adlar; küçük gruplar
+(< 3) `Diğer`'de birleşir, o da < 3 ise hiç gösterilmez. Excel için ExcelJS kullanıldı (`docs/engineering.md` yığınında,
+onaylı); dosya bellekte üretilir, işlem kaydı ve hız sınırıyla aynı işlemdedir. Kullanıcı aramasında `LIKE` özel karakterleri
+kaçırılır (Prisma `contains` kaçırmaz).
+
