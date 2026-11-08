@@ -52,8 +52,7 @@
       "EXPERIENCE_NOT_PENDING": "Bu deneyim artık moderasyon beklemiyor. Listeyi yenile.",
       "EXPERIENCE_NOT_PUBLISHED": "Yalnız yayınlanmış deneyimleri şikâyet edebilirsin.",
       "REPORT_ALREADY_OPEN": "Bu deneyim için açık bir şikâyetin var. Yeni şikâyet göndermene gerek yok.",
-      "REPORT_NOT_OPEN": "Bu şikâyet daha önce sonuçlandırılmış. Listeyi yenile.",
-      "EMAIL_CHANGE_SAME_ADDRESS": "Bu zaten kullandığın adres. Farklı bir e-posta adresi yaz."
+      "REPORT_NOT_OPEN": "Bu şikâyet daha önce sonuçlandırılmış. Listeyi yenile."
     }
   },
   "nav": {
