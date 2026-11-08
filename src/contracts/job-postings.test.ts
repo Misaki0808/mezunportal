@@ -15,6 +15,10 @@ import {
   jobPostingFilterOptionsSchema,
   getJobPostingFilterOptionsSchema,
   jobPostingFormContextSchema,
+  jobPostingContactPreviewSchema,
+  previewJobPostingContactSchema,
+  requestJobPostingContactSchema,
+  JOB_POSTING_CONTACT_NOT_REQUESTABLE,
   jobPostingModerationItemSchema,
   jobPostingReportSchema,
   listJobPostingReportsSchema,
@@ -291,9 +295,12 @@ describe('çıktı şemaları: kimlik sızıntısı yok', () => {
     expect(Object.keys(jobPostingCardSchema.shape)).toContain('authorKind');
   });
 
-  it('detayda bağlantı ve iletişim kimliği ayrı, boşalabilir alanlardır', () => {
+  it('D7: detayda ve kartta kullanıcı kimliği alanı yoktur (iletişim talebi ilan üzerinden); bağlantı boşalabilir', () => {
     expect(jobPostingDetailSchema.shape.applyUrl.safeParse(null).success).toBe(true);
-    expect(jobPostingDetailSchema.shape.contactUserId.safeParse(null).success).toBe(true);
+    for (const shape of [jobPostingCardSchema.shape, jobPostingDetailSchema.shape])
+      for (const key of Object.keys(shape).filter((k) => k !== 'authorKind'))
+        expect(key, `${key} kullanıcı kimliği izi taşımamalı`).not.toMatch(/user|author|contact/i);
+    expect(Object.keys(jobPostingDetailSchema.shape)).not.toContain('contactUserId');
   });
 
   it('moderatör kaydı yazarın yalnız görünen adını ve rolünü taşır (e-posta/telefon yok)', () => {
@@ -373,5 +380,70 @@ describe('süzgeç seçenekleri', () => {
         jobPostingFilterOptionsSchema.shape.locations.element.shape,
       ])
         expect(Object.keys(shape)).not.toContain(key);
+  });
+});
+
+describe('ilan üzerinden iletişim (D7)', () => {
+  it('girdi ilan kimliğidir; hedef kullanıcı kimliği istemciden alınmaz (strict)', () => {
+    expect(previewJobPostingContactSchema.safeParse({ jobPostingId: 'p1' }).success).toBe(true);
+    expect(previewJobPostingContactSchema.safeParse({ targetUserId: 'u1' }).success).toBe(false);
+    expect(
+      previewJobPostingContactSchema.safeParse({ jobPostingId: 'p1', targetUserId: 'u1' }).success,
+    ).toBe(false);
+    expect(
+      requestJobPostingContactSchema.safeParse({ jobPostingId: 'p1', fields: ['EMAIL'] }).success,
+    ).toBe(true);
+    expect(
+      requestJobPostingContactSchema.safeParse({
+        jobPostingId: 'p1',
+        targetUserId: 'u1',
+        fields: ['EMAIL'],
+      }).success,
+    ).toBe(false);
+  });
+
+  it('alanlar: en az bir, tekrarsız, bilinen; mesaj en çok 500 karakter ve boşsa yok sayılır', () => {
+    const ok = (over: object) =>
+      requestJobPostingContactSchema.safeParse({ jobPostingId: 'p1', fields: ['EMAIL'], ...over })
+        .success;
+    expect(ok({ fields: [] })).toBe(false);
+    expect(ok({ fields: ['EMAIL', 'EMAIL'] })).toBe(false);
+    expect(ok({ fields: ['TCKN'] })).toBe(false);
+    expect(ok({ fields: ['EMAIL', 'PHONE'] })).toBe(true);
+    expect(ok({ message: 'a'.repeat(501) })).toBe(false);
+    expect(
+      requestJobPostingContactSchema.parse({
+        jobPostingId: 'p1',
+        fields: ['EMAIL'],
+        message: '   ',
+      }).message,
+    ).toBeNull();
+  });
+
+  it('önizleme çıktısında ad/kimlik yoktur; olumsuz yanıt tek biçimlidir', () => {
+    const yes = {
+      canRequest: true,
+      postingTitle: 'Veri analisti stajyeri',
+      organizationName: 'Örnek Teknoloji',
+      requestableFields: ['EMAIL'],
+    };
+    expect(jobPostingContactPreviewSchema.safeParse(yes).success).toBe(true);
+    for (const key of ['displayName', 'userId', 'authorId', 'name'])
+      expect(jobPostingContactPreviewSchema.safeParse({ ...yes, [key]: 'x' }).success).toBe(false);
+    expect(
+      jobPostingContactPreviewSchema.safeParse(JOB_POSTING_CONTACT_NOT_REQUESTABLE).success,
+    ).toBe(true);
+    expect(
+      jobPostingContactPreviewSchema.safeParse({ ...yes, canRequest: true, requestableFields: [] })
+        .success,
+    ).toBe(false);
+    expect(
+      jobPostingContactPreviewSchema.safeParse({
+        canRequest: false,
+        postingTitle: 'x',
+        organizationName: null,
+        requestableFields: [],
+      }).success,
+    ).toBe(false);
   });
 });

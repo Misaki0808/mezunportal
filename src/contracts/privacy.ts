@@ -6,7 +6,6 @@ import { emailSchema } from './auth';
 import { ONBOARDING_STEPS, profileTagSchema } from './profile';
 import { EXPERIENCE_STATUSES, experienceDraftTemplateSchema } from './experience';
 import { FAQ_STATUSES } from './faq';
-import { JOB_APPLY_METHODS, JOB_POSTING_KINDS, JOB_POSTING_STATUSES } from './job-postings';
 import {
   BADGE_KINDS,
   POINT_ACTIONS,
@@ -366,21 +365,21 @@ export const dataExportSchema = z.object({
       ),
     })
     .strict(),
-  /** İlanlar (P2-04): yalnız kendi yazdığın ilanlar. Moderatör, şikâyet eden ve başka kullanıcıya ait alan yok. */
+  /** İlanlar (P2-04): yalnız kendi yazdığın ilanlar (değer kümeleri `contracts/job-postings` ile aynıdır; döngüsel içe aktarma olmasın diye burada yazılıdır, test eşitliği korur). Moderatör, şikâyet eden ve başka kullanıcıya ait alan yok. */
   jobPostings: z.array(
     z
       .object({
         id: z.string(),
-        kind: z.enum(JOB_POSTING_KINDS),
+        kind: z.enum(['INTERNSHIP', 'JOB']),
         title: z.string().nullable(),
         organizationName: z.string().nullable(),
         location: z.string().nullable(),
         isRemote: z.boolean(),
         description: z.string().nullable(),
-        applyMethod: z.enum(JOB_APPLY_METHODS).nullable(),
+        applyMethod: z.enum(['URL', 'CONTACT_REQUEST']).nullable(),
         applyUrl: z.string().nullable(),
         deadlineOn: z.string().nullable(),
-        status: z.enum(JOB_POSTING_STATUSES),
+        status: z.enum(['DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED', 'EXPIRED', 'CLOSED']),
         moderationNote: z.string().nullable(),
         createdAt: z.string(),
         publishedAt: z.string().nullable(),
