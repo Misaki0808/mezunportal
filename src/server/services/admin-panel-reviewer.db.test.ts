@@ -170,3 +170,28 @@ it('inceleyici: SKILL yeniden adlandırma bağları birleştirir, silme kişisel
   ]);
   expect((await suggestSkills({ db }, owner, { query: renamed })).skills).toEqual([]);
 });
+
+it('inceleyici: SKILL CREATE aynı kişisel etiketi ve bağını yerinde kurallıya yükseltir', async () => {
+  const a = await admin(),
+    name = `Yeni ${marker()}`,
+    userId = await createUser(db);
+  const profile = await addProfileSkill({ db }, userId, { name });
+  const originalId = profile.skills[0]!.tagId;
+  const unmatched = await db.unmatchedValue.findFirstOrThrow({
+    where: { kind: 'SKILL', normalizedValue: normalizeName(name) },
+  });
+  const result = await resolveUnmatchedValue({ db }, a.id, {
+    id: unmatched.id,
+    resolution: { type: 'CREATE', name, aliases: [] },
+  });
+  const link = await db.profileTag.findFirstOrThrow({
+    where: { profile: { userId } },
+    select: { tagId: true, tag: { select: { curated: true, label: true } } },
+  });
+  expect(link).toEqual({ tagId: originalId, tag: { curated: true, label: name } });
+  expect(
+    (await listDictionaryEntries({ db }, a.id, { kind: 'SKILL', query: name })).items.find(
+      (row) => row.id === result.entryId,
+    )?.usageCount,
+  ).toBe(1);
+});

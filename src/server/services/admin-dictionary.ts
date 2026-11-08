@@ -576,19 +576,23 @@ export async function listUnmatchedValues(
 /** Kişisel/önceki etiketi sözlüğün kurallı etiketine taşır; çift bağ ve eski öneri bırakmaz. */
 async function relinkSkillTag(tx: Tx, entryId: string, sourceSlug: string): Promise<number> {
   // FK ile aynı satır: bağlar kopyalanırken eski etikete yeni bağ eklenip kaybolamaz.
-  await tx.$queryRaw`SELECT "id" FROM "Tag" WHERE "kind"='SKILL' AND "slug"=${sourceSlug} FOR UPDATE`;
+  const locked = await tx.$queryRaw<
+    { id: string }[]
+  >`SELECT "id" FROM "Tag" WHERE "kind"='SKILL' AND "slug"=${sourceSlug} FOR UPDATE`;
   const skill = await tx.skill.findUniqueOrThrow({
     where: { id: entryId },
     select: { name: true },
   });
-  const source = await tx.tag.findUnique({
-    where: { kind_slug: { kind: 'SKILL', slug: sourceSlug } },
-    select: {
-      id: true,
-      curated: true,
-      profiles: { select: { profileId: true, createdAt: true, updatedAt: true } },
-    },
-  });
+  const source = locked[0]
+    ? await tx.tag.findUnique({
+        where: { id: locked[0].id },
+        select: {
+          id: true,
+          curated: true,
+          profiles: { select: { profileId: true, createdAt: true, updatedAt: true } },
+        },
+      })
+    : null;
   const identity = skillTagIdentity(skill.name);
   const target = await tx.tag.upsert({
     where: { kind_slug: { kind: 'SKILL', slug: identity.slug } },
