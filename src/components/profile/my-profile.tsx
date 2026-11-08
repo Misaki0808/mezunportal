@@ -67,8 +67,8 @@ export type MyProfileActions = {
 type Props = {
   initial: MyProfileData;
   actions: MyProfileActions;
-  /** Tamamlama göstergesinin hemen altında gösterilen ek bölüm (ör. katkı puanı özeti). */
-  afterCompletion?: ReactNode;
+  /** Uzun eksik alan listesinden önce, ilk ekranda görünen ek bölüm (ör. katkı puanı özeti). */
+  beforeCompletion?: ReactNode;
 };
 
 const ENTRY_SECTIONS: readonly {
@@ -87,7 +87,7 @@ type Editing =
   | { kind: 'links' };
 
 /** Kendi profilim: bölüm bölüm görüntüle + alt sayfada düzenle. Her eylem güncel profili döner; ekran onu çizer. */
-export function MyProfile({ initial, actions, afterCompletion }: Props) {
+export function MyProfile({ initial, actions, beforeCompletion }: Props) {
   const t = useTranslations('profile.my');
   const sections = useTranslations('profile.sections');
   const errors = useTranslations('errors.codes');
@@ -180,6 +180,8 @@ export function MyProfile({ initial, actions, afterCompletion }: Props) {
         </div>
       )}
 
+      {beforeCompletion}
+
       <section aria-labelledby="completion" className="rounded-card border border-border p-4">
         <h2 id="completion" className="text-base font-semibold text-fg">
           {t('completion', { percent })}
@@ -212,8 +214,6 @@ export function MyProfile({ initial, actions, afterCompletion }: Props) {
           {t('onboardingLink')}
         </Link>
       </section>
-
-      {afterCompletion}
 
       <section className="flex flex-col gap-3 rounded-card border border-primary bg-primary-soft p-4 text-on-primary-soft">
         <h2 className="text-lg font-semibold">{t('cvTitle')}</h2>

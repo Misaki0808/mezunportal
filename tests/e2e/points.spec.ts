@@ -61,9 +61,10 @@ test('profil: katkı puanı, bekleyen puan ve geçmiş görünür', async ({ pag
     await login(page, 'student');
     await page.goto('/profil');
     await page.waitForLoadState('networkidle');
-    // Özet tamamlama göstergesinin altında (ilk ekranda), geçmiş sayfanın altında ayrı bölümdür.
+    // Özet uzun eksik alan listesinden önce ilk ekrandadır; geçmiş sayfanın altında ayrı bölümdür.
     const summary = page.getByRole('region', { name: 'Katkı puanın' });
     await expect(summary).toBeVisible();
+    await expect(summary).toBeInViewport({ ratio: 1 });
     await expect(
       summary.getByText('Bekleyen puan').locator('xpath=following-sibling::dd'),
     ).toContainText(/[1-9]/);

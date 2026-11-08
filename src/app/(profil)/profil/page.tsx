@@ -25,7 +25,7 @@ export default async function ProfilePage() {
     <>
       <MyProfile
         initial={result.data}
-        afterCompletion={
+        beforeCompletion={
           points?.ok ? <ContributionSummary summary={points.data.summary} /> : undefined
         }
         actions={{

@@ -27,6 +27,10 @@ export function Tabs({ items, label, defaultId, value, onValueChange, className 
   const selectedId = value ?? internal;
   const tabRefs = useRef(new Map<string, HTMLButtonElement>());
   const listRef = useRef<HTMLDivElement>(null);
+  const revealSelected = useCallback(() => {
+    if (selectedId === undefined) return;
+    tabRefs.current.get(selectedId)?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
+  }, [selectedId]);
   // Şerit sığmayınca kaydırma ipucu: hangi kenarda gizli sekme var?
   const [edges, setEdges] = useState({ start: false, end: false });
   const measure = useCallback(() => {
@@ -37,18 +41,17 @@ export function Tabs({ items, label, defaultId, value, onValueChange, className 
     setEdges((old) => (old.start === start && old.end === end ? old : { start, end }));
   }, []);
   useEffect(() => {
+    revealSelected();
     measure();
     const list = listRef.current;
     if (!list || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(measure);
+    const observer = new ResizeObserver(() => {
+      revealSelected();
+      measure();
+    });
     observer.observe(list);
     return () => observer.disconnect();
-  }, [measure, items.length]);
-  // Seçili sekme (klavye, dokunma ya da dışarıdan değişim) görünür alana kayar.
-  useEffect(() => {
-    if (selectedId === undefined) return;
-    tabRefs.current.get(selectedId)?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
-  }, [selectedId]);
+  }, [measure, items.length, revealSelected]);
 
   function select(id: string) {
     if (value === undefined) setInternal(id);

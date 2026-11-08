@@ -104,7 +104,7 @@ export function Contribution({ initial, list, variant = 'full' }: Props) {
 }
 
 /**
- * Katkı puanı özeti (toplam, bekleyen, rozet). Profilde tamamlama göstergesinin hemen altında, ilk ekranda görünür;
+ * Katkı puanı özeti (toplam, bekleyen, rozet). Profilde tamamlama bölümünün hemen üstünde, ilk ekranda görünür;
  * "Puan geçmişi" bağlantısı sayfanın altındaki geçmişe iner.
  */
 export function ContributionSummary({

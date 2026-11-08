@@ -216,6 +216,68 @@ describe('katkı puanı özeti (profilde üstte)', () => {
 });
 
 describe('puan yönetimi (sistem yöneticisi)', () => {
+  it('kayıt yanıtı beklenirken kullanıcı değişmez; yanıt başka kişi altında çizilmez', async () => {
+    const gate = Promise.withResolvers<{
+      ok: true;
+      data: { items: PointEntryView[]; nextCursor: null };
+    }>();
+    const a = actions({ listEntries: vi.fn(() => gate.promise) });
+    renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Kayıt' }));
+    await pickPerson();
+    const change = screen.getByRole('button', { name: 'Başka kullanıcı seç' });
+    try {
+      fireEvent.click(change);
+      expect(screen.queryByLabelText(/Kullanıcı ara/)).not.toBeInTheDocument();
+      expect(change).toBeDisabled();
+    } finally {
+      gate.resolve({ ok: true, data: { items: [entry()], nextCursor: null } });
+    }
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Başka kullanıcı seç' })).toBeEnabled(),
+    );
+    expect(screen.getByText('Seçili kullanıcı').nextElementSibling).toHaveTextContent(
+      'Deniz Aksoy',
+    );
+  });
+
+  it('arama metni değişince eski sonuç ve eski imleçle daha fazla çağrısı kalmaz', async () => {
+    const a = actions({
+      searchUsers: vi.fn(async () => ({
+        ok: true as const,
+        data: { items: [person()], nextCursor: 'previous-query-cursor' },
+      })),
+    });
+    renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Kayıt' }));
+    fireEvent.change(screen.getByLabelText(/Kullanıcı ara/), { target: { value: 'deniz' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ara' }));
+    await screen.findByRole('button', { name: 'Seç: Deniz Aksoy' });
+    expect(screen.getByRole('button', { name: 'Daha fazla sonuç' })).toBeVisible();
+    fireEvent.change(screen.getByLabelText(/Kullanıcı ara/), { target: { value: 'selin' } });
+    expect(screen.queryByRole('button', { name: 'Daha fazla sonuç' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Seç: Deniz Aksoy' })).not.toBeInTheDocument();
+  });
+
+  it('arama sürerken metin değişip eski yanıtın yeni sorguyla karışması engellenir', async () => {
+    const gate = Promise.withResolvers<{
+      ok: true;
+      data: { items: AdminUserSummary[]; nextCursor: null };
+    }>();
+    const a = actions({ searchUsers: vi.fn(() => gate.promise) });
+    renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Kayıt' }));
+    const input = screen.getByLabelText(/Kullanıcı ara/);
+    fireEvent.change(input, { target: { value: 'deniz' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ara' }));
+    try {
+      expect(input).toBeDisabled();
+    } finally {
+      gate.resolve({ ok: true, data: { items: [], nextCursor: null } });
+    }
+    await waitFor(() => expect(input).toBeEnabled());
+  });
+
   it('kural değişikliği gerekçesiz gönderilmez; gerekçeyle sayılar sözleşmeye uygun gider', async () => {
     const a = actions();
     renderUi(<AdminPoints rules={[rule()]} flags={{ items: [], nextCursor: null }} actions={a} />);

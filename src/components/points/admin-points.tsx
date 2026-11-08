@@ -455,6 +455,7 @@ function EntriesPanel({ actions }: { actions: AdminPointsActions }) {
   }
 
   function pick(user: AdminUserSummary) {
+    if (pending) return;
     setSelected(user);
     setResults(undefined);
     setItems(undefined);
@@ -508,6 +509,9 @@ function EntriesPanel({ actions }: { actions: AdminPointsActions }) {
             <Button
               className="mt-3"
               variant="secondary"
+              {...(pending
+                ? { disabled: true as const, disabledReason: t('admin.waitForEntries') }
+                : { disabled: false as const })}
               onClick={() => {
                 setSelected(undefined);
                 setItems(undefined);
@@ -566,8 +570,13 @@ function EntriesPanel({ actions }: { actions: AdminPointsActions }) {
                   type="search"
                   autoComplete="off"
                   maxLength={100}
+                  disabled={searching}
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setResults(undefined);
+                    setResultCursor(null);
+                  }}
                 />
               )}
             </Field>

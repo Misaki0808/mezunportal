@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
@@ -65,5 +65,35 @@ describe('Tabs', () => {
     await user.click(screen.getByRole('tab', { name: 'Eğitim' }));
     expect(scrolled).toContain('Eğitim');
     Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+  });
+
+  it('genişlik değişince seçim değişmeden etkin sekmeyi yeniden görünür alana alır', () => {
+    let resize: ResizeObserverCallback | undefined;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resize = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const previous = Element.prototype.scrollIntoView;
+    const visible: string[] = [];
+    Element.prototype.scrollIntoView = function scrollIntoView() {
+      visible.push(this.textContent ?? '');
+    };
+    try {
+      renderUi(<Tabs label="Profil" items={items} defaultId="c" />);
+      visible.length = 0;
+      act(() => resize?.([], {} as ResizeObserver));
+      expect(visible).toContain('Eğitim');
+      expect(screen.getByRole('tab', { name: 'Eğitim' })).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      vi.unstubAllGlobals();
+      if (previous) Element.prototype.scrollIntoView = previous;
+      else Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    }
   });
 });
