@@ -1,6 +1,7 @@
 import { adminAccess } from '@/components/admin/access';
 import { AdminPoints } from '@/components/points/admin-points';
 import { ErrorState } from '@/components/ui';
+import { searchUsers } from '@/server/actions/admin-users';
 import {
   decideSuspicion,
   listPointEntries,
@@ -35,6 +36,7 @@ export default async function PointsAdminPage() {
         listFlags: listSuspicionFlags,
         decide: decideSuspicion,
         backfill: requestPointBackfill,
+        searchUsers,
       }}
     />
   );
