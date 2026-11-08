@@ -107,7 +107,7 @@ export function MyPostings({
                 </span>
               </div>
               {item.moderationNote && (
-                <p className="break-words rounded-control bg-accent-soft p-3 text-sm text-accent-strong">
+                <p className="break-words rounded-control bg-accent-soft p-3 text-sm text-on-accent-soft">
                   {t('moderationReason', { reason: item.moderationNote })}
                 </p>
               )}

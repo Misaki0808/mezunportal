@@ -64,7 +64,7 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
         <span
           className={
             posting.daysLeft <= 7
-              ? 'rounded-full bg-accent-soft px-3 py-1.5 font-semibold text-accent-strong'
+              ? 'rounded-full bg-accent-soft px-3 py-1.5 font-semibold text-on-accent-soft'
               : 'rounded-full bg-primary-soft px-3 py-1.5 text-on-primary-soft'
           }
         >
