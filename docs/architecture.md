@@ -205,7 +205,7 @@ yüklendi/uygulandı, deneyim yayınlandı, arama (yalnız filtre türleri), men
 görüntülendi, randevu talep/onay/gerçekleşti, SSS talep/yayın, CV inceleme, iletişim talebi.
 Panel rol ve bölüm kırılımlıdır; Excel'e toplu aktarılır. `props` alanında kişisel veri yoktur.
 
-Uygulama (P1-13): kataloğ ve tür başına `props` şemaları `src/contracts/metrics.ts`'tedir (hepsi `strict`; serbest metin alanı
+Uygulama (P1-13): Katalog ve tür başına `props` şemaları `src/contracts/metrics.ts`'tedir (hepsi `strict`; serbest metin alanı
 yok, arama olayında yalnız süzgeç TÜRLERİ). Yazım `services/event.ts`: `emitEvent` ateşle-ve-unut, hata yutar, işlem
 (transaction) dışından çağrılır; olay, kullanıcının o anki birincil doğrulanmış üyeliğinin rolünü ve bölümünü saklar. Panel
 sorgusu `services/usage-metrics.ts`: yönetici kapsamıyla kesişir, (tür × rol × bölüm) hücreleri ayrı kullanıcı sayısı 3'ün
