@@ -2,10 +2,7 @@ import { PostingList } from '@/components/job-postings/list';
 import { mayPost, parseJobFilters } from '@/components/job-postings/model';
 import { ErrorState } from '@/components/ui';
 import { requireVerifiedMember } from '@/server/permissions';
-import {
-  getJobPostingFilterOptions,
-  searchJobPostings,
-} from '@/server/actions/job-postings-preview';
+import { getJobPostingFilterOptions, searchJobPostings } from '@/server/actions/job-postings';
 export const dynamic = 'force-dynamic';
 export default async function PostingsPage({
   searchParams,

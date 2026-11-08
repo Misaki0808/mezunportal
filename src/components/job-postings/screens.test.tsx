@@ -56,7 +56,6 @@ it('detayda yalnız güvenli dış bağlantı ve yazarın kimliği yoktur', () =
         ...posting,
         description: 'Açıklama',
         applyUrl: 'https://example.org/basvur',
-        contactUserId: null,
       }}
     />,
   );
@@ -85,7 +84,6 @@ it('iletişim eylemi yazar kimliği taşımadan ilan üzerinden açılır', () =
         applyMethod: 'CONTACT_REQUEST',
         description: 'Açıklama',
         applyUrl: null,
-        contactUserId: 'gizli-yazar',
       }}
     />,
   );

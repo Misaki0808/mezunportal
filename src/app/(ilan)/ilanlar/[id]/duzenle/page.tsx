@@ -5,7 +5,7 @@ import {
   listMyJobPostings,
   saveJobPostingDraft,
   submitJobPosting,
-} from '@/server/actions/job-postings-preview';
+} from '@/server/actions/job-postings';
 export const dynamic = 'force-dynamic';
 export default async function EditPostingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

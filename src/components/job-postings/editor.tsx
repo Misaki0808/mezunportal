@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition } from 'react';
@@ -23,6 +24,7 @@ type Props = {
   submit: (input: JobPostingIdInput) => Promise<ActionResult<SubmitJobPostingOutput>>;
 };
 export function PostingEditor({ context, initial, save, submit }: Props) {
+  const hydrated = useHydrated();
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -110,7 +112,10 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   }
   const bad = (field: string) => (invalid.has(field) ? t('requiredError') : undefined);
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+    <div
+      data-hydrated={hydrated ? 'true' : undefined}
+      className="mx-auto max-w-3xl px-4 py-8 sm:px-6"
+    >
       <Link
         href="/ilanlar"
         className="press-control inline-flex min-h-11 items-center font-semibold text-primary"

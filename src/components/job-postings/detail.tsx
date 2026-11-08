@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { parseApplyUrl, type JobPostingDetail } from '@/contracts/job-postings';
 import { buttonClasses } from '@/components/ui';
 
-export function PostingDetail({ posting }: { posting: JobPostingDetail }) {
+export function PostingDetail({ posting }: { posting: Omit<JobPostingDetail, 'contactUserId'> }) {
   const t = useTranslations('jobs');
   const url =
     posting.applyMethod === 'URL' && posting.applyUrl ? parseApplyUrl(posting.applyUrl) : null;

@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
@@ -25,6 +26,7 @@ export function MyPostings({
   list: (input: ListMyJobPostingsInput) => Promise<ActionResult<MyJobPostingPage>>;
   close: (input: JobPostingIdInput) => Promise<ActionResult<CloseJobPostingOutput>>;
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -61,7 +63,10 @@ export function MyPostings({
     });
   }
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+    <div
+      data-hydrated={hydrated ? 'true' : undefined}
+      className="mx-auto max-w-5xl px-4 py-8 sm:px-6"
+    >
       <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
         <div>
           <Link
@@ -181,6 +186,7 @@ export function PostingModeration({
   ) => Promise<ActionResult<JobPostingModerationPage>>;
   review: (input: ReviewJobPostingInput) => Promise<ActionResult<ReviewJobPostingOutput>>;
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -224,7 +230,10 @@ export function PostingModeration({
     });
   }
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+    <div
+      data-hydrated={hydrated ? 'true' : undefined}
+      className="mx-auto max-w-5xl px-4 py-8 sm:px-6"
+    >
       <h1 className="mb-7 text-3xl font-bold">{t('moderationTitle')}</h1>
       {items.length ? (
         <ul className="grid gap-4">
