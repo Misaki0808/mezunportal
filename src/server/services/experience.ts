@@ -39,6 +39,8 @@ import {
   type ExperienceRow,
 } from './experienceProjection';
 import { consumeRateLimit } from './rateLimit';
+import type { EXPERIENCE_TYPES } from '@/contracts/experience';
+import { emitEvent } from './event';
 import { requireConsent } from './privacy';
 
 type Tx = Prisma.TransactionClient;
@@ -187,34 +189,64 @@ export async function reviewExperience(
   input: ReviewExperienceInput,
   now = new Date(),
 ): Promise<ReviewExperienceOutput> {
-  return asMember(db, userId, now, async (tx, actor, permissions) => {
-    const parsed = reviewExperienceSchema.parse(input);
-    const row = await loadExperience(tx, parsed.experienceId, true);
-    if (!(await permissions.canModerate(actor, row.departmentIdAtWrite)))
-      throw codedForbidden('AUTH_FORBIDDEN');
-    await requireConsent(tx, userId);
-    if (row.status !== 'PENDING') throw codedConflict('EXPERIENCE_NOT_PENDING');
-    const status = parsed.decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED';
-    await tx.experience.update({
-      where: { id: row.id },
-      data: {
-        status,
-        moderatedById: userId,
-        moderatedAt: now,
-        publishedAt: status === 'PUBLISHED' ? now : null,
-        moderationNote: parsed.decision === 'REJECT' ? parsed.reason : null,
+  type ExperienceKind = (typeof EXPERIENCE_TYPES)[number];
+  let published: { type: ExperienceKind; anonymous: boolean; authorId: string | null } | null =
+    null;
+  const output: ReviewExperienceOutput = await asMember(
+    db,
+    userId,
+    now,
+    async (tx, actor, permissions) => {
+      const parsed = reviewExperienceSchema.parse(input);
+      const row = await loadExperience(tx, parsed.experienceId, true);
+      if (!(await permissions.canModerate(actor, row.departmentIdAtWrite)))
+        throw codedForbidden('AUTH_FORBIDDEN');
+      await requireConsent(tx, userId);
+      if (row.status !== 'PENDING') throw codedConflict('EXPERIENCE_NOT_PENDING');
+      const status = parsed.decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED';
+      await tx.experience.update({
+        where: { id: row.id },
+        data: {
+          status,
+          moderatedById: userId,
+          moderatedAt: now,
+          publishedAt: status === 'PUBLISHED' ? now : null,
+          moderationNote: parsed.decision === 'REJECT' ? parsed.reason : null,
+        },
+      });
+      await recordAdminAction(tx, {
+        actor,
+        action: status === 'PUBLISHED' ? 'MODERATION_PUBLISH' : 'MODERATION_REJECT',
+        targetType: 'EXPERIENCE',
+        targetId: row.id,
+        reason: parsed.decision === 'REJECT' ? parsed.reason : undefined,
+        metadata: { departmentId: row.departmentIdAtWrite },
+      });
+      if (status === 'PUBLISHED') {
+        published = { type: row.type, anonymous: row.isAnonymous, authorId: row.authorId };
+      }
+      return { experienceId: row.id, status };
+    },
+  );
+  // Kullanım olayı (P1-13): yayın işlemi bittikten sonra. ANONİM deneyimde olay yazarla ilişkilendirilmez
+  // (kullanıcı, rol ve bölüm boş): sayı kalır, anonimlik sızmaz.
+  const done = published as {
+    type: ExperienceKind;
+    anonymous: boolean;
+    authorId: string | null;
+  } | null;
+  if (done) {
+    emitEvent(
+      db,
+      done.anonymous ? null : done.authorId,
+      {
+        type: 'EXPERIENCE_PUBLISHED',
+        props: { experienceType: done.type, anonymous: done.anonymous },
       },
-    });
-    await recordAdminAction(tx, {
-      actor,
-      action: status === 'PUBLISHED' ? 'MODERATION_PUBLISH' : 'MODERATION_REJECT',
-      targetType: 'EXPERIENCE',
-      targetId: row.id,
-      reason: parsed.decision === 'REJECT' ? parsed.reason : undefined,
-      metadata: { departmentId: row.departmentIdAtWrite },
-    });
-    return { experienceId: row.id, status };
-  });
+      done.anonymous ? null : undefined,
+    );
+  }
+  return output;
 }
 export async function getExperienceDetail(
   db: PrismaClient,
