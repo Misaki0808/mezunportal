@@ -361,7 +361,10 @@
     "home": {
       "verificationTitle": "Doğrulamanı tamamla",
       "verificationDescription": "Üyeliğini doğrulayarak devam et.",
-      "verificationAction": "Doğrulamaya git"
+      "verificationAction": "Doğrulamaya git",
+      "onboardingTitle": "Profilini tamamla",
+      "onboardingDescription": "İlgilerini ve hedeflerini seçerek başlayabilirsin.",
+      "onboardingAction": "Başlangıca devam et"
     },
     "testSignIn": {
       "title": "Yerel test girişi",
@@ -624,6 +627,61 @@
           }
         }
       }
+    }
+  },
+  "onboarding": {
+    "eyebrow": "SANA ÖZEL BİR BAŞLANGIÇ",
+    "progress": "Profilin %{percent} tamamlandı",
+    "membershipTitle": "Önce üyeliğini doğrula",
+    "membershipDescription": "Bölümünü seçerek üniversite topluluğuna katıl.",
+    "membershipAction": "Üyeliğimi doğrula",
+    "interestsTitle": "Neler ilgini çekiyor?",
+    "interestsDescription": "Sana uygun içerikleri göstermek için ilgilerini seç.",
+    "goalsTitle": "Birlikte neyi hedefleyelim?",
+    "goalsDescription": "Hedeflerini seç; tercihlerini daha sonra değiştirebilirsin.",
+    "mentorTitle": "Mentor olmak ister misin?",
+    "mentorDescription": "Deneyimlerini paylaşarak başkalarına destek olabilirsin.",
+    "mentorYes": "Evet, ilgileniyorum",
+    "mentorNo": "Hayır, ilgilenmiyorum",
+    "visibilityTitle": "Gizlilik tercihlerini gözden geçir",
+    "visibilityDescription": "E-posta ve telefonun varsayılan olarak gizlidir. İstediğin zaman değiştirebilirsin.",
+    "visibilityAction": "Gizlilik ayarlarına git",
+    "visibilityConfirm": "Tercihlerimi gözden geçirdim",
+    "completeTitle": "Hazırsın!",
+    "completeDescription": "Profilini istediğin zaman Hesabım bölümünden güncelleyebilirsin.",
+    "home": "Ana sayfaya git",
+    "next": "Devam et",
+    "skip": "Şimdilik atla",
+    "saving": "Kaydediliyor…",
+    "emptyTitle": "Seçenekler yüklenemedi",
+    "emptyDescription": "Biraz sonra tekrar dene.",
+    "retry": "Tekrar dene",
+    "selectionHint": "Birden fazla seçenek seçebilirsin.",
+    "unavailable": "Bu adım şu anda kullanılamıyor.",
+    "unavailableDescription": "İlerlemen korunuyor; daha sonra yeniden deneyebilirsin.",
+    "fields": {
+      "EMAIL": "E-posta",
+      "PHONE": "Telefon",
+      "SOCIAL_LINKS": "Sosyal bağlantılar",
+      "LINKEDIN": "LinkedIn"
+    },
+    "levels": {
+      "PRIVATE": "Yalnız ben",
+      "ON_APPROVED_REQUEST": "Talep ve onayla",
+      "MEMBERS": "Doğrulanmış üyeler"
+    },
+    "chooseOrSkip": "En az bir seçenek seç veya bu adımı şimdilik atla.",
+    "readyTitle": "Son bir adım",
+    "readyDescription": "Hazırsan başlangıcı tamamlayıp devam edebilirsin.",
+    "finish": "Başlangıcı tamamla",
+    "missingTitle": "Eksik kalan adımlar",
+    "missingDescription": "Bunları daha sonra tamamlayabilirsin.",
+    "steps": {
+      "MEMBERSHIP": "Üyelik",
+      "INTERESTS": "İlgi alanları",
+      "GOALS": "Hedefler",
+      "MENTOR_PREFERENCE": "Mentorluk tercihi",
+      "VISIBILITY": "Gizlilik tercihleri"
     }
   }
 }
