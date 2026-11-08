@@ -6,7 +6,9 @@ Son güncelleme: **2026-11-07**. Ajan çalışma ve belge yönlendirmesi için �
 
 - Node.js 24 LTS (`.nvmrc`), pnpm 11 (`packageManager`; tek paket, monorepo değil)
 - Next.js 16+ (App Router, `src/`) · React · TypeScript `strict` + `noUncheckedIndexedAccess`
-- Tailwind CSS · next-intl (tek dil `tr`, önek yok)
+- Tailwind CSS · next-intl (tek dil `tr`, önek yok) · yazı tipleri `next/font/google` (Inter + Plus Jakarta Sans, `latin-ext`;
+  derleme İLK seferde fonts.googleapis.com'a erişir ve dosyaları kendinden barındırır — çevrimdışı ilk derleme başarısız olur,
+  sonraki derlemeler `.next/cache`ten gider; çalışma anında dış istek yok)
 - PostgreSQL 16+ (`pg_trgm`, `btree_gist`, `turkish` tam metin araması)
 - Prisma 7 · Better Auth · Zod · pg-boss · ExcelJS
 - Vitest (birim ve servis), Playwright (çekirdek akış testleri ve PM'in tarayıcı turu)

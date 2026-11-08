@@ -12,7 +12,8 @@ export type ButtonSize = 'md' | 'lg';
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary: 'bg-primary text-on-primary hover:bg-primary-hover',
   secondary: 'border border-border-control bg-bg text-fg hover:bg-surface-strong',
-  ghost: 'bg-transparent text-primary hover:bg-primary-soft',
+  // Hover'da zemin primary-soft olur: `primary` metni orada AA değil (4,34:1); `primary-hover` AA (5,8:1) → hover'da metin de koyulaşır.
+  ghost: 'bg-transparent text-primary hover:bg-primary-soft hover:text-primary-hover',
   danger: 'bg-danger text-on-danger hover:bg-danger-hover',
   // Yıkıcı ama ikincil eylem (örn. listede "Sil"): çerçeve ve yazı tehlike renginde; onay penceresi birincil yıkıcı düğmedir.
   'danger-outline': 'border border-danger bg-bg text-danger hover:bg-surface-strong',

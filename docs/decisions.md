@@ -835,3 +835,11 @@ yakalar). Seçenekler: (a) her yeni kanıta ayrı işaret — kısmi benzersiz i
 işarete katıp onayda hepsini geri almak — yönetici görmediği kaydı geri almış olur; (c) seçilen: sayaç + özet. Oturumu düşmüş
 kullanıcının eyleminde `AUTH_UNAUTHENTICATED` her formda ayrı ele alınmaz; sunucu eylemlerinin ortak çıkışı `failAction` girişe
 `?donus=` ile yönlendirir (`safeReturnPath`), `ErrorState`'in "Giriş yap" bağlantısı da aynı yolu taşır.
+
+**Marka paleti: İris + Mercan (kullanıcı isteği ve açık onayı, 8 Kas).** Önceki mavi/gri palet "çok sıkıcı" bulundu; İstanbul Üniversitesi
+renklerine dayanmama kararı verildi. Seçilen: İris `#5B5BF6` ana, Mercan `#FF7A59` vurgu, Nane `#0F9F8F` destek, sıcak nötrler,
+yalnız büyük alanda marka geçişi, `prefers-color-scheme` ile koyu tema; başlık Plus Jakarta Sans, metin Inter
+(`next/font/google`, kendinden barındırılır; yeni npm bağımlılığı yok). Mercan zeminde metin koyu (beyaz AA değil), `primary`
+metni `primary-soft` üstünde AA değil (soft zeminde `on-primary-soft`). Seçenekler: (a) yalnız İris + nötr — canlılık yok;
+(b) Mercan'ı ana renk yapmak — beyaz metinle AA sağlanamaz; (c) seçilen: İris ana, Mercan az kullanılan vurgu. Kontrast
+testi iki temayı da korur (`src/lib/contrast.test.ts`). Risk: ilk derleme ağa muhtaç (Google Fonts indirmesi).
