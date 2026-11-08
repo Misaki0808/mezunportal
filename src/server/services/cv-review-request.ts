@@ -215,12 +215,13 @@ export async function answerRequest(
         data: { status: 'COMPLETED', comment: input.comment, answeredAt: now },
         select,
       });
-      await releaseOldFile(tx, deps.storage, updated);
       await stageNotification(tx, updated.studentId, {
         type: 'cvReview',
         event: 'answered',
         requestId: updated.id,
       });
+      // Fiziksel silme bütün veritabanı yazımlarından sonra yapılır.
+      await releaseOldFile(tx, deps.storage, updated);
       return updated;
     },
     { timeout: 30000 },
@@ -315,12 +316,12 @@ export async function expireRequests(deps: CvReviewDeps) {
         const row = await tx.cvReviewRequest.findUnique({ where: { id: ref.id } });
         if (!row || row.status !== 'OPEN' || row.expiresAt > now) return false;
         await tx.cvReviewRequest.update({ where: { id: row.id }, data: { status: 'EXPIRED' } });
-        await releaseOldFile(tx, deps.storage, row);
         await stageNotification(tx, row.studentId, {
           type: 'cvReview',
           event: 'expired',
           requestId: row.id,
         });
+        await releaseOldFile(tx, deps.storage, row);
         return true;
       },
       { timeout: 30000 },

@@ -376,3 +376,47 @@ it('inceleyici: niyet yazımı geri alınırsa talep de kısmi oluşmaz', async 
   expect(await db.cvReviewRequest.count({ where: { studentId: h.student } })).toBe(0);
   expect(await db.notificationIntent.count({ where: { userId: h.mentor } })).toBe(0);
 });
+
+it('inceleyici: yanıt/süre dolumu niyeti yazılamazsa açık talebin gerçek dosyası silinmez', async () => {
+  const h = await fixture();
+  const request = await createRequest(h.deps, h.student, {
+    mentorId: h.mentor,
+    note: 'Dosyası korunacak talep',
+  });
+  const key = newCvKey(h.student);
+  await h.storage.put(key, h.bytes, { contentType: 'application/pdf' });
+  await db.cvUpload.create({
+    data: {
+      userId: h.student,
+      storageKey: key,
+      byteSize: h.bytes.length,
+      pageCount: 1,
+      status: 'APPLIED',
+      appliedAt: new Date(now.getTime() + 1000),
+    },
+  });
+  const broken = db.$extends({
+    query: {
+      notificationIntent: {
+        upsert: async () => {
+          throw new Error('Sahte niyet yazım hatası');
+        },
+      },
+    },
+  });
+  const deps = { ...h.deps, db: broken as unknown as typeof db };
+  await expect(
+    answerRequest(deps, h.mentor, { requestId: request.id, comment: 'Geri alınan yanıt' }),
+  ).rejects.toThrow('Sahte niyet yazım hatası');
+  expect((await db.cvReviewRequest.findUniqueOrThrow({ where: { id: request.id } })).status).toBe(
+    'OPEN',
+  );
+  expect(await h.storage.get(h.key)).toEqual(h.bytes);
+  await expect(
+    expireRequests({ ...deps, now: () => new Date(now.getTime() + 14 * 86400000) }),
+  ).rejects.toThrow('Sahte niyet yazım hatası');
+  expect((await db.cvReviewRequest.findUniqueOrThrow({ where: { id: request.id } })).status).toBe(
+    'OPEN',
+  );
+  expect(await h.storage.get(h.key)).toEqual(h.bytes);
+});
