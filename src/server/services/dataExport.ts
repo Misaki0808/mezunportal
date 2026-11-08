@@ -164,6 +164,21 @@ export async function buildDataExport(
   const contribution = await loadContributionExport(db, userId, iso);
   const faq = await loadFaqExport(db, userId, iso);
   const jobPostings = await loadJobPostingExport(db, userId, iso);
+  const referrals = await db.referralClaim.findMany({
+    where: { OR: [{ alumnusId: userId }, { studentId: userId }] },
+    orderBy: { id: 'asc' },
+    select: {
+      id: true,
+      alumnusId: true,
+      status: true,
+      organizationName: true,
+      note: true,
+      acceptanceNote: true,
+      decisionReason: true,
+      acceptanceReason: true,
+      createdAt: true,
+    },
+  });
   const matchRows = await db.jobMatch.findMany({
     where: { userId },
     select: { postingId: true, createdAt: true },
@@ -243,6 +258,11 @@ export async function buildDataExport(
     contribution,
     faq,
     jobPostings,
+    referrals: referrals.map(({ alumnusId, createdAt, ...row }) => ({
+      ...row,
+      role: alumnusId === userId ? ('ALUMNI' as const) : ('STUDENT' as const),
+      createdAt: createdAt.toISOString(),
+    })),
     jobMatches,
     cvReviewRequests: cvReviews.map((row) => ({
       id: row.id,
