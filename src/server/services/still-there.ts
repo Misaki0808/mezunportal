@@ -21,6 +21,7 @@ export async function consumeStillThere(
   db: PrismaClient,
   input: StillThereInput,
   secret: string,
+  userId: string,
   now = new Date(),
 ): Promise<StillThereChoice | null> {
   const parsed = stillThereInputSchema.safeParse(input);
@@ -35,6 +36,7 @@ export async function consumeStillThere(
     const consumed = await tx.notificationAction.updateMany({
       where: {
         id: parts[0],
+        userId,
         usedAt: null,
         expiresAt: { gt: now },
         user: { deletedAt: null },

@@ -1,11 +1,9 @@
 import 'server-only';
-import { createTranslator } from 'next-intl';
-import messages from '../../../messages/tr.json';
+import { notificationCopy as t } from '../jobs/notification-copy';
 import { getEnv } from '@/lib/env';
 import { getDb } from '../db';
 import { enqueueEmail } from '../jobs/email';
 
-const t = createTranslator({ locale: 'tr', messages, namespace: 'notifications.email' });
 type Event =
   | 'moderationApproved'
   | 'moderationRejected'

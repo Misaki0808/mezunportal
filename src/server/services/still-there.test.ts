@@ -20,10 +20,12 @@ describe('çalışma bilgisi bağlantısı', () => {
       $transaction: async (fn: (db: typeof tx) => unknown) => fn(tx),
     } as unknown as PrismaClient;
     const token = stillThereToken('action', 'YES', 'test-secret');
-    expect(await consumeStillThere(db, { token, choice: 'NO' }, 'test-secret')).toBeNull();
+    expect(await consumeStillThere(db, { token, choice: 'NO' }, 'test-secret', 'user')).toBeNull();
     expect(tx.notificationAction.updateMany).not.toHaveBeenCalled();
-    expect(await consumeStillThere(db, { token, choice: 'YES' }, 'test-secret')).toBe('YES');
-    expect(await consumeStillThere(db, { token, choice: 'YES' }, 'test-secret')).toBeNull();
+    expect(await consumeStillThere(db, { token, choice: 'YES' }, 'test-secret', 'user')).toBe(
+      'YES',
+    );
+    expect(await consumeStillThere(db, { token, choice: 'YES' }, 'test-secret', 'user')).toBeNull();
     expect(tx.notificationAction.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ usedAt: null, expiresAt: { gt: expect.any(Date) } }),

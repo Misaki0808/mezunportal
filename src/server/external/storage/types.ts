@@ -10,6 +10,8 @@ export interface StorageAdapter {
   get(key: string): Promise<Uint8Array | null>;
   /** Dosyayı siler; yoksa sessizce geçer (idempotent). */
   delete(key: string): Promise<void>;
+  /** Belirtilen tarihten eski mezun belgeleri (temizlik işinin sunucu içi taraması). */
+  listOldGraduationKeys?(before: Date): Promise<string[]>;
 }
 
 export class StorageError extends Error {

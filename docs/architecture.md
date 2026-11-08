@@ -196,7 +196,9 @@ yalnız yayında yazılır.
 | `files.purge` | Günlük emniyet: karar verilmiş belgeler, bağlı olmayan eski CV'ler |
 
 İşler idempotenttir; tekrar çalışınca çift e-posta ya da çift puan üretmez. Zorunlu hesap
-e-postaları dışındaki bildirimler kullanıcı tercihinden kapatılabilir.
+e-postaları dışındaki bildirimler kullanıcı tercihinden kapatılabilir; tercih hem kuyruğa alma hem teslim sırasında
+denetlenir. Günlük işler worker çalışırken İstanbul saatine göre zamanlanır; mezun yanıtının imzası ve tek kullanımı
+sunucuda doğrulanır, sayfayı açmak yanıt sayılmaz.
 
 ### Kullanım metrikleri
 

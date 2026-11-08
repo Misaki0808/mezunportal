@@ -17,12 +17,10 @@ describe('bildirim tercih ekranı', () => {
     expect(screen.getByText('Hesap güvenliği için bu bildirim kapatılamaz.')).toBeVisible();
   });
   it('değişikliği kaydetmeden göndermez; kapalı tercihi açıkça iletir', async () => {
-    const save = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        data: { items: [initial.items[0], { ...initial.items[1], enabled: false }] },
-      });
+    const save = vi.fn().mockResolvedValue({
+      ok: true,
+      data: { items: [initial.items[0], { ...initial.items[1], enabled: false }] },
+    });
     const { user } = renderUi(<NotificationPreferencesForm initial={initial} save={save} />);
     await user.click(screen.getByRole('switch', { name: /İletişim talepleri/ }));
     expect(save).not.toHaveBeenCalled();

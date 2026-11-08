@@ -75,6 +75,7 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
           {items.map((item) => (
             <li key={item.type} className="py-2">
               <Switch
+                className="[&_.text-sm]:text-base"
                 label={t(`types.${item.type}.label`)}
                 description={item.mandatory ? t('mandatory') : t(`types.${item.type}.description`)}
                 checked={item.enabled}

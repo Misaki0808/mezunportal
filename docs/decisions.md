@@ -627,3 +627,12 @@ değişimler skoru bir sonraki profil yazımında yansıtır; okuma yolundaki y�
 Pilot sözlük seed'i (TD-011, PM onaylı): sektör 10, unvan 15 (takma adlı), beceri 14; şirket yazılmaz (eşleşmeyen
 kuyruğundan gelir). Tekrar koşulabilir; var olan kayda dokunmaz, başka kaydın takma adıyla çakışan takma adı atlar.
 
+## 2026-11-08 · Bildirim tercihleri ve yıllık doğrulama (P1-12)
+
+Zorunlu hesap/güvenlik iletileri kapatılamaz; diğer türler varsayılan açık olup hem kuyruğa alınırken hem de teslimden
+önce güncel tercihle denetlenir. İşler İstanbul saatiyle günlük çalışır ve dönem/olay anahtarıyla yinelenir. Öğrenci
+posta geçişi için doğrulanmış üyeliğin üniversitesindeki öğrenci alan adı ve mevcut sınıf hesabının dördüncü yılı
+kullanılır. Mezun yanıtları seçime bağlı HMAC, 30 günlük süre ve veritabanında koşullu tek kullanım taşır; kimlik
+oturumdan doğrulanır. E-posta tarayıcılarının bağlantıyı açması yanıt kaydetmez: kullanıcı ayrıca onaylar. Jeton URL
+parçasında taşınır (sunucu istek günlüğüne gitmez); e-posta ile açılan farklı sekmeden dönüş için tarayıcıda geçici tutulur ve sonuçta silinir.
+Bağlı olmayan mezun belgesi artıkları, yeni yükleme olasılığına karşı en az bir saat sonra taranır.

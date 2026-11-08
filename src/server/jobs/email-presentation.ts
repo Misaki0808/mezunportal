@@ -1,9 +1,7 @@
 import 'server-only';
-import { createTranslator } from 'next-intl';
-import messages from '../../../messages/tr.json';
+import { notificationCopy as t } from './notification-copy';
 import type { QueuedEmail } from './email-core';
 
-const t = createTranslator({ locale: 'tr', messages, namespace: 'notifications.email' });
 const escapeHtml = (value: string) =>
   value
     .replaceAll('&', '&amp;')

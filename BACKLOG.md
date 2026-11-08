@@ -120,12 +120,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   Neden borç: veri en azlığı (KVKK) ve tablo büyümesi.
   Kapanış ölçütü: zamanlanmış pg-boss işi süresi geçmiş satırları siler (idempotent, testli).
 
-- [ ] **TD-008** · P1 · `files.purge` zamanlanmamış
-  Ne: `purgeCvFiles` (bağlı olmayan eski CV dosyaları, 24 saatten uzun takılı `cv.parse` işleri, 7 günden uzun onay
-  bekleyen ayrıştırma çıktısı) hazır ve testli
-  ama pg-boss zamanlayıcısı kapalı (`schedule: false`); hiçbir yerden çağrılmıyor.
-  Neden borç: hata anında silinemeyen dosya ve takılı iş yalnız bu süpürmeyle temizlenir (KVKK saklama).
-  Kapanış ölçütü: günlük `files.purge` işi kayıtlı, mezun belgesi artıklarını da kapsar, testli.
 - [ ] **TD-009** · P1 · CV doğruluk tablosu sahte adaptörle, gerçek LLM ile değil
   Ne: 5 sentetik örnek CV + ölçüm düzeneği (`src/test/cv-accuracy.ts`) hazır; sahte adaptörde sonuç hat
   bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).

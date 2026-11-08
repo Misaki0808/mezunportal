@@ -1037,6 +1037,9 @@
     },
     "stillThere": {
       "title": "Çalışma bilgini doğrula",
+      "loading": "Bağlantın kontrol ediliyor…",
+      "loginNeeded": "Yanıtlamak için önce hesabına giriş yap.",
+      "login": "Giriş yap",
       "yes": "Evet, hâlâ çalışıyorum",
       "no": "Hayır, artık çalışmıyorum",
       "description": "Yanıtını onayla. Bu bağlantı yalnız bir kez kullanılabilir.",

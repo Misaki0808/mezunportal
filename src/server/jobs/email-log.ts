@@ -5,6 +5,6 @@ export function maskEmail(address: string): string {
   // Alan adını da gizle: kişisel veya kurumsal alan günlükte kalmasın.
   return address.includes('@') ? '***@***' : '***';
 }
-export const logEmailEvent: EmailLogger = (event, _recipient) => {
+export const logEmailEvent: EmailLogger = (event) => {
   process.stdout.write(JSON.stringify({ event: `email.${event}` }) + '\n');
 };
