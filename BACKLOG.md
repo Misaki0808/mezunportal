@@ -113,18 +113,18 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 ### Biçim
 
 ```text
-- [ ] **TD-001** · P1 · <kısa başlık>
+- [ ] **TD-XXX** · P1 · <kısa başlık>
   Ne: <somut durum, dosya/satır>
   Neden borç: <risk ya da maliyet>
   Kapanış ölçütü: <ne olunca silinir>
 ```
 
 ### Açık borçlar
-- [ ] **TD-001** · P1 · Güvenlik başlıkları build anında yazılıyor
-  Ne: başlıklar `next build` sırasında `.next/routes-manifest.json`'a yazılıyor; HSTS yalnız
-  `APP_ENV=prod` ile alınan build'de çıkar (`next.config.ts`).
-  Neden borç: canlı build yanlış env'le alınırsa HSTS sessizce düşer.
-  Kapanış ölçütü: P1-18 dağıtım betiği build'i `APP_ENV=prod` ile alır ve başlık kanıtlanır.
+- [ ] **TD-017** · P2 · Çözülemeyen outbox niyeti için kalıcı hata durumu
+  Ne: Bekleyen şifreli davet niyetinin anahtarı değişirse içerik çözülemez.
+  Neden borç: Anahtar döndürme sonrasında niyet her aktarımda sonsuz yeniden denenir.
+  Kapanış ölçütü: Sınırlı deneme, kalıcı hata durumu ve kişisel veri içermeyen işlem kaydı uygulanır.
+
 - [ ] **TD-009** · P1 · CV doğruluk tablosu sahte adaptörle, gerçek LLM ile değil
   Ne: 5 sentetik örnek CV + ölçüm düzeneği (`src/test/cv-accuracy.ts`) hazır; sahte adaptörde sonuç hat
   bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).

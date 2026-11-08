@@ -36,6 +36,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  output: 'standalone',
   // `next dev` varsayılan olarak AGENTS.md'ye kendi bloğunu yazar; bu dosya yalnız kullanıcı onaylı
   // kartla değişir (prompts/README.md), bu yüzden kapalı.
   agentRules: false,
