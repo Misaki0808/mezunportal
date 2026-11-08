@@ -1,16 +1,20 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { getExperienceDetail, listMyExperiences } from './services/experience';
+import { buildDataExport } from './services/dataExport';
 import { createTestPrisma } from '@/test/db';
-import { createInstitution, createUser } from '@/test/fixtures';
+import { addMembership, createInstitution, createUser } from '@/test/fixtures';
 
 // Üretilmiş arama sütunları şemada modellidir (`migrate dev` sürüklenmesin). `searchKeys` String görünür: istemci global
 // `omit` ile bunu hiçbir sorguda varsayılan döndürmemelidir; `searchVector` Unsupported olduğundan zaten yoktur
 // (docs/decisions.md). Ham SQL (arama) ikisini de okur.
 const db = createTestPrisma();
 let id: string;
+let authorId: string;
 beforeAll(async () => {
-  const authorId = await createUser(db);
+  authorId = await createUser(db);
   const departmentIdAtWrite = (await createInstitution(db)).deptA1;
+  await addMembership(db, { userId: authorId, departmentId: departmentIdAtWrite, role: 'ALUMNI' });
   id = (
     await db.experience.create({
       data: {
@@ -58,4 +62,34 @@ describe('arama sütunları varsayılan dönmez', () => {
     expect(row?.keys).toContain('arama sutunu');
     expect(row?.hasVector).toBe(true);
   });
+});
+
+it('inceleyici: üretilmiş sütuna yazılamaz ve kalıcı içerik değişmez', async () => {
+  const before = await db.experience.findUniqueOrThrow({
+    where: { id },
+    select: { searchKeys: true, organizationName: true },
+  });
+  await expect(
+    db.experience.update({ where: { id }, data: { searchKeys: 'forged search data' } }),
+  ).rejects.toThrow();
+  expect(
+    await db.experience.findUniqueOrThrow({
+      where: { id },
+      select: { searchKeys: true, organizationName: true },
+    }),
+  ).toEqual(before);
+});
+it('inceleyici: detay, kendi listesi ve veri dökümünün hiçbir nesnesinde arama sütunu yoktur', async () => {
+  const values = await Promise.all([
+    getExperienceDetail(db, authorId, { experienceId: id }),
+    listMyExperiences(db, authorId, {}),
+    buildDataExport(db, authorId),
+  ]);
+  const walk = (value: unknown): void => {
+    if (!value || typeof value !== 'object') return;
+    expect(Object.keys(value)).not.toContain('searchKeys');
+    expect(Object.keys(value)).not.toContain('searchVector');
+    for (const child of Object.values(value)) walk(child);
+  };
+  values.forEach(walk);
 });
