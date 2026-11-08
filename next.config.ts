@@ -49,7 +49,7 @@ const nextConfig: NextConfig = {
   },
   // Yerel telefon testinde alt gezinmeyi örtmesin; hata katmanı açık kalır.
   devIndicators: false,
-  // Sunucu eylemi argümanları ve jetonlu istek satırları günlüğe yazılmaz (src/lib/dev-logging.ts).
+  // Sunucu eylemi argümanları ve istek URL’leri günlüğe yazılmaz (src/lib/dev-logging.ts).
   logging: nextLogging,
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];

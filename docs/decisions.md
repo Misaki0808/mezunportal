@@ -456,6 +456,6 @@ Faz 1 ekran turunun güvenlik/KVKK bulguları için:
 - Oturumsuz kullanıcı hata ekranı yerine girişe yönlenir; gitmek istediği yol `?donus=` ile taşınır ve
   yalnız site içi göreli yol kabul edilir (açık yönlendirme yerine sessizce ana sayfa).
 - Rıza kapısı yönetim sayfalarını ve eylemlerini de kapsar; kontrol yetkiden sonradır.
-- `next dev` günlüğünde sunucu eylemi argümanları ve jetonlu istek satırları kapalıdır. Telefon testi geliştirme
+- `next dev` günlüğünde sunucu eylemi argümanları ve istek URL günlükleri kapalıdır; URL’lerde kodlanmış kişisel veri bulunabilir. Telefon testi geliştirme
   sunucusuyla yapıldığı için geliştirme günlüğü de kişisel veri kuralına tabidir.
 - İletişim hedefi önizlemesi talep edilemeyen her hedefe aynı yanıtı verir.

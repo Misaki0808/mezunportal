@@ -8,6 +8,7 @@ describe('dönüş yolu (açık yönlendirme yok)', () => {
     ['/hesap/gizlilik?sekme=1', '/hesap/gizlilik?sekme=1'],
     ['/hesap#parca', '/hesap'],
     ['/iletisim-iste/abc', '/iletisim-iste/abc'],
+    ['/profil/%C4%B0stanbul?ara=%2F', '/profil/%C4%B0stanbul?ara=%2F'],
     ['/', '/'],
   ])('site içi yol kabul: %s', (input, expected) => {
     expect(safeReturnPath(input)).toBe(expected);
@@ -30,6 +31,14 @@ describe('dönüş yolu (açık yönlendirme yok)', () => {
     '/onay',
     '/cikis',
     '/api/auth/magic-link/verify',
+    '/%2f%2fevil.com',
+    '/%5cevil.com',
+    '/%252f%252fevil.com',
+    '/%255cevil.com',
+    '/%68%74%74%70%73:%2f%2fevil.com',
+    '/%2e%2e/%2f%2fevil.com',
+    '/%250d%250aevil',
+    '/%256fnay',
     '/' + 'a'.repeat(600),
     42,
     null,

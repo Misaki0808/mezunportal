@@ -85,13 +85,16 @@ export async function previewContactTarget(
   now: Date = new Date(),
 ): Promise<ContactTargetPreview> {
   await consumeRateLimit(db, RATE_LIMITS.contactPreview, requesterId, now);
-  if (input.targetUserId === requesterId) return CONTACT_TARGET_NOT_REQUESTABLE;
   const target = await db.user.findUnique({
     where: { id: input.targetUserId },
     select: { id: true, name: true, deletedAt: true, banned: true },
   });
-  if (!target || target.deletedAt || target.banned) return CONTACT_TARGET_NOT_REQUESTABLE;
-  const levels = (await loadVisibilityLevels(db, [target.id])).get(target.id) ?? new Map();
+  // Olumsuz durumlarda aynı sorgu akışını uygula; erken çıkışlar kullanıcı varlığı hakkında
+  // gözlenebilir süre farkı oluşturabilir. Bu, sabit süre garantisi değil, kaba farkı azaltır.
+  const levels =
+    (await loadVisibilityLevels(db, [input.targetUserId])).get(input.targetUserId) ?? new Map();
+  if (input.targetUserId === requesterId || !target || target.deletedAt || target.banned)
+    return CONTACT_TARGET_NOT_REQUESTABLE;
   const requestableFields = CONTACT_FIELDS.filter(
     (field) => effectiveLevel(field, levels) === 'ON_APPROVED_REQUEST',
   );

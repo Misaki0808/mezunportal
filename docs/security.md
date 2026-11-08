@@ -167,8 +167,8 @@ yığın izi kullanıcıya gösterilmez. Ayrıntı `docs/architecture.md` “Dı
 - Loglanmaz: jeton, parola, giriş bağlantısı, CV/belge içeriği, LLM girdi/çıktısı. E-posta ve
   telefon maskeli (`src/lib/mask.ts`: `maskEmail`, `maskPhone`, serbest metin için `maskPersonalData`).
 - Geliştirme sunucusu da (telefon testi `dev:lan` ile yapılır) bu kurala uyar: Next.js'in sunucu eylemi
-  argüman günlüğü kapalıdır; jeton/doğrulama taşıyan istek satırları (`/api/auth/`, `token=`, `code=`…) ve
-  belge dosyası yolu yazılmaz (`src/lib/dev-logging.ts`, `next.config.ts` `logging`).
+  argüman ve istek URL günlükleri kapalıdır; kullanıcı girdisi, kodlanmış jetonlar ve kişisel veri
+  URL içinde de bulunabilir (`src/lib/dev-logging.ts`, `next.config.ts` `logging`).
 
 ## Güvenlik başlıkları
 
