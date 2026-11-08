@@ -16,6 +16,7 @@ import {
   type SimilarMentors,
 } from '@/contracts/mentor-directory';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
+import { MENTOR_FILTER_KEYS, resultBucketOf } from '@/contracts/metrics';
 import { codedValidation } from '@/lib/errors';
 import { escapeLike } from '@/lib/sql-like';
 
@@ -25,6 +26,7 @@ import { evaluateAccess } from '../rules/authorization';
 import { normalizeName } from '../rules/dictionary';
 import { computeMentorAvailability } from '../rules/mentorAvailability';
 import { rankSimilar, type PathItem, type PathSignals } from '../rules/similarity';
+import { emitEvent, subjectFromActor, usedFilterKeys } from './event';
 import { approvedCountsThisMonth, type ApprovedCounts } from './mentor-load';
 import { viewerUniversityIds } from './search';
 
@@ -59,11 +61,11 @@ function requireDirectoryAccess(actor: Actor) {
 // ---------------------------------------------------------------------------------------------
 
 /** Süresiz ya da süresi dolmamış askı hesabı dizinden düşürür (`accountStatusOf` ile aynı kural). */
-const notSuspended = (now: Date): Prisma.UserWhereInput => ({
+export const notSuspended = (now: Date): Prisma.UserWhereInput => ({
   NOT: { banned: true, OR: [{ banExpires: null }, { banExpires: { gt: now } }] },
 });
 
-function visibleMentorWhere(
+export function visibleMentorWhere(
   universityIds: string[],
   viewerId: string,
   filter: Partial<SearchMentorsFilter>,
@@ -306,6 +308,18 @@ export async function searchMentors(
   const start = (filter.page - 1) * filter.pageSize;
   const pageIds = ids.slice(start, start + filter.pageSize);
   const items = await loadCards(deps, universityIds, pageIds, now, used);
+  emitEvent(
+    deps.db,
+    actor.userId,
+    {
+      type: 'MENTOR_SEARCH',
+      props: {
+        filters: usedFilterKeys(filter, MENTOR_FILTER_KEYS),
+        results: resultBucketOf(ids.length),
+      },
+    },
+    subjectFromActor(actor),
+  );
   return mentorPageSchema.parse({
     items,
     page: filter.page,
@@ -522,6 +536,7 @@ export async function getMentorEntryPoints(
       contact: open,
     });
   }
+  emitEvent(deps.db, actor.userId, { type: 'MENTOR_VIEWED', props: {} }, subjectFromActor(actor));
   const used = (await countsOf(deps)(deps.db, [targetId], now)).get(targetId) ?? 0;
   const availability = computeMentorAvailability({
     pausedUntil: mentor.pausedUntil,

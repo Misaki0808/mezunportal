@@ -226,3 +226,24 @@ describe('CV ayrıştırma / LLM ortamı (parseLlmEnv)', () => {
     }
   });
 });
+
+describe('Takvim ortamı (parseCalendarEnv)', () => {
+  const base = { APP_ENV: 'local' };
+  it('boşken takvim kapalı (sağlayıcı yok)', async () => {
+    const { parseCalendarEnv } = await import('./env');
+    expect(parseCalendarEnv(base).CALENDAR_PROVIDER).toBeUndefined();
+    expect(parseCalendarEnv({ ...base, CALENDAR_PROVIDER: '' }).CALENDAR_PROVIDER).toBeUndefined();
+  });
+  it('fake yalnız local/test; prod’da ve bilinmeyen değerde env düşer', async () => {
+    const { parseCalendarEnv, EnvValidationError } = await import('./env');
+    expect(parseCalendarEnv({ APP_ENV: 'test', CALENDAR_PROVIDER: 'fake' }).CALENDAR_PROVIDER).toBe(
+      'fake',
+    );
+    expect(() => parseCalendarEnv({ APP_ENV: 'prod', CALENDAR_PROVIDER: 'fake' })).toThrow(
+      EnvValidationError,
+    );
+    expect(() => parseCalendarEnv({ APP_ENV: 'local', CALENDAR_PROVIDER: 'google' })).toThrow(
+      EnvValidationError,
+    );
+  });
+});

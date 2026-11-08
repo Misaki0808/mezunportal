@@ -68,7 +68,13 @@ export function EmailChangeForm({ submit }: Props) {
       <Field
         className="[&_p]:text-base"
         label={t('label')}
-        error={fieldError ? errors(fieldError) : undefined}
+        error={
+          fieldError === 'VALIDATION_INVALID'
+            ? t('invalidEmail')
+            : fieldError
+              ? errors(fieldError)
+              : undefined
+        }
         required
       >
         {(control) => (

@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -49,6 +50,7 @@ export function OnboardingFlow({
   ) => Promise<ActionResult<FieldVisibilitySettings>>;
   editInitially?: boolean;
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('onboarding');
   const tags = useTranslations('profileTags');
   const errors = useTranslations('errors.codes');
@@ -224,7 +226,10 @@ export function OnboardingFlow({
               ? t('visibilityDescription')
               : t(done ? 'completeDescription' : 'readyDescription');
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16">
+    <div
+      data-hydrated={hydrated ? 'true' : undefined}
+      className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16"
+    >
       <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
       <div
         className="mt-5"

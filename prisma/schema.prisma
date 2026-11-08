@@ -54,6 +54,7 @@ model Department {
   adminGrants         AdminGrant[]
   experiences         Experience[]
   graduationDocuments GraduationDocument[]
+  events              Event[]
 
   @@unique([facultyId, code])
   @@unique([facultyId, name])
@@ -145,10 +146,15 @@ model User {
   skills                      UserSkill[]
   experienceInvitations       ExperienceInvitation[]
 
-  experiences          Experience[] @relation("ExperienceAuthor")
-  moderatedExperiences Experience[] @relation("ExperienceModerator")
-  reports              Report[]     @relation("ReportReporter")
-  reviewedReports      Report[]     @relation("ReportReviewer")
+  experiences           Experience[]       @relation("ExperienceAuthor")
+  moderatedExperiences  Experience[]       @relation("ExperienceModerator")
+  reports               Report[]           @relation("ReportReporter")
+  events                Event[]
+  availabilityRules     AvailabilityRule[]
+  mentorAppointments    Appointment[]      @relation("AppointmentMentor")
+  menteeAppointments    Appointment[]      @relation("AppointmentMentee")
+  reviewedReports       Report[]           @relation("ReportReviewer")
+  cancelledAppointments Appointment[]      @relation("AppointmentCanceller")
 }
 
 /// İlk giriş adımı; atlanan ya da tamamlanan adımların kalıcı ilerleme noktası.
@@ -935,4 +941,107 @@ model Report {
   @@index([targetId, status])
   @@index([status, createdAt])
   @@index([reporterId])
+}
+
+enum EventType {
+  LOGIN
+  PROFILE_THRESHOLD
+  CV_UPLOADED
+  CV_APPLIED
+  EXPERIENCE_PUBLISHED
+  SEARCH
+  MENTOR_SEARCH
+  MENTOR_VIEWED
+  APPOINTMENT_REQUESTED
+  APPOINTMENT_CONFIRMED
+  APPOINTMENT_COMPLETED
+  FAQ_REQUESTED
+  FAQ_PUBLISHED
+  CV_REVIEW_REQUESTED
+  CONTACT_REQUESTED
+}
+
+/// Kullanım metrikleri (P1-13). `props` KİŞİSEL VERİ taşımaz (Zod strict + veritabanı CHECK). `role` ve `departmentId`
+/// olay anındaki üyelik anlık görüntüsüdür. `userId` 24 ay sonra ve hesap silmede `null` yapılır; sayılar kalır.
+model Event {
+  id           String          @id @default(uuid(7))
+  type         EventType
+  userId       String?
+  role         MembershipRole?
+  departmentId String?
+  props        Json            @default("{}")
+  createdAt    DateTime        @default(now())
+
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+
+  @@index([type, createdAt])
+  @@index([departmentId, createdAt])
+  @@index([userId, createdAt])
+}
+
+enum AppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  DECLINED
+  CANCELLED
+  EXPIRED
+  COMPLETED
+  NO_SHOW
+}
+
+/// Mentorun haftalık müsaitliği (P1-10). `weekday` 1 = pazartesi … 7 = pazar; dakikalar `Europe/Istanbul` yerel günüdür.
+/// `mode` boşsa iki biçim de. Aynı mentor+gün aralıkları çakışamaz (exclusion, ham SQL migration).
+model AvailabilityRule {
+  id          String       @id @default(uuid(7))
+  mentorId    String
+  weekday     Int
+  startMinute Int
+  endMinute   Int
+  mode        MeetingMode?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  mentor User @relation(fields: [mentorId], references: [id], onDelete: Restrict)
+
+  @@index([mentorId, weekday])
+}
+
+/// Randevu (P1-10). Aynı mentorun REQUESTED/CONFIRMED aralıkları ve aynı öğrencinin REQUESTED/CONFIRMED aralıkları
+/// çakışamaz (exclusion constraint, ham SQL migration): çakışmanın son sözü veritabanıdır. `expiresAt` yalnız REQUESTED
+/// için anlamlıdır (D11). Hesap silmede açık randevular iptal edilir ve notlar temizlenir (satır kalır).
+model Appointment {
+  id                String            @id @default(uuid(7))
+  mentorId          String
+  menteeId          String
+  startsAt          DateTime
+  endsAt            DateTime
+  mode              MeetingMode
+  menteeNote        String?
+  /// Yüz yüze: onayda mentorun yer notundan kopyalanır (sonradan değişen ayar randevuyu değiştirmez).
+  location          String?
+  status            AppointmentStatus @default(REQUESTED)
+  expiresAt         DateTime
+  decidedAt         DateTime?
+  decisionNote      String?
+  meetUrl           String?
+  calendarEventId   String?
+  /// Takvim etkinliği oluşturma kesin başarısız oldu (ya da adaptör kapalı): mentor elle link ekler.
+  calendarFailedAt  DateTime?
+  /// Takvim etkinliği oluşturma deneme sayısı (en çok 3; sonra mentor elle link ekler).
+  calendarAttempts  Int               @default(0)
+  reminderSentAt    DateTime?
+  cancelledById     String?
+  cancelledBySystem Boolean           @default(false)
+  cancelReason      String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  mentor      User  @relation("AppointmentMentor", fields: [mentorId], references: [id], onDelete: Restrict)
+  mentee      User  @relation("AppointmentMentee", fields: [menteeId], references: [id], onDelete: Restrict)
+  cancelledBy User? @relation("AppointmentCanceller", fields: [cancelledById], references: [id], onDelete: Restrict)
+
+  @@index([mentorId, status, startsAt])
+  @@index([menteeId, status, startsAt])
+  @@index([status, expiresAt])
 }

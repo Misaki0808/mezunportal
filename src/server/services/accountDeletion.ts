@@ -103,6 +103,34 @@ export async function deleteAccount(
       data: { status: 'REVOKED', closedAt: now },
     });
 
+    // Kullanım olayları (P1-13): sayılar kalır, kullanıcıyla bağ hemen kopar.
+    await tx.event.updateMany({ where: { userId }, data: { userId: null } });
+
+    // Randevular (P1-10): açık olanlar sistem tarafından iptal edilir (takvim etkinliği süpürmede silinir); kişiye ait
+    // serbest metin (öğrenci notu, yer notu, görüşme bağlantısı, ret notu) temizlenir. Satır, karşı tarafın geçmişi için kalır.
+    await tx.appointment.updateMany({
+      where: {
+        status: { in: ['REQUESTED', 'CONFIRMED'] },
+        OR: [{ mentorId: userId }, { menteeId: userId }],
+      },
+      data: {
+        status: 'CANCELLED',
+        cancelledBySystem: true,
+        cancelledById: null,
+        cancelReason: null,
+      },
+    });
+    await tx.appointment.updateMany({
+      where: { cancelledById: userId },
+      data: { cancelReason: null },
+    });
+    await tx.appointment.updateMany({ where: { menteeId: userId }, data: { menteeNote: null } });
+    await tx.appointment.updateMany({
+      where: { mentorId: userId },
+      data: { location: null, meetUrl: null, decisionNote: null },
+    });
+    await tx.availabilityRule.deleteMany({ where: { mentorId: userId } });
+
     // Profil yayınlanmış içerik değildir: K-09'un her iki seçiminde de kişisel veri silinir.
     // ProfileTag ilişkileri ON DELETE CASCADE; ortak etiket sözlüğü korunur.
     await tx.profile.deleteMany({ where: { userId } });
