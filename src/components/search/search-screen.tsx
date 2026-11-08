@@ -310,7 +310,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
             </Button>
           </div>
         </aside>
-        <main aria-busy={pending}>
+        <section aria-busy={pending}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="font-semibold" aria-live="polite">
               {t('resultCount', { count: results.total })}
@@ -387,7 +387,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
             pageCount={Math.ceil(results.total / results.pageSize)}
             hrefFor={(page) => href({ ...filter, page })}
           />
-        </main>
+        </section>
       </div>
     </div>
   );
