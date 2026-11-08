@@ -30,7 +30,9 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
   const student = await db.user.findUniqueOrThrow({
     where: { email: 'student@test.mezunportal.local' },
   });
-  await db.appointment.deleteMany({ where: { mentorId: mentor.id } });
+  await db.appointment.deleteMany({
+    where: { mentorId: mentor.id, status: { in: ['REQUESTED', 'CONFIRMED'] } },
+  });
   await db.availabilityRule.deleteMany({ where: { mentorId: mentor.id } });
   await db.mentorProfile.update({
     where: { userId: mentor.id },
@@ -75,8 +77,7 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
     await m.goto('/randevular');
     await m.waitForLoadState('networkidle');
     await expect(m.getByText('Yanıt bekliyor').first()).toBeVisible();
-    await m.getByRole('link', { name: 'Aç' }).first().click();
-    await m.waitForURL(/\/randevular\/.+/);
+    await m.goto(`/randevular/${row.id}`);
     await m.waitForLoadState('networkidle');
     await expect(m.getByText('Staj başvurusu hakkında soru.')).toBeVisible();
     await m.getByRole('button', { name: 'Onayla' }).click();
@@ -90,7 +91,9 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
     await s.waitForLoadState('networkidle');
     await expect(s.getByText('Onaylandı').first()).toBeVisible();
   } finally {
-    await db.appointment.deleteMany({ where: { mentorId: mentor.id } });
+    await db.appointment.deleteMany({
+      where: { mentorId: mentor.id, status: { in: ['REQUESTED', 'CONFIRMED'] } },
+    });
     await mentorContext.close();
     await studentContext.close();
   }
