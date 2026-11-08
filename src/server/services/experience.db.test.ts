@@ -443,6 +443,67 @@ describe('anonimlik: rastgele verili tüm eylem yanıtları', () => {
       expect(JSON.stringify(logs)).not.toContain(author);
     },
   );
+  it('hata yolları ve karşı tarafların veri dökümü anonim yazarı taşımaz (rastgele veri)', async () => {
+    const author = await member(institution.deptA1),
+      reader = await member(institution.deptB1);
+    const secret = {
+      id: author,
+      name: `Anon-${randomBytes(12).toString('hex')}`,
+      email: `${randomBytes(12).toString('hex')}@test.local`,
+      phone: `+905${randomInt(100000000, 999999999)}`,
+    };
+    await db.user.update({
+      where: { id: author },
+      data: { name: secret.name, email: secret.email, phone: secret.phone },
+    });
+    session.userId = author;
+    const pendingRow = await ok(actions.saveExperienceDraft(inputs.saveExperienceDraft()));
+    await ok(actions.submitExperience({ experienceId: pendingRow.id }));
+    const publishedId = await published(author);
+    session.userId = reader;
+    const report = await ok(
+      actions.reportExperience({ experienceId: publishedId, reason: 'Yanıltıcı bilgi' }),
+    );
+    const failures: unknown[] = [];
+    // Başkasının bekleyen anonim deneyimi: okuma, düzenleme, gönderme, karar, şikâyet, tekrar şikâyet.
+    failures.push(await actions.getExperienceDetail({ experienceId: pendingRow.id }));
+    failures.push(
+      await actions.saveExperienceDraft({
+        ...inputs.saveExperienceDraft(),
+        experienceId: pendingRow.id,
+      }),
+    );
+    failures.push(await actions.submitExperience({ experienceId: pendingRow.id }));
+    failures.push(
+      await actions.reviewExperience({ experienceId: pendingRow.id, decision: 'PUBLISH' }),
+    );
+    failures.push(
+      await actions.reportExperience({ experienceId: pendingRow.id, reason: 'Yanıltıcı bilgi' }),
+    );
+    failures.push(
+      await actions.reportExperience({ experienceId: publishedId, reason: 'Yine yanıltıcı' }),
+    );
+    failures.push(await actions.listModerationQueue({}));
+    failures.push(
+      await actions.resolveExperienceReport({
+        reportId: report.reportId,
+        decision: 'DISMISSED',
+        reason: 'Yetkisiz deneme',
+      }),
+    );
+    for (const failure of failures) {
+      expect(failure).toMatchObject({ ok: false });
+      expect(Object.keys(failure as object).sort()).toEqual(['errorCode', 'ok']);
+      for (const value of Object.values(secret))
+        expect(JSON.stringify(failure)).not.toContain(value);
+    }
+    // Karşı tarafların dökümü: şikâyet eden okur ve karar veren moderatör yazarı görmez.
+    for (const other of [reader, moderator]) {
+      const exported = await buildDataExport(db, other, NOW);
+      for (const value of Object.values(secret))
+        expect(JSON.stringify(exported)).not.toContain(value);
+    }
+  });
   it('adlı içerik yalnız açık id/görünen ad taşır, e-posta/telefon veya ilişkiler taşımaz', async () => {
     const author = await member(institution.deptA1),
       row = await draft(author, false);
