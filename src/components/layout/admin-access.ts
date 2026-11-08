@@ -2,12 +2,13 @@ import 'server-only';
 
 import { cache } from 'react';
 
-import { requireAdmin, requireUser } from '@/server/permissions';
+import { requireAdmin, requireUserWithoutConsent } from '@/server/permissions';
 import type { AdminTargetInput } from '@/server/permissions';
+import { isCodedError } from '@/lib/errors';
 
-/** Görünürlük sunucuda aynı yetki korumasından türetilir; hatada bağlantı gizlenir. */
+/** Yalnız rol uygunluğu. Ürün verisi eylemlerin rıza kapısından ayrıca geçer. */
 export const hasAdminAccess = cache(async (): Promise<boolean> => {
-  const actor = await requireUser().catch(() => null);
+  const actor = await requireUserWithoutConsent().catch(() => null);
   if (!actor) return false;
   for (const grant of actor.facts.grants) {
     let target: AdminTargetInput | undefined;
@@ -20,7 +21,9 @@ export const hasAdminAccess = cache(async (): Promise<boolean> => {
       target &&
       (await requireAdmin(target).then(
         () => true,
-        () => false,
+        // requireAdmin önce rol/kapsamı doğrular. Sonraki rıza reddi rol yokluğu değildir;
+        // sayfanın veri eylemi CONSENT_REQUIRED döndürüp doğru onay çağrısını gösterir.
+        (error: unknown) => isCodedError(error) && error.code === 'CONSENT_REQUIRED',
       ))
     )
       return true;

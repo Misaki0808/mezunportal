@@ -35,3 +35,8 @@ it('inceleyici: izinli sayfa ve servis hataları kararlı sonucu korur', async (
   mocks.overview.mockRejectedValueOnce(new Error('private detail'));
   expect(await adminAccess('users')).toEqual({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
 });
+
+it('eksik rıza veri kapısından gelir ve rol reddine dönüştürülmez', async () => {
+  mocks.overview.mockResolvedValue({ ok: false, errorCode: 'CONSENT_REQUIRED' });
+  expect(await adminAccess('users')).toEqual({ ok: false, errorCode: 'CONSENT_REQUIRED' });
+});
