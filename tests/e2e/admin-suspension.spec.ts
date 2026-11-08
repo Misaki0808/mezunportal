@@ -8,7 +8,10 @@ const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
 test.afterAll(() => db.$disconnect());
-async function login(page: Page, persona: 'systemAdmin' | 'alumniMentor' | 'departmentAdmin') {
+async function login(
+  page: Page,
+  persona: 'systemAdmin' | 'alumniMentor' | 'departmentAdmin' | 'academic',
+) {
   await page.goto(`/giris/test?persona=${persona}`);
   await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
   await page.waitForURL(/\/(hesap|onay)$/);
@@ -96,4 +99,69 @@ test('sistem yöneticisi toplu istihdam raporunu Excel olarak indirebilir', asyn
     'Unvan',
     'Şirket',
   ]);
+});
+
+test('fakülte yöneticisi kapsamlı paneli görür, sistem sözlüğüne erişemez', async ({ page }) => {
+  const academic = await db.user.findUniqueOrThrow({
+    where: { email: 'academic@test.mezunportal.local' },
+  });
+  const system = await db.user.findUniqueOrThrow({
+    where: { email: 'system-admin@test.mezunportal.local' },
+  });
+  const membership = await db.membership.findFirstOrThrow({
+    where: { userId: academic.id, endedAt: null, verificationStatus: 'VERIFIED' },
+    include: { department: true },
+  });
+  const grant = await db.adminGrant.create({
+    data: {
+      userId: academic.id,
+      scope: 'FACULTY',
+      facultyId: membership.department.facultyId,
+      grantedById: system.id,
+    },
+  });
+  try {
+    await login(page, 'academic');
+    await page.goto('/yonetim');
+    await expect(page.getByRole('link', { name: /Kullanıcılar/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /İstihdam raporu/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Sözlükler/ })).toHaveCount(0);
+    await page.goto('/yonetim/sozlukler');
+    await expect(page.getByText('Bu işlem için yetkin yok.')).toBeVisible();
+  } finally {
+    await db.adminGrant.delete({ where: { id: grant.id } });
+  }
+});
+
+test('sözlük kaydı eklenir, düzenlenir ve gerekçeyle silinir', async ({ page }) => {
+  const suffix = Date.now().toString();
+  const initial = `Deneme Sektör ${suffix}`;
+  const changed = `Örnek Sektör ${suffix}`;
+  try {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page, 'systemAdmin');
+    await page.goto('/yonetim/sozlukler');
+    await page.getByLabel('Sözlük').selectOption('SECTOR');
+    await page.getByRole('button', { name: 'Ekle', exact: true }).click();
+    let dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Ad').fill(initial);
+    await dialog.getByRole('button', { name: 'Kaydet' }).click();
+    let card = page.locator('li').filter({ hasText: initial });
+    await expect(card).toBeVisible();
+    await card.getByRole('button', { name: 'Düzenle' }).click();
+    dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Ad').fill(changed);
+    await dialog.getByRole('button', { name: 'Kaydet' }).click();
+    card = page.locator('li').filter({ hasText: changed });
+    await expect(card).toBeVisible();
+    await card.getByRole('button', { name: 'Sil', exact: true }).click();
+    dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Sil', exact: true }).click();
+    await expect(dialog.getByText('En az 3 karakterlik bir gerekçe yaz.')).toBeVisible();
+    await dialog.getByLabel('İşlem gerekçesi').fill('Tekrarlanan deneme kaydı');
+    await dialog.getByRole('button', { name: 'Sil', exact: true }).click();
+    await expect(card).toHaveCount(0);
+  } finally {
+    await db.sector.deleteMany({ where: { name: { in: [initial, changed] } } });
+  }
 });

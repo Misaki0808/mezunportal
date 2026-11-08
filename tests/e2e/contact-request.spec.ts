@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
-import { waitForHydratedForm } from './hydration';
+import { waitForHydratedControl, waitForHydratedForm } from './hydration';
 import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
@@ -102,7 +102,7 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     await expect(page.locator('body')).not.toContainText('+90 555 123 45 67');
     // Veri dökümü karşı tarafın gizli iletişimini taşımaz.
     await page.goto('/hesap/veriler');
-    await page.waitForLoadState('networkidle');
+    await waitForHydratedControl(page, 'Verilerimi indir');
     const downloaded = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Verilerimi indir' }).click();
     const file = await (await downloaded).path();
