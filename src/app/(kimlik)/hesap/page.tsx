@@ -12,11 +12,12 @@ export const dynamic = 'force-dynamic';
 export default async function AccountPage() {
   const actor = await requireUser().catch(() => null);
   if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
-  const [state, showAdmin, t, verification] = await Promise.all([
+  const [state, showAdmin, t, verification, entry] = await Promise.all([
     getVerificationState().catch(() => null),
     hasAdminAccess(),
     getTranslations('authScreens.account'),
     getTranslations('authScreens.verification'),
+    getTranslations('experiences.entry'),
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -28,9 +29,19 @@ export default async function AccountPage() {
   }[state.data.status];
   const links = [
     { href: '/dogrulama', title: t('verification'), description: statusLabel },
+    ...(state.data.status === 'VERIFIED'
+      ? [{ href: '/deneyimlerim', title: entry('mine'), description: entry('mineDescription') }]
+      : []),
     { href: '/hesap/e-posta', title: t('email'), description: t('emailDescription') },
     ...(showAdmin
-      ? [{ href: '/yonetim/belge-kuyrugu', title: t('admin'), description: t('adminDescription') }]
+      ? [
+          { href: '/yonetim/belge-kuyrugu', title: t('admin'), description: t('adminDescription') },
+          {
+            href: '/yonetim/deneyimler',
+            title: entry('moderation'),
+            description: entry('moderationDescription'),
+          },
+        ]
       : []),
     { href: '/cikis', title: t('signOut'), description: t('signOutDescription') },
   ];
