@@ -17,7 +17,7 @@ import {
 
 import { KeyboardState } from './keyboard-state';
 
-type NavId = 'home' | 'experiences' | 'mentors' | 'appointments' | 'profile';
+type NavId = 'home' | 'experiences' | 'jobs' | 'mentors' | 'appointments' | 'profile';
 
 /**
  * YER TUTUCU gezinme: ürün sayfaları henüz yok (Faz 1). Yalnız `href`i olan öğe bağlantıdır;
@@ -27,12 +27,14 @@ type NavId = 'home' | 'experiences' | 'mentors' | 'appointments' | 'profile';
 const NAV_ITEMS: readonly { id: NavId; href?: string; icon: ReactNode }[] = [
   { id: 'home', href: '/', icon: <HomeIcon /> },
   { id: 'experiences', href: '/deneyimler', icon: <BriefcaseIcon /> },
+  { id: 'jobs', href: '/ilanlar', icon: <BriefcaseIcon /> },
   { id: 'mentors', href: '/mentorlar', icon: <UsersIcon /> },
   { id: 'appointments', href: '/randevular', icon: <CalendarIcon /> },
   { id: 'profile', href: '/hesap', icon: <UserIcon /> },
 ];
 
 function isCurrent(pathname: string, href: string): boolean {
+  if (href === '/ilanlar' && pathname === '/ilanlarim') return true;
   return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -75,7 +77,8 @@ export function AppShellClient({
   }
 
   function renderItem(item: (typeof NAV_ITEMS)[number], layout: 'bottom' | 'side') {
-    const label = t(`items.${item.id}`);
+    const fullLabel = t(`items.${item.id}`);
+    const label = layout === 'bottom' ? t(`shortItems.${item.id}`) : fullLabel;
     const current = item.href ? isCurrent(pathname, item.href) : false;
     const shared = cn(
       'inline-flex items-center gap-1 rounded-control font-medium',
@@ -102,6 +105,7 @@ export function AppShellClient({
     return (
       <Link
         href={item.href}
+        aria-label={fullLabel}
         aria-current={current ? 'page' : undefined}
         className={cn(
           shared,
@@ -188,7 +192,7 @@ export function AppShellClient({
         aria-label={t('labelBottom')}
         className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
-        <ul className="grid grid-cols-5">
+        <ul className="grid grid-cols-6">
           {NAV_ITEMS.map((item) => (
             <li key={item.id}>{renderItem(item, 'bottom')}</li>
           ))}
