@@ -54,6 +54,7 @@ import {
   type CvDeps,
   type Tx,
 } from './cv-shared';
+import { syncCompletionScore } from './profile';
 import { attachSkill, ensureProfile } from './profile-skills';
 import { consumeRateLimit, peekRateLimit } from './rateLimit';
 
@@ -757,6 +758,7 @@ export async function applyCv(
       // Son CV uygulama anı profilde durur ("CV" tamamlama adımı ve tazelik hatırlatması bunu okur).
       const applied = await ensureProfile(tx, actor.userId);
       await tx.profile.update({ where: { id: applied.id }, data: { cvUpdatedAt: now } });
+      await syncCompletionScore(tx, actor.userId, now);
 
       // Saklama: son dosya (bu CV) kalır; eski dosyalar silinir (açık incelemeye bağlı olan hariç).
       // Silme işlemin SON adımıdır: hata fırlatırsa işlem geri alınır.
