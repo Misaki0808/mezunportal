@@ -48,15 +48,24 @@ const catalog = readdirSync(dir)
         node.expression.text === 'use server',
     );
     if (!server) return [];
+    const actionFile = file.slice(0, -3);
     return source.statements.flatMap((node) => {
-      if (
-        !ts.isFunctionDeclaration(node) ||
-        !node.name ||
-        !node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-      )
-        return [];
-      const actionFile = file.slice(0, -3);
-      return [{ actionFile, name: node.name.text, key: `${actionFile}.${node.name.text}` }];
+      const exported =
+        ts.canHaveModifiers(node) &&
+        ts.getModifiers(node)?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword);
+      let names: string[] = [];
+      if (ts.isFunctionDeclaration(node) && exported && node.name) names = [node.name.text];
+      if (ts.isVariableStatement(node) && exported) {
+        names = node.declarationList.declarations.map((declaration) => {
+          if (!ts.isIdentifier(declaration.name))
+            throw new Error(`Eylem kataloğu ayrıştırılamadı: ${file}`);
+          return declaration.name.text;
+        });
+      }
+      if (ts.isExportDeclaration(node) || ts.isExportAssignment(node)) {
+        throw new Error(`Eylem kataloğu yeniden dışa aktarmayı desteklemiyor: ${file}`);
+      }
+      return names.map((name) => ({ actionFile, name, key: `${actionFile}.${name}` }));
     });
   });
 
