@@ -173,3 +173,54 @@ describe('ilan özeti gerçek PostgreSQL', () => {
     expect(mocks.enqueue).not.toHaveBeenCalled();
   });
 });
+
+describe('R2 teslim anında ilan ve öğrenci kapsamı', () => {
+  it.each([
+    'ended-author',
+    'missing-target',
+    'foreign-target',
+    'ended-student',
+    'unverified-student',
+    'different-department',
+  ] as const)('%s hem kuyrukta hem teslimde reddedilir', async (change) => {
+    const f = await fixture();
+    await sendNotificationIntent(db, f.row);
+    const message = mocks.enqueue.mock.calls[0]![0];
+    expect(await maySendNotification(db, message)).toBe(true);
+    if (change === 'ended-author')
+      await db.membership.updateMany({
+        where: { userId: f.authorId },
+        data: { endedAt: new Date() },
+      });
+    if (change === 'missing-target')
+      await db.jobPostingDepartment.deleteMany({ where: { postingId: f.postingId } });
+    if (change === 'foreign-target') {
+      const foreign = await createInstitution(db);
+      await db.jobPostingDepartment.create({
+        data: { postingId: f.postingId, departmentId: foreign.deptA1 },
+      });
+    }
+    if (change === 'ended-student')
+      await db.membership.updateMany({
+        where: { userId: f.userId },
+        data: { endedAt: new Date() },
+      });
+    if (change === 'unverified-student')
+      await db.membership.updateMany({
+        where: { userId: f.userId },
+        data: { verificationStatus: 'PENDING', verifiedAt: null },
+      });
+    if (change === 'different-department') {
+      const other = await createInstitution(db);
+      await db.membership.updateMany({
+        where: { userId: f.userId },
+        data: { departmentId: other.deptA1 },
+      });
+    }
+    expect(await maySendNotification(db, message)).toBe(false);
+    await db.jobMatchDigest.deleteMany({ where: { userId: f.userId } });
+    mocks.enqueue.mockClear();
+    await sendNotificationIntent(db, f.row);
+    expect(mocks.enqueue).not.toHaveBeenCalled();
+  });
+});
