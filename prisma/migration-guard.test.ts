@@ -7,7 +7,8 @@ import { describe, expect, it } from 'vitest';
  * `Experience.searchVector` / `searchKeys` veritabanında GENERATED ALWAYS sütundur ve 6 GIN indeksi vardır (4 sözlük
  * trgm indeksi P1-05'te, 2 arama indeksi P1-08'de). Prisma bunları şemada tam modelleyemediği için `prisma migrate dev`
  * sonraki HER migration'a bunlar için yanlış `ALTER COLUMN`/`DROP INDEX` yazar; olduğu gibi uygulanırsa arama bozulur.
- * Bu test, onları yaratan migration'lar dışında bunlara dokunan migration'ı reddeder.
+ * Bu test, onları yaratan migration’lar dışında bunlara dokunan migration’ı reddeder. Artık şemada modelli olduğundan
+ * `migrate dev` normalde sürüklenmez; bu test İKİNCİ KEMERDİR (docs/decisions.md).
  */
 const MIGRATIONS = new URL('./migrations/', import.meta.url);
 

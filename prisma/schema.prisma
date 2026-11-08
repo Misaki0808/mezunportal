@@ -642,6 +642,8 @@ model Sector {
   updatedAt      DateTime   @updatedAt
   companies      Company[]
   positions      Position[]
+
+  @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "Sector_normalizedName_trgm")
 }
 
 model Company {
@@ -654,6 +656,8 @@ model Company {
   updatedAt      DateTime   @updatedAt
   sector         Sector?    @relation(fields: [sectorId], references: [id], onDelete: SetNull)
   positions      Position[]
+
+  @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "Company_normalizedName_trgm")
 }
 
 model Title {
@@ -664,6 +668,8 @@ model Title {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   positions      Position[]
+
+  @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "Title_normalizedName_trgm")
 }
 
 model Skill {
@@ -674,6 +680,8 @@ model Skill {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   userSkills     UserSkill[]
+
+  @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "Skill_normalizedName_trgm")
 }
 
 /// Sözlükte eşleşmeyen, kullanıcının ONAYLADIĞI değerler (yönetici kuyruğu). Kişi bilgisi tutmaz: yalnız değer,
@@ -892,9 +900,11 @@ model Experience {
   moderatedById       String?
   moderatedAt         DateTime?
   publishedAt         DateTime?
-  /// Üretilmiş arama sütunları (P1-08 ham SQL migration'ı; Prisma yazamaz, yalnız `repositories/search.ts` okur).
-  searchVector        Unsupported("tsvector")?
-  searchKeys          Unsupported("text")?
+  /// Üretilmiş arama sütunları (GENERATED ALWAYS; P1-08 ham SQL migration'ı). Prisma yazamaz; istemcide global `omit`
+  /// ile hiçbir sorguda varsayılan dönmez (`src/server/db.ts`). Yalnız `repositories/search.ts` ham SQL ile okur.
+  /// `dbgenerated()` ve aşağıdaki GIN indeksleri `migrate dev`'in yanlış ALTER/DROP üretmesini önler (docs/decisions.md).
+  searchVector        Unsupported("tsvector")? @default(dbgenerated())
+  searchKeys          String?                  @default(dbgenerated())
   createdAt           DateTime                 @default(now())
   updatedAt           DateTime                 @updatedAt
 
@@ -907,6 +917,8 @@ model Experience {
   @@index([departmentIdAtWrite, status, createdAt])
   @@index([status, publishedAt])
   @@index([type, termYear])
+  @@index([searchVector], type: Gin, map: "Experience_searchVector_idx")
+  @@index([searchKeys(ops: raw("gin_trgm_ops"))], type: Gin, map: "Experience_searchKeys_trgm")
 }
 
 /// Şimdilik tek hedef türü deneyimdir; hedef FK ile korunur. SSS kendi sözleşmesinde eklenir.

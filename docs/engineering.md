@@ -23,11 +23,11 @@ Ajanların eğitim verisinde eski sürümlerin örnekleri çoktur; kurulumda saa
   kurulur (`@prisma/adapter-pg`). CLI ayarı ve bağlantı adresi kökteki `prisma.config.ts`'tedir;
   env açıkça yüklenir. `pg` sürücüsünün bağlantı zaman aşımı varsayılanı Prisma 6'dan farklıdır;
   bağlantı havuzu ayarı açıkça verilir.
-- **Üretilmiş arama sütunları (`Experience.searchVector`/`searchKeys`) ve 6 GIN indeksi:** Prisma
-  bunları şemada tam modelleyemez; `prisma migrate dev` sonraki HER migration'a bunlar için yanlış
-  `ALTER COLUMN`/`DROP INDEX` yazar, uygulanırsa arama bozulur. Çözüm: `prisma migrate dev
-  --create-only` → üretilen SQL'den bu satırları sil → uygula. Bekçi: `prisma/migration-guard.test.ts`
-  (yaratıcı migration'lar dışında bunlara dokunanı reddeder).
+- **Üretilmiş arama sütunları (`Experience.searchVector`/`searchKeys`) ve 6 GIN indeksi:** artık
+  şemada modelli (`@@index(type: Gin)` + `@default(dbgenerated())`), `migrate dev` boş fark üretir;
+  `searchKeys` istemcide global `omit` ile varsayılan dönmez (`src/lib/prisma-options.ts`). Yine de
+  bir migration bu sütun/indekslere `ALTER`/`DROP` içeriyorsa SQL'den o satırları sil (`--create-only`);
+  yedek bekçi: `prisma/migration-guard.test.ts`. Gerekçe: `docs/decisions.md`.
 - **Kimlik:** Better Auth kullanılır; **Auth.js/NextAuth kullanılmaz** (bakım modunda).
 - **Beta, canary, RC sürüm yok.** Bütün bağımlılıklar kararlı sürümde ve lockfile ile sabittir.
 - Yeni bir kütüphanenin kurulum biçiminden emin değilsen, kurulu sürümün belgesine bak;
