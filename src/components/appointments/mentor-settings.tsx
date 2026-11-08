@@ -50,7 +50,7 @@ function daysFromRules(view: MentorSettingsView): Record<number, Day> {
     days[rule.weekday]!.on = true;
     days[rule.weekday]!.ranges.push({
       start: minutesToTime(rule.startMinute),
-      end: minutesToTime(rule.endMinute),
+      end: rule.endMinute === 1440 ? '00:00' : minutesToTime(rule.endMinute),
       mode: rule.mode ?? '',
     });
   }
@@ -161,7 +161,8 @@ export function MentorSettings({
       const sorted: { start: number; end: number }[] = [];
       day.ranges.forEach((range, index) => {
         const start = timeToMinutes(range.start);
-        const end = timeToMinutes(range.end);
+        const rawEnd = timeToMinutes(range.end);
+        const end = rawEnd === 0 ? 1440 : rawEnd;
         const key = `d${weekday}r${index}`;
         if (start === null || end === null || start % 5 !== 0 || end % 5 !== 0)
           found[key] = t('errors.step');
@@ -375,7 +376,10 @@ export function MentorSettings({
                               />
                             )}
                           </Field>
-                          <Field label={t('to')}>
+                          <Field
+                            label={t('to')}
+                            hint={range.end === '00:00' ? t('midnightHint') : undefined}
+                          >
                             {(control) => (
                               <Input
                                 {...control}

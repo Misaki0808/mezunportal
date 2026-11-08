@@ -519,3 +519,20 @@ it('inceleyici: sunucu uygun gördüğünde randevu detayında görüşme formun
     '/hesap/gorusme/a1',
   );
 });
+
+it('inceleyici: gün sonu 1440 dakikalık kural geçerli 00:00 alanıyla görünür ve aynı dakika ile kaydedilir', async () => {
+  const actions = settingsActions();
+  const { user } = renderUi(
+    <MentorSettings
+      initial={settingsView({
+        rules: [{ weekday: 7, startMinute: 1380, endMinute: 1440, mode: null }],
+      })}
+      actions={actions}
+    />,
+  );
+  expect(screen.getByLabelText('Bitiş')).toHaveValue('00:00');
+  await user.click(screen.getByRole('button', { name: 'Müsaitliği kaydet' }));
+  expect(actions.saveAvailability).toHaveBeenCalledWith({
+    rules: [{ weekday: 7, startMinute: 1380, endMinute: 1440, mode: null }],
+  });
+});

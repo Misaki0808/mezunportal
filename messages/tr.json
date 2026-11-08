@@ -1872,7 +1872,8 @@
         "overlap": "Aynı gündeki aralıklar çakışamaz.",
         "step": "Saatleri 5 dakikalık adımlarla gir.",
         "pauseDate": "Geçerli bir tarih seç."
-      }
+      },
+      "midnightHint": "00:00, bu günün sonunu ifade eder."
     },
     "request": {
       "eyebrow": "RANDEVU",

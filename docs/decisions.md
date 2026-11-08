@@ -719,3 +719,5 @@ Sunucu bir slotu dolu/bayat diye reddettiğinde ekran eski seçimi bırakır, o 
 ### P1-13 ekran incelemesi: toplamdan küçük grup çıkarımını engelleme
 
 Gizlenen hücre varsa etkin kullanıcı toplamı da gizlenir; görünür grubun kişi sayısı toplamdan çıkarılarak küçük grup hesaplanamaz. Aynı servis izdüşümü panelin HTML/RSC verisine ve Excel özetine uygulanır. Kullanım sayfasında zorunlu rıza ve yönetici yetkisi loading başlamadan kontrol edilir; rızasız/yetkisiz erişim gerçek 404, dosya rotası 403 döner. Diğer sayfaların yeniden onay akışı korunur.
+
+Gün sonu müsaitliği sözleşmede 1440 dakikadır; yerel saat alanı 24:00 kabul etmediği için bitişte 00:00 gösterilir ve sunucuya yine 1440 gider. Alan ipucu gün sonu anlamını açıklar.
