@@ -860,7 +860,10 @@ ekran ayrı kartlardadır (bu PR yalnız sözleşme, şema ve migration).
 **Mezun ilanları: servis, D7 ve K-07 kararları (P2-04, kart 129).** (1) **D7 (PM):** `CONTACT_REQUEST` ilanında yazar kimliği okuyucuya HİÇ gitmez. `/iletisim-iste`
 önizlemesi görünen ad döndürdüğü için ilan→yazar adı sızardı (ayrıca uuid7 hesap zamanını sızdırır); bu yüzden `contactUserId` sözleşmeden
 kaldırıldı, iletişim talebi ilan üzerinden gider (`previewJobPostingContact`/`requestJobPostingContact`, girdi `jobPostingId`; sunucu yazarı çözer,
-mevcut `ContactRequest` kaydı/bildirimi/hız sınırı). Önizleme ilan başlığı/kurum gösterir, olumsuz durumların hepsi tek genel yanıttır; talep notuna
+mevcut `ContactRequest` kaydı/bildirimi/hız sınırı; talebe sunucuca `source=JOB_POSTING` + `jobPostingId` (ilan silinirse SET NULL) + talep anındaki başlık/kurum
+özeti yazılır). **Giden talep sızıntısı (W2 bulgusu, PM kararı):** giden listede hedef adı/kimliği PENDING'de görünürdü; ilan kaynaklı talepte `counterpart` artık
+`null` ve `origin{başlık, kurum}` gösterilir, kimlik/ad yalnız `APPROVED`'da açılır (REVOKED'da yeniden gizli; ilan kapansa/silinse de sızmaz); veri dökümünde onaysız
+giden talepte `targetId` yoktur; doğrudan profil talebi (kişiyi kendisi seçmiş) değişmedi. Önizleme ilan başlığı/kurum gösterir, olumsuz durumların hepsi tek genel yanıttır; talep notuna
 "İlan: <başlık>" bağlamı eklenir; ad yalnız onayda açılır. Seçenekler: (a) uuid'siz takma ad — yeni tablo gerektirir; (b) mevcut `/iletisim-iste` — ad
 sızar; (c) seçilen: ilan üzerinden, sunucuda çözümleme. (2) **K-07 (PM):** başka üniversitenin bölümü `JobPostingDepartment`'a veritabanında
 bağlanabilir; kapı SERVİS katmanındadır (hedef bölümler ve kapsam bölümü yazarın üniversitesinden; gönderimde yeniden denetlenir, gerçek DB testi +
