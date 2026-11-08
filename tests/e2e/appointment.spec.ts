@@ -170,7 +170,11 @@ test('inceleyici: iki oturum aynı slot için yarışır; kaybeden SLOT_TAKEN g�
     const refreshed: boolean[] = [false, false];
     for (const [index, page] of pages.entries()) {
       page.on('response', (response) => {
-        if (response.url().includes('/randevu-al/') && response.request().headers().rsc === '1')
+        if (
+          response.url().includes('/randevu-al/') &&
+          response.request().method() === 'GET' &&
+          response.request().headers().rsc === '1'
+        )
           refreshed[index] = true;
       });
       await page.route('**/randevu-al/*', async (route) => {
