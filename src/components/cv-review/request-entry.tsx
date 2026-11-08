@@ -29,7 +29,9 @@ export function ReviewRequestEntry({
     );
   return (
     <>
-      <Button onClick={() => setOpen(true)}>{t('requestLink')}</Button>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        {t('requestLink')}
+      </Button>
       <Sheet open={open} onClose={() => setOpen(false)} title={t('requestTitle')}>
         <RequestForm mentorId={mentorId} availability={availability} embedded />
       </Sheet>

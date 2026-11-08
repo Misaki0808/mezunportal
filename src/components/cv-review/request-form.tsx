@@ -80,7 +80,12 @@ export function RequestForm({
             void submit();
           }}
         >
-          <Field label={t('note')} hint={t('noteHint')} error={invalid ? t('required') : undefined}>
+          <Field
+            className="[&_p]:text-base"
+            label={t('note')}
+            hint={t('noteHint')}
+            error={invalid ? t('required') : undefined}
+          >
             {(control) => (
               <Textarea
                 {...control}
