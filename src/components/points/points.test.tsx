@@ -75,6 +75,22 @@ describe('katkı puanı (profil)', () => {
     expect(screen.getByText('Kuralları ihlal eden işlem olarak doğrulandı')).toBeVisible();
   });
 
+  it('çarpan satırı yalnız indirimli ve geri alınmamış kayıtta görünür', () => {
+    renderUi(
+      <Contribution
+        initial={overview([
+          entry({ id: 'a', multiplierPercent: 100 }),
+          entry({ id: 'b', multiplierPercent: 25, basePoints: 10, points: 2 }),
+          entry({ id: 'c', multiplierPercent: 50, basePoints: 8, points: 4, status: 'REVOKED' }),
+        ])}
+        list={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByText(/^Çarpan %/)).toHaveLength(1);
+    expect(screen.getByText('Çarpan %25 (taban 10 puan)')).toBeVisible();
+    expect(screen.queryByText(/%50/)).not.toBeInTheDocument();
+  });
+
   it('boş geçmişte açıklayıcı boş durum gösterir', () => {
     renderUi(
       <Contribution
@@ -225,6 +241,60 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
     fireEvent.change(dialog().getByLabelText(/Gerekçe/), { target: { value: 'Hatalı kayıt' } });
     fireEvent.click(dialog().getByRole('button', { name: 'Puanı geri al' }));
     expect(await dialog().findByText('Bu puan kaydı zaten geri alınmış.')).toBeVisible();
+  });
+
+  it('kayıt listesinde geri alınmış kayıt yeniden iptal edilemez; bekleyen "iptal", kesinleşmiş "geri al" der', async () => {
+    const a = actions({
+      listEntries: vi.fn(async () => ({
+        ok: true as const,
+        data: {
+          items: [
+            entry({ id: 'f', status: 'FINAL' }),
+            entry({ id: 'p', status: 'PENDING', finalizesAt: new Date('2026-11-20T09:00:00Z') }),
+            entry({ id: 'r', status: 'REVOKED', revokedReason: 'ADMIN_CANCEL' }),
+          ],
+          nextCursor: null,
+        },
+      })),
+    });
+    renderUi(<AdminPoints rules={[]} flags={{ items: [], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Kayıt' }));
+    fireEvent.change(screen.getByLabelText(/Kullanıcı kimliği/), { target: { value: 'u1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Listele' }));
+    await screen.findAllByRole('button', { name: 'Puanı geri al' });
+    // Satırlar mobil kart + masaüstü tablo olarak iki kez çizilir (`ResponsiveRows`): kayıt başına iki düğme.
+    expect(screen.getAllByRole('button', { name: 'Puanı geri al' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Puanı iptal et' })).toHaveLength(2);
+  });
+
+  it('şüphe onayı tehlikeli işlem olarak işaretlenir; ret işaretlenmez; çift tıklama tek istek gönderir', async () => {
+    let release: () => void = () => undefined;
+    const a = actions({
+      decide: vi.fn(
+        () =>
+          new Promise<{
+            ok: true;
+            data: { flagId: string; status: 'CONFIRMED'; revokedCount: number };
+          }>((resolve) => {
+            release = () =>
+              resolve({ ok: true, data: { flagId: 'f1', status: 'CONFIRMED', revokedCount: 1 } });
+          }),
+      ),
+    });
+    renderUi(<AdminPoints rules={[]} flags={{ items: [flag()], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Şüpheli' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Reddet' })[0]!);
+    expect(dialog().getByRole('button', { name: 'Reddet' })).not.toHaveClass('text-danger');
+    fireEvent.click(dialog().getByRole('button', { name: 'Vazgeç' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Onayla' })[0]!);
+    const confirm = dialog().getByRole('button', { name: 'Onayla ve geri al' });
+    expect(confirm).toHaveClass('text-danger');
+    fireEvent.change(dialog().getByLabelText(/Gerekçe/), { target: { value: 'Tekrarlı kayıt' } });
+    fireEvent.click(confirm);
+    fireEvent.click(confirm);
+    expect(a.decide).toHaveBeenCalledTimes(1);
+    release();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
   it('geriye dönük hesaplama onayla başlar, sonra sebebiyle kilitlenir', async () => {
