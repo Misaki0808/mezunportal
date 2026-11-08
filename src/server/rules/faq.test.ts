@@ -183,3 +183,44 @@ describe('analyzeIdentity: engel ve uyarı (kart 122)', () => {
     expect(analyzeIdentity('DENİZ’İN sözü', names).blocked).toBe(true); // tipografik kesme
   });
 });
+
+describe('analyzeIdentity: kesme işareti varyantları ve aksanlar engelde yakalanır (kart 126)', () => {
+  const names = ['Deniz Aksoy'];
+  // Düz, kıvrık, harf sayılan değiştirici harf (Lm), simge ve tam genişlik biçimleri: hepsi KESMELİ ek = ENGEL.
+  it.each([
+    ["'", 'düz'],
+    ['\u2019', 'kıvrık ’'],
+    ['\u2018', 'ters kıvrık ‘'],
+    ['\u02BC', 'değiştirici harf ʼ (Lm)'],
+    ['\u02BB', 'değiştirici harf ʻ (Lm)'],
+    ['\u02B9', 'değiştirici harf ʹ (Lm)'],
+    ['\u02C8', 'dikey çizgi ˈ (Lm)'],
+    ['`', 'grave'],
+    ['\u00B4', 'acute ´'],
+    ['\u2032', 'asal ′'],
+    ['\uFF07', 'tam genişlik ＇'],
+  ])('Deniz%sin: %s → engel', (mark) => {
+    const result = analyzeIdentity(`Deniz${mark}in cevabı`, names);
+    expect(result.blocked).toBe(true);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it.each(['Déniz', 'Dêniz', 'D\u0065\u0301niz', 'Denı\u0307z', 'DÉNİZ', 'Ｄéｎｉｚ'])(
+    'aksanlı ya da birleşik işaretli ad %s da yakalanır',
+    (variant) => {
+      expect(analyzeIdentity(`Bunu ${variant} yazdı`, names).blocked).toBe(true);
+    },
+  );
+
+  it('kesmesiz ek yine yalnız uyarıdır; ilgisiz aksanlı sözcük etkilenmez', () => {
+    expect(analyzeIdentity('denize sor', names)).toEqual({ blocked: false, warnings: ['denize'] });
+    expect(analyzeIdentity('çalışma şüphesiz öğretici', names)).toEqual({
+      blocked: false,
+      warnings: [],
+    });
+  });
+
+  it('uyarı sözcüğü ayırıcı çevirisi yüzünden bozulmaz (özgün yazım korunur)', () => {
+    expect(analyzeIdentity('Şu denizcilik işi', names).warnings).toEqual(['denizcilik']);
+  });
+});

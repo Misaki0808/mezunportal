@@ -6,15 +6,33 @@ import { looksLikePersonalData } from './adminAudit';
  * katıdır (sızıntı geri alınamaz); kesmesiz ekli biçim ve ad önekiyle eşleşen sözcük engel değil uyarıdır (moderatör onayı + işlem kaydı).
  */
 
-/** Türkçe katlama: İ→i, I→ı, aksanlar düşer; karşılaştırma büyük/küçük harf ve aksandan bağımsızdır. */
-export function foldTr(value: string): string {
+/**
+ * Kesme işareti gibi kullanılan ama HARF sayılan (Unicode `Lm`) ya da simge sınıfındaki karakterler: ʹ ʺ ʻ ʼ ʽ ʾ ʿ ˈ ՚ ꞌ.
+ * `\p{L}` bunları sözcüğün parçası sayar ("Denizʼin" tek sözcük olurdu ve tam ad eşleşmesi yerine önek UYARISI verirdi);
+ * ayırıcı olarak boşluğa çevrilir, böylece düz/kıvrık kesme ile aynı sonucu (tam eşleşme = engel) verir.
+ */
+const APOSTROPHE_LIKE = /[\u02B9-\u02BF\u02C8\u0374\u055A\uA78B\uA78C]/gu;
+
+/** Karşılaştırma ve gösterim için ortak ön işlem: NFKC, biçim (görünmez) karakterleri at, kesme benzerlerini ayırıcı yap. */
+function prepare(value: string): string {
   return value
     .normalize('NFKC')
     .replace(/\p{Cf}/gu, '')
+    .replace(APOSTROPHE_LIKE, ' ');
+}
+
+/**
+ * Türkçe katlama: İ→i, I→ı, aksanlar ve birleştirici işaretler düşer (Déniz/Dêniz = deniz); karşılaştırma büyük/küçük
+ * harf ve aksandan bağımsızdır.
+ */
+export function foldTr(value: string): string {
+  return prepare(value)
     .replace(/İ/g, 'i')
     .replace(/I/g, 'ı')
     .toLowerCase()
-    .replace(/[ıçğöşüâîû]/g, (char) => 'icgosuaiu'['ıçğöşüâîû'.indexOf(char)] ?? char);
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/ı/g, 'i');
 }
 
 const WORD = /[\p{L}\p{N}]+/gu;
@@ -73,12 +91,7 @@ export function analyzeIdentity(
     return { blocked: true, warnings: [] };
 
   // Gösterim için özgün yazımlı sözcükler (katlama yalnız karşılaştırmada); noktalama atılmış biçim ayrıca, bölünmüş adı yakalar.
-  const display = (
-    text
-      .normalize('NFKC')
-      .replace(/\p{Cf}/gu, '')
-      .match(WORD) ?? []
-  ).map((word) => ({
+  const display = (prepare(text).match(WORD) ?? []).map((word) => ({
     word,
     folded: foldTr(word),
   }));
