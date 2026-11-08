@@ -182,8 +182,12 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
 - **İletişim talebi** onaylanınca ilgili alanlar o kişiye açılır; sahibi istediği an geri alır. Talep formu
   önizlemesi (`previewContactTarget`) kullanıcı varlığını sızdırmaz: hedef yok, silinmiş, askıda, kendisi ya
   da talep alabileceği alanı yoksa yanıt aynıdır; saatte 60 ile sınırlıdır.
-- **Rıza kapısı yönetimde de geçerlidir:** zorunlu onayı güncel olmayan yönetici belge kuyruğunu, belge
-  dosyasını ve kararı kullanamaz (`CONSENT_REQUIRED`; yetki kontrolünden sonra, yetkisize rıza durumu söylenmez).
+- **Merkezi zorunlu onay kapısı:** ürün ve yönetim okuma/yazmaları sunucu tarafında kimlik ve rol
+  yetkisinden sonra güncel zorunlu onayı denetler; eksik onay `CONSENT_REQUIRED` döndürür. Sunucu
+  eylemlerinin otomatik envanter testi yeni eylemin de kapıdan geçmesini veya açık istisnaya alınmasını ister.
+  İstisnalar: giriş/çıkış ve kayıt/doğrulama beyanı; onay durumunu görme ve verme; kişinin kendi
+  görünürlük ayarları, veri dökümü ve hesap silme/geri çekme işlemleri. Bu istisnalar başkasının
+  verisine erişim yetkisi vermez. Sayfa koruması ek yönlendirme sağlar; veri güvenliği sunucu kapısındadır.
 - **Randevu onayında e-posta paylaşılır** (takvim daveti için); talep ekranında önceden yazılır.
 - **Hesap silme:** oturumlar düşer, kişisel alanlar anında temizlenir, dosyalar silinir;
   yayınlanmış içerik kullanıcının seçimine göre silinir (varsayılan) ya da anonimleştirilir (K-09,

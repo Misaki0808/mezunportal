@@ -1,7 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, expect, it } from 'vitest';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
-import { addGrant, addMembership, createInstitution, createUser } from '@/test/fixtures';
+import {
+  addGrant,
+  addMembership,
+  createInstitution,
+  createUser,
+  grantRequiredConsents,
+} from '@/test/fixtures';
 import { createTestPrisma } from '@/test/db';
 import { grantAdmin, revokeAdmin, suspendUser } from './admin-users';
 import { deleteAccount } from './accountDeletion';
@@ -23,6 +29,8 @@ async function people() {
   const a = await user(),
     b = await user(),
     target = await user();
+  await grantRequiredConsents(db, a);
+  await grantRequiredConsents(db, b);
   const grantA = await addGrant(db, { userId: a, scope: 'SYSTEM' }),
     grantB = await addGrant(db, { userId: b, scope: 'SYSTEM' });
   return { a, b, target, grantA, grantB };

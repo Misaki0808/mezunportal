@@ -427,7 +427,10 @@ describe('moderasyon: yayın', () => {
     const outOfScope = await w.make('ACADEMIC', 'Dr. Başka Bölüm', w.inst.deptA2);
     await addGrant(db, { userId: outOfScope, scope: 'DEPARTMENT', departmentId: w.inst.deptA2 });
     expect((await listFaqModerationQueue(deps, outOfScope, {})).items).toEqual([]);
-    expect(await code(publishFaq(deps, outOfScope, publishInput(r)))).toBe('AUTH_FORBIDDEN');
+    expect(await code(publishFaq(deps, outOfScope, publishInput(r)))).toBe('RESOURCE_NOT_FOUND');
+    expect(
+      await code(publishFaq(deps, outOfScope, { ...publishInput(r), requestId: 'missing' })),
+    ).toBe('RESOURCE_NOT_FOUND');
     expect(await code(publishFaq(deps, w.student, publishInput(r)))).toBe('AUTH_FORBIDDEN');
 
     const out = await publishFaq(deps, w.moderator, publishInput(r));
@@ -621,7 +624,9 @@ describe('moderasyon: ret ve yönlendirme', () => {
     expect(await code(redirectFaq(deps, w.student, { requestId, note }))).toBe('AUTH_FORBIDDEN');
     const outOfScope = await w.make('ACADEMIC', 'Dr. Başka Bölüm', w.inst.deptA2);
     await addGrant(db, { userId: outOfScope, scope: 'DEPARTMENT', departmentId: w.inst.deptA2 });
-    expect(await code(redirectFaq(deps, outOfScope, { requestId, note }))).toBe('AUTH_FORBIDDEN');
+    expect(await code(redirectFaq(deps, outOfScope, { requestId, note }))).toBe(
+      'RESOURCE_NOT_FOUND',
+    );
     expect((await db.faqRequest.findUniqueOrThrow({ where: { id: requestId } })).status).toBe(
       'OPEN',
     );

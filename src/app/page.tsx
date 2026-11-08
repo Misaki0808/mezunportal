@@ -8,14 +8,14 @@ import { HomeDashboard } from '@/components/home/dashboard';
 import { ErrorState } from '@/components/ui';
 
 import { getVerificationState } from '@/server/actions/auth';
-import { requireUser } from '@/server/permissions';
+import { requireUserWithoutConsent } from '@/server/permissions';
 
 export default async function HomePage() {
   const [t, auth] = await Promise.all([
     getTranslations('home'),
     getTranslations('authScreens.home'),
   ]);
-  const actor = await requireUser().catch(() => null);
+  const actor = await requireUserWithoutConsent().catch(() => null);
   if (actor) {
     const consent = await getConsentState();
     if (!consent.ok) return <ErrorState errorCode={consent.errorCode} />;

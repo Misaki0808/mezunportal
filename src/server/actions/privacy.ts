@@ -17,7 +17,7 @@ import { failAction } from '../fail-action';
 
 import { getDb } from '../db';
 import { getStorage } from '../external/storage';
-import { requireUser } from '../permissions';
+import { requireUserWithoutConsent } from '../permissions';
 import { deleteAccount as deleteAccountService } from '../services/accountDeletion';
 import * as privacy from '../services/privacy';
 
@@ -28,7 +28,7 @@ import * as privacy from '../services/privacy';
 
 export async function getConsentState(): Promise<ActionResult<ConsentState>> {
   try {
-    const actor = await requireUser();
+    const actor = await requireUserWithoutConsent();
     return actionOk(await privacy.getConsentState(getDb(), actor.userId));
   } catch (error) {
     return failAction(error);
@@ -39,7 +39,7 @@ export async function recordConsents(
   input: RecordConsentsInput,
 ): Promise<ActionResult<ConsentState>> {
   try {
-    const actor = await requireUser();
+    const actor = await requireUserWithoutConsent();
     const parsed = parseInput(recordConsentsSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await privacy.recordConsents(getDb(), actor.userId, parsed.data.decisions));
@@ -50,7 +50,7 @@ export async function recordConsents(
 
 export async function getFieldVisibility(): Promise<ActionResult<FieldVisibilitySettings>> {
   try {
-    const actor = await requireUser();
+    const actor = await requireUserWithoutConsent();
     return actionOk(await privacy.getFieldVisibility(getDb(), actor.userId));
   } catch (error) {
     return failAction(error);
@@ -61,7 +61,7 @@ export async function setFieldVisibility(
   input: SetFieldVisibilityInput,
 ): Promise<ActionResult<FieldVisibilitySettings>> {
   try {
-    const actor = await requireUser();
+    const actor = await requireUserWithoutConsent();
     const parsed = parseInput(setFieldVisibilitySchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await privacy.setFieldVisibility(getDb(), actor.userId, parsed.data));
@@ -77,7 +77,7 @@ export async function deleteAccount(
   input: DeleteAccountInput,
 ): Promise<ActionResult<DeleteAccountOutput>> {
   try {
-    const actor = await requireUser();
+    const actor = await requireUserWithoutConsent();
     const parsed = parseInput(deleteAccountSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(

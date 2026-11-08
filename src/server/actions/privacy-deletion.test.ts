@@ -4,7 +4,9 @@ const { remove, deletion } = vi.hoisted(() => ({
   remove: vi.fn<(key: string) => Promise<void>>().mockResolvedValue(undefined),
   deletion: vi.fn(),
 }));
-vi.mock('../permissions', () => ({ requireUser: async () => ({ userId: 'session-user' }) }));
+vi.mock('../permissions', () => ({
+  requireUserWithoutConsent: async () => ({ userId: 'session-user' }),
+}));
 vi.mock('../db', () => ({ getDb: () => ({}) }));
 vi.mock('../external/storage', () => ({ getStorage: () => ({ delete: remove }) }));
 vi.mock('../services/accountDeletion', () => ({ deleteAccount: deletion }));
