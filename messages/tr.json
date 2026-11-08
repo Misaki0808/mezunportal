@@ -42,6 +42,7 @@
       "CONTACT_REQUEST_NOT_APPROVED": "Yalnız onayladığın bir talebi geri alabilirsin.",
       "CONTACT_FIELD_NOT_REQUESTABLE": "İstediğin bilgilerden biri talep edilemiyor. Seçimini değiştirip tekrar dene.",
       "ACCOUNT_DELETE_CONFIRMATION_MISMATCH": "Yazdığın e-posta hesabının e-postasıyla aynı değil.",
+      "EMAIL_CHANGE_SAME_ADDRESS": "Bu zaten kullandığın adres. Farklı bir e-posta adresi yaz.",
       "PROFILE_TAG_INVALID": "Seçtiğin etiketlerden biri geçerli değil. Seçimini yenile.",
       "MENTOR_NOT_ELIGIBLE": "Mentorluk için koşullar henüz tamamlanmadı.",
       "ONBOARDING_REQUIRED_STEP_PENDING": "Bitirmeden önce rolünü ve bölümünü seç.",
