@@ -2863,7 +2863,27 @@
     "mergeSuccess": "Şirketler birleştirildi.",
     "cancel": "Vazgeç",
     "chooseDifferent": "Farklı iki şirket seç.",
-    "open": "Şirketi incele"
+    "open": "Şirketi incele",
+    "interviewLink": "Mülakat sorularını keşfet"
+  },
+  "interviewBank": {
+    "title": "Mülakat soru bankası",
+    "description": "Topluluğun paylaştığı mülakat sorularına ve süreçlere göz at.",
+    "company": "Şirket",
+    "allCompanies": "Tüm şirketler",
+    "sector": "Sektör",
+    "allSectors": "Tüm sektörler",
+    "search": "Sorularda ara",
+    "apply": "Soruları göster",
+    "question": "Mülakat sorusu",
+    "process": "Süreç adımı",
+    "count": "{count} deneyimde geçti",
+    "insufficient": "Bu seçim için az sayıda deneyim var.",
+    "empty": "Henüz gösterilebilecek soru yok.",
+    "emptyHint": "Daha fazla deneyim paylaşıldığında soruları burada görebilirsin.",
+    "share": "Deneyim paylaş",
+    "tab": "Mülakat",
+    "link": "Mülakat sorularını keşfet"
   },
   "referrals": {
     "title": "Referanslarım",

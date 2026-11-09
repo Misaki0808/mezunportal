@@ -19,6 +19,8 @@ import {
 } from '@/components/ui';
 import { MentorCard } from '@/components/mentors/mentor-card';
 import { mergeCompanies, searchCompanies } from '@/server/actions/companies';
+import type { InterviewQuestionBank } from '@/contracts/interview-questions';
+import { QuestionCards } from '@/components/interview-questions/question-bank';
 
 function CompanyCard({ company }: { company: CompanySummary }) {
   const t = useTranslations('companies');
@@ -46,6 +48,9 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 pb-28">
       <PageHeader title={t('title')} description={t('description')} />
+      <Link href="/mulakat-sorulari" className={`${buttonClasses({ variant: 'secondary' })} mt-5`}>
+        {t('interviewLink')}
+      </Link>
       <form action="/sirketler" className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-end">
         <Field className="min-w-0 flex-1" label={t('searchLabel')}>
           {(p) => <Input {...p} name="q" defaultValue={query} autoComplete="organization" />}
@@ -79,10 +84,17 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
     </main>
   );
 }
-export function CompanyScreen({ company }: { company: CompanyDetail }) {
+export function CompanyScreen({
+  company,
+  questions,
+}: {
+  company: CompanyDetail;
+  questions: InterviewQuestionBank;
+}) {
   const t = useTranslations('companies');
   const experience = useTranslations('experiences');
   const jobs = useTranslations('jobs');
+  const interviews = useTranslations('interviewBank');
   const tabs = [
     {
       id: 'experiences',
@@ -121,6 +133,11 @@ export function CompanyScreen({ company }: { company: CompanyDetail }) {
           }
         />
       ),
+    },
+    {
+      id: 'interviews',
+      label: interviews('tab'),
+      content: <QuestionCards groups={questions.groups} insufficient={questions.insufficient} />,
     },
     {
       id: 'periods',

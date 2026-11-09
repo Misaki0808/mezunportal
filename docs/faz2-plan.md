@@ -178,6 +178,8 @@ k-anonimlik (tek deneyimli şirket yalnız “az sayıda” notuyla, yazar tanı
 **📝 PM kararı (verildi, D26):** ayrı tablo yok; sorgu anında türetilir (performans gerekirse indeks/önbellek, tablo değil).
 **Bağımlılık:** P2-09 (şirket çözümleme).
 
+**PM kararı (kart 151):** pozisyon süzgeci sonraki faza, k-anonimlik değerlendirmesiyle bırakıldı; bu adımda şirket, sektör ve metin süzülür.
+
 ### P2-11 · Staj başvuru takvimi · Sözleşme (W1) → Servis (W1) ∥ Ekran (W2) · H2
 **İş:** deneyimlerden “bu şirkete/sektöre hangi aylarda başvurulmuş” takvimi ve hatırlatma. Deneyim formuna isteğe bağlı
 `appliedMonth` (ekleyici migration; eski deneyimlerde boş, dönem sezonu `termSeason` yedek). Takvim yalnız k ≥ 3 deneyim olan
