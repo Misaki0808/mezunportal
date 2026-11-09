@@ -13,4 +13,5 @@ export const PRISMA_OMIT = {
   experience: { searchKeys: true, appliedMonth: true },
   faqItem: { searchKeys: true },
   jobPosting: { searchKeys: true },
+  award: { verificationCode: true },
 } as const;

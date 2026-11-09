@@ -41,6 +41,7 @@ export default async function AdminOverviewPage() {
     { key: 'faq', href: '/yonetim/sss', visible: true },
     { key: 'jobPostings', href: '/yonetim/ilanlar', visible: true },
     { key: 'referrals', href: '/yonetim/referanslar', visible: true },
+    { key: 'yearAlumni', href: '/yonetim/yilin-mezunu', visible: true },
   ] as const;
   // Renk dağılımı: moderasyon/kişi işleri İris, veri ve raporlar Nane, sistem ayarları Mercan (anlam taşımaz; metin asıl sinyaldir).
   const TONE = {
@@ -51,6 +52,7 @@ export default async function AdminOverviewPage() {
     faq: 'primary',
     jobPostings: 'primary',
     referrals: 'primary',
+    yearAlumni: 'primary',
     unmatchedValues: 'primary',
     usageMetrics: 'success',
     employmentReport: 'success',
@@ -68,6 +70,7 @@ export default async function AdminOverviewPage() {
     faq: <ClipboardCheckIcon width={22} height={22} />,
     jobPostings: <ClipboardCheckIcon width={22} height={22} />,
     referrals: <ClipboardCheckIcon width={22} height={22} />,
+    yearAlumni: <BadgeCheckIcon width={22} height={22} />,
     unmatchedValues: <ClipboardCheckIcon width={22} height={22} />,
     usageMetrics: <BadgeCheckIcon width={22} height={22} />,
     employmentReport: <BadgeCheckIcon width={22} height={22} />,

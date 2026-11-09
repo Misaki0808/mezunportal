@@ -403,6 +403,10 @@ export const AUDIT_ACTION_NAMES = [
   'BULK_INVITATION',
   'DICTIONARY_CHANGE',
   'UNMATCHED_RESOLVE',
+  'AWARD_CYCLE_CONFIGURE',
+  'AWARD_RECALCULATE',
+  'AWARD_SELECT',
+  'AWARD_REVIEW_REQUIRED',
 ] as const;
 export type AuditActionName = (typeof AUDIT_ACTION_NAMES)[number];
 
@@ -424,6 +428,8 @@ export const AUDIT_TARGET_TYPE_NAMES = [
   'EMPLOYMENT_REPORT',
   'USAGE_METRICS',
   'INVITATION_BATCH',
+  'AWARD_CYCLE',
+  'AWARD',
 ] as const;
 
 export const listAuditLogSchema = z

@@ -132,6 +132,15 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   Neden borç: tablo büyümesi ve veri en azlığı; operatörün incelemesi için sınırsız tutmanın gerekçesi yok.
   Kapanış ölçütü: günlük iş `failedAt` üzerinden belirlenen süreyi (karar gerekir) aşan `FAILED` satırlarını siler (idempotent, testli).
 
+
+- [ ] **TD-021** · P1 · Canlıya alımda (K-02) güvenilir proxy ayarı
+  Ne: `getRequestContext` şu anda istemcinin değiştirebildiği X-Forwarded-For değerini kullanır; IP kotası
+  yalnız tamamlayıcı korumadır. Bu durum bütün kamuya açık hız sınırlarını etkiler.
+  Neden borç: istemci XFF değiştirerek kotayı aşabilir; canlıda kaynak IP platform tarafından doğrulanmalıdır.
+  Kapanış ölçütü: güvenilir proxy istemci başlıklarını ezer; `getRequestContext` yalnız platformun eklediği
+  son hop'u kullanır, istemcinin XFF'sine güvenmez. Node doğrudan dışarı açılmaz; bütün kamuya açık
+  kotalarda sahte başlık, eşzamanlı sınır ve pencere yenilenmesi testleri geçer.
+
 ### Bilinçli kabul edilen sınırlar
 
 - Canlı ortam yok; dağıtım ve yedek P1-18'e kadar sınanmaz.

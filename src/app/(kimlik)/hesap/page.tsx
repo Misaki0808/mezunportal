@@ -43,6 +43,7 @@ export default async function AccountPage() {
     seekers,
     jobs,
     referrals,
+    awards,
   ] = await Promise.all([
     getVerificationState().catch(() => null),
     hasAdminAccess(),
@@ -59,6 +60,7 @@ export default async function AccountPage() {
     getTranslations('seekers'),
     getTranslations('jobs'),
     getTranslations('referrals'),
+    getTranslations('yearAlumni'),
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -76,6 +78,18 @@ export default async function AccountPage() {
     REJECTED: verification('rejected'),
   }[state.data.status];
   const links = [
+    ...(actor.facts.memberships.some(
+      (m) => m.role === 'ALUMNI' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
+    )
+      ? [
+          {
+            href: '/odullerim',
+            title: awards('awardLink'),
+            description: awards('awardDescription'),
+            icon: BadgeCheckIcon,
+          },
+        ]
+      : []),
     {
       href: '/profil',
       title: t('profile'),
