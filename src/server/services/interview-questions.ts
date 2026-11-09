@@ -40,7 +40,7 @@ export async function getInterviewQuestions(
         select: { id: true, name: true, sectorId: true, sector: { select: { name: true } } },
         orderBy: { name: 'asc' },
       });
-      const [companyOptions, sectors, experiences] = await Promise.all([
+      const [companyOptions, sectors, experiences, identityContext] = await Promise.all([
         tx.company.findMany({
           select: { id: true, name: true },
           orderBy: { name: 'asc' },
@@ -62,17 +62,44 @@ export async function getInterviewQuestions(
           },
           orderBy: { id: 'asc' },
         }),
+        // Bir kaynağın geri çekilmesi veya yazarın askıya alınması, diğer metinlerdeki adını açmaz.
+        // Kimlik bağlamı yalnız engelleme içindir; sorular ve sayımlar yukarıdaki görünür kaynaklardan gelir.
+        tx.experience.findMany({
+          where: {
+            companyId: { in: companies.map((c) => c.id) },
+            department: { faculty: { universityId: { in: universities } } },
+          },
+          select: {
+            id: true,
+            companyId: true,
+            status: true,
+            author: { select: { id: true, name: true, email: true } },
+          },
+        }),
       ]);
+      // Yayımlanmamış özel bir taslak diğer yazarların sorularını bastıramaz.
+      // Geçmiş yayın kanıtı zaten tutulan, yalnız eklenebilen moderasyon kaydından gelir.
+      const inactiveIds = identityContext
+        .filter((exp) => exp.status !== 'PUBLISHED')
+        .map((exp) => exp.id);
+      const pastPublications = inactiveIds.length
+        ? await tx.adminAuditLog.findMany({
+            where: {
+              action: 'MODERATION_PUBLISH',
+              targetType: 'EXPERIENCE',
+              targetId: { in: inactiveIds },
+            },
+            select: { targetId: true },
+          })
+        : [];
+      const previouslyPublished = new Set(pastPublications.map((row) => row.targetId));
       const candidates = new Map<string, QuestionCandidate[]>();
       const authors = new Map<string, Set<string>>();
       const companyNames = new Map<string, Set<string>>();
       const companyIdentifiers = new Map<string, Set<string>>();
-      for (const exp of experiences) {
+      for (const exp of identityContext) {
         if (!exp.companyId || !exp.author) continue;
-        const companyCandidates = candidates.get(exp.companyId) ?? [];
-        const companyAuthors = authors.get(exp.companyId) ?? new Set<string>();
-        companyAuthors.add(exp.author.id);
-        authors.set(exp.companyId, companyAuthors);
+        if (exp.status !== 'PUBLISHED' && !previouslyPublished.has(exp.id)) continue;
         const names = companyNames.get(exp.companyId) ?? new Set<string>();
         names.add(exp.author.name);
         companyNames.set(exp.companyId, names);
@@ -81,15 +108,16 @@ export async function getInterviewQuestions(
         identifiers.add(exp.author.email);
         identifiers.add(exp.id);
         companyIdentifiers.set(exp.companyId, identifiers);
+      }
+      for (const exp of experiences) {
+        if (!exp.companyId || !exp.author) continue;
+        const companyCandidates = candidates.get(exp.companyId) ?? [];
+        const companyAuthors = authors.get(exp.companyId) ?? new Set<string>();
+        companyAuthors.add(exp.author.id);
+        authors.set(exp.companyId, companyAuthors);
         const add = (text: unknown, category: QuestionCandidate['category']) => {
           if (typeof text !== 'string' || !text.trim()) return;
           const clean = text.trim();
-          const identity = analyzeIdentity(
-            clean,
-            [exp.author!.name],
-            [exp.author!.id, exp.author!.email, exp.id],
-          );
-          if (identity.blocked || identity.warnings.length) return;
           companyCandidates.push({
             text: clean,
             category,
@@ -110,9 +138,22 @@ export async function getInterviewQuestions(
         if ((authors.get(company.id)?.size ?? 0) < QUESTION_MIN_AUTHORS) return [];
         const names = [...(companyNames.get(company.id) ?? [])];
         const identifiers = [...(companyIdentifiers.get(company.id) ?? [])];
+        // Aynı soru çok sayıda deneyimde tekrarlanabilir; kimlik sonucu bu istek/şirket içinde aynıdır.
+        const safeTexts = new Map<string, boolean>();
         const safeCandidates = (candidates.get(company.id) ?? []).filter((candidate) => {
+          const cached = safeTexts.get(candidate.text);
+          if (cached !== undefined) return cached;
           const identity = analyzeIdentity(candidate.text, names, identifiers);
-          return !identity.blocked && identity.warnings.length === 0;
+          // Harf/rakam aralarına boşluk koymak e-posta veya telefonu yayımlanabilir yapmaz.
+          const compactIdentity = analyzeIdentity(
+            candidate.text.replace(/\s+/gu, ''),
+            [],
+            identifiers,
+          );
+          const safe =
+            !identity.blocked && identity.warnings.length === 0 && !compactIdentity.blocked;
+          safeTexts.set(candidate.text, safe);
+          return safe;
         });
         const questions = groupQuestions(safeCandidates).filter(
           (question) =>

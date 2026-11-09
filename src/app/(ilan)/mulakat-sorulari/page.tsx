@@ -10,11 +10,12 @@ export default async function Page({
 }) {
   const raw = await searchParams;
   const parsed = interviewQuerySchema.safeParse({
-    q: typeof raw.q === 'string' ? raw.q : '',
-    companyId: typeof raw.companyId === 'string' ? raw.companyId : '',
-    sectorId: typeof raw.sectorId === 'string' ? raw.sectorId : '',
+    q: raw.q ?? '',
+    companyId: raw.companyId ?? '',
+    sectorId: raw.sectorId ?? '',
   });
-  const filters = parsed.success ? parsed.data : interviewQuerySchema.parse({});
+  if (!parsed.success) return <ErrorState errorCode="VALIDATION_INVALID" />;
+  const filters = parsed.data;
   const result = await getInterviewQuestions(filters);
   return result.ok ? (
     <QuestionBank data={result.data} filters={filters} />
