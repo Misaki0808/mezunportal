@@ -226,7 +226,10 @@ export async function listStoryModeration(
         user: {
           select: {
             name: true,
-            suspicionFlags: { where: { status: 'OPEN' }, select: { id: true } },
+            suspicionFlags: {
+              where: { status: { in: ['OPEN', 'CONFIRMED'] } },
+              select: { id: true },
+            },
           },
         },
       },
@@ -320,7 +323,7 @@ export async function selectMonthlyAlumnus(deps: Deps, userId: string, input: un
         user: {
           deletedAt: null,
           OR: [{ banned: false }, { banExpires: { lte: now } }],
-          suspicionFlags: { none: { status: 'OPEN' } },
+          suspicionFlags: { none: { status: { in: ['OPEN', 'CONFIRMED'] } } },
           memberships: {
             some: {
               departmentId: data.departmentId,
@@ -361,7 +364,7 @@ function visibleStoryWhere(now: Date): Prisma.AlumniStoryWhereInput {
     user: {
       deletedAt: null,
       OR: [{ banned: false }, { banExpires: { lte: now } }],
-      suspicionFlags: { none: { status: 'OPEN' } },
+      suspicionFlags: { none: { status: { in: ['OPEN', 'CONFIRMED'] } } },
     },
   };
 }

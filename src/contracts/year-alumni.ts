@@ -48,6 +48,7 @@ export const awardCycleViewSchema = z
     candidates: z.array(awardCandidateSchema),
     excludedForSuspicion: z.number().int().nonnegative(),
     selectedUserId: z.string().nullable(),
+    selectedNeedsReview: z.boolean(),
   })
   .strict();
 export type AwardCycleView = z.infer<typeof awardCycleViewSchema>;
@@ -95,3 +96,12 @@ export type YearAlumniActions = {
   listMyAwards: () => Promise<ActionResult<MyAward[]>>;
   setAwardPublication: (input: SetAwardPublicationInput) => Promise<ActionResult<MyAward>>;
 };
+
+/** Genel oturum/rıza kapısından gerekçeli kamuya açık sayfa istisnası. */
+export const YEAR_ALUMNI_PUBLIC_PAGE_ACCESS = {
+  '/dogrula/[kod]': {
+    access: 'PUBLIC',
+    reason:
+      'Only current, award-specific publication consent exposes the limited verification fields.',
+  },
+} as const;

@@ -43,6 +43,7 @@ export const ADMIN_ACTIONS = {
   STORY_PUBLISH: { reasonRequired: false },
   STORY_REJECT: { reasonRequired: true },
   MONTHLY_ALUMNUS_SELECT: { reasonRequired: true },
+  AWARD_REVIEW_REQUIRED: { reasonRequired: false },
 } as const;
 
 export type AdminActionName = keyof typeof ADMIN_ACTIONS;

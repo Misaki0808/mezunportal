@@ -409,6 +409,7 @@ export const AUDIT_ACTION_NAMES = [
   'STORY_PUBLISH',
   'STORY_REJECT',
   'MONTHLY_ALUMNUS_SELECT',
+  'AWARD_REVIEW_REQUIRED',
 ] as const;
 export type AuditActionName = (typeof AUDIT_ACTION_NAMES)[number];
 

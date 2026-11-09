@@ -187,6 +187,11 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
         <>
           <Card className="space-y-3 p-5">
             <p className="font-semibold">{cycle.frozenAt ? t('frozen') : t('live')}</p>
+            {cycle.selectedNeedsReview && (
+              <p role="alert" className="text-danger">
+                {t('awardNeedsReview')}
+              </p>
+            )}
             <p>{t('excluded', { count: cycle.excludedForSuspicion })}</p>
             {cycle.frozenAt && (
               <>

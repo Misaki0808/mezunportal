@@ -1815,7 +1815,8 @@
         "AWARD_SELECT": "Yılın mezunu seçimi",
         "STORY_PUBLISH": "Mezun hikâyesi onayı",
         "STORY_REJECT": "Mezun hikâyesi düzenleme talebi",
-        "MONTHLY_ALUMNUS_SELECT": "Ayın mezunu seçimi"
+        "MONTHLY_ALUMNUS_SELECT": "Ayın mezunu seçimi",
+        "AWARD_REVIEW_REQUIRED": "Ödül için yeniden inceleme uyarısı"
       },
       "targets": {
         "USER": "Kullanıcı",
@@ -3066,7 +3067,8 @@
     "awardLink": "Ödüllerim",
     "awardDescription": "Ödülünü ve yayın tercihini görüntüle.",
     "share": "Paylaşım metnini kopyala",
-    "shareText": "{university} {department} bölümünde {year} akademik yılı Yılın Mezunu ödülünü aldım. Doğrula: {url}"
+    "shareText": "{university} {department} bölümünde {year} akademik yılı Yılın Mezunu ödülünü aldım. Doğrula: {url}",
+    "awardNeedsReview": "Bu ödül için sonradan doğrulanmış şüphe var. Geçerli katkıları ve ödül kararını yeniden incele."
   },
   "alumniStory": {
     "title": "Ayın mezunu",

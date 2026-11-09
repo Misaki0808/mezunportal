@@ -147,6 +147,24 @@ describe('Ayın mezunu', () => {
         reason: 'Yeni dönem seçimi',
       }),
     ).rejects.toMatchObject({ code: 'STORY_INVALID_STATE' });
+    await db.suspicionFlag.update({
+      where: { id: flag.id },
+      data: { status: 'CONFIRMED', decidedAt: at, decidedById: admin },
+    });
+    expect(await getCurrentStory(deps, student)).toBeNull();
+    expect(
+      (await listStoryModeration(deps, admin, { departmentId: inst.deptA1 })).some(
+        (item) => item.id === story.id,
+      ),
+    ).toBe(false);
+    await expect(
+      selectMonthlyAlumnus(deps, admin, {
+        departmentId: inst.deptA1,
+        storyId: story.id,
+        month: '2026-06',
+        reason: 'Yeni dönem seçimi',
+      }),
+    ).rejects.toMatchObject({ code: 'STORY_INVALID_STATE' });
     await db.suspicionFlag.delete({ where: { id: flag.id } });
     const before = await getCurrentStory(
       { db, now: () => new Date('2026-05-31T20:59:59Z') },
