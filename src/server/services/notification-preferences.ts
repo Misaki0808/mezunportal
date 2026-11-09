@@ -123,6 +123,32 @@ export async function maySendNotification(
     const { hasCurrentApplicationWindow } = await import('./application-window');
     if (!(await hasCurrentApplicationWindow(db, message.recipientUserId, cycle, now))) return false;
   }
+  if (type === 'MONTHLY_DIGEST') {
+    const cycle = message.idempotencyKey.split(':').at(-1);
+    const { istanbulDay } = await import('../rules/jobPosting');
+    if (!cycle || cycle !== istanbulDay(now).slice(0, 7)) return false;
+    const { buildMonthlyDigest } = await import('./monthly-digest');
+    const { isCodedError } = await import('@/lib/errors');
+    try {
+      const digest = await buildMonthlyDigest(db, message.recipientUserId, now);
+      if (!digest) return false;
+      const { getAuthEnv } = await import('@/lib/env');
+      const { monthlyDigestEmail } = await import('./monthly-digest-email');
+      const { decorateEmail } = await import('../jobs/email-presentation');
+      const env = getAuthEnv();
+      const expected = monthlyDigestEmail(
+        digest,
+        message.recipientUserId,
+        env.BETTER_AUTH_SECRET,
+        env.APP_URL,
+      );
+      const rendered = decorateEmail({ ...message, ...expected }, env.APP_URL);
+      if (message.subject !== expected.subject || message.text !== rendered.text) return false;
+    } catch (error) {
+      if (isCodedError(error)) return false;
+      throw error;
+    }
+  }
   const preference = await db.notificationPreference.findUnique({
     where: { userId_type: { userId: message.recipientUserId, type } },
     select: { enabled: true },

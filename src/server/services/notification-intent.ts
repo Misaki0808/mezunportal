@@ -77,6 +77,13 @@ const applicationWindow = z
     cycle: z.string().regex(/^\d{4}-\d{2}$/),
   })
   .strict();
+const monthlyDigest = z
+  .object({
+    type: z.literal('monthlyDigest'),
+    event: z.literal('summary'),
+    cycle: z.string().regex(/^\d{4}-\d{2}$/),
+  })
+  .strict();
 export const notificationIntentPayload = z.discriminatedUnion('type', [
   generic,
   appointment,
@@ -84,6 +91,7 @@ export const notificationIntentPayload = z.discriminatedUnion('type', [
   cvReview,
   jobMatch,
   applicationWindow,
+  monthlyDigest,
 ]);
 export type NotificationIntentPayload = z.infer<typeof notificationIntentPayload>;
 
@@ -105,7 +113,7 @@ export async function stageNotification(
           ? payload.invitationId
           : payload.type === 'jobMatch'
             ? payload.day
-            : payload.type === 'applicationWindow'
+            : payload.type === 'applicationWindow' || payload.type === 'monthlyDigest'
               ? payload.cycle
               : payload.requestId;
   const event = payload.type === 'pilotInvitation' ? 'invitation' : payload.event;
