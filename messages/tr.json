@@ -276,7 +276,10 @@
       "REFERRAL_NOT_ELIGIBLE": "Yalnız onaylı iletişim kurduğun veya tamamlanmış görüşmen olan öğrenciyi seçebilirsin.",
       "REFERRAL_INVALID_STATE": "Referansın durumu bu işleme uygun değil.",
       "REFERRAL_CANCEL_WINDOW_CLOSED": "Bu referansın iptal süresi doldu.",
-      "AWARD_FREEZE_MISSED": "Otomatik dondurma zamanı kaçırıldı. Gerekçeyle yeniden hesaplayarak aday listesini oluştur."
+      "AWARD_FREEZE_MISSED": "Otomatik dondurma zamanı kaçırıldı. Gerekçeyle yeniden hesaplayarak aday listesini oluştur.",
+      "STORY_IDENTITY_LEAK": "Hikâyendeki başka kişilere ait adları ve iletişim bilgilerini çıkarıp tekrar dene.",
+      "STORY_INVALID_STATE": "Bu işlem için hikâyenin durumunu ve yayın iznini kontrol et.",
+      "STORY_MONTH_ALREADY_SELECTED": "Bu bölüm için bu ayın mezunu zaten seçildi."
     }
   },
   "nav": {
@@ -1672,7 +1675,8 @@
       "faq": "SSS moderasyonu",
       "jobPostings": "İlan inceleme",
       "referrals": "Referans inceleme",
-      "yearAlumni": "Yılın Mezunu"
+      "yearAlumni": "Yılın Mezunu",
+      "alumniStory": "Ayın mezunu"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1690,7 +1694,8 @@
       "faq": "SSS taleplerini incele, yayımla, reddet ya da mentorluğa yönlendir.",
       "jobPostings": "Topluluğun paylaştığı ilanları incele.",
       "referrals": "Referans ve işe kabul beyanlarını incele.",
-      "yearAlumni": "Adayları incele ve bölüm adına karar ver."
+      "yearAlumni": "Adayları incele ve bölüm adına karar ver.",
+      "alumniStory": "Hikâyeleri incele ve ayın mezununu seç."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1807,7 +1812,10 @@
         "UNMATCHED_RESOLVE": "Eşleşmeyen değer kararı",
         "AWARD_CYCLE_CONFIGURE": "Ödül töreni ayarı",
         "AWARD_RECALCULATE": "Ödül adaylarını yeniden hesaplama",
-        "AWARD_SELECT": "Yılın mezunu seçimi"
+        "AWARD_SELECT": "Yılın mezunu seçimi",
+        "STORY_PUBLISH": "Mezun hikâyesi onayı",
+        "STORY_REJECT": "Mezun hikâyesi düzenleme talebi",
+        "MONTHLY_ALUMNUS_SELECT": "Ayın mezunu seçimi"
       },
       "targets": {
         "USER": "Kullanıcı",
@@ -1828,7 +1836,9 @@
         "USAGE_METRICS": "Kullanım metrikleri",
         "INVITATION_BATCH": "Davet grubu",
         "AWARD_CYCLE": "Ödül dönemi",
-        "AWARD": "Ödül"
+        "AWARD": "Ödül",
+        "ALUMNI_STORY": "Mezun hikâyesi",
+        "MONTHLY_ALUMNUS": "Ayın mezunu seçimi"
       }
     },
     "employment": {
@@ -3057,5 +3067,65 @@
     "awardDescription": "Ödülünü ve yayın tercihini görüntüle.",
     "share": "Paylaşım metnini kopyala",
     "shareText": "{university} {department} bölümünde {year} akademik yılı Yılın Mezunu ödülünü aldım. Doğrula: {url}"
+  },
+  "alumniStory": {
+    "title": "Ayın mezunu",
+    "headline": "Bir hikâye, yeni olasılıklar",
+    "intro": "Mezunlarımızın yolculuklarından ilham al.",
+    "read": "Hikâyeyi oku",
+    "archive": "Önceki hikâyeler",
+    "archiveTitle": "Mezun hikâyeleri",
+    "archiveEmpty": "Henüz paylaşılmış bir hikâye yok.",
+    "back": "Hikâyelere dön",
+    "share": "Hikâyeni paylaş",
+    "shareDescription": "Yolculuğunu anlatarak bir öğrenciye ilham ver.",
+    "editorTitle": "Kariyer hikâyem",
+    "editorDescription": "Yolculuğunu kendi sözlerinle anlat. Hikâyen incelendikten ve ayın mezunu seçildikten sonra bölümünle paylaşılır.",
+    "department": "Bölüm",
+    "body": "Hikâyen",
+    "bodyHint": "En az 50, en çok 3000 karakter. Başka kişilerin ad ve iletişim bilgilerini yazma.",
+    "consent": "Hikâyemin bölümümün üyeleriyle paylaşılmasına açık rıza veriyorum",
+    "consentHelp": "Taslak rıza metni: Adın, bölümün ve hikâyen yalnız bölümünün doğrulanmış üyelerine gösterilir. İstediğin zaman iznini geri alabilirsin.",
+    "save": "Kaydet",
+    "submit": "İncelemeye gönder",
+    "saving": "Kaydediliyor…",
+    "saved": "Hikâyen kaydedildi.",
+    "submitted": "Hikâyen incelemeye gönderildi.",
+    "withdraw": "Yayın iznini geri al",
+    "grant": "Yayın izni ver",
+    "consentSaved": "Yayın tercihin kaydedildi.",
+    "empty": "Henüz bir hikâye yazmadın.",
+    "status": "Durum",
+    "statuses": {
+      "DRAFT": "Taslak",
+      "PENDING": "İncelemede",
+      "PUBLISHED": "Onaylandı",
+      "REJECTED": "Düzenleme gerekli"
+    },
+    "adminTitle": "Ayın mezunu hikâyeleri",
+    "adminIntro": "Hikâyeleri incele; onaylı ve rızalı mezunlar arasından bölümün için seçim yap.",
+    "selectDepartment": "Bölüm seç",
+    "load": "Hikâyeleri göster",
+    "queueEmpty": "Bu bölümde incelenecek veya seçilecek hikâye yok.",
+    "review": "Hikâyeyi onayla",
+    "reject": "Düzenleme iste",
+    "reason": "Gerekçe",
+    "choose": "Ayın mezunu seç",
+    "month": "Seçim ayı",
+    "points": "{count} katkı puanı",
+    "noPoints": "Puan bilgisi yok",
+    "suspicious": "Açık şüphe kaydı: seçilemez",
+    "noConsent": "Yayın izni yok",
+    "chooseSuccess": "Ayın mezunu seçildi.",
+    "reviewSuccess": "Hikâye kararı kaydedildi.",
+    "invalid": "Alanları kontrol edip yeniden dene.",
+    "cancel": "Vazgeç",
+    "confirm": "Kararı onayla",
+    "confirmText": "Bu karar işlem kaydına yazılır.",
+    "noDepartments": "Yetkili olduğun bölüm bulunmadı.",
+    "pending": "İşlem sürüyor…",
+    "missingConsent": "İnceleme için yayın izni gerekir.",
+    "photoAlt": "Mezunun baş harfleri",
+    "alreadyApproved": "Hikâyen zaten onaylı. Metni değiştirirsen yeniden incelemeye gönderebilirsin."
   }
 }

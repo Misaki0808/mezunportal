@@ -49,7 +49,7 @@ const PENDING_LINKS = [
 /** Kısayol çipleri sırayla İris, Mercan, Nane (renk dağılımı; anlam taşımaz). */
 const CHIP_TONES = ['primary', 'accent', 'success', 'primary'] as const;
 
-export function HomeDashboard({ summary }: { summary: HomeSummary }) {
+export function HomeDashboard({ summary, feature }: { summary: HomeSummary; feature?: ReactNode }) {
   const t = useTranslations('home');
   const pending = PENDING_LINKS.map((item) => ({
     ...item,
@@ -60,6 +60,8 @@ export function HomeDashboard({ summary }: { summary: HomeSummary }) {
       <h1 className="text-3xl font-semibold tracking-tight">
         {summary.firstName ? t('greeting', { name: summary.firstName }) : t('greetingPlain')}
       </h1>
+
+      {feature}
 
       <section aria-labelledby="home-pending" className="flex flex-col gap-3">
         <h2 id="home-pending" className="text-xl font-semibold">
