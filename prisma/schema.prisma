@@ -13,15 +13,17 @@ datasource db {
 
 /// Kurum yapısı (üniversite → fakülte → bölüm) sistem yöneticisinindir.
 model University {
-  id                  String   @id @default(uuid(7))
-  name                String   @unique
-  shortName           String   @unique
+  id                     String   @id @default(uuid(7))
+  name                   String   @unique
+  shortName              String   @unique
   /// Öğrenci e-postası alan adları: üniversiteyi doğrular, bölümü doğrulamaz (docs/architecture.md).
-  studentEmailDomains String[]
+  studentEmailDomains    String[]
   /// Personel (akademisyen) e-postası alan adları.
-  staffEmailDomains   String[]
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  staffEmailDomains      String[]
+  /// LinkedIn kurum kimliği bilinmiyorsa boş bırakılır; bağlantı kurumsuz da oluşturulur.
+  linkedinOrganizationId String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   faculties Faculty[]
 }
@@ -60,6 +62,8 @@ model Department {
   jobPostings         JobPosting[]
   jobPostingTargets   JobPostingDepartment[]
   referralClaims      ReferralClaim[]
+  awardCycles         AwardCycle[]
+  awards              Award[]
 
   @@unique([facultyId, code])
   @@unique([facultyId, name])
@@ -184,6 +188,59 @@ model User {
   receivedReferrals     ReferralClaim[]    @relation("ReferralStudent")
   reviewedReferrals     ReferralClaim[]    @relation("ReferralReviewer")
   reviewedAcceptances   ReferralClaim[]    @relation("ReferralAcceptanceReviewer")
+  awardCandidates       AwardCandidate[]
+  awards                Award[]
+}
+
+enum AwardKind {
+  YEAR_ALUMNI
+}
+
+/// Akademik yılın başlangıç yılı; tören tarihi İstanbul gününün başlangıcı olarak saklanır.
+model AwardCycle {
+  id           String           @id @default(uuid(7))
+  departmentId String
+  year         Int
+  ceremonyAt   DateTime
+  frozenAt     DateTime?
+  department   Department       @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  candidates   AwardCandidate[]
+  awards       Award[]
+
+  @@unique([departmentId, year])
+}
+
+/// Dondurulmuş adayın hesaplanmış değerleri; kullanıcı silinirken silinir.
+model AwardCandidate {
+  id              String     @id @default(uuid(7))
+  cycleId         String
+  userId          String
+  points          Int
+  experienceCount Int
+  meetingCount    Int
+  breakdown       Json
+  cycle           AwardCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([cycleId, userId])
+}
+
+model Award {
+  id               String     @id @default(uuid(7))
+  kind             AwardKind  @default(YEAR_ALUMNI)
+  cycleId          String
+  departmentId     String
+  userId           String
+  year             Int
+  verificationCode String     @unique
+  publicConsentAt  DateTime?
+  createdAt        DateTime   @default(now())
+  cycle            AwardCycle @relation(fields: [cycleId], references: [id], onDelete: Restrict)
+  department       Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([kind, departmentId, year])
+  @@index([userId])
 }
 
 enum NotificationIntentStatus {
@@ -332,7 +389,7 @@ model Tag {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  profiles ProfileTag[]
+  profiles    ProfileTag[]
   jobPostings JobPostingTag[]
 
   @@unique([kind, slug])
@@ -808,11 +865,11 @@ model CvReviewRequest {
 /// Sözlükler (sistem yöneticisinin): `normalizedName` benzersiz, `aliases` normalleştirilmiş takma adlar.
 /// Eşleme `pg_trgm` benzerliğiyle (eşik `src/server/rules/dictionary.ts`); eşik altı değer `UnmatchedValue`'ya düşer.
 model Sector {
-  id             String     @id @default(uuid(7))
+  id             String          @id @default(uuid(7))
   name           String
-  normalizedName String     @unique
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  normalizedName String          @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   companies      Company[]
   positions      Position[]
   followers      CompanyFollow[]
@@ -821,15 +878,15 @@ model Sector {
 }
 
 model Company {
-  id             String       @id @default(uuid(7))
+  id             String          @id @default(uuid(7))
   name           String
-  normalizedName String       @unique
+  normalizedName String          @unique
   aliases        String[]
-  searchKeys     String?      @default(dbgenerated())
+  searchKeys     String?         @default(dbgenerated())
   sectorId       String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  sector         Sector?      @relation(fields: [sectorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  sector         Sector?         @relation(fields: [sectorId], references: [id], onDelete: SetNull)
   positions      Position[]
   followers      CompanyFollow[]
   jobPostings    JobPosting[]
@@ -1612,20 +1669,22 @@ model JobPostingTag {
 /// Öğrencinin yayın sırasında eşleşen ilanları; yalnız kendi panosunda kullanılır.
 model JobMatch {
   postingId String
-  userId String
-  createdAt DateTime @default(now())
-  posting JobPosting @relation(fields: [postingId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime   @default(now())
+  posting   JobPosting @relation(fields: [postingId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@id([postingId, userId])
   @@index([userId, createdAt])
 }
 
 /// Günlük özet hakkı: eşzamanlı işçiler için benzersiz İstanbul günü.
 model JobMatchDigest {
-  userId String
-  day String
+  userId    String
+  day       String
   createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@id([userId, day])
   @@index([userId, createdAt])
 }
