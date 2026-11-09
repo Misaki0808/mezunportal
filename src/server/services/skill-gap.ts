@@ -78,7 +78,12 @@ export async function getSkillGap(db: PrismaClient, userId: string) {
         orderBy: { name: 'asc' },
       }),
       tx.position.findMany({
-        where: { ...countableAlumniPositionsWhere(undefined, universities, now), isCurrent: true },
+        where: {
+          ...countableAlumniPositionsWhere(undefined, universities, now),
+          // Çift rol: kendi becerisini değiştirerek kaynak eşiğini geçiremesin.
+          userId: { not: userId },
+          isCurrent: true,
+        },
         select: {
           id: true,
           userId: true,
