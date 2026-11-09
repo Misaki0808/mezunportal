@@ -75,6 +75,8 @@ async function fixture() {
 }
 it('başka kaynak yazarın Unicode adı, e-posta ve telefon türev soru ve süreçten düşer', async () => {
   const w = await fixture();
+  // Telefon öneki tek başına kişisel veri değildir; rastgele kimlik/sözlükte bulunabilir.
+  await db.company.update({ where: { id: w.company.id }, data: { name: 'Örnek 532 Kurumu' } });
   await w.add(w.context, []);
   const unsafe = [
     'Néhirʼin görüşü nasıldı?',
@@ -100,7 +102,12 @@ it('başka kaynak yazarın Unicode adı, e-posta ve telefon türev soru ve süre
   expect(result.groups.flatMap((g) => g.questions)).toEqual([
     { text: 'SQL nedir?', count: 3, category: 'QUESTION' },
   ]);
-  expect(JSON.stringify(result)).not.toMatch(/Néhir|Ｎｅｈｉｒ|N e h i r|@example|532/);
+  expect(result.companies.find((company) => company.id === w.company.id)?.name).toBe(
+    'Örnek 532 Kurumu',
+  );
+  expect(JSON.stringify(result)).not.toMatch(
+    /Néhir|Ｎｅｈｉｒ|N e h i r|@example|532 123 45 67|０５３２１２３４５６７|0 5 3 2 1 2 3 4 5 6 7/,
+  );
 });
 it('kimlik kapısı başka kaynak yazar askıya alınınca adını sorularda açmaz', async () => {
   const w = await fixture();

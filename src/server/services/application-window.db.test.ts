@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { INSECURE_DEV_AUTH_SECRET } from '@/lib/env';
 import { createTestPrisma } from '@/test/db';
 import {
   addMembership,
@@ -16,6 +17,24 @@ import { sendNotificationIntent } from '../jobs/notification-intent-worker';
 import { getApplicationCalendar, setApplicationFollow } from './application-window';
 
 const db = createTestPrisma();
+beforeEach(() => {
+  // Bağlantı üretimi gerçek sır veya rolün .env.local dosyasına bağımlı değildir.
+  for (const [key, value] of Object.entries({
+    APP_ENV: 'test',
+    APP_URL: 'http://127.0.0.1:3999',
+    BETTER_AUTH_SECRET: INSECURE_DEV_AUTH_SECRET,
+    SMTP_HOST: '127.0.0.1',
+    SMTP_PORT: '1025',
+    SMTP_SECURE: 'false',
+    EMAIL_FROM: 'test@example.invalid',
+    SMTP_USER: undefined,
+    SMTP_PASSWORD: undefined,
+    LINKEDIN_CLIENT_ID: undefined,
+    LINKEDIN_CLIENT_SECRET: undefined,
+  }))
+    vi.stubEnv(key, value);
+});
+afterEach(() => vi.unstubAllEnvs());
 const mail = vi.hoisted(() => vi.fn().mockResolvedValue({ emailLogId: 'queued-email' }));
 vi.mock('../jobs/email', () => ({ enqueueEmail: mail }));
 afterAll(() => db.$disconnect());

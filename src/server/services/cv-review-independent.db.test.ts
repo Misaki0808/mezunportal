@@ -361,7 +361,7 @@ it('inceleyici: niyet yazımı geri alınırsa talep de kısmi oluşmaz', async 
   const broken = db.$extends({
     query: {
       notificationIntent: {
-        upsert: async () => {
+        createMany: async () => {
           throw new Error('Sahte niyet yazım hatası');
         },
       },
@@ -398,7 +398,7 @@ it('inceleyici: yanıt/süre dolumu niyeti yazılamazsa açık talebin gerçek d
   const broken = db.$extends({
     query: {
       notificationIntent: {
-        upsert: async () => {
+        createMany: async () => {
           throw new Error('Sahte niyet yazım hatası');
         },
       },

@@ -74,7 +74,7 @@ export async function maySendNotification(
   if (
     !user ||
     user.deletedAt ||
-    (user.banned && (!user.banExpires || user.banExpires > new Date())) ||
+    (user.banned && (!user.banExpires || user.banExpires > now)) ||
     user.email.toLowerCase() !== message.to.toLowerCase()
   )
     return false;

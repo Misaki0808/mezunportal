@@ -110,16 +110,18 @@ export async function stageNotification(
               : payload.requestId;
   const event = payload.type === 'pilotInvitation' ? 'invitation' : payload.event;
   const key = `${payload.type}:${event}:${eventId}:${userId}`;
-  await tx.notificationIntent.upsert({
-    where: { key },
-    create: {
-      key,
-      userId,
-      kind: payload.type,
-      payload,
-      ...(notBefore ? { nextAttemptAt: notBefore } : {}),
-    },
-    update: {},
+  // Eşzamanlı üreticilerde SELECT + INSERT yarışı yok: tek atomik ON CONFLICT DO NOTHING.
+  await tx.notificationIntent.createMany({
+    data: [
+      {
+        key,
+        userId,
+        kind: payload.type,
+        payload,
+        ...(notBefore ? { nextAttemptAt: notBefore } : {}),
+      },
+    ],
+    skipDuplicates: true,
   });
 }
 // Hesabı henüz olmayan alıcının adresi, niyet işlenene dek yalnız kimlik doğrulanmış
