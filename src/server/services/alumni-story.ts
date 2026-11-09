@@ -165,9 +165,23 @@ async function requireIdentitySafe(tx: Tx, authorId: string, body: string) {
   const names = [
     ...new Set(others.map((x) => x.name).filter((name) => foldTr(name) !== foldTr(author.name))),
   ];
-  const finding = analyzeIdentity(body, names);
+  // Kendi tam adı yayımlanabilir; ortak bir ad parçasını genel olarak serbest bırakma.
+  // İletişim bilgilerini maskelemeden önce denetle, yalnız tam adın geçtiği aralığı çıkar.
+  const authorParts = foldTr(author.name).trim().split(/\s+/u);
+  const ownFullName = authorParts
+    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('\\s+');
+  const nameBody =
+    authorParts.length > 1
+      ? foldTr(body).replace(
+          new RegExp(`(?<![\\p{L}\\p{N}])${ownFullName}(?![\\p{L}\\p{N}])`, 'gu'),
+          ' ',
+        )
+      : body;
+  const contacts = analyzeIdentity(body, []);
+  const finding = analyzeIdentity(nameBody, names);
   const compact = analyzeIdentity(body.replace(/\s+/gu, ''), [], []);
-  if (finding.blocked || finding.warnings.length || compact.blocked)
+  if (contacts.blocked || finding.blocked || finding.warnings.length || compact.blocked)
     throw codedValidation('STORY_IDENTITY_LEAK');
 }
 export async function submitStory(deps: Deps, userId: string, input: unknown): Promise<MyStory> {
