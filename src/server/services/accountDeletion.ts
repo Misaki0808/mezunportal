@@ -186,6 +186,8 @@ export async function deleteAccount(
     // Katkı puanı (P1-16): kişiye ait puan kayıtları, etiketler ve şüphe işaretleri silinir; başkalarının kayıtlarındaki
     // karşı taraf bağı kopar (kayıt ve puan kalır). Önce etiket: kaynak kayıt silinmeden bağ düşer.
     await tx.userBadge.deleteMany({ where: { userId } });
+    await tx.award.deleteMany({ where: { userId } });
+    await tx.awardCandidate.deleteMany({ where: { userId } });
     await tx.suspicionFlag.deleteMany({ where: { userId } });
     await tx.pointEntry.deleteMany({ where: { userId } });
     await tx.pointEntry.updateMany({

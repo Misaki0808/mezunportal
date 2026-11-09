@@ -275,7 +275,8 @@
       "FEEDBACK_ALREADY_SUBMITTED": "Bu görüşme için formu zaten gönderdin.",
       "REFERRAL_NOT_ELIGIBLE": "Yalnız onaylı iletişim kurduğun veya tamamlanmış görüşmen olan öğrenciyi seçebilirsin.",
       "REFERRAL_INVALID_STATE": "Referansın durumu bu işleme uygun değil.",
-      "REFERRAL_CANCEL_WINDOW_CLOSED": "Bu referansın iptal süresi doldu."
+      "REFERRAL_CANCEL_WINDOW_CLOSED": "Bu referansın iptal süresi doldu.",
+      "AWARD_FREEZE_MISSED": "Otomatik dondurma zamanı kaçırıldı. Gerekçeyle yeniden hesaplayarak aday listesini oluştur."
     }
   },
   "nav": {
@@ -1669,7 +1670,8 @@
       "points": "Puan yönetimi",
       "faq": "SSS moderasyonu",
       "jobPostings": "İlan inceleme",
-      "referrals": "Referans inceleme"
+      "referrals": "Referans inceleme",
+      "yearAlumni": "Yılın Mezunu"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1686,7 +1688,8 @@
       "points": "Puan kurallarını, kayıtları ve şüpheli işaretleri yönet.",
       "faq": "SSS taleplerini incele, yayımla, reddet ya da mentorluğa yönlendir.",
       "jobPostings": "Topluluğun paylaştığı ilanları incele.",
-      "referrals": "Referans ve işe kabul beyanlarını incele."
+      "referrals": "Referans ve işe kabul beyanlarını incele.",
+      "yearAlumni": "Adayları incele ve bölüm adına karar ver."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1800,7 +1803,10 @@
         "DATA_EXPORT": "Veri dışa aktarma",
         "BULK_INVITATION": "Toplu davet",
         "DICTIONARY_CHANGE": "Sözlük değişikliği",
-        "UNMATCHED_RESOLVE": "Eşleşmeyen değer kararı"
+        "UNMATCHED_RESOLVE": "Eşleşmeyen değer kararı",
+        "AWARD_CYCLE_CONFIGURE": "Ödül töreni ayarı",
+        "AWARD_RECALCULATE": "Ödül adaylarını yeniden hesaplama",
+        "AWARD_SELECT": "Yılın mezunu seçimi"
       },
       "targets": {
         "USER": "Kullanıcı",
@@ -1819,7 +1825,9 @@
         "UNMATCHED_VALUE": "Eşleşmeyen değer",
         "EMPLOYMENT_REPORT": "İstihdam raporu",
         "USAGE_METRICS": "Kullanım metrikleri",
-        "INVITATION_BATCH": "Davet grubu"
+        "INVITATION_BATCH": "Davet grubu",
+        "AWARD_CYCLE": "Ödül dönemi",
+        "AWARD": "Ödül"
       }
     },
     "employment": {
@@ -2977,5 +2985,56 @@
     "noSectors": "Henüz sektör yok.",
     "allCompanies": "Şirket seç",
     "chooseScope": "Bir şirket veya sektör seçerek başvuru dönemlerini görebilirsin."
+  },
+  "yearAlumni": {
+    "awardName": "Yılın Mezunu",
+    "title": "Katkınla ilham verdin",
+    "intro": "Topluluğumuza kattığın değer için teşekkür ederiz.",
+    "empty": "Henüz bir ödülün yok.",
+    "awardYear": "{year} akademik yılı",
+    "department": "Bölüm",
+    "institution": "Kurum",
+    "publication": "Ödülümü herkese açık doğrulama sayfasında yayınla",
+    "publicationHelp": "Taslak rıza metni: Adın, ödülün, bölümün, yılın ve kurumun herkes tarafından görüntülenir. İstediğin zaman geri alabilirsin.",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor…",
+    "saved": "Tercihin kaydedildi.",
+    "linkedin": "LinkedIn’e ekle",
+    "copy": "Doğrulama bağlantısını kopyala",
+    "copied": "Bağlantı kopyalandı.",
+    "enablePublic": "Bağlantıları açmak için yayın izni ver.",
+    "verifyTitle": "Ödül doğrulama",
+    "verifyIntro": "Bu ödül MezunPortal tarafından doğrulanmıştır.",
+    "adminTitle": "Yılın Mezunu adayları",
+    "adminIntro": "Adaylar katkılarına göre sıralanır; seçim bölüm yöneticisinin kararıdır.",
+    "selectDepartment": "Bölüm seç",
+    "year": "Akademik yıl başlangıcı",
+    "ceremony": "Tören tarihi",
+    "configure": "Tören tarihini kaydet",
+    "load": "Adayları göster",
+    "noCycle": "Bu yıl için önce tören tarihini kaydet.",
+    "freezeInfo": "Liste törenden 30 gün önce dondurulur.",
+    "frozen": "Liste donduruldu",
+    "live": "Liste henüz dondurulmadı",
+    "excluded": "{count} aday açık şüphe kaydı nedeniyle listede değil.",
+    "points": "{count} katkı puanı",
+    "experiences": "{count} yayınlanmış deneyim",
+    "meetings": "{count} görüşme",
+    "reason": "Karar gerekçesi",
+    "choose": "Bu mezunu seç",
+    "recalculate": "Listeyi yeniden hesapla",
+    "recalculateReason": "Yeniden hesaplama gerekçesi",
+    "noCandidates": "Bu dönemde uygun aday bulunamadı.",
+    "selected": "Yılın mezunu seçildi.",
+    "confirm": "Ödül kararını onayla",
+    "confirmText": "Bu mezunu yılın mezunu seçmek üzeresin. Karar işlem kaydına yazılır.",
+    "cancel": "Vazgeç",
+    "invalid": "Alanları kontrol edip yeniden dene.",
+    "noDepartments": "Yetkili olduğun bölüm bulunamadı.",
+    "back": "Ana sayfaya dön",
+    "awardLink": "Ödüllerim",
+    "awardDescription": "Ödülünü ve yayın tercihini görüntüle.",
+    "share": "Paylaşım metnini kopyala",
+    "shareText": "{university} {department} bölümünde {year} akademik yılı Yılın Mezunu ödülünü aldım. Doğrula: {url}"
   }
 }

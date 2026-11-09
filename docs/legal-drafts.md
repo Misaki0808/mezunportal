@@ -138,3 +138,12 @@ kaç kez gösterildiğini görürsünüz; **kimin baktığı tutulmaz.**
 - **Saklama:** görünürlük kapanınca kart kimliği silinir; rıza kaydı hukuki kanıt olarak kalır (append-only).
 - **Kapsam dışı:** [K-03: veri sorumlusu bilgisi ve başvuru adresi eklenecek.]
 
+
+## §5 Yılın Mezunu ödülünün kamuya açık doğrulaması (P2-01) — TASLAK, onay bekliyor ⏸
+
+> Sürüm: `taslak-1`; metin değiştiğinde sürüm artırılır ve yayın için yeniden açık rıza istenir.
+
+Ödülümü kamuya açık doğrulama sayfasında yayınlamayı seçersem adım, ödül adı, bölümüm,
+akademik yıl ve kurumum giriş yapmayan kişiler tarafından da görülebilir. Yayın iznini vermek
+isteğe bağlıdır; istediğim zaman Ödüllerim ekranından geri alabilirim. İzni geri aldığımda
+kamuya açık doğrulama sayfası kapanır. Metin hoca/üniversite ve hukuk onayı bekleyen taslaktır.

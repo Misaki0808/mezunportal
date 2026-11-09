@@ -453,6 +453,41 @@ export const dataExportSchema = z.object({
           })
           .strict(),
       ),
+      awards: z.array(
+        z
+          .object({
+            kind: z.literal('YEAR_ALUMNI'),
+            departmentId: z.string(),
+            year: z.number().int(),
+            createdAt: z.string(),
+            publicConsentAt: z.string().nullable(),
+          })
+          .strict(),
+      ),
+      awardCandidacies: z.array(
+        z
+          .object({
+            departmentId: z.string(),
+            year: z.number().int(),
+            points: z.number().int(),
+            experienceCount: z.number().int(),
+            meetingCount: z.number().int(),
+            breakdown: z.array(
+              z.object({ action: z.enum(POINT_ACTIONS), points: z.number().int() }).strict(),
+            ),
+          })
+          .strict(),
+      ),
+      awardPublicationDecisions: z.array(
+        z
+          .object({
+            awardId: z.string().nullable(),
+            version: z.string(),
+            granted: z.boolean(),
+            createdAt: z.string(),
+          })
+          .strict(),
+      ),
       /** Şüphe işaretleri: yalnız kural, durum ve tarihler (eşikler ve kanıt kimlikleri çıkmaz). */
       suspicionFlags: z.array(
         z

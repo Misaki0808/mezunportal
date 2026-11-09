@@ -37,6 +37,9 @@ export const ADMIN_ACTIONS = {
   DICTIONARY_CHANGE: { reasonRequired: false },
   /** Eşleşmeyen CV değerinin çözümü (bağla/yeni kayıt/at). */
   UNMATCHED_RESOLVE: { reasonRequired: false },
+  AWARD_CYCLE_CONFIGURE: { reasonRequired: false },
+  AWARD_RECALCULATE: { reasonRequired: true },
+  AWARD_SELECT: { reasonRequired: true },
 } as const;
 
 export type AdminActionName = keyof typeof ADMIN_ACTIONS;
@@ -59,6 +62,8 @@ export const AUDIT_TARGET_TYPES = [
   'EMPLOYMENT_REPORT',
   'USAGE_METRICS',
   'INVITATION_BATCH',
+  'AWARD_CYCLE',
+  'AWARD',
 ] as const;
 
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];

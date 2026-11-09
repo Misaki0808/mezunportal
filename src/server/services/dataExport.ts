@@ -7,6 +7,7 @@ import {
 } from '@/contracts/privacy';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { codedNotFound } from '@/lib/errors';
+import { awardCandidateSchema } from '@/contracts/year-alumni';
 
 import { toYearMonth } from './cv-shared';
 import { loadVisibilityLevels } from './privacy';
@@ -438,33 +439,73 @@ async function loadContributionExport(
   userId: string,
   iso: (date: Date | null) => string | null,
 ): Promise<DataExport['contribution']> {
-  const [entries, badges, flags] = await Promise.all([
-    db.pointEntry.findMany({
-      where: { userId },
-      orderBy: { id: 'asc' },
-      select: {
-        action: true,
-        basePoints: true,
-        multiplierPercent: true,
-        points: true,
-        status: true,
-        eventAt: true,
-        createdAt: true,
-        revokedReason: true,
-      },
-    }),
-    db.userBadge.findMany({
-      where: { userId },
-      orderBy: { awardedAt: 'asc' },
-      select: { kind: true, awardedAt: true, revokedAt: true },
-    }),
-    db.suspicionFlag.findMany({
-      where: { userId },
-      orderBy: { id: 'asc' },
-      select: { rule: true, status: true, createdAt: true, decidedAt: true },
-    }),
-  ]);
+  const [entries, badges, flags, awards, awardCandidacies, awardPublicationDecisions] =
+    await Promise.all([
+      db.pointEntry.findMany({
+        where: { userId },
+        orderBy: { id: 'asc' },
+        select: {
+          action: true,
+          basePoints: true,
+          multiplierPercent: true,
+          points: true,
+          status: true,
+          eventAt: true,
+          createdAt: true,
+          revokedReason: true,
+        },
+      }),
+      db.userBadge.findMany({
+        where: { userId },
+        orderBy: { awardedAt: 'asc' },
+        select: { kind: true, awardedAt: true, revokedAt: true },
+      }),
+      db.suspicionFlag.findMany({
+        where: { userId },
+        orderBy: { id: 'asc' },
+        select: { rule: true, status: true, createdAt: true, decidedAt: true },
+      }),
+      db.award.findMany({
+        where: { userId },
+        select: {
+          kind: true,
+          departmentId: true,
+          year: true,
+          createdAt: true,
+          publicConsentAt: true,
+        },
+      }),
+      db.awardCandidate.findMany({
+        where: { userId },
+        select: {
+          points: true,
+          experienceCount: true,
+          meetingCount: true,
+          breakdown: true,
+          cycle: { select: { departmentId: true, year: true } },
+        },
+      }),
+      db.awardPublicationDecision.findMany({
+        where: { userId },
+        select: { awardId: true, version: true, granted: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
   return {
+    awardPublicationDecisions: awardPublicationDecisions.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+    })),
+    awards: awards.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+      publicConsentAt: iso(row.publicConsentAt),
+    })),
+    awardCandidacies: awardCandidacies.map(({ cycle, breakdown, ...row }) => ({
+      ...row,
+      ...cycle,
+      breakdown: awardCandidateSchema.shape.breakdown.parse(breakdown),
+    })),
     entries: entries.map((row) => ({
       ...row,
       eventAt: row.eventAt.toISOString(),

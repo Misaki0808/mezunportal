@@ -164,32 +164,33 @@ model User {
   experienceInvitations       ExperienceInvitation[]
   companyFollows              CompanyFollow[]
 
-  experiences           Experience[]       @relation("ExperienceAuthor")
-  moderatedExperiences  Experience[]       @relation("ExperienceModerator")
-  reports               Report[]           @relation("ReportReporter")
-  events                Event[]
-  availabilityRules     AvailabilityRule[]
-  mentorAppointments    Appointment[]      @relation("AppointmentMentor")
-  menteeAppointments    Appointment[]      @relation("AppointmentMentee")
-  reviewedReports       Report[]           @relation("ReportReviewer")
-  cancelledAppointments Appointment[]      @relation("AppointmentCanceller")
-  pointEntries          PointEntry[]       @relation("PointOwner")
-  counterpartPoints     PointEntry[]       @relation("PointCounterpart")
-  suspicionFlags        SuspicionFlag[]
-  badges                UserBadge[]
-  faqRequests           FaqRequest[]       @relation("FaqAsker")
-  faqAnswers            FaqAnswer[]
-  jobPostings           JobPosting[]       @relation("JobPostingAuthor")
-  moderatedJobPostings  JobPosting[]       @relation("JobPostingModerator")
-  endedJobPostings      JobPosting[]       @relation("JobPostingEnder")
-  jobPostingReports     JobPostingReport[] @relation("JobPostingReporter")
-  reviewedJobReports    JobPostingReport[] @relation("JobPostingReportReviewer")
-  givenReferrals        ReferralClaim[]    @relation("ReferralAlumnus")
-  receivedReferrals     ReferralClaim[]    @relation("ReferralStudent")
-  reviewedReferrals     ReferralClaim[]    @relation("ReferralReviewer")
-  reviewedAcceptances   ReferralClaim[]    @relation("ReferralAcceptanceReviewer")
-  awardCandidates       AwardCandidate[]
-  awards                Award[]
+  experiences               Experience[]               @relation("ExperienceAuthor")
+  moderatedExperiences      Experience[]               @relation("ExperienceModerator")
+  reports                   Report[]                   @relation("ReportReporter")
+  events                    Event[]
+  availabilityRules         AvailabilityRule[]
+  mentorAppointments        Appointment[]              @relation("AppointmentMentor")
+  menteeAppointments        Appointment[]              @relation("AppointmentMentee")
+  reviewedReports           Report[]                   @relation("ReportReviewer")
+  cancelledAppointments     Appointment[]              @relation("AppointmentCanceller")
+  pointEntries              PointEntry[]               @relation("PointOwner")
+  counterpartPoints         PointEntry[]               @relation("PointCounterpart")
+  suspicionFlags            SuspicionFlag[]
+  badges                    UserBadge[]
+  faqRequests               FaqRequest[]               @relation("FaqAsker")
+  faqAnswers                FaqAnswer[]
+  jobPostings               JobPosting[]               @relation("JobPostingAuthor")
+  moderatedJobPostings      JobPosting[]               @relation("JobPostingModerator")
+  endedJobPostings          JobPosting[]               @relation("JobPostingEnder")
+  jobPostingReports         JobPostingReport[]         @relation("JobPostingReporter")
+  reviewedJobReports        JobPostingReport[]         @relation("JobPostingReportReviewer")
+  givenReferrals            ReferralClaim[]            @relation("ReferralAlumnus")
+  receivedReferrals         ReferralClaim[]            @relation("ReferralStudent")
+  reviewedReferrals         ReferralClaim[]            @relation("ReferralReviewer")
+  reviewedAcceptances       ReferralClaim[]            @relation("ReferralAcceptanceReviewer")
+  awardCandidates           AwardCandidate[]
+  awards                    Award[]
+  awardPublicationDecisions AwardPublicationDecision[]
 }
 
 enum AwardKind {
@@ -226,21 +227,38 @@ model AwardCandidate {
 }
 
 model Award {
-  id               String     @id @default(uuid(7))
-  kind             AwardKind  @default(YEAR_ALUMNI)
-  cycleId          String
-  departmentId     String
-  userId           String
-  year             Int
-  verificationCode String     @unique
-  publicConsentAt  DateTime?
-  createdAt        DateTime   @default(now())
-  cycle            AwardCycle @relation(fields: [cycleId], references: [id], onDelete: Restrict)
-  department       Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String                     @id @default(uuid(7))
+  kind                 AwardKind                  @default(YEAR_ALUMNI)
+  cycleId              String
+  departmentId         String
+  userId               String
+  year                 Int
+  verificationCode     String                     @unique
+  publicConsentAt      DateTime?
+  publicConsentVersion String?
+  createdAt            DateTime                   @default(now())
+  cycle                AwardCycle                 @relation(fields: [cycleId], references: [id], onDelete: Restrict)
+  department           Department                 @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  user                 User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publicationDecisions AwardPublicationDecision[]
 
   @@unique([kind, departmentId, year])
   @@index([userId])
+}
+
+/// Sürümlü açık rıza geçmişi; ödül silinince rıza kanıtı anonimleştirilmiş hesaba bağlı kalır.
+model AwardPublicationDecision {
+  id        String   @id @default(uuid(7))
+  awardId   String?
+  userId    String
+  version   String
+  granted   Boolean
+  createdAt DateTime @default(now())
+  award     Award?   @relation(fields: [awardId], references: [id], onDelete: SetNull)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([awardId, createdAt, id])
+  @@index([userId, createdAt])
 }
 
 enum NotificationIntentStatus {
