@@ -71,9 +71,19 @@ export function visibleMentorWhere(
   viewerId: string,
   filter: Partial<SearchMentorsFilter>,
   now: Date,
+  skillAliases: readonly string[] = [],
 ): Prisma.MentorProfileWhereInput {
   const company = filter.company ? normalizeName(filter.company, 'COMPANY') : null;
   const title = filter.title ? normalizeName(filter.title, 'TITLE') : null;
+  const skill = filter.skill ? normalizeName(filter.skill, 'SKILL') : null;
+  const skillNames = [
+    ...new Set(
+      [
+        ...(skill ? [skill] : []),
+        ...skillAliases.map((name) => normalizeName(name, 'SKILL')),
+      ].filter(Boolean),
+    ),
+  ];
   const positionClauses: Prisma.PositionWhereInput[] = [];
   if (filter.sectorId) {
     positionClauses.push({
@@ -98,11 +108,16 @@ export function visibleMentorWhere(
   }
   return {
     isActive: true,
-    userId: { not: viewerId },
+    userId: filter.skill && !skill ? { in: [] } : { not: viewerId },
     ...(filter.meetingModes ? { meetingModes: { hasSome: filter.meetingModes } } : {}),
     user: {
       deletedAt: null,
       ...notSuspended(now),
+      ...(skill
+        ? {
+            profile: { tags: { some: { tag: { kind: 'SKILL', slug: { in: skillNames } } } } },
+          }
+        : {}),
       memberships: {
         some: {
           endedAt: null,
@@ -281,8 +296,24 @@ export async function searchMentors(
   requireDirectoryAccess(actor);
   const now = nowOf(deps);
   const universityIds = await viewerUniversityIds(deps.db, actor);
+  const requested = filter.skill ? normalizeName(filter.skill, 'SKILL') : '';
+  const dictionarySkill = requested
+    ? await deps.db.skill.findFirst({
+        where: { OR: [{ normalizedName: requested }, { aliases: { has: requested } }] },
+        select: { name: true, aliases: true },
+      })
+    : null;
+  const effectiveFilter = requested
+    ? { ...filter, skill: dictionarySkill?.name ?? filter.skill }
+    : filter;
   const candidates = await deps.db.mentorProfile.findMany({
-    where: visibleMentorWhere(universityIds, actor.userId, filter, now),
+    where: visibleMentorWhere(
+      universityIds,
+      actor.userId,
+      effectiveFilter,
+      now,
+      dictionarySkill ? [...dictionarySkill.aliases, dictionarySkill.name.slice(0, 80)] : undefined,
+    ),
     select: { userId: true, monthlyCapacity: true, pausedUntil: true },
     orderBy: [{ createdAt: 'desc' }, { userId: 'asc' }],
     take: SCAN_MAX,

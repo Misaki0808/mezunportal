@@ -208,6 +208,8 @@ profil sayıma girmez; öğrencinin becerisi eşleşme normalizasyonuyla (sözl�
 **Kabul:** yukarıdakiler.
 **Bağımlılık:** P2-09 (pozisyon/sektör çözümleme); P1-04–P1-06 profil ve etiketler.
 
+**PM kararı (kart 155):** Hedef, profil GOAL etiketleri yerine kullanıcının sözlükten açıkça seçtiği unvandır. Beceri satırında hem sahip hem sahip olmayan en az beş farklı mezun bulunur; grup yalnız 10+/25+/50+ bandı, yüzdeler beşlik adımla gösterilir ve küçük/tamamlayıcı hücreler gizlenir.
+
 ### P2-08 · Seçmeli ders rehberi · Sözleşme (W1) → Servis (W1) ∥ Ekran (W2) · H2
 **İş:** mezunun “işimde işe yarayan dersler” işareti: yönetimin yönettiği `Course` sözlüğü (bölüm bazlı; **YBS'nin bütün dersleri**, seçmeli dersler listede ve süzgeçte öne çıkar, D25)
 ve `AlumniCourseMark` (mezun, ders, en çok 5 işaret). Öğrenci ders sayfasında “N mezun işinde işe yaradığını söyledi”, hangi

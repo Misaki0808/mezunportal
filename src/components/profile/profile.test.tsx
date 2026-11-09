@@ -11,6 +11,8 @@ import { renderUi } from '@/test/render';
 import { MyProfile, type MyProfileActions } from './my-profile';
 import { ProfileView } from './profile-view';
 
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function showModal() {
     this.setAttribute('open', '');

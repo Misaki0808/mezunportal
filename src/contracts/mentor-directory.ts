@@ -56,6 +56,8 @@ export const searchMentorsSchema = z
     company: text(MENTOR_QUERY_MIN, MENTOR_QUERY_MAX).optional(),
     /** Unvan (kısmi). */
     title: text(MENTOR_QUERY_MIN, MENTOR_QUERY_MAX).optional(),
+    /** Beceri adı; sözlük adı/takma adıyla normalleştirilir. */
+    skill: text(1, 200).optional(),
     /** Mentorun yayınlanmış ADLI deneyim türü. */
     experienceTypes: enumList(EXPERIENCE_TYPES).optional(),
     /** Görüşme biçimlerinden herhangi birini sunan mentorlar. */
@@ -83,7 +85,7 @@ export type SearchMentorsFilter = z.output<typeof searchMentorsSchema>;
 // ---------------------------------------------------------------------------------------------
 
 const LIST_KEYS = ['mentorTypes', 'experienceTypes', 'meetingModes'] as const;
-const STRING_KEYS = ['sectorId', 'company', 'title'] as const;
+const STRING_KEYS = ['sectorId', 'company', 'title', 'skill'] as const;
 const NUMBER_KEYS = ['page', 'pageSize'] as const;
 
 /** Filtreyi kanonik (alan sırası sabit, varsayılanlar atılmış) sorgu dizgisine çevirir. */

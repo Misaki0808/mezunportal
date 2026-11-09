@@ -79,6 +79,7 @@ export async function buildDataExport(
           summary: true,
           city: true,
           goals: true,
+          targetTitleId: true,
           socialLinks: true,
           linkedinUrl: true,
           completionScore: true,
