@@ -9,7 +9,17 @@ export async function DigestView({
 }) {
   const t = await getTranslations('monthlyDigest');
   if (!digest)
-    return <p className="mt-6 rounded-card border border-border p-5 text-fg-muted">{t('empty')}</p>;
+    return (
+      <div className="mt-6 rounded-card border border-border p-5">
+        <p className="text-fg-muted">{t('empty')}</p>
+        <Link
+          href="/deneyimler"
+          className="mt-3 inline-flex min-h-11 items-center font-semibold text-primary underline"
+        >
+          {t('emptyAction')}
+        </Link>
+      </div>
+    );
   const sections = [
     digest.experiences && {
       title: t('experiences'),

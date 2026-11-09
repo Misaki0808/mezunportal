@@ -26,7 +26,9 @@ test('aylık özetten girişsiz çıkış ve tekrar kullanım mobilde çalışı
     });
     for (let i = 0; i < 2; i++) {
       await page.goto(`/aylik-ozet/abonelikten-cik#token=${token}`);
-      await expect(page.getByRole('status')).toContainText('aboneliğin kapatıldı');
+      await expect(
+        page.getByRole('status').filter({ hasText: 'aboneliğin kapatıldı' }),
+      ).toBeVisible();
       await expect
         .poll(
           async () =>

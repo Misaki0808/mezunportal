@@ -1989,6 +1989,7 @@
     "pageTitle": "Bu ayın özeti",
     "pageDescription": "Bölümünden haberler ve sana uygun fırsatlar bir arada.",
     "empty": "Bu ay için henüz gösterilecek bir özet yok. Yeni paylaşımlar olduğunda burada bulacaksın.",
+    "emptyAction": "Deneyimleri keşfet",
     "adminPreview": "Aylık özet önizlemesi",
     "adminDescription": "E-posta gönderilmez; önizlemede kendi hesabının verileri kullanılır.",
     "intro": "İşte senin için hazırladığımız aylık özet.",
