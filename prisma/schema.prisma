@@ -367,6 +367,7 @@ enum NotificationType {
   REFERRAL
   JOB_MATCH
   APPLICATION_WINDOW
+  MONTHLY_DIGEST
 }
 
 enum StillThereChoice {
