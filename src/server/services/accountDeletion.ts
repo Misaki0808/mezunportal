@@ -228,6 +228,7 @@ export async function deleteAccount(
     await pruneOrphanSkillTags(tx);
     await tx.fieldVisibility.deleteMany({ where: { userId } });
     await tx.jobMatch.deleteMany({ where: { userId } });
+    await tx.companyFollow.deleteMany({ where: { userId } });
     await tx.jobMatchDigest.deleteMany({ where: { userId } });
     await tx.notificationIntent.deleteMany({ where: { userId } });
     await tx.sessionFeedback.deleteMany({ where: { authorId: userId } });

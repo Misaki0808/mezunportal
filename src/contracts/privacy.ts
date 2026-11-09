@@ -267,6 +267,7 @@ export const exportedExperienceSchema = z
     id: z.string(),
     departmentIdAtWrite: z.string(),
     content: experienceDraftTemplateSchema,
+    appliedMonth: z.number().int().min(1).max(12).nullable(),
     isAnonymous: z.boolean(),
     status: z.enum(EXPERIENCE_STATUSES),
     moderationNote: z.string().nullable(),
@@ -315,6 +316,15 @@ export const dataExportSchema = z.object({
   }),
   profile: exportedProfileSchema.nullable(),
   experiences: z.array(exportedExperienceSchema),
+  companyFollows: z.array(
+    z
+      .object({
+        companyId: z.string().nullable(),
+        sectorId: z.string().nullable(),
+        createdAt: z.string(),
+      })
+      .strict(),
+  ),
   memberships: z.array(z.record(z.string(), z.unknown())),
   consents: z.array(
     z.object({

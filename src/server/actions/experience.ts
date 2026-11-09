@@ -110,6 +110,18 @@ export async function getExperienceDetail(
     return failAction(error);
   }
 }
+export async function getOwnAppliedMonth(
+  input: ExperienceIdInput,
+): Promise<ActionResult<{ appliedMonth: number | null }>> {
+  try {
+    const actor = await requireVerifiedMember();
+    const parsed = parseInput(experienceIdSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(await experience.getOwnAppliedMonth(getDb(), actor.userId, parsed.data));
+  } catch (error) {
+    return failAction(error);
+  }
+}
 export async function listModerationQueue(
   input: ListModerationQueueInput,
 ): Promise<ActionResult<ExperiencePage>> {

@@ -136,6 +136,11 @@ export async function saveExperienceDraft(
     if (parsed.prefillPositionId) throw codedValidation('VALIDATION_INVALID');
     const data = {
       ...draftColumns(parsed.content),
+      ...(parsed.content.type !== 'INTERNSHIP'
+        ? { appliedMonth: null }
+        : parsed.appliedMonth !== undefined
+          ? { appliedMonth: parsed.appliedMonth }
+          : {}),
       isAnonymous: parsed.isAnonymous,
       status: 'DRAFT' as const,
       moderationNote: null,
@@ -168,6 +173,25 @@ export async function saveExperienceDraft(
         select: experienceSelect,
       }),
     );
+  });
+}
+/** Ay yalnız kendi düzenleme formuna döner; genel deneyim yansıtmasına girmez. */
+export async function getOwnAppliedMonth(
+  db: PrismaClient,
+  userId: string,
+  input: ExperienceIdInput,
+  now = new Date(),
+) {
+  return asMember(db, userId, now, async (tx) => {
+    await requireConsent(tx, userId);
+    const parsed = experienceIdSchema.parse(input);
+    const row = await tx.experience.findUnique({
+      where: { id: parsed.experienceId },
+      select: { authorId: true, status: true, appliedMonth: true },
+    });
+    if (!row || row.authorId !== userId) throw codedNotFound('RESOURCE_NOT_FOUND');
+    if (!canEditExperience(row.status)) throw codedConflict('EXPERIENCE_NOT_EDITABLE');
+    return { appliedMonth: row.appliedMonth };
   });
 }
 export async function submitExperience(

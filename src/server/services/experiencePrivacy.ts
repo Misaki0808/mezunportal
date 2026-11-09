@@ -9,7 +9,7 @@ export const eraseExperienceContent: PublishedContentHandler = async (tx, userId
     await tx.experience.deleteMany({ where: { authorId: userId, status: { not: 'PUBLISHED' } } });
     await tx.experience.updateMany({
       where: { authorId: userId, status: 'PUBLISHED' },
-      data: { authorId: null, isAnonymous: true },
+      data: { authorId: null, isAnonymous: true, appliedMonth: null },
     });
   }
   // Şikâyet yayınlanmış içerik değildir; serbest metni de kişisel veri taşıyabilir.

@@ -16,8 +16,9 @@ describe('davet niyeti aktarımı', () => {
     let payload: Prisma.JsonValue = null;
     const tx = {
       notificationIntent: {
-        upsert: async (args: { create: { payload: Prisma.JsonValue } }) => {
-          payload = args.create.payload;
+        createMany: async (args: { data: { payload: Prisma.JsonValue }[] }) => {
+          payload = args.data[0]!.payload;
+          return { count: 1 };
         },
       },
     };

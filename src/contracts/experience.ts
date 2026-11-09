@@ -189,6 +189,8 @@ export const saveExperienceDraftSchema = z
     departmentId: id,
     content: experienceDraftTemplateSchema,
     isAnonymous: z.boolean({ error: INVALID }),
+    /** Yalnız yazım ve toplu istatistik; genel deneyim yanıtına girmez. */
+    appliedMonth: z.number({ error: INVALID }).int().min(1).max(12).nullable().optional(),
     /** P1-05/06 CV daveti: yalnız kullanıcının kendi Position kaydı; sahipliği servis kontrol eder. Çıktıya taşınmaz. */
     prefillPositionId: id.optional(),
   })
