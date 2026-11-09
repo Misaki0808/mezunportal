@@ -116,7 +116,9 @@ export function SkillGapPanel({
               {analysis.missing.map((skill) => (
                 <li key={skill.id} className="rounded-control border border-border bg-bg p-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="break-words font-semibold">{skill.label}</span>
+                    <span className="min-w-0 max-w-full font-semibold [overflow-wrap:anywhere]">
+                      {skill.label}
+                    </span>
                     <Badge tone="category">{t('percent', { percent: skill.percent })}</Badge>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
