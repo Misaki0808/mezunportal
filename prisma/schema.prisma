@@ -362,6 +362,7 @@ model Profile {
   summary               String?
   city                  String?
   goals                 String?
+  targetTitleId         String?
   socialLinks           Json?
   linkedinUrl           String?
   completionScore       Int              @default(0)
@@ -390,8 +391,9 @@ model Profile {
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
 
-  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags ProfileTag[]
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetTitle Title?       @relation(fields: [targetTitleId], references: [id], onDelete: SetNull)
+  tags        ProfileTag[]
 }
 
 /// Sabit sözlük anahtarı; görünen Türkçe karşılık mesaj kataloğundadır.
@@ -947,6 +949,7 @@ model Title {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   positions      Position[]
+  targetProfiles Profile[]
 
   @@index([normalizedName(ops: raw("gin_trgm_ops"))], type: Gin, map: "Title_normalizedName_trgm")
 }

@@ -130,6 +130,15 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
           },
         ]
       : []),
+    ...(filter.skill
+      ? [
+          {
+            key: 'skill',
+            label: filter.skill,
+            onRemove: () => go({ ...filter, skill: undefined, page: 1 }),
+          },
+        ]
+      : []),
     ...(filter.onlyAvailable
       ? [
           {
@@ -208,6 +217,16 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
             maxLength={100}
             value={draft.title ?? ''}
             onChange={(event) => update({ title: event.target.value || undefined })}
+          />
+        )}
+      </Field>
+      <Field label={t('filters.skill')}>
+        {(control) => (
+          <Input
+            {...control}
+            maxLength={200}
+            value={draft.skill ?? ''}
+            onChange={(event) => update({ skill: event.target.value || undefined })}
           />
         )}
       </Field>

@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import type { CvSection } from '@/contracts/cv';
@@ -88,6 +89,7 @@ type Editing =
 
 /** Kendi profilim: bölüm bölüm görüntüle + alt sayfada düzenle. Her eylem güncel profili döner; ekran onu çizer. */
 export function MyProfile({ initial, actions, beforeCompletion }: Props) {
+  const router = useRouter();
   const t = useTranslations('profile.my');
   const sections = useTranslations('profile.sections');
   const errors = useTranslations('errors.codes');
@@ -298,7 +300,12 @@ export function MyProfile({ initial, actions, beforeCompletion }: Props) {
       <SkillsBlock
         profile={profile}
         actions={actions}
-        run={run}
+        run={(action, after) =>
+          run(action, () => {
+            after?.();
+            router.refresh();
+          })
+        }
         pending={pending}
         title={t('skills')}
       />

@@ -13,6 +13,8 @@ import {
   updateProfileBasics,
 } from '@/server/actions/profile-content';
 import { getMyContribution } from '@/server/actions/points';
+import { getSkillGap, listSkillGapTitles } from '@/server/actions/skill-gap';
+import { SkillGapPanel } from '@/components/skill-gap/skill-gap-panel';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,12 +23,26 @@ export default async function ProfilePage() {
   if (!result) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   const points = await getMyContribution({}).catch(() => null);
+  const gap = await getSkillGap().catch(() => null);
+  const titles = gap?.ok ? await listSkillGapTitles().catch(() => null) : null;
   return (
     <>
       <MyProfile
         initial={result.data}
         beforeCompletion={
-          points?.ok ? <ContributionSummary summary={points.data.summary} /> : undefined
+          <>
+            {gap?.ok && titles?.ok && <SkillGapPanel data={gap.data} titles={titles.data} />}
+            {gap?.ok && !titles?.ok && (
+              <ErrorState
+                errorCode={titles && !titles.ok ? titles.errorCode : 'SERVER_UNEXPECTED'}
+              />
+            )}
+            {!gap && <ErrorState errorCode="SERVER_UNEXPECTED" />}
+            {gap && !gap.ok && gap.errorCode !== 'AUTH_FORBIDDEN' && (
+              <ErrorState errorCode={gap.errorCode} />
+            )}
+            {points?.ok && <ContributionSummary summary={points.data.summary} />}
+          </>
         }
         actions={{
           updateBasics: updateProfileBasics,

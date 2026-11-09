@@ -386,7 +386,8 @@
       "onlyAvailableHint": "Ara vermiş ya da bu ay kapasitesi dolan mentorlar gizlenir.",
       "all": "Tümü",
       "noSectors": "Henüz seçilebilir sektör yok.",
-      "invalid": "En az 2 karakter yaz."
+      "invalid": "En az 2 karakter yaz.",
+      "skill": "Beceri"
     },
     "types": {
       "ALUMNI": "Mezun",
@@ -2946,6 +2947,26 @@
     "goBack": "Vazgeç",
     "reviewApproveConfirm": "Bu beyanı onaylamak istiyor musun?",
     "reviewRejectConfirm": "Bu beyanı reddetmek istiyor musun? Gerekçe taraflara gösterilir."
+  },
+  "skillGap": {
+    "title": "Hedefime ne kadar yakınım?",
+    "description": "Hedefindeki mezunların paylaştığı becerilerle kendi becerilerini karşılaştır.",
+    "choose": "Hedef pozisyonun",
+    "placeholder": "Bir pozisyon seç",
+    "save": "Hedefi kaydet",
+    "saving": "Kaydediliyor…",
+    "chooseHint": "Başlamak için bir hedef pozisyon seç.",
+    "insufficient": "Bu pozisyon için henüz yeterli mezun verisi yok.",
+    "cohort": "{band} mezun grubundan",
+    "progress": "Görünen becerilerde uyum: %{percent}",
+    "missing": "Geliştirebileceğin beceriler",
+    "percent": "%{percent} mezunun profilinde",
+    "mentor": "Bu beceri için mentor bul",
+    "faq": "İlgili sorular",
+    "experience": "İlgili deneyimler",
+    "complete": "Görünen becerilerin hepsi profilinde var.",
+    "saved": "Hedefin kaydedildi.",
+    "privacy": "İstatistikler yalnız yeterli büyüklükteki gruplar için gösterilir."
   },
   "applicationCalendar": {
     "title": "Başvuru takvimi",
