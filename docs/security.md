@@ -274,3 +274,4 @@ yığın izi kullanıcıya gösterilmez. Ayrıntı `docs/architecture.md` “Dı
 kontrolü korunur; dosya yükleme gibi rota uçlarında köken ve oturum ayrıca doğrulanır.
 
 - Yılın Mezunu ödülü: kamuya açık doğrulama genel oturum/rıza kapısının gerekçeli istisnasıdır; yalnız ödül sahibinin güncel sürümlü açık yayın rızasıyla sınırlı alanları gösterir. Kod 256 bit rastgele, istek IP bazında hız sınırlı ve sayfa noindex'tir. Açık/kapalı kararları sürümlü ve yalnız eklenen geçmişe yazılır; ödül hesap silmeyle kalktığında kanıt anonimleştirilmiş kullanıcıya bağlı kalır. Kullanıcının veri dökümü kendi ödülü, aday anlık görüntüsü ve rıza kararlarını kapsar.
+- Aylık özetten çıkış, kullanıcının isteğe bağlı e-postayı durdurabilmesi için oturum ve zorunlu onay kapısının istisnasıdır. HMAC imzalı bağlantı yalnız ilgili hesabın aylık özet tercihini kapatır; belirteç URL parçasında taşınır, sunucuya POST gövdesiyle iletilir ve sonuç hesap varlığını açıklamaz.

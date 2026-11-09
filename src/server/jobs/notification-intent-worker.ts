@@ -13,6 +13,8 @@ import {
 } from '../services/appointment-notifier';
 import { sendNotification } from '../services/notification-email';
 import { hasCurrentApplicationWindow } from '../services/application-window';
+import { buildMonthlyDigest } from '../services/monthly-digest';
+import { monthlyDigestEmail } from '../services/monthly-digest-email';
 import {
   notificationIntentPayload,
   openPilotInvitation,
@@ -44,6 +46,46 @@ export async function sendNotificationIntent(
       event: payload.event,
       eventId: payload.eventId,
       path: payload.path,
+    });
+    return;
+  }
+  if (payload.type === 'monthlyDigest') {
+    if (istanbulDay(now).slice(0, 7) !== payload.cycle) return;
+    const digest = await buildMonthlyDigest(db, row.userId, now);
+    if (!digest) return;
+    const today = istanbulDay(now);
+    await db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`job-match:${row.userId}`}, 0))::text`;
+      const user = await tx.user.findUnique({
+        where: { id: row.userId },
+        select: { email: true, deletedAt: true },
+      });
+      if (!user || user.deletedAt) return;
+      const key = `monthly-digest:${row.userId}:${payload.cycle}`;
+      if (await tx.emailLog.findUnique({ where: { idempotencyKey: key }, select: { id: true } }))
+        return;
+      if (
+        await tx.jobMatchDigest.findUnique({
+          where: { userId_day: { userId: row.userId, day: today } },
+        })
+      )
+        return;
+      if (
+        (await tx.jobMatchDigest.count({
+          where: { userId: row.userId, day: { gte: addDays(today, -6), lte: today } },
+        })) >= 3
+      )
+        return;
+      const env = getAuthEnv();
+      const result = await enqueueEmail({
+        ...monthlyDigestEmail(digest, row.userId, env.BETTER_AUTH_SECRET, env.APP_URL),
+        to: user.email,
+        recipientUserId: row.userId,
+        template: 'monthlyDigest.summary',
+        idempotencyKey: key,
+      });
+      if (result.emailLogId)
+        await tx.jobMatchDigest.create({ data: { userId: row.userId, day: today } });
     });
     return;
   }

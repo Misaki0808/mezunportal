@@ -49,6 +49,8 @@ export function notificationTypeForTemplate(template: string): NotificationType 
       return 'JOB_MATCH';
     case 'applicationWindow.reminder':
       return 'APPLICATION_WINDOW';
+    case 'monthlyDigest.summary':
+      return 'MONTHLY_DIGEST';
     case 'jobPosting.published':
     case 'jobPosting.rejected':
     case 'jobPosting.expired':

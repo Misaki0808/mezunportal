@@ -1974,6 +1974,28 @@
     "invalidFiltersTitle": "Filtre bağlantısı geçersiz",
     "invalidFiltersDescription": "Filtreleri temizleyip yeniden arayabilirsin."
   },
+  "monthlyDigest": {
+    "subject": "Bu ay MezunPortal'da",
+    "pageTitle": "Bu ayın özeti",
+    "pageDescription": "Bölümünden haberler ve sana uygun fırsatlar bir arada.",
+    "empty": "Bu ay için henüz gösterilecek bir özet yok. Yeni paylaşımlar olduğunda burada bulacaksın.",
+    "adminPreview": "Aylık özet önizlemesi",
+    "adminDescription": "E-posta gönderilmez; önizlemede kendi hesabının verileri kullanılır.",
+    "intro": "İşte senin için hazırladığımız aylık özet.",
+    "experiences": "Bölümünden yeni deneyimler",
+    "jobs": "Sana uygun ilanlar",
+    "contribution": "Katkı puanın",
+    "earned": "Kazanılan: {points}",
+    "pending": "Bekleyen: {points}",
+    "windows": "Başvuru dönemleri",
+    "events": "Etkinlikler",
+    "open": "Uygulamada görüntüle: {url}",
+    "unsubscribe": "Aylık özetten aboneliği kapat: {url}",
+    "unsubscribeTitle": "Aylık özet aboneliği",
+    "unsubscribeDone": "Bağlantı geçerliyse aylık özet aboneliğin kapatıldı. Tercihini istediğin zaman hesabından değiştirebilirsin.",
+    "unsubscribeLoading": "Tercihin güncelleniyor…",
+    "unsubscribeError": "Tercihin güncellenemedi. Lütfen sayfayı yenileyip tekrar dene."
+  },
   "notifications": {
     "title": "Bildirim tercihlerin",
     "description": "Hangi e-postaları almak istediğini seç. Hesap güvenliği iletileri her zaman gönderilir.",
@@ -2046,6 +2068,10 @@
       "APPLICATION_WINDOW": {
         "label": "Başvuru dönemi hatırlatmaları",
         "description": "Takip ettiğin şirket veya sektörün başvuru dönemleri başladığında haber ver."
+      },
+      "MONTHLY_DIGEST": {
+        "label": "Aylık özet",
+        "description": "Bölümünden haberleri ve sana uygun fırsatları ayda bir özetle."
       }
     },
     "email": {
