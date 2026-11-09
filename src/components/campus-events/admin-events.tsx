@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { Button, Modal } from '@/components/ui';
+import { createCampusEventSchema } from '@/contracts/campus-events';
 import {
   cancelCampusEvent,
   createCampusEvent,
@@ -28,7 +30,8 @@ export function AdminEvents({
   const [pending, start] = useTransition(),
     [status, setStatus] = useState(''),
     [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}),
-    [reason, setReason] = useState('');
+    [reason, setReason] = useState(''),
+    [cancelId, setCancelId] = useState<string | null>(null);
   const labels = {
     PENDING: t('pending'),
     PUBLISHED: t('published'),
@@ -51,7 +54,7 @@ export function AdminEvents({
         setFieldErrors({ startsAt: t('timeInvalid') });
         return;
       }
-      const result = await createCampusEvent({
+      const parsed = createCampusEventSchema.safeParse({
         title: form.get('title'),
         description: form.get('description'),
         location: form.get('location'),
@@ -60,6 +63,18 @@ export function AdminEvents({
         capacity: Number(form.get('capacity')),
         departmentIds: form.getAll('departments'),
       });
+      if (!parsed.success) {
+        setFieldErrors(
+          Object.fromEntries(
+            parsed.error.issues.map((issue) => [
+              String(issue.path[0]),
+              errors('VALIDATION_INVALID'),
+            ]),
+          ),
+        );
+        return;
+      }
+      const result = await createCampusEvent(parsed.data);
       setFieldErrors(
         result.ok
           ? {}
@@ -85,7 +100,10 @@ export function AdminEvents({
           ? t(kind === 'PUBLISH' ? 'published' : kind === 'REJECT' ? 'rejected' : 'cancelled')
           : errors(result.errorCode),
       );
-      if (result.ok) router.refresh();
+      if (result.ok) {
+        setCancelId(null);
+        router.refresh();
+      }
     });
   }
   const field = 'min-h-12 w-full rounded-xl border border-border bg-surface px-3';
@@ -189,7 +207,10 @@ export function AdminEvents({
                 </Link>
                 <button
                   disabled={pending || reason.trim().length < 3}
-                  onClick={() => decide(event.id, 'CANCEL')}
+                  onClick={() => {
+                    setStatus('');
+                    setCancelId(event.id);
+                  }}
                   className="min-h-11 rounded-xl border border-border px-4 disabled:opacity-50"
                 >
                   {t('cancel')}
@@ -199,6 +220,34 @@ export function AdminEvents({
           </li>
         ))}
       </ul>
+      <Modal
+        open={cancelId !== null}
+        onClose={() => setCancelId(null)}
+        title={t('cancel')}
+        description={t('cancelConfirm')}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCancelId(null)}>
+              {t('dismiss')}
+            </Button>
+            <Button
+              {...(pending || reason.trim().length < 3
+                ? {
+                    disabled: true as const,
+                    disabledReason: pending ? t('registering') : t('reason'),
+                  }
+                : { disabled: false as const })}
+              onClick={() => {
+                if (cancelId) decide(cancelId, 'CANCEL');
+              }}
+            >
+              {t('cancel')}
+            </Button>
+          </>
+        }
+      >
+        {status && <p role="alert">{status}</p>}
+      </Modal>
     </div>
   );
 }

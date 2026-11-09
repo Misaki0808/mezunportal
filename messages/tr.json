@@ -2006,6 +2006,8 @@
     "checking": "Doğrulanıyor…",
     "checked": "Katılımın doğrulandı.",
     "codeInvalid": "Katılım doğrulanamadı. Kodu ve etkinlik saatini kontrol edip tekrar dene.",
+    "cancelConfirm": "Etkinlik iptal edilecek ve katılım puanları geri alınacak. Devam etmek istiyor musun?",
+    "dismiss": "Vazgeç",
     "adminTitle": "Etkinlik yönetimi",
     "create": "Etkinlik oluştur",
     "name": "Etkinlik adı",

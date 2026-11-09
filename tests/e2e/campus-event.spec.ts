@@ -109,6 +109,19 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    await admin.goto('/yonetim/etkinlikler');
+    await admin.getByLabel('İşlem gerekçesi').fill('Etkinlik iptal denemesi');
+    const row = admin.locator('li').filter({ hasText: 'Örnek etkinlik' });
+    await row.getByRole('button', { name: 'Etkinliği iptal et', exact: true }).click();
+    await expect(admin.getByRole('dialog')).toBeVisible();
+    expect((await db.campusEvent.findUniqueOrThrow({ where: { id: event.id } })).status).toBe(
+      'PUBLISHED',
+    );
+    await admin
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Etkinliği iptal et', exact: true })
+      .click();
+    await expect(row.getByText('İptal edildi', { exact: true })).toBeVisible();
   } finally {
     await adminContext.close();
     await db.pointEntry.deleteMany({

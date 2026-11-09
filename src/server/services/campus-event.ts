@@ -375,18 +375,21 @@ export async function checkInCampusEvent(
       },
       now,
     );
-    await flagCampusEventPatterns(tx, eventId, now);
+    await flagCampusEventPatterns(tx, eventId);
     return { accepted: true };
   }, TX_OPTIONS);
 }
 
 /** İşaret cezalandırmaz; aynı saniye/ağ eşiğinde ilgili puanlar insan incelemesine kalır. */
-async function flagCampusEventPatterns(tx: Tx, eventId: string, now: Date) {
+async function flagCampusEventPatterns(tx: Tx, eventId: string) {
   const attendees = await tx.eventAttendance.findMany({
     where: { eventId },
     select: { userId: true, attendedAt: true, networkDigest: true },
   });
-  const groups = new Map<string, { rule: 'EVENT_BURST' | 'EVENT_NETWORK'; users: string[] }>();
+  const groups = new Map<
+    string,
+    { rule: 'EVENT_BURST' | 'EVENT_NETWORK'; users: string[]; from: Date; to: Date }
+  >();
   for (const row of attendees) {
     const keys = [
       `EVENT_BURST:${Math.floor(row.attendedAt.getTime() / 1000)}`,
@@ -396,11 +399,16 @@ async function flagCampusEventPatterns(tx: Tx, eventId: string, now: Date) {
       const group = groups.get(key) ?? {
         rule: key.startsWith('EVENT_BURST:') ? 'EVENT_BURST' : 'EVENT_NETWORK',
         users: [],
+        from: row.attendedAt,
+        to: row.attendedAt,
       };
       group.users.push(row.userId);
+      if (row.attendedAt < group.from) group.from = row.attendedAt;
+      if (row.attendedAt > group.to) group.to = row.attendedAt;
       groups.set(key, group);
     }
   }
+  let flagged = 0;
   for (const [key, group] of groups) {
     if (group.users.length < 3) continue;
     const entries = await tx.pointEntry.findMany({
@@ -414,18 +422,49 @@ async function flagCampusEventPatterns(tx: Tx, eventId: string, now: Date) {
       select: { id: true, userId: true, points: true },
     });
     const evidenceKey = createHmac('sha256', eventId).update(key).digest('hex');
-    await tx.suspicionFlag.createMany({
+    const { count } = await tx.suspicionFlag.createMany({
       data: entries.map((entry) => ({
         userId: entry.userId,
         rule: group.rule,
         evidenceKey,
         entryIds: [entry.id],
-        windowStart: now,
-        windowEnd: now,
+        windowStart: group.from,
+        windowEnd: group.to,
         entryCount: group.users.length,
         points: entry.points,
       })),
       skipDuplicates: true,
     });
+    flagged += count;
+  }
+  return flagged;
+}
+
+/** İlk işaret karara bağlanınca kalan bekleyen etkinlik kanıtını yeniden değerlendirir. */
+export async function scanCampusEventPatterns(db: PrismaClient, now = new Date()) {
+  let after = '',
+    flagged = 0;
+  for (;;) {
+    const events = await db.pointEntry.findMany({
+      where: {
+        action: 'EVENT_ATTENDED',
+        sourceType: 'CAMPUS_EVENT',
+        status: 'PENDING',
+        eventAt: { lte: now },
+        sourceId: { gt: after },
+      },
+      distinct: ['sourceId'],
+      select: { sourceId: true },
+      orderBy: { sourceId: 'asc' },
+      take: 100,
+    });
+    if (!events.length) return flagged;
+    for (const { sourceId } of events) {
+      flagged += await db.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "CampusEvent" WHERE "id"=${sourceId} FOR UPDATE`;
+        return flagCampusEventPatterns(tx, sourceId);
+      }, TX_OPTIONS);
+    }
+    after = events[events.length - 1]!.sourceId;
   }
 }

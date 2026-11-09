@@ -510,6 +510,9 @@ export async function revokePendingReferralPoints(
  */
 export async function finalizeDuePoints(deps: PointDeps): Promise<{ finalized: number }> {
   const now = nowOf(deps);
+  // Şüphe taraması ayrı cron'da da çalışır; kesinleştirme onun çalışma sırasına bağlı kalmaz.
+  const { scanCampusEventPatterns } = await import('./campus-event');
+  await scanCampusEventPatterns(deps.db, now);
   const { count } = await deps.db.pointEntry.updateMany({
     where: {
       status: 'PENDING',
