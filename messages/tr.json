@@ -2033,6 +2033,10 @@
       "JOB_MATCH": {
         "label": "İlan eşleşmeleri",
         "description": "Profiline uyan ilanların özeti."
+      },
+      "APPLICATION_WINDOW": {
+        "label": "Başvuru dönemi hatırlatmaları",
+        "description": "Takip ettiğin şirket veya sektörün başvuru dönemleri başladığında haber ver."
       }
     },
     "email": {
@@ -2068,7 +2072,9 @@
       "migrationSubject": "E-posta adresini güncel tut",
       "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}",
       "jobMatchSubject": "Sana uyan yeni fırsatlar",
-      "jobMatchText": "Sana uygun yeni ilanları bir arada incele: {url}"
+      "jobMatchText": "Sana uygun yeni ilanları bir arada incele: {url}",
+      "applicationWindowSubject": "Takip ettiğin başvuru dönemleri başladı",
+      "applicationWindowText": "Takip ettiğin başvuru dönemlerini incele: {url}"
     },
     "stillThere": {
       "title": "Çalışma bilgini doğrula",
@@ -2865,7 +2871,8 @@
     "cancel": "Vazgeç",
     "chooseDifferent": "Farklı iki şirket seç.",
     "open": "Şirketi incele",
-    "interviewLink": "Mülakat sorularını keşfet"
+    "interviewLink": "Mülakat sorularını keşfet",
+    "calendarLink": "Başvuru takvimini keşfet"
   },
   "interviewBank": {
     "title": "Mülakat soru bankası",
@@ -2952,5 +2959,44 @@
     "complete": "Görünen becerilerin hepsi profilinde var.",
     "saved": "Hedefin kaydedildi.",
     "privacy": "İstatistikler yalnız yeterli büyüklükteki gruplar için gösterilir."
+  },
+  "applicationCalendar": {
+    "title": "Başvuru takvimi",
+    "description": "Geçmiş deneyimlerin toplu başvuru dönemlerini keşfet.",
+    "monthLabel": "Başvuru ayı (isteğe bağlı)",
+    "monthHint": "Bu ay yalnız en az üç farklı kişinin toplu istatistiğinde kullanılır; deneyiminde gösterilmez.",
+    "monthUnknown": "Belirtmek istemiyorum",
+    "months": {
+      "1": "Ocak",
+      "2": "Şubat",
+      "3": "Mart",
+      "4": "Nisan",
+      "5": "Mayıs",
+      "6": "Haziran",
+      "7": "Temmuz",
+      "8": "Ağustos",
+      "9": "Eylül",
+      "10": "Ekim",
+      "11": "Kasım",
+      "12": "Aralık"
+    },
+    "tab": "Başvuru dönemi",
+    "empty": "Henüz yeterli veri yok",
+    "note": "Ayı belirtilmeyen deneyimler için mevsimin üç ayı yaklaşık kabul edilir.",
+    "month": "Ay",
+    "count": "Kişi sayısı",
+    "hidden": "Gizli",
+    "follow": "Takip et",
+    "unfollow": "Takibi bırak",
+    "following": "Takip ediliyor",
+    "followError": "Takip güncellenemedi.",
+    "saving": "Kaydediliyor…",
+    "sector": "Sektör",
+    "company": "Şirket",
+    "open": "Takvimi göster",
+    "allSectors": "Sektör seç",
+    "noSectors": "Henüz sektör yok.",
+    "allCompanies": "Şirket seç",
+    "chooseScope": "Bir şirket veya sektör seçerek başvuru dönemlerini görebilirsin."
   }
 }

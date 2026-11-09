@@ -70,12 +70,20 @@ const jobMatch = z
     day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   })
   .strict();
+const applicationWindow = z
+  .object({
+    type: z.literal('applicationWindow'),
+    event: z.literal('reminder'),
+    cycle: z.string().regex(/^\d{4}-\d{2}$/),
+  })
+  .strict();
 export const notificationIntentPayload = z.discriminatedUnion('type', [
   generic,
   appointment,
   pilotInvitation,
   cvReview,
   jobMatch,
+  applicationWindow,
 ]);
 export type NotificationIntentPayload = z.infer<typeof notificationIntentPayload>;
 
@@ -97,19 +105,23 @@ export async function stageNotification(
           ? payload.invitationId
           : payload.type === 'jobMatch'
             ? payload.day
-            : payload.requestId;
+            : payload.type === 'applicationWindow'
+              ? payload.cycle
+              : payload.requestId;
   const event = payload.type === 'pilotInvitation' ? 'invitation' : payload.event;
   const key = `${payload.type}:${event}:${eventId}:${userId}`;
-  await tx.notificationIntent.upsert({
-    where: { key },
-    create: {
-      key,
-      userId,
-      kind: payload.type,
-      payload,
-      ...(notBefore ? { nextAttemptAt: notBefore } : {}),
-    },
-    update: {},
+  // Eşzamanlı üreticilerde SELECT + INSERT yarışı yok: tek atomik ON CONFLICT DO NOTHING.
+  await tx.notificationIntent.createMany({
+    data: [
+      {
+        key,
+        userId,
+        kind: payload.type,
+        payload,
+        ...(notBefore ? { nextAttemptAt: notBefore } : {}),
+      },
+    ],
+    skipDuplicates: true,
   });
 }
 // Hesabı henüz olmayan alıcının adresi, niyet işlenene dek yalnız kimlik doğrulanmış

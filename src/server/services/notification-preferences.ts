@@ -52,6 +52,7 @@ export async function setNotificationPreferences(
 export async function maySendNotification(
   db: PrismaClient,
   message: QueuedEmail,
+  now: Date = new Date(),
 ): Promise<boolean> {
   // Davet yalnız henüz hesabı olmayan adrese gider; mevcut hesap tercihleri atlanmaz.
   if (message.template === 'pilot.invitation') {
@@ -73,7 +74,7 @@ export async function maySendNotification(
   if (
     !user ||
     user.deletedAt ||
-    (user.banned && (!user.banExpires || user.banExpires > new Date())) ||
+    (user.banned && (!user.banExpires || user.banExpires > now)) ||
     user.email.toLowerCase() !== message.to.toLowerCase()
   )
     return false;
@@ -115,6 +116,12 @@ export async function maySendNotification(
       ).length
     )
       return false;
+  }
+  if (type === 'APPLICATION_WINDOW') {
+    const cycle = message.idempotencyKey.split(':').at(-1);
+    if (!cycle || !/^\d{4}-\d{2}$/.test(cycle)) return false;
+    const { hasCurrentApplicationWindow } = await import('./application-window');
+    if (!(await hasCurrentApplicationWindow(db, message.recipientUserId, cycle, now))) return false;
   }
   const preference = await db.notificationPreference.findUnique({
     where: { userId_type: { userId: message.recipientUserId, type } },

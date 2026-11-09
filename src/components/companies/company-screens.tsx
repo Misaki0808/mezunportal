@@ -21,6 +21,8 @@ import { MentorCard } from '@/components/mentors/mentor-card';
 import { mergeCompanies, searchCompanies } from '@/server/actions/companies';
 import type { InterviewQuestionBank } from '@/contracts/interview-questions';
 import { QuestionCards } from '@/components/interview-questions/question-bank';
+import { CalendarView } from '@/components/application-window/calendar';
+import type { ApplicationCalendar } from '@/contracts/application-window';
 
 function CompanyCard({ company }: { company: CompanySummary }) {
   const t = useTranslations('companies');
@@ -48,9 +50,14 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 pb-28">
       <PageHeader title={t('title')} description={t('description')} />
-      <Link href="/mulakat-sorulari" className={`${buttonClasses({ variant: 'secondary' })} mt-5`}>
-        {t('interviewLink')}
-      </Link>
+      <div className="mt-5 flex flex-wrap gap-3">
+        <Link href="/mulakat-sorulari" className={buttonClasses({ variant: 'secondary' })}>
+          {t('interviewLink')}
+        </Link>
+        <Link href="/basvuru-takvimi" className={buttonClasses({ variant: 'secondary' })}>
+          {t('calendarLink')}
+        </Link>
+      </div>
       <form action="/sirketler" className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-end">
         <Field className="min-w-0 flex-1" label={t('searchLabel')}>
           {(p) => <Input {...p} name="q" defaultValue={query} autoComplete="organization" />}
@@ -87,9 +94,11 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
 export function CompanyScreen({
   company,
   questions,
+  calendar,
 }: {
   company: CompanyDetail;
   questions: InterviewQuestionBank;
+  calendar: ApplicationCalendar;
 }) {
   const t = useTranslations('companies');
   const experience = useTranslations('experiences');
@@ -142,40 +151,7 @@ export function CompanyScreen({
     {
       id: 'periods',
       label: t('periods'),
-      content: company.periods.length ? (
-        <div className="grid gap-4">
-          <table className="w-full text-left">
-            <caption className="sr-only">{t('periods')}</caption>
-            <thead>
-              <tr>
-                <th>{t('tableSeason')}</th>
-                <th>{t('tableCount')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {company.periods.map((period) => (
-                <tr key={period.season}>
-                  <th scope="row" className="py-3 font-medium">
-                    {t(`season.${period.season}`)}
-                  </th>
-                  <td>
-                    <span className="font-semibold">{period.count}</span>
-                    <span
-                      aria-hidden="true"
-                      className="ml-3 inline-block h-2 max-w-40 rounded-full bg-primary"
-                      style={{
-                        width: `${Math.max(10, (100 * period.count) / Math.max(...company.periods.map((x) => x.count)))}%`,
-                      }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <EmptyState title={t('emptyPeriods')} />
-      ),
+      content: <CalendarView scope={{ kind: 'COMPANY', id: company.id }} data={calendar} />,
     },
     {
       id: 'mentors',
