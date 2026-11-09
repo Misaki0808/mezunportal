@@ -97,13 +97,20 @@ it('öğrenci becerisini değiştirince mezun yüzdeleri/bant değişmez; gizli 
 it('belirsiz beceri takma adı bir sözlüğe keyfi bağlanmaz; gizli grubu açmaz', async () => {
   const w = await fixture();
   const alias = w.skills[2]!.aliases[0]!;
-  await db.skill.create({
+  const collision = await db.skill.create({
     data: { name: 'Çakışan ' + randomUUID(), normalizedName: randomUUID(), aliases: [alias] },
   });
-  for (const id of w.people.slice(1, 6)) await w.tag(id, 2, true);
-  const result = (await getSkillGap(db, w.student)).analysis!;
-  expect(result.missing.map((x) => x.id).sort()).toEqual([w.skills[0]!.id, w.skills[1]!.id].sort());
-  expect(result.missing.some((x) => x.id === w.skills[2]!.id)).toBe(false);
+  try {
+    for (const id of w.people.slice(1, 6)) await w.tag(id, 2, true);
+    const result = (await getSkillGap(db, w.student)).analysis!;
+    expect(result.missing.map((x) => x.id).sort()).toEqual(
+      [w.skills[0]!.id, w.skills[1]!.id].sort(),
+    );
+    expect(result.missing.some((x) => x.id === w.skills[2]!.id)).toBe(false);
+  } finally {
+    // Ortak test DB'sinde sözlük bekçisi sonraki dosyada aynı kaydı görür.
+    await db.skill.delete({ where: { id: collision.id } });
+  }
 });
 it('aynı mezunun iki hedefi aynı anda büyütmesi mümkün değil; başlangıç ve kayıt sırası kararlı', async () => {
   const w = await fixture(10),
