@@ -24,6 +24,17 @@ beforeEach(() => {
   vi.stubEnv('APP_ENV', 'test');
   vi.stubEnv('APP_URL', url);
   vi.stubEnv('BETTER_AUTH_SECRET', INSECURE_DEV_AUTH_SECRET);
+  for (const [key, value] of Object.entries({
+    SMTP_HOST: '127.0.0.1',
+    SMTP_PORT: '1025',
+    SMTP_SECURE: 'false',
+    EMAIL_FROM: 'test@example.invalid',
+    SMTP_USER: undefined,
+    SMTP_PASSWORD: undefined,
+    LINKEDIN_CLIENT_ID: undefined,
+    LINKEDIN_CLIENT_SECRET: undefined,
+  }))
+    vi.stubEnv(key, value);
 });
 afterEach(() => vi.unstubAllEnvs());
 afterAll(() => db.$disconnect());

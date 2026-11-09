@@ -61,7 +61,10 @@ export async function DigestView({
           <ul className="mt-3 space-y-2">
             {section.rows.map((row) => (
               <li key={row.id}>
-                <Link className="flex min-h-11 items-center text-primary underline" href={row.href}>
+                <Link
+                  className="flex min-h-11 min-w-0 items-center text-primary underline [overflow-wrap:anywhere]"
+                  href={row.href}
+                >
                   {row.label}
                 </Link>
               </li>
