@@ -7,6 +7,8 @@ import { getHomeSummary, getSuggestedJobs } from '@/server/actions/home';
 import { HomeDashboard } from '@/components/home/dashboard';
 import { Landing } from '@/components/landing/landing';
 import { getLandingStats } from '@/server/services/landing';
+import { getCurrentStory } from '@/server/actions/alumni-story';
+import { StoryInvite, StoryShowcase } from '@/components/alumni-story/showcase';
 import type { Metadata } from 'next';
 import { ErrorState } from '@/components/ui';
 
@@ -43,6 +45,27 @@ export default async function HomePage() {
   const showOnboarding = onboarding?.ok && onboarding.data.step !== 'COMPLETE';
   const verified = actor && state?.ok && state.data.status === 'VERIFIED';
   const summary = verified ? await getHomeSummary().catch(() => null) : null;
+  const story = verified ? await getCurrentStory().catch(() => null) : null;
+  const storyTexts = await getTranslations('alumniStory');
+  const isAlumnus = actor.facts.memberships.some(
+    (m) => m.role === 'ALUMNI' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
+  );
+  const feature =
+    story?.ok && story.data ? (
+      <>
+        <StoryShowcase story={story.data} />
+        <Link
+          href="/hikayeler"
+          className="inline-flex min-h-11 items-center font-semibold text-primary underline"
+        >
+          {storyTexts('archive')}
+        </Link>
+      </>
+    ) : story?.ok && isAlumnus ? (
+      <StoryInvite />
+    ) : story && !story.ok ? (
+      <ErrorState errorCode={story.errorCode} />
+    ) : null;
   const suggestedJobs =
     summary?.ok && summary.data.role === 'STUDENT'
       ? await getSuggestedJobs().catch(() => null)
@@ -84,11 +107,12 @@ export default async function HomePage() {
         </Link>
       )}
       {summary?.ok ? (
-        <HomeDashboard summary={summary.data} />
+        <HomeDashboard summary={summary.data} feature={feature} />
       ) : (
         <>
           <h1 className="text-3xl font-semibold">{t('title')}</h1>
           <p className="text-base leading-relaxed">{t('tagline')}</p>
+          {feature}
         </>
       )}
       {suggestedJobs?.ok && (

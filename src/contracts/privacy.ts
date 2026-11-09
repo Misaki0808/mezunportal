@@ -308,6 +308,31 @@ export const exportedAppointmentSchema = z
 export const dataExportSchema = z.object({
   formatVersion: z.literal(DATA_EXPORT_FORMAT_VERSION),
   exportedAt: z.string(),
+  alumniStories: z.array(
+    z
+      .object({
+        id: z.string(),
+        departmentId: z.string(),
+        body: z.string(),
+        status: z.enum(['DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED']),
+        publicConsentAt: z.string().nullable(),
+        publicConsentVersion: z.string().nullable(),
+        moderationReason: z.string().nullable(),
+        createdAt: z.string(),
+        updatedAt: z.string(),
+      })
+      .strict(),
+  ),
+  storyConsentDecisions: z.array(
+    z
+      .object({
+        storyId: z.string().nullable(),
+        version: z.string(),
+        granted: z.boolean(),
+        createdAt: z.string(),
+      })
+      .strict(),
+  ),
   user: z.object({
     id: z.string(),
     name: z.string(),

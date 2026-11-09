@@ -64,6 +64,8 @@ model Department {
   referralClaims      ReferralClaim[]
   awardCycles         AwardCycle[]
   awards              Award[]
+  alumniStories       AlumniStory[]
+  monthlyAlumni       MonthlyAlumnus[]
 
   @@unique([facultyId, code])
   @@unique([facultyId, name])
@@ -191,6 +193,68 @@ model User {
   awardCandidates           AwardCandidate[]
   awards                    Award[]
   awardPublicationDecisions AwardPublicationDecision[]
+  alumniStories             AlumniStory[]
+  storyConsentDecisions     StoryConsentDecision[]
+}
+
+enum AlumniStoryStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+/// Metin her değiştiğinde yeniden moderasyona gider; yayın rızası geri alınınca görünmez.
+model AlumniStory {
+  id                   String                 @id @default(uuid(7))
+  userId               String
+  departmentId         String
+  body                 String
+  status               AlumniStoryStatus      @default(DRAFT)
+  publicConsentAt      DateTime?
+  publicConsentVersion String?
+  moderationReason     String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  submittedAt          DateTime?
+  moderatedAt          DateTime?
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department           Department             @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  selections           MonthlyAlumnus[]
+  consentDecisions     StoryConsentDecision[]
+
+  @@unique([userId, departmentId])
+  @@unique([id, departmentId])
+  @@index([departmentId, status])
+}
+
+/// Rıza kanıtı saklanır; hikâye silindiğinde ilişki kaldırılır, kişi anonimleştirilir.
+model StoryConsentDecision {
+  id        String       @id @default(uuid(7))
+  storyId   String?
+  userId    String
+  version   String
+  granted   Boolean
+  createdAt DateTime     @default(now())
+  story     AlumniStory? @relation(fields: [storyId], references: [id], onDelete: SetNull)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+}
+
+/// Bölüm ve İstanbul takvim ayı başına tek seçim; güncel ay okuma anında da denetlenir.
+model MonthlyAlumnus {
+  id           String      @id @default(uuid(7))
+  departmentId String
+  storyId      String
+  month        String
+  chosenAt     DateTime    @default(now())
+  active       Boolean     @default(false)
+  department   Department  @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  story        AlumniStory @relation(fields: [storyId, departmentId], references: [id, departmentId], onDelete: Cascade)
+
+  @@unique([departmentId, month])
+  @@index([month, active])
 }
 
 enum AwardKind {

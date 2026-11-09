@@ -188,6 +188,7 @@ export async function deleteAccount(
     await tx.userBadge.deleteMany({ where: { userId } });
     await tx.award.deleteMany({ where: { userId } });
     await tx.awardCandidate.deleteMany({ where: { userId } });
+    await tx.alumniStory.deleteMany({ where: { userId } });
     await tx.suspicionFlag.deleteMany({ where: { userId } });
     await tx.pointEntry.deleteMany({ where: { userId } });
     await tx.pointEntry.updateMany({

@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   purgeAuth: vi.fn(),
   detach: vi.fn(),
   freezeAwards: vi.fn(),
+  rotateMonthly: vi.fn(),
   db: {},
 }));
 vi.mock('pg-boss', () => ({
@@ -28,6 +29,7 @@ vi.mock('../external/storage', () => ({ getStorage: () => ({}) }));
 vi.mock('../services/auth-cleanup', () => ({ purgeExpiredAuth: mocks.purgeAuth }));
 vi.mock('../services/event', () => ({ detachOldEvents: mocks.detach }));
 vi.mock('../services/year-alumni', () => ({ freezeDueAwardCycles: mocks.freezeAwards }));
+vi.mock('../services/alumni-story', () => ({ rotateMonthlyAlumni: mocks.rotateMonthly }));
 vi.mock('./notification-intent-worker', () => ({ relayPendingNotifications: vi.fn() }));
 vi.mock('../services/files-purge', () => ({ purgeFiles: vi.fn() }));
 vi.mock('./feedback-task', () => ({ scheduleFeedbackPrompts: vi.fn() }));
@@ -69,5 +71,18 @@ describe('günlük bakım işlerinin kaydı', () => {
     expect(worker).toBeTypeOf('function');
     await worker();
     expect(mocks.freezeAwards).toHaveBeenCalledWith(mocks.db);
+  });
+  it('ayın mezununu İstanbul ay başında döndürür', async () => {
+    await createNotificationRuntime();
+    expect(mocks.schedule).toHaveBeenCalledWith(
+      'alumni.monthlyRotate',
+      '0 0 1 * *',
+      {},
+      { tz: 'Europe/Istanbul', missed: 'once' },
+    );
+    const worker = mocks.work.mock.calls.find(([queue]) => queue === 'alumni.monthlyRotate')?.[2];
+    expect(worker).toBeTypeOf('function');
+    await worker();
+    expect(mocks.rotateMonthly).toHaveBeenCalledWith(mocks.db);
   });
 });

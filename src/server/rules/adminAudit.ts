@@ -40,6 +40,9 @@ export const ADMIN_ACTIONS = {
   AWARD_CYCLE_CONFIGURE: { reasonRequired: false },
   AWARD_RECALCULATE: { reasonRequired: true },
   AWARD_SELECT: { reasonRequired: true },
+  STORY_PUBLISH: { reasonRequired: false },
+  STORY_REJECT: { reasonRequired: true },
+  MONTHLY_ALUMNUS_SELECT: { reasonRequired: true },
   AWARD_REVIEW_REQUIRED: { reasonRequired: false },
 } as const;
 
@@ -65,6 +68,8 @@ export const AUDIT_TARGET_TYPES = [
   'INVITATION_BATCH',
   'AWARD_CYCLE',
   'AWARD',
+  'ALUMNI_STORY',
+  'MONTHLY_ALUMNUS',
 ] as const;
 
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];

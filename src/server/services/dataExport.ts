@@ -165,6 +165,27 @@ export async function buildDataExport(
   });
   if (!user || user.deletedAt) throw codedNotFound('RESOURCE_NOT_FOUND');
   const iso = (date: Date | null) => (date ? date.toISOString() : null);
+  const [alumniStories, storyConsentDecisions] = await Promise.all([
+    db.alumniStory.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        departmentId: true,
+        body: true,
+        status: true,
+        publicConsentAt: true,
+        publicConsentVersion: true,
+        moderationReason: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+    db.storyConsentDecision.findMany({
+      where: { userId },
+      select: { storyId: true, version: true, granted: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ]);
   const cv = await loadCvExport(db, userId, iso);
   const appointments = await loadAppointmentExport(db, userId);
   const contribution = await loadContributionExport(db, userId, iso);
@@ -215,6 +236,16 @@ export async function buildDataExport(
   return {
     formatVersion: DATA_EXPORT_FORMAT_VERSION,
     exportedAt: now.toISOString(),
+    alumniStories: alumniStories.map((row) => ({
+      ...row,
+      publicConsentAt: iso(row.publicConsentAt),
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    })),
+    storyConsentDecisions: storyConsentDecisions.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+    })),
     user: {
       id: user.id,
       name: user.name,

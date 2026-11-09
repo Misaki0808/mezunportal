@@ -16,6 +16,7 @@ import { scheduleFeedbackPrompts } from './feedback-task';
 import { alumniStillThere, profileFreshness, studentEmailMigration } from './notification-tasks';
 import { scheduleApplicationWindows } from './application-window-task';
 import { freezeDueAwardCycles } from '../services/year-alumni';
+import { rotateMonthlyAlumni } from '../services/alumni-story';
 
 /** Görev adları dışında kişi, bağlantı ve sağlayıcı hata bilgisi günlüğe yazılmaz. */
 export async function createNotificationRuntime() {
@@ -49,6 +50,7 @@ export async function createNotificationRuntime() {
     'postings.expire': () => expireJobPostings({ db: getDb() }),
     'applications.remind': () => scheduleApplicationWindows(getDb()),
     'awards.freeze': () => freezeDueAwardCycles(getDb()),
+    'alumni.monthlyRotate': () => rotateMonthlyAlumni(getDb()),
   };
   try {
     await boss.start();
@@ -59,16 +61,18 @@ export async function createNotificationRuntime() {
       });
       await boss.schedule(
         name,
-        name === 'applications.remind'
-          ? '0 9 1 * *'
-          : [
-                'notification.relay',
-                'appointment.feedback',
-                'cvReview.expire',
-                'awards.freeze',
-              ].includes(name)
-            ? '* * * * *'
-            : '0 3 * * *',
+        name === 'alumni.monthlyRotate'
+          ? '0 0 1 * *'
+          : name === 'applications.remind'
+            ? '0 9 1 * *'
+            : [
+                  'notification.relay',
+                  'appointment.feedback',
+                  'cvReview.expire',
+                  'awards.freeze',
+                ].includes(name)
+              ? '* * * * *'
+              : '0 3 * * *',
         {},
         { tz: 'Europe/Istanbul', missed: 'once' },
       );
