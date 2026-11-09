@@ -1,7 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button, Field, PageHeader, Select } from '@/components/ui';
+import { Button, Field, IconChip, PageHeader, Select } from '@/components/ui';
 import type { ApplicationCalendar, ApplicationScope } from '@/contracts/application-window';
 import { setApplicationFollow } from '@/server/actions/application-window';
 
@@ -35,7 +35,12 @@ export function CalendarView({
     <section className="grid gap-5">
       {data.canFollow && (
         <div>
-          <Button variant={following ? 'secondary' : 'primary'} loading={pending} onClick={toggle}>
+          <Button
+            variant="secondary"
+            loading={pending}
+            onClick={toggle}
+            leadingIcon={<IconChip className="size-7">{following ? '✓' : '+'}</IconChip>}
+          >
             {following ? t('unfollow') : t('follow')}
           </Button>
           {following && (
@@ -115,7 +120,10 @@ export function CalendarPage({
               {...control}
               name="companyId"
               value={companyId}
-              onChange={(event) => { setCompanyId(event.target.value); if (event.target.value) setSectorId(''); }}
+              onChange={(event) => {
+                setCompanyId(event.target.value);
+                if (event.target.value) setSectorId('');
+              }}
             >
               <option value="">{t('allCompanies')}</option>
               {companies.map((item) => (
@@ -132,7 +140,10 @@ export function CalendarPage({
               {...control}
               name="sectorId"
               value={sectorId}
-              onChange={(event) => { setSectorId(event.target.value); if (event.target.value) setCompanyId(''); }}
+              onChange={(event) => {
+                setSectorId(event.target.value);
+                if (event.target.value) setCompanyId('');
+              }}
             >
               <option value="">{t('allSectors')}</option>
               {sectors.map((item) => (
@@ -145,6 +156,11 @@ export function CalendarPage({
         </Field>
         <Button type="submit">{t('open')}</Button>
       </form>
+      {!scope && (
+        <p className="mt-8 rounded-card border border-border p-5 text-fg-muted">
+          {t('chooseScope')}
+        </p>
+      )}
       {scope && data && (
         <div className="mt-8">
           <CalendarView key={`${scope.kind}:${scope.id}`} scope={scope} data={data} />

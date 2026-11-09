@@ -48,6 +48,9 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 pb-28">
       <PageHeader title={t('title')} description={t('description')} />
+      <Link href="/basvuru-takvimi" className={`${buttonClasses({ variant: 'secondary' })} mt-5`}>
+        {t('calendarLink')}
+      </Link>
       <form action="/sirketler" className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-end">
         <Field className="min-w-0 flex-1" label={t('searchLabel')}>
           {(p) => <Input {...p} name="q" defaultValue={query} autoComplete="organization" />}

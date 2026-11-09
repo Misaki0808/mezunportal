@@ -19,13 +19,7 @@ export async function getApplicationCalendar(
     const actor = await requireVerifiedMember();
     const parsed = parseInput(applicationScopeSchema, input);
     if (!parsed.ok) return parsed.failure;
-    return actionOk(
-      (await service.getApplicationCalendar(
-        getDb(),
-        actor.userId,
-        parsed.data,
-      )) as ApplicationCalendar,
-    );
+    return actionOk(await service.getApplicationCalendar(getDb(), actor.userId, parsed.data));
   } catch (error) {
     return failAction(error);
   }
@@ -37,11 +31,7 @@ export async function setApplicationFollow(
     const actor = await requireVerifiedMember({ roles: ['STUDENT'] });
     const parsed = parseInput(applicationFollowSchema, input);
     if (!parsed.ok) return parsed.failure;
-    return actionOk(
-      (await service.setApplicationFollow(getDb(), actor.userId, parsed.data)) as {
-        following: boolean;
-      },
-    );
+    return actionOk(await service.setApplicationFollow(getDb(), actor.userId, parsed.data));
   } catch (error) {
     return failAction(error);
   }

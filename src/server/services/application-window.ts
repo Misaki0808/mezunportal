@@ -8,7 +8,10 @@ import {
 } from '@/contracts/application-window';
 import { codedForbidden, codedNotFound } from '@/lib/errors';
 import { createPermissions, type Actor } from '../permissions';
-import { applicationDistribution } from '../rules/application-window';
+import {
+  applicationDistribution,
+  sectorApplicationDistribution,
+} from '../rules/application-window';
 import { notSuspended } from './mentor-directory';
 import { requireConsent } from './privacy';
 import { viewerUniversityIds } from './search';
@@ -19,11 +22,11 @@ function isStudent(actor: Actor) {
     (m) => m.role === 'STUDENT' && m.endedAt === null && m.verificationStatus === 'VERIFIED',
   );
 }
-async function inScope(
+async function inScope<T>(
   tx: Tx,
   userId: string,
   now: Date,
-  run: (tx: Tx, actor: Actor, universities: string[]) => Promise<unknown>,
+  run: (tx: Tx, actor: Actor, universities: string[]) => Promise<T>,
 ) {
   return tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR UPDATE`.then(async () => {
     const actor = await createPermissions({
@@ -56,12 +59,32 @@ export async function aggregateApplicationMonths(
   // P2-09: aynı kapsamda herhangi bir anonim deneyim varken kesişen kesitler verilmez.
   if (await tx.experience.count({ where: { ...where, isAnonymous: true } })) return [];
   const rows = await tx.experience.findMany({
-    where: { ...where, author: { is: { deletedAt: null, ...notSuspended(now) } } },
-    select: { authorId: true, appliedMonth: true, termSeason: true },
+    where: {
+      ...where,
+      author: {
+        is: {
+          deletedAt: null,
+          ...notSuspended(now),
+          memberships: {
+            some: {
+              endedAt: null,
+              verificationStatus: 'VERIFIED',
+              department: { faculty: { universityId: { in: universities } } },
+            },
+          },
+        },
+      },
+    },
+    select: { authorId: true, companyId: true, appliedMonth: true, termSeason: true },
   });
-  return applicationDistribution(
-    rows.flatMap((row) => (row.authorId ? [{ ...row, authorId: row.authorId }] : [])),
+  const source = rows.flatMap((row) =>
+    row.authorId && row.companyId
+      ? [{ ...row, authorId: row.authorId, companyId: row.companyId }]
+      : [],
   );
+  return parsed.kind === 'SECTOR'
+    ? sectorApplicationDistribution(source)
+    : applicationDistribution(source);
 }
 export async function getApplicationCalendar(
   db: PrismaClient,

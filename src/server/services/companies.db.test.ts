@@ -159,6 +159,7 @@ it('şirket birleştirme bağlantıları taşır, audit yazar, tekrar aynı sonu
     select: { id: true },
   });
   const userId = await alumni(w.company.id, w.institution.deptA1, 'Mezun');
+  await db.companyFollow.create({ data: { userId: w.viewer, companyId: w.company.id } });
   const experience = await published(w.company.id, w.institution.deptA1, userId, false);
   const posting = await db.jobPosting.create({
     data: { authorId: userId, departmentIdAtWrite: w.institution.deptA1, companyId: w.company.id },
@@ -181,6 +182,9 @@ it('şirket birleştirme bağlantıları taşır, audit yazar, tekrar aynı sonu
     ).companyId,
   ).toBe(target.id);
   expect(await db.position.count({ where: { userId, companyId: target.id } })).toBe(1);
+  expect(await db.companyFollow.count({ where: { userId: w.viewer, companyId: target.id } })).toBe(
+    1,
+  );
   expect(
     (
       await db.jobPosting.findUniqueOrThrow({

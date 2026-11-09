@@ -109,10 +109,18 @@ describe('deneyim formu', () => {
     await user.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
     expect(save).toHaveBeenCalledWith({
       departmentId: 'd1',
+      appliedMonth: null,
       content: { type: 'INTERNSHIP', processSteps: [], interviewQuestions: [] },
       isAnonymous: true,
     });
     expect(await screen.findByText('Taslak kaydedildi.')).toBeInTheDocument();
+  });
+  it('başvuru ayı yalnız özel kaydetme alanında gönderilir', async () => {
+    const { user, save } = setup();
+    await user.selectOptions(screen.getByLabelText('Başvuru ayı (isteğe bağlı)'), '3');
+    await user.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+    expect(save.mock.calls[0]![0]).toMatchObject({ appliedMonth: 3 });
+    expect(save.mock.calls[0]![0].content).not.toHaveProperty('appliedMonth');
   });
 
   it('geçerli içerik onay penceresinden sonra kaydedilir ve gönderilir; sonraki kayıt aynı kaydı günceller', async () => {

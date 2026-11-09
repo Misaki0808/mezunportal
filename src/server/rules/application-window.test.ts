@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { applicationDistribution, applicationWindowCycle } from './application-window';
+import {
+  applicationDistribution,
+  applicationWindowCycle,
+  sectorApplicationDistribution,
+} from './application-window';
 describe('başvuru dağılımı', () => {
   it('üç farklı yazardan azını gizler; bir yazarı bir kez sayar', () => {
     const row = (authorId: string) => ({
@@ -23,6 +27,22 @@ describe('başvuru dağılımı', () => {
       { month: 2, count: 3 },
       { month: 12, count: 3 },
     ]);
+  });
+  it('sektör ve şirket sayısından küçük veya çakışan grup çıkarılmasını engeller', () => {
+    const row = (authorId: string, companyId: string) => ({
+      authorId,
+      companyId,
+      appliedMonth: 4,
+      termSeason: null,
+    });
+    const group = [row('a', 'x'), row('b', 'x'), row('c', 'x')];
+    expect(sectorApplicationDistribution([...group, row('d', 'y')])).toEqual([]);
+    expect(
+      sectorApplicationDistribution([...group, row('a', 'y'), row('d', 'y'), row('e', 'y')]),
+    ).toEqual([]);
+    expect(
+      sectorApplicationDistribution([...group, row('d', 'y'), row('e', 'y'), row('f', 'y')]),
+    ).toEqual([{ month: 4, count: 6 }]);
   });
   it.each([
     ['2026-02-28T20:59:59Z', null],

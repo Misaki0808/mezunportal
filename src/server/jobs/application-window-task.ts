@@ -16,16 +16,17 @@ export async function scheduleApplicationWindows(db: PrismaClient, now = new Dat
   let staged = 0;
   for (const { userId } of followers) {
     if (!(await hasCurrentApplicationWindow(db, userId, cycle, now))) continue;
-    await db.$transaction(async (tx) => {
+    const didStage = await db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR KEY SHARE`;
       const active = await tx.user.findFirst({
         where: { id: userId, deletedAt: null },
         select: { id: true },
       });
-      if (!active || !(await tx.companyFollow.count({ where: { userId } }))) return;
+      if (!active || !(await tx.companyFollow.count({ where: { userId } }))) return false;
       await stageNotification(tx, userId, { type: 'applicationWindow', event: 'reminder', cycle });
+      return true;
     });
-    staged++;
+    if (didStage) staged++;
   }
   return staged;
 }

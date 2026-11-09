@@ -2869,7 +2869,8 @@
     "mergeSuccess": "Şirketler birleştirildi.",
     "cancel": "Vazgeç",
     "chooseDifferent": "Farklı iki şirket seç.",
-    "open": "Şirketi incele"
+    "open": "Şirketi incele",
+    "calendarLink": "Başvuru takvimini keşfet"
   },
   "applicationCalendar": {
     "title": "Başvuru takvimi",
@@ -2907,7 +2908,8 @@
     "open": "Takvimi göster",
     "allSectors": "Sektör seç",
     "noSectors": "Henüz sektör yok.",
-    "allCompanies": "Şirket seç"
+    "allCompanies": "Şirket seç",
+    "chooseScope": "Bir şirket veya sektör seçerek başvuru dönemlerini görebilirsin."
   },
   "referrals": {
     "title": "Referanslarım",

@@ -561,28 +561,27 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
             <section key={section.id} className="flex flex-col gap-5">
               <h2 className="text-xl font-semibold text-fg">{sectionTitle[section.id]}</h2>
               {visible.map(renderField)}
+              {section.id === 'process' && type === 'INTERNSHIP' && (
+                <Field label={calendar('monthLabel')} hint={calendar('monthHint')}>
+                  {(control) => (
+                    <Select
+                      {...control}
+                      value={appliedMonth}
+                      onChange={(event) => setAppliedMonth(event.target.value)}
+                    >
+                      <option value="">{calendar('monthUnknown')}</option>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                        <option key={month} value={month}>
+                          {calendar(`months.${month as 1}`)}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                </Field>
+              )}
             </section>
           );
         })}
-
-        {type === 'INTERNSHIP' && (
-          <Field label={calendar('monthLabel')} hint={calendar('monthHint')}>
-            {(control) => (
-              <Select
-                {...control}
-                value={appliedMonth}
-                onChange={(event) => setAppliedMonth(event.target.value)}
-              >
-                <option value="">{calendar('monthUnknown')}</option>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                  <option key={month} value={month}>
-                    {calendar(`months.${month as 1}`)}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
-        )}
 
         <section className="flex flex-col gap-3">
           <h2 className="text-xl font-semibold text-fg">{t('form.sections.privacy')}</h2>

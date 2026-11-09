@@ -20,7 +20,11 @@ import {
   type IntentRecord,
 } from '../services/notification-intent';
 
-export async function sendNotificationIntent(db: PrismaClient, row: IntentRecord) {
+export async function sendNotificationIntent(
+  db: PrismaClient,
+  row: IntentRecord,
+  now = new Date(),
+) {
   const payload = notificationIntentPayload.parse(row.payload);
   if (payload.type === 'pilotInvitation') {
     const env = getAuthEnv();
@@ -121,7 +125,6 @@ export async function sendNotificationIntent(db: PrismaClient, row: IntentRecord
     return;
   }
   if (payload.type === 'applicationWindow') {
-    const now = new Date();
     if (!(await hasCurrentApplicationWindow(db, row.userId, payload.cycle, now))) return;
     const today = istanbulDay(now);
     await db.$transaction(async (tx) => {
