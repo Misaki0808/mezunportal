@@ -21,6 +21,7 @@ export default async function AdminOverviewPage() {
   if (!overview.ok) return <ErrorState errorCode={overview.errorCode} />;
   const t = await getTranslations('admin');
   const digest = await getTranslations('monthlyDigest');
+  const campusEvents = await getTranslations('campusEvents');
   const { capabilities } = overview.data;
   const links = [
     { key: 'usageMetrics', href: '/yonetim/kullanim', visible: true },
@@ -92,6 +93,12 @@ export default async function AdminOverviewPage() {
         className="press-row mt-6 flex min-h-14 items-center rounded-card border border-border p-4 font-semibold"
       >
         {digest('adminPreview')} →
+      </Link>
+      <Link
+        href="/yonetim/etkinlikler"
+        className="press-row mt-3 flex min-h-14 items-center rounded-card border border-border p-4 font-semibold"
+      >
+        {campusEvents('adminTitle')} →
       </Link>
       <ul className="mt-7 grid gap-3 sm:grid-cols-2">
         {links

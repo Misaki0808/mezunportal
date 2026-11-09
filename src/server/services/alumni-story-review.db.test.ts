@@ -103,7 +103,7 @@ it('iki farklı hikâyenin aynı bölüm/ay yarışı tek seçimdir; rıza/sür�
   await setStoryConsent(deps, author, { storyId: id, consent: true });
   await saveStory(deps, author, {
     departmentId: w.inst.deptA1,
-    body: BODY + ' Yeni deneyimlerimi paylaşarak gelişmeye devam ettim.',
+    body: BODY + ' Deneyimlerimi paylaşarak gelişmeye devam ettim.',
     consent: true,
   });
   await hidden();

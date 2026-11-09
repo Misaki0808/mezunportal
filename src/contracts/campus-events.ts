@@ -78,6 +78,7 @@ export const campusEventViewSchema = z
 export const campusEventCodeSchema = z
   .object({
     code: z.string().regex(/^\d{6}$/),
+    qrSvg: z.string().min(1),
     expiresAt: z.date(),
     attendanceCount: z.number().int().nonnegative(),
   })

@@ -18,6 +18,8 @@ describe('etkinlik katılımı', () => {
     expect(validCampusEventCode({ ...input, now: first.expiresAt })).toBe(false);
     expect(validCampusEventCode({ ...input, now: new Date(now.getTime() - 1) })).toBe(false);
     expect(validCampusEventCode({ ...input, now: input.endsAt })).toBe(false);
+    expect(validCampusEventCode({ ...input, startsAt: new Date(now.getTime() + 1) })).toBe(false);
+    expect(validCampusEventCode({ ...input, endsAt: now })).toBe(false);
   });
   it('beşinci katılımda aylık puan çarpanını sıfırlar', () => {
     expect(eventAttendanceMultiplier(3)).toBe(100);
