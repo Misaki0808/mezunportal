@@ -100,7 +100,9 @@ it('başka kaynak yazarın Unicode adı, e-posta ve telefon türev soru ve süre
   expect(result.groups.flatMap((g) => g.questions)).toEqual([
     { text: 'SQL nedir?', count: 3, category: 'QUESTION' },
   ]);
-  expect(JSON.stringify(result)).not.toMatch(/Néhir|Ｎｅｈｉｒ|N e h i r|@example|532/);
+  expect(JSON.stringify(result)).not.toMatch(
+    /Néhir|Ｎｅｈｉｒ|N e h i r|@example|\+90 532 123 45 67|０５３２１２３４５６７|0 5 3 2 1 2 3 4 5 6 7/,
+  );
 });
 it('kimlik kapısı başka kaynak yazar askıya alınınca adını sorularda açmaz', async () => {
   const w = await fixture();

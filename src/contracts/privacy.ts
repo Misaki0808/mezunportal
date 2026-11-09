@@ -240,6 +240,7 @@ export const exportedProfileSchema = z
     summary: z.string().nullable(),
     city: z.string().nullable(),
     goals: z.string().nullable(),
+    targetTitleId: z.string().nullable(),
     socialLinks: z.json().nullable(),
     linkedinUrl: z.string().nullable(),
     completionScore: z.number().int().min(0).max(100),

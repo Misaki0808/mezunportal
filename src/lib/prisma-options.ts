@@ -9,6 +9,7 @@
  */
 export const PRISMA_OMIT = {
   company: { searchKeys: true },
+  profile: { targetTitleId: true },
   experience: { searchKeys: true },
   faqItem: { searchKeys: true },
   jobPosting: { searchKeys: true },

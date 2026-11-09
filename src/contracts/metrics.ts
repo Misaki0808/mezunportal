@@ -68,6 +68,7 @@ export const MENTOR_FILTER_KEYS = [
   'sectorId',
   'company',
   'title',
+  'skill',
   'experienceTypes',
   'meetingModes',
   'onlyAvailable',

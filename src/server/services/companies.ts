@@ -60,12 +60,12 @@ async function asMember<T>(
 }
 /** Pozisyonlar bugün profilde aynı üniversitenin doğrulanmış üyelerine açıktır (PM A). */
 export function countableAlumniPositionsWhere(
-  companyId: string,
+  companyId: string | undefined,
   universityIds: string[],
   now: Date,
 ): Prisma.PositionWhereInput {
   return {
-    companyId,
+    ...(companyId ? { companyId } : {}),
     user: {
       deletedAt: null,
       ...notSuspended(now),
