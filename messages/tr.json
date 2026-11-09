@@ -1807,7 +1807,8 @@
         "UNMATCHED_RESOLVE": "Eşleşmeyen değer kararı",
         "AWARD_CYCLE_CONFIGURE": "Ödül töreni ayarı",
         "AWARD_RECALCULATE": "Ödül adaylarını yeniden hesaplama",
-        "AWARD_SELECT": "Yılın mezunu seçimi"
+        "AWARD_SELECT": "Yılın mezunu seçimi",
+        "AWARD_REVIEW_REQUIRED": "Ödül için yeniden inceleme uyarısı"
       },
       "targets": {
         "USER": "Kullanıcı",
@@ -3056,6 +3057,7 @@
     "awardLink": "Ödüllerim",
     "awardDescription": "Ödülünü ve yayın tercihini görüntüle.",
     "share": "Paylaşım metnini kopyala",
-    "shareText": "{university} {department} bölümünde {year} akademik yılı Yılın Mezunu ödülünü aldım. Doğrula: {url}"
+    "shareText": "{university} {department} bölümünde {year} akademik yılı Yılın Mezunu ödülünü aldım. Doğrula: {url}",
+    "awardNeedsReview": "Bu ödül için sonradan doğrulanmış şüphe var. Geçerli katkıları ve ödül kararını yeniden incele."
   }
 }

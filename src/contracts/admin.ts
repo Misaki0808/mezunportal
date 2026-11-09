@@ -406,6 +406,7 @@ export const AUDIT_ACTION_NAMES = [
   'AWARD_CYCLE_CONFIGURE',
   'AWARD_RECALCULATE',
   'AWARD_SELECT',
+  'AWARD_REVIEW_REQUIRED',
 ] as const;
 export type AuditActionName = (typeof AUDIT_ACTION_NAMES)[number];
 

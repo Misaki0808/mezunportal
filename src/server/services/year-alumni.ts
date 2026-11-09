@@ -145,17 +145,21 @@ async function view(
     frozenAt: Date | null;
   },
   now: Date,
+  actor: { userId: string },
 ): Promise<AwardCycleView> {
   let candidates;
   let excludedForSuspicion = 0;
   if (cycle.frozenAt) {
+    const disqualifyingFlags: Prisma.SuspicionFlagWhereInput = {
+      OR: [{ status: 'OPEN' }, { status: 'CONFIRMED', decidedAt: { gt: cycle.frozenAt } }],
+    };
     const rows = await tx.awardCandidate.findMany({
       where: {
         cycleId: cycle.id,
         user: {
           deletedAt: null,
           OR: [{ banned: false }, { banExpires: { lte: now } }],
-          suspicionFlags: { none: { status: 'OPEN' } },
+          suspicionFlags: { none: disqualifyingFlags },
           memberships: {
             some: {
               departmentId: cycle.departmentId,
@@ -180,7 +184,7 @@ async function view(
       }),
     );
     excludedForSuspicion = await tx.awardCandidate.count({
-      where: { cycleId: cycle.id, user: { suspicionFlags: { some: { status: 'OPEN' } } } },
+      where: { cycleId: cycle.id, user: { suspicionFlags: { some: disqualifyingFlags } } },
     });
   } else {
     const calculated = await candidateRows(tx, cycle.departmentId, cycle.year, now);
@@ -189,8 +193,37 @@ async function view(
   }
   const selected = await tx.award.findFirst({
     where: { cycleId: cycle.id },
-    select: { userId: true },
+    select: { id: true, userId: true, createdAt: true },
   });
+  const awardFlags = selected
+    ? await tx.suspicionFlag.findMany({
+        where: {
+          userId: selected.userId,
+          status: 'CONFIRMED',
+          decidedAt: { gt: selected.createdAt },
+        },
+        select: { id: true },
+      })
+    : [];
+  // Döngü kilidi altında, yöneticiye ilk gösterimde her ödül/bayrak için tek uyarı kaydı.
+  for (const flag of awardFlags) {
+    const recorded = await tx.adminAuditLog.findFirst({
+      where: {
+        action: 'AWARD_REVIEW_REQUIRED',
+        targetId: selected!.id,
+        metadata: { path: ['flagId'], equals: flag.id },
+      },
+      select: { id: true },
+    });
+    if (!recorded)
+      await recordAdminAction(tx, {
+        actor,
+        action: 'AWARD_REVIEW_REQUIRED',
+        targetType: 'AWARD',
+        targetId: selected!.id,
+        metadata: { flagId: flag.id },
+      });
+  }
   return {
     year: cycle.year,
     departmentId: cycle.departmentId,
@@ -199,6 +232,7 @@ async function view(
     candidates,
     excludedForSuspicion,
     selectedUserId: selected?.userId ?? null,
+    selectedNeedsReview: awardFlags.length > 0,
   };
 }
 export async function configureAwardCycle(deps: Deps, userId: string, input: unknown) {
@@ -227,14 +261,14 @@ export async function configureAwardCycle(deps: Deps, userId: string, input: unk
       targetType: 'AWARD_CYCLE',
       targetId: cycle.id,
     });
-    return view(tx, cycle, now);
+    return view(tx, cycle, now, actor);
   }, TX_OPTIONS);
 }
 export async function listAwardCandidates(deps: Deps, userId: string, input: unknown) {
   const data = awardCycleInputSchema.parse(input),
     now = nowOf(deps);
   return deps.db.$transaction(async (tx) => {
-    await admin(tx, userId, data.departmentId, now);
+    const actor = await admin(tx, userId, data.departmentId, now);
     let cycle = await lockCycle(tx, data.departmentId, data.year);
     if (!cycle.frozenAt && now >= new Date(cycle.ceremonyAt.getTime() - 30 * 86400_000)) {
       if (now.getTime() > freezeDeadline(cycle.ceremonyAt) + FREEZE_GRACE_MS)
@@ -242,7 +276,7 @@ export async function listAwardCandidates(deps: Deps, userId: string, input: unk
       await freeze(tx, cycle, now);
       cycle = (await tx.awardCycle.findUnique({ where: { id: cycle.id } }))!;
     }
-    return view(tx, cycle, now);
+    return view(tx, cycle, now, actor);
   }, TX_OPTIONS);
 }
 export async function recalculateAwardCycle(deps: Deps, userId: string, input: unknown) {
@@ -261,7 +295,7 @@ export async function recalculateAwardCycle(deps: Deps, userId: string, input: u
       targetId: cycle.id,
       reason: data.reason,
     });
-    return view(tx, { ...cycle, frozenAt: now }, now);
+    return view(tx, { ...cycle, frozenAt: now }, now, actor);
   }, TX_OPTIONS);
 }
 export async function selectYearAlumnus(deps: Deps, userId: string, input: unknown) {
@@ -272,7 +306,7 @@ export async function selectYearAlumnus(deps: Deps, userId: string, input: unkno
     const cycle = await lockCycle(tx, data.departmentId, data.year);
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${data.userId} FOR UPDATE`;
     if (!cycle.frozenAt) throw codedValidation('VALIDATION_INVALID');
-    const available = await view(tx, cycle, now);
+    const available = await view(tx, cycle, now, actor);
     if (!available.candidates.some((x) => x.userId === data.userId) || available.selectedUserId)
       throw codedValidation('VALIDATION_INVALID');
     const award = await tx.award.create({

@@ -40,6 +40,7 @@ export const ADMIN_ACTIONS = {
   AWARD_CYCLE_CONFIGURE: { reasonRequired: false },
   AWARD_RECALCULATE: { reasonRequired: true },
   AWARD_SELECT: { reasonRequired: true },
+  AWARD_REVIEW_REQUIRED: { reasonRequired: false },
 } as const;
 
 export type AdminActionName = keyof typeof ADMIN_ACTIONS;
