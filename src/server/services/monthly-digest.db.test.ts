@@ -102,6 +102,13 @@ it('boş hesap niyet üretmez; anonim yazar gizli, kapsam dışı deneyim dışa
   await sendNotificationIntent(db, intent, now);
   expect(mail).not.toHaveBeenCalled();
   await db.jobMatchDigest.deleteMany({ where: { userId } });
+  mail.mockRejectedValueOnce(new Error('QUEUE_FAILED'));
+  await expect(sendNotificationIntent(db, intent, now)).rejects.toThrow('QUEUE_FAILED');
+  expect(
+    await db.jobMatchDigest.findUnique({ where: { userId_day: { userId, day: '2026-03-01' } } }),
+  ).not.toBeNull();
+  mail.mockClear();
+  await db.jobMatchDigest.deleteMany({ where: { userId } });
   await sendNotificationIntent(db, intent, now);
   await sendNotificationIntent(db, intent, now);
   expect(mail).toHaveBeenCalledTimes(1);

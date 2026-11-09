@@ -76,16 +76,17 @@ export async function sendNotificationIntent(
         })) >= 3
       )
         return;
+      // E-posta kendi outbox işleminde commit edilir. Kota önce ayrı ve kalıcı olarak
+      // ayrılır: iki commit arasında süreç çökerse sınır aşılmaz; özet ertesi gün denenir.
+      await db.jobMatchDigest.create({ data: { userId: row.userId, day: today } });
       const env = getAuthEnv();
-      const result = await enqueueEmail({
+      await enqueueEmail({
         ...monthlyDigestEmail(digest, row.userId, env.BETTER_AUTH_SECRET, env.APP_URL),
         to: user.email,
         recipientUserId: row.userId,
         template: 'monthlyDigest.summary',
         idempotencyKey: key,
       });
-      if (result.emailLogId)
-        await tx.jobMatchDigest.create({ data: { userId: row.userId, day: today } });
     });
     return;
   }
