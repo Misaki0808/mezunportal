@@ -178,6 +178,8 @@ Taslak plan: `docs/faz2-plan.md` (adım ayrıntıları, dalga sırası, onay nok
 
 Kariyer yolu haritası · doğal dille arama · diğer fakültelere ve üniversitelere açılma.
 
+- Yerel profil fotoğrafı yükleme ve güvenli sunma altyapısı; gösterim için ayrı açık rıza.
+
 ## Sürekli kapılar
 
 - Her faz sonunda `faz-kapanis` skill'i: kapılar yeniden, plan↔yapılan, telefon testi, hocaya

@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   getHomeSummary: vi.fn(),
   getSuggestedJobs: vi.fn(),
   getLandingStats: vi.fn(),
+  getCurrentStory: vi.fn(),
 }));
 vi.mock('@/server/permissions', () => ({
   requireUser: mocks.requireUser,
@@ -24,6 +25,7 @@ vi.mock('@/server/actions/home', () => ({
   getHomeSummary: mocks.getHomeSummary,
   getSuggestedJobs: mocks.getSuggestedJobs,
 }));
+vi.mock('@/server/actions/alumni-story', () => ({ getCurrentStory: mocks.getCurrentStory }));
 vi.mock('@/server/services/landing', () => ({ getLandingStats: mocks.getLandingStats }));
 vi.mock('@/components/landing/landing', () => ({
   Landing: () => (
@@ -56,6 +58,7 @@ describe('HomePage', () => {
       meetings: null,
     });
     mocks.getSuggestedJobs.mockResolvedValue({ ok: true, data: [] });
+    mocks.getCurrentStory.mockReset().mockResolvedValue({ ok: true, data: null });
     mocks.getHomeSummary.mockReset();
     mocks.getHomeSummary.mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
   });
@@ -64,9 +67,10 @@ describe('HomePage', () => {
     renderUi(await HomePage());
     expect(screen.queryByRole('link', { name: /verificationTitle/ })).not.toBeInTheDocument();
     expect(mocks.getVerificationState).not.toHaveBeenCalled();
+    expect(mocks.getCurrentStory).not.toHaveBeenCalled();
   });
   it('doğrulanmamış oturuma sunucu durumundan doğrulama bağlantısı gösterir', async () => {
-    mocks.requireUser.mockResolvedValue({});
+    mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
     mocks.getVerificationState.mockResolvedValue({ ok: true, data: { status: 'NOT_STARTED' } });
     renderUi(await HomePage());
     expect(screen.getByRole('link', { name: /verificationTitle/ })).toHaveAttribute(
@@ -75,13 +79,13 @@ describe('HomePage', () => {
     );
   });
   it('doğrulanmış üyeye doğrulama uyarısı göstermez', async () => {
-    mocks.requireUser.mockResolvedValue({});
+    mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
     mocks.getVerificationState.mockResolvedValue({ ok: true, data: { status: 'VERIFIED' } });
     renderUi(await HomePage());
     expect(screen.queryByRole('link', { name: /verificationTitle/ })).not.toBeInTheDocument();
   });
   it('inceleme bekleyen belgeyi doğrulamaya başlamamış gibi göstermez', async () => {
-    mocks.requireUser.mockResolvedValue({});
+    mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
     mocks.getVerificationState.mockResolvedValue({ ok: true, data: { status: 'AWAITING_REVIEW' } });
     renderUi(await HomePage());
     expect(screen.getByRole('link', { name: /reviewTitle/ })).toHaveAttribute('href', '/dogrulama');
@@ -90,7 +94,7 @@ describe('HomePage', () => {
 });
 
 it('giriş sonrası zorunlu onay eksikse doğrulamadan önce onaya gider', async () => {
-  mocks.requireUser.mockResolvedValue({});
+  mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
   mocks.getConsentState.mockResolvedValue({ ok: true, data: { blocking: true } });
   mocks.getVerificationState.mockClear();
   await expect(HomePage()).rejects.toThrow('onay-redirect');
@@ -98,7 +102,7 @@ it('giriş sonrası zorunlu onay eksikse doğrulamadan önce onaya gider', async
 });
 
 it('doğrulanmış ve ilk girişi yarım kullanıcıya başlangıç bağlantısı gösterir', async () => {
-  mocks.requireUser.mockResolvedValue({});
+  mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
   mocks.getConsentState.mockResolvedValue({ ok: true, data: { blocking: false } });
   mocks.getVerificationState.mockResolvedValue({ ok: true, data: { status: 'VERIFIED' } });
   mocks.getOnboardingState.mockResolvedValue({ ok: true, data: { step: 'INTERESTS' } });
@@ -128,7 +132,7 @@ const summary = (over: object = {}) => ({
 
 describe('HomePage: kişisel pano', () => {
   beforeEach(() => {
-    mocks.requireUser.mockResolvedValue({});
+    mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
     mocks.getConsentState.mockResolvedValue({ ok: true, data: { blocking: false } });
     mocks.getVerificationState.mockResolvedValue({ ok: true, data: { status: 'VERIFIED' } });
     mocks.getOnboardingState.mockResolvedValue({ ok: true, data: { step: 'COMPLETE' } });

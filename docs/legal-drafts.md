@@ -147,3 +147,9 @@ kaç kez gösterildiğini görürsünüz; **kimin baktığı tutulmaz.**
 akademik yıl ve kurumum giriş yapmayan kişiler tarafından da görülebilir. Yayın iznini vermek
 isteğe bağlıdır; istediğim zaman Ödüllerim ekranından geri alabilirim. İzni geri aldığımda
 kamuya açık doğrulama sayfası kapanır. Metin hoca/üniversite ve hukuk onayı bekleyen taslaktır.
+
+## §6 Ayın mezunu hikâyesi yayın rızası (P2-02) — TASLAK, onay bekliyor ⏸
+
+> Sürüm: `taslak-1`. Metin değiştiğinde sürüm artar ve yayın için yeni açık rıza istenir.
+
+Hikâyemin incelendikten ve ayın mezunu seçildikten sonra adım ve bölümümle birlikte yalnız bölümümün doğrulanmış üyelerine gösterilmesini isteğe bağlı olarak kabul ediyorum. Rızamı istediğim an geri alabilirim; geri aldığımda hikâyem ana sayfadan ve arşivden kaldırılır. Metin kullanıcı, hoca ve hukuk onayı bekleyen taslaktır.
