@@ -1035,8 +1035,7 @@
     "testSignIn": {
       "title": "Yerel test girişi",
       "submit": "Test hesabıyla giriş yap",
-      "pickTitle": "Yerel test girişi: rol seç",
-      "pickDescription": "Yalnız yerel ve test ortamında görünür. Girmek istediğin test hesabını seç.",
+      "chooseRole": "Devam etmek için bir test rolü seç.",
       "personas": {
         "student": "Öğrenci",
         "seniorMentor": "Üst sınıf mentor",

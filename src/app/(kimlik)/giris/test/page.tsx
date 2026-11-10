@@ -20,29 +20,31 @@ export default async function TestSignInPage({
   // Gerçek giriş akışı gibi: güvenli dönüş yolu varsa girişten sonra oraya dönülür.
   const returnTo = safeReturnPath(query[RETURN_PATH_PARAM]);
   const t = await getTranslations('authScreens.testSignIn');
-  // Rol verilmeden açılınca (yalnız local/test) rol seçici listesi; boş 404 değil.
   if (query.persona === undefined) {
     return (
-      <div className="mx-auto max-w-lg px-5 py-12">
-        <h1 className="text-3xl font-semibold">{t('pickTitle')}</h1>
-        <p className="mt-2 text-fg-muted">{t('pickDescription')}</p>
-        <ul className="mt-6 flex flex-col gap-3">
+      <main className="mx-auto max-w-lg px-5 py-12">
+        <h1 className="text-3xl font-semibold">{t('title')}</h1>
+        <p className="mt-3 text-fg-muted">{t('chooseRole')}</p>
+        <ul className="mt-6 space-y-3">
           {TEST_LOGIN_PERSONAS.map((persona) => {
             const params = new URLSearchParams({ persona });
             if (returnTo) params.set(RETURN_PATH_PARAM, returnTo);
             return (
               <li key={persona}>
                 <Link
-                  href={`/giris/test?${params.toString()}`}
-                  className="press-row flex min-h-14 items-center rounded-card border border-border bg-surface px-5 text-lg font-semibold"
+                  href={`/giris/test?${params}`}
+                  className="press-row flex min-h-14 items-center rounded-card border border-border bg-surface px-5 py-3 font-semibold shadow-card"
                 >
-                  {t(`personas.${persona}`)}
+                  {t(`personas.${persona}`)}{' '}
+                  <span aria-hidden="true" className="ml-auto">
+                    →
+                  </span>
                 </Link>
               </li>
             );
           })}
         </ul>
-      </div>
+      </main>
     );
   }
   const parsed = testLoginSchema.safeParse({ persona: query.persona });

@@ -5,6 +5,7 @@ import { createNotificationRuntime } from './notification-worker';
 import { createPointsRuntime } from './points';
 import { getDb } from '../db';
 import { isLlmConfigured } from '../external/llm';
+import { pathToFileURL } from 'node:url';
 async function main() {
   const runtime = await createEmailRuntime(true);
   // CV ayrıştırma kuyruğu yalnız sağlayıcı yapılandırılmışsa dinlenir (yoksa yükleme zaten kapalıdır).
@@ -57,7 +58,10 @@ async function main() {
       void stop();
     });
 }
-main().catch(() => {
-  process.stderr.write('worker: unavailable\n');
-  process.exitCode = 1;
-});
+// Modül bağımlılıkları yan etkisiz yüklenebilir; gerçek worker yalnız giriş noktası olarak çalışır.
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  main().catch(() => {
+    process.stderr.write('worker: unavailable\n');
+    process.exitCode = 1;
+  });
+}

@@ -1,5 +1,6 @@
-import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { TEST_LOGIN_PERSONAS } from '@/contracts/auth';
 
 import TestSignInPage from './page';
 
@@ -14,6 +15,9 @@ describe('/giris/test', () => {
     await expect(
       TestSignInPage({ searchParams: Promise.resolve({ persona: 'student' }) }),
     ).rejects.toMatchObject({ digest: expect.stringContaining('404') });
+    await expect(TestSignInPage({ searchParams: Promise.resolve({}) })).rejects.toMatchObject({
+      digest: expect.stringContaining('404'),
+    });
   });
   it('geçersiz rolü reddeder', async () => {
     vi.stubEnv('APP_ENV', 'local');
@@ -27,17 +31,26 @@ describe('/giris/test', () => {
       TestSignInPage({ searchParams: Promise.resolve({ persona: 'student' }) }),
     ).resolves.toBeDefined();
   });
-  it('rol verilmezse prod/boş ortamda yine 404 verir', async () => {
-    vi.stubEnv('APP_ENV', 'prod');
-    await expect(TestSignInPage({ searchParams: Promise.resolve({}) })).rejects.toMatchObject({
-      digest: expect.stringContaining('404'),
-    });
-  });
-  it('yerelde rol verilmezse altı rolü listeler ve dönüş yolunu bağlara taşır', async () => {
+  it.each(['local', 'test'])(
+    '%s ortamında altı rolü ve güvenli dönüş yolunu gösterir',
+    async (appEnv) => {
+      vi.stubEnv('APP_ENV', appEnv);
+      const markup = renderToStaticMarkup(
+        await TestSignInPage({ searchParams: Promise.resolve({ donus: '/hesap/bildirimler' }) }),
+      );
+      for (const persona of TEST_LOGIN_PERSONAS) {
+        expect(markup).toContain(`persona=${persona}&amp;donus=%2Fhesap%2Fbildirimler`);
+        expect(markup).toContain(`personas.${persona}`);
+      }
+      expect((markup.match(/<a\s/g) ?? []).length).toBe(6);
+    },
+  );
+  it('geçersiz dönüş hedefi rol bağlantılarına taşınmaz', async () => {
     vi.stubEnv('APP_ENV', 'local');
-    const page = await TestSignInPage({ searchParams: Promise.resolve({ donus: '/ilanlar' }) });
-    const html = renderToStaticMarkup(page);
-    expect(html.match(/href="\/giris\/test\?persona=/g)).toHaveLength(6);
-    expect(html).toContain('persona=student&amp;donus=%2Filanlar');
+    const markup = renderToStaticMarkup(
+      await TestSignInPage({ searchParams: Promise.resolve({ donus: '//evil.example' }) }),
+    );
+    expect(markup).not.toContain('evil.example');
+    expect(markup).not.toContain('donus=');
   });
 });
