@@ -20,6 +20,7 @@ async function asMember<T>(
   userId: string,
   role: Role,
   run: (tx: Tx, departments: string[], now: Date) => Promise<T>,
+  isolationLevel: 'RepeatableRead' | 'ReadCommitted' = 'RepeatableRead',
 ) {
   const now = new Date();
   return db.$transaction(
@@ -36,7 +37,7 @@ async function asMember<T>(
         .map((m) => m.departmentId);
       return run(tx, departments, now);
     },
-    { isolationLevel: 'RepeatableRead', timeout: 20000, maxWait: 10000 },
+    { isolationLevel, timeout: 20000, maxWait: 10000 },
   );
 }
 
@@ -47,7 +48,10 @@ export async function listAlumniCourses(db: PrismaClient, userId: string) {
         where: { departmentId: { in: departments } },
         orderBy: [{ elective: 'desc' }, { semester: 'asc' }, { name: 'asc' }],
       }),
-      tx.alumniCourseMark.findMany({ where: { userId }, select: { courseId: true } }),
+      tx.alumniCourseMark.findMany({
+        where: { userId, course: { departmentId: { in: departments } } },
+        select: { courseId: true },
+      }),
     ]);
     return { courses, selected: marks.map((m) => m.courseId) };
   });
@@ -59,18 +63,25 @@ export async function saveAlumniCourses(
   input: CourseSelectionInput,
 ) {
   const { courseIds } = courseSelectionSchema.parse(input);
-  return asMember(db, userId, 'ALUMNI', async (tx, departments) => {
-    const count = await tx.course.count({
-      where: { id: { in: courseIds }, departmentId: { in: departments } },
-    });
-    if (count !== courseIds.length) throw codedNotFound('RESOURCE_NOT_FOUND');
-    await tx.alumniCourseMark.deleteMany({ where: { userId } });
-    if (courseIds.length)
-      await tx.alumniCourseMark.createMany({
-        data: courseIds.map((courseId) => ({ userId, courseId })),
+  // Kilit bekledikten sonra önceki yazarın eklediği işaretler de görülüp değiştirilmelidir.
+  return asMember(
+    db,
+    userId,
+    'ALUMNI',
+    async (tx, departments) => {
+      const count = await tx.course.count({
+        where: { id: { in: courseIds }, departmentId: { in: departments } },
       });
-    return { saved: true as const };
-  });
+      if (count !== courseIds.length) throw codedNotFound('RESOURCE_NOT_FOUND');
+      await tx.alumniCourseMark.deleteMany({ where: { userId } });
+      if (courseIds.length)
+        await tx.alumniCourseMark.createMany({
+          data: courseIds.map((courseId) => ({ userId, courseId })),
+        });
+      return { saved: true as const };
+    },
+    'ReadCommitted',
+  );
 }
 
 export async function listCourseGuide(db: PrismaClient, userId: string, input: CourseFilterInput) {

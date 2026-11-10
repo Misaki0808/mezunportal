@@ -23,6 +23,7 @@ describe('ders rehberi sınırları', () => {
     });
   });
   it('küçük sektörün tamamlayıcısını da gizler', () => {
+    expect(summarizeCourseMarks(4, [{ name: 'A', count: 3 }])).toEqual({ count: 4, sectors: [] });
     expect(
       summarizeCourseMarks(5, [
         { name: 'A', count: 3 },
