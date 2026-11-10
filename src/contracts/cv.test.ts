@@ -299,3 +299,12 @@ describe('hata kodu kaydı', () => {
     for (const code of CV_PARSE_FAILURE_CODES) expect(all.has(code), code).toBe(true);
   });
 });
+
+it('LinkedIn PDF kaynağı açıkça doğrulanır; bilinmeyen kaynak reddedilir', () => {
+  const form = new FormData();
+  form.set('file', new File(['%PDF-1.4'], 'profil.pdf', { type: 'application/pdf' }));
+  form.set('source', 'LINKEDIN_PDF');
+  expect(cvUploadFormSchema.safeParse(cvUploadFormInput(form)).success).toBe(true);
+  form.set('source', 'OTHER');
+  expect(cvUploadFormSchema.safeParse(cvUploadFormInput(form)).success).toBe(false);
+});

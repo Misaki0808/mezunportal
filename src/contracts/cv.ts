@@ -273,6 +273,7 @@ export type CvAvailability = z.infer<typeof cvAvailabilitySchema>;
  * Sunucu dosyayı içeriğinden yeniden doğrular (sihirli bayt, sayfa sayısı, şifreli PDF).
  */
 export const cvUploadFormSchema = z.object({
+  source: z.enum(['CV', 'LINKEDIN_PDF'], { error: INVALID }).optional(),
   file: z
     .file({ error: 'DOCUMENT_REQUIRED' })
     .min(1, { error: 'DOCUMENT_EMPTY' })
@@ -282,7 +283,8 @@ export const cvUploadFormSchema = z.object({
 export type CvUploadForm = z.output<typeof cvUploadFormSchema>;
 
 export function cvUploadFormInput(formData: FormData): Record<string, unknown> {
-  return { file: formData.get('file') };
+  const source = formData.get('source');
+  return { file: formData.get('file'), ...(source === null ? {} : { source }) };
 }
 
 export const cvUploadOutputSchema = z.object({

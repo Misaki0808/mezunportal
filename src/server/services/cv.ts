@@ -168,6 +168,7 @@ export async function uploadCv(
         const upload = await tx.cvUpload.create({
           data: {
             userId: actor.userId,
+            source: form.source ?? 'CV',
             storageKey: key,
             byteSize: bytes.length,
             pageCount: check.pageCount,
@@ -372,7 +373,7 @@ function readParsed(value: Prisma.JsonValue | null): ParsedCv {
 async function findParsedUpload(tx: Tx, userId: string, cvUploadId: string) {
   const upload = await tx.cvUpload.findFirst({
     where: { id: cvUploadId, userId },
-    select: { id: true, status: true, parsedJson: true, storageKey: true },
+    select: { id: true, status: true, parsedJson: true, storageKey: true, source: true },
   });
   if (!upload) throw codedNotFound('RESOURCE_NOT_FOUND');
   if (upload.status !== 'PARSED') throw codedConflict('CV_NOT_READY');
@@ -772,7 +773,9 @@ export async function applyCv(
       });
       // Son CV uygulama anı profilde durur ("CV" tamamlama adımı ve tazelik hatırlatması bunu okur).
       const applied = await ensureProfile(tx, actor.userId);
-      await tx.profile.update({ where: { id: applied.id }, data: { cvUpdatedAt: now } });
+      if (upload.source === 'CV') {
+        await tx.profile.update({ where: { id: applied.id }, data: { cvUpdatedAt: now } });
+      }
       scoreAfter = (await syncCompletionScore(tx, actor.userId, now)).percent;
 
       // Saklama: son dosya (bu CV) kalır; eski dosyalar silinir (açık incelemeye bağlı olan hariç).
@@ -786,7 +789,11 @@ export async function applyCv(
         },
         select: { id: true, storageKey: true },
       });
-      await removeUploadFiles(tx, storage, old, deps.holds);
+      if (upload.source === 'LINKEDIN_PDF') {
+        await removeUploadFiles(tx, storage, [upload], deps.holds);
+      } else {
+        await removeUploadFiles(tx, storage, old, deps.holds);
+      }
       return { created, updated, invitations };
     },
     { timeout: 30_000, maxWait: 10_000 },

@@ -909,6 +909,11 @@ model ContactRequest {
 /// `QUEUED` → `PARSING` → `PARSED` (kullanıcı onayını bekler) | `FAILED`; `PARSED` → `APPLIED` | `DISCARDED`.
 /// Veritabanı kısıtları: ayrıştırma çıktısı (`parsedJson`) yalnız `PARSED`'dadır; `FAILED` bir `errorCode`
 /// taşır; bir kullanıcının en fazla bir işlenen (`QUEUED`/`PARSING`) ve bir onay bekleyen (`PARSED`) CV'si vardır.
+enum CvUploadSource {
+  CV
+  LINKEDIN_PDF
+}
+
 enum CvStatus {
   QUEUED
   PARSING
@@ -969,20 +974,21 @@ enum ExperienceInvitationStatus {
 /// kalır, eski dosyalar uygulama/atma anında silinir (açık incelemeye bağlı dosya hariç), hatada anında silinir.
 /// `parsedJson`: doğrulanmış `ParsedCv`, uygulama/atma anında temizlenir; LLM çıktısı yetki belirlemez.
 model CvUpload {
-  id         String    @id @default(uuid(7))
+  id         String         @id @default(uuid(7))
   userId     String
   storageKey String?
   byteSize   Int
   pageCount  Int
-  status     CvStatus  @default(QUEUED)
+  source     CvUploadSource @default(CV)
+  status     CvStatus       @default(QUEUED)
   parsedJson Json?
   /// `FAILED` için kararlı hata kodu (`ERROR_CODES`).
   errorCode  String?
   /// LLM çağrı denemeleri (iş yeniden denemeleri dahil); yalnız sayaç.
-  attempts   Int       @default(0)
+  attempts   Int            @default(0)
   appliedAt  DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
   user           User              @relation(fields: [userId], references: [id], onDelete: Restrict)
   reviewRequests CvReviewRequest[]

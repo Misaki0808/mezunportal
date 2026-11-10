@@ -215,6 +215,7 @@ export const exportedCvSchema = z.object({
     z.object({
       id: z.string(),
       status: z.enum(['QUEUED', 'PARSING', 'PARSED', 'FAILED', 'APPLIED', 'DISCARDED']),
+      source: z.enum(['CV', 'LINKEDIN_PDF']),
       errorCode: z.string().nullable(),
       pageCount: z.number().int(),
       hasFile: z.boolean(),

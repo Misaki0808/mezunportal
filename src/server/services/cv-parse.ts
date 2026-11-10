@@ -255,7 +255,7 @@ export async function purgeCvFiles(
         c."status" IN ('FAILED', 'DISCARDED')
         OR (c."status" = 'APPLIED' AND EXISTS (
           SELECT 1 FROM "CvUpload" n
-          WHERE n."userId" = c."userId" AND n."status" = 'APPLIED'
+          WHERE n."userId" = c."userId" AND n."status" = 'APPLIED' AND n."source" = 'CV'
             AND (n."appliedAt" > c."appliedAt" OR (n."appliedAt" = c."appliedAt" AND n."id" > c."id"))))
       )
     ORDER BY c."updatedAt" ASC
@@ -277,7 +277,7 @@ export async function purgeCvFiles(
             return false;
           if (current.status === 'APPLIED') {
             const latest = await tx.cvUpload.findFirst({
-              where: { userId: row.userId, status: 'APPLIED' },
+              where: { userId: row.userId, status: 'APPLIED', source: 'CV' },
               orderBy: [{ appliedAt: 'desc' }, { id: 'desc' }],
               select: { id: true },
             });
