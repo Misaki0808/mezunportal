@@ -12,6 +12,8 @@ import type { Prisma } from '@/generated/prisma/client';
 
 import { CV_SYSTEM_INSTRUCTION, LlmError } from '../external/llm';
 import { hasActiveConsent } from '../rules/consent';
+import { splitLinkedInSections } from '../rules/linkedin-pdf';
+import type { PdfTextExtractor } from '../external/pdf-text';
 import { DbNull, heldUploadIds, logCv, nowOf, type CvDeps } from './cv-shared';
 
 /**
@@ -25,6 +27,8 @@ import { DbNull, heldUploadIds, logCv, nowOf, type CvDeps } from './cv-shared';
 export type CvParseDeps = Pick<CvDeps, 'db' | 'storage' | 'llm' | 'now' | 'holds'> & {
   /** Tek LLM çağrısının zaman aşımı (ms); varsayılan 60 sn. */
   timeoutMs?: number;
+  /** LinkedIn PDF için metin portu; yoksa dosya sağlayıcıya iletilmez. */
+  pdfTextExtractor?: PdfTextExtractor | null;
 };
 export type CvParseContext = { retryCount: number; retryLimit: number };
 export type CvParseOutcome = 'SKIPPED' | 'PARSED' | 'FAILED' | 'RETRY';
@@ -34,7 +38,11 @@ const OUTPUT_ATTEMPTS = 2;
 
 type Failure = { code: CvParseFailureCode; retryable: boolean };
 
-async function callWithTimeout(deps: CvParseDeps, pdf: Uint8Array): Promise<unknown> {
+async function callWithTimeout(
+  deps: CvParseDeps,
+  pdf: Uint8Array,
+  sectionHints?: ('experience' | 'education' | 'skills')[],
+): Promise<unknown> {
   const llm = deps.llm;
   if (!llm) throw new LlmError('UNAVAILABLE');
   const controller = new AbortController();
@@ -49,6 +57,7 @@ async function callWithTimeout(deps: CvParseDeps, pdf: Uint8Array): Promise<unkn
     return await Promise.race([
       llm.parseCv({
         pdf,
+        ...(sectionHints ? { sectionHints } : {}),
         instruction: CV_SYSTEM_INSTRUCTION,
         schema: parsedCvJsonSchema(),
         signal: controller.signal,
@@ -137,7 +146,7 @@ export async function processCvParse(
   const [upload] = await db.cvUpload.updateManyAndReturn({
     where: { id: cvUploadId, status: { in: ['QUEUED', 'PARSING'] } },
     data: { status: 'PARSING', attempts: { increment: 1 } },
-    select: { userId: true, storageKey: true, attempts: true },
+    select: { userId: true, storageKey: true, attempts: true, source: true },
   });
   if (!upload) return 'SKIPPED';
   const fail = async (code: CvParseFailureCode): Promise<CvParseOutcome> => {
@@ -177,11 +186,25 @@ export async function processCvParse(
   }
   if (!pdf) return fail('CV_PARSE_UNAVAILABLE');
 
+  let sectionHints: ('experience' | 'education' | 'skills')[] | undefined;
+  if (upload.source === 'LINKEDIN_PDF') {
+    // Gerçek sağlayıcıya ham PDF gönderilemez; maskeleme bağlanana dek yalnız sahte sağlayıcı.
+    if (deps.llm?.provider !== 'fake') return fail('CV_PARSE_UNAVAILABLE');
+    if (!deps.pdfTextExtractor) return fail('CV_PARSE_UNAVAILABLE');
+    try {
+      const sections = splitLinkedInSections(await deps.pdfTextExtractor.extract(pdf));
+      sectionHints = (['experience', 'education', 'skills'] as const).filter(
+        (key) => sections[key].length > 0,
+      );
+    } catch {
+      return fail('CV_PARSE_UNAVAILABLE');
+    }
+  }
   let parsed: ParsedCv | null = null;
   for (let attempt = 1; attempt <= OUTPUT_ATTEMPTS && !parsed; attempt += 1) {
     let raw: unknown;
     try {
-      raw = await callWithTimeout(deps, pdf);
+      raw = await callWithTimeout(deps, pdf, sectionHints);
     } catch (error) {
       return retryOrFail(failureOf(error));
     }

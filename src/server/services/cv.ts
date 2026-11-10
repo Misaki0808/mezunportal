@@ -778,7 +778,7 @@ export async function applyCv(
       }
       scoreAfter = (await syncCompletionScore(tx, actor.userId, now)).percent;
 
-      // Saklama: son dosya (bu CV) kalır; eski dosyalar silinir (açık incelemeye bağlı olan hariç).
+      // CV son dosya olarak kalır; LinkedIn PDF karar anında silinir ve önceki CV korunur.
       // Silme işlemin SON adımıdır: hata fırlatırsa işlem geri alınır.
       const old = await tx.cvUpload.findMany({
         where: {

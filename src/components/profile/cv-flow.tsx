@@ -228,6 +228,11 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
                   {t('linkedin.importAction')}
                 </label>
               </fieldset>
+              {source === 'LINKEDIN_PDF' && (
+                <p role="status" className="text-sm text-fg-muted">
+                  {t('linkedin.demoNotice')}
+                </p>
+              )}
               <Field
                 label={t('file')}
                 hint={t('fileHint')}
@@ -248,9 +253,6 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
               <p className="text-sm text-fg-muted">
                 {t('remaining', { count: availability.remainingToday })}
               </p>
-              <Button variant="ghost" onClick={() => setGuide(true)}>
-                {t('linkedin.open')}
-              </Button>
               {error && (
                 <p role="alert" className="text-base text-danger">
                   {errors(error)}
@@ -263,6 +265,9 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
               </div>
             </form>
           )}
+          <Button variant="ghost" onClick={() => setGuide(true)}>
+            {t('linkedin.open')}
+          </Button>
           <Link
             className={buttonClasses({ variant: 'ghost', fullWidth: true }) + ' mt-2'}
             href="/profil"

@@ -625,7 +625,8 @@
         "close": "Anladım",
         "chooseSource": "Ne yüklemek istersin?",
         "normalCv": "CV PDF dosyası",
-        "importAction": "LinkedIn profilini içe aktar"
+        "importAction": "LinkedIn profilini içe aktar",
+        "demoNotice": "LinkedIn PDF okuma şu an deneme aşamasında: test ortamında örnek bilgiler gösterilir, yüklediğin profil okunmaz."
       },
       "processing": {
         "title": "CV'n okunuyor",

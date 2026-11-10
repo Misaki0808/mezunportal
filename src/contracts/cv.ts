@@ -269,7 +269,7 @@ export const cvAvailabilitySchema = z.object({
 export type CvAvailability = z.infer<typeof cvAvailabilitySchema>;
 
 /**
- * Yükleme `FormData` ile yapılır (`uploadCv(formData)`); tek alan: `file`. Hata kodları `fieldErrors.file`.
+ * Yükleme `FormData` ile yapılır (`uploadCv(formData)`); alanlar: `file` ve isteğe bağlı `source`. Hata kodları `fieldErrors.file`.
  * Sunucu dosyayı içeriğinden yeniden doğrular (sihirli bayt, sayfa sayısı, şifreli PDF).
  */
 export const cvUploadFormSchema = z.object({
