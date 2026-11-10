@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import {
   addGrant,
@@ -25,7 +25,8 @@ import {
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
 // Kimlik denetimi tüm kullanıcı adlarına karşı sınar: önceki dosyaların bıraktığı adlar metinle çakışmasın (dalgalı hata, kart 170).
-beforeEach(() => neutralizeUserNames(db));
+// Dosya başına bir kez (her testte tüm kullanıcıları güncellemek büyük veritabanında yavaştır; dosyalar sırayla koşar).
+beforeAll(() => neutralizeUserNames(db));
 const BODY =
   'Üretim yolculuğum boyunca merakla öğrenmeye ve deneyim kazanmaya devam ettim. Zorluklar karşısında gelişmeyi seçtim.';
 
