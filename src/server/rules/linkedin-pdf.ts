@@ -27,8 +27,10 @@ export function splitLinkedInSections(text: string): LinkedInSections {
   for (const raw of text.slice(0, 200_000).split(/\r?\n/)) {
     const line = raw.trim();
     const key = line.toLocaleLowerCase('tr-TR').replace(/:$/, '').trim();
-    if (Object.hasOwn(HEADINGS, key)) {
-      current = HEADINGS[key] ?? null;
+    const englishKey = line.toLowerCase().replace(/:$/, '').trim();
+    const heading = Object.hasOwn(HEADINGS, key) ? key : englishKey;
+    if (Object.hasOwn(HEADINGS, heading)) {
+      current = HEADINGS[heading] ?? null;
       continue;
     }
     if (line && current && result[current].length < 500) result[current].push(line);

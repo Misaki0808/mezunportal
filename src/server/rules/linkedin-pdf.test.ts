@@ -8,7 +8,7 @@ describe('LinkedIn bölüm başlıkları', () => {
       'Örnek Okul',
     ],
     [
-      'Experience\nSample Company\nEducation\nSample School\nSkills\nSQL\nLanguages\nEnglish',
+      'EXPERIENCE\nSample Company\nEDUCATION\nSample School\nSKILLS\nSQL\nLanguages\nEnglish',
       'Sample Company',
       'Sample School',
     ],
