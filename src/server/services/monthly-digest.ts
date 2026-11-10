@@ -27,7 +27,7 @@ export async function buildMonthlyDigest(db: PrismaClient, userId: string, now =
     const departments = actor.facts.memberships
       .filter((m) => m.endedAt === null && m.verificationStatus === 'VERIFIED')
       .map((m) => m.departmentId);
-    const [experiences, points, follows, universities, preferences] = await Promise.all([
+    const [experiences, points, follows, universities, preferences, events] = await Promise.all([
       tx.experience.findMany({
         where: {
           departmentIdAtWrite: { in: departments },
@@ -57,6 +57,16 @@ export async function buildMonthlyDigest(db: PrismaClient, userId: string, now =
       tx.notificationPreference.findMany({
         where: { userId, type: { in: ['JOB_MATCH', 'APPLICATION_WINDOW'] } },
         select: { type: true, enabled: true },
+      }),
+      tx.campusEvent.findMany({
+        where: {
+          status: 'PUBLISHED',
+          startsAt: { gt: now },
+          departments: { some: { departmentId: { in: departments } } },
+        },
+        select: { id: true, title: true },
+        orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+        take: 5,
       }),
     ]);
     const applicationWindows: { label: string }[] = [];
@@ -89,6 +99,7 @@ export async function buildMonthlyDigest(db: PrismaClient, userId: string, now =
       })),
       contribution: { earned: sum('FINAL'), pending: sum('PENDING') },
       applicationWindows,
+      events: events.map(({ id, title }) => ({ id, label: title })),
       jobsEnabled: !preferences.some((item) => item.type === 'JOB_MATCH' && !item.enabled),
     };
   });
@@ -107,6 +118,6 @@ export async function buildMonthlyDigest(db: PrismaClient, userId: string, now =
       .filter(({ id }) => scoped.jobsEnabled && matchingTags.has(id))
       .slice(0, 3)
       .map(({ id, title, organizationName }) => ({ id, title, organization: organizationName })),
-    events: [],
+    events: scoped.events,
   });
 }
