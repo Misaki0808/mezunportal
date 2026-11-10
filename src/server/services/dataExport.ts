@@ -192,6 +192,28 @@ export async function buildDataExport(
   const contribution = await loadContributionExport(db, userId, iso);
   const faq = await loadFaqExport(db, userId, iso);
   const jobPostings = await loadJobPostingExport(db, userId, iso);
+  const [eventRegistrations, eventAttendances, eventsCreated, eventsReviewed] = await Promise.all([
+    db.campusEventRegistration.findMany({
+      where: { userId },
+      select: { eventId: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+    db.eventAttendance.findMany({
+      where: { userId },
+      select: { eventId: true, attendedAt: true, networkDigest: true },
+      orderBy: { attendedAt: 'asc' },
+    }),
+    db.campusEvent.findMany({
+      where: { createdById: userId },
+      select: { id: true, title: true, description: true, location: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+    db.campusEvent.findMany({
+      where: { reviewedById: userId },
+      select: { id: true, status: true, reviewReason: true, reviewedAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ]);
   const referrals = await db.referralClaim.findMany({
     where: { OR: [{ alumnusId: userId }, { studentId: userId }] },
     orderBy: { id: 'asc' },
@@ -265,6 +287,30 @@ export async function buildDataExport(
       ...mark,
       createdAt: mark.createdAt.toISOString(),
     })),
+    campusEvents: {
+      registrations: eventRegistrations.map((row) => ({
+        eventId: row.eventId,
+        createdAt: row.createdAt.toISOString(),
+      })),
+      attendances: eventAttendances.map((row) => ({
+        eventId: row.eventId,
+        attendedAt: row.attendedAt.toISOString(),
+        networkDigest: row.networkDigest,
+      })),
+      created: eventsCreated.map((row) => ({
+        eventId: row.id,
+        title: row.title,
+        description: row.description,
+        location: row.location,
+        createdAt: row.createdAt.toISOString(),
+      })),
+      reviews: eventsReviewed.map((row) => ({
+        eventId: row.id,
+        status: row.status,
+        reason: row.reviewReason,
+        reviewedAt: iso(row.reviewedAt),
+      })),
+    },
     companyFollows: user.companyFollows.map((follow) => ({
       ...follow,
       createdAt: follow.createdAt.toISOString(),

@@ -46,6 +46,7 @@ export default async function AccountPage() {
     awards,
     alumniStory,
     courseGuide,
+    campusEvents,
   ] = await Promise.all([
     getVerificationState().catch(() => null),
     hasAdminAccess(),
@@ -65,6 +66,7 @@ export default async function AccountPage() {
     getTranslations('yearAlumni'),
     getTranslations('alumniStory'),
     getTranslations('courseGuide'),
+    getTranslations('campusEvents'),
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -170,6 +172,12 @@ export default async function AccountPage() {
             href: '/randevular',
             title: appointments('title'),
             description: appointments('description'),
+            icon: CalendarIcon,
+          },
+          {
+            href: '/etkinlikler',
+            title: campusEvents('title'),
+            description: campusEvents('description'),
             icon: CalendarIcon,
           },
           ...(mentor?.ok && mentor.data.eligible

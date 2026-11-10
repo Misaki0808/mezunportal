@@ -51,7 +51,7 @@ model Department {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  faculty             Faculty                @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  faculty             Faculty                 @relation(fields: [facultyId], references: [id], onDelete: Restrict)
   memberships         Membership[]
   adminGrants         AdminGrant[]
   experiences         Experience[]
@@ -67,6 +67,7 @@ model Department {
   alumniStories       AlumniStory[]
   monthlyAlumni       MonthlyAlumnus[]
   courses             Course[]
+  campusEventTargets  CampusEventDepartment[]
 
   @@unique([facultyId, code])
   @@unique([facultyId, name])
@@ -197,6 +198,77 @@ model User {
   awardPublicationDecisions AwardPublicationDecision[]
   alumniStories             AlumniStory[]
   storyConsentDecisions     StoryConsentDecision[]
+  campusEventsCreated       CampusEvent[]              @relation("CampusEventCreator")
+  campusEventsReviewed      CampusEvent[]              @relation("CampusEventReviewer")
+  campusEventRegistrations  CampusEventRegistration[]
+  campusEventAttendances    EventAttendance[]
+}
+
+enum CampusEventStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+  CANCELLED
+}
+
+model CampusEvent {
+  id            String                    @id @default(uuid(7))
+  title         String
+  description   String
+  location      String
+  startsAt      DateTime
+  endsAt        DateTime
+  capacity      Int
+  status        CampusEventStatus         @default(PENDING)
+  createdById   String?
+  reviewedById  String?
+  reviewReason  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  createdBy     User?                     @relation("CampusEventCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewedBy    User?                     @relation("CampusEventReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  departments   CampusEventDepartment[]
+  registrations CampusEventRegistration[]
+  attendances   EventAttendance[]
+
+  @@index([status, startsAt])
+}
+
+model CampusEventDepartment {
+  eventId      String
+  departmentId String
+  event        CampusEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  department   Department  @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+
+  @@id([eventId, departmentId])
+  @@index([departmentId])
+}
+
+model CampusEventRegistration {
+  eventId   String
+  userId    String
+  createdAt DateTime    @default(now())
+  event     CampusEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, userId])
+  @@index([userId, createdAt])
+}
+
+model EventAttendance {
+  id            String      @id @default(uuid(7))
+  eventId       String
+  userId        String
+  attendedAt    DateTime    @default(now())
+  networkDigest String?
+  event         CampusEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId, attendedAt])
+  @@index([eventId, networkDigest])
+  @@index([userId, attendedAt])
 }
 
 enum AlumniStoryStatus {
@@ -1440,6 +1512,7 @@ enum PointAction {
   JOB_POSTING_PUBLISHED
   REFERRAL_GIVEN
   REFERRAL_ACCEPTED
+  EVENT_ATTENDED
 }
 
 enum PointSourceType {
@@ -1450,6 +1523,7 @@ enum PointSourceType {
   FAQ_ANSWER
   JOB_POSTING
   REFERRAL
+  CAMPUS_EVENT
 }
 
 enum PointStatus {
@@ -1464,6 +1538,7 @@ enum PointRevokeReason {
   /// Puanı doğuran ilan kesinleşmeden geri çekildi/kaldırıldı (P2-04).
   POSTING_WITHDRAWN
   REFERRAL_CANCELLED
+  EVENT_CANCELLED
 }
 
 enum SuspicionRule {
@@ -1472,6 +1547,8 @@ enum SuspicionRule {
   SYNC_FEEDBACK
   REFERRAL_REPEAT
   REFERRAL_BURST
+  EVENT_BURST
+  EVENT_NETWORK
 }
 
 enum SuspicionStatus {
