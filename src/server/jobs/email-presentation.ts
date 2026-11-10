@@ -37,7 +37,7 @@ export function decorateEmail(message: QueuedEmail, appUrl: string): QueuedEmail
     text,
     html:
       message.template === 'monthlyDigest.summary'
-        ? `<!doctype html><html lang="tr"><body style="margin:0;background:#f4f3ff;color:#202038;font-family:Arial,sans-serif;line-height:1.6"><div style="max-width:600px;margin:0 auto;padding:24px 16px"><div style="background:#5b5bf6;color:#ffffff;font-size:20px;font-weight:bold;padding:18px 20px;border-radius:16px 16px 0 0">MezunPortal</div><div style="background:#ffffff;color:#202038;padding:20px;border-radius:0 0 16px 16px;overflow-wrap:anywhere"><p style="white-space:pre-line;margin:0">${html}</p></div></div></body></html>`
+        ? `<!doctype html><html lang="tr"><body style="margin:0;background:#fff1e3;color:#202038;font-family:Arial,sans-serif;line-height:1.6"><div style="max-width:600px;margin:0 auto;padding:24px 16px"><div style="background:#fffaf4;color:#1d1b33;font-size:24px;font-weight:800;letter-spacing:-0.5px;padding:18px 20px;border-radius:16px 16px 0 0;border-bottom:3px solid #5b5bf6">mezun<span style="color:#5b5bf6">portal</span><span style="color:#ff6b7f">.</span></div><div style="background:#ffffff;color:#202038;padding:20px;border-radius:0 0 16px 16px;overflow-wrap:anywhere"><p style="white-space:pre-line;margin:0">${html}</p></div></div></body></html>`
         : `<!doctype html><html lang="tr"><body style="font-family: sans-serif; line-height: 1.5"><p style="white-space: pre-line">${html}</p></body></html>`,
   };
 }
