@@ -82,7 +82,7 @@ describe('token tanımı', () => {
     expect(SCHEMES.açık.accent).toBe('#ff6b7f');
     expect(SCHEMES.açık.bg).toBe('#fffaf4');
     expect(SCHEMES.açık.success).toBe('#0f9f8f');
-    expect(SCHEMES.koyu.primary).toBe('#8b8bff');
+    expect(SCHEMES.koyu.primary).toBe('#a3a3ff');
     expect(SCHEMES.koyu.bg).toBe('#14224a');
   });
 
