@@ -26,7 +26,7 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
         />
       </label>
       <p>{t('selectedCount', { count: selected.length })}</p>
-      <div className="space-y-2">
+      <div className="max-h-[55vh] space-y-2 overflow-y-auto">
         {filtered.map((course) => (
           <label
             key={course.id}
