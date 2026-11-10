@@ -1034,7 +1034,17 @@
     },
     "testSignIn": {
       "title": "Yerel test girişi",
-      "submit": "Test hesabıyla giriş yap"
+      "submit": "Test hesabıyla giriş yap",
+      "pickTitle": "Yerel test girişi: rol seç",
+      "pickDescription": "Yalnız yerel ve test ortamında görünür. Girmek istediğin test hesabını seç.",
+      "personas": {
+        "student": "Öğrenci",
+        "seniorMentor": "Üst sınıf mentor",
+        "alumniMentor": "Mezun mentor",
+        "academic": "Akademisyen",
+        "departmentAdmin": "Bölüm yöneticisi",
+        "systemAdmin": "Sistem yöneticisi"
+      }
     }
   },
   "experiences": {

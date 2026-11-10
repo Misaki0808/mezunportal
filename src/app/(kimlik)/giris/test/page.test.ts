@@ -1,3 +1,4 @@
+import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import TestSignInPage from './page';
@@ -25,5 +26,18 @@ describe('/giris/test', () => {
     await expect(
       TestSignInPage({ searchParams: Promise.resolve({ persona: 'student' }) }),
     ).resolves.toBeDefined();
+  });
+  it('rol verilmezse prod/boş ortamda yine 404 verir', async () => {
+    vi.stubEnv('APP_ENV', 'prod');
+    await expect(TestSignInPage({ searchParams: Promise.resolve({}) })).rejects.toMatchObject({
+      digest: expect.stringContaining('404'),
+    });
+  });
+  it('yerelde rol verilmezse altı rolü listeler ve dönüş yolunu bağlara taşır', async () => {
+    vi.stubEnv('APP_ENV', 'local');
+    const page = await TestSignInPage({ searchParams: Promise.resolve({ donus: '/ilanlar' }) });
+    const html = renderToStaticMarkup(page);
+    expect(html.match(/href="\/giris\/test\?persona=/g)).toHaveLength(6);
+    expect(html).toContain('persona=student&amp;donus=%2Filanlar');
   });
 });
