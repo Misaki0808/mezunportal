@@ -110,6 +110,7 @@ describe('Google Takvim adaptörü: etkinlik oluşturma', () => {
       },
       guestsCanModify: false,
       guestsCanInviteOthers: false,
+      guestsCanSeeOtherGuests: false,
     });
   });
 

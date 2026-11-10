@@ -227,6 +227,8 @@ export function createGoogleCalendar(deps: GoogleCalendarDeps): CalendarPort {
           },
           guestsCanModify: false,
           guestsCanInviteOthers: false,
+          // D7: mentor ve öğrenci davette birbirinin e-postasını görmez (iletişim bilgisi yalnız onaylı talepte açılır).
+          guestsCanSeeOtherGuests: false,
           extendedProperties: { private: { mezunportalAppointment: request.appointmentId } },
         },
         options?.signal,
