@@ -20,14 +20,10 @@ export async function StoryShowcase({
   return (
     <section aria-label={t('title')}>
       <Card className="relative overflow-hidden p-6">
-        <div
-          aria-hidden="true"
-          className="absolute -right-12 -top-16 size-48 rounded-full bg-[image:var(--gradient-brand)] opacity-20 blur-2xl motion-safe:animate-pulse"
-        />
         <div className="relative space-y-4">
           <p className="font-semibold text-primary">{t('title')}</p>
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-[image:var(--gradient-brand)] p-1">
+            <span className="rounded-full bg-primary p-1">
               <Avatar name={story.name} decorative size="lg" className="bg-bg text-fg" />
             </span>
             <div>

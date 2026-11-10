@@ -130,9 +130,6 @@
     --brand-cap: #5b5bf6;
     --brand-tassel: #ff6b7f;
     --brand-dot: #ff6b7f;
-    /* Marka geçişi: YALNIZ büyük dekoratif alanda (tanıtım şeridi, boş durum zemini); üzerine metin konmaz,
-       küçük bileşende (düğme, rozet, kart) kullanılmaz. */
-    --gradient-brand: linear-gradient(135deg, #5b5bf6 0%, #a855f7 55%, #ff6b7f 100%);
   }
 
   html {

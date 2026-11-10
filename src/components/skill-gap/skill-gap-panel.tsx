@@ -115,7 +115,7 @@ export function SkillGapPanel({
               className="mt-2 h-3 overflow-hidden rounded-full bg-bg"
             >
               <div
-                className="h-full rounded-full bg-[image:var(--gradient-brand)]"
+                className="h-full rounded-full bg-primary"
                 style={{ width: `${analysis.progress}%` }}
               />
             </div>

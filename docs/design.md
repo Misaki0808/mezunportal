@@ -18,8 +18,8 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
   sadeleştirilmiş simge, yalnız kepli “o” (`BrandMark`). Renkler `--brand-*` token'larıdır.
   Ana eylem, bağlantı, odak ve seçili durum İris (`primary`). Mercan (`accent`) **az** kullanılır: öne çıkan rozet/sayı,
   ikincil müjde; sayfada birincil eylem rengi olamaz. Nane = başarı/“müsait” (`success`).
-- **Geçiş** (`--gradient-brand`: İris → mor → Mercan) yalnız tanıtım/büyük dekoratif alanda; üzerine metin konmaz, düğme,
-  rozet ve kartta kullanılmaz.
+- **Gradyan ve parlama yok:** arayüzde renk geçişi, bulanık ışıma (`blur`) ve nabız animasyonlu süs daireleri kullanılmaz
+  ("AI izi", kullanıcı kararı). Tek renk geçişi logodaki n–p harfleridir. Çerçeve ve doluluk çubuğu düz İris'tir.
 - **Mercan kuralı:** mercan zeminde metin koyudur (`on-accent`); beyaz metin AA değildir. Mercanı metin/ikon olarak
   beyaz üstünde kullanma — `accent-strong` (AA) kullan.
 - **Koyu tema** `prefers-color-scheme` ile gelir; aynı token adları yeniden tanımlanır (`globals.css`), bileşende
