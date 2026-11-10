@@ -79,10 +79,11 @@ describe('token tanımı', () => {
 
   it('marka paleti İris + Mercan + Nane (kullanıcı kararı; İÜ renkleri değil)', () => {
     expect(SCHEMES.açık.primary).toBe('#5b5bf6');
-    expect(SCHEMES.açık.accent).toBe('#ff7a59');
+    expect(SCHEMES.açık.accent).toBe('#ff6b7f');
+    expect(SCHEMES.açık.bg).toBe('#fffaf4');
     expect(SCHEMES.açık.success).toBe('#0f9f8f');
     expect(SCHEMES.koyu.primary).toBe('#8b8bff');
-    expect(SCHEMES.koyu.bg).toBe('#0e0d1a');
+    expect(SCHEMES.koyu.bg).toBe('#14224a');
   });
 
   it('bilinen çift için oran doğru hesaplanır (siyah/beyaz = 21:1)', () => {

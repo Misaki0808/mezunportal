@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { PublishedStory } from '@/contracts/alumni-story';
-import { Avatar, Card, IconChip } from '@/components/ui';
+import { Avatar, Card, IconChip, UsersIcon } from '@/components/ui';
 
 export async function StoryShowcase({
   story,
@@ -59,7 +59,9 @@ export async function StoryInvite() {
       href="/hesap/hikayem"
       className="press-row flex min-h-20 items-center gap-4 rounded-card border border-border p-5"
     >
-      <IconChip tone="accent">✦</IconChip>
+      <IconChip tone="accent">
+        <UsersIcon />
+      </IconChip>
       <span>
         <span className="block font-semibold">{t('share')}</span>
         <span className="block text-fg-muted">{t('shareDescription')}</span>
