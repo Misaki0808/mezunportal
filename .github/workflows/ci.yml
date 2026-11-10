@@ -1,0 +1,75 @@
+# Hafif CI (kullanıcı kararı, 9 Kas: "az ve öz, 10-15 dk koşmasın"): her PR'da duvar saatiyle ≤ 5 dakika.
+# Yalnız önemli üç kapı paralel koşar: tür denetimi, kod kalitesi ve hızlı birim testleri. Veritabanı gerektiren testler, build ve
+# e2e CI'da YOK; onları PM'in yerel birleştirme kapısı koşar (docs/engineering.md "CI").
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Aynı dalda yeni itme gelince eski koşu iptal edilir.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Kodun ortam doğrulaması için; hepsi sahte değerdir, gerçek hizmete bağlanılmaz.
+  APP_ENV: test
+  APP_URL: http://localhost:3206
+  DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+  CI: true
+
+jobs:
+  typecheck:
+    name: Tür denetimi
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate
+      - run: pnpm typecheck
+      - run: pnpm prisma validate
+
+  quality:
+    name: Kod ve metin kalitesi
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm messages:check
+
+  unit:
+    name: Hızlı birim testleri
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate
+      # Yalnız veritabanı gerektirmeyen Vitest projesi (`unit`) ve Node betik testleri.
+      - run: pnpm test:local
+      - run: pnpm test:unit
