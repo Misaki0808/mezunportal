@@ -200,6 +200,7 @@ model User {
   campusEventsReviewed      CampusEvent[]              @relation("CampusEventReviewer")
   campusEventRegistrations  CampusEventRegistration[]
   campusEventAttendances    EventAttendance[]
+  integrationConnections    IntegrationConnection[]
 }
 
 enum CampusEventStatus {
@@ -1923,4 +1924,38 @@ model ReferralClaim {
   @@index([studentId, status, createdAt])
   @@index([departmentIdAtWrite, status, createdAt])
   @@index([jobPostingId])
+}
+
+// ---------------------------------------------------------------------------------------------
+// Dış servis bağlantıları (P1-10 / kart 174): sistem yöneticisinin tek seferlik OAuth yetkilendirmesi
+// ---------------------------------------------------------------------------------------------
+
+enum IntegrationProvider {
+  GOOGLE_CALENDAR
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  /// Yenileme jetonu geçersiz (erişim geri alındı ya da sunucu sırrı değişti): yönetici yeniden bağlar.
+  NEEDS_RECONNECT
+}
+
+/// Sağlayıcı başına TEK satır. Yenileme jetonu AES-256-GCM ile şifreli saklanır (`src/server/crypto/secret-box.ts`; anahtar
+/// sunucu sırrından türetilir); düz metin veritabanında, logda ve depoda YOKTUR. `accountLabel` yalnız görüntü içindir.
+model IntegrationConnection {
+  id              String              @id @default(uuid(7))
+  provider        IntegrationProvider @unique
+  status          IntegrationStatus   @default(ACTIVE)
+  refreshTokenEnc String
+  accountLabel    String?
+  scope           String
+  connectedById   String
+  connectedAt     DateTime            @default(now())
+  /// Son hata kodu (kararlı kod; sağlayıcı yanıtı değil).
+  lastErrorCode   String?
+  updatedAt       DateTime            @updatedAt
+
+  connectedBy User @relation(fields: [connectedById], references: [id], onDelete: Restrict)
+
+  @@index([connectedById])
 }

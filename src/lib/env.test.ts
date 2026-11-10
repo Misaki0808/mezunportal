@@ -242,9 +242,33 @@ describe('Takvim ortamı (parseCalendarEnv)', () => {
     expect(() => parseCalendarEnv({ APP_ENV: 'prod', CALENDAR_PROVIDER: 'fake' })).toThrow(
       EnvValidationError,
     );
-    expect(() => parseCalendarEnv({ APP_ENV: 'local', CALENDAR_PROVIDER: 'google' })).toThrow(
+    expect(() => parseCalendarEnv({ APP_ENV: 'local', CALENDAR_PROVIDER: 'bilinmeyen' })).toThrow(
       EnvValidationError,
     );
+  });
+  it('google: istemci kimliği ve sırrı zorunlu; hangisi eksikse yalnız onun adı raporlanır; prod’da da geçerli', async () => {
+    const { parseCalendarEnv, EnvValidationError } = await import('./env');
+    const google = { APP_ENV: 'prod', CALENDAR_PROVIDER: 'google' };
+    expect(() => parseCalendarEnv(google)).toThrow(EnvValidationError);
+    for (const missing of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'] as const) {
+      const present = missing === 'GOOGLE_CLIENT_ID' ? 'GOOGLE_CLIENT_SECRET' : 'GOOGLE_CLIENT_ID';
+      try {
+        parseCalendarEnv({ ...google, [present]: 'deger' });
+        expect.unreachable();
+      } catch (error) {
+        expect(error).toBeInstanceOf(EnvValidationError);
+        expect(String((error as Error).message)).toContain(missing);
+        expect(String((error as Error).message)).not.toContain(present);
+      }
+    }
+    expect(
+      parseCalendarEnv({ ...google, GOOGLE_CLIENT_ID: 'kimlik', GOOGLE_CLIENT_SECRET: 'sir' })
+        .CALENDAR_PROVIDER,
+    ).toBe('google');
+    // anahtarlar google dışında zorunlu değildir (sahte/kapalı modda çalışır)
+    expect(
+      parseCalendarEnv({ APP_ENV: 'local', CALENDAR_PROVIDER: 'fake' }).GOOGLE_CLIENT_ID,
+    ).toBeUndefined();
   });
 });
 

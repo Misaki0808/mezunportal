@@ -152,6 +152,7 @@ it('inceleyici: üst üste binen takvim süpürmeleri toplam üç deneme sınır
         await gate;
         throw new CalendarError('CALENDAR_UNAVAILABLE', true);
       },
+      async updateEvent() {},
       async deleteEvent() {},
     },
   };
