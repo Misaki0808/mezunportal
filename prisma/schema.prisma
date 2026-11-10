@@ -117,6 +117,7 @@ enum MeetingMode {
 model User {
   id            String    @id @default(uuid(7))
   name          String
+  nameSearch    String?   @default(dbgenerated())
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
@@ -200,6 +201,8 @@ model User {
   campusEventsReviewed      CampusEvent[]              @relation("CampusEventReviewer")
   campusEventRegistrations  CampusEventRegistration[]
   campusEventAttendances    EventAttendance[]
+
+  @@index([nameSearch(ops: raw("gin_trgm_ops"))], type: Gin, map: "User_nameSearch_trgm")
 }
 
 enum CampusEventStatus {

@@ -18,15 +18,18 @@ const CREATOR = '20261108010000_p1_08_search';
 const FAQ_CREATOR = '20261108160100_p1_17_faq';
 const JOB_CREATOR = '20261109000000_p2_04_job_posting';
 const COMPANY_CREATOR = '20261109060000_p2_09_company_search';
+const USER_CREATOR = '20261110104233_story_user_name_search';
 /** Her oluşturucu yalnız kendi tablosuna GENERATED sütunu ekleyebilir. */
 const COLUMN_CREATORS: Record<string, string> = {
   [CREATOR]: 'Experience',
   [FAQ_CREATOR]: 'FaqItem',
   [JOB_CREATOR]: 'JobPosting',
   [COMPANY_CREATOR]: 'Company',
+  [USER_CREATOR]: 'User',
 };
 const GUARDED_INDEXES: Record<string, string> = {
   Company_searchKeys_trgm: COMPANY_CREATOR,
+  User_nameSearch_trgm: USER_CREATOR,
   Company_normalizedName_trgm: '20261107234822_p1_05_cv',
   Title_normalizedName_trgm: '20261107234822_p1_05_cv',
   Skill_normalizedName_trgm: '20261107234822_p1_05_cv',
@@ -38,7 +41,7 @@ const GUARDED_INDEXES: Record<string, string> = {
   JobPosting_searchVector_idx: JOB_CREATOR,
   JobPosting_searchKeys_trgm: JOB_CREATOR,
 };
-const GUARDED_COLUMNS = ['searchVector', 'searchKeys'];
+const GUARDED_COLUMNS = ['searchVector', 'searchKeys', 'nameSearch'];
 
 const FIX_HINT =
   'Prisma üretilmiş arama sütunları/indeksleri için yanlış SQL üretti. `prisma migrate dev --create-only` ile ' +

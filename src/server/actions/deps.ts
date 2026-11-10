@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { getPdfTextExtractor } from '../external/pdf-text';
+
 import { getAuthEnv, getLlmEnv } from '@/lib/env';
 
 import { getAuth, getAuthEmailPort } from '../auth';
@@ -43,6 +45,7 @@ export function cvDeps(): CvDeps {
     db: getDb(),
     storage: getStorage(),
     llm: getLlm(),
+    pdfTextExtractor: getPdfTextExtractor(),
     enqueue: enqueueCvParse,
     dailyLimit: getLlmEnv().CV_PARSE_DAILY_LIMIT,
   };

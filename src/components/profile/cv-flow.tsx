@@ -222,15 +222,19 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
                     type="radio"
                     name="source"
                     value="LINKEDIN_PDF"
+                    disabled={!availability.linkedinPdf}
+                    aria-describedby={
+                      !availability.linkedinPdf ? 'linkedin-unavailable' : undefined
+                    }
                     checked={source === 'LINKEDIN_PDF'}
                     onChange={() => setSource('LINKEDIN_PDF')}
                   />
                   {t('linkedin.importAction')}
                 </label>
               </fieldset>
-              {source === 'LINKEDIN_PDF' && (
-                <p role="status" className="text-sm text-fg-muted">
-                  {t('linkedin.demoNotice')}
+              {!availability.linkedinPdf && (
+                <p id="linkedin-unavailable" className="text-sm text-fg-muted">
+                  {t('linkedin.comingSoon')}
                 </p>
               )}
               <Field

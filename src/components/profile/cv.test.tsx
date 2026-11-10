@@ -17,7 +17,13 @@ beforeAll(() => {
   };
 });
 
-const available = { available: true, reason: null, dailyLimit: 5, remainingToday: 4 };
+const available = {
+  available: true,
+  reason: null,
+  dailyLimit: 5,
+  remainingToday: 4,
+  linkedinPdf: false,
+};
 const review: CvReviewData = {
   cvUploadId: 'cv1',
   unchangedCount: 2,
@@ -400,7 +406,11 @@ it('LinkedIn seçimi yüklemede kaynak olarak gönderilir', async () => {
     .fn()
     .mockResolvedValue({ ok: true, data: { cvUploadId: 'cv-linkedin', status: 'QUEUED' } });
   const { user } = renderUi(
-    <CvFlow availability={available} latest={null} actions={actions({ upload })} />,
+    <CvFlow
+      availability={{ ...available, linkedinPdf: true }}
+      latest={null}
+      actions={actions({ upload })}
+    />,
   );
   await user.click(screen.getByRole('radio', { name: 'LinkedIn profilini içe aktar' }));
   await user.upload(
@@ -410,4 +420,10 @@ it('LinkedIn seçimi yüklemede kaynak olarak gönderilir', async () => {
   await user.click(screen.getByRole('button', { name: "CV'yi oku" }));
   expect(upload).toHaveBeenCalledOnce();
   expect((upload.mock.calls[0]![0] as FormData).get('source')).toBe('LINKEDIN_PDF');
+});
+
+it('gerçek çıkarıcı ve maskeleme yokken LinkedIn seçimi kapalı ve sebebi görünür', () => {
+  renderUi(<CvFlow availability={available} latest={null} actions={actions()} />);
+  expect(screen.getByRole('radio', { name: 'LinkedIn profilini içe aktar' })).toBeDisabled();
+  expect(screen.getByText('LinkedIn PDF içe aktarma yakında kullanıma açılacak.')).toBeVisible();
 });
