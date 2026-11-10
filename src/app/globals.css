@@ -79,19 +79,19 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    /* Zemin lacivert (#14224a; kullanıcı onayı bekliyor, değer yalnız burada: kolay geri alınır). */
-    --color-bg: #14224a;
-    --color-surface: #1b2c5e;
-    --color-surface-strong: #24376f;
+    /* Zemin lacivert (#0e1a38; kullanıcı onaylı, 10 Kasım). */
+    --color-bg: #0e1a38;
+    --color-surface: #15254a;
+    --color-surface-strong: #1d315d;
     --color-overlay: rgb(8 12 30 / 0.65);
     --color-fg: #f2f4fc;
     --color-fg-muted: #bcc4e2;
     --color-fg-subtle: #9ea8cf;
-    --color-border: #31427a;
+    --color-border: #30446b;
     --color-border-control: #8190c4;
     --color-primary: #a3a3ff;
     --color-primary-hover: #b8b8ff;
-    --color-on-primary: #14224a;
+    --color-on-primary: #0e1a38;
     --color-primary-soft: #2b3a7a;
     --color-on-primary-soft: #d4d4ff;
     --color-accent: #ff8798;
