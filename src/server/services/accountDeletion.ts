@@ -82,6 +82,7 @@ export async function deleteAccount(
     }
     await tx.graduationDocument.deleteMany({ where: { userId, status: 'PENDING' } });
     await tx.experienceInvitation.deleteMany({ where: { userId } });
+    await tx.alumniCourseMark.deleteMany({ where: { userId } });
     await tx.position.deleteMany({ where: { userId } });
     await tx.education.deleteMany({ where: { userId } });
     await tx.language.deleteMany({ where: { userId } });
