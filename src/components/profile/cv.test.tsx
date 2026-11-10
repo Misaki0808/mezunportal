@@ -237,6 +237,8 @@ describe('CV akışı', () => {
       screen.getByText('CV okuma şu an kapalı. Bilgilerini elle girebilirsin.'),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText(/CV dosyası/)).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'LinkedIn profilini içe aktar' })).toBeDisabled();
+    expect(screen.getByText('LinkedIn PDF içe aktarma yakında kullanıma açılacak.')).toBeVisible();
     expect(screen.getByRole('link', { name: 'Bilgilerimi elle gireceğim' })).toHaveAttribute(
       'href',
       '/profil',
