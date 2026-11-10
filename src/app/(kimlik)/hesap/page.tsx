@@ -45,6 +45,7 @@ export default async function AccountPage() {
     referrals,
     awards,
     alumniStory,
+    courseGuide,
   ] = await Promise.all([
     getVerificationState().catch(() => null),
     hasAdminAccess(),
@@ -63,6 +64,7 @@ export default async function AccountPage() {
     getTranslations('referrals'),
     getTranslations('yearAlumni'),
     getTranslations('alumniStory'),
+    getTranslations('courseGuide'),
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -80,6 +82,30 @@ export default async function AccountPage() {
     REJECTED: verification('rejected'),
   }[state.data.status];
   const links = [
+    ...(actor.facts.memberships.some(
+      (m) => m.role === 'STUDENT' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
+    )
+      ? [
+          {
+            href: '/ders-rehberi',
+            title: courseGuide('accountStudent'),
+            description: courseGuide('accountStudentDescription'),
+            icon: FileTextIcon,
+          },
+        ]
+      : []),
+    ...(actor.facts.memberships.some(
+      (m) => m.role === 'ALUMNI' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
+    )
+      ? [
+          {
+            href: '/profil/dersler',
+            title: courseGuide('accountAlumni'),
+            description: courseGuide('accountAlumniDescription'),
+            icon: FileTextIcon,
+          },
+        ]
+      : []),
     ...(actor.facts.memberships.some(
       (m) => m.role === 'ALUMNI' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
     )
@@ -270,6 +296,12 @@ export default async function AccountPage() {
     ...(showAdmin
       ? [
           {
+            href: '/yonetim/dersler',
+            title: courseGuide('adminTitle'),
+            description: courseGuide('adminDescription'),
+            icon: ShieldCheckIcon,
+          },
+          {
             href: '/yonetim/kullanim',
             title: metrics('accountTitle'),
             description: metrics('accountDescription'),
@@ -298,7 +330,11 @@ export default async function AccountPage() {
   ];
   // Gruplar: hub 17'ye kadar kart içerebilir; başlıklı bölümlere ayrılır (tarama kolaylığı). Sıra grup içinde korunur.
   const GROUPS = [
-    { key: 'profile', tone: 'primary', hrefs: ['/profil', '/dogrulama'] },
+    {
+      key: 'profile',
+      tone: 'primary',
+      hrefs: ['/profil', '/dogrulama', '/ders-rehberi', '/profil/dersler'],
+    },
     {
       key: 'activity',
       tone: 'accent',
@@ -322,7 +358,13 @@ export default async function AccountPage() {
     {
       key: 'admin',
       tone: 'primary',
-      hrefs: ['/yonetim/kullanim', '/yonetim', '/yonetim/sss', '/yonetim/deneyimler'],
+      hrefs: [
+        '/yonetim/kullanim',
+        '/yonetim',
+        '/yonetim/sss',
+        '/yonetim/deneyimler',
+        '/yonetim/dersler',
+      ],
     },
   ] as const;
   // Gruba yazılmamış bağlantı (ör. yeni eklenen sayfa) sessizce düşmez: "Görüşmeler ve içerikler" grubunda görünür.

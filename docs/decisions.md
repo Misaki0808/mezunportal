@@ -924,3 +924,7 @@ Dondurma işinin çalışmadığı uzun kesintide geçmiş durum güvenilir biç
 Ayın mezununda yalnız İris→Mercan baş harfli avatar kullanılır; uzak LinkedIn fotoğrafı üçüncü taraf isteği ve ayrı rıza gerektirdiğinden gösterilmez. Yerel fotoğraf yükleme ve sunma Faz 3'e ertelendi (PM kararı).
 
 **Aylık özet ve ortak gönderim kotası (P2-13, kart 161).** Özet önceki takvim ayının bölüm deneyimlerini ve sorgu anında görünür diğer bölümleri kullanır; boş özet gönderilmez. İlan ve başvuru hatırlatmalarıyla ortak günlük/haftalık kotayı aşmamak için hak e-posta outbox işleminden önce kalıcı ayrılır. Kuyruğa yazma başarısız olduğunda o günün hakkı kullanılmamış olsa da korunur; ilk hafta ertesi gün yeniden denenir. E-posta tesliminde rıza, tercih ve içerik tekrar hesaplanır; içerik değişmişse eski e-posta gönderilmez. Bu seçim, çökme sonrasında kota aşımı ve artık görünmeyen verinin teslimi yerine bazı özetlerin gecikmesini kabul eder.
+
+### P2-08 · YBS ders kaynağı
+
+Kullanıcının verdiği 89 ders resmî seed listesidir; daha önceki hoca onayı koşulu kaldırıldı. OBS kaynağında Rusça II ve IV için aynı `FOYD0014` kodu kullanıldığından ders, bölüm + kod + yarıyıl ile ayırt edilir. Küçük sektör hücreleri ve tamamlayıcıları birlikte gizlenir.

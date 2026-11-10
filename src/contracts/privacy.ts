@@ -342,6 +342,7 @@ export const dataExportSchema = z.object({
   }),
   profile: exportedProfileSchema.nullable(),
   experiences: z.array(exportedExperienceSchema),
+  courseMarks: z.array(z.object({ courseId: z.string(), createdAt: z.string() }).strict()),
   companyFollows: z.array(
     z
       .object({
