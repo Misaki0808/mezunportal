@@ -9,7 +9,7 @@ import {
   reviewCampusEventSchema,
 } from '@/contracts/campus-events';
 import { codedConflict, codedForbidden, codedNotFound, isCodedError } from '@/lib/errors';
-import { createPermissions } from '../permissions';
+import { createPermissions } from '../permissions/guards';
 import {
   campusEventCode,
   eventAttendanceMultiplier,

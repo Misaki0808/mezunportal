@@ -1,7 +1,7 @@
 import 'server-only';
 import messages from '../../../messages/tr.json';
 import type { PrismaClient } from '@/generated/prisma/client';
-import { createPermissions } from '../permissions';
+import { createPermissions } from '../permissions/guards';
 import { selectDigest } from '../rules/digest';
 import { istanbulDay } from '../rules/jobPosting';
 import { aggregateApplicationMonths } from './application-window';

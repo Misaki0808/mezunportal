@@ -7,7 +7,8 @@ import {
   type ApplicationScope,
 } from '@/contracts/application-window';
 import { codedForbidden, codedNotFound } from '@/lib/errors';
-import { createPermissions, type Actor } from '../permissions';
+import { createPermissions } from '../permissions/guards';
+import type { Actor } from '../permissions/actor';
 import {
   applicationDistribution,
   sectorApplicationDistribution,
