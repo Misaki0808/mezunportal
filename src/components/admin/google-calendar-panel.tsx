@@ -154,7 +154,7 @@ export function GoogleCalendarPanel({
           </div>
         }
       >
-        <span className="sr-only">{t('disconnectTitle')}</span>
+        {null}
       </Modal>
     </AdminFrame>
   );
