@@ -38,5 +38,7 @@ it.each(['contact.requested', 'monthlyDigest.summary'])(
     expect(result.html).toContain('prefers-color-scheme:dark');
     expect(result.html).toContain('background:#0e1a38!important');
     expect(result.html).toContain('color:#b8b8ff!important');
+    if (template === 'monthlyDigest.summary')
+      expect(result.html).toContain('.email-brand-portal{color:#a3a3ff!important}');
   },
 );
