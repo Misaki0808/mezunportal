@@ -14,6 +14,7 @@ describe('sahte veri çerçevesi', () => {
     expect(new Set(TEST_ACCOUNT_PLACEHOLDERS).size).toBe(6);
     expect(SEED_MODULES.map((seedModule) => seedModule.name)).toEqual([
       'institutions',
+      'courses',
       'accounts',
       'profileTags',
       'dictionary',

@@ -66,6 +66,7 @@ model Department {
   awards              Award[]
   alumniStories       AlumniStory[]
   monthlyAlumni       MonthlyAlumnus[]
+  courses             Course[]
   campusEventTargets  CampusEventDepartment[]
 
   @@unique([facultyId, code])
@@ -166,6 +167,7 @@ model User {
   skills                      UserSkill[]
   experienceInvitations       ExperienceInvitation[]
   companyFollows              CompanyFollow[]
+  courseMarks                 AlumniCourseMark[]
 
   experiences               Experience[]               @relation("ExperienceAuthor")
   moderatedExperiences      Experience[]               @relation("ExperienceModerator")
@@ -1958,4 +1960,32 @@ model IntegrationConnection {
   connectedBy User @relation(fields: [connectedById], references: [id], onDelete: Restrict)
 
   @@index([connectedById])
+}
+
+/// Bölüm müfredatı; aynı ders kodu farklı yarıyıllarda kullanılabilir.
+model Course {
+  id           String             @id @default(uuid(7))
+  departmentId String
+  code         String
+  name         String
+  semester     Int
+  elective     Boolean
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  department   Department         @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  marks        AlumniCourseMark[]
+
+  @@unique([departmentId, code, semester])
+  @@index([departmentId, elective, semester])
+}
+
+model AlumniCourseMark {
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, courseId])
+  @@index([courseId])
 }
