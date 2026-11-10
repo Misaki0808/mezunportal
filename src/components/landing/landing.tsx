@@ -28,7 +28,8 @@ export async function Landing({ stats }: { stats: LandingStats }) {
   ).filter((entry): entry is { key: typeof entry.key; value: number } => entry.value !== null);
   const steps = ['verify', 'explore', 'connect'] as const;
   const questions = ['who', 'cost', 'privacy', 'mentor'] as const;
-  const lines = t.raw('rotating') as string[];
+  // Mesaj kataloğu dizi kabul etmez (messages:check); satırlar sıralı anahtarlarla (line1…line9) tutulur.
+  const lines = Object.values(t.raw('rotating') as Record<string, string>);
   return (
     <div className="landing">
       <a href="#landing-main" className="landing-skip">

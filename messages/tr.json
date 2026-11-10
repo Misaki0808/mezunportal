@@ -12,17 +12,17 @@
     "heroStart": "Staj ararken",
     "heroEnd": "yalnız değilsin.",
     "heroDescription": "YBS'de senden önce okuyanlar bu yoldan geçti. Hangi şirkete nasıl girdiklerini, mülakatta ne sorulduğunu burada anlatıyorlar.",
-    "rotating": [
-      "Sen giderken dönen arkadaşların var, bir destek alsana?",
-      "O şirkete kim girdi, mülakatta ne sordular? Soran kazanır.",
-      "Bu yoldan senden önce geçen YBS'liler burada.",
-      "Staj başvurusunu son güne bırakma, takvim burada.",
-      "CV'ne bir mezun gözü değsin.",
-      "Stajı nereden değil, kimden bulacağına bak.",
-      "Mülakatta ne soracaklarını tahmin etme, bilenden öğren.",
-      "Bir kahvelik görüşme, bir yaz stajı demek olabilir.",
-      "Mezunlar yardım etmek istiyor, sadece sormanı bekliyorlar."
-    ],
+    "rotating": {
+      "line1": "Sen giderken dönen arkadaşların var, bir destek alsana?",
+      "line2": "O şirkete kim girdi, mülakatta ne sordular? Soran kazanır.",
+      "line3": "Bu yoldan senden önce geçen YBS'liler burada.",
+      "line4": "Staj başvurusunu son güne bırakma, takvim burada.",
+      "line5": "CV'ne bir mezun gözü değsin.",
+      "line6": "Stajı nereden değil, kimden bulacağına bak.",
+      "line7": "Mülakatta ne soracaklarını tahmin etme, bilenden öğren.",
+      "line8": "Bir kahvelik görüşme, bir yaz stajı demek olabilir.",
+      "line9": "Mezunlar yardım etmek istiyor, sadece sormanı bekliyorlar."
+    },
     "primary": "İÜ e-postanla başla",
     "secondary": "Nasıl çalışır?",
     "trust": "Üyelik e-posta ya da belgeyle doğrulanır.",
