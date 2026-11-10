@@ -72,8 +72,9 @@ sağlayıcısına [K-04: sağlayıcı adı ve ülkesi] gönderilir. Sağlayıcı
 kullanmaz [sağlayıcı politikasıyla doğrulanacak]. Rıza vermezseniz profilinizi elle doldurursunuz.
 
 ### 2. Online randevu davetleri
-Online randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz Google LLC'ye
-aktarılır. Rıza vermezseniz mentor görüşme bağlantısını kendisi paylaşır.
+Online randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz, görüşmenin
+başlığında yer alan mentor ve öğrenci adları ile görüşme saati Google LLC'ye aktarılır. Rıza
+vermezseniz mentor görüşme bağlantısını kendisi paylaşır.
 
 Rızanızı istediğiniz an gizlilik ayarlarından geri alabilirsiniz; geri alma ileriye dönük işler.
 
@@ -164,6 +165,6 @@ Hikâyemin incelendikten ve ayın mezunu seçildikten sonra adım ve bölümüml
   gider; yalnız puan hesabı ve kötüye kullanım kontrolü için işlenir. Hukuki sebep: meşru menfaat.
 - **Etkinlik katılımı:** katılım kodu/QR ile yapılan kayıt etkinlik puanı ve kötüye kullanım kontrolü (aynı ağdan çok katılım) için işlenir; ağ bilgisi etkinliğe bağlı özet olarak tutulur ve 30 gün sonra silinir, ham IP saklanmaz. Hukuki sebep: meşru menfaat.
 - **Aylık özet e-postası:** bölümün önceki aya ait toplu deneyim ve ilan özeti, kullanıcı bildirim tercihine göre gönderilir; her e-postada tek tıkla abonelikten çıkış bağlantısı vardır. Hukuki sebep: açık rıza (tercih).
-- **Takvim ve Meet daveti:** online randevuda Google Takvim davetinin e-posta adresini işlemesi `§2` yurt dışına aktarım rızasına bağlıdır; rıza yoksa davet oluşturulmaz, mentor bağlantıyı elle ekler.
+- **Takvim ve Meet daveti:** online randevuda Google Takvim davetine e-posta adresleri, etkinlik başlığındaki mentor ve öğrenci adları ile görüşme saati gider; bu `§2` yurt dışına aktarım rızasına bağlıdır; rıza yoksa davet oluşturulmaz, mentor bağlantıyı elle ekler.
 - **Şirket/soru bankası/başvuru takvimi:** yayınlanmış deneyimlerden türetilen toplu özetlerdir; üç farklı yazardan az olan gruplar gösterilmez, kişi bilgisi içermez.
 
