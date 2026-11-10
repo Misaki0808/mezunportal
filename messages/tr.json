@@ -35,7 +35,7 @@
     },
     "howKicker": "Nasıl çalışır?",
     "howTitle": "Üç adımda başlarsın.",
-    "howDescription": "Kayıt olmak bir okul e-postası kadar kolay.",
+    "howDescription": "İÜ e-postanla gir, çevreni tanımaya başla.",
     "steps": {
       "verify": {
         "title": "Okul e-postanla gir",
@@ -77,7 +77,7 @@
       }
     },
     "faqKicker": "Aklında kalmasın",
-    "faqTitle": "Merak ettiklerine kısa cevaplar.",
+    "faqTitle": "Aklına takılanlara bakalım.",
     "faqDescription": "Başlamadan önce bilmek isteyebileceğin birkaç şey.",
     "questions": {
       "who": {
@@ -102,7 +102,12 @@
     "footerDescription": "İÜ İktisat Fakültesi YBS öğrencileri için.",
     "footerPrivacy": "Aydınlatma metni",
     "footerTerms": "Kullanım şartları",
-    "footerNote": "Bu bir öğrenci projesidir; İstanbul Üniversitesi'nin resmî hizmeti değildir."
+    "footerNote": "Bu bir öğrenci projesidir; İstanbul Üniversitesi'nin resmî hizmeti değildir.",
+    "pause": "Durdur",
+    "resume": "Devam et",
+    "pauseLabel": "Dönen metni durdur",
+    "resumeLabel": "Dönen metni devam ettir",
+    "motionReduced": "Hareket azaltıldı"
   },
   "metadata": {
     "title": "MezunPortal",

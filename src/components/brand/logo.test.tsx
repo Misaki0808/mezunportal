@@ -45,6 +45,14 @@ describe('mezunportal. logosu', () => {
     expect(WORDMARK.cap.angle).toBeLessThan(0);
   });
 
+  it('açık tek renk sürümü yalnız beyazdan oluşur ve erişilebilir adı korur', () => {
+    const html = renderToStaticMarkup(<BrandLogo variant="mono-light" label="mezunportal." />);
+    expect(html).toContain('aria-label="mezunportal."');
+    for (const name of ['ink', 'iris', 'cap', 'tassel', 'dot'])
+      expect(html).toContain(`--brand-${name}:#fff`);
+    expect(html).not.toContain('opacity="0.88"');
+  });
+
   it('iki logo birlikte basılınca geçiş kimlikleri çakışmaz', () => {
     const html = renderToStaticMarkup(
       <>
@@ -70,6 +78,7 @@ describe('public/brand dosyaları', () => {
     'mezunportal.svg',
     'mezunportal-koyu.svg',
     'mezunportal-siyah-beyaz.svg',
+    'mezunportal-beyaz.svg',
     'mezunportal-simge.svg',
     'mezunportal-simge-tam.svg',
   ])('%s geçerli, yazı tipi gerektirmeyen bir SVG', (name) => {
@@ -78,6 +87,12 @@ describe('public/brand dosyaları', () => {
     expect(svg).toContain('viewBox=');
     expect(svg).not.toContain('<text');
     expect(svg).not.toContain('font-family');
+  });
+
+  it('beyaz SVG yalnız tam beyaz renk kullanır', () => {
+    const svg = read('mezunportal-beyaz.svg');
+    expect(new Set(svg.match(/#[a-f0-9]{6}/gi))).toEqual(new Set(['#ffffff']));
+    expect(svg).not.toContain('opacity="0.88"');
   });
 
   it('siyah-beyaz sürümde "portal" gri tonla ayrışır, renkli sürümde mor ve mercan vardır', () => {

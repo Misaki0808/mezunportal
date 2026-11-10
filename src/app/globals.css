@@ -79,7 +79,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    /* Zemin lacivert (#14224a; kullanıcı onayı bekliyor, değer yalnız burada: kolay geri alınır). */
+    /* Zemin lacivert (#14224a; kullanıcı onaylı, 10 Kasım). */
     --color-bg: #14224a;
     --color-surface: #1b2c5e;
     --color-surface-strong: #24376f;

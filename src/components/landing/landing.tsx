@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
-import { BrandLogo, BrandMark } from '@/components/brand/logo';
+import { BrandLogo } from '@/components/brand/logo';
 import { CheckIcon, ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon } from '@/components/ui';
 import type { LandingStats } from '@/server/services/landing';
 import { CountUp, Reveal } from './motion';
@@ -67,7 +67,14 @@ export async function Landing({ stats }: { stats: LandingStats }) {
               <h1>
                 {t('heroStart')} <span className="landing-title-mark">{t('heroEnd')}</span>
               </h1>
-              <RotatingLine lines={lines} />
+              <RotatingLine
+                lines={lines}
+                pauseText={t('pause')}
+                resumeText={t('resume')}
+                pauseLabel={t('pauseLabel')}
+                resumeLabel={t('resumeLabel')}
+                reducedLabel={t('motionReduced')}
+              />
               <p className="landing-hero-description">{t('heroDescription')}</p>
               <div className="landing-hero-actions">
                 <Link href="/giris" className="landing-primary">
@@ -81,9 +88,6 @@ export async function Landing({ stats }: { stats: LandingStats }) {
                 <CheckIcon />
                 {t('trust')}
               </p>
-            </div>
-            <div className="landing-hero-art" aria-hidden="true">
-              <BrandMark className="landing-hero-mark" />
             </div>
           </div>
         </section>
