@@ -61,7 +61,7 @@ export default async function CourseGuidePage({
             <option value="required">{t('required')}</option>
           </select>
         </label>
-        <button className="min-h-11 self-end rounded-lg bg-primary px-4 font-semibold text-white">
+        <button className="min-h-11 self-end rounded-lg bg-primary px-4 font-semibold text-on-primary">
           {t('filter')}
         </button>
       </form>

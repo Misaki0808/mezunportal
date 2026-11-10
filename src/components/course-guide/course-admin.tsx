@@ -116,7 +116,7 @@ export function CourseAdmin({
         <div className="flex gap-2">
           <button
             disabled={pending || !departments.length}
-            className="min-h-11 rounded-lg bg-primary px-5 font-semibold text-white disabled:opacity-50"
+            className="min-h-11 rounded-lg bg-primary px-5 font-semibold text-on-primary disabled:opacity-50"
           >
             {t(pending ? 'saving' : 'save')}
           </button>

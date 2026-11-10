@@ -68,7 +68,7 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
             setStatus(result.ok ? t('saved') : errors(result.errorCode));
           })
         }
-        className="min-h-11 rounded-lg bg-primary px-5 font-semibold text-white disabled:opacity-50"
+        className="min-h-11 rounded-lg bg-primary px-5 font-semibold text-on-primary disabled:opacity-50"
       >
         {t(pending ? 'saving' : 'save')}
       </button>
