@@ -7,13 +7,14 @@ import { seedDictionary } from './seed-dictionary';
 import { seedInstitutions } from './seed-institutions';
 import { seedPhase2 } from './seed-phase2';
 import { seedProfileTags } from './seed-profile-tags';
-import { seedId } from './seed-util';
+import { seedUuid } from './seed-util';
 
 const db = createTestPrisma();
 const NOW = new Date('2030-03-10T09:00:00Z');
 const DAY = 24 * 60 * 60 * 1000;
 
-const ids = (kind: string, keys: string[]) => keys.map((key) => seedId('phase2', `${kind}:${key}`));
+const ids = (kind: string, keys: string[]) =>
+  keys.map((key) => seedUuid('phase2', `${kind}:${key}`));
 const POSTINGS = ids('posting', [
   'veri-analizi-staj',
   'is-analizi-staj',
@@ -132,5 +133,16 @@ describe('Faz 2 deneme verisi (P2-14)', () => {
       internships.filter((e) => e.interviewQuestions.length > 0).length,
     ).toBeGreaterThanOrEqual(3);
     expect(internships.filter((e) => e.appliedMonth !== null).length).toBe(4);
+  });
+
+  it("şirket, ilan, etkinlik ve deneyim kimlikleri gerçek UUID'dir (çıktı şemaları z.uuid() ister; aksi halde ekranlar hata verir)", async () => {
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+    for (const id of [...POSTINGS, ...EVENTS, ...EXPERIENCES]) expect(id).toMatch(uuid);
+    const companies = await db.company.findMany({
+      where: { name: { startsWith: 'Örnek' } },
+      select: { id: true },
+    });
+    expect(companies.length).toBeGreaterThanOrEqual(3);
+    for (const company of companies) expect(company.id).toMatch(uuid);
   });
 });

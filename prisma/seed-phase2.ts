@@ -2,7 +2,7 @@ import type { PrismaClient } from '../src/generated/prisma/client';
 import { normalizeName } from '../src/server/rules/dictionary';
 import { seedUserId } from './seed-accounts';
 import { INSTITUTION_SEED } from './seed-data';
-import { seedId } from './seed-util';
+import { seedUuid } from './seed-util';
 
 /**
  * Faz 2 DENEME VERİSİ (P2-14): kullanıcının telefonda hızlıca gezebileceği örnek içerik. SAHTE ve açıkça işaretlidir: şirket
@@ -324,7 +324,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
       where: { normalizedName: normalizeName(company.sector, 'SECTOR') },
       select: { id: true },
     });
-    const id = seedId(NS, `company:${company.key}`);
+    const id = seedUuid(NS, `company:${company.key}`);
     const data = {
       name: company.name,
       normalizedName: normalizeName(company.name, 'COMPANY'),
@@ -337,7 +337,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
 
   // Yayınlanmış deneyimler.
   for (const e of EXPERIENCES) {
-    const id = seedId(NS, `experience:${e.key}`);
+    const id = seedUuid(NS, `experience:${e.key}`);
     const publishedAt = new Date(now.getTime() - e.publishedDaysAgo * DAY);
     const data = {
       authorId: e.author ? seedUserId(e.author) : null,
@@ -369,7 +369,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
   // İlanlar.
   const alumni = seedUserId('alumniMentor');
   for (const p of POSTINGS) {
-    const id = seedId(NS, `posting:${p.key}`);
+    const id = seedUuid(NS, `posting:${p.key}`);
     const published = p.state === 'PUBLISHED';
     const submitted = p.state !== 'DRAFT';
     const publishedAt = published ? new Date(now.getTime() - 2 * DAY) : null;
@@ -435,7 +435,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
     },
   ];
   for (const event of events) {
-    const id = seedId(NS, `event:${event.key}`);
+    const id = seedUuid(NS, `event:${event.key}`);
     const startsAt = new Date(today.getTime() + event.inDays * DAY + 11 * HOUR);
     const published = event.status === 'PUBLISHED';
     const data = {
