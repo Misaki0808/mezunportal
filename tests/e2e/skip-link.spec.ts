@@ -22,7 +22,7 @@ for (const width of [390, 1440]) {
     await expect(skip).toBeFocused();
     const skipBox = (await skip.boundingBox())!;
     // Marka iki yerde olabilir (mobil üst çubuk / masaüstü kenar çubuğu); görünür olan ölçülür.
-    const brand = page.getByText('MezunPortal', { exact: true }).locator('visible=true').first();
+    const brand = page.getByRole('img', { name: 'MezunPortal' }).locator('visible=true').first();
     await expect(brand).toBeVisible();
     const brandBox = (await brand.boundingBox())!;
     expect(

@@ -5,15 +5,21 @@ belge görsel niyeti ve kullanım kurallarını açıklar, CSS değerini ikinci 
 
 ## Yön
 
-Canlı ama güven veren, akademik ve resmî olmayan bir ürün. Sıcak nötr yüzey, koyu metin, **İris** ana renk,
-**Mercan** vurgu, **Nane** destek; uyarı/hata renkleri yalnız anlam taşır. Kullanıcı çoğunlukla telefondan,
+Sıcak, samimi, insancıl; akademik ve resmî olmayan bir ürün. Açık temada **krem** zemin, koyu temada **lacivert** zemin,
+koyu metin, **İris** ana renk, **Mercan-pembe** vurgu, **Nane** destek; uyarı/hata renkleri yalnız anlam taşır. Köşeler yumuşak
+(`--radius-*`), metin “sen” diliyle kısa ve içtendir. Kullanıcı çoğunlukla telefondan,
 kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
 
 - Marka paleti **İris + Mercan** (kullanıcı kararı; İstanbul Üniversitesi renkleri kullanılmaz, `docs/decisions.md`).
+- **AI izi yok** (kullanıcı kararı, 9 Kas): yıldız/ışıltı/✳ gibi süs simgesi, stok ya da yapay zekâ görseli kullanılmaz; yalnız anlam taşıyan sade
+  simge kalır. Mercan, Claude turuncusundan (≈#D97757) uzak, pembeye yakın tutulur. `no-ai-traces.test.ts` bekçisidir.
+- **Logo** `mezunportal.` (kullanıcı kararı, 3. tur): küçük harf, kep “o” harfinde (yatık), “mezun” koyu → “portal” İris (n–p yapışık, renk
+  geçişi), nokta yuvarlak ve Mercan. Çizim dış hatlıdır (`BrandLogo`, `public/brand/*.svg`); küçük yerlerde (favicon, uygulama simgesi) ayrı
+  sadeleştirilmiş simge, yalnız kepli “o” (`BrandMark`). Renkler `--brand-*` token'larıdır.
   Ana eylem, bağlantı, odak ve seçili durum İris (`primary`). Mercan (`accent`) **az** kullanılır: öne çıkan rozet/sayı,
   ikincil müjde; sayfada birincil eylem rengi olamaz. Nane = başarı/“müsait” (`success`).
-- **Geçiş** (`--gradient-brand`: İris → mor → Mercan) yalnız tanıtım/büyük dekoratif alanda; üzerine metin konmaz, düğme,
-  rozet ve kartta kullanılmaz.
+- **Gradyan ve parlama yok:** arayüzde renk geçişi, bulanık ışıma (`blur`) ve nabız animasyonlu süs daireleri kullanılmaz
+  ("AI izi", kullanıcı kararı). Tek renk geçişi logodaki n–p harfleridir. Çerçeve ve doluluk çubuğu düz İris'tir.
 - **Mercan kuralı:** mercan zeminde metin koyudur (`on-accent`); beyaz metin AA değildir. Mercanı metin/ikon olarak
   beyaz üstünde kullanma — `accent-strong` (AA) kullan.
 - **Koyu tema** `prefers-color-scheme` ile gelir; aynı token adları yeniden tanımlanır (`globals.css`), bileşende
@@ -49,23 +55,23 @@ Kanonik koruma `src/lib/contrast.test.ts` (her çift her iki temada; normal meti
 
 | Çift | Kullanım | Açık | Koyu |
 |---|---|---|---|
-| `fg` / `bg` | Metin | 17.3 | 17.2 |
-| `fg-muted` / `surface` | İkincil metin | 6.3 | 8.7 |
-| `fg-subtle` / `surface-strong` | Soluk metin | 4.5 | 5.2 |
-| `primary` / `bg` | Bağlantı / İris metin | 4.8 | 6.6 |
-| `on-primary` / `primary` | Birincil düğme | 4.9 | 6.6 |
-| `on-primary-soft` / `primary-soft` | Soft rozet | 10.1 | 9.5 |
-| `on-accent` / `accent` | Mercan zemin | 6.8 | 7.8 |
-| `accent-strong` / `bg` | Mercan metin | 5.5 | 8.6 |
-| `on-accent-soft` / `accent-soft` | Mercan soft | 7.4 | 8.5 |
-| `on-success-soft` / `success-soft` | Başarı rozeti | 7.1 | 11.0 |
-| `success` / `bg` | Nane sınır/simge (3:1) | 3.2 | 10.6 |
-| `on-warning-soft` / `warning-soft` | Uyarı | 8.7 | 11.5 |
+| `fg` / `bg` | Metin | 16.1 | 14.1 |
+| `fg-muted` / `surface` | İkincil metin | 6.4 | 7.7 |
+| `fg-subtle` / `surface-strong` | Soluk metin | 4.9 | 4.8 |
+| `primary` / `bg` | Bağlantı / İris metin | 4.7 | 6.8 |
+| `on-primary` / `primary` | Birincil düğme | 4.9 | 6.8 |
+| `on-primary-soft` / `primary-soft` | Soft rozet | 10.1 | 7.4 |
+| `on-accent` / `accent` | Mercan zemin | 6.6 | 7.8 |
+| `accent-strong` / `bg` | Mercan metin | 6.3 | 6.8 |
+| `on-accent-soft` / `accent-soft` | Mercan soft | 7.8 | 8.2 |
+| `on-success-soft` / `success-soft` | Başarı rozeti | 7.1 | 9.9 |
+| `success` / `bg` | Nane sınır/simge (3:1) | 3.2 | 8.5 |
+| `on-warning-soft` / `warning-soft` | Uyarı | 8.7 | 10.2 |
 | `on-danger` / `danger` | Yıkıcı düğme | 6.5 | 7.6 |
-| `on-danger-soft` / `danger-soft` | Hata | 9.2 | 10.3 |
-| `border-control` / `bg` | Kontrol sınırı (3:1) | 4.1 | 4.8 |
+| `on-danger-soft` / `danger-soft` | Hata | 9.2 | 9.2 |
+| `border-control` / `bg` | Kontrol sınırı (3:1) | 4.1 | 5.0 |
 
-Bilinen sınırlar: `primary` metni `primary-soft` üstünde AA değildir (4.3) → soft zeminde `on-primary-soft` kullan (ghost düğmenin
+Bilinen sınırlar: `primary` metni `primary-soft` üstünde AA değildir (4.3 açık, 4.6 koyu) → soft zeminde `on-primary-soft` kullan (ghost düğmenin
 hover'ında `primary-hover`, 5.8); `contrast.test.ts` bekçisi aynı sınıf dizgesinde `primary-soft` zemin + çıplak `text-primary`'yi yasaklar;
 Mercan (`accent`) beyaz zeminde 3:1'in altındadır → sınır/ikon için `accent-strong`; Nane metin için değil, simge/sınır içindir
 (metin `on-success-soft`).

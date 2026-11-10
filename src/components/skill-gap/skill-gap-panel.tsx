@@ -4,7 +4,15 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import type { SkillGapResult } from '@/contracts/skill-gap';
-import { Badge, Button, Field, IconChip, Select, buttonClasses } from '@/components/ui';
+import {
+  Badge,
+  BriefcaseIcon,
+  Button,
+  Field,
+  IconChip,
+  Select,
+  buttonClasses,
+} from '@/components/ui';
 import { selectSkillGoal } from '@/server/actions/skill-gap';
 
 function relatedQuery(label: string) {
@@ -47,7 +55,9 @@ export function SkillGapPanel({
       aria-labelledby="skill-gap-title"
     >
       <div className="flex items-start gap-3">
-        <IconChip tone="accent">✦</IconChip>
+        <IconChip tone="accent">
+          <BriefcaseIcon />
+        </IconChip>
         <div>
           <h2 id="skill-gap-title" className="text-xl font-semibold">
             {t('title')}
@@ -105,7 +115,7 @@ export function SkillGapPanel({
               className="mt-2 h-3 overflow-hidden rounded-full bg-bg"
             >
               <div
-                className="h-full rounded-full bg-[image:var(--gradient-brand)]"
+                className="h-full rounded-full bg-primary"
                 style={{ width: `${analysis.progress}%` }}
               />
             </div>
