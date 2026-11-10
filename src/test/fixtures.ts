@@ -196,3 +196,13 @@ export async function grantRequiredConsents(db: PrismaClient, userId: string) {
     })),
   });
 }
+
+/**
+ * Önceki testlerden kalan kullanıcıların adlarını nötrleştirir (yalnız test). Hikâye kimlik denetimi metni TÜM kullanıcı adlarına
+ * karşı sınar; test veritabanı dosyalar arasında paylaşıldığından, başka bir dosyanın bıraktığı "Yeni Üye" gibi bir ad metindeki
+ * sıradan sözcükle çakışıp `STORY_IDENTITY_LEAK` verebilir (dosya sırasına bağlı dalgalı hata). Ad kimlikle değişir; belirteçleri
+ * (≥3 harf) sözcük olamaz.
+ */
+export async function neutralizeUserNames(db: PrismaClient): Promise<void> {
+  await db.$executeRaw`UPDATE "User" SET "name" = 'x ' || "id" WHERE "name" NOT LIKE 'x %'`;
+}

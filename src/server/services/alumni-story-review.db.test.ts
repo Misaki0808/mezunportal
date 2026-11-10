@@ -1,4 +1,4 @@
-import { afterAll, expect, it } from 'vitest';
+import { afterAll, beforeEach, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import {
   addGrant,
@@ -6,6 +6,7 @@ import {
   createInstitution,
   createUser,
   grantRequiredConsents,
+  neutralizeUserNames,
 } from '@/test/fixtures';
 import {
   getCurrentStory,
@@ -20,6 +21,8 @@ import {
 } from './alumni-story';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
+// Kimlik denetimi tüm kullanıcı adlarına karşı sınar: önceki dosyaların bıraktığı adlar metinle çakışmasın (dalgalı hata, kart 170).
+beforeEach(() => neutralizeUserNames(db));
 const at = new Date('2026-05-15T10:00:00Z'),
   deps = { db, now: () => at };
 const BODY =
@@ -199,4 +202,22 @@ it('yazarın tam kendi adı başka kullanıcının ilk adıyla aynı olsa da ken
       code: 'STORY_IDENTITY_LEAK',
     });
   }
+});
+
+it('paylaşılan veritabanında başka testten kalan ad, hikâye metnindeki sıradan sözcükle çakışırsa gönderim reddedilir; adlar nötrleşince geçer (dalgalı hatanın kök nedeni)', async () => {
+  const w = await fixture();
+  const draft = await saveStory(deps, w.owner, {
+    departmentId: w.inst.deptA1,
+    body: BODY + ' Yeni deneyimlerimi paylaşarak gelişmeye devam ettim.',
+    consent: true,
+  });
+  // Başka bir test dosyasının bıraktığı kullanıcı (ör. "Yeni Üye 1"): metindeki "Yeni" sözcüğüyle eşleşir. Denetim gönderimde çalışır.
+  await createUser(db, { name: 'Yeni Üye 1' });
+  await expect(submitStory(deps, w.owner, { storyId: draft.id })).rejects.toMatchObject({
+    code: 'STORY_IDENTITY_LEAK',
+  });
+  await neutralizeUserNames(db);
+  await expect(submitStory(deps, w.owner, { storyId: draft.id })).resolves.toMatchObject({
+    status: 'PENDING',
+  });
 });

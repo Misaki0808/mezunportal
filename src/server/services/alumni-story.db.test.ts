@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import {
   addGrant,
@@ -6,6 +6,7 @@ import {
   createInstitution,
   createUser,
   grantRequiredConsents,
+  neutralizeUserNames,
 } from '@/test/fixtures';
 import { buildDataExport } from './dataExport';
 import { deleteAccount } from './accountDeletion';
@@ -23,6 +24,8 @@ import {
 } from './alumni-story';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
+// Kimlik denetimi tüm kullanıcı adlarına karşı sınar: önceki dosyaların bıraktığı adlar metinle çakışmasın (dalgalı hata, kart 170).
+beforeEach(() => neutralizeUserNames(db));
 const BODY =
   'Üretim yolculuğum boyunca merakla öğrenmeye ve deneyim kazanmaya devam ettim. Zorluklar karşısında gelişmeyi seçtim.';
 
