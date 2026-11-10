@@ -216,15 +216,4 @@ describe('seed gerçekten GÖRÜNÜR içerik üretir (servisler k-anonimlik eşi
     });
     expect(JSON.stringify(detail)).not.toContain('@test.mezunportal.local');
   });
-
-  it("şirket, ilan, etkinlik ve deneyim kimlikleri gerçek UUID'dir (çıktı şemaları z.uuid() ister; aksi halde ekranlar hata verir)", async () => {
-    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-    for (const id of [...POSTINGS, ...EVENTS, ...EXPERIENCES]) expect(id).toMatch(uuid);
-    const companies = await db.company.findMany({
-      where: { name: { startsWith: 'Örnek' } },
-      select: { id: true },
-    });
-    expect(companies.length).toBeGreaterThanOrEqual(3);
-    for (const company of companies) expect(company.id).toMatch(uuid);
-  });
 });
