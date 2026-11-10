@@ -115,6 +115,7 @@
   font-weight: 800;
   line-height: 1.04;
   letter-spacing: -0.035em;
+  word-spacing: 0.08em;
   text-wrap: balance;
 }
 .landing-title-mark {
@@ -289,6 +290,7 @@
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.03em;
+  word-spacing: 0.06em;
   text-wrap: balance;
 }
 .landing-section-head p:last-child {
