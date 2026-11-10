@@ -53,8 +53,9 @@ export async function runSuspicionScan(
     // Üst sınırı dedektörler uygular (`<= now`).
     eventAt: { gte: since },
   };
+  const { scanCampusEventPatterns } = await import('./campus-event');
   let scanned = 0;
-  let flagged = 0;
+  let flagged = await scanCampusEventPatterns(deps.db, now);
   for (let after: string | undefined; ;) {
     const users = await deps.db.pointEntry.findMany({
       where: {

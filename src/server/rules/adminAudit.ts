@@ -44,6 +44,10 @@ export const ADMIN_ACTIONS = {
   STORY_REJECT: { reasonRequired: true },
   MONTHLY_ALUMNUS_SELECT: { reasonRequired: true },
   AWARD_REVIEW_REQUIRED: { reasonRequired: false },
+  CAMPUS_EVENT_CREATE: { reasonRequired: false },
+  CAMPUS_EVENT_PUBLISH: { reasonRequired: true },
+  CAMPUS_EVENT_REJECT: { reasonRequired: true },
+  CAMPUS_EVENT_CANCEL: { reasonRequired: true },
 } as const;
 
 export type AdminActionName = keyof typeof ADMIN_ACTIONS;
@@ -70,6 +74,7 @@ export const AUDIT_TARGET_TYPES = [
   'AWARD',
   'ALUMNI_STORY',
   'MONTHLY_ALUMNUS',
+  'CAMPUS_EVENT',
 ] as const;
 
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];

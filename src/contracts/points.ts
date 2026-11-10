@@ -41,6 +41,7 @@ export const POINT_ACTIONS = [
   'JOB_POSTING_PUBLISHED',
   'REFERRAL_GIVEN',
   'REFERRAL_ACCEPTED',
+  'EVENT_ATTENDED',
 ] as const;
 export type PointAction = (typeof POINT_ACTIONS)[number];
 
@@ -53,6 +54,7 @@ export const POINT_SOURCE_TYPES = [
   'FAQ_ANSWER',
   'JOB_POSTING',
   'REFERRAL',
+  'CAMPUS_EVENT',
 ] as const;
 export type PointSourceType = (typeof POINT_SOURCE_TYPES)[number];
 
@@ -66,6 +68,7 @@ export const POINT_REVOKE_REASONS = [
   'FRAUD_CONFIRMED',
   'POSTING_WITHDRAWN',
   'REFERRAL_CANCELLED',
+  'EVENT_CANCELLED',
 ] as const;
 export type PointRevokeReason = (typeof POINT_REVOKE_REASONS)[number];
 
@@ -84,6 +87,8 @@ export const SUSPICION_RULES = [
   'SYNC_FEEDBACK',
   'REFERRAL_REPEAT',
   'REFERRAL_BURST',
+  'EVENT_BURST',
+  'EVENT_NETWORK',
 ] as const;
 export type SuspicionRule = (typeof SUSPICION_RULES)[number];
 export const SUSPICION_STATUSES = ['OPEN', 'CONFIRMED', 'DISMISSED'] as const;
@@ -103,6 +108,7 @@ export const DEFAULT_POINT_RULES: Readonly<
   JOB_POSTING_PUBLISHED: { points: 5, delayDays: 7 },
   REFERRAL_GIVEN: { points: 20, delayDays: 14 },
   REFERRAL_ACCEPTED: { points: 30, delayDays: 14 },
+  EVENT_ATTENDED: { points: 5, delayDays: 3 },
   CV_REVIEW_HELPFUL: { points: 3, delayDays: 0 },
   SESSION_ONLINE: { points: 10, delayDays: 0 },
   SESSION_IN_PERSON: { points: 15, delayDays: 7 },

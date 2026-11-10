@@ -232,6 +232,16 @@ export async function deleteAccount(
     await tx.fieldVisibility.deleteMany({ where: { userId } });
     await tx.jobMatch.deleteMany({ where: { userId } });
     await tx.companyFollow.deleteMany({ where: { userId } });
+    await tx.eventAttendance.deleteMany({ where: { userId } });
+    await tx.campusEventRegistration.deleteMany({ where: { userId } });
+    await tx.campusEvent.updateMany({
+      where: { createdById: userId },
+      data: { createdById: null },
+    });
+    await tx.campusEvent.updateMany({
+      where: { reviewedById: userId },
+      data: { reviewedById: null, reviewReason: null },
+    });
     await tx.jobMatchDigest.deleteMany({ where: { userId } });
     await tx.notificationIntent.deleteMany({ where: { userId } });
     await tx.sessionFeedback.deleteMany({ where: { authorId: userId } });
