@@ -3,7 +3,8 @@
 /*
  * Tasarım token'larının KANONİK kaynağı bu dosyadır (docs/design.md görsel niyeti anlatır, değeri
  * ikinci kez yönetmez). Marka paleti "İris + Mercan" (kullanıcı kararı; İÜ renkleri kullanılmaz):
- * ana renk İris (`primary`), vurgu Mercan (`accent`), destek Nane (`success`); nötrler sıcak.
+ * ana renk İris (`primary`), vurgu Mercan-pembe (`accent`; Claude turuncusundan uzak, pembeye yakın),
+ * destek Nane (`success`); nötrler sıcak (açık tema krem, koyu tema lacivert).
  * Uyarı/hata renkleri yalnız anlam taşır. Koyu tema aynı adlı token'ları `prefers-color-scheme`
  * ile yeniden tanımlar (bileşenler yalnız token kullanır). Metin/zemin çiftlerinin kontrastı
  * `src/lib/contrast.test.ts` ile HER İKİ temada korunur (WCAG AA: normal metin 4.5:1, arayüz
@@ -11,18 +12,18 @@
  */
 @theme {
   /* Zemin ve yüzeyler (sıcak nötr) */
-  --color-bg: #fcfcfd;
-  --color-surface: #f6f5fa;
-  --color-surface-strong: #eeedf5;
-  --color-overlay: rgb(23 22 42 / 0.5);
+  --color-bg: #fffaf4;
+  --color-surface: #fcf6ee;
+  --color-surface-strong: #f5ecdf;
+  --color-overlay: rgb(29 27 51 / 0.5);
 
   /* Metin */
-  --color-fg: #17162a;
+  --color-fg: #1d1b33;
   --color-fg-muted: #5a5870;
-  --color-fg-subtle: #6b6985;
+  --color-fg-subtle: #65637f;
 
   /* Çizgiler: `border` dekoratif ayırıcı, `border-control` etkileşimli kontrol sınırı (3:1) */
-  --color-border: #e7e5ef;
+  --color-border: #eadfd0;
   --color-border-control: #7a7893;
 
   /* Marka: İris (ana). Düğme, bağlantı, odak, seçili durum. */
@@ -34,12 +35,12 @@
 
   /* Vurgu: Mercan. Az kullanılır (rozet, öne çıkan sayı, ikincil müjde); mercan zeminde metin KOYUDUR
      (`on-accent`), mercan metin olarak yalnız `accent-strong`. */
-  --color-accent: #ff7a59;
-  --color-accent-hover: #f26a47;
-  --color-on-accent: #1f1530;
-  --color-accent-soft: #fff1ec;
-  --color-on-accent-soft: #8a3414;
-  --color-accent-strong: #b4421f;
+  --color-accent: #ff6b7f;
+  --color-accent-hover: #f45a70;
+  --color-on-accent: #2a0d18;
+  --color-accent-soft: #ffeef0;
+  --color-on-accent-soft: #8f1d33;
+  --color-accent-strong: #b3203f;
 
   /* Anlam renkleri: her biri renk + metinle birlikte kullanılır, tek sinyal değildir.
      Başarı = Nane ("müsait", onaylandı). */
@@ -65,61 +66,70 @@
     Roboto, Arial, sans-serif;
 
   /* Radius ölçeği: kontrol < kart < örtü */
-  --radius-control: 0.75rem;
-  --radius-card: 1rem;
-  --radius-sheet: 1.25rem;
+  --radius-control: 0.875rem;
+  --radius-card: 1.25rem;
+  --radius-sheet: 1.5rem;
 
   /* Gölge işlevseldir, hiyerarşinin yerine geçmez */
-  --shadow-card: 0 1px 2px rgb(23 22 42 / 0.06), 0 1px 3px rgb(23 22 42 / 0.08);
-  --shadow-overlay: 0 10px 30px rgb(23 22 42 / 0.2);
+  --shadow-card: 0 1px 2px rgb(60 40 20 / 0.06), 0 2px 8px rgb(60 40 20 / 0.06);
+  --shadow-overlay: 0 10px 30px rgb(29 27 51 / 0.2);
 }
 
 /* Koyu tema: aynı token adları. Ana renk koyu zeminde açılır, üstündeki metin koyudur. */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --color-bg: #0e0d1a;
-    --color-surface: #17162b;
-    --color-surface-strong: #211f3a;
-    --color-overlay: rgb(0 0 0 / 0.6);
-    --color-fg: #f2f1fa;
-    --color-fg-muted: #b5b3cc;
-    --color-fg-subtle: #9391ad;
-    --color-border: #2b2a45;
-    --color-border-control: #7d7ba0;
-    --color-primary: #8b8bff;
-    --color-primary-hover: #a3a3ff;
-    --color-on-primary: #0e0d1a;
-    --color-primary-soft: #23224a;
-    --color-on-primary-soft: #c9c9ff;
-    --color-accent: #ff8f73;
-    --color-accent-hover: #ffa48b;
-    --color-on-accent: #1f1530;
-    --color-accent-soft: #3a2321;
-    --color-on-accent-soft: #ffb4a0;
-    --color-accent-strong: #ff8f73;
+    /* Zemin lacivert (#14224a; kullanıcı onayı bekliyor, değer yalnız burada: kolay geri alınır). */
+    --color-bg: #14224a;
+    --color-surface: #1b2c5e;
+    --color-surface-strong: #24376f;
+    --color-overlay: rgb(8 12 30 / 0.65);
+    --color-fg: #f2f4fc;
+    --color-fg-muted: #bcc4e2;
+    --color-fg-subtle: #9ea8cf;
+    --color-border: #31427a;
+    --color-border-control: #8190c4;
+    --color-primary: #a3a3ff;
+    --color-primary-hover: #b8b8ff;
+    --color-on-primary: #14224a;
+    --color-primary-soft: #2b3a7a;
+    --color-on-primary-soft: #d4d4ff;
+    --color-accent: #ff8798;
+    --color-accent-hover: #ff9eac;
+    --color-on-accent: #2a0d18;
+    --color-accent-soft: #4a2745;
+    --color-on-accent-soft: #ffc0ca;
+    --color-accent-strong: #ff8798;
     --color-success: #3dd6c3;
-    --color-success-soft: #0f2d2b;
+    --color-success-soft: #10353a;
     --color-on-success-soft: #8ff0e3;
     --color-warning: #f5b355;
-    --color-warning-soft: #33260f;
+    --color-warning-soft: #3a2f1a;
     --color-on-warning-soft: #fde0a8;
     --color-danger: #ff7a8a;
     --color-danger-hover: #ff9aa6;
     --color-on-danger: #1f0a10;
-    --color-danger-soft: #3b1820;
+    --color-danger-soft: #42203a;
     --color-on-danger-soft: #ffc2cc;
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.5);
-    --shadow-overlay: 0 10px 30px rgb(0 0 0 / 0.6);
+    --brand-ink: #f4f2ff;
+    --brand-iris: #a3a3ff;
+    --brand-cap: #a3a3ff;
+    --brand-tassel: #ff8798;
+    --brand-dot: #ff8798;
+    --shadow-card: 0 1px 2px rgb(4 8 24 / 0.4), 0 2px 8px rgb(4 8 24 / 0.35);
+    --shadow-overlay: 0 10px 30px rgb(4 8 24 / 0.6);
   }
 }
 
 @layer base {
   :root {
     color-scheme: light dark;
-    /* Marka geçişi: YALNIZ büyük dekoratif alanda (tanıtım şeridi, boş durum zemini); üzerine metin konmaz,
-       küçük bileşende (düğme, rozet, kart) kullanılmaz. */
-    --gradient-brand: linear-gradient(135deg, #5b5bf6 0%, #a855f7 55%, #ff7a59 100%);
+    /* Logo renkleri (BrandLogo): "mezun" koyu → "portal" iris, kep iris, püskül ve nokta mercan-pembe. */
+    --brand-ink: #1d1b33;
+    --brand-iris: #5b5bf6;
+    --brand-cap: #5b5bf6;
+    --brand-tassel: #ff6b7f;
+    --brand-dot: #ff6b7f;
   }
 
   html {

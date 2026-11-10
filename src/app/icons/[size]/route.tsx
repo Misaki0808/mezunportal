@@ -14,5 +14,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{ siz
   const { size } = await params;
   const px = SIZES[size as keyof typeof SIZES];
   if (!px) return new Response(null, { status: 404 });
-  return new ImageResponse(<BrandIcon size={px} />, { width: px, height: px });
+  return new ImageResponse(<BrandIcon size={px} full />, { width: px, height: px });
 }

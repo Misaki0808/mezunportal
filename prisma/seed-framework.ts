@@ -1,5 +1,6 @@
 import type { PrismaClient } from '../src/generated/prisma/client';
 import { seedAccounts } from './seed-accounts';
+import { seedCourses } from './seed-courses';
 import { seedDictionary } from './seed-dictionary';
 import { seedFeedback } from './seed-feedback';
 import { seedInstitutions } from './seed-institutions';
@@ -22,6 +23,7 @@ export const TEST_ACCOUNT_PLACEHOLDERS = [
 // Yabancı anahtar sırası: kurumlar → hesaplar ve üyelikler (P1-01) → özellik örnekleri (ilgili faz adımı).
 export const SEED_MODULES = [
   { name: 'institutions', run: seedInstitutions },
+  { name: 'courses', run: seedCourses },
   { name: 'accounts', run: seedAccounts },
   { name: 'profileTags', run: seedProfileTags },
   { name: 'dictionary', run: seedDictionary },

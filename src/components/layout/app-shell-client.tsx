@@ -16,6 +16,7 @@ import {
 } from '@/components/ui';
 
 import { KeyboardState } from './keyboard-state';
+import { BrandLogo } from '@/components/brand/logo';
 
 type NavId = 'home' | 'experiences' | 'jobs' | 'mentors' | 'appointments' | 'profile';
 
@@ -62,11 +63,8 @@ export function AppShellClient({
     return (
       <div className="min-h-dvh">
         <header className="flex h-14 items-center border-b border-border px-5">
-          <Link
-            href="/"
-            className="press-control inline-flex min-h-11 items-center text-lg font-semibold text-primary"
-          >
-            {t('brand')}
+          <Link href="/" className="press-control inline-flex min-h-11 items-center">
+            <BrandLogo className="h-7 w-auto" label={t('brand')} />
           </Link>
         </header>
         <main id="main-content" tabIndex={-1} className="outline-none">
@@ -131,7 +129,9 @@ export function AppShellClient({
       </a>
 
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-bg px-4 lg:hidden">
-        <span className="text-lg font-semibold text-primary">{t('brand')}</span>
+        <Link href="/" className="press-control inline-flex min-h-11 items-center">
+          <BrandLogo className="h-7 w-auto" label={t('brand')} />
+        </Link>
         {!signedIn && (
           <Link
             href="/giris"
@@ -143,7 +143,9 @@ export function AppShellClient({
       </header>
 
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col gap-6 border-r border-border bg-surface p-4 lg:flex">
-        <span className="px-3 pt-2 text-xl font-semibold text-primary">{t('brand')}</span>
+        <Link href="/" className="press-control inline-flex min-h-11 items-center px-3 pt-2">
+          <BrandLogo className="h-8 w-auto" label={t('brand')} />
+        </Link>
         {!signedIn && (
           <Link
             href="/giris"

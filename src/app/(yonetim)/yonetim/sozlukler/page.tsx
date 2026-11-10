@@ -21,6 +21,7 @@ export default async function DictionariesPage() {
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   if (!sectors.ok) return <ErrorState errorCode={sectors.errorCode} />;
   const t = await getTranslations('companies');
+  const course = await getTranslations('courseGuide');
   return (
     <>
       <div className="mx-auto max-w-5xl px-4 pt-6">
@@ -29,6 +30,14 @@ export default async function DictionariesPage() {
           className="inline-flex min-h-11 items-center font-semibold text-primary"
         >
           {t('mergeTitle')} →
+        </Link>
+      </div>
+      <div className="mx-auto max-w-5xl px-4">
+        <Link
+          href="/yonetim/dersler"
+          className="inline-flex min-h-11 items-center font-semibold text-primary"
+        >
+          {course('adminLink')} →
         </Link>
       </div>
       <Dictionaries

@@ -56,7 +56,7 @@ Faz 1'in D1–D17 kararları **aynen geçerlidir** (`docs/faz1-plan.md` §2). Fa
 | D22 | Ödül | Yılın Mezunu ve ayın mezunu puanla **otomatik** verilmez; puan yalnız aday listesini sıralar, kararı bölüm yöneticisi verir (`docs/architecture.md` “Puan motoru”) |
 | D23 | Rehber özellikleri | Beceri açığı ve ders rehberi yapay zekâsız, açık kuralla ve k-anonim sayımla çalışır |
 | D24 | Dış hesap | LinkedIn “Add to Profile” yalnız bağlantıdır (API/kazıma yok); kurum sayfası ve metinleri kullanıcıdan gelir (E maddesi) |
-| D25 | Ders rehberi kapsamı | YBS'nin **bütün dersleri** listelenir, seçmeliler öne çıkar; resmî ders listesi hoca onayıyla gelir (PM, 8 Kas) |
+| D25 | Ders rehberi kapsamı | YBS'nin **bütün dersleri** listelenir, seçmeliler öne çıkar; resmî ders listesi kullanıcı tarafından sağlandı (PM, 10 Kas) |
 | D26 | Soru bankası | Ayrı tablo yoktur; yayınlanmış deneyimlerdeki mülakat sorularından **türetilir** (PM, 8 Kas) |
 | D27 | Yılın Mezunu havuzu | Aday havuzu **akademik yıl** (Eylül–Ağustos); liste törenden 30 gün önce **dondurulur** (PM, 8 Kas) |
 | D28 | Aday arama | Aramayı yalnız doğrulanmış ve “işe alım yapıyorum” beyanlı **mezun** yapar; öğrenci yalnız açık rıza + “staj arıyorum” etiketiyle görünür; sonuçlar maskeli, iletişim mevcut iletişim talebi akışıyla, hız sınırlı (PM, 8 Kas) |
@@ -219,7 +219,7 @@ sektörlerde (k ≥ 3). Kimlik gösterilmez. Ders sözlüğü yönetici ekranın
 **Testler:** k altında sayı gösterilmez; mezun silinince işaretleri düşer; en çok 5 işaret sınırı; ders yalnız kendi bölümüne bağlı
 mezundan işaret alır; mutasyon (sınır, k).
 **Kabul:** yukarıdakiler.
-**⏸ Onay noktası:** resmî YBS ders listesi **hoca onayıyla** gelir (D25; onay tablosunda); onay gelene kadar seed örnek listedir. Seçmeli/zorunlu ayrımı `Course` alanıdır.
+**PM kararı (kart 169):** Kullanıcının sağladığı 89 ders resmî seed listesidir; hoca onayı koşulu kaldırıldı. Seçmeli/zorunlu ayrımı `Course` alanıdır.
 **Bağımlılık:** Faz 1 profil; bölüm sözlüğü.
 
 ## 7. Adımlar — Dalga D · Tanınma ve topluluk
@@ -305,7 +305,6 @@ hangi akışın nasıl denendiği; yeni `.md` açılmaz, `docs/engineering.md` �
 | LinkedIn “Add to Profile”: kurum sayfası, ödül adı | Kullanıcı | Dış hesap/kurum sayfası (E maddesi) | P2-01 |
 | Ters arama ve ödül yayını rıza metinleri | Kullanıcı + hoca | KVKK (özel rıza), `docs/legal-drafts.md` | P2-06, P2-01, P2-02 |
 | İlan (değer), referans, etkinlik puan değerleri ve referans/etkinlik gecikmeleri | PM | Puan ekonomisi dengesi (`PointRule` seed); ilan gecikmesi (7 gün) ve aylık sınır (3) verildi | P2-04, P2-03, P2-12 |
-| YBS'nin bütün derslerinin resmî listesi | Hoca | Resmî müfredat onayı (D25) | P2-08 |
 | Canlı SMTP hacmi (özet + eşleşme e-postaları) | Kullanıcı | K-05; ücretsiz katman sınırları | P2-05, P2-13 |
 
 ## 10. Faz düzeyinde kabul

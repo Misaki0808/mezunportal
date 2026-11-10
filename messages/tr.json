@@ -1,109 +1,108 @@
 {
   "landing": {
-    "metaTitle": "MezunPortal | Birlikte yolunu bul",
-    "metaDescription": "İstanbul Üniversitesi öğrencileri ve mezunları için deneyimler, mentorluk ve kariyer yolculuğu bir arada.",
+    "metaTitle": "mezunportal. | Staj ararken yalnız değilsin",
+    "metaDescription": "İstanbul Üniversitesi İktisat Fakültesi YBS öğrencileri için: mezunlardan staj deneyimi, CV desteği ve kısa görüşmeler.",
     "skip": "İçeriğe geç",
-    "brand": "MezunPortal ana sayfa",
-    "brandWord": "mezunportal",
+    "brand": "mezunportal. ana sayfa",
     "navigation": "Tanıtım gezinmesi",
     "navHow": "Nasıl çalışır?",
-    "navYbs": "YBS topluluğu",
+    "navDepartment": "Bölümümüz",
     "navLogin": "Giriş yap",
-    "eyebrow": "İstanbul Üniversitesi topluluğu",
-    "heroStart": "Yolun daha yeni",
-    "heroEnd": "başlıyor.",
-    "heroDescription": "Senden önce bu yollardan geçenlerle tanış. Deneyimleri keşfet, sorularını sor, kendi yolunu çiz.",
-    "rotatingLead": "Birlikte daha çok",
-    "rotatingAccessible": "staj, mentor, deneyim ve kariyer",
+    "faculty": "İstanbul Üniversitesi İktisat Fakültesi · Yönetim Bilişim Sistemleri",
+    "heroStart": "Staj ararken",
+    "heroEnd": "yalnız değilsin.",
+    "heroDescription": "YBS'de senden önce okuyanlar bu yoldan geçti. Hangi şirkete nasıl girdiklerini, mülakatta ne sorulduğunu burada anlatıyorlar.",
     "rotating": {
-      "internship": "staj",
-      "mentor": "mentor",
-      "experience": "deneyim",
-      "career": "kariyer"
+      "line1": "Sen giderken dönen arkadaşların var, bir destek alsana?",
+      "line2": "O şirkete kim girdi, mülakatta ne sordular? Soran kazanır.",
+      "line3": "Bu yoldan senden önce geçen YBS'liler burada.",
+      "line4": "Staj başvurusunu son güne bırakma, takvim burada.",
+      "line5": "CV'ne bir mezun gözü değsin.",
+      "line6": "Stajı nereden değil, kimden bulacağına bak.",
+      "line7": "Mülakatta ne soracaklarını tahmin etme, bilenden öğren.",
+      "line8": "Bir kahvelik görüşme, bir yaz stajı demek olabilir.",
+      "line9": "Mezunlar yardım etmek istiyor, sadece sormanı bekliyorlar."
     },
     "primary": "İÜ e-postanla başla",
     "secondary": "Nasıl çalışır?",
-    "trust": "Doğrulanmış üniversite topluluğu",
-    "previewBrand": "mezunportal.",
-    "previewKicker": "SENİN İÇİN",
-    "previewHeading": "Birlikte keşfet.",
-    "previewExperienceTag": "Staj deneyimi",
-    "previewExperience": "İlk stajına hazırlanırken",
-    "previewExperienceMeta": "Örnek deneyim · YBS",
-    "previewMentor": "Bir mentorla tanış",
-    "previewMentorMeta": "Deneyimlerinden öğren",
-    "previewDepartment": "Yönetim Bilişim Sistemleri",
-    "previewAvailable": "Görüşmeye açık",
-    "previewTopic": "Kariyer",
-    "previewMeeting": "Bir görüşme planla",
-    "previewMeetingMeta": "Sana uygun bir zaman seç",
-    "previewOpportunity": "Yeni bir bakış açısı",
-    "previewOpportunityMeta": "Topluluğunla keşfet",
-    "heroBottom": "Aynı üniversite, farklı yollar.",
-    "scroll": "Keşfet",
+    "trust": "Üyelik e-posta ya da belgeyle doğrulanır.",
     "statsLabel": "Topluluğun sayıları",
-    "statsIntro": "Birlikte büyüyen bir topluluk.",
-    "newCommunity": "Yeni başladık",
-    "statsUnavailable": "Bilgi yok",
+    "statsIntro": "Şu ana kadar",
     "stats": {
-      "experiences": "Paylaşılan deneyim",
-      "mentors": "Aktif mentor",
-      "meetings": "Gerçekleşen görüşme"
+      "experiences": "paylaşılan deneyim",
+      "mentors": "aktif mentor",
+      "meetings": "gerçekleşen görüşme"
     },
-    "howKicker": "NASIL ÇALIŞIR?",
-    "howTitle": "Kendi yolunu çizmek",
-    "howAccent": "üç adım kadar yakın.",
-    "howDescription": "İster ilk stajını arıyor ol, ister deneyimlerini paylaşmak iste. Burada bir sonraki adımı birlikte düşünürüz.",
+    "howKicker": "Nasıl çalışır?",
+    "howTitle": "Üç adımda başlarsın.",
+    "howDescription": "Kayıt olmak bir okul e-postası kadar kolay.",
     "steps": {
       "verify": {
-        "title": "Topluluğa katıl",
-        "description": "Üniversite üyeliğini doğrula, sana ait bir alan oluştur."
+        "title": "Okul e-postanla gir",
+        "description": "İÜ öğrenci e-postanla üyeliğini doğrula. Mezunsan mezuniyet belgeni yükle."
       },
       "explore": {
-        "title": "Deneyimleri keşfet",
-        "description": "Staj, eğitim ve kariyer hikâyelerinde sana yol gösterecek ayrıntıları bul."
+        "title": "Deneyimlere bak",
+        "description": "Mezunların hangi şirkette staj yaptığını, nasıl başvurduğunu ve mülakatta neler sorulduğunu oku."
       },
       "connect": {
-        "title": "Birlikte ilerle",
-        "description": "Bir mentorla tanış, görüşme iste ve aklındaki soruları paylaş."
+        "title": "Sor, görüşme iste",
+        "description": "Bir mezuna kısa bir görüşme için yaz ya da CV'ni bir mezunun görmesini iste."
       }
     },
-    "ybsKicker": "ÖNCE YAKININDAN",
-    "ybsTitle": "YBS ile başlıyor,",
-    "ybsAccent": "birlikte büyüyoruz.",
-    "ybsDescription": "MezunPortal pilot yolculuğuna İstanbul Üniversitesi Yönetim Bilişim Sistemleri topluluğuyla başlıyor. Tanıdık bir yerden, farklı deneyimlere açılan bir alan.",
-    "ybsAction": "Topluluğa katıl",
-    "ybsArt": "İstanbul Üniversitesi · YBS",
-    "faqKicker": "AKLINDA KALMASIN",
-    "faqTitle": "Merak ettiklerine",
-    "faqAccent": "kısa cevaplar.",
+    "departmentKicker": "Bölümümüz",
+    "departmentTitle": "İktisat Fakültesi, YBS",
+    "departmentDescription": "Bölümün kendi sayfaları ve hesapları bunlar. Duyurular orada, staj ve mezun deneyimleri burada.",
+    "externalHint": "Yeni sekmede açılır",
+    "links": {
+      "site": {
+        "name": "Bölüm sitesi",
+        "description": "Bölüm bilgileri ve duyurular"
+      },
+      "staff": {
+        "name": "Akademik kadro",
+        "description": "Hocalarımız ve çalışma alanları"
+      },
+      "linkedin": {
+        "name": "LinkedIn",
+        "description": "Bölümün LinkedIn sayfası"
+      },
+      "instagram": {
+        "name": "Instagram",
+        "description": "Bölümün Instagram hesabı"
+      },
+      "club": {
+        "name": "YBS Kulübü",
+        "description": "Kulübün Instagram hesabı"
+      }
+    },
+    "faqKicker": "Aklında kalmasın",
+    "faqTitle": "Merak ettiklerine kısa cevaplar.",
     "faqDescription": "Başlamadan önce bilmek isteyebileceğin birkaç şey.",
     "questions": {
       "who": {
-        "question": "MezunPortal kimler için?",
-        "answer": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için. Pilot çalışma YBS topluluğuyla başlıyor."
+        "question": "mezunportal. kimler için?",
+        "answer": "İÜ İktisat Fakültesi YBS öğrencileri, mezunları ve akademisyenleri için. Pilot çalışma bu bölümle başlıyor."
       },
       "cost": {
         "question": "Başlamak için neye ihtiyacım var?",
-        "answer": "Üniversite üyeliğini doğrulayarak profilini oluşturabilir ve topluluğu keşfetmeye başlayabilirsin."
+        "answer": "Bir İÜ öğrenci e-postası yeter. Mezunsan mezuniyet belgeni yüklersin, doğrulanınca içeri girersin."
       },
       "privacy": {
         "question": "Bilgilerimi kimler görebilir?",
         "answer": "Profilindeki alanların görünürlüğünü sen belirlersin. İletişim bilgilerin ancak onayladığın taleplerde paylaşılır."
       },
       "mentor": {
-        "question": "Bir mentordan nasıl destek alırım?",
-        "answer": "Doğrulamanı tamamladıktan sonra mentorları keşfedebilir, uygun bir zaman için görüşme talebi gönderebilirsin."
+        "question": "Bir mezundan nasıl destek alırım?",
+        "answer": "Doğrulanınca mezunlara bakabilir, uygun bir zaman için görüşme isteği gönderebilirsin."
       }
     },
-    "closingKicker": "BİR SONRAKİ ADIM",
-    "closingTitle": "Yalnız yürümek",
-    "closingAccent": "zorunda değilsin.",
-    "closingDescription": "Merak ettiklerin, paylaşacakların ve keşfedeceklerin için topluluğun burada.",
-    "footerDescription": "Aynı üniversiteden, birbirinden farklı yollara.",
+    "closingTitle": "Yalnız yürümek zorunda değilsin.",
+    "closingDescription": "Okul e-postanla gir, ilk sorunu sor.",
+    "footerDescription": "İÜ İktisat Fakültesi YBS öğrencileri için.",
     "footerPrivacy": "Aydınlatma metni",
     "footerTerms": "Kullanım şartları",
-    "footerNote": "İstanbul Üniversitesi topluluğu için tasarlandı."
+    "footerNote": "Bu bir öğrenci projesidir; İstanbul Üniversitesi'nin resmî hizmeti değildir."
   },
   "metadata": {
     "title": "MezunPortal",
@@ -1035,7 +1034,16 @@
     },
     "testSignIn": {
       "title": "Yerel test girişi",
-      "submit": "Test hesabıyla giriş yap"
+      "submit": "Test hesabıyla giriş yap",
+      "chooseRole": "Devam etmek için bir test rolü seç.",
+      "personas": {
+        "student": "Öğrenci",
+        "seniorMentor": "Üst sınıf mentor",
+        "alumniMentor": "Mezun mentor",
+        "academic": "Akademisyen",
+        "departmentAdmin": "Bölüm yöneticisi",
+        "systemAdmin": "Sistem yöneticisi"
+      }
     }
   },
   "experiences": {
@@ -3212,5 +3220,42 @@
     "missingConsent": "İnceleme için yayın izni gerekir.",
     "photoAlt": "Mezunun baş harfleri",
     "alreadyApproved": "Hikâyen zaten onaylı. Metni değiştirirsen yeniden incelemeye gönderebilirsin."
+  },
+  "courseGuide": {
+    "title": "Seçmeli ders rehberi",
+    "description": "Mezunların iş hayatında yararlı bulduğu dersleri keşfet.",
+    "search": "Ders ara",
+    "semester": "Yarıyıl",
+    "kind": "Ders türü",
+    "all": "Tümü",
+    "elective": "Seçmeli",
+    "required": "Zorunlu",
+    "filter": "Filtrele",
+    "empty": "Bu filtrelere uygun ders bulunamadı.",
+    "departmentCourses": "YBS dersleri",
+    "commonCourses": "Ortak dersler",
+    "semesterNumber": "{count}. yarıyıl",
+    "notEnough": "Henüz yeterli mezun değerlendirmesi yok.",
+    "alumniCount": "{count} mezun işinde işe yaradığını söyledi.",
+    "alumniTitle": "Hangi dersler işine yaradı?",
+    "alumniDescription": "İş hayatında yararlı bulduğun en fazla beş dersi seçerek öğrencilere yol göster.",
+    "selectedCount": "{count} / 5 ders seçildi",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor…",
+    "saved": "Seçimlerin kaydedildi.",
+    "error": "Seçimlerin kaydedilemedi. Lütfen yeniden dene.",
+    "accountStudent": "Seçmeli ders rehberi",
+    "accountStudentDescription": "Mezunların yararlı bulduğu dersleri keşfet.",
+    "accountAlumni": "İşine yarayan dersler",
+    "accountAlumniDescription": "Öğrencilere yol göstermek için ders seç.",
+    "adminTitle": "Ders sözlüğü",
+    "adminDescription": "Bölümünün derslerini ekle veya güncelle.",
+    "addCourse": "Ders ekle",
+    "editCourse": "Dersi düzenle",
+    "department": "Bölüm",
+    "code": "Ders kodu",
+    "name": "Ders adı",
+    "cancel": "Vazgeç",
+    "adminLink": "Ders sözlüğünü yönet"
   }
 }

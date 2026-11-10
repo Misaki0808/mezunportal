@@ -13,19 +13,30 @@ test('girişsiz karşılama ekranının birincil eylemi girişe götürür', asy
   await expect(page).toHaveURL(/\/giris$/);
 });
 
-test('hareket azaltıldığında içerik görünür ve animasyon durur', async ({ page }) => {
+test('hareket azaltıldığında içerik görünür ve dönen satır sabit kalır', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.locator('.landing-hero-wave')).toHaveCSS('animation-name', 'none');
-  await expect(page.getByRole('heading', { name: /üç adım kadar yakın/i })).toBeVisible();
+  const line = page.locator('.landing-rotating-text');
+  const first = await line.textContent();
+  await page.waitForTimeout(6500);
+  expect(await line.textContent()).toBe(first);
+  await expect(page.getByRole('heading', { name: 'Üç adımda başlarsın.' })).toBeVisible();
 });
 
-test('karşılama metni JavaScript olmadan sunulur; maketteki örnek bağlantı odak almaz', async ({
-  browser,
+test('dönen satır birkaç saniyede değişir; ekran okuyucu yalnız ilk satırı okur', async ({
   page,
-  baseURL,
 }) => {
+  await page.goto('/');
+  const line = page.locator('.landing-rotating-text');
+  const first = (await line.textContent())!;
+  await expect(line).toHaveAttribute('aria-hidden', 'true');
+  await expect(page.locator('.landing-rotating .sr-only')).toHaveText(first);
+  await expect.poll(async () => line.textContent(), { timeout: 9000 }).not.toBe(first);
+  await expect(page.locator('.landing-rotating .sr-only')).toHaveText(first);
+});
+
+test('karşılama metni JavaScript olmadan sunulur', async ({ browser, baseURL }) => {
   const noScript = await browser.newContext({
     baseURL,
     javaScriptEnabled: false,
@@ -33,24 +44,46 @@ test('karşılama metni JavaScript olmadan sunulur; maketteki örnek bağlantı 
   });
   const serverPage = await noScript.newPage();
   await serverPage.goto('/');
-  await expect(serverPage.getByRole('heading', { level: 1 })).toContainText('Yolun daha yeni');
+  await expect(serverPage.getByRole('heading', { level: 1 })).toContainText(
+    'Staj ararken yalnız değilsin.',
+  );
+  await expect(serverPage.locator('.landing-rotating .sr-only')).toHaveText(
+    'Sen giderken dönen arkadaşların var, bir destek alsana?',
+  );
   await expect(serverPage.getByRole('link', { name: 'İÜ e-postanla başla' }).first()).toBeVisible();
   await noScript.close();
-
-  await page.goto('/');
-  await expect(page.locator('.landing-stage')).toHaveAttribute('inert', '');
-  for (let i = 0; i < 25; i++) {
-    await page.keyboard.press('Tab');
-    expect(
-      await page.evaluate(() => Boolean(document.activeElement?.closest('.landing-stage'))),
-    ).toBe(false);
-  }
 });
 
-test('koyu tema ve sabit kahraman yüzeyi okunabilir kalır', async ({ page }) => {
+test('Bölümümüz bağlantıları bölümün sayfalarına yeni sekmede, güvenli açılır', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const hrefs = [
+    'https://mis-iktisat.istanbul.edu.tr/tr/_',
+    'https://mis-iktisat.istanbul.edu.tr/tr/akademikkadro',
+    'https://www.linkedin.com/company/mis-iktisat/posts/',
+    'https://www.instagram.com/mis_iktisat/',
+    'https://www.instagram.com/iuybskulubu/',
+  ];
+  const links = page.locator('#bolumumuz a');
+  await expect(links).toHaveCount(hrefs.length);
+  for (const [index, href] of hrefs.entries()) {
+    const link = links.nth(index);
+    await expect(link).toHaveAttribute('href', href);
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  }
+  await expect(
+    page.getByText("Bu bir öğrenci projesidir; İstanbul Üniversitesi'nin resmî hizmeti değildir."),
+  ).toBeVisible();
+});
+
+test('koyu tema (lacivert) ve açık tema (krem) okunabilir kalır', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
-  await expect(page.locator('.landing')).toHaveCSS('background-color', 'rgb(14, 13, 26)');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(page.locator('.landing')).toHaveCSS('background-color', 'rgb(20, 34, 74)');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCSS('color', 'rgb(242, 244, 252)');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect(page.locator('.landing')).toHaveCSS('background-color', 'rgb(255, 250, 244)');
 });

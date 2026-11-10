@@ -69,6 +69,7 @@ export async function buildDataExport(
       createdAt: true,
       deletedAt: true,
       experiences: { select: experienceSelect, orderBy: { id: 'asc' } },
+      courseMarks: { select: { courseId: true, createdAt: true }, orderBy: { courseId: 'asc' } },
       companyFollows: {
         select: { companyId: true, sectorId: true, createdAt: true },
         orderBy: { createdAt: 'asc' },
@@ -281,6 +282,10 @@ export async function buildDataExport(
       publishedAt: iso(row.publishedAt),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
+    })),
+    courseMarks: user.courseMarks.map((mark) => ({
+      ...mark,
+      createdAt: mark.createdAt.toISOString(),
     })),
     campusEvents: {
       registrations: eventRegistrations.map((row) => ({
