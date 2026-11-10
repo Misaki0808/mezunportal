@@ -1,6 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
+import { courseSelectionSchema } from '@/contracts/course-guide';
 import { saveAlumniCourses } from '@/server/actions/course-guide';
 
 type Course = { id: string; name: string; code: string; semester: number; elective: boolean };
@@ -58,7 +59,12 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
         disabled={pending}
         onClick={() =>
           startTransition(async () => {
-            const result = await saveAlumniCourses({ courseIds: selected });
+            const parsed = courseSelectionSchema.safeParse({ courseIds: selected });
+            if (!parsed.success) {
+              setStatus(errors('VALIDATION_INVALID'));
+              return;
+            }
+            const result = await saveAlumniCourses(parsed.data);
             setStatus(result.ok ? t('saved') : errors(result.errorCode));
           })
         }

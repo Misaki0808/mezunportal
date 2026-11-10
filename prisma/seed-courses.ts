@@ -1,6 +1,7 @@
 import type { PrismaClient } from '../src/generated/prisma/client';
 import { INSTITUTION_SEED } from './seed-data';
 import { YBS_COURSES } from './seed-courses-data';
+import { seedId } from './seed-util';
 
 export async function seedCourses(prisma: PrismaClient) {
   const department = await prisma.department.findFirstOrThrow({
@@ -14,16 +15,14 @@ export async function seedCourses(prisma: PrismaClient) {
     select: { id: true },
   });
   for (const course of YBS_COURSES) {
-    await prisma.course.upsert({
+    const id = seedId('course', `${department.id}:${course.code}:${course.semester}`);
+    const existing = await prisma.course.findFirst({
       where: {
-        departmentId_code_semester: {
-          departmentId: department.id,
-          code: course.code,
-          semester: course.semester,
-        },
+        OR: [{ id }, { departmentId: department.id, code: course.code, semester: course.semester }],
       },
-      create: { departmentId: department.id, ...course },
-      update: {},
+      select: { id: true },
     });
+    if (!existing)
+      await prisma.course.create({ data: { id, departmentId: department.id, ...course } });
   }
 }

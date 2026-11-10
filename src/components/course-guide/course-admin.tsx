@@ -2,6 +2,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { saveCourseSchema } from '@/contracts/course-guide';
 import { saveCourse } from '@/server/actions/course-guide';
 
 type Course = {
@@ -34,7 +35,7 @@ export function CourseAdmin({
           event.preventDefault();
           const data = new FormData(event.currentTarget);
           startTransition(async () => {
-            const result = await saveCourse({
+            const parsed = saveCourseSchema.safeParse({
               id: selected?.id,
               departmentId: String(data.get('departmentId')),
               code: String(data.get('code')),
@@ -42,6 +43,11 @@ export function CourseAdmin({
               semester: Number(data.get('semester')),
               elective: data.get('elective') === 'yes',
             });
+            if (!parsed.success) {
+              setStatus(errors('VALIDATION_INVALID'));
+              return;
+            }
+            const result = await saveCourse(parsed.data);
             setStatus(result.ok ? t('saved') : errors(result.errorCode));
             if (result.ok) {
               setSelected(null);
