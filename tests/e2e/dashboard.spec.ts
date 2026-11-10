@@ -31,7 +31,7 @@ test('ana sayfa oturumsuzken tanıtım ve giriş eylemini gösterir; "Çok yakı
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { level: 1, name: /Yolun daha yeni başlıyor/ }),
+    page.getByRole('heading', { level: 1, name: /Staj ararken yalnız değilsin/ }),
   ).toBeVisible();
   await expect(
     page.getByRole('main').getByRole('link', { name: 'İÜ e-postanla başla' }).first(),

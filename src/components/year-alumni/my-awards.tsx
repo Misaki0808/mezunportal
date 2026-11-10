@@ -51,10 +51,6 @@ function AwardCard({ initial }: { initial: MyAward }) {
   }
   return (
     <Card className="relative overflow-hidden p-6">
-      <div
-        aria-hidden="true"
-        className="absolute -right-12 -top-12 size-40 rounded-full bg-[image:var(--gradient-brand)] opacity-20 blur-2xl motion-safe:animate-pulse"
-      />
       <div className="relative space-y-5">
         <IconChip tone="primary">
           <BadgeCheckIcon />
