@@ -342,6 +342,41 @@ export const dataExportSchema = z.object({
   }),
   profile: exportedProfileSchema.nullable(),
   experiences: z.array(exportedExperienceSchema),
+  campusEvents: z
+    .object({
+      registrations: z.array(z.object({ eventId: z.string(), createdAt: z.string() }).strict()),
+      attendances: z.array(
+        z
+          .object({
+            eventId: z.string(),
+            attendedAt: z.string(),
+            networkDigest: z.string().nullable(),
+          })
+          .strict(),
+      ),
+      created: z.array(
+        z
+          .object({
+            eventId: z.string(),
+            title: z.string(),
+            description: z.string(),
+            location: z.string(),
+            createdAt: z.string(),
+          })
+          .strict(),
+      ),
+      reviews: z.array(
+        z
+          .object({
+            eventId: z.string(),
+            status: z.string(),
+            reason: z.string().nullable(),
+            reviewedAt: z.string().nullable(),
+          })
+          .strict(),
+      ),
+    })
+    .strict(),
   companyFollows: z.array(
     z
       .object({

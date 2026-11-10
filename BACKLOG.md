@@ -171,7 +171,6 @@ Taslak plan: `docs/faz2-plan.md` (adım ayrıntıları, dalga sırası, onay nok
   **puanlama yok**.
 - **P2-10 · Mülakat soru bankası** — şirket ve pozisyona göre.
 - **P2-11 · Staj başvuru takvimi** — deneyimlerden çıkan dönemler ve hatırlatma.
-- **P2-12 · Etkinlik modülü** — yönetici onaylı; QR/geçici kodla katılım; puan (gecikmeli).
 - **P2-13 · Aylık özet e-postası** — kişiselleştirilmiş.
 
 ## Faz 3 fikirleri (aktif iş değil)

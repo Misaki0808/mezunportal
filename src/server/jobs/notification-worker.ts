@@ -18,6 +18,7 @@ import { scheduleApplicationWindows } from './application-window-task';
 import { scheduleMonthlyDigests } from './monthly-digest-task';
 import { freezeDueAwardCycles } from '../services/year-alumni';
 import { rotateMonthlyAlumni } from '../services/alumni-story';
+import { purgeCampusEventNetworks } from '../services/campus-event';
 
 /** Görev adları dışında kişi, bağlantı ve sağlayıcı hata bilgisi günlüğe yazılmaz. */
 export async function createNotificationRuntime() {
@@ -53,6 +54,7 @@ export async function createNotificationRuntime() {
     'monthly.digest': () => scheduleMonthlyDigests(getDb()),
     'awards.freeze': () => freezeDueAwardCycles(getDb()),
     'alumni.monthlyRotate': () => rotateMonthlyAlumni(getDb()),
+    'campusEvent.purgeNetworks': () => purgeCampusEventNetworks(getDb()),
   };
   try {
     await boss.start();
