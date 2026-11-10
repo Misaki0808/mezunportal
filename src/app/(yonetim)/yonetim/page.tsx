@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { hasAdminAccess } from '@/components/layout/admin-access';
 import {
   BadgeCheckIcon,
+  CalendarIcon,
   ClipboardCheckIcon,
   ErrorState,
   FileTextIcon,
@@ -37,6 +38,7 @@ export default async function AdminOverviewPage() {
     { key: 'invitations', href: '/yonetim/davetler', visible: capabilities.dictionaries },
     { key: 'adminGrants', href: '/yonetim/yetkiler', visible: capabilities.adminGrants },
     { key: 'points', href: '/yonetim/puan', visible: capabilities.adminGrants },
+    { key: 'googleCalendar', href: '/yonetim/google', visible: capabilities.adminGrants },
     { key: 'auditLog', href: '/yonetim/islem-kaydi', visible: capabilities.auditLog },
     { key: 'documents', href: '/yonetim/belge-kuyrugu', visible: true },
     { key: 'experiences', href: '/yonetim/deneyimler', visible: true },
@@ -65,6 +67,7 @@ export default async function AdminOverviewPage() {
     invitations: 'accent',
     adminGrants: 'accent',
     points: 'accent',
+    googleCalendar: 'accent',
   } as const;
   const ICON = {
     users: <UsersIcon width={22} height={22} />,
@@ -84,6 +87,7 @@ export default async function AdminOverviewPage() {
     invitations: <UsersIcon width={22} height={22} />,
     adminGrants: <ShieldCheckIcon width={22} height={22} />,
     points: <BadgeCheckIcon width={22} height={22} />,
+    googleCalendar: <CalendarIcon width={22} height={22} />,
   } as const;
   return (
     <div className="mx-auto max-w-4xl px-5 pb-12 pt-10 sm:pt-14">

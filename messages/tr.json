@@ -1686,7 +1686,8 @@
       "jobPostings": "İlan inceleme",
       "referrals": "Referans inceleme",
       "yearAlumni": "Yılın Mezunu",
-      "alumniStory": "Ayın mezunu"
+      "alumniStory": "Ayın mezunu",
+      "googleCalendar": "Google Takvim"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1705,7 +1706,8 @@
       "jobPostings": "Topluluğun paylaştığı ilanları incele.",
       "referrals": "Referans ve işe kabul beyanlarını incele.",
       "yearAlumni": "Adayları incele ve bölüm adına karar ver.",
-      "alumniStory": "Hikâyeleri incele ve ayın mezununu seç."
+      "alumniStory": "Hikâyeleri incele ve ayın mezununu seç.",
+      "googleCalendar": "Online randevulara otomatik Meet bağlantısı için Google hesabını bağla."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1827,6 +1829,8 @@
         "CAMPUS_EVENT_PUBLISH": "Etkinlik onayı",
         "CAMPUS_EVENT_REJECT": "Etkinlik reddi",
         "CAMPUS_EVENT_CANCEL": "Etkinlik iptali",
+        "INTEGRATION_CONNECT": "Google Takvim bağlandı",
+        "INTEGRATION_DISCONNECT": "Google Takvim bağlantısı kesildi",
         "STORY_PUBLISH": "Mezun hikâyesi onayı",
         "STORY_REJECT": "Mezun hikâyesi düzenleme talebi",
         "MONTHLY_ALUMNUS_SELECT": "Ayın mezunu seçimi",
@@ -1854,6 +1858,7 @@
         "AWARD": "Ödül",
         "ALUMNI_STORY": "Mezun hikâyesi",
         "CAMPUS_EVENT": "Etkinlik",
+        "INTEGRATION": "Dış servis bağlantısı",
         "MONTHLY_ALUMNUS": "Ayın mezunu seçimi"
       }
     },
@@ -3221,5 +3226,45 @@
     "missingConsent": "İnceleme için yayın izni gerekir.",
     "photoAlt": "Mezunun baş harfleri",
     "alreadyApproved": "Hikâyen zaten onaylı. Metni değiştirirsen yeniden incelemeye gönderebilirsin."
+  },
+  "googleCalendar": {
+    "title": "Google Takvim ve Meet",
+    "description": "Online randevu onaylanınca mentor ve öğrenciye otomatik Google Meet bağlantısı gider. Bağlantıyı bir kez burada kurarsın.",
+    "outcome": {
+      "connected": "Google Takvim bağlandı.",
+      "denied": "Google izni verilmedi, bağlantı kurulmadı.",
+      "failed": "Google bağlantısı kurulamadı. Biraz sonra yeniden dene.",
+      "invalid": "Bağlantı isteği geçersiz ya da süresi dolmuş. Yeniden bağlamayı dene.",
+      "not-configured": "Google anahtarları tanımlı değil; önce sunucu ayarlarını tamamla."
+    },
+    "state": {
+      "OFF": "Takvim kapalı",
+      "FAKE": "Sahte takvim (yalnız yerel ve test)",
+      "GOOGLE_MISSING": "Google anahtarları tanımlı değil",
+      "NONE": "Bağlı değil",
+      "ACTIVE": "Bağlı",
+      "NEEDS_RECONNECT": "Yeniden bağlamak gerekiyor"
+    },
+    "explain": {
+      "OFF": "Sunucuda takvim sağlayıcısı kapalı. Online randevular yine onaylanır; mentor görüşme bağlantısını elle ekler.",
+      "FAKE": "Yerel ve test ortamı için sahte takvim açık. Gerçek Meet bağlantısı oluşmaz.",
+      "GOOGLE_MISSING": "Takvim sağlayıcısı Google seçili ama istemci kimliği ya da sırrı yok. Anahtarları sunucu ayarlarına ekleyip uygulamayı yeniden başlat.",
+      "NONE": "Anahtarlar hazır. Google hesabını bağlayınca onaylanan online randevulara Meet bağlantısı otomatik eklenir. Bağlanana kadar mentor bağlantıyı elle ekler.",
+      "ACTIVE": "Onaylanan online randevulara Meet bağlantısı otomatik eklenir; iptalde etkinlik silinir.",
+      "NEEDS_RECONNECT": "Google erişimi geri alınmış ya da kaydedilen yetki okunamıyor. Yeniden bağlayana kadar mentor bağlantıyı elle ekler."
+    },
+    "account": "Takvim hesabı",
+    "connectedAt": "Bağlanma zamanı",
+    "redirectUri": "Yönlendirme adresi",
+    "redirectUriHint": "Google Cloud'da OAuth istemcisine bu adresi yetkili yönlendirme olarak ekle.",
+    "connect": "Google Takvim'i bağla",
+    "reconnect": "Yeniden bağla",
+    "disconnect": "Bağlantıyı kes",
+    "disconnectTitle": "Bağlantı kesilsin mi?",
+    "disconnectDescription": "Yeni online randevulara Meet bağlantısı eklenmez; bağlantıyı yeniden kurana kadar mentor bağlantıyı elle ekler. Var olan etkinlikler takvimde kalır.",
+    "disconnectConfirm": "Evet, kes",
+    "cancel": "Vazgeç",
+    "disconnected": "Bağlantı kesildi.",
+    "disconnectedNotRevoked": "Bağlantı kesildi; Google'da izin iptali yapılamadı, istersen Google hesabının güvenlik sayfasından kaldır."
   }
 }
