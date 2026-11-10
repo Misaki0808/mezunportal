@@ -102,9 +102,21 @@ Ekran kaynağı deseni testle değil lint kuralıyla korunur.
 test); kural saf işleve çıkarılır, test onu sınar. Vitest eşzamanlılığı `--maxWorkers=4`.
 
 **Çekirdek akış testleri:** her çekirdek adım kendi akışı için bir Playwright testi bırakır
-(giriş, ilk giriş akışı, CV onayı, deneyim yazma/moderasyon, arama, randevu, yönetim). CI'da her
-PR'da değil, yalnız `main`'e birleşmede çalışır (özel repoda ücretsiz CI dakikası sınırlıdır);
-reviewer gerekirse yerelde koşar.
+(giriş, ilk giriş akışı, CV onayı, deneyim yazma/moderasyon, arama, randevu, yönetim). CI bunları
+koşmaz; PM'in yerel birleştirme kapısı ve reviewer yerelde koşar (bkz. "CI").
+
+### CI
+
+Tek iş akışı (`.github/workflows/ci.yml`), her PR'da ve `main`'e itmede, duvar saatiyle **≤ 5 dakika**
+(kullanıcı kararı: "az ve öz"). Üç iş paralel koşar, pnpm önbelleği açıktır, aynı dalda yeni itme eski koşuyu
+iptal eder: (1) tür denetimi (`prisma generate`, `typecheck`, `prisma validate`), (2) kalite (`lint`,
+`format:check`, `messages:check`), (3) hızlı birim testleri (`test:local` + `test:unit`: veritabanı gerektirmeyen Vitest
+projesi). Ortam değişkenleri iş akışında sahte değerdir; gerçek hizmete bağlanılmaz.
+**CI'da yok (yerel kapıda):** veritabanı testleri (`*.db.test.ts`), `pnpm build`, Playwright e2e, CodeQL; PM
+birleştirmeden önce bunları yerelde, makinede tek ağır iş kuralıyla koşar. Yeni bir iş CI'ya eklenecekse süre
+bütçesi (5 dk) ve neden yerelde yetmediği gerekçesiyle `docs/decisions.md`'ye yazılır. GitHub ayarları (kod
+değil; PM açar): gizli anahtar taraması + push koruması ve Dependabot **uyarıları** (otomatik PR yok); ikisi de
+ücretsiz ve koşu süresi almaz.
 
 ## Komutlar
 
@@ -336,8 +348,8 @@ Rol protokolü Git dışı `prompts/README.md`'dedir.
 - Kısa ömürlü, tek amaçlı dal ve küçük PR. Ad: `feat/<konu>`, `fix/<konu>`, `docs/<konu>`,
   `refactor/<konu>`, `test/<konu>`, `chore/<konu>`.
 - PR her zaman **taslak** açılır; birleştirmeyi PM sırayla, betikle yapar (betik hazıra çevirir).
-- **Her PR tek push:** her push CI koşturur ve özel repoda Actions dakikası sınırlıdır; ek push
-  (reviewer düzeltmesi dahil) PM onayıyla, tek seferde.
+- **Her PR tek push:** repo herkese açık olduğundan CI ücretsizdir, yine de gereksiz itme yapma
+  (yeni itme eski CI koşusunu iptal eder); ek push (reviewer düzeltmesi dahil) PM onayıyla, tek seferde.
 - Sözleşme önce: servis + ekran diye bölünen işte önce şema ve `src/contracts` sözleşme PR'ı
   birleşir.
 
@@ -394,7 +406,7 @@ Reviewer kusur bulmak zorunda değildir; bulgusuz geçiş normaldir.
 
 ### Merge sonrası
 
-- `main`'de kapılar yeşil; çekirdek akış testleri (CI) yeşil.
+- `main`'de kapılar yeşil (CI'daki hızlı üç kapı + PM'in yerel tam kapısı); çekirdek akış testleri yerel kapıda yeşil.
 - Tamamlanan `BACKLOG.md` maddesi silinir; oturum günlüğü eklenmez.
 - Geçici dal ve test verisi temizlenir.
 

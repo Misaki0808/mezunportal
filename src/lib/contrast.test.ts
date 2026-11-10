@@ -83,7 +83,12 @@ describe('token tanımı', () => {
     expect(SCHEMES.açık.bg).toBe('#fffaf4');
     expect(SCHEMES.açık.success).toBe('#0f9f8f');
     expect(SCHEMES.koyu.primary).toBe('#a3a3ff');
-    expect(SCHEMES.koyu.bg).toBe('#14224a');
+    expect(SCHEMES.koyu.bg).toBe('#0e1a38');
+  });
+
+  it('koyu logo yeni lacivert zeminde okunur', () => {
+    for (const color of ['#f4f2ff', '#a3a3ff', '#ff8798'])
+      expect(contrastRatio(color, SCHEMES.koyu.bg!)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('bilinen çift için oran doğru hesaplanır (siyah/beyaz = 21:1)', () => {
