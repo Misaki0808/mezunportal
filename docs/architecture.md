@@ -214,7 +214,7 @@ kurallar `src/server/rules/jobPosting.ts`.
 | `alumni.stillThere` | Mezuna yılda bir “Hâlâ X'te misin?” — imzalı, süreli, tek kullanımlık bağlantı |
 | `student.emailMigration` | Mezuniyet yılındaki öğrenciye kişisel e-postaya geçiş hatırlatması |
 | `files.purge` | Günlük emniyet: karar verilmiş belgeler, bağlı olmayan eski CV'ler |
-| `linkedin.purge` | Onaylanmamış LinkedIn PDF ve önerilerini 24 saatten sonra dakika başına temizler; worker çalışmıyorsa yeniden başladığında sürer |
+| `linkedin.purge` | LinkedIn PDF ve onaylanmamış önerileri yüklemeden 24 saat sonra dakika başına temizler; worker çalışmıyorsa yeniden başladığında sürer |
 
 İşler idempotenttir; tekrar çalışınca çift e-posta ya da çift puan üretmez. Zorunlu hesap
 e-postaları dışındaki bildirimler kullanıcı tercihinden kapatılabilir; tercih hem kuyruğa alma hem teslim sırasında

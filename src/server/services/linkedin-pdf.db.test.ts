@@ -151,13 +151,13 @@ it('LinkedIn kararsız PDF 24 saatte anında silinir; normal CV yedi gün bekler
   await processCvParse(kit.deps, normal.cvUploadId, fresh);
   const linkedRow = await db.cvUpload.findUniqueOrThrow({ where: { id: linked.cvUploadId } });
   const normalRow = await db.cvUpload.findUniqueOrThrow({ where: { id: normal.cvUploadId } });
-  const before = new Date(linkedRow.updatedAt.getTime() + 24 * 60 * 60 * 1000 - 1);
+  const before = new Date(linkedRow.createdAt.getTime() + 24 * 60 * 60 * 1000 - 1);
   await purgeCvFiles({ ...kit.deps, now: () => before });
   expect((await db.cvUpload.findUniqueOrThrow({ where: { id: linked.cvUploadId } })).status).toBe(
     'PARSED',
   );
   const boundary = new Date(
-    Math.max(linkedRow.updatedAt.getTime(), normalRow.updatedAt.getTime()) + 24 * 60 * 60 * 1000,
+    Math.max(linkedRow.createdAt.getTime(), normalRow.createdAt.getTime()) + 24 * 60 * 60 * 1000,
   );
   await purgeCvFiles({ ...kit.deps, now: () => boundary });
   expect(await db.cvUpload.findUniqueOrThrow({ where: { id: linked.cvUploadId } })).toMatchObject({
@@ -221,3 +221,25 @@ it('çıkarıcı yokken doğrudan LinkedIn yüklemesi depoya yazılmadan reddedi
   expect(await db.cvUpload.count({ where: { userId } })).toBe(0);
   expect(kit.storage.files.size).toBe(0);
 });
+
+it.each(['QUEUED', 'PARSING'] as const)(
+  'LinkedIn %s durumunda takılsa bile yüklemeden 24 saat sonra dosya silinir',
+  async (status) => {
+    const { actor } = await cvUser(db);
+    const kit = cvKit(db);
+    const upload = await uploadCv(kit.deps, actor, { ...pdfForm(), source: 'LINKEDIN_PDF' });
+    if (status === 'PARSING')
+      await db.cvUpload.update({ where: { id: upload.cvUploadId }, data: { status } });
+    const row = await db.cvUpload.findUniqueOrThrow({ where: { id: upload.cvUploadId } });
+    await purgeCvFiles({
+      ...kit.deps,
+      now: () => new Date(row.createdAt.getTime() + 24 * 60 * 60 * 1000),
+    });
+    expect(await db.cvUpload.findUniqueOrThrow({ where: { id: row.id } })).toMatchObject({
+      status: 'DISCARDED',
+      storageKey: null,
+      parsedJson: null,
+    });
+    expect(kit.storage.files.has(row.storageKey!)).toBe(false);
+  },
+);

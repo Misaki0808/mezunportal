@@ -999,6 +999,7 @@ model CvUpload {
   reviewRequests CvReviewRequest[]
 
   @@index([userId, createdAt])
+  @@index([source, createdAt])
 }
 
 enum CvReviewRequestStatus {

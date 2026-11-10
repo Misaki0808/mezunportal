@@ -275,7 +275,12 @@ export async function purgeExpiredLinkedinFiles(
   const now = nowOf(deps);
   const linkedBefore = new Date(now.getTime() - LINKEDIN_PARSED_RETENTION_MS);
   const linked = await deps.db.cvUpload.findMany({
-    where: { status: 'PARSED', source: 'LINKEDIN_PDF', updatedAt: { lte: linkedBefore } },
+    where: {
+      source: 'LINKEDIN_PDF',
+      createdAt: { lte: linkedBefore },
+      OR: [{ status: { in: ['QUEUED', 'PARSING', 'PARSED'] } }, { storageKey: { not: null } }],
+    },
+    orderBy: { createdAt: 'asc' },
     select: { id: true, userId: true },
     take: PURGE_BATCH,
   });
@@ -286,20 +291,18 @@ export async function purgeExpiredLinkedinFiles(
       const removed = await deps.db.$transaction(
         async (tx) => {
           await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${row.userId} FOR UPDATE`;
+          await tx.$queryRaw`SELECT "id" FROM "CvUpload" WHERE "id" = ${row.id} FOR UPDATE`;
           const current = await tx.cvUpload.findFirst({
-            where: {
-              id: row.id,
-              status: 'PARSED',
-              source: 'LINKEDIN_PDF',
-              updatedAt: { lte: linkedBefore },
-            },
-            select: { id: true, storageKey: true },
+            where: { id: row.id, source: 'LINKEDIN_PDF', createdAt: { lte: linkedBefore } },
+            select: { id: true, storageKey: true, status: true },
           });
           if (!current) return null;
-          await tx.cvUpload.update({
-            where: { id: row.id },
-            data: { status: 'DISCARDED', parsedJson: DbNull },
-          });
+          if (['QUEUED', 'PARSING', 'PARSED'].includes(current.status)) {
+            await tx.cvUpload.update({
+              where: { id: row.id },
+              data: { status: 'DISCARDED', parsedJson: DbNull },
+            });
+          }
           return removeUploadFiles(tx, deps.storage, [current], deps.holds);
         },
         { timeout: 30000 },
