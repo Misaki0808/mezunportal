@@ -2,20 +2,35 @@ import type { PrismaClient } from '../src/generated/prisma/client';
 import { normalizeName } from '../src/server/rules/dictionary';
 import { seedUserId } from './seed-accounts';
 import { INSTITUTION_SEED } from './seed-data';
-import { seedId } from './seed-util';
+import { seedUuid } from './seed-util';
 
 /**
  * Faz 2 DENEME VERİSİ (P2-14): kullanıcının telefonda hızlıca gezebileceği örnek içerik. SAHTE ve açıkça işaretlidir: şirket
  * adları "Örnek …" ile başlar (gerçek bir şirketi gösterdiği sanılmaz), yazarlar test hesaplarıdır, metinler örnektir.
  * Zamanlar ÇALIŞMA ANINA göredir (son başvuru tarihi gelecekte, yayın tarihi yakın geçmişte); bu yüzden yalnız bu modül saate bağlıdır
  * ve `now` verilebilir (test). İdempotenttir: kayıtlar sabit kimlikle upsert edilir, tekrar koşunca çoğalmaz, tarihler tazelenir.
- * Kapsam: şirket, yayınlanmış deneyim (arama, şirket sayfası, soru bankası, başvuru takvimi, beceri analizi buradan beslenir),
+ * K-anonimlik: şirket sayfası, soru bankası ve başvuru takvimi en az 3 FARKLI yazar ister; bu yüzden 4 örnek mezun (giriş yapılamayan sahte
+ * hesaplar) ve ortak sorular/başvuru ayları eklenir; anonim deneyim eklenmez (anonim deneyim kapsamdaki kesitleri bastırır: deneme turunda
+ * kullanıcı kendisi anonim bir deneyim yazarak bu kuralı canlı görebilir).
+ * Kapsam: örnek mezunlar, şirket, yayınlanmış deneyim (arama, şirket sayfası, soru bankası, başvuru takvimi, beceri analizi buradan beslenir),
  * ilan (yayında/incelemede/taslak), etkinlik. Ders rehberi (P2-08) ve ödül/ay mezunu yayınları ana akışlarında (rıza + seçim)
  * yönetici ekranından denenir; seed rıza ya da seçim uydurmaz.
  */
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
 const NS = 'phase2';
+
+export const SAMPLE_ALUMNI = [
+  'ornek-mezun-1',
+  'ornek-mezun-2',
+  'ornek-mezun-3',
+  'ornek-mezun-4',
+] as const;
+type Author = 'alumniMentor' | 'seniorMentor' | (typeof SAMPLE_ALUMNI)[number];
+const authorId = (author: Author) =>
+  (SAMPLE_ALUMNI as readonly string[]).includes(author)
+    ? seedUuid(NS, `user:${author}`)
+    : seedUserId(author as 'alumniMentor' | 'seniorMentor');
 
 const COMPANIES = [
   {
@@ -40,7 +55,7 @@ const COMPANIES = [
 
 type SeedExperience = {
   key: string;
-  author: 'alumniMentor' | 'seniorMentor' | null;
+  author: Author;
   type: 'INTERNSHIP' | 'ERASMUS' | 'CLUB';
   company?: (typeof COMPANIES)[number]['key'];
   organizationName: string;
@@ -65,19 +80,29 @@ type SeedExperience = {
   publishedDaysAgo: number;
 };
 
+const SHARED = {
+  yazilim: ['Neden bu şirketi seçtin?', 'SQL ile iki tabloyu nasıl birleştirirsin?'],
+  finans: ['Excel’de hangi işlevleri kullanırsın?', 'Bir süreci nasıl modellersin?'],
+  perakende: ['Neden perakende?', 'Haftada kaç gün çalışabilirsin?'],
+} as const;
+
+const base = {
+  country: 'Türkiye',
+  durationWeeks: 8,
+  type: 'INTERNSHIP',
+} as const;
+
 const EXPERIENCES: SeedExperience[] = [
   {
-    key: 'yazilim-yaz',
+    ...base,
+    key: 'yazilim-mert',
     author: 'alumniMentor',
-    type: 'INTERNSHIP',
     company: 'yazilim',
     organizationName: 'Örnek Yazılım A.Ş.',
-    country: 'Türkiye',
     city: 'İstanbul',
     termYear: 2025,
     termSeason: 'SUMMER',
     appliedMonth: 3,
-    durationWeeks: 8,
     pay: 'PAID',
     channel: 'LINKEDIN_POST',
     steps: [
@@ -85,26 +110,21 @@ const EXPERIENCES: SeedExperience[] = [
       { title: 'Teknik görüşme', description: 'SQL ve algoritma soruları, otuz dakika.' },
       { title: 'İK görüşmesi', description: 'Motivasyon ve takvim konuşuldu.' },
     ],
-    questions: [
-      'İki tabloyu nasıl birleştirirsin?',
-      'Bir veri hatasını nasıl bulursun?',
-      'Neden bu şirket?',
-    ],
+    questions: [...SHARED.yazilim, 'Bir veri hatasını nasıl bulursun?'],
     learned: 'Örnek veri: gerçek bir ekiple sprint planlamayı ve raporlama panolarını öğrendim.',
     advice: 'Örnek veri: SQL’i önceden çalış, görüşmede düşünme sürecini yüksek sesle anlat.',
     publishedDaysAgo: 40,
   },
   {
-    key: 'yazilim-kis',
+    ...base,
+    key: 'yazilim-elif',
     author: 'seniorMentor',
-    type: 'INTERNSHIP',
     company: 'yazilim',
     organizationName: 'Örnek Yazılım A.Ş.',
-    country: 'Türkiye',
     city: 'İstanbul',
-    termYear: 2026,
-    termSeason: 'WINTER',
-    appliedMonth: 10,
+    termYear: 2025,
+    termSeason: 'SUMMER',
+    appliedMonth: 3,
     durationWeeks: 6,
     pay: 'NOT_DISCLOSED',
     channel: 'CAREER_PLATFORM',
@@ -112,18 +132,60 @@ const EXPERIENCES: SeedExperience[] = [
       { title: 'Çevrimiçi test', description: 'Mantık ve temel programlama, kırk dakika.' },
       { title: 'Ekip görüşmesi', description: 'Proje deneyimi ve ekip çalışması.' },
     ],
-    questions: ['En son hangi projede takım çalışması yaptın?', 'Python mu Java mı, neden?'],
+    questions: [...SHARED.yazilim, 'Python mu Java mı, neden?'],
     learned: 'Örnek veri: test otomasyonuna ve kod incelemesine giriş.',
     advice: 'Örnek veri: başvuruyu son güne bırakma, test linki geç açılıyor.',
     publishedDaysAgo: 25,
   },
   {
-    key: 'finans-yaz',
+    ...base,
+    key: 'yazilim-1',
+    author: 'ornek-mezun-1',
+    company: 'yazilim',
+    organizationName: 'Örnek Yazılım A.Ş.',
+    city: 'İstanbul',
+    termYear: 2024,
+    termSeason: 'SUMMER',
+    appliedMonth: 3,
+    durationWeeks: 10,
+    pay: 'PAID',
+    channel: 'REFERRAL',
+    steps: [
+      {
+        title: 'Referansla başvuru',
+        description: 'Bir tanıdık CV’mi ekibe iletti, görüşme bir hafta sürdü.',
+      },
+    ],
+    questions: [...SHARED.yazilim],
+    learned: 'Örnek veri: veri ambarı ve raporlama araçlarını tanıdım.',
+    advice: 'Örnek veri: mezunlarla önceden konuşmak görüşmeyi rahatlattı.',
+    publishedDaysAgo: 80,
+  },
+  {
+    ...base,
+    key: 'yazilim-2',
+    author: 'ornek-mezun-2',
+    company: 'yazilim',
+    organizationName: 'Örnek Yazılım A.Ş.',
+    city: 'İstanbul',
+    termYear: 2026,
+    termSeason: 'WINTER',
+    appliedMonth: 10,
+    durationWeeks: 6,
+    pay: 'PAID',
+    channel: 'COMPANY_SITE',
+    steps: [{ title: 'Başvuru formu', description: 'Şirket sitesindeki forma başvuruldu.' }],
+    questions: ['Neden bu şirketi seçtin?', 'Takım içinde anlaşmazlığı nasıl çözersin?'],
+    learned: 'Örnek veri: iş analizi ve gereksinim toplantıları.',
+    advice: 'Örnek veri: kendi projelerinden kısa bir örnek hazırla.',
+    publishedDaysAgo: 20,
+  },
+  {
+    ...base,
+    key: 'finans-mert',
     author: 'alumniMentor',
-    type: 'INTERNSHIP',
     company: 'finans',
     organizationName: 'Örnek Finans Teknolojileri',
-    country: 'Türkiye',
     city: 'İstanbul',
     termYear: 2025,
     termSeason: 'SUMMER',
@@ -136,22 +198,60 @@ const EXPERIENCES: SeedExperience[] = [
       { title: 'Vaka çalışması', description: 'Küçük bir iş analizi vakası, bir hafta süre.' },
       { title: 'Panel görüşmesi', description: 'Üç kişilik panel, kırk beş dakika.' },
     ],
-    questions: [
-      'Bir süreci nasıl modellersin?',
-      'Excel’de hangi işlevleri kullanırsın?',
-      'Zor bir müşteriyle nasıl çalışırsın?',
-    ],
+    questions: [...SHARED.finans, 'Zor bir müşteriyle nasıl çalışırsın?'],
     learned: 'Örnek veri: iş analizi belgeleri ve paydaş toplantıları.',
     advice: 'Örnek veri: vaka çalışmasını sunum gibi hazırla, rakamları kendi cümlenle anlat.',
     publishedDaysAgo: 60,
   },
   {
-    key: 'perakende-yaz',
-    author: null,
-    type: 'INTERNSHIP',
+    ...base,
+    key: 'finans-2',
+    author: 'ornek-mezun-2',
+    company: 'finans',
+    organizationName: 'Örnek Finans Teknolojileri',
+    city: 'İstanbul',
+    termYear: 2024,
+    termSeason: 'SUMMER',
+    appliedMonth: 2,
+    durationWeeks: 8,
+    pay: 'PAID',
+    channel: 'CAREER_FAIR',
+    steps: [{ title: 'Fuar görüşmesi', description: 'Fuarda ekip yöneticisiyle kısa görüşme.' }],
+    questions: [...SHARED.finans],
+    learned: 'Örnek veri: ödeme sistemleri ve süreç haritalama.',
+    advice: 'Örnek veri: finans terimlerine kısa bir çalışma yeter, merak göster.',
+    publishedDaysAgo: 100,
+  },
+  {
+    ...base,
+    key: 'finans-3',
+    author: 'ornek-mezun-3',
+    company: 'finans',
+    organizationName: 'Örnek Finans Teknolojileri',
+    city: 'İstanbul',
+    termYear: 2025,
+    termSeason: 'WINTER',
+    appliedMonth: 2,
+    durationWeeks: 6,
+    pay: 'NOT_DISCLOSED',
+    channel: 'LINKEDIN_POST',
+    steps: [
+      {
+        title: 'Çevrimiçi başvuru',
+        description: 'LinkedIn ilanından başvuruldu, iki hafta sonra dönüş geldi.',
+      },
+    ],
+    questions: [...SHARED.finans],
+    learned: 'Örnek veri: raporlama panoları ve veri doğrulama.',
+    advice: 'Örnek veri: Excel’de özet tablo ve düşey ara iyi gider.',
+    publishedDaysAgo: 35,
+  },
+  {
+    ...base,
+    key: 'perakende-1',
+    author: 'ornek-mezun-1',
     company: 'perakende',
     organizationName: 'Örnek Perakende Grubu',
-    country: 'Türkiye',
     city: 'Ankara',
     termYear: 2024,
     termSeason: 'SUMMER',
@@ -160,10 +260,48 @@ const EXPERIENCES: SeedExperience[] = [
     pay: 'UNPAID',
     channel: 'UNIVERSITY_ANNOUNCEMENT',
     steps: [{ title: 'Başvuru formu', description: 'Okulun duyurusundaki forma başvuruldu.' }],
-    questions: ['Neden perakende?', 'Haftada kaç gün çalışabilirsin?'],
-    learned: 'Örnek veri (anonim): stok ve satış raporlarına bakmayı öğrendim.',
-    advice: 'Örnek veri (anonim): ücretsiz stajda süreyi baştan netleştir.',
+    questions: [...SHARED.perakende],
+    learned: 'Örnek veri: stok ve satış raporlarına bakmayı öğrendim.',
+    advice: 'Örnek veri: ücretsiz stajda süreyi baştan netleştir.',
     publishedDaysAgo: 90,
+  },
+  {
+    ...base,
+    key: 'perakende-3',
+    author: 'ornek-mezun-3',
+    company: 'perakende',
+    organizationName: 'Örnek Perakende Grubu',
+    city: 'Ankara',
+    termYear: 2025,
+    termSeason: 'SUMMER',
+    appliedMonth: 4,
+    durationWeeks: 8,
+    pay: 'PAID',
+    channel: 'UNIVERSITY_ANNOUNCEMENT',
+    steps: [{ title: 'Mülakat', description: 'Kısa bir tanışma görüşmesi, yirmi dakika.' }],
+    questions: [...SHARED.perakende],
+    learned: 'Örnek veri: kampanya takvimi ve satış analizi.',
+    advice: 'Örnek veri: gelişi güzel değil, örneklerle konuş.',
+    publishedDaysAgo: 45,
+  },
+  {
+    ...base,
+    key: 'perakende-4',
+    author: 'ornek-mezun-4',
+    company: 'perakende',
+    organizationName: 'Örnek Perakende Grubu',
+    city: 'İstanbul',
+    termYear: 2025,
+    termSeason: 'SUMMER',
+    appliedMonth: 4,
+    durationWeeks: 6,
+    pay: 'PAID',
+    channel: 'CAREER_PLATFORM',
+    steps: [{ title: 'Çevrimiçi form', description: 'Kariyer sitesi üzerinden başvuru.' }],
+    questions: [...SHARED.perakende],
+    learned: 'Örnek veri: müşteri verisi ve segmentasyon.',
+    advice: 'Örnek veri: başvuru döneminde erken ol, kontenjan sınırlı.',
+    publishedDaysAgo: 30,
   },
   {
     key: 'erasmus',
@@ -324,7 +462,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
       where: { normalizedName: normalizeName(company.sector, 'SECTOR') },
       select: { id: true },
     });
-    const id = seedId(NS, `company:${company.key}`);
+    const id = seedUuid(NS, `company:${company.key}`);
     const data = {
       name: company.name,
       normalizedName: normalizeName(company.name, 'COMPANY'),
@@ -335,12 +473,79 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
     companyIds.set(company.key, id);
   }
 
+  // Örnek mezunlar: giriş yapılamayan sahte hesaplar (parola/oturum yok), doğrulanmış YBS mezunu üyelikli.
+  const verifier = seedUserId('systemAdmin');
+  for (const [index, key] of SAMPLE_ALUMNI.entries()) {
+    const id = authorId(key);
+    const user = {
+      name: `Örnek Mezun ${index + 1}`,
+      email: `${key}@test.mezunportal.local`,
+      emailVerified: true,
+    };
+    await prisma.user.upsert({ where: { id }, create: { id, ...user }, update: user });
+    const membership = {
+      graduationYear: 2023,
+      classOffset: 0,
+      verificationStatus: 'VERIFIED' as const,
+      verificationMethod: 'GRADUATION_DOCUMENT' as const,
+      verifiedAt: new Date(now.getTime() - 120 * DAY),
+      verifiedById: verifier,
+    };
+    const membershipId = seedUuid(NS, `membership:${key}`);
+    await prisma.membership.upsert({
+      where: { id: membershipId },
+      create: {
+        id: membershipId,
+        userId: id,
+        departmentId: department.id,
+        role: 'ALUMNI',
+        ...membership,
+      },
+      update: membership,
+    });
+  }
+
+  // Şirket sayfasındaki "çalışan/geçmiş çalışan" hücresi en az 3 doğrulanmış mezun ister: örnek pozisyonlar.
+  const POSITIONS: {
+    key: string;
+    user: Author;
+    company: (typeof COMPANIES)[number]['key'];
+    current: boolean;
+  }[] = [
+    { key: 'mert-yazilim', user: 'alumniMentor', company: 'yazilim', current: true },
+    { key: 'ornek-1-yazilim', user: 'ornek-mezun-1', company: 'yazilim', current: true },
+    { key: 'ornek-2-yazilim', user: 'ornek-mezun-2', company: 'yazilim', current: true },
+    { key: 'ornek-3-yazilim', user: 'ornek-mezun-3', company: 'yazilim', current: false },
+    { key: 'ornek-4-yazilim', user: 'ornek-mezun-4', company: 'yazilim', current: false },
+    { key: 'ornek-3-finans', user: 'ornek-mezun-3', company: 'finans', current: true },
+    { key: 'ornek-4-finans', user: 'ornek-mezun-4', company: 'finans', current: true },
+    { key: 'mert-finans', user: 'alumniMentor', company: 'finans', current: true },
+    { key: 'ornek-1-finans', user: 'ornek-mezun-1', company: 'finans', current: false },
+  ];
+  for (const position of POSITIONS) {
+    const id = seedUuid(NS, `position:${position.key}`);
+    const company = COMPANIES.find((c) => c.key === position.company)!;
+    const data = {
+      userId: authorId(position.user),
+      companyId: companyIds.get(position.company)!,
+      companyRaw: company.name,
+      titleRaw: 'Stajyer',
+      employmentType: 'INTERNSHIP' as const,
+      startYear: 2024,
+      startMonth: 6,
+      isCurrent: position.current,
+      ...(position.current ? {} : { endYear: 2025, endMonth: 3 }),
+      source: 'MANUAL' as const,
+    };
+    await prisma.position.upsert({ where: { id }, create: { id, ...data }, update: data });
+  }
+
   // Yayınlanmış deneyimler.
   for (const e of EXPERIENCES) {
-    const id = seedId(NS, `experience:${e.key}`);
+    const id = seedUuid(NS, `experience:${e.key}`);
     const publishedAt = new Date(now.getTime() - e.publishedDaysAgo * DAY);
     const data = {
-      authorId: e.author ? seedUserId(e.author) : null,
+      authorId: authorId(e.author),
       departmentIdAtWrite: department.id,
       type: e.type,
       companyId: e.company ? companyIds.get(e.company)! : null,
@@ -357,7 +562,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
       interviewQuestions: e.questions,
       whatLearned: e.learned,
       advice: e.advice,
-      isAnonymous: e.author === null,
+      isAnonymous: false,
       status: 'PUBLISHED' as const,
       moderatedById: moderator,
       moderatedAt: publishedAt,
@@ -369,7 +574,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
   // İlanlar.
   const alumni = seedUserId('alumniMentor');
   for (const p of POSTINGS) {
-    const id = seedId(NS, `posting:${p.key}`);
+    const id = seedUuid(NS, `posting:${p.key}`);
     const published = p.state === 'PUBLISHED';
     const submitted = p.state !== 'DRAFT';
     const publishedAt = published ? new Date(now.getTime() - 2 * DAY) : null;
@@ -435,7 +640,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
     },
   ];
   for (const event of events) {
-    const id = seedId(NS, `event:${event.key}`);
+    const id = seedUuid(NS, `event:${event.key}`);
     const startsAt = new Date(today.getTime() + event.inDays * DAY + 11 * HOUR);
     const published = event.status === 'PUBLISHED';
     const data = {
