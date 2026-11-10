@@ -512,7 +512,7 @@ describe('açık şüpheye yeni kanıt (kart 116)', () => {
     expect(flag!.recentEvidence).toMatchObject([{ entryCount: 5 }, { entryCount: 4 }]);
   });
 
-  it('eşzamanlı iki tarama aynı kanıtı bir kez sayar', async () => {
+  it('eşzamanlı iki tarama aynı kanıtı bir kez sayar', { timeout: 45_000 }, async () => {
     const { mentor, student } = await repeatedPair();
     await scan();
     await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
@@ -520,61 +520,66 @@ describe('açık şüpheye yeni kanıt (kart 116)', () => {
     expect((await flagsOf(mentor))[0]).toMatchObject({ recurrenceCount: 1 });
   });
 
-  it('GERÇEK YARIŞ: iki tarama açık işareti aynı anda okur; satır kilidi ikincisini bekletir, kanıt bir kez sayılır', async () => {
-    const { mentor, student } = await repeatedPair();
-    await scan();
-    await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
-    // Bariyer: işaretin okunduğu noktada iki işlem de buraya gelirse (kilit yoksa) birlikte yazar. Kilit varsa ikincisi
-    // kilitte bekler; bariyer 400 ms sonra serbest kalır ve ikinci işlem birincinin yazdığını görür.
-    let arrived = 0;
-    let open: () => void = () => undefined;
-    const gate = new Promise<void>((resolve) => (open = resolve));
-    const raced = new Proxy(db, {
-      get(target, prop) {
-        const value = Reflect.get(target, prop, target) as unknown;
-        if (prop !== '$transaction')
-          return typeof value === 'function' ? value.bind(target) : value;
-        return (fn: (tx: unknown) => Promise<unknown>, options?: unknown) =>
-          (target.$transaction as (f: unknown, o?: unknown) => Promise<unknown>)(
-            async (tx: typeof db) =>
-              fn(
-                new Proxy(tx, {
-                  get(inner, name) {
-                    const member = Reflect.get(inner, name, inner) as unknown;
-                    if (name !== 'suspicionFlag') {
-                      return typeof member === 'function' ? member.bind(inner) : member;
-                    }
-                    return new Proxy(inner.suspicionFlag, {
-                      get(model, method) {
-                        const fnMember = Reflect.get(model, method, model) as unknown;
-                        if (method !== 'findUniqueOrThrow') {
-                          return typeof fnMember === 'function' ? fnMember.bind(model) : fnMember;
-                        }
-                        return async (...args: unknown[]) => {
-                          const row = await (
-                            fnMember as (...a: unknown[]) => Promise<unknown>
-                          ).apply(model, args);
-                          arrived += 1;
-                          if (arrived >= 2) open();
-                          await Promise.race([gate, new Promise((r) => setTimeout(r, 400))]);
-                          return row;
-                        };
-                      },
-                    });
-                  },
-                }),
-              ),
-            options,
-          );
-      },
-    }) as typeof db;
-    const racedDeps = { ...deps, db: raced };
-    await Promise.all([runSuspicionScan(racedDeps), runSuspicionScan(racedDeps)]);
-    const [flag] = await flagsOf(mentor);
-    expect(flag).toMatchObject({ recurrenceCount: 1 });
-    expect(flag!.seenEvidenceKeys).toHaveLength(1);
-    expect(flag!.recentEvidence as unknown[]).toHaveLength(1);
-  });
+  // Yarış testleri tam pakette büyük paylaşılan veritabanında iki tam tarama koşturur; yük altında 15 sn varsayılanı aşabilir (kart 170).
+  it(
+    'GERÇEK YARIŞ: iki tarama açık işareti aynı anda okur; satır kilidi ikincisini bekletir, kanıt bir kez sayılır',
+    { timeout: 45_000 },
+    async () => {
+      const { mentor, student } = await repeatedPair();
+      await scan();
+      await extraEntry(mentor, student, new Date('2030-06-15T10:00:00Z'));
+      // Bariyer: işaretin okunduğu noktada iki işlem de buraya gelirse (kilit yoksa) birlikte yazar. Kilit varsa ikincisi
+      // kilitte bekler; bariyer 400 ms sonra serbest kalır ve ikinci işlem birincinin yazdığını görür.
+      let arrived = 0;
+      let open: () => void = () => undefined;
+      const gate = new Promise<void>((resolve) => (open = resolve));
+      const raced = new Proxy(db, {
+        get(target, prop) {
+          const value = Reflect.get(target, prop, target) as unknown;
+          if (prop !== '$transaction')
+            return typeof value === 'function' ? value.bind(target) : value;
+          return (fn: (tx: unknown) => Promise<unknown>, options?: unknown) =>
+            (target.$transaction as (f: unknown, o?: unknown) => Promise<unknown>)(
+              async (tx: typeof db) =>
+                fn(
+                  new Proxy(tx, {
+                    get(inner, name) {
+                      const member = Reflect.get(inner, name, inner) as unknown;
+                      if (name !== 'suspicionFlag') {
+                        return typeof member === 'function' ? member.bind(inner) : member;
+                      }
+                      return new Proxy(inner.suspicionFlag, {
+                        get(model, method) {
+                          const fnMember = Reflect.get(model, method, model) as unknown;
+                          if (method !== 'findUniqueOrThrow') {
+                            return typeof fnMember === 'function' ? fnMember.bind(model) : fnMember;
+                          }
+                          return async (...args: unknown[]) => {
+                            const row = await (
+                              fnMember as (...a: unknown[]) => Promise<unknown>
+                            ).apply(model, args);
+                            arrived += 1;
+                            if (arrived >= 2) open();
+                            await Promise.race([gate, new Promise((r) => setTimeout(r, 400))]);
+                            return row;
+                          };
+                        },
+                      });
+                    },
+                  }),
+                ),
+              options,
+            );
+        },
+      }) as typeof db;
+      const racedDeps = { ...deps, db: raced };
+      await Promise.all([runSuspicionScan(racedDeps), runSuspicionScan(racedDeps)]);
+      const [flag] = await flagsOf(mentor);
+      expect(flag).toMatchObject({ recurrenceCount: 1 });
+      expect(flag!.seenEvidenceKeys).toHaveLength(1);
+      expect(flag!.recentEvidence as unknown[]).toHaveLength(1);
+    },
+  );
 
   it('özet en çok 5, tekrar anahtarı en çok 20 tutulur; sayaç sınırsız artar', async () => {
     const { mentor, student } = await repeatedPair();
