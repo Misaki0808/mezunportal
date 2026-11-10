@@ -17,6 +17,18 @@ export const DEPARTMENT_LINKS = [
   { key: 'club', href: 'https://www.instagram.com/iuybskulubu/' },
 ] as const;
 
+const ROTATING_KEYS = [
+  'line1',
+  'line2',
+  'line3',
+  'line4',
+  'line5',
+  'line6',
+  'line7',
+  'line8',
+  'line9',
+] as const;
+
 export async function Landing({ stats }: { stats: LandingStats }) {
   const t = await getTranslations('landing');
   const numbers = (
@@ -29,7 +41,7 @@ export async function Landing({ stats }: { stats: LandingStats }) {
   const steps = ['verify', 'explore', 'connect'] as const;
   const questions = ['who', 'cost', 'privacy', 'mentor'] as const;
   // Mesaj kataloğu dizi kabul etmez (messages:check); satırlar sıralı anahtarlarla (line1…line9) tutulur.
-  const lines = Object.values(t.raw('rotating') as Record<string, string>);
+  const lines = ROTATING_KEYS.map((key) => t(`rotating.${key}`));
   return (
     <div className="landing">
       <a href="#landing-main" className="landing-skip">
