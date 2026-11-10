@@ -19,6 +19,7 @@ describe('sahte veri çerçevesi', () => {
       'dictionary',
       'feedback',
       'pointRules',
+      'phase2',
     ]);
   });
 });
