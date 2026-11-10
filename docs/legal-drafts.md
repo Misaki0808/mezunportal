@@ -153,3 +153,17 @@ kamuya açık doğrulama sayfası kapanır. Metin hoca/üniversite ve hukuk onay
 > Sürüm: `taslak-1`. Metin değiştiğinde sürüm artar ve yayın için yeni açık rıza istenir.
 
 Hikâyemin incelendikten ve ayın mezunu seçildikten sonra adım ve bölümümle birlikte yalnız bölümümün doğrulanmış üyelerine gösterilmesini isteğe bağlı olarak kabul ediyorum. Rızamı istediğim an geri alabilirim; geri aldığımda hikâyem ana sayfadan ve arşivden kaldırılır. Metin kullanıcı, hoca ve hukuk onayı bekleyen taslaktır.
+
+## §7 Faz 2 aydınlatma ekleri (P2-14) — TASLAK, onay bekliyor ⏸
+
+> `§1` aydınlatma metnine eklenecek yeni işleme amaçları. Sürüm `taslak-1`; hoca/hukuk onayı ve veri sorumlusu bilgisi (K-03) tamamlanınca metin sabitlenir.
+
+- **Mezun ilanları:** ilanı yazan doğrulanmış mezun/akademisyenin adı okuyuculara gösterilmez; başvuru ilandaki bağlantıdan ya da (seçilirse) iletişim talebiyle yapılır, ad yalnız talep onaylanınca
+  paylaşılır. Amaç: staj/iş fırsatlarını doğrulanmış topluluğa duyurmak. Hukuki sebep: sözleşmenin kurulması/ifası ve meşru menfaat.
+- **Referans:** mezunun öğrenciye referans olduğunu beyan etmesi, iki tarafın doğrulanmış ve önceden etkileşimi (onaylı iletişim talebi ya da tamamlanmış görüşme) olması şartıyla yönetici onayına
+  gider; yalnız puan hesabı ve kötüye kullanım kontrolü için işlenir. Hukuki sebep: meşru menfaat.
+- **Etkinlik katılımı:** katılım kodu/QR ile kaydedilen katılım, etkinlik puanı ve katılım listesi için işlenir; liste yalnız etkinliği yöneten yöneticiye açılır. Hukuki sebep: meşru menfaat, puan için açık davranış.
+- **Aylık özet e-postası:** bölümün önceki aya ait toplu deneyim ve ilan özeti, kullanıcı bildirim tercihine göre gönderilir; her e-postada tek tıkla abonelikten çıkış bağlantısı vardır. Hukuki sebep: açık rıza (tercih).
+- **Takvim ve Meet daveti:** online randevuda Google Takvim davetinin e-posta adresini işlemesi `§2` yurt dışına aktarım rızasına bağlıdır; rıza yoksa davet oluşturulmaz, mentor bağlantıyı elle ekler.
+- **Şirket/soru bankası/başvuru takvimi:** yayınlanmış deneyimlerden türetilen toplu özetlerdir; üç farklı yazardan az olan gruplar gösterilmez, kişi bilgisi içermez.
+
