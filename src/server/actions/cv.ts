@@ -41,7 +41,7 @@ export async function getCvAvailability(): Promise<ActionResult<CvAvailability>>
   }
 }
 
-/** `FormData` alanı: `file` (PDF, ≤ 5 MB, ≤ 6 sayfa; içerik sunucuda yeniden doğrulanır). */
+/** `FormData`: `file` ve isteğe bağlı `source` (PDF ≤ 5 MB, ≤ 6 sayfa; içerik sunucuda yeniden doğrulanır). */
 export async function uploadCv(formData: FormData): Promise<ActionResult<CvUploadOutput>> {
   try {
     // Önce kimlik: oturumsuz isteğin gövdesi işlenmez.

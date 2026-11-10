@@ -74,6 +74,7 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
   const [error, setError] = useState<ErrorCode>();
   const [pending, setPending] = useState(false);
   const [guide, setGuide] = useState(false);
+  const [source, setSource] = useState<'CV' | 'LINKEDIN_PDF'>('CV');
   const locked = useRef(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const kind = view.kind;
@@ -204,6 +205,34 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
               }}
               className="mt-6 flex flex-col gap-4"
             >
+              <fieldset className="space-y-2">
+                <legend className="font-semibold">{t('linkedin.chooseSource')}</legend>
+                <label className="flex min-h-11 items-center gap-3 rounded-control border border-border p-3">
+                  <input
+                    type="radio"
+                    name="source"
+                    value="CV"
+                    checked={source === 'CV'}
+                    onChange={() => setSource('CV')}
+                  />
+                  {t('linkedin.normalCv')}
+                </label>
+                <label className="flex min-h-11 items-center gap-3 rounded-control border border-border p-3">
+                  <input
+                    type="radio"
+                    name="source"
+                    value="LINKEDIN_PDF"
+                    checked={source === 'LINKEDIN_PDF'}
+                    onChange={() => setSource('LINKEDIN_PDF')}
+                  />
+                  {t('linkedin.importAction')}
+                </label>
+              </fieldset>
+              {source === 'LINKEDIN_PDF' && (
+                <p role="status" className="text-sm text-fg-muted">
+                  {t('linkedin.demoNotice')}
+                </p>
+              )}
               <Field
                 label={t('file')}
                 hint={t('fileHint')}
@@ -224,9 +253,6 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
               <p className="text-sm text-fg-muted">
                 {t('remaining', { count: availability.remainingToday })}
               </p>
-              <Button variant="ghost" onClick={() => setGuide(true)}>
-                {t('linkedin.open')}
-              </Button>
               {error && (
                 <p role="alert" className="text-base text-danger">
                   {errors(error)}
@@ -239,6 +265,9 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
               </div>
             </form>
           )}
+          <Button variant="ghost" onClick={() => setGuide(true)}>
+            {t('linkedin.open')}
+          </Button>
           <Link
             className={buttonClasses({ variant: 'ghost', fullWidth: true }) + ' mt-2'}
             href="/profil"
