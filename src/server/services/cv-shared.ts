@@ -3,6 +3,7 @@ import 'server-only';
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 
 import type { LlmAdapter } from '../external/llm';
+import type { PdfTextExtractor } from '../external/pdf-text';
 import type { StorageAdapter } from '../external/storage';
 import { loadActor } from '../permissions/actor';
 import { errorForDenyReason } from '../permissions/guards';
@@ -19,6 +20,9 @@ export type CvDeps = {
   storage: StorageAdapter;
   /** `null` = sağlayıcı yapılandırılmamış, CV ayrıştırma kapalı. */
   llm: LlmAdapter | null;
+  pdfTextExtractor?: PdfTextExtractor | null;
+  /** Yalnız sahte sağlayıcılı servis testleri. Üretim bağlantısı bu bayrağı kurmaz. */
+  allowFakeLinkedin?: boolean;
   /** `cv.parse` işini AYNI işlemde (outbox) kuyruğa yazar; işlem geri alınırsa iş de yoktur. */
   enqueue: (tx: Tx, cvUploadId: string) => Promise<void>;
   dailyLimit: number;
@@ -105,3 +109,12 @@ export const toYearMonth = (year: number | null, month: number | null): string |
     : month === null
       ? String(year)
       : `${year}-${String(month).padStart(2, '0')}`;
+
+/** Gerçek LinkedIn akışı yalnız çıkarıcı, maskeleme ve metin sağlayıcısı birlikte bağlıysa açılır. */
+export function isLinkedinPdfReady(deps: Pick<CvDeps, 'llm' | 'pdfTextExtractor'>): boolean {
+  return (
+    deps.pdfTextExtractor?.kind === 'real' &&
+    typeof deps.pdfTextExtractor.redact === 'function' &&
+    typeof deps.llm?.parseRedactedCv === 'function'
+  );
+}

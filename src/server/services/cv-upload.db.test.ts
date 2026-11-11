@@ -75,6 +75,7 @@ describe('uploadCv — önkoşullar', () => {
       reason: null,
       dailyLimit: 4,
       remainingToday: 4,
+      linkedinPdf: false,
     });
   });
 });

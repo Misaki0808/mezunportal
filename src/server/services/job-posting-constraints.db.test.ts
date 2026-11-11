@@ -282,4 +282,11 @@ describe('üretilmiş arama sütunları', () => {
     const found = await db.jobPosting.findUniqueOrThrow({ where: { id: row.id } });
     expect(found).not.toHaveProperty('searchKeys');
   });
+
+  it('PRISMA_OMIT: User.nameSearch (ad türevi) varsayılan yanıtta yoktur', async () => {
+    const author = await createUser(db);
+    expect(await db.user.findUniqueOrThrow({ where: { id: author } })).not.toHaveProperty(
+      'nameSearch',
+    );
+  });
 });
