@@ -42,6 +42,8 @@ export default defineConfig({
         test: {
           name: 'db',
           testTimeout: 15000,
+          // Yük altında gerçek veritabanı bağlantılarının kapanması için ayrı pay.
+          hookTimeout: 30000,
           environment: 'node',
           include: ['src/**/*.db.test.ts', 'prisma/**/*.db.test.ts'],
           globalSetup: ['./src/test/db-global-setup.ts'],
