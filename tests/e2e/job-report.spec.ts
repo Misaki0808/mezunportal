@@ -1,35 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
-import { waitForHydratedForm } from './hydration';
+import { loginAs } from './login';
 
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
 test.afterAll(() => db.$disconnect());
-async function login(page: Page, persona: 'student' | 'systemAdmin') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.waitForLoadState('networkidle');
-  const submit = page.getByRole('button', { name: 'Test hesabıyla giriş yap' });
-  await expect(async () => {
-    if (new URL(page.url()).pathname === '/giris/test') await submit.click();
-    await expect(page).not.toHaveURL(/\/giris\/test(?:\?|$)/, { timeout: 3000 });
-  }).toPass({ timeout: 20_000, intervals: [500] });
-  const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  const account = page.getByRole('heading', { name: 'Hesabın', exact: true });
-  await expect(account.or(consent.first())).toBeVisible({ timeout: 20_000 });
-  if (await consent.first().isVisible()) {
-    await waitForHydratedForm(page, 'Seçimlerimi kaydet');
-    await consent.nth(0).check();
-    await consent.nth(1).check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-    await page.waitForURL((url) => url.pathname !== '/onay', { timeout: 20_000 });
-  }
-  await page.waitForLoadState('networkidle');
-}
 
 test('öğrenci ilanı bildirir, yönetici kaldırır ve ilanın listeden kalktığı görülür', async ({
   browser,
@@ -72,7 +51,7 @@ test('öğrenci ilanı bildirir, yönetici kaldırır ve ilanın listeden kalkt�
   const student = await studentContext.newPage();
   const admin = await adminContext.newPage();
   try {
-    await login(student, 'student');
+    await loginAs(student, 'student');
     await student.goto(`/ilanlar/${posting.id}`);
     await student.waitForLoadState('networkidle');
     await student.getByRole('button', { name: 'Bu ilanı şikâyet et' }).click();
@@ -89,7 +68,7 @@ test('öğrenci ilanı bildirir, yönetici kaldırır ve ilanın listeden kalkt�
     });
     await student.getByRole('button', { name: 'Şikâyeti gönder' }).click();
     await expect(student.getByText('Şikâyetin alındı. Teşekkürler.')).toBeVisible();
-    await login(admin, 'systemAdmin');
+    await loginAs(admin, 'systemAdmin');
     await admin.goto('/yonetim/sikayetler');
     const item = admin.locator('li').filter({ hasText: title });
     await expect(item).toBeVisible();
