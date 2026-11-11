@@ -54,10 +54,12 @@ export function HeroPreview({ t }: { t: (key: PreviewKey) => string }) {
           <div className="flex items-center gap-3">
             <Avatar name={t('mentor.name')} decorative />
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-fg">{t('mentor.name')}</p>
+              <p className="whitespace-nowrap font-semibold text-fg">{t('mentor.name')}</p>
               <p className="text-sm text-fg-muted">{t('mentor.detail')}</p>
             </div>
-            <Badge tone="success">{t('mentor.badge')}</Badge>
+            <Badge tone="success" className="shrink-0">
+              {t('mentor.badge')}
+            </Badge>
           </div>
           <span className={`${buttonClasses()} mt-4`}>
             {t('mentor.action')}

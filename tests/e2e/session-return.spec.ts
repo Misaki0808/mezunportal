@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { expect, test } from '@playwright/test';
 
 /**
@@ -5,10 +6,8 @@ import { expect, test } from '@playwright/test';
  * gider; girişten sonra aynı sayfaya döner (ortak `failAction`, kart 116). Açık yönlendirme `?donus=` güvenli
  * yol dışında yok sayılır.
  */
-async function signIn(page: import('@playwright/test').Page, query = '') {
-  await page.goto(`/giris/test?persona=student${query}`);
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-}
+const signIn = (page: import('@playwright/test').Page, query = '') =>
+  loginAs(page, 'student', { returnTo: new URLSearchParams(query).get('donus') ?? undefined });
 
 test('oturum düşmüşken eylem gönderilince girişe, giriş sonrası aynı sayfaya dönülür', async ({
   page,
@@ -17,13 +16,6 @@ test('oturum düşmüşken eylem gönderilince girişe, giriş sonrası aynı sa
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 390, height: 844 });
   await signIn(page);
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await required.nth(0).check();
-  await required.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
 
   await page.goto('/hesap/bildirimler');
   const optional = page.getByRole('switch', { name: /İletişim talepleri/ });

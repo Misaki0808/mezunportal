@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { createHmac, randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -99,9 +100,7 @@ test('360 px: uzun ilan başlığı aylık özette yatay taşma oluşturmaz', as
     });
     postingId = posting.id;
     await db.jobMatch.create({ data: { userId: student.id, postingId, createdAt: now } });
-    await page.goto('/giris/test?persona=student');
-    await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await page.waitForURL(/\/(hesap|onay)$/);
+    await loginAs(page, 'student');
     await page.goto('/hesap/aylik-ozet');
     await expect(page.locator(`a[href="/ilanlar/${postingId}"]`)).toContainText(title);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(360);

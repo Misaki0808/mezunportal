@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { loginAs } from './login';
+import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { waitForHydratedControl, waitForHydratedForm } from './hydration';
@@ -13,19 +14,7 @@ const db = new PrismaClient({
 test.afterAll(() => db.$disconnect());
 test.describe.configure({ mode: 'serial' });
 /** Sayfa yüklenince hidratasyon biter (ağ durulur); öncesinde tıklanan form/düğme sessizce işlevsiz kalır. */
-async function login(page: Page, persona: 'student' | 'alumniMentor' | 'systemAdmin') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  await waitForHydratedForm(page, 'Seçimlerimi kaydet');
-  const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await required.nth(0).check();
-  await required.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = loginAs;
 test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybolur', async ({
   page,
   browser,
