@@ -52,7 +52,18 @@ describe('SignInForm', () => {
     );
     await user.type(screen.getByLabelText(/E-posta adresi/), 'yanlis');
     await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Geçerli bir e-posta adresi yaz.');
+    expect(request).not.toHaveBeenCalled();
+  });
+  it('boş gönderimde odak gönder düğmesinde kalmaz, ilk hatalı alana (e-posta) gider', async () => {
+    const request = vi.fn();
+    const { user } = renderUi(
+      <SignInForm options={disabledOptions} requestLink={request} startLinkedIn={startLinkedIn} />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
+    const field = screen.getByLabelText(/E-posta adresi/);
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    expect(field).toHaveFocus();
     expect(request).not.toHaveBeenCalled();
   });
   it.each(['kayitli@example.test', 'kayitsiz@example.test'])(

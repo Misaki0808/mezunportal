@@ -45,14 +45,6 @@ import { EntryEditor } from './entry-editor';
 import { EntrySummary } from './entry-summary';
 
 type Values = Record<string, unknown>;
-/** İlk giriş adımları `/baslangic` ekranında tamamlanır. */
-const ONBOARDING_FIELDS: readonly string[] = [
-  'MEMBERSHIP',
-  'INTERESTS',
-  'GOALS',
-  'MENTOR_PREFERENCE',
-  'VISIBILITY',
-];
 type Result = Promise<ActionResult<MyProfileData>>;
 
 export type MyProfileActions = {

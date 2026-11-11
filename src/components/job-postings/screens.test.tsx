@@ -35,6 +35,22 @@ const context: JobPostingFormContext = {
   targetDepartments: [{ id: 'dep', name: 'YBS', facultyName: 'İşletme' }],
   limits: { maxDays: 60, submitLimit: 5, submitWindowDays: 30, maxTargets: 10 },
 };
+it('"İncele" bağlantıları ilan başlığıyla adlanır; görünen metin aynı kalır', () => {
+  const other: JobPostingCard = { ...posting, id: 'job-2', title: 'Veri analizi stajyeri' };
+  renderUi(
+    <PostingList
+      canPost={false}
+      filters={{}}
+      options={options}
+      page={{ items: [posting, other], total: 2, page: 1, pageSize: 20 }}
+    />,
+  );
+  const first = screen.getByRole('link', { name: 'İncele: Yazılım stajyeri' });
+  const second = screen.getByRole('link', { name: 'İncele: Veri analizi stajyeri' });
+  expect(first).toHaveAttribute('href', '/ilanlar/job-1');
+  expect(second).toHaveAttribute('href', '/ilanlar/job-2');
+  expect(first).toHaveTextContent(/^İncele/);
+});
 it('öğrenciye ilan verme sunulmaz; süzgeçler ve sonraki sayfa URL taşır', () => {
   renderWithToasts(
     <PostingList

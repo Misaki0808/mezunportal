@@ -17,6 +17,8 @@ import {
   type QuestionCandidate,
 } from '../rules/questionDedupe';
 
+const PAGE_SIZE = 10;
+
 export async function getInterviewQuestions(
   db: PrismaClient,
   userId: string,
@@ -38,7 +40,7 @@ export async function getInterviewQuestions(
           ...(filters.sectorId ? { sectorId: filters.sectorId } : {}),
         },
         select: { id: true, name: true, sectorId: true, sector: { select: { name: true } } },
-        orderBy: { name: 'asc' },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
       });
       const [companyOptions, sectors, experiences, identityContext] = await Promise.all([
         tx.company.findMany({
@@ -173,10 +175,16 @@ export async function getInterviewQuestions(
             ]
           : [];
       });
+      // Gizlilik denetiminden önce saymak veya sayfalamak küçük grupları sızdırabilir.
+      const total = groups.length;
+      const page = Math.min(filters.page ?? 1, Math.max(1, Math.ceil(total / PAGE_SIZE)));
       return interviewQuestionBankSchema.parse({
         companies: companyOptions,
         sectors,
-        groups,
+        groups: groups.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+        total,
+        page,
+        pageSize: PAGE_SIZE,
         insufficient: companies.some((c) => {
           const count = authors.get(c.id)?.size ?? 0;
           return count > 0 && count < QUESTION_MIN_AUTHORS;

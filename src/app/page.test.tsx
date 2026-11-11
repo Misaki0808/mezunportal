@@ -56,6 +56,8 @@ describe('HomePage', () => {
       experiences: null,
       mentors: null,
       meetings: null,
+      jobs: null,
+      companies: null,
     });
     mocks.getSuggestedJobs.mockResolvedValue({ ok: true, data: [] });
     mocks.getCurrentStory.mockReset().mockResolvedValue({ ok: true, data: null });
@@ -73,6 +75,7 @@ describe('HomePage', () => {
     mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
     mocks.getVerificationState.mockResolvedValue({ ok: true, data: { status: 'NOT_STARTED' } });
     renderUi(await HomePage());
+    expect(screen.getByRole('heading', { level: 1, name: 'welcome' })).toBeVisible();
     expect(screen.getByRole('link', { name: /verificationTitle/ })).toHaveAttribute(
       'href',
       '/dogrulama',
