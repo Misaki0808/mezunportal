@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { safeClientAction } from '@/lib/safe-client-action';
 
 import { AdminFrame } from '@/components/admin/frame';
 import {
@@ -67,7 +68,7 @@ export function GoogleCalendarPanel({
 
   function confirmDisconnect() {
     startTransition(async () => {
-      const result = await disconnect();
+      const result = await safeClientAction(disconnect);
       setConfirming(false);
       if (!result.ok) {
         toast.show({ message: errors(result.errorCode), tone: 'error' });

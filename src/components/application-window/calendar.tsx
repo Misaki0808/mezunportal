@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button, Field, IconChip, PageHeader, Select } from '@/components/ui';
@@ -23,7 +24,9 @@ export function CalendarView({
   function toggle() {
     setError('');
     start(async () => {
-      const result = await setApplicationFollow({ scope, following: !following });
+      const result = await safeClientAction(() =>
+        setApplicationFollow({ scope, following: !following }),
+      );
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;

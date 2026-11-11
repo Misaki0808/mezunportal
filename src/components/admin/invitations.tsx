@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { sendInvitations } from '@/server/actions/invitations';
@@ -21,7 +22,7 @@ export function Invitations() {
           setError(null);
           setResult(null);
           start(async () => {
-            const response = await sendInvitations(text);
+            const response = await safeClientAction(() => sendInvitations(text));
             if (response.ok) setResult(response.data);
             else setError(response.errorCode);
           });

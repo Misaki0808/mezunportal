@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { saveStorySchema, type MyStory } from '@/contracts/alumni-story';
@@ -48,7 +49,7 @@ export function StoryEditor({
         setMessage(t('missingConsent'));
         return;
       }
-      const saved = await saveStory(parsed.data);
+      const saved = await safeClientAction(() => saveStory(parsed.data));
       if (!saved.ok) {
         setMessage(errors(saved.errorCode));
         return;
@@ -58,7 +59,7 @@ export function StoryEditor({
         setMessage(t('saved'));
         return;
       }
-      const submitted = await submitStory({ storyId: saved.data.id });
+      const submitted = await safeClientAction(() => submitStory({ storyId: saved.data.id }));
       if (!submitted.ok) {
         setMessage(errors(submitted.errorCode));
         return;
@@ -75,7 +76,9 @@ export function StoryEditor({
     const previous = consent;
     setConsent(next);
     start(async () => {
-      const result = await setStoryConsent({ storyId: story.id, consent: next });
+      const result = await safeClientAction(() =>
+        setStoryConsent({ storyId: story.id, consent: next }),
+      );
       if (!result.ok) {
         setConsent(previous);
         setMessage(errors(result.errorCode));

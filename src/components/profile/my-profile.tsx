@@ -128,6 +128,34 @@ export function MyProfile({ initial, actions, beforeCompletion }: Props) {
     }
   }
 
+  // Sanal klavye görünür alanı daralttığında odaklı kontrolü sayfanın kaydırılabilir kısmında tut.
+  useEffect(() => {
+    if (!editing) return;
+    let frame = 0;
+    const reveal = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const active = document.activeElement;
+        if (
+          active instanceof HTMLElement &&
+          active.matches('input, textarea, select') &&
+          active.closest('dialog[open]')
+        ) {
+          active.scrollIntoView?.({ block: 'nearest' });
+        }
+      });
+    };
+    window.addEventListener('resize', reveal);
+    window.visualViewport?.addEventListener('resize', reveal);
+    document.addEventListener('focusin', reveal);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', reveal);
+      window.visualViewport?.removeEventListener('resize', reveal);
+      document.removeEventListener('focusin', reveal);
+    };
+  }, [editing]);
+
   const editorFooter = (
     <>
       <Button type="submit" form={editFormId} size="lg" fullWidth loading={pending}>
@@ -181,6 +209,10 @@ export function MyProfile({ initial, actions, beforeCompletion }: Props) {
           {error ? errors(error) : notice}
         </div>
       )}
+
+      <Button variant="secondary" onClick={() => setEditing({ kind: 'basics' })}>
+        {t('editShortcut')}
+      </Button>
 
       {beforeCompletion}
 

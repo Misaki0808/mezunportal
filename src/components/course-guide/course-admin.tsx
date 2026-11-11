@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -47,7 +48,7 @@ export function CourseAdmin({
               setStatus(errors('VALIDATION_INVALID'));
               return;
             }
-            const result = await saveCourse(parsed.data);
+            const result = await safeClientAction(() => saveCourse(parsed.data));
             setStatus(result.ok ? t('saved') : errors(result.errorCode));
             if (result.ok) {
               setSelected(null);
