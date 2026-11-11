@@ -2,7 +2,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import messages from '../../../messages/tr.json';
-import { renderWithToasts } from '@/test/render';
+import { renderUi, renderWithToasts } from '@/test/render';
 import type { JobPostingCard, JobPostingFormContext } from '@/contracts/job-postings';
 import { PostingList } from './list';
 import { PostingDetail } from './detail';
@@ -177,6 +177,31 @@ it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderi
     }),
   );
 });
+const pendingItem = {
+  id: 'job-1',
+  status: 'PENDING' as const,
+  kind: 'INTERNSHIP' as const,
+  title: 'Staj',
+  organizationName: 'Kurum',
+  companyId: null,
+  location: 'İstanbul',
+  isRemote: false,
+  description: 'Örnek açıklama',
+  applyMethod: 'URL' as const,
+  applyUrl: 'https://example.org',
+  deadlineOn: '2027-01-01',
+  departmentId: 'dep',
+  targetDepartments: [{ id: 'dep', name: 'YBS' }],
+  tagIds: [],
+  targetGrades: [],
+  moderationNote: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  submittedAt: new Date(),
+  publishedAt: null,
+  endedAt: null,
+  author: { displayName: 'Yetkili kişi', role: 'ALUMNI' as const },
+};
 it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () => {
   HTMLDialogElement.prototype.showModal = function () {
     this.setAttribute('open', '');
@@ -188,34 +213,9 @@ it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () =>
   const review = vi
     .fn()
     .mockResolvedValue({ ok: true, data: { postingId: 'job-1', status: 'REJECTED' } });
-  const item = {
-    id: 'job-1',
-    status: 'PENDING' as const,
-    kind: 'INTERNSHIP' as const,
-    title: 'Staj',
-    organizationName: 'Kurum',
-    companyId: null,
-    location: 'İstanbul',
-    isRemote: false,
-    description: 'Örnek açıklama',
-    applyMethod: 'URL' as const,
-    applyUrl: 'https://example.org',
-    deadlineOn: '2027-01-01',
-    departmentId: 'dep',
-    targetDepartments: [{ id: 'dep', name: 'YBS' }],
-    tagIds: [],
-    targetGrades: [],
-    moderationNote: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    submittedAt: new Date(),
-    publishedAt: null,
-    endedAt: null,
-    author: { displayName: 'Yetkili kişi', role: 'ALUMNI' as const },
-  };
   renderWithToasts(
     <PostingModeration
-      initial={{ items: [item], nextCursor: null }}
+      initial={{ items: [pendingItem], nextCursor: null }}
       review={review}
       list={vi.fn()}
     />,
@@ -226,6 +226,34 @@ it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () =>
   await waitFor(() =>
     expect(review).toHaveBeenCalledWith({ postingId: 'job-1', decision: 'REJECT', reason: 'abc' }),
   );
+});
+it('moderasyon onay penceresi ne olacağını söyler: yayımlamada bildirim, reddetmede gerekçenin gösterilmesi', async () => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute('open');
+  };
+  const { PostingModeration } = await import('./manage');
+  renderWithToasts(
+    <PostingModeration
+      initial={{ items: [pendingItem], nextCursor: null }}
+      review={vi.fn()}
+      list={vi.fn()}
+    />,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Yayımla' }));
+  const publish = screen.getByRole('dialog');
+  expect(
+    within(publish).getByText('İlan yayımlanır ve paylaşan kişiye bildirim gider.'),
+  ).toBeVisible();
+  fireEvent.click(within(publish).getByRole('button', { name: 'Vazgeç' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reddet' }));
+  const reject = screen.getByRole('dialog');
+  expect(
+    within(reject).getByText('Yazdığın gerekçe ilanı paylaşan kişiye gösterilir.'),
+  ).toBeVisible();
+  expect(within(reject).queryByText(/bildirim gider/)).toBeNull();
 });
 it('düzenlemede değiştirilmemiş sözlük kurumu korunur', async () => {
   const initial = {
