@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { PrivacyGuard } from '@/components/privacy/server-guard';
 import { ErrorState } from '@/components/ui';
-import { getFeedbackView } from '@/server/actions/feedback';
+import { getRequestFeedbackView } from '@/app/(kimlik)/feedback-view';
 import { feedbackRouteId } from '../feedback-route';
 
 /**
@@ -15,7 +15,7 @@ export default async function ConsentLayout({ children }: { children: ReactNode 
   if (guarded !== children) return guarded;
   const id = await feedbackRouteId();
   if (id !== null) {
-    const result = await getFeedbackView(id);
+    const result = await getRequestFeedbackView(id);
     if (!result.ok) {
       if (result.errorCode === 'RESOURCE_NOT_FOUND' || result.errorCode === 'AUTH_FORBIDDEN')
         notFound();

@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { REQUEST_PATH_HEADER } from '@/lib/return-path';
-import { getFeedbackView } from '@/server/actions/feedback';
+import { getRequestFeedbackView } from '@/app/(kimlik)/feedback-view';
 
 const FEEDBACK_PATH = /^\/hesap\/gorusme\/([^/]+)\/?$/;
 
@@ -29,7 +29,7 @@ export async function feedbackRouteId(): Promise<string | null> {
 export async function rejectForeignFeedback(): Promise<void> {
   const id = await feedbackRouteId();
   if (id === null) return;
-  const result = await getFeedbackView(id);
+  const result = await getRequestFeedbackView(id);
   if (
     !result.ok &&
     (result.errorCode === 'RESOURCE_NOT_FOUND' || result.errorCode === 'AUTH_FORBIDDEN')
