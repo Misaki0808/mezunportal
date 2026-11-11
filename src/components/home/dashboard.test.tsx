@@ -30,7 +30,7 @@ describe('ana sayfa panosu', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Merhaba, Mert' })).toBeVisible();
     expect(screen.getByText('Şu an bekleyen bir işin yok.')).toBeVisible();
     const region = screen.getByRole('region', { name: 'Bekleyen işlerin' });
-    expect(within(region).getByRole('link', { name: 'Deneyimleri keşfet' })).toHaveAttribute(
+    expect(within(region).getByRole('link', { name: 'Deneyimleri oku' })).toHaveAttribute(
       'href',
       '/deneyimler',
     );
