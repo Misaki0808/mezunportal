@@ -2,7 +2,7 @@ import type { PrismaClient } from '../src/generated/prisma/client';
 import { normalizeName } from '../src/server/rules/dictionary';
 import { seedUserId } from './seed-accounts';
 import { INSTITUTION_SEED } from './seed-data';
-import { seedUuid } from './seed-util';
+import { seedId, seedUuid } from './seed-util';
 
 /**
  * Faz 2 DENEME VERİSİ (P2-14): kullanıcının telefonda hızlıca gezebileceği örnek içerik. SAHTE ve açıkça işaretlidir: şirket
@@ -447,6 +447,32 @@ const startOfIstanbulDay = (now: Date) => {
   return new Date(`${parts}T00:00:00.000Z`);
 };
 
+/**
+ * Bu modülün İLK sürümü 24 harfli onaylı kimlik (`seedId`) kullanıyordu; arayüz sözleşmeleri UUID bekler (`seedUuid`). O sürümü koşmuş
+ * bir yerel veritabanında aynı şirket adı benzersizlik hatası verirdi ve eski satırlar çiftlenirdi: önce eski kimlikli örnek satırlar silinir.
+ */
+const LEGACY_KEYS = {
+  company: ['yazilim', 'finans', 'perakende'],
+  experience: ['yazilim-yaz', 'yazilim-kis', 'finans-yaz', 'perakende-yaz', 'erasmus', 'kulup'],
+  posting: [
+    'veri-analizi-staj',
+    'is-analizi-staj',
+    'erp-junior',
+    'urun-staj-incelemede',
+    'pazarlama-taslak',
+  ],
+  event: ['kariyer-sohbeti', 'cv-atolyesi'],
+} as const;
+
+async function removeLegacyRows(prisma: PrismaClient) {
+  const legacy = (kind: keyof typeof LEGACY_KEYS) =>
+    LEGACY_KEYS[kind].map((key) => seedId(NS, `${kind}:${key}`));
+  await prisma.jobPosting.deleteMany({ where: { id: { in: legacy('posting') } } });
+  await prisma.campusEvent.deleteMany({ where: { id: { in: legacy('event') } } });
+  await prisma.experience.deleteMany({ where: { id: { in: legacy('experience') } } });
+  await prisma.company.deleteMany({ where: { id: { in: legacy('company') } } });
+}
+
 export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
   const department = await prisma.department.findFirstOrThrow({
     where: { code: INSTITUTION_SEED.department.code },
@@ -454,6 +480,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
   });
   const moderator = seedUserId('departmentAdmin');
   const today = startOfIstanbulDay(now);
+  await removeLegacyRows(prisma);
 
   // Şirketler (sektör sözlükten; sözlük seed'i önce koşar).
   const companyIds = new Map<string, string>();
@@ -469,8 +496,14 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
       aliases: company.aliases.map((alias) => normalizeName(alias, 'COMPANY')),
       sectorId: sector?.id ?? null,
     };
-    await prisma.company.upsert({ where: { id }, create: { id, ...data }, update: data });
-    companyIds.set(company.key, id);
+    // Ad (`normalizedName`) benzersizdir: yönetici sözlükten aynı şirketi önceden eklemişse o satır kullanılır, çakışma olmaz.
+    const row = await prisma.company.upsert({
+      where: { normalizedName: data.normalizedName },
+      create: { id, ...data },
+      update: data,
+      select: { id: true },
+    });
+    companyIds.set(company.key, row.id);
   }
 
   // Örnek mezunlar: giriş yapılamayan sahte hesaplar (parola/oturum yok), doğrulanmış YBS mezunu üyelikli.
