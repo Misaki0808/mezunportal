@@ -1,83 +1,159 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RotatingLine } from './rotating-line';
+
 const LINES = ['Birinci satır', 'İkinci satır', 'Üçüncü satır'];
-const LABELS = {
-  pauseText: 'Durdur',
-  resumeText: 'Devam et',
-  pauseLabel: 'Dönen metni durdur',
-  resumeLabel: 'Dönen metni devam ettir',
-  reducedLabel: 'Hareket azaltıldı',
-};
-function stubReducedMotion(reduce: boolean) {
+// Aralık 3,6 sn + geçiş 0,26 sn: bir satır değişimi ≈ 3,9 sn.
+const STEP = 3900;
+
+/** `reduce`: hareket azalt tercihi; `hover`: fare gibi hover destekleyen cihaz (telefonda false). */
+function stubMedia(reduce: boolean, hover = true) {
+  // Sorgunun DEĞERİNİ yorumlar (yalnız adını aramaz): `(hover: none)` gibi ters bir sorgu testi kırar.
+  const clauses: Record<string, boolean> = {
+    '(prefers-reduced-motion: reduce)': reduce,
+    '(prefers-reduced-motion: no-preference)': !reduce,
+    '(hover: hover)': hover,
+    '(hover: none)': !hover,
+    '(pointer: fine)': hover,
+    '(pointer: coarse)': !hover,
+  };
   vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: reduce && query.includes('reduce'),
+    matches: query.split(' and ').every((clause) => clauses[clause.trim()] === true),
     media: query,
   }));
 }
-beforeEach(() => {
-  vi.useFakeTimers();
-  window.localStorage.clear();
-});
+const stubReducedMotion = (reduce: boolean) => stubMedia(reduce, true);
+/** Gerçek sayfadaki gibi: dönen satır `.landing-hero-copy` bölgesinin içindedir (fare/odak bekletme bölgesi). */
+function setup(lines: readonly string[] = LINES) {
+  const view = render(
+    <div className="landing-hero-copy">
+      <RotatingLine lines={lines} />
+      <a href="#a" data-testid="inside-a">
+        iç bağlantı A
+      </a>
+      <a href="#b" data-testid="inside-b">
+        iç bağlantı B
+      </a>
+    </div>,
+  );
+  const zone = view.container.querySelector('.landing-hero-copy')!;
+  const text = () => view.container.querySelector('.landing-rotating-text');
+  return { ...view, zone, text };
+}
+beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
+
 describe('RotatingLine', () => {
-  it('ilk satır ekran okuyucuya gösterilir', () => {
+  it('ilk satır ekran okuyucuya gösterilir; dönen metin gizli; DÜĞME ve canlı bölge yoktur', () => {
     stubReducedMotion(false);
-    const { container } = render(<RotatingLine lines={LINES} {...LABELS} />);
+    const { container, text } = setup();
     expect(container.querySelector('.sr-only')?.textContent).toBe('Birinci satır');
-    expect(container.querySelector('.landing-rotating-text')?.getAttribute('aria-hidden')).toBe(
-      'true',
-    );
+    expect(text()?.getAttribute('aria-hidden')).toBe('true');
+    // Kullanıcı kararı (12 Kas): görünür durdur düğmesi yok; ekran okuyucuyu sürekli duyuruyla da rahatsız etmeyiz.
+    expect(container.querySelector('button')).toBeNull();
+    expect(container.querySelector('[aria-live], [role="status"], [role="alert"]')).toBeNull();
   });
-  it('durdurma ve sürdürme zamanlayıcıyı yönetir, tercih yeniden yüklemede korunur', () => {
+
+  it('satırlar sürekli döner ve sona gelince başa sarar', () => {
     stubReducedMotion(false);
-    const { container, unmount } = render(<RotatingLine lines={LINES} {...LABELS} />);
-    act(() => void vi.advanceTimersByTime(5900));
-    expect(container.querySelector('.landing-rotating-text')?.textContent).toBe('İkinci satır');
-    fireEvent.click(screen.getByRole('button', { name: 'Dönen metni durdur' }));
-    expect(window.localStorage.getItem('mezunportal:landing-motion-paused')).toBe('true');
-    act(() => void vi.advanceTimersByTime(30_000));
-    expect(container.querySelector('.landing-rotating-text')?.textContent).toBe('İkinci satır');
-    unmount();
-    const next = render(<RotatingLine lines={LINES} {...LABELS} />);
-    expect(screen.getByRole('button', { name: 'Dönen metni devam ettir' })).toBeTruthy();
-    act(() => void vi.advanceTimersByTime(30_000));
-    expect(next.container.querySelector('.landing-rotating-text')?.textContent).toBe(
-      'Birinci satır',
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Dönen metni devam ettir' }));
-    act(() => void vi.advanceTimersByTime(5900));
-    expect(next.container.querySelector('.landing-rotating-text')?.textContent).toBe(
-      'İkinci satır',
-    );
+    const { text } = setup();
+    expect(text()?.textContent).toBe('Birinci satır');
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('İkinci satır');
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('Üçüncü satır');
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('Birinci satır');
   });
-  it('geçiş ortasında durdurma metni gizli bırakmaz', () => {
+
+  it('fare bölgenin üstündeyken bekler, çekilince kaldığı yerden sürer', () => {
     stubReducedMotion(false);
-    const { container } = render(<RotatingLine lines={LINES} {...LABELS} />);
-    act(() => void vi.advanceTimersByTime(5500));
-    fireEvent.click(screen.getByRole('button', { name: 'Dönen metni durdur' }));
-    expect(container.querySelector('.landing-rotating-text')?.getAttribute('data-visible')).toBe(
-      'true',
-    );
+    const { zone, text } = setup();
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('İkinci satır');
+    fireEvent.mouseEnter(zone);
+    act(() => void vi.advanceTimersByTime(30_000));
+    expect(text()?.textContent).toBe('İkinci satır');
+    fireEvent.mouseLeave(zone);
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('Üçüncü satır');
   });
-  it('hareket azaltma tercihinde sabit kalır ve durum bildirilir', () => {
+
+  it('DOKUNMATİKTE (hover yok) bir kez dokunmak satırı kalıcı durdurmaz; fare olayları yok sayılır', () => {
+    stubMedia(false, false);
+    const { zone, text } = setup();
+    // Telefonda dokunma `mouseenter` üretir ve takılı kalır: bekletme olmamalı.
+    fireEvent.mouseEnter(zone);
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('İkinci satır');
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('Üçüncü satır');
+  });
+
+  it('dokunmatikte de klavye odağı (harici klavye/ekran okuyucu) satırı bekletir', () => {
+    stubMedia(false, false);
+    const { getByTestId, text } = setup();
+    fireEvent.focusIn(getByTestId('inside-a'));
+    act(() => void vi.advanceTimersByTime(30_000));
+    expect(text()?.textContent).toBe('Birinci satır');
+    fireEvent.focusOut(getByTestId('inside-a'), { relatedTarget: document.body });
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('İkinci satır');
+  });
+
+  it('klavye odağı bölgedeyken bekler; odak bölge içinde gezerken bekleme sürer, dışına çıkınca döner', () => {
+    stubReducedMotion(false);
+    const { getByTestId, text } = setup();
+    const a = getByTestId('inside-a');
+    const b = getByTestId('inside-b');
+    fireEvent.focusIn(a);
+    act(() => void vi.advanceTimersByTime(30_000));
+    expect(text()?.textContent).toBe('Birinci satır');
+    // A → B: odak bölge içinde kaldı (relatedTarget içeride).
+    fireEvent.focusOut(a, { relatedTarget: b });
+    fireEvent.focusIn(b);
+    act(() => void vi.advanceTimersByTime(30_000));
+    expect(text()?.textContent).toBe('Birinci satır');
+    // B → dışarı.
+    fireEvent.focusOut(b, { relatedTarget: document.body });
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('İkinci satır');
+  });
+
+  it('geçiş ortasında beklemeye girmek metni gizli bırakmaz; çıkınca da gizli takılmaz', () => {
+    stubReducedMotion(false);
+    const { zone, text } = setup();
+    // 3,6 sn'de geçiş (soluklaşma) başlar; 0,26 sn bitmeden fare gelir.
+    act(() => void vi.advanceTimersByTime(3650));
+    expect(text()?.getAttribute('data-visible')).toBe('false');
+    fireEvent.mouseEnter(zone);
+    expect(text()?.getAttribute('data-visible')).toBe('true');
+    fireEvent.mouseLeave(zone);
+    expect(text()?.getAttribute('data-visible')).toBe('true');
+    expect(text()?.textContent).toBe('Birinci satır');
+  });
+
+  it('hareket azaltma tercihinde hiç dönmez: ilk satır sabit', () => {
     stubReducedMotion(true);
-    const { container } = render(<RotatingLine lines={LINES} {...LABELS} />);
-    act(() => void vi.advanceTimersByTime(30_000));
-    expect(container.querySelector('.landing-rotating-text')?.textContent).toBe('Birinci satır');
-    expect(screen.getByRole('button', { name: 'Hareket azaltıldı' }).hasAttribute('disabled')).toBe(
-      true,
-    );
-  });
-  it('tek satır zamanlayıcı veya kontrol oluşturmaz', () => {
-    stubReducedMotion(false);
-    render(<RotatingLine lines={['Tek']} {...LABELS} />);
+    const { text } = setup();
+    act(() => void vi.advanceTimersByTime(60_000));
+    expect(text()?.textContent).toBe('Birinci satır');
     expect(vi.getTimerCount()).toBe(0);
-    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('tek satır zamanlayıcı kurmaz; sökülünce zamanlayıcı kalmaz', () => {
+    stubReducedMotion(false);
+    const single = setup(['Tek']);
+    expect(vi.getTimerCount()).toBe(0);
+    single.unmount();
+    const many = setup();
+    expect(vi.getTimerCount()).toBeGreaterThan(0);
+    many.unmount();
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

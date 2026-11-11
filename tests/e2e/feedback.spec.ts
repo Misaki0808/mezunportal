@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
@@ -29,21 +30,7 @@ test('öğrenci görüşme formunu 390 pikselde doldurur ve ikinci kez gönderem
     },
   });
   try {
-    await page.goto('/giris/test?persona=student');
-    await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await page.waitForURL(/\/(hesap|onay)$/);
-    await page.goto('/onay');
-    await page.waitForLoadState('networkidle');
-    await page
-      .getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true })
-      .nth(0)
-      .check();
-    await page
-      .getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true })
-      .nth(1)
-      .check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
+    await loginAs(page, 'student');
     await page.goto(`/hesap/gorusme/${appointment.id}`);
     await page.waitForLoadState('networkidle');
     await page.getByRole('radio', { name: 'Evet, gerçekleşti' }).check();
@@ -76,17 +63,7 @@ test('inceleyici: başka katılımcının form adresi veri vermeden gerçek 404 
       mentee: { email: 'student@test.mezunportal.local' },
     },
   });
-  await page.goto('/giris/test?persona=academic');
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  await page.waitForLoadState('networkidle');
-  const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await required.nth(0).check();
-  await required.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
+  await loginAs(page, 'academic');
   const response = await page.goto('/hesap/gorusme/' + row.id);
   expect(response?.status()).toBe(404);
   await expect(page.getByRole('button', { name: 'Yanıtı gönder' })).toHaveCount(0);
@@ -138,19 +115,7 @@ test('inceleyici: gösterge kendi öğrencisine ve talep mentoruna açık, başk
     });
   ids.push(request.id);
   const reason = 'Son 12 ayda 4 görüşmenin 1 tanesine katılım olmadı.';
-  async function login(persona: string) {
-    await page.goto('/giris/test?persona=' + persona);
-    await page.waitForLoadState('networkidle');
-    await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await page.waitForURL(/\/(hesap|onay)$/);
-    await page.goto('/onay');
-    await page.waitForLoadState('networkidle');
-    const boxes = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-    await boxes.nth(0).check();
-    await boxes.nth(1).check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-  }
+  const login = (persona: Parameters<typeof loginAs>[1]) => loginAs(page, persona);
   try {
     await login('student');
     await page.goto('/hesap/guvenilirlik');

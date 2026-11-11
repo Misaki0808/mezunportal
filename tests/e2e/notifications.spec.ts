@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { createHmac, randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -39,21 +40,7 @@ test('tercih kaydedilir ve imzalı yanıt yalnız bir kez işlenir', async ({ pa
     choice: 'YES',
   }).toString();
   try {
-    await page.goto('/giris/test?persona=student');
-    await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await page.waitForURL(/\/(hesap|onay)$/);
-    await page.goto('/onay');
-    await page.waitForLoadState('networkidle');
-    await page
-      .getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true })
-      .nth(0)
-      .check();
-    await page
-      .getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true })
-      .nth(1)
-      .check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
+    await loginAs(page, 'student');
     await page.goto('/hesap/bildirimler');
     const optional = page.getByRole('switch', { name: /İletişim talepleri/ });
     const security = page.getByRole('switch', { name: /Hesap ve güvenlik/ });

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -7,7 +7,7 @@ import { renderUi } from '@/test/render';
 import { Modal, Sheet } from './dialog';
 
 // jsdom'da <dialog>.showModal/close yok; tarayıcı davranışının açık/kapalı niteliği taklit edilir.
-// Odak tuzağı ve Esc tarayıcının işidir (PM turunda elle denenir); burada bağlantılar sınanır.
+// Tab sırası ve olayların pencere katmanı burada; yerel dialog davranışı ayrıca gerçek tarayıcıda sınanır.
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function showModal() {
     this.setAttribute('open', '');
@@ -116,6 +116,21 @@ describe.each([
     expect(within(dialog).getByLabelText('Gerekçe')).toHaveFocus();
   });
 
+  it('tarayıcı varsayılan odağı değiştirmese de ara denetimler arasında Tab ve Shift+Tab ilerler', () => {
+    renderUi(
+      <Component open onClose={() => undefined} title="Başlık" footer={<button>Vazgeç</button>}>
+        <input aria-label="Gerekçe" />
+      </Component>,
+    );
+    const input = screen.getByLabelText('Gerekçe');
+    const next = screen.getByRole('button', { name: 'Vazgeç' });
+    input.focus();
+    fireEvent.keyDown(input, { key: 'Tab' });
+    expect(next).toHaveFocus();
+    fireEvent.keyDown(next, { key: 'Tab', shiftKey: true });
+    expect(input).toHaveFocus();
+  });
+
   it('odak pencerenin dışına düşmüşse Tab içeri alır; odaklanabilir öğe yoksa Tab odağı bırakmaz', async () => {
     const { user } = renderUi(
       <>
@@ -131,6 +146,92 @@ describe.each([
     dialog.focus();
     await user.tab();
     expect(within(dialog).getByRole('button', { name: 'Kapat' })).toHaveFocus();
+  });
+
+  it('sekme dışı, devre dışı, inert ve gizli denetimleri atlar', () => {
+    renderUi(
+      <Component open onClose={() => undefined} title="Başlık">
+        <input aria-label="Birinci" />
+        <button tabIndex={-1}>Sekme dışında</button>
+        <button disabled tabIndex={0}>
+          Devre dışı
+        </button>
+        <fieldset disabled>
+          <input aria-label="Devre dışı alan" />
+        </fieldset>
+        <div inert>
+          <button>Etkisiz</button>
+        </div>
+        <div style={{ display: 'none' }}>
+          <button>Gizli</button>
+        </div>
+        <input aria-label="İkinci" />
+      </Component>,
+    );
+    const first = screen.getByLabelText('Birinci');
+    const second = screen.getByLabelText('İkinci');
+    first.focus();
+    fireEvent.keyDown(first, { key: 'Tab' });
+    expect(second).toHaveFocus();
+    fireEvent.keyDown(second, { key: 'Tab', shiftKey: true });
+    expect(first).toHaveFocus();
+  });
+
+  it('iç içe Sheet içindeki Tab yalnız üst pencerede bir adım ilerler', () => {
+    renderUi(
+      <Component open onClose={() => undefined} title="Dış pencere">
+        <input aria-label="Dış alan" />
+        <Sheet open onClose={() => undefined} title="İç pencere" footer={<button>İç son</button>}>
+          <input aria-label="İç birinci" />
+          <input aria-label="İç ikinci" />
+        </Sheet>
+        <button>Dış son</button>
+      </Component>,
+    );
+    const first = screen.getByLabelText('İç birinci');
+    const second = screen.getByLabelText('İç ikinci');
+    first.focus();
+    fireEvent.keyDown(first, { key: 'Tab' });
+    expect(second).toHaveFocus();
+    fireEvent.keyDown(second, { key: 'Tab', shiftKey: true });
+    expect(first).toHaveFocus();
+  });
+
+  it('iç pencerenin Esc ve kapanma olayı dış pencereyi kapatmaz', () => {
+    const outerClose = vi.fn();
+    const innerClose = vi.fn();
+    renderUi(
+      <Component open onClose={outerClose} title="Dış pencere">
+        <Sheet open onClose={innerClose} title="İç pencere">
+          <input aria-label="İç alan" />
+        </Sheet>
+      </Component>,
+    );
+    const inner = screen.getByRole('dialog', { name: 'İç pencere' });
+    fireEvent(inner, new Event('cancel', { cancelable: true }));
+    expect(innerClose).toHaveBeenCalledTimes(1);
+    expect(outerClose).not.toHaveBeenCalled();
+    fireEvent(inner, new Event('close'));
+    expect(innerClose).toHaveBeenCalledTimes(2);
+    expect(outerClose).not.toHaveBeenCalled();
+  });
+
+  it('odaklanabilir denetim kalmadığında kapsayıcıya odak verir', () => {
+    renderUi(
+      <>
+        <button type="button">Dışarıdaki</button>
+        <Component open onClose={() => undefined} title="Başlık">
+          <p>İçerik</p>
+        </Component>
+      </>,
+    );
+    const dialog = screen.getByRole('dialog');
+    // jsdom yerel dialog odaklanabilirliğini sağlamaz; tarayıcıdaki programatik odağı taklit et.
+    dialog.tabIndex = -1;
+    within(dialog).getByRole('button', { name: 'Kapat' }).setAttribute('disabled', '');
+    screen.getByRole('button', { name: 'Dışarıdaki' }).focus();
+    fireEvent.keyDown(dialog, { key: 'Tab' });
+    expect(dialog).toHaveFocus();
   });
 
   describe('ilk odak', () => {

@@ -2,12 +2,12 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Avatar, Card, ErrorState, PageHeader } from '@/components/ui';
-import { getPublishedStory } from '@/server/actions/alumni-story';
+import { requestStoryDetail } from '@/app/detail-route';
 export const dynamic = 'force-dynamic';
 export default async function StoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params,
     t = await getTranslations('alumniStory');
-  const result = await getPublishedStory({ storyId: id });
+  const result = await requestStoryDetail(id);
   if (!result.ok) {
     if (result.errorCode === 'RESOURCE_NOT_FOUND') notFound();
     return <ErrorState errorCode={result.errorCode} />;

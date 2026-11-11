@@ -1,3 +1,5 @@
+import { loginAs } from './login';
+import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { decodeQR } from 'qr/decode.js';
@@ -28,9 +30,10 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
     (m) => m.role === 'STUDENT' && m.endedAt === null && m.verificationStatus === 'VERIFIED',
   )!.departmentId;
   const now = new Date();
+  const eventTitle = `Örnek etkinlik ${randomUUID().slice(0, 8)}`;
   const event = await db.campusEvent.create({
     data: {
-      title: 'Örnek etkinlik',
+      title: eventTitle,
       description: 'Öğrenciler için örnek etkinlik',
       location: 'Kampüs',
       startsAt: new Date(now.getTime() - 60_000),
@@ -46,18 +49,7 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
   const adminContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   try {
     const admin = await adminContext.newPage();
-    await admin.goto('/giris/test?persona=departmentAdmin');
-    await admin.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await admin.waitForURL(/\/(hesap|onay)$/);
-    await admin.goto('/onay');
-    const adminConsent = admin.getByRole('checkbox', {
-      name: 'Okudum ve onaylıyorum.',
-      exact: true,
-    });
-    await adminConsent.nth(0).check();
-    await adminConsent.nth(1).check();
-    await admin.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(admin.getByText('Onayların kaydedildi.').first()).toBeVisible();
+    await loginAs(admin, 'departmentAdmin');
     await admin.goto(`/yonetim/etkinlikler/${event.id}`);
     const qr = admin.getByRole('img', { name: 'Etkinlik katılım bağlantısının QR kodu' });
     await expect(qr).toBeVisible();
@@ -90,17 +82,9 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
     expect(qrCode).toMatch(/^\d{6}$/);
     await page.goto(qrUrl.href);
     await page.waitForURL(/\/giris/);
-    await page.goto('/giris/test?persona=student');
-    await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await page.waitForURL(/\/(hesap|onay)$/);
-    await page.goto('/onay');
-    const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-    await consent.nth(0).check();
-    await consent.nth(1).check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
+    await loginAs(page, 'student');
     await page.goto(`/etkinlikler/${event.id}`);
-    await expect(page.getByRole('heading', { name: 'Örnek etkinlik' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: eventTitle })).toBeVisible();
     await page.getByRole('button', { name: 'Katılıyorum' }).click();
     await expect(page.getByLabel('Altı haneli katılım kodu')).toBeVisible();
     await expect(page.getByLabel('Altı haneli katılım kodu')).toHaveValue(qrCode);
@@ -110,8 +94,12 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
       true,
     );
     await admin.goto('/yonetim/etkinlikler');
+    await admin.waitForLoadState('networkidle');
     await admin.getByLabel('İşlem gerekçesi').fill('Etkinlik iptal denemesi');
-    const row = admin.locator('li').filter({ hasText: 'Örnek etkinlik' });
+    const row = admin.locator('li').filter({ hasText: eventTitle });
+    await expect(
+      row.getByRole('button', { name: 'Etkinliği iptal et', exact: true }),
+    ).toBeEnabled();
     await row.getByRole('button', { name: 'Etkinliği iptal et', exact: true }).click();
     await expect(admin.getByRole('dialog')).toBeVisible();
     expect((await db.campusEvent.findUniqueOrThrow({ where: { id: event.id } })).status).toBe(

@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { expect, test } from '@playwright/test';
@@ -50,15 +51,7 @@ test('şirketi takma adla bulur; anonim deneyim ve güvenli boş dönem görün�
       },
       select: { id: true },
     });
-    await page.goto('/giris/test?persona=student');
-    await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await page.waitForURL(/\/(hesap|onay)$/);
-    await page.goto('/onay');
-    const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-    await consent.nth(0).check();
-    await consent.nth(1).check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
+    await loginAs(page, 'student');
     await page.goto('/sirketler');
     await page.getByLabel('Şirket adı veya takma adı').fill(alias);
     await page.getByRole('button', { name: 'Ara', exact: true }).click();

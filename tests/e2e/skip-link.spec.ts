@@ -1,15 +1,17 @@
+import { loginAs } from './login';
 import { expect, test, type Page } from '@playwright/test';
+
+test.skip(
+  ({ browserName }) => browserName === 'webkit',
+  'Safari varsayılan Tab tercihi bağlantılara odak taşımaz.',
+);
 
 /** "İçeriğe geç" bağlantısı odaklanınca markaya (logo/üst çubuk) binmemeli (R1 P2, 1440). */
 type Box = { x: number; y: number; width: number; height: number };
 const intersects = (a: Box, b: Box) =>
   a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
-async function loginStudent(page: Page) {
-  await page.goto('/giris/test?persona=student');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-}
+const loginStudent = (page: Page) => loginAs(page, 'student');
 
 for (const width of [390, 1440]) {
   test(`uygulama kabuğu ${width}px: atlama bağlantısı markaya binmez`, async ({ page }) => {

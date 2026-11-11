@@ -1,17 +1,7 @@
+import { loginAs } from './login';
 import { expect, test, type Page } from '@playwright/test';
 
-async function login(page: Page) {
-  await page.goto('/giris/test?persona=academic');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  await page.waitForLoadState('networkidle');
-  const boxes = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await boxes.nth(0).check();
-  await boxes.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = (page: Page) => loginAs(page, 'academic');
 
 test('beş geçersiz filtre bağlantısı çökmeden temizleme sunar', async ({ page }) => {
   await login(page);
