@@ -130,6 +130,23 @@ describe('GET /api/google/callback', () => {
     expect((await callback(callbackRequest('code=k&state=abc', 'c'))).status).toBe(403);
     expect(mocks.complete).not.toHaveBeenCalled();
   });
+  it('durum çerezi HER sonuçta silinir: giriş yönlendirmesi, 403 ve 500 dahil (tek kullanımlık)', async () => {
+    const cleared = (response: Response) => {
+      const cookie = response.headers.get('set-cookie') ?? '';
+      expect(cookie).toMatch(/mp_google_oauth=;/);
+      expect(cookie).toMatch(/Max-Age=0/);
+      expect(cookie).toMatch(/Path=\/api\/google/);
+    };
+    mocks.requireAdmin.mockRejectedValueOnce(codedUnauthenticated('AUTH_UNAUTHENTICATED'));
+    cleared(await callback(callbackRequest('code=k&state=abc', 'yuk.imza')));
+    mocks.requireAdmin.mockRejectedValueOnce(codedForbidden('AUTH_FORBIDDEN'));
+    cleared(await callback(callbackRequest('code=k&state=abc', 'yuk.imza')));
+    mocks.complete.mockRejectedValueOnce(new Error('beklenmeyen'));
+    cleared(await callback(callbackRequest('code=k&state=abc', 'yuk.imza')));
+    // başarı ve ret zaten siliyordu
+    mocks.complete.mockResolvedValueOnce('failed');
+    cleared(await callback(callbackRequest('code=k&state=abc', 'yuk.imza')));
+  });
 
   it('servis beklenmeyen hata verirse 500 döner ve ayrıntı sızmaz', async () => {
     mocks.complete.mockRejectedValueOnce(new Error('GIZLI-1//jeton'));

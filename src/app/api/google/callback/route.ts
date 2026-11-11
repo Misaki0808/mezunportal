@@ -18,14 +18,22 @@ const NO_STORE = { 'cache-control': 'no-store', 'referrer-policy': 'no-referrer'
 
 export async function GET(request: NextRequest) {
   const { APP_URL } = getAuthEnv();
-  const done = (outcome: GoogleConnectOutcome) => {
-    const response = NextResponse.redirect(
-      new URL(`${GOOGLE_ADMIN_HREF}?durum=${outcome}`, APP_URL),
-      { status: 303, headers: NO_STORE },
+  // Durum çerezi TEK KULLANIMLIKTIR: sonuç ne olursa olsun (başarı, ret, giriş yönlendirmesi, yetkisizlik, beklenmeyen hata) silinir;
+  // yarım kalmış bir akışın çerezi sonraki bir denemede yeniden kullanılamaz.
+  const clear = <T extends Response>(response: T): T => {
+    (response as unknown as NextResponse).headers.append(
+      'set-cookie',
+      `${OAUTH_STATE_COOKIE}=; Path=/api/google; Max-Age=0; HttpOnly; SameSite=lax`,
     );
-    response.cookies.set(OAUTH_STATE_COOKIE, '', { path: '/api/google', maxAge: 0 });
     return response;
   };
+  const done = (outcome: GoogleConnectOutcome) =>
+    clear(
+      NextResponse.redirect(new URL(`${GOOGLE_ADMIN_HREF}?durum=${outcome}`, APP_URL), {
+        status: 303,
+        headers: NO_STORE,
+      }),
+    );
   try {
     const actor = await requireAdmin({ kind: 'SYSTEM' });
     const params = request.nextUrl.searchParams;
@@ -44,8 +52,10 @@ export async function GET(request: NextRequest) {
     if (isCodedError(error) && error.kind === 'unauthenticated') {
       const login = new URL('/giris', APP_URL);
       login.searchParams.set('donus', GOOGLE_ADMIN_HREF);
-      return NextResponse.redirect(login, { status: 303, headers: NO_STORE });
+      return clear(NextResponse.redirect(login, { status: 303, headers: NO_STORE }));
     }
-    return new Response(null, { status: isCodedError(error) ? 403 : 500, headers: NO_STORE });
+    return clear(
+      new Response(null, { status: isCodedError(error) ? 403 : 500, headers: NO_STORE }),
+    );
   }
 }

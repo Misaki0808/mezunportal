@@ -162,6 +162,29 @@ Rıza belgeleri `ConsentDocument` değerleridir (`JOB_SEEKER_VISIBILITY` isteğe
 - Her migration boş veritabanında ve seed'li veritabanında koşulur.
 - Canlıya alımdan sonra H3 migration'ından önce yedek doğrulanır.
 
+### Faz 2 migration geri alma tablosu
+
+Hepsi **ekleyicidir** (yeni tablo, sütun, enum değeri; var olan veri değişmez) ve temiz veritabanında sırayla uygulanır (`migrations.db.test.ts` ve taze veritabanı denemesi).
+Genel kural: tablolar yabancı anahtar sırasının tersinde (çocuk önce) `DROP TABLE` ile kaldırılır; **PostgreSQL enum değeri kaldırılamaz**: geri almada değer kalır,
+o değeri kullanan satır yoksa zararsızdır (varsa önce satırlar silinir/geri alınır, ileri onarım). Üretilmiş sütun/GIN indeksi tablodan önce düşer. Veri taşıyan geri alma
+kullanıcı verisini siler; PR'da onay ister. `p2_04_*`, `p2_06_*`, `contact_request_context*` ve `integration_connection` migration'ları geri alma notunu kendi başlarında taşır.
+
+| Migration | Ekler | Geri alma (özet) |
+|---|---|---|
+| `job_matching` | `JobPostingTag`, `JobPosting.targetGrades`, `NotificationType.JOB_MATCH` | `DROP TABLE "JobPostingTag"`; `ALTER TABLE "JobPosting" DROP COLUMN "targetGrades"`; enum değeri kalır |
+| `job_match_notifications` | `JobMatch`, `JobMatchDigest` | iki tablo `DROP TABLE` (eşleşme geçmişi silinir) |
+| `p2_03_referral` | `ReferralStatus`, `ReferralClaim`, `PointSourceType`/`PointRevokeReason` değerleri | `DROP TABLE "ReferralClaim"; DROP TYPE "ReferralStatus"`; referans puanı kayıtları önce geri alınır; enum değerleri kalır |
+| `p2_03_referral_suspicion` | `SuspicionRule.REFERRAL_REPEAT/BURST` | yalnız enum değeri: kalır; açık işaret varsa karar verilir |
+| `p2_09_company_search` | `CompanyMerge`, `Company.searchKeys` (üretilmiş) + trigram GIN | önce indeks ve sütun, sonra `DROP TABLE "CompanyMerge"` (birleştirme yönlendirmesi kaybolur) |
+| `p2_11_application_window` | `CompanyFollow`, `Experience.appliedMonth` + CHECK, `NotificationType.APPLICATION_WINDOW` | CHECK ve sütun düşer (başvuru ayı verisi silinir), `DROP TABLE "CompanyFollow"` |
+| `p2_07_target_title` | `Profile.targetTitleId` | `DROP COLUMN` (hedef pozisyon seçimi silinir) |
+| `p2_01_year_alumni` | `AwardKind`, `AwardCycle`, `AwardCandidate`, `Award` | tablolar tersten `DROP TABLE`, sonra `DROP TYPE "AwardKind"` |
+| `p2_01_award_consent` / `_version` | `AwardPublicationDecision`, koruma işlevi/tetikleyici, `Award.publicConsentVersion` | tetikleyici + işlev, sütun, tablo sırasıyla düşer |
+| `p2_02_alumni_story` | `AlumniStoryStatus`, `AlumniStory`, `StoryConsentDecision`, `MonthlyAlumnus` | tablolar tersten `DROP TABLE`, sonra `DROP TYPE` |
+| `p2_13_monthly_digest` | `NotificationType.MONTHLY_DIGEST` | yalnız enum değeri: kalır |
+| `p2_12_campus_events` | `CampusEventStatus`, `CampusEvent`, `CampusEventDepartment`, `CampusEventRegistration`, `EventAttendance`, puan/şüphe enum değerleri | tablolar tersten `DROP TABLE`, `DROP TYPE "CampusEventStatus"`; etkinlik puan kayıtları önce geri alınır |
+| `p2_08_course_guide` | `Course`, `AlumniCourseMark` | iki tablo `DROP TABLE` (mezun ders işaretleri silinir) |
+
 ## Veri güvenliği ve saklama
 
 - Mezun belgesi karar anında silinir. CV'de son dosya tutulur; eski dosyalar uygulama anında
