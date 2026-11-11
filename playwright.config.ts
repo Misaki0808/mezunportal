@@ -15,7 +15,14 @@ export default defineConfig({
   // Testler ortak seed hesaplarının rıza ve oturum durumunu değiştirir; eşzamanlı dosyalar yarışır.
   workers: 1,
   use: { baseURL },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    // `webkit-*.spec.ts` yalnız Safari projesinde koşar; varsayılan çalıştırma (ve CI) değişmez.
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /webkit-.*\.spec\.ts/ },
+    // İsteğe bağlı Safari (WebKit) + iPhone turu: `E2E_WEBKIT=1 pnpm exec playwright test --project=webkit-iphone` (docs/engineering.md "Test").
+    ...(process.env.E2E_WEBKIT === '1'
+      ? [{ name: 'webkit-iphone', use: { ...devices['iPhone 13'] } }]
+      : []),
+  ],
   webServer: {
     // Doğrudan Next: dev betiğinin yerel env yüklemesi test ortamını değiştiremez.
     command: `node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port ${port}`,
