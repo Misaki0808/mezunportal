@@ -13,6 +13,8 @@ import { awardForEventAttendance, runPointBackfill } from './points';
 const db = createTestPrisma();
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = new Date('2031-03-20T09:00:00Z');
+/** Paylaşılan test veritabanı başka testlerin satırlarıyla dolu olabilir: tam tarama yerine bu testin 8 günlük penceresi koşulur (aksi hâlde tam pakette 15 sn'yi aşar). */
+const SINCE = new Date(NOW.getTime() - 8 * DAY);
 let inst: Institution;
 
 beforeAll(async () => {
@@ -69,16 +71,16 @@ describe('etkinlik katılımı puan uzlaştırması', () => {
       const start = new Date(NOW.getTime() - day * DAY);
       await attend(await event(start), user, new Date(start.getTime() + 600_000));
     }
-    await runPointBackfill({ db, now: () => NOW });
+    await runPointBackfill({ db, now: () => NOW }, { since: SINCE });
     expect(await entries(user)).toHaveLength(0); // kural pasifken puan yok
     await setRule(true);
-    const first = await runPointBackfill({ db, now: () => NOW });
+    const first = await runPointBackfill({ db, now: () => NOW }, { since: SINCE });
     expect(first.eventAttendances).toBeGreaterThanOrEqual(6);
     const rows = await entries(user);
     expect(rows).toHaveLength(6);
     expect(rows.map((r) => r.multiplierPercent)).toEqual([100, 100, 100, 100, 0, 0]);
     expect(rows.map((r) => r.points)).toEqual([5, 5, 5, 5, 0, 0]);
-    const second = await runPointBackfill({ db, now: () => NOW });
+    const second = await runPointBackfill({ db, now: () => NOW }, { since: SINCE });
     expect(second.created).toBe(0);
     expect(await entries(user)).toHaveLength(6);
   });
@@ -94,7 +96,7 @@ describe('etkinlik katılımı puan uzlaştırması', () => {
     await attend(cancelled, user, start);
     await attend(live, user, new Date(start.getTime() + 3_700_000));
     await attend(live, banned, new Date(start.getTime() + 3_800_000));
-    await runPointBackfill({ db, now: () => NOW });
+    await runPointBackfill({ db, now: () => NOW }, { since: SINCE });
     const rows = await entries(user);
     expect(rows).toHaveLength(1);
     expect(rows[0]!.sourceId).toBe(live);
@@ -103,7 +105,7 @@ describe('etkinlik katılımı puan uzlaştırması', () => {
       where: { id: rows[0]!.id },
       data: { status: 'REVOKED', revokedReason: 'FRAUD_CONFIRMED', revokedAt: NOW },
     });
-    await runPointBackfill({ db, now: () => NOW });
+    await runPointBackfill({ db, now: () => NOW }, { since: SINCE });
     expect(await entries(user)).toHaveLength(1);
     expect((await entries(user))[0]!.status).toBe('REVOKED');
   });
@@ -155,7 +157,7 @@ describe('etkinlik katılımı puan uzlaştırması', () => {
     const id = await event(start);
     const same = new Date(start.getTime() + 120_000);
     for (const user of people) await attend(id, user, same);
-    await runPointBackfill({ db, now: () => NOW });
+    await runPointBackfill({ db, now: () => NOW }, { since: SINCE });
     expect(await db.pointEntry.count({ where: { sourceId: id, status: 'PENDING' } })).toBe(3);
     const flagged = await scanCampusEventPatterns(db, NOW);
     expect(flagged).toBeGreaterThanOrEqual(3);
