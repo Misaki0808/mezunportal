@@ -138,7 +138,7 @@ function ModerationCard({
             <ul className="mt-2 grid gap-3 md:grid-cols-2">
               {item.answers.map((a, index) => (
                 <li key={a.id} className="min-w-0">
-                  <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-card border border-border p-3 has-[:checked]:border-primary has-[:checked]:bg-surface-subtle">
+                  <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-card border border-border p-3 has-[:checked]:border-primary has-[:checked]:bg-surface">
                     <input
                       type="radio"
                       name={groupId}

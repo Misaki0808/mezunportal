@@ -38,12 +38,12 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
     <Card
       as="article"
       padding="none"
-      className="group flex min-w-0 flex-col gap-2 rounded-2xl border border-border bg-surface p-3 shadow-sm sm:gap-5 sm:rounded-3xl transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:transform-none sm:p-6"
+      className="group flex min-w-0 flex-col gap-2 rounded-card border border-border bg-surface p-3 shadow-sm sm:gap-5 transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:transform-none sm:p-6"
     >
       <div className="flex min-w-0 items-start gap-3 sm:gap-4">
         <IconChip
           tone={posting.kind === 'JOB' ? 'success' : 'primary'}
-          className="rounded-2xl font-bold sm:size-14 sm:text-lg"
+          className="rounded-control font-bold sm:size-14 sm:text-lg"
         >
           {initials}
         </IconChip>
@@ -264,7 +264,7 @@ export function PostingList({
         role="search"
         action="/ilanlar"
         onSubmit={() => setNavigating(true)}
-        className="mb-4 rounded-2xl border border-border bg-surface p-3 shadow-sm sm:mb-8 sm:p-5"
+        className="mb-4 rounded-card border border-border bg-surface p-3 shadow-sm sm:mb-8 sm:p-5"
       >
         <div className="flex gap-2">
           <label htmlFor={searchId} className="sr-only">
@@ -345,7 +345,7 @@ export function PostingList({
           ))}
         </div>
       ) : (
-        <div className="rounded-3xl border border-dashed border-border bg-surface">
+        <div className="rounded-card border border-dashed border-border bg-surface">
           <EmptyState
             title={t('emptyTitle')}
             description={t(filtered ? 'emptyFiltered' : 'emptyBody')}

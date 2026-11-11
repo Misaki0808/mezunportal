@@ -107,7 +107,8 @@
     "resume": "Devam et",
     "pauseLabel": "Dönen metni durdur",
     "resumeLabel": "Dönen metni devam ettir",
-    "motionReduced": "Hareket azaltıldı"
+    "motionReduced": "Hareket azaltıldı",
+    "shareImageText": "Öğrenciler ve mezunlar bir arada."
   },
   "metadata": {
     "title": "MezunPortal",
@@ -2060,6 +2061,11 @@
     "codeExpires": "Kodun yenilenmesine {seconds} saniye",
     "attendanceCount": "Doğrulanan katılım: {count}",
     "back": "Etkinliklere dön",
+    "emptyTitle": "Henüz yaklaşan etkinlik yok",
+    "emptyDescription": "Yeni buluşmalar burada görünecek.",
+    "registeredBadge": "Kayıtlısın",
+    "attendedBadge": "Katılımın doğrulandı",
+    "codeNeeded": "Altı haneli kodu eksiksiz yaz.",
     "adminDescription": "Etkinlik oluştur, başvuruları incele ve yayınlanan buluşmaları yönet.",
     "presentDescription": "Katılımcıların okutabilmesi için QR kodunu veya altı haneli kodu göster.",
     "reasonHint": "İşlem gerekçesi en az 3 karakter olmalı."
@@ -2200,7 +2206,29 @@
       "jobMatchSubject": "Sana uyan yeni ilanlar",
       "jobMatchText": "Sana uygun yeni ilanları bir arada incele: {url}",
       "applicationWindowSubject": "Takip ettiğin başvuru dönemleri başladı",
-      "applicationWindowText": "Takip ettiğin başvuru dönemlerini incele: {url}"
+      "applicationWindowText": "Takip ettiğin başvuru dönemlerini incele: {url}",
+      "footerTagline": "İstanbul Üniversitesi YBS öğrencileri ve mezunları için",
+      "footerPreferences": "Bildirim tercihlerin",
+      "ctaDefault": "MezunPortal'ı aç",
+      "ctaSignIn": "Giriş yap",
+      "ctaVerifyEmail": "E-posta değişikliğini onayla",
+      "ctaGraduation": "Doğrulama durumunu gör",
+      "ctaAppointment": "Randevuyu gör",
+      "ctaFeedback": "Görüşmeni değerlendir",
+      "ctaContact": "Talebi incele",
+      "ctaInvitation": "Daveti kabul et",
+      "ctaExperience": "Deneyimini gör",
+      "ctaCvInvitation": "Deneyimini paylaş",
+      "ctaCv": "CV incelemesini gör",
+      "ctaProfile": "Profilini gör",
+      "ctaChangeEmail": "E-postanı güncelle",
+      "ctaStillThere": "Evet, hâlâ çalışıyorum",
+      "ctaFaq": "Soruyu gör",
+      "ctaMentor": "Mentorları gör",
+      "ctaReferral": "Referansı gör",
+      "ctaJobs": "İlanları gör",
+      "ctaApplication": "Başvuru dönemlerini gör",
+      "ctaDigest": "Aylık özeti gör"
     },
     "stillThere": {
       "title": "Çalışma bilgini doğrula",
@@ -3317,6 +3345,11 @@
     "name": "Ders adı",
     "cancel": "Vazgeç",
     "adminLink": "Ders sözlüğünü yönet",
+    "emptyTitle": "Ders bulunamadı",
+    "clearFilters": "Filtreleri temizle",
+    "alumniBadge": "{count} mezun işine yaradı",
+    "notEnoughShort": "Henüz yeterli değerlendirme yok",
+    "filters": "Filtreler",
     "totalCount": "{count} ders arasından seçim yapabilirsin."
   },
   "errorBoundary": {

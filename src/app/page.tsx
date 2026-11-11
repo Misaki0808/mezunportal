@@ -21,6 +21,11 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t('metaTitle'),
     description: t('metaDescription'),
     openGraph: { title: t('metaTitle'), description: t('metaDescription'), type: 'website' },
+    twitter: {
+      card: 'summary_large_image',
+      title: t('metaTitle'),
+      description: t('metaDescription'),
+    },
   };
 }
 

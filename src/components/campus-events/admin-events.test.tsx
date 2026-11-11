@@ -1,27 +1,123 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { expect, it, vi } from 'vitest';
+import { screen, within } from '@testing-library/react';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
-import { AdminEvents } from './admin-events';
-vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
-vi.mock('@/server/actions/campus-events', () => ({
-  createCampusEvent: vi.fn(),
-  cancelCampusEvent: vi.fn(),
-  reviewCampusEvent: vi.fn(),
+
+const mocks = vi.hoisted(() => ({
+  review: vi.fn(),
+  cancel: vi.fn(),
+  create: vi.fn(),
+  refresh: vi.fn(),
 }));
-it('gönder düğmesi her temada on-primary kullanır; engelli kararlar gerekçeye bağlanır', async () => {
-  const user = userEvent.setup();
-  renderUi(
-    <AdminEvents
-      departments={[]}
-      events={[{ id: 'event', title: 'Buluşma', startsAt: new Date(), status: 'PUBLISHED' }]}
-    />,
-  );
-  expect(screen.getByRole('button', { name: 'İncelemeye gönder' })).toHaveClass('text-on-primary');
-  const cancel = screen.getByRole('button', { name: 'Etkinliği iptal et' });
-  expect(cancel).toBeDisabled();
-  expect(cancel).toHaveAccessibleDescription('İşlem gerekçesi en az 3 karakter olmalı.');
-  await user.type(screen.getByLabelText('İşlem gerekçesi'), 'uygun');
-  expect(cancel).toBeEnabled();
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: mocks.refresh }) }));
+vi.mock('@/server/actions/campus-events', () => ({
+  reviewCampusEvent: mocks.review,
+  cancelCampusEvent: mocks.cancel,
+  createCampusEvent: mocks.create,
+}));
+
+import { AdminEvents } from './admin-events';
+
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function showModal() {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function close() {
+    this.removeAttribute('open');
+  };
+});
+beforeEach(() => {
+  vi.clearAllMocks();
+  mocks.review.mockResolvedValue({ ok: true, data: {} });
+  mocks.cancel.mockResolvedValue({ ok: true, data: {} });
+});
+
+const DEPARTMENTS = [
+  { id: '018f0000-0000-7000-8000-0000000000d1', name: 'Yönetim Bilişim Sistemleri' },
+];
+const EVENTS = [
+  {
+    id: '018f0000-0000-7000-8000-0000000000e1',
+    title: 'CV Atölyesi',
+    startsAt: new Date('2026-11-25T11:00:00Z'),
+    status: 'PENDING' as const,
+  },
+  {
+    id: '018f0000-0000-7000-8000-0000000000e2',
+    title: 'Kariyer Sohbeti',
+    startsAt: new Date('2026-11-18T11:00:00Z'),
+    status: 'PUBLISHED' as const,
+  },
+];
+
+describe('AdminEvents', () => {
+  it('gönder düğmesi her temada on-primary kullanır; engelli kararlar gerekçeye bağlanır', async () => {
+    const { user } = renderUi(<AdminEvents departments={[]} events={[EVENTS[1]!]} />);
+    expect(screen.getByRole('button', { name: 'İncelemeye gönder' })).toHaveClass(
+      'text-on-primary',
+    );
+    const cancel = screen.getByRole('button', { name: 'Etkinliği iptal et' });
+    expect(cancel).toBeDisabled();
+    expect(cancel).toHaveAccessibleDescription('İşlem gerekçesi en az 3 karakter olmalı.');
+    await user.type(screen.getByLabelText('İşlem gerekçesi'), 'uygun');
+    // Kit `Button` sebep satırı için sarmalayıcı ekler; etkinleşince düğme yeniden oluşur: eski öğeyi değil güncelini sorgula.
+    expect(screen.getByRole('button', { name: 'Etkinliği iptal et' })).toBeEnabled();
+  });
+
+  it('durumlar rozet olarak görünür; olay yoksa tek mesajlı boş durum çıkar', () => {
+    const { unmount } = renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+    const pending = screen.getByText('CV Atölyesi').closest('li')!;
+    expect(within(pending).getByText('İnceleme bekliyor')).toBeInTheDocument();
+    const published = screen.getByText('Kariyer Sohbeti').closest('li')!;
+    expect(within(published).getByText('Yayında')).toBeInTheDocument();
+    unmount();
+    renderUi(<AdminEvents departments={DEPARTMENTS} events={[]} />);
+    expect(screen.getByText('Henüz yaklaşan etkinlik yok')).toBeInTheDocument();
+    expect(screen.queryByLabelText('İşlem gerekçesi')).toBeNull();
+  });
+
+  it('gerekçe yokken onay ve ret kapalıdır, sebebi düğmenin altında yazar; sunucuya gitmez', async () => {
+    renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+    const pending = screen.getByText('CV Atölyesi').closest('li')!;
+    expect(within(pending).getByRole('button', { name: 'Onayla' })).toBeDisabled();
+    expect(within(pending).getByRole('button', { name: 'Reddet' })).toBeDisabled();
+    expect(within(pending).getAllByText('İşlem gerekçesi en az 3 karakter olmalı.')).toHaveLength(
+      2,
+    );
+    expect(mocks.review).not.toHaveBeenCalled();
+  });
+
+  it('gerekçe yazılınca onay ve ret sunucuya gider', async () => {
+    const { user } = renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+    await user.type(screen.getByLabelText('İşlem gerekçesi'), 'Uygun bulundu');
+    await user.click(screen.getByRole('button', { name: 'Onayla' }));
+    expect(mocks.review).toHaveBeenCalledWith({
+      eventId: EVENTS[0]!.id,
+      decision: 'PUBLISH',
+      reason: 'Uygun bulundu',
+    });
+    await user.click(screen.getByRole('button', { name: 'Reddet' }));
+    expect(mocks.review).toHaveBeenLastCalledWith({
+      eventId: EVENTS[0]!.id,
+      decision: 'REJECT',
+      reason: 'Uygun bulundu',
+    });
+  });
+
+  it('iptal gerekçeyle onay penceresi açar; pencerede onaylanınca sunucuya gider', async () => {
+    const { user } = renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+    await user.type(screen.getByLabelText('İşlem gerekçesi'), 'Salon yok');
+    await user.click(screen.getByRole('button', { name: 'Etkinliği iptal et' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Etkinliği iptal et' }));
+    expect(mocks.cancel).toHaveBeenCalledWith({ eventId: EVENTS[1]!.id, reason: 'Salon yok' });
+  });
+
+  it('ağ hatası formu düşürmez: kararlı hata metni gösterilir', async () => {
+    mocks.review.mockRejectedValue(new Error('ağ'));
+    const { user } = renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+    await user.type(screen.getByLabelText('İşlem gerekçesi'), 'Uygun bulundu');
+    await user.click(screen.getByRole('button', { name: 'Onayla' }));
+    expect(await screen.findByRole('status')).toHaveTextContent(/.+/);
+  });
 });

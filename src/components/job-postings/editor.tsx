@@ -204,7 +204,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
           {notice}
         </p>
       )}
-      <section className="space-y-5 rounded-3xl border border-border bg-surface p-5 sm:p-7">
+      <section className="space-y-5 rounded-card border border-border bg-surface p-5 sm:p-7">
         <h2 className="text-xl font-bold">
           {t(step === 0 ? 'formBasics' : step === 1 ? 'formDetails' : 'formPreview')}
         </h2>
@@ -435,7 +435,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
         {step === 2 && (
           <div className="space-y-4">
             <p className="text-fg-muted">{t('previewHint')}</p>
-            <div className="rounded-2xl bg-primary-soft p-5 text-on-primary-soft">
+            <div className="rounded-card bg-primary-soft p-5 text-on-primary-soft">
               <p className="font-semibold">{organization || '—'}</p>
               <p className="mt-2 text-2xl font-bold">{title || '—'}</p>
               <p className="mt-3">
@@ -446,7 +446,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
           </div>
         )}
       </section>
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 -mx-2 mt-5 flex flex-wrap gap-3 rounded-2xl border border-border bg-surface/95 p-2 shadow-lg backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 -mx-2 mt-5 flex flex-wrap gap-3 rounded-card border border-border bg-surface/95 p-2 shadow-lg backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
         <Button variant="secondary" loading={busy} onClick={() => saveDraft(false)}>
           {t('saveDraft')}
         </Button>

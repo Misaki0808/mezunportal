@@ -1,7 +1,8 @@
 'use client';
-import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useTranslations } from 'next-intl';
+import { Badge, Button, Checkbox, EmptyState, Field, FileTextIcon, Input } from '@/components/ui';
 import { courseSelectionSchema } from '@/contracts/course-guide';
 import { saveAlumniCourses } from '@/server/actions/course-guide';
 
@@ -18,24 +19,24 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
   );
   return (
     <div className="space-y-4">
-      <label className="block">
-        {t('search')}
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          className="mt-1 min-h-11 w-full rounded-lg border border-border bg-transparent px-3"
-        />
-      </label>
-      <p>{t('totalCount', { count: courses.length })}</p>
-      <p>{t('selectedCount', { count: selected.length })}</p>
+      <Field label={t('search')}>
+        {(control) => (
+          <Input {...control} value={query} onChange={(event) => setQuery(event.target.value)} />
+        )}
+      </Field>
+      <p className="text-fg-muted">{t('totalCount', { count: courses.length })}</p>
+      <Badge tone={selected.length >= 5 ? 'success' : 'info'}>
+        {t('selectedCount', { count: selected.length })}
+      </Badge>
       <div className="space-y-2">
         {filtered.map((course) => (
-          <label
+          <div
             key={course.id}
-            className="flex min-h-11 items-center gap-3 rounded-xl border border-border p-3"
+            className="rounded-control border border-border bg-bg px-3 has-[:checked]:border-primary has-[:checked]:bg-primary-soft"
           >
-            <input
-              type="checkbox"
+            <Checkbox
+              label={course.name}
+              description={`${course.code} · ${t('semesterNumber', { count: course.semester })}`}
               checked={selected.includes(course.id)}
               disabled={!selected.includes(course.id) && selected.length >= 5}
               onChange={() => {
@@ -47,18 +48,20 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
                 );
               }}
             />
-            <span>
-              {course.name}
-              <small className="block text-muted">
-                {course.code} · {t('semesterNumber', { count: course.semester })}
-              </small>
-            </span>
-          </label>
+          </div>
         ))}
       </div>
-      {filtered.length === 0 && <p>{t('empty')}</p>}
-      <button
-        disabled={pending}
+      {filtered.length === 0 && (
+        <EmptyState
+          className="rounded-card border border-dashed border-border"
+          icon={<FileTextIcon width={32} height={32} strokeWidth={1.5} />}
+          title={t('emptyTitle')}
+          description={t('empty')}
+        />
+      )}
+      <Button
+        loading={pending}
+        fullWidth
         onClick={() =>
           startTransition(async () => {
             const parsed = courseSelectionSchema.safeParse({ courseIds: selected });
@@ -70,11 +73,12 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
             setStatus(result.ok ? t('saved') : errors(result.errorCode));
           })
         }
-        className="min-h-11 rounded-lg bg-primary px-5 font-semibold text-on-primary disabled:opacity-50"
       >
         {t(pending ? 'saving' : 'save')}
-      </button>
-      <p role="status">{status}</p>
+      </Button>
+      <p role="status" className="text-fg-muted">
+        {status}
+      </p>
     </div>
   );
 }
