@@ -399,6 +399,7 @@ describe('runAppointmentSweep', () => {
         createEvent: async () => {
           throw new Error('beklenmeyen');
         },
+        updateEvent: async () => undefined,
         deleteEvent: async () => undefined,
       },
     };
