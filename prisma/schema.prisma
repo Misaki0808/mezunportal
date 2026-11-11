@@ -118,6 +118,7 @@ enum MeetingMode {
 model User {
   id            String    @id @default(uuid(7))
   name          String
+  nameSearch    String?   @default(dbgenerated())
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
@@ -203,6 +204,8 @@ model User {
   campusEventRegistrations  CampusEventRegistration[]
   campusEventAttendances    EventAttendance[]
   integrationConnections    IntegrationConnection[]
+
+  @@index([nameSearch(ops: raw("gin_trgm_ops"))], type: Gin, map: "User_nameSearch_trgm")
 }
 
 enum CampusEventStatus {
@@ -997,6 +1000,7 @@ model CvUpload {
   reviewRequests CvReviewRequest[]
 
   @@index([userId, createdAt])
+  @@index([source, createdAt])
 }
 
 enum CvReviewRequestStatus {

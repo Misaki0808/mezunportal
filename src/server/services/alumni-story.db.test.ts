@@ -241,8 +241,15 @@ describe('Ayın mezunu', () => {
       other = await createUser(db, { name: 'İlknur Çakır' });
     await grantRequiredConsents(db, author);
     await addMembership(db, { userId: author, role: 'ALUMNI', departmentId: inst.deptA1 });
+    await addMembership(db, {
+      userId: other,
+      role: 'STUDENT',
+      departmentId: inst.deptA1,
+      entryYear: 2023,
+    });
     const deps = { db },
-      body = 'İlknur ile kariyer yolculuğumu anlattım; bu süreçte çok şey öğrendim ve devam ettim.';
+      body =
+        'İlknur Çakır ile kariyer yolculuğumu anlattım; bu süreçte çok şey öğrendim ve devam ettim.';
     const story = await saveStory(deps, author, { departmentId: inst.deptA1, body, consent: true });
     await expect(submitStory(deps, author, { storyId: story.id })).rejects.toMatchObject({
       code: 'STORY_IDENTITY_LEAK',

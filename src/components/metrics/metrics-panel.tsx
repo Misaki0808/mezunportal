@@ -102,7 +102,7 @@ export function MetricsPanel({ initial, initialFilter, departments }: Props) {
   const isEmpty = report.totalsByType.every((item) => item.events === 0);
   const hiddenTypes = report.totalsByType.filter((item) => item.events === null);
   return (
-    <main className="mx-auto max-w-5xl px-5 py-10 pb-28">
+    <div className="mx-auto max-w-5xl px-5 py-10 pb-28">
       <Link href="/yonetim" className="inline-flex min-h-11 items-center text-primary">
         ← {t('back')}
       </Link>
@@ -334,6 +334,6 @@ export function MetricsPanel({ initial, initialFilter, departments }: Props) {
           </section>
         </>
       )}
-    </main>
+    </div>
   );
 }

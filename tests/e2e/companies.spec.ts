@@ -70,7 +70,7 @@ test('şirketi takma adla bulur; anonim deneyim ve güvenli boş dönem görün�
     await expect(page.getByText('Anonim', { exact: true })).toBeVisible();
     expect(await page.content()).not.toContain(student.id);
     await page.getByRole('tab', { name: 'Başvuru dönemi' }).click();
-    await expect(page.getByText('Henüz gösterilecek yeterli dönem bilgisi yok.')).toBeVisible();
+    await expect(page.getByText('Henüz yeterli veri yok')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

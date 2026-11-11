@@ -157,7 +157,7 @@ export function AdminEvents({
         </fieldset>
         <button
           disabled={pending}
-          className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-white disabled:opacity-50"
+          className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-on-primary disabled:opacity-50"
         >
           {pending ? t('registering') : t('submit')}
         </button>

@@ -168,6 +168,32 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
 - **Toplu rapor ve Excel kişi satırı içermez:** mezun istihdam dağılımları sözlükle eşleşen adlarla ve küçük hücre
   bastırmayla (`REPORT_MIN_GROUP_SIZE` = 3) verilir; her dışa aktarma `DATA_EXPORT` kaydı yazar ve hız sınırlıdır.
 
+## Faz 2 görünürlük ve rıza kuralları (P2-14 özeti)
+
+Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnız kalıcı kural ve bekçi yeri durur.
+
+- **K-07 her yerde:** ilan, deneyim, aday, şirket, soru bankası, etkinlik ve özet yalnız arayanın doğrulanmış üyeliklerinin üniversitesindeki
+  veriyi görür; kapsam sunucuda oturumdan hesaplanır, istemci süzgeci genişletemez.
+- **D7, kaynak bağımsızlığı:** iletişim talebinin hedefi sunucuda çözülür; talep eden, hedefin adını/kimliğini yalnız talep `APPROVED` olunca görür
+  (`source` ≠ `PROFILE` için giden listede ve veri dökümünde gizli). Bekleyen talep kaynak ve bağlam başına tektir (profil, aday kartı, ilan
+  başına ayrı): bilinen profile giden talep anonim aday/ilan talebiyle `ALREADY_OPEN` ya da ortak `requestId` ile eşlenmez; bir kaynağın
+  onayı başka kaynağın bekleyenini kapatmaz. İlan yazarı (`CONTACT_REQUEST`) ve aday (opak `seekerRef`) kullanıcı kimliğiyle anılmaz.
+- **Rıza sorgu anında denetlenir:** `JOB_SEEKER_VISIBILITY` geri alınınca kart aynı anda hiçbir yanıtta yoktur (son rıza satırı + güncel sürüm);
+  ödül yayını ve hikâye yayını rızaları da geri alınca içeriği kapatır. İsteğe bağlı rıza yokken özellik çalışmaz, hesap kilitlenmez.
+- **k-anonimlik ve küçük sayı:** şirket sayfasında çalışan/geçmiş çalışan hücresi 3 kişinin altında gizli; soru grubu en az 3 farklı yazardan;
+  başvuru takvimi dağılımı en az 3 farklı yazarlı; ilan erişim ve yayın sayıları 3'ün altında gizli; girişsiz tanıtım sayısı ≥ 3.
+  Eşikler satıra değil **farklı yazara** bakar.
+- **Kesişim önlemi:** aynı üniversitede anonim deneyim varsa mentor/çalışan/dönem/takvim kesitleri birlikte bastırılır; kesişen kümelerin
+  farkından anonim yazar çıkarılamaz. Popüler sıralama anonim deneyimden etkilenmez.
+- **Çift rol (aynı kişi hem öğrenci hem mezun/akademisyen):** arama yetkisi yalnız doğrulanmış etkin **mezun** üyelikten gelir (öğrenci üyeliği kapsamı
+  genişletmez); kişi kendi aday kartını ve kendisiyle açık talebi olduğu kişiyi aramada görmez; beyan ve kart ayrı kayıtlardır.
+- **Kimlik koruması serbest metinde:** başlık satırı, SSS ve soru türevleri ad/e-posta/telefon/kimlik biçimine karşı sorgu anında denetlenir; şüpheli
+  satır gösterilmez. Opak aday kimliği rastgeledir, görünürlük kapanınca silinir.
+- **Dış servis jetonu:** Google yenileme jetonu veritabanında AES-256-GCM ile şifrelidir (anahtar sunucu sırrından türer); düz metin log, işlem kaydı,
+  hata ve yönlendirme adresine girmez; yalnız sistem yöneticisi bağlar/keser.
+- **Bekçiler:** sızıntı testleri (`*.db.test.ts`: aday/ilan/deneyim yanıtında ad-e-posta-kimlik yok), `ai-traces`/log bekçileri, rıza kapısı kataloğu
+  testi (her sunucu eylemi), migration bekçisi.
+
 ## KVKK
 
 - **Veri sorumlusu** K-03 ile netleşir; aydınlatma metni buna göre yazılır, son halini

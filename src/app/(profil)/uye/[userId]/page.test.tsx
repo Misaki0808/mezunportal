@@ -43,5 +43,5 @@ it('inceleyici: profil görünür değilse giriş sorgusu varlık ayrımı yapma
   mocks.profile.mockResolvedValue({ ok: false, errorCode: 'RESOURCE_NOT_FOUND' });
   renderUi(await Page({ params: Promise.resolve({ userId: 'hidden' }) }));
   expect(mocks.entry).not.toHaveBeenCalled();
-  expect(screen.queryByText('Mentorla bağlantı')).not.toBeInTheDocument();
+  expect(screen.queryByText('Mentorla görüş')).not.toBeInTheDocument();
 });

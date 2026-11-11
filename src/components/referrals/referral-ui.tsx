@@ -78,7 +78,7 @@ export function ReferralCreate({
     });
   }
   return (
-    <main
+    <div
       data-hydrated={hydrated ? 'true' : undefined}
       className="mx-auto max-w-2xl px-4 py-8 pb-32"
     >
@@ -150,7 +150,7 @@ export function ReferralCreate({
           </div>
         </form>
       )}
-    </main>
+    </div>
   );
 }
 
@@ -251,7 +251,7 @@ export function ReferralList({
     });
   }
   return (
-    <main
+    <div
       data-hydrated={hydrated ? 'true' : undefined}
       className="mx-auto max-w-3xl px-4 py-8 pb-32"
     >
@@ -462,6 +462,6 @@ export function ReferralList({
           </Button>
         </div>
       )}
-    </main>
+    </div>
   );
 }

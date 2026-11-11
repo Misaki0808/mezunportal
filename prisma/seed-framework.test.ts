@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { seedId, seedTime, SEED_MODULES, TEST_ACCOUNT_PLACEHOLDERS } from './seed-framework';
+import { seedUuid } from './seed-util';
 
 describe('sahte veri çerçevesi', () => {
   it('kimlik ve zamanı tekrar üretir; ad alanlarını ayırır', () => {
@@ -20,6 +22,16 @@ describe('sahte veri çerçevesi', () => {
       'dictionary',
       'feedback',
       'pointRules',
+      'phase2',
     ]);
+  });
+  it('seedUuid geçerli UUID üretir (arayüze çıkan kimlikler z.uuid() doğrulamasından geçer), deterministik ve ad alanına duyarlıdır', () => {
+    const id = seedUuid('phase2', 'company:yazilim');
+    expect(z.uuid().safeParse(id).success).toBe(true);
+    expect(seedUuid('phase2', 'company:yazilim')).toBe(id);
+    expect(seedUuid('phase2', 'company:finans')).not.toBe(id);
+    expect(seedUuid('a', 'b')).not.toBe(seedUuid('b', 'a'));
+    for (let i = 0; i < 200; i += 1)
+      expect(z.uuid().safeParse(seedUuid('t', String(i))).success).toBe(true);
   });
 });

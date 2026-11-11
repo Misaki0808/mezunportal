@@ -73,6 +73,15 @@ sourceType, sourceId, counterpartId?, basePoints, multiplierPercent, points, eve
 **Bildirim ve metrik:** `NotificationPreference` · `Event` (props'ta
 kişisel veri yok). pg-boss kendi şemasını (`pgboss`) kullanır.
 
+**Faz 2 (P2-01…P2-13; ayrıntı `prisma/schema.prisma`):** `JobPosting` (+ `JobPostingDepartment`, `JobPostingTag`, `JobPostingReport`, `JobMatch`/`JobMatchDigest`:
+yazar, hedef bölümler, sözlükten en çok 5 etiket, son tarih ≤ yayından 60 gün) · `ReferralClaim` (kanıt zinciri; puan ve iki aşamalı onay) · `Profile`
+aday alanları (`seekingInternship`, `seekerRef` opak ve benzersiz, `seekerViewCount`, `hiringDeclaredAt`) ve `ContactRequest.source`
+(`PROFILE` | `JOB_POSTING` | `SEEKER_PROFILE`; kaynak özeti talepte kalır) · `Company` (+ `CompanyMerge`, `CompanyFollow`) · `CampusEvent` (+ departmanlar,
+`CampusEventRegistration`, `EventAttendance`) · `AwardCycle`/`Award`/`AwardCandidate`/`AwardPublicationDecision`, `AlumniStory`/`StoryConsentDecision`/`MonthlyAlumnus` ·
+`Experience.appliedMonth` (yalnız staj; başvuru takvimi için) · `IntegrationConnection` (Google yenileme jetonu şifreli; sağlayıcı başına tek satır).
+Soru bankası, beceri açığı ve takvim kesitleri **ayrı tablo tutmaz**: yayınlanmış deneyimden sorgu anında görünürlük ve eşikle türer.
+Rıza belgeleri `ConsentDocument` değerleridir (`JOB_SEEKER_VISIBILITY` isteğe bağlı, sürümlü; ödül/hikâye yayın kararları kendi karar tablolarında).
+
 ## Temel değişmezler
 
 - Bir kullanıcının aynı bölüm ve rolde en fazla bir **aktif** üyeliği vardır (`endedAt` boş) — kısmi

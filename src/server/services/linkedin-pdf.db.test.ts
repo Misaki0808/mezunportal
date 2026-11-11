@@ -129,8 +129,117 @@ it('gerçek sağlayıcı ve metin portu olsa bile maskeleme bağlanmadan ham PDF
     },
   };
   const deps = { ...kit.deps, llm, pdfTextExtractor: createFakePdfTextExtractor() };
-  const upload = await uploadCv(deps, actor, { ...pdfForm(), source: 'LINKEDIN_PDF' });
+  await expect(
+    uploadCv(deps, actor, { ...pdfForm(), source: 'LINKEDIN_PDF' }),
+  ).rejects.toMatchObject({ code: 'CV_LINKEDIN_UNAVAILABLE' });
+  const upload = await uploadCv(kit.deps, actor, { ...pdfForm(), source: 'LINKEDIN_PDF' });
   expect(await processCvParse(deps, upload.cvUploadId, fresh)).toBe('FAILED');
   expect(called).toBe(false);
   expect(kit.storage.files.size).toBe(0);
 });
+it('LinkedIn kararsız PDF 24 saatte anında silinir; normal CV yedi gün bekler', async () => {
+  const first = await cvUser(db);
+  const second = await cvUser(db);
+  const kit = cvKit(db);
+  const linked = await uploadCv(kit.deps, first.actor, { ...pdfForm(), source: 'LINKEDIN_PDF' });
+  const normal = await uploadCv(kit.deps, second.actor, pdfForm());
+  await processCvParse(
+    { ...kit.deps, pdfTextExtractor: createFakePdfTextExtractor() },
+    linked.cvUploadId,
+    fresh,
+  );
+  await processCvParse(kit.deps, normal.cvUploadId, fresh);
+  const linkedRow = await db.cvUpload.findUniqueOrThrow({ where: { id: linked.cvUploadId } });
+  const normalRow = await db.cvUpload.findUniqueOrThrow({ where: { id: normal.cvUploadId } });
+  const before = new Date(linkedRow.createdAt.getTime() + 24 * 60 * 60 * 1000 - 1);
+  await purgeCvFiles({ ...kit.deps, now: () => before });
+  expect((await db.cvUpload.findUniqueOrThrow({ where: { id: linked.cvUploadId } })).status).toBe(
+    'PARSED',
+  );
+  const boundary = new Date(
+    Math.max(linkedRow.createdAt.getTime(), normalRow.createdAt.getTime()) + 24 * 60 * 60 * 1000,
+  );
+  await purgeCvFiles({ ...kit.deps, now: () => boundary });
+  expect(await db.cvUpload.findUniqueOrThrow({ where: { id: linked.cvUploadId } })).toMatchObject({
+    status: 'DISCARDED',
+    storageKey: null,
+    parsedJson: null,
+  });
+  expect(kit.storage.files.has(linkedRow.storageKey!)).toBe(false);
+  expect(await db.cvUpload.findUniqueOrThrow({ where: { id: normal.cvUploadId } })).toMatchObject({
+    status: 'PARSED',
+    storageKey: normalRow.storageKey,
+  });
+});
+it('gerçek port, maskeleme ve metin sağlayıcısı birlikte bağlanınca seçenek açılır; ham PDF gönderilmez', async () => {
+  const { getCvAvailability } = await import('./cv');
+  const { DEMO_CV_OUTPUT } = await import('../external/llm/fake');
+  const { actor } = await cvUser(db);
+  const kit = cvKit(db);
+  let received: unknown;
+  let rawCalled = false;
+  const llm = {
+    provider: 'example-real',
+    parseCv: async () => {
+      rawCalled = true;
+      return {};
+    },
+    parseRedactedCv: async (request: { text: string }) => {
+      received = request;
+      return DEMO_CV_OUTPUT;
+    },
+  };
+  const extractor = {
+    kind: 'real' as const,
+    extract: async () => 'Experience\nKişiselAd\nSkills\nSQL',
+    redact: async (text: string) => text.replace('KişiselAd', '[gizli]'),
+  };
+  const deps = { ...kit.deps, llm, pdfTextExtractor: extractor };
+  expect((await getCvAvailability(kit.deps, actor)).linkedinPdf).toBe(false);
+  expect(
+    (
+      await getCvAvailability(
+        { ...deps, pdfTextExtractor: { kind: 'real', extract: extractor.extract } },
+        actor,
+      )
+    ).linkedinPdf,
+  ).toBe(false);
+  expect((await getCvAvailability(deps, actor)).linkedinPdf).toBe(true);
+  const upload = await uploadCv(deps, actor, { ...pdfForm(), source: 'LINKEDIN_PDF' });
+  expect(await processCvParse(deps, upload.cvUploadId, fresh)).toBe('PARSED');
+  expect(rawCalled).toBe(false);
+  expect(received).toMatchObject({ text: 'Experience\n[gizli]\nSkills\nSQL' });
+  expect(JSON.stringify(received)).not.toContain('KişiselAd');
+  expect(received).not.toHaveProperty('pdf');
+});
+it('çıkarıcı yokken doğrudan LinkedIn yüklemesi depoya yazılmadan reddedilir', async () => {
+  const { actor, userId } = await cvUser(db);
+  const kit = cvKit(db, { allowFakeLinkedin: false });
+  await expect(
+    uploadCv(kit.deps, actor, { ...pdfForm(), source: 'LINKEDIN_PDF' }),
+  ).rejects.toMatchObject({ code: 'CV_LINKEDIN_UNAVAILABLE' });
+  expect(await db.cvUpload.count({ where: { userId } })).toBe(0);
+  expect(kit.storage.files.size).toBe(0);
+});
+
+it.each(['QUEUED', 'PARSING'] as const)(
+  'LinkedIn %s durumunda takılsa bile yüklemeden 24 saat sonra dosya silinir',
+  async (status) => {
+    const { actor } = await cvUser(db);
+    const kit = cvKit(db);
+    const upload = await uploadCv(kit.deps, actor, { ...pdfForm(), source: 'LINKEDIN_PDF' });
+    if (status === 'PARSING')
+      await db.cvUpload.update({ where: { id: upload.cvUploadId }, data: { status } });
+    const row = await db.cvUpload.findUniqueOrThrow({ where: { id: upload.cvUploadId } });
+    await purgeCvFiles({
+      ...kit.deps,
+      now: () => new Date(row.createdAt.getTime() + 24 * 60 * 60 * 1000),
+    });
+    expect(await db.cvUpload.findUniqueOrThrow({ where: { id: row.id } })).toMatchObject({
+      status: 'DISCARDED',
+      storageKey: null,
+      parsedJson: null,
+    });
+    expect(kit.storage.files.has(row.storageKey!)).toBe(false);
+  },
+);
