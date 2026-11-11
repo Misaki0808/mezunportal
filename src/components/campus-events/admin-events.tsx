@@ -45,6 +45,7 @@ export function AdminEvents({
   events: Item[];
 }) {
   const t = useTranslations('campusEvents'),
+    ui = useTranslations('ui'),
     errors = useTranslations('errors.codes'),
     router = useRouter();
   const [pending, start] = useTransition(),
@@ -240,9 +241,9 @@ export function AdminEvents({
                     <Link
                       className={buttonClasses({ variant: 'secondary' })}
                       href={`/yonetim/etkinlikler/${event.id}`}
+                      aria-label={ui('namedAction', { action: t('present'), target: event.title })}
                     >
                       {t('present')}
-                      <span className="sr-only"> — {event.title}</span>
                     </Link>
                     <Button
                       variant="danger-outline"
