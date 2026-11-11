@@ -118,6 +118,15 @@ bütçesi (5 dk) ve neden yerelde yetmediği gerekçesiyle `docs/decisions.md`'y
 değil; PM açar): gizli anahtar taraması + push koruması ve Dependabot **uyarıları** (otomatik PR yok); ikisi de
 ücretsiz ve koşu süresi almaz.
 
+### Yük altında altyapı kaynaklı düşmeler (P2-14)
+
+Birleştirme kapısında yük altında iki kez `[vitest-pool-runner]: Timeout waiting for worker to respond` ile kodla ilgisiz 3–8 test düştü. Vitest'in işçi
+başlatma/durdurma sınırı (60 sn) kütüphane içinde **sabittir**, yapılandırmayla büyütülemez (`fsModuleCache` zaten varsayılan olarak açıktır). Bu yüzden iki önlem var:
+(1) **`pnpm test:gate`**: `pnpm test` ile aynı kapsam; yalnız işçi zaman aşımı mesajı taşıyan dosyaları **bir kez** yeniden koşar (`scripts/test-gate.mjs`; assert, derleme,
+bilinmeyen ya da karışık hata asla yeniden denenmez, kırmızı kalır). Birleştirme betiği tam test için bunu çağırır. (2) Alt süreç başlatan bekçi testleri (`node --import tsx`,
+react-server koşulu) `src/test/subprocess.ts` süreleriyle yazılır: test 30 sn, alt süreç 25 sn, `beforeAll(warmUpSubprocess)` ile tek seferlik ısınma (birim varsayılanı 5 sn yük altında
+yetmiyordu). Yeni bir alt süreç testi aynı yardımcıyı kullanır.
+
 ### Performans (P2-14)
 
 `pnpm test:perf` (yalnız yerel; `pnpm test` ve CI'da koşmaz) iki hacimde liste/arama yanıt sürelerini ve kritik planları ölçer: **10× deneme verisi**
