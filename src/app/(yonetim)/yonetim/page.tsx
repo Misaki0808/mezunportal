@@ -48,6 +48,7 @@ export default async function AdminOverviewPage() {
     { key: 'referrals', href: '/yonetim/referanslar', visible: true },
     { key: 'yearAlumni', href: '/yonetim/yilin-mezunu', visible: true },
     { key: 'alumniStory', href: '/yonetim/ayin-mezunu', visible: true },
+    { key: 'courses', href: '/yonetim/dersler', visible: true },
   ] as const;
   const queueCounts: Partial<Record<(typeof links)[number]['key'], number | null>> = {
     documents: counts.pendingGraduationDocuments,
@@ -75,6 +76,7 @@ export default async function AdminOverviewPage() {
     employmentReport: 'success',
     auditLog: 'success',
     dictionaries: 'accent',
+    courses: 'accent',
     invitations: 'accent',
     adminGrants: 'accent',
     points: 'accent',
@@ -95,6 +97,7 @@ export default async function AdminOverviewPage() {
     employmentReport: <BadgeCheckIcon width={22} height={22} />,
     auditLog: <ShieldCheckIcon width={22} height={22} />,
     dictionaries: <FileTextIcon width={22} height={22} />,
+    courses: <FileTextIcon width={22} height={22} />,
     invitations: <UsersIcon width={22} height={22} />,
     adminGrants: <ShieldCheckIcon width={22} height={22} />,
     points: <BadgeCheckIcon width={22} height={22} />,

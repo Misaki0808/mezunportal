@@ -1729,7 +1729,8 @@
       "referrals": "Referans inceleme",
       "yearAlumni": "Yılın Mezunu",
       "alumniStory": "Ayın mezunu",
-      "googleCalendar": "Google Takvim"
+      "googleCalendar": "Google Takvim",
+      "courses": "Ders sözlüğü"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1749,7 +1750,8 @@
       "referrals": "Referans ve işe kabul beyanlarını incele.",
       "yearAlumni": "Adayları incele ve bölüm adına karar ver.",
       "alumniStory": "Hikâyeleri incele ve ayın mezununu seç.",
-      "googleCalendar": "Çevrimiçi randevulara otomatik Meet bağlantısı için Google hesabını bağla."
+      "googleCalendar": "Çevrimiçi randevulara otomatik Meet bağlantısı için Google hesabını bağla.",
+      "courses": "Bölümünün derslerini ekle veya güncelle."
     },
     "users": {
       "title": "Kullanıcılar",

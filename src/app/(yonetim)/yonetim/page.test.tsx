@@ -47,4 +47,8 @@ it('kuyruk kartlarında sunucu sayısını gösterir; sıfır görünür, kapsam
     within(screen.getByRole('link', { name: /adminTitle/ })).getByText('pendingCount: 6'),
   ).toBeVisible();
   expect(screen.queryByRole('link', { name: /sections.unmatchedValues/ })).toBeNull();
+  expect(screen.getByRole('link', { name: /sections.courses/ })).toHaveAttribute(
+    'href',
+    '/yonetim/dersler',
+  );
 });
