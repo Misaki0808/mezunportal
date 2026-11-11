@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -37,21 +38,7 @@ test('yönetici küçük grubu gizli görür ve aynı korumayla Excel indirir', 
         props: { threshold: 50 },
       })),
     });
-    await page.goto('/giris/test?persona=systemAdmin');
-    await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await page.waitForURL(/\/(hesap|onay)$/);
-    await page.goto('/onay');
-    await page.waitForLoadState('networkidle');
-    await page
-      .getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true })
-      .nth(0)
-      .check();
-    await page
-      .getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true })
-      .nth(1)
-      .check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
+    await loginAs(page, 'systemAdmin');
     await page.goto('/yonetim/kullanim');
     await page.waitForLoadState('networkidle');
     await page.getByLabel('Bölüm', { exact: true }).selectOption(department.id);
@@ -105,10 +92,7 @@ test('inceleyici: rızasız ve yetkisiz kullanıcı metrik sayfasında 404, Exce
     where: { email: 'system-admin@test.mezunportal.local' },
   });
   const { CURRENT_CONSENT_VERSIONS } = await import('../../src/contracts/privacy');
-  await page.goto('/giris/test?persona=systemAdmin');
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
+  await loginAs(page, 'systemAdmin');
   const now = new Date(),
     from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())),
     to = new Date(from.getTime() + 86400000),
@@ -140,10 +124,7 @@ test('inceleyici: rızasız ve yetkisiz kullanıcı metrik sayfasında 404, Exce
       },
     });
   }
-  await page.goto('/giris/test?persona=student');
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
+  await loginAs(page, 'student');
   expect((await context.request.get('/yonetim/kullanim', { maxRedirects: 0 })).status()).toBe(404);
   expect(
     (

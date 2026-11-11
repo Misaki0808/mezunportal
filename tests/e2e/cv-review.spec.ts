@@ -1,26 +1,15 @@
+import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile, rm, access } from 'node:fs/promises';
 import path from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
 test.afterAll(() => db.$disconnect());
-async function login(page: Page, persona: 'student' | 'alumniMentor') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  await page.waitForLoadState('networkidle');
-  const checks = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await checks.nth(0).check();
-  await checks.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = loginAs;
 test('CV talebi → yorum → faydalı; kapalı dosya erişimi 403', async ({ page, browser }) => {
   test.setTimeout(90000);
   await page.setViewportSize({ width: 390, height: 844 });

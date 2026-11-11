@@ -6,11 +6,8 @@ import { ExperienceContent } from '@/components/experience/experience-content';
 import { ReportExperience } from '@/components/experience/report-sheet';
 import { StatusBadge } from '@/components/experience/status-badge';
 import { Badge, buttonClasses, ErrorState } from '@/components/ui';
-import {
-  getExperienceDetail,
-  listMyExperiences,
-  reportExperience,
-} from '@/server/actions/experience';
+import { listMyExperiences, reportExperience } from '@/server/actions/experience';
+import { requestExperienceDetail } from '@/app/detail-route';
 import { requireUser } from '@/server/permissions';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +19,7 @@ export default async function ExperienceDetailPage({
 }) {
   const { id } = await params;
   const [detail, actor, t] = await Promise.all([
-    getExperienceDetail({ experienceId: id }).catch(() => null),
+    requestExperienceDetail(id).catch(() => null),
     requireUser().catch(() => null),
     getTranslations('experiences'),
   ]);

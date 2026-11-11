@@ -1,7 +1,7 @@
+import { loginAs } from './login';
 import { expect, test, type Page } from '@playwright/test';
 
 import { luminanceOf, measurePage, tabThrough } from './a11y';
-import { waitForHydratedForm } from './hydration';
 
 // Faz 2 erişilebilirlik turu (P2-14): klavye, ekran okuyucu adları, kontrast ve taşma; her iki temada, telefon ve masaüstü genişliğinde.
 // Ölçümler `tests/e2e/a11y.ts` içindedir (kütüphane yok). Bulgu çıkarsa sayfa düzeltilir; test gevşetilmez.
@@ -29,19 +29,7 @@ const SYSTEM_ADMIN = ['/yonetim/deneyimler', '/yonetim/ayin-mezunu'];
 // Liste → ilk ayrıntı sayfası: ayrıntı ekranları da aynı kurallarla ölçülür.
 const DETAILS = [{ list: '/etkinlikler', link: 'a[href^="/etkinlikler/"]' }];
 
-async function login(page: Page, persona: 'student' | 'departmentAdmin' | 'systemAdmin') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  // Test girişi önce /hesap'a gidebilir; onay kapısını hedef sayfa sanıp ölçmemek için açıkça tamamla.
-  await page.goto('/onay');
-  await waitForHydratedForm(page, 'Seçimlerimi kaydet');
-  const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await consent.nth(0).check();
-  await consent.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = loginAs;
 
 async function audit(page: Page, path: string, scheme: 'light' | 'dark') {
   await page.goto(path, { waitUntil: 'networkidle' });

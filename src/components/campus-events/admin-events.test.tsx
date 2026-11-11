@@ -65,6 +65,15 @@ describe('AdminEvents', () => {
     expect(cancel).toBeEnabled();
   });
 
+  it('Katılım ekranı bağlantıları etkinlik adıyla ayırt edilir; görünen metin aynı kalır', () => {
+    renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+    const link = screen.getByRole('link', { name: 'Katılım ekranı: Kariyer Sohbeti' });
+    expect(link.textContent).toBe('Katılım ekranı');
+    expect(link.getAttribute('href')).toBe(
+      '/yonetim/etkinlikler/018f0000-0000-7000-8000-0000000000e2',
+    );
+  });
+
   it('durumlar rozet olarak görünür; olay yoksa tek mesajlı boş durum çıkar', () => {
     const { unmount } = renderWithToasts(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
     const pending = screen.getByText('CV Atölyesi').closest('li')!;

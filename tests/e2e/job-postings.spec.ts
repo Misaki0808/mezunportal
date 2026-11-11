@@ -1,6 +1,7 @@
+import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { waitForHydratedControl, waitForHydratedForm } from './hydration';
@@ -8,17 +9,7 @@ const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
 test.afterAll(() => db.$disconnect());
-async function login(page: Page, persona: 'student' | 'alumniMentor' | 'systemAdmin') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await consent.nth(0).check();
-  await consent.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = loginAs;
 test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browser }) => {
   test.setTimeout(120_000);
   const title = `Staj ${randomUUID().replaceAll('-', '').slice(0, 10)}`;
@@ -265,7 +256,8 @@ test('mobil ilk ekranda iki ilan kartı ve erişilebilir süzgeç alt sayfası g
       }
       const filters = page.getByRole('button', { name: 'Süzgeçler', exact: true });
       await expect(filters).toBeInViewport({ ratio: 1 });
-      await filters.click();
+      await filters.focus();
+      await page.keyboard.press('Enter');
       await expect(page.getByRole('dialog')).toBeVisible();
       await expect(page.getByRole('dialog').getByLabel('Konum', { exact: true })).toBeVisible();
       await page.keyboard.press('Escape');

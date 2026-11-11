@@ -211,14 +211,18 @@
 }
 .landing-trust {
   display: flex;
-  align-items: center;
+  /* Çok satıra inen güven metninde ✓ simgesi İLK satırın hizasında kalır (ortada değil). */
+  align-items: flex-start;
   gap: 0.5rem;
+  line-height: 1.5;
   margin: 1.25rem 0 0;
   color: var(--color-fg-muted);
   font-size: 0.9375rem;
 }
 .landing-trust svg {
   flex: none;
+  /* (satır yüksekliği 0,9375 × 1,5 rem − simge 1,125 rem) / 2 */
+  margin-top: 0.14rem;
   width: 1.125rem;
   height: 1.125rem;
   color: var(--color-success);
@@ -661,5 +665,38 @@
   .landing {
     --lp-max: 90rem;
     --lp-gutter: 4rem;
+  }
+}
+
+/*
+ * Çok geniş ekranlar (kullanıcı: "sayfanın tamamına yay, yanlar boş duruyo"): sayfa BÜTÜN olarak (yazı, kit kartları, boşluklar)
+ * kademeli büyütülür; içerik ≈ ekranın %83'ünü kaplar (2560'ta 1440 px yerine ~2160 px). `zoom`, rem tabanlı kit bileşenlerini de
+ * orantılı büyüten tek yoldur; desteklemeyen tarayıcıda (Firefox < 126) sayfa 1440 px ortalı kalır, bozulmaz. 1440/1920 değişmez.
+ */
+@supports (zoom: 1) {
+  @media (min-width: 125rem) {
+    .landing {
+      zoom: 1.15;
+    }
+  }
+  @media (min-width: 140rem) {
+    .landing {
+      zoom: 1.3;
+    }
+  }
+  @media (min-width: 160rem) {
+    .landing {
+      zoom: 1.5;
+    }
+  }
+  @media (min-width: 190rem) {
+    .landing {
+      zoom: 1.75;
+    }
+  }
+  @media (min-width: 215rem) {
+    .landing {
+      zoom: 2;
+    }
   }
 }

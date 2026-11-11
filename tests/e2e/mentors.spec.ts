@@ -1,18 +1,8 @@
-import { expect, test, type Page } from '@playwright/test';
+import { loginAs } from './login';
+import { expect, test } from '@playwright/test';
 import { TEST_PERSONA_EMAILS } from '../../src/server/auth/test-personas';
 
-async function login(page: Page, persona: 'student') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  await page.waitForLoadState('networkidle');
-  const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await required.nth(0).check();
-  await required.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = loginAs;
 
 test('mentor bul: liste, mobil filtre alt sayfası, çip, boş durum ve geçersiz adres', async ({
   page,

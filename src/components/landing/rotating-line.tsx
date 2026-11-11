@@ -7,6 +7,11 @@ const INTERVAL_MS = 3600;
 const FADE_MS = 260;
 /** Fare ya da klavye odağı bu bölgedeyken satır bekler (kullanıcı okurken kaymaz). */
 const HOLD_ZONE = '.landing-hero-copy';
+/**
+ * Fare bekletmesi YALNIZ gerçek fare/dokunmatik yüzey gibi `hover` destekleyen cihazlarda: telefonda bir kez dokununca
+ * `mouseenter` takılı kalır ve satır bir daha dönmezdi (kullanıcı: "o yazı paso değişsin"). Klavye odağı her cihazda bekletir.
+ */
+const CAN_HOVER = '(hover: hover) and (pointer: fine)';
 
 function getReduced() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -54,13 +59,18 @@ export function RotatingLine({ lines }: { lines: readonly string[] }) {
       focus = next instanceof Node && zone.contains(next);
       sync();
     };
-    zone.addEventListener('mouseenter', enter);
-    zone.addEventListener('mouseleave', leave);
+    const canHover = window.matchMedia(CAN_HOVER).matches;
+    if (canHover) {
+      zone.addEventListener('mouseenter', enter);
+      zone.addEventListener('mouseleave', leave);
+    }
     zone.addEventListener('focusin', focusIn);
     zone.addEventListener('focusout', focusOut);
     return () => {
-      zone.removeEventListener('mouseenter', enter);
-      zone.removeEventListener('mouseleave', leave);
+      if (canHover) {
+        zone.removeEventListener('mouseenter', enter);
+        zone.removeEventListener('mouseleave', leave);
+      }
       zone.removeEventListener('focusin', focusIn);
       zone.removeEventListener('focusout', focusOut);
     };
