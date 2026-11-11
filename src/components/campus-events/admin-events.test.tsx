@@ -2,7 +2,7 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import messages from '../../../messages/tr.json';
-import { renderUi, renderWithToasts } from '@/test/render';
+import { renderWithToasts } from '@/test/render';
 
 const mocks = vi.hoisted(() => ({
   review: vi.fn(),
@@ -66,7 +66,7 @@ describe('AdminEvents', () => {
   });
 
   it('Katılım ekranı bağlantıları etkinlik adıyla ayırt edilir; görünen metin aynı kalır', () => {
-    renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+    renderWithToasts(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
     const link = screen.getByRole('link', { name: 'Katılım ekranı: Kariyer Sohbeti' });
     expect(link.textContent).toBe('Katılım ekranı');
     expect(link.getAttribute('href')).toBe(
