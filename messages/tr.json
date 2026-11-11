@@ -207,7 +207,7 @@
       "CV_TRANSFER_CONSENT_REQUIRED": "CV'ni okuyabilmemiz için yurt dışına aktarım iznini vermen gerekiyor. İznini gizlilik ayarlarından verebilir ya da bilgilerini elle girebilirsin.",
       "CV_DAILY_LIMIT_REACHED": "Bugünlük CV okuma hakkın doldu. Yarın tekrar deneyebilir ya da bilgilerini elle girebilirsin.",
       "CV_ALREADY_PROCESSING": "CV'n şu anda okunuyor. Bitmesini bekle.",
-      "CV_NOT_READY": "CV'n henüz hazır değil. Biraz sonra tekrar dene.",
+      "CV_NOT_READY": "Bu CV için bu işlem şu an yapılamıyor. CV durumunu kontrol et.",
       "CV_REVIEW_STALE": "Profilin ya da CV sonucu değişti. Sayfayı yenileyip kalemleri yeniden gözden geçir.",
       "CV_CONFLICT_UNRESOLVED": "Elle düzelttiğin bir kalemin üzerine yazmak için bunu açıkça seçmelisin.",
       "CV_PARSE_UNAVAILABLE": "CV'n şu an okunamadı. Biraz sonra tekrar deneyebilir ya da bilgilerini elle girebilirsin.",
