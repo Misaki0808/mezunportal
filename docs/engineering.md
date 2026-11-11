@@ -106,6 +106,19 @@ test); kural saf işleve çıkarılır, test onu sınar. Vitest eşzamanlılığ
 PR'da değil, yalnız `main`'e birleşmede çalışır (özel repoda ücretsiz CI dakikası sınırlıdır);
 reviewer gerekirse yerelde koşar.
 
+### Performans (P2-14)
+
+`pnpm test:perf` (yalnız yerel; `pnpm test` ve CI'da koşmaz) iki hacimde liste/arama yanıt sürelerini ve kritik planları ölçer: **10× deneme verisi**
+(120 deneyim, 60 ilan, 30 şirket; hedef p95 < 300 ms) ve **stres** (3.000 deneyim, 1.500 ilan, 100 şirket, 600 kullanıcı, 200 aday; gerileme sınırı p95 < 1 sn).
+Ölçüm, üretimde autovacuum'un yaptığı gibi veri yüklendikten sonra `ANALYZE` çalıştırır; `PERF_OUT=<dosya>` ayrıntılı JSON ve `EXPLAIN` çıktısı yazar.
+Plan testi indeks **kullanılabilirliğini** (`enable_seqscan = off`) denetler; küçük tabloda sıralı tarama geçerli bir plan seçimidir.
+
+Son ölçüm (yerel, p50/p95 ms): 10× hacimde en yavaş yüzey 52 ms (ilan arama), hepsi bütçe içinde. Stres hacminde: ilan listesi 123/178, ilan arama (metin) 306/361,
+deneyim arama (metin) 212/281, soru bankası (tüm şirketler) 431/494, aday arama 36/48, diğerleri < 80. **Bu turda düzeltilenler:** ilan görünürlük koşulu ilişkili
+`EXISTS`/skaler alt sorgudan küme üyeliğine alındı (ilan listesi 1,2 sn → 0,18 sn, davranış aynı); `Experience(companyId, status)` indeksi eklendi (şirket sayfası/soru
+bankası/başvuru takvimi sıralı taramadan çıktı). **Bilinen sınırlar (pilot ölçeğinin üstünde):** soru bankası "tüm şirketler" görünümü yayınlanmış deneyimlerin hepsini okur
+(O(n); sayfalama/özet sonraki faz), metin aramasında sıralama her eşleşen satırda `ts_rank_cd` + `word_similarity` hesaplar.
+
 ## Komutlar
 
 ```bash
