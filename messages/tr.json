@@ -3340,6 +3340,8 @@
     "accountAlumniDescription": "Öğrencilere yol göstermek için ders seç.",
     "adminTitle": "Ders sözlüğü",
     "adminDescription": "Bölümünün derslerini ekle veya güncelle.",
+    "adminCount": "{count} ders bulundu.",
+    "showMore": "Daha fazla göster",
     "addCourse": "Ders ekle",
     "editCourse": "Dersi düzenle",
     "department": "Bölüm",
