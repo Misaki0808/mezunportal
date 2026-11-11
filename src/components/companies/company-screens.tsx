@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
@@ -242,7 +243,7 @@ export function CompanyMerge() {
   const [pending, start] = useTransition();
   function lookup(which: 'source' | 'target') {
     start(async () => {
-      const result = await searchCompanies({ q: queries[which] });
+      const result = await safeClientAction(() => searchCompanies({ q: queries[which] }));
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;
@@ -260,7 +261,7 @@ export function CompanyMerge() {
       return;
     }
     start(async () => {
-      const result = await mergeCompanies(parsed.data);
+      const result = await safeClientAction(() => mergeCompanies(parsed.data));
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;

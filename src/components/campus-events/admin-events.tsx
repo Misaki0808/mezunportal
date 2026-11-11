@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
@@ -74,7 +75,7 @@ export function AdminEvents({
         );
         return;
       }
-      const result = await createCampusEvent(parsed.data);
+      const result = await safeClientAction(() => createCampusEvent(parsed.data));
       setFieldErrors(
         result.ok
           ? {}
@@ -93,8 +94,8 @@ export function AdminEvents({
     start(async () => {
       const result =
         kind === 'CANCEL'
-          ? await cancelCampusEvent({ eventId, reason })
-          : await reviewCampusEvent({ eventId, decision: kind, reason });
+          ? await safeClientAction(() => cancelCampusEvent({ eventId, reason }))
+          : await safeClientAction(() => reviewCampusEvent({ eventId, decision: kind, reason }));
       setStatus(
         result.ok
           ? t(kind === 'PUBLISH' ? 'published' : kind === 'REJECT' ? 'rejected' : 'cancelled')
@@ -157,15 +158,23 @@ export function AdminEvents({
         </fieldset>
         <button
           disabled={pending}
-          className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-white disabled:opacity-50"
+          className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-on-primary disabled:opacity-50"
         >
           {pending ? t('registering') : t('submit')}
         </button>
       </form>
       <label className="block space-y-2">
         <span className="font-semibold">{t('reason')}</span>
-        <input value={reason} onChange={(e) => setReason(e.target.value)} className={field} />
+        <input
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          className={field}
+          aria-describedby="campus-reason-hint"
+        />
       </label>
+      <p id="campus-reason-hint" className="text-sm text-fg-muted">
+        {t('reasonHint')}
+      </p>
       {status && <p role="status">{status}</p>}
       <ul className="space-y-3">
         {events.map((event) => (
@@ -183,6 +192,7 @@ export function AdminEvents({
               <div className="mt-3 flex flex-wrap gap-3">
                 <button
                   disabled={pending || reason.trim().length < 3}
+                  aria-describedby={reason.trim().length < 3 ? 'campus-reason-hint' : undefined}
                   onClick={() => decide(event.id, 'PUBLISH')}
                   className="min-h-11 rounded-xl border border-border px-4 disabled:opacity-50"
                 >
@@ -190,6 +200,7 @@ export function AdminEvents({
                 </button>
                 <button
                   disabled={pending || reason.trim().length < 3}
+                  aria-describedby={reason.trim().length < 3 ? 'campus-reason-hint' : undefined}
                   onClick={() => decide(event.id, 'REJECT')}
                   className="min-h-11 rounded-xl border border-border px-4 disabled:opacity-50"
                 >
@@ -207,6 +218,7 @@ export function AdminEvents({
                 </Link>
                 <button
                   disabled={pending || reason.trim().length < 3}
+                  aria-describedby={reason.trim().length < 3 ? 'campus-reason-hint' : undefined}
                   onClick={() => {
                     setStatus('');
                     setCancelId(event.id);

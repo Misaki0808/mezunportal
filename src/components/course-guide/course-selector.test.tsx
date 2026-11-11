@@ -24,3 +24,16 @@ it('beş seçimden sonra başka seçim kapalıdır; arama ders kodunu bulur', as
   expect(screen.getByRole('checkbox', { name: /Ders 5/ })).toBeVisible();
   expect(screen.queryByRole('checkbox', { name: /Ders 1/ })).toBeNull();
 });
+
+it('toplam ders sayısını gösterir ve liste sayfa akışındadır', () => {
+  renderUi(
+    <CourseSelector
+      courses={[{ id: '1', name: 'Ders', code: 'YBS', semester: 1, elective: true }]}
+      initial={[]}
+    />,
+  );
+  expect(screen.getByText('1 ders arasından seçim yapabilirsin.')).toBeVisible();
+  expect(screen.getByRole('checkbox').parentElement?.parentElement).not.toHaveClass(
+    'overflow-y-auto',
+  );
+});

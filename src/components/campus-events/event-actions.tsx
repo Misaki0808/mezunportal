@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -49,14 +50,14 @@ export function EventActions({
   }, [eventId]);
   function register() {
     start(async () => {
-      const result = await registerCampusEvent({ eventId });
+      const result = await safeClientAction(() => registerCampusEvent({ eventId }));
       setStatus(result.ok ? t('registered') : errors(result.errorCode));
       if (result.ok) router.refresh();
     });
   }
   function checkin() {
     start(async () => {
-      const result = await checkInCampusEvent({ eventId, code });
+      const result = await safeClientAction(() => checkInCampusEvent({ eventId, code }));
       setStatus(result.ok && result.data.accepted ? t('checked') : t('codeInvalid'));
       if (result.ok && result.data.accepted) router.refresh();
     });

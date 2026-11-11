@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import {
@@ -30,7 +31,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
   function load() {
     start(async () => {
       setMessage('');
-      const result = await listStoryModeration({ departmentId });
+      const result = await safeClientAction(() => listStoryModeration({ departmentId }));
       if (result.ok) setRows(result.data);
       else setMessage(errors(result.errorCode));
     });
@@ -50,7 +51,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
           setMessage(t('invalid'));
           return;
         }
-        const result = await selectMonthlyAlumnus(parsed.data);
+        const result = await safeClientAction(() => selectMonthlyAlumnus(parsed.data));
         if (!result.ok) {
           setMessage(errors(result.errorCode));
           return;
@@ -66,7 +67,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
           setMessage(t('invalid'));
           return;
         }
-        const result = await reviewStory(parsed.data);
+        const result = await safeClientAction(() => reviewStory(parsed.data));
         if (!result.ok) {
           setMessage(errors(result.errorCode));
           return;
@@ -75,7 +76,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
       }
       setIntent(null);
       setReason('');
-      const result = await listStoryModeration({ departmentId });
+      const result = await safeClientAction(() => listStoryModeration({ departmentId }));
       if (result.ok) setRows(result.data);
     });
   }

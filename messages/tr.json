@@ -796,7 +796,8 @@
         "YOUTUBE": "YouTube"
       },
       "linksEdit": "Bağlantıları düzenle",
-      "linkDuplicate": "Her site için en fazla bir bağlantı ekleyebilirsin."
+      "linkDuplicate": "Her site için en fazla bir bağlantı ekleyebilirsin.",
+      "editShortcut": "Profilimi düzenle"
     },
     "view": {
       "back": "Geri",
@@ -2051,7 +2052,10 @@
     "qrInvalid": "Bu bağlantı geçerli değil. Etkinlik kodunu yeniden okutmayı dene.",
     "codeExpires": "Kodun yenilenmesine {seconds} saniye",
     "attendanceCount": "Doğrulanan katılım: {count}",
-    "back": "Etkinliklere dön"
+    "back": "Etkinliklere dön",
+    "adminDescription": "Etkinlik oluştur, başvuruları incele ve yayınlanan buluşmaları yönet.",
+    "presentDescription": "Katılımcıların okutabilmesi için QR kodunu veya altı haneli kodu göster.",
+    "reasonHint": "İşlem gerekçesi en az 3 karakter olmalı."
   },
   "monthlyDigest": {
     "subject": "Bu ay MezunPortal'da",
@@ -3265,6 +3269,13 @@
     "code": "Ders kodu",
     "name": "Ders adı",
     "cancel": "Vazgeç",
-    "adminLink": "Ders sözlüğünü yönet"
+    "adminLink": "Ders sözlüğünü yönet",
+    "totalCount": "{count} ders arasından seçim yapabilirsin."
+  },
+  "errorBoundary": {
+    "title": "Bir sorun oluştu",
+    "description": "Sayfa şu anda görüntülenemiyor. Lütfen tekrar dene.",
+    "retry": "Tekrar dene",
+    "home": "Ana sayfaya dön"
   }
 }

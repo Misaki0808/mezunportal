@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -62,7 +63,7 @@ export function ReferralCreate({
     setFieldErrors({});
     setError('');
     start(async () => {
-      const result = await actions.proposeReferral(input);
+      const result = await safeClientAction(() => actions.proposeReferral(input));
       if (!result.ok) {
         setError(errors(result.errorCode));
         if (result.fieldErrors)
@@ -197,25 +198,33 @@ export function ReferralList({
     start(async () => {
       setError('');
       const result = moderation
-        ? await actions.reviewReferral({
-            referralId: row.id,
-            stage: row.status === 'STUDENT_CONFIRMED' ? 'REFERRAL' : 'ACCEPTANCE',
-            decision: operation === 'CONFIRM' ? 'APPROVE' : 'REJECT',
-            ...(operation === 'REJECT' ? { reason: reason[row.id] ?? '' } : {}),
-          })
-        : operation === 'ACCEPTANCE'
-          ? await actions.proposeReferralAcceptance({
+        ? await safeClientAction(() =>
+            actions.reviewReferral({
               referralId: row.id,
-              note: note[row.id] ?? '',
-            })
+              stage: row.status === 'STUDENT_CONFIRMED' ? 'REFERRAL' : 'ACCEPTANCE',
+              decision: operation === 'CONFIRM' ? 'APPROVE' : 'REJECT',
+              ...(operation === 'REJECT' ? { reason: reason[row.id] ?? '' } : {}),
+            }),
+          )
+        : operation === 'ACCEPTANCE'
+          ? await safeClientAction(() =>
+              actions.proposeReferralAcceptance({
+                referralId: row.id,
+                note: note[row.id] ?? '',
+              }),
+            )
           : operation === 'CANCEL'
-            ? await actions.cancelReferral({ referralId: row.id })
+            ? await safeClientAction(() => actions.cancelReferral({ referralId: row.id }))
             : row.student.id === userId
-              ? await actions.respondReferral({ referralId: row.id, decision: operation })
-              : await actions.respondReferralAcceptance({
-                  referralId: row.id,
-                  decision: operation,
-                });
+              ? await safeClientAction(() =>
+                  actions.respondReferral({ referralId: row.id, decision: operation }),
+                )
+              : await safeClientAction(() =>
+                  actions.respondReferralAcceptance({
+                    referralId: row.id,
+                    decision: operation,
+                  }),
+                );
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;
@@ -238,8 +247,8 @@ export function ReferralList({
     start(async () => {
       const input = { cursor: page.nextCursor! };
       const result = moderation
-        ? await actions.listReferralModeration(input)
-        : await actions.listMyReferrals(input);
+        ? await safeClientAction(() => actions.listReferralModeration(input))
+        : await safeClientAction(() => actions.listMyReferrals(input));
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;

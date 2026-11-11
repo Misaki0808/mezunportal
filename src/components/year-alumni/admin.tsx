@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import {
@@ -39,7 +40,7 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
         setMessage(t('invalid'));
         return;
       }
-      const result = await listAwardCandidates(input);
+      const result = await safeClientAction(() => listAwardCandidates(input));
       setMissed(!result.ok && result.errorCode === 'AWARD_FREEZE_MISSED');
       if (result.ok) setCycle(result.data);
       else {
@@ -58,7 +59,7 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
         setMessage(t('invalid'));
         return;
       }
-      const result = await configureAwardCycle(parsed.data);
+      const result = await safeClientAction(() => configureAwardCycle(parsed.data));
       if (result.ok) {
         setCycle(result.data);
         setMissed(false);
@@ -74,7 +75,7 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
         setMessage(t('invalid'));
         return;
       }
-      const result = await recalculateAwardCycle(parsed.data);
+      const result = await safeClientAction(() => recalculateAwardCycle(parsed.data));
       if (result.ok) {
         setCycle(result.data);
         setReason('');
@@ -91,7 +92,7 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
         setMessage(t('invalid'));
         return;
       }
-      const result = await selectYearAlumnus(parsed.data);
+      const result = await safeClientAction(() => selectYearAlumnus(parsed.data));
       if (!result.ok) {
         setMessage(errors(result.errorCode));
         return;
@@ -99,7 +100,7 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
       setSelected(null);
       setReason('');
       setMessage(t('selected'));
-      const refreshed = await listAwardCandidates(input);
+      const refreshed = await safeClientAction(() => listAwardCandidates(input));
       if (refreshed.ok) setCycle(refreshed.data);
     });
   }

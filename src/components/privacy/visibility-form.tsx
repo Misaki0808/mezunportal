@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
@@ -57,7 +58,7 @@ export function VisibilityForm({ initial }: { initial: FieldVisibilitySettings }
             let updated = false;
             for (const input of inputs) {
               if (!input) continue;
-              result = await setFieldVisibility(input);
+              result = await safeClientAction(() => setFieldVisibility(input));
               if (!result.ok) {
                 setPartial(updated);
                 return result;

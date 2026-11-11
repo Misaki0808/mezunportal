@@ -21,7 +21,7 @@ export default async function AdminCampusEventsPage() {
   });
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
-      <PageHeader title={t('adminTitle')} description={t('description')} />
+      <PageHeader title={t('adminTitle')} description={t('adminDescription')} />
       <AdminEvents departments={departments} events={result.data} />
     </main>
   );

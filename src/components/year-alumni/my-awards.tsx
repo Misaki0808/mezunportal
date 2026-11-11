@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import type { MyAward } from '@/contracts/year-alumni';
@@ -24,7 +25,9 @@ function AwardCard({ initial }: { initial: MyAward }) {
   function save() {
     start(async () => {
       setMessage('');
-      const result = await setAwardPublication({ awardId: award.id, public: publish });
+      const result = await safeClientAction(() =>
+        setAwardPublication({ awardId: award.id, public: publish }),
+      );
       if (result.ok) {
         setAward(result.data);
         setMessage(t('saved'));
