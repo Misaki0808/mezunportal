@@ -2,7 +2,7 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import messages from '../../../messages/tr.json';
-import { renderWithToasts } from '@/test/render';
+import { renderUi, renderWithToasts } from '@/test/render';
 
 const mocks = vi.hoisted(() => ({
   review: vi.fn(),
