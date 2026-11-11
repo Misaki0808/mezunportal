@@ -3217,6 +3217,8 @@
     "archive": "Önceki hikâyeler",
     "archiveTitle": "Mezun hikâyeleri",
     "archiveEmpty": "Henüz paylaşılmış bir hikâye yok.",
+    "archiveEmptyHint": "Bu arada mezunların deneyimlerine göz atabilirsin.",
+    "archiveEmptyAction": "Deneyimlere git",
     "back": "Hikâyelere dön",
     "share": "Hikâyeni paylaş",
     "shareDescription": "Yolculuğunu anlatarak bir öğrenciye ilham ver.",
