@@ -22,7 +22,7 @@ function actionFor(template: string): { label: string; path: string } {
   if (template === 'appointment.feedback')
     return { label: t('ctaFeedback'), path: '/hesap/gorusmeler' };
   if (template.startsWith('appointment.'))
-    return { label: t('ctaAppointment'), path: '/hesap/gorusmeler' };
+    return { label: t('ctaAppointment'), path: '/randevular' };
   if (template === 'contact.requested') return { label: t('ctaContact'), path: '/hesap/iletisim' };
   if (template === 'pilot.invitation') return { label: t('ctaInvitation'), path: '/giris' };
   if (template.startsWith('experience.'))

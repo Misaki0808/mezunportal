@@ -115,9 +115,7 @@ it('gövdesinde iç bağlantı olmayan randevuda dış URL düz kalır ve eylem 
     'https://portal.invalid',
   );
   expect(result.html).not.toContain('href="https://meet.example.invalid');
-  expect(result.html).toContain(
-    'class="email-button" href="https://portal.invalid/hesap/gorusmeler"',
-  );
+  expect(result.html).toContain('class="email-button" href="https://portal.invalid/randevular"');
   expect(result.html).toContain('Randevuyu gör');
 });
 it('evet ve hayır bağlantıları farklı anlamlarını korur', () => {
@@ -153,7 +151,7 @@ it('eksik tek kullanımlık bağlantı yerine onay veya evet eylemi varmış gib
       },
       'https://portal.invalid',
     );
-    expect(result.html).toContain('MezunPortal’ı aç');
+    expect(result.html).toContain('MezunPortal&#39;ı aç');
     expect(result.html).not.toContain('Evet, hâlâ çalışıyorum');
     expect(result.html).not.toContain('Daveti kabul et');
   }

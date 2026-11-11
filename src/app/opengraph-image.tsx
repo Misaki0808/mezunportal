@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
 import messages from '../../messages/tr.json';
 
-export const alt = 'MezunPortal';
+export const alt = messages.metadata.title;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
