@@ -394,3 +394,20 @@ it('inceleyici: CV temel bilgi özetini düzeltme mevcut özeti açar ve düzenl
   await user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
   expect(apply.mock.calls[0]![0].decisions[0].values.summary).toBe('Düzeltilen özet');
 });
+
+it('LinkedIn seçimi yüklemede kaynak olarak gönderilir', async () => {
+  const upload = vi
+    .fn()
+    .mockResolvedValue({ ok: true, data: { cvUploadId: 'cv-linkedin', status: 'QUEUED' } });
+  const { user } = renderUi(
+    <CvFlow availability={available} latest={null} actions={actions({ upload })} />,
+  );
+  await user.click(screen.getByRole('radio', { name: 'LinkedIn profilini içe aktar' }));
+  await user.upload(
+    screen.getByLabelText(/CV dosyası/),
+    new File(['%PDF-1.4'], 'profil.pdf', { type: 'application/pdf' }),
+  );
+  await user.click(screen.getByRole('button', { name: "CV'yi oku" }));
+  expect(upload).toHaveBeenCalledOnce();
+  expect((upload.mock.calls[0]![0] as FormData).get('source')).toBe('LINKEDIN_PDF');
+});

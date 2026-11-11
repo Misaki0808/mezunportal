@@ -8,6 +8,8 @@
  */
 export type LlmCvRequest = {
   pdf: Uint8Array;
+  /** Yalnız bulunan bölüm türleri; PDF metni veya kişisel veri içermez. */
+  sectionHints?: readonly ('experience' | 'education' | 'skills')[];
   /** Sistem talimatı (`prompt.ts`); sağlayıcıdan bağımsız metin. */
   instruction: string;
   /** Beklenen çıktının JSON Şeması (`parsedCvJsonSchema()`). */

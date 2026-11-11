@@ -202,6 +202,7 @@ model User {
   campusEventsReviewed      CampusEvent[]              @relation("CampusEventReviewer")
   campusEventRegistrations  CampusEventRegistration[]
   campusEventAttendances    EventAttendance[]
+  integrationConnections    IntegrationConnection[]
 }
 
 enum CampusEventStatus {
@@ -911,6 +912,11 @@ model ContactRequest {
 /// `QUEUED` → `PARSING` → `PARSED` (kullanıcı onayını bekler) | `FAILED`; `PARSED` → `APPLIED` | `DISCARDED`.
 /// Veritabanı kısıtları: ayrıştırma çıktısı (`parsedJson`) yalnız `PARSED`'dadır; `FAILED` bir `errorCode`
 /// taşır; bir kullanıcının en fazla bir işlenen (`QUEUED`/`PARSING`) ve bir onay bekleyen (`PARSED`) CV'si vardır.
+enum CvUploadSource {
+  CV
+  LINKEDIN_PDF
+}
+
 enum CvStatus {
   QUEUED
   PARSING
@@ -971,20 +977,21 @@ enum ExperienceInvitationStatus {
 /// kalır, eski dosyalar uygulama/atma anında silinir (açık incelemeye bağlı dosya hariç), hatada anında silinir.
 /// `parsedJson`: doğrulanmış `ParsedCv`, uygulama/atma anında temizlenir; LLM çıktısı yetki belirlemez.
 model CvUpload {
-  id         String    @id @default(uuid(7))
+  id         String         @id @default(uuid(7))
   userId     String
   storageKey String?
   byteSize   Int
   pageCount  Int
-  status     CvStatus  @default(QUEUED)
+  source     CvUploadSource @default(CV)
+  status     CvStatus       @default(QUEUED)
   parsedJson Json?
   /// `FAILED` için kararlı hata kodu (`ERROR_CODES`).
   errorCode  String?
   /// LLM çağrı denemeleri (iş yeniden denemeleri dahil); yalnız sayaç.
-  attempts   Int       @default(0)
+  attempts   Int            @default(0)
   appliedAt  DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
   user           User              @relation(fields: [userId], references: [id], onDelete: Restrict)
   reviewRequests CvReviewRequest[]
@@ -1925,6 +1932,40 @@ model ReferralClaim {
   @@index([studentId, status, createdAt])
   @@index([departmentIdAtWrite, status, createdAt])
   @@index([jobPostingId])
+}
+
+// ---------------------------------------------------------------------------------------------
+// Dış servis bağlantıları (P1-10 / kart 174): sistem yöneticisinin tek seferlik OAuth yetkilendirmesi
+// ---------------------------------------------------------------------------------------------
+
+enum IntegrationProvider {
+  GOOGLE_CALENDAR
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  /// Yenileme jetonu geçersiz (erişim geri alındı ya da sunucu sırrı değişti): yönetici yeniden bağlar.
+  NEEDS_RECONNECT
+}
+
+/// Sağlayıcı başına TEK satır. Yenileme jetonu AES-256-GCM ile şifreli saklanır (`src/server/crypto/secret-box.ts`; anahtar
+/// sunucu sırrından türetilir); düz metin veritabanında, logda ve depoda YOKTUR. `accountLabel` yalnız görüntü içindir.
+model IntegrationConnection {
+  id              String              @id @default(uuid(7))
+  provider        IntegrationProvider @unique
+  status          IntegrationStatus   @default(ACTIVE)
+  refreshTokenEnc String
+  accountLabel    String?
+  scope           String
+  connectedById   String
+  connectedAt     DateTime            @default(now())
+  /// Son hata kodu (kararlı kod; sağlayıcı yanıtı değil).
+  lastErrorCode   String?
+  updatedAt       DateTime            @updatedAt
+
+  connectedBy User @relation(fields: [connectedById], references: [id], onDelete: Restrict)
+
+  @@index([connectedById])
 }
 
 /// Bölüm müfredatı; aynı ders kodu farklı yarıyıllarda kullanılabilir.

@@ -135,6 +135,31 @@
   display: flex;
   align-items: center;
 }
+.landing-hero-copy {
+  max-width: 56rem;
+}
+.landing-motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+.landing-motion-toggle:disabled {
+  cursor: default;
+  text-decoration: none;
+}
+.landing-motion-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 .landing-rotating-text {
   display: block;
   transition:
@@ -209,17 +234,6 @@
   height: 1.125rem;
   color: var(--color-success);
 }
-.landing-hero-art {
-  display: none;
-}
-.landing-hero-mark {
-  width: min(100%, 20rem);
-  height: auto;
-  transform: rotate(4deg);
-  border-radius: 3rem;
-  box-shadow: var(--shadow-overlay);
-}
-
 /* Sayılar (yalnız ≥3 olanlar gösterilir) */
 .landing-stats {
   background: var(--color-surface);
@@ -534,14 +548,6 @@
   }
 }
 @media (min-width: 64rem) {
-  .landing-hero-inner {
-    grid-template-columns: 1.4fr 1fr;
-    gap: 4rem;
-  }
-  .landing-hero-art {
-    display: grid;
-    place-items: center;
-  }
   .landing-links {
     grid-template-columns: repeat(3, 1fr);
   }

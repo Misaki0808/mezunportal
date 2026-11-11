@@ -389,6 +389,7 @@ async function loadCvExport(
         select: {
           id: true,
           status: true,
+          source: true,
           errorCode: true,
           pageCount: true,
           storageKey: true,
@@ -420,6 +421,7 @@ async function loadCvExport(
     uploads: uploads.map((row) => ({
       id: row.id,
       status: row.status,
+      source: row.source,
       errorCode: row.errorCode,
       pageCount: row.pageCount,
       hasFile: row.storageKey !== null,

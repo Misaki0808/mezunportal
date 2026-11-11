@@ -270,8 +270,26 @@ sahte adaptördür ve yalnız `local`/`test`'te kabul edilir (`prod`'da env doğ
 
 **Takvim / Meet grubu** (`getCalendarEnv()`, varsayılanlı): `CALENDAR_PROVIDER` boşsa takvim KAPALIDIR (online randevu
 yine onaylanır; mentor görüşme linkini elle ekler); `fake` deterministik sahte adaptördür ve yalnız `local`/`test`'te
-kabul edilir (`prod`'da env doğrulamasını düşürür). Gerçek Google adaptörü ve `GOOGLE_*` değişkenleri kullanıcı onayından
-(E4) sonra ayrı kartla gelir. Adaptörler `src/server/external/calendar/`.
+kabul edilir (`prod`'da env doğrulamasını düşürür). `google` gerçek Google Takvim/Meet adaptörüdür ve `GOOGLE_CLIENT_ID` ile
+`GOOGLE_CLIENT_SECRET` zorunludur (eksikse yalnız eksik anahtarın adıyla env düşer); anahtarlar `fake`/boşken gerekmez. Yenileme
+jetonu env'de DEĞİL, veritabanında AES-256-GCM ile şifreli durur (anahtar `BETTER_AUTH_SECRET`'tan türer: sır değişirse bağlantı
+yeniden kurulur). Adaptörler `src/server/external/calendar/`.
+
+### Google Takvim / Meet'i bağlama (tek seferlik, kullanıcı + sistem yöneticisi)
+
+1. **Hesap:** platform için ayrılmış bir Gmail (randevu davetleri bu hesabın takviminden gider). Faturalandırma gerekmez (Calendar API ücretsiz).
+2. **Google Cloud:** yeni proje → *APIs & Services* → **Google Calendar API**'yi etkinleştir.
+3. **OAuth izin ekranı:** *External*; uygulama adı, destek e-postası; kapsam olarak yalnız `.../auth/calendar.events`. **Publish app** ile "Yayında"
+   yap: "Test" modunda yenileme jetonu 7 günde düşer. (Doğrulama istenmeyebilir; hassas kapsamda "doğrulanmamış uygulama" uyarısı görünürse
+   *Gelişmiş → devam* ile ilerlenir, kullanıcı sayısı küçüktür.)
+4. **Kimlik bilgileri:** *OAuth client ID* → *Web application*; **Authorized redirect URI** = `<APP_URL>/api/google/callback` (adres
+   `/yonetim/google` sayfasında da yazar; yerelde `http://localhost:<port>/api/google/callback`).
+5. **Sunucu ayarı:** `GOOGLE_CLIENT_ID` ve `GOOGLE_CLIENT_SECRET` değerlerini `korunan/google.env`'e (Git dışı) yaz ve ortam değişkeni olarak ver;
+   `CALENDAR_PROVIDER=google`; uygulamayı yeniden başlat.
+6. **Bağla:** sistem yöneticisi olarak `/yonetim/google` → **Google Takvim'i bağla** → platform Gmail'iyle izin ver. Başarıda sayfa "Bağlı"
+   gösterir; işlem kaydına `INTEGRATION_CONNECT` düşer. Kesmek için aynı sayfada **Bağlantıyı kes** (jeton Google'da da iptal edilir).
+7. **Sınır:** bağlantı kurulmadan ya da yetki geri alınınca randevu yine onaylanır, mentor Meet bağlantısını elle ekler; bağlanmadan önce onaylanmış
+   randevulara sonradan otomatik bağlantı eklenmez.
 
 **Puan motoru grubu** (`getPointsEnv()`, isteğe bağlı): `FOUNDING_MEMBER_UNTIL` (`YYYY-MM-DD`, İstanbul günü, o gün dahil)
 kurucu üye etiketinin (K-10) pilot bitişidir; BOŞSA pilot açıktır ve etiket verilmeye devam eder. Bitişten sonra yayınlanan
@@ -312,18 +330,18 @@ tarihler seed'i koştuğun ana göredir, yeniden koşmak tazeler). `pnpm dev:lan
 | İlan eşleşme bildirimi | `student` ilgi alanlarından "Veri analitiği"/"Yazılım geliştirme"yi işaretle; ilan yayınlanınca `/hesap/bildirimler` ve Mailpit (günde en çok bir özet) |
 | İletişim talebi (ilandan) | `student`: "İletişim talebi" olan ilanda gönder → `alumniMentor`: `/hesap/iletisim` → onayla; öğrencinin giden listesinde onaydan önce yazar adı yok |
 | Ters arama | `student`: `/hesap/staj-ariyorum` → rıza + "staj arıyorum" aç, önizlemeyi gör; `alumniMentor`: beyan aç, `/adaylar` → kartta ad yok → talep gönder; rızayı geri alınca kart aranmada yok |
-| Referans | `alumniMentor`: `/referans/yeni` (öğrenciyle önceden onaylı talep gerekir) → `departmentAdmin`: `/yonetim/referanslar`; puan `/hesap/guvenilirlik` |
+| Referans | `alumniMentor`: `/referans/yeni` (öğrenciyle önceden onaylı talep gerekir) → `departmentAdmin`: `/yonetim/referanslar`; mentorun puanı `/profil` sayfasındaki "Katkı puanın" bölümünde (`/hesap/guvenilirlik` yalnız öğrenci hesabında açılır) |
 | Şirket sayfaları | `student`: `/sirketler` → "Örnek Yazılım A.Ş." (üç kişi altı gizli, takip et) |
 | Soru bankası | `student`: `/mulakat-sorulari` (en az üç farklı yazardan gelen gruplar) |
 | Başvuru takvimi | `student`: `/basvuru-takvimi` (aylar, takip, anonim deneyim varken kesit gizlenir) |
 | Beceri açığı | `student`: `/profil` → "Hedefime ne kadar yakınım?" (hedef pozisyon seç) |
 | Yılın / Ayın mezunu | `departmentAdmin`: `/yonetim/yilin-mezunu`, `/yonetim/ayin-mezunu`; yayın rızası `/odullerim`, `/hesap/hikayem`; kamuya açık doğrulama `/dogrula/<kod>` |
-| Etkinlik | `student`: `/etkinlikler` → kayıt; etkinlik başlayınca kod/QR (`/etkinlik-katilim`); `departmentAdmin`: `/yonetim/etkinlikler` (incelemedeki etkinliği onayla) |
+| Etkinlik | `student`: `/etkinlikler` → kayıt; etkinlik başlayınca yöneticinin etkinlik ekranındaki QR'ı telefonla aç (adres `/etkinlik-katilim#…` biçimindedir; sayfayı kodsuz açarsan "Bu bağlantı geçerli değil" görünür, bu beklenen); `departmentAdmin`: `/yonetim/etkinlikler` (incelemedeki etkinliği onayla) |
 | Aylık özet | `systemAdmin`/`departmentAdmin`: `/yonetim/aylik-ozet` (önizleme); `student`: `/hesap/aylik-ozet` (abonelik) |
-| Google Meet | `systemAdmin`: `/yonetim/google` (anahtarlar gelince bağla); online randevuda Meet bağlantısı otomatik, bağlı değilse mentor elle ekler |
+| Google Meet | `systemAdmin`: `/yonetim/google` (Google Takvim/Meet PR'ı birleşince açılır; o zamana dek 404; anahtarlar gelince bağla); online randevuda Meet bağlantısı otomatik, bağlı değilse mentor elle ekler |
 | Koyu tema ve klavye | Tarayıcı/telefon koyu temada her ekran; Tab ile gezinti, her düğmenin adı okunuyor mu |
 
-Atlananlar: seçmeli ders rehberi (P2-08) henüz yok. Ödül ve ayın mezunu içeriğini seed uydurmaz: seçim ve rıza akışı ekrandan denenir.
+Seçmeli ders rehberi: `student`: `/ders-rehberi`; mezun işaretlemesi `/profil/dersler`; yönetim `/yonetim/dersler`. Ödül ve ayın mezunu içeriğini seed uydurmaz: seçim ve rıza akışı ekrandan denenir.
 
 ### Canlıya alım
 

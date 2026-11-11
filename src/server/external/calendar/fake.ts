@@ -19,6 +19,7 @@ export type FakeCalendar = CalendarPort & {
   readonly events: ReadonlyMap<string, CalendarEventRequest & CalendarEvent>;
   readonly createCalls: number;
   readonly deleteCalls: number;
+  readonly updateCalls: number;
   configure(options: FakeCalendarOptions): void;
 };
 
@@ -28,6 +29,7 @@ export function createFakeCalendar(initial: FakeCalendarOptions = {}): FakeCalen
   const byKey = new Map<string, string>();
   let createCalls = 0;
   let deleteCalls = 0;
+  let updateCalls = 0;
   let failedOnce = false;
   return {
     get events() {
@@ -38,6 +40,9 @@ export function createFakeCalendar(initial: FakeCalendarOptions = {}): FakeCalen
     },
     get deleteCalls() {
       return deleteCalls;
+    },
+    get updateCalls() {
+      return updateCalls;
     },
     configure(next) {
       options = next;
@@ -63,6 +68,17 @@ export function createFakeCalendar(initial: FakeCalendarOptions = {}): FakeCalen
       events.set(eventId, { ...request, eventId, meetUrl });
       byKey.set(request.idempotencyKey, eventId);
       return { eventId, meetUrl };
+    },
+    async updateEvent(eventId, patch): Promise<void> {
+      updateCalls += 1;
+      const existing = events.get(eventId);
+      if (!existing) throw new CalendarError('CALENDAR_REJECTED', false);
+      events.set(eventId, {
+        ...existing,
+        startsAt: patch.startsAt,
+        endsAt: patch.endsAt,
+        summary: patch.summary ?? existing.summary,
+      });
     },
     async deleteEvent(eventId): Promise<void> {
       deleteCalls += 1;

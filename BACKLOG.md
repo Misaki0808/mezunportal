@@ -54,7 +54,7 @@ Hiçbiri kodla çözülemez; her biri aşağıdaki işi engeller. Kullanıcı/ho
 |---|---|
 | E3 — LinkedIn uygulaması + doğrulanmış şirket sayfası | P1-02 kabulü: LinkedIn ile giriş (kod yolu var, sınanmadı) |
 | K-04 — LLM sağlayıcısı + API anahtarı + harcama sınırı | Gerçek CV ayrıştırma; TD-009 doğruluk tablosu |
-| E4 — Google Cloud projesi + OAuth + yenileme jetonu | P1-10 kabulü: gerçek takvim daveti ve Meet linki |
+| E4 — Google Cloud projesi + OAuth anahtarları (`korunan/google.env`) | P1-10 kabulü: gerçek takvim daveti ve Meet linki (adaptör ve panelden bağlama hazır; anahtarlar gelince `CALENDAR_PROVIDER=google` + `/yonetim/google`) |
 | K-02 — sunucu ve dağıtım aracı; K-05 — canlı SMTP | Canlı ortam (PILOT-DEPLOY), gerçek e-posta teslimi |
 | K-03 — veri sorumlusu ve yöneticiler; hoca onayı | PILOT-LEGAL, gerçek yönetici atamaları, canlı açılış |
 | K-12 — pilot kimler, ne zaman, başarı ölçütleri | Pilot kararı, P1-18 başarı ölçütleri kutusu |

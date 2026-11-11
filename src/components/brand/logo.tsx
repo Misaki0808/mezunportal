@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type CSSProperties } from 'react';
 
 import { MARK, WORDMARK, type CapGeometry, type CapPart, type LetterTone } from './logo-geometry';
 
@@ -75,7 +75,25 @@ function Cap({
   );
 }
 
-export function BrandLogo({ className, label }: { className?: string; label?: string }) {
+export function BrandLogo({
+  className,
+  label,
+  variant = 'color',
+}: {
+  className?: string;
+  label?: string;
+  variant?: 'color' | 'mono-light';
+}) {
+  const mono = variant === 'mono-light';
+  const colorStyle = mono
+    ? ({
+        '--brand-ink': '#fff',
+        '--brand-iris': '#fff',
+        '--brand-cap': '#fff',
+        '--brand-tassel': '#fff',
+        '--brand-dot': '#fff',
+      } as CSSProperties)
+    : undefined;
   const gradientId = `brand-np-${useId().replace(/:/g, '')}`;
   const { gradient, dot, cap } = WORDMARK;
   return (
@@ -83,6 +101,7 @@ export function BrandLogo({ className, label }: { className?: string; label?: st
       xmlns="http://www.w3.org/2000/svg"
       viewBox={WORDMARK.viewBox}
       className={className}
+      style={colorStyle}
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
@@ -110,7 +129,7 @@ export function BrandLogo({ className, label }: { className?: string; label?: st
       ))}
       <path d={WORDMARK.bridge} fill={`url(#${gradientId})`} />
       <circle cx={dot.cx} cy={dot.cy} r={dot.r} fill="var(--brand-dot)" />
-      <Cap cap={cap} />
+      <Cap cap={cap} band={mono ? 1 : undefined} />
     </svg>
   );
 }
