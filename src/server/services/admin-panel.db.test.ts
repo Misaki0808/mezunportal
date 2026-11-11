@@ -786,3 +786,104 @@ describe('listAuditLog', () => {
     ).rejects.toThrow();
   });
 });
+
+it('yeni kuyruk sayaçları yetkili kapsam ve karar verilebilir durumlarla sınırlıdır', async () => {
+  const scoped = await createInstitution(db);
+  const manager = await adminOf('DEPARTMENT', scoped.deptA1, { departmentId: scoped.deptA1 });
+  const at = new Date('2033-01-01T10:00:00Z');
+  const authors: string[] = [];
+  for (const departmentId of [scoped.deptA1, scoped.deptB1]) {
+    const alumni = await person({ departmentId, role: 'ALUMNI' }),
+      student = await person({ departmentId });
+    authors.push(alumni);
+    await db.faqRequest.create({
+      data: {
+        askerId: student,
+        departmentIdAtWrite: departmentId,
+        question: 'Başvuru belgeleri nasıl hazırlanır?',
+      },
+    });
+    await db.jobPosting.create({
+      data: {
+        authorId: alumni,
+        departmentIdAtWrite: departmentId,
+        title: 'İncelenecek ilan',
+        submittedAt: new Date(),
+        organizationName: 'Örnek ekip',
+        deadlineOn: new Date(Date.now() + 30 * 86400000),
+        description: 'Yerel sayaç sınaması için örnek açıklama.',
+        isRemote: true,
+        applyMethod: 'URL',
+        applyUrl: 'https://example.test/basvuru',
+        status: 'PENDING',
+      },
+    });
+    for (const status of ['STUDENT_CONFIRMED', 'ACCEPTED_ALUMNI_CONFIRMED', 'PROPOSED'] as const) {
+      const target = await person({ departmentId });
+      await db.referralClaim.create({
+        data: {
+          alumnusId: alumni,
+          studentId: target,
+          departmentIdAtWrite: departmentId,
+          status,
+          studentConfirmedAt: new Date(),
+          approvedAt: new Date(),
+          acceptanceProposedAt: new Date(),
+          alumniConfirmedAt: new Date(),
+        },
+      });
+    }
+    await db.alumniStory.create({
+      data: {
+        userId: alumni,
+        departmentId,
+        body: 'Yerel sayaç sınaması için hazırlanmış yeterince uzun örnek mezun hikâyesi.',
+        status: 'PENDING',
+      },
+    });
+    await db.campusEvent.create({
+      data: {
+        title: 'Bekleyen buluşma',
+        description: 'Yerel sayaç sınaması',
+        location: 'Kampüs',
+        startsAt: at,
+        endsAt: new Date(+at + 3600000),
+        capacity: 10,
+        status: 'PENDING',
+        createdById: alumni,
+        departments: { create: { departmentId } },
+      },
+    });
+  }
+  // Tek bölüm yöneticisi başka bölüme de hedeflenen etkinliği yönetemez.
+  await db.campusEvent.create({
+    data: {
+      title: 'Ortak buluşma',
+      description: 'İki ayrı kapsam hedefi',
+      location: 'Kampüs',
+      startsAt: at,
+      endsAt: new Date(+at + 3600000),
+      capacity: 10,
+      status: 'PENDING',
+      createdById: authors[0]!,
+      departments: { create: [{ departmentId: scoped.deptA1 }, { departmentId: scoped.deptB1 }] },
+    },
+  });
+  // Yalnız başka bölümde aktif mezun üyeliği olan kişinin eski hikâyesi görünmez.
+  await db.alumniStory.create({
+    data: {
+      userId: authors[1]!,
+      departmentId: scoped.deptA1,
+      body: 'Yerel kapsam dışı mezun hikâyesi için yeterli uzunlukta örnek açıklama.',
+      status: 'PENDING',
+    },
+  });
+  const out = await getAdminOverview(deps, manager);
+  expect(out.counts).toMatchObject({
+    pendingFaqRequests: 1,
+    pendingJobPostings: 1,
+    pendingReferrals: 2,
+    pendingCampusEvents: 1,
+    pendingAlumniStories: 1,
+  });
+});

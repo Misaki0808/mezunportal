@@ -1983,7 +1983,8 @@
         "JOB_POSTING_SEARCH": "İlan araması",
         "JOB_SEEKER_SEARCH": "Aday araması"
       }
-    }
+    },
+    "pendingCount": "{count} bekliyor"
   },
   "search": {
     "eyebrow": "DENEYİMLER",

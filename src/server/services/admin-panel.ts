@@ -98,6 +98,11 @@ export async function getAdminOverview(
       const [
         pendingGraduationDocuments,
         pendingExperiences,
+        pendingFaqRequests,
+        pendingJobPostings,
+        pendingReferrals,
+        pendingCampusEvents,
+        pendingAlumniStories,
         openReports,
         suspendedUsers,
         unmatched,
@@ -107,6 +112,46 @@ export async function getAdminOverview(
         }),
         tx.experience.count({
           where: { status: 'PENDING', departmentIdAtWrite: { in: departmentIds } },
+        }),
+        tx.faqRequest.count({
+          where: { status: 'OPEN', departmentIdAtWrite: { in: departmentIds } },
+        }),
+        tx.jobPosting.count({
+          where: { status: 'PENDING', departmentIdAtWrite: { in: departmentIds } },
+        }),
+        tx.referralClaim.count({
+          where: {
+            status: { in: ['STUDENT_CONFIRMED', 'ACCEPTED_ALUMNI_CONFIRMED'] },
+            departmentIdAtWrite: { in: departmentIds },
+          },
+        }),
+        tx.campusEvent.count({
+          where: {
+            status: 'PENDING',
+            departments: {
+              some: { departmentId: { in: departmentIds } },
+              every: { departmentId: { in: departmentIds } },
+            },
+          },
+        }),
+        tx.alumniStory.count({
+          where: {
+            status: 'PENDING',
+            user: { deletedAt: null, OR: [{ banned: false }, { banExpires: { lte: now } }] },
+            OR: departmentIds.map((departmentId) => ({
+              departmentId,
+              user: {
+                memberships: {
+                  some: {
+                    departmentId,
+                    role: 'ALUMNI' as const,
+                    verificationStatus: 'VERIFIED' as const,
+                    endedAt: null,
+                  },
+                },
+              },
+            })),
+          },
         }),
         tx.report.count({
           where: { status: 'OPEN', target: { departmentIdAtWrite: { in: departmentIds } } },
@@ -135,6 +180,11 @@ export async function getAdminOverview(
         counts: {
           pendingGraduationDocuments,
           pendingExperiences,
+          pendingFaqRequests,
+          pendingJobPostings,
+          pendingReferrals,
+          pendingCampusEvents,
+          pendingAlumniStories,
           openReports,
           suspendedUsers,
           openUnmatchedValues: unmatched,
