@@ -22,11 +22,7 @@ import {
 import { getCompany, searchCompanies } from '@/server/services/companies';
 import { getInterviewQuestions } from '@/server/services/interview-questions';
 import { searchJobPostings } from '@/server/services/job-postings';
-import {
-  setHiringDeclaration,
-  searchSeekers,
-  setSeekerSettings,
-} from '@/server/services/job-seekers';
+import { setHiringDeclaration, searchSeekers } from '@/server/services/job-seekers';
 import { buildMonthlyDigest } from '@/server/services/monthly-digest';
 import { searchExperiences } from '@/server/services/search';
 
@@ -47,7 +43,7 @@ const plans: Record<string, string> = {};
 let inst: Institution;
 let viewer: string;
 let alumnus: string;
-let companyIds: string[] = [];
+const companyIds: string[] = [];
 
 const pick = <T>(items: readonly T[], i: number) => items[i % items.length]!;
 const chunks = <T>(items: T[], size = 1000) =>
@@ -349,7 +345,7 @@ afterAll(async () => {
         2,
       ),
     );
-  console.log(
+  process.stdout.write(
     `\nFAZ 2 PERFORMANS (p50/p95/max ms, bütçe p95 < ${BUDGET}):\n${Object.entries(report)
       .map(([k, v]) => `  ${k.padEnd(34)} ${v.p50}/${v.p95}/${v.max}`)
       .join('\n')}\n`,
