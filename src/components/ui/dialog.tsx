@@ -29,6 +29,8 @@ const FOCUSABLE =
 /** Pencere içindeki görünür, odaklanabilir öğeler (belge sırasıyla). */
 function focusableIn(root: HTMLElement): HTMLElement[] {
   return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((element) => {
+    if (element.tabIndex < 0 || element.matches(':disabled') || element.closest('dialog') !== root)
+      return false;
     for (let node: HTMLElement | null = element; node && node !== root; node = node.parentElement) {
       if (node.hidden || node.hasAttribute('inert')) return false;
       const style = getComputedStyle(node);
@@ -95,29 +97,28 @@ function BaseDialog({
     return lockScroll();
   }, [open]);
 
-  // Tarayıcının kendi modal odak tuzağı, son öğeden sonra odağı tarayıcı arayüzüne/gövdeye bırakır: Tab pencere içinde
-  // döner (sondan ilke, ilkten Shift+Tab ile sona). Esc ve odağın tetikleyiciye dönüşü yukarıda.
+  // Safari varsayılan Tab sırasında bazı düğme ve bağlantıları atlar; tarayıcı sırasına güvenmeden
+  // tüm görünür denetimler arasında odağı kendimiz dolaştırırız.
   function handleKeyDown(event: KeyboardEvent<HTMLDialogElement>) {
-    if (event.key !== 'Tab') return;
+    if (event.key !== 'Tab' || event.defaultPrevented) return;
     const dialog = dialogRef.current;
     if (!dialog) return;
+    if (event.target instanceof Element && event.target.closest('dialog') !== dialog) return;
     const items = focusableIn(dialog);
-    const first = items[0];
-    const last = items[items.length - 1];
-    if (!first || !last) {
-      event.preventDefault();
+    event.preventDefault();
+    if (items.length === 0) {
+      dialog.focus();
       return;
     }
     const active = document.activeElement;
-    const outside =
-      !(active instanceof HTMLElement) || active === dialog || !dialog.contains(active);
-    if (event.shiftKey && (outside || active === first)) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && (outside || active === last)) {
-      event.preventDefault();
-      first.focus();
-    }
+    const index = items.findIndex((item) => item === active);
+    const next =
+      index === -1
+        ? event.shiftKey
+          ? items.length - 1
+          : 0
+        : (index + (event.shiftKey ? -1 : 1) + items.length) % items.length;
+    items[next]?.focus();
   }
 
   function handleBackdropClick(event: MouseEvent<HTMLDialogElement>) {
@@ -131,13 +132,14 @@ function BaseDialog({
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       onCancel={(event) => {
+        if (event.target !== event.currentTarget) return;
         // Esc: tarayıcının kendiliğinden kapatmasını durdur; durumu çağıran yönetir.
         event.preventDefault();
         onClose();
       }}
-      onClose={() => {
+      onClose={(event) => {
         // Tarayıcı yine de kapattıysa (örn. ikinci Esc) durum eşitlenir.
-        if (open) onClose();
+        if (event.target === event.currentTarget && open) onClose();
       }}
       onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}

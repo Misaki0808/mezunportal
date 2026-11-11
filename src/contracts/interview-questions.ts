@@ -5,6 +5,16 @@ export const interviewQuerySchema = z
     q: z.string().trim().max(100).default(''),
     companyId: z.string().trim().max(64).default(''),
     sectorId: z.string().trim().max(64).default(''),
+    page: z
+      .union([
+        z.number(),
+        z
+          .string()
+          .regex(/^[1-9]\d{0,4}$/)
+          .transform(Number),
+      ])
+      .pipe(z.number().int().min(1).max(10000))
+      .optional(),
   })
   .strict();
 export type InterviewQuery = z.input<typeof interviewQuerySchema>;
@@ -33,6 +43,9 @@ export const interviewQuestionBankSchema = z
         .strict(),
     ),
     insufficient: z.boolean(),
+    total: z.number().int().min(0),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1),
   })
   .strict();
 export type InterviewQuestionBank = z.infer<typeof interviewQuestionBankSchema>;
