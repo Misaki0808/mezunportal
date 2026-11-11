@@ -13,6 +13,7 @@ import {
   Select,
   buttonClasses,
 } from '@/components/ui';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { selectSkillGoal } from '@/server/actions/skill-gap';
 
 function relatedQuery(label: string) {
@@ -39,7 +40,7 @@ export function SkillGapPanel({
     setError('');
     setMessage('');
     start(async () => {
-      const result = await selectSkillGoal({ titleId: selected });
+      const result = await safeClientAction(() => selectSkillGoal({ titleId: selected }));
       if (!result.ok) {
         setError(errors(result.errorCode));
         return;

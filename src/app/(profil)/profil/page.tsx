@@ -31,6 +31,7 @@ export default async function ProfilePage() {
         initial={result.data}
         beforeCompletion={
           <>
+            {points?.ok && <ContributionSummary summary={points.data.summary} />}
             {gap?.ok && titles?.ok && <SkillGapPanel data={gap.data} titles={titles.data} />}
             {gap?.ok && !titles?.ok && (
               <ErrorState
@@ -41,7 +42,6 @@ export default async function ProfilePage() {
             {gap && !gap.ok && gap.errorCode !== 'AUTH_FORBIDDEN' && (
               <ErrorState errorCode={gap.errorCode} />
             )}
-            {points?.ok && <ContributionSummary summary={points.data.summary} />}
           </>
         }
         actions={{

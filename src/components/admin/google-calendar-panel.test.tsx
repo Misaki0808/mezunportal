@@ -109,4 +109,17 @@ describe('Google Takvim paneli', () => {
     await waitFor(() => expect(disconnect).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(refresh).toHaveBeenCalled());
   });
+
+  it('ağ reddinde paneli korur, Türkçe hata gösterir ve yeniden denemeye izin verir', async () => {
+    const disconnect = vi.fn().mockRejectedValueOnce(new Error('private network details'));
+    const { user } = show({ connection: 'ACTIVE', accountLabel: 'x' }, { disconnect });
+    await user.click(screen.getByRole('button', { name: 'Bağlantıyı kes' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Evet, kes' }));
+    expect(
+      await screen.findByText('Beklenmeyen bir sorun oluştu. Biraz sonra tekrar dene.'),
+    ).toBeVisible();
+    expect(screen.getByText('Bağlı')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Bağlantıyı kes' })).toBeEnabled();
+    expect(screen.queryByText('private network details')).not.toBeInTheDocument();
+  });
 });

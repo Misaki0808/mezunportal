@@ -9,7 +9,7 @@ export default async function CampusEventCodePage({ params }: { params: Promise<
   const [{ id }, t] = await Promise.all([params, getTranslations('campusEvents')]);
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">
-      <PageHeader title={t('present')} description={t('codeHint')} />
+      <PageHeader title={t('present')} description={t('presentDescription')} />
       <EventCode eventId={id} />
     </div>
   );

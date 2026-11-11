@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -61,7 +62,7 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
       return;
     }
     await run(row.id, async () => {
-      const r = await answerCvReviewRequest(p.data);
+      const r = await safeClientAction(() => answerCvReviewRequest(p.data));
       if (r.ok) {
         update(r.data);
         setMessage(t('answered'));
@@ -70,7 +71,7 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
   }
   async function helpful(row: CvReviewRequestView) {
     await run(row.id, async () => {
-      const r = await markCvReviewHelpful({ requestId: row.id });
+      const r = await safeClientAction(() => markCvReviewHelpful({ requestId: row.id }));
       if (r.ok) {
         update(r.data);
         setMessage(t('marked'));
@@ -79,7 +80,7 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
   }
   async function more(role: 'STUDENT' | 'MENTOR', cursor: string) {
     await run(`more-${role}`, async () => {
-      const r = await listCvReviewRequests({ role, cursor });
+      const r = await safeClientAction(() => listCvReviewRequests({ role, cursor }));
       if (r.ok) {
         const setter = role === 'MENTOR' ? setMentor : setStudent;
         setter((prev) => (prev ? { ...r.data, items: [...prev.items, ...r.data.items] } : r.data));
@@ -93,7 +94,7 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
       return;
     }
     await run('settings', async () => {
-      const r = await saveCvReviewSettings(p.data);
+      const r = await safeClientAction(() => saveCvReviewSettings(p.data));
       if (r.ok) {
         setSettings(r.data);
         setMessage(t('saved'));

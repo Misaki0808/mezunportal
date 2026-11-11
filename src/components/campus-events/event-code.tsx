@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { getCampusEventCode } from '@/server/actions/campus-events';
@@ -10,7 +11,7 @@ export function EventCode({ eventId }: { eventId: string }) {
     [now, setNow] = useState(0),
     [unavailable, setUnavailable] = useState(false);
   const refresh = useCallback(async () => {
-    const result = await getCampusEventCode({ eventId });
+    const result = await safeClientAction(() => getCampusEventCode({ eventId }));
     if (result.ok) {
       setNow(Date.now());
       setValue(result.data);

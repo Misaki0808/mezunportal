@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { courseSelectionSchema } from '@/contracts/course-guide';
@@ -25,8 +26,9 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
           className="mt-1 min-h-11 w-full rounded-lg border border-border bg-transparent px-3"
         />
       </label>
+      <p>{t('totalCount', { count: courses.length })}</p>
       <p>{t('selectedCount', { count: selected.length })}</p>
-      <div className="max-h-[55vh] space-y-2 overflow-y-auto">
+      <div className="space-y-2">
         {filtered.map((course) => (
           <label
             key={course.id}
@@ -64,7 +66,7 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
               setStatus(errors('VALIDATION_INVALID'));
               return;
             }
-            const result = await saveAlumniCourses(parsed.data);
+            const result = await safeClientAction(() => saveAlumniCourses(parsed.data));
             setStatus(result.ok ? t('saved') : errors(result.errorCode));
           })
         }
