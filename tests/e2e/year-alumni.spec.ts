@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { randomBytes } from 'node:crypto';
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -50,14 +51,7 @@ test('mezun yayın iznini açar, doğrulama sayfasını görür ve geri alır', 
   });
   try {
     expect((await request.get(`/dogrula/${award.verificationCode}`)).status()).toBe(404);
-    await page.goto('/giris/test?persona=alumniMentor');
-    await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await page.waitForURL(/\/(hesap|onay)$/);
-    await page.goto('/onay');
-    const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-    await required.nth(0).check();
-    await required.nth(1).check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
+    await loginAs(page, 'alumniMentor');
     await page.goto('/odullerim');
     const card = page
       .locator('div')

@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
@@ -42,15 +43,7 @@ test('mobil filtreli aramanın paylaşılan bağlantısı aynı sonucu açar', a
   });
   try {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/giris/test?persona=academic');
-    await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await page.waitForURL(/\/(hesap|onay)$/);
-    await page.goto('/onay');
-    const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-    await consent.nth(0).check();
-    await consent.nth(1).check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
+    await loginAs(page, 'academic');
     await page.goto('/deneyimler');
     await page.getByLabel('Deneyim ara').fill('KutupTeknoloji');
     await page.getByRole('button', { name: 'Ara', exact: true }).click();

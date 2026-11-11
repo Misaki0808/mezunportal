@@ -1,5 +1,6 @@
+import { loginAs } from './login';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
 
@@ -7,17 +8,7 @@ const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
 test.afterAll(() => db.$disconnect());
-async function login(page: Page, persona: 'student' | 'alumniMentor' | 'systemAdmin') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  const checks = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await checks.nth(0).check();
-  await checks.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = loginAs;
 test('390 px: mezun hikâye gönderir, yönetici seçer, bölüm görür ve rıza geri alınır', async ({
   browser,
 }) => {
