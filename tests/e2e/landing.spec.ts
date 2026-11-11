@@ -41,6 +41,12 @@ test('dönen satır sürekli döner, DÜĞMESİZDİR; ekran okuyucu yalnız ilk 
 test('fare kahraman metninin üstündeyken dönen satır bekler, çekilince sürer', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
+  // Fare bekletmesi yalnız hover destekleyen cihazda var; iPhone emülasyonunda (WebKit turu) yoktur ve
+  // bu beklenen davranıştır — dokunmatik karşılığı aşağıdaki "dokunmak ... durdurmaz" testindedir.
+  test.skip(
+    !(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)),
+    'hover desteklemeyen (dokunmatik) cihaz',
+  );
   const line = page.locator('.landing-rotating-text');
   await page.locator('.landing-hero-copy').hover();
   const held = (await line.textContent())!;
