@@ -3,7 +3,7 @@
 // kodla ilgisiz testler düşüyor; bu süre Vitest içinde sabittir (ayar yok). Başka her kırmızı (assert, derleme, bilinmeyen/yakalanmamış
 // hata) DERHAL kırmızıdır: yeniden deneme asla gerçek bir hatayı gizlemez.
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -51,10 +51,10 @@ function runVitest(extraArgs, outFile) {
 }
 
 export function main() {
-  const nodeTests = spawnSync('node', ['--test', 'scripts/*.test.mjs'], {
-    stdio: 'inherit',
-    shell: true,
-  });
+  const scriptTests = readdirSync('scripts')
+    .filter((name) => name.endsWith('.test.mjs'))
+    .map((name) => join('scripts', name));
+  const nodeTests = spawnSync(process.execPath, ['--test', ...scriptTests], { stdio: 'inherit' });
   if (nodeTests.status !== 0) return nodeTests.status ?? 1;
   const out = join(tmpdir(), `vitest-gate-${process.pid}.json`);
   try {
