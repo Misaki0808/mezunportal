@@ -104,7 +104,9 @@ export async function Landing({ stats }: { stats: LandingStats }) {
               </div>
               <p className="landing-trust">
                 <CheckIcon />
-                {t('trust')}
+                <span>
+                  {t('trust')} {t('alumniStart')}
+                </span>
               </p>
             </div>
             <HeroPreview t={(key) => t(`preview.${key}`)} />

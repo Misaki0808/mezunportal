@@ -129,7 +129,8 @@
         "place": "İstanbul",
         "deadline": "Son 21 gün"
       }
-    }
+    },
+    "alumniStart": "Mezunsan kişisel e-postanla da başlayabilirsin."
   },
   "metadata": {
     "title": "MezunPortal",
@@ -185,7 +186,10 @@
       "title": "Sana uyan ilanlar",
       "empty": "Henüz sana uyan ilan yok. İlgi alanlarını eklersen uygun ilanlar burada görünür.",
       "profile": "Profilini düzenle"
-    }
+    },
+    "welcome": "Hoş geldin!",
+    "emptyStudentAction": "Deneyimleri oku",
+    "emptyMentorAction": "Deneyimini paylaş"
   },
   "errors": {
     "codes": {
@@ -949,6 +953,8 @@
       "verifiedDescription": "Doğrulanmış üyeliğinle devam edebilirsin.",
       "notStarted": "Doğrulamanı tamamla",
       "notStartedDescription": "Devam etmek için doğrulama adımını tamamla.",
+      "personalEmailHint": "Öğrenci veya akademisyensen üniversite e-postana geçerek üyeliğini doğrulayabilirsin.",
+      "changeEmail": "E-postanı değiştir",
       "awaiting": "Belgen inceleniyor",
       "awaitingDescription": "Bölüm yöneticin belgeyi incelediğinde sonucu burada göreceksin.",
       "rejected": "Belgen onaylanmadı",
@@ -958,7 +964,8 @@
       "uploadAgain": "Yeniden belge yükle",
       "home": "Ana sayfaya dön",
       "error": "Durumun şu anda yüklenemedi.",
-      "declare": "Üyeliğini doğrula"
+      "declare": "Üyeliğini doğrula",
+      "account": "Hesabına dön"
     },
     "document": {
       "eyebrow": "MEZUN DOĞRULAMA",
@@ -1014,7 +1021,8 @@
       "linkedin": "LinkedIn ile devam et",
       "redirecting": "Yönlendiriliyor…",
       "emailHint": "Öğrenci veya akademisyensen üniversite adresini, mezunsan kişisel e-posta adresini kullan.",
-      "continueTitle": "Devam etmek için giriş yap"
+      "continueTitle": "Devam etmek için giriş yap",
+      "invalidEmail": "Geçerli bir e-posta adresi yaz."
     },
     "membership": {
       "eyebrow": "ÜYELİK DOĞRULAMA",
@@ -1608,7 +1616,7 @@
   },
   "onboarding": {
     "eyebrow": "SANA ÖZEL BİR BAŞLANGIÇ",
-    "progress": "Profilin %{percent} tamamlandı",
+    "progress": "Başlangıç adımların %{percent} tamamlandı",
     "membershipTitle": "Önce üyeliğini doğrula",
     "membershipDescription": "Bölümünü seçerek üniversite topluluğuna katıl.",
     "membershipAction": "Üyeliğimi doğrula",

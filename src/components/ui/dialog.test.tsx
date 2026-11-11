@@ -187,3 +187,60 @@ describe.each([
     });
   });
 });
+
+describe('kaydırma kilidi', () => {
+  const locked = () =>
+    document.documentElement.style.overflow === 'hidden' &&
+    document.body.style.overflow === 'hidden';
+
+  it('açıkken arka sayfa kilitlenir, kapanınca ve sökülünce önceki değer döner', () => {
+    document.documentElement.style.overflow = 'clip';
+    const { rerender, unmount } = renderUi(
+      <Modal open={false} onClose={() => undefined} title="Başlık">
+        <p>İçerik</p>
+      </Modal>,
+    );
+    expect(locked()).toBe(false);
+    rerender(
+      <Modal open onClose={() => undefined} title="Başlık">
+        <p>İçerik</p>
+      </Modal>,
+    );
+    expect(locked()).toBe(true);
+    rerender(
+      <Modal open={false} onClose={() => undefined} title="Başlık">
+        <p>İçerik</p>
+      </Modal>,
+    );
+    expect(document.documentElement.style.overflow).toBe('clip');
+    expect(document.body.style.overflow).toBe('');
+    rerender(
+      <Modal open onClose={() => undefined} title="Başlık">
+        <p>İçerik</p>
+      </Modal>,
+    );
+    expect(locked()).toBe(true);
+    unmount();
+    expect(document.documentElement.style.overflow).toBe('clip');
+    document.documentElement.style.overflow = '';
+  });
+
+  it('iç içe iki pencere: biri kapanınca kilit kalır, ikisi kapanınca kalkar', () => {
+    const tree = (a: boolean, b: boolean) => (
+      <>
+        <Modal open={a} onClose={() => undefined} title="Bir">
+          <p>1</p>
+        </Modal>
+        <Sheet open={b} onClose={() => undefined} title="İki">
+          <p>2</p>
+        </Sheet>
+      </>
+    );
+    const { rerender } = renderUi(tree(true, true));
+    expect(locked()).toBe(true);
+    rerender(tree(false, true));
+    expect(locked()).toBe(true);
+    rerender(tree(false, false));
+    expect(locked()).toBe(false);
+  });
+});
