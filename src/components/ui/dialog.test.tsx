@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -114,6 +114,21 @@ describe.each([
     close.focus();
     await user.tab();
     expect(within(dialog).getByLabelText('Gerekçe')).toHaveFocus();
+  });
+
+  it('tarayıcı varsayılan odağı değiştirmese de ara denetimler arasında Tab ve Shift+Tab ilerler', () => {
+    renderUi(
+      <Component open onClose={() => undefined} title="Başlık" footer={<button>Vazgeç</button>}>
+        <input aria-label="Gerekçe" />
+      </Component>,
+    );
+    const input = screen.getByLabelText('Gerekçe');
+    const next = screen.getByRole('button', { name: 'Vazgeç' });
+    input.focus();
+    fireEvent.keyDown(input, { key: 'Tab' });
+    expect(next).toHaveFocus();
+    fireEvent.keyDown(next, { key: 'Tab', shiftKey: true });
+    expect(input).toHaveFocus();
   });
 
   it('odak pencerenin dışına düşmüşse Tab içeri alır; odaklanabilir öğe yoksa Tab odağı bırakmaz', async () => {

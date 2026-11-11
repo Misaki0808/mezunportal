@@ -88,29 +88,24 @@ function BaseDialog({
     }
   }, [open]);
 
-  // Tarayıcının kendi modal odak tuzağı, son öğeden sonra odağı tarayıcı arayüzüne/gövdeye bırakır: Tab pencere içinde
-  // döner (sondan ilke, ilkten Shift+Tab ile sona). Esc ve odağın tetikleyiciye dönüşü yukarıda.
+  // Safari varsayılan Tab sırasında bazı düğme ve bağlantıları atlar; tarayıcı sırasına güvenmeden
+  // tüm görünür denetimler arasında odağı kendimiz dolaştırırız.
   function handleKeyDown(event: KeyboardEvent<HTMLDialogElement>) {
     if (event.key !== 'Tab') return;
     const dialog = dialogRef.current;
     if (!dialog) return;
     const items = focusableIn(dialog);
-    const first = items[0];
-    const last = items[items.length - 1];
-    if (!first || !last) {
-      event.preventDefault();
-      return;
-    }
+    event.preventDefault();
+    if (items.length === 0) return;
     const active = document.activeElement;
-    const outside =
-      !(active instanceof HTMLElement) || active === dialog || !dialog.contains(active);
-    if (event.shiftKey && (outside || active === first)) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && (outside || active === last)) {
-      event.preventDefault();
-      first.focus();
-    }
+    const index = items.findIndex((item) => item === active);
+    const next =
+      index === -1
+        ? event.shiftKey
+          ? items.length - 1
+          : 0
+        : (index + (event.shiftKey ? -1 : 1) + items.length) % items.length;
+    items[next]?.focus();
   }
 
   function handleBackdropClick(event: MouseEvent<HTMLDialogElement>) {
