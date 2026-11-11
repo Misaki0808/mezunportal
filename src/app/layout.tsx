@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
 import { AppShell } from '@/components/layout/app-shell';
+import { getEnv } from '@/lib/env';
 import { ToastProvider } from '@/components/ui';
 
 import './globals.css';
@@ -23,7 +24,11 @@ const headingFont = Plus_Jakarta_Sans({
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('metadata');
-  return { title: t('title'), description: t('description') };
+  return {
+    title: t('title'),
+    description: t('description'),
+    metadataBase: new URL(getEnv().APP_URL),
+  };
 }
 
 export const viewport: Viewport = {

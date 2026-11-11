@@ -12,6 +12,7 @@ let base = process.env.APP_URL;
 let output;
 let persona;
 let viewport;
+let theme;
 const personas = {
   student: 'student',
   öğrenci: 'student',
@@ -32,12 +33,15 @@ for (let i = 0; i < args.length; i++) {
     const value = args[++i];
     if (!value || !Object.hasOwn(personas, value)) throw new Error('Geçerli bir test rolü gerekli');
     persona = personas[value];
-  } else if (arg === '--url' || arg === '--out' || arg === '--width') {
+  } else if (arg === '--url' || arg === '--out' || arg === '--width' || arg === '--theme') {
     const value = args[++i];
     if (!value || value.startsWith('--')) throw new Error(`${arg} için değer gerekli`);
     if (arg === '--url') base = value;
     else if (arg === '--out') output = value;
-    else {
+    else if (arg === '--theme') {
+      if (!['light', 'dark'].includes(value)) throw new Error('Tema light veya dark olmalı');
+      theme = value;
+    } else {
       if (!['360', '390', '1440'].includes(value))
         throw new Error('Genişlik 360, 390 veya 1440 olmalı');
       viewport = value;
@@ -71,7 +75,7 @@ const directory = await mkdtemp(path.join(root, 'tur-'));
 const browser = await chromium.launch();
 const report = [];
 try {
-  const context = await browser.newContext();
+  const context = await browser.newContext(theme ? { colorScheme: theme } : {});
   if (persona) {
     const login = await context.newPage();
     const loginUrl = new URL('/giris/test', baseUrl);
