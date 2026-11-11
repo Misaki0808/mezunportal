@@ -79,6 +79,7 @@ export default async function HomePage() {
     <div
       className={`mx-auto flex max-w-2xl flex-col gap-6 px-5 py-10 sm:py-12 ${!actor ? 'min-h-[calc(100dvh-8rem)]' : ''}`}
     >
+      {needsVerification && <h1 className="text-3xl font-semibold">{t('welcome')}</h1>}
       {needsVerification && (
         <Link
           href="/dogrulama"
@@ -115,7 +116,7 @@ export default async function HomePage() {
         <HomeDashboard summary={summary.data} feature={feature} />
       ) : (
         <>
-          <h1 className="text-3xl font-semibold">{t('title')}</h1>
+          {!needsVerification && <h1 className="text-3xl font-semibold">{t('title')}</h1>}
           <p className="text-base leading-relaxed">{t('tagline')}</p>
           {feature}
         </>

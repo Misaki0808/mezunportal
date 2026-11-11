@@ -48,6 +48,9 @@ describe('ilk giriş akışı', () => {
         saveVisibility={saveVisibility}
       />,
     );
+    expect(
+      screen.getByRole('progressbar', { name: 'Başlangıç adımların %25 tamamlandı' }),
+    ).toBeVisible();
     await user.click(screen.getByRole('checkbox', { name: 'Yazılım geliştirme' }));
     await user.click(screen.getByRole('button', { name: 'Devam et' }));
     await user.click(await screen.findByRole('checkbox', { name: 'Staj bulmak' }));

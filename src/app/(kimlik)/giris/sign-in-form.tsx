@@ -132,7 +132,13 @@ export function SignInForm({
           className="[&_p]:text-base"
           label={t('email')}
           hint={t('emailHint')}
-          error={fieldError ? errors(fieldError) : undefined}
+          error={
+            fieldError
+              ? fieldError === 'VALIDATION_INVALID'
+                ? t('invalidEmail')
+                : errors(fieldError)
+              : undefined
+          }
           required
         >
           {(control) => (
