@@ -1161,6 +1161,39 @@ describe('D7 sızıntı bekçisi: ilan kaynaklı talepte hedef kimliği onaydan 
 });
 
 describe('şikâyet', () => {
+  it('hedef bölüm yöneticisi şikâyeti görüp karara bağlar; yazan bölüm yöneticisi ve ilan sahibi raportörü göremez', async () => {
+    const w = await world();
+    const id = await published(w, w.alumni, { targetDepartmentIds: [w.inst.deptB1] });
+    const report = await reportJobPosting(deps, w.student, {
+      postingId: id,
+      reason: 'Yanıltıcı ilan',
+    });
+    expect((await listJobPostingReports(deps, w.moderator, {})).items).toEqual([]);
+    const queue = await listJobPostingReports(deps, w.otherModerator, {});
+    expect(queue.items.map((item) => item.id)).toEqual([report.reportId]);
+    expect(JSON.stringify(queue)).not.toContain(w.student);
+    const authorView = JSON.stringify(await listMyJobPostings(deps, w.alumni, {}));
+    expect(authorView).not.toContain(w.student);
+    expect(authorView).not.toContain('Elif Demirtaş');
+    expect(
+      await code(
+        resolveJobPostingReport(deps, w.moderator, {
+          reportId: report.reportId,
+          decision: 'DISMISS',
+          reason: 'İncelendi',
+        }),
+      ),
+    ).toBe('AUTH_FORBIDDEN');
+    await resolveJobPostingReport(deps, w.otherModerator, {
+      reportId: report.reportId,
+      decision: 'DISMISS',
+      reason: 'İncelendi',
+    });
+    expect(await code(reportJobPosting(deps, w.student, { postingId: id, reason: 'Tekrar' }))).toBe(
+      'REPORT_ALREADY_OPEN',
+    );
+  });
+
   it('açık ve görünür ilan şikâyet edilir; çift açık şikâyet, görünmeyen ve süresi dolmuş ilan reddedilir', async () => {
     const w = await world();
     const id = await published(w);

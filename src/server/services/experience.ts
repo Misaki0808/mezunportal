@@ -403,6 +403,7 @@ export async function listExperienceReports(
     const rows = await tx.report.findMany({
       where: {
         status: parsed.status,
+        targetType: 'EXPERIENCE',
         target: { departmentIdAtWrite: { in: ids } },
         ...pageWhere(parsed.cursor),
       },
@@ -410,7 +411,10 @@ export async function listExperienceReports(
       orderBy: { id: 'desc' },
       take: parsed.limit + 1,
     });
-    return page(rows, parsed.limit);
+    return page(
+      rows.map((row) => ({ ...row, targetType: 'EXPERIENCE' as const })),
+      parsed.limit,
+    );
   });
 }
 export async function resolveExperienceReport(

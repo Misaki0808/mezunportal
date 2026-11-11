@@ -223,7 +223,11 @@ export async function listJobPostingReports(
       where: {
         status: parsed.status,
         posting: {
-          departmentIdAtWrite: { in: intersectDepartments(departmentIds, parsed.departmentId) },
+          targets: {
+            some: {
+              departmentId: { in: intersectDepartments(departmentIds, parsed.departmentId) },
+            },
+          },
         },
         ...idCursorWhere(parsed.cursor),
       },
@@ -271,7 +275,19 @@ export async function resolveJobPostingReport(
       select: { postingId: true },
     });
     if (!target) throw codedNotFound('RESOURCE_NOT_FOUND');
-    const posting = await requireInScope(tx, admin, target.postingId);
+    const posting = await lockedPosting(tx, target.postingId);
+    const targets = await tx.jobPostingDepartment.findMany({
+      where: { postingId: target.postingId },
+      select: { departmentId: true },
+    });
+    let inScope = false;
+    for (const targetDepartment of targets) {
+      if (await covers(tx, admin, targetDepartment.departmentId)) {
+        inScope = true;
+        break;
+      }
+    }
+    if (!inScope) throw codedForbidden('AUTH_FORBIDDEN');
     await requireConsent(tx, adminId);
     const report = await tx.jobPostingReport.findUnique({
       where: { id: parsed.reportId },
