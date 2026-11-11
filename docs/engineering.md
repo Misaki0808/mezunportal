@@ -127,12 +127,16 @@ değeri değişirse tur yeniden koşulur. **İlk koşuda bulunup giderilenler:**
 sayfa bileşenleri artık `main` kullanmaz, kabuk sağlar. Etkinlik düğmeleri koyu temada `text-white` ile 2,27:1 kontrastlıydı, `text-on-primary` oldu. Tarih/saat girişlerinin iç parçaları tarayıcının
 kendi odak halkasını çizer; tur bunları ana öğe düzeyinde atlar.
 
+### Safari (WebKit) + iPhone turu (kart 200)
+
+Bütün otomatik turlar Chromium'da koşar; öğrencilerin önemli kısmı iPhone (Safari = WebKit) kullandığı için **isteğe bağlı** bir WebKit projesi vardır, CI ve varsayılan `pnpm test:e2e` değişmez. İlk kurulumda `pnpm exec playwright install webkit` (ücretsiz tarayıcı indirmesi, pakete bir şey eklemez). Koşmak için `E2E_WEBKIT=1 pnpm exec playwright test --project=webkit-iphone tests/e2e/webkit-iphone.spec.ts` (`--project` verilmezse Chromium da koşar; tek ağır iş kuralıyla, `--workers=1`: testler ortak seed hesaplarını paylaşır). `webkit-iphone.spec.ts` yalnız bu projede çalışır: çekirdek ekranları açık + koyu 390 px'te gezer ve yatay taşmayı, 16 px altı giriş alanını (iOS odakta yakınlaştırır), alt gezinme ile yapışkan çubuk çakışmasını, tarih/saat girişlerinin yerel türünü/boyunu, modal kaydırma kilidini, logo/kep SVG'sini ve odak halkasını ölçer; kapı/yetki/bulunamadı ekranını ölçerse başarısız olur (sahte yeşil olmasın). `WEBKIT_OUT=<klasör>` verilirse görüntü ve ölçüm JSON'u oraya yazılır; mevcut spec'ler de aynı projede koşabilir (`--project=webkit-iphone tests/e2e/<dosya>`). **Emülatör yapamaz, gerçek iPhone gerekir:** çentik/güvenli alan değerleri (`env()` = 0; yalnız `viewport-fit=cover` ve CSS'te `env(safe-area-inset-*)` kullanımı denetlenir), ekran klavyesinin açılması, iOS tarih çarkı, örtüye dokunup sürükleyince sayfanın kaymaması (emülatörde yalnız kilit mekanizması ölçülür).
+
 ### Yük altında altyapı kaynaklı düşmeler (P2-14)
 
 Birleştirme kapısında yük altında iki kez `[vitest-pool-runner]: Timeout waiting for worker to respond` ile kodla ilgisiz 3–8 test düştü. Vitest'in işçi
 başlatma/durdurma sınırı (60 sn) kütüphane içinde **sabittir**, yapılandırmayla büyütülemez (`fsModuleCache` zaten varsayılan olarak açıktır). Bu yüzden iki önlem var:
 (1) **`pnpm test:gate`**: `pnpm test` ile aynı kapsam; yalnız işçi zaman aşımı mesajı taşıyan dosyaları **bir kez** yeniden koşar (`scripts/test-gate.mjs`; assert, derleme,
-bilinmeyen ya da karışık hata asla yeniden denenmez, kırmızı kalır). Birleştirme betiği tam test için bunu çağırır. (2) Alt süreç başlatan bekçi testleri (`node --import tsx`,
+bilinmeyen ya da karışık hata asla yeniden denenmez, kırmızı kalır). Birleştirme betiği tam test için bunu çağırır. Dosya "geçti" sayılıp işçi yine de başlatılamadıysa Vitest bunu JSON raporuna yazmaz, yalnız çıktıda "Unhandled Error: Failed to start forks worker for test files …" verip 1 ile çıkar: `test:gate` çıktıyı yakalayıp ayrıştırır ve yakalanmamış hataların **hepsi** işçi başlatma/zaman aşımı kalıbındaysa ve her birinden dosya yolu çıkıyorsa yalnız o dosyaları bir kez yeniden koşar (kalıba uymayan tek bir hata, dosyası çıkarılamayan hata ya da sayıyla tutmayan bölüm kırmızıdır). (2) Alt süreç başlatan bekçi testleri (`node --import tsx`,
 react-server koşulu) `src/test/subprocess.ts` süreleriyle yazılır: test 30 sn, alt süreç 25 sn, `beforeAll(warmUpSubprocess)` ile tek seferlik ısınma (birim varsayılanı 5 sn yük altında
 yetmiyordu). Yeni bir alt süreç testi aynı yardımcıyı kullanır.
 
@@ -352,28 +356,51 @@ Hocaya gösterim de aynı yolla, bilgisayardan ya da telefondan, sahte veriyle y
 
 Hazırlık: `pnpm db:deploy && pnpm db:seed` (Faz 2 örnek verisi gelir: "Örnek …" şirketler, altı yayınlanmış deneyim, üç yayında + biri incelemede + bir taslak ilan, bir yayında + bir incelemede etkinlik;
 tarihler seed'i koştuğun ana göredir, yeniden koşmak tazeler). `pnpm dev:lan` ile telefonda aç; her hesap için `/giris/test?persona=<hesap>`
-(rol seçici: `/giris/test`). Hesaplar: `student` Deniz (öğrenci), `seniorMentor` Elif, `alumniMentor` Mert (mezun), `academic` Selin,
-`departmentAdmin` Kerem (bölüm yöneticisi), `systemAdmin`. E-postalar Mailpit'te (`http://localhost:8025`). Bulgularını pm-handoff'taki bulgu listesi şablonuna yaz.
+(rol seçici: `/giris/test`). **Bir hesapla ilk kez girince önce onay ekranı çıkar:** iki "Okudum ve onaylıyorum." kutusunu işaretle, "Seçimlerimi kaydet"e bas; sonra kaldığın sayfaya geçer.
+Hesaplar: `student` Deniz (öğrenci), `seniorMentor` Elif, `alumniMentor` Mert (mezun), `academic` Selin,
+`departmentAdmin` Kerem (bölüm yöneticisi), `systemAdmin`. E-postalar Mailpit'te (`http://localhost:8025`). Bulgularını aşağıdaki küçük tabloya ya da pm-handoff'taki
+`BULGU-LISTESI-SABLONU-FAZ2.md` dosyasına yaz.
 
 | Akış | Hesap → adım |
 |---|---|
-| Ana sayfa ve tanıtım | Çıkış yapmış tarayıcıda `/` (krem/koyu, dönen satır); giriş yapınca ana sayfa |
-| İlan | `student`: `/ilanlar` (üç örnek ilan, süzgeç, ilan detayı, "Şikâyet et"); `alumniMentor`: `/ilanlarim` → "Yeni ilan" → gönder; `departmentAdmin`: `/yonetim/ilanlar` → onayla/reddet |
-| İlan eşleşme bildirimi | `student` ilgi alanlarından "Veri analitiği"/"Yazılım geliştirme"yi işaretle; ilan yayınlanınca `/hesap/bildirimler` ve Mailpit (günde en çok bir özet) |
-| İletişim talebi (ilandan) | `student`: "İletişim talebi" olan ilanda gönder → `alumniMentor`: `/hesap/iletisim` → onayla; öğrencinin giden listesinde onaydan önce yazar adı yok |
-| Ters arama | `student`: `/hesap/staj-ariyorum` → rıza + "staj arıyorum" aç, önizlemeyi gör; `alumniMentor`: beyan aç, `/adaylar` → kartta ad yok → talep gönder; rızayı geri alınca kart aranmada yok |
-| Referans | `alumniMentor`: `/referans/yeni` (öğrenciyle önceden onaylı talep gerekir) → `departmentAdmin`: `/yonetim/referanslar`; mentorun puanı `/profil` sayfasındaki "Katkı puanın" bölümünde (`/hesap/guvenilirlik` yalnız öğrenci hesabında açılır) |
+| Ana sayfa ve tanıtım | Çıkış yapmış tarayıcıda `/` (krem/koyu, dönen satır, "Durdur" ve "Devam et" düğmesi); giriş yapınca ana sayfa ("Merhaba, Deniz") |
+| İlan | `student`: `/ilanlar` (üç örnek ilan, "Süzgeçler", arama, ilan detayı); `alumniMentor`: `/ilanlarim` → "İlan ver" → üç adım ("Devam et", son adımda önizleme) → "İncelemeye gönder" (konum boşsa son adımda geri gönderir; uzaktan ilanda "Uzaktan çalışılabilir"i işaretle); `departmentAdmin`: `/yonetim/ilanlar` → "Yayımla" → açılan pencerede "Onayla" (ya da "Reddet"). Şikâyet ilanda değil deneyimde: `student`: `/deneyimler` → "Deneyimi incele" → sayfanın altında "Bu deneyimi şikâyet et" |
+| İlan eşleşme bildirimi | `student`: `/baslangic` ("Neler ilgini çekiyor?") → "Veri analitiği" ve "Yazılım geliştirme"yi işaretle → "Devam et"; ilan yayınlanınca ana sayfada "Sana uyan ilanlar"da görünür. E-posta hemen gelmez, günde en çok bir özet gider (Mailpit); kapatmak için `/hesap/bildirimler` → "İlan eşleşmeleri" |
+| İletişim talebi (ilandan) | `student`: "İletişim iste" düğmesi olan ilanda (örnek: "İş Analizi Stajyeri") talebi gönder → `alumniMentor`: `/hesap/iletisim` → "Gelen" → "Onayla"; öğrencinin "Gönderilen" listesinde onaydan önce yazar adı yok |
+| Ters arama | `student`: `/hesap/staj-ariyorum` ("İş arayanlara görün") → anahtarı aç → açılan rıza kutusunu işaretle → "Kaydet"; "Mezunlar seni böyle görür" önizlemesinde ad yok; `alumniMentor`: `/adaylar` → "İşe alım yapıyorum"u aç → "Aday ara" → kartta ad yok → "İletişim iste" → "İstek gönder"; öğrenci anahtarı kapatıp kaydedince kart aranmada yok |
+| Referans | `alumniMentor`: `/referans/yeni` (öğrenciyle önceden onaylı iletişim talebi gerekir, öğrenci listede görünür) → "Beyan gönder"; `student`: `/hesap/referanslar` → "Onayla"; sonra `departmentAdmin`: `/yonetim/referanslar` → "Onayla" (öğrenci onaylamadan yönetimde görünmez); mentorun puanı `/profil` sayfasındaki "Katkı puanın" bölümünde (`/hesap/guvenilirlik` yalnız öğrenci hesabında açılır) |
 | Şirket sayfaları | `student`: `/sirketler` → "Örnek Yazılım A.Ş." (üç kişi altı gizli, takip et) |
 | Soru bankası | `student`: `/mulakat-sorulari` (en az üç farklı yazardan gelen gruplar) |
-| Başvuru takvimi | `student`: `/basvuru-takvimi` (aylar, takip, anonim deneyim varken kesit gizlenir) |
-| Beceri açığı | `student`: `/profil` → "Hedefime ne kadar yakınım?" (hedef pozisyon seç) |
-| Yılın / Ayın mezunu | `departmentAdmin`: `/yonetim/yilin-mezunu`, `/yonetim/ayin-mezunu`; yayın rızası `/odullerim`, `/hesap/hikayem`; kamuya açık doğrulama `/dogrula/<kod>` |
-| Etkinlik | `student`: `/etkinlikler` → kayıt; etkinlik başlayınca yöneticinin etkinlik ekranındaki QR'ı telefonla aç (adres `/etkinlik-katilim#…` biçimindedir; sayfayı kodsuz açarsan "Bu bağlantı geçerli değil" görünür, bu beklenen); `departmentAdmin`: `/yonetim/etkinlikler` (incelemedeki etkinliği onayla) |
-| Aylık özet | `systemAdmin`/`departmentAdmin`: `/yonetim/aylik-ozet` (önizleme); `student`: `/hesap/aylik-ozet` (abonelik) |
-| Google Meet | `systemAdmin`: `/yonetim/google` (Google Takvim/Meet PR'ı birleşince açılır; o zamana dek 404; anahtarlar gelince bağla); online randevuda Meet bağlantısı otomatik, bağlı değilse mentor elle ekler |
-| Koyu tema ve klavye | Tarayıcı/telefon koyu temada her ekran; Tab ile gezinti, her düğmenin adı okunuyor mu |
+| Başvuru takvimi | `student`: `/basvuru-takvimi` → şirket seç → "Takvimi göster" (aylar, "+ Takip et", anonim deneyim varken kesit gizlenir) |
+| Beceri açığı | `student`: `/profil` → "Hedefime ne kadar yakınım?" (hedef pozisyon seç → "Hedefi kaydet") |
+| Yılın / Ayın mezunu | `departmentAdmin`: `/yonetim/yilin-mezunu` (bölüm, yıl, tören tarihi → "Tören tarihini kaydet" → "Adayları göster"), `/yonetim/ayin-mezunu` ("Hikâyeleri göster" → "Hikâyeyi onayla" ya da "Düzenleme iste"). Tören tarihini 30 günden uzak bir güne koy (ör. 45 gün sonrası; yakın tarih "Formda eksik ya da uymayan bir alan var" hatası verir). "Bu mezunu seç" liste donunca (törenden 30 gün önce) açılır; hemen denemek için aşağıdaki "Ödül seçimini hemen açmak" kutusuna bak. Mezun tarafı `alumniMentor`: `/odullerim` (yayın rızası anahtarı → "Kaydet"), `/hesap/hikayem` (hikâyeyi yaz, en az 50 karakter; rıza anahtarını aç, "Kaydet", sonra "İncelemeye gönder"); öğrenci hesabı bu iki sayfayı görmez ("Bu sayfa senin rolün için değil"); kamuya açık doğrulama `/dogrula/<kod>` |
+| Etkinlik | `student`: `/etkinlikler` → etkinliğe dokun → "Katılıyorum"; etkinlik başlayınca `departmentAdmin`: `/yonetim/etkinlikler` → "Katılım ekranı" (QR + altı haneli kod, kod 2 dakikada bir yenilenir); QR'ı telefon kamerasıyla aç (adres `/etkinlik-katilim#…` biçimindedir; sayfayı kodsuz açarsan "Bu bağlantı geçerli değil" görünür, bu beklenen) → etkinlik sayfasında kod hazır gelir → "Katılımı doğrula"; incelemedeki etkinliği onaylamak için önce "İşlem gerekçesi"ne en az 3 karakter yaz, sonra "Onayla". Seed'deki etkinlik bir hafta sonra, kod yalnız başlangıç–bitiş arasında çalışır: hemen denemek için aşağıdaki "Etkinliği şimdiye çekmek" kutusuna bak |
+| Aylık özet | `departmentAdmin`/`systemAdmin`: `/yonetim/aylik-ozet` (önizleme); `student`: `/hesap/aylik-ozet` (özet); aboneliği `/hesap/bildirimler` → "Aylık özet" açıp kapatır |
+| Google Meet | `systemAdmin`: `/yonetim/google` (sayfa açık; yerelde "sahte takvim" açık olduğu için gerçek Meet bağlantısı oluşmaz; gerçek bağlantı için anahtarlar gelince bağla); online randevuda Meet bağlantısı otomatik, bağlı değilse mentor elle ekler |
+| Koyu tema ve klavye | Tarayıcı/telefon koyu temada her ekran; Tab ile gezinti (ilk durak "İçeriğe geç"), her düğmenin adı okunuyor mu |
 
 Seçmeli ders rehberi: `student`: `/ders-rehberi`; mezun işaretlemesi `/profil/dersler`; yönetim `/yonetim/dersler`. Ödül ve ayın mezunu içeriğini seed uydurmaz: seçim ve rıza akışı ekrandan denenir.
+
+**Etkinliği şimdiye çekmek** (QR ve kod için; veritabanı adı `.env.local` içindeki `DATABASE_URL`'nin sonudur):
+
+```bash
+docker compose exec -T postgres psql -U mezun -d <veritabanı> -c "update \"CampusEvent\" set \"startsAt\"=now()-interval '10 minutes', \"endsAt\"=now()+interval '2 hours' where title like 'YBS Kariyer%'"
+```
+
+**Ödül seçimini hemen açmak** (listeyi dondurur; yerel veritabanı için):
+tören tarihini 45 gün sonrası olarak kaydet, sonra
+
+```bash
+docker compose exec -T postgres psql -U mezun -d <veritabanı> -c "update \"AwardCycle\" set \"frozenAt\"=now()"
+```
+
+çalıştır; sayfada "Adayları göster". Liste boş gelirse "Yeniden hesaplama gerekçesi"ne bir şey yazıp "Listeyi yeniden hesapla"ya bas; "Bu mezunu seç" açılır.
+
+**Bulgu şablonu** (telefondan hızlı not için; ayrıntılı hâli pm-handoff'taki `BULGU-LISTESI-SABLONU-FAZ2.md`):
+
+| Nerede (adres ya da ekran) | Ne oldu | Görüntü (dosya adı) |
+|---|---|---|
+| | | |
 
 ### Canlıya alım
 

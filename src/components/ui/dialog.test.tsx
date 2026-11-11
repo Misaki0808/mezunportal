@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -116,6 +116,21 @@ describe.each([
     expect(within(dialog).getByLabelText('Gerekçe')).toHaveFocus();
   });
 
+  it('tarayıcı varsayılan odağı değiştirmese de ara denetimler arasında Tab ve Shift+Tab ilerler', () => {
+    renderUi(
+      <Component open onClose={() => undefined} title="Başlık" footer={<button>Vazgeç</button>}>
+        <input aria-label="Gerekçe" />
+      </Component>,
+    );
+    const input = screen.getByLabelText('Gerekçe');
+    const next = screen.getByRole('button', { name: 'Vazgeç' });
+    input.focus();
+    fireEvent.keyDown(input, { key: 'Tab' });
+    expect(next).toHaveFocus();
+    fireEvent.keyDown(next, { key: 'Tab', shiftKey: true });
+    expect(input).toHaveFocus();
+  });
+
   it('odak pencerenin dışına düşmüşse Tab içeri alır; odaklanabilir öğe yoksa Tab odağı bırakmaz', async () => {
     const { user } = renderUi(
       <>
@@ -185,5 +200,62 @@ describe.each([
       HTMLDialogElement.prototype.showModal = native;
       expect(screen.getByLabelText('İkinci')).toHaveFocus();
     });
+  });
+});
+
+describe('kaydırma kilidi', () => {
+  const locked = () =>
+    document.documentElement.style.overflow === 'hidden' &&
+    document.body.style.overflow === 'hidden';
+
+  it('açıkken arka sayfa kilitlenir, kapanınca ve sökülünce önceki değer döner', () => {
+    document.documentElement.style.overflow = 'clip';
+    const { rerender, unmount } = renderUi(
+      <Modal open={false} onClose={() => undefined} title="Başlık">
+        <p>İçerik</p>
+      </Modal>,
+    );
+    expect(locked()).toBe(false);
+    rerender(
+      <Modal open onClose={() => undefined} title="Başlık">
+        <p>İçerik</p>
+      </Modal>,
+    );
+    expect(locked()).toBe(true);
+    rerender(
+      <Modal open={false} onClose={() => undefined} title="Başlık">
+        <p>İçerik</p>
+      </Modal>,
+    );
+    expect(document.documentElement.style.overflow).toBe('clip');
+    expect(document.body.style.overflow).toBe('');
+    rerender(
+      <Modal open onClose={() => undefined} title="Başlık">
+        <p>İçerik</p>
+      </Modal>,
+    );
+    expect(locked()).toBe(true);
+    unmount();
+    expect(document.documentElement.style.overflow).toBe('clip');
+    document.documentElement.style.overflow = '';
+  });
+
+  it('iç içe iki pencere: biri kapanınca kilit kalır, ikisi kapanınca kalkar', () => {
+    const tree = (a: boolean, b: boolean) => (
+      <>
+        <Modal open={a} onClose={() => undefined} title="Bir">
+          <p>1</p>
+        </Modal>
+        <Sheet open={b} onClose={() => undefined} title="İki">
+          <p>2</p>
+        </Sheet>
+      </>
+    );
+    const { rerender } = renderUi(tree(true, true));
+    expect(locked()).toBe(true);
+    rerender(tree(false, true));
+    expect(locked()).toBe(true);
+    rerender(tree(false, false));
+    expect(locked()).toBe(false);
   });
 });

@@ -86,7 +86,9 @@ export async function Landing({ stats }: { stats: LandingStats }) {
               </div>
               <p className="landing-trust">
                 <CheckIcon />
-                {t('trust')}
+                <span>
+                  {t('trust')} {t('alumniStart')}
+                </span>
               </p>
             </div>
           </div>
