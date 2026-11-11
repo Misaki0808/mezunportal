@@ -1,4 +1,5 @@
 'use client';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { safeClientAction } from '@/lib/safe-client-action';
 
 import Link from 'next/link';
@@ -166,6 +167,7 @@ export function ReferralList({
   moderation?: boolean;
   canCreate?: boolean;
 }) {
+  const queueFocus = useQueueFocus();
   const t = useTranslations('referrals');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -229,6 +231,7 @@ export function ReferralList({
         setError(errors(result.errorCode));
         return;
       }
+      if (moderation) queueFocus.complete(row.id);
       setCancelChoice(undefined);
       setReviewChoice(undefined);
       setPage((p) => ({
@@ -261,6 +264,7 @@ export function ReferralList({
   }
   return (
     <div
+      ref={queueFocus.rootRef}
       data-hydrated={hydrated ? 'true' : undefined}
       className="mx-auto max-w-3xl px-4 py-8 pb-32"
     >
@@ -296,6 +300,7 @@ export function ReferralList({
               (alumni && row.status === 'ACCEPTED_PROPOSED');
             return (
               <li
+                data-queue-row={row.id}
                 key={row.id}
                 className="min-w-0 rounded-card border border-border bg-surface p-5 shadow-card"
               >
@@ -342,6 +347,7 @@ export function ReferralList({
                 {canRespond && (
                   <div className="mt-4 flex flex-wrap gap-3">
                     <Button
+                      data-queue-action
                       loading={pending}
                       onClick={() =>
                         moderation

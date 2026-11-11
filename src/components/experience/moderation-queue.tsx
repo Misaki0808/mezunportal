@@ -1,4 +1,5 @@
 'use client';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -182,6 +183,7 @@ export function ModerationQueue({
   listReports,
   resolve,
 }: Props) {
+  const queueFocus = useQueueFocus();
   const t = useTranslations('experiences');
   const errors = useTranslations('errors.codes');
   const [items, setItems] = useState(initialExperiences.items);
@@ -208,6 +210,7 @@ export function ModerationQueue({
       return review(parsed.data);
     },
     (choice) => {
+      queueFocus.complete(choice.id);
       setItems((current) => current.filter((item) => item.id !== choice.id));
       setNotice(choice.kind === 'PUBLISH' ? t('queue.published') : t('queue.rejected'));
     },
@@ -224,6 +227,7 @@ export function ModerationQueue({
       return resolve(parsed.data);
     },
     (choice) => {
+      queueFocus.complete(choice.id);
       setReports((current) => current.filter((item) => item.id !== choice.id));
       setNotice(t('queue.resolved'));
     },
@@ -271,7 +275,11 @@ export function ModerationQueue({
     ) : (
       <ul className="flex flex-col gap-4">
         {items.map((item) => (
-          <li key={item.id} className="rounded-card border border-border bg-bg p-5 shadow-card">
+          <li
+            data-queue-row={item.id}
+            key={item.id}
+            className="rounded-card border border-border bg-bg p-5 shadow-card"
+          >
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="category">{t(`types.${item.content.type}`)}</Badge>
               {item.isAnonymous && <Badge>{t('mine.anonymousNote')}</Badge>}
@@ -296,6 +304,7 @@ export function ModerationQueue({
             </details>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button
+                data-queue-action
                 onClick={() => experienceDecision.setChoice({ id: item.id, kind: 'PUBLISH' })}
               >
                 {t('queue.publish')}
@@ -326,7 +335,11 @@ export function ModerationQueue({
     ) : (
       <ul className="flex flex-col gap-4">
         {reports.map((report) => (
-          <li key={report.id} className="rounded-card border border-border bg-bg p-5 shadow-card">
+          <li
+            data-queue-row={report.id}
+            key={report.id}
+            className="rounded-card border border-border bg-bg p-5 shadow-card"
+          >
             <p className="text-sm text-fg-muted">
               {t('queue.reportDate', { date: dateOf(report.createdAt) })}
             </p>
@@ -339,7 +352,10 @@ export function ModerationQueue({
               >
                 {t('queue.reportedOn')}
               </Link>
-              <Button onClick={() => reportDecision.setChoice({ id: report.id, kind: 'RESOLVED' })}>
+              <Button
+                data-queue-action
+                onClick={() => reportDecision.setChoice({ id: report.id, kind: 'RESOLVED' })}
+              >
                 {t('queue.resolve')}
               </Button>
               <Button
@@ -360,7 +376,7 @@ export function ModerationQueue({
     );
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
+    <div ref={queueFocus.rootRef} className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
       <header className="mb-6">
         <p className="mb-2 text-base font-semibold text-primary">{t('queue.eyebrow')}</p>
         <h1 className="text-3xl font-semibold tracking-tight text-fg">{t('queue.title')}</h1>

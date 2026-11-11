@@ -1,4 +1,5 @@
 'use client';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
@@ -17,6 +18,7 @@ import {
 
 type Intent = { mode: 'PUBLISH' | 'REJECT' | 'SELECT'; storyId: string };
 export function StoryAdmin({ departments }: { departments: { id: string; name: string }[] }) {
+  const queueFocus = useQueueFocus();
   const t = useTranslations('alumniStory'),
     errors = useTranslations('errors.codes');
   const [departmentId, setDepartment] = useState(departments[0]?.id ?? ''),
@@ -74,6 +76,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
         }
         setMessage(t('reviewSuccess'));
       }
+      queueFocus.complete(intent.storyId);
       setIntent(null);
       setReason('');
       const result = await safeClientAction(() => listStoryModeration({ departmentId }));
@@ -86,7 +89,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
     setIntent({ mode, storyId });
   }
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-5 py-10">
+    <div ref={queueFocus.rootRef} className="mx-auto max-w-4xl space-y-6 px-5 py-10">
       <PageHeader title={t('adminTitle')} description={t('adminIntro')} />
       <Card className="space-y-4 p-5">
         <Field label={t('selectDepartment')}>
@@ -119,7 +122,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
         <>
           <ul className="space-y-4">
             {rows.map((story) => (
-              <li key={story.id}>
+              <li data-queue-row={story.id} key={story.id}>
                 <Card className="space-y-3 p-5">
                   <h2 className="text-lg font-semibold">{story.name}</h2>
                   <p>
@@ -133,6 +136,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
                     {story.status === 'PENDING' && (
                       <>
                         <Button
+                          data-queue-action
                           variant="secondary"
                           {...disabled(
                             pending || !story.consent,
@@ -153,6 +157,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
                     )}
                     {story.status === 'PUBLISHED' && (
                       <Button
+                        data-queue-action
                         {...disabled(
                           pending || !story.consent || story.suspicious,
                           pending

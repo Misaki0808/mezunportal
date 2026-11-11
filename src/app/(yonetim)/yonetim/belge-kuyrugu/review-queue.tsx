@@ -1,4 +1,5 @@
 'use client';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
@@ -36,6 +37,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
   const [error, setError] = useState<ErrorCode>();
   const [notice, setNotice] = useState(false);
   const [pending, setPending] = useState(false);
+  const queueFocus = useQueueFocus();
   const locked = useRef(false);
   const reasonInput = useRef<HTMLTextAreaElement>(null);
 
@@ -90,6 +92,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
     try {
       const result = await review(parsed.data);
       if (result.ok) {
+        queueFocus.complete(selection.id);
         setItems((current) => current.filter((item) => item.id !== selection.id));
         setSelection(undefined);
         setReason('');
@@ -107,7 +110,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
+    <div ref={queueFocus.rootRef} className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
       <PageHeader
         className="mb-8"
         eyebrow={t('eyebrow')}
@@ -140,7 +143,11 @@ export function ReviewQueue({ initial, list, review }: Props) {
       ) : (
         <ul className="flex flex-col gap-4">
           {items.map((item) => (
-            <li key={item.id} className="rounded-card border border-border bg-bg p-5 shadow-card">
+            <li
+              data-queue-row={item.id}
+              key={item.id}
+              className="rounded-card border border-border bg-bg p-5 shadow-card"
+            >
               <div className="flex flex-col gap-1">
                 <h2 className="break-words text-lg font-semibold text-fg">{item.applicantName}</h2>
                 <p className="break-all text-base text-fg-muted">{item.maskedEmail}</p>
@@ -169,6 +176,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
                 </a>
                 <div className="grid grid-cols-2 gap-3">
                   <Button
+                    data-queue-action
                     onClick={() => {
                       setNotice(false);
                       setSelection({ id: item.id, decision: 'APPROVE' });
