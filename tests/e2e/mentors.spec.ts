@@ -191,7 +191,7 @@ test('inceleyici: uzun beceri/gerekçe taşmaz ve bekleyen filtre isteği tekrar
     await expect(page).toHaveURL(/company=R2Pending/);
     await page.unroute('**/mentorlar?*');
     await page.goto('/uye/' + mentor.id);
-    await expect(page.getByRole('heading', { name: 'Mentorla bağlantı' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Mentorla görüş' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'İletişim iste', exact: true })).toBeVisible();
   } finally {
     await db.position.delete({ where: { id: position.id } });
