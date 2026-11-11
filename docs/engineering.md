@@ -179,6 +179,7 @@ portta sunucu varsa onu kullanmak yerine durur. `.env.local` veya süreçte `APP
 `pnpm exec playwright install chromium` gerekir. `pnpm evidence /`
 çalışan sunucudan 390×844 ve 1440×900 tam sayfa görüntüleri ile konsol hata/uyarı raporu üretir.
 `--width 360`, `--width 390` veya `--width 1440` yalnız seçilen genişliği çeker; 360 görünümü 360×780'dir.
+`--theme dark` veya `--theme light` renk temasını seçer.
 `APP_URL` adresi `--url` yerine kullanılabilir; `--out` çıktı kökünü değiştirir. Varsayılan çıktı,
 ana repo yanındaki `pm-handoff/kanit/<tarih>/` altında her çalışmaya ayrı bir klasördür. Rapor
 konsol içeriği barındırabilir; yalnız sahte veriyle kullanılır. `--as student`, `seniorMentor`,
