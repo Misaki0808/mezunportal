@@ -1,4 +1,5 @@
 'use client';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import Link from 'next/link';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useRef, useState, useTransition } from 'react';
@@ -48,6 +49,7 @@ export function AdminEvents({
   departments: { id: string; name: string }[];
   events: Item[];
 }) {
+  const queueFocus = useQueueFocus();
   const t = useTranslations('campusEvents'),
     errors = useTranslations('errors.codes'),
     router = useRouter();
@@ -158,6 +160,7 @@ export function AdminEvents({
           : errors(result.errorCode),
       );
       if (result.ok) {
+        if (kind !== 'CANCEL') queueFocus.complete(event.id);
         closeDecision();
         router.refresh();
       }
@@ -171,8 +174,87 @@ export function AdminEvents({
     ['endsAt', 'end', 'datetime-local'],
     ['capacity', 'capacity', 'number'],
   ] as const;
+  const pendingEvents = events.filter((event) => event.status === 'PENDING');
+  const otherEvents = events.filter((event) => event.status !== 'PENDING');
+  function eventCards(items: Item[]) {
+    return (
+      <ul className="space-y-3">
+        {items.map((event) => (
+          <Card
+            as="li"
+            data-queue-row={event.status === 'PENDING' ? event.id : undefined}
+            key={event.id}
+            className="list-none"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <h3 className="min-w-0 break-words font-semibold">{event.title}</h3>
+              <Badge tone={STATUS_TONES[event.status]}>{labels[event.status]}</Badge>
+            </div>
+            <p className="mt-2 flex items-center gap-1.5 text-fg-muted">
+              <CalendarIcon width={16} height={16} className="shrink-0" />
+              {new Intl.DateTimeFormat('tr-TR', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                timeZone: 'Europe/Istanbul',
+              }).format(new Date(event.startsAt))}
+            </p>
+            {event.status === 'PENDING' && (
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Button
+                  data-queue-action
+                  loading={pending}
+                  onClick={() => openDecision(event, 'PUBLISH')}
+                >
+                  {t('approve')}
+                </Button>
+                <Button
+                  variant="danger-outline"
+                  loading={pending}
+                  onClick={() => openDecision(event, 'REJECT')}
+                >
+                  {t('reject')}
+                </Button>
+              </div>
+            )}
+            {event.status === 'PUBLISHED' && (
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  className={buttonClasses({ variant: 'secondary' })}
+                  href={`/yonetim/etkinlikler/${event.id}`}
+                >
+                  {t('present')}
+                </Link>
+                <Button variant="danger-outline" onClick={() => openDecision(event, 'CANCEL')}>
+                  {t('cancel')}
+                </Button>
+              </div>
+            )}
+          </Card>
+        ))}
+      </ul>
+    );
+  }
   return (
-    <div className="space-y-8">
+    <div ref={queueFocus.rootRef} className="space-y-8">
+      {status && (
+        <p role="status" className="text-fg-muted">
+          {status}
+        </p>
+      )}
+      <section aria-label={t('pendingTitle')} className="space-y-4">
+        <h2 data-queue-heading className="text-xl font-semibold">
+          {t('pendingTitle')}
+        </h2>
+        {pendingEvents.length ? (
+          eventCards(pendingEvents)
+        ) : (
+          <EmptyState
+            icon={<CalendarIcon width={32} height={32} />}
+            title={t('pendingEmpty')}
+            description={t('pendingEmptyDescription')}
+          />
+        )}
+      </section>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -214,65 +296,10 @@ export function AdminEvents({
           </Button>
         </Card>
       </form>
-      {events.length === 0 ? (
-        <EmptyState
-          className="rounded-card border border-dashed border-border"
-          icon={<CalendarIcon width={32} height={32} strokeWidth={1.5} />}
-          title={t('emptyTitle')}
-          description={t('emptyDescription')}
-        />
-      ) : (
-        <section className="space-y-4">
-          {status && (
-            <p role="status" className="text-fg-muted">
-              {status}
-            </p>
-          )}
-          <ul className="space-y-3">
-            {events.map((event) => (
-              <Card as="li" key={event.id} className="list-none">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <h2 className="min-w-0 break-words font-semibold">{event.title}</h2>
-                  <Badge tone={STATUS_TONES[event.status]}>{labels[event.status]}</Badge>
-                </div>
-                <p className="mt-2 flex items-center gap-1.5 text-fg-muted">
-                  <CalendarIcon width={16} height={16} className="shrink-0" />
-                  {new Intl.DateTimeFormat('tr-TR', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                    timeZone: 'Europe/Istanbul',
-                  }).format(new Date(event.startsAt))}
-                </p>
-                {event.status === 'PENDING' && (
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Button loading={pending} onClick={() => openDecision(event, 'PUBLISH')}>
-                      {t('approve')}
-                    </Button>
-                    <Button
-                      variant="danger-outline"
-                      loading={pending}
-                      onClick={() => openDecision(event, 'REJECT')}
-                    >
-                      {t('reject')}
-                    </Button>
-                  </div>
-                )}
-                {event.status === 'PUBLISHED' && (
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Link
-                      className={buttonClasses({ variant: 'secondary' })}
-                      href={`/yonetim/etkinlikler/${event.id}`}
-                    >
-                      {t('present')}
-                    </Link>
-                    <Button variant="danger-outline" onClick={() => openDecision(event, 'CANCEL')}>
-                      {t('cancel')}
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            ))}
-          </ul>
+      {otherEvents.length > 0 && (
+        <section aria-label={t('managedTitle')} className="space-y-4">
+          <h2 className="text-xl font-semibold">{t('managedTitle')}</h2>
+          {eventCards(otherEvents)}
         </section>
       )}
       <Modal

@@ -130,6 +130,17 @@ describe('AdminEvents karar penceresi', () => {
     );
     unmount();
     renderUi(<AdminEvents departments={DEPARTMENTS} events={[]} />);
-    expect(screen.getByText('Henüz yaklaşan etkinlik yok')).toBeVisible();
+    expect(screen.getByText('İncelenecek etkinlik yok')).toBeVisible();
   });
+});
+
+it('yalnız bekleyenleri oluşturma formundan önce gösterir; diğer durumlar ayrı bölümdedir', () => {
+  renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+  const pending = screen.getByRole('region', { name: 'Onay bekleyenler' }),
+    other = screen.getByRole('region', { name: 'Yayınlanan ve sonuçlananlar' });
+  expect(within(pending).getByText('CV Atölyesi')).toBeVisible();
+  expect(within(pending).queryByText('Kariyer Sohbeti')).toBeNull();
+  expect(within(other).getByText('Kariyer Sohbeti')).toBeVisible();
+  const form = screen.getByRole('button', { name: 'İncelemeye gönder' }).closest('form')!;
+  expect(pending.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
