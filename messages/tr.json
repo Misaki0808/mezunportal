@@ -2098,7 +2098,8 @@
     "codeNeeded": "Altı haneli kodu eksiksiz yaz.",
     "adminDescription": "Etkinlik oluştur, başvuruları incele ve yayınlanan buluşmaları yönet.",
     "presentDescription": "Katılımcıların okutabilmesi için QR kodunu veya altı haneli kodu göster.",
-    "reasonHint": "İşlem gerekçesi en az 3 karakter olmalı."
+    "reasonHint": "İşlem gerekçesi en az 3 karakter olmalı.",
+    "reviewConfirm": "Bu etkinlik için verdiğin karar işlem kaydına yazılacak."
   },
   "monthlyDigest": {
     "subject": "Bu ay MezunPortal'da",

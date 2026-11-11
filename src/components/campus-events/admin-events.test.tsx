@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
-
 const mocks = vi.hoisted(() => ({
   review: vi.fn(),
   cancel: vi.fn(),
@@ -15,14 +14,12 @@ vi.mock('@/server/actions/campus-events', () => ({
   cancelCampusEvent: mocks.cancel,
   createCampusEvent: mocks.create,
 }));
-
 import { AdminEvents } from './admin-events';
-
 beforeAll(() => {
-  HTMLDialogElement.prototype.showModal = function showModal() {
+  HTMLDialogElement.prototype.showModal = function () {
     this.setAttribute('open', '');
   };
-  HTMLDialogElement.prototype.close = function close() {
+  HTMLDialogElement.prototype.close = function () {
     this.removeAttribute('open');
   };
 });
@@ -31,7 +28,6 @@ beforeEach(() => {
   mocks.review.mockResolvedValue({ ok: true, data: {} });
   mocks.cancel.mockResolvedValue({ ok: true, data: {} });
 });
-
 const DEPARTMENTS = [
   { id: '018f0000-0000-7000-8000-0000000000d1', name: 'Yönetim Bilişim Sistemleri' },
 ];
@@ -48,76 +44,92 @@ const EVENTS = [
     startsAt: new Date('2026-11-18T11:00:00Z'),
     status: 'PUBLISHED' as const,
   },
+  {
+    id: '018f0000-0000-7000-8000-0000000000e3',
+    title: 'Staj Buluşması',
+    startsAt: new Date('2026-11-19T11:00:00Z'),
+    status: 'PENDING' as const,
+  },
 ];
-
-describe('AdminEvents', () => {
-  it('gönder düğmesi her temada on-primary kullanır; engelli kararlar gerekçeye bağlanır', async () => {
-    const { user } = renderUi(<AdminEvents departments={[]} events={[EVENTS[1]!]} />);
-    expect(screen.getByRole('button', { name: 'İncelemeye gönder' })).toHaveClass(
-      'text-on-primary',
-    );
-    const cancel = screen.getByRole('button', { name: 'Etkinliği iptal et' });
-    expect(cancel).toBeDisabled();
-    expect(cancel).toHaveAccessibleDescription('İşlem gerekçesi en az 3 karakter olmalı.');
-    await user.type(screen.getByLabelText('İşlem gerekçesi'), 'uygun');
-    // Kit `Button` sebep satırı için sarmalayıcı ekler; etkinleşince düğme yeniden oluşur: eski öğeyi değil güncelini sorgula.
-    expect(screen.getByRole('button', { name: 'Etkinliği iptal et' })).toBeEnabled();
-  });
-
-  it('durumlar rozet olarak görünür; olay yoksa tek mesajlı boş durum çıkar', () => {
-    const { unmount } = renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
-    const pending = screen.getByText('CV Atölyesi').closest('li')!;
-    expect(within(pending).getByText('İnceleme bekliyor')).toBeInTheDocument();
-    const published = screen.getByText('Kariyer Sohbeti').closest('li')!;
-    expect(within(published).getByText('Yayında')).toBeInTheDocument();
-    unmount();
-    renderUi(<AdminEvents departments={DEPARTMENTS} events={[]} />);
-    expect(screen.getByText('Henüz yaklaşan etkinlik yok')).toBeInTheDocument();
-    expect(screen.queryByLabelText('İşlem gerekçesi')).toBeNull();
-  });
-
-  it('gerekçe yokken onay ve ret kapalıdır, sebebi düğmenin altında yazar; sunucuya gitmez', async () => {
-    renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
-    const pending = screen.getByText('CV Atölyesi').closest('li')!;
-    expect(within(pending).getByRole('button', { name: 'Onayla' })).toBeDisabled();
-    expect(within(pending).getByRole('button', { name: 'Reddet' })).toBeDisabled();
-    expect(within(pending).getAllByText('İşlem gerekçesi en az 3 karakter olmalı.')).toHaveLength(
-      2,
-    );
-    expect(mocks.review).not.toHaveBeenCalled();
-  });
-
-  it('gerekçe yazılınca onay ve ret sunucuya gider', async () => {
+const row = (title: string) => within(screen.getByText(title, { exact: true }).closest('li')!);
+describe('AdminEvents karar penceresi', () => {
+  it('kaydı ve kararı gösterir; pencere onaylanmadan sunucuya yazmaz', async () => {
     const { user } = renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
-    await user.type(screen.getByLabelText('İşlem gerekçesi'), 'Uygun bulundu');
-    await user.click(screen.getByRole('button', { name: 'Onayla' }));
+    await user.click(row('CV Atölyesi').getByRole('button', { name: 'Onayla' }));
+    const d = await screen.findByRole('dialog', { name: 'Onayla' });
+    expect(within(d).getByText('CV Atölyesi')).toBeVisible();
+    expect(mocks.review).not.toHaveBeenCalled();
+    await user.click(within(d).getByRole('button', { name: 'Onayla' }));
+    expect(mocks.review).not.toHaveBeenCalled();
+    expect(within(d).getByRole('alert')).toHaveTextContent(
+      'Bu işlem için kısa bir gerekçe yazmalısın.',
+    );
+    expect(within(d).getByLabelText(/İşlem gerekçesi/)).toHaveFocus();
+  });
+  it('onay gerekçesi sonraki kaydın retine taşınmaz', async () => {
+    const { user } = renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+    await user.click(row('CV Atölyesi').getByRole('button', { name: 'Onayla' }));
+    let d = await screen.findByRole('dialog');
+    await user.type(within(d).getByLabelText(/İşlem gerekçesi/), 'Yayımlanmaya uygun');
+    await user.click(within(d).getByRole('button', { name: 'Onayla' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(mocks.review).toHaveBeenCalledWith({
       eventId: EVENTS[0]!.id,
       decision: 'PUBLISH',
-      reason: 'Uygun bulundu',
+      reason: 'Yayımlanmaya uygun',
     });
-    await user.click(screen.getByRole('button', { name: 'Reddet' }));
+    await user.click(row('Staj Buluşması').getByRole('button', { name: 'Reddet' }));
+    d = await screen.findByRole('dialog');
+    expect(within(d).getByLabelText(/İşlem gerekçesi/)).toHaveValue('');
+    await user.click(within(d).getByRole('button', { name: 'Reddet' }));
+    expect(mocks.review).toHaveBeenCalledTimes(1);
+    await user.type(within(d).getByLabelText(/İşlem gerekçesi/), 'Tarih ve kapsam eksik');
+    await user.click(within(d).getByRole('button', { name: 'Reddet' }));
+    await waitFor(() => expect(mocks.review).toHaveBeenCalledTimes(2));
     expect(mocks.review).toHaveBeenLastCalledWith({
-      eventId: EVENTS[0]!.id,
+      eventId: EVENTS[2]!.id,
       decision: 'REJECT',
-      reason: 'Uygun bulundu',
+      reason: 'Tarih ve kapsam eksik',
     });
   });
-
-  it('iptal gerekçeyle onay penceresi açar; pencerede onaylanınca sunucuya gider', async () => {
+  it('vazgeçilen gerekçeyi diğer kayda veya iptale taşımaz', async () => {
     const { user } = renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
-    await user.type(screen.getByLabelText('İşlem gerekçesi'), 'Salon yok');
-    await user.click(screen.getByRole('button', { name: 'Etkinliği iptal et' }));
-    const dialog = await screen.findByRole('dialog');
-    await user.click(within(dialog).getByRole('button', { name: 'Etkinliği iptal et' }));
-    expect(mocks.cancel).toHaveBeenCalledWith({ eventId: EVENTS[1]!.id, reason: 'Salon yok' });
+    await user.click(row('CV Atölyesi').getByRole('button', { name: 'Onayla' }));
+    let d = await screen.findByRole('dialog');
+    await user.type(within(d).getByLabelText(/İşlem gerekçesi/), 'İlk kayıt için');
+    await user.click(within(d).getByRole('button', { name: 'Vazgeç' }));
+    expect(mocks.review).not.toHaveBeenCalled();
+    await user.click(row('Kariyer Sohbeti').getByRole('button', { name: 'Etkinliği iptal et' }));
+    d = await screen.findByRole('dialog');
+    expect(within(d).getByLabelText(/İşlem gerekçesi/)).toHaveValue('');
+    await user.type(within(d).getByLabelText(/İşlem gerekçesi/), 'Salon kullanılamıyor');
+    await user.click(within(d).getByRole('button', { name: 'Etkinliği iptal et' }));
+    await waitFor(() =>
+      expect(mocks.cancel).toHaveBeenCalledWith({
+        eventId: EVENTS[1]!.id,
+        reason: 'Salon kullanılamıyor',
+      }),
+    );
   });
-
-  it('ağ hatası formu düşürmez: kararlı hata metni gösterilir', async () => {
+  it('ağ hatasında pencere ve gerekçe korunur; kararlı hata metni gösterir', async () => {
     mocks.review.mockRejectedValue(new Error('ağ'));
     const { user } = renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
-    await user.type(screen.getByLabelText('İşlem gerekçesi'), 'Uygun bulundu');
-    await user.click(screen.getByRole('button', { name: 'Onayla' }));
-    expect(await screen.findByRole('status')).toHaveTextContent(/.+/);
+    await user.click(row('CV Atölyesi').getByRole('button', { name: 'Onayla' }));
+    const d = await screen.findByRole('dialog');
+    await user.type(within(d).getByLabelText(/İşlem gerekçesi/), 'Uygun bulundu');
+    await user.click(within(d).getByRole('button', { name: 'Onayla' }));
+    expect(await within(d).findByRole('alert')).not.toHaveTextContent('ağ');
+    expect(within(d).getByLabelText(/İşlem gerekçesi/)).toHaveValue('Uygun bulundu');
+  });
+  it('durum rozetleri ve boş ekran korunur', () => {
+    const { unmount } = renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+    expect(row('CV Atölyesi').getByText('İnceleme bekliyor')).toBeVisible();
+    expect(row('Kariyer Sohbeti').getByText('Yayında')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'İncelemeye gönder' })).toHaveClass(
+      'text-on-primary',
+    );
+    unmount();
+    renderUi(<AdminEvents departments={DEPARTMENTS} events={[]} />);
+    expect(screen.getByText('Henüz yaklaşan etkinlik yok')).toBeVisible();
   });
 });

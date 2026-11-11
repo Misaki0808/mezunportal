@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { safeClientAction } from '@/lib/safe-client-action';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -18,7 +18,11 @@ import {
   Textarea,
 } from '@/components/ui';
 import type { BadgeTone } from '@/components/ui';
-import { createCampusEventSchema } from '@/contracts/campus-events';
+import {
+  cancelCampusEventSchema,
+  createCampusEventSchema,
+  reviewCampusEventSchema,
+} from '@/contracts/campus-events';
 import {
   cancelCampusEvent,
   createCampusEvent,
@@ -51,7 +55,11 @@ export function AdminEvents({
     [status, setStatus] = useState(''),
     [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}),
     [reason, setReason] = useState(''),
-    [cancelId, setCancelId] = useState<string | null>(null);
+    [intent, setIntent] = useState<{ event: Item; kind: 'PUBLISH' | 'REJECT' | 'CANCEL' } | null>(
+      null,
+    ),
+    [reasonError, setReasonError] = useState('');
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
   const labels = {
     PENDING: t('pending'),
     PUBLISHED: t('published'),
@@ -109,24 +117,48 @@ export function AdminEvents({
       if (result.ok) router.refresh();
     });
   }
-  const reasonOk = reason.trim().length >= 3;
-  /** Gerekçe yokken kararlar kapalıdır ve sebebi düğmenin altında (ve alanın ipucunda) yazılır. */
-  const reasonGate = reasonOk
-    ? ({ disabled: false } as const)
-    : ({ disabled: true, disabledReason: t('reasonHint') } as const);
-  function decide(eventId: string, kind: 'PUBLISH' | 'REJECT' | 'CANCEL') {
+  function closeDecision() {
+    setIntent(null);
+    setReason('');
+    setReasonError('');
+  }
+  function openDecision(event: Item, kind: 'PUBLISH' | 'REJECT' | 'CANCEL') {
+    setReason('');
+    setReasonError('');
+    setStatus('');
+    setIntent({ event, kind });
+  }
+  function decide() {
+    if (!intent || pending) return;
+    const { event, kind } = intent;
+    const input = { eventId: event.id, reason, ...(kind === 'CANCEL' ? {} : { decision: kind }) };
+    const parsed = (
+      kind === 'CANCEL' ? cancelCampusEventSchema : reviewCampusEventSchema
+    ).safeParse(input);
+    if (!parsed.success) {
+      setReasonError(
+        reason.trim().length < 3 ? errors('AUDIT_REASON_REQUIRED') : errors('VALIDATION_INVALID'),
+      );
+      reasonRef.current?.focus();
+      return;
+    }
+    setReasonError('');
     start(async () => {
       const result =
         kind === 'CANCEL'
-          ? await safeClientAction(() => cancelCampusEvent({ eventId, reason }))
-          : await safeClientAction(() => reviewCampusEvent({ eventId, decision: kind, reason }));
+          ? await safeClientAction(() =>
+              cancelCampusEvent({ eventId: event.id, reason: parsed.data.reason }),
+            )
+          : await safeClientAction(() =>
+              reviewCampusEvent({ eventId: event.id, decision: kind, reason: parsed.data.reason }),
+            );
       setStatus(
         result.ok
           ? t(kind === 'PUBLISH' ? 'published' : kind === 'REJECT' ? 'rejected' : 'cancelled')
           : errors(result.errorCode),
       );
       if (result.ok) {
-        setCancelId(null);
+        closeDecision();
         router.refresh();
       }
     });
@@ -191,11 +223,6 @@ export function AdminEvents({
         />
       ) : (
         <section className="space-y-4">
-          <Field label={t('reason')} hint={t('reasonHint')}>
-            {(control) => (
-              <Input {...control} value={reason} onChange={(e) => setReason(e.target.value)} />
-            )}
-          </Field>
           {status && (
             <p role="status" className="text-fg-muted">
               {status}
@@ -218,18 +245,13 @@ export function AdminEvents({
                 </p>
                 {event.status === 'PENDING' && (
                   <div className="mt-4 flex flex-wrap gap-3">
-                    <Button
-                      loading={pending}
-                      {...reasonGate}
-                      onClick={() => decide(event.id, 'PUBLISH')}
-                    >
+                    <Button loading={pending} onClick={() => openDecision(event, 'PUBLISH')}>
                       {t('approve')}
                     </Button>
                     <Button
                       variant="danger-outline"
                       loading={pending}
-                      {...reasonGate}
-                      onClick={() => decide(event.id, 'REJECT')}
+                      onClick={() => openDecision(event, 'REJECT')}
                     >
                       {t('reject')}
                     </Button>
@@ -243,14 +265,7 @@ export function AdminEvents({
                     >
                       {t('present')}
                     </Link>
-                    <Button
-                      variant="danger-outline"
-                      {...reasonGate}
-                      onClick={() => {
-                        setStatus('');
-                        setCancelId(event.id);
-                      }}
-                    >
+                    <Button variant="danger-outline" onClick={() => openDecision(event, 'CANCEL')}>
                       {t('cancel')}
                     </Button>
                   </div>
@@ -261,32 +276,46 @@ export function AdminEvents({
         </section>
       )}
       <Modal
-        open={cancelId !== null}
-        onClose={() => setCancelId(null)}
-        title={t('cancel')}
-        description={t('cancelConfirm')}
+        open={intent !== null}
+        onClose={() => {
+          if (!pending) closeDecision();
+        }}
+        title={t(
+          intent?.kind === 'CANCEL' ? 'cancel' : intent?.kind === 'REJECT' ? 'reject' : 'approve',
+        )}
+        description={t(intent?.kind === 'CANCEL' ? 'cancelConfirm' : 'reviewConfirm')}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setCancelId(null)}>
+            <Button variant="secondary" loading={pending} onClick={closeDecision}>
               {t('dismiss')}
             </Button>
             <Button
-              variant="danger"
-              {...(pending || !reasonOk
-                ? {
-                    disabled: true as const,
-                    disabledReason: pending ? t('registering') : t('reason'),
-                  }
-                : { disabled: false as const })}
-              onClick={() => {
-                if (cancelId) decide(cancelId, 'CANCEL');
-              }}
+              variant={intent?.kind === 'PUBLISH' ? 'primary' : 'danger'}
+              loading={pending}
+              onClick={decide}
             >
-              {t('cancel')}
+              {t(
+                intent?.kind === 'CANCEL'
+                  ? 'cancel'
+                  : intent?.kind === 'REJECT'
+                    ? 'reject'
+                    : 'approve',
+              )}
             </Button>
           </>
         }
       >
+        <p className="mb-4 font-semibold">{intent?.event.title}</p>
+        <Field label={t('reason')} hint={t('reasonHint')} required error={reasonError || undefined}>
+          {(control) => (
+            <Textarea
+              {...control}
+              ref={reasonRef}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          )}
+        </Field>
         {status && <p role="alert">{status}</p>}
       </Modal>
     </div>
