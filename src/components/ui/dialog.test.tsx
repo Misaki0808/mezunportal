@@ -132,4 +132,58 @@ describe.each([
     await user.tab();
     expect(within(dialog).getByRole('button', { name: 'Kapat' })).toHaveFocus();
   });
+
+  describe('ilk odak', () => {
+    // Tarayıcının showModal() odaklama adımı: belgedeki ilk odaklanabilir öğe (başlıktaki Kapat).
+    beforeAll(() => {
+      HTMLDialogElement.prototype.showModal = function showModal() {
+        this.setAttribute('open', '');
+        this.querySelector<HTMLElement>('button, input, textarea, select, a[href]')?.focus();
+      };
+    });
+
+    it('"Kapat"ta değil, içeriğin ilk alanında başlar', () => {
+      renderUi(
+        <Component open onClose={() => undefined} title="Başlık">
+          <label>
+            Gerekçe
+            <textarea />
+          </label>
+        </Component>,
+      );
+      expect(screen.getByLabelText('Gerekçe')).toHaveFocus();
+    });
+
+    it("içerikte alan yoksa altbilgideki ilk düğmeye, o da yoksa Kapat'a verilir", () => {
+      const footer = renderUi(
+        <Component open onClose={() => undefined} title="Başlık" footer={<button>Vazgeç</button>}>
+          <p>Metin</p>
+        </Component>,
+      );
+      expect(screen.getByRole('button', { name: 'Vazgeç' })).toHaveFocus();
+      footer.unmount();
+      renderUi(
+        <Component open onClose={() => undefined} title="Başlık">
+          <p>Metin</p>
+        </Component>,
+      );
+      expect(screen.getByRole('button', { name: 'Kapat' })).toHaveFocus();
+    });
+
+    it('tarayıcı odağı zaten içeriğe verdiyse (autofocus niteliği) değiştirilmez', () => {
+      const native = HTMLDialogElement.prototype.showModal;
+      HTMLDialogElement.prototype.showModal = function showModal() {
+        this.setAttribute('open', '');
+        this.querySelector<HTMLElement>('[aria-label="İkinci"]')?.focus();
+      };
+      renderUi(
+        <Component open onClose={() => undefined} title="Başlık">
+          <input aria-label="Birinci" />
+          <input aria-label="İkinci" />
+        </Component>,
+      );
+      HTMLDialogElement.prototype.showModal = native;
+      expect(screen.getByLabelText('İkinci')).toHaveFocus();
+    });
+  });
 });

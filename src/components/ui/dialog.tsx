@@ -59,6 +59,7 @@ function BaseDialog({
 }: DialogProps & { placement: Placement }) {
   const t = useTranslations('ui.dialog');
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<Element | null>(null);
   const titleId = useId();
   const descriptionId = useId();
@@ -71,6 +72,13 @@ function BaseDialog({
     if (open && !dialog.open) {
       returnFocusRef.current = document.activeElement;
       dialog.showModal();
+      // showModal() odağı belgedeki İLK öğeye, yani başlıktaki "Kapat" düğmesine verir. İlk odak anlamlı olsun: içerikteki
+      // (ya da altbilgideki) ilk alan/düğme; hiç yoksa "Kapat"ta kalır. Odak zaten içerikteyse (autofocus niteliği) dokunulmaz.
+      const header = headerRef.current;
+      if (header?.contains(document.activeElement))
+        focusableIn(dialog)
+          .find((element) => !header.contains(element))
+          ?.focus();
     } else if (!open && dialog.open) {
       dialog.close();
     }
@@ -133,7 +141,10 @@ function BaseDialog({
     >
       {open && (
         <div className="flex max-h-[inherit] min-h-0 flex-col md:h-full">
-          <div className="flex items-start justify-between gap-3 border-b border-border p-4">
+          <div
+            ref={headerRef}
+            className="flex items-start justify-between gap-3 border-b border-border p-4"
+          >
             <div>
               <h2 id={titleId} className="text-lg font-semibold">
                 {title}

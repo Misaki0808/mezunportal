@@ -15,6 +15,15 @@ describe('EmailChangeForm', () => {
     expect(screen.getByText('Geçerli bir e-posta adresi yaz.')).toBeVisible();
     expect(submit).not.toHaveBeenCalled();
   });
+  it('boş gönderimde odak gönder düğmesinde kalmaz, ilk hatalı alana gider', async () => {
+    const submit = vi.fn();
+    const { user } = renderUi(<EmailChangeForm submit={submit} />);
+    await user.click(screen.getByRole('button', { name: 'Doğrulama bağlantısı gönder' }));
+    const field = screen.getByLabelText(/Yeni e-posta adresi/);
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    expect(field).toHaveFocus();
+    expect(submit).not.toHaveBeenCalled();
+  });
   it('nötr başarılı yanıtı ve kişisel veri içermeyen mesajı gösterir', async () => {
     const submit = vi.fn().mockResolvedValue({ ok: true, data: { status: 'CHECK_EMAIL' } });
     const { user } = renderUi(<EmailChangeForm submit={submit} />);

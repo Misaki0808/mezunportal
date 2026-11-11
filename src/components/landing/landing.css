@@ -20,21 +20,31 @@
   padding-inline: var(--lp-gutter);
 }
 .landing-skip {
-  position: fixed;
-  top: 0;
-  left: 0.75rem;
-  z-index: 100;
-  transform: translateY(-200%);
+  /* Görünmez ama odaklanabilir (sr-only). */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
   background: var(--color-bg);
   color: var(--color-fg);
+}
+.landing-skip:focus {
+  /* Odaklanınca akışta ÜST ÇUBUĞUN ÜSTÜNDE belirir ve çubuğu aşağı iter: markaya binmez, Tab sırası (atlama → marka → bağlantılar)
+     ekranda yukarıdan aşağı akar. Yalnız odak sürerken yer kaplar. */
+  position: relative;
+  z-index: 100;
+  display: block;
+  width: fit-content;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  margin: 0.5rem 0 0 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-control);
   box-shadow: var(--shadow-overlay);
-}
-.landing-skip:focus {
-  /* Odaklanınca marka ve üst çubuğun ALTINDA görünür (72 px üst çubuğa binmez). */
-  top: 5rem;
-  transform: translateY(0);
 }
 
 /* Üst çubuk */

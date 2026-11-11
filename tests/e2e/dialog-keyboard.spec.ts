@@ -42,6 +42,9 @@ for (const viewport of [
     await page.keyboard.press('Enter');
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
+    // İlk odak başlıktaki "Kapat"ta değil, içeriğin ilk alanında (pencere içinde) başlar.
+    await expect(dialog.getByRole('button', { name: 'Kapat' })).not.toBeFocused();
+    await expect(dialog.locator(':focus')).toHaveCount(1);
 
     for (let i = 0; i < 12; i += 1) {
       await page.keyboard.press('Tab');
