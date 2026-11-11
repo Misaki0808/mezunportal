@@ -2,7 +2,7 @@
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 import { useTranslations } from 'next-intl';
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 
 import { adminReason } from '@/contracts/admin';
 import {
@@ -45,6 +45,9 @@ function ModerationCard({
   const t = useTranslations('faq.moderation');
   const errors = useTranslations('errors.codes');
   const groupId = useId();
+  const noteInput = useRef<HTMLTextAreaElement>(null),
+    questionInput = useRef<HTMLTextAreaElement>(null),
+    answerInput = useRef<HTMLTextAreaElement>(null);
   const [selected, setSelected] = useState<string | undefined>(item.answers[0]?.id);
   const [question, setQuestion] = useState(item.question);
   const [answer, setAnswer] = useState(item.answers[0]?.body ?? '');
@@ -80,12 +83,17 @@ function ModerationCard({
       });
       if (!parsed.success) {
         setInvalid(true);
+        (parsed.error.issues[0]?.path[0] === 'question'
+          ? questionInput
+          : answerInput
+        ).current?.focus();
         return;
       }
       call = actions.publish(parsed.data);
     } else {
       if (!adminReason.safeParse(note).success) {
         setInvalid(true);
+        noteInput.current?.focus();
         return;
       }
       call =
@@ -124,6 +132,7 @@ function ModerationCard({
           {(f) => (
             <Textarea
               {...f}
+              ref={questionInput}
               rows={3}
               maxLength={FAQ_QUESTION_MAX}
               value={question}
@@ -171,6 +180,7 @@ function ModerationCard({
             {(f) => (
               <Textarea
                 {...f}
+                ref={answerInput}
                 rows={5}
                 maxLength={FAQ_ANSWER_MAX}
                 value={answer}
@@ -233,7 +243,14 @@ function ModerationCard({
                 required
                 error={invalid ? t('noteInvalid') : undefined}
               >
-                {(f) => <Textarea {...f} value={note} onChange={(e) => setNote(e.target.value)} />}
+                {(f) => (
+                  <Textarea
+                    {...f}
+                    ref={noteInput}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                  />
+                )}
               </Field>
             )
           )}

@@ -5,7 +5,7 @@ import { safeClientAction } from '@/lib/safe-client-action';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, useTransition, type FormEvent } from 'react';
+import { useRef, useState, useTransition, type FormEvent } from 'react';
 import {
   proposeReferralSchema,
   reviewReferralSchema,
@@ -168,6 +168,7 @@ export function ReferralList({
   canCreate?: boolean;
 }) {
   const queueFocus = useQueueFocus();
+  const reviewReasonInput = useRef<HTMLTextAreaElement>(null);
   const t = useTranslations('referrals');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -192,7 +193,15 @@ export function ReferralList({
         reason: reason[row.id] ?? '',
       });
       if (!parsed.success) {
-        setReasonErrors((previous) => ({ ...previous, [row.id]: errors('VALIDATION_INVALID') }));
+        setReasonErrors((previous) => ({
+          ...previous,
+          [row.id]: errors(
+            (reason[row.id] ?? '').trim().length < 3
+              ? 'AUDIT_REASON_REQUIRED'
+              : 'AUDIT_REASON_INVALID',
+          ),
+        }));
+        reviewReasonInput.current?.focus();
         return;
       }
     }
@@ -228,7 +237,13 @@ export function ReferralList({
                   }),
                 );
       if (!result.ok) {
-        setError(errors(result.errorCode));
+        if (moderation && result.fieldErrors?.reason) {
+          setReasonErrors((previous) => ({
+            ...previous,
+            [row.id]: errors(result.fieldErrors!.reason!),
+          }));
+          reviewReasonInput.current?.focus();
+        } else setError(errors(result.errorCode));
         return;
       }
       if (moderation) queueFocus.complete(row.id);
@@ -429,6 +444,7 @@ export function ReferralList({
             {(p) => (
               <Textarea
                 {...p}
+                ref={reviewReasonInput}
                 value={reason[reviewChoice.row.id] ?? ''}
                 maxLength={1000}
                 onChange={(e) => setReason({ ...reason, [reviewChoice.row.id]: e.target.value })}

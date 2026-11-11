@@ -3,7 +3,7 @@ import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useRef, useState, type RefObject } from 'react';
 
 import {
   resolveExperienceReportSchema,
@@ -54,6 +54,7 @@ function DecisionModal({
   pending,
   error,
   reasonInvalid,
+  reasonInput,
   reason,
   setReason,
   onConfirm,
@@ -63,6 +64,7 @@ function DecisionModal({
   pending: boolean;
   error?: ErrorCode;
   reasonInvalid?: ErrorCode;
+  reasonInput: RefObject<HTMLTextAreaElement | null>;
   reason: string;
   setReason: (value: string) => void;
   onConfirm: () => void;
@@ -113,6 +115,7 @@ function DecisionModal({
           {(control) => (
             <Textarea
               {...control}
+              ref={reasonInput}
               rows={4}
               value={reason}
               onChange={(event) => setReason(event.target.value)}
@@ -138,6 +141,7 @@ function useDecision<Out>(
   const [reasonInvalid, setReasonInvalid] = useState<ErrorCode>();
   const [error, setError] = useState<ErrorCode>();
   const [pending, setPending] = useState(false);
+  const reasonInput = useRef<HTMLTextAreaElement>(null);
   const locked = useRef(false);
   function close() {
     if (pending) return;
@@ -151,6 +155,7 @@ function useDecision<Out>(
     const early = run(choice, reason);
     if (typeof early === 'string') {
       setReasonInvalid(early);
+      reasonInput.current?.focus();
       return;
     }
     locked.current = true;
@@ -163,8 +168,10 @@ function useDecision<Out>(
         onDone(choice);
         setChoice(undefined);
         setReason('');
-      } else if (result.fieldErrors?.reason) setReasonInvalid(result.fieldErrors.reason);
-      else setError(result.errorCode);
+      } else if (result.fieldErrors?.reason) {
+        setReasonInvalid(result.fieldErrors.reason);
+        reasonInput.current?.focus();
+      } else setError(result.errorCode);
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -172,7 +179,18 @@ function useDecision<Out>(
       setPending(false);
     }
   }
-  return { choice, setChoice, reason, setReason, reasonInvalid, error, pending, close, confirm };
+  return {
+    choice,
+    setChoice,
+    reason,
+    setReason,
+    reasonInvalid,
+    reasonInput,
+    error,
+    pending,
+    close,
+    confirm,
+  };
 }
 
 export function ModerationQueue({
@@ -406,6 +424,7 @@ export function ModerationQueue({
         choice={experienceDecision.choice}
         pending={experienceDecision.pending}
         error={experienceDecision.error}
+        reasonInput={experienceDecision.reasonInput}
         reasonInvalid={experienceDecision.reasonInvalid}
         reason={experienceDecision.reason}
         setReason={experienceDecision.setReason}
@@ -416,6 +435,7 @@ export function ModerationQueue({
         choice={reportDecision.choice}
         pending={reportDecision.pending}
         error={reportDecision.error}
+        reasonInput={reportDecision.reasonInput}
         reasonInvalid={reportDecision.reasonInvalid}
         reason={reportDecision.reason}
         setReason={reportDecision.setReason}
