@@ -39,6 +39,7 @@ const CAUSE =
 const WORKER_START = /\[vitest-pool\]: Failed to start \w+ worker for test files?\s+([^\n]+)/;
 const TEST_FILE_END = /\.(?:test|spec)\.[cm]?[jt]sx?$/;
 const ANSI = /\x1b\[[0-9;]*m/g;
+const SUMMARY_ERRORS = /^\s*Errors\s+[1-9]\d*\s+errors?/m;
 
 /**
  * Vitest metin çıktısındaki "Unhandled Errors" bölümünü ayrıştırır. Bölüm yoksa `null`. Blok sayısı Vitest'in bildirdiği sayıyla
@@ -81,6 +82,11 @@ export function unhandledInfraFiles(text) {
   for (const block of parsed.blocks) {
     const start = WORKER_START.exec(block);
     if (!start || !CAUSE.test(block)) return null;
+    // Aynı blokta başka bir hata cümlesi (ör. "AssertionError: …") varsa blok yalnız işçi hatası DEĞİLDİR: kalıp eşleşmesi onu gizlemesin.
+    const errorLines = block
+      .split('\n')
+      .filter((line) => /^\s*(?:Caused by:\s*)?[A-Za-z]*Error\b/.test(line));
+    if (!errorLines.every((line) => INFRA.test(line))) return null;
     // Yol BOŞLUK içerebilir ("Okul/Bitirme Projem/..."): satırın tamamı alınır, sondaki nokta atılır, ", " ile bölünür ve her
     // parça test uzantısıyla bitmeli; bitmiyorsa dosya güvenle çıkarılamamıştır → yeniden deneme yok.
     const paths = start[1]
@@ -103,7 +109,11 @@ export function planRetry({ code, report, text }) {
   if (code === 0 || !report) return null;
   const { infraFiles, real } = classify(report);
   if (real > 0) return null;
-  const unhandled = parseUnhandled(text) === null ? { files: [] } : unhandledInfraFiles(text);
+  const parsed = parseUnhandled(text);
+  // Vitest özeti "Errors N error" diyor ama "Unhandled Errors" bölümü ayrıştırılamadı (biçim kayması, bozuk çıktı): sayılamayan hata
+  // güvenilmez, yeniden deneme ona karşı sessizce yeşil üretmesin.
+  if (parsed === null && SUMMARY_ERRORS.test(String(text ?? '').replace(ANSI, ''))) return null;
+  const unhandled = parsed === null ? { files: [] } : unhandledInfraFiles(text);
   if (!unhandled) return null;
   const files = [...new Set([...infraFiles, ...unhandled.files])];
   return files.length > 0 ? files : null;
@@ -130,11 +140,15 @@ function runVitest(extraArgs, outFile) {
       ],
       { stdio: ['inherit', 'pipe', 'pipe'] },
     );
-    const tee = (stream, out) =>
+    // `setEncoding`: çok baytlı karakter ("⎯", Türkçe harfler) yığın sınırında bölünürse her yığını ayrı çevirmek onu bozar ve
+    // "Unhandled Errors" başlığı ayrıştırılamaz.
+    const tee = (stream, out) => {
+      stream.setEncoding('utf8');
       stream.on('data', (chunk) => {
         out.write(chunk);
-        text = (text + chunk.toString('utf8')).slice(-TAIL_LIMIT);
+        text = (text + chunk).slice(-TAIL_LIMIT);
       });
+    };
     tee(child.stdout, process.stdout);
     tee(child.stderr, process.stderr);
     child.on('close', (status) => {

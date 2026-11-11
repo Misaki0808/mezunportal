@@ -177,3 +177,42 @@ test('dosya yolu BOŞLUK içerebilir ve birden çok dosya ", " ile gelebilir: yo
   const notTests = vitestText([workerTimeout('/Users/x/Bitirme Projem/src/a.ts')]);
   assert.equal(unhandledInfraFiles(notTests), null);
 });
+
+// --- İnceleme (R1, kart 214): gerçek hatayı gizleyebilecek ek yollar ---
+
+test('Vitest özeti "Errors N error" diyor ama "Unhandled Errors" bölümü ayrıştırılamıyorsa yeniden deneme YOK', () => {
+  const report = {
+    testResults: [
+      {
+        name: `${ROOT}/src/x.test.ts`,
+        status: 'failed',
+        message: '[vitest-pool-runner]: Timeout waiting for worker to respond',
+      },
+    ],
+  };
+  // Başlık satırı bozuk/yok: bölüm bulunamaz ama özet bir hata sayar.
+  const drifted = vitestText(['Error: gerçek yakalanmamış hata']).replace(
+    /^⎯+ Unhandled Errors ⎯+$/m,
+    '',
+  );
+  assert.equal(planRetry({ code: 1, report, text: drifted }), null);
+  const onlySummary = ' Test Files  1 failed | 4 passed (5)\n     Errors  1 error\n';
+  assert.equal(planRetry({ code: 1, report, text: onlySummary }), null);
+  // Hata özeti hiç yoksa (yalnız düşen altyapı dosyası) yeniden deneme sürer.
+  assert.deepEqual(planRetry({ code: 1, report, text: ' Test Files  1 failed | 4 passed (5)\n' }), [
+    `${ROOT}/src/x.test.ts`,
+  ]);
+});
+
+test('işçi hatası bloğunda başka bir hata cümlesi (ör. AssertionError) varsa blok altyapı sayılmaz', () => {
+  const mixed = vitestText([
+    `${workerTimeout(`${ROOT}/src/a.test.ts`)}\nAssertionError: expected 1 to be 2`,
+  ]);
+  assert.equal(unhandledInfraFiles(mixed), null);
+  assert.equal(planRetry({ code: 1, report: passedReport, text: mixed }), null);
+  // Meşru blok ("Error: [vitest-pool]…" + "Caused by: Error: [vitest-pool-runner]…") etkilenmez.
+  assert.deepEqual(
+    unhandledInfraFiles(vitestText([workerTimeout(`${ROOT}/src/a.test.ts`)])).files,
+    ['src/a.test.ts'],
+  );
+});
