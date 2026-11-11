@@ -149,6 +149,8 @@ deneyim arama (metin) 212/281, soru bankası (tüm şirketler) 431/494, aday ara
 bankası/başvuru takvimi sıralı taramadan çıktı). **Bilinen sınırlar (pilot ölçeğinin üstünde):** soru bankası güvenli gruplardan sonra arayüzde sayfalıdır; hesap hâlâ O(n),
 gerekirse önbellek/özet tablosu sonraki fazda değerlendirilir. Metin aramasında sıralama her eşleşen satırda `ts_rank_cd` + `word_similarity` hesaplar.
 
+Kart 205 sonrası yerel tekrar ölçümünde soru bankası 10× hacimde 18/25 ms, stres hacminde 377/391 ms (p50/p95); güvenli sonuçların sayfalanması hesap karmaşıklığını değiştirmez.
+
 ## Komutlar
 
 ```bash
