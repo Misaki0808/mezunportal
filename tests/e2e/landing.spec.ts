@@ -24,7 +24,7 @@ test('hareket azaltıldığında içerik görünür ve dönen satır sabit kalı
   await expect(page.getByRole('heading', { name: 'Üç adımda başlarsın.' })).toBeVisible();
 });
 
-test('dönen satır birkaç saniyede değişir; ekran okuyucu yalnız ilk satırı okur', async ({
+test('dönen satır sürekli döner, DÜĞMESİZDİR; ekran okuyucu yalnız ilk satırı okur', async ({
   page,
 }) => {
   await page.goto('/');
@@ -32,8 +32,61 @@ test('dönen satır birkaç saniyede değişir; ekran okuyucu yalnız ilk satır
   const first = (await line.textContent())!;
   await expect(line).toHaveAttribute('aria-hidden', 'true');
   await expect(page.locator('.landing-rotating .sr-only')).toHaveText(first);
-  await expect.poll(async () => line.textContent(), { timeout: 9000 }).not.toBe(first);
+  // Kullanıcı kararı (12 Kas): görünür durdur/devam düğmesi yok.
+  await expect(page.getByRole('button', { name: /durdur|devam/i })).toHaveCount(0);
+  await expect.poll(async () => line.textContent(), { timeout: 7000 }).not.toBe(first);
   await expect(page.locator('.landing-rotating .sr-only')).toHaveText(first);
+});
+
+test('fare kahraman metninin üstündeyken dönen satır bekler, çekilince sürer', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const line = page.locator('.landing-rotating-text');
+  await page.locator('.landing-hero-copy').hover();
+  const held = (await line.textContent())!;
+  await page.waitForTimeout(5000);
+  expect(await line.textContent(), 'fare üstündeyken satır değişmez').toBe(held);
+  await page.mouse.move(5, 5);
+  await expect.poll(async () => line.textContent(), { timeout: 7000 }).not.toBe(held);
+});
+
+test('masaüstünde sayfa genişliği kullanılır: iki sütun kahraman, sağda örnek kartlar, dolu sayı bandı', async ({
+  page,
+}) => {
+  for (const width of [1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const copy = (await page.locator('.landing-hero-copy').boundingBox())!;
+    const preview = (await page.locator('.landing-preview').boundingBox())!;
+    // Önizleme sağ sütunda ve içerik genişliğinin (≈1280 px) sağ kenarına yaslı; kopyanın yanında, altında değil.
+    expect(preview.x, `${width}: önizleme kopyanın sağında`).toBeGreaterThan(
+      copy.x + copy.width - 1,
+    );
+    expect(preview.x + preview.width, `${width}: sağ kenar`).toBeGreaterThan(width * 0.6);
+    expect(Math.abs(preview.y - copy.y), `${width}: aynı hizada`).toBeLessThan(200);
+    // Kapsayıcı genişlemiş: kopya + önizleme birlikte ≥ 1100 px kaplar (eski ~800 px sütun değil).
+    expect(preview.x + preview.width - copy.x).toBeGreaterThan(1100);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  }
+  await expect(page.locator('.landing-preview')).toHaveAttribute('aria-hidden', 'true');
+});
+
+test('mobilde örnek kartlar gizlidir: ilk ekranı itmez, tek sütun, taşma yok', async ({ page }) => {
+  for (const width of [360, 390]) {
+    await page.setViewportSize({ width, height: 780 });
+    await page.goto('/');
+    await expect(page.locator('.landing-preview')).toBeHidden();
+    const action = (await page
+      .getByRole('link', { name: 'İÜ e-postanla başla' })
+      .first()
+      .boundingBox())!;
+    expect(action.y + action.height).toBeLessThanOrEqual(780);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  }
 });
 
 test('karşılama metni JavaScript olmadan sunulur', async ({ browser, baseURL }) => {

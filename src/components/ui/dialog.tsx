@@ -29,6 +29,8 @@ const FOCUSABLE =
 /** Pencere içindeki görünür, odaklanabilir öğeler (belge sırasıyla). */
 function focusableIn(root: HTMLElement): HTMLElement[] {
   return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((element) => {
+    if (element.tabIndex < 0 || element.matches(':disabled') || element.closest('dialog') !== root)
+      return false;
     for (let node: HTMLElement | null = element; node && node !== root; node = node.parentElement) {
       if (node.hidden || node.hasAttribute('inert')) return false;
       const style = getComputedStyle(node);
@@ -98,12 +100,16 @@ function BaseDialog({
   // Safari varsayılan Tab sırasında bazı düğme ve bağlantıları atlar; tarayıcı sırasına güvenmeden
   // tüm görünür denetimler arasında odağı kendimiz dolaştırırız.
   function handleKeyDown(event: KeyboardEvent<HTMLDialogElement>) {
-    if (event.key !== 'Tab') return;
+    if (event.key !== 'Tab' || event.defaultPrevented) return;
     const dialog = dialogRef.current;
     if (!dialog) return;
+    if (event.target instanceof Element && event.target.closest('dialog') !== dialog) return;
     const items = focusableIn(dialog);
     event.preventDefault();
-    if (items.length === 0) return;
+    if (items.length === 0) {
+      dialog.focus();
+      return;
+    }
     const active = document.activeElement;
     const index = items.findIndex((item) => item === active);
     const next =
@@ -126,13 +132,14 @@ function BaseDialog({
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       onCancel={(event) => {
+        if (event.target !== event.currentTarget) return;
         // Esc: tarayıcının kendiliğinden kapatmasını durdur; durumu çağıran yönetir.
         event.preventDefault();
         onClose();
       }}
-      onClose={() => {
+      onClose={(event) => {
         // Tarayıcı yine de kapattıysa (örn. ikinci Esc) durum eşitlenir.
-        if (open) onClose();
+        if (event.target === event.currentTarget && open) onClose();
       }}
       onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}

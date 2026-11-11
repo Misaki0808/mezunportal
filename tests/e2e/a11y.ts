@@ -167,6 +167,9 @@ export async function tabThrough(page: Page, steps = 30) {
     const info = await page.evaluate(() => {
       const element = document.activeElement as HTMLElement | null;
       if (!element || element === document.body) return null;
+      // Next geliştirme sunucusunun kendi katmanı (derleme göstergesi, `nextjs-portal`): yalnız geliştirmede vardır, üretim derlemesinde
+      // yoktur; uygulamanın odak sırası değildir. Tab oraya taşarsa gezinti bitmiştir, sahte kırmızı üretmesin.
+      if (element.tagName === 'NEXTJS-PORTAL') return null;
       const style = getComputedStyle(element);
       const box = element.getBoundingClientRect();
       // Tarih/saat girişinin iç parçaları (gün/ay alanları, takvim düğmesi) tarayıcının kendi odak halkasını çizer; ana öğe odakta kalır.

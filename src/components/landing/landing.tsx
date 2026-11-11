@@ -2,8 +2,21 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import { BrandLogo } from '@/components/brand/logo';
-import { CheckIcon, ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon } from '@/components/ui';
+import {
+  BriefcaseIcon,
+  BuildingIcon,
+  CalendarIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ExternalLinkIcon,
+  FileTextIcon,
+  IconChip,
+  UsersIcon,
+} from '@/components/ui';
+import type { IconChipTone } from '@/components/ui';
 import type { LandingStats } from '@/server/services/landing';
+import { HeroPreview } from './hero-preview';
 import { CountUp, Reveal } from './motion';
 import { RotatingLine } from './rotating-line';
 import './landing.css';
@@ -17,7 +30,8 @@ export const DEPARTMENT_LINKS = [
   { key: 'club', href: 'https://www.instagram.com/iuybskulubu/' },
 ] as const;
 
-const ROTATING_KEYS = [
+/** Dönen satır anahtarları: mesaj kataloğundaki `landing.rotating` ile BİREBİR aynı olmalı (landing.test.tsx sınar). */
+export const ROTATING_KEYS = [
   'line1',
   'line2',
   'line3',
@@ -27,17 +41,28 @@ const ROTATING_KEYS = [
   'line7',
   'line8',
   'line9',
+  'line10',
 ] as const;
+
+/** Sayı bandındaki sayıların simgeleri; renkler sırayla İris, Mercan, Nane (docs/design.md "Renk dağılımı"). */
+const STAT_ITEMS = [
+  { key: 'experiences', icon: <FileTextIcon />, tone: 'primary' },
+  { key: 'mentors', icon: <UsersIcon />, tone: 'accent' },
+  { key: 'meetings', icon: <CalendarIcon />, tone: 'success' },
+  { key: 'jobs', icon: <BriefcaseIcon />, tone: 'primary' },
+  { key: 'companies', icon: <BuildingIcon />, tone: 'accent' },
+] as const satisfies readonly {
+  key: keyof Omit<LandingStats, 'available'>;
+  icon: React.ReactNode;
+  tone: IconChipTone;
+}[];
 
 export async function Landing({ stats }: { stats: LandingStats }) {
   const t = await getTranslations('landing');
-  const numbers = (
-    [
-      { key: 'experiences', value: stats.experiences },
-      { key: 'mentors', value: stats.mentors },
-      { key: 'meetings', value: stats.meetings },
-    ] as const
-  ).filter((entry): entry is { key: typeof entry.key; value: number } => entry.value !== null);
+  const numbers = STAT_ITEMS.flatMap((item) => {
+    const value = stats[item.key];
+    return value === null ? [] : [{ ...item, value }];
+  });
   const steps = ['verify', 'explore', 'connect'] as const;
   const questions = ['who', 'cost', 'privacy', 'mentor'] as const;
   // Mesaj kataloğu dizi kabul etmez (messages:check); satırlar sıralı anahtarlarla (line1…line9) tutulur.
@@ -67,14 +92,7 @@ export async function Landing({ stats }: { stats: LandingStats }) {
               <h1>
                 {t('heroStart')} <span className="landing-title-mark">{t('heroEnd')}</span>
               </h1>
-              <RotatingLine
-                lines={lines}
-                pauseText={t('pause')}
-                resumeText={t('resume')}
-                pauseLabel={t('pauseLabel')}
-                resumeLabel={t('resumeLabel')}
-                reducedLabel={t('motionReduced')}
-              />
+              <RotatingLine lines={lines} />
               <p className="landing-hero-description">{t('heroDescription')}</p>
               <div className="landing-hero-actions">
                 <Link href="/giris" className="landing-primary">
@@ -91,15 +109,20 @@ export async function Landing({ stats }: { stats: LandingStats }) {
                 </span>
               </p>
             </div>
+            <HeroPreview t={(key) => t(`preview.${key}`)} />
           </div>
         </section>
         {numbers.length > 0 && (
           <section className="landing-stats" aria-label={t('statsLabel')}>
             <div className="landing-content landing-stats-inner">
-              <p className="landing-stats-intro">{t('statsIntro')}</p>
+              <div className="landing-stats-copy">
+                <p className="landing-stats-intro">{t('statsIntro')}</p>
+                <p className="landing-stats-note">{t('statsNote')}</p>
+              </div>
               <dl>
-                {numbers.map(({ key, value }) => (
+                {numbers.map(({ key, value, icon, tone }) => (
                   <div key={key}>
+                    <IconChip tone={tone}>{icon}</IconChip>
                     <dd>
                       <CountUp value={value} />
                     </dd>
@@ -114,8 +137,10 @@ export async function Landing({ stats }: { stats: LandingStats }) {
           <div className="landing-content">
             <Reveal>
               <div className="landing-section-head">
-                <p className="landing-section-kicker">{t('howKicker')}</p>
-                <h2>{t('howTitle')}</h2>
+                <div>
+                  <p className="landing-section-kicker">{t('howKicker')}</p>
+                  <h2>{t('howTitle')}</h2>
+                </div>
                 <p>{t('howDescription')}</p>
               </div>
             </Reveal>
@@ -140,8 +165,10 @@ export async function Landing({ stats }: { stats: LandingStats }) {
           <div className="landing-content">
             <Reveal>
               <div className="landing-section-head">
-                <p className="landing-section-kicker">{t('departmentKicker')}</p>
-                <h2>{t('departmentTitle')}</h2>
+                <div>
+                  <p className="landing-section-kicker">{t('departmentKicker')}</p>
+                  <h2>{t('departmentTitle')}</h2>
+                </div>
                 <p>{t('departmentDescription')}</p>
               </div>
             </Reveal>
@@ -187,8 +214,10 @@ export async function Landing({ stats }: { stats: LandingStats }) {
         </section>
         <section className="landing-closing">
           <div className="landing-content landing-closing-inner">
-            <h2>{t('closingTitle')}</h2>
-            <p>{t('closingDescription')}</p>
+            <div>
+              <h2>{t('closingTitle')}</h2>
+              <p>{t('closingDescription')}</p>
+            </div>
             <Link href="/giris" className="landing-primary">
               {t('primary')} <ChevronRightIcon />
             </Link>
