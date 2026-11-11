@@ -22,6 +22,8 @@ import {
   sessionActionFor,
   sessionMultiplierPercent,
 } from '../rules/points';
+import { eventAttendanceMultiplier } from '../rules/campus-event';
+import { monthRange } from '../rules/appointmentSlots';
 import { jobPostingMultiplierPercent } from '../rules/jobPosting';
 import { idCursorWhere, toPage } from './admin-access';
 
@@ -531,6 +533,7 @@ export type BackfillResult = {
   faqs: number;
   jobPostings: number;
   referrals: number;
+  eventAttendances: number;
   created: number;
   failed: number;
 };
@@ -552,11 +555,19 @@ export async function runPointBackfill(
     faqs: 0,
     jobPostings: 0,
     referrals: 0,
+    eventAttendances: 0,
     created: 0,
     failed: 0,
   };
   const apply = async (
-    kind: 'experiences' | 'sessions' | 'cvReviews' | 'faqs' | 'jobPostings' | 'referrals',
+    kind:
+      | 'experiences'
+      | 'sessions'
+      | 'cvReviews'
+      | 'faqs'
+      | 'jobPostings'
+      | 'referrals'
+      | 'eventAttendances',
     run: () => Promise<AwardResult | null>,
   ) => {
     try {
@@ -683,7 +694,71 @@ export async function runPointBackfill(
     cursor = rows.at(-1)?.id;
     if (rows.length < BACKFILL_PAGE) break;
   }
+  // Etkinlik katılımı: katılım ve puan normalde aynı işlemde yazılır; bu döngü yalnız kural sonradan açılınca/atlanınca eksik kalanı tamamlar.
+  // Katılım sırasıyla (aylık dört puanlı tavan sıraya bağlıdır); iptal edilen etkinlik puan üretmez; geri alınmış kayıt yeniden doğmaz (benzersiz anahtar).
+  for (let cursor: { eventId: string; userId: string } | undefined; ;) {
+    const rows = await deps.db.eventAttendance.findMany({
+      where: {
+        event: { status: 'PUBLISHED' },
+        ...(since ? { attendedAt: { gte: since } } : {}),
+      },
+      orderBy: [{ attendedAt: 'asc' }, { eventId: 'asc' }, { userId: 'asc' }],
+      take: BACKFILL_PAGE,
+      ...(cursor ? { cursor: { eventId_userId: cursor }, skip: 1 } : {}),
+      select: { eventId: true, userId: true },
+    });
+    for (const row of rows)
+      await apply('eventAttendances', () => awardForEventAttendance(deps, row.eventId, row.userId));
+    const last = rows.at(-1);
+    cursor = last ? { eventId: last.eventId, userId: last.userId } : undefined;
+    if (rows.length < BACKFILL_PAGE) break;
+  }
   return result;
+}
+
+/**
+ * Etkinlik katılımının puanı (uzlaştırma yolu). Girişteki yazımla AYNI kilit ve çarpan kuralı: aynı ay içinde, bu katılımdan ÖNCE
+ * puanlanmış katılımlar sayılır (`eventAttendanceMultiplier`). İptal edilmiş/yayında olmayan etkinlik ya da katılım yoksa `null`.
+ */
+export async function awardForEventAttendance(
+  deps: PointDeps,
+  eventId: string,
+  userId: string,
+): Promise<AwardResult | null> {
+  const now = nowOf(deps);
+  return deps.db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`points:event:${userId}`}, 0))::text`;
+    const attendance = await tx.eventAttendance.findUnique({
+      where: { eventId_userId: { eventId, userId } },
+      select: { attendedAt: true, event: { select: { status: true } } },
+    });
+    if (!attendance || attendance.event.status !== 'PUBLISHED') return null;
+    const { attendedAt } = attendance;
+    const range = monthRange(attendedAt);
+    return awardPoint(
+      tx,
+      {
+        userId,
+        action: 'EVENT_ATTENDED',
+        sourceType: 'CAMPUS_EVENT',
+        sourceId: eventId,
+        eventAt: attendedAt,
+        multiplierPercent: async (inner) =>
+          eventAttendanceMultiplier(
+            await inner.pointEntry.count({
+              where: {
+                userId,
+                action: 'EVENT_ATTENDED',
+                status: { not: 'REVOKED' },
+                multiplierPercent: { gt: 0 },
+                eventAt: { gte: range.from, lt: attendedAt },
+              },
+            }),
+          ),
+      },
+      now,
+    );
+  }, TX_OPTIONS);
 }
 
 /** Günlük iş (`points.finalize`): bekleyenleri kesinleştirir, son `RECONCILE_DAYS` günde kaçırılan puanı tamamlar. */

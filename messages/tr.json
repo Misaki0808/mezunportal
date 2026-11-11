@@ -798,7 +798,8 @@
         "YOUTUBE": "YouTube"
       },
       "linksEdit": "Bağlantıları düzenle",
-      "linkDuplicate": "Her site için en fazla bir bağlantı ekleyebilirsin."
+      "linkDuplicate": "Her site için en fazla bir bağlantı ekleyebilirsin.",
+      "editShortcut": "Profilimi düzenle"
     },
     "view": {
       "back": "Geri",
@@ -2064,9 +2065,9 @@
     "registeredBadge": "Kayıtlısın",
     "attendedBadge": "Katılımın doğrulandı",
     "codeNeeded": "Altı haneli kodu eksiksiz yaz.",
-    "reasonNeeded": "Önce işlem gerekçesini yaz.",
-    "reasonHint": "Onay, ret ve iptal için en az üç harflik gerekçe gerekir.",
-    "listTitle": "Etkinlikler"
+    "adminDescription": "Etkinlik oluştur, başvuruları incele ve yayınlanan buluşmaları yönet.",
+    "presentDescription": "Katılımcıların okutabilmesi için QR kodunu veya altı haneli kodu göster.",
+    "reasonHint": "İşlem gerekçesi en az 3 karakter olmalı."
   },
   "monthlyDigest": {
     "subject": "Bu ay MezunPortal'da",
@@ -3325,6 +3326,13 @@
     "clearFilters": "Filtreleri temizle",
     "alumniBadge": "{count} mezun işine yaradı",
     "notEnoughShort": "Henüz yeterli değerlendirme yok",
-    "filters": "Filtreler"
+    "filters": "Filtreler",
+    "totalCount": "{count} ders arasından seçim yapabilirsin."
+  },
+  "errorBoundary": {
+    "title": "Bir sorun oluştu",
+    "description": "Sayfa şu anda görüntülenemiyor. Tekrar dene.",
+    "retry": "Tekrar dene",
+    "home": "Ana sayfaya dön"
   }
 }

@@ -1,4 +1,5 @@
 'use client';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -64,7 +65,7 @@ export function ContactList({
     setLoading(false);
   }
   async function refresh() {
-    const result = await listContactRequests({ box });
+    const result = await safeClientAction(() => listContactRequests({ box }));
     if (!result.ok) throw new Error('refresh');
     setPage(result.data);
     setClosing(null);

@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { selectSkillGoal } from '@/server/actions/skill-gap';
+vi.mock('@/server/actions/skill-gap', () => ({ selectSkillGoal: vi.fn() }));
 import { expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
 import { searchFaqSchema } from '@/contracts/faq';
@@ -57,4 +60,20 @@ it('uzun sözlük adından üretilen bağlantılar arama sınırlarına uyar', (
   expect(
     searchMentorsSchema.safeParse({ skill: param('Bu beceri için mentor bul', 'skill') }).success,
   ).toBe(true);
+});
+
+it('ağ hatasında seçim korunur ve Türkçe yeniden deneme mesajı gösterilir', async () => {
+  const user = userEvent.setup();
+  vi.mocked(selectSkillGoal).mockRejectedValueOnce(new Error('network error'));
+  renderUi(
+    <SkillGapPanel
+      data={{ title: null, analysis: null }}
+      titles={[{ id: 'title', name: 'Analist' }]}
+    />,
+  );
+  await user.selectOptions(screen.getByRole('combobox'), 'title');
+  await user.click(screen.getByRole('button', { name: 'Hedefi kaydet' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('tekrar dene');
+  expect(screen.getByRole('combobox')).toHaveValue('title');
+  expect(screen.getByRole('button', { name: 'Hedefi kaydet' })).toBeEnabled();
 });

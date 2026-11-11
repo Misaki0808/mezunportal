@@ -32,7 +32,7 @@ export default defineConfig({
           testTimeout: 5000,
           environment: 'node',
           include: ['src/**/*.test.{ts,tsx}', 'prisma/**/*.test.ts'],
-          exclude: ['**/*.db.test.ts', '**/node_modules/**'],
+          exclude: ['**/*.db.test.ts', '**/*.perf.test.ts', '**/node_modules/**'],
         },
       },
       {
@@ -49,6 +49,23 @@ export default defineConfig({
           fileParallelism: false,
         },
       },
+      // Yerel performans ölçümü (P2-14): yalnız `PERF=1` iken var (`pnpm test:perf`); `pnpm test` ve CI'da koşmaz.
+      ...(process.env.PERF === '1'
+        ? [
+            {
+              extends: true as const,
+              test: {
+                name: 'perf',
+                testTimeout: 600_000,
+                hookTimeout: 600_000,
+                environment: 'node' as const,
+                include: ['src/**/*.perf.test.ts'],
+                globalSetup: ['./src/test/db-global-setup.ts'],
+                fileParallelism: false,
+              },
+            },
+          ]
+        : []),
     ],
   },
 });

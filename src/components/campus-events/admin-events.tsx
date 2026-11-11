@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useRef, useState, useTransition } from 'react';
+import { safeClientAction } from '@/lib/safe-client-action';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -50,8 +51,6 @@ export function AdminEvents({
     [status, setStatus] = useState(''),
     [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}),
     [reason, setReason] = useState(''),
-    [reasonError, setReasonError] = useState(''),
-    reasonRef = useRef<HTMLInputElement>(null),
     [cancelId, setCancelId] = useState<string | null>(null);
   const labels = {
     PENDING: t('pending'),
@@ -95,7 +94,7 @@ export function AdminEvents({
         );
         return;
       }
-      const result = await createCampusEvent(parsed.data);
+      const result = await safeClientAction(() => createCampusEvent(parsed.data));
       setFieldErrors(
         result.ok
           ? {}
@@ -111,22 +110,16 @@ export function AdminEvents({
     });
   }
   const reasonOk = reason.trim().length >= 3;
-  /** Gerekçe yoksa düğme sessizce kapalı kalmaz: sebep alanın altında söylenir ve odak oraya gider. */
-  function needReason(action: () => void) {
-    if (reasonOk) {
-      setReasonError('');
-      action();
-      return;
-    }
-    setReasonError(t('reasonNeeded'));
-    reasonRef.current?.focus();
-  }
+  /** Gerekçe yokken kararlar kapalıdır ve sebebi düğmenin altında (ve alanın ipucunda) yazılır. */
+  const reasonGate = reasonOk
+    ? ({ disabled: false } as const)
+    : ({ disabled: true, disabledReason: t('reasonHint') } as const);
   function decide(eventId: string, kind: 'PUBLISH' | 'REJECT' | 'CANCEL') {
     start(async () => {
       const result =
         kind === 'CANCEL'
-          ? await cancelCampusEvent({ eventId, reason })
-          : await reviewCampusEvent({ eventId, decision: kind, reason });
+          ? await safeClientAction(() => cancelCampusEvent({ eventId, reason }))
+          : await safeClientAction(() => reviewCampusEvent({ eventId, decision: kind, reason }));
       setStatus(
         result.ok
           ? t(kind === 'PUBLISH' ? 'published' : kind === 'REJECT' ? 'rejected' : 'cancelled')
@@ -198,17 +191,9 @@ export function AdminEvents({
         />
       ) : (
         <section className="space-y-4">
-          <Field label={t('reason')} hint={t('reasonHint')} error={reasonError || undefined}>
+          <Field label={t('reason')} hint={t('reasonHint')}>
             {(control) => (
-              <Input
-                {...control}
-                ref={reasonRef}
-                value={reason}
-                onChange={(e) => {
-                  setReason(e.target.value);
-                  if (reasonError) setReasonError('');
-                }}
-              />
+              <Input {...control} value={reason} onChange={(e) => setReason(e.target.value)} />
             )}
           </Field>
           {status && (
@@ -235,14 +220,16 @@ export function AdminEvents({
                   <div className="mt-4 flex flex-wrap gap-3">
                     <Button
                       loading={pending}
-                      onClick={() => needReason(() => decide(event.id, 'PUBLISH'))}
+                      {...reasonGate}
+                      onClick={() => decide(event.id, 'PUBLISH')}
                     >
                       {t('approve')}
                     </Button>
                     <Button
                       variant="danger-outline"
                       loading={pending}
-                      onClick={() => needReason(() => decide(event.id, 'REJECT'))}
+                      {...reasonGate}
+                      onClick={() => decide(event.id, 'REJECT')}
                     >
                       {t('reject')}
                     </Button>
@@ -258,12 +245,11 @@ export function AdminEvents({
                     </Link>
                     <Button
                       variant="danger-outline"
-                      onClick={() =>
-                        needReason(() => {
-                          setStatus('');
-                          setCancelId(event.id);
-                        })
-                      }
+                      {...reasonGate}
+                      onClick={() => {
+                        setStatus('');
+                        setCancelId(event.id);
+                      }}
                     >
                       {t('cancel')}
                     </Button>

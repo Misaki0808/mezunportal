@@ -1,5 +1,6 @@
 'use client';
 import { useState, useTransition } from 'react';
+import { safeClientAction } from '@/lib/safe-client-action';
 import { useTranslations } from 'next-intl';
 import { Badge, Button, Checkbox, EmptyState, Field, FileTextIcon, Input } from '@/components/ui';
 import { courseSelectionSchema } from '@/contracts/course-guide';
@@ -23,10 +24,11 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
           <Input {...control} value={query} onChange={(event) => setQuery(event.target.value)} />
         )}
       </Field>
+      <p className="text-fg-muted">{t('totalCount', { count: courses.length })}</p>
       <Badge tone={selected.length >= 5 ? 'success' : 'info'}>
         {t('selectedCount', { count: selected.length })}
       </Badge>
-      <div className="max-h-[55vh] space-y-2 overflow-y-auto">
+      <div className="space-y-2">
         {filtered.map((course) => (
           <div
             key={course.id}
@@ -67,7 +69,7 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
               setStatus(errors('VALIDATION_INVALID'));
               return;
             }
-            const result = await saveAlumniCourses(parsed.data);
+            const result = await safeClientAction(() => saveAlumniCourses(parsed.data));
             setStatus(result.ok ? t('saved') : errors(result.errorCode));
           })
         }
