@@ -5,6 +5,7 @@ import { useEffect, useId, useRef } from 'react';
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 import { cn } from './cn';
+import { lockScroll } from './scroll-lock';
 import { CloseIcon } from './icons';
 import { IconButton } from './icon-button';
 
@@ -88,6 +89,12 @@ function BaseDialog({
     }
   }, [open]);
 
+  // Açıkken arka sayfa kaymaz (iOS Safari'de örtü üstünde sürükleme sayfayı kaydırırdı).
+  useEffect(() => {
+    if (!open) return;
+    return lockScroll();
+  }, [open]);
+
   // Safari varsayılan Tab sırasında bazı düğme ve bağlantıları atlar; tarayıcı sırasına güvenmeden
   // tüm görünür denetimler arasında odağı kendimiz dolaştırırız.
   function handleKeyDown(event: KeyboardEvent<HTMLDialogElement>) {
@@ -130,7 +137,7 @@ function BaseDialog({
       onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        'bg-bg p-0 text-fg shadow-overlay backdrop:bg-overlay',
+        'bg-bg p-0 text-fg shadow-overlay backdrop:bg-overlay overscroll-contain',
         PLACEMENT_CLASSES[placement],
       )}
     >
