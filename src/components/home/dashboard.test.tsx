@@ -30,7 +30,10 @@ describe('ana sayfa panosu', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Merhaba, Mert' })).toBeVisible();
     expect(screen.getByText('Şu an bekleyen bir işin yok.')).toBeVisible();
     const region = screen.getByRole('region', { name: 'Bekleyen işlerin' });
-    expect(within(region).queryAllByRole('link')).toHaveLength(0);
+    expect(within(region).getByRole('link', { name: 'Deneyimleri keşfet' })).toHaveAttribute(
+      'href',
+      '/deneyimler',
+    );
   });
 
   it('ad boşsa yalnız "Merhaba" der', () => {
@@ -100,4 +103,14 @@ describe('ana sayfa panosu', () => {
     expect(screen.getByRole('link', { name: /Yönetim/ })).toHaveAttribute('href', '/yonetim');
     expect(screen.getByText('Bekleyen iş yok')).toBeVisible();
   });
+});
+
+it('bekleyen iş yoksa mentor için tek anlamlı başlangıç eylemi gösterir', () => {
+  renderUi(<HomeDashboard summary={{ ...base, role: 'MENTOR' }} />);
+  const region = screen.getByRole('region', { name: 'Bekleyen işlerin' });
+  expect(within(region).getAllByRole('link')).toHaveLength(1);
+  expect(within(region).getByRole('link', { name: 'Deneyimini paylaş' })).toHaveAttribute(
+    'href',
+    '/deneyim/yeni',
+  );
 });
