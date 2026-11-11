@@ -201,8 +201,7 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 - **Ödül onay penceresinde bayat durum metni:** "Bu mezunu seç" penceresinde "Karar gerekçesi" alanının altında, tören tarihi kaydından kalan "Tercihin kaydedildi."
   kırmızı hata gibi görünüyor (203 provası; `year-alumni/admin.tsx` sayfa mesajını alan hatası olarak veriyor). "Yayımla" onay penceresi gövdesiz;
   tören tarihi 30 günden yakınsa genel "Formda eksik ya da uymayan bir alan var" hatası çıkıyor ("en az 30 gün sonrası" demeli).
-- **Küçük görünüm borçları:** hikâyeler boş durumu düz cümle (diğerleri `EmptyState`); `giris/epostani-kontrol-et` `rounded-2xl` (kit dili `rounded-card`);
-  klasik (kaplamasız) kaydırma çubuğunda modal açıkken sabit öğeler kayabilir (macOS/iOS'ta gözlenemez).
+- **Küçük görünüm borcu:** klasik (kaplamasız) kaydırma çubuğunda modal açıkken sabit öğeler kayabilir (macOS/iOS'ta gözlenemez; Windows/Linux deneme turunda bakılır).
 
 ### Bakım kuralı
 
