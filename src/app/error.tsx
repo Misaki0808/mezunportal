@@ -11,7 +11,7 @@ export default function ErrorPage({
 }) {
   const t = messages.errorBoundary;
   return (
-    <main className="mx-auto max-w-xl px-5 py-16">
+    <div className="mx-auto max-w-xl px-5 py-16">
       <h1 className="text-3xl font-semibold">{t.title}</h1>
       <p className="mt-4 text-fg-muted">{t.description}</p>
       <div className="mt-6 flex flex-wrap gap-3">
@@ -28,6 +28,6 @@ export default function ErrorPage({
           {t.home}
         </Link>
       </div>
-    </main>
+    </div>
   );
 }

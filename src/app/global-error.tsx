@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { BrandLogo } from '@/components/brand/logo';
 import messages from '../../messages/tr.json';
 import './globals.css';
 
@@ -14,8 +15,14 @@ export default function GlobalError({
   return (
     <html lang="tr">
       <body>
-        <header className="border-b border-border px-5 py-4 text-xl font-semibold text-primary">
-          MezunPortal
+        <header className="border-b border-border px-5 py-4">
+          <Link
+            href="/"
+            className="inline-flex min-h-11 items-center"
+            aria-label={messages.nav.brand}
+          >
+            <BrandLogo className="h-7 w-auto" />
+          </Link>
         </header>
         <main className="mx-auto max-w-xl px-5 py-16">
           <h1 className="text-3xl font-semibold">{t.title}</h1>

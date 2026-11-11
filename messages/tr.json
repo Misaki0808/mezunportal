@@ -3321,7 +3321,7 @@
   },
   "errorBoundary": {
     "title": "Bir sorun oluştu",
-    "description": "Sayfa şu anda görüntülenemiyor. Lütfen tekrar dene.",
+    "description": "Sayfa şu anda görüntülenemiyor. Tekrar dene.",
     "retry": "Tekrar dene",
     "home": "Ana sayfaya dön"
   }
