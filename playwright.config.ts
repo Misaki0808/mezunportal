@@ -9,6 +9,7 @@ if (!Number.isInteger(port) || port < 1024 || port > 65535) {
   throw new Error('E2E için APP_URL açık bir worktree portu içermeli.');
 }
 const baseURL = `http://127.0.0.1:${port}`;
+const webkitMode = process.env.E2E_WEBKIT;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -18,9 +19,17 @@ export default defineConfig({
   projects: [
     // `webkit-*.spec.ts` yalnız Safari projesinde koşar; varsayılan çalıştırma (ve CI) değişmez.
     { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /webkit-.*\.spec\.ts/ },
-    // İsteğe bağlı Safari (WebKit) + iPhone turu: `E2E_WEBKIT=1 pnpm exec playwright test --project=webkit-iphone` (docs/engineering.md "Test").
-    ...(process.env.E2E_WEBKIT === '1'
-      ? [{ name: 'webkit-iphone', use: { ...devices['iPhone 13'] } }]
+    // İsteğe bağlı Safari (WebKit) + iPhone turu (docs/engineering.md "Test"):
+    //  - E2E_WEBKIT=1: proje YALNIZ `webkit-*.spec.ts` dosyalarını koşar; `--project` verilmese bile bütün testler WebKit'e kaymaz.
+    //  - E2E_WEBKIT=all: kasıtlı kapı; seçtiğin tek tek spec'leri WebKit'te koşmak için (`--project=webkit-iphone tests/e2e/<dosya>`).
+    ...(webkitMode === '1' || webkitMode === 'all'
+      ? [
+          {
+            name: 'webkit-iphone',
+            use: { ...devices['iPhone 13'] },
+            ...(webkitMode === '1' ? { testMatch: /webkit-.*\.spec\.ts/ } : {}),
+          },
+        ]
       : []),
   ],
   webServer: {
