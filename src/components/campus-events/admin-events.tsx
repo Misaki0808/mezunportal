@@ -49,7 +49,7 @@ export function AdminEvents({
   departments: { id: string; name: string }[];
   events: Item[];
 }) {
-  const queueFocus = useQueueFocus();
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const t = useTranslations('campusEvents'),
     errors = useTranslations('errors.codes'),
     router = useRouter();
@@ -160,7 +160,7 @@ export function AdminEvents({
           : errors(result.errorCode),
       );
       if (result.ok) {
-        if (kind !== 'CANCEL') queueFocus.complete(event.id);
+        if (kind !== 'CANCEL') completeDecision(event.id);
         closeDecision();
         router.refresh();
       }
@@ -235,7 +235,7 @@ export function AdminEvents({
     );
   }
   return (
-    <div ref={queueFocus.rootRef} className="space-y-8">
+    <div ref={queueRef} className="space-y-8">
       {status && (
         <p role="status" className="text-fg-muted">
           {status}

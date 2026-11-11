@@ -280,7 +280,7 @@ export function FaqModerationQueue({
 }) {
   const t = useTranslations('faq.moderation');
   const errors = useTranslations('errors.codes');
-  const queueFocus = useQueueFocus();
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
   const [notice, setNotice] = useState<Kind>();
@@ -307,7 +307,7 @@ export function FaqModerationQueue({
   }
 
   return (
-    <div ref={queueFocus.rootRef} className="flex flex-col gap-4">
+    <div ref={queueRef} className="flex flex-col gap-4">
       {notice && (
         <p role="status" className="text-on-success-soft">
           {t(`done.${notice}`)}
@@ -328,7 +328,7 @@ export function FaqModerationQueue({
               item={item}
               actions={actions}
               onDone={(id, kind) => {
-                queueFocus.complete(id);
+                completeDecision(id);
                 setItems((old) => old.filter((row) => row.id !== id));
                 setNotice(kind);
               }}

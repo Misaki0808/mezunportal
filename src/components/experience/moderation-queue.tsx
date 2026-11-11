@@ -201,7 +201,7 @@ export function ModerationQueue({
   listReports,
   resolve,
 }: Props) {
-  const queueFocus = useQueueFocus();
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const t = useTranslations('experiences');
   const errors = useTranslations('errors.codes');
   const [items, setItems] = useState(initialExperiences.items);
@@ -228,7 +228,7 @@ export function ModerationQueue({
       return review(parsed.data);
     },
     (choice) => {
-      queueFocus.complete(choice.id);
+      completeDecision(choice.id);
       setItems((current) => current.filter((item) => item.id !== choice.id));
       setNotice(choice.kind === 'PUBLISH' ? t('queue.published') : t('queue.rejected'));
     },
@@ -245,7 +245,7 @@ export function ModerationQueue({
       return resolve(parsed.data);
     },
     (choice) => {
-      queueFocus.complete(choice.id);
+      completeDecision(choice.id);
       setReports((current) => current.filter((item) => item.id !== choice.id));
       setNotice(t('queue.resolved'));
     },
@@ -394,7 +394,7 @@ export function ModerationQueue({
     );
 
   return (
-    <div ref={queueFocus.rootRef} className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
+    <div ref={queueRef} className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
       <header className="mb-6">
         <p className="mb-2 text-base font-semibold text-primary">{t('queue.eyebrow')}</p>
         <h1 className="text-3xl font-semibold tracking-tight text-fg">{t('queue.title')}</h1>

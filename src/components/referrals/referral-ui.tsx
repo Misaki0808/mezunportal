@@ -167,7 +167,7 @@ export function ReferralList({
   moderation?: boolean;
   canCreate?: boolean;
 }) {
-  const queueFocus = useQueueFocus();
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const reviewReasonInput = useRef<HTMLTextAreaElement>(null);
   const t = useTranslations('referrals');
   const errors = useTranslations('errors.codes');
@@ -246,7 +246,7 @@ export function ReferralList({
         } else setError(errors(result.errorCode));
         return;
       }
-      if (moderation) queueFocus.complete(row.id);
+      if (moderation) completeDecision(row.id);
       setCancelChoice(undefined);
       setReviewChoice(undefined);
       setPage((p) => ({
@@ -279,7 +279,7 @@ export function ReferralList({
   }
   return (
     <div
-      ref={queueFocus.rootRef}
+      ref={queueRef}
       data-hydrated={hydrated ? 'true' : undefined}
       className="mx-auto max-w-3xl px-4 py-8 pb-32"
     >

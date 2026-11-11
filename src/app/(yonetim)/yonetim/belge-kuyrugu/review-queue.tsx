@@ -37,7 +37,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
   const [error, setError] = useState<ErrorCode>();
   const [notice, setNotice] = useState(false);
   const [pending, setPending] = useState(false);
-  const queueFocus = useQueueFocus();
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const locked = useRef(false);
   const reasonInput = useRef<HTMLTextAreaElement>(null);
 
@@ -92,7 +92,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
     try {
       const result = await review(parsed.data);
       if (result.ok) {
-        queueFocus.complete(selection.id);
+        completeDecision(selection.id);
         setItems((current) => current.filter((item) => item.id !== selection.id));
         setSelection(undefined);
         setReason('');
@@ -110,7 +110,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
   }
 
   return (
-    <div ref={queueFocus.rootRef} className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
+    <div ref={queueRef} className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
       <PageHeader
         className="mb-8"
         eyebrow={t('eyebrow')}

@@ -18,7 +18,7 @@ import {
 
 type Intent = { mode: 'PUBLISH' | 'REJECT' | 'SELECT'; storyId: string };
 export function StoryAdmin({ departments }: { departments: { id: string; name: string }[] }) {
-  const queueFocus = useQueueFocus();
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const reasonInput = useRef<HTMLTextAreaElement>(null),
     monthInput = useRef<HTMLInputElement>(null);
   const [reasonError, setReasonError] = useState('');
@@ -91,7 +91,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
         }
         setMessage(t('reviewSuccess'));
       }
-      queueFocus.complete(intent.storyId);
+      completeDecision(intent.storyId);
       setIntent(null);
       setReason('');
       const result = await safeClientAction(() => listStoryModeration({ departmentId }));
@@ -105,7 +105,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
     setIntent({ mode, storyId });
   }
   return (
-    <div ref={queueFocus.rootRef} className="mx-auto max-w-4xl space-y-6 px-5 py-10">
+    <div ref={queueRef} className="mx-auto max-w-4xl space-y-6 px-5 py-10">
       <PageHeader title={t('adminTitle')} description={t('adminIntro')} />
       <Card className="space-y-4 p-5">
         <Field label={t('selectDepartment')}>
