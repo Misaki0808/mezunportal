@@ -15,7 +15,7 @@ export default async function CampusEventPage({ params }: { params: Promise<{ id
   const event = result.data.find((x) => x.id === id);
   if (!event) notFound();
   return (
-    <main className="mx-auto max-w-2xl px-5 pb-56 pt-10 lg:pb-10">
+    <div className="mx-auto max-w-2xl px-5 pb-56 pt-10 lg:pb-10">
       <Link
         href="/etkinlikler"
         className="inline-flex min-h-11 items-center text-primary underline"
@@ -43,6 +43,6 @@ export default async function CampusEventPage({ params }: { params: Promise<{ id
         attended={event.attended}
         full={event.registeredCount >= event.capacity}
       />
-    </main>
+    </div>
   );
 }

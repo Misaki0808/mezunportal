@@ -78,10 +78,10 @@ test('Bölümümüz bağlantıları bölümün sayfalarına yeni sekmede, güven
   ).toBeVisible();
 });
 
-test('koyu tema (lacivert) ve açık tema (krem) okunabilir kalır', async ({ page }) => {
+test('koyu tema (lacivert #0E1A38) ve açık tema (krem) okunabilir kalır', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
-  await expect(page.locator('.landing')).toHaveCSS('background-color', 'rgb(20, 34, 74)');
+  await expect(page.locator('.landing')).toHaveCSS('background-color', 'rgb(14, 26, 56)');
   await expect(page.getByRole('heading', { level: 1 })).toHaveCSS('color', 'rgb(242, 244, 252)');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.emulateMedia({ colorScheme: 'light' });

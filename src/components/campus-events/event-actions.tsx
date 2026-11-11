@@ -75,7 +75,7 @@ export function EventActions({
           type="button"
           onClick={register}
           disabled={pending || full}
-          className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-white disabled:opacity-50"
+          className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-on-primary disabled:opacity-50"
         >
           {pending ? t('registering') : full ? t('full') : t('register')}
         </button>
@@ -100,7 +100,7 @@ export function EventActions({
             type="button"
             onClick={checkin}
             disabled={pending || code.length !== 6}
-            className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-white disabled:opacity-50"
+            className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-on-primary disabled:opacity-50"
           >
             {pending ? t('checking') : t('submitCode')}
           </button>

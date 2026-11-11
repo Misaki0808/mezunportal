@@ -49,7 +49,7 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
     ? data.companies
     : data.companies.filter((company) => !popularIds.has(company.id));
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 pb-28">
+    <div className="mx-auto max-w-5xl px-4 py-8 pb-28">
       <PageHeader title={t('title')} description={t('description')} />
       <div className="mt-5 flex flex-wrap gap-3">
         <Link href="/mulakat-sorulari" className={buttonClasses({ variant: 'secondary' })}>
@@ -89,7 +89,7 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
           )}
         </section>
       )}
-    </main>
+    </div>
   );
 }
 export function CompanyScreen({
@@ -194,7 +194,7 @@ export function CompanyScreen({
       : []),
   ];
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 pb-28">
+    <div className="mx-auto max-w-4xl px-4 py-8 pb-28">
       <Link
         href="/sirketler"
         className="press-control inline-flex min-h-11 items-center font-semibold text-primary"
@@ -224,7 +224,7 @@ export function CompanyScreen({
         </div>
       )}
       <Tabs className="mt-8" label={t('tabs')} items={tabs} />
-    </main>
+    </div>
   );
 }
 
@@ -272,7 +272,7 @@ export function CompanyMerge() {
     });
   }
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 pb-28">
+    <div className="mx-auto max-w-2xl px-4 py-8 pb-28">
       <PageHeader title={t('mergeTitle')} description={t('mergeDescription')} />
       <div className="mt-7 grid gap-6">
         {(['source', 'target'] as const).map((which) => (
@@ -347,6 +347,6 @@ export function CompanyMerge() {
           </p>
         )}
       </Modal>
-    </main>
+    </div>
   );
 }

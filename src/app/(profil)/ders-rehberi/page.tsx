@@ -20,7 +20,7 @@ export default async function CourseGuidePage({
     result.data.filter((c) => !c.code.startsWith('YBSB')),
   ];
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
       <header>
         <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="mt-2 text-muted">{t('description')}</p>
@@ -102,6 +102,6 @@ export default async function CourseGuidePage({
             </section>
           ),
       )}
-    </main>
+    </div>
   );
 }

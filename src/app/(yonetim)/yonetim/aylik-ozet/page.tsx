@@ -14,9 +14,9 @@ export default async function MonthlyDigestPreview() {
   const t = await getTranslations('monthlyDigest');
   const digest = await buildMonthlyDigest(getDb(), actor.userId);
   return (
-    <main className="mx-auto max-w-2xl px-5 py-10">
+    <div className="mx-auto max-w-2xl px-5 py-10">
       <PageHeader title={t('adminPreview')} description={t('adminDescription')} />
       <DigestView digest={digest} />
-    </main>
+    </div>
   );
 }

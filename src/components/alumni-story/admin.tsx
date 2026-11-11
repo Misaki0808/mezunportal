@@ -86,7 +86,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
     setIntent({ mode, storyId });
   }
   return (
-    <main className="mx-auto max-w-4xl space-y-6 px-5 py-10">
+    <div className="mx-auto max-w-4xl space-y-6 px-5 py-10">
       <PageHeader title={t('adminTitle')} description={t('adminIntro')} />
       <Card className="space-y-4 p-5">
         <Field label={t('selectDepartment')}>
@@ -214,6 +214,6 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
           {intent?.mode === 'PUBLISH' && message && <p role="alert">{message}</p>}
         </div>
       </Modal>
-    </main>
+    </div>
   );
 }

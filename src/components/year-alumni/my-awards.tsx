@@ -107,13 +107,13 @@ function AwardCard({ initial }: { initial: MyAward }) {
 export function MyAwards({ awards }: { awards: MyAward[] }) {
   const t = useTranslations('yearAlumni');
   return (
-    <main className="mx-auto max-w-2xl space-y-7 px-5 py-10">
+    <div className="mx-auto max-w-2xl space-y-7 px-5 py-10">
       <PageHeader eyebrow={t('awardName')} title={t('title')} description={t('intro')} />
       {awards.length ? (
         awards.map((award) => <AwardCard key={award.id} initial={award} />)
       ) : (
         <EmptyState title={t('empty')} />
       )}
-    </main>
+    </div>
   );
 }

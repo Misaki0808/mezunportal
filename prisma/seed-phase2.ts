@@ -2,7 +2,7 @@ import type { PrismaClient } from '../src/generated/prisma/client';
 import { normalizeName } from '../src/server/rules/dictionary';
 import { seedUserId } from './seed-accounts';
 import { INSTITUTION_SEED } from './seed-data';
-import { seedUuid } from './seed-util';
+import { seedId, seedUuid } from './seed-util';
 
 /**
  * Faz 2 DENEME VERİSİ (P2-14): kullanıcının telefonda hızlıca gezebileceği örnek içerik. SAHTE ve açıkça işaretlidir: şirket
@@ -447,6 +447,32 @@ const startOfIstanbulDay = (now: Date) => {
   return new Date(`${parts}T00:00:00.000Z`);
 };
 
+/**
+ * Bu modülün İLK sürümü 24 harfli onaylı kimlik (`seedId`) kullanıyordu; arayüz sözleşmeleri UUID bekler (`seedUuid`). O sürümü koşmuş
+ * bir yerel veritabanında aynı şirket adı benzersizlik hatası verirdi ve eski satırlar çiftlenirdi: önce eski kimlikli örnek satırlar silinir.
+ */
+const LEGACY_KEYS = {
+  company: ['yazilim', 'finans', 'perakende'],
+  experience: ['yazilim-yaz', 'yazilim-kis', 'finans-yaz', 'perakende-yaz', 'erasmus', 'kulup'],
+  posting: [
+    'veri-analizi-staj',
+    'is-analizi-staj',
+    'erp-junior',
+    'urun-staj-incelemede',
+    'pazarlama-taslak',
+  ],
+  event: ['kariyer-sohbeti', 'cv-atolyesi'],
+} as const;
+
+async function removeLegacyRows(prisma: PrismaClient) {
+  const legacy = (kind: keyof typeof LEGACY_KEYS) =>
+    LEGACY_KEYS[kind].map((key) => seedId(NS, `${kind}:${key}`));
+  await prisma.jobPosting.deleteMany({ where: { id: { in: legacy('posting') } } });
+  await prisma.campusEvent.deleteMany({ where: { id: { in: legacy('event') } } });
+  await prisma.experience.deleteMany({ where: { id: { in: legacy('experience') } } });
+  await prisma.company.deleteMany({ where: { id: { in: legacy('company') } } });
+}
+
 export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
   const department = await prisma.department.findFirstOrThrow({
     where: { code: INSTITUTION_SEED.department.code },
@@ -454,9 +480,11 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
   });
   const moderator = seedUserId('departmentAdmin');
   const today = startOfIstanbulDay(now);
+  await removeLegacyRows(prisma);
 
   // Şirketler (sektör sözlükten; sözlük seed'i önce koşar).
   const companyIds = new Map<string, string>();
+  const companySectors = new Map<string, string | null>();
   for (const company of COMPANIES) {
     const sector = await prisma.sector.findUnique({
       where: { normalizedName: normalizeName(company.sector, 'SECTOR') },
@@ -469,8 +497,15 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
       aliases: company.aliases.map((alias) => normalizeName(alias, 'COMPANY')),
       sectorId: sector?.id ?? null,
     };
-    await prisma.company.upsert({ where: { id }, create: { id, ...data }, update: data });
-    companyIds.set(company.key, id);
+    // Ad (`normalizedName`) benzersizdir: yönetici sözlükten aynı şirketi önceden eklemişse o satır kullanılır, çakışma olmaz.
+    const row = await prisma.company.upsert({
+      where: { normalizedName: data.normalizedName },
+      create: { id, ...data },
+      update: data,
+      select: { id: true },
+    });
+    companyIds.set(company.key, row.id);
+    companySectors.set(company.key, sector?.id ?? null);
   }
 
   // Örnek mezunlar: giriş yapılamayan sahte hesaplar (parola/oturum yok), doğrulanmış YBS mezunu üyelikli.
@@ -529,6 +564,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
       userId: authorId(position.user),
       companyId: companyIds.get(position.company)!,
       companyRaw: company.name,
+      sectorId: companySectors.get(position.company) ?? null,
       titleRaw: 'Stajyer',
       employmentType: 'INTERNSHIP' as const,
       startYear: 2024,
@@ -539,6 +575,26 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
     };
     await prisma.position.upsert({ where: { id }, create: { id, ...data }, update: data });
   }
+
+  // Ders rehberi: mezunlar seçmeli dersleri işaretler. Bir dersin sayısı en az 3 mezun işareti ister (küçük hücre gizli): ilk üç seçmeli
+  // beş mezundan işaret alır (görünür), dördüncü yalnız ikiden (gizli: kuralı canlı gösterir). Ders sözlüğü `seedCourses`'tan gelir.
+  const electives = await prisma.course.findMany({
+    where: { departmentId: department.id, elective: true },
+    orderBy: [{ semester: 'asc' }, { code: 'asc' }],
+    take: 4,
+    select: { id: true },
+  });
+  const markers: Author[] = ['alumniMentor', ...SAMPLE_ALUMNI];
+  for (const [courseIndex, course] of electives.entries())
+    for (const [markerIndex, marker] of markers.entries()) {
+      if (courseIndex === 3 && markerIndex >= 2) continue;
+      const key = { userId: authorId(marker), courseId: course.id };
+      await prisma.alumniCourseMark.upsert({
+        where: { userId_courseId: key },
+        create: key,
+        update: {},
+      });
+    }
 
   // Yayınlanmış deneyimler.
   for (const e of EXPERIENCES) {
@@ -622,9 +678,9 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
   const events = [
     {
       key: 'kariyer-sohbeti',
-      title: 'YBS Kariyer Sohbeti (örnek etkinlik)',
+      title: 'YBS Kariyer Sohbeti (deneme etkinliği)',
       description:
-        'Örnek etkinlik: mezunlarla staj ve ilk iş üzerine sohbet. Katılım kodu etkinlik başlayınca açılır.',
+        'Deneme verisi: mezunlarla staj ve ilk iş üzerine sohbet. Katılım kodu etkinlik başlayınca açılır.',
       location: 'İktisat Fakültesi, Amfi 2',
       inDays: 7,
       status: 'PUBLISHED' as const,
@@ -633,7 +689,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
       key: 'cv-atolyesi',
       title: 'CV Atölyesi (inceleme bekliyor)',
       description:
-        'Örnek etkinlik: moderatör onayını denemek için incelemede bekliyor. CV’ni mezunlarla birlikte gözden geçir.',
+        'Deneme verisi: moderatör onayını denemek için incelemede bekliyor. CV’ni mezunlarla birlikte gözden geçir.',
       location: 'İktisat Fakültesi, Bilgisayar Laboratuvarı',
       inDays: 14,
       status: 'PENDING' as const,
