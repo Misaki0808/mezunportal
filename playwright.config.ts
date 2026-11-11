@@ -14,7 +14,9 @@ const webkitMode = process.env.E2E_WEBKIT;
 export default defineConfig({
   testDir: './tests/e2e',
   // Testler ortak seed hesaplarının rıza ve oturum durumunu değiştirir; eşzamanlı dosyalar yarışır.
+  // `--workers=2` gibi bir üst değer global-setup.ts'te açık hatayla reddedilir.
   workers: 1,
+  globalSetup: './tests/e2e/global-setup.ts',
   use: { baseURL },
   projects: [
     // `webkit-*.spec.ts` yalnız Safari projesinde koşar; varsayılan çalıştırma (ve CI) değişmez.
