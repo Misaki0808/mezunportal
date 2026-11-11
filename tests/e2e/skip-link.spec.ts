@@ -46,6 +46,25 @@ for (const width of [390, 1440]) {
     const header = (await page.locator('.landing-header').boundingBox())!;
     const brandBox = (await page.locator('.landing-brand').first().boundingBox())!;
     expect(intersects(skipBox, brandBox)).toBe(false);
-    expect(skipBox.y).toBeGreaterThanOrEqual(header.y + header.height - 1);
+    // Tab sırası ekranda yukarıdan aşağı akar: atlama bağlantısı üst çubuğun ÜSTÜNDE (çubuğu aşağı iter), marka bir sonraki durak.
+    expect(skipBox.y + skipBox.height).toBeLessThanOrEqual(header.y + 1);
+    await page.keyboard.press('Tab');
+    await expect(page.locator('.landing-brand').first()).toBeFocused();
+  });
+
+  test(`giriş ekranı ${width}px: ilk durak atlama bağlantısı, Enter ana içeriğe atlar, markaya binmez`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/giris');
+    await page.waitForLoadState('networkidle');
+    await page.keyboard.press('Tab');
+    const skip = page.getByRole('link', { name: 'İçeriğe geç' });
+    await expect(skip).toBeFocused();
+    const skipBox = (await skip.boundingBox())!;
+    const brandBox = (await page.getByRole('img', { name: 'MezunPortal' }).boundingBox())!;
+    expect(intersects(skipBox, brandBox)).toBe(false);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#main-content')).toBeFocused();
   });
 }

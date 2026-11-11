@@ -62,13 +62,13 @@ describe('mentor kartı', () => {
     const { unmount } = renderUi(
       <MentorCard mentor={mentor()} returnTo="/mentorlar?mentorTypes=ALUMNI&page=2" />,
     );
-    expect(screen.getByRole('link', { name: 'İletişim iste' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /^İletişim iste/ })).toHaveAttribute(
       'href',
       '/iletisim-iste/m1?donus=%2Fmentorlar%3FmentorTypes%3DALUMNI%26page%3D2',
     );
     unmount();
     renderUi(<MentorCard mentor={mentor()} returnTo="https://kotu.example/x" />);
-    expect(screen.getByRole('link', { name: 'İletişim iste' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /^İletişim iste/ })).toHaveAttribute(
       'href',
       '/iletisim-iste/m1',
     );
@@ -76,12 +76,27 @@ describe('mentor kartı', () => {
 
   it('eylem önceliği: uygunsa "Randevu iste" birincil (dolgulu, tam genişlik), "Profili gör" ve "İletişim iste" ikincil', () => {
     renderUi(<MentorCard mentor={mentor()} />);
-    const appointment = screen.getByRole('link', { name: 'Randevu iste' });
+    const appointment = screen.getByRole('link', { name: /^Randevu iste/ });
     expect(appointment).toHaveClass('bg-primary', 'w-full', 'sm:w-auto');
-    for (const name of ['Profili gör', 'İletişim iste']) {
+    for (const name of [/^Profili gör/, /^İletişim iste/]) {
       const link = screen.getByRole('link', { name });
       expect(link).not.toHaveClass('bg-primary');
       expect(link).toHaveClass('border');
+    }
+  });
+
+  it('aynı adlı eylem bağlantıları kart sahibiyle ayırt edilir (görünen metin aynı kalır)', () => {
+    renderUi(
+      <>
+        <MentorCard mentor={mentor()} />
+        <MentorCard mentor={mentor({ userId: 'm2', displayName: 'Elif Kaya' })} />
+      </>,
+    );
+    for (const action of ['Randevu iste', 'Profili gör', 'İletişim iste']) {
+      const mert = screen.getByRole('link', { name: `${action}: Mert Yıldız` });
+      const elif = screen.getByRole('link', { name: `${action}: Elif Kaya` });
+      expect(mert).toHaveTextContent(action);
+      expect(mert).not.toHaveAttribute('href', elif.getAttribute('href')!);
     }
   });
 
@@ -93,12 +108,12 @@ describe('mentor kartı', () => {
         })}
       />,
     );
-    expect(screen.getByRole('link', { name: 'Profili gör' })).toHaveClass('bg-primary');
-    expect(screen.queryByRole('link', { name: 'Randevu iste' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Profili gör/ })).toHaveClass('bg-primary');
+    expect(screen.queryByRole('link', { name: /^Randevu iste/ })).not.toBeInTheDocument();
     unmount();
     renderUi(<MentorCard mentor={mentor()} compact />);
     expect(screen.getAllByRole('link')).toHaveLength(1);
-    expect(screen.getByRole('link', { name: 'Profili gör' })).toHaveClass('bg-primary');
+    expect(screen.getByRole('link', { name: /^Profili gör/ })).toHaveClass('bg-primary');
   });
 
   it('başlık, şirket/unvan, konular, müsaitlik ve kapasite; e-posta/telefon yok', () => {
@@ -110,12 +125,12 @@ describe('mentor kartı', () => {
     expect(screen.getByText('Yazılım geliştirme')).toBeInTheDocument();
     // Kataloğda olmayan konu anahtarı ham metin olarak sızmaz.
     expect(screen.queryByText('bilinmeyen-anahtar')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Profili gör' })).toHaveAttribute('href', '/uye/m1');
-    expect(screen.getByRole('link', { name: 'İletişim iste' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /^Profili gör/ })).toHaveAttribute('href', '/uye/m1');
+    expect(screen.getByRole('link', { name: /^İletişim iste/ })).toHaveAttribute(
       'href',
       '/iletisim-iste/m1',
     );
-    expect(screen.getByRole('link', { name: 'Randevu iste' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /^Randevu iste/ })).toHaveAttribute(
       'href',
       '/randevu-al/m1',
     );

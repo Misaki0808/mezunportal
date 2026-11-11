@@ -22,6 +22,10 @@ export function MentorCard({
 }) {
   const t = useTranslations('mentors');
   const tags = useTranslations('profileTags');
+  const ui = useTranslations('ui');
+  // Aynı adlı eylem bağlantıları kartın sahibiyle ayırt edilir: "Profili gör: Ad" (görünen metin değişmez).
+  const named = (key: 'card.profile' | 'card.appointment' | 'card.contact') =>
+    ui('namedAction', { action: t(key), target: mentor.displayName });
   const date = (value: Date) =>
     new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(value));
   const { availability, capacity } = mentor;
@@ -112,7 +116,11 @@ export function MentorCard({
         if (compact)
           return (
             <div className="mt-4 flex flex-wrap gap-2">
-              <Link className={buttonClasses({})} href={profileHref}>
+              <Link
+                className={buttonClasses({})}
+                href={profileHref}
+                aria-label={named('card.profile')}
+              >
                 {t('card.profile')}
               </Link>
             </div>
@@ -123,6 +131,7 @@ export function MentorCard({
               <Link
                 className={cn(buttonClasses({}), 'w-full sm:w-auto')}
                 href={`/randevu-al/${mentor.userId}`}
+                aria-label={named('card.appointment')}
               >
                 {t('card.appointment')}
               </Link>
@@ -130,12 +139,14 @@ export function MentorCard({
                 <Link
                   className={cn(buttonClasses({ variant: 'secondary' }), 'w-full sm:w-auto')}
                   href={profileHref}
+                  aria-label={named('card.profile')}
                 >
                   {t('card.profile')}
                 </Link>
                 <Link
                   className={cn(buttonClasses({ variant: 'secondary' }), 'w-full sm:w-auto')}
                   href={contactHref}
+                  aria-label={named('card.contact')}
                 >
                   {t('card.contact')}
                 </Link>
@@ -144,10 +155,18 @@ export function MentorCard({
           );
         return (
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link className={buttonClasses({})} href={profileHref}>
+            <Link
+              className={buttonClasses({})}
+              href={profileHref}
+              aria-label={named('card.profile')}
+            >
               {t('card.profile')}
             </Link>
-            <Link className={buttonClasses({ variant: 'secondary' })} href={contactHref}>
+            <Link
+              className={buttonClasses({ variant: 'secondary' })}
+              href={contactHref}
+              aria-label={named('card.contact')}
+            >
               {t('card.contact')}
             </Link>
           </div>
