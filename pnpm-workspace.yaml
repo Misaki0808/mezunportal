@@ -9,3 +9,8 @@ allowBuilds:
   # Onaylanan: Prisma CLI ve şema motoru ikilisi (prisma migrate için gerekli, resmî paket)
   '@prisma/engines': true
   prisma: true
+
+# Güvenlik yamaları: ExcelJS'nin uuid v4 yolu ve yalnız geliştirme araçlarındaki minimatch 10.
+overrides:
+  'exceljs>uuid': '11.1.1'
+  'minimatch@>=7 <11': '11.0.1'
