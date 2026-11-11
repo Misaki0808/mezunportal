@@ -1,19 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-import { waitForHydratedForm } from './hydration';
+import { loginAs } from './login';
 
 /** Ortak pencerede (Modal/Sheet) klavye: Tab içeride döner, Shift+Tab geri döner, Esc kapatır ve odak tetikleyiciye döner. */
-async function loginAdmin(page: Page) {
-  await page.goto('/giris/test?persona=systemAdmin');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  await waitForHydratedForm(page, 'Seçimlerimi kaydet');
-  const boxes = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await boxes.nth(0).check();
-  await boxes.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const loginAdmin = (page: Page) => loginAs(page, 'systemAdmin');
 
 const insideDialog = (page: Page) =>
   page.evaluate(() => {
