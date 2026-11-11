@@ -1,6 +1,6 @@
 /**
- * Takvim adaptör arayüzü (docs/architecture.md "Dış servisler" §3). Servis katmanı yalnız bunu bilir. Gerçek
- * (Google) adaptörü kullanıcı onayıyla ayrı kartla gelir; sahte adaptör başarı/zaman aşımı/hata senaryolarını üretir.
+ * Takvim adaptör arayüzü (docs/architecture.md "Dış servisler" §3). Servis katmanı yalnız bunu bilir. Gerçek adaptör
+ * `google.ts` (Google Takvim REST, fetch); sahte adaptör başarı/zaman aşımı/hata senaryolarını üretir.
  * Sağlayıcının ham yanıtı hata mesajına/loga girmez.
  */
 export type CalendarEventRequest = {
@@ -20,11 +20,22 @@ export interface CalendarPort {
     request: CalendarEventRequest,
     options?: { signal?: AbortSignal },
   ): Promise<CalendarEvent>;
+  /** Saat (ve istenirse başlık) değişikliği; davetlilere güncelleme gider. Etkinlik yoksa `CALENDAR_REJECTED`. */
+  updateEvent(
+    eventId: string,
+    patch: { startsAt: Date; endsAt: Date; summary?: string },
+    options?: { signal?: AbortSignal },
+  ): Promise<void>;
   /** Etkinlik yoksa da başarılıdır (iptal tekrarında hata vermez). */
   deleteEvent(eventId: string, options?: { signal?: AbortSignal }): Promise<void>;
 }
 
-export type CalendarErrorCode = 'CALENDAR_UNAVAILABLE' | 'CALENDAR_TIMEOUT' | 'CALENDAR_REJECTED';
+/**
+ * `CALENDAR_NOT_CONNECTED`: Google bağlantısı kurulmamış ya da yetkisi geri alınmış; yeniden denemek işe yaramaz (yönetici
+ * bağlayana kadar), randevu mentorun elle ekleyeceği linke düşer.
+ */
+export type CalendarErrorCode =
+  'CALENDAR_UNAVAILABLE' | 'CALENDAR_TIMEOUT' | 'CALENDAR_REJECTED' | 'CALENDAR_NOT_CONNECTED';
 
 export class CalendarError extends Error {
   constructor(

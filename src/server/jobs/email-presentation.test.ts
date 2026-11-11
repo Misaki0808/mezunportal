@@ -21,3 +21,24 @@ describe('e-posta sunumu', () => {
     expect(result.text).toContain('https://portal.invalid/hesap/bildirimler');
   });
 });
+
+it.each(['contact.requested', 'monthlyDigest.summary'])(
+  '%s koyu modunda onaylı zemini ve okunur bağlantıyı belirtir',
+  (template) => {
+    const result = decorateEmail(
+      {
+        to: 'test@example.invalid',
+        subject: 'Örnek',
+        template,
+        idempotencyKey: '1',
+        text: 'https://portal.invalid/ornek',
+      },
+      'https://portal.invalid',
+    );
+    expect(result.html).toContain('prefers-color-scheme:dark');
+    expect(result.html).toContain('background:#0e1a38!important');
+    expect(result.html).toContain('color:#b8b8ff!important');
+    if (template === 'monthlyDigest.summary')
+      expect(result.html).toContain('.email-brand-portal{color:#a3a3ff!important}');
+  },
+);

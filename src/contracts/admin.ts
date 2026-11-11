@@ -414,6 +414,8 @@ export const AUDIT_ACTION_NAMES = [
   'CAMPUS_EVENT_PUBLISH',
   'CAMPUS_EVENT_REJECT',
   'CAMPUS_EVENT_CANCEL',
+  'INTEGRATION_CONNECT',
+  'INTEGRATION_DISCONNECT',
 ] as const;
 export type AuditActionName = (typeof AUDIT_ACTION_NAMES)[number];
 
@@ -440,6 +442,7 @@ export const AUDIT_TARGET_TYPE_NAMES = [
   'ALUMNI_STORY',
   'MONTHLY_ALUMNUS',
   'CAMPUS_EVENT',
+  'INTEGRATION',
 ] as const;
 
 export const listAuditLogSchema = z

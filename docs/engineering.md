@@ -102,9 +102,21 @@ Ekran kaynağı deseni testle değil lint kuralıyla korunur.
 test); kural saf işleve çıkarılır, test onu sınar. Vitest eşzamanlılığı `--maxWorkers=4`.
 
 **Çekirdek akış testleri:** her çekirdek adım kendi akışı için bir Playwright testi bırakır
-(giriş, ilk giriş akışı, CV onayı, deneyim yazma/moderasyon, arama, randevu, yönetim). CI'da her
-PR'da değil, yalnız `main`'e birleşmede çalışır (özel repoda ücretsiz CI dakikası sınırlıdır);
-reviewer gerekirse yerelde koşar.
+(giriş, ilk giriş akışı, CV onayı, deneyim yazma/moderasyon, arama, randevu, yönetim). CI bunları
+koşmaz; PM'in yerel birleştirme kapısı ve reviewer yerelde koşar (bkz. "CI").
+
+### CI
+
+Tek iş akışı (`.github/workflows/ci.yml`), her PR'da ve `main`'e itmede, duvar saatiyle **≤ 5 dakika**
+(kullanıcı kararı: "az ve öz"). Üç iş paralel koşar, pnpm önbelleği açıktır, aynı dalda yeni itme eski koşuyu
+iptal eder: (1) tür denetimi (`prisma generate`, `typecheck`, `prisma validate`), (2) kalite (`lint`,
+`format:check`, `messages:check`), (3) hızlı birim testleri (`test:local` + `test:unit`: veritabanı gerektirmeyen Vitest
+projesi). Ortam değişkenleri iş akışında sahte değerdir; gerçek hizmete bağlanılmaz.
+**CI'da yok (yerel kapıda):** veritabanı testleri (`*.db.test.ts`), `pnpm build`, Playwright e2e, CodeQL; PM
+birleştirmeden önce bunları yerelde, makinede tek ağır iş kuralıyla koşar. Yeni bir iş CI'ya eklenecekse süre
+bütçesi (5 dk) ve neden yerelde yetmediği gerekçesiyle `docs/decisions.md`'ye yazılır. GitHub ayarları (kod
+değil; PM açar): gizli anahtar taraması + push koruması ve Dependabot **uyarıları** (otomatik PR yok); ikisi de
+ücretsiz ve koşu süresi almaz.
 
 ### Performans (P2-14)
 
@@ -271,8 +283,26 @@ sahte adaptördür ve yalnız `local`/`test`'te kabul edilir (`prod`'da env doğ
 
 **Takvim / Meet grubu** (`getCalendarEnv()`, varsayılanlı): `CALENDAR_PROVIDER` boşsa takvim KAPALIDIR (online randevu
 yine onaylanır; mentor görüşme linkini elle ekler); `fake` deterministik sahte adaptördür ve yalnız `local`/`test`'te
-kabul edilir (`prod`'da env doğrulamasını düşürür). Gerçek Google adaptörü ve `GOOGLE_*` değişkenleri kullanıcı onayından
-(E4) sonra ayrı kartla gelir. Adaptörler `src/server/external/calendar/`.
+kabul edilir (`prod`'da env doğrulamasını düşürür). `google` gerçek Google Takvim/Meet adaptörüdür ve `GOOGLE_CLIENT_ID` ile
+`GOOGLE_CLIENT_SECRET` zorunludur (eksikse yalnız eksik anahtarın adıyla env düşer); anahtarlar `fake`/boşken gerekmez. Yenileme
+jetonu env'de DEĞİL, veritabanında AES-256-GCM ile şifreli durur (anahtar `BETTER_AUTH_SECRET`'tan türer: sır değişirse bağlantı
+yeniden kurulur). Adaptörler `src/server/external/calendar/`.
+
+### Google Takvim / Meet'i bağlama (tek seferlik, kullanıcı + sistem yöneticisi)
+
+1. **Hesap:** platform için ayrılmış bir Gmail (randevu davetleri bu hesabın takviminden gider). Faturalandırma gerekmez (Calendar API ücretsiz).
+2. **Google Cloud:** yeni proje → *APIs & Services* → **Google Calendar API**'yi etkinleştir.
+3. **OAuth izin ekranı:** *External*; uygulama adı, destek e-postası; kapsam olarak yalnız `.../auth/calendar.events`. **Publish app** ile "Yayında"
+   yap: "Test" modunda yenileme jetonu 7 günde düşer. (Doğrulama istenmeyebilir; hassas kapsamda "doğrulanmamış uygulama" uyarısı görünürse
+   *Gelişmiş → devam* ile ilerlenir, kullanıcı sayısı küçüktür.)
+4. **Kimlik bilgileri:** *OAuth client ID* → *Web application*; **Authorized redirect URI** = `<APP_URL>/api/google/callback` (adres
+   `/yonetim/google` sayfasında da yazar; yerelde `http://localhost:<port>/api/google/callback`).
+5. **Sunucu ayarı:** `GOOGLE_CLIENT_ID` ve `GOOGLE_CLIENT_SECRET` değerlerini `korunan/google.env`'e (Git dışı) yaz ve ortam değişkeni olarak ver;
+   `CALENDAR_PROVIDER=google`; uygulamayı yeniden başlat.
+6. **Bağla:** sistem yöneticisi olarak `/yonetim/google` → **Google Takvim'i bağla** → platform Gmail'iyle izin ver. Başarıda sayfa "Bağlı"
+   gösterir; işlem kaydına `INTEGRATION_CONNECT` düşer. Kesmek için aynı sayfada **Bağlantıyı kes** (jeton Google'da da iptal edilir).
+7. **Sınır:** bağlantı kurulmadan ya da yetki geri alınınca randevu yine onaylanır, mentor Meet bağlantısını elle ekler; bağlanmadan önce onaylanmış
+   randevulara sonradan otomatik bağlantı eklenmez.
 
 **Puan motoru grubu** (`getPointsEnv()`, isteğe bağlı): `FOUNDING_MEMBER_UNTIL` (`YYYY-MM-DD`, İstanbul günü, o gün dahil)
 kurucu üye etiketinin (K-10) pilot bitişidir; BOŞSA pilot açıktır ve etiket verilmeye devam eder. Bitişten sonra yayınlanan
@@ -349,8 +379,8 @@ Rol protokolü Git dışı `prompts/README.md`'dedir.
 - Kısa ömürlü, tek amaçlı dal ve küçük PR. Ad: `feat/<konu>`, `fix/<konu>`, `docs/<konu>`,
   `refactor/<konu>`, `test/<konu>`, `chore/<konu>`.
 - PR her zaman **taslak** açılır; birleştirmeyi PM sırayla, betikle yapar (betik hazıra çevirir).
-- **Her PR tek push:** her push CI koşturur ve özel repoda Actions dakikası sınırlıdır; ek push
-  (reviewer düzeltmesi dahil) PM onayıyla, tek seferde.
+- **Her PR tek push:** repo herkese açık olduğundan CI ücretsizdir, yine de gereksiz itme yapma
+  (yeni itme eski CI koşusunu iptal eder); ek push (reviewer düzeltmesi dahil) PM onayıyla, tek seferde.
 - Sözleşme önce: servis + ekran diye bölünen işte önce şema ve `src/contracts` sözleşme PR'ı
   birleşir.
 
@@ -407,7 +437,7 @@ Reviewer kusur bulmak zorunda değildir; bulgusuz geçiş normaldir.
 
 ### Merge sonrası
 
-- `main`'de kapılar yeşil; çekirdek akış testleri (CI) yeşil.
+- `main`'de kapılar yeşil (CI'daki hızlı üç kapı + PM'in yerel tam kapısı); çekirdek akış testleri yerel kapıda yeşil.
 - Tamamlanan `BACKLOG.md` maddesi silinir; oturum günlüğü eklenmez.
 - Geçici dal ve test verisi temizlenir.
 
