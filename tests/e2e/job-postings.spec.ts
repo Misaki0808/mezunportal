@@ -256,7 +256,8 @@ test('mobil ilk ekranda iki ilan kartı ve erişilebilir süzgeç alt sayfası g
       }
       const filters = page.getByRole('button', { name: 'Süzgeçler', exact: true });
       await expect(filters).toBeInViewport({ ratio: 1 });
-      await filters.click();
+      await filters.focus();
+      await page.keyboard.press('Enter');
       await expect(page.getByRole('dialog')).toBeVisible();
       await expect(page.getByRole('dialog').getByLabel('Konum', { exact: true })).toBeVisible();
       await page.keyboard.press('Escape');

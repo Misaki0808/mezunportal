@@ -27,6 +27,7 @@ test('deneyim: yaz → moderasyon → yayın → okuyucu anonim yazarı görmez'
   try {
     await login(page, 'student');
     await page.goto('/deneyim/yeni');
+    await page.waitForLoadState('networkidle');
     await page.getByLabel(/Kurum ya da etkinlik adı/).fill('E2E Teknoloji A.Ş.');
     await page.getByLabel(/^Yıl/).fill('2025');
     await page.getByLabel(/^Dönem/).selectOption('SUMMER');
