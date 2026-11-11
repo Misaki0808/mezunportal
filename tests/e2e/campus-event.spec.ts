@@ -1,4 +1,5 @@
 import { loginAs } from './login';
+import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { decodeQR } from 'qr/decode.js';
@@ -29,9 +30,10 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
     (m) => m.role === 'STUDENT' && m.endedAt === null && m.verificationStatus === 'VERIFIED',
   )!.departmentId;
   const now = new Date();
+  const eventTitle = `Örnek etkinlik ${randomUUID().slice(0, 8)}`;
   const event = await db.campusEvent.create({
     data: {
-      title: 'Örnek etkinlik',
+      title: eventTitle,
       description: 'Öğrenciler için örnek etkinlik',
       location: 'Kampüs',
       startsAt: new Date(now.getTime() - 60_000),
@@ -82,7 +84,7 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
     await page.waitForURL(/\/giris/);
     await loginAs(page, 'student');
     await page.goto(`/etkinlikler/${event.id}`);
-    await expect(page.getByRole('heading', { name: 'Örnek etkinlik' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: eventTitle })).toBeVisible();
     await page.getByRole('button', { name: 'Katılıyorum' }).click();
     await expect(page.getByLabel('Altı haneli katılım kodu')).toBeVisible();
     await expect(page.getByLabel('Altı haneli katılım kodu')).toHaveValue(qrCode);
@@ -93,7 +95,7 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
     );
     await admin.goto('/yonetim/etkinlikler');
     await admin.getByLabel('İşlem gerekçesi').fill('Etkinlik iptal denemesi');
-    const row = admin.locator('li').filter({ hasText: 'Örnek etkinlik' });
+    const row = admin.locator('li').filter({ hasText: eventTitle });
     await row.getByRole('button', { name: 'Etkinliği iptal et', exact: true }).click();
     await expect(admin.getByRole('dialog')).toBeVisible();
     expect((await db.campusEvent.findUniqueOrThrow({ where: { id: event.id } })).status).toBe(
