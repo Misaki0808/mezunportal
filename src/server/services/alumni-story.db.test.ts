@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import {
   addGrant,
@@ -6,7 +6,6 @@ import {
   createInstitution,
   createUser,
   grantRequiredConsents,
-  neutralizeUserNames,
 } from '@/test/fixtures';
 import { buildDataExport } from './dataExport';
 import { deleteAccount } from './accountDeletion';
@@ -24,9 +23,6 @@ import {
 } from './alumni-story';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
-// Kimlik denetimi tüm kullanıcı adlarına karşı sınar: önceki dosyaların bıraktığı adlar metinle çakışmasın (dalgalı hata, kart 170).
-// Dosya başına bir kez (her testte tüm kullanıcıları güncellemek büyük veritabanında yavaştır; dosyalar sırayla koşar).
-beforeAll(() => neutralizeUserNames(db));
 const BODY =
   'Üretim yolculuğum boyunca merakla öğrenmeye ve deneyim kazanmaya devam ettim. Zorluklar karşısında gelişmeyi seçtim.';
 
@@ -245,8 +241,15 @@ describe('Ayın mezunu', () => {
       other = await createUser(db, { name: 'İlknur Çakır' });
     await grantRequiredConsents(db, author);
     await addMembership(db, { userId: author, role: 'ALUMNI', departmentId: inst.deptA1 });
+    await addMembership(db, {
+      userId: other,
+      role: 'STUDENT',
+      departmentId: inst.deptA1,
+      entryYear: 2023,
+    });
     const deps = { db },
-      body = 'İlknur ile kariyer yolculuğumu anlattım; bu süreçte çok şey öğrendim ve devam ettim.';
+      body =
+        'İlknur Çakır ile kariyer yolculuğumu anlattım; bu süreçte çok şey öğrendim ve devam ettim.';
     const story = await saveStory(deps, author, { departmentId: inst.deptA1, body, consent: true });
     await expect(submitStory(deps, author, { storyId: story.id })).rejects.toMatchObject({
       code: 'STORY_IDENTITY_LEAK',

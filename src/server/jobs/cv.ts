@@ -3,6 +3,7 @@ import { getEnv } from '@/lib/env';
 import { getDb } from '../db';
 import { getLlm } from '../external/llm';
 import { getStorage } from '../external/storage';
+import { createFakePdfTextExtractor, getPdfTextExtractor } from '../external/pdf-text';
 import { markCvParseExhausted, processCvParse, type CvParseDeps } from '../services/cv-parse';
 import type { Tx } from '../services/cv-shared';
 import { createCvQueue, publishCvParse, startCvConsumer, startCvFailureConsumer } from './cv-queue';
@@ -14,7 +15,16 @@ import { createCvQueue, publishCvParse, startCvConsumer, startCvFailureConsumer 
 export async function createCvRuntime(consume = false) {
   const env = getEnv();
   const boss = await createCvQueue(env.DATABASE_URL, { supervise: consume });
-  const deps = (): CvParseDeps => ({ db: getDb(), storage: getStorage(), llm: getLlm() });
+  const deps = (): CvParseDeps => {
+    const llm = getLlm();
+    return {
+      db: getDb(),
+      storage: getStorage(),
+      llm,
+      pdfTextExtractor:
+        llm?.provider === 'fake' ? createFakePdfTextExtractor() : getPdfTextExtractor(),
+    };
+  };
   try {
     if (consume) {
       await startCvConsumer(boss, async (job, retryCount, retryLimit) => {

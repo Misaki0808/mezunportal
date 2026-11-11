@@ -74,6 +74,7 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
   const [error, setError] = useState<ErrorCode>();
   const [pending, setPending] = useState(false);
   const [guide, setGuide] = useState(false);
+  const [source, setSource] = useState<'CV' | 'LINKEDIN_PDF'>('CV');
   const locked = useRef(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const kind = view.kind;
@@ -118,6 +119,7 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
   async function upload(form: HTMLFormElement) {
     if (locked.current) return;
     const data = new FormData(form);
+    data.set('source', source);
     const input = form.elements.namedItem('file') as HTMLInputElement | null;
     const file = input?.files?.[0];
     setError(undefined);
@@ -184,6 +186,37 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
               {t('applied')}
             </p>
           )}
+          <fieldset className="mt-6 space-y-2">
+            <legend className="font-semibold">{t('linkedin.chooseSource')}</legend>
+            <label className="flex min-h-11 items-center gap-3 rounded-control border border-border p-3">
+              <input
+                type="radio"
+                name="source"
+                value="CV"
+                disabled={!availability.available}
+                checked={source === 'CV'}
+                onChange={() => setSource('CV')}
+              />
+              {t('linkedin.normalCv')}
+            </label>
+            <label className="flex min-h-11 items-center gap-3 rounded-control border border-border p-3">
+              <input
+                type="radio"
+                name="source"
+                value="LINKEDIN_PDF"
+                disabled={!availability.available || !availability.linkedinPdf}
+                aria-describedby={!availability.linkedinPdf ? 'linkedin-unavailable' : undefined}
+                checked={source === 'LINKEDIN_PDF'}
+                onChange={() => setSource('LINKEDIN_PDF')}
+              />
+              {t('linkedin.importAction')}
+            </label>
+          </fieldset>
+          {!availability.linkedinPdf && (
+            <p id="linkedin-unavailable" className="text-sm text-fg-muted">
+              {t('linkedin.comingSoon')}
+            </p>
+          )}
           {!availability.available && availability.reason ? (
             <div className="mt-6 rounded-card border border-border bg-surface p-4">
               <p role="status" className="text-base text-fg">
@@ -224,9 +257,6 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
               <p className="text-sm text-fg-muted">
                 {t('remaining', { count: availability.remainingToday })}
               </p>
-              <Button variant="ghost" onClick={() => setGuide(true)}>
-                {t('linkedin.open')}
-              </Button>
               {error && (
                 <p role="alert" className="text-base text-danger">
                   {errors(error)}
@@ -239,6 +269,9 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
               </div>
             </form>
           )}
+          <Button variant="ghost" onClick={() => setGuide(true)}>
+            {t('linkedin.open')}
+          </Button>
           <Link
             className={buttonClasses({ variant: 'ghost', fullWidth: true }) + ' mt-2'}
             href="/profil"

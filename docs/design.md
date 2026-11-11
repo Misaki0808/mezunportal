@@ -5,7 +5,7 @@ belge görsel niyeti ve kullanım kurallarını açıklar, CSS değerini ikinci 
 
 ## Yön
 
-Sıcak, samimi, insancıl; akademik ve resmî olmayan bir ürün. Açık temada **krem** zemin, koyu temada **lacivert** zemin,
+Sıcak, samimi, insancıl; akademik ve resmî olmayan bir ürün. Açık temada **krem** zemin, koyu temada **lacivert** zemin (kullanıcı onaylı, 10 Kasım: #0E1A38),
 koyu metin, **İris** ana renk, **Mercan-pembe** vurgu, **Nane** destek; uyarı/hata renkleri yalnız anlam taşır. Köşeler yumuşak
 (`--radius-*`), metin “sen” diliyle kısa ve içtendir. Kullanıcı çoğunlukla telefondan,
 kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.

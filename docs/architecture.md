@@ -214,6 +214,7 @@ kurallar `src/server/rules/jobPosting.ts`.
 | `alumni.stillThere` | Mezuna yılda bir “Hâlâ X'te misin?” — imzalı, süreli, tek kullanımlık bağlantı |
 | `student.emailMigration` | Mezuniyet yılındaki öğrenciye kişisel e-postaya geçiş hatırlatması |
 | `files.purge` | Günlük emniyet: karar verilmiş belgeler, bağlı olmayan eski CV'ler |
+| `linkedin.purge` | LinkedIn PDF ve onaylanmamış önerileri yüklemeden 24 saat sonra dakika başına temizler; worker çalışmıyorsa yeniden başladığında sürer |
 
 İşler idempotenttir; tekrar çalışınca çift e-posta ya da çift puan üretmez. Zorunlu hesap
 e-postaları dışındaki bildirimler kullanıcı tercihinden kapatılabilir; tercih hem kuyruğa alma hem teslim sırasında
@@ -283,14 +284,18 @@ Dış servislerin nasıl bağlanacağı ve projedeki servislerin sözleşmesi.
   silinir.
 - **OAuth tuzağı:** OAuth uygulaması “Testing” durumundayken verilen yenileme jetonu 7 günde düşer
   ve Meet linkleri sessizce üretilmez. Uygulama **“In production”** durumuna alınır;
-  doğrulanmamış uygulama uyarısını yalnız platform hesabı bir kez görür. Yenileme jetonu bir kez
-  alınıp env'e konur.
+  doğrulanmamış uygulama uyarısını yalnız platform hesabı bir kez görür. Yenileme jetonu env'e
+  KONMAZ: sistem yöneticisi `/yonetim/google` panelinden bir kez bağlar (OAuth kodu akışı, yalnız
+  `calendar.events` kapsamı, `state` + PKCE); jeton veritabanında AES-256-GCM ile şifreli durur
+  (`IntegrationConnection`; anahtar `BETTER_AUTH_SECRET`'tan türer), erişim jetonu yalnız bellekte tutulur.
 - Yerelden de çalışır (dışarıya giden çağrıdır); OAuth onayı için yönlendirme adresi `localhost`.
 - **Hata yolu:** randevu onaylı kalır; `calendar.retry` sınırlı dener; olmazsa mentora “linki elle
   ekle” bildirimi. Yurt dışı rızası olmayan kullanıcıda takvim çağrısı yapılmaz, mentor kendi
   linkini girer.
-- **Env:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`,
-  `GOOGLE_CALENDAR_ID`.
+- **Env:** `CALENDAR_PROVIDER` (`google` | `fake` | boş), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+  Etkinlik platform hesabının birincil takviminde (`primary`) açılır; kimlik `idempotencyKey`'den türer
+  (çift etkinlik olmaz). Bağlı değilse ya da yetki geri alınmışsa `CALENDAR_NOT_CONNECTED`: yeniden
+  denenmez, mentor linki elle ekler. Bağlama rehberi: `docs/engineering.md` "Yerel ortam".
 
 ### 4. E-posta
 

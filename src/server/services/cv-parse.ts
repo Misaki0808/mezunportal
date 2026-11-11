@@ -12,7 +12,17 @@ import type { Prisma } from '@/generated/prisma/client';
 
 import { CV_SYSTEM_INSTRUCTION, LlmError } from '../external/llm';
 import { hasActiveConsent } from '../rules/consent';
-import { DbNull, heldUploadIds, logCv, nowOf, type CvDeps } from './cv-shared';
+import { splitLinkedInSections } from '../rules/linkedin-pdf';
+import type { PdfTextExtractor } from '../external/pdf-text';
+import {
+  DbNull,
+  heldUploadIds,
+  isLinkedinPdfReady,
+  logCv,
+  nowOf,
+  removeUploadFiles,
+  type CvDeps,
+} from './cv-shared';
 
 /**
  * `cv.parse` işinin gövdesi (docs/architecture.md "CV ayrıştırma hattı" adım 2). İş kuyruğu bunu çağırır; istek
@@ -25,6 +35,8 @@ import { DbNull, heldUploadIds, logCv, nowOf, type CvDeps } from './cv-shared';
 export type CvParseDeps = Pick<CvDeps, 'db' | 'storage' | 'llm' | 'now' | 'holds'> & {
   /** Tek LLM çağrısının zaman aşımı (ms); varsayılan 60 sn. */
   timeoutMs?: number;
+  /** LinkedIn PDF için metin portu; yoksa dosya sağlayıcıya iletilmez. */
+  pdfTextExtractor?: PdfTextExtractor | null;
 };
 export type CvParseContext = { retryCount: number; retryLimit: number };
 export type CvParseOutcome = 'SKIPPED' | 'PARSED' | 'FAILED' | 'RETRY';
@@ -34,7 +46,12 @@ const OUTPUT_ATTEMPTS = 2;
 
 type Failure = { code: CvParseFailureCode; retryable: boolean };
 
-async function callWithTimeout(deps: CvParseDeps, pdf: Uint8Array): Promise<unknown> {
+async function callWithTimeout(
+  deps: CvParseDeps,
+  pdf: Uint8Array,
+  sectionHints?: ('experience' | 'education' | 'skills')[],
+  redactedText?: string,
+): Promise<unknown> {
   const llm = deps.llm;
   if (!llm) throw new LlmError('UNAVAILABLE');
   const controller = new AbortController();
@@ -47,12 +64,21 @@ async function callWithTimeout(deps: CvParseDeps, pdf: Uint8Array): Promise<unkn
   });
   try {
     return await Promise.race([
-      llm.parseCv({
-        pdf,
-        instruction: CV_SYSTEM_INSTRUCTION,
-        schema: parsedCvJsonSchema(),
-        signal: controller.signal,
-      }),
+      redactedText !== undefined
+        ? (llm.parseRedactedCv?.({
+            text: redactedText,
+            ...(sectionHints ? { sectionHints } : {}),
+            instruction: CV_SYSTEM_INSTRUCTION,
+            schema: parsedCvJsonSchema(),
+            signal: controller.signal,
+          }) ?? Promise.reject(new LlmError('UNAVAILABLE')))
+        : llm.parseCv({
+            pdf,
+            ...(sectionHints ? { sectionHints } : {}),
+            instruction: CV_SYSTEM_INSTRUCTION,
+            schema: parsedCvJsonSchema(),
+            signal: controller.signal,
+          }),
       timedOut,
     ]);
   } finally {
@@ -137,7 +163,7 @@ export async function processCvParse(
   const [upload] = await db.cvUpload.updateManyAndReturn({
     where: { id: cvUploadId, status: { in: ['QUEUED', 'PARSING'] } },
     data: { status: 'PARSING', attempts: { increment: 1 } },
-    select: { userId: true, storageKey: true, attempts: true },
+    select: { userId: true, storageKey: true, attempts: true, source: true },
   });
   if (!upload) return 'SKIPPED';
   const fail = async (code: CvParseFailureCode): Promise<CvParseOutcome> => {
@@ -177,11 +203,33 @@ export async function processCvParse(
   }
   if (!pdf) return fail('CV_PARSE_UNAVAILABLE');
 
+  let sectionHints: ('experience' | 'education' | 'skills')[] | undefined;
+  let redactedText: string | undefined;
+  if (upload.source === 'LINKEDIN_PDF') {
+    // Gerçek sağlayıcıya yalnız maskelenmiş metin gidebilir; üç port birlikte hazır olmalıdır.
+    if (deps.llm?.provider !== 'fake' && !isLinkedinPdfReady(deps))
+      return fail('CV_PARSE_UNAVAILABLE');
+    if (!deps.pdfTextExtractor) return fail('CV_PARSE_UNAVAILABLE');
+    try {
+      const text = await deps.pdfTextExtractor.extract(pdf);
+      if (text.length > 200_000) return fail('CV_PARSE_UNAVAILABLE');
+      const sections = splitLinkedInSections(text);
+      if (deps.llm?.provider !== 'fake') {
+        redactedText = await deps.pdfTextExtractor.redact!(text);
+        if (!redactedText || redactedText.length > 200_000) return fail('CV_PARSE_UNAVAILABLE');
+      }
+      sectionHints = (['experience', 'education', 'skills'] as const).filter(
+        (key) => sections[key].length > 0,
+      );
+    } catch {
+      return fail('CV_PARSE_UNAVAILABLE');
+    }
+  }
   let parsed: ParsedCv | null = null;
   for (let attempt = 1; attempt <= OUTPUT_ATTEMPTS && !parsed; attempt += 1) {
     let raw: unknown;
     try {
-      raw = await callWithTimeout(deps, pdf);
+      raw = await callWithTimeout(deps, pdf, sectionHints, redactedText);
     } catch (error) {
       return retryOrFail(failureOf(error));
     }
@@ -217,7 +265,59 @@ const PURGE_GRACE_MS = 60 * 60 * 1000;
 const STUCK_MS = 24 * 60 * 60 * 1000;
 /** Kullanıcının hiç onaylamadığı/atmadığı ayrıştırma çıktısı (kişisel veri) en çok bu kadar bekler. */
 export const PARSED_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+export const LINKEDIN_PARSED_RETENTION_MS = 24 * 60 * 60 * 1000;
 const PURGE_BATCH = 500;
+
+/** Onay bekleyen LinkedIn verisini 24 saat dolunca temizler; eşzamanlı karar kullanıcı kilidiyle sıralanır. */
+export async function purgeExpiredLinkedinFiles(
+  deps: CvParseDeps,
+): Promise<{ expired: number; filesRemoved: number }> {
+  const now = nowOf(deps);
+  const linkedBefore = new Date(now.getTime() - LINKEDIN_PARSED_RETENTION_MS);
+  const linked = await deps.db.cvUpload.findMany({
+    where: {
+      source: 'LINKEDIN_PDF',
+      createdAt: { lte: linkedBefore },
+      OR: [{ status: { in: ['QUEUED', 'PARSING', 'PARSED'] } }, { storageKey: { not: null } }],
+    },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, userId: true },
+    take: PURGE_BATCH,
+  });
+  let linkedExpired = 0;
+  let linkedFilesRemoved = 0;
+  for (const row of linked) {
+    try {
+      const removed = await deps.db.$transaction(
+        async (tx) => {
+          await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${row.userId} FOR UPDATE`;
+          await tx.$queryRaw`SELECT "id" FROM "CvUpload" WHERE "id" = ${row.id} FOR UPDATE`;
+          const current = await tx.cvUpload.findFirst({
+            where: { id: row.id, source: 'LINKEDIN_PDF', createdAt: { lte: linkedBefore } },
+            select: { id: true, storageKey: true, status: true },
+          });
+          if (!current) return null;
+          if (['QUEUED', 'PARSING', 'PARSED'].includes(current.status)) {
+            await tx.cvUpload.update({
+              where: { id: row.id },
+              data: { status: 'DISCARDED', parsedJson: DbNull },
+            });
+          }
+          return removeUploadFiles(tx, deps.storage, [current], deps.holds);
+        },
+        { timeout: 30000 },
+      );
+      if (removed !== null) {
+        linkedExpired += 1;
+        linkedFilesRemoved += removed;
+      }
+    } catch {
+      logCv('purge_failed', 'STORAGE');
+    }
+  }
+
+  return { expired: linkedExpired, filesRemoved: linkedFilesRemoved };
+}
 
 /**
  * Silinmemiş kalmış dosyaları temizler: `FAILED`/`DISCARDED` satırların ve kullanıcının son uygulanan CV'sinden
@@ -235,9 +335,12 @@ export async function purgeCvFiles(
 
   // Onay bekleyip unutulan sonuç: ayrıştırma çıktısı (kişisel veri) temizlenir; dosya aşağıdaki süpürmede silinir.
   const expired = await deps.db.cvUpload.updateMany({
-    where: { status: 'PARSED', updatedAt: { lt: parsedBefore } },
+    where: { status: 'PARSED', source: 'CV', updatedAt: { lt: parsedBefore } },
     data: { status: 'DISCARDED', parsedJson: DbNull },
   });
+
+  const { expired: linkedExpired, filesRemoved: linkedFilesRemoved } =
+    await purgeExpiredLinkedinFiles(deps);
 
   const stuck = await deps.db.cvUpload.findMany({
     where: { status: { in: ['QUEUED', 'PARSING'] }, updatedAt: { lt: stuckBefore } },
@@ -255,12 +358,12 @@ export async function purgeCvFiles(
         c."status" IN ('FAILED', 'DISCARDED')
         OR (c."status" = 'APPLIED' AND EXISTS (
           SELECT 1 FROM "CvUpload" n
-          WHERE n."userId" = c."userId" AND n."status" = 'APPLIED'
+          WHERE n."userId" = c."userId" AND n."status" = 'APPLIED' AND n."source" = 'CV'
             AND (n."appliedAt" > c."appliedAt" OR (n."appliedAt" = c."appliedAt" AND n."id" > c."id"))))
       )
     ORDER BY c."updatedAt" ASC
     LIMIT ${PURGE_BATCH}`;
-  let filesRemoved = 0;
+  let filesRemoved = linkedFilesRemoved;
   for (const row of candidates) {
     try {
       const removed = await deps.db.$transaction(
@@ -277,7 +380,7 @@ export async function purgeCvFiles(
             return false;
           if (current.status === 'APPLIED') {
             const latest = await tx.cvUpload.findFirst({
-              where: { userId: row.userId, status: 'APPLIED' },
+              where: { userId: row.userId, status: 'APPLIED', source: 'CV' },
               orderBy: [{ appliedAt: 'desc' }, { id: 'desc' }],
               select: { id: true },
             });
@@ -296,5 +399,5 @@ export async function purgeCvFiles(
       logCv('purge_failed', 'STORAGE');
     }
   }
-  return { filesRemoved, stuckFailed: stuck.length, expiredParsed: expired.count };
+  return { filesRemoved, stuckFailed: stuck.length, expiredParsed: expired.count + linkedExpired };
 }

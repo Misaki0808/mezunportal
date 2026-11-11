@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import {
   addGrant,
@@ -6,7 +6,6 @@ import {
   createInstitution,
   createUser,
   grantRequiredConsents,
-  neutralizeUserNames,
 } from '@/test/fixtures';
 import {
   getCurrentStory,
@@ -21,9 +20,6 @@ import {
 } from './alumni-story';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
-// Kimlik denetimi tüm kullanıcı adlarına karşı sınar: önceki dosyaların bıraktığı adlar metinle çakışmasın (dalgalı hata, kart 170).
-// Dosya başına bir kez (her testte tüm kullanıcıları güncellemek büyük veritabanında yavaştır; dosyalar sırayla koşar).
-beforeAll(() => neutralizeUserNames(db));
 const at = new Date('2026-05-15T10:00:00Z'),
   deps = { db, now: () => at };
 const BODY =
@@ -151,13 +147,18 @@ it('aynı ay farklı bölüm seçimi bağımsız, ay sınırı İstanbul ve iş 
     await db.monthlyAlumnus.count({ where: { storyId: { in: [a.id, s.id] }, active: true } }),
   ).toBe(0);
 });
-it('U+02BC/aksan/tam genişlik/ayrık ad ve iletişim biçimleri hem gönderimde hem yayın kararında engellenir', async () => {
+it('aynı üniversitedeki tam ad ve iletişim biçimleri hem gönderimde hem yayın kararında engellenir', async () => {
   const w = await fixture();
-  await createUser(db, { name: 'Nehir Akın' });
+  const other = await createUser(db, { name: 'Nehir Akın' });
+  await addMembership(db, {
+    userId: other,
+    role: 'STUDENT',
+    departmentId: w.inst.deptA1,
+    entryYear: 2023,
+  });
   for (const text of [
-    'Néhirʼin görüşü',
-    'Ｎｅｈｉｒ ile',
-    'N e h i r ne dedi',
+    'Néhir Akınʼın görüşü',
+    'Ｎｅｈｉｒ ＡＫＩＮ ile',
     'b i r i @ e x a m p l e . i n v a l i d',
     '0 5 3 2 1 2 3 4 5 6 7',
     '11111111110',
@@ -181,7 +182,13 @@ it('U+02BC/aksan/tam genişlik/ayrık ad ve iletişim biçimleri hem gönderimde
 });
 it('yazarın tam kendi adı başka kullanıcının ilk adıyla aynı olsa da kendi anlatımı yayınlanabilir', async () => {
   const w = await fixture();
-  await createUser(db, { name: 'Alya Ekin' });
+  const other = await createUser(db, { name: 'Alya Ekin' });
+  await addMembership(db, {
+    userId: other,
+    role: 'STUDENT',
+    departmentId: w.inst.deptA1,
+    entryYear: 2023,
+  });
   const s = await saveStory(deps, w.owner, {
     departmentId: w.inst.deptA1,
     body: 'Alya Demir olarak ' + BODY,
@@ -204,21 +211,120 @@ it('yazarın tam kendi adı başka kullanıcının ilk adıyla aynı olsa da ken
     });
   }
 });
-
-it('paylaşılan veritabanında başka testten kalan ad, hikâye metnindeki sıradan sözcükle çakışırsa gönderim reddedilir; adlar nötrleşince geçer (dalgalı hatanın kök nedeni)', async () => {
+it('tek sözcük yanlış pozitif değildir; yalnız aynı üniversitenin etkin üyesinin tam adı engellenir', async () => {
   const w = await fixture();
-  const draft = await saveStory(deps, w.owner, {
+  for (const name of ['Deniz', 'Umut']) {
+    const id = await createUser(db, { name });
+    await addMembership(db, {
+      userId: id,
+      role: 'STUDENT',
+      departmentId: w.inst.deptA1,
+      entryYear: 2023,
+    });
+  }
+  const external = await createInstitution(db);
+  const foreign = await createUser(db, { name: 'Arda Uzun' });
+  await addMembership(db, {
+    userId: foreign,
+    role: 'STUDENT',
+    departmentId: external.deptA1,
+    entryYear: 2023,
+  });
+  const former = await createUser(db, { name: 'Yalın Tunca' });
+  await addMembership(db, {
+    userId: former,
+    role: 'STUDENT',
     departmentId: w.inst.deptA1,
-    body: BODY + ' Yeni deneyimlerimi paylaşarak gelişmeye devam ettim.',
+    entryYear: 2023,
+    endedAt: new Date('2025-01-01'),
+  });
+  const s = await saveStory(deps, w.owner, {
+    departmentId: w.inst.deptA1,
+    body: BODY + ' Deniz kenarı güzeldi. Umut ediyorum. Arda Uzun ve Yalın Tunca ile çalıştım.',
     consent: true,
   });
-  // Başka bir test dosyasının bıraktığı kullanıcı (ör. "Yeni Üye 1"): metindeki "Yeni" sözcüğüyle eşleşir. Denetim gönderimde çalışır.
-  await createUser(db, { name: 'Yeni Üye 1' });
-  await expect(submitStory(deps, w.owner, { storyId: draft.id })).rejects.toMatchObject({
-    code: 'STORY_IDENTITY_LEAK',
-  });
-  await neutralizeUserNames(db);
-  await expect(submitStory(deps, w.owner, { storyId: draft.id })).resolves.toMatchObject({
+  await expect(submitStory(deps, w.owner, { storyId: s.id })).resolves.toMatchObject({
     status: 'PENDING',
   });
+  const same = await createUser(db, { name: 'Deniz Sahil' });
+  await addMembership(db, {
+    userId: same,
+    role: 'STUDENT',
+    departmentId: w.inst.deptA2,
+    entryYear: 2023,
+  });
+  await saveStory(deps, w.owner, {
+    departmentId: w.inst.deptA1,
+    body: BODY + ' Deniz Sahil ile çalıştım.',
+    consent: true,
+  });
+  await expect(submitStory(deps, w.owner, { storyId: s.id })).rejects.toMatchObject({
+    code: 'STORY_IDENTITY_LEAK',
+  });
+  const accented = await createUser(db, { name: 'José Núñez' });
+  await addMembership(db, {
+    userId: accented,
+    role: 'STUDENT',
+    departmentId: w.inst.deptA1,
+    entryYear: 2023,
+  });
+  await saveStory(deps, w.owner, {
+    departmentId: w.inst.deptA1,
+    body: BODY + ' Jose Nunez ile çalıştım.',
+    consent: true,
+  });
+  await expect(submitStory(deps, w.owner, { storyId: s.id })).rejects.toMatchObject({
+    code: 'STORY_IDENTITY_LEAK',
+  });
 });
+it('5.000 etkin üyede tam ad araması ve indeks planı ölçülür', async () => {
+  const { randomUUID } = await import('node:crypto');
+  const w = await fixture();
+  const suffix = randomUUID().slice(0, 8);
+  const people = Array.from({ length: 5000 }, (_, i) => ({
+    id: randomUUID(),
+    name: `Kisi${i} Soyad${i}`,
+    email: `${suffix}-${i}@example.invalid`,
+    emailVerified: true,
+  }));
+  await db.user.createMany({ data: people });
+  await db.membership.createMany({
+    data: people.map(({ id }) => ({
+      userId: id,
+      departmentId: w.inst.deptA1,
+      role: 'STUDENT' as const,
+      verificationMethod: 'STUDENT_EMAIL' as const,
+      verificationStatus: 'VERIFIED' as const,
+      verifiedAt: new Date(),
+      entryYear: 2023,
+    })),
+  });
+  await db.$executeRaw`ANALYZE "User"`;
+  const plan = await db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('enable_seqscan', 'off', true)`;
+    const pairs = ['%kisi3789 soyad3789%', '%soyad3789 ile%'];
+    return tx.$queryRaw<{ 'QUERY PLAN': string }[]>`
+      EXPLAIN WITH name_candidates AS MATERIALIZED (
+        SELECT "id", "name" FROM "User" WHERE "id" <> ${w.owner}
+          AND "deletedAt" IS NULL AND "nameSearch" LIKE ANY(${pairs}::text[])
+      )
+      SELECT DISTINCT u."name" FROM name_candidates u
+      JOIN "Membership" m ON m."userId" = u."id" AND m."endedAt" IS NULL
+      JOIN "Department" d ON d."id" = m."departmentId"
+      JOIN "Faculty" f ON f."id" = d."facultyId"
+      JOIN "Department" target ON target."id" = ${w.inst.deptA1}
+      JOIN "Faculty" tf ON tf."id" = target."facultyId" AND tf."universityId" = f."universityId"
+    `;
+  });
+  expect(plan.map((row) => row['QUERY PLAN']).join(' ')).toContain('User_nameSearch_trgm');
+  const story = await saveStory(deps, w.owner, {
+    departmentId: w.inst.deptA1,
+    body: BODY + ' Kisi3789 Soyad3789 ile tanıştım.',
+    consent: true,
+  });
+  const start = performance.now();
+  await expect(submitStory(deps, w.owner, { storyId: story.id })).rejects.toMatchObject({
+    code: 'STORY_IDENTITY_LEAK',
+  });
+  console.info(`5000 üyede hikâye ad denetimi: ${(performance.now() - start).toFixed(0)} ms`);
+}, 30000);
