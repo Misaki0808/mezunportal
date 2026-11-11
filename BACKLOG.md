@@ -8,10 +8,9 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 ## Güncel durum
 
 Faz 0 (iskelet, veritabanı, yerel ortam, tasarım sistemi, ekip araçları), Faz 1 (çekirdek, tamamlayıcılar ve SSS ekranları dahil) ve
-Faz 2 (fırsatlar, mevcut veriden değer, rehberlik, tanınma; `docs/faz2-plan.md`) main'dedir; her adımın servisi ve ekranı vardır. Canlı ortam
+Faz 2'nin (fırsatlar, mevcut veriden değer, rehberlik, tanınma; `docs/faz2-plan.md`) adımları main'dedir; iki ekran eksiği tamamlama olarak sürüyor (aşağıda "Yakın hedef"). Canlı ortam
 yoktur ve bilinçli ertelenmiştir: geliştirme, test ve ekran doğrulaması yerelde, birleştirme kapıları yerelde; CI az ve öz (≤ 5 dk, K-14
-kararı, `docs/engineering.md` "CI"). Faz 2 bitti; sırada kullanıcının komple test ve deneme turu var (`docs/engineering.md` "Faz 2 deneme
-rehberi"). Ürün özellikleri aşağıdaki gibi çalışır; ayrıntı ve gerekçe `docs/decisions.md`'dedir.
+kararı, `docs/engineering.md` "CI"). Faz 2'nin kalan iki kalemi bitince kullanıcının komple test ve deneme turu başlar (`docs/engineering.md` "Faz 2 deneme rehberi"). Ürün özellikleri aşağıdaki gibi çalışır; ayrıntı ve gerekçe `docs/decisions.md`'dedir.
 
 ### Faz 1'de main'de olanlar
 
@@ -86,8 +85,9 @@ Hiçbiri kodla çözülemez; her biri aşağıdaki işi engeller. Kullanıcı/ho
 
 ### Yakın hedef
 
-Kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon test listesi; bulgular PM'de karta bölünür
-ya da bu belgeye borç olarak yazılır. Kullanıcının hesap isteyen işleri (Gemini anahtarı, Google Cloud anahtarları ve panelden bağlama, platform hesabı) ve
+Faz 2'yi tamamlamak: ilan şikâyeti ekranları (plan P2-04: ilan sayfasında kullanıcı "Şikâyet et" düğmesi ve yönetimde şikâyet kuyruğu; servis ve testler hazır) ve
+gruplu uygulama içi bildirim listesi (plan P2-05). Sonra kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon test listesi;
+bulgular PM'de karta bölünür ya da bu belgeye borç olarak yazılır. Kullanıcının hesap isteyen işleri (Gemini anahtarı, Google Cloud anahtarları ve panelden bağlama, platform hesabı) ve
 canlıya alım ile pilot kararları (K-02, K-05, K-03, K-12, hukuki okuma) kullanıcı gündeme getirince ele alınır. Faz 3 pilottan sonra konuşulur.
 
 ### Bilinen kısıtlar
@@ -197,9 +197,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 
 ### Faz 2 sonrası ürün ve arayüz P3'leri
 
-- **İlan şikâyeti ekranları yok.** Servis, sözleşme ve testler hazır (`reportJobPosting`, yönetimde çözümleme; ayrı `JobPostingReport` tablosu); ilan sayfasında
-  kullanıcı düğmesi ve yönetimde kuyruk ekranı yok. Plan P2-04 "ilan şikâyeti" satırının ekran yarısı eksik (şikâyet yalnız deneyimde: `ReportTargetType` yalnız `EXPERIENCE`).
-- **Uygulama içi bildirim kutusu yok** (plan P2-05 "gruplu liste"): tercihler, ana sayfada "Sana uyan ilanlar" ve e-posta özeti var; kutu kullanıcı testine göre kararlaştırılır.
 - **İlan formu:** zorunlu alanlar yalnız son adımda denetleniyor ("Devam et" boş alanla da geçer); adım değişimi ekran okuyucuya duyurulmuyor.
 - **Ödül onay penceresinde bayat durum metni:** "Bu mezunu seç" penceresinde "Karar gerekçesi" alanının altında, tören tarihi kaydından kalan "Tercihin kaydedildi."
   kırmızı hata gibi görünüyor (203 provası; `year-alumni/admin.tsx` sayfa mesajını alan hatası olarak veriyor). "Yayımla" onay penceresi gövdesiz;

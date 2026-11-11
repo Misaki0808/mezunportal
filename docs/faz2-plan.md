@@ -332,8 +332,8 @@ testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümle
 
 | Adım | PR | Durum | Not |
 |---|---|---|---|
-| P2-04 Mezun staj ilanları | #62, #65, #69 | ◐ | Yazma, moderasyon, 60 gün sınırı ve kendiliğinden kapanma, ilan puanı (7 gün gecikmeli, ayda 3), arama, hız sınırı, görünürlük K-07 ✓. **İlan şikâyetinin ekranı yok:** servis, sözleşme ve testler hazır (`reportJobPosting`), kullanıcı düğmesi ve yönetim kuyruğu yazılmadı (`ReportTargetType` yalnız `EXPERIENCE`; ilan şikâyeti ayrı tablo) → BACKLOG |
-| P2-05 İlan eşleştirme | #67, #69 | ◐ | Saf kural, outbox, günlük ve yedi günlük e-posta sınırı, "Sana uyan ilanlar" paneli, "Neden sana uygun?", ilan sahibine yalnız sayı ✓. Planın "uygulama içi bildirim listesi" yerine ana sayfa paneli yapıldı; bildirim kutusu yok → BACKLOG |
+| P2-04 Mezun staj ilanları | #62, #65, #69 | ◐ → kart 216 ile tamamlanıyor | Yazma, moderasyon, 60 gün sınırı ve kendiliğinden kapanma, ilan puanı (7 gün gecikmeli, ayda 3), arama, hız sınırı, görünürlük K-07 ✓. **İlan şikâyetinin ekranı yok:** servis, sözleşme ve testler hazır (`reportJobPosting`), kullanıcı düğmesi ve yönetim kuyruğu yazılmadı (`ReportTargetType` yalnız `EXPERIENCE`; ilan şikâyeti ayrı tablo) → PM kararı: P3 değil, Faz 2 tamamlama (kart 216) |
+| P2-05 İlan eşleştirme | #67, #69 | ◐ → kart 217 ile tamamlanıyor | Saf kural, outbox, günlük ve yedi günlük e-posta sınırı, "Sana uyan ilanlar" paneli, "Neden sana uygun?", ilan sahibine yalnız sayı ✓. Planın "uygulama içi bildirim listesi" yerine ana sayfa paneli yapıldı; gruplu bildirim listesi yok → PM kararı: P3 değil, Faz 2 tamamlama (kart 217) |
 | P2-06 Ters yönlü arama | #66 | ✓ | Rızalı görünürlük, işe alım beyanlı mezun, maskeli kart, hız sınırı; D7 çapraz kaynak yan kanalı kapatıldı. Rıza metninin hukuki onayı kullanıcıda (⏸ → PILOT-LEGAL) |
 | P2-03 Referans akışı | #68 | ✓ | Üç taraflı onay, "referansla kabul", gecikmeli puan, ikili tavan, şüphe kuralları |
 | P2-09 Şirket sayfaları | #70 | ✓ | Puansız, k ≥ 3, anonim yazar sızıntı testi, şirket birleştirme |
@@ -363,9 +363,9 @@ testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümle
 |---|---|
 | Soru bankasında pozisyon süzgeci, "kaydet/çalış" | Faz 3 fikirleri (`BACKLOG.md`) |
 | Yerel profil fotoğrafı (ayın mezunu) | Faz 3 fikirleri (`BACKLOG.md`) |
-| İlan şikâyeti ekranları, uygulama içi bildirim kutusu | `BACKLOG.md` "Faz 2 sonrası ürün ve arayüz P3'leri" |
+| İlan şikâyeti ekranları, gruplu uygulama içi bildirim listesi | Ertelenmedi: Faz 2 tamamlama, W2 kartı 216 ve W1 kartı 217; girince §12.1 ✓'ye çekilir |
 | Stres hacminde arama/soru bankası, `test:gate` OOM kalıbı, e2e düzeneği ve diğer teknik borç | `BACKLOG.md` TD-022 … TD-026 |
 | Rıza metinlerinin hukuki okuması; LinkedIn kurum kimliği; Gemini ve Google Cloud anahtarları; platform hesabı | `BACKLOG.md` "Dış bağımlılık bekleyenler" (kullanıcı) ve PILOT-LEGAL |
 
-**Sayım:** 14 adımın 8'i ✓ (P2-06, P2-03, P2-09, P2-11, P2-08, P2-01, P2-12, P2-13), 6'sı ◐ (P2-04, P2-05, P2-10, P2-07, P2-02, P2-14); ✗ yok. Plandan sapmalar: ilan şikâyetinin ekranı,
+**Sayım (kart 216/217 girene kadar):** 14 adımın 8'i ✓ (P2-06, P2-03, P2-09, P2-11, P2-08, P2-01, P2-12, P2-13), 6'sı ◐ (P2-04, P2-05, P2-10, P2-07, P2-02, P2-14); ✗ yok. Plandan sapmalar: ilan şikâyetinin ekranı,
 uygulama içi bildirim kutusu, soru bankası pozisyon süzgeci, hedef unvanın sözlükten seçilmesi, uzak fotoğraf yerine baş harf, rapor PDF'lerinin üretilmemesi.
