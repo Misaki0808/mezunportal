@@ -1,5 +1,6 @@
+import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 
@@ -9,18 +10,7 @@ const db = new PrismaClient({
 test.afterAll(() => db.$disconnect());
 test.describe.configure({ mode: 'serial' });
 
-async function login(page: Page, persona: 'student' | 'academic') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  await page.waitForLoadState('networkidle');
-  const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await required.nth(0).check();
-  await required.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = loginAs;
 
 // Çalışan iş kuyruğu (worker) bu testte yok: ayrıştırma sonucu, işin üreteceği biçimde (`PARSED` +
 // doğrulanmış çıktı) veritabanına konur; ekran akışı (onay → uygulama → profil) gerçek servislerle denenir.

@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { expect, test } from '@playwright/test';
@@ -52,15 +53,7 @@ test('mobilde soru süz ve şirket sekmesinde anonim soruyu gör', async ({ page
         interviewQuestions: ['SQL nedir?'],
       })),
     });
-    await page.goto('/giris/test?persona=student');
-    await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-    await page.waitForURL(/\/(hesap|onay)$/);
-    await page.goto('/onay');
-    const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-    await consent.nth(0).check();
-    await consent.nth(1).check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
+    await loginAs(page, 'student');
     await page.goto('/mulakat-sorulari');
     await page.getByLabel('Şirket', { exact: true }).selectOption(company.id);
     await page.getByLabel('Sorularda ara').fill('SQL');

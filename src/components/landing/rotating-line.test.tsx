@@ -7,12 +7,23 @@ const LINES = ['Birinci satır', 'İkinci satır', 'Üçüncü satır'];
 // Aralık 3,6 sn + geçiş 0,26 sn: bir satır değişimi ≈ 3,9 sn.
 const STEP = 3900;
 
-function stubReducedMotion(reduce: boolean) {
+/** `reduce`: hareket azalt tercihi; `hover`: fare gibi hover destekleyen cihaz (telefonda false). */
+function stubMedia(reduce: boolean, hover = true) {
+  // Sorgunun DEĞERİNİ yorumlar (yalnız adını aramaz): `(hover: none)` gibi ters bir sorgu testi kırar.
+  const clauses: Record<string, boolean> = {
+    '(prefers-reduced-motion: reduce)': reduce,
+    '(prefers-reduced-motion: no-preference)': !reduce,
+    '(hover: hover)': hover,
+    '(hover: none)': !hover,
+    '(pointer: fine)': hover,
+    '(pointer: coarse)': !hover,
+  };
   vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: reduce && query.includes('reduce'),
+    matches: query.split(' and ').every((clause) => clauses[clause.trim()] === true),
     media: query,
   }));
 }
+const stubReducedMotion = (reduce: boolean) => stubMedia(reduce, true);
 /** Gerçek sayfadaki gibi: dönen satır `.landing-hero-copy` bölgesinin içindedir (fare/odak bekletme bölgesi). */
 function setup(lines: readonly string[] = LINES) {
   const view = render(
@@ -71,6 +82,28 @@ describe('RotatingLine', () => {
     fireEvent.mouseLeave(zone);
     act(() => void vi.advanceTimersByTime(STEP));
     expect(text()?.textContent).toBe('Üçüncü satır');
+  });
+
+  it('DOKUNMATİKTE (hover yok) bir kez dokunmak satırı kalıcı durdurmaz; fare olayları yok sayılır', () => {
+    stubMedia(false, false);
+    const { zone, text } = setup();
+    // Telefonda dokunma `mouseenter` üretir ve takılı kalır: bekletme olmamalı.
+    fireEvent.mouseEnter(zone);
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('İkinci satır');
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('Üçüncü satır');
+  });
+
+  it('dokunmatikte de klavye odağı (harici klavye/ekran okuyucu) satırı bekletir', () => {
+    stubMedia(false, false);
+    const { getByTestId, text } = setup();
+    fireEvent.focusIn(getByTestId('inside-a'));
+    act(() => void vi.advanceTimersByTime(30_000));
+    expect(text()?.textContent).toBe('Birinci satır');
+    fireEvent.focusOut(getByTestId('inside-a'), { relatedTarget: document.body });
+    act(() => void vi.advanceTimersByTime(STEP));
+    expect(text()?.textContent).toBe('İkinci satır');
   });
 
   it('klavye odağı bölgedeyken bekler; odak bölge içinde gezerken bekleme sürer, dışına çıkınca döner', () => {

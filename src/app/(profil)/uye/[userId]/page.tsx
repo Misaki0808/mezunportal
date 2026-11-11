@@ -6,7 +6,7 @@ import { getMentorEntryPoints } from '@/server/actions/mentor-directory';
 import { ProfileView } from '@/components/profile/profile-view';
 import { ErrorState } from '@/components/ui';
 import { getCvReviewAvailability } from '@/server/actions/cv-review-request';
-import { getProfile } from '@/server/actions/profile-content';
+import { requestMemberProfile } from '@/app/detail-route';
 
 export const dynamic = 'force-dynamic';
 export default async function MemberProfilePage({
@@ -15,7 +15,7 @@ export default async function MemberProfilePage({
   params: Promise<{ userId: string }>;
 }) {
   const { userId } = await params;
-  const result = await getProfile({ userId }).catch(() => null);
+  const result = await requestMemberProfile(userId).catch(() => null);
   if (!result) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   const [entry, availability] = await Promise.all([

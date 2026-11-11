@@ -144,3 +144,10 @@ it('yalnız bekleyenleri oluşturma formundan önce gösterir; diğer durumlar a
   const form = screen.getByRole('button', { name: 'İncelemeye gönder' }).closest('form')!;
   expect(pending.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
+
+it('katılım bağlantısının erişilebilir adı etkinliği ayırt eder', () => {
+  renderUi(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+  const link = screen.getByRole('link', { name: 'Katılım ekranı: Kariyer Sohbeti' });
+  expect(link).toHaveTextContent('Katılım ekranı');
+  expect(link).toHaveAttribute('href', '/yonetim/etkinlikler/' + EVENTS[1]!.id);
+});

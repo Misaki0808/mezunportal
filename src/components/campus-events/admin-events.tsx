@@ -51,6 +51,7 @@ export function AdminEvents({
 }) {
   const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const t = useTranslations('campusEvents'),
+    ui = useTranslations('ui'),
     errors = useTranslations('errors.codes'),
     router = useRouter();
   const [pending, start] = useTransition(),
@@ -221,6 +222,7 @@ export function AdminEvents({
                 <Link
                   className={buttonClasses({ variant: 'secondary' })}
                   href={`/yonetim/etkinlikler/${event.id}`}
+                  aria-label={ui('namedAction', { action: t('present'), target: event.title })}
                 >
                   {t('present')}
                 </Link>

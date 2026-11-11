@@ -1,7 +1,7 @@
+import { loginAs } from './login';
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
-import { waitForHydratedForm } from './hydration';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 const db = new PrismaClient({
@@ -22,19 +22,7 @@ async function evidence(page: Page, name: string) {
   }
   await page.setViewportSize({ width: 390, height: 844 });
 }
-async function login(page: Page, persona: 'student' | 'alumniMentor') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  await waitForHydratedForm(page, 'Seçimlerimi kaydet');
-  const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await required.nth(0).check();
-  await required.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = loginAs;
 test('öğrenci rıza verir, mezun anonim kartı bulur, talep onaylanınca kimlik açılır', async ({
   browser,
 }) => {
