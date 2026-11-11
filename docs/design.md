@@ -154,6 +154,8 @@ kendisi `messages/tr.json`'dadır; burada yalnız kelime seçimi tutulur. Kodda 
 | SSS talebi | Öğrencinin SSS'ye önerdiği soru | — |
 | CV incelemesi | Mentorun CV'ye yazılı yorumu | “CV değerlendirmesi” |
 | İletişim talebi | E-posta/telefon gibi bilgilerin açılması için istek | “bağlantı isteği” |
+| İlan | Mezun ya da akademisyenin paylaştığı staj/iş duyurusu | “fırsat”, “iş fırsatı” |
+| Çevrimiçi | Görüşme biçimi (karşısı: Yüz yüze) | “online”, “çevrim içi” |
 | Katkı puanı | Katkılardan gelen puan | “skor”, “XP” |
 | Güvenilirlik | Öğrencinin randevuya katılım göstergesi | “puan” |
 | Moderasyon | Yayın öncesi yönetici incelemesi | “onay süreci” |
@@ -176,5 +178,5 @@ yıkıcı eylem ne olacağını söyler (“Hesabımı sil”).
 
 ### Ses
 
-Sen dili, kısa cümle, sıcak ama ciddi. Resmî kurum dili (“işleminiz gerçekleştirilmiştir”) yok:
+Sen dili, kısa cümle, sıcak ama ciddi. Kalıp sözcük yok (“keşfet”, “kolayca”, “sorunsuz”, “tek tıkla”): yapılacak işi söyle (“Deneyimlere bak”). Emir kipine “lütfen” eklenmez. Kesme işareti düz ('). Resmî kurum dili (“işleminiz gerçekleştirilmiştir”) yok:
 “Randevun onaylandı.”

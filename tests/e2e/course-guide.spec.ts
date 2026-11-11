@@ -47,8 +47,11 @@ test('360 px: mezun beş ders seçer, öğrenci YBS/ortak ayrımını ve seçmel
     await login(viewer, 'student');
     await viewer.goto('/ders-rehberi');
     await expect(viewer.locator('article')).toHaveCount(89);
-    const titles = await viewer.locator('main section > h2').allTextContents();
-    expect(titles).toEqual([t.departmentCourses, t.commonCourses]);
+    // Otomatik bekleyen doğrulama: başlıklar makale sayısıyla aynı anda hazır olmayabilir (tek seferlik okuma yarışırdı).
+    await expect(viewer.locator('#main-content section > h2')).toHaveText([
+      t.departmentCourses,
+      t.commonCourses,
+    ]);
     await viewer.getByRole('combobox', { name: t.kind, exact: true }).selectOption('elective');
     await viewer.getByRole('button', { name: t.filter, exact: true }).click();
     await expect(viewer.locator('article')).toHaveCount(53);

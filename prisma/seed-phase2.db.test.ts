@@ -3,16 +3,19 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import { addMembership, createUser, grantRequiredConsents } from '@/test/fixtures';
 
+import { normalizeName } from '../src/server/rules/dictionary';
+import { listCourseGuide } from '../src/server/services/course-guide';
 import { getApplicationCalendar } from '../src/server/services/application-window';
 import { getCompany, searchCompanies } from '../src/server/services/companies';
 import { getInterviewQuestions } from '../src/server/services/interview-questions';
 import { searchJobPostings } from '../src/server/services/job-postings';
 import { seedAccounts, seedUserId } from './seed-accounts';
+import { seedCourses } from './seed-courses';
 import { seedDictionary } from './seed-dictionary';
 import { seedInstitutions } from './seed-institutions';
 import { SAMPLE_ALUMNI, seedPhase2 } from './seed-phase2';
 import { seedProfileTags } from './seed-profile-tags';
-import { seedUuid } from './seed-util';
+import { seedId, seedUuid } from './seed-util';
 
 const db = createTestPrisma();
 const NOW = new Date('2030-03-10T09:00:00Z');
@@ -50,6 +53,9 @@ async function cleanup() {
   await db.jobPosting.deleteMany({ where: { id: { in: POSTINGS } } });
   await db.campusEvent.deleteMany({ where: { id: { in: EVENTS } } });
   await db.experience.deleteMany({ where: { id: { in: EXPERIENCES } } });
+  await db.alumniCourseMark.deleteMany({
+    where: { userId: { in: [...SAMPLE_USERS, seedUserId('alumniMentor')] } },
+  });
   await db.position.deleteMany({ where: { userId: { in: SAMPLE_USERS } } });
   await db.company.deleteMany({ where: { id: { in: COMPANIES } } });
   // Görüntüleyen öğrenci kalır: rıza kayıtları yalnız eklenir (silinemez), diğer testler de kullanıcılarını bırakır.
@@ -62,6 +68,7 @@ beforeAll(async () => {
   await seedAccounts(db);
   await seedProfileTags(db);
   await seedDictionary(db);
+  await seedCourses(db);
   await cleanup();
   // Seed'in İÜ YBS bölümünde bir öğrenci (K-07: aynı üniversite) ve rıza kapısı açık.
   const department = await db.department.findFirstOrThrow({
@@ -166,6 +173,34 @@ describe('Faz 2 deneme verisi (P2-14)', () => {
   });
 });
 
+describe('eski sürümden geçiş (24 harfli kimlikler)', () => {
+  it('eski kimlikli örnek satırlar silinir; aynı şirket adı çakışması ve çiftlenme olmaz', async () => {
+    await cleanup();
+    const legacyCompany = seedId('phase2', 'company:yazilim');
+    const legacyExperience = seedId('phase2', 'experience:yazilim-yaz');
+    await db.company.create({
+      data: {
+        id: legacyCompany,
+        name: 'Örnek Yazılım A.Ş.',
+        normalizedName: 'ornek yazilim as',
+        aliases: [],
+      },
+    });
+    await seedPhase2(db, NOW);
+    expect(
+      await db.company.count({
+        where: { normalizedName: normalizeName('Örnek Yazılım A.Ş.', 'COMPANY') },
+      }),
+    ).toBe(1);
+    expect(await db.company.count({ where: { id: legacyCompany } })).toBe(0);
+    expect(await db.experience.count({ where: { id: legacyExperience } })).toBe(0);
+    expect(await db.experience.count({ where: { id: { in: EXPERIENCES } } })).toBe(12);
+    // idempotans: ikinci koşu satır sayısını değiştirmez
+    await seedPhase2(db, NOW);
+    expect(await db.company.count({ where: { id: { in: COMPANIES } } })).toBe(3);
+  });
+});
+
 describe('seed gerçekten GÖRÜNÜR içerik üretir (servisler k-anonimlik eşikleriyle birlikte)', () => {
   // Seed saati gerçek saat olmalı: ilan görünürlüğü "son tarih ≥ bugün" ister.
   beforeAll(async () => {
@@ -195,6 +230,13 @@ describe('seed gerçekten GÖRÜNÜR içerik üretir (servisler k-anonimlik eşi
       expect(calendar.months.length, id).toBeGreaterThan(0);
       for (const month of calendar.months) expect(month.count).toBeGreaterThanOrEqual(3);
     }
+  });
+
+  it('ders rehberi: ilk üç seçmeli beş mezun işaretiyle görünür, dördüncü (iki işaret) gizli kalır', async () => {
+    const guide = await listCourseGuide(db, viewer, { elective: true });
+    const marked = guide.filter((course) => course.count !== null);
+    expect(marked.map((c) => c.count)).toEqual([5, 5, 5]);
+    expect(guide.filter((course) => course.count === null).length).toBeGreaterThan(0);
   });
 
   it('şirket sayfası: yazarlı deneyimler, 3 mezunluk çalışan hücresi ve dönem kesiti görünür; 3 altı hücre gizli; e-posta yok', async () => {

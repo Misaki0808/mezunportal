@@ -44,8 +44,8 @@ raporlar; bildirim gönderimi.
 ### 5. Aktarım
 - **Yurt dışı:** CV ayrıştırma için yapay zekâ sağlayıcısı [K-04]; randevu davetleri için Google
   Takvim; [K-05 canlıda e-posta sağlayıcısı yurt dışındaysa]. Yalnız ayrı açık rızanızla.
-- **Platform içi:** iletişim bilgileriniz yalnız sizin onayladığınız kişilere; randevu onayında
-  e-posta adresiniz karşı tarafa.
+- **Platform içi:** iletişim bilgileriniz yalnız sizin onayladığınız kişilere açılır; randevu davetinde
+  e-posta adresiniz karşı tarafa gösterilmez.
 
 ### 6. Saklama süreleri
 Mezun belgesi: karar anında silinir. CV: son sürüm, siz silene ya da hesabınızı kapatana kadar.

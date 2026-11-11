@@ -22,11 +22,11 @@ export function DigestUnsubscribe() {
       .catch(() => setFailed(true));
   }, []);
   return (
-    <main className="mx-auto max-w-xl px-5 py-16">
+    <div className="mx-auto max-w-xl px-5 py-16">
       <h1 className="text-2xl font-bold">{t('unsubscribeTitle')}</h1>
       <p className="mt-4" role="status">
         {failed ? t('unsubscribeError') : done ? t('unsubscribeDone') : t('unsubscribeLoading')}
       </p>
-    </main>
+    </div>
   );
 }

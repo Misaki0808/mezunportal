@@ -219,9 +219,9 @@ describe('giriş noktaları', () => {
       cvReview: { available: false, reason },
     });
     const { rerender } = renderUi(<MentorEntryPoints userId="m1" entry={blocked('NOT_MENTOR')} />);
-    expect(screen.queryByText('Mentorla bağlantı')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mentorla görüş')).not.toBeInTheDocument();
     rerender(<MentorEntryPoints userId="m1" entry={blocked('SELF')} />);
-    expect(screen.queryByText('Mentorla bağlantı')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mentorla görüş')).not.toBeInTheDocument();
   });
 });
 

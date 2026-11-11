@@ -7,10 +7,10 @@ export default async function ManageCoursesPage() {
   const [result, t] = await Promise.all([getManagedCourses(), getTranslations('courseGuide')]);
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   return (
-    <main className="mx-auto max-w-4xl space-y-5 px-4 py-8">
+    <div className="mx-auto max-w-4xl space-y-5 px-4 py-8">
       <h1 className="text-3xl font-bold">{t('adminTitle')}</h1>
       <p>{t('adminDescription')}</p>
       <CourseAdmin departments={result.data.departments} courses={result.data.courses} />
-    </main>
+    </div>
   );
 }

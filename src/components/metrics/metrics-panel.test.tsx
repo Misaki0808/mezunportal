@@ -17,11 +17,11 @@ const hidden: UsageMetrics = {
 describe('kullanım paneli', () => {
   it('gizli toplam ve etkin kullanıcıya sayı veya grafik atamaz', () => {
     renderUi(<MetricsPanel initial={hidden} initialFilter={filter} departments={[]} />);
-    expect(screen.getAllByText('Gizli (3’ten az kişi)').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("Gizli (3'ten az kişi)").length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     expect(screen.queryByRole('meter')).not.toBeInTheDocument();
     const totals = screen.getByRole('heading', { name: 'Olay türleri' }).closest('section')!;
-    expect(within(totals).getByText('Gizli (3’ten az kişi)')).toBeInTheDocument();
+    expect(within(totals).getByText("Gizli (3'ten az kişi)")).toBeInTheDocument();
     expect(within(totals).queryByText(/^\d+$/)).not.toBeInTheDocument();
   });
   it('Excel 429 olduğunda tekrar indirme kilitlenir ve sebep görünür', async () => {
@@ -52,6 +52,6 @@ describe('kullanım paneli', () => {
 it('inceleyici: null etkin toplam yalnız gizli etiketi taşır, sıfır veya başka sayı üretmez', () => {
   renderUi(<MetricsPanel initial={hidden} initialFilter={filter} departments={[]} />);
   const active = screen.getByText('Etkin kullanıcı', { exact: true }).parentElement!;
-  expect(within(active).getByText('Gizli (3’ten az kişi)')).toBeVisible();
+  expect(within(active).getByText("Gizli (3'ten az kişi)")).toBeVisible();
   expect(within(active).queryByText(/^\d+$/)).not.toBeInTheDocument();
 });
