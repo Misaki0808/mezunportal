@@ -1,6 +1,16 @@
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import {
+  Badge,
+  buttonClasses,
+  Card,
+  EmptyState,
+  ErrorState,
+  FileTextIcon,
+  PageHeader,
+} from '@/components/ui';
+import { CourseFilters } from '@/components/course-guide/course-filters';
 import { getCourseGuide } from '@/server/actions/course-guide';
-import { ErrorState } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 export default async function CourseGuidePage({
@@ -21,82 +31,55 @@ export default async function CourseGuidePage({
   ];
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-      <header>
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
-        <p className="mt-2 text-muted">{t('description')}</p>
-      </header>
-      <form className="grid gap-3 rounded-2xl border border-border p-4 sm:grid-cols-4">
-        <label>
-          {t('search')}
-          <input
-            name="q"
-            defaultValue={query.q}
-            className="mt-1 min-h-11 w-full rounded-lg border border-border bg-transparent px-3"
-          />
-        </label>
-        <label>
-          {t('semester')}
-          <select
-            name="semester"
-            defaultValue={semester?.toString() ?? ''}
-            className="mt-1 min-h-11 w-full rounded-lg border border-border bg-background px-3"
-          >
-            <option value="">{t('all')}</option>
-            {Array.from({ length: 9 }, (_, i) => (
-              <option key={i} value={i}>
-                {i}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t('kind')}
-          <select
-            name="kind"
-            defaultValue={query.kind ?? ''}
-            className="mt-1 min-h-11 w-full rounded-lg border border-border bg-background px-3"
-          >
-            <option value="">{t('all')}</option>
-            <option value="elective">{t('elective')}</option>
-            <option value="required">{t('required')}</option>
-          </select>
-        </label>
-        <button className="min-h-11 self-end rounded-lg bg-primary px-4 font-semibold text-on-primary">
-          {t('filter')}
-        </button>
-      </form>
-      {result.data.length === 0 && <p>{t('empty')}</p>}
+      <PageHeader title={t('title')} description={t('description')} />
+      <CourseFilters query={query.q} semester={semester} kind={query.kind} />
+      {result.data.length === 0 && (
+        <EmptyState
+          className="rounded-card border border-dashed border-border"
+          icon={<FileTextIcon width={32} height={32} strokeWidth={1.5} />}
+          title={t('emptyTitle')}
+          description={t('empty')}
+          action={
+            <Link href="/ders-rehberi" className={buttonClasses({ variant: 'secondary' })}>
+              {t('clearFilters')}
+            </Link>
+          }
+        />
+      )}
       {groups.map(
         (courses, index) =>
           courses.length > 0 && (
             <section key={index} className="space-y-3">
-              <h2 className="text-xl font-bold">
+              <h2 className="text-xl font-semibold text-fg">
                 {t(index === 0 ? 'departmentCourses' : 'commonCourses')}
               </h2>
               <div className="grid gap-3 md:grid-cols-2">
                 {courses.map((c) => (
-                  <article key={c.id} className="rounded-2xl border border-border p-5">
-                    <p className="text-sm text-muted">
-                      {c.code} · {t('semesterNumber', { count: c.semester })} ·{' '}
-                      {t(c.elective ? 'elective' : 'required')}
-                    </p>
-                    <h3 className="mt-2 font-semibold">{c.name}</h3>
-                    <p className="mt-3 text-sm">
-                      {c.count === null ? t('notEnough') : t('alumniCount', { count: c.count })}
-                    </p>
+                  <Card as="article" key={c.id}>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
+                      <Badge tone="category">{t(c.elective ? 'elective' : 'required')}</Badge>
+                      <span>
+                        {c.code} · {t('semesterNumber', { count: c.semester })}
+                      </span>
+                    </div>
+                    <h3 className="mt-2 break-words font-semibold text-fg">{c.name}</h3>
+                    <div className="mt-3">
+                      {c.count === null ? (
+                        <span className="text-sm text-fg-muted">{t('notEnoughShort')}</span>
+                      ) : (
+                        <Badge tone="success">{t('alumniBadge', { count: c.count })}</Badge>
+                      )}
+                    </div>
                     {c.sectors.length > 0 && (
                       <ul className="mt-3 flex flex-wrap gap-2">
                         {c.sectors.map((name) => (
-                          <li
-                            key={name}
-                            className="rounded-full bg-primary-soft px-3 py-1 text-sm text-on-primary-soft"
-                          >
-                            {name}
+                          <li key={name}>
+                            <Badge tone="info">{name}</Badge>
                           </li>
                         ))}
                       </ul>
                     )}
-                  </article>
+                  </Card>
                 ))}
               </div>
             </section>

@@ -1,9 +1,22 @@
 'use client';
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Button, Modal } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  buttonClasses,
+  CalendarIcon,
+  Card,
+  Checkbox,
+  EmptyState,
+  Field,
+  Input,
+  Modal,
+  Textarea,
+} from '@/components/ui';
+import type { BadgeTone } from '@/components/ui';
 import { createCampusEventSchema } from '@/contracts/campus-events';
 import {
   cancelCampusEvent,
@@ -16,6 +29,12 @@ type Item = {
   title: string;
   startsAt: Date;
   status: 'PENDING' | 'PUBLISHED' | 'REJECTED' | 'CANCELLED';
+};
+const STATUS_TONES: Record<Item['status'], BadgeTone> = {
+  PENDING: 'warning',
+  PUBLISHED: 'success',
+  REJECTED: 'danger',
+  CANCELLED: 'neutral',
 };
 export function AdminEvents({
   departments,
@@ -31,6 +50,8 @@ export function AdminEvents({
     [status, setStatus] = useState(''),
     [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}),
     [reason, setReason] = useState(''),
+    [reasonError, setReasonError] = useState(''),
+    reasonRef = useRef<HTMLInputElement>(null),
     [cancelId, setCancelId] = useState<string | null>(null);
   const labels = {
     PENDING: t('pending'),
@@ -89,6 +110,17 @@ export function AdminEvents({
       if (result.ok) router.refresh();
     });
   }
+  const reasonOk = reason.trim().length >= 3;
+  /** Gerekçe yoksa düğme sessizce kapalı kalmaz: sebep alanın altında söylenir ve odak oraya gider. */
+  function needReason(action: () => void) {
+    if (reasonOk) {
+      setReasonError('');
+      action();
+      return;
+    }
+    setReasonError(t('reasonNeeded'));
+    reasonRef.current?.focus();
+  }
   function decide(eventId: string, kind: 'PUBLISH' | 'REJECT' | 'CANCEL') {
     start(async () => {
       const result =
@@ -106,7 +138,14 @@ export function AdminEvents({
       }
     });
   }
-  const field = 'min-h-12 w-full rounded-xl border border-border bg-surface px-3';
+  const fields = [
+    ['title', 'name', 'text'],
+    ['description', 'detailsLabel', 'textarea'],
+    ['location', 'place', 'text'],
+    ['startsAt', 'start', 'datetime-local'],
+    ['endsAt', 'end', 'datetime-local'],
+    ['capacity', 'capacity', 'number'],
+  ] as const;
   return (
     <div className="space-y-8">
       <form
@@ -114,112 +153,127 @@ export function AdminEvents({
           event.preventDefault();
           create(new FormData(event.currentTarget));
         }}
-        className="mt-6 space-y-4 rounded-card border border-border p-5"
       >
-        <h2 className="text-xl font-semibold">{t('create')}</h2>
-        {(
-          [
-            ['title', 'name', 'text'],
-            ['description', 'detailsLabel', 'text'],
-            ['location', 'place', 'text'],
-            ['startsAt', 'start', 'datetime-local'],
-            ['endsAt', 'end', 'datetime-local'],
-            ['capacity', 'capacity', 'number'],
-          ] as const
-        ).map(([name, label, type]) => (
-          <label key={name} className="block space-y-2">
-            <span className="font-semibold">{t(label!)}</span>
-            <input
-              className={field}
-              name={name}
-              type={type}
-              min={type === 'number' ? 1 : undefined}
-              aria-invalid={!!fieldErrors[name]}
-              aria-describedby={fieldErrors[name] ? `campus-error-${name}` : undefined}
-              required
-            />
-            {fieldErrors[name] && (
-              <span id={`campus-error-${name}`} className="block text-danger">
-                {fieldErrors[name]}
-              </span>
-            )}
-          </label>
-        ))}
-        <fieldset>
-          <legend className="font-semibold">{t('departments')}</legend>
-          {departments.map((d) => (
-            <label key={d.id} className="mt-2 flex min-h-11 items-center gap-3">
-              <input type="checkbox" name="departments" value={d.id} />
-              {d.name}
-            </label>
+        <Card className="mt-6 space-y-5">
+          <h2 className="text-xl font-semibold">{t('create')}</h2>
+          {fields.map(([name, label, type]) => (
+            <Field key={name} label={t(label)} required error={fieldErrors[name]}>
+              {(control) =>
+                type === 'textarea' ? (
+                  <Textarea {...control} name={name} />
+                ) : (
+                  <Input
+                    {...control}
+                    name={name}
+                    type={type}
+                    min={type === 'number' ? 1 : undefined}
+                    inputMode={type === 'number' ? 'numeric' : undefined}
+                  />
+                )
+              }
+            </Field>
           ))}
-          {fieldErrors.departmentIds && <p className="text-danger">{fieldErrors.departmentIds}</p>}
-        </fieldset>
-        <button
-          disabled={pending}
-          className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-on-primary disabled:opacity-50"
-        >
-          {pending ? t('registering') : t('submit')}
-        </button>
+          <fieldset>
+            <legend className="font-medium text-fg">{t('departments')}</legend>
+            {departments.map((d) => (
+              <Checkbox key={d.id} name="departments" value={d.id} label={d.name} />
+            ))}
+            {fieldErrors.departmentIds && (
+              <p role="alert" className="text-sm text-danger">
+                {fieldErrors.departmentIds}
+              </p>
+            )}
+          </fieldset>
+          <Button type="submit" size="lg" fullWidth loading={pending}>
+            {pending ? t('registering') : t('submit')}
+          </Button>
+        </Card>
       </form>
-      <label className="block space-y-2">
-        <span className="font-semibold">{t('reason')}</span>
-        <input value={reason} onChange={(e) => setReason(e.target.value)} className={field} />
-      </label>
-      {status && <p role="status">{status}</p>}
-      <ul className="space-y-3">
-        {events.map((event) => (
-          <li key={event.id} className="rounded-card border border-border p-5">
-            <h2 className="font-semibold">{event.title}</h2>
-            <p>{labels[event.status]}</p>
-            <p>
-              {new Intl.DateTimeFormat('tr-TR', {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-                timeZone: 'Europe/Istanbul',
-              }).format(new Date(event.startsAt))}
+      {events.length === 0 ? (
+        <EmptyState
+          className="rounded-card border border-dashed border-border"
+          icon={<CalendarIcon width={32} height={32} strokeWidth={1.5} />}
+          title={t('emptyTitle')}
+          description={t('emptyDescription')}
+        />
+      ) : (
+        <section className="space-y-4">
+          <Field label={t('reason')} hint={t('reasonHint')} error={reasonError || undefined}>
+            {(control) => (
+              <Input
+                {...control}
+                ref={reasonRef}
+                value={reason}
+                onChange={(e) => {
+                  setReason(e.target.value);
+                  if (reasonError) setReasonError('');
+                }}
+              />
+            )}
+          </Field>
+          {status && (
+            <p role="status" className="text-fg-muted">
+              {status}
             </p>
-            {event.status === 'PENDING' && (
-              <div className="mt-3 flex flex-wrap gap-3">
-                <button
-                  disabled={pending || reason.trim().length < 3}
-                  onClick={() => decide(event.id, 'PUBLISH')}
-                  className="min-h-11 rounded-xl border border-border px-4 disabled:opacity-50"
-                >
-                  {t('approve')}
-                </button>
-                <button
-                  disabled={pending || reason.trim().length < 3}
-                  onClick={() => decide(event.id, 'REJECT')}
-                  className="min-h-11 rounded-xl border border-border px-4 disabled:opacity-50"
-                >
-                  {t('reject')}
-                </button>
-              </div>
-            )}
-            {event.status === 'PUBLISHED' && (
-              <div className="mt-3 flex flex-wrap gap-3">
-                <Link
-                  className="inline-flex min-h-11 items-center text-primary underline"
-                  href={`/yonetim/etkinlikler/${event.id}`}
-                >
-                  {t('present')}
-                </Link>
-                <button
-                  disabled={pending || reason.trim().length < 3}
-                  onClick={() => {
-                    setStatus('');
-                    setCancelId(event.id);
-                  }}
-                  className="min-h-11 rounded-xl border border-border px-4 disabled:opacity-50"
-                >
-                  {t('cancel')}
-                </button>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+          )}
+          <ul className="space-y-3">
+            {events.map((event) => (
+              <Card as="li" key={event.id} className="list-none">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h2 className="min-w-0 break-words font-semibold">{event.title}</h2>
+                  <Badge tone={STATUS_TONES[event.status]}>{labels[event.status]}</Badge>
+                </div>
+                <p className="mt-2 flex items-center gap-1.5 text-fg-muted">
+                  <CalendarIcon width={16} height={16} className="shrink-0" />
+                  {new Intl.DateTimeFormat('tr-TR', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                    timeZone: 'Europe/Istanbul',
+                  }).format(new Date(event.startsAt))}
+                </p>
+                {event.status === 'PENDING' && (
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Button
+                      loading={pending}
+                      onClick={() => needReason(() => decide(event.id, 'PUBLISH'))}
+                    >
+                      {t('approve')}
+                    </Button>
+                    <Button
+                      variant="danger-outline"
+                      loading={pending}
+                      onClick={() => needReason(() => decide(event.id, 'REJECT'))}
+                    >
+                      {t('reject')}
+                    </Button>
+                  </div>
+                )}
+                {event.status === 'PUBLISHED' && (
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                      className={buttonClasses({ variant: 'secondary' })}
+                      href={`/yonetim/etkinlikler/${event.id}`}
+                    >
+                      {t('present')}
+                    </Link>
+                    <Button
+                      variant="danger-outline"
+                      onClick={() =>
+                        needReason(() => {
+                          setStatus('');
+                          setCancelId(event.id);
+                        })
+                      }
+                    >
+                      {t('cancel')}
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </ul>
+        </section>
+      )}
       <Modal
         open={cancelId !== null}
         onClose={() => setCancelId(null)}
@@ -231,7 +285,8 @@ export function AdminEvents({
               {t('dismiss')}
             </Button>
             <Button
-              {...(pending || reason.trim().length < 3
+              variant="danger"
+              {...(pending || !reasonOk
                 ? {
                     disabled: true as const,
                     disabledReason: pending ? t('registering') : t('reason'),

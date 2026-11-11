@@ -33,7 +33,7 @@ export function PostingContactForm({
   const [pending, start] = useTransition();
   if (sent)
     return (
-      <div className="space-y-5 rounded-3xl border border-border bg-surface p-5">
+      <div className="space-y-5 rounded-card border border-border bg-surface p-5">
         <p role="status">{t('sent')}</p>
         <Link href="/hesap/iletisim?box=OUTGOING" className={buttonClasses({ fullWidth: true })}>
           {t('sendDone')}
@@ -63,7 +63,7 @@ export function PostingContactForm({
         });
       }}
     >
-      <fieldset className="space-y-3 rounded-3xl border border-border bg-surface p-5">
+      <fieldset className="space-y-3 rounded-card border border-border bg-surface p-5">
         <legend className="font-semibold">{t('fieldLegend')}</legend>
         <p className="text-fg-muted">{t('requestableHelp')}</p>
         {CONTACT_FIELDS.map((field) => (
@@ -89,7 +89,7 @@ export function PostingContactForm({
           </div>
         ))}
       </fieldset>
-      <div className="rounded-3xl border border-border bg-surface p-5">
+      <div className="rounded-card border border-border bg-surface p-5">
         <Field label={t('message')} hint={t('messageHelp', { max: CONTACT_MESSAGE_MAX })}>
           {(props) => (
             <Textarea

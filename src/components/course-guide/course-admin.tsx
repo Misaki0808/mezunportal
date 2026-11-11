@@ -2,6 +2,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { Badge, Button, Checkbox, Field, Input, Select } from '@/components/ui';
 import { saveCourseSchema } from '@/contracts/course-guide';
 import { saveCourse } from '@/server/actions/course-guide';
 
@@ -30,7 +31,7 @@ export function CourseAdmin({
     <div className="space-y-5">
       <form
         key={selected?.id ?? 'new'}
-        className="grid gap-3 rounded-2xl border border-border p-4"
+        className="grid gap-4 rounded-card border border-border bg-bg p-4 shadow-card sm:p-5"
         onSubmit={(event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget);
@@ -57,91 +58,82 @@ export function CourseAdmin({
         }}
       >
         <h2 className="text-xl font-semibold">{t(selected ? 'editCourse' : 'addCourse')}</h2>
-        <label>
-          {t('department')}
-          <select
-            required
-            name="departmentId"
-            defaultValue={selected?.departmentId ?? departments[0]?.id}
-            className="mt-1 min-h-11 w-full rounded-lg border border-border bg-background px-3"
-          >
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t('code')}
-          <input
-            required
-            maxLength={32}
-            name="code"
-            defaultValue={selected?.code}
-            className="mt-1 min-h-11 w-full rounded-lg border border-border bg-transparent px-3"
-          />
-        </label>
-        <label>
-          {t('name')}
-          <input
-            required
-            maxLength={200}
-            name="name"
-            defaultValue={selected?.name}
-            className="mt-1 min-h-11 w-full rounded-lg border border-border bg-transparent px-3"
-          />
-        </label>
-        <label>
-          {t('semester')}
-          <input
-            required
-            type="number"
-            min={0}
-            max={8}
-            name="semester"
-            defaultValue={selected?.semester ?? 1}
-            className="mt-1 min-h-11 w-full rounded-lg border border-border bg-transparent px-3"
-          />
-        </label>
-        <label className="flex min-h-11 items-center gap-2">
-          <input
-            type="checkbox"
-            name="elective"
-            value="yes"
-            defaultChecked={selected?.elective ?? true}
-          />
-          {t('elective')}
-        </label>
-        <div className="flex gap-2">
-          <button
-            disabled={pending || !departments.length}
-            className="min-h-11 rounded-lg bg-primary px-5 font-semibold text-on-primary disabled:opacity-50"
-          >
+        <Field label={t('department')} required>
+          {(control) => (
+            <Select
+              {...control}
+              name="departmentId"
+              defaultValue={selected?.departmentId ?? departments[0]?.id}
+            >
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
+          <Field label={t('code')} required>
+            {(control) => (
+              <Input {...control} maxLength={32} name="code" defaultValue={selected?.code} />
+            )}
+          </Field>
+          <Field label={t('name')} required>
+            {(control) => (
+              <Input {...control} maxLength={200} name="name" defaultValue={selected?.name} />
+            )}
+          </Field>
+        </div>
+        <Field label={t('semester')} required>
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={8}
+              name="semester"
+              defaultValue={selected?.semester ?? 1}
+            />
+          )}
+        </Field>
+        <Checkbox
+          name="elective"
+          value="yes"
+          label={t('elective')}
+          defaultChecked={selected?.elective ?? true}
+        />
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" loading={pending}>
             {t(pending ? 'saving' : 'save')}
-          </button>
+          </Button>
           {selected && (
-            <button type="button" className="min-h-11 px-4" onClick={() => setSelected(null)}>
+            <Button variant="ghost" onClick={() => setSelected(null)}>
               {t('cancel')}
-            </button>
+            </Button>
           )}
         </div>
-        <p role="status">{status}</p>
+        <p role="status" className="text-fg-muted">
+          {status}
+        </p>
       </form>
       <div className="space-y-2">
         {courses.map((course) => (
           <button
             type="button"
             key={course.id}
+            aria-pressed={selected?.id === course.id}
             onClick={() => {
               setSelected(course);
               setStatus('');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="block min-h-11 w-full rounded-xl border border-border p-4 text-left"
+            className="press-row block min-h-11 w-full rounded-card border border-border bg-bg p-4 text-left aria-pressed:border-primary aria-pressed:bg-primary-soft"
           >
-            <span className="font-semibold">{course.name}</span>
-            <span className="block text-sm text-muted">
+            <span className="font-semibold text-fg">{course.name}</span>
+            <span className="mt-1 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
+              <Badge tone="category">{t(course.elective ? 'elective' : 'required')}</Badge>
               {course.code} · {t('semesterNumber', { count: course.semester })}
             </span>
           </button>

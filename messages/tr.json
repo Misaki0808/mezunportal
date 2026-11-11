@@ -2058,7 +2058,15 @@
     "qrInvalid": "Bu bağlantı geçerli değil. Etkinlik kodunu yeniden okutmayı dene.",
     "codeExpires": "Kodun yenilenmesine {seconds} saniye",
     "attendanceCount": "Doğrulanan katılım: {count}",
-    "back": "Etkinliklere dön"
+    "back": "Etkinliklere dön",
+    "emptyTitle": "Henüz yaklaşan etkinlik yok",
+    "emptyDescription": "Yeni buluşmalar burada görünecek.",
+    "registeredBadge": "Kayıtlısın",
+    "attendedBadge": "Katılımın doğrulandı",
+    "codeNeeded": "Altı haneli kodu eksiksiz yaz.",
+    "reasonNeeded": "Önce işlem gerekçesini yaz.",
+    "reasonHint": "Onay, ret ve iptal için en az üç harflik gerekçe gerekir.",
+    "listTitle": "Etkinlikler"
   },
   "monthlyDigest": {
     "subject": "Bu ay MezunPortal'da",
@@ -3312,6 +3320,11 @@
     "code": "Ders kodu",
     "name": "Ders adı",
     "cancel": "Vazgeç",
-    "adminLink": "Ders sözlüğünü yönet"
+    "adminLink": "Ders sözlüğünü yönet",
+    "emptyTitle": "Ders bulunamadı",
+    "clearFilters": "Filtreleri temizle",
+    "alumniBadge": "{count} mezun işine yaradı",
+    "notEnoughShort": "Henüz yeterli değerlendirme yok",
+    "filters": "Filtreler"
   }
 }

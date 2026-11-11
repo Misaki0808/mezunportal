@@ -16,7 +16,16 @@ import type {
   ReviewJobPostingOutput,
 } from '@/contracts/job-postings';
 import type { ActionResult } from '@/contracts/result';
-import { Badge, Button, EmptyState, Field, Modal, Textarea, buttonClasses } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Field,
+  Modal,
+  PageHeader,
+  Textarea,
+  buttonClasses,
+} from '@/components/ui';
 
 export function MyPostings({
   initial,
@@ -80,7 +89,7 @@ export function MyPostings({
           >
             ← {t('back')}
           </Link>
-          <h1 className="text-3xl font-bold">{t('listTitle')}</h1>
+          <PageHeader title={t('listTitle')} />
         </div>
         <Link href="/ilanlar/yeni" className={buttonClasses()}>
           {t('post')}
@@ -91,7 +100,7 @@ export function MyPostings({
           {items.map((item) => (
             <li
               key={item.id}
-              className="flex min-w-0 flex-col gap-4 rounded-3xl border border-border bg-surface p-5"
+              className="flex min-w-0 flex-col gap-4 rounded-card border border-border bg-surface p-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -261,11 +270,11 @@ export function PostingModeration({
       data-hydrated={hydrated ? 'true' : undefined}
       className="mx-auto max-w-5xl px-4 py-8 sm:px-6"
     >
-      <h1 className="mb-7 text-3xl font-bold">{t('moderationTitle')}</h1>
+      <PageHeader title={t('moderationTitle')} className="mb-7" />
       {items.length ? (
         <ul className="grid gap-4">
           {items.map((item) => (
-            <li key={item.id} className="min-w-0 rounded-3xl border border-border bg-surface p-5">
+            <li key={item.id} className="min-w-0 rounded-card border border-border bg-surface p-5">
               <p className="break-words text-sm text-fg-muted">
                 {item.organizationName} · {t('reviewedBy', { name: item.author.displayName })}
               </p>

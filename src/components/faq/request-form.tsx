@@ -120,7 +120,7 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
       {visible.length > 0 && (
         <section
           aria-labelledby="similar-title"
-          className="rounded-card border border-border bg-surface-subtle p-4"
+          className="rounded-card border border-border bg-surface p-4"
         >
           <h3 id="similar-title" className="text-base font-semibold text-fg">
             {t('similarTitle')}

@@ -46,7 +46,7 @@ export function EventCode({ eventId }: { eventId: string }) {
               alt={t('qrAlt')}
               width={280}
               height={280}
-              className="h-auto w-[min(70vw,280px)] rounded-xl bg-white p-2"
+              className="h-auto w-[min(70vw,280px)] rounded-card bg-white p-3"
             />
             <p
               className="whitespace-nowrap text-6xl font-bold tracking-wider sm:text-7xl xl:text-8xl"

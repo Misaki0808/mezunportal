@@ -49,10 +49,16 @@ describe('Tabs', () => {
     expect(screen.getByRole('tab', { name: 'Hakkında' })).toHaveFocus();
   });
 
-  it('şerit sığmayınca kenar ipucu çizilir; seçilen sekme görünür alana kaydırılır', async () => {
-    const scrolled: string[] = [];
+  it('şerit sığmayınca kenar ipucu çizilir; seçilen sekme yalnız şeritte yatay kaydırılır, sayfa kaymaz', async () => {
+    const strip: unknown[] = [];
+    const page: string[] = [];
+    Object.defineProperty(Element.prototype, 'scrollTo', {
+      value: (options: unknown) => strip.push(options),
+      configurable: true,
+      writable: true,
+    });
     Element.prototype.scrollIntoView = function scrollIntoView(this: Element) {
-      scrolled.push(this.textContent ?? '');
+      page.push(this.textContent ?? '');
     };
     const { user } = renderUi(<Tabs label="Profil" items={items} />);
     const list = screen.getByRole('tablist');
@@ -62,8 +68,15 @@ describe('Tabs', () => {
     list.dispatchEvent(new Event('scroll'));
     expect(await screen.findByText('', { selector: '[data-tabs-fade="end"]' })).toBeInTheDocument();
     expect(document.querySelector('[data-tabs-fade="start"]')).toBeNull();
-    await user.click(screen.getByRole('tab', { name: 'Eğitim' }));
-    expect(scrolled).toContain('Eğitim');
+    const tab = screen.getByRole('tab', { name: 'Eğitim' });
+    Object.defineProperty(tab, 'offsetLeft', { value: 300, configurable: true });
+    Object.defineProperty(tab, 'offsetWidth', { value: 100, configurable: true });
+    strip.length = 0;
+    await user.click(tab);
+    // 300 − (200 − 100) / 2: sekme şeridin ortasına gelir.
+    expect(strip).toContainEqual({ left: 250 });
+    expect(page).toEqual([]);
+    Reflect.deleteProperty(Element.prototype, 'scrollTo');
     Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
   });
 
@@ -79,21 +92,27 @@ describe('Tabs', () => {
         disconnect() {}
       },
     );
-    const previous = Element.prototype.scrollIntoView;
-    const visible: string[] = [];
-    Element.prototype.scrollIntoView = function scrollIntoView() {
-      visible.push(this.textContent ?? '');
+    const visible: unknown[] = [];
+    const page: string[] = [];
+    Object.defineProperty(Element.prototype, 'scrollTo', {
+      value: (options: unknown) => visible.push(options),
+      configurable: true,
+      writable: true,
+    });
+    Element.prototype.scrollIntoView = function scrollIntoView(this: Element) {
+      page.push(this.textContent ?? '');
     };
     try {
       renderUi(<Tabs label="Profil" items={items} defaultId="c" />);
       visible.length = 0;
       act(() => resize?.([], {} as ResizeObserver));
-      expect(visible).toContain('Eğitim');
+      expect(visible).toHaveLength(1);
+      expect(page).toEqual([]);
       expect(screen.getByRole('tab', { name: 'Eğitim' })).toHaveAttribute('aria-selected', 'true');
     } finally {
       vi.unstubAllGlobals();
-      if (previous) Element.prototype.scrollIntoView = previous;
-      else Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+      Reflect.deleteProperty(Element.prototype, 'scrollTo');
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
     }
   });
 });
