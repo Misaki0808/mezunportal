@@ -1,28 +1,14 @@
-import { expect, test, type Page } from '@playwright/test';
+import { loginAs } from './login';
+import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import ExcelJS from 'exceljs';
 import { PrismaClient } from '../../src/generated/prisma/client';
-import { waitForHydratedForm } from './hydration';
 
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
 test.afterAll(() => db.$disconnect());
-async function login(
-  page: Page,
-  persona: 'systemAdmin' | 'alumniMentor' | 'departmentAdmin' | 'academic',
-) {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  await waitForHydratedForm(page, 'Seçimlerimi kaydet');
-  const boxes = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await boxes.nth(0).check();
-  await boxes.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = loginAs;
 
 test('yönetici gerekçeyle askıya alır; oturum kapanır ve yeniden giriş engellenir', async ({
   page,
@@ -59,8 +45,7 @@ test('yönetici gerekçeyle askıya alır; oturum kapanır ve yeniden giriş eng
     expect((await db.user.findUniqueOrThrow({ where: { id: target.id } })).banned).toBe(true);
     await targetPage.goto('/hesap');
     await expect(targetPage).toHaveURL(/\/giris/);
-    await targetPage.goto('/giris/test?persona=alumniMentor');
-    await targetPage.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
+    await loginAs(targetPage, 'alumniMentor', { expectRejected: true });
     await expect(targetPage).toHaveURL(/\/giris$/);
   } finally {
     await db.user.update({

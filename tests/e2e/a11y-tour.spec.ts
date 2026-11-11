@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { expect, test, type Page } from '@playwright/test';
 
 import { luminanceOf, measurePage, tabThrough } from './a11y';
@@ -22,18 +23,7 @@ const STUDENT = [
 ];
 const ADMIN = ['/yonetim', '/yonetim/ilanlar', '/yonetim/etkinlikler'];
 
-async function login(page: Page, persona: 'student' | 'departmentAdmin') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  if (page.url().endsWith('/onay')) {
-    const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-    await consent.nth(0).check();
-    await consent.nth(1).check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-  }
-}
+const login = loginAs;
 
 async function audit(page: Page, path: string, scheme: 'light' | 'dark') {
   await page.goto(path, { waitUntil: 'networkidle' });

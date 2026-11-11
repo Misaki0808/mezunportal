@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { loginAs } from './login';
+import { expect, test } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
@@ -9,11 +10,7 @@ const db = new PrismaClient({
 });
 const t = messages.courseGuide;
 test.afterAll(() => db.$disconnect());
-async function login(page: Page, role: 'student' | 'alumniMentor') {
-  await page.goto('/giris/test?persona=' + role);
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-}
+const login = loginAs;
 test('360 px: mezun beş ders seçer, öğrenci YBS/ortak ayrımını ve seçmeli filtresini kullanır', async ({
   page,
   browser,

@@ -1,3 +1,4 @@
+import { loginAs } from './login';
 import { expect, test, type Page } from '@playwright/test';
 
 // Faz 2 deneme verisiyle (pnpm db:seed → prisma/seed-phase2.ts) uçtan uca gezinti (P2-14): kullanıcının test turunda ilk açacağı
@@ -16,17 +17,7 @@ const SEEDED = {
   sharedQuestion: 'Neden bu şirketi seçtin?',
 };
 
-async function login(page: Page, persona: 'student' | 'departmentAdmin') {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay)$/);
-  await page.goto('/onay');
-  const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  await consent.nth(0).check();
-  await consent.nth(1).check();
-  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-}
+const login = loginAs;
 const noOverflow = async (page: Page) =>
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 
