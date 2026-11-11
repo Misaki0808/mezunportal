@@ -11,6 +11,7 @@ import {
 } from '@/contracts/auth';
 import type { ActionResult } from '@/contracts/result';
 import { Button, Field, Input } from '@/components/ui';
+import { useFocusFirstInvalid } from '@/hooks/use-focus-first-invalid';
 import type { ErrorCode } from '@/lib/errors';
 
 type Props = {
@@ -26,6 +27,7 @@ export function EmailChangeForm({ submit }: Props) {
   const [pending, setPending] = useState(false);
   const [complete, setComplete] = useState(false);
   const locked = useRef(false);
+  const { formRef, focusFirstInvalid } = useFocusFirstInvalid();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,6 +37,7 @@ export function EmailChangeForm({ submit }: Props) {
     const parsed = requestEmailChangeSchema.safeParse({ newEmail: email });
     if (!parsed.success) {
       setFieldError('VALIDATION_INVALID');
+      focusFirstInvalid();
       return;
     }
     locked.current = true;
@@ -45,6 +48,7 @@ export function EmailChangeForm({ submit }: Props) {
       else {
         setFieldError(result.fieldErrors?.newEmail);
         setFormError(result.fieldErrors?.newEmail ? undefined : result.errorCode);
+        if (result.fieldErrors?.newEmail) focusFirstInvalid();
       }
     } catch {
       setFormError('SERVER_UNEXPECTED');
@@ -64,7 +68,7 @@ export function EmailChangeForm({ submit }: Props) {
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit} className="flex flex-1 flex-col gap-6">
+    <form ref={formRef} noValidate onSubmit={handleSubmit} className="flex flex-1 flex-col gap-6">
       <Field
         className="[&_p]:text-base"
         label={t('label')}

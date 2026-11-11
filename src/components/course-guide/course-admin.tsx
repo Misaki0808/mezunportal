@@ -125,7 +125,13 @@ export function CourseAdmin({
           defaultChecked={selected?.elective ?? true}
         />
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" loading={pending}>
+          <Button
+            type="submit"
+            loading={pending}
+            {...(departments.length
+              ? { disabled: false as const }
+              : { disabled: true as const, disabledReason: t('noDepartments') })}
+          >
             {t(pending ? 'saving' : 'save')}
           </Button>
           {selected && (

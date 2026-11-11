@@ -12,6 +12,8 @@ export default async function PostingContactPage({ params }: { params: Promise<{
   if (!result.data.canRequest)
     return (
       <div className="mx-auto max-w-xl px-4 py-10">
+        {/* Her durumda sayfanın tek h1'i vardır; "ulaşılamaz" durumunda EmptyState başlığı h2 olarak kalır. */}
+        <PageHeader className="mb-6" title={t('contactTitle')} />
         <EmptyState
           title={t('contactUnavailable')}
           action={

@@ -132,7 +132,7 @@ kendi odak halkasını çizer; tur bunları ana öğe düzeyinde atlar.
 Birleştirme kapısında yük altında iki kez `[vitest-pool-runner]: Timeout waiting for worker to respond` ile kodla ilgisiz 3–8 test düştü. Vitest'in işçi
 başlatma/durdurma sınırı (60 sn) kütüphane içinde **sabittir**, yapılandırmayla büyütülemez (`fsModuleCache` zaten varsayılan olarak açıktır). Bu yüzden iki önlem var:
 (1) **`pnpm test:gate`**: `pnpm test` ile aynı kapsam; yalnız işçi zaman aşımı mesajı taşıyan dosyaları **bir kez** yeniden koşar (`scripts/test-gate.mjs`; assert, derleme,
-bilinmeyen ya da karışık hata asla yeniden denenmez, kırmızı kalır). Birleştirme betiği tam test için bunu çağırır. (2) Alt süreç başlatan bekçi testleri (`node --import tsx`,
+bilinmeyen ya da karışık hata asla yeniden denenmez, kırmızı kalır). Birleştirme betiği tam test için bunu çağırır. Dosya "geçti" sayılıp işçi yine de başlatılamadıysa Vitest bunu JSON raporuna yazmaz, yalnız çıktıda "Unhandled Error: Failed to start forks worker for test files …" verip 1 ile çıkar: `test:gate` çıktıyı yakalayıp ayrıştırır ve yakalanmamış hataların **hepsi** işçi başlatma/zaman aşımı kalıbındaysa ve her birinden dosya yolu çıkıyorsa yalnız o dosyaları bir kez yeniden koşar (kalıba uymayan tek bir hata, dosyası çıkarılamayan hata ya da sayıyla tutmayan bölüm kırmızıdır). (2) Alt süreç başlatan bekçi testleri (`node --import tsx`,
 react-server koşulu) `src/test/subprocess.ts` süreleriyle yazılır: test 30 sn, alt süreç 25 sn, `beforeAll(warmUpSubprocess)` ile tek seferlik ısınma (birim varsayılanı 5 sn yük altında
 yetmiyordu). Yeni bir alt süreç testi aynı yardımcıyı kullanır.
 

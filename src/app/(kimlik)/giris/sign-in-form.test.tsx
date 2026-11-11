@@ -55,6 +55,17 @@ describe('SignInForm', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(request).not.toHaveBeenCalled();
   });
+  it('boş gönderimde odak gönder düğmesinde kalmaz, ilk hatalı alana (e-posta) gider', async () => {
+    const request = vi.fn();
+    const { user } = renderUi(
+      <SignInForm options={disabledOptions} requestLink={request} startLinkedIn={startLinkedIn} />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
+    const field = screen.getByLabelText(/E-posta adresi/);
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    expect(field).toHaveFocus();
+    expect(request).not.toHaveBeenCalled();
+  });
   it.each(['kayitli@example.test', 'kayitsiz@example.test'])(
     'başarılı nötr yanıtı aynı ekrana götürür: %s',
     async (email) => {

@@ -1,4 +1,5 @@
 'use client';
+import { useFocusFirstInvalid } from '@/hooks/use-focus-first-invalid';
 import { useHydrated } from '@/hooks/use-hydrated';
 
 import { useTranslations } from 'next-intl';
@@ -33,6 +34,7 @@ export function SignInForm({
   startLinkedIn,
 }: Props) {
   const hydrated = useHydrated();
+  const { formRef, focusFirstInvalid } = useFocusFirstInvalid();
   const t = useTranslations('authScreens.signIn');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -50,6 +52,7 @@ export function SignInForm({
     const parsed = requestSignInLinkSchema.safeParse({ email, ...(returnTo ? { returnTo } : {}) });
     if (!parsed.success) {
       setFieldError('VALIDATION_INVALID');
+      focusFirstInvalid();
       return;
     }
     locked.current = true;
@@ -57,8 +60,10 @@ export function SignInForm({
     try {
       const result = await requestLink(parsed.data);
       if (result.ok) router.push('/giris/epostani-kontrol-et');
-      else if (result.fieldErrors?.email) setFieldError(result.fieldErrors.email);
-      else setError(result.errorCode);
+      else if (result.fieldErrors?.email) {
+        setFieldError(result.fieldErrors.email);
+        focusFirstInvalid();
+      } else setError(result.errorCode);
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -117,6 +122,7 @@ export function SignInForm({
         )}
       </div>
       <form
+        ref={formRef}
         data-hydrated={hydrated ? 'true' : undefined}
         noValidate
         onSubmit={handleSubmit}

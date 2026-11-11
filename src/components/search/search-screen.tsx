@@ -322,7 +322,10 @@ export function SearchScreen({ filter, results, sectors }: Props) {
                     <Badge tone="category">{t(`types.${item.type}`)}</Badge>
                     {item.termYear && <Badge>{String(item.termYear)}</Badge>}
                   </div>
-                  <h2 className="mt-3 break-words text-xl font-semibold">
+                  <h2
+                    id={`result-title-${item.id}`}
+                    className="mt-3 break-words text-xl font-semibold"
+                  >
                     {item.companyId ? (
                       <Link
                         className="inline-flex min-h-11 items-center underline decoration-border-control underline-offset-4"
@@ -339,11 +342,18 @@ export function SearchScreen({ filter, results, sectors }: Props) {
                   </p>
                   <p className="mt-1 text-sm text-fg-muted">{item.departmentName}</p>
                   {item.snippet && (
-                    <p className="mt-4 whitespace-pre-line break-words">{item.snippet}</p>
+                    <p
+                      id={`result-snippet-${item.id}`}
+                      className="mt-4 whitespace-pre-line break-words"
+                    >
+                      {item.snippet}
+                    </p>
                   )}
                   <Link
                     className={`${buttonClasses({ variant: 'secondary' })} mt-4`}
                     href={`/deneyim/${item.id}`}
+                    id={`result-open-${item.id}`}
+                    aria-labelledby={`result-open-${item.id} result-title-${item.id}${item.snippet ? ` result-snippet-${item.id}` : ''}`}
                   >
                     {t('open')}
                   </Link>
