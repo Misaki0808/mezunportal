@@ -9,8 +9,17 @@ const STEP = 3900;
 
 /** `reduce`: hareket azalt tercihi; `hover`: fare gibi hover destekleyen cihaz (telefonda false). */
 function stubMedia(reduce: boolean, hover = true) {
+  // Sorgunun DEĞERİNİ yorumlar (yalnız adını aramaz): `(hover: none)` gibi ters bir sorgu testi kırar.
+  const clauses: Record<string, boolean> = {
+    '(prefers-reduced-motion: reduce)': reduce,
+    '(prefers-reduced-motion: no-preference)': !reduce,
+    '(hover: hover)': hover,
+    '(hover: none)': !hover,
+    '(pointer: fine)': hover,
+    '(pointer: coarse)': !hover,
+  };
   vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: query.includes('reduce') ? reduce : query.includes('hover') ? hover : false,
+    matches: query.split(' and ').every((clause) => clauses[clause.trim()] === true),
     media: query,
   }));
 }
