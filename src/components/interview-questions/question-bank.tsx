@@ -76,6 +76,15 @@ export function QuestionBank({
   filters: InterviewFilters;
 }) {
   const t = useTranslations('interviewBank');
+  const pageCount = Math.max(1, Math.ceil(data.total / data.pageSize));
+  const pageLink = (page: number) => {
+    const params = new URLSearchParams();
+    if (filters.companyId) params.set('companyId', filters.companyId);
+    if (filters.sectorId) params.set('sectorId', filters.sectorId);
+    if (filters.q) params.set('q', filters.q);
+    params.set('page', String(page));
+    return `/mulakat-sorulari?${params.toString()}`;
+  };
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 pb-28">
       <PageHeader title={t('title')} description={t('description')} />
@@ -117,7 +126,29 @@ export function QuestionBank({
         </div>
       </form>
       <div className="mt-8">
+        <p className="mb-4 text-fg-muted">{t('totalCompanies', { count: data.total })}</p>
         <QuestionCards groups={data.groups} insufficient={data.insufficient} />
+        {pageCount > 1 && (
+          <nav aria-label={t('pagination')} className="mt-6 flex flex-wrap items-center gap-3">
+            {data.page > 1 && (
+              <Link
+                className={buttonClasses({ variant: 'secondary' })}
+                href={pageLink(data.page - 1)}
+              >
+                {t('previous')}
+              </Link>
+            )}
+            <span>{t('page', { page: data.page, total: pageCount })}</span>
+            {data.page < pageCount && (
+              <Link
+                className={buttonClasses({ variant: 'secondary' })}
+                href={pageLink(data.page + 1)}
+              >
+                {t('next')}
+              </Link>
+            )}
+          </nav>
+        )}
       </div>
     </div>
   );

@@ -19,10 +19,16 @@ it.each([
   { q: 'x'.repeat(101), companyId: 'selected-company' },
   { companyId: ['a', 'b'] },
   { sectorId: ['a', 'b'] },
+  { page: '-1' },
+  { page: ['1', '2'] },
 ])('bozuk URL tüm süzgeçleri düşürerek genel arama yapmaz: %j', async (params) => {
   renderUi(await Page({ searchParams: Promise.resolve(params) }));
   expect(search).not.toHaveBeenCalled();
   expect(screen.getByRole('alert')).toBeVisible();
+});
+it('geçerli sayfa numarasını sayısal değere çevirir', async () => {
+  renderUi(await Page({ searchParams: Promise.resolve({ q: 'SQL', page: '2' }) }));
+  expect(search).toHaveBeenCalledWith({ companyId: '', sectorId: '', q: 'SQL', page: 2 });
 });
 it('geçerli URL seçili şirketi ve aramayı korur', async () => {
   renderUi(await Page({ searchParams: Promise.resolve({ companyId: 'company', q: 'SQL' }) }));

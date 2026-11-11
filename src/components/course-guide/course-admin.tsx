@@ -28,8 +28,27 @@ export function CourseAdmin({
   const [selected, setSelected] = useState<Course | null>(null);
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState('');
+  const [query, setQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(10);
+  const needle = query.trim().toLocaleLowerCase('tr-TR');
+  const filteredCourses = courses.filter((course) =>
+    `${course.name} ${course.code}`.toLocaleLowerCase('tr-TR').includes(needle),
+  );
   return (
     <div className="space-y-5">
+      <Field label={t('search')}>
+        {(control) => (
+          <Input
+            {...control}
+            type="search"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setVisibleCount(10);
+            }}
+          />
+        )}
+      </Field>
       <form
         key={selected?.id ?? 'new'}
         className="grid gap-4 rounded-card border border-border bg-bg p-4 shadow-card sm:p-5"
@@ -126,7 +145,10 @@ export function CourseAdmin({
         </p>
       </form>
       <div className="space-y-2">
-        {courses.map((course) => (
+        <p className="text-fg-muted" role="status">
+          {t('adminCount', { count: filteredCourses.length })}
+        </p>
+        {filteredCourses.slice(0, visibleCount).map((course) => (
           <button
             type="button"
             key={course.id}
@@ -145,6 +167,11 @@ export function CourseAdmin({
             </span>
           </button>
         ))}
+        {visibleCount < filteredCourses.length && (
+          <Button variant="secondary" onClick={() => setVisibleCount((count) => count + 10)}>
+            {t('showMore')}
+          </Button>
+        )}
       </div>
     </div>
   );
