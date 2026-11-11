@@ -2,7 +2,7 @@
 import { screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { renderUi } from '@/test/render';
+import { renderWithToasts } from '@/test/render';
 
 import { ExperienceForm } from './experience-form';
 import { emptyState } from './form-state';
@@ -25,7 +25,7 @@ function setup(overrides: Partial<Parameters<typeof ExperienceForm>[0]> = {}) {
   const submit = vi
     .fn()
     .mockResolvedValue({ ok: true, data: { experienceId: 'e1', status: 'PENDING' } });
-  const view = renderUi(
+  const view = renderWithToasts(
     <ExperienceForm
       departments={departments}
       save={save as never}
@@ -144,9 +144,10 @@ describe('deneyim formu', () => {
     const save = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
     const { user } = setup({ save: save as never });
     await user.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
-    const alert = await screen.findByRole('alert');
+    // ToastProvider kalıcı bir alert bölgesi taşır: hata metni metinle sorgulanır.
+    const alert = (await screen.findByText(/Çok fazla deneme/)).closest('[role="alert"]');
+    expect(alert).not.toBeNull();
     expect(alert).not.toHaveTextContent('RATE_LIMITED');
-    expect(alert).toHaveTextContent('Çok fazla deneme');
   });
 
   it('düzenlemede bölüm sabittir; reddedilen deneyimin gerekçesi üstte görünür', () => {

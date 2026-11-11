@@ -30,6 +30,11 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
   token ve bileşenleri kullanır.
 - Gölge işlevseldir, hiyerarşinin yerine geçmez. Radius ölçeği kart/input/buton arasında tutarlı.
 - Gerçek durumlar zorunludur: yükleniyor, boş, hata, devre dışı (sebebiyle), odak, yıkıcı onay.
+- **Eylem geri bildirimi tek kalıptır (kart 207):** (1) basınca ANINDA bekleyen düğme (`Button loading`; ikinci tıklama yutulur, istek tek gider); (2) başarıda
+  **toast** — kısa, bağlama uygun, sıcak ("Profilin güncellendi.", "İlanın incelemeye gönderildi."), yönlendirmede de görünür; sayfayı aşağı iten satır içi başarı
+  kutusu yok (düzen zıplar); (3) hatada hata satır içi `role="alert"` ve kararlı `errorCode` metniyle gösterilir, **girilen veri korunur** (başarıda form temizlenir);
+  (4) sayfa geçişinde `loading.tsx` iskeleti. Ortak parçalar: `useAction` (kilit + bekleyen durum + toast + hata), `useToast`, `PageSkeleton`. Hareket ölçülü: toast
+  girişi 160 ms, dönen simge ve giriş animasyonu `prefers-reduced-motion`'da kapalı; gradyan/parlama/konfeti yok.
 - **Boş durum** `EmptyState` ile verilir (simge + kısa başlık + tek eylem); çıplak bir "veri yok" paragrafı değildir.
   Tabloda tek tek soluk görünen sayaç/"yeterli veri yok" satırları kısa metin ve rozetle (`Badge`) gösterilir.
 - **Listede satır eylemleri** ortak bir koşula (ör. gerekçe yazma) bağlıysa düğmeler sessizce kapalı kalmaz: tıklanınca sebep

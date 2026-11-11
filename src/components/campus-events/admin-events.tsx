@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { safeClientAction } from '@/lib/safe-client-action';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -16,6 +15,7 @@ import {
   Input,
   Modal,
   Textarea,
+  useAction,
 } from '@/components/ui';
 import type { BadgeTone } from '@/components/ui';
 import { createCampusEventSchema } from '@/contracts/campus-events';
@@ -31,6 +31,7 @@ type Item = {
   startsAt: Date;
   status: 'PENDING' | 'PUBLISHED' | 'REJECTED' | 'CANCELLED';
 };
+const REASON_HINT_ID = 'campus-reason-hint';
 const STATUS_TONES: Record<Item['status'], BadgeTone> = {
   PENDING: 'warning',
   PUBLISHED: 'success',
@@ -46,10 +47,9 @@ export function AdminEvents({
 }) {
   const t = useTranslations('campusEvents'),
     errors = useTranslations('errors.codes'),
-    router = useRouter();
-  const [pending, start] = useTransition(),
-    [status, setStatus] = useState(''),
-    [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}),
+    router = useRouter(),
+    action = useAction();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}),
     [reason, setReason] = useState(''),
     [cancelId, setCancelId] = useState<string | null>(null);
   const labels = {
@@ -58,78 +58,81 @@ export function AdminEvents({
     REJECTED: t('rejected'),
     CANCELLED: t('cancelled'),
   };
-  function create(form: FormData) {
-    start(async () => {
-      const startAt = String(form.get('startsAt') ?? ''),
-        endAt = String(form.get('endsAt') ?? '');
-      const asIstanbul = (value: string) => `${value}${value.length === 16 ? ':00' : ''}+03:00`;
-      const startDate = new Date(asIstanbul(startAt)),
-        endDate = new Date(asIstanbul(endAt));
-      if (
-        !startAt ||
-        !endAt ||
-        Number.isNaN(startDate.getTime()) ||
-        Number.isNaN(endDate.getTime())
-      ) {
-        setFieldErrors({ startsAt: t('timeInvalid') });
-        return;
-      }
-      const parsed = createCampusEventSchema.safeParse({
-        title: form.get('title'),
-        description: form.get('description'),
-        location: form.get('location'),
-        startsAt: startDate.toISOString(),
-        endsAt: endDate.toISOString(),
-        capacity: Number(form.get('capacity')),
-        departmentIds: form.getAll('departments'),
-      });
-      if (!parsed.success) {
+  function create(formElement: HTMLFormElement) {
+    const form = new FormData(formElement);
+    const startAt = String(form.get('startsAt') ?? ''),
+      endAt = String(form.get('endsAt') ?? '');
+    const asIstanbul = (value: string) => `${value}${value.length === 16 ? ':00' : ''}+03:00`;
+    const startDate = new Date(asIstanbul(startAt)),
+      endDate = new Date(asIstanbul(endAt));
+    if (
+      !startAt ||
+      !endAt ||
+      Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime())
+    ) {
+      setFieldErrors({ startsAt: t('timeInvalid') });
+      return;
+    }
+    const parsed = createCampusEventSchema.safeParse({
+      title: form.get('title'),
+      description: form.get('description'),
+      location: form.get('location'),
+      startsAt: startDate.toISOString(),
+      endsAt: endDate.toISOString(),
+      capacity: Number(form.get('capacity')),
+      departmentIds: form.getAll('departments'),
+    });
+    if (!parsed.success) {
+      setFieldErrors(
+        Object.fromEntries(
+          parsed.error.issues.map((issue) => [String(issue.path[0]), errors('VALIDATION_INVALID')]),
+        ),
+      );
+      return;
+    }
+    // Başarıda form temizlenir ve toast gösterilir; hatada girilen HİÇBİR değer silinmez.
+    void action.run(() => createCampusEvent(parsed.data), {
+      success: t('created'),
+      onOk: () => {
+        setFieldErrors({});
+        formElement.reset();
+        router.refresh();
+      },
+      onFailure: (failure) =>
         setFieldErrors(
           Object.fromEntries(
-            parsed.error.issues.map((issue) => [
-              String(issue.path[0]),
-              errors('VALIDATION_INVALID'),
-            ]),
+            Object.entries(failure.fieldErrors ?? {}).map(([field, code]) => [field, errors(code)]),
           ),
-        );
-        return;
-      }
-      const result = await safeClientAction(() => createCampusEvent(parsed.data));
-      setFieldErrors(
-        result.ok
-          ? {}
-          : Object.fromEntries(
-              Object.entries(result.fieldErrors ?? {}).map(([field, code]) => [
-                field,
-                errors(code),
-              ]),
-            ),
-      );
-      setStatus(result.ok ? t('pending') : errors(result.errorCode));
-      if (result.ok) router.refresh();
+        ),
     });
   }
   const reasonOk = reason.trim().length >= 3;
-  /** Gerekçe yokken kararlar kapalıdır ve sebebi düğmenin altında (ve alanın ipucunda) yazılır. */
+  /** Gerekçe yokken kararlar kapalıdır; sebep alanın altındaki ipucunda BİR kez yazar, düğmeler `aria-describedby` ile ona bağlanır. */
   const reasonGate = reasonOk
     ? ({ disabled: false } as const)
-    : ({ disabled: true, disabledReason: t('reasonHint') } as const);
+    : ({ disabled: true, disabledReasonId: REASON_HINT_ID } as const);
   function decide(eventId: string, kind: 'PUBLISH' | 'REJECT' | 'CANCEL') {
-    start(async () => {
-      const result =
+    void action.run(
+      () =>
         kind === 'CANCEL'
-          ? await safeClientAction(() => cancelCampusEvent({ eventId, reason }))
-          : await safeClientAction(() => reviewCampusEvent({ eventId, decision: kind, reason }));
-      setStatus(
-        result.ok
-          ? t(kind === 'PUBLISH' ? 'published' : kind === 'REJECT' ? 'rejected' : 'cancelled')
-          : errors(result.errorCode),
-      );
-      if (result.ok) {
-        setCancelId(null);
-        router.refresh();
-      }
-    });
+          ? cancelCampusEvent({ eventId, reason })
+          : reviewCampusEvent({ eventId, decision: kind, reason }),
+      {
+        success: t(
+          kind === 'PUBLISH'
+            ? 'decidedPublished'
+            : kind === 'REJECT'
+              ? 'decidedRejected'
+              : 'decidedCancelled',
+        ),
+        onOk: () => {
+          setCancelId(null);
+          setReason('');
+          router.refresh();
+        },
+      },
+    );
   }
   const fields = [
     ['title', 'name', 'text'],
@@ -144,13 +147,19 @@ export function AdminEvents({
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          create(new FormData(event.currentTarget));
+          create(event.currentTarget);
         }}
       >
         <Card className="mt-6 space-y-5">
           <h2 className="text-xl font-semibold">{t('create')}</h2>
           {fields.map(([name, label, type]) => (
-            <Field key={name} label={t(label)} required error={fieldErrors[name]}>
+            <Field
+              key={name}
+              label={t(label)}
+              required
+              hint={type === 'datetime-local' ? t('dateTimeHint') : undefined}
+              error={fieldErrors[name]}
+            >
               {(control) =>
                 type === 'textarea' ? (
                   <Textarea {...control} name={name} />
@@ -177,8 +186,8 @@ export function AdminEvents({
               </p>
             )}
           </fieldset>
-          <Button type="submit" size="lg" fullWidth loading={pending}>
-            {pending ? t('registering') : t('submit')}
+          <Button type="submit" size="lg" fullWidth loading={action.busy}>
+            {action.busy ? t('registering') : t('submit')}
           </Button>
         </Card>
       </form>
@@ -191,14 +200,24 @@ export function AdminEvents({
         />
       ) : (
         <section className="space-y-4">
-          <Field label={t('reason')} hint={t('reasonHint')}>
-            {(control) => (
-              <Input {...control} value={reason} onChange={(e) => setReason(e.target.value)} />
-            )}
-          </Field>
-          {status && (
-            <p role="status" className="text-fg-muted">
-              {status}
+          <div className="space-y-1.5">
+            <Field label={t('reason')}>
+              {(control) => (
+                <Input
+                  {...control}
+                  aria-describedby={REASON_HINT_ID}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+              )}
+            </Field>
+            <p id={REASON_HINT_ID} className="text-sm text-fg-muted">
+              {t('reasonHint')}
+            </p>
+          </div>
+          {action.error && (
+            <p role="alert" className="text-danger">
+              {action.error}
             </p>
           )}
           <ul className="space-y-3">
@@ -219,7 +238,7 @@ export function AdminEvents({
                 {event.status === 'PENDING' && (
                   <div className="mt-4 flex flex-wrap gap-3">
                     <Button
-                      loading={pending}
+                      loading={action.busy}
                       {...reasonGate}
                       onClick={() => decide(event.id, 'PUBLISH')}
                     >
@@ -227,7 +246,7 @@ export function AdminEvents({
                     </Button>
                     <Button
                       variant="danger-outline"
-                      loading={pending}
+                      loading={action.busy}
                       {...reasonGate}
                       onClick={() => decide(event.id, 'REJECT')}
                     >
@@ -247,7 +266,7 @@ export function AdminEvents({
                       variant="danger-outline"
                       {...reasonGate}
                       onClick={() => {
-                        setStatus('');
+                        action.clear();
                         setCancelId(event.id);
                       }}
                     >
@@ -272,10 +291,10 @@ export function AdminEvents({
             </Button>
             <Button
               variant="danger"
-              {...(pending || !reasonOk
+              {...(action.busy || !reasonOk
                 ? {
                     disabled: true as const,
-                    disabledReason: pending ? t('registering') : t('reason'),
+                    disabledReason: action.busy ? t('registering') : t('reason'),
                   }
                 : { disabled: false as const })}
               onClick={() => {
@@ -287,7 +306,7 @@ export function AdminEvents({
           </>
         }
       >
-        {status && <p role="alert">{status}</p>}
+        {action.error && <p role="alert">{action.error}</p>}
       </Modal>
     </div>
   );

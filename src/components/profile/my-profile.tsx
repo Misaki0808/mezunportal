@@ -37,6 +37,7 @@ import {
   Select,
   Sheet,
   Textarea,
+  useToast,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
@@ -90,6 +91,7 @@ type Editing =
 /** Kendi profilim: bölüm bölüm görüntüle + alt sayfada düzenle. Her eylem güncel profili döner; ekran onu çizer. */
 export function MyProfile({ initial, actions, beforeCompletion }: Props) {
   const router = useRouter();
+  const toast = useToast();
   const t = useTranslations('profile.my');
   const sections = useTranslations('profile.sections');
   const errors = useTranslations('errors.codes');
@@ -97,7 +99,6 @@ export function MyProfile({ initial, actions, beforeCompletion }: Props) {
   const [editing, setEditing] = useState<Editing>();
   const [deleting, setDeleting] = useState<{ section: ProfileEntrySection; id: string }>();
   const [error, setError] = useState<ErrorCode>();
-  const [notice, setNotice] = useState<string>();
   const [pending, setPending] = useState(false);
   const locked = useRef(false);
   const editFormId = useId();
@@ -108,12 +109,11 @@ export function MyProfile({ initial, actions, beforeCompletion }: Props) {
     locked.current = true;
     setPending(true);
     setError(undefined);
-    setNotice(undefined);
     try {
       const result = await action();
       if (result.ok) {
         setProfile(result.data);
-        setNotice(t('saved'));
+        toast.show({ message: t('saved'), tone: 'success' });
         after?.();
         return null;
       }
@@ -197,16 +197,10 @@ export function MyProfile({ initial, actions, beforeCompletion }: Props) {
         </p>
       </header>
 
-      {(notice || error) && (
-        <div
-          role={error ? 'alert' : 'status'}
-          className={
-            error
-              ? 'text-base text-danger'
-              : 'rounded-control bg-success-soft p-3 text-base text-on-success-soft'
-          }
-        >
-          {error ? errors(error) : notice}
+      {/* Çekmece açıkken hata çekmecenin İÇİNDE (serverError) gösterilir; arkadaki sayfada yinelenmez. */}
+      {error && !editing && (
+        <div role="alert" className="text-base text-danger">
+          {errors(error)}
         </div>
       )}
 

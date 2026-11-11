@@ -323,7 +323,8 @@
     },
     "field": {
       "required": "zorunlu",
-      "toggleHelp": "Açıklamayı göster ya da gizle"
+      "toggleHelp": "Açıklamayı göster ya da gizle",
+      "dateUnset": "Gri görünüyorsa henüz seçmedin."
     },
     "tag": {
       "remove": "{label} etiketini kaldır"
@@ -757,7 +758,7 @@
       "cancel": "Vazgeç",
       "save": "Kaydet",
       "saving": "Kaydediliyor…",
-      "saved": "Kaydedildi.",
+      "saved": "Profilin güncellendi.",
       "fromCv": "CV'den",
       "manual": "Elle",
       "edited": "Düzeltildi",
@@ -2068,7 +2069,12 @@
     "codeNeeded": "Altı haneli kodu eksiksiz yaz.",
     "adminDescription": "Etkinlik oluştur, başvuruları incele ve yayınlanan buluşmaları yönet.",
     "presentDescription": "Katılımcıların okutabilmesi için QR kodunu veya altı haneli kodu göster.",
-    "reasonHint": "İşlem gerekçesi en az 3 karakter olmalı."
+    "reasonHint": "İşlem gerekçesi en az 3 karakter olmalı.",
+    "dateTimeHint": "Tarihi ve saati seç. Gri görünüyorsa henüz seçmedin.",
+    "created": "Etkinliğin incelemeye gönderildi.",
+    "decidedPublished": "Etkinlik yayınlandı.",
+    "decidedRejected": "Etkinlik reddedildi.",
+    "decidedCancelled": "Etkinlik iptal edildi."
   },
   "monthlyDigest": {
     "subject": "Bu ay MezunPortal'da",
@@ -2982,7 +2988,8 @@
     "mineDescription": "Paylaştığın ilanların durumunu takip et.",
     "compactTitle": "Staj ve iş ilanları",
     "searchPlaceholder": "İlan ara",
-    "applyFilters": "Süzgeçleri uygula"
+    "applyFilters": "Süzgeçleri uygula",
+    "submittedToast": "İlanın incelemeye gönderildi."
   },
   "companies": {
     "title": "Şirketlere bak",

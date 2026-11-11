@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
-import { renderUi } from '@/test/render';
+import messages from '../../../messages/tr.json';
+import { renderWithToasts } from '@/test/render';
 import type { JobPostingCard, JobPostingFormContext } from '@/contracts/job-postings';
 import { PostingList } from './list';
 import { PostingDetail } from './detail';
@@ -35,7 +36,7 @@ const context: JobPostingFormContext = {
   limits: { maxDays: 60, submitLimit: 5, submitWindowDays: 30, maxTargets: 10 },
 };
 it('öğrenciye ilan verme sunulmaz; süzgeçler ve sonraki sayfa URL taşır', () => {
-  renderUi(
+  renderWithToasts(
     <PostingList
       canPost={false}
       filters={{ q: 'staj', location: 'İstanbul', organizationName: 'Örnek Kurum' }}
@@ -52,7 +53,7 @@ it('öğrenciye ilan verme sunulmaz; süzgeçler ve sonraki sayfa URL taşır', 
   );
 });
 it('detayda yalnız güvenli dış bağlantı ve yazarın kimliği yoktur', () => {
-  renderUi(
+  renderWithToasts(
     <PostingDetail
       posting={{
         ...posting,
@@ -70,7 +71,7 @@ it('detayda yalnız güvenli dış bağlantı ve yazarın kimliği yoktur', () =
 it('eksik form hatası özetlenir ve odaklanır, işlem çağrılmaz', async () => {
   const save = vi.fn(),
     submit = vi.fn();
-  renderUi(<PostingEditor context={context} save={save} submit={submit} />);
+  renderWithToasts(<PostingEditor context={context} save={save} submit={submit} />);
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
   fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
@@ -83,7 +84,7 @@ it('eksik form hatası özetlenir ve odaklanır, işlem çağrılmaz', async () 
   expect(save).not.toHaveBeenCalled();
 });
 it('iletişim eylemi yazar kimliği taşımadan ilan üzerinden açılır', () => {
-  renderUi(
+  renderWithToasts(
     <PostingDetail
       canRequestContact
       posting={{
@@ -99,7 +100,7 @@ it('iletişim eylemi yazar kimliği taşımadan ilan üzerinden açılır', () =
   expect(document.body.innerHTML).not.toContain('gizli-yazar');
 });
 it('talep edilemeyen ilan için düğme yerine tek nötr açıklama gösterilir', () => {
-  renderUi(
+  renderWithToasts(
     <PostingDetail
       posting={{
         ...posting,
@@ -117,13 +118,15 @@ it('ilan iletişimi yalnız ilan kimliği ve seçilen alanlarla gönderilir', as
   const send = vi
     .fn()
     .mockResolvedValue({ ok: true, data: { requestId: 'istek', status: 'PENDING' } });
-  renderUi(<PostingContactForm postingId="ilan-123" requestableFields={['EMAIL']} send={send} />);
+  renderWithToasts(
+    <PostingContactForm postingId="ilan-123" requestableFields={['EMAIL']} send={send} />,
+  );
   fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
   fireEvent.click(screen.getByRole('button', { name: 'Talep gönder' }));
   await waitFor(() =>
     expect(send).toHaveBeenCalledWith({ jobPostingId: 'ilan-123', fields: ['EMAIL'], message: '' }),
   );
-  expect(await screen.findByRole('status')).toHaveTextContent('Talebin gönderildi');
+  expect(await screen.findByText(/Talebin gönderildi/)).toBeInTheDocument();
 });
 it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderilir', async () => {
   const { addDays, istanbulDay } = await import('./model');
@@ -131,7 +134,7 @@ it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderi
   const submit = vi
     .fn()
     .mockResolvedValue({ ok: true, data: { postingId: 'draft-1', status: 'PENDING' } });
-  renderUi(<PostingEditor context={context} save={save} submit={submit} />);
+  renderWithToasts(<PostingEditor context={context} save={save} submit={submit} />);
   fireEvent.change(screen.getByLabelText(/Pozisyon adı/), {
     target: { value: 'Yazılım stajyeri' },
   });
@@ -194,7 +197,7 @@ it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () =>
     endedAt: null,
     author: { displayName: 'Yetkili kişi', role: 'ALUMNI' as const },
   };
-  renderUi(
+  renderWithToasts(
     <PostingModeration
       initial={{ items: [item], nextCursor: null }}
       review={review}
@@ -234,7 +237,9 @@ it('düzenlemede değiştirilmemiş sözlük kurumu korunur', async () => {
     endedAt: null,
   };
   const save = vi.fn().mockResolvedValue({ ok: true, data: initial });
-  renderUi(<PostingEditor context={context} initial={initial} save={save} submit={vi.fn()} />);
+  renderWithToasts(
+    <PostingEditor context={context} initial={initial} save={save} submit={vi.fn()} />,
+  );
   fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
   await waitFor(() =>
     expect(save).toHaveBeenCalledWith(
@@ -244,7 +249,7 @@ it('düzenlemede değiştirilmemiş sözlük kurumu korunur', async () => {
 });
 it('ağ hatasında ham hata metni gösterilmez, kullanıcıya kararlı hata sunulur', async () => {
   const { PostingContactForm } = await import('./contact');
-  renderUi(
+  renderWithToasts(
     <PostingContactForm
       postingId="ilan-123"
       requestableFields={['EMAIL']}
@@ -253,14 +258,14 @@ it('ağ hatasında ham hata metni gösterilmez, kullanıcıya kararlı hata sunu
   );
   fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
   fireEvent.click(screen.getByRole('button', { name: 'Talep gönder' }));
-  expect(await screen.findByRole('alert')).toBeVisible();
+  expect(await screen.findByText(messages.errors.codes.SERVER_UNEXPECTED)).toBeVisible();
   expect(document.body.textContent).not.toContain('gizli ağ ayrıntısı');
 });
 
 it.each(['http://example.org/staj', 'javascript:alert(1)', 'data:text/html,example'])(
   'okuyucuya güvenli olmayan %s başvuru bağlantısı sunulmaz',
   (applyUrl) => {
-    renderUi(<PostingDetail posting={{ ...posting, description: 'Açıklama', applyUrl }} />);
+    renderWithToasts(<PostingDetail posting={{ ...posting, description: 'Açıklama', applyUrl }} />);
     expect(screen.queryByRole('link', { name: /Başvur/ })).not.toBeInTheDocument();
   },
 );
@@ -270,7 +275,7 @@ it('60 gün sınırındaki taslak kaydedilir, 61. gün istemcide reddedilir', as
   try {
     const { addDays, istanbulDay } = await import('./model');
     const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'date-boundary' } });
-    renderUi(<PostingEditor context={context} save={save} submit={vi.fn()} />);
+    renderWithToasts(<PostingEditor context={context} save={save} submit={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
     const date = screen.getByLabelText(/Son başvuru tarihi/);
     expect(date).toHaveAttribute('max', addDays(istanbulDay(), 60));
@@ -294,7 +299,7 @@ it('mobil süzgeçler alt sayfada uygulanır ve arama metni korunur', async () =
   HTMLDialogElement.prototype.close = function () {
     this.removeAttribute('open');
   };
-  renderUi(
+  renderWithToasts(
     <PostingList
       canPost={false}
       filters={{ q: 'tasarım' }}
