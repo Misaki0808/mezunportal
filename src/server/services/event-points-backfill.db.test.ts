@@ -110,6 +110,30 @@ describe('etkinlik katılımı puan uzlaştırması', () => {
     expect((await entries(user))[0]!.status).toBe('REVOKED');
   });
 
+  it('geri alınan katılım aynı ayın dört puanlı hakkını tüketmez', async () => {
+    await setRule(true);
+    const user = await student();
+    const events: string[] = [];
+    for (const day of [5, 4, 3, 2, 1]) {
+      const start = new Date(NOW.getTime() - day * DAY);
+      const id = await event(start);
+      await attend(id, user, new Date(start.getTime() + 60_000));
+      events.push(id);
+    }
+    await awardForEventAttendance({ db, now: () => NOW }, events[0]!, user);
+    await db.pointEntry.updateMany({
+      where: { userId: user, action: 'EVENT_ATTENDED', sourceId: events[0] },
+      data: { status: 'REVOKED', revokedReason: 'FRAUD_CONFIRMED', revokedAt: NOW },
+    });
+    for (const id of events.slice(1))
+      await awardForEventAttendance({ db, now: () => NOW }, id, user);
+    const bySource = new Map((await entries(user)).map((row) => [row.sourceId, row]));
+    expect(bySource.get(events[0]!)?.status).toBe('REVOKED');
+    for (const id of events.slice(1)) {
+      expect(bySource.get(id)).toMatchObject({ multiplierPercent: 100, points: 5 });
+    }
+  });
+
   it('`since` penceresi dışındaki katılım dokunulmaz; tek tek çağrı da idempotenttir ve iptal/olmayan katılımda null döner', async () => {
     await setRule(true);
     const user = await student();
