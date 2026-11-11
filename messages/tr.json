@@ -1516,7 +1516,7 @@
           },
           "section2": {
             "title": "2. Online randevu davetleri",
-            "body": "Online randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz Google LLC'ye aktarılır. Rıza vermezseniz mentor görüşme bağlantısını kendisi paylaşır. Rızanızı istediğiniz an gizlilik ayarlarından geri alabilirsiniz; geri alma ileriye dönük işler."
+            "body": "Online randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz, görüşmenin başlığında yer alan mentor ve öğrenci adları ile görüşme saati Google LLC'ye aktarılır. Rıza vermezseniz mentor görüşme bağlantısını kendisi paylaşır. Rızanızı istediğiniz an gizlilik ayarlarından geri alabilirsiniz; geri alma ileriye dönük işler."
           }
         }
       },

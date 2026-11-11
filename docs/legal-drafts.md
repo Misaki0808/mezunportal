@@ -72,8 +72,9 @@ sağlayıcısına [K-04: sağlayıcı adı ve ülkesi] gönderilir. Sağlayıcı
 kullanmaz [sağlayıcı politikasıyla doğrulanacak]. Rıza vermezseniz profilinizi elle doldurursunuz.
 
 ### 2. Online randevu davetleri
-Online randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz Google LLC'ye
-aktarılır. Rıza vermezseniz mentor görüşme bağlantısını kendisi paylaşır.
+Online randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz, görüşmenin
+başlığında yer alan mentor ve öğrenci adları ile görüşme saati Google LLC'ye aktarılır. Rıza
+vermezseniz mentor görüşme bağlantısını kendisi paylaşır.
 
 Rızanızı istediğiniz an gizlilik ayarlarından geri alabilirsiniz; geri alma ileriye dönük işler.
 
@@ -153,3 +154,17 @@ kamuya açık doğrulama sayfası kapanır. Metin hoca/üniversite ve hukuk onay
 > Sürüm: `taslak-1`. Metin değiştiğinde sürüm artar ve yayın için yeni açık rıza istenir.
 
 Hikâyemin incelendikten ve ayın mezunu seçildikten sonra adım ve bölümümle birlikte yalnız bölümümün doğrulanmış üyelerine gösterilmesini isteğe bağlı olarak kabul ediyorum. Rızamı istediğim an geri alabilirim; geri aldığımda hikâyem ana sayfadan ve arşivden kaldırılır. Metin kullanıcı, hoca ve hukuk onayı bekleyen taslaktır.
+
+## §7 Faz 2 aydınlatma ekleri (P2-14) — TASLAK, onay bekliyor ⏸
+
+> `§1` aydınlatma metnine eklenecek yeni işleme amaçları. Sürüm `taslak-1`; hoca/hukuk onayı ve veri sorumlusu bilgisi (K-03) tamamlanınca metin sabitlenir.
+
+- **Mezun ilanları:** ilanı yazan doğrulanmış mezun/akademisyenin adı okuyuculara gösterilmez; başvuru ilandaki bağlantıdan ya da (seçilirse) iletişim talebiyle yapılır, ad yalnız talep onaylanınca
+  paylaşılır. Amaç: staj/iş fırsatlarını doğrulanmış topluluğa duyurmak. Hukuki sebep: sözleşmenin kurulması/ifası ve meşru menfaat.
+- **Referans:** mezunun öğrenciye referans olduğunu beyan etmesi, iki tarafın doğrulanmış ve önceden etkileşimi (onaylı iletişim talebi ya da tamamlanmış görüşme) olması şartıyla yönetici onayına
+  gider; yalnız puan hesabı ve kötüye kullanım kontrolü için işlenir. Hukuki sebep: meşru menfaat.
+- **Etkinlik katılımı:** katılım kodu/QR ile yapılan kayıt etkinlik puanı ve kötüye kullanım kontrolü (aynı ağdan çok katılım) için işlenir; ağ bilgisi etkinliğe bağlı özet olarak tutulur ve 30 gün sonra silinir, ham IP saklanmaz. Hukuki sebep: meşru menfaat.
+- **Aylık özet e-postası:** bölümün önceki aya ait toplu deneyim ve ilan özeti, kullanıcı bildirim tercihine göre gönderilir; her e-postada tek tıkla abonelikten çıkış bağlantısı vardır. Hukuki sebep: açık rıza (tercih).
+- **Takvim ve Meet daveti:** online randevuda Google Takvim davetine e-posta adresleri, etkinlik başlığındaki mentor ve öğrenci adları ile görüşme saati gider; bu `§2` yurt dışına aktarım rızasına bağlıdır; rıza yoksa davet oluşturulmaz, mentor bağlantıyı elle ekler.
+- **Şirket/soru bankası/başvuru takvimi:** yayınlanmış deneyimlerden türetilen toplu özetlerdir; üç farklı yazardan az olan gruplar gösterilmez, kişi bilgisi içermez.
+
