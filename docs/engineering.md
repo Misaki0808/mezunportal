@@ -150,8 +150,10 @@ Plan testi indeks **kullanılabilirliğini** (`enable_seqscan = off`) denetler; 
 Son ölçüm (yerel, p50/p95 ms): 10× hacimde en yavaş yüzey 52 ms (ilan arama), hepsi bütçe içinde. Stres hacminde: ilan listesi 123/178, ilan arama (metin) 306/361,
 deneyim arama (metin) 212/281, soru bankası (tüm şirketler) 431/494, aday arama 36/48, diğerleri < 80. **Bu turda düzeltilenler:** ilan görünürlük koşulu ilişkili
 `EXISTS`/skaler alt sorgudan küme üyeliğine alındı (ilan listesi 1,2 sn → 0,18 sn, davranış aynı); `Experience(companyId, status)` indeksi eklendi (şirket sayfası/soru
-bankası/başvuru takvimi sıralı taramadan çıktı). **Bilinen sınırlar (pilot ölçeğinin üstünde):** soru bankası "tüm şirketler" görünümü yayınlanmış deneyimlerin hepsini okur
-(O(n); sayfalama/özet sonraki faz), metin aramasında sıralama her eşleşen satırda `ts_rank_cd` + `word_similarity` hesaplar.
+bankası/başvuru takvimi sıralı taramadan çıktı). **Bilinen sınırlar (pilot ölçeğinin üstünde):** soru bankası güvenli gruplardan sonra arayüzde sayfalıdır; hesap hâlâ O(n),
+gerekirse önbellek/özet tablosu sonraki fazda değerlendirilir. Metin aramasında sıralama her eşleşen satırda `ts_rank_cd` + `word_similarity` hesaplar.
+
+Kart 205 sonrası yerel tekrar ölçümünde soru bankası 10× hacimde 18/25 ms, stres hacminde 377/391 ms (p50/p95); güvenli sonuçların sayfalanması hesap karmaşıklığını değiştirmez.
 
 ## Komutlar
 
