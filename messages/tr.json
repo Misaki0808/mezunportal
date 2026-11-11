@@ -115,7 +115,7 @@
   },
   "home": {
     "title": "MezunPortal",
-    "tagline": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için staj odaklı kariyer platformu. Deneyimleri keşfet, mentorlarla tanış.",
+    "tagline": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için staj odaklı kariyer platformu. Mezunların deneyimlerini oku, bir mentorla görüş.",
     "greeting": "Merhaba, {name}",
     "greetingPlain": "Merhaba",
     "pendingTitle": "Bekleyen işlerin",
@@ -135,7 +135,7 @@
       },
       "mentors": {
         "title": "Mentor bul",
-        "description": "Mezun ve mentorlarla tanış."
+        "description": "Bir mezunla görüşme ayarla."
       },
       "cvReview": {
         "title": "CV incelemesi",
@@ -161,22 +161,22 @@
     },
     "jobMatches": {
       "title": "Sana uyan ilanlar",
-      "empty": "Henüz sana uygun ilan yok. İlgi alanlarını ekleyerek yeni fırsatları keşfedebilirsin.",
+      "empty": "Henüz sana uyan ilan yok. İlgi alanlarını eklersen uygun ilanlar burada görünür.",
       "profile": "Profilini düzenle"
     }
   },
   "errors": {
     "codes": {
-      "VALIDATION_INVALID": "Girdiğin bilgilerde eksik ya da hatalı alanlar var. Kontrol edip tekrar dene.",
+      "VALIDATION_INVALID": "Formda eksik ya da uymayan bir alan var. Kontrol edip tekrar dene.",
       "AUTH_UNAUTHENTICATED": "Devam etmek için giriş yapmalısın.",
       "AUTH_ACCOUNT_SUSPENDED": "Hesabın askıya alındı. Bilgi almak için bölüm yöneticinle iletişime geç.",
       "AUTH_NOT_VERIFIED": "Bu işlem için üyeliğinin doğrulanması gerekiyor.",
       "AUTH_FORBIDDEN": "Bu işlem için yetkin yok.",
       "RESOURCE_NOT_FOUND": "Aradığın kayıt bulunamadı.",
-      "RESOURCE_CONFLICT": "Bu işlem mevcut bir kayıtla çakıştı. Sayfayı yenileyip tekrar dene.",
+      "RESOURCE_CONFLICT": "Aynı anda başka bir işlem yapılmış. Sayfayı yenileyip tekrar dene.",
       "RATE_LIMITED": "Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.",
       "SERVER_UNEXPECTED": "Beklenmeyen bir sorun oluştu. Biraz sonra tekrar dene.",
-      "DB_UNAVAILABLE": "Veritabanına şu an ulaşılamıyor. Biraz sonra tekrar dene.",
+      "DB_UNAVAILABLE": "Şu an kayıtlara ulaşamıyoruz. Biraz sonra tekrar dene.",
       "AUDIT_REASON_REQUIRED": "Bu işlem için kısa bir gerekçe yazmalısın.",
       "AUDIT_REASON_INVALID": "Gerekçe 3 ile 1000 karakter arasında olmalı ve e-posta ya da telefon içermemeli.",
       "MEMBERSHIP_TRANSITION_INVALID": "Üyelik geçişi bu durumda yapılamaz. Üyelik kaydını kontrol et.",
@@ -207,7 +207,7 @@
       "CV_TRANSFER_CONSENT_REQUIRED": "CV'ni okuyabilmemiz için yurt dışına aktarım iznini vermen gerekiyor. İznini gizlilik ayarlarından verebilir ya da bilgilerini elle girebilirsin.",
       "CV_DAILY_LIMIT_REACHED": "Bugünlük CV okuma hakkın doldu. Yarın tekrar deneyebilir ya da bilgilerini elle girebilirsin.",
       "CV_ALREADY_PROCESSING": "CV'n şu anda okunuyor. Bitmesini bekle.",
-      "CV_NOT_READY": "Bu CV için bu işlem şu an yapılamıyor.",
+      "CV_NOT_READY": "Bu CV için bu işlem şu an yapılamıyor. CV durumunu kontrol et.",
       "CV_REVIEW_STALE": "Profilin ya da CV sonucu değişti. Sayfayı yenileyip kalemleri yeniden gözden geçir.",
       "CV_CONFLICT_UNRESOLVED": "Elle düzelttiğin bir kalemin üzerine yazmak için bunu açıkça seçmelisin.",
       "CV_PARSE_UNAVAILABLE": "CV'n şu an okunamadı. Biraz sonra tekrar deneyebilir ya da bilgilerini elle girebilirsin.",
@@ -267,7 +267,7 @@
       "FAQ_IDENTITY_LEAK": "Yayınlanacak metinde ad, e-posta ya da telefon var. Kimliği belli eden bilgileri çıkar.",
       "JOB_POSTING_NOT_EDITABLE": "Bu ilan şu an düzenlenemez. Yalnız taslak ve reddedilmiş ilanlar düzenlenir.",
       "JOB_POSTING_NOT_DRAFT": "Yalnız taslak ilan incelemeye gönderilir.",
-      "JOB_POSTING_INCOMPLETE": "İlanda eksik ya da hatalı alan var. Zorunlu alanları tamamlayıp tekrar dene.",
+      "JOB_POSTING_INCOMPLETE": "İlanda eksik ya da uymayan alan var. Zorunlu alanları tamamlayıp tekrar dene.",
       "JOB_POSTING_NOT_PENDING": "Bu ilan için karar zaten verilmiş ya da inceleme beklemiyor.",
       "JOB_POSTING_NOT_OPEN": "Bu ilan artık açık değil.",
       "JOB_POSTING_URL_INVALID": "Başvuru bağlantısı https:// ile başlayan, geçerli bir adres olmalı.",
@@ -383,7 +383,7 @@
   "mentors": {
     "eyebrow": "MENTORLAR",
     "title": "Mentor bul",
-    "description": "Mezun, akademisyen ve üst sınıf mentorlarla tanış. Müsait olanları filtreleyip iletişim kurabilirsin.",
+    "description": "Mezun, akademisyen ve üst sınıf mentorlar burada. Müsait olanları süzüp randevu ya da iletişim isteyebilirsin.",
     "filters": {
       "mentorTypes": "Mentor türü",
       "sector": "Sektör",
@@ -443,7 +443,7 @@
       "noneDescription": "Mentorlar profillerini etkinleştirdikçe burada görünür."
     },
     "entry": {
-      "title": "Mentorla bağlantı",
+      "title": "Mentorla görüş",
       "contact": "İletişim iste",
       "contactBlocked": "Bu kişiye şu anda iletişim talebi gönderemezsin.",
       "appointmentBlocked": "Randevu şu an alınamıyor.",
@@ -502,7 +502,7 @@
       "switch": "Müsait değilim",
       "switchDescription": "Açıkken yeni randevu talebi almazsın.",
       "radioLegend": "Görüşme biçimi",
-      "radioOnline": "Çevrim içi",
+      "radioOnline": "Çevrimiçi",
       "radioInPerson": "Yüz yüze",
       "radioError": "Bir görüşme biçimi seç."
     },
@@ -623,9 +623,9 @@
       "linkedin": {
         "open": "LinkedIn PDF'i nasıl alınır?",
         "title": "LinkedIn profilini PDF olarak al",
-        "step1": "LinkedIn’de profilini aç.",
+        "step1": "LinkedIn'de profilini aç.",
         "step2": "Masaüstünde “Daha fazla” menüsünden “PDF olarak kaydet”i seç.",
-        "step3": "İndirilen PDF’i burada seçip yükle. Telefonda seçenek görünmüyorsa tarayıcının masaüstü sitesi görünümünü dene.",
+        "step3": "İndirilen PDF'i burada seçip yükle. Telefonda seçenek görünmüyorsa tarayıcının masaüstü sitesi görünümünü dene.",
         "note": "Yalnız yüklediğin dosya işlenir; önerileri sen onaylamadan profiline eklemeyiz. LinkedIn sayfasını taramayız.",
         "close": "Anladım",
         "chooseSource": "Ne yüklemek istersin?",
@@ -874,13 +874,13 @@
       },
       "linkNeeded": {
         "subject": "Görüşme bağlantısını ekle",
-        "text": "Merhaba,\n\n{name} ile {when} için online görüşmenin bağlantısı otomatik oluşturulamadı. MezunPortal'da Randevularım bölümünden kendi görüşme bağlantını ekle; öğrenciye iletilecek."
+        "text": "Merhaba,\n\n{name} ile {when} için çevrimiçi görüşmenin bağlantısı otomatik oluşturulamadı. MezunPortal'da Randevularım bölümünden kendi görüşme bağlantını ekle; öğrenciye iletilecek."
       },
       "linkAdded": {
         "subject": "Görüşme bağlantın hazır",
-        "text": "Merhaba,\n\n{name} ile {when} için online görüşmenin bağlantısı eklendi:\n{url}"
+        "text": "Merhaba,\n\n{name} ile {when} için çevrimiçi görüşmenin bağlantısı eklendi:\n{url}"
       },
-      "modeOnline": "online",
+      "modeOnline": "çevrimiçi",
       "modeInPerson": "yüz yüze",
       "detailsLink": "\n\nBağlantı: {url}",
       "detailsPlace": "\n\nYer: {place}",
@@ -893,7 +893,7 @@
       "eyebrow": "BİR SONRAKİ ADIM",
       "title": "<email>E-postanı</email> kontrol et",
       "description": "Bağlantıyı <email>e-posta</email> adresine gönderdik. Gelen kutunu ve gerekirse istenmeyen posta klasörünü kontrol et.",
-      "security": "Bağlantıyı yalnızca sen kullanmalısın.",
+      "security": "Bağlantıyı kimseyle paylaşma.",
       "back": "Girişe dön"
     },
     "emailChange": {
@@ -914,7 +914,7 @@
     },
     "signOut": {
       "title": "Çıkış yap",
-      "description": "Oturumunu bu cihazda güvenle kapat.",
+      "description": "Bu cihazdaki oturumunu kapat.",
       "submit": "Çıkış yap",
       "pending": "Çıkış yapılıyor…"
     },
@@ -940,13 +940,13 @@
     "document": {
       "eyebrow": "MEZUN DOĞRULAMA",
       "title": "Mezun belgeni yükle",
-      "description": "e-Devlet’ten aldığın barkodlu mezun belgesini paylaş.",
+      "description": "e-Devlet'ten aldığın barkodlu mezun belgesini yükle.",
       "privacy": "Belgen bölüm yöneticisi tarafından incelenir ve karar verildiğinde silinir.",
       "department": "Bölüm",
       "departmentPlaceholder": "Bölüm seç",
       "year": "Mezuniyet yılı",
       "file": "Mezun belgesi",
-      "fileHint": "Yalnızca PDF · en fazla 5 MB",
+      "fileHint": "Yalnız PDF · en fazla 5 MB",
       "submit": "Belgeyi gönder",
       "sending": "Gönderiliyor…",
       "success": "Belgen incelemeye gönderildi.",
@@ -981,9 +981,9 @@
       "applicant": "{name} için gönderilen başvuruyu onaylamak üzeresin."
     },
     "signIn": {
-      "eyebrow": "MEZUNPORTAL’A HOŞ GELDİN",
-      "title": "Bir adımda giriş yap",
-      "description": "Üniversitenle ve mezunlarla buluşmak için <email>e-posta</email> adresini kullan.",
+      "eyebrow": "MEZUNPORTAL'A HOŞ GELDİN",
+      "title": "E-postanla giriş yap",
+      "description": "Giriş bağlantısını e-posta adresine göndereceğiz.",
       "email": "E-posta adresi",
       "submit": "Giriş bağlantısı gönder",
       "sending": "Gönderiliyor…",
@@ -1201,7 +1201,7 @@
       "notEditableTitle": "Bu deneyim düzenlenemez",
       "notEditableDescription": "İncelemedeki ya da yayındaki deneyim düzenlenemez.",
       "fixErrors": "Hatalı alanları düzeltip tekrar dene.",
-      "goToFirstError": "İlk hatalı alana git"
+      "goToFirstError": "İlk sorunlu alana git"
     },
     "fieldErrors": {
       "required": "Bu alan zorunlu.",
@@ -1489,7 +1489,7 @@
             "title": "5. Aktarım",
             "items": {
               "item1": "Yurt dışı: CV ayrıştırma için yapay zekâ sağlayıcısı [K-04]; randevu davetleri için Google Takvim; [K-05 canlıda e-posta sağlayıcısı yurt dışındaysa]. Yalnız ayrı açık rızanızla.",
-              "item2": "Platform içi: iletişim bilgileriniz yalnız sizin onayladığınız kişilere; randevu onayında e-posta adresiniz karşı tarafa."
+              "item2": "Platform içi: iletişim bilgileriniz yalnız sizin onayladığınız kişilere açılır; randevu davetinde e-posta adresiniz karşı tarafa gösterilmez."
             }
           },
           "section6": {
@@ -1518,8 +1518,8 @@
             "body": "Yüklediğiniz CV, profilinizi otomatik doldurmak için yurt dışında bulunan yapay zekâ hizmet sağlayıcısına [K-04: sağlayıcı adı ve ülkesi] gönderilir. Sağlayıcı bu veriyi model eğitiminde kullanmaz [sağlayıcı politikasıyla doğrulanacak]. Rıza vermezseniz profilinizi elle doldurursunuz."
           },
           "section2": {
-            "title": "2. Online randevu davetleri",
-            "body": "Online randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz, görüşmenin başlığında yer alan mentor ve öğrenci adları ile görüşme saati Google LLC'ye aktarılır. Rıza vermezseniz mentor görüşme bağlantısını kendisi paylaşır. Rızanızı istediğiniz an gizlilik ayarlarından geri alabilirsiniz; geri alma ileriye dönük işler."
+            "title": "2. Çevrimiçi randevu davetleri",
+            "body": "Çevrimiçi randevu onaylandığında Meet bağlantılı takvim daveti için e-posta adresiniz, görüşmenin başlığında yer alan mentor ve öğrenci adları ile görüşme saati Google LLC'ye aktarılır. Rıza vermezseniz mentor görüşme bağlantısını kendisi paylaşır. Rızanızı istediğiniz an gizlilik ayarlarından geri alabilirsiniz; geri alma ileriye dönük işler."
           }
         }
       },
@@ -1718,7 +1718,7 @@
       "referrals": "Referans ve işe kabul beyanlarını incele.",
       "yearAlumni": "Adayları incele ve bölüm adına karar ver.",
       "alumniStory": "Hikâyeleri incele ve ayın mezununu seç.",
-      "googleCalendar": "Online randevulara otomatik Meet bağlantısı için Google hesabını bağla."
+      "googleCalendar": "Çevrimiçi randevulara otomatik Meet bağlantısı için Google hesabını bağla."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1908,9 +1908,9 @@
       "download": "Excel indir",
       "downloading": "Hazırlanıyor…",
       "rateLimit": "Saatlik indirme sınırına ulaştın. Bir saat sonra tekrar dene.",
-      "downloadError": "Dosya indirilemedi. Lütfen tekrar dene.",
+      "downloadError": "Dosya indirilemedi. Tekrar dene.",
       "active": "Etkin kullanıcı",
-      "hidden": "Gizli (3’ten az kişi)",
+      "hidden": "Gizli (3'ten az kişi)",
       "privacy": "Küçük grupların gizliliği için bazı sonuçlar gösterilmez.",
       "totals": "Olay türleri",
       "breakdown": "Rol ve bölüm dağılımı",
@@ -1956,8 +1956,8 @@
   },
   "search": {
     "eyebrow": "DENEYİMLER",
-    "title": "Deneyimleri keşfet",
-    "description": "Başka öğrencilerin ve mezunların deneyimlerinden yoluna ışık tutacak fikirler bul.",
+    "title": "Deneyimlere bak",
+    "description": "Başka öğrencilerin ve mezunların staj, Erasmus ve yarışma deneyimlerini oku.",
     "query": "Deneyim ara",
     "queryHint": "Kurum, konu veya anahtar kelime",
     "submit": "Ara",
@@ -1972,7 +1972,7 @@
     "season": "Dönem",
     "pay": "Ücret",
     "emptyTitle": "Bu filtrelerle deneyim bulunamadı",
-    "emptyDescription": "Filtreleri gevşet veya ilk deneyimi sen paylaş.",
+    "emptyDescription": "Filtreleri biraz gevşet ya da bu konuda ilk deneyimi sen paylaş.",
     "write": "Deneyim yaz",
     "anonymous": "Anonim paylaşıldı",
     "by": "{name} tarafından paylaşıldı",
@@ -2017,7 +2017,7 @@
   },
   "campusEvents": {
     "title": "Etkinlikler",
-    "description": "Bölümündeki buluşmaları keşfet ve yerini ayırt.",
+    "description": "Bölümündeki buluşmalara bak, yerini ayır.",
     "empty": "Henüz yaklaşan etkinlik yok. Yeni buluşmalar burada görünecek.",
     "details": "Etkinliği incele",
     "register": "Katılıyorum",
@@ -2067,12 +2067,12 @@
   "monthlyDigest": {
     "subject": "Bu ay MezunPortal'da",
     "pageTitle": "Bu ayın özeti",
-    "pageDescription": "Bölümünden haberler ve sana uygun fırsatlar bir arada.",
+    "pageDescription": "Bölümünden yeni deneyimler, sana uyan ilanlar ve etkinlikler.",
     "empty": "Bu ay için henüz gösterilecek bir özet yok. Yeni paylaşımlar olduğunda burada bulacaksın.",
-    "emptyAction": "Deneyimleri keşfet",
+    "emptyAction": "Deneyimlere bak",
     "adminPreview": "Aylık özet önizlemesi",
     "adminDescription": "E-posta gönderilmez; önizlemede kendi hesabının verileri kullanılır.",
-    "intro": "İşte senin için hazırladığımız aylık özet.",
+    "intro": "Bu ay bölümünde olanlar:",
     "experiences": "Bölümünden yeni deneyimler",
     "jobs": "Sana uygun ilanlar",
     "contribution": "Katkı puanın",
@@ -2085,7 +2085,7 @@
     "unsubscribeTitle": "Aylık özet aboneliği",
     "unsubscribeDone": "Bağlantı geçerliyse aylık özet aboneliğin kapatıldı. Tercihini istediğin zaman hesabından değiştirebilirsin.",
     "unsubscribeLoading": "Tercihin güncelleniyor…",
-    "unsubscribeError": "Tercihin güncellenemedi. Lütfen sayfayı yenileyip tekrar dene."
+    "unsubscribeError": "Tercihin güncellenemedi. Sayfayı yenileyip tekrar dene."
   },
   "notifications": {
     "title": "Bildirim tercihlerin",
@@ -2118,7 +2118,7 @@
       },
       "CV_INVITATION": {
         "label": "Deneyim davetleri",
-        "description": "CV’ndeki stajlar için deneyim yazma daveti."
+        "description": "CV'ndeki stajlar için deneyim yazma daveti."
       },
       "PROFILE_FRESHNESS": {
         "label": "Profil hatırlatmaları",
@@ -2162,7 +2162,7 @@
       },
       "MONTHLY_DIGEST": {
         "label": "Aylık özet",
-        "description": "Bölümünden haberleri ve sana uygun fırsatları ayda bir özetle."
+        "description": "Bölümünden yeni deneyimleri ve sana uyan ilanları ayda bir özetle."
       }
     },
     "email": {
@@ -2190,14 +2190,14 @@
       "contactSubject": "Yeni iletişim talebin var",
       "contactText": "Bir üye seninle iletişim kurmak istiyor. Talebi incele: {url}",
       "invitationSubject": "Deneyimini paylaşmak ister misin?",
-      "invitationText": "CV’ndeki bir staj için deneyim paylaşabilirsin. Davetlerini görüntüle: {url}",
+      "invitationText": "CV'ndeki bir staj için deneyim paylaşabilirsin. Davetlerini görüntüle: {url}",
       "freshnessSubject": "Profilini gözden geçir",
       "freshnessText": "Profilini gözden geçirerek bilgilerini güncel tutabilirsin: {url}",
       "stillThereSubject": "Çalışma bilgin güncel mi?",
       "stillThereText": "Hâlâ {company} bünyesinde misin? Evet: {yesUrl} Hayır: {noUrl}",
       "migrationSubject": "E-posta adresini güncel tut",
       "migrationText": "Mezuniyet döneminde hesabına erişimini korumak için kişisel e-posta adresine geçebilirsin: {url}",
-      "jobMatchSubject": "Sana uyan yeni fırsatlar",
+      "jobMatchSubject": "Sana uyan yeni ilanlar",
       "jobMatchText": "Sana uygun yeni ilanları bir arada incele: {url}",
       "applicationWindowSubject": "Takip ettiğin başvuru dönemleri başladı",
       "applicationWindowText": "Takip ettiğin başvuru dönemlerini incele: {url}"
@@ -2256,15 +2256,15 @@
   },
   "invitations": {
     "title": "Toplu davet",
-    "description": "Hesabı olmayan kişileri MezunPortal’a davet et.",
+    "description": "Hesabı olmayan kişileri MezunPortal'a davet et.",
     "label": "E-posta adresleri",
     "help": "En çok 100 adres gir. Satır, virgül veya noktalı virgül ile ayır; tekrarlar bir kez işlenir.",
     "file": "CSV veya metin dosyası yükle",
     "submit": "Davetleri gönder",
     "sending": "Kuyruğa ekleniyor…",
     "result": "Gönderilmek üzere kaydedilen: {queued} · mevcut hesap: {skipped}",
-    "emailSubject": "MezunPortal’a davet",
-    "emailBody": "MezunPortal’a davetlisiniz. Başlamak için giriş sayfasını ziyaret edin: {url}"
+    "emailSubject": "MezunPortal'a davet",
+    "emailBody": "MezunPortal'a davet edildin. Başlamak için giriş sayfasını aç: {url}"
   },
   "cvReview": {
     "email": {
@@ -2293,7 +2293,7 @@
     "sent": "Talebin gönderildi.",
     "toInbox": "Taleplerime git",
     "viewRequest": "Talebini gör",
-    "viewCv": "CV’yi aç",
+    "viewCv": "CV'yi aç",
     "comment": "Yazılı yorumun",
     "answer": "Yorumu gönder",
     "answered": "Yorum gönderildi.",
@@ -2301,9 +2301,9 @@
     "marked": "Faydalı olarak işaretlendi.",
     "studentHeading": "Gönderdiğim talepler",
     "mentorHeading": "Gelen talepler",
-    "emptyStudent": "Henüz bir talebin yok. Mentorları keşfederek başlayabilirsin.",
+    "emptyStudent": "Henüz bir talebin yok. Bir mentor seçip CV incelemesi isteyebilirsin.",
     "emptyMentor": "Henüz gelen bir CV inceleme talebin yok.",
-    "findMentor": "Mentorları keşfet",
+    "findMentor": "Mentor bul",
     "settings": "CV inceleme tercihlerin",
     "enabled": "CV inceleme talebi al",
     "limit": "Aylık talep sınırı",
@@ -2323,7 +2323,7 @@
       "NO_CV": "Önce bir CV yükleyip profiline uygula.",
       "OPEN_REQUEST_EXISTS": "Bu mentora açık bir talebin var."
     },
-    "required": "Lütfen bu alanı doldur.",
+    "required": "Bu alanı doldur.",
     "toCv": "CV yükle",
     "loading": "Yükleniyor…",
     "more": "Daha fazla göster",
@@ -2416,7 +2416,7 @@
       "place": "Buluşma yeri: {note}",
       "note": "Mentora not (isteğe bağlı)",
       "noteHint": "Ne konuşmak istediğini kısaca yaz. En fazla 500 karakter.",
-      "emailShared": "Randevu onaylanınca takvim daveti için e-posta adresin mentorla paylaşılır.",
+      "emailShared": "Randevu onaylanınca takvim daveti için e-posta adresin Google'a aktarılır; mentor e-postanı görmez.",
       "submit": "Randevu talep et",
       "submitting": "Gönderiliyor…",
       "chooseSlot": "Önce bir saat seç.",
@@ -2491,7 +2491,7 @@
       "cancelReasonShown": "Neden: {reason}",
       "expiresAt": "Yanıt son tarihi: {date}",
       "done": "İşlem kaydedildi.",
-      "emailShared": "Takvim davetinde iki tarafın e-posta adresi paylaşılır."
+      "emailShared": "Takvim davetinde iki tarafın e-posta adresi birbirine gösterilmez; yalnız Google'a aktarılır."
     }
   },
   "points": {
@@ -2766,7 +2766,7 @@
     }
   },
   "seekers": {
-    "eyebrow": "Fırsatlar",
+    "eyebrow": "İLANLAR",
     "backAccount": "Hesabıma dön",
     "settingsTitle": "İş arayanlara görün",
     "settingsDescription": "Staj aradığında, işe alım yapan doğrulanmış mezunlar kimliğini görmeden sana ulaşma isteği gönderebilir.",
@@ -2837,9 +2837,9 @@
     "searchAccountDescription": "İş arayan öğrencilerin anonim kartlarını incele."
   },
   "jobs": {
-    "eyebrow": "Fırsatlar",
+    "eyebrow": "İLANLAR",
     "title": "Bir sonraki adımın burada",
-    "subtitle": "Topluluğundan gelen staj ve iş fırsatlarını keşfet.",
+    "subtitle": "Topluluğundan gelen staj ve iş ilanları.",
     "post": "İlan ver",
     "mine": "İlanlarım",
     "studentReason": "İlanları doğrulanmış mezunlar ve akademisyenler paylaşabilir.",
@@ -2859,9 +2859,9 @@
     "anyTime": "Her zaman",
     "sevenDays": "Son 7 gün",
     "fourteenDays": "Son 14 gün",
-    "results": "{count} fırsat",
+    "results": "{count} ilan",
     "emptyTitle": "Henüz ilan bulunamadı",
-    "emptyBody": "Yeni fırsatlar eklendiğinde burada göreceksin.",
+    "emptyBody": "Yeni ilanlar eklenince burada görünür.",
     "emptyFiltered": "Süzgeçleri değiştirerek yeniden deneyebilirsin.",
     "today": "Bugün son gün",
     "daysLeft": "Son {count} gün",
@@ -2876,8 +2876,8 @@
     "notFound": "İlan bulunamadı",
     "listTitle": "İlanlarım",
     "listEmpty": "Henüz bir ilan paylaşmadın.",
-    "newTitle": "Fırsatını paylaş",
-    "newSubtitle": "Topluluğumuzla paylaşacağın fırsatı birkaç adımda hazırla.",
+    "newTitle": "İlan paylaş",
+    "newSubtitle": "Paylaşacağın ilanı adım adım hazırla.",
     "step": "Adım {current} / {total}",
     "next": "Devam et",
     "previous": "Geri",
@@ -2885,8 +2885,8 @@
     "preview": "Önizle",
     "submit": "İncelemeye gönder",
     "saving": "Kaydediliyor",
-    "formSummary": "Lütfen işaretli alanları kontrol et.",
-    "formBasics": "Fırsatı anlat",
+    "formSummary": "İşaretli alanları kontrol et.",
+    "formBasics": "İlanı anlat",
     "formDetails": "Ayrıntılar ve başvuru",
     "formPreview": "İlan önizlemesi",
     "titleLabel": "Pozisyon adı",
@@ -2957,8 +2957,8 @@
     "applyFilters": "Süzgeçleri uygula"
   },
   "companies": {
-    "title": "Şirketleri keşfet",
-    "description": "Deneyimleri ve kariyer yollarını şirketlere göre keşfet.",
+    "title": "Şirketlere bak",
+    "description": "Deneyimleri ve kariyer yollarını şirketlere göre incele.",
     "searchLabel": "Şirket adı veya takma adı",
     "search": "Ara",
     "popular": "Öne çıkan şirketler",
@@ -3001,8 +3001,8 @@
     "cancel": "Vazgeç",
     "chooseDifferent": "Farklı iki şirket seç.",
     "open": "Şirketi incele",
-    "interviewLink": "Mülakat sorularını keşfet",
-    "calendarLink": "Başvuru takvimini keşfet"
+    "interviewLink": "Mülakat sorularına bak",
+    "calendarLink": "Başvuru takvimine bak"
   },
   "interviewBank": {
     "title": "Mülakat soru bankası",
@@ -3021,7 +3021,7 @@
     "emptyHint": "Daha fazla deneyim paylaşıldığında soruları burada görebilirsin.",
     "share": "Deneyim paylaş",
     "tab": "Mülakat",
-    "link": "Mülakat sorularını keşfet"
+    "link": "Mülakat sorularına bak"
   },
   "referrals": {
     "title": "Referanslarım",
@@ -3092,7 +3092,7 @@
   },
   "applicationCalendar": {
     "title": "Başvuru takvimi",
-    "description": "Geçmiş deneyimlerin toplu başvuru dönemlerini keşfet.",
+    "description": "Geçmiş deneyimlerdeki toplu başvuru dönemlerini incele.",
     "monthLabel": "Başvuru ayı (isteğe bağlı)",
     "monthHint": "Bu ay yalnız en az üç farklı kişinin toplu istatistiğinde kullanılır; deneyiminde gösterilmez.",
     "monthUnknown": "Belirtmek istemiyorum",
@@ -3142,7 +3142,7 @@
     "save": "Kaydet",
     "saving": "Kaydediliyor…",
     "saved": "Tercihin kaydedildi.",
-    "linkedin": "LinkedIn’e ekle",
+    "linkedin": "LinkedIn'e ekle",
     "copy": "Doğrulama bağlantısını kopyala",
     "copied": "Bağlantı kopyalandı.",
     "enablePublic": "Bağlantıları açmak için yayın izni ver.",
@@ -3243,7 +3243,7 @@
   },
   "googleCalendar": {
     "title": "Google Takvim ve Meet",
-    "description": "Online randevu onaylanınca mentor ve öğrenciye otomatik Google Meet bağlantısı gider. Bağlantıyı bir kez burada kurarsın.",
+    "description": "Çevrimiçi randevu onaylanınca mentor ve öğrenciye otomatik Google Meet bağlantısı gider. Bağlantıyı bir kez burada kurarsın.",
     "outcome": {
       "connected": "Google Takvim bağlandı.",
       "denied": "Google izni verilmedi, bağlantı kurulmadı.",
@@ -3260,11 +3260,11 @@
       "NEEDS_RECONNECT": "Yeniden bağlamak gerekiyor"
     },
     "explain": {
-      "OFF": "Sunucuda takvim sağlayıcısı kapalı. Online randevular yine onaylanır; mentor görüşme bağlantısını elle ekler.",
+      "OFF": "Sunucuda takvim sağlayıcısı kapalı. Çevrimiçi randevular yine onaylanır; mentor görüşme bağlantısını elle ekler.",
       "FAKE": "Yerel ve test ortamı için sahte takvim açık. Gerçek Meet bağlantısı oluşmaz.",
       "GOOGLE_MISSING": "Takvim sağlayıcısı Google seçili ama istemci kimliği ya da sırrı yok. Anahtarları sunucu ayarlarına ekleyip uygulamayı yeniden başlat.",
-      "NONE": "Anahtarlar hazır. Google hesabını bağlayınca onaylanan online randevulara Meet bağlantısı otomatik eklenir. Bağlanana kadar mentor bağlantıyı elle ekler.",
-      "ACTIVE": "Onaylanan online randevulara Meet bağlantısı otomatik eklenir; iptalde etkinlik silinir.",
+      "NONE": "Anahtarlar hazır. Google hesabını bağlayınca onaylanan çevrimiçi randevulara Meet bağlantısı otomatik eklenir. Bağlanana kadar mentor bağlantıyı elle ekler.",
+      "ACTIVE": "Onaylanan çevrimiçi randevulara Meet bağlantısı otomatik eklenir; iptalde etkinlik silinir.",
       "NEEDS_RECONNECT": "Google erişimi geri alınmış ya da kaydedilen yetki okunamıyor. Yeniden bağlayana kadar mentor bağlantıyı elle ekler."
     },
     "account": "Takvim hesabı",
@@ -3275,7 +3275,7 @@
     "reconnect": "Yeniden bağla",
     "disconnect": "Bağlantıyı kes",
     "disconnectTitle": "Bağlantı kesilsin mi?",
-    "disconnectDescription": "Yeni online randevulara Meet bağlantısı eklenmez; bağlantıyı yeniden kurana kadar mentor bağlantıyı elle ekler. Var olan etkinlikler takvimde kalır.",
+    "disconnectDescription": "Yeni çevrimiçi randevulara Meet bağlantısı eklenmez; bağlantıyı yeniden kurana kadar mentor bağlantıyı elle ekler. Var olan etkinlikler takvimde kalır.",
     "disconnectConfirm": "Evet, kes",
     "cancel": "Vazgeç",
     "disconnected": "Bağlantı kesildi.",
@@ -3283,7 +3283,7 @@
   },
   "courseGuide": {
     "title": "Seçmeli ders rehberi",
-    "description": "Mezunların iş hayatında yararlı bulduğu dersleri keşfet.",
+    "description": "Mezunların iş hayatında işe yaradığını söylediği dersleri gör.",
     "search": "Ders ara",
     "semester": "Yarıyıl",
     "kind": "Ders türü",
@@ -3303,9 +3303,9 @@
     "save": "Kaydet",
     "saving": "Kaydediliyor…",
     "saved": "Seçimlerin kaydedildi.",
-    "error": "Seçimlerin kaydedilemedi. Lütfen yeniden dene.",
+    "error": "Seçimlerin kaydedilemedi. Yeniden dene.",
     "accountStudent": "Seçmeli ders rehberi",
-    "accountStudentDescription": "Mezunların yararlı bulduğu dersleri keşfet.",
+    "accountStudentDescription": "Mezunların işe yaradığını söylediği dersleri gör.",
     "accountAlumni": "İşine yarayan dersler",
     "accountAlumniDescription": "Öğrencilere yol göstermek için ders seç.",
     "adminTitle": "Ders sözlüğü",

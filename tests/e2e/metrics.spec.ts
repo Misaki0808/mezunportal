@@ -59,11 +59,11 @@ test('yönetici küçük grubu gizli görür ve aynı korumayla Excel indirir', 
     await page.getByRole('button', { name: 'Raporu göster' }).click();
     const totals = page.getByRole('heading', { name: 'Olay türleri' }).locator('..');
     await expect(totals.locator('li')).toHaveCount(1);
-    await expect(totals.getByText('Gizli (3’ten az kişi)')).toBeVisible();
+    await expect(totals.getByText("Gizli (3'ten az kişi)")).toBeVisible();
     await expect(totals.getByText('2', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('progressbar')).toHaveCount(0);
     const active = page.getByText('Etkin kullanıcı', { exact: true }).locator('..');
-    await expect(active.getByText('Gizli (3’ten az kişi)', { exact: true })).toBeVisible();
+    await expect(active.getByText("Gizli (3'ten az kişi)", { exact: true })).toBeVisible();
     const downloaded = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Excel indir' }).click();
     const file = await (await downloaded).path();
