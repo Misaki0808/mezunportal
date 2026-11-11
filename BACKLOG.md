@@ -174,6 +174,7 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   yalnız dış betik yakalıyor (kapı betiği kendi testini koştuğu için `main()` testi özyineleme yaratır).
   Neden borç: gerçek hatayı tek denemelik tolerans gizleyebilir; çıkış kodu mantığı repoda korunmuyor.
   Kapanış ölçütü: `TEST_GATE_NESTED` bayrağı ile betik testlerini atlayan sahte `pnpm`'li 3 uçtan uca senaryo (yeniden koşu geçer / kırmızı / gerçek yakalanmamış hata) repoya girer; OOM kalıbı için karar yazılır.
+  Durum: uçtan uca testler taslak PR #108'de (R2 incelemesinde); girince madde yalnız OOM kalıbı kararına iner.
 - [ ] **TD-024** · P2 · `profile-content.db.test` yük altında bir kez 15 sn zaman aşımına düştü
   Ne: dosya normalde 3–5 sn, bir kapıda 50 sn; yeniden koşuda 3,1 sn yeşil (yük ya da veritabanı beklemesi).
   Neden borç: izleniyor, kök neden bilinmiyor.
@@ -183,6 +184,7 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   sessizce atlıyor (`if (!href) continue`); ortak seed hesabını paylaşan spec grupları `--workers=2`'de yarışıyor (`--workers=1` güvenli).
   Neden borç: yanlış kullanımda uzun ve anlamsız koşu; boş veride sahte yeşil.
   Kapanış ölçütü: projeye `testMatch: /webkit-.*\.spec\.ts/`; `tour()` boş listede başarısız olur; yarış için ortak hesap yardımcısı (kart 209) ya da belgelenmiş `--workers=1`.
+  Durum: üç ölçüt de taslak PR #108'de (R2 incelemesinde; yarış için PM kararı: tek işçi kalır, `--workers=2` açık hatayla reddedilir); girince madde silinir.
 - [ ] **TD-026** · P2 · `src/components/ui/button-classes.test.ts` bileşen kaynağını metin olarak okuyor
   Ne: `'use client'` yönergesini ve barrel dışa aktarımını dosya metninden arıyor ("ekran kaynağını tarayan test yazılmaz" kuralına yakın); gerçek koruma e2e'de
   (etkinlik detayı, deneyim sayfası sunucuda `buttonClasses` çağırır).

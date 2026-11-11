@@ -349,12 +349,12 @@ testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümle
 
 ### 12.2 Yol boyunca eklenenler
 
-- **Marka ve arayüz:** İris + Mercan palet ve koyu tema (#57), tanıtım sayfası ve markalama (#59, #80, #83), UI cila ve ekran cilası (#64, #95), metin turu (#89), mobil tur ve puan özeti (#91, #92),
+- **Marka ve arayüz:** İris + Mercan palet ve koyu tema (#57), tanıtım sayfası ve markalama (#59, #80, #83), masaüstünde tam genişlik ve çok geniş ekran ölçeği (#105, #107), UI cila ve ekran cilası (#64, #95), metin turu (#89), mobil tur ve puan özeti (#91, #92),
   e-posta markalaması (#94), erişilebilirlik turu ve düzeltmeleri (#90, #97).
 - **Güvenlik ve gizlilik:** SSS kimlik denetimi düzeltmesi (#58), zorunlu onay kapısı merkezileştirme (#61), D7 çapraz kaynak yan kanalının kapatılması ve ilan görünürlüğü (#66, #69),
-  LinkedIn saklama ve hikâye gizliliği (#87), görüşme formu 404 (#93).
+  LinkedIn saklama ve hikâye gizliliği (#87), görüşme formu 404 (#93), altı giriş gerektiren ayrıntı rotasında gerçek 404 (#106).
 - **Yeni yetenekler:** LinkedIn profil PDF içe aktarma (#82), gerçek Google Takvim/Meet adaptörü (#84; anahtarlar gelince açılır), SSS ekranları.
-- **Altyapı ve test:** süreç/işçi temizliği (#63), CI az ve öz (#81), yük altı test payı ve `test:gate` (#86, #88, #102), küçük borçlar (#96), Safari turu ve kaydırma kilidi (#99).
+- **Altyapı ve test:** süreç/işçi temizliği (#63), CI az ve öz (#81), yük altı test payı ve `test:gate` (#86, #88, #102), küçük borçlar (#96), Safari turu ve kaydırma kilidi (#99), Safari diyalog Tab sırası (#104), ortak e2e girişi (#106).
 - **Deneme turu:** deneme rehberi provası ve düzeltmesi (kart 203, #101).
 
 ### 12.3 Bilinçli ertelenenler ve nereye
