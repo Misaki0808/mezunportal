@@ -127,6 +127,10 @@ değeri değişirse tur yeniden koşulur. **İlk koşuda bulunup giderilenler:**
 sayfa bileşenleri artık `main` kullanmaz, kabuk sağlar. Etkinlik düğmeleri koyu temada `text-white` ile 2,27:1 kontrastlıydı, `text-on-primary` oldu. Tarih/saat girişlerinin iç parçaları tarayıcının
 kendi odak halkasını çizer; tur bunları ana öğe düzeyinde atlar.
 
+### Safari (WebKit) + iPhone turu (kart 200)
+
+Bütün otomatik turlar Chromium'da koşar; öğrencilerin önemli kısmı iPhone (Safari = WebKit) kullandığı için **isteğe bağlı** bir WebKit projesi vardır, CI ve varsayılan `pnpm test:e2e` değişmez. İlk kurulumda `pnpm exec playwright install webkit` (ücretsiz tarayıcı indirmesi, pakete bir şey eklemez). Koşmak için `E2E_WEBKIT=1 pnpm exec playwright test --project=webkit-iphone tests/e2e/webkit-iphone.spec.ts` (`--project` verilmezse Chromium da koşar; tek ağır iş kuralıyla, `--workers=1`: testler ortak seed hesaplarını paylaşır). `webkit-iphone.spec.ts` yalnız bu projede çalışır: çekirdek ekranları açık + koyu 390 px'te gezer ve yatay taşmayı, 16 px altı giriş alanını (iOS odakta yakınlaştırır), alt gezinme ile yapışkan çubuk çakışmasını, tarih/saat girişlerinin yerel türünü/boyunu, modal kaydırma kilidini, logo/kep SVG'sini ve odak halkasını ölçer; kapı/yetki/bulunamadı ekranını ölçerse başarısız olur (sahte yeşil olmasın). `WEBKIT_OUT=<klasör>` verilirse görüntü ve ölçüm JSON'u oraya yazılır; mevcut spec'ler de aynı projede koşabilir (`--project=webkit-iphone tests/e2e/<dosya>`). **Emülatör yapamaz, gerçek iPhone gerekir:** çentik/güvenli alan değerleri (`env()` = 0; yalnız `viewport-fit=cover` ve CSS'te `env(safe-area-inset-*)` kullanımı denetlenir), ekran klavyesinin açılması, iOS tarih çarkı, örtüye dokunup sürükleyince sayfanın kaymaması (emülatörde yalnız kilit mekanizması ölçülür).
+
 ### Yük altında altyapı kaynaklı düşmeler (P2-14)
 
 Birleştirme kapısında yük altında iki kez `[vitest-pool-runner]: Timeout waiting for worker to respond` ile kodla ilgisiz 3–8 test düştü. Vitest'in işçi
