@@ -237,14 +237,23 @@ const calendarEnvSchema = z
     APP_ENV: z.enum(['local', 'test', 'prod']),
     /**
      * Sağlayıcı seçimi. BOŞSA takvim KAPALIDIR: online randevu yine onaylanır, mentor görüşme linkini elle ekler.
-     * `fake`: deterministik sahte adaptör; yalnız `local`/`test` (canlıda env doğrulamasını düşürür). Gerçek Google
-     * adaptörü kullanıcı onayıyla (E4: bulut projesi, OAuth, yenileme jetonu) ayrı kartla eklenir.
+     * `fake`: deterministik sahte adaptör; yalnız `local`/`test` (canlıda env doğrulamasını düşürür). `google`: gerçek Google
+     * Takvim/Meet adaptörü; `GOOGLE_CLIENT_ID` ve `GOOGLE_CLIENT_SECRET` zorunludur ve sistem yöneticisi panelden bir kez
+     * bağlar (yenileme jetonu veritabanında şifreli). Bağlanmadan `google` çalışır ama etkinlik açmaz: mentor linki elle ekler.
      */
-    CALENDAR_PROVIDER: z.preprocess(blankToUndefined, z.enum(['fake']).optional()),
+    CALENDAR_PROVIDER: z.preprocess(blankToUndefined, z.enum(['fake', 'google']).optional()),
+    /** Google OAuth Web istemcisi (Cloud Console). Sır: logda, kartta ve depoda yer almaz. */
+    GOOGLE_CLIENT_ID: z.preprocess(blankToUndefined, z.string().min(1).optional()),
+    GOOGLE_CLIENT_SECRET: z.preprocess(blankToUndefined, z.string().min(1).optional()),
   })
   .superRefine((env, ctx) => {
     if (env.APP_ENV === 'prod' && env.CALENDAR_PROVIDER === 'fake') {
       ctx.addIssue({ code: 'custom', path: ['CALENDAR_PROVIDER'], message: 'CALENDAR_PROVIDER' });
+    }
+    if (env.CALENDAR_PROVIDER === 'google') {
+      for (const key of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'] as const) {
+        if (!env[key]) ctx.addIssue({ code: 'custom', path: [key], message: key });
+      }
     }
   });
 

@@ -48,6 +48,9 @@ export const ADMIN_ACTIONS = {
   CAMPUS_EVENT_PUBLISH: { reasonRequired: true },
   CAMPUS_EVENT_REJECT: { reasonRequired: true },
   CAMPUS_EVENT_CANCEL: { reasonRequired: true },
+  /** Dış servis (Google Takvim) bağlantısını kurma/kesme (sistem yöneticisi; jeton kaydın içine girmez). */
+  INTEGRATION_CONNECT: { reasonRequired: false },
+  INTEGRATION_DISCONNECT: { reasonRequired: false },
 } as const;
 
 export type AdminActionName = keyof typeof ADMIN_ACTIONS;
@@ -75,6 +78,7 @@ export const AUDIT_TARGET_TYPES = [
   'ALUMNI_STORY',
   'MONTHLY_ALUMNUS',
   'CAMPUS_EVENT',
+  'INTEGRATION',
 ] as const;
 
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
