@@ -583,13 +583,30 @@ test.describe('WebKit iPhone: etkileşimli akışlar', () => {
     const student = await db.user.findUniqueOrThrow({
       where: { email: 'student@test.mezunportal.local' },
     });
+    const membership = await db.membership.findFirstOrThrow({
+      where: { userId: student.id, role: 'STUDENT', verificationStatus: 'VERIFIED', endedAt: null },
+    });
+    const now = Date.now();
+    const event = await db.campusEvent.create({
+      data: {
+        title: `Safari etkinlik ${randomUUID()}`,
+        description: 'Örnek test etkinliği',
+        location: 'Kampüs',
+        startsAt: new Date(now - 60_000),
+        endsAt: new Date(now + 3_600_000),
+        capacity: 10,
+        status: 'PUBLISHED',
+        createdById: student.id,
+        reviewedById: student.id,
+        reviewedAt: new Date(now),
+        departments: { create: { departmentId: membership.departmentId } },
+      },
+    });
     const context = await browser.newContext({ ...IPHONE });
     try {
       const page = await context.newPage();
       await login(page, 'student');
-      await page.goto('/etkinlikler', { waitUntil: 'networkidle' });
-      const href = await page.locator('a[href^="/etkinlikler/"]').first().getAttribute('href');
-      await page.goto(href!, { waitUntil: 'networkidle' });
+      await page.goto(`/etkinlikler/${event.id}`, { waitUntil: 'networkidle' });
       await page.getByRole('button', { name: 'Katılıyorum' }).click();
       await expect(page.getByLabel('Altı haneli katılım kodu')).toBeVisible();
       await page.goto('/ders-rehberi', { waitUntil: 'networkidle' });
@@ -599,7 +616,10 @@ test.describe('WebKit iPhone: etkileşimli akışlar', () => {
       await expect(page.locator('article').first()).toBeVisible();
     } finally {
       await context.close();
-      await db.campusEventRegistration.deleteMany({ where: { userId: student.id } });
+      await db.campusEventRegistration.deleteMany({
+        where: { userId: student.id, eventId: event.id },
+      });
+      await db.campusEvent.delete({ where: { id: event.id } });
     }
   });
 });
