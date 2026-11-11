@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
-import { ErrorState, PageHeader } from '@/components/ui';
+import Link from 'next/link';
+import { EmptyState, ErrorState, PageHeader, buttonClasses } from '@/components/ui';
 import { StoryShowcase } from '@/components/alumni-story/showcase';
 import { listPublishedStories } from '@/server/actions/alumni-story';
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,15 @@ export default async function ArchivePage() {
           <StoryShowcase key={`${story.id}-${story.month}`} story={story} showMonth />
         ))
       ) : (
-        <p>{t('archiveEmpty')}</p>
+        <EmptyState
+          title={t('archiveEmpty')}
+          description={t('archiveEmptyHint')}
+          action={
+            <Link href="/deneyimler" className={buttonClasses()}>
+              {t('archiveEmptyAction')}
+            </Link>
+          }
+        />
       )}
     </div>
   );

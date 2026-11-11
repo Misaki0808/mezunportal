@@ -13,6 +13,7 @@ export default async function Page({
     q: raw.q ?? '',
     companyId: raw.companyId ?? '',
     sectorId: raw.sectorId ?? '',
+    ...(raw.page === undefined ? {} : { page: raw.page }),
   });
   if (!parsed.success) return <ErrorState errorCode="VALIDATION_INVALID" />;
   const filters = parsed.data;

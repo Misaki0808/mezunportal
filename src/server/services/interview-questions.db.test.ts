@@ -177,3 +177,54 @@ it('1000 deneyimde sorgu yanıtı ölçülür', async () => {
   expect(result.groups.length).toBeGreaterThan(0);
   expect(duration).toBeLessThan(5000);
 }, 15000);
+
+it('yalnız güvenli şirketleri sayar, sayfalar ve filtreleri bütün sonuçlarda uygular', async () => {
+  const w = await fixture();
+  const sector = await db.sector.create({
+    data: { name: 'Sayfalama sektörü', normalizedName: randomUUID() },
+  });
+  for (let i = 0; i < 12; i++) {
+    const key = randomUUID();
+    const company = await db.company.create({
+      data: {
+        name: `Sayfa Şirketi ${String(i).padStart(2, '0')}`,
+        normalizedName: key,
+        aliases: [],
+        sectorId: sector.id,
+      },
+    });
+    const authors = i === 11 ? w.authors.slice(0, 2) : w.authors;
+    await db.experience.createMany({
+      data: authors.map((authorId) => ({
+        authorId,
+        departmentIdAtWrite: w.institution.deptA1,
+        companyId: company.id,
+        organizationName: company.name,
+        type: 'INTERNSHIP' as const,
+        termYear: 2025,
+        termSeason: 'SUMMER' as const,
+        durationWeeks: 8,
+        pay: 'PAID' as const,
+        applicationChannel: 'REFERRAL' as const,
+        status: 'PUBLISHED' as const,
+        moderatedAt: new Date(),
+        moderatedById: w.moderator,
+        publishedAt: new Date(),
+        whatLearned: 'Öğrendim',
+        advice: 'Çalışın',
+        interviewQuestions: ['SQL nedir?'],
+      })),
+    });
+  }
+  const query = interviewQuerySchema.parse({ sectorId: sector.id, q: 'SQL' });
+  const first = await getInterviewQuestions(db, w.viewer, query);
+  const second = await getInterviewQuestions(db, w.viewer, { ...query, page: 2 });
+  expect(first.total).toBe(11);
+  expect(first.groups).toHaveLength(10);
+  expect(second.total).toBe(11);
+  expect(second.groups).toHaveLength(1);
+  expect(second.groups[0]?.companyName).toBe('Sayfa Şirketi 10');
+  expect(JSON.stringify([first.groups, second.groups])).not.toContain('Sayfa Şirketi 11');
+  expect((await getInterviewQuestions(db, w.viewer, { ...query, q: 'bulunmayan' })).total).toBe(0);
+  expect((await getInterviewQuestions(db, w.viewer, { ...query, page: 99 })).page).toBe(2);
+});
