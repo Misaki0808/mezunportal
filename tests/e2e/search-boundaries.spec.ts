@@ -28,7 +28,7 @@ test('beş geçersiz filtre bağlantısı çökmeden temizleme sunar', async ({ 
     await expect(page.getByRole('heading', { name: 'Filtre bağlantısı geçersiz' })).toBeVisible();
     await page.getByRole('link', { name: 'Filtreleri temizle' }).click();
     await expect(page).toHaveURL(/\/deneyimler$/);
-    await expect(page.getByRole('heading', { name: 'Deneyimleri keşfet' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Deneyimlere bak' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'This page couldn’t load' })).toHaveCount(0);
   }
   expect(errors).toEqual([]);

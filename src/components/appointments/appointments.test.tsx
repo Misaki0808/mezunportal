@@ -80,7 +80,7 @@ describe('slot seçici', () => {
     const request = vi.fn().mockResolvedValue({ ok: true, data: {} });
     const { user } = renderUi(<SlotPicker list={slotList()} request={request} />);
     expect(screen.getByText('Saatler İstanbul saatidir.')).toBeInTheDocument();
-    expect(screen.getByText(/e-posta adresin mentorla paylaşılır/)).toBeInTheDocument();
+    expect(screen.getByText(/mentor e-postanı görmez/)).toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: '10:00 saatini seç' }));
     await user.click(screen.getByRole('radio', { name: 'Yüz yüze' }));
     expect(screen.getByText('Buluşma yeri: Kampüs kütüphane girişi')).toBeInTheDocument();

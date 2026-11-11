@@ -80,7 +80,7 @@ describe('deneyim formu', () => {
     expect(screen.getAllByText('Bu alan zorunlu.').length).toBeGreaterThan(3);
   });
 
-  it('genel hata özeti renge atıf yapmaz ve "İlk hatalı alana git" odağı taşır', async () => {
+  it('genel hata özeti renge atıf yapmaz ve "İlk sorunlu alana git" odağı taşır', async () => {
     const { user } = setup();
     await user.click(screen.getByRole('button', { name: 'Moderasyona gönder' }));
     const alert = screen.getByText('Hatalı alanları düzeltip tekrar dene.');
@@ -90,7 +90,7 @@ describe('deneyim formu', () => {
     expect(field).toHaveFocus();
     field.blur();
     expect(field).not.toHaveFocus();
-    await user.click(screen.getByRole('button', { name: 'İlk hatalı alana git' }));
+    await user.click(screen.getByRole('button', { name: 'İlk sorunlu alana git' }));
     expect(field).toHaveFocus();
   });
 
