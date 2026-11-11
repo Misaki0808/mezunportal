@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { luminanceOf, measurePage, tabThrough } from './a11y';
+import { waitForHydratedForm } from './hydration';
 
 // Faz 2 erişilebilirlik turu (P2-14): klavye, ekran okuyucu adları, kontrast ve taşma; her iki temada, telefon ve masaüstü genişliğinde.
 // Ölçümler `tests/e2e/a11y.ts` içindedir (kütüphane yok). Bulgu çıkarsa sayfa düzeltilir; test gevşetilmez.
@@ -32,17 +33,21 @@ async function login(page: Page, persona: 'student' | 'departmentAdmin' | 'syste
   await page.goto(`/giris/test?persona=${persona}`);
   await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
   await page.waitForURL(/\/(hesap|onay)$/);
-  if (page.url().endsWith('/onay')) {
-    const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-    await consent.nth(0).check();
-    await consent.nth(1).check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-  }
+  // Test girişi önce /hesap'a gidebilir; onay kapısını hedef sayfa sanıp ölçmemek için açıkça tamamla.
+  await page.goto('/onay');
+  await waitForHydratedForm(page, 'Seçimlerimi kaydet');
+  const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
+  await consent.nth(0).check();
+  await consent.nth(1).check();
+  await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
+  await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
 }
 
 async function audit(page: Page, path: string, scheme: 'light' | 'dark') {
   await page.goto(path, { waitUntil: 'networkidle' });
+  expect(new URL(page.url()).pathname, `${path}: hedef rota ölçülmeli`).toBe(
+    new URL(path, page.url()).pathname,
+  );
   await expect(page.locator('main, [role="main"]').first()).toBeVisible();
   // İlk Tab durağı "İçeriğe geç": klavye kullanıcısı gezinmeyi atlayabilir.
   await page.keyboard.press('Tab');
