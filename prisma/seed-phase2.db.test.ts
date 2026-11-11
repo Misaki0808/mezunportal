@@ -4,11 +4,13 @@ import { createTestPrisma } from '@/test/db';
 import { addMembership, createUser, grantRequiredConsents } from '@/test/fixtures';
 
 import { normalizeName } from '../src/server/rules/dictionary';
+import { listCourseGuide } from '../src/server/services/course-guide';
 import { getApplicationCalendar } from '../src/server/services/application-window';
 import { getCompany, searchCompanies } from '../src/server/services/companies';
 import { getInterviewQuestions } from '../src/server/services/interview-questions';
 import { searchJobPostings } from '../src/server/services/job-postings';
 import { seedAccounts, seedUserId } from './seed-accounts';
+import { seedCourses } from './seed-courses';
 import { seedDictionary } from './seed-dictionary';
 import { seedInstitutions } from './seed-institutions';
 import { SAMPLE_ALUMNI, seedPhase2 } from './seed-phase2';
@@ -51,6 +53,9 @@ async function cleanup() {
   await db.jobPosting.deleteMany({ where: { id: { in: POSTINGS } } });
   await db.campusEvent.deleteMany({ where: { id: { in: EVENTS } } });
   await db.experience.deleteMany({ where: { id: { in: EXPERIENCES } } });
+  await db.alumniCourseMark.deleteMany({
+    where: { userId: { in: [...SAMPLE_USERS, seedUserId('alumniMentor')] } },
+  });
   await db.position.deleteMany({ where: { userId: { in: SAMPLE_USERS } } });
   await db.company.deleteMany({ where: { id: { in: COMPANIES } } });
   // Görüntüleyen öğrenci kalır: rıza kayıtları yalnız eklenir (silinemez), diğer testler de kullanıcılarını bırakır.
@@ -63,6 +68,7 @@ beforeAll(async () => {
   await seedAccounts(db);
   await seedProfileTags(db);
   await seedDictionary(db);
+  await seedCourses(db);
   await cleanup();
   // Seed'in İÜ YBS bölümünde bir öğrenci (K-07: aynı üniversite) ve rıza kapısı açık.
   const department = await db.department.findFirstOrThrow({
@@ -224,6 +230,13 @@ describe('seed gerçekten GÖRÜNÜR içerik üretir (servisler k-anonimlik eşi
       expect(calendar.months.length, id).toBeGreaterThan(0);
       for (const month of calendar.months) expect(month.count).toBeGreaterThanOrEqual(3);
     }
+  });
+
+  it('ders rehberi: ilk üç seçmeli beş mezun işaretiyle görünür, dördüncü (iki işaret) gizli kalır', async () => {
+    const guide = await listCourseGuide(db, viewer, { elective: true });
+    const marked = guide.filter((course) => course.count !== null);
+    expect(marked.map((c) => c.count)).toEqual([5, 5, 5]);
+    expect(guide.filter((course) => course.count === null).length).toBeGreaterThan(0);
   });
 
   it('şirket sayfası: yazarlı deneyimler, 3 mezunluk çalışan hücresi ve dönem kesiti görünür; 3 altı hücre gizli; e-posta yok', async () => {

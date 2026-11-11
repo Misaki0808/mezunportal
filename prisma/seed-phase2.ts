@@ -484,6 +484,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
 
   // Şirketler (sektör sözlükten; sözlük seed'i önce koşar).
   const companyIds = new Map<string, string>();
+  const companySectors = new Map<string, string | null>();
   for (const company of COMPANIES) {
     const sector = await prisma.sector.findUnique({
       where: { normalizedName: normalizeName(company.sector, 'SECTOR') },
@@ -504,6 +505,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
       select: { id: true },
     });
     companyIds.set(company.key, row.id);
+    companySectors.set(company.key, sector?.id ?? null);
   }
 
   // Örnek mezunlar: giriş yapılamayan sahte hesaplar (parola/oturum yok), doğrulanmış YBS mezunu üyelikli.
@@ -562,6 +564,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
       userId: authorId(position.user),
       companyId: companyIds.get(position.company)!,
       companyRaw: company.name,
+      sectorId: companySectors.get(position.company) ?? null,
       titleRaw: 'Stajyer',
       employmentType: 'INTERNSHIP' as const,
       startYear: 2024,
@@ -572,6 +575,26 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
     };
     await prisma.position.upsert({ where: { id }, create: { id, ...data }, update: data });
   }
+
+  // Ders rehberi: mezunlar seçmeli dersleri işaretler. Bir dersin sayısı en az 3 mezun işareti ister (küçük hücre gizli): ilk üç seçmeli
+  // beş mezundan işaret alır (görünür), dördüncü yalnız ikiden (gizli: kuralı canlı gösterir). Ders sözlüğü `seedCourses`'tan gelir.
+  const electives = await prisma.course.findMany({
+    where: { departmentId: department.id, elective: true },
+    orderBy: [{ semester: 'asc' }, { code: 'asc' }],
+    take: 4,
+    select: { id: true },
+  });
+  const markers: Author[] = ['alumniMentor', ...SAMPLE_ALUMNI];
+  for (const [courseIndex, course] of electives.entries())
+    for (const [markerIndex, marker] of markers.entries()) {
+      if (courseIndex === 3 && markerIndex >= 2) continue;
+      const key = { userId: authorId(marker), courseId: course.id };
+      await prisma.alumniCourseMark.upsert({
+        where: { userId_courseId: key },
+        create: key,
+        update: {},
+      });
+    }
 
   // Yayınlanmış deneyimler.
   for (const e of EXPERIENCES) {
