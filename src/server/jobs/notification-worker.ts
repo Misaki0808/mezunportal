@@ -7,6 +7,7 @@ import { expireRequests } from '../services/cv-review-request';
 import { createCvReviewNotifier } from '../services/cv-review-notifier';
 import { relayPendingNotifications } from './notification-intent-worker';
 import { purgeFiles } from '../services/files-purge';
+import { purgeExpiredLinkedinFiles } from '../services/cv-parse';
 import { purgeExpiredAuth } from '../services/auth-cleanup';
 import { detachOldEvents } from '../services/event';
 import { expireJobPostings } from '../services/job-postings';
@@ -42,6 +43,8 @@ export async function createNotificationRuntime() {
       }),
     'notification.relay': () => relayPendingNotifications(),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
+    'linkedin.purge': () =>
+      purgeExpiredLinkedinFiles({ db: getDb(), storage: getStorage(), llm: null }),
     'auth.purge': () => purgeExpiredAuth(getDb()),
     'events.detach': () => detachOldEvents(getDb(), new Date()),
     'appointment.feedback': () => scheduleFeedbackPrompts(getDb()),
@@ -72,6 +75,7 @@ export async function createNotificationRuntime() {
             : name === 'applications.remind'
               ? '0 9 1 * *'
               : [
+                    'linkedin.purge',
                     'notification.relay',
                     'appointment.feedback',
                     'cvReview.expire',

@@ -284,7 +284,8 @@
       "AWARD_FREEZE_MISSED": "Otomatik dondurma zamanı kaçırıldı. Gerekçeyle yeniden hesaplayarak aday listesini oluştur.",
       "STORY_IDENTITY_LEAK": "Hikâyendeki başka kişilere ait adları ve iletişim bilgilerini çıkarıp tekrar dene.",
       "STORY_INVALID_STATE": "Bu işlem için hikâyenin durumunu ve yayın iznini kontrol et.",
-      "STORY_MONTH_ALREADY_SELECTED": "Bu bölüm için bu ayın mezunu zaten seçildi."
+      "STORY_MONTH_ALREADY_SELECTED": "Bu bölüm için bu ayın mezunu zaten seçildi.",
+      "CV_LINKEDIN_UNAVAILABLE": "LinkedIn PDF içe aktarma henüz açık değil. Normal CV yükleyebilir ya da bilgilerini elle girebilirsin."
     }
   },
   "nav": {
@@ -630,7 +631,8 @@
         "chooseSource": "Ne yüklemek istersin?",
         "normalCv": "CV PDF dosyası",
         "importAction": "LinkedIn profilini içe aktar",
-        "demoNotice": "LinkedIn PDF okuma henüz açık değil. Şimdilik yalnız deneme ortamında örnek bilgiler gösterilir; yüklediğin profil okunmaz. Bilgilerini normal CV PDF'iyle yükleyebilir ya da elle girebilirsin."
+        "demoNotice": "LinkedIn PDF okuma henüz açık değil. Şimdilik yalnız deneme ortamında örnek bilgiler gösterilir; yüklediğin profil okunmaz. Bilgilerini normal CV PDF'iyle yükleyebilir ya da elle girebilirsin.",
+        "comingSoon": "LinkedIn PDF içe aktarma yakında kullanıma açılacak."
       },
       "processing": {
         "title": "CV'n okunuyor",

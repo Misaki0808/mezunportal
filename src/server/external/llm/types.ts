@@ -18,9 +18,13 @@ export type LlmCvRequest = {
   signal: AbortSignal;
 };
 
+/** Yalnız maske sonrası metin; ham PDF veya kimlik bu çağrıya girmez. */
+export type RedactedCvRequest = Omit<LlmCvRequest, 'pdf'> & { text: string };
+
 export interface LlmAdapter {
   readonly provider: string;
   parseCv(request: LlmCvRequest): Promise<unknown>;
+  parseRedactedCv?(request: RedactedCvRequest): Promise<unknown>;
 }
 
 /**

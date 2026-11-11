@@ -54,7 +54,7 @@ export function cvKit(db: PrismaClient, overrides: Partial<CvDeps> = {}): CvTest
     queued.push(id);
   };
   return {
-    deps: { db, storage, llm, enqueue, dailyLimit: 50, ...overrides },
+    deps: { db, storage, llm, enqueue, dailyLimit: 50, allowFakeLinkedin: true, ...overrides },
     storage,
     llm,
     queued,

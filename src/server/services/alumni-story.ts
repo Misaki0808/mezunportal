@@ -152,37 +152,52 @@ export async function setStoryConsent(
     );
   }, TX_OPTIONS);
 }
-/** SSS kimlik kuralı: metnin içindeki e-posta/telefon/kimlik ve bilinen başka kişi adları engellenir. */
-async function requireIdentitySafe(tx: Tx, authorId: string, body: string) {
+/** Kişisel veri biçimleri ve aynı üniversitedeki etkin üyelerin tam adları denetlenir. */
+async function requireIdentitySafe(tx: Tx, authorId: string, departmentId: string, body: string) {
+  const contacts = analyzeIdentity(body, []);
+  const compact = analyzeIdentity(body.replace(/\s+/gu, ''), [], []);
+  if (contacts.blocked || compact.blocked) throw codedValidation('STORY_IDENTITY_LEAK');
+  const words = foldTr(body).match(/[\p{L}\p{N}]+/gu) ?? [];
+  const pairs = [
+    ...new Set(words.slice(0, -1).map((word, index) => `%${word} ${words[index + 1]}%`)),
+  ];
+  if (!pairs.length) return;
+  // Hikâye metnindeki ikili sözcükler için ad trigram indeksini kullan; 5.000 kullanıcıda bile tam ad tablosu taranmasın.
+  const [settings] = await tx.$queryRaw<
+    { prior: string }[]
+  >`SELECT current_setting('enable_seqscan') AS prior`;
+  await tx.$executeRaw`SELECT set_config('enable_seqscan', 'off', true)`;
+  let candidates: { name: string }[];
+  try {
+    candidates = await tx.$queryRaw<{ name: string }[]>`
+    WITH name_candidates AS MATERIALIZED (
+      SELECT "id", "name" FROM "User" WHERE "id" <> ${authorId}
+        AND "deletedAt" IS NULL AND "nameSearch" LIKE ANY(${pairs}::text[])
+    )
+    SELECT DISTINCT u."name" FROM name_candidates u
+    JOIN "Membership" m ON m."userId" = u."id" AND m."endedAt" IS NULL
+    JOIN "Department" d ON d."id" = m."departmentId"
+    JOIN "Faculty" f ON f."id" = d."facultyId"
+    JOIN "Department" target ON target."id" = ${departmentId}
+    JOIN "Faculty" tf ON tf."id" = target."facultyId" AND tf."universityId" = f."universityId"
+    `;
+  } finally {
+    await tx.$executeRaw`SELECT set_config('enable_seqscan', ${settings?.prior ?? 'on'}, true)`;
+  }
+  const bodyWords = ` ${words.join(' ')} `;
   const author = await tx.user.findUniqueOrThrow({
     where: { id: authorId },
     select: { name: true },
   });
-  const others = await tx.user.findMany({
-    where: { id: { not: authorId }, deletedAt: null },
-    select: { name: true },
-  });
-  const names = [
-    ...new Set(others.map((x) => x.name).filter((name) => foldTr(name) !== foldTr(author.name))),
-  ];
-  // Kendi tam adı yayımlanabilir; ortak bir ad parçasını genel olarak serbest bırakma.
-  // İletişim bilgilerini maskelemeden önce denetle, yalnız tam adın geçtiği aralığı çıkar.
-  const authorParts = foldTr(author.name).trim().split(/\s+/u);
-  const ownFullName = authorParts
-    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    .join('\\s+');
-  const nameBody =
-    authorParts.length > 1
-      ? foldTr(body).replace(
-          new RegExp(`(?<![\\p{L}\\p{N}])${ownFullName}(?![\\p{L}\\p{N}])`, 'gu'),
-          ' ',
-        )
-      : body;
-  const contacts = analyzeIdentity(body, []);
-  const finding = analyzeIdentity(nameBody, names);
-  const compact = analyzeIdentity(body.replace(/\s+/gu, ''), [], []);
-  if (contacts.blocked || finding.blocked || finding.warnings.length || compact.blocked)
-    throw codedValidation('STORY_IDENTITY_LEAK');
+  const ownName = foldTr(author.name)
+    .match(/[\p{L}\p{N}]+/gu)
+    ?.join(' ');
+  for (const candidate of candidates) {
+    const parts = foldTr(candidate.name).match(/[\p{L}\p{N}]+/gu) ?? [];
+    const full = parts.join(' ');
+    if (parts.length >= 2 && full !== ownName && bodyWords.includes(` ${full} `))
+      throw codedValidation('STORY_IDENTITY_LEAK');
+  }
 }
 export async function submitStory(deps: Deps, userId: string, input: unknown): Promise<MyStory> {
   const data = storyIdSchema.parse(input),
@@ -200,7 +215,7 @@ export async function submitStory(deps: Deps, userId: string, input: unknown): P
       return myView(
         await tx.alumniStory.findUniqueOrThrow({ where: { id: story.id }, select: mySelect }),
       );
-    await requireIdentitySafe(tx, userId, story.body);
+    await requireIdentitySafe(tx, userId, story.departmentId, story.body);
     const updated = await tx.alumniStory.update({
       where: { id: story.id },
       data: { status: 'PENDING', submittedAt: now, moderationReason: null },
@@ -287,7 +302,7 @@ export async function reviewStory(deps: Deps, userId: string, input: unknown): P
     if (data.decision === 'PUBLISH') {
       if (!story.publicConsentAt || story.publicConsentVersion !== STORY_CONSENT_VERSION)
         throw codedConflict('STORY_INVALID_STATE');
-      await requireIdentitySafe(tx, story.userId, story.body);
+      await requireIdentitySafe(tx, story.userId, story.departmentId, story.body);
     }
     const updated = await tx.alumniStory.update({
       where: { id: story.id },

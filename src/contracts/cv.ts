@@ -261,6 +261,7 @@ export const CV_UNAVAILABLE_REASONS = [
 export type CvUnavailableReason = (typeof CV_UNAVAILABLE_REASONS)[number];
 
 export const cvAvailabilitySchema = z.object({
+  linkedinPdf: z.boolean(),
   available: z.boolean(),
   reason: z.enum(CV_UNAVAILABLE_REASONS).nullable(),
   dailyLimit: z.number().int().min(1),
@@ -501,6 +502,7 @@ export const CV_ACTION_ERRORS = {
     'CV_PDF_UNREADABLE',
     'CV_TOO_MANY_PAGES',
     'CV_PROVIDER_NOT_CONFIGURED',
+    'CV_LINKEDIN_UNAVAILABLE',
     'CV_TRANSFER_CONSENT_REQUIRED',
     'CV_DAILY_LIMIT_REACHED',
     'CV_ALREADY_PROCESSING',
