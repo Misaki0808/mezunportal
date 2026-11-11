@@ -78,7 +78,7 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
       .locator('article')
       .filter({ has: s.getByRole('heading', { name: mentor.name, exact: true }) })
       .first();
-    await expect(card.getByRole('link', { name: 'Randevu iste', exact: true })).toHaveAttribute(
+    await expect(card.getByRole('link', { name: /^Randevu iste: / })).toHaveAttribute(
       'href',
       `/randevu-al/${mentor.id}`,
     );
