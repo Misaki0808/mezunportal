@@ -30,13 +30,22 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
   token ve bileşenleri kullanır.
 - Gölge işlevseldir, hiyerarşinin yerine geçmez. Radius ölçeği kart/input/buton arasında tutarlı.
 - Gerçek durumlar zorunludur: yükleniyor, boş, hata, devre dışı (sebebiyle), odak, yıkıcı onay.
+- **Boş durum** `EmptyState` ile verilir (simge + kısa başlık + tek eylem); çıplak bir "veri yok" paragrafı değildir.
+  Tabloda tek tek soluk görünen sayaç/"yeterli veri yok" satırları kısa metin ve rozetle (`Badge`) gösterilir.
+- **Listede satır eylemleri** ortak bir koşula (ör. gerekçe yazma) bağlıysa düğmeler sessizce kapalı kalmaz: tıklanınca sebep
+  alanın altında söylenir ve odak o alana gider. Tek düğmede `Button disabled` sebebiyle birlikte kullanılır.
+- **Sekmeler** seçili sekmeyi yalnız şerit içinde yatay kaydırır; sayfa dikey kaymaz (`scrollIntoView` kullanılmaz, sayfa açılışta
+  başlığı kesmesin).
+- Tema belirteci olmayan sınıf (`text-muted`, `bg-background`, `bg-surface-subtle`…) yazılmaz: stilsiz kalır. Köşe yalnız
+  `rounded-control` / `rounded-card` / `rounded-sheet` ölçeğindendir.
 
 ## Mobil öncelik
 
 - Tasarım 360 px'ten başlar; asgari kontrol genişlikleri 360/390, 768 ve 1440.
 - Mobilde üst başlık + **alt gezinme** (4–5 sekme); ≥ 1024 px'te yan menü.
 - Filtre ve ikincil işlemler mobilde **alt sayfa (sheet)**, masaüstünde yan panel/modal.
-- Tablolar mobilde kayıpsız **kart listesine** döner; eylem veya sütun sessizce kaybolmaz.
+- Tablolar mobilde kayıpsız **kart listesine** döner; eylem veya sütun sessizce kaybolmaz. `ResponsiveRows` kartında ilk hücre
+  başlık, son hücre eylem gibi tam genişliktir; ortadaki değerler iki sütuna iner (kart kısa kalır).
 - Dokunma hedefi ≥ 44 px; form alanlarında doğru `inputmode` ve `autocomplete`; klavye açıkken
   gönder düğmesi görünür kalır.
 - Yatay kaydırma yok. Uzun metin “devamını göster” ile kısalır.
