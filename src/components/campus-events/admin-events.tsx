@@ -242,6 +242,7 @@ export function AdminEvents({
                       href={`/yonetim/etkinlikler/${event.id}`}
                     >
                       {t('present')}
+                      <span className="sr-only"> — {event.title}</span>
                     </Link>
                     <Button
                       variant="danger-outline"
