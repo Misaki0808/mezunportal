@@ -52,7 +52,7 @@ describe('SignInForm', () => {
     );
     await user.type(screen.getByLabelText(/E-posta adresi/), 'yanlis');
     await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Geçerli bir e-posta adresi yaz.');
     expect(request).not.toHaveBeenCalled();
   });
   it('boş gönderimde odak gönder düğmesinde kalmaz, ilk hatalı alana (e-posta) gider', async () => {

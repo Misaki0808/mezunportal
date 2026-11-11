@@ -68,7 +68,15 @@ export function HomeDashboard({ summary, feature }: { summary: HomeSummary; feat
           {t('pendingTitle')}
         </h2>
         {pending.length === 0 ? (
-          <p className="text-base text-fg-muted">{t('pendingNone')}</p>
+          <div className="flex flex-col items-start gap-2">
+            <p className="text-base text-fg-muted">{t('pendingNone')}</p>
+            <Link
+              className="press-row inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-4"
+              href={summary.role === 'STUDENT' ? '/deneyimler' : '/deneyim/yeni'}
+            >
+              {t(summary.role === 'STUDENT' ? 'emptyStudentAction' : 'emptyMentorAction')}
+            </Link>
+          </div>
         ) : (
           <ul className="flex flex-col gap-2">
             {pending.map((item) => (
