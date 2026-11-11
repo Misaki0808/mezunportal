@@ -40,17 +40,17 @@ async function audit(page: Page, path: string, scheme: 'light' | 'dark') {
   await expect(page.locator('main, [role="main"]').first()).toBeVisible();
   const report = await measurePage(page);
   const where = `${path} (${scheme}, ${page.viewportSize()?.width}px)`;
-  expect(report.overflowX, `${where}: yatay taşma`).toBe(false);
-  expect(report.mains, `${where}: tek ana bölge`).toBe(1);
-  expect(report.h1s, `${where}: görünür h1 sayısı`).toBeGreaterThanOrEqual(1);
-  expect(report.unnamed, `${where}: adsız etkileşimli öğe`).toEqual([]);
-  expect(report.lowContrast, `${where}: AA altı metin`).toEqual([]);
+  expect.soft(report.overflowX, `${where}: yatay taşma`).toBe(false);
+  expect.soft(report.mains, `${where}: tek ana bölge`).toBe(1);
+  expect.soft(report.h1s, `${where}: görünür h1 sayısı`).toBeGreaterThanOrEqual(1);
+  expect.soft(report.unnamed, `${where}: adsız etkileşimli öğe`).toEqual([]);
+  expect.soft(report.lowContrast, `${where}: AA altı metin`).toEqual([]);
   const luminance = luminanceOf(report.background);
   if (scheme === 'dark') expect(luminance, `${where}: koyu zemin`).toBeLessThan(0.08);
-  else expect(luminance, `${where}: açık (krem) zemin`).toBeGreaterThan(0.85);
+  else expect.soft(luminance, `${where}: açık (krem) zemin`).toBeGreaterThan(0.85);
   const keyboard = await tabThrough(page, 30);
-  expect(keyboard.problems, `${where}: klavye`).toEqual([]);
-  expect(keyboard.distinct, `${where}: odak bir yere sıkışmamalı`).toBeGreaterThanOrEqual(3);
+  expect.soft(keyboard.problems, `${where}: klavye`).toEqual([]);
+  expect.soft(keyboard.distinct, `${where}: odak bir yere sıkışmamalı`).toBeGreaterThanOrEqual(3);
 }
 
 for (const scheme of SCHEMES) {

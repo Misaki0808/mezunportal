@@ -9,7 +9,7 @@ export default async function ReliabilityPage() {
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   const value = result.data;
   return (
-    <main className="mx-auto max-w-xl px-5 py-10">
+    <div className="mx-auto max-w-xl px-5 py-10">
       <Link className="inline-flex min-h-11 items-center text-primary" href="/hesap">
         ← {t('back')}
       </Link>
@@ -23,6 +23,6 @@ export default async function ReliabilityPage() {
             : t('reason', { total: value.total, noShow: value.noShow })}
         </p>
       </section>
-    </main>
+    </div>
   );
 }

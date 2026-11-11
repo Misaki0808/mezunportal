@@ -10,7 +10,7 @@ const SEEDED = {
   ],
   pendingPosting: 'Ürün Yönetimi Stajyeri (inceleme bekliyor)',
   draftPosting: 'Dijital Pazarlama Stajyeri (taslak)',
-  event: 'YBS Kariyer Sohbeti (örnek etkinlik)',
+  event: 'YBS Kariyer Sohbeti (deneme etkinliği)',
   pendingEvent: 'CV Atölyesi (inceleme bekliyor)',
   company: 'Örnek Yazılım A.Ş.',
   sharedQuestion: 'Neden bu şirketi seçtin?',

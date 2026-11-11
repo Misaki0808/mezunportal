@@ -8,7 +8,7 @@ export default async function CampusEventsPage() {
   const [result, t] = await Promise.all([listCampusEvents(), getTranslations('campusEvents')]);
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   return (
-    <main className="mx-auto max-w-3xl px-5 py-10">
+    <div className="mx-auto max-w-3xl px-5 py-10">
       <PageHeader title={t('title')} description={t('description')} />
       {!result.data.length ? (
         <p className="mt-6 rounded-card border border-border p-5">{t('empty')}</p>
@@ -35,6 +35,6 @@ export default async function CampusEventsPage() {
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }

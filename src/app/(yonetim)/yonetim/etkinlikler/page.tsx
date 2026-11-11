@@ -20,9 +20,9 @@ export default async function AdminCampusEventsPage() {
     orderBy: { name: 'asc' },
   });
   return (
-    <main className="mx-auto max-w-3xl px-5 py-10">
+    <div className="mx-auto max-w-3xl px-5 py-10">
       <PageHeader title={t('adminTitle')} description={t('description')} />
       <AdminEvents departments={departments} events={result.data} />
-    </main>
+    </div>
   );
 }

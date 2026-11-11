@@ -152,7 +152,12 @@ export async function tabThrough(page: Page, steps = 30) {
       if (!element || element === document.body) return null;
       const style = getComputedStyle(element);
       const box = element.getBoundingClientRect();
-      const outline = style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0;
+      // Tarih/saat girişinin iç parçaları (gün/ay alanları, takvim düğmesi) tarayıcının kendi odak halkasını çizer; ana öğe odakta kalır.
+      const native = element.matches(
+        'input[type="date"], input[type="datetime-local"], input[type="time"], input[type="month"], input[type="week"]',
+      );
+      const outline =
+        native || (style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0);
       const shadow = style.boxShadow !== 'none';
       return {
         key: `${element.tagName}:${element.id}:${(element.textContent ?? '').trim().slice(0, 30)}:${Math.round(box.top + scrollY)}`,

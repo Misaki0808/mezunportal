@@ -147,7 +147,7 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
     );
   }
   return (
-    <main className="mx-auto max-w-2xl px-5 py-10 pb-28">
+    <div className="mx-auto max-w-2xl px-5 py-10 pb-28">
       <Link className="inline-flex min-h-11 items-center text-primary" href="/hesap">
         ← {t('back')}
       </Link>
@@ -195,7 +195,7 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
           </Button>
         </section>
       )}
-    </main>
+    </div>
   );
 }
 function ReviewCard({

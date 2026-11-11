@@ -8,7 +8,7 @@ export default async function FeedbackOverviewPage() {
   const [result, t] = await Promise.all([getFeedbackOverview(), getTranslations('feedback')]);
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   return (
-    <main className="mx-auto max-w-2xl px-5 py-10">
+    <div className="mx-auto max-w-2xl px-5 py-10">
       <Link className="inline-flex min-h-11 items-center text-primary" href="/hesap">
         ← {t('back')}
       </Link>
@@ -52,6 +52,6 @@ export default async function FeedbackOverviewPage() {
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }

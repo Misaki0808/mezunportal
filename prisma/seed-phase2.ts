@@ -678,9 +678,9 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
   const events = [
     {
       key: 'kariyer-sohbeti',
-      title: 'YBS Kariyer Sohbeti (örnek etkinlik)',
+      title: 'YBS Kariyer Sohbeti (deneme etkinliği)',
       description:
-        'Örnek etkinlik: mezunlarla staj ve ilk iş üzerine sohbet. Katılım kodu etkinlik başlayınca açılır.',
+        'Deneme verisi: mezunlarla staj ve ilk iş üzerine sohbet. Katılım kodu etkinlik başlayınca açılır.',
       location: 'İktisat Fakültesi, Amfi 2',
       inDays: 7,
       status: 'PUBLISHED' as const,
@@ -689,7 +689,7 @@ export async function seedPhase2(prisma: PrismaClient, now: Date = new Date()) {
       key: 'cv-atolyesi',
       title: 'CV Atölyesi (inceleme bekliyor)',
       description:
-        'Örnek etkinlik: moderatör onayını denemek için incelemede bekliyor. CV’ni mezunlarla birlikte gözden geçir.',
+        'Deneme verisi: moderatör onayını denemek için incelemede bekliyor. CV’ni mezunlarla birlikte gözden geçir.',
       location: 'İktisat Fakültesi, Bilgisayar Laboratuvarı',
       inDays: 14,
       status: 'PENDING' as const,

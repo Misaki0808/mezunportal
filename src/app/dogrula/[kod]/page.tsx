@@ -25,7 +25,7 @@ export default async function VerificationPage({ params }: { params: Promise<{ k
   if (!award) notFound();
   const t = await getTranslations('yearAlumni');
   return (
-    <main className="mx-auto max-w-2xl px-5 py-12">
+    <div className="mx-auto max-w-2xl px-5 py-12">
       <PageHeader
         eyebrow={t('awardName')}
         title={t('verifyTitle')}
@@ -43,6 +43,6 @@ export default async function VerificationPage({ params }: { params: Promise<{ k
           {award.department} · {award.university}
         </p>
       </Card>
-    </main>
+    </div>
   );
 }
