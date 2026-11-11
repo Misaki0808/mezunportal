@@ -3,7 +3,8 @@
  * burada sabit #hex yoktur. `.landing` bloğu yalnız renk dışı ölçü değişkenlerini tanımlar.
  */
 .landing {
-  --lp-max: 72rem;
+  /* İçerik genişliği ~1280 px: geniş ekranda sayfa boş yanlarla daralmaz; bölüm zeminleri zaten tam genişliktir. */
+  --lp-max: 80rem;
   --lp-gutter: 1.25rem;
   min-height: 100dvh;
   background: var(--color-bg);
@@ -148,33 +149,11 @@
 .landing-hero-copy {
   max-width: 56rem;
 }
-.landing-motion-toggle {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 0.5rem;
-  border: 0;
-  background: transparent;
-  color: var(--color-fg-muted);
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-  cursor: pointer;
-}
-.landing-motion-toggle:disabled {
-  cursor: default;
-  text-decoration: none;
-}
-.landing-motion-toggle:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
 .landing-rotating-text {
   display: block;
   transition:
-    opacity 0.4s ease,
-    transform 0.4s ease;
+    opacity 0.26s ease,
+    transform 0.26s ease;
 }
 .landing-rotating-text[data-visible='false'] {
   opacity: 0;
@@ -244,40 +223,61 @@
   height: 1.125rem;
   color: var(--color-success);
 }
-/* Sayılar (yalnız ≥3 olanlar gösterilir) */
+/* Sayılar (yalnız ≥3 olanlar gösterilir): her sayı simgeli bir kartta; bir tane bile olsa band dolu görünür */
 .landing-stats {
   background: var(--color-surface);
   border-block: 1px solid var(--color-border);
 }
 .landing-stats-inner {
   display: grid;
-  gap: 1rem;
-  padding-block: 1.75rem;
+  gap: 1.5rem;
+  padding-block: 2.25rem;
+}
+.landing-stats-copy {
+  display: grid;
+  gap: 0.5rem;
+  align-content: center;
 }
 .landing-stats-intro {
   margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.landing-stats-note {
+  margin: 0;
+  max-width: 24rem;
   color: var(--color-fg-muted);
-  font-weight: 600;
+  line-height: 1.5;
 }
 .landing-stats dl {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem 3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  gap: 1rem;
   margin: 0;
 }
 .landing-stats dl > div {
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-card);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
 }
 .landing-stats dd {
-  margin: 0;
+  order: 2;
+  margin: 0.75rem 0 0;
   font-family: var(--font-heading);
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.03em;
 }
 .landing-stats dt {
+  order: 3;
   color: var(--color-fg-muted);
   font-size: 0.9375rem;
 }
@@ -486,6 +486,9 @@
   justify-items: start;
   gap: 1rem;
 }
+.landing-closing h2 + p {
+  margin-top: 0.75rem;
+}
 .landing-closing p {
   margin: 0;
   font-size: 1.125rem;
@@ -529,6 +532,38 @@
   line-height: 1.5;
 }
 
+/* Kahraman sağ sütun: ürünün kendi bileşenleriyle örnek kart kompozisyonu (yalnız masaüstü) */
+.landing-preview {
+  display: none;
+}
+.landing-preview-label {
+  margin-bottom: 1rem;
+}
+.landing-preview-stack {
+  display: grid;
+  gap: 0;
+}
+.landing-preview-card {
+  box-shadow: var(--shadow-overlay);
+}
+.landing-preview-experience {
+  width: 90%;
+  transform: rotate(-1.5deg);
+  z-index: 1;
+}
+.landing-preview-mentor {
+  width: 80%;
+  margin: -1.25rem 0 0 auto;
+  transform: rotate(1.25deg);
+  z-index: 2;
+}
+.landing-preview-job {
+  width: 86%;
+  margin-top: -1rem;
+  transform: rotate(-0.75deg);
+  z-index: 3;
+}
+
 @media (min-width: 48rem) {
   .landing {
     --lp-gutter: 2rem;
@@ -558,10 +593,73 @@
   }
 }
 @media (min-width: 64rem) {
+  .landing-hero {
+    padding-block: 3.5rem 6rem;
+  }
+  .landing-hero-inner {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: clamp(2.5rem, 5vw, 5rem);
+  }
+  .landing-hero h1 {
+    font-size: clamp(3rem, 4.6vw, 4.75rem);
+  }
+  .landing-hero-copy {
+    max-width: none;
+  }
+  .landing-preview {
+    display: block;
+    position: relative;
+    padding: 2rem;
+    border-radius: var(--radius-sheet);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+  .landing-stats-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr);
+    align-items: center;
+    gap: 3rem;
+  }
+  .landing-section-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+    gap: 3rem;
+    max-width: none;
+  }
+  .landing-section-head p:last-child {
+    margin: 0;
+  }
+  .landing-closing-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 3rem;
+  }
+  .landing-closing .landing-primary {
+    margin-top: 0;
+  }
+  /* Beş kart: üst satırda üç, alt satırda iki (hepsi satırı doldurur; sağda boş kare kalmaz). */
   .landing-links {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .landing-links li {
+    grid-column: span 2;
+  }
+  .landing-links li:nth-child(n + 4) {
+    grid-column: span 3;
   }
   .landing-section {
     padding-block: 5rem;
+  }
+}
+@media (min-width: 80rem) {
+  .landing {
+    --lp-gutter: 3rem;
+  }
+}
+@media (min-width: 100rem) {
+  /* Çok geniş ekran (≥1600 px): içerik 1440 px'e çıkar, yanlar boş kalmaz. */
+  .landing {
+    --lp-max: 90rem;
+    --lp-gutter: 4rem;
   }
 }
