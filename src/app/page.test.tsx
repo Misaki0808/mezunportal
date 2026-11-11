@@ -56,6 +56,8 @@ describe('HomePage', () => {
       experiences: null,
       mentors: null,
       meetings: null,
+      jobs: null,
+      companies: null,
     });
     mocks.getSuggestedJobs.mockResolvedValue({ ok: true, data: [] });
     mocks.getCurrentStory.mockReset().mockResolvedValue({ ok: true, data: null });

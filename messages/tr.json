@@ -18,10 +18,11 @@
       "line3": "Bu yoldan senden önce geçen YBS'liler burada.",
       "line4": "Staj başvurusunu son güne bırakma, takvim burada.",
       "line5": "CV'ne bir mezun gözü değsin.",
-      "line6": "Stajı nereden değil, kimden bulacağına bak.",
-      "line7": "Mülakatta ne soracaklarını tahmin etme, bilenden öğren.",
+      "line6": "Staj ilanını, o şirkette çalışan mezundan duy.",
+      "line7": "İyi bir referans, doğru kişiyle tanışmakla başlar.",
       "line8": "Bir kahvelik görüşme, bir yaz stajı demek olabilir.",
-      "line9": "Mezunlar yardım etmek istiyor, sadece sormanı bekliyorlar."
+      "line9": "Mezunlar yardım etmek istiyor, sadece sormanı bekliyorlar.",
+      "line10": "Hangi seçmeli ders işine yarar, mezunlar söylesin."
     },
     "primary": "İÜ e-postanla başla",
     "secondary": "Nasıl çalışır?",
@@ -31,7 +32,9 @@
     "stats": {
       "experiences": "paylaşılan deneyim",
       "mentors": "aktif mentor",
-      "meetings": "gerçekleşen görüşme"
+      "meetings": "gerçekleşen görüşme",
+      "jobs": "açık ilan",
+      "companies": "şirketten deneyim"
     },
     "howKicker": "Nasıl çalışır?",
     "howTitle": "Üç adımda başlarsın.",
@@ -103,12 +106,30 @@
     "footerPrivacy": "Aydınlatma metni",
     "footerTerms": "Kullanım şartları",
     "footerNote": "Bu bir öğrenci projesidir; İstanbul Üniversitesi'nin resmî hizmeti değildir.",
-    "pause": "Durdur",
-    "resume": "Devam et",
-    "pauseLabel": "Dönen metni durdur",
-    "resumeLabel": "Dönen metni devam ettir",
-    "motionReduced": "Hareket azaltıldı",
-    "shareImageText": "Öğrenciler ve mezunlar bir arada."
+    "shareImageText": "Öğrenciler ve mezunlar bir arada.",
+    "statsNote": "Gizlilik için üç kişiden azını ilgilendiren sayılar gösterilmez.",
+    "preview": {
+      "label": "Örnek görünüm",
+      "experience": {
+        "badge": "Staj",
+        "author": "Örnek Mezun",
+        "title": "Yazılım stajı: mülakatta neler soruldu?",
+        "body": "İlk tur algoritma, ikinci tur proje sohbeti. Hazırlanırken baktığım kaynaklar burada.",
+        "action": "Deneyimi oku"
+      },
+      "mentor": {
+        "name": "Örnek Mezun",
+        "detail": "2023 mezunu · Veri analisti",
+        "badge": "Müsait",
+        "action": "Randevu iste"
+      },
+      "job": {
+        "company": "Örnek Yazılım A.Ş.",
+        "title": "Veri Analizi Stajyeri",
+        "place": "İstanbul",
+        "deadline": "Son 21 gün"
+      }
+    }
   },
   "metadata": {
     "title": "MezunPortal",
