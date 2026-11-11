@@ -18,6 +18,21 @@ import {
 import { KeyboardState } from './keyboard-state';
 import { BrandLogo } from '@/components/brand/logo';
 
+/** Klavye kullanıcısının ilk durağı: odaklanınca görünür, `main`'e atlar. Konum sınıfları çağırana göre değişir. */
+function SkipLink({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <a
+      href="#main-content"
+      className={cn(
+        'sr-only focus:not-sr-only focus:fixed focus:top-16 focus:left-2 focus:z-50 focus:rounded-control focus:bg-bg focus:px-4 focus:py-2 focus:shadow-overlay',
+        className,
+      )}
+    >
+      {children}
+    </a>
+  );
+}
+
 type NavId = 'home' | 'experiences' | 'jobs' | 'mentors' | 'appointments' | 'profile';
 
 /**
@@ -62,6 +77,7 @@ export function AppShellClient({
   if (pathname === '/giris' || pathname.startsWith('/giris/')) {
     return (
       <div className="min-h-dvh">
+        <SkipLink>{t('skipToContent')}</SkipLink>
         <header className="flex h-14 items-center border-b border-border px-5">
           <Link href="/" className="press-control inline-flex min-h-11 items-center">
             <BrandLogo className="h-7 w-auto" label={t('brand')} />
@@ -121,12 +137,7 @@ export function AppShellClient({
 
   return (
     <div className="min-h-dvh lg:pl-64">
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-16 focus:left-2 focus:z-50 focus:rounded-control focus:bg-bg focus:px-4 focus:py-2 focus:shadow-overlay lg:focus:top-2 lg:focus:left-[17rem]"
-      >
-        {t('skipToContent')}
-      </a>
+      <SkipLink className="lg:focus:top-2 lg:focus:left-[17rem]">{t('skipToContent')}</SkipLink>
 
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-bg px-4 lg:hidden">
         <Link href="/" className="press-control inline-flex min-h-11 items-center">

@@ -6,6 +6,8 @@ export type A11yReport = {
   mains: number;
   h1s: number;
   unnamed: string[];
+  /** Aynı erişilebilir ada sahip ama FARKLI adrese giden bağlantılar (WCAG 2.4.4): ekran okuyucu bağlantı listesinde ayırt edilemez. */
+  duplicateLinks: string[];
   lowContrast: string[];
   background: { r: number; g: number; b: number };
 };
@@ -96,6 +98,20 @@ export async function measurePage(page: Page): Promise<A11yReport> {
         );
     }
 
+    const destinations = new Map<string, Set<string>>();
+    for (const link of document.querySelectorAll<HTMLAnchorElement>('a[href]')) {
+      if (!visible(link) || link.closest('.sr-only')) continue;
+      const name = nameOf(link).replace(/\s+/g, ' ').trim().toLowerCase();
+      if (!name) continue;
+      const target = new URL(link.href, location.href);
+      const set = destinations.get(name) ?? new Set<string>();
+      set.add(target.pathname + target.search);
+      destinations.set(name, set);
+    }
+    const duplicateLinks = [...destinations]
+      .filter(([, targets]) => targets.size > 1)
+      .map(([name, targets]) => `${name} (${targets.size} farklı adres)`);
+
     const lowContrast: string[] = [];
     const seen = new Set<Element>();
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -126,6 +142,7 @@ export async function measurePage(page: Page): Promise<A11yReport> {
       mains: document.querySelectorAll('main, [role="main"]').length,
       h1s: [...document.querySelectorAll('h1')].filter(visible).length,
       unnamed,
+      duplicateLinks,
       lowContrast,
       background: (() => {
         const [r, g, b] = background(document.body);

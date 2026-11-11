@@ -26,6 +26,7 @@ import {
 
 export function PostingCard({ posting }: { posting: JobPostingCard }) {
   const t = useTranslations('jobs');
+  const ui = useTranslations('ui');
   const tagLabels = useTranslations('profileTags');
   const initials = posting.organizationName
     .trim()
@@ -111,6 +112,7 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
         </p>
         <Link
           href={`/ilanlar/${encodeURIComponent(posting.id)}`}
+          aria-label={ui('namedAction', { action: t('open'), target: posting.title })}
           className="press-control hidden min-h-11 shrink-0 sm:inline-flex items-center gap-1 font-semibold text-primary hover:underline"
         >
           {t('open')} <span aria-hidden="true">→</span>

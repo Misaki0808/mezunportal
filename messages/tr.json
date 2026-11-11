@@ -315,6 +315,7 @@
     }
   },
   "ui": {
+    "namedAction": "{action}: {target}",
     "button": {
       "loading": "Yükleniyor"
     },
@@ -1250,7 +1251,7 @@
       "description": "Bekleyen deneyimleri incele; yayınla ya da gerekçeyle reddet.",
       "tabs": {
         "label": "Moderasyon",
-        "experiences": "Deneyimler",
+        "experiences": "Bekleyen deneyimler",
         "reports": "Şikâyetler"
       },
       "emptyTitle": "İncelenecek deneyim yok",
@@ -3349,6 +3350,7 @@
     "clearFilters": "Filtreleri temizle",
     "alumniBadge": "{count} mezun işine yaradı",
     "notEnoughShort": "Henüz yeterli değerlendirme yok",
+    "noDepartments": "Önce bir bölüm tanımlı olmalı.",
     "filters": "Filtreler",
     "totalCount": "{count} ders arasından seçim yapabilirsin."
   },
