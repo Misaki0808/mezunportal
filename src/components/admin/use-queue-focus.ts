@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 
 /** Başarılı karardan sonra kaldırılan açıcı yerine sıradaki kaydın eylemine devam eder. */
-export function useQueueFocus() {
+export function useQueueFocus(busy = false) {
   const rootRef = useRef<HTMLDivElement>(null);
   const waiting = useRef<{ opener: HTMLElement | null; nextIds: string[] } | null>(null);
   function complete(id: string) {
@@ -19,15 +19,16 @@ export function useQueueFocus() {
   useEffect(() => {
     const job = waiting.current,
       root = rootRef.current;
-    if (!job || !root || root.querySelector('dialog[open]')) return;
+    if (busy || !job || !root || root.querySelector('dialog[open]')) return;
     // Sunucu yenilemesi sürerken açıcı hâlâ listededir; Modal'ın kendi dönüşünü ezme.
     if (job.opener?.isConnected && root.contains(job.opener)) return;
     const rows = Array.from(root.querySelectorAll<HTMLElement>('[data-queue-row]'));
     const next = job.nextIds
       .map((id) => rows.find((row) => row.dataset.queueRow === id))
       .find(Boolean);
-    const action = next?.querySelector<HTMLElement>('[data-queue-action]');
-    if (action?.matches(':disabled')) return;
+    const action = Array.from(
+      next?.querySelectorAll<HTMLElement>('[data-queue-action]') ?? [],
+    ).find((element) => !element.matches(':disabled'));
     const target =
       action ??
       root.querySelector<HTMLElement>('h1,[data-queue-heading]') ??

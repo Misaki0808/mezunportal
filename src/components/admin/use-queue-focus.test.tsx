@@ -7,9 +7,13 @@ import { useQueueFocus } from './use-queue-focus';
 function Queue({
   ids = ['first', 'second'],
   delayed = false,
+  blocked = false,
+  alternate = false,
 }: {
   ids?: string[];
   delayed?: boolean;
+  blocked?: boolean;
+  alternate?: boolean;
 }) {
   const [rows, setRows] = useState(ids);
   const { rootRef, complete } = useQueueFocus();
@@ -20,6 +24,7 @@ function Queue({
         <div data-queue-row={id} key={id}>
           <button
             data-queue-action
+            disabled={blocked && id === 'second'}
             onClick={() => {
               complete(id);
               if (!delayed) setRows(rows.filter((x) => x !== id));
@@ -27,6 +32,7 @@ function Queue({
           >
             {id}
           </button>
+          {id === 'second' && alternate && <button data-queue-action>second reject</button>}
         </div>
       ))}
       {delayed && <button onClick={() => setRows(rows.slice(1))}>Yenileme tamamlandı</button>}
@@ -57,4 +63,15 @@ describe('karar sonrası kuyruk odağı', () => {
     await user.click(screen.getByRole('button', { name: 'second' }));
     expect(screen.getByRole('heading', { name: 'Kuyruk' })).toHaveFocus();
   });
+});
+
+it('sıradaki ilk karar kapalıysa kullanılabilir ret eylemini bulur', async () => {
+  const { user } = renderUi(<Queue blocked alternate />);
+  await user.click(screen.getByRole('button', { name: 'first' }));
+  expect(screen.getByRole('button', { name: 'second reject' })).toHaveFocus();
+});
+it('sıradaki kaydın kullanılabilir eylemi yoksa odağı gövdede bırakmaz', async () => {
+  const { user } = renderUi(<Queue blocked />);
+  await user.click(screen.getByRole('button', { name: 'first' }));
+  expect(screen.getByRole('heading', { name: 'Kuyruk' })).toHaveFocus();
 });

@@ -18,7 +18,6 @@ import {
 
 type Intent = { mode: 'PUBLISH' | 'REJECT' | 'SELECT'; storyId: string };
 export function StoryAdmin({ departments }: { departments: { id: string; name: string }[] }) {
-  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const reasonInput = useRef<HTMLTextAreaElement>(null),
     monthInput = useRef<HTMLInputElement>(null);
   const [reasonError, setReasonError] = useState('');
@@ -31,6 +30,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
     [intent, setIntent] = useState<Intent | null>(null),
     [message, setMessage] = useState('');
   const [pending, start] = useTransition();
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus(pending);
   const disabled = (value: boolean, why: string) =>
     value ? { disabled: true as const, disabledReason: why } : { disabled: false as const };
   function load() {
@@ -163,6 +163,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
                           {t('review')}
                         </Button>
                         <Button
+                          data-queue-action
                           variant="secondary"
                           {...disabled(pending, t('pending'))}
                           onClick={() => open('REJECT', story.id)}

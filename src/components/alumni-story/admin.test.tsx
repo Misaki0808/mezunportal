@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { screen, within, waitFor } from '@testing-library/react';
 import { beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
 const mocks = vi.hoisted(() => ({ list: vi.fn(), review: vi.fn(), select: vi.fn() }));
@@ -58,4 +58,37 @@ it('retin sunucu hatası açık pencerenin içinde görünür, gerekçe korunur'
   expect(await dialog.findByRole('alert')).toHaveTextContent(/.+/);
   expect(dialog.getByLabelText(/Gerekçe/)).toHaveValue('Kapsamı yeniden açıkla');
   expect(mocks.review).toHaveBeenCalledOnce();
+});
+
+it('sonraki hikâyede yayın kapalıysa gerekçeli ret eylemine devam eder', async () => {
+  const first = {
+    id: 's1',
+    userId: 'u1',
+    name: 'Örnek mezun',
+    departmentId: 'd1',
+    department: 'YBS',
+    body: 'Bir mezun hikâyesi',
+    status: 'PENDING',
+    consent: true,
+    points: null,
+    suspicious: false,
+  };
+  const second = { ...first, id: 's2', userId: 'u2', name: 'Diğer mezun', consent: false };
+  mocks.list
+    .mockResolvedValueOnce({ ok: true, data: [first, second] })
+    .mockResolvedValue({ ok: true, data: [{ ...first, status: 'PUBLISHED' }, second] });
+  mocks.review.mockResolvedValue({ ok: true, data: {} });
+  const { user } = renderUi(<StoryAdmin departments={[{ id: 'd1', name: 'YBS' }]} />);
+  await user.click(screen.getByRole('button', { name: 'Hikâyeleri göster' }));
+  await user.click(
+    await screen
+      .findAllByRole('button', { name: 'Hikâyeyi onayla' })
+      .then((buttons) => buttons[0]!),
+  );
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', { name: 'Kararı onayla' }),
+  );
+  const row = within(screen.getByText('Diğer mezun').closest('li')!);
+  await waitFor(() => expect(row.getByRole('button', { name: 'Düzenleme iste' })).toHaveFocus());
+  expect(row.getByRole('button', { name: 'Hikâyeyi onayla' })).toBeDisabled();
 });
