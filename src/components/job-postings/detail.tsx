@@ -31,7 +31,7 @@ export function PostingDetail({
       <Card
         as="article"
         padding="none"
-        className="mt-3 rounded-3xl border border-border bg-surface p-5 sm:p-8"
+        className="mt-3 rounded-card border border-border bg-surface p-5 sm:p-8"
       >
         <header>
           <p className="break-words font-semibold text-accent-strong">

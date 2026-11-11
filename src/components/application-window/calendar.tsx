@@ -2,7 +2,15 @@
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button, Field, IconChip, PageHeader, Select } from '@/components/ui';
+import {
+  Button,
+  CalendarIcon,
+  EmptyState,
+  Field,
+  IconChip,
+  PageHeader,
+  Select,
+} from '@/components/ui';
 import type { ApplicationCalendar, ApplicationScope } from '@/contracts/application-window';
 import { setApplicationFollow } from '@/server/actions/application-window';
 
@@ -160,9 +168,11 @@ export function CalendarPage({
         <Button type="submit">{t('open')}</Button>
       </form>
       {!scope && (
-        <p className="mt-8 rounded-card border border-border p-5 text-fg-muted">
-          {t('chooseScope')}
-        </p>
+        <EmptyState
+          className="mt-8 rounded-card border border-dashed border-border"
+          icon={<CalendarIcon width={32} height={32} strokeWidth={1.5} />}
+          title={t('chooseScope')}
+        />
       )}
       {scope && data && (
         <div className="mt-8">

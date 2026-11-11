@@ -3,6 +3,7 @@ import { safeClientAction } from '@/lib/safe-client-action';
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { Badge, Button, CheckIcon, Field, Input } from '@/components/ui';
 import { checkInCampusEvent, registerCampusEvent } from '@/server/actions/campus-events';
 
 export function EventActions({
@@ -21,6 +22,7 @@ export function EventActions({
     router = useRouter();
   const [pending, start] = useTransition(),
     [code, setCode] = useState(''),
+    [codeError, setCodeError] = useState(''),
     [status, setStatus] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,6 +58,11 @@ export function EventActions({
     });
   }
   function checkin() {
+    // Düğme kapatılmaz: eksik kod alanın altında sebebiyle söylenir (docs/design.md "devre dışı sebebiyle").
+    if (code.length !== 6) {
+      setCodeError(t('codeNeeded'));
+      return;
+    }
     start(async () => {
       const result = await safeClientAction(() => checkInCampusEvent({ eventId, code }));
       setStatus(result.ok && result.data.accepted ? t('checked') : t('codeInvalid'));
@@ -71,43 +78,53 @@ export function EventActions({
       }
     >
       {!registered && (
-        <button
-          type="button"
+        <Button
+          size="lg"
+          fullWidth
+          loading={pending}
           onClick={register}
-          disabled={pending || full}
-          className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-on-primary disabled:opacity-50"
+          {...(full
+            ? { disabled: true as const, disabledReason: t('full') }
+            : { disabled: false as const })}
         >
-          {pending ? t('registering') : full ? t('full') : t('register')}
-        </button>
+          {pending ? t('registering') : t('register')}
+        </Button>
       )}
       {registered && !attended && (
-        <div className="space-y-2">
-          <label htmlFor="campus-code" className="block font-semibold">
-            {t('codeLabel')}
-          </label>
-          <p className="text-fg-muted">{t('codeHint')}</p>
-          <input
-            id="campus-code"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            className="min-h-12 w-full rounded-xl border border-border bg-surface px-3"
-          />
-          <button
-            type="button"
-            onClick={checkin}
-            disabled={pending || code.length !== 6}
-            className="min-h-12 w-full rounded-xl bg-primary px-4 font-semibold text-on-primary disabled:opacity-50"
-          >
+        <div className="space-y-3">
+          <Badge tone="success">{t('registeredBadge')}</Badge>
+          <Field label={t('codeLabel')} hint={t('codeHint')} error={codeError || undefined}>
+            {(control) => (
+              <Input
+                {...control}
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={code}
+                onChange={(e) => {
+                  setCodeError('');
+                  setCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                }}
+              />
+            )}
+          </Field>
+          <Button size="lg" fullWidth loading={pending} onClick={checkin}>
             {pending ? t('checking') : t('submitCode')}
-          </button>
+          </Button>
         </div>
       )}
-      {attended && <p>{t('checked')}</p>}
-      {status && <p role="status">{status}</p>}
+      {attended && (
+        <Badge tone="success" className="gap-1.5">
+          <CheckIcon width={16} height={16} strokeWidth={3} />
+          {t('attendedBadge')}
+        </Badge>
+      )}
+      {status && (
+        <p role="status" className="text-fg-muted">
+          {status}
+        </p>
+      )}
     </div>
   );
 }

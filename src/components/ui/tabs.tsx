@@ -29,7 +29,13 @@ export function Tabs({ items, label, defaultId, value, onValueChange, className 
   const listRef = useRef<HTMLDivElement>(null);
   const revealSelected = useCallback(() => {
     if (selectedId === undefined) return;
-    tabRefs.current.get(selectedId)?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
+    const tab = tabRefs.current.get(selectedId);
+    const list = listRef.current;
+    if (!tab || !list) return;
+    // Yalnız ŞERİT yatay kaydırılır. `scrollIntoView` sayfayı da dikey kaydırırdı: sekmeler ilk ekranın altındaysa
+    // (şirket sayfası, puan yönetimi) sayfa açılışta aşağı kayar, başlık kesilirdi.
+    const left = tab.offsetLeft - (list.clientWidth - tab.offsetWidth) / 2;
+    list.scrollTo?.({ left: Math.max(0, left) });
   }, [selectedId]);
   // Şerit sığmayınca kaydırma ipucu: hangi kenarda gizli sekme var?
   const [edges, setEdges] = useState({ start: false, end: false });

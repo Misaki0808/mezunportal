@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { PostingContactForm } from '@/components/job-postings/contact';
-import { EmptyState, ErrorState } from '@/components/ui';
+import { EmptyState, ErrorState, PageHeader } from '@/components/ui';
 import { previewJobPostingContact, requestJobPostingContact } from '@/server/actions/job-postings';
 export const dynamic = 'force-dynamic';
 export default async function PostingContactPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,12 +33,14 @@ export default async function PostingContactPage({ params }: { params: Promise<{
       >
         ← {t('back')}
       </Link>
-      <header className="mb-6">
-        <p className="font-semibold text-accent-strong">{result.data.organizationName}</p>
-        <h1 className="mt-2 text-3xl font-bold">{t('contactTitle')}</h1>
-        <p className="mt-2 break-words font-semibold">{result.data.postingTitle}</p>
-        <p className="mt-3 text-fg-muted">{t('contactSubtitle')}</p>
-      </header>
+      <PageHeader
+        className="mb-6"
+        eyebrow={result.data.organizationName}
+        title={t('contactTitle')}
+        description={result.data.postingTitle}
+      >
+        <p className="mt-2 text-fg-muted">{t('contactSubtitle')}</p>
+      </PageHeader>
       <PostingContactForm
         postingId={id}
         requestableFields={result.data.requestableFields}

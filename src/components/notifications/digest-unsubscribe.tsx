@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { PageHeader } from '@/components/ui';
 
 export function DigestUnsubscribe() {
   const t = useTranslations('monthlyDigest');
@@ -23,7 +24,7 @@ export function DigestUnsubscribe() {
   }, []);
   return (
     <div className="mx-auto max-w-xl px-5 py-16">
-      <h1 className="text-2xl font-bold">{t('unsubscribeTitle')}</h1>
+      <PageHeader title={t('unsubscribeTitle')} />
       <p className="mt-4" role="status">
         {failed ? t('unsubscribeError') : done ? t('unsubscribeDone') : t('unsubscribeLoading')}
       </p>

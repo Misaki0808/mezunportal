@@ -8,9 +8,15 @@ export function ResponsiveRows({ headers, rows }: { headers: string[]; rows: Dis
       <ul className="flex min-w-0 flex-col gap-3 lg:hidden">
         {rows.map((row) => (
           <li key={row.id} className="min-w-0 rounded-card border border-border p-5 shadow-card">
-            <dl className="grid min-w-0 gap-3">
+            <dl className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-3">
               {row.cells.map((cell, index) => (
-                <div key={`${row.id}-${index}`} className="min-w-0">
+                // İlk hücre kart başlığı, son hücre eylem alanı gibi tam genişlik; ortadakiler iki sütuna iner (kart kısalır).
+                <div
+                  key={`${row.id}-${index}`}
+                  className={
+                    index === 0 || index === row.cells.length - 1 ? 'col-span-2 min-w-0' : 'min-w-0'
+                  }
+                >
                   <dt className="text-sm font-medium text-fg-muted">{headers[index]}</dt>
                   <dd className="mt-1 text-base [overflow-wrap:anywhere]">{cell}</dd>
                 </div>

@@ -8,7 +8,7 @@ import {
   type SetNotificationPreferencesInput,
 } from '@/contracts/notifications';
 import type { ActionResult } from '@/contracts/result';
-import { Button, Switch } from '@/components/ui';
+import { Button, PageHeader, Switch } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 type Props = {
@@ -62,8 +62,7 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
       >
         ← {t('back')}
       </Link>
-      <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
-      <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
+      <PageHeader title={t('title')} description={t('description')} />
       <form
         className="mt-7 flex flex-1 flex-col"
         onSubmit={(e) => {
