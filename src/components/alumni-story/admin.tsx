@@ -238,7 +238,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
               )}
             </Field>
           )}
-          {intent?.mode === 'PUBLISH' && message && <p role="alert">{message}</p>}
+          {message && !reasonError && <p role="alert">{message}</p>}
         </div>
       </Modal>
     </div>
