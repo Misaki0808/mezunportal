@@ -118,6 +118,15 @@ bütçesi (5 dk) ve neden yerelde yetmediği gerekçesiyle `docs/decisions.md`'y
 değil; PM açar): gizli anahtar taraması + push koruması ve Dependabot **uyarıları** (otomatik PR yok); ikisi de
 ücretsiz ve koşu süresi almaz.
 
+### Erişilebilirlik turu (P2-14)
+
+`tests/e2e/a11y-tour.spec.ts` (yardımcılar `tests/e2e/a11y.ts`, kütüphane yok) girişsiz, öğrenci ve yönetici ekranlarını **açık ve koyu temada, 390 ve 1440 px'te** gezer ve şunları denetler: tek `main`
+ve görünür `h1`, adsız etkileşimli öğe yok, her metin WCAG AA kontrastında (gerçek renkler ve zemin hesaplanır), yatay taşma yok, açık zemin krem / koyu zemin koyu, klavyeyle Tab'a basınca
+her odak hedefi görünür bir odak göstergesi taşır ve odak bir yere sıkışmaz. Tek başına koşar: `pnpm exec playwright test tests/e2e/a11y-tour.spec.ts --workers=1` (tek ağır iş kuralıyla). Koyu zemin
+değeri değişirse tur yeniden koşulur. **İlk koşuda bulunup giderilenler:** 27 ekran/bileşen kabuğun `<main>`'inin içine ikinci bir `<main>` koyuyordu (ekran okuyucuda iki ana bölge);
+sayfa bileşenleri artık `main` kullanmaz, kabuk sağlar. Etkinlik düğmeleri koyu temada `text-white` ile 2,27:1 kontrastlıydı, `text-on-primary` oldu. Tarih/saat girişlerinin iç parçaları tarayıcının
+kendi odak halkasını çizer; tur bunları ana öğe düzeyinde atlar.
+
 ## Komutlar
 
 ```bash

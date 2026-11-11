@@ -111,7 +111,7 @@ export function CalendarPage({
   const [companyId, setCompanyId] = useState(scope?.kind === 'COMPANY' ? scope.id : '');
   const [sectorId, setSectorId] = useState(scope?.kind === 'SECTOR' ? scope.id : '');
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 pb-28">
+    <div className="mx-auto max-w-4xl px-4 py-8 pb-28">
       <PageHeader title={t('title')} description={t('description')} />
       <form action="/basvuru-takvimi" className="mt-7 grid gap-3 sm:grid-cols-2">
         <Field label={t('company')}>
@@ -166,6 +166,6 @@ export function CalendarPage({
           <CalendarView key={`${scope.kind}:${scope.id}`} scope={scope} data={data} />
         </div>
       )}
-    </main>
+    </div>
   );
 }

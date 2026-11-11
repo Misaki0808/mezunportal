@@ -77,7 +77,7 @@ export function QuestionBank({
 }) {
   const t = useTranslations('interviewBank');
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 pb-28">
+    <div className="mx-auto max-w-5xl px-4 py-8 pb-28">
       <PageHeader title={t('title')} description={t('description')} />
       <form
         action="/mulakat-sorulari"
@@ -119,6 +119,6 @@ export function QuestionBank({
       <div className="mt-8">
         <QuestionCards groups={data.groups} insufficient={data.insufficient} />
       </div>
-    </main>
+    </div>
   );
 }

@@ -60,7 +60,7 @@ export function StillThereForm() {
     }
   }
   return (
-    <main className="mx-auto max-w-xl px-5 py-12">
+    <div className="mx-auto max-w-xl px-5 py-12">
       <h1 className="text-3xl font-semibold">{t('title')}</h1>
       {state === 'loading' && <p className="mt-5">{t('loading')}</p>}
       {state === 'ready' && (
@@ -104,6 +104,6 @@ export function StillThereForm() {
           {t('profile')}
         </Link>
       )}
-    </main>
+    </div>
   );
 }

@@ -22,7 +22,7 @@ export default async function TestSignInPage({
   const t = await getTranslations('authScreens.testSignIn');
   if (query.persona === undefined) {
     return (
-      <main className="mx-auto max-w-lg px-5 py-12">
+      <div className="mx-auto max-w-lg px-5 py-12">
         <h1 className="text-3xl font-semibold">{t('title')}</h1>
         <p className="mt-3 text-fg-muted">{t('chooseRole')}</p>
         <ul className="mt-6 space-y-3">
@@ -44,7 +44,7 @@ export default async function TestSignInPage({
             );
           })}
         </ul>
-      </main>
+      </div>
     );
   }
   const parsed = testLoginSchema.safeParse({ persona: query.persona });

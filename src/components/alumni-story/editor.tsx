@@ -86,7 +86,7 @@ export function StoryEditor({
     });
   }
   return (
-    <main className="mx-auto max-w-2xl space-y-6 px-5 py-10">
+    <div className="mx-auto max-w-2xl space-y-6 px-5 py-10">
       <PageHeader title={t('editorTitle')} description={t('editorDescription')} />
       <Card className="space-y-5 p-5">
         <Field label={t('department')}>
@@ -159,6 +159,6 @@ export function StoryEditor({
         </div>
         {message && <p role="status">{message}</p>}
       </Card>
-    </main>
+    </div>
   );
 }
