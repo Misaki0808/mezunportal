@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { act, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppointmentView, MentorSettingsView, SlotList } from '@/contracts/appointment';
-import { renderUi } from '@/test/render';
+import { renderUi, renderWithToasts } from '@/test/render';
 
 import { AppointmentDetail } from './appointment-detail';
 import { MentorSettings } from './mentor-settings';
@@ -76,9 +76,25 @@ const slotList = (over: Partial<SlotList> = {}): SlotList => ({
 });
 
 describe('slot seçici', () => {
+  it('çift gönderim tek istektir; ağ hatasında not korunur', async () => {
+    const gate = Promise.withResolvers<{ ok: true; data: unknown }>();
+    const request = vi.fn(() => gate.promise);
+    const { user } = renderWithToasts(<SlotPicker list={slotList()} request={request} />);
+    await user.click(screen.getByRole('radio', { name: '11:00 saatini seç' }));
+    const note = screen.getByLabelText(/Mentora not/);
+    await user.type(note, 'Deneme notu');
+    const button = screen.getByRole('button', { name: 'Randevu talep et' });
+    fireEvent.submit(button.closest('form')!);
+    fireEvent.submit(button.closest('form')!);
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    await act(async () => gate.reject(new Error('ağ')));
+    expect(note).toHaveValue('Deneme notu');
+    expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
+  });
   it('gün → saat → biçim → gönder: sözleşme biçiminde istek gider, başarıda onay görünümü', async () => {
     const request = vi.fn().mockResolvedValue({ ok: true, data: {} });
-    const { user } = renderUi(<SlotPicker list={slotList()} request={request} />);
+    const { user } = renderWithToasts(<SlotPicker list={slotList()} request={request} />);
     expect(screen.getByText('Saatler İstanbul saatidir.')).toBeInTheDocument();
     expect(screen.getByText(/mentor e-postanı görmez/)).toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: '10:00 saatini seç' }));
@@ -101,7 +117,7 @@ describe('slot seçici', () => {
 
   it('saat seçilmeden gönderilmez; tek biçimli slotta biçim otomatik seçilir', async () => {
     const request = vi.fn().mockResolvedValue({ ok: true, data: {} });
-    const { user } = renderUi(<SlotPicker list={slotList()} request={request} />);
+    const { user } = renderWithToasts(<SlotPicker list={slotList()} request={request} />);
     await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
     expect(request).not.toHaveBeenCalled();
     expect(screen.getByText('Önce bir saat seç.')).toBeInTheDocument();
@@ -111,7 +127,7 @@ describe('slot seçici', () => {
   });
 
   it('gün değişince saatler değişir ve seçim sıfırlanır', async () => {
-    const { user } = renderUi(<SlotPicker list={slotList()} request={vi.fn()} />);
+    const { user } = renderWithToasts(<SlotPicker list={slotList()} request={vi.fn()} />);
     expect(screen.getAllByRole('radio', { name: /saatini seç/ })).toHaveLength(2);
     const days = screen
       .getAllByRole('radio')
@@ -122,10 +138,10 @@ describe('slot seçici', () => {
 
   it('sunucu SLOT_TAKEN dönerse katalog metniyle gösterir', async () => {
     const request = vi.fn().mockResolvedValue({ ok: false, errorCode: 'APPOINTMENT_SLOT_TAKEN' });
-    const { user } = renderUi(<SlotPicker list={slotList()} request={request} />);
+    const { user } = renderWithToasts(<SlotPicker list={slotList()} request={request} />);
     await user.click(screen.getByRole('radio', { name: '11:00 saatini seç' }));
     await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('başkası tarafından alındı');
+    expect(await screen.findByText(/başkası tarafından alındı/)).toBeInTheDocument();
   });
 
   it.each([
@@ -133,7 +149,7 @@ describe('slot seçici', () => {
     ['CAPACITY_FULL', /kapasitesi dolu/],
     ['NO_AVAILABILITY', /henüz müsait saat eklememiş/],
   ] as const)('mentor talep almıyorsa (%s) sebebi yazılır, form çizilmez', (reason, text) => {
-    renderUi(
+    renderWithToasts(
       <SlotPicker list={slotList({ slots: [], unavailableReason: reason })} request={vi.fn()} />,
     );
     expect(screen.getByText(text)).toBeInTheDocument();
@@ -454,10 +470,10 @@ describe('randevularım', () => {
 
 it('inceleyici: SLOT_TAKEN sonrası eski seçimi bırakır ve sunucunun slot listesini yeniler', async () => {
   const request = vi.fn().mockResolvedValue({ ok: false, errorCode: 'APPOINTMENT_SLOT_TAKEN' });
-  const { user } = renderUi(<SlotPicker list={slotList()} request={request} />);
+  const { user } = renderWithToasts(<SlotPicker list={slotList()} request={request} />);
   await user.click(screen.getByRole('radio', { name: '11:00 saatini seç' }));
   await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
-  expect(await screen.findByRole('alert')).toHaveTextContent('başkası tarafından alındı');
+  expect(await screen.findByText(/başkası tarafından alındı/)).toBeInTheDocument();
   expect(router.refresh).toHaveBeenCalledTimes(1);
   expect(screen.queryByRole('radio', { name: '11:00 saatini seç' })).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));

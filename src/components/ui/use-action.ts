@@ -40,22 +40,34 @@ export function useAction() {
     setBusy(true);
     setFailure(null);
     try {
-      const result = await action();
+      let result: ActionResult<T>;
+      try {
+        result = await action();
+      } catch {
+        const unexpected: ActionFailure = { ok: false, errorCode: 'SERVER_UNEXPECTED' };
+        setFailure(unexpected);
+        options.onFailure?.(unexpected);
+        return false;
+      }
       if (!result.ok) {
         setFailure(result);
         options.onFailure?.(result);
         return false;
       }
-      await options.onOk?.(result.data);
-      const message =
-        typeof options.success === 'function' ? options.success(result.data) : options.success;
-      if (message) toast.show({ message, tone: 'success' });
+      // Eylem zaten başarılı: istemcideki takip işlemi hatası sunucu sonucunu tersine çevirmez.
+      try {
+        await options.onOk?.(result.data);
+      } catch {
+        // Hata ayrıntısı kullanıcı verisi içerebilir; günlüğe yazılmaz.
+      }
+      try {
+        const message =
+          typeof options.success === 'function' ? options.success(result.data) : options.success;
+        if (message) toast.show({ message, tone: 'success' });
+      } catch {
+        // Bildirim sorunu da başarılı eylemi başarısız göstermemeli.
+      }
       return true;
-    } catch {
-      const unexpected: ActionFailure = { ok: false, errorCode: 'SERVER_UNEXPECTED' };
-      setFailure(unexpected);
-      options.onFailure?.(unexpected);
-      return false;
     } finally {
       lock.current = false;
       setBusy(false);

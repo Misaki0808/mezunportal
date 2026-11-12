@@ -1225,7 +1225,7 @@
       "saveDraft": "Taslağı kaydet",
       "submit": "Moderasyona gönder",
       "saving": "Kaydediliyor…",
-      "draftSaved": "Taslak kaydedildi.",
+      "draftSaved": "Taslağın kaydedildi.",
       "submitted": "Deneyimin incelemeye gönderildi.",
       "submittedAction": "Deneyimlerime git",
       "submitConfirmTitle": "İncelemeye gönderilsin mi?",
@@ -1278,6 +1278,7 @@
       "submit": "Şikâyeti gönder",
       "cancel": "Vazgeç",
       "sent": "Şikâyetin alındı. Teşekkürler.",
+      "sentToast": "Şikâyetin gönderildi.",
       "close": "Kapat"
     },
     "queue": {
@@ -1441,6 +1442,7 @@
       "messageHelp": "Neden iletişim kurmak istediğini kısaca anlat. En fazla {max} karakter.",
       "send": "Talep gönder",
       "sent": "Talebin gönderildi. Yanıtı Gönderilen kutusundan izleyebilirsin.",
+      "sentToast": "Talebin gönderildi.",
       "sendDone": "Taleplerime git",
       "notePlaceholder": "Örneğin, staj deneyimin hakkında danışmak istiyorum.",
       "requestableHelp": "Bir alan zaten üyelere açıksa veya sahibi paylaşımı kapattıysa o alan için talep gönderilemez.",
@@ -3044,6 +3046,7 @@
     "reportDetails": "Açıklama (isteğe bağlı)",
     "reportSubmit": "Şikâyeti gönder",
     "reportSent": "Şikâyetin alındı. Teşekkürler.",
+    "reportSentToast": "Şikâyetin gönderildi.",
     "reportQueue": "İlan şikâyetleri",
     "reportQueueEmpty": "Açık ilan şikâyeti yok.",
     "reportTakeDown": "İlanı kaldır",

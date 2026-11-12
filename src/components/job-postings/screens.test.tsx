@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import messages from '../../../messages/tr.json';
 import { renderUi, renderWithToasts } from '@/test/render';
@@ -142,11 +142,35 @@ it('ilan iletişimi yalnız ilan kimliği ve seçilen alanlarla gönderilir', as
   await waitFor(() =>
     expect(send).toHaveBeenCalledWith({ jobPostingId: 'ilan-123', fields: ['EMAIL'], message: '' }),
   );
-  expect(await screen.findByText(/Talebin gönderildi/)).toBeInTheDocument();
+  expect((await screen.findAllByText(/Talebin gönderildi/)).length).toBeGreaterThan(0);
+});
+it('ilan iletişiminde çift gönderim tek istektir ve hata notu korur', async () => {
+  const { PostingContactForm } = await import('./contact');
+  const gate = Promise.withResolvers<{
+    ok: true;
+    data: { requestId: string; status: 'PENDING' };
+  }>();
+  const send = vi.fn(() => gate.promise);
+  renderWithToasts(<PostingContactForm postingId="p" requestableFields={['EMAIL']} send={send} />);
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  const note = screen.getByLabelText(/Kısa not/);
+  fireEvent.change(note, { target: { value: 'Notum' } });
+  const button = screen.getByRole('button', { name: 'Talep gönder' });
+  fireEvent.submit(button.closest('form')!);
+  fireEvent.submit(button.closest('form')!);
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(button).toHaveAttribute('aria-busy', 'true');
+  await act(async () => gate.reject(new Error('ağ')));
+  expect(note).toHaveValue('Notum');
+  expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
 });
 it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderilir', async () => {
   const { addDays, istanbulDay } = await import('./model');
-  const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'draft-1' } });
+  const gate = Promise.withResolvers<never>();
+  const save = vi
+    .fn()
+    .mockReturnValueOnce(gate.promise)
+    .mockResolvedValue({ ok: true, data: { id: 'draft-1' } });
   const submit = vi
     .fn()
     .mockResolvedValue({ ok: true, data: { postingId: 'draft-1', status: 'PENDING' } });
@@ -168,7 +192,17 @@ it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderi
     target: { value: 'https://example.org/staj' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
-  fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  const button = screen.getByRole('button', { name: 'İncelemeye gönder' });
+  act(() => {
+    button.click();
+    button.click();
+  });
+  expect(save).toHaveBeenCalledTimes(1);
+  expect(button).toHaveAttribute('aria-busy', 'true');
+  await act(async () => gate.reject(new Error('ağ')));
+  expect(screen.getByText('Yazılım stajyeri')).toBeVisible();
+  expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
+  fireEvent.click(button);
   await waitFor(() => expect(submit).toHaveBeenCalledWith({ postingId: 'draft-1' }));
   expect(save).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -364,4 +398,67 @@ it('mobil süzgeçler alt sayfada uygulanır ve arama metni korunur', async () =
   const form = document.getElementById(apply.getAttribute('form')!);
   expect(form).toHaveAttribute('action', '/ilanlar');
   expect(new FormData(form as HTMLFormElement).get('q')).toBe('tasarım');
+});
+
+it.each(['PUBLISH', 'REJECT'] as const)(
+  'B2: %s kararı odağı sonraki ilana, son kararda başlığa taşır',
+  async (decision) => {
+    HTMLDialogElement.prototype.showModal = function () {
+      this.setAttribute('open', '');
+    };
+    HTMLDialogElement.prototype.close = function () {
+      this.removeAttribute('open');
+    };
+    const { PostingModeration } = await import('./manage');
+    const review = vi.fn().mockResolvedValue({
+      ok: true,
+      data: { postingId: 'job-1', status: decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED' },
+    });
+    const { user } = renderWithToasts(
+      <PostingModeration
+        initial={{
+          items: [pendingItem, { ...pendingItem, id: 'job-2', title: 'İkinci ilan' }],
+          nextCursor: null,
+        }}
+        review={review}
+        list={vi.fn()}
+      />,
+    );
+    const action = decision === 'PUBLISH' ? 'Yayımla' : 'Reddet';
+    await user.click(screen.getAllByRole('button', { name: action })[0]!);
+    if (decision === 'REJECT')
+      await user.type(screen.getByLabelText(/Ret gerekçesi/), 'Geçerli ret gerekçesi');
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Yayımla' })).toHaveFocus());
+    await user.click(screen.getByRole('button', { name: 'Yayımla' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: messages.jobs.moderationTitle })).toHaveFocus(),
+    );
+  },
+);
+
+it('B3: boş ret ilk hatalı alana odaklanır ve alan altı açıklama taşır', async () => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute('open');
+  };
+  const { PostingModeration } = await import('./manage');
+  const review = vi.fn();
+  const { user } = renderWithToasts(
+    <PostingModeration
+      initial={{ items: [pendingItem], nextCursor: null }}
+      review={review}
+      list={vi.fn()}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: 'Reddet' }));
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+  const reason = screen.getByLabelText(/Ret gerekçesi/);
+  expect(reason).toHaveFocus();
+  expect(reason).toHaveAttribute('aria-invalid', 'true');
+  expect(reason).toHaveAccessibleDescription(/En az 3 karakterlik bir gerekçe yaz/);
+  expect(review).not.toHaveBeenCalled();
 });

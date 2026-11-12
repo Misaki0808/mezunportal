@@ -37,7 +37,7 @@ import {
   Select,
   Sheet,
   Textarea,
-  useToast,
+  useAction,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
@@ -83,7 +83,7 @@ type Editing =
 /** Kendi profilim: bölüm bölüm görüntüle + alt sayfada düzenle. Her eylem güncel profili döner; ekran onu çizer. */
 export function MyProfile({ initial, actions, beforeCompletion }: Props) {
   const router = useRouter();
-  const toast = useToast();
+  const action = useAction();
   const t = useTranslations('profile.my');
   const sections = useTranslations('profile.sections');
   const errors = useTranslations('errors.codes');
@@ -91,33 +91,25 @@ export function MyProfile({ initial, actions, beforeCompletion }: Props) {
   const [editing, setEditing] = useState<Editing>();
   const [deleting, setDeleting] = useState<{ section: ProfileEntrySection; id: string }>();
   const [error, setError] = useState<ErrorCode>();
-  const [pending, setPending] = useState(false);
-  const locked = useRef(false);
+  const pending = action.busy;
   const editFormId = useId();
 
   /** Eylemi çalıştırır; başarıda profili günceller. Alan/sunucu hatası çağırana `false` + kodla döner. */
-  async function run(action: () => Result, after?: () => void): Promise<ErrorCode | null> {
-    if (locked.current) return null;
-    locked.current = true;
-    setPending(true);
+  async function run(operation: () => Result, after?: () => void): Promise<ErrorCode | null> {
+    let failure: ErrorCode | null = null;
     setError(undefined);
-    try {
-      const result = await action();
-      if (result.ok) {
-        setProfile(result.data);
-        toast.show({ message: t('saved'), tone: 'success' });
+    await action.run(operation, {
+      success: t('saved'),
+      onOk: (data) => {
+        setProfile(data);
         after?.();
-        return null;
-      }
-      setError(result.errorCode);
-      return result.errorCode;
-    } catch {
-      setError('SERVER_UNEXPECTED');
-      return 'SERVER_UNEXPECTED';
-    } finally {
-      locked.current = false;
-      setPending(false);
-    }
+      },
+      onFailure: (result) => {
+        failure = result.errorCode;
+        setError(result.errorCode);
+      },
+    });
+    return failure;
   }
 
   // Sanal klavye görünür alanı daralttığında odaklı kontrolü sayfanın kaydırılabilir kısmında tut.
