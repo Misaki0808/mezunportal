@@ -93,3 +93,78 @@ it.each(['cancel', 'dismiss'] as const)(
     expect(mocks.resolve).not.toHaveBeenCalled();
   },
 );
+
+it.each(['DISMISS', 'TAKE_DOWN'] as const)(
+  'B2: %s kararı kaldırılan diğer şikâyetleri atlar ve son kayıtta başlığa döner',
+  async (decision) => {
+    mocks.resolve
+      .mockReset()
+      .mockResolvedValue({ ok: true, data: { reportId: 'r1', status: 'RESOLVED' } });
+    const row = {
+      postingStatus: 'PUBLISHED' as const,
+      reason: 'Yanıltıcı ilan',
+      status: 'OPEN' as const,
+      createdAt: new Date(),
+      reviewedAt: null,
+      resolutionNote: null,
+    };
+    const { user } = renderUi(
+      <JobPostingReports
+        initial={{
+          items: [
+            { ...row, id: 'r1', postingId: 'p1', postingTitle: 'İlk ilan' },
+            ...(decision === 'TAKE_DOWN'
+              ? [{ ...row, id: 'r2', postingId: 'p1', postingTitle: 'İlk ilanın diğer şikâyeti' }]
+              : []),
+            { ...row, id: 'r3', postingId: 'p3', postingTitle: 'Son ilan' },
+          ],
+          nextCursor: null,
+        }}
+      />,
+    );
+    const action = decision === 'DISMISS' ? 'Şikâyeti yoksay' : 'İlanı kaldır';
+    await user.click(screen.getAllByRole('button', { name: action })[0]!);
+    await user.type(screen.getByLabelText(/Karar gerekçesi/), 'İnceleme tamamlandı');
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Şikâyeti yoksay' })).toHaveFocus(),
+    );
+    await user.click(screen.getByRole('button', { name: 'Şikâyeti yoksay' }));
+    await user.type(screen.getByLabelText(/Karar gerekçesi/), 'Son karar gerekçesi');
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'İlan şikâyetleri' })).toHaveFocus(),
+    );
+  },
+);
+
+it('B3: boş karar gerekçesi alana odaklanır, mesaj alanla ilişkilidir', async () => {
+  mocks.resolve.mockReset();
+  const { user } = renderUi(
+    <JobPostingReports
+      initial={{
+        items: [
+          {
+            id: 'r1',
+            postingId: 'p1',
+            postingTitle: 'İlan',
+            postingStatus: 'PUBLISHED',
+            reason: 'Yanıltıcı ilan',
+            status: 'OPEN',
+            createdAt: new Date(),
+            reviewedAt: null,
+            resolutionNote: null,
+          },
+        ],
+        nextCursor: null,
+      }}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: 'İlanı kaldır' }));
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+  const reason = screen.getByLabelText(/Karar gerekçesi/);
+  expect(reason).toHaveFocus();
+  expect(reason).toHaveAttribute('aria-invalid', 'true');
+  expect(reason).toHaveAccessibleDescription(/En az 3 karakterlik bir gerekçe yaz/);
+  expect(mocks.resolve).not.toHaveBeenCalled();
+});
