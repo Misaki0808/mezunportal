@@ -257,8 +257,18 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
 - **Çıktı temizliği:** `ParsedCv` bilinmeyen alanları atar (rol/kullanıcı kimliği şemada yok), görünmez ve çift
   yönlü biçim karakterlerini siler, liste ve metin uzunluklarını sınırlar; saklı çıktı uygulamada yeniden
   doğrulanır. Veritabanı kısıtları da metin uzunluğu ve tarih tutarlılığını zorlar.
-- **Modele yalnız PDF gider:** kullanıcı kimliği, e-posta, rol ve başka kullanıcı verisi isteğe girmez; yurt dışı
-  rızası yüklemede ve iş başında denetlenir.
+- **Gerçek modele yalnız maskelenmiş CV metni gider:** yükleyenin adı sunucudan alınır; kişisel veri kalıpları
+  yerelde maskelenir ve maskeleyici, çıkarıcı veya metin sağlayıcısı yoksa işlem kapalı kalır. Kural tabanlı
+  maskeleme alışılmadık veya gizlenmiş kişisel veriyi her zaman tanıyamayabilir; yurt dışı rızası yüklemede ve
+  iş başında denetlenir. Gizlilik önceliklidir: yükleyenin adıyla eşadlı kurum da kısmen maskelenebilir
+  (ör. sunucu adı “İpek Işık” iken “Işık Üniversitesi” → “[AD] Üniversitesi”); kurum eki maskeyi atlatma
+  istisnası değildir. Üçüncü kişilerin adları yalnız açık referans/yönetici/danışman başlığı ve bu başlığa
+  bağlı bloklarda biçimsel olarak aranır; serbest metindeki adlar veya farklı yazılmış başlıklar kaçabilir,
+  başlık altındaki kişi dışı büyük harfli ifadeler de gizlenebilir (iş unvanı olarak tek başına yazılan "Yönetici"/"Danışman"
+  satırı başlık sayılmaz). Maskelenmeyenler: yaş ("25 yaşında"), anahtar sözcüksüz adres, yalnız ilçe/şehir adı ve tek sözcüklü
+  referans adı. Kişisel alan adında en az üç harfli ad
+  parçası aranır; bu parça şirket alan adıyla çakışırsa alan adı da gizlenebilir. Yapay zekâ yalnız öneri
+  üretir; kullanıcı okul adını onay ekranında düzeltebilir.
 - LLM girdisi ve çıktısı loglanmaz.
 
 ## Kötüye kullanım sınırları

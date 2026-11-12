@@ -77,9 +77,10 @@ ve kapsamlıdır (`SYSTEM`, `FACULTY`, `DEPARTMENT`).
    (`rules/pdf.ts`, sayfa sayımı bağımlılıksız ve sezgisel). Ön koşul: yurt dışına aktarım rızası (`docs/security.md`
    KVKK) ve yapılandırılmış sağlayıcı (`LLM_PROVIDER` boşsa özellik kapalı, sebebi ekranda). Günlük hak yalnız
    doğrulamadan geçen yüklemede harcanır. Dosya, `CvUpload` kaydı ve `cv.parse` işi tek işlemde yazılır.
-2. **İş `cv.parse`:** PDF, PDF girdisini doğrudan kabul eden LLM'e gönderilir (taranmış CV'ler
-   ayrı OCR olmadan okunur); yapılandırılmış çıktı istenir ve `ParsedCv` Zod şemasıyla
-   doğrulanır. Uymazsa bir kez yeniden denenir, sonra `FAILED` + hata kodu. Kullanıcı başına
+2. **İş `cv.parse`:** gerçek sağlayıcıya yalnız yerelde çıkarılmış ve kişisel verileri maskelenmiş
+   metin gönderilir; ham PDF ve yükleyenin adı isteğe girmez. Çıkarıcı/maskeleyici yoksa veya metin
+   çıkarılamazsa yol kapalıdır (taranmış PDF için ayrı OCR yoktur). Ham PDF yalnız yerel sahte sağlayıcıda
+   kullanılır. Yapılandırılmış çıktı istenir ve `ParsedCv` Zod şemasıyla doğrulanır. Uymazsa bir kez yeniden denenir, sonra `FAILED` + hata kodu. Kullanıcı başına
    günlük ayrıştırma sınırı vardır. İş başlarken rıza yeniden okunur (geri çekilmişse LLM'e hiçbir şey gitmez).
    Geçici LLM hatası (zaman aşımı, kesinti) pg-boss ile sınırlı yeniden denenir; hak bitince `FAILED`. İş yalnız
    `PARSED` satırını yazar, profile dokunmaz.
