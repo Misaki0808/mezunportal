@@ -264,13 +264,17 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
               }
             />
           ) : (
-            <ul className="mt-5 flex flex-col gap-4">
-              {results.items.map((mentor) => (
-                <li key={mentor.userId}>
-                  <MentorCard mentor={mentor} returnTo={href(filter)} />
-                </li>
-              ))}
-            </ul>
+            <>
+              {/* Mobilde filtre paneli kapalıyken kartların (h3) üstünde h2 bulunsun: başlık atlaması yok. */}
+              <h2 className="sr-only">{t('resultsHeading')}</h2>
+              <ul className="mt-5 flex flex-col gap-4">
+                {results.items.map((mentor) => (
+                  <li key={mentor.userId}>
+                    <MentorCard mentor={mentor} returnTo={href(filter)} />
+                  </li>
+                ))}
+              </ul>
+            </>
           )
         }
         pagination={

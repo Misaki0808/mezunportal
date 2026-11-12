@@ -5,13 +5,32 @@ import type { ExperienceDetail } from '@/contracts/experience';
 type Content = ExperienceDetail['content'];
 type Row = { label: string; value: string };
 
+/** Sıra numarası çipi (dekoratif; sıra liste anlamından gelir). */
+function NumberChip({ children }: { children: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-on-primary-soft"
+    >
+      {children}
+    </span>
+  );
+}
+
 /** Deneyim içeriği (okuma). Moderasyon kuyruğu, detay ve liste aynı görünümü kullanır; yazar bilgisi içermez. */
-export function ExperienceContent({ content }: { content: Content }) {
+export function ExperienceContent({
+  content,
+  showOrganization = true,
+}: {
+  content: Content;
+  /** Sayfa başlığı kurumu zaten söylüyorsa (detay) `false`: aynı bilgi iki kez yazılmaz. */
+  showOrganization?: boolean;
+}) {
   const t = useTranslations('experiences');
   const read = content as Record<string, unknown>;
   const text = (key: string) => (typeof read[key] === 'string' ? (read[key] as string) : '');
   const rows: Row[] = [];
-  if (text('organizationName'))
+  if (showOrganization && text('organizationName'))
     rows.push({ label: t('detail.organization'), value: text('organizationName') });
   const season = text('termSeason');
   const year = read.termYear;
@@ -60,29 +79,34 @@ export function ExperienceContent({ content }: { content: Content }) {
       )}
       {steps.length > 0 && (
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-fg">{t('detail.process')}</h2>
+          <h2 className="mb-3 text-lg font-semibold text-fg">{t('detail.process')}</h2>
           <ol className="flex flex-col gap-3">
             {steps.map((step, index) => (
-              <li key={index} className="rounded-control border border-border p-3">
-                <p className="text-base font-semibold text-fg">
-                  {index + 1}. {step.title}
-                </p>
-                <p className="mt-1 whitespace-pre-line text-base text-fg-muted">
-                  {step.description}
-                </p>
+              <li key={index} className="flex gap-3 rounded-control border border-border p-3">
+                <NumberChip>{index + 1}</NumberChip>
+                <div className="min-w-0">
+                  <p className="break-words text-base font-semibold text-fg">{step.title}</p>
+                  <p className="mt-1 whitespace-pre-line break-words text-base text-fg-muted">
+                    {step.description}
+                  </p>
+                </div>
               </li>
             ))}
           </ol>
         </section>
       )}
       {questions.length > 0 && (
-        <section>
-          <h2 className="mb-2 text-lg font-semibold text-fg">{t('detail.questions')}</h2>
-          <ul className="list-disc space-y-1 pl-5 text-base text-fg">
+        // Mülakat soruları öğrencinin en çok aradığı kısımdır: zeminli kutu ve numaralı satırlarla öne çıkar.
+        <section className="rounded-card bg-surface-strong p-4 sm:p-5">
+          <h2 className="mb-3 text-lg font-semibold text-fg">{t('detail.questions')}</h2>
+          <ol className="flex flex-col gap-3">
             {questions.map((question, index) => (
-              <li key={index}>{question}</li>
+              <li key={index} className="flex gap-3">
+                <NumberChip>{index + 1}</NumberChip>
+                <span className="min-w-0 break-words text-base text-fg">{question}</span>
+              </li>
             ))}
-          </ul>
+          </ol>
         </section>
       )}
       {text('whatLearned') && (
@@ -94,7 +118,7 @@ export function ExperienceContent({ content }: { content: Content }) {
         </section>
       )}
       {text('advice') && (
-        <section>
+        <section className="border-l-4 border-primary pl-4">
           <h2 className="mb-2 text-lg font-semibold text-fg">{t('detail.advice')}</h2>
           <p className="whitespace-pre-line text-base leading-relaxed text-fg">{text('advice')}</p>
         </section>
