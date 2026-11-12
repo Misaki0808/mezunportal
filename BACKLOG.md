@@ -8,9 +8,9 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 ## Güncel durum
 
 Faz 0 (iskelet, veritabanı, yerel ortam, tasarım sistemi, ekip araçları), Faz 1 (çekirdek, tamamlayıcılar ve SSS ekranları dahil) ve
-Faz 2'nin (fırsatlar, mevcut veriden değer, rehberlik, tanınma; `docs/faz2-plan.md`) adımları main'dedir; bir ekran eksiği (gruplu uygulama içi bildirim listesi) tamamlama olarak sürüyor (aşağıda "Yakın hedef"). Canlı ortam
+Faz 2'nin (fırsatlar, mevcut veriden değer, rehberlik, tanınma; `docs/faz2-plan.md`) bütün plan adımları main'dedir. Canlı ortam
 yoktur ve bilinçli ertelenmiştir: geliştirme, test ve ekran doğrulaması yerelde, birleştirme kapıları yerelde; CI az ve öz (≤ 5 dk, K-14
-kararı, `docs/engineering.md` "CI"). Faz 2'nin kalan kalemi bitince kullanıcının komple test ve deneme turu başlar (`docs/engineering.md` "Faz 2 deneme rehberi"). Ürün özellikleri aşağıdaki gibi çalışır; ayrıntı ve gerekçe `docs/decisions.md`'dedir.
+kararı, `docs/engineering.md` "CI"). Kullanıcının komple test ve deneme turu başlayabilir (`docs/engineering.md` "Faz 2 deneme rehberi"). Ürün özellikleri aşağıdaki gibi çalışır; ayrıntı ve gerekçe `docs/decisions.md`'dedir.
 
 ### Faz 1'de main'de olanlar
 
@@ -51,7 +51,7 @@ kararı, `docs/engineering.md` "CI"). Faz 2'nin kalan kalemi bitince kullanıcı
 - **İlanlar (P2-04, P2-05):** doğrulanmış mezun ve akademisyen ilan yazar (taslak, önizleme, bölüm yöneticisi moderasyonu, en çok 60 gün,
   süre dolunca kendiliğinden kapanır; ilan puanı yayından 7 gün sonra kesinleşir, ayda 3 ilan puan getirir). Öğrenciye profiline uyan
   ilanlar ana sayfada "Sana uyan ilanlar" olarak görünür; e-posta özeti günde en çok bir, haftada en çok 3. İlan sahibi eşleşenleri görmez,
-  yalnız "N kişiye ulaştı" sayısını görür. İlan sayfasında kullanıcı "Şikâyet et" ile bildirebilir; bölüm yöneticisi şikâyet kuyruğunda karar verir.
+  yalnız "N kişiye ulaştı" sayısını görür. İlan sayfasında kullanıcı "Şikâyet et" ile bildirebilir; bölüm yöneticisi şikâyet kuyruğunda karar verir. Uygulama içi bildirim kutusu (`/bildirimler`): gün başlıklı gruplu liste, zil rozeti, tek dokunuşla ve toplu okundu.
 - **Ters yönlü arama (P2-06):** öğrenci açık rızayla "İş arayanlara görün"ü açar; işe alım beyanlı doğrulanmış mezun "Aday bul" ile maskeli kart
   görür (ad, fotoğraf, iletişim yok); iletişim yalnız onaylı talepten sonra açılır (D7, kaynaktan bağımsız); hız sınırlı.
 - **Referans (P2-03):** mezun beyanı → öğrenci onayı → yönetici onayı; "referansla kabul" aşaması; puanlar gecikmeli ve iptalde geri alınır.
@@ -75,7 +75,7 @@ Hiçbiri kodla çözülemez; her biri aşağıdaki işi engeller. Kullanıcı/ho
 | Bekleyen | Neyi engelliyor |
 |---|---|
 | E3 — LinkedIn uygulaması + doğrulanmış şirket sayfası | P1-02 kabulü: LinkedIn ile giriş (kod yolu var, sınanmadı) |
-| K-04 — CV yapay zekâsı: kullanıcı kararı Gemini ücretsiz katman; API anahtarı kullanıcıdan gelecek, CV metni gönderilmeden önce kimlik bilgileri maskelenecek; gerçek adaptör yazılmadı (`LLM_PROVIDER` yalnız `fake`) | Gerçek CV ayrıştırma; TD-009 doğruluk tablosu |
+| K-04 — CV yapay zekâsı: kullanıcı kararı Gemini ücretsiz katman; API anahtarı kullanıcıdan gelecek, CV ve LinkedIn metni sağlayıcıya gitmeden önce yerelde maskelenir (hazır, kural tabanlı: ad, e-posta, telefon, kimlik, IBAN, URL, doğum tarihi, adres anahtarlı satırlar, referans/yönetici adları); gerçek adaptör yazılmadı (`LLM_PROVIDER` yalnız `fake`) | Gerçek CV ayrıştırma; TD-009 doğruluk tablosu |
 | E4 — Google Cloud projesi + OAuth anahtarları (`korunan/google.env`) | P1-10 kabulü: gerçek takvim daveti ve Meet linki (adaptör ve panelden bağlama hazır; anahtarlar gelince `CALENDAR_PROVIDER=google` + `/yonetim/google`) |
 | K-02 — sunucu ve dağıtım aracı; K-05 — canlı SMTP | Canlı ortam (PILOT-DEPLOY), gerçek e-posta teslimi |
 | K-03 — veri sorumlusu ve yöneticiler; hoca onayı | PILOT-LEGAL, gerçek yönetici atamaları, canlı açılış |
@@ -85,7 +85,7 @@ Hiçbiri kodla çözülemez; her biri aşağıdaki işi engeller. Kullanıcı/ho
 
 ### Yakın hedef
 
-Faz 2'yi tamamlamak: gruplu uygulama içi bildirim listesi (plan P2-05). Sonra kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon test listesi;
+Kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon test listesi;
 bulgular PM'de karta bölünür ya da bu belgeye borç olarak yazılır. Kullanıcının hesap isteyen işleri (Gemini anahtarı, Google Cloud anahtarları ve panelden bağlama, platform hesabı) ve
 canlıya alım ile pilot kararları (K-02, K-05, K-03, K-12, hukuki okuma) kullanıcı gündeme getirince ele alınır. Faz 3 pilottan sonra konuşulur.
 
