@@ -28,6 +28,7 @@ import {
 } from '@/contracts/admin-users';
 import type { Prisma } from '@/generated/prisma/client';
 import { codedForbidden, codedNotFound } from '@/lib/errors';
+import { jobPostingReportScopeWhere } from './job-posting-report-scope';
 
 import { looksLikePersonalData } from '../rules/adminAudit';
 import { accountStatusOf } from '../rules/authorization';
@@ -103,7 +104,8 @@ export async function getAdminOverview(
         pendingReferrals,
         pendingCampusEvents,
         pendingAlumniStoriesRows,
-        openReports,
+        openExperienceReports,
+        openJobReports,
         suspendedUsers,
         unmatched,
       ] = await Promise.all([
@@ -154,6 +156,9 @@ export async function getAdminOverview(
         tx.report.count({
           where: { status: 'OPEN', target: { departmentIdAtWrite: { in: departmentIds } } },
         }),
+        tx.jobPostingReport.count({
+          where: jobPostingReportScopeWhere(departmentIds, 'OPEN'),
+        }),
         tx.user.count({ where: { deletedAt: null, ...suspendedWhere(now), ...userScope } }),
         system ? tx.unmatchedValue.count({ where: openUnmatchedWhere }) : Promise.resolve(null),
       ]);
@@ -183,7 +188,7 @@ export async function getAdminOverview(
           pendingReferrals,
           pendingCampusEvents,
           pendingAlumniStories: Number(pendingAlumniStoriesRows[0]!.count),
-          openReports,
+          openReports: openExperienceReports + openJobReports,
           suspendedUsers,
           openUnmatchedValues: unmatched,
         },

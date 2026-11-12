@@ -199,6 +199,8 @@ olur. Okuyucular (K-07: aynı üniversite) yalnız açık ilanı görür; yazar 
 `docs/decisions.md` "Mezun staj/iş ilanları"; servis `src/server/services/job-posting*.ts`, arama deposu `src/server/repositories/job-postings.ts`,
 kurallar `src/server/rules/jobPosting.ts`.
 
+Şikâyet kuyruğu ilanın hedef bölümleriyle sınırlandırılır; paneldeki açık şikâyet toplamı deneyim ve ilan şikâyetlerini kapsar. İlan listesinin ve sayacının hedef filtresi ortaktır (`src/server/services/job-posting-report-scope.ts`); çok hedefli ilan aynı raporu çoğaltmaz.
+
 ### Bildirimler ve zamanlanmış işler (pg-boss)
 
 | İş | Ne zaman |
