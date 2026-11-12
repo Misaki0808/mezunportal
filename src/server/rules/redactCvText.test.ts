@@ -220,6 +220,8 @@ describe('bağlamlı ek kişisel veri kalıpları', () => {
   it.each([
     ['Referans: Prof. Dr. Ahmet Yılmaz', 'Ahmet Yılmaz'],
     ['Referanslar: Mehmet Kaya — Satış Müdürü', 'Mehmet Kaya'],
+    ['Referanslar\nAd Soyad: Mehmet Kaya\n\nBeceriler\nSQL', 'Mehmet Kaya'],
+    ['Referanslar\nE-posta: kisi@example.com\nAd Soyad: Mehmet Kaya', 'Mehmet Kaya'],
     [
       'References\nProf. Dr. Ahmet Yılmaz\nMehmet Kaya — Satış Müdürü\n\nBeceriler\nSQL',
       'Ahmet Yılmaz',

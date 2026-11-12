@@ -85,6 +85,16 @@ function redactReferencedPeople(text: string): string {
         );
       }
       if (!inBlock) return line;
+      const nameField = line
+        .toLocaleLowerCase('tr-TR')
+        .match(/^\s*(?:ad soyad|adı soyadı|name|full name)\s*:\s*/u);
+      if (nameField) {
+        return (
+          line.slice(0, nameField[0].length) +
+          line.slice(nameField[0].length).replace(person, marker.person)
+        );
+      }
+      if (/^\s*(?:e-posta|e-mail|email|telefon|phone)\s*:/iu.test(line)) return line;
       if (!line.trim() || /^\s*[\p{L} ]+\s*:/u.test(line)) {
         inBlock = false;
         return line;
