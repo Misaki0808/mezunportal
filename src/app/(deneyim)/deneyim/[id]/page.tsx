@@ -37,11 +37,12 @@ export default async function ExperienceDetailPage({
     new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(value));
   return (
     <article className="mx-auto w-full max-w-2xl px-5 pb-8 pt-10 sm:pt-16">
+      {/* Okuyucu listeye (aradığı yere), yazar kendi deneyimlerine döner. */}
       <Link
-        href="/deneyimlerim"
+        href={isOwner === true ? '/deneyimlerim' : '/deneyimler'}
         className="press-row mb-6 inline-flex min-h-11 items-center text-base font-medium text-primary"
       >
-        ← {t('detail.back')}
+        ← {isOwner === true ? t('detail.backMine') : t('detail.backList')}
       </Link>
       <p className="text-base font-semibold text-primary">{t('detail.eyebrow')}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -66,7 +67,7 @@ export default async function ExperienceDetailPage({
         </section>
       )}
       <div className="mt-8">
-        <ExperienceContent content={experience.content} />
+        <ExperienceContent content={experience.content} showOrganization={false} />
       </div>
       <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6">
         {editable && (

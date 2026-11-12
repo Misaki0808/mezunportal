@@ -36,14 +36,23 @@ export function MentorEntryPoints({
   return (
     <section
       aria-labelledby="entry-title"
-      className="flex flex-col gap-3 rounded-card border border-border p-4"
+      className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4"
     >
-      <h2 id="entry-title" className="text-xl font-semibold text-fg">
+      <h2 id="entry-title" className="text-lg font-semibold text-fg">
         {t('title')}
       </h2>
+      {/* Tek birincil eylem: randevu açıksa "Randevu iste", değilse (açık olan) iletişim isteği birincil olur. */}
+      {entry.appointment.available && (
+        <Link className={buttonClasses({ fullWidth: true })} href={`/randevu-al/${userId}`}>
+          {t('appointment')}
+        </Link>
+      )}
       {entry.contact.available ? (
         <Link
-          className={buttonClasses({ fullWidth: true })}
+          className={buttonClasses({
+            variant: entry.appointment.available ? 'secondary' : 'primary',
+            fullWidth: true,
+          })}
           href={withReturnPath(`/iletisim-iste/${userId}`, `/uye/${userId}`)}
         >
           {t('contact')}
@@ -52,14 +61,6 @@ export function MentorEntryPoints({
         <p className="text-base text-fg-muted">
           {entry.contact.reason ? t(`reasons.${entry.contact.reason}`) : t('contactBlocked')}
         </p>
-      )}
-      {entry.appointment.available && (
-        <Link
-          className={buttonClasses({ variant: 'secondary', fullWidth: true })}
-          href={`/randevu-al/${userId}`}
-        >
-          {t('appointment')}
-        </Link>
       )}
       {cvAvailability && <ReviewRequestEntry mentorId={userId} availability={cvAvailability} />}
       {blocked.length > 0 && (
