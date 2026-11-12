@@ -212,6 +212,7 @@ test.describe('bildirim kutusu', () => {
     await page.goto('/bildirimler');
     await expect(page).not.toHaveURL(/\/bildirimler$/);
     await expect(page.getByRole('heading', { name: 'Bildirimler', level: 1 })).toHaveCount(0);
+    await page.waitForLoadState('networkidle');
   });
 });
 
