@@ -358,7 +358,7 @@ Hocaya gösterim de aynı yolla, bilgisayardan ya da telefondan, sahte veriyle y
 
 Hazırlık: `pnpm db:deploy && pnpm db:seed` (Faz 2 örnek verisi gelir: "Örnek …" şirketler, altı yayınlanmış deneyim, üç yayında + biri incelemede + bir taslak ilan, bir yayında + bir incelemede etkinlik;
 tarihler seed'i koştuğun ana göredir, yeniden koşmak tazeler). `pnpm dev:lan` ile telefonda aç; her hesap için `/giris/test?persona=<hesap>` adresini aç ve **"Test hesabıyla giriş yap"** düğmesine bas
-(rol seçici: `/giris/test`; hesaplar orada "Öğrenci", "Üst sınıf mentor", "Mezun mentor", "Akademisyen", "Bölüm yöneticisi", "Sistem yöneticisi" adıyla durur). **Bir hesapla ilk kez girince önce onay ekranı çıkar:** iki "Okudum ve onaylıyorum." kutusunu işaretle, "Seçimlerimi kaydet"e bas; sonra kaldığın sayfaya geçer.
+(rol seçici: `/giris/test`; hesaplar orada "Öğrenci", "Üst sınıf mentor", "Mezun mentor", "Akademisyen", "Bölüm yöneticisi", "Sistem yöneticisi" adıyla durur). **Onaylarını tamamla:** onay ekranı açılmadıysa `/onay` adresine git; iki "Okudum ve onaylıyorum." kutusunu işaretle, "Seçimlerimi kaydet"e bas. Ardından `/hesap` üzerinden denemeye devam et.
 Hesaplar: `student` Deniz (öğrenci), `seniorMentor` Elif, `alumniMentor` Mert (mezun), `academic` Selin,
 `departmentAdmin` Kerem (bölüm yöneticisi), `systemAdmin`. E-postalar Mailpit'te (`http://localhost:8025`). Bulgularını aşağıdaki küçük tabloya ya da pm-handoff'taki
 `BULGU-LISTESI-SABLONU-FAZ2.md` dosyasına yaz.
