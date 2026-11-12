@@ -33,20 +33,18 @@ export default async function MemberProfilePage({
     getTranslations('referrals'),
   ]);
   return (
-    <>
-      <div className="mx-auto max-w-2xl px-5 pt-4">
-        <Badge>{t('profileCount', { count })}</Badge>
-      </div>
-      <ProfileView profile={result.data} />
-      {entry?.ok && (
-        <div className="mx-auto max-w-2xl px-5 pb-28">
+    <ProfileView
+      profile={result.data}
+      badges={count > 0 ? <Badge>{t('profileCount', { count })}</Badge> : undefined}
+      actions={
+        entry?.ok ? (
           <MentorEntryPoints
             userId={userId}
             entry={entry.data}
             cvAvailability={availability?.ok ? availability.data : null}
           />
-        </div>
-      )}
-    </>
+        ) : undefined
+      }
+    />
   );
 }
