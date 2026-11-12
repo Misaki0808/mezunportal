@@ -133,3 +133,49 @@ it('son karar sonrası eski sayfalama imleci de tükenince tek boş duruma geçe
   fireEvent.click(screen.getByRole('button', { name: 'Daha fazla göster' }));
   await waitFor(() => expect(screen.getAllByText('Açık şikâyet yok.')).toHaveLength(1));
 });
+
+for (const desktop of [false, true]) {
+  for (const mode of ['next', 'only', 'last'] as const) {
+    const last = mode !== 'next';
+    it(`deneyim kararı: ${desktop ? 'masaüstü' : 'mobil'} görünümde ${mode === 'last' ? 'önceki satır kalsa da başlığa' : last ? 'son kayıt başlığa' : 'sonraki görünür kayda'} odaklanır`, async () => {
+      const resolve = vi
+        .fn()
+        .mockResolvedValue({ ok: true, data: { reportId: experience.id, status: 'DISMISSED' } });
+      const next = { ...experience, id: 'next-report', reason: 'İkinci şikâyet' };
+      const { user, container } = renderUi(
+        <main>
+          <AdminReports
+            initial={{
+              items: mode === 'only' ? [experience] : [experience, next],
+              nextCursor: null,
+            }}
+            list={vi.fn()}
+            resolve={resolve}
+          />
+        </main>,
+      );
+      // ResponsiveRows aynı kayıtları iki DOM ağacında tutar; Tailwind görünürlüğünü jsdom'da kur.
+      const mobile = container.querySelector('ul')!;
+      const table = container.querySelector('table')!;
+      mobile.style.display = desktop ? 'none' : 'block';
+      table.style.display = desktop ? 'table' : 'none';
+      await user.click(
+        screen.getAllByRole('button', { name: 'Şikâyeti reddet' }).at(mode === 'last' ? -1 : 0)!,
+      );
+      const dialog = within(screen.getByRole('dialog'));
+      await user.type(dialog.getByRole('textbox'), 'İçerik incelendi, ihlal bulunmadı.');
+      await user.click(dialog.getByRole('button', { name: 'Onayla' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      if (last) {
+        const heading = screen.getByRole('heading', { level: 1, name: 'Şikâyet kuyruğu' });
+        expect(heading).toHaveFocus();
+        expect(heading).toHaveAttribute('tabindex', '-1');
+        heading.blur();
+        expect(heading).not.toHaveAttribute('tabindex');
+      } else {
+        // Sıradaki kaydın ilk karar eylemi, gizli mobil kopya değil.
+        expect(screen.getByRole('button', { name: 'Çözüldü olarak işaretle' })).toHaveFocus();
+      }
+    });
+  }
+}
