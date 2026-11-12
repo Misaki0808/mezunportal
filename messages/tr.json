@@ -1797,7 +1797,10 @@
       "resolve": "Çözüldü olarak işaretle",
       "dismiss": "Şikâyeti reddet",
       "confirmTitle": "Şikâyet kararı onaylansın mı?",
-      "confirmDescription": "Kararın işlem kaydına eklenir."
+      "confirmDescription": "Kararın işlem kaydına eklenir.",
+      "experiences": "Deneyim şikâyetleri",
+      "emptyExperiences": "Açık deneyim şikâyeti yok.",
+      "emptyAll": "Açık şikâyet yok."
     },
     "dictionary": {
       "title": "Sözlük yönetimi",

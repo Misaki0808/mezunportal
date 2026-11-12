@@ -39,6 +39,7 @@ import { emitEvent } from './event';
 import { MY_POSTING_SELECT, projectMyPosting } from './job-postings';
 import { stageNotification } from './notification-intent';
 import { stageJobMatches } from './job-match';
+import { jobPostingReportScopeWhere } from './job-posting-report-scope';
 import { awardJobPostingInTx, withdrawJobPostingPoints } from './points';
 import { requireConsent } from './privacy';
 
@@ -221,14 +222,10 @@ export async function listJobPostingReports(
     await requireConsent(tx, adminId);
     const rows = await tx.jobPostingReport.findMany({
       where: {
-        status: parsed.status,
-        posting: {
-          targets: {
-            some: {
-              departmentId: { in: intersectDepartments(departmentIds, parsed.departmentId) },
-            },
-          },
-        },
+        ...jobPostingReportScopeWhere(
+          intersectDepartments(departmentIds, parsed.departmentId),
+          parsed.status,
+        ),
         ...idCursorWhere(parsed.cursor),
       },
       orderBy: { id: 'desc' },
