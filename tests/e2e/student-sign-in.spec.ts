@@ -6,6 +6,17 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { waitForHydratedControl, waitForHydratedForm } from './hydration';
 
+/** Bekleyen yönlendirme hesap bağlantısını keserse, idempotent gezinmeyi hedef URL ile doğrula. */
+async function openProfile(page: import('@playwright/test').Page) {
+  await page.goto('/hesap', { waitUntil: 'networkidle' });
+  const link = page.getByRole('link', { name: /^Profilim/ });
+  await expect(link).toHaveAttribute('href', '/profil');
+  await expect(async () => {
+    if (new URL(page.url()).pathname === '/hesap') await link.click();
+    await expect(page).toHaveURL(/\/profil$/, { timeout: 3_000 });
+  }).toPass({ timeout: 15_000, intervals: [500] });
+}
+
 test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async ({ page, context }) => {
   test.setTimeout(90_000);
   page.setDefaultTimeout(8_000);
@@ -144,18 +155,14 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
         where: { userId_field: { userId: user.id, field: 'LINKEDIN' } },
       }),
     ).toMatchObject({ level: 'PRIVATE' });
-    await page.goto('/hesap');
-    await page.getByRole('link', { name: /^Profilim/ }).click();
-    await expect(page).toHaveURL(/\/profil$/);
+    await openProfile(page);
     await page.getByRole('link', { name: 'Başlangıç adımlarına git' }).click();
     await expect(page).toHaveURL(/\/baslangic\?duzenle=1$/);
     await waitForHydratedControl(page, 'Devam et');
     await expect(page.getByRole('checkbox', { name: 'Yazılım geliştirme' })).toBeChecked();
     await page.getByRole('button', { name: 'Şimdilik atla' }).click();
     await expect(page.getByRole('heading', { name: 'Birlikte neyi hedefleyelim?' })).toBeVisible();
-    await page.goto('/hesap');
-    await page.getByRole('link', { name: /^Profilim/ }).click();
-    await expect(page).toHaveURL(/\/profil$/);
+    await openProfile(page);
     await page.getByRole('link', { name: 'Başlangıç adımlarına git' }).click();
     await expect(page).toHaveURL(/\/baslangic\?duzenle=1$/);
     await waitForHydratedControl(page, 'Devam et');
