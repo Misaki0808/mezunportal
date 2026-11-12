@@ -221,6 +221,12 @@ e-postaları dışındaki bildirimler kullanıcı tercihinden kapatılabilir; te
 denetlenir. Günlük işler worker çalışırken İstanbul saatine göre zamanlanır; mezun yanıtının imzası ve tek kullanımı
 sunucuda doğrulanır, sayfayı açmak yanıt sayılmaz.
 
+**Uygulama içi bildirim kutusu (`/bildirimler`).** E-posta niyeti (`NotificationIntent`) gönderilince silinir; kutu için ayrı, kalıcı
+`InAppNotification` tablosu vardır ve `stageNotification` ile AYNI işlemde yazılır (aynı olay tek kayıt). Kutu e-posta tercihinden, kotadan ve
+gönderim sonucundan bağımsızdır; kayıt yalnız tür ve ilgili kayıt kimliğini taşır, metin ve bağlantı `server/rules/inbox` kataloğundan kurulur
+(kişisel veri yok). Liste aynı tür + aynı İstanbul gününü tek satırda toplar ve güne göre sayfalanır; rozet sayısı kabukta sunucudan gelir,
+gezinmede küçük bir GET ile tazelenir (canlı bağlantı yok).
+
 ### Kullanım metrikleri
 
 Kendi `Event` tablomuz; üçüncü taraf analitik yok. Olaylar: giriş, profil eşiği, CV

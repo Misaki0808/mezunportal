@@ -245,6 +245,7 @@ export async function deleteAccount(
     });
     await tx.jobMatchDigest.deleteMany({ where: { userId } });
     await tx.notificationIntent.deleteMany({ where: { userId } });
+    await tx.inAppNotification.deleteMany({ where: { userId } });
     await tx.sessionFeedback.deleteMany({ where: { authorId: userId } });
     await tx.notificationPreference.deleteMany({ where: { userId } });
     await tx.notificationAction.deleteMany({ where: { userId } });
