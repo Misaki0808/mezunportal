@@ -34,14 +34,22 @@ describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
     mocks.count.mockResolvedValue(4);
     const shell = await render();
     expect(shell.type).toBe(AppShellClient);
-    expect(shell.props).toMatchObject({ signedIn: true, unreadNotifications: 4 });
+    expect(shell.props).toMatchObject({
+      signedIn: true,
+      canRefreshNotifications: true,
+      unreadNotifications: 4,
+    });
     expect(mocks.count).toHaveBeenCalledWith({ db: 'db' }, 'u1');
   });
 
   it('girişsizde sayım yapılmaz, sayı 0', async () => {
     mocks.actor.mockRejectedValue(new Error('oturum yok'));
     const shell = await render();
-    expect(shell.props).toMatchObject({ signedIn: false, unreadNotifications: 0 });
+    expect(shell.props).toMatchObject({
+      signedIn: false,
+      canRefreshNotifications: false,
+      unreadNotifications: 0,
+    });
     expect(mocks.count).not.toHaveBeenCalled();
   });
 
@@ -49,7 +57,11 @@ describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
     mocks.actor.mockResolvedValue({ userId: 'u1' });
     mocks.count.mockRejectedValue(new Error('veritabanı'));
     const shell = await render();
-    expect(shell.props).toMatchObject({ signedIn: true, unreadNotifications: 0 });
+    expect(shell.props).toMatchObject({
+      signedIn: true,
+      canRefreshNotifications: true,
+      unreadNotifications: 0,
+    });
   });
 });
 
@@ -57,6 +69,10 @@ it('rızası eksik kullanıcı giriş yapmış görünür ama rozet iş verisi o
   mocks.actor.mockResolvedValue({ userId: 'u1' });
   mocks.consented.mockRejectedValue(new Error('CONSENT_REQUIRED'));
   const shell = await render();
-  expect(shell.props).toMatchObject({ signedIn: true, unreadNotifications: 0 });
+  expect(shell.props).toMatchObject({
+    signedIn: true,
+    canRefreshNotifications: false,
+    unreadNotifications: 0,
+  });
   expect(mocks.count).not.toHaveBeenCalled();
 });

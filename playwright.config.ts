@@ -60,6 +60,8 @@ export default defineConfig({
       APP_URL: workerBaseUrl(index),
       DATABASE_URL: workerDatabaseUrl(index),
       E2E_NEXT_INSTANCE: String(index),
+      // Yalnız test sunucusunda pg kullanımdan kaldırma uyarısı Next hata katmanına taşınmaz.
+      NODE_OPTIONS: [process.env.NODE_OPTIONS, '--no-deprecation'].filter(Boolean).join(' '),
     },
   })),
 });
