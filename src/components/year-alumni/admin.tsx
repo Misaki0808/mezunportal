@@ -1,7 +1,8 @@
 'use client';
 import { safeClientAction } from '@/lib/safe-client-action';
-import { useState, useTransition } from 'react';
+import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { ADMIN_REASON_MIN } from '@/contracts/admin';
 import {
   awardCycleInputSchema,
   configureAwardCycleSchema,
@@ -9,7 +10,20 @@ import {
   selectYearAlumnusSchema,
   type AwardCycleView,
 } from '@/contracts/year-alumni';
-import { Button, Card, Field, Input, Modal, PageHeader, Select, Textarea } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  Field,
+  Input,
+  Modal,
+  PageHeader,
+  Select,
+  Textarea,
+  cn,
+  useAction,
+} from '@/components/ui';
+import { awardFreezeAt } from '@/server/rules/yearAlumni';
 import {
   configureAwardCycle,
   listAwardCandidates,
@@ -17,93 +31,168 @@ import {
   selectYearAlumnus,
 } from '@/server/actions/year-alumni';
 
+type Operation = 'load' | 'configure' | 'recalculate' | 'choose';
+
+/**
+ * Yılın Mezunu yönetimi. Geri bildirim tek kalıptadır (kart 207): başarı toast, hata `role="alert"`, gönderim sürerken düğme
+ * bekler. Karar penceresi her açılışta temiz başlar (önceki işlemin mesajı sızmaz); tören tarihi sebebi tarih alanının altındadır.
+ */
 export function AwardAdmin({ departments }: { departments: { id: string; name: string }[] }) {
   const t = useTranslations('yearAlumni');
-  const errors = useTranslations('errors.codes');
   const pointLabels = useTranslations('points.actions');
+  const action = useAction();
+  const hintId = useId();
   const disabled = (condition: boolean, reason: string) =>
     condition ? { disabled: true as const, disabledReason: reason } : { disabled: false as const };
   const [departmentId, setDepartment] = useState(departments[0]?.id ?? '');
   const [year, setYear] = useState(new Date().getFullYear() - 1);
   const [ceremonyDate, setCeremony] = useState('');
-  const [reason, setReason] = useState('');
+  const [recalcReason, setRecalcReason] = useState('');
+  const [decisionReason, setDecisionReason] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [cycle, setCycle] = useState<AwardCycleView | null>(null);
   const [missed, setMissed] = useState(false);
-  const [message, setMessage] = useState('');
-  const [pending, start] = useTransition();
+  const [operation, setOperation] = useState<Operation | null>(null);
+  // Sayfa düzeyi geri bildirim: bilgi (dönem yok), form hatası ve alan sebepleri. Sunucu hatası `action.error`'dadır.
+  const [notice, setNotice] = useState('');
+  const [formError, setFormError] = useState('');
+  const [ceremonyError, setCeremonyError] = useState<string>();
+  const [recalcError, setRecalcError] = useState<string>();
+  const [decisionError, setDecisionError] = useState<string>();
   const input = { departmentId, year };
-  function load() {
-    start(async () => {
-      setMessage('');
-      if (!awardCycleInputSchema.safeParse(input).success) {
-        setMessage(t('invalid'));
-        return;
-      }
-      const result = await safeClientAction(() => listAwardCandidates(input));
-      setMissed(!result.ok && result.errorCode === 'AWARD_FREEZE_MISSED');
-      if (result.ok) setCycle(result.data);
-      else {
+  const loading = (name: Operation) => action.busy && operation === name;
+
+  function resetFeedback() {
+    action.clear();
+    setNotice('');
+    setFormError('');
+    setCeremonyError(undefined);
+    setRecalcError(undefined);
+    setDecisionError(undefined);
+  }
+  function start(name: Operation) {
+    if (action.busy) return false;
+    resetFeedback();
+    setOperation(name);
+    return true;
+  }
+  function clearCycle() {
+    setCycle(null);
+    setMissed(false);
+    resetFeedback();
+  }
+
+  async function load() {
+    if (!start('load')) return;
+    if (!awardCycleInputSchema.safeParse(input).success) {
+      setFormError(t('invalid'));
+      return;
+    }
+    await action.run(() => listAwardCandidates(input), {
+      onOk: (data) => {
+        setMissed(false);
+        setCycle(data);
+      },
+      onFailure: (failure) => {
         setCycle(null);
-        setMessage(
-          result.errorCode === 'RESOURCE_NOT_FOUND' ? t('noCycle') : errors(result.errorCode),
+        setMissed(failure.errorCode === 'AWARD_FREEZE_MISSED');
+        if (failure.errorCode === 'RESOURCE_NOT_FOUND') {
+          setNotice(t('noCycle'));
+          action.clear();
+        }
+      },
+    });
+  }
+
+  async function configure() {
+    if (!start('configure')) return;
+    const parsed = configureAwardCycleSchema.safeParse({ ...input, ceremonyDate });
+    if (!parsed.success) {
+      const onlyDate = parsed.error.issues.every((issue) => issue.path[0] === 'ceremonyDate');
+      if (onlyDate) setCeremonyError(t('ceremonyRequired'));
+      else setFormError(t('invalid'));
+      return;
+    }
+    // Sunucuyla aynı kural: liste törenden 30 gün önce donar; bu an geçmişse tarih kabul edilmez.
+    if (awardFreezeAt(parsed.data.ceremonyDate).getTime() <= Date.now()) {
+      setCeremonyError(t('ceremonyTooSoon'));
+      return;
+    }
+    await action.run(() => configureAwardCycle(parsed.data), {
+      success: t('ceremonySaved'),
+      onOk: (data) => {
+        setCycle(data);
+        setMissed(false);
+      },
+      onFailure: (failure) => {
+        // Sunucu da tarihi reddedebilir (dönem zaten donmuş): sebep tarih alanının altında, genel mesaj değil.
+        if (failure.errorCode === 'VALIDATION_INVALID') {
+          setCeremonyError(t('ceremonyRejected'));
+          action.clear();
+        }
+      },
+    });
+  }
+
+  async function recalculate() {
+    if (!start('recalculate')) return;
+    const parsed = recalculateAwardCycleSchema.safeParse({ ...input, reason: recalcReason });
+    if (!parsed.success) {
+      setRecalcError(t('reasonRequired', { min: ADMIN_REASON_MIN }));
+      return;
+    }
+    await action.run(() => recalculateAwardCycle(parsed.data), {
+      success: t('recalculated'),
+      onOk: (data) => {
+        setCycle(data);
+        setRecalcReason('');
+        setMissed(false);
+      },
+    });
+  }
+
+  function openChoice(userId: string) {
+    resetFeedback();
+    setDecisionReason('');
+    setSelected(userId);
+  }
+  function closeChoice() {
+    setSelected(null);
+    resetFeedback();
+  }
+  async function choose() {
+    if (!selected || action.busy) return;
+    action.clear();
+    setDecisionError(undefined);
+    setOperation('choose');
+    const parsed = selectYearAlumnusSchema.safeParse({
+      ...input,
+      userId: selected,
+      reason: decisionReason,
+    });
+    if (!parsed.success) {
+      setDecisionError(t('reasonRequired', { min: ADMIN_REASON_MIN }));
+      return;
+    }
+    const name = cycle?.candidates.find((candidate) => candidate.userId === selected)?.name;
+    await action.run(() => selectYearAlumnus(parsed.data), {
+      success: name ? t('selectedNamed', { name }) : t('selected'),
+      onOk: async () => {
+        setSelected(null);
+        setDecisionReason('');
+        // Yenileme başarısız olsa da seçilen kişi ekranda hemen görünür (düğmeler kilitlenir, kart rozet alır).
+        setCycle((current) =>
+          current ? { ...current, selectedUserId: parsed.data.userId } : current,
         );
-      }
+        const refreshed = await safeClientAction(() => listAwardCandidates(input));
+        if (refreshed.ok) setCycle(refreshed.data);
+      },
     });
   }
-  function configure() {
-    start(async () => {
-      setMessage('');
-      const parsed = configureAwardCycleSchema.safeParse({ ...input, ceremonyDate });
-      if (!parsed.success) {
-        setMessage(t('invalid'));
-        return;
-      }
-      const result = await safeClientAction(() => configureAwardCycle(parsed.data));
-      if (result.ok) {
-        setCycle(result.data);
-        setMissed(false);
-        setMessage(t('saved'));
-      } else setMessage(errors(result.errorCode));
-    });
-  }
-  function recalculate() {
-    start(async () => {
-      setMessage('');
-      const parsed = recalculateAwardCycleSchema.safeParse({ ...input, reason });
-      if (!parsed.success) {
-        setMessage(t('invalid'));
-        return;
-      }
-      const result = await safeClientAction(() => recalculateAwardCycle(parsed.data));
-      if (result.ok) {
-        setCycle(result.data);
-        setReason('');
-        setMissed(false);
-        setMessage(t('saved'));
-      } else setMessage(errors(result.errorCode));
-    });
-  }
-  function choose() {
-    start(async () => {
-      if (!selected) return;
-      const parsed = selectYearAlumnusSchema.safeParse({ ...input, userId: selected, reason });
-      if (!parsed.success) {
-        setMessage(t('invalid'));
-        return;
-      }
-      const result = await safeClientAction(() => selectYearAlumnus(parsed.data));
-      if (!result.ok) {
-        setMessage(errors(result.errorCode));
-        return;
-      }
-      setSelected(null);
-      setReason('');
-      setMessage(t('selected'));
-      const refreshed = await safeClientAction(() => listAwardCandidates(input));
-      if (refreshed.ok) setCycle(refreshed.data);
-    });
-  }
+
+  const selectedUserId = cycle?.selectedUserId ?? null;
+  const choiceBlocked = !!cycle && (!cycle.frozenAt || !!selectedUserId);
+  const pageError = selected ? '' : formError || action.error || '';
   return (
     <div className="mx-auto max-w-4xl space-y-7 px-5 py-10">
       <PageHeader title={t('adminTitle')} description={t('adminIntro')} />
@@ -115,8 +204,7 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
               value={departmentId}
               onChange={(e) => {
                 setDepartment(e.target.value);
-                setCycle(null);
-                setMissed(false);
+                clearCycle();
               }}
             >
               {departments.map((d) => (
@@ -137,49 +225,69 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
               value={year}
               onChange={(e) => {
                 setYear(Number(e.target.value));
-                setCycle(null);
-                setMissed(false);
+                clearCycle();
               }}
             />
           )}
         </Field>
         <Button
-          {...disabled(pending || !departmentId, pending ? t('saving') : t('noDepartments'))}
-          onClick={load}
+          {...disabled(!departmentId, t('noDepartments'))}
+          loading={loading('load')}
+          onClick={() => void load()}
         >
-          {pending ? t('saving') : t('load')}
+          {t('load')}
         </Button>
-        <Field label={t('ceremony')} hint={t('freezeInfo')}>
+        <Field label={t('ceremony')} hint={t('freezeInfo')} error={ceremonyError}>
           {(props) => (
             <Input
               {...props}
               type="date"
               value={ceremonyDate}
-              onChange={(e) => setCeremony(e.target.value)}
+              onChange={(e) => {
+                setCeremony(e.target.value);
+                setCeremonyError(undefined);
+              }}
             />
           )}
         </Field>
         <Button
           variant="secondary"
-          {...disabled(pending || !departmentId, pending ? t('saving') : t('noDepartments'))}
-          onClick={configure}
+          {...disabled(!departmentId, t('noDepartments'))}
+          loading={loading('configure')}
+          onClick={() => void configure()}
         >
           {t('configure')}
         </Button>
       </Card>
-      {message && (
+      {notice && (
         <p role="status" className="text-fg">
-          {message}
+          {notice}
+        </p>
+      )}
+      {pageError && (
+        <p role="alert" className="text-danger">
+          {pageError}
         </p>
       )}
       {missed && (
         <Card className="space-y-3 p-5">
-          <Field label={t('recalculateReason')}>
+          <Field label={t('recalculateReason')} error={recalcError}>
             {(props) => (
-              <Textarea {...props} value={reason} onChange={(e) => setReason(e.target.value)} />
+              <Textarea
+                {...props}
+                value={recalcReason}
+                onChange={(e) => {
+                  setRecalcReason(e.target.value);
+                  setRecalcError(undefined);
+                }}
+              />
             )}
           </Field>
-          <Button variant="secondary" {...disabled(pending, t('saving'))} onClick={recalculate}>
+          <Button
+            variant="secondary"
+            loading={loading('recalculate')}
+            onClick={() => void recalculate()}
+          >
             {t('recalculate')}
           </Button>
         </Card>
@@ -188,6 +296,12 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
         <>
           <Card className="space-y-3 p-5">
             <p className="font-semibold">{cycle.frozenAt ? t('frozen') : t('live')}</p>
+            {/* Seçim kilitliyken sebep BİR yerde: aday kartlarındaki kapalı düğmeler buna bağlanır (kartlarda tekrarlanmaz). */}
+            {choiceBlocked && (
+              <p id={hintId} className="text-fg-muted">
+                {selectedUserId ? t('alreadySelected') : t('freezeInfo')}
+              </p>
+            )}
             {cycle.selectedNeedsReview && (
               <p role="alert" className="text-danger">
                 {t('awardNeedsReview')}
@@ -196,19 +310,22 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
             <p>{t('excluded', { count: cycle.excludedForSuspicion })}</p>
             {cycle.frozenAt && (
               <>
-                <Field label={t('recalculateReason')}>
+                <Field label={t('recalculateReason')} error={recalcError}>
                   {(props) => (
                     <Textarea
                       {...props}
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
+                      value={recalcReason}
+                      onChange={(e) => {
+                        setRecalcReason(e.target.value);
+                        setRecalcError(undefined);
+                      }}
                     />
                   )}
                 </Field>
                 <Button
                   variant="secondary"
-                  {...disabled(pending, t('saving'))}
-                  onClick={recalculate}
+                  loading={loading('recalculate')}
+                  onClick={() => void recalculate()}
                 >
                   {t('recalculate')}
                 </Button>
@@ -216,67 +333,79 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
             )}
           </Card>
           <ul className="space-y-3">
-            {cycle.candidates.map((candidate) => (
-              <li key={candidate.userId}>
-                <Card className="space-y-2 p-5">
-                  <h2 className="text-lg font-semibold">{candidate.name}</h2>
-                  <p>
-                    {t('points', { count: candidate.points })} ·{' '}
-                    {t('experiences', { count: candidate.experienceCount })} ·{' '}
-                    {t('meetings', { count: candidate.meetingCount })}
-                  </p>
-                  <ul>
-                    {candidate.breakdown.map((item) => (
-                      <li key={item.action}>
-                        {pointLabels(item.action)}: {item.points}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    variant="secondary"
-                    {...disabled(
-                      pending || !cycle.frozenAt || !!cycle.selectedUserId,
-                      pending
-                        ? t('saving')
-                        : cycle.selectedUserId
-                          ? t('selected')
-                          : t('freezeInfo'),
+            {cycle.candidates.map((candidate) => {
+              const winner = candidate.userId === selectedUserId;
+              return (
+                <li key={candidate.userId}>
+                  <Card className={cn('space-y-2 p-5', winner && 'border-success')}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold">{candidate.name}</h2>
+                      {winner && <Badge tone="success">{t('winnerBadge')}</Badge>}
+                    </div>
+                    <p>
+                      {t('points', { count: candidate.points })} ·{' '}
+                      {t('experiences', { count: candidate.experienceCount })} ·{' '}
+                      {t('meetings', { count: candidate.meetingCount })}
+                    </p>
+                    <ul>
+                      {candidate.breakdown.map((item) => (
+                        <li key={item.action}>
+                          {pointLabels(item.action)}: {item.points}
+                        </li>
+                      ))}
+                    </ul>
+                    {!winner && (
+                      <Button
+                        variant="secondary"
+                        {...(choiceBlocked
+                          ? ({ disabled: true, disabledReasonId: hintId } as const)
+                          : { disabled: false as const })}
+                        onClick={() => openChoice(candidate.userId)}
+                      >
+                        {t('choose')}
+                      </Button>
                     )}
-                    onClick={() => {
-                      setReason('');
-                      setSelected(candidate.userId);
-                    }}
-                  >
-                    {t('choose')}
-                  </Button>
-                </Card>
-              </li>
-            ))}
+                  </Card>
+                </li>
+              );
+            })}
           </ul>
           {cycle.candidates.length === 0 && <p>{t('noCandidates')}</p>}
         </>
       )}
       <Modal
         open={!!selected}
-        onClose={() => setSelected(null)}
+        onClose={closeChoice}
         title={t('confirm')}
         description={t('confirmText')}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setSelected(null)}>
+            <Button variant="secondary" onClick={closeChoice}>
               {t('cancel')}
             </Button>
-            <Button {...disabled(pending, t('saving'))} onClick={choose}>
-              {pending ? t('saving') : t('confirm')}
+            <Button loading={loading('choose')} onClick={() => void choose()}>
+              {t('confirm')}
             </Button>
           </>
         }
       >
-        <Field label={t('reason')} error={message || undefined}>
+        <Field label={t('reason')} error={decisionError}>
           {(props) => (
-            <Textarea {...props} value={reason} onChange={(e) => setReason(e.target.value)} />
+            <Textarea
+              {...props}
+              value={decisionReason}
+              onChange={(e) => {
+                setDecisionReason(e.target.value);
+                setDecisionError(undefined);
+              }}
+            />
           )}
         </Field>
+        {action.error && (
+          <p role="alert" className="text-danger">
+            {action.error}
+          </p>
+        )}
       </Modal>
     </div>
   );

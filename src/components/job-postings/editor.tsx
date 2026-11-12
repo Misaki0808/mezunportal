@@ -15,7 +15,7 @@ import {
   type SubmitJobPostingOutput,
 } from '@/contracts/job-postings';
 import type { ActionResult } from '@/contracts/result';
-import { Button, Field, Input, Select, Textarea } from '@/components/ui';
+import { Button, Field, Input, Select, Textarea, useToast } from '@/components/ui';
 import { addDays, istanbulDay } from './model';
 import { deadlineProblem } from '@/server/rules/jobPosting';
 
@@ -29,6 +29,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   const hydrated = useHydrated();
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
+  const fieldText = useTranslations('ui.field');
+  const toast = useToast();
   const tagLabels = useTranslations('profileTags');
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -53,7 +55,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   const [targetGrades, setTargetGrades] = useState<number[]>(initial?.targetGrades ?? []);
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
   const summary = useRef<HTMLDivElement>(null);
   const today = istanbulDay();
   const max = addDays(today, JOB_POSTING_MAX_DAYS);
@@ -80,7 +81,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   }
   function saveDraft(thenSubmit: boolean) {
     setError('');
-    setNotice('');
     if (!departmentId) {
       showError(t('formSummary'), ['departmentId']);
       return;
@@ -109,7 +109,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
       }
       setId(result.data.id);
       if (!thenSubmit) {
-        setNotice(t('saved'));
+        toast.show({ message: t('saved'), tone: 'success' });
         return;
       }
       const sent = await submit({ postingId: result.data.id }).catch(
@@ -119,6 +119,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
         showError(errors(sent.errorCode));
         return;
       }
+      // Toast kök düzende yaşar: yönlendirmeden sonra da görünür.
+      toast.show({ message: t('submittedToast'), tone: 'success' });
       router.push('/ilanlarim');
       router.refresh();
     });
@@ -198,11 +200,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
             </ul>
           )}
         </div>
-      )}
-      {notice && (
-        <p role="status" className="mb-5 rounded-control bg-primary-soft p-4 text-on-primary-soft">
-          {notice}
-        </p>
       )}
       <section className="space-y-5 rounded-card border border-border bg-surface p-5 sm:p-7">
         <h2 className="text-xl font-bold">
@@ -299,7 +296,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
             </label>
             <Field
               label={t('deadline')}
-              hint={t('deadlineHint')}
+              hint={`${t('deadlineHint')} ${fieldText('dateUnset')}`}
               required
               error={bad('deadlineOn')}
             >

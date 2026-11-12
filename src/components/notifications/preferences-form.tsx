@@ -8,7 +8,7 @@ import {
   type SetNotificationPreferencesInput,
 } from '@/contracts/notifications';
 import type { ActionResult } from '@/contracts/result';
-import { Button, PageHeader, Switch } from '@/components/ui';
+import { Button, PageHeader, Switch, useToast } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 type Props = {
@@ -21,7 +21,7 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
   const [items, setItems] = useState(initial.items);
   const [saved, setSaved] = useState(initial.items);
   const [pending, setPending] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const toast = useToast();
   const [error, setError] = useState<ErrorCode>();
   const locked = useRef(false);
   const dirty = items.some((item, index) => item.enabled !== saved[index]?.enabled);
@@ -37,7 +37,6 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
     locked.current = true;
     setPending(true);
     setError(undefined);
-    setSuccess(false);
     try {
       const result = await save(parsed.data);
       if (!result.ok) {
@@ -46,7 +45,7 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
       }
       setItems(result.data.items);
       setSaved(result.data.items);
-      setSuccess(true);
+      toast.show({ message: t('saved'), tone: 'success' });
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -80,7 +79,6 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
                 checked={item.enabled}
                 disabled={item.mandatory || pending}
                 onChange={(e) => {
-                  setSuccess(false);
                   setItems((old) =>
                     old.map((row) =>
                       row.type === item.type ? { ...row, enabled: e.target.checked } : row,
@@ -92,11 +90,6 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
           ))}
         </ul>
         {dirty && <p className="mt-4 text-base text-fg-muted">{t('unsaved')}</p>}
-        {success && (
-          <p role="status" className="mt-4 text-on-success-soft">
-            {t('saved')}
-          </p>
-        )}
         {error && (
           <p role="alert" className="mt-4 text-danger">
             {errors(error)}

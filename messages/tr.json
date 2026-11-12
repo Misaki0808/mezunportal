@@ -349,7 +349,8 @@
     },
     "field": {
       "required": "zorunlu",
-      "toggleHelp": "Açıklamayı göster ya da gizle"
+      "toggleHelp": "Açıklamayı göster ya da gizle",
+      "dateUnset": "Gri görünüyorsa henüz seçmedin."
     },
     "tag": {
       "remove": "{label} etiketini kaldır"
@@ -783,7 +784,7 @@
       "cancel": "Vazgeç",
       "save": "Kaydet",
       "saving": "Kaydediliyor…",
-      "saved": "Kaydedildi.",
+      "saved": "Profilin güncellendi.",
       "fromCv": "CV'den",
       "manual": "Elle",
       "edited": "Düzeltildi",
@@ -2102,6 +2103,11 @@
     "adminDescription": "Etkinlik oluştur, başvuruları incele ve yayınlanan buluşmaları yönet.",
     "presentDescription": "Katılımcıların okutabilmesi için QR kodunu veya altı haneli kodu göster.",
     "reasonHint": "İşlem gerekçesi en az 3 karakter olmalı.",
+    "dateTimeHint": "Tarihi ve saati seç. Gri görünüyorsa henüz seçmedin.",
+    "created": "Etkinliğin incelemeye gönderildi.",
+    "decidedPublished": "Etkinlik yayınlandı.",
+    "decidedRejected": "Etkinlik reddedildi.",
+    "decidedCancelled": "Etkinlik iptal edildi.",
     "reviewConfirm": "Bu etkinlik için verdiğin karar işlem kaydına yazılacak.",
     "pendingTitle": "Onay bekleyenler",
     "pendingEmpty": "İncelenecek etkinlik yok",
@@ -2979,6 +2985,8 @@
     "reject": "Reddet",
     "reason": "Ret gerekçesi",
     "confirm": "Onayla",
+    "publishText": "İlan yayımlanır ve paylaşan kişiye bildirim gider.",
+    "rejectText": "Yazdığın gerekçe ilanı paylaşan kişiye gösterilir.",
     "status": {
       "DRAFT": "Taslak",
       "PENDING": "İncelemede",
@@ -3021,6 +3029,7 @@
     "compactTitle": "Staj ve iş ilanları",
     "searchPlaceholder": "İlan ara",
     "applyFilters": "Süzgeçleri uygula",
+    "submittedToast": "İlanın incelemeye gönderildi.",
     "reportTitle": "Bu ilanı şikâyet et",
     "reportDescription": "İlanı neden şikâyet ettiğini seç. Kimliğin ilanı paylaşan kişiyle paylaşılmaz.",
     "reportReason": "Şikâyet nedeni",
@@ -3256,6 +3265,15 @@
     "recalculateReason": "Yeniden hesaplama gerekçesi",
     "noCandidates": "Bu dönemde uygun aday bulunamadı.",
     "selected": "Yılın mezunu seçildi.",
+    "selectedNamed": "{name} yılın mezunu seçildi.",
+    "winnerBadge": "Bu yılın mezunu",
+    "alreadySelected": "Bu dönem için Yılın Mezunu zaten seçildi.",
+    "ceremonySaved": "Tören tarihi kaydedildi.",
+    "ceremonyRequired": "Tören tarihini seç.",
+    "ceremonyTooSoon": "Tören tarihi en az 30 gün sonra olmalı.",
+    "ceremonyRejected": "Bu tarih kaydedilemedi: tören en az 30 gün sonra olmalı ya da bu dönemin listesi zaten dondurulmuş.",
+    "recalculated": "Aday listesi yeniden hesaplandı.",
+    "reasonRequired": "Gerekçeyi en az {min} karakterle yaz.",
     "confirm": "Ödül kararını onayla",
     "confirmText": "Bu mezunu yılın mezunu seçmek üzeresin. Karar işlem kaydına yazılır.",
     "cancel": "Vazgeç",

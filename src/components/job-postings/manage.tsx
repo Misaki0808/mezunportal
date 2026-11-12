@@ -323,6 +323,9 @@ export function PostingModeration({
         open={!!choice}
         onClose={() => setChoice(undefined)}
         title={t(choice?.decision === 'REJECT' ? 'reject' : 'publish')}
+        description={
+          choice ? t(choice.decision === 'REJECT' ? 'rejectText' : 'publishText') : undefined
+        }
         footer={
           <>
             <Button
