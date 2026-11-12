@@ -4,6 +4,7 @@ import { applyCvSchema, parsedCvSchema } from '@/contracts/cv';
 import { cvKit, cvUser, pdfForm, skillCount } from '@/test/cv';
 import { createTestPrisma } from '@/test/db';
 import { createFakeLlm, LlmError } from '../external/llm';
+import { withCvTextRedaction } from '../external/pdf-text';
 import { applyCv, discardCv, getCvReview, uploadCv } from './cv';
 import { processCvParse } from './cv-parse';
 import { normalizeName } from '../rules/dictionary';
@@ -117,6 +118,9 @@ it('eski ayrıştırma denemesinin geç hatası yeni PARSED sonucunun dosyasın�
     llm: {
       provider: 'reviewer',
       async parseCv() {
+        throw new Error('Ham PDF gerçek sağlayıcıya gönderilemez');
+      },
+      async parseRedactedCv() {
         calls++;
         if (calls === 1) {
           started.resolve();
@@ -126,6 +130,7 @@ it('eski ayrıştırma denemesinin geç hatası yeni PARSED sonucunun dosyasın�
         return { skills: ['SQL'] };
       },
     },
+    pdfTextExtractor: withCvTextRedaction({ kind: 'real', extract: async () => 'SQL' }),
   });
   const upload = await uploadCv(kit.deps, user.actor, pdfForm());
   const first = processCvParse(kit.deps, upload.cvUploadId, { retryCount: 0, retryLimit: 0 });
