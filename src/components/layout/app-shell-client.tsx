@@ -64,11 +64,13 @@ export function AppShellClient({
   children,
   showAdmin = false,
   signedIn = false,
+  canRefreshNotifications = false,
   unreadNotifications = 0,
 }: {
   children: ReactNode;
   showAdmin?: boolean;
   signedIn?: boolean;
+  canRefreshNotifications?: boolean;
   /** Okunmamış bildirim sayısı (üst sınırlı); yalnız oturum açıkken anlamlıdır. */
   unreadNotifications?: number;
 }) {
@@ -156,7 +158,13 @@ export function AppShellClient({
             {t('signIn')}
           </Link>
         )}
-        {signedIn && <NotificationBell initial={unreadNotifications} layout="header" />}
+        {signedIn && (
+          <NotificationBell
+            initial={unreadNotifications}
+            layout="header"
+            refreshEnabled={canRefreshNotifications}
+          />
+        )}
       </header>
 
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col gap-6 border-r border-border bg-surface p-4 lg:flex">
@@ -178,7 +186,11 @@ export function AppShellClient({
             ))}
             {signedIn && (
               <li>
-                <NotificationBell initial={unreadNotifications} layout="side" />
+                <NotificationBell
+                  initial={unreadNotifications}
+                  layout="side"
+                  refreshEnabled={canRefreshNotifications}
+                />
               </li>
             )}
             {showAdmin && (
