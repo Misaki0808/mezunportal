@@ -53,7 +53,7 @@ export function PostingContactForm({
           return;
         }
         void action.run(() => send({ jobPostingId: postingId, fields, message }), {
-          success: t('sent'),
+          success: t('sentToast'),
           onOk: () => setSent(true),
           onFailure: (failure) => setError(errors(failure.errorCode)),
         });

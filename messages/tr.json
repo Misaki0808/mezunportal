@@ -1436,6 +1436,7 @@
       "messageHelp": "Neden iletişim kurmak istediğini kısaca anlat. En fazla {max} karakter.",
       "send": "Talep gönder",
       "sent": "Talebin gönderildi. Yanıtı Gönderilen kutusundan izleyebilirsin.",
+      "sentToast": "Talebin gönderildi.",
       "sendDone": "Taleplerime git",
       "notePlaceholder": "Örneğin, staj deneyimin hakkında danışmak istiyorum.",
       "requestableHelp": "Bir alan zaten üyelere açıksa veya sahibi paylaşımı kapattıysa o alan için talep gönderilemez.",

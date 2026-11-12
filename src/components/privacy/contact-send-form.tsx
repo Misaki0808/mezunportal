@@ -46,7 +46,7 @@ export function ContactSendForm({
           void form.run(
             () => sendContactRequest(input),
             () => setSent(true),
-            t('sent'),
+            t('sentToast'),
           );
       }}
     >
