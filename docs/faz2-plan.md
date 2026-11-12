@@ -1,6 +1,6 @@
-# Faz 2 planı — Fırsatlar, mevcut veriden değer, rehberlik ve tanınma (TASLAK)
+# Faz 2 planı — Fırsatlar, mevcut veriden değer, rehberlik ve tanınma
 
-Durum: **TASLAK, PM incelemesinde** · Yazıldı: 2026-11-08 · Kaynak: `BACKLOG.md` “Ertelenmiş — Faz 2” (P2-01…P2-13),
+Durum: **Tamamlandı** · 2026-11-12 · kapanış paketi: telefon test listesi (`faz2-telefon-testi.md`/`.html`, repo dışı `pm-handoff/faz2-kapanis/`) ve bu belgenin §12 kapanış notu · Yazıldı: 2026-11-08 · Kaynak: `BACKLOG.md`'nin eski “Ertelenmiş — Faz 2” listesi (P2-01…P2-13; Git geçmişinde),
 `README.md` “Kapsam”, `docs/faz1-plan.md` D-tablosu, `docs/architecture.md`, `docs/data.md`, koddaki mevcut modeller.
 
 Bu belge Faz 2'nin **tek hedefini** ve ona giden **on dört adımı** tanımlar. `docs/faz1-plan.md` ile aynı çalışma
@@ -321,3 +321,51 @@ Canlı sohbet/websocket · chatbot · ayrı mobil uygulama · konaklama · döne
 **LinkedIn kazıma** (D17). Faz 2'de ayrıca: platform içi **başvuru gönderme/özgeçmiş iletme** (başvuru dış bağlantı ya da mezunla
 iletişimle yapılır), ücretli ya da öne çıkarılmış ilan, yapay zekâ ile ilan/aday eşleştirme (D23), diğer fakülte ve üniversitelere
 açılma (Faz 3), kariyer yolu haritası ve doğal dille arama (Faz 3 fikirleri).
+
+## 12. Kapanış notu — plan ↔ yapılan (2026-11-12)
+
+İşaretler: ✓ yapıldı · ◐ kısmen ya da bilinçli sapma · → bilinçli ertelendi · ✗ yapılmadı. PR numaraları `main`'e birleşen PR'lardır.
+**Doğrulama sınırı:** her adımın Kabul satırını PR kapanış kayıtlarına, inceleme sonuçlarına, kodda şema/rota/test varlığına (14 adımın hepsinin ekranı, hizmeti ve
+testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümleyi baştan yeniden test etmedim. Kapı sonuçları kapanış raporundadır (repo dışı).
+
+### 12.1 Plan adımları
+
+| Adım | PR | Durum | Not |
+|---|---|---|---|
+| P2-04 Mezun staj ilanları | #62, #65, #69, #111 | ✓ | Yazma, moderasyon, 60 gün sınırı ve kendiliğinden kapanma, ilan puanı (7 gün gecikmeli, ayda 3), arama, hız sınırı, görünürlük K-07 ✓. İlan şikâyeti ekranları da tamam (kart 216, #111): ilan sayfasında kullanıcının "Şikâyet et" düğmesi ve bölüm yöneticisinin şikâyet kuyruğu. |
+| P2-05 İlan eşleştirme | #67, #69, #115 | ✓ | Saf kural, outbox, günlük ve yedi günlük e-posta sınırı, "Sana uyan ilanlar" paneli, "Neden sana uygun?", ilan sahibine yalnız sayı ✓. Uygulama içi bildirim kutusu (`/bildirimler`: gün başlıklı gruplu liste, zil rozeti, tek dokunuşla ve toplu okundu, sayfalama) #115 ile tamam (kart 217) |
+| P2-06 Ters yönlü arama | #66 | ✓ | Rızalı görünürlük, işe alım beyanlı mezun, maskeli kart, hız sınırı; D7 çapraz kaynak yan kanalı kapatıldı. Rıza metninin hukuki onayı kullanıcıda (⏸ → PILOT-LEGAL) |
+| P2-03 Referans akışı | #68 | ✓ | Üç taraflı onay, "referansla kabul", gecikmeli puan, ikili tavan, şüphe kuralları |
+| P2-09 Şirket sayfaları | #70 | ✓ | Puansız, k ≥ 3, anonim yazar sızıntı testi, şirket birleştirme |
+| P2-10 Mülakat soru bankası | #71 | ◐ | Türetilmiş, yinelenen birleştirme, kimlik denetimi ✓. **Pozisyon süzgeci ve "kaydet/çalış" yapılmadı** (PM kararı, kart 151: deneyimde pozisyon alanı yok, anonim deneyimde yarı tanımlayıcı riski) → Faz 3 |
+| P2-11 Staj başvuru takvimi | #72 | ✓ | `appliedMonth`, k ≥ 3, takip ve ay başı hatırlatma |
+| P2-07 Beceri açığı | #73 | ◐ | Küme farkı, k ≥ 5, bantlı sayılar ✓. Hedef, plandaki `GOAL` etiketi yerine sözlükten seçilen unvandır (PM kararı, kart 155) |
+| P2-08 Seçmeli ders rehberi | #79 | ✓ | 89 dersin tamamı (kullanıcının resmî listesi; hoca onayı koşulu kullanıcı kararıyla kalktı), k ≥ 3, en çok 5 işaret |
+| P2-01 Yılın Mezunu ve LinkedIn rozeti | #74 | ✓ | Akademik yıl, dondurma, bölüm kararı, rızalı herkese açık doğrulama sayfası, LinkedIn bağlantısı (API yok). Kurum sayfası/kimliği kullanıcıda (⏸) |
+| P2-02 Ayın mezunu | #75 | ◐ | Hikâye, rıza, moderasyon, ayda bir seçim, ana sayfa kartı, arşiv ✓; uzak fotoğraf yok, yalnız baş harf avatar (PM kararı; yerel fotoğraf Faz 3) |
+| P2-12 Etkinlik modülü | #77 | ✓ | Onaylı etkinlik, kayıt, QR/6 haneli kod (2 dk), gecikmeli puan, kod deneme sınırı; QR 390'da okunur (R1 ölçümü, 203) |
+| P2-13 Aylık özet e-postası | #76 | ✓ | Kural, outbox, önizleme, imzalı çıkış; Mailpit'te özet iletileri görülüyor |
+| P2-14 Sertleştirme ve kullanıcı testine hazırlık | #85, #88, #90 | ◐ | Deneme verisi, güvenlik/veri belgeleri, geri alma tablosu, performans, etkinlik puanı geri hesabı, e2e ve erişilebilirlik turu, deneme rehberi ve bulgu şablonu ✓. Kapanış paketinin hoca ve teknik rapor PDF'leri **üretilmedi** (kullanıcı kararı: "hocaya çoktan rapor gönderdik") |
+
+### 12.2 Yol boyunca eklenenler
+
+- **Marka ve arayüz:** İris + Mercan palet ve koyu tema (#57), tanıtım sayfası ve markalama (#59, #80, #83), masaüstünde tam genişlik ve çok geniş ekran ölçeği (#105, #107), UI cila ve ekran cilası (#64, #95), metin turu (#89), mobil tur ve puan özeti (#91, #92),
+  e-posta markalaması (#94), erişilebilirlik turu ve düzeltmeleri (#90, #97).
+- **Güvenlik ve gizlilik:** SSS kimlik denetimi düzeltmesi (#58), zorunlu onay kapısı merkezileştirme (#61), D7 çapraz kaynak yan kanalının kapatılması ve ilan görünürlüğü (#66, #69),
+  LinkedIn saklama ve hikâye gizliliği (#87), görüşme formu 404 (#93), altı giriş gerektiren ayrıntı rotasında gerçek 404 (#106).
+- **Yeni yetenekler:** LinkedIn profil PDF içe aktarma (#82), gerçek PDF metin çıkarıcı (#112) ve sağlayıcıya gitmeden önce yerel kişisel veri maskeleme (#113, #116; gerçek sağlayıcı yok, K-04), gerçek Google Takvim/Meet adaptörü (#84; anahtarlar gelince açılır), SSS ekranları.
+- **Yönetim ve kullanım:** yönetim kuyruklarında gerekçe, odak ve bekleyen sayılar (#109, #117), kullanım hissi ve ortak geri bildirim kalıbı (#110, #114), ilan şikâyeti (#111), uygulama içi bildirim kutusu (#115).
+- **Altyapı ve test:** süreç/işçi temizliği (#63), CI az ve öz (#81), yük altı test payı ve `test:gate` (#86, #88, #102), küçük borçlar (#96), Safari turu ve kaydırma kilidi (#99), Safari diyalog Tab sırası (#104), ortak e2e girişi (#106), test düzeneği küçük borçları (#108).
+- **Deneme turu:** deneme rehberi provası ve düzeltmesi (kart 203, #101).
+
+### 12.3 Bilinçli ertelenenler ve nereye
+
+| Kalem | Nereye |
+|---|---|
+| Soru bankasında pozisyon süzgeci, "kaydet/çalış" | Faz 3 fikirleri (`BACKLOG.md`) |
+| Yerel profil fotoğrafı (ayın mezunu) | Faz 3 fikirleri (`BACKLOG.md`) |
+| Stres hacminde arama/soru bankası, `test:gate` OOM kalıbı ve diğer teknik borç | `BACKLOG.md` TD-022, TD-023, TD-024, TD-026, TD-027 |
+| Rıza metinlerinin hukuki okuması; LinkedIn kurum kimliği; Gemini ve Google Cloud anahtarları; platform hesabı | `BACKLOG.md` "Dış bağımlılık bekleyenler" (kullanıcı) ve PILOT-LEGAL |
+
+**Sayım:** 14 adımın 10'u ✓ (P2-04, P2-05, P2-06, P2-03, P2-09, P2-11, P2-08, P2-01, P2-12, P2-13), 4'ü ◐ (P2-10, P2-07, P2-02, P2-14); ✗ yok. Plandan sapmalar:
+soru bankası pozisyon süzgeci, hedef unvanın sözlükten seçilmesi, uzak fotoğraf yerine baş harf, rapor PDF'lerinin üretilmemesi.
