@@ -376,12 +376,10 @@ it.each(['PUBLISH', 'REJECT'] as const)(
       this.removeAttribute('open');
     };
     const { PostingModeration } = await import('./manage');
-    const review = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        data: { postingId: 'job-1', status: decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED' },
-      });
+    const review = vi.fn().mockResolvedValue({
+      ok: true,
+      data: { postingId: 'job-1', status: decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED' },
+    });
     const { user } = renderWithToasts(
       <PostingModeration
         initial={{
