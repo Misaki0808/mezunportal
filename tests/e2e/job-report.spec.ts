@@ -88,6 +88,7 @@ test('öğrenci ilanı bildirir, yönetici kaldırır ve ilanın listeden kalkt�
     await dialog.getByLabel(/Karar gerekçesi/).fill('Yanıltıcı ilan tespit edildi.');
     await dialog.getByRole('button', { name: 'Onayla' }).click();
     await expect(item).toHaveCount(0);
+    await expect(admin.getByRole('heading', { name: 'İlan şikâyetleri' })).toBeFocused();
     const ownerAfter = await owner.goto('/ilanlarim');
     ownerViews.push(await ownerAfter!.text());
     await owner.screenshot({

@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueueFocus } from './use-queue-focus';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -20,6 +21,7 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
   const [error, setError] = useState<ErrorCode>();
   const [notice, setNotice] = useState(false);
 
+  const { rootRef, complete } = useQueueFocus(pending);
   function close() {
     if (pending) return;
     setChoice(undefined);
@@ -46,6 +48,7 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
       setError(result.errorCode);
       return;
     }
+    complete(choice.id);
     setItems((current) =>
       current.filter(
         (item) =>
@@ -71,8 +74,10 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
     setCursor(result.data.nextCursor);
   }
   return (
-    <section className="mt-10 space-y-4">
-      <h2 className="text-xl font-semibold">{t('reportQueue')}</h2>
+    <div ref={rootRef} className="mt-10 space-y-4">
+      <h2 data-queue-heading className="text-xl font-semibold">
+        {t('reportQueue')}
+      </h2>
       {notice && <p role="status">{t('reportDecisionDone')}</p>}
       {error && !choice && (
         <p role="alert" className="text-danger">
@@ -84,7 +89,11 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
       ) : (
         <ul className="space-y-4">
           {items.map((item) => (
-            <li key={item.id} className="rounded-card border border-border bg-surface p-4">
+            <li
+              key={item.id}
+              data-queue-row={item.id}
+              className="rounded-card border border-border bg-surface p-4"
+            >
               <h3 className="break-words font-semibold">{item.postingTitle}</h3>
               <p className="mt-2 whitespace-pre-wrap break-words">{item.reason}</p>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -95,6 +104,7 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
                   {t('open')}
                 </Link>
                 <Button
+                  data-queue-action
                   variant="secondary"
                   onClick={() => {
                     setError(undefined);
@@ -105,6 +115,7 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
                   {t('reportDismiss')}
                 </Button>
                 <Button
+                  data-queue-action
                   variant="danger-outline"
                   onClick={() => {
                     setError(undefined);
@@ -156,6 +167,6 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
           </p>
         )}
       </Modal>
-    </section>
+    </div>
   );
 }

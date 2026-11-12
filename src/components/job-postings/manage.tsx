@@ -4,6 +4,7 @@ import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { reviewJobPostingSchema } from '@/contracts/job-postings';
 import type {
   CloseJobPostingOutput,
@@ -227,6 +228,7 @@ export function PostingModeration({
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
   const [pending, start] = useTransition();
+  const { rootRef, complete } = useQueueFocus(pending);
   function loadMore() {
     if (!cursor) return;
     start(async () => {
@@ -260,6 +262,7 @@ export function PostingModeration({
         setError(errors(result.errorCode));
         return;
       }
+      complete(choice.id);
       setItems((all) => all.filter((item) => item.id !== choice.id));
       setChoice(undefined);
       router.refresh();
@@ -267,6 +270,7 @@ export function PostingModeration({
   }
   return (
     <div
+      ref={rootRef}
       data-hydrated={hydrated ? 'true' : undefined}
       className="mx-auto max-w-5xl px-4 py-8 sm:px-6"
     >
@@ -274,7 +278,11 @@ export function PostingModeration({
       {items.length ? (
         <ul className="grid gap-4">
           {items.map((item) => (
-            <li key={item.id} className="min-w-0 rounded-card border border-border bg-surface p-5">
+            <li
+              key={item.id}
+              data-queue-row={item.id}
+              className="min-w-0 rounded-card border border-border bg-surface p-5"
+            >
               <p className="break-words text-sm text-fg-muted">
                 {item.organizationName} · {t('reviewedBy', { name: item.author.displayName })}
               </p>
@@ -285,6 +293,7 @@ export function PostingModeration({
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Button
+                  data-queue-action
                   onClick={() => {
                     setError('');
                     setChoice({ id: item.id, decision: 'PUBLISH' });
@@ -293,6 +302,7 @@ export function PostingModeration({
                   {t('publish')}
                 </Button>
                 <Button
+                  data-queue-action
                   variant="danger-outline"
                   onClick={() => {
                     setReason('');

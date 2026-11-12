@@ -365,3 +365,41 @@ it('mobil süzgeçler alt sayfada uygulanır ve arama metni korunur', async () =
   expect(form).toHaveAttribute('action', '/ilanlar');
   expect(new FormData(form as HTMLFormElement).get('q')).toBe('tasarım');
 });
+
+it.each(['PUBLISH', 'REJECT'] as const)(
+  'B2: %s kararı odağı sonraki ilana, son kararda başlığa taşır',
+  async (decision) => {
+    HTMLDialogElement.prototype.showModal = function () {
+      this.setAttribute('open', '');
+    };
+    HTMLDialogElement.prototype.close = function () {
+      this.removeAttribute('open');
+    };
+    const { PostingModeration } = await import('./manage');
+    const review = vi.fn().mockResolvedValue({
+      ok: true,
+      data: { postingId: 'job-1', status: decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED' },
+    });
+    const { user } = renderWithToasts(
+      <PostingModeration
+        initial={{
+          items: [pendingItem, { ...pendingItem, id: 'job-2', title: 'İkinci ilan' }],
+          nextCursor: null,
+        }}
+        review={review}
+        list={vi.fn()}
+      />,
+    );
+    const action = decision === 'PUBLISH' ? 'Yayımla' : 'Reddet';
+    await user.click(screen.getAllByRole('button', { name: action })[0]!);
+    if (decision === 'REJECT')
+      await user.type(screen.getByLabelText(/Ret gerekçesi/), 'Geçerli ret gerekçesi');
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Yayımla' })).toHaveFocus());
+    await user.click(screen.getByRole('button', { name: 'Yayımla' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: messages.jobs.moderationTitle })).toHaveFocus(),
+    );
+  },
+);
