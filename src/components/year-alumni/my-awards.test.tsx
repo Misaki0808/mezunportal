@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import messages from '../../../messages/tr.json';
 import type { MyAward } from '@/contracts/year-alumni';
@@ -21,6 +21,22 @@ const award: MyAward = {
   verificationUrl: null,
   linkedinUrl: null,
 };
+
+const publicAward: MyAward = {
+  ...award,
+  isPublic: true,
+  verificationUrl: 'https://mezun.example/dogrula/ABC123',
+  linkedinUrl: 'https://www.linkedin.com/profile/add?name=odul',
+};
+const SHARE_TEXT =
+  'İstanbul Üniversitesi Yönetim Bilişim Sistemleri bölümünde 2026 akademik yılı Yılın Mezunu ödülünü aldım. Doğrula: https://mezun.example/dogrula/ABC123';
+
+function clipboard(value: unknown) {
+  Object.defineProperty(navigator, 'clipboard', { value, configurable: true });
+}
+afterEach(() => {
+  delete (navigator as unknown as { clipboard?: unknown }).clipboard;
+});
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -55,5 +71,46 @@ describe('MyAwards: yayın tercihi geri bildirimi', () => {
     expect(await screen.findByText(messages.errors.codes.RESOURCE_NOT_FOUND)).toBeInTheDocument();
     expect(toggle).toBeChecked();
     expect(screen.queryByText(messages.yearAlumni.saved)).toBeNull();
+  });
+});
+
+describe('MyAwards: kopyalama düğmeleri', () => {
+  it('pano kapalıyken bağlantı düğmesi kopyalama cümlesini ve seçili bağlantı alanını gösterir, form hatası cümlesi çıkmaz', async () => {
+    const { user } = renderWithToasts(<MyAwards awards={[publicAward]} />);
+    clipboard(undefined);
+    await user.click(screen.getByRole('button', { name: messages.yearAlumni.copy }));
+    expect(await screen.findByText(messages.yearAlumni.copyFailed)).toHaveAttribute(
+      'role',
+      'alert',
+    );
+    expect(screen.queryByText(messages.yearAlumni.invalid)).toBeNull();
+    const field = screen.getByRole('textbox', { name: messages.yearAlumni.copyFieldLabel });
+    expect(field).toHaveValue(publicAward.verificationUrl);
+    expect(field).toHaveAttribute('readonly');
+  });
+
+  it('pano kapalıyken paylaşım düğmesi metni çok satırlı alanda gösterir', async () => {
+    const { user } = renderWithToasts(<MyAwards awards={[publicAward]} />);
+    clipboard(undefined);
+    await user.click(screen.getByRole('button', { name: messages.yearAlumni.share }));
+    expect(await screen.findByText(messages.yearAlumni.shareFailed)).toHaveAttribute(
+      'role',
+      'alert',
+    );
+    expect(screen.getByRole('textbox', { name: messages.yearAlumni.shareFieldLabel })).toHaveValue(
+      SHARE_TEXT,
+    );
+    expect(screen.queryByText(messages.yearAlumni.invalid)).toBeNull();
+  });
+
+  it('pano açıkken her düğme kendi metnini kopyalar ve kendi toast metnini gösterir', async () => {
+    const { user } = renderWithToasts(<MyAwards awards={[publicAward]} />);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    clipboard({ writeText });
+    await user.click(screen.getByRole('button', { name: messages.yearAlumni.copy }));
+    expect(await screen.findByText(messages.yearAlumni.copied)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: messages.yearAlumni.share }));
+    expect(await screen.findByText(messages.yearAlumni.shareCopied)).toBeInTheDocument();
+    expect(writeText.mock.calls).toEqual([[publicAward.verificationUrl], [SHARE_TEXT]]);
   });
 });
