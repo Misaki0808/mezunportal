@@ -1,8 +1,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import { isolationRunId, workerBaseUrl, workerDatabaseUrl } from '../../tests/e2e/isolation';
 
 afterEach(() => vi.unstubAllEnvs());
 describe('E2E geçici ortam güvenliği', () => {
+  it('her spec işçi izolasyon fikstürünü kullanır', () => {
+    const directory = path.join(process.cwd(), 'tests/e2e');
+    const specs = readdirSync(directory).filter((file) => file.endsWith('.spec.ts'));
+    expect(specs.length).toBeGreaterThan(0);
+    for (const file of specs) {
+      const source = readFileSync(path.join(directory, file), 'utf8');
+      expect(source, file).toMatch(/from ['"]\.\/fixture['"]/u);
+      expect(source, file).not.toMatch(
+        /import\s*\{[^}]*\btest\b[^}]*\}\s*from\s*['"]@playwright\/test['"]/su,
+      );
+    }
+  });
   function local() {
     vi.stubEnv('APP_ENV', 'test');
     vi.stubEnv('E2E_ISOLATION_RUN', 'abcdef123456');
