@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react';
 /** Başarılı karardan sonra kaldırılan açıcı yerine sıradaki kaydın eylemine devam eder. */
 export function useQueueFocus(busy = false) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const clearTemporaryFocus = useRef<(() => void) | null>(null);
+  useEffect(() => () => clearTemporaryFocus.current?.(), []);
   const waiting = useRef<{ opener: HTMLElement | null; nextIds: string[] } | null>(null);
   function complete(id: string) {
     const rows = Array.from(
@@ -34,7 +36,17 @@ export function useQueueFocus(busy = false) {
       root.querySelector<HTMLElement>('h1,[data-queue-heading]') ??
       root.closest('main')?.querySelector<HTMLElement>('h1') ??
       root;
-    if (!action) target.setAttribute('tabindex', '-1');
+    if (!action && !target.hasAttribute('tabindex')) {
+      clearTemporaryFocus.current?.();
+      target.setAttribute('tabindex', '-1');
+      const clear = () => {
+        target.removeEventListener('blur', clear);
+        if (target.getAttribute('tabindex') === '-1') target.removeAttribute('tabindex');
+        if (clearTemporaryFocus.current === clear) clearTemporaryFocus.current = null;
+      };
+      clearTemporaryFocus.current = clear;
+      target.addEventListener('blur', clear, { once: true });
+    }
     target.focus();
     waiting.current = null;
   });
