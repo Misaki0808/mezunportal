@@ -38,6 +38,7 @@ describe('gerçek sağlayıcı sınırı', () => {
       expect(request.text).toContain('İstanbul Üniversitesi');
       expect(request.text).toContain('SQL');
       expect(request).not.toHaveProperty('pdf');
+      expect(request).not.toHaveProperty('ownerName');
     },
   );
   it('maskeleyici yoksa normal CV de gerçek sağlayıcıya kapalıdır', async () => {
