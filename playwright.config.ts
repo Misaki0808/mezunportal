@@ -40,6 +40,13 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { APP_ENV: 'test', APP_URL: baseURL },
+    env: {
+      APP_ENV: 'test',
+      APP_URL: baseURL,
+      // pg'nin "client.query() already executing" uyarısı (BACKLOG TD-027, Prisma 7 kaynaklı) dev sunucudan tarayıcıya iletilir ve
+      // Next hata katmanı 390 px'te alt gezinmeyi örten "1 Issue" rozeti çizer (tek spec koşusunda tıklamayı keser). Yalnız bu test
+      // sunucusunda Node kullanımdan kaldırma uyarıları kapalıdır; normal dev ve birim/DB koşuları uyarıyı görmeye devam eder.
+      NODE_OPTIONS: [process.env.NODE_OPTIONS, '--no-deprecation'].filter(Boolean).join(' '),
+    },
   },
 });
