@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useQueueFocus } from './use-queue-focus';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { resolveJobPostingReportSchema, type JobPostingReportPage } from '@/contracts/job-postings';
@@ -12,6 +13,7 @@ import { Button, EmptyState, Field, Modal, Textarea, buttonClasses } from '@/com
 export function JobPostingReports({ initial }: { initial: JobPostingReportPage }) {
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
+  const admin = useTranslations('admin');
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
   const [choice, setChoice] = useState<{ id: string; decision: 'DISMISS' | 'TAKE_DOWN' }>();
@@ -19,11 +21,15 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<ErrorCode>();
   const [notice, setNotice] = useState(false);
+  const [reasonInvalid, setReasonInvalid] = useState(false);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
+  const { rootRef, complete } = useQueueFocus(pending);
 
   function close() {
     if (pending) return;
     setChoice(undefined);
     setReason('');
+    setReasonInvalid(false);
     setError(undefined);
   }
 
@@ -35,10 +41,12 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
       reason,
     });
     if (!parsed.success) {
-      setError('VALIDATION_INVALID');
+      setReasonInvalid(true);
+      reasonRef.current?.focus();
       return;
     }
     setPending(true);
+    setReasonInvalid(false);
     setError(undefined);
     const result = await safeClientAction(() => resolveJobPostingReport(parsed.data));
     setPending(false);
@@ -46,6 +54,7 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
       setError(result.errorCode);
       return;
     }
+    complete(choice.id);
     setItems((current) =>
       current.filter(
         (item) =>
@@ -71,8 +80,10 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
     setCursor(result.data.nextCursor);
   }
   return (
-    <section className="mt-10 space-y-4">
-      <h2 className="text-xl font-semibold">{t('reportQueue')}</h2>
+    <div ref={rootRef} className="mt-10 space-y-4">
+      <h2 data-queue-heading className="text-xl font-semibold">
+        {t('reportQueue')}
+      </h2>
       {notice && <p role="status">{t('reportDecisionDone')}</p>}
       {error && !choice && (
         <p role="alert" className="text-danger">
@@ -84,7 +95,11 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
       ) : (
         <ul className="space-y-4">
           {items.map((item) => (
-            <li key={item.id} className="rounded-card border border-border bg-surface p-4">
+            <li
+              key={item.id}
+              data-queue-row={item.id}
+              className="rounded-card border border-border bg-surface p-4"
+            >
               <h3 className="break-words font-semibold">{item.postingTitle}</h3>
               <p className="mt-2 whitespace-pre-wrap break-words">{item.reason}</p>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -95,20 +110,24 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
                   {t('open')}
                 </Link>
                 <Button
+                  data-queue-action
                   variant="secondary"
                   onClick={() => {
                     setError(undefined);
                     setReason('');
+                    setReasonInvalid(false);
                     setChoice({ id: item.id, decision: 'DISMISS' });
                   }}
                 >
                   {t('reportDismiss')}
                 </Button>
                 <Button
+                  data-queue-action
                   variant="danger-outline"
                   onClick={() => {
                     setError(undefined);
                     setReason('');
+                    setReasonInvalid(false);
                     setChoice({ id: item.id, decision: 'TAKE_DOWN' });
                   }}
                 >
@@ -139,10 +158,16 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
           </>
         }
       >
-        <Field label={t('reportDecisionReason')} hint={t('reportDecisionHint')} required>
+        <Field
+          label={t('reportDecisionReason')}
+          hint={t('reportDecisionHint')}
+          required
+          error={reasonInvalid ? admin('reasonInvalid') : undefined}
+        >
           {(props) => (
             <Textarea
               {...props}
+              ref={reasonRef}
               value={reason}
               maxLength={1000}
               rows={4}
@@ -156,6 +181,6 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
           </p>
         )}
       </Modal>
-    </section>
+    </div>
   );
 }

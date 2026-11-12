@@ -3,13 +3,24 @@ import 'server-only';
 import { Worker } from 'node:worker_threads';
 import { CV_MAX_BYTES, CV_MAX_PAGES } from '@/contracts/cv';
 import { codedValidation, type ErrorCode } from '@/lib/errors';
+import { redactCvText } from '../rules/redactCvText';
 
 /** PDF metni yalnız bellekte işlenir; uygulamalar belgeyi veya çıkarılan metni loglamaz. */
 export interface PdfTextExtractor {
   readonly kind?: 'fake' | 'real';
   extract(pdf: Uint8Array): Promise<string>;
   /** Gerçek sağlayıcıdan önce kişisel verileri temizler; yoksa LinkedIn içe aktarma kapalıdır. */
-  redact?(text: string): Promise<string>;
+  redact?(text: string, ownerName: string): Promise<string>;
+}
+
+/** Gerçek çıkarıcıya saf yerel maskeleyiciyi bağlar; sahte portu gerçekmiş gibi göstermez. */
+export function withCvTextRedaction(extractor: PdfTextExtractor | null): PdfTextExtractor | null {
+  if (!extractor || extractor.kind !== 'real') return extractor;
+  return {
+    kind: 'real',
+    extract: (pdf) => extractor.extract(pdf),
+    redact: async (text, ownerName) => redactCvText(text, ownerName),
+  };
 }
 
 /** Yalnız sahte sağlayıcıyla yerel akış testi; PDF'deki gerçek metni ÇIKARMAZ. */
