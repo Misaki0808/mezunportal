@@ -1734,6 +1734,21 @@ describe('ilan eşleşmeleri', () => {
     });
     expect(intents).toHaveLength(1);
     expect(intents[0]?.nextAttemptAt?.toISOString()).toBe('2030-06-20T21:05:00.000Z');
+    // Bildirim kutusu: eşleşen öğrenciye ilana özel kayıt (okunmamış); ilan sahibi eşleşeni görmez, yalnız kendi "yayında" bildirimini alır.
+    expect(
+      await db.inAppNotification.findMany({
+        where: { userId: w.student },
+        select: { kind: true, refId: true, readAt: true },
+      }),
+    ).toEqual([{ kind: 'jobMatchPosting', refId: id, readAt: null }]);
+    expect(
+      (
+        await db.inAppNotification.findMany({
+          where: { userId: w.alumni },
+          select: { kind: true },
+        })
+      ).map((row) => row.kind),
+    ).toEqual(['jobPostingPublished']);
     const mine = await listMyJobPostings(deps, w.alumni, {});
     expect(JSON.stringify(mine)).not.toContain(w.student);
     expect(mine.items[0]?.matchReach).toEqual({ belowThreshold: true, count: null });
@@ -1758,6 +1773,7 @@ describe('ilan eşleşmeleri', () => {
       { removeStoredFiles: null },
     );
     expect(await db.jobMatch.count({ where: { userId: w.student } })).toBe(0);
+    expect(await db.inAppNotification.count({ where: { userId: w.student } })).toBe(0);
     expect(
       await db.notificationIntent.count({ where: { userId: w.student, kind: 'jobMatch' } }),
     ).toBe(0);

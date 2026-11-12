@@ -15,6 +15,8 @@ import {
   cn,
 } from '@/components/ui';
 
+import { NotificationBell } from '@/components/inbox/notification-bell';
+
 import { KeyboardState } from './keyboard-state';
 import { BrandLogo } from '@/components/brand/logo';
 
@@ -62,10 +64,13 @@ export function AppShellClient({
   children,
   showAdmin = false,
   signedIn = false,
+  unreadNotifications = 0,
 }: {
   children: ReactNode;
   showAdmin?: boolean;
   signedIn?: boolean;
+  /** Okunmamış bildirim sayısı (üst sınırlı); yalnız oturum açıkken anlamlıdır. */
+  unreadNotifications?: number;
 }) {
   const t = useTranslations('nav');
   const pathname = usePathname();
@@ -151,6 +156,7 @@ export function AppShellClient({
             {t('signIn')}
           </Link>
         )}
+        {signedIn && <NotificationBell initial={unreadNotifications} layout="header" />}
       </header>
 
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col gap-6 border-r border-border bg-surface p-4 lg:flex">
@@ -170,6 +176,11 @@ export function AppShellClient({
             {NAV_ITEMS.map((item) => (
               <li key={item.id}>{renderItem(item, 'side')}</li>
             ))}
+            {signedIn && (
+              <li>
+                <NotificationBell initial={unreadNotifications} layout="side" />
+              </li>
+            )}
             {showAdmin && (
               <li>
                 <Link

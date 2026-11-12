@@ -13,12 +13,20 @@ export default async function NotificationPreferencesPage() {
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   const matches = await getMyJobMatchNotifications();
   const t = await getTranslations('notifications.jobMatches');
+  const inbox = await getTranslations('notifications');
   const digest = await getTranslations('monthlyDigest');
   const days = matches.ok ? [...new Set(matches.data.map((row) => row.day))] : [];
   return (
     <>
       <NotificationPreferencesForm initial={result.data} save={updateMyNotificationPreferences} />
-      <div className="mx-auto max-w-2xl px-5 pt-6">
+      <div className="mx-auto max-w-2xl space-y-3 px-5 pt-6">
+        <Link
+          className="press-row flex min-h-14 items-center rounded-card border border-border p-4 font-semibold"
+          href="/bildirimler"
+        >
+          {inbox('inboxLink')} →
+        </Link>
+        <p className="text-sm text-fg-muted">{inbox('inboxNote')}</p>
         <Link
           className="press-row flex min-h-14 items-center rounded-card border border-border p-4 font-semibold"
           href="/hesap/aylik-ozet"

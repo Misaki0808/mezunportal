@@ -149,6 +149,7 @@ model User {
   emailLogs                   EmailLog[]
   notificationPreferences     NotificationPreference[]
   notificationIntents         NotificationIntent[]
+  inAppNotifications          InAppNotification[]
   notificationActions         NotificationAction[]
   jobMatches                  JobMatch[]
   jobMatchDigests             JobMatchDigest[]
@@ -426,6 +427,25 @@ model NotificationIntent {
 
   @@index([createdAt, id])
   @@index([status, nextAttemptAt, id])
+}
+
+/// Uygulama içi bildirim kutusu. E-posta niyeti (`NotificationIntent`) gönderilince silinir; bu kayıt kalır ve okundu bilgisi taşır.
+/// Metin ve bağlantı DEPOLANMAZ: `kind` + `refId`'den sunucuda kurulur (kişisel veri yok, bağlantı istemciden gelmez).
+model InAppNotification {
+  id        String    @id @default(uuid(7))
+  userId    String
+  /// `rules/inbox` kataloğundaki tür anahtarı (örn. `jobMatchPosting`, `appointmentConfirmed`).
+  kind      String
+  /// İlgili kaydın kimliği (ilan, randevu, talep…); yalnız bağlantı kurmakta kullanılır.
+  refId     String
+  /// Aynı olay iki kez yazılmaz: `kind:refId:userId` benzersizdir (yeniden deneme güvenli).
+  key       String    @unique
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt, id])
+  @@index([userId, readAt])
 }
 
 /// Bildirim türleri; güvenlik bildirimleri daima açıktır.

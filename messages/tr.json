@@ -326,7 +326,8 @@
       "mentors": "Mentorlar",
       "appointments": "Randevular",
       "profile": "Hesabım",
-      "jobs": "İlanlar"
+      "jobs": "İlanlar",
+      "notifications": "Bildirimler"
     },
     "admin": "Yönetim",
     "signIn": "Giriş yap",
@@ -2292,7 +2293,9 @@
     "jobMatches": {
       "title": "Sana uyan ilan bildirimleri",
       "empty": "Henüz ilan eşleşmesi bildirimin yok."
-    }
+    },
+    "inboxLink": "Bildirim kutun",
+    "inboxNote": "Bildirim kutundaki kayıtlar bu tercihlerden etkilenmez; yalnız e-postaları seçersin."
   },
   "feedback": {
     "emailSubject": "Görüşmeni değerlendir",
@@ -3442,5 +3445,131 @@
     "description": "Sayfa şu anda görüntülenemiyor. Tekrar dene.",
     "retry": "Tekrar dene",
     "home": "Ana sayfaya dön"
+  },
+  "inbox": {
+    "title": "Bildirimler",
+    "description": "Sana ulaşan her şey burada. Aynı gündeki benzer bildirimler tek satırda toplanır.",
+    "markAll": "Hepsini okundu yap",
+    "markAllNone": "Okunmamış bildirimin yok.",
+    "markAllDone": "Bildirimlerin okundu olarak işaretlendi.",
+    "today": "Bugün",
+    "yesterday": "Dün",
+    "unread": "Okunmadı",
+    "loadMore": "Daha eski bildirimler",
+    "groupList": "Gün: {day}",
+    "preferencesLink": "E-posta tercihlerini düzenle",
+    "empty": {
+      "title": "Henüz bildirimin yok",
+      "description": "Sana uyan bir ilan, bir randevu ya da deneyimine gelen yanıt olduğunda burada görürsün.",
+      "action": "İlanlara göz at"
+    },
+    "bell": {
+      "label": "Bildirimler",
+      "labelUnread": "Bildirimler, {count} okunmamış",
+      "labelMany": "Bildirimler, 99’dan fazla okunmamış",
+      "overflow": "99+"
+    },
+    "kinds": {
+      "jobMatchPosting": {
+        "one": "Profiline uyan yeni bir ilan var.",
+        "many": "Profiline uyan {count} yeni ilan var."
+      },
+      "jobPostingPublished": {
+        "one": "İlanın yayında.",
+        "many": "{count} ilanın yayında."
+      },
+      "jobPostingRejected": {
+        "one": "İlanın yayınlanamadı; nedenini ilanlarım sayfasında görebilirsin.",
+        "many": "{count} ilanın yayınlanamadı; nedenlerini ilanlarım sayfasında görebilirsin."
+      },
+      "jobPostingExpired": {
+        "one": "İlanının süresi doldu.",
+        "many": "{count} ilanının süresi doldu."
+      },
+      "moderationApproved": {
+        "one": "Deneyimin yayınlandı.",
+        "many": "{count} deneyimin yayınlandı."
+      },
+      "moderationRejected": {
+        "one": "Deneyimin yayınlanamadı; nedeni deneyimlerim sayfasında.",
+        "many": "{count} deneyimin yayınlanamadı; nedenleri deneyimlerim sayfasında."
+      },
+      "invitation": {
+        "one": "Staj deneyimini paylaşmaya davetlisin.",
+        "many": "{count} staj için deneyim paylaşma davetin var."
+      },
+      "contact": {
+        "one": "Sana bir iletişim talebi geldi.",
+        "many": "Sana {count} iletişim talebi geldi."
+      },
+      "faqPublished": {
+        "one": "Sorun yayınlandı.",
+        "many": "{count} sorun yayınlandı."
+      },
+      "faqRejected": {
+        "one": "Sorun yayınlanamadı.",
+        "many": "{count} sorun yayınlanamadı."
+      },
+      "faqRedirected": {
+        "one": "Sorun, var olan bir cevaba yönlendirildi.",
+        "many": "{count} sorun var olan cevaplara yönlendirildi."
+      },
+      "faqAnswerPublished": {
+        "one": "Cevabın yayınlandı.",
+        "many": "{count} cevabın yayınlandı."
+      },
+      "referralUpdated": {
+        "one": "Referans sürecinde bir gelişme var.",
+        "many": "Referans sürecinde {count} gelişme var."
+      },
+      "appointmentRequested": {
+        "one": "Yeni bir randevu talebi var.",
+        "many": "{count} yeni randevu talebi var."
+      },
+      "appointmentConfirmed": {
+        "one": "Bir randevun onaylandı.",
+        "many": "{count} randevun onaylandı."
+      },
+      "appointmentDeclined": {
+        "one": "Bir randevu talebin kabul edilmedi.",
+        "many": "{count} randevu talebin kabul edilmedi."
+      },
+      "appointmentCancelled": {
+        "one": "Bir randevu iptal edildi.",
+        "many": "{count} randevu iptal edildi."
+      },
+      "appointmentExpired": {
+        "one": "Bir randevu talebinin yanıt süresi doldu.",
+        "many": "{count} randevu talebinin yanıt süresi doldu."
+      },
+      "appointmentReminder": {
+        "one": "Yaklaşan bir randevun var.",
+        "many": "Yaklaşan {count} randevun var."
+      },
+      "appointmentLinkNeeded": {
+        "one": "Bir randevu için görüşme bağlantısı eklenmesi gerekiyor.",
+        "many": "{count} randevu için görüşme bağlantısı eklenmesi gerekiyor."
+      },
+      "appointmentLinkAdded": {
+        "one": "Bir randevunun görüşme bağlantısı eklendi.",
+        "many": "{count} randevunun görüşme bağlantısı eklendi."
+      },
+      "cvReviewRequested": {
+        "one": "Yeni bir CV inceleme talebi var.",
+        "many": "{count} yeni CV inceleme talebi var."
+      },
+      "cvReviewAnswered": {
+        "one": "CV incelemen yanıtlandı.",
+        "many": "{count} CV incelemen yanıtlandı."
+      },
+      "cvReviewExpired": {
+        "one": "Bir CV inceleme talebinin süresi doldu.",
+        "many": "{count} CV inceleme talebinin süresi doldu."
+      },
+      "applicationWindowReminder": {
+        "one": "Takip ettiğin bir başvuru dönemi başladı.",
+        "many": "Takip ettiğin {count} başvuru dönemi başladı."
+      }
+    }
   }
 }

@@ -45,6 +45,8 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     create: { profileId: profile.id, tagId: tag.id },
     update: {},
   });
+  // Bildirim kutusu sayısı belirli olsun: önceki koşulardan kalan kayıtlar rozeti kaydırmasın.
+  await db.inAppNotification.deleteMany({ where: { userId: seededStudent.id } });
   try {
     await db.user.update({
       where: { id: originalWriter.id },
@@ -104,6 +106,24 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     await student!.goto('/');
     await expect(student!.getByRole('heading', { name: 'Sana uyan ilanlar' })).toBeVisible();
     await expect(student!.getByRole('link', { name: new RegExp(title) })).toBeVisible();
+    // Bildirim kutusu (P2-05): yayınla eşleşen öğrencide rozet → liste → ilana git; ilanı yazan kendi "yayında" bildirimini görür.
+    const bell = student!.getByRole('link', { name: 'Bildirimler, 1 okunmamış' });
+    await expect(bell).toBeVisible();
+    await bell.click();
+    await student!.waitForURL('**/bildirimler');
+    const inboxRow = student!.getByRole('link', { name: /Profiline uyan yeni bir ilan var/ });
+    await expect(inboxRow).toContainText('Okunmadı');
+    await expect(inboxRow).toHaveAttribute('href', `/ilanlar/${postingId}`);
+    await inboxRow.click();
+    await student!.waitForURL(`**/ilanlar/${postingId}`);
+    // Dokunulan bildirim okundu olur: rozet söner (sayı küçük bir GET ile tazelenir, sayfa yenilenmez).
+    await expect(student!.getByRole('link', { name: 'Bildirimler', exact: true })).toBeVisible();
+    expect(
+      await db.inAppNotification.count({ where: { userId: seededStudent.id, readAt: null } }),
+    ).toBe(0);
+    await alumni!.goto('/bildirimler');
+    await expect(alumni!.getByText(/lanın yayında\./).first()).toBeVisible();
+    await student!.goto('/');
     await student!.goto('/hesap/bildirimler');
     await expect(
       student!.getByRole('heading', { name: 'Sana uyan ilan bildirimleri' }),
