@@ -7,6 +7,7 @@ const marker = {
   identity: '[KİMLİK]',
   iban: '[IBAN]',
   birth: '[DOĞUM TARİHİ]',
+  person: '[KİŞİ]',
   address: '[ADRES]',
 } as const;
 
@@ -64,6 +65,43 @@ function namePattern(part: string): RegExp {
     })
     .join('[.\\s]*');
   return new RegExp(`(?<![\\p{L}\\p{M}])${pattern}(?![\\p{L}\\p{M}])`, 'gu');
+}
+
+function redactReferencedPeople(text: string): string {
+  const heading =
+    /^(\s*(?:referans(?:lar)?|references?|yönetici|danışman|supervisor|iletişim kişisi)\s*)(?::\s*|$)/u;
+  const person =
+    /(?<![\p{L}])(?:(?:Prof|Dr|Doç|Mr|Mrs|Ms)\.\s*)*(?:[\p{Lu}][\p{Ll}]+|[\p{Lu}]{2,})(?:\s+(?:[\p{Lu}][\p{Ll}]+|[\p{Lu}]{2,})){1,2}(?![\p{L}])/gu;
+  let inBlock = false;
+  return text
+    .split('\n')
+    .map((line) => {
+      const match = line.toLocaleLowerCase('tr-TR').match(heading);
+      if (match) {
+        inBlock = true;
+        return (
+          line.slice(0, match[0].length) +
+          line.slice(match[0].length).replace(person, marker.person)
+        );
+      }
+      if (!inBlock) return line;
+      if (!line.trim() || /^\s*[\p{L} ]+\s*:/u.test(line)) {
+        inBlock = false;
+        return line;
+      }
+      const masked = line.replace(person, marker.person);
+      if (masked === line && !/\[(?:E-POSTA|TELEFON)\]/u.test(line)) inBlock = false;
+      return masked;
+    })
+    .join('\n');
+}
+
+function foldDomain(value: string): string {
+  return value
+    .toLocaleLowerCase('tr-TR')
+    .replace(/ı/g, 'i')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
 }
 
 /** Ad yalnız sunucudan gelir; eksikse çağıran sağlayıcıyı çalıştırmamalıdır. */
@@ -140,6 +178,14 @@ export function redactCvText(text: string, ownerName: string): string {
     /(?:https?:\/\/|www\.)[^\s<>]+|(?<![\p{L}\p{N}@])(?:[\p{L}\p{N}-]+\.)+[\p{L}]{2,}\/[^\s<>]*/giu,
     marker.url,
   );
+  const ownerParts = parts.map(foldDomain).filter((part) => part.length >= 3);
+  result = result.replace(
+    /(?<![\p{L}\p{N}@._-])(?:[\p{L}\p{N}-]+\.)+[\p{L}]{2,}(?![\p{L}\p{N}_-])/gu,
+    (domain) => {
+      const labels = foldDomain(domain).split('.').slice(0, -1).join('');
+      return ownerParts.some((part) => labels.includes(part)) ? '[URL]' : domain;
+    },
+  );
   result = result.replace(
     /\b(?:linkedin|github|instagram|twitter)\s*(?:kullanıcı\s*adı|username|hesabı)?\s*[:：]\s*@?[\p{L}\p{N}_.-]+/giu,
     marker.url,
@@ -149,7 +195,7 @@ export function redactCvText(text: string, ownerName: string): string {
     marker.url,
   );
   result = result.replace(
-    /(?:doğum\s*(?:tarihi|günü|yılı)|birth\s*(?:date|day)|date\s*of\s*birth|dob)\s*[:\-]?\s*(?:\d{1,4}[.\/-]\d{1,2}[.\/-]\d{2,4}|\d{1,2}\s+[\p{L}]+\s+\d{4}|\d{4})/giu,
+    /(?:doğum(?:\s*(?:tarihi|günü|yılı))?|d\s*\.\s*t\.|birth\s*(?:date|day)|date\s*of\s*birth|dob)\s*[:\-]?\s*(?:\d{1,4}[.\/-]\d{1,2}[.\/-]\d{2,4}|\d{1,2}\s+[\p{L}]+\s+\d{4}|\d{4})/giu,
     marker.birth,
   );
   result = result.replace(
@@ -173,9 +219,10 @@ export function redactCvText(text: string, ownerName: string): string {
     }
   }
   result = result.replace(
-    /^.*(?:\b(?:mah(?:alle(?:si)?)?|cad(?:de(?:si)?)?|sok(?:ak|ağı)?)\.?(?=\s|,|:|$)|\b(?:no|posta\s*kodu|adres|address)\s*[.:]|\b\d{5}\b).*$/gimu,
+    /^(?!\s*referans\s+numarası\s*:\s*\d+\s*$).*(?:\b(?:mah(?:alle(?:si)?)?|cad(?:de(?:si)?)?|sok(?:ak|ağı)?)\.?(?=\s|,|:|$)|\b(?:no|posta\s*kodu|adres|address)\s*[.:]|\b\d{5}\b).*$/gimu,
     marker.address,
   );
+  result = redactReferencedPeople(result);
   for (const part of [...new Set(parts)].sort((a, b) => b.length - a.length)) {
     result = result.replace(namePattern(part), marker.name);
   }
