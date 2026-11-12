@@ -23,6 +23,8 @@ test('mezun yayın iznini açar, doğrulama sayfasını görür ve geri alır', 
   page,
   request,
 }) => {
+  // Altmış gerçek HTTP isteğiyle hız sınırını da doğrulayan bu akış, soğuk derlemede uzayabilir.
+  test.setTimeout(90_000);
   await page.setViewportSize({ width: 390, height: 844 });
   const member = await db.membership.findFirstOrThrow({
     where: {
