@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
 import { isolationRunId, workerBaseUrl, workerDatabaseUrl } from './tests/e2e/isolation';
 
@@ -12,6 +12,13 @@ if (!Number.isInteger(port) || port < 1024 || port > 65535) {
 process.env.E2E_ORIGINAL_DATABASE_URL = process.env.DATABASE_URL;
 process.env.E2E_ORIGINAL_APP_URL = process.env.APP_URL;
 isolationRunId();
+mkdirSync('.data', { recursive: true });
+for (const index of [0, 1]) {
+  writeFileSync(
+    `.data/e2e-tsconfig-${index}.json`,
+    JSON.stringify({ extends: '../tsconfig.json' }),
+  );
+}
 const baseURL = workerBaseUrl(0);
 const webkitMode = process.env.E2E_WEBKIT;
 

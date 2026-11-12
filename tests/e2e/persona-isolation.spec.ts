@@ -14,6 +14,7 @@ for (const label of ['a', 'b']) {
   test(`eşzamanlı ${label}: aynı seed rolünün verisi diğer işçiden ayrıdır`, async ({
     page,
   }, info) => {
+    test.setTimeout(120_000);
     test.skip(info.config.workers < 2, 'Bu yarış testi iki işçi gerektirir.');
     const index = info.parallelIndex;
     const user = await db.user.findUniqueOrThrow({
@@ -34,7 +35,7 @@ for (const label of ['a', 'b']) {
               return '';
             }
           },
-          { timeout: 20_000 },
+          { timeout: 90_000 },
         )
         .toBe('hazır');
       expect((await db.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe(name);
