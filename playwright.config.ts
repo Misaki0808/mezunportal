@@ -21,6 +21,12 @@ for (const index of [0, 1]) {
 }
 const baseURL = workerBaseUrl(0);
 const webkitMode = process.env.E2E_WEBKIT;
+const workersArg =
+  process.argv.find((arg) => arg.startsWith('--workers='))?.split('=')[1] ??
+  (process.argv.includes('--workers')
+    ? process.argv[process.argv.indexOf('--workers') + 1]
+    : undefined);
+const serverIndices = workersArg === '1' ? [0] : [0, 1];
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -44,7 +50,7 @@ export default defineConfig({
         ]
       : []),
   ],
-  webServer: [0, 1].map((index) => ({
+  webServer: serverIndices.map((index) => ({
     command: `node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port ${new URL(workerBaseUrl(index)).port}`,
     // Sunucular DB kurulmadan başlar; giriş sayfası DB'ye bağlanmadan hazır olabilir.
     url: `${workerBaseUrl(index)}/giris`,

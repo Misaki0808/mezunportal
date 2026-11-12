@@ -8,7 +8,7 @@ import { workerDatabaseUrl } from './isolation';
 /** Her işçi için kendi seed'i ve hesapları olan tek kullanımlık E2E veritabanı. */
 export default async function globalSetup(config: FullConfig) {
   if (config.workers > 2) throw new Error('E2E en çok iki işçiyle çalışır');
-  const urls = Array.from({ length: 2 }, (_, index) => workerDatabaseUrl(index));
+  const urls = Array.from({ length: config.workers }, (_, index) => workerDatabaseUrl(index));
   const adminUrl = new URL(urls[0]!);
   adminUrl.pathname = '/postgres';
   const client = new pg.Client({ connectionString: adminUrl.toString() });
