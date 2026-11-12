@@ -4,7 +4,7 @@ import messages from '../../../messages/tr.json';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useRef, useState, useTransition } from 'react';
+import { useRef, useState } from 'react';
 import {
   JOB_POSTING_MAX_DAYS,
   jobPostingContentSchema,
@@ -15,7 +15,7 @@ import {
   type SubmitJobPostingOutput,
 } from '@/contracts/job-postings';
 import type { ActionResult } from '@/contracts/result';
-import { Button, Field, Input, Select, Textarea, useToast } from '@/components/ui';
+import { Button, Field, Input, Select, Textarea, useAction } from '@/components/ui';
 import { addDays, istanbulDay } from './model';
 import { deadlineProblem } from '@/server/rules/jobPosting';
 
@@ -30,11 +30,11 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
   const fieldText = useTranslations('ui.field');
-  const toast = useToast();
+  const action = useAction();
   const tagLabels = useTranslations('profileTags');
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [busy, start] = useTransition();
+  const busy = action.busy;
   const [id, setId] = useState(initial?.id);
   const [departmentId, setDepartment] = useState(
     initial?.departmentId ?? context.authorDepartments[0]?.id ?? '',
@@ -99,31 +99,28 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
         return;
       }
     }
-    start(async () => {
-      const result = await save({ ...(id ? { postingId: id } : {}), departmentId, content }).catch(
-        () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
-      );
-      if (!result.ok) {
-        showError(errors(result.errorCode));
-        return;
-      }
-      setId(result.data.id);
-      if (!thenSubmit) {
-        toast.show({ message: t('saved'), tone: 'success' });
-        return;
-      }
-      const sent = await submit({ postingId: result.data.id }).catch(
-        () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
-      );
-      if (!sent.ok) {
-        showError(errors(sent.errorCode));
-        return;
-      }
-      // Toast kök düzende yaşar: yönlendirmeden sonra da görünür.
-      toast.show({ message: t('submittedToast'), tone: 'success' });
-      router.push('/ilanlarim');
-      router.refresh();
-    });
+    void action.run(
+      async (): Promise<ActionResult<null>> => {
+        const saved = await save({ ...(id ? { postingId: id } : {}), departmentId, content });
+        if (!saved.ok) return saved;
+        setId(saved.data.id);
+        if (thenSubmit) {
+          const sent = await submit({ postingId: saved.data.id });
+          if (!sent.ok) return sent;
+        }
+        return { ok: true, data: null };
+      },
+      {
+        success: thenSubmit ? t('submittedToast') : t('saved'),
+        onOk: () => {
+          if (thenSubmit) {
+            router.push('/ilanlarim');
+            router.refresh();
+          }
+        },
+        onFailure: (failure) => showError(errors(failure.errorCode)),
+      },
+    );
   }
   const bad = (field: string) => (invalid.has(field) ? t('requiredError') : undefined);
   const fieldNames: Record<string, string> = {

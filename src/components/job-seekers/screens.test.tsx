@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
-import { renderUi } from '@/test/render';
+import { renderUi, renderWithToasts } from '@/test/render';
 import type { SeekerSettings } from '@/contracts/job-seekers';
 const mocks = vi.hoisted(() => ({
   consent: vi.fn(),
@@ -81,7 +81,7 @@ it('mezun beyan vermeden arama eylemi sunulmaz', () => {
   expect(screen.queryByRole('button', { name: 'Aday ara' })).not.toBeInTheDocument();
 });
 it('iletişim için en az bir alan istenir, sunucu kapalı alanı seçtirmez', async () => {
-  renderUi(
+  renderWithToasts(
     <SeekerContact
       candidateRef="opaque"
       preview={{ canRequest: true, card: initial.preview!, requestableFields: ['EMAIL'] }}
@@ -89,6 +89,30 @@ it('iletişim için en az bir alan istenir, sunucu kapalı alanı seçtirmez', a
   );
   expect(screen.getByRole('checkbox', { name: 'Telefon' })).toBeDisabled();
   fireEvent.click(screen.getByRole('button', { name: 'İstek gönder' }));
-  expect(await screen.findByRole('alert')).toHaveTextContent('En az bir');
+  expect(await screen.findByText(/En az bir/)).toBeInTheDocument();
   expect(mocks.request).not.toHaveBeenCalled();
+});
+it('aday iletişiminde çift tıklama tek istek ve ağ hatasında not korunur', async () => {
+  const { act } = await import('@testing-library/react');
+  const gate = Promise.withResolvers<never>();
+  mocks.request.mockReturnValueOnce(gate.promise);
+  renderWithToasts(
+    <SeekerContact
+      candidateRef="opaque"
+      preview={{ canRequest: true, card: initial.preview!, requestableFields: ['EMAIL'] }}
+    />,
+  );
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  const note = screen.getByLabelText(/Kısa not/);
+  fireEvent.change(note, { target: { value: 'Merhaba' } });
+  const button = screen.getByRole('button', { name: 'İstek gönder' });
+  act(() => {
+    button.click();
+    button.click();
+  });
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  expect(button).toHaveAttribute('aria-busy', 'true');
+  await act(async () => gate.reject(new Error('ağ')));
+  expect(note).toHaveValue('Merhaba');
+  expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
 });

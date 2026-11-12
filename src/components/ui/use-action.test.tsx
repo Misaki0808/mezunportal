@@ -36,6 +36,25 @@ function Harness({
 const wrap = (node: React.ReactNode) => <ToastProvider>{node}</ToastProvider>;
 
 describe('useAction', () => {
+  it('başarı sonrası onOk hatası başarılı eylemi ağ hatası olarak göstermez', async () => {
+    const onFailure = vi.fn();
+    const { user } = renderUi(
+      wrap(
+        <Harness
+          action={async () => ({ ok: true, data: { id: 7 } })}
+          success="Kaydedildi"
+          onOk={() => {
+            throw new Error('takip işlemi');
+          }}
+          onFailure={onFailure}
+        />,
+      ),
+    );
+    await user.click(screen.getByRole('button', { name: 'Gönder' }));
+    expect(await screen.findByText('Kaydedildi')).toBeInTheDocument();
+    expect(screen.queryByTestId('error')).toBeNull();
+    expect(onFailure).not.toHaveBeenCalled();
+  });
   it('başarıda toast gösterir, onOk çalışır, bekleyen durum biter', async () => {
     const onOk = vi.fn();
     const { user } = renderUi(
