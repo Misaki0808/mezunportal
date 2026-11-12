@@ -1,8 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button, PageHeader, Textarea } from '@/components/ui';
+import { Button, PageHeader, Textarea, useAction } from '@/components/ui';
 import { CONTACT_FIELDS, type ContactField } from '@/contracts/privacy';
 import type { SeekerContactPreview } from '@/contracts/job-seekers';
 import { requestSeekerContact } from '@/server/actions/job-seekers';
@@ -22,24 +22,18 @@ export function SeekerContact({
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
-  const [pending, start] = useTransition();
+  const action = useAction();
+  const pending = action.busy;
   function send() {
     setError('');
     if (!fields.length) {
       setError(t('selectField'));
       return;
     }
-    start(async () => {
-      try {
-        const result = await requestSeekerContact({ ref: candidateRef, fields, message });
-        if (!result.ok) {
-          setError(errors(result.errorCode));
-          return;
-        }
-        setSent(true);
-      } catch {
-        setError(errors('SERVER_UNEXPECTED'));
-      }
+    void action.run(() => requestSeekerContact({ ref: candidateRef, fields, message }), {
+      success: t('contactSent'),
+      onOk: () => setSent(true),
+      onFailure: (failure) => setError(errors(failure.errorCode)),
     });
   }
   return (
@@ -52,7 +46,7 @@ export function SeekerContact({
       </Link>
       <PageHeader title={t('contactTitle')} description={t('contactDescription')} />
       {sent ? (
-        <div role="status" className="space-y-4 rounded-card border border-border p-5">
+        <div className="space-y-4 rounded-card border border-border p-5">
           <p>{t('contactSent')}</p>
           <Link
             href="/hesap/iletisim?box=OUTGOING"

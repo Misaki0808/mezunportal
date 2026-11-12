@@ -23,6 +23,7 @@ const STUDENT = [
   '/basvuru-takvimi',
   '/etkinlikler',
   '/profil',
+  '/bildirimler',
 ];
 const ADMIN = ['/yonetim', '/yonetim/ilanlar', '/yonetim/etkinlikler'];
 const SYSTEM_ADMIN = ['/yonetim/deneyimler', '/yonetim/ayin-mezunu'];

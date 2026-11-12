@@ -3,6 +3,7 @@ import { createCipheriv, createDecipheriv, createHmac, randomBytes, randomUUID }
 import { z } from 'zod';
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { notificationRetry } from '../rules/notification-retry';
+import type { InboxKind } from '../rules/inbox';
 import type { AppointmentNotice } from './appointment-notifier';
 
 const generic = z
@@ -95,7 +96,65 @@ export const notificationIntentPayload = z.discriminatedUnion('type', [
 ]);
 export type NotificationIntentPayload = z.infer<typeof notificationIntentPayload>;
 
-type IntentWriter = Pick<Prisma.TransactionClient, 'notificationIntent'>;
+type IntentWriter = Pick<Prisma.TransactionClient, 'notificationIntent' | 'inAppNotification'>;
+
+const APPOINTMENT_KINDS = {
+  requested: 'appointmentRequested',
+  confirmed: 'appointmentConfirmed',
+  declined: 'appointmentDeclined',
+  cancelled: 'appointmentCancelled',
+  expired: 'appointmentExpired',
+  reminder: 'appointmentReminder',
+  linkNeeded: 'appointmentLinkNeeded',
+  linkAdded: 'appointmentLinkAdded',
+} as const satisfies Record<z.infer<typeof appointment>['event'], InboxKind>;
+const CV_REVIEW_KINDS = {
+  requested: 'cvReviewRequested',
+  answered: 'cvReviewAnswered',
+  expired: 'cvReviewExpired',
+} as const satisfies Record<z.infer<typeof cvReview>['event'], InboxKind>;
+
+/**
+ * Bildirimin uygulama içi kutudaki karşılığı. Davet (hedef sayfa yok, alıcı kişisel adres), aylık özet (içeriği gönderim anında
+ * hesaplanır) ve ilan eşleşmesi (alıcı başına ilana özel kayıt `stageJobMatches`'ta yazılır) kutuya BURADAN girmez.
+ */
+export function inboxEntry(
+  payload: NotificationIntentPayload,
+): { kind: InboxKind; refId: string } | null {
+  switch (payload.type) {
+    case 'generic':
+      return { kind: payload.event, refId: payload.eventId };
+    case 'appointment':
+      return { kind: APPOINTMENT_KINDS[payload.event], refId: payload.appointmentId };
+    case 'cvReview':
+      return { kind: CV_REVIEW_KINDS[payload.event], refId: payload.requestId };
+    case 'applicationWindow':
+      return { kind: 'applicationWindowReminder', refId: payload.cycle };
+    default:
+      return null;
+  }
+}
+
+/** Uygulama içi kayıt; `key` benzersizdir, yeniden deneme ve eşzamanlı üretici güvenlidir. */
+export async function stageInboxNotification(
+  tx: Pick<Prisma.TransactionClient, 'inAppNotification'>,
+  userId: string,
+  entry: { kind: InboxKind; refId: string },
+  createdAt?: Date,
+) {
+  await tx.inAppNotification.createMany({
+    data: [
+      {
+        key: `${entry.kind}:${entry.refId}:${userId}`,
+        userId,
+        kind: entry.kind,
+        refId: entry.refId,
+        ...(createdAt ? { createdAt } : {}),
+      },
+    ],
+    skipDuplicates: true,
+  });
+}
 /** Hesaplı bildirimler yalnız olay/kimlik taşır; davet adresi yalnız geçici şifreli biçimde tutulur. */
 export async function stageNotification(
   tx: IntentWriter,
@@ -131,6 +190,9 @@ export async function stageNotification(
     ],
     skipDuplicates: true,
   });
+  // Aynı işlemde: e-posta tercihi, kota ya da gönderim sonucu kutudaki kaydı etkilemez ("sınırsız ama gruplu").
+  const entry = inboxEntry(payload);
+  if (entry) await stageInboxNotification(tx, userId, entry);
 }
 // Hesabı henüz olmayan alıcının adresi, niyet işlenene dek yalnız kimlik doğrulanmış
 // şifreli metin olarak tutulur. Anahtar uygulama sırrından ayrı amaç için türetilir.

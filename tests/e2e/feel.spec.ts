@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaClient } from '../../src/generated/prisma/client';
+import { loginAs } from './login';
+import { waitForHydratedForm } from './hydration';
 import messages from '../../messages/tr.json' with { type: 'json' };
 
 /**
@@ -22,31 +24,7 @@ test.use({ viewport: { width: 390, height: 844 } });
 const SERVER_ERROR = messages.errors.codes.SERVER_UNEXPECTED;
 const SLOW_MS = 900;
 
-type Persona = 'student' | 'alumniMentor' | 'systemAdmin';
-async function login(page: Page, persona: Persona) {
-  await page.goto(`/giris/test?persona=${persona}`);
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/(hesap|onay|yonetim)/);
-  await page.waitForURL(/\/onay/, { timeout: 5000 }).catch(() => undefined);
-  await page.waitForLoadState('networkidle');
-  const required = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  if (page.url().includes('/onay'))
-    await required
-      .first()
-      .waitFor({ timeout: 8000 })
-      .catch(() => undefined);
-  if ((await required.count()) >= 2) {
-    await required.nth(0).check();
-    await required.nth(1).check();
-    await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page.getByText('Onayların kaydedildi.').first()).toBeVisible();
-  }
-  await page
-    .waitForURL((url) => !url.pathname.startsWith('/onay'), { timeout: 10_000 })
-    .catch(() => undefined);
-  await page.waitForLoadState('networkidle');
-}
+const login = loginAs;
 
 /** Sunucu eylemi POST'larını sayar, yavaşlatır ya da keser. */
 async function watchActions(page: Page) {
@@ -78,6 +56,130 @@ async function expectPendingNow(page: Page) {
 }
 
 test.describe('kullanım hissi: geri bildirim anları (390)', () => {
+  test('randevu iste: çift tıklama tek istek, ağ hatasında not korunur', async ({ page }) => {
+    test.setTimeout(120_000);
+    const mentor = await db.user.findUniqueOrThrow({
+      where: { email: 'alumni-mentor@test.mezunportal.local' },
+    });
+    const student = await db.user.findUniqueOrThrow({
+      where: { email: 'student@test.mezunportal.local' },
+    });
+    const original = await db.mentorProfile.findUniqueOrThrow({ where: { userId: mentor.id } });
+    // Mentorun hazır müsaitlik kuralları (seed ya da önceki spec bırakır) çakışma kısıtına takılır: önce saklanır, sonunda geri yazılır.
+    const savedRules = await db.availabilityRule.findMany({ where: { mentorId: mentor.id } });
+    const ruleIds: string[] = [];
+    const note = `Hisset ${randomUUID()}`;
+    try {
+      await db.availabilityRule.deleteMany({ where: { mentorId: mentor.id } });
+      await db.mentorProfile.update({
+        where: { userId: mentor.id },
+        data: {
+          isActive: true,
+          pausedUntil: null,
+          monthlyCapacity: 40,
+          sessionMinutes: 30,
+          meetingModes: ['ONLINE'],
+        },
+      });
+      for (let weekday = 1; weekday <= 7; weekday++) {
+        const rule = await db.availabilityRule.create({
+          data: { mentorId: mentor.id, weekday, startMinute: 540, endMinute: 1020 },
+        });
+        ruleIds.push(rule.id);
+      }
+      await login(page, 'student');
+      await page.goto(`/randevu-al/${mentor.id}`, { waitUntil: 'networkidle' });
+      const state = await watchActions(page);
+      await page
+        .getByRole('radio', { name: /saatini seç/ })
+        .first()
+        .click();
+      const field = page.getByLabel(/Mentora not/);
+      await field.fill(note);
+      state.abort = true;
+      await page.getByRole('button', { name: 'Randevu talep et' }).click();
+      await expect(page.getByText(SERVER_ERROR)).toBeVisible();
+      await expect(field).toHaveValue(note);
+      state.abort = false;
+      state.delay = SLOW_MS;
+      await page.getByRole('button', { name: 'Randevu talep et' }).dblclick();
+      await expectPendingNow(page);
+      await expect(page.getByRole('heading', { name: 'Talebin gönderildi' })).toBeVisible();
+      await expect(
+        page.getByRole('region', { name: 'Bildirimler' }).getByText('Talebin gönderildi'),
+      ).toBeVisible();
+      expect(state.posts).toBe(2);
+      expect(state.uncaught).toEqual([]);
+    } finally {
+      await db.appointment.deleteMany({
+        where: { mentorId: mentor.id, menteeId: student.id, menteeNote: note },
+      });
+      await db.availabilityRule.deleteMany({ where: { id: { in: ruleIds } } });
+      if (savedRules.length) await db.availabilityRule.createMany({ data: savedRules });
+      await db.mentorProfile.update({
+        where: { userId: mentor.id },
+        data: {
+          isActive: original.isActive,
+          pausedUntil: original.pausedUntil,
+          monthlyCapacity: original.monthlyCapacity,
+          sessionMinutes: original.sessionMinutes,
+          meetingModes: original.meetingModes,
+        },
+      });
+    }
+  });
+
+  test('iletişim iste: çift tıklama tek istek, ağ hatasında not korunur', async ({ page }) => {
+    test.setTimeout(120_000);
+    const target = await db.user.findUniqueOrThrow({
+      where: { email: 'alumni-mentor@test.mezunportal.local' },
+    });
+    const student = await db.user.findUniqueOrThrow({
+      where: { email: 'student@test.mezunportal.local' },
+    });
+    const original = await db.fieldVisibility.findUnique({
+      where: { userId_field: { userId: target.id, field: 'EMAIL' } },
+    });
+    const note = `Hisset ${randomUUID()}`;
+    try {
+      await db.fieldVisibility.upsert({
+        where: { userId_field: { userId: target.id, field: 'EMAIL' } },
+        create: { userId: target.id, field: 'EMAIL', level: 'ON_APPROVED_REQUEST' },
+        update: { level: 'ON_APPROVED_REQUEST' },
+      });
+      await login(page, 'student');
+      await page.goto(`/iletisim-iste/${target.id}`, { waitUntil: 'networkidle' });
+      await waitForHydratedForm(page, 'Talep gönder');
+      const state = await watchActions(page);
+      await page.getByRole('checkbox', { name: 'E-posta', exact: true }).check();
+      const field = page.getByLabel('Kısa not');
+      await field.fill(note);
+      state.abort = true;
+      await page.getByRole('button', { name: 'Talep gönder' }).click();
+      await expect(page.getByText(SERVER_ERROR)).toBeVisible();
+      await expect(field).toHaveValue(note);
+      state.abort = false;
+      state.delay = SLOW_MS;
+      await page.getByRole('button', { name: 'Talep gönder' }).dblclick();
+      await expectPendingNow(page);
+      await expect(
+        page.getByRole('region', { name: 'Bildirimler' }).getByText('Talebin gönderildi.'),
+      ).toBeVisible();
+      expect(state.posts).toBe(2);
+      expect(state.uncaught).toEqual([]);
+    } finally {
+      await db.contactRequest.deleteMany({
+        where: { requesterId: student.id, targetId: target.id, message: note },
+      });
+      if (original)
+        await db.fieldVisibility.update({
+          where: { id: original.id },
+          data: { level: original.level },
+        });
+      else await db.fieldVisibility.deleteMany({ where: { userId: target.id, field: 'EMAIL' } });
+    }
+  });
+
   test('etkinliğe katıl: bekleyen düğme, tek istek, başarı bildirimi; hatada kod korunur', async ({
     page,
   }) => {
