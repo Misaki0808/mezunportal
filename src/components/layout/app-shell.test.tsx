@@ -71,6 +71,41 @@ describe('AppShell', () => {
   });
 });
 
+describe('AppShell: bildirim girişi', () => {
+  it('giriş yapmış kullanıcıda üst çubukta ve yan menüde, okunmamış sayısıyla görünür', () => {
+    renderUi(
+      <AppShell signedIn unreadNotifications={3}>
+        x
+      </AppShell>,
+    );
+    const links = screen.getAllByRole('link', { name: 'Bildirimler, 3 okunmamış' });
+    expect(links).toHaveLength(2);
+    for (const link of links) expect(link).toHaveAttribute('href', '/bildirimler');
+    // Üst çubukta (mobil) ve yan menüde (masaüstü) birer tane; alt gezinmede yok (altı sütun sabit).
+    const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });
+    expect(within(bottom).queryByRole('link', { name: /Bildirimler/ })).toBeNull();
+    const side = screen.getByRole('navigation', { name: 'Yan menü' });
+    expect(within(side).getByRole('link', { name: /Bildirimler/ })).toBeVisible();
+  });
+
+  it('okunmamış yokken rozet yok; ad yalnız "Bildirimler"', () => {
+    renderUi(
+      <AppShell signedIn unreadNotifications={0}>
+        x
+      </AppShell>,
+    );
+    expect(screen.getAllByRole('link', { name: 'Bildirimler' })).toHaveLength(2);
+    expect(screen.queryByTestId('bell-badge')).toBeNull();
+  });
+
+  it('girişsiz kullanıcıya bildirim girişi gösterilmez', () => {
+    navigation.pathname = '/mentorlar';
+    renderUi(<AppShell unreadNotifications={9}>x</AppShell>);
+    expect(screen.queryByRole('link', { name: /Bildirimler/ })).toBeNull();
+    navigation.pathname = '/';
+  });
+});
+
 it('Hesabım bağlantısını gösterir, yönetimi yalnız sunucudan açıkça izin verilirse sunar', () => {
   const { rerender } = renderUi(<AppShell signedIn>x</AppShell>);
   const side = screen.getByRole('navigation', { name: 'Yan menü' });

@@ -3,7 +3,7 @@ import type { Prisma } from '@/generated/prisma/client';
 import { matchJobPosting } from '../rules/jobMatch';
 import { visibleJobPostingIds } from '../repositories/job-postings';
 import { addDays, istanbulDay } from '../rules/jobPosting';
-import { stageNotification } from './notification-intent';
+import { stageInboxNotification, stageNotification } from './notification-intent';
 
 /** Yayınla aynı işlemde, yalnız doğrulanmış etkin öğrenciler için eşleşme ve günlük niyet. */
 export async function stageJobMatches(tx: Prisma.TransactionClient, postingId: string, now: Date) {
@@ -68,8 +68,11 @@ export async function stageJobMatches(tx: Prisma.TransactionClient, postingId: s
   });
   const day = istanbulDay(now);
   const notBefore = new Date(`${addDays(day, 1)}T00:05:00+03:00`);
-  for (const userId of recipients)
+  for (const userId of recipients) {
     await stageNotification(tx, userId, { type: 'jobMatch', event: 'digest', day }, notBefore);
+    // Kutuda her eşleşme kendi ilanına bağlanır; aynı günün eşleşmeleri listede "Sana uyan N yeni ilan" olarak toplanır.
+    await stageInboxNotification(tx, userId, { kind: 'jobMatchPosting', refId: postingId }, now);
+  }
 }
 
 /** Yalnız oturumdaki öğrencinin etkin üyeliklerinden kendi önerilerini üretir. */
