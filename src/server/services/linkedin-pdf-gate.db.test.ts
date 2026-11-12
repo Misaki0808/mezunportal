@@ -88,20 +88,20 @@ it('gerçek sağlayıcı + allowFakeLinkedin açık olsa bile LinkedIn yüklemes
   ).rejects.toMatchObject({ code: 'CV_LINKEDIN_UNAVAILABLE' });
 });
 
-it('normal CV akışı: metin ÇIKARILMAZ (extract çağrılmaz); sağlayıcı yalnız parseCv(PDF) alır, parseRedactedCv çağrılmaz', async () => {
+it('normal CV: maskeleyici yoksa yükleme ve işleme kapalı, ham PDF sağlayıcıya gitmez', async () => {
   const { actor } = await cvUser(db);
   const kit = cvKit(db);
   const s = spies();
   const deps = { ...kit.deps, llm: s.llm, pdfTextExtractor: s.extractor };
-  const upload = await uploadCv(deps, actor, pdfForm());
+  await expect(uploadCv(deps, actor, pdfForm())).rejects.toMatchObject({
+    code: 'CV_PROVIDER_NOT_CONFIGURED',
+  });
+  const upload = await uploadCv(kit.deps, actor, pdfForm());
   const outcome = await processCvParse(deps, upload.cvUploadId, fresh);
-  expect(outcome).toBe('PARSED');
+  expect(outcome).toBe('FAILED');
   expect(s.calls.extract).toBe(0);
   expect(s.calls.parseRedactedCv).toHaveLength(0);
-  expect(s.calls.parseCv).toHaveLength(1);
-  const sent = s.calls.parseCv[0] as { pdf?: Uint8Array; text?: unknown };
-  expect(sent.pdf).toBeInstanceOf(Uint8Array);
-  expect(sent).not.toHaveProperty('text');
+  expect(s.calls.parseCv).toHaveLength(0);
 });
 
 it('sahte sağlayıcı + LinkedIn: metin yalnız bölüm ipucu olarak kullanılır, sağlayıcıya metin gitmez', async () => {

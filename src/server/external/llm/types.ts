@@ -3,8 +3,8 @@
  * bilir; gerçek adaptör (K-04 cevaplanınca) ve sahte adaptör aynı sözleşmeye uyar.
  *
  * Güven sınırı: adaptör sağlayıcının yapılandırılmış çıktısını OLDUĞU GİBİ (`unknown`) döner; doğrulama ve
- * temizleme servis katmanında `parsedCvSchema` ile yapılır. Adaptöre araç/çağrı yetkisi verilmez ve yalnız
- * PDF baytları ile talimat gider — kullanıcı kimliği, e-posta, rol vb. HİÇBİR ZAMAN modele iletilmez.
+ * temizleme servis katmanında `parsedCvSchema` ile yapılır. Gerçek sağlayıcıya yalnız yerelde maskelenmiş
+ * metin ve talimat gider; ham PDF yalnız ağ erişimi olmayan sahte sağlayıcıda kullanılır.
  */
 export type LlmCvRequest = {
   pdf: Uint8Array;
