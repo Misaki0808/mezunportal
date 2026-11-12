@@ -173,6 +173,29 @@ describe('çıktı şemaları', () => {
     ).toBe(false);
   });
 
+  it('profil müsaitliği isteğe bağlıdır ve kartla aynı dar şemayı kullanır', () => {
+    const point = { available: true, reason: null };
+    const entry = { appointment: point, cvReview: point, contact: point };
+    const availability = {
+      available: false,
+      reason: 'PAUSED',
+      pausedUntil: new Date('2033-01-05T09:00:00Z'),
+    };
+    expect(mentorEntryPointsSchema.parse(entry)).not.toHaveProperty('availability');
+    expect(mentorEntryPointsSchema.parse({ ...entry, availability }).availability).toEqual(
+      availability,
+    );
+    for (const invalid of [
+      { ...availability, pausedUntil: '2033-01-05' },
+      { ...availability, reason: 'SECRET' },
+      { ...availability, userId: 'private' },
+    ]) {
+      expect(mentorEntryPointsSchema.safeParse({ ...entry, availability: invalid }).success).toBe(
+        false,
+      );
+    }
+  });
+
   it('hata kodları kayıtlıdır', () => {
     for (const codes of Object.values(MENTOR_DIRECTORY_ACTION_ERRORS)) {
       for (const code of codes) expect(ERROR_CODES).toContain(code);

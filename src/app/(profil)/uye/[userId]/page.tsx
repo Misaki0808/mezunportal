@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { getDb } from '@/server/db';
 import { Badge } from '@/components/ui';
+import { MentorAvailabilityBadge } from '@/components/mentors/mentor-availability-badge';
 import { MentorEntryPoints } from '@/components/mentors/mentor-entry-points';
 import { getMentorEntryPoints } from '@/server/actions/mentor-directory';
 import { ProfileView } from '@/components/profile/profile-view';
@@ -35,7 +36,16 @@ export default async function MemberProfilePage({
   return (
     <ProfileView
       profile={result.data}
-      badges={count > 0 ? <Badge>{t('profileCount', { count })}</Badge> : undefined}
+      badges={
+        (entry?.ok && entry.data.availability) || count > 0 ? (
+          <span className="flex flex-wrap items-center gap-2">
+            {entry?.ok && entry.data.availability && (
+              <MentorAvailabilityBadge availability={entry.data.availability} />
+            )}
+            {count > 0 && <Badge>{t('profileCount', { count })}</Badge>}
+          </span>
+        ) : undefined
+      }
       actions={
         entry?.ok ? (
           <MentorEntryPoints
