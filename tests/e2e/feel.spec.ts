@@ -65,9 +65,12 @@ test.describe('kullanım hissi: geri bildirim anları (390)', () => {
       where: { email: 'student@test.mezunportal.local' },
     });
     const original = await db.mentorProfile.findUniqueOrThrow({ where: { userId: mentor.id } });
+    // Mentorun hazır müsaitlik kuralları (seed ya da önceki spec bırakır) çakışma kısıtına takılır: önce saklanır, sonunda geri yazılır.
+    const savedRules = await db.availabilityRule.findMany({ where: { mentorId: mentor.id } });
     const ruleIds: string[] = [];
     const note = `Hisset ${randomUUID()}`;
     try {
+      await db.availabilityRule.deleteMany({ where: { mentorId: mentor.id } });
       await db.mentorProfile.update({
         where: { userId: mentor.id },
         data: {
@@ -112,6 +115,7 @@ test.describe('kullanım hissi: geri bildirim anları (390)', () => {
         where: { mentorId: mentor.id, menteeId: student.id, menteeNote: note },
       });
       await db.availabilityRule.deleteMany({ where: { id: { in: ruleIds } } });
+      if (savedRules.length) await db.availabilityRule.createMany({ data: savedRules });
       await db.mentorProfile.update({
         where: { userId: mentor.id },
         data: {
