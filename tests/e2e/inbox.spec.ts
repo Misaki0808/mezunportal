@@ -214,3 +214,76 @@ test.describe('bildirim kutusu', () => {
     await expect(page.getByRole('heading', { name: 'Bildirimler', level: 1 })).toHaveCount(0);
   });
 });
+
+test('201 bildirimli grup tek dokunuşta bütünüyle okundu olur (390)', async ({ browser }) => {
+  const student = await userId('student');
+  await reset(student);
+  await put(
+    student,
+    Array.from({ length: 201 }, () => ({ kind: 'contact', createdAt: at(0, 9) })),
+  );
+  await put(student, [{ kind: 'faqPublished', createdAt: at(0, 10) }]);
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  try {
+    await loginAs(page, 'student');
+    await page.goto('/bildirimler');
+    await page.getByRole('link', { name: /201 iletişim talebi geldi/ }).click();
+    await page.waitForURL('**/hesap/iletisim');
+    await expect
+      .poll(() =>
+        db.inAppNotification.count({ where: { userId: student, kind: 'contact', readAt: null } }),
+      )
+      .toBe(0);
+    await expect(bell(page, 'Bildirimler, 1 okunmamış')).toBeVisible();
+    await page.goBack();
+    await expect(page.getByRole('button', { name: 'Hepsini okundu yap' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Hepsini okundu yap' }).click();
+    await expect
+      .poll(() => db.inAppNotification.count({ where: { userId: student, readAt: null } }))
+      .toBe(0);
+    await expect(bell(page, 'Bildirimler')).toBeVisible();
+  } finally {
+    await context.close();
+    await reset(student);
+  }
+});
+
+test('inceleme: 390/1440 açık-koyu dolu ve boş bildirim kutusu', async ({ browser }, testInfo) => {
+  test.setTimeout(120_000);
+  const student = await userId('student');
+  for (const width of [390, 1440])
+    for (const colorScheme of ['light', 'dark'] as const) {
+      await reset(student);
+      await put(student, [
+        ...Array.from({ length: 3 }, () => ({ kind: 'jobMatchPosting', createdAt: at(0, 9) })),
+        { kind: 'contact', createdAt: at(0, 10) },
+        { kind: 'appointmentConfirmed', createdAt: at(1, 9), read: true },
+      ]);
+      const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme });
+      const page = await context.newPage();
+      try {
+        await loginAs(page, 'student');
+        await page.goto('/bildirimler');
+        await expect(page.getByRole('link', { name: /Profiline uyan 3 yeni ilan/ })).toBeVisible();
+        await expect(bell(page, 'Bildirimler, 4 okunmamış')).toBeVisible();
+        expect(await noOverflow(page)).toBe(true);
+        await page.screenshot({
+          path: testInfo.outputPath(`dolu-${width}-${colorScheme}.png`),
+          fullPage: true,
+        });
+        await reset(student);
+        await page.reload();
+        await expect(page.getByRole('heading', { name: 'Henüz bildirimin yok' })).toBeVisible();
+        await expect(bell(page, 'Bildirimler')).toBeVisible();
+        expect(await noOverflow(page)).toBe(true);
+        await page.screenshot({
+          path: testInfo.outputPath(`bos-${width}-${colorScheme}.png`),
+          fullPage: true,
+        });
+      } finally {
+        await context.close();
+        await reset(student);
+      }
+    }
+});

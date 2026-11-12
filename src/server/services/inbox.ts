@@ -13,9 +13,8 @@ import { istanbulDay } from '../rules/jobPosting';
 
 type Deps = { db: Pick<PrismaClient, 'inAppNotification'>; now?: () => Date };
 
-/** Bir sayfada okunan en çok bildirim; günler bölünmez, tek gün bu sınırı aşarsa o gün tam okunur (`DAY_CAP`). */
+/** Sayfa hedefi; günün bütünlüğü için tek günün kayıtları gerektiğinde bu sayıyı aşar. */
 const PAGE_ITEMS = 100;
-const DAY_CAP = 2000;
 const dayStart = (day: string) => new Date(`${day}T00:00:00+03:00`);
 const nextDay = (day: string) => new Date(dayStart(day).getTime() + 86_400_000);
 
@@ -60,13 +59,12 @@ export async function listMyInbox(
       rows = rows.filter((row) => istanbulDay(row.createdAt) !== oldest);
       nextCursor = days[days.length - 2]!;
     } else {
-      // Tek gün sayfayı aşıyor: o günü bütün oku (üst sınırla), imleç o gündür.
+      // Tek gün sayfayı aşıyor: o günü bütün oku, imleç o gündür; kalan kayıtlar atlanmaz.
       const only = days[0]!;
       rows = await deps.db.inAppNotification.findMany({
         where: { userId, createdAt: { gte: dayStart(only), lt: nextDay(only) } },
         select,
         orderBy,
-        take: DAY_CAP,
       });
       nextCursor = only;
     }

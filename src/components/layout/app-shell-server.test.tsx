@@ -3,10 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   admin: vi.fn(),
   actor: vi.fn(),
+  consented: vi.fn(),
   count: vi.fn(),
 }));
 vi.mock('./admin-access', () => ({ hasAdminAccess: mocks.admin }));
-vi.mock('@/server/permissions', () => ({ requireUserWithoutConsent: mocks.actor }));
+vi.mock('@/server/permissions', () => ({
+  requireUserWithoutConsent: mocks.actor,
+  requireUser: mocks.consented,
+}));
 vi.mock('@/server/db', () => ({ getDb: () => 'db' }));
 vi.mock('@/server/services/inbox', () => ({ countMyUnread: mocks.count }));
 
@@ -21,6 +25,7 @@ async function render() {
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.admin.mockResolvedValue(false);
+  mocks.consented.mockResolvedValue({ userId: 'u1' });
 });
 
 describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
@@ -46,4 +51,12 @@ describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
     const shell = await render();
     expect(shell.props).toMatchObject({ signedIn: true, unreadNotifications: 0 });
   });
+});
+
+it('rızası eksik kullanıcı giriş yapmış görünür ama rozet iş verisi okunmaz', async () => {
+  mocks.actor.mockResolvedValue({ userId: 'u1' });
+  mocks.consented.mockRejectedValue(new Error('CONSENT_REQUIRED'));
+  const shell = await render();
+  expect(shell.props).toMatchObject({ signedIn: true, unreadNotifications: 0 });
+  expect(mocks.count).not.toHaveBeenCalled();
 });

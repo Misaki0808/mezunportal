@@ -3,7 +3,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { InboxGroupView, InboxPage } from '@/contracts/inbox';
+import { markInboxReadInputSchema, type InboxGroupView, type InboxPage } from '@/contracts/inbox';
 import { ToastProvider } from '@/components/ui';
 import { renderUi } from '@/test/render';
 
@@ -303,4 +303,39 @@ describe('InboxList: sayfa başlığı', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Hepsini okundu yap' }));
     expect(mocks.markAll).not.toHaveBeenCalled();
   });
+});
+
+it('201 kayıtlık grup tek tıklamada sınırı aşmadan tamamen okundu olur', async () => {
+  const persisted = new Set<string>();
+  mocks.mark.mockImplementation(async (input: unknown) => {
+    const parsed = markInboxReadInputSchema.safeParse(input);
+    if (!parsed.success) return { ok: false, errorCode: 'VALIDATION_INVALID' };
+    parsed.data.ids.forEach((id) => persisted.add(id));
+    return { ok: true, data: { marked: parsed.data.ids.length } };
+  });
+  show(
+    page(
+      [
+        group({
+          count: 201,
+          unread: 201,
+          ids: Array.from({ length: 201 }, (_, i) => `row-${i}`),
+          href: '/ilanlar',
+        }),
+      ],
+      { unread: 100 },
+    ),
+  );
+  fireEvent.click(screen.getByRole('link', { name: /Profiline uyan 201 yeni ilan/ }));
+  await waitFor(() => expect(persisted.size).toBe(201));
+  expect(mocks.mark).toHaveBeenCalledTimes(2);
+  expect(screen.queryByText('Okunmadı')).not.toBeInTheDocument();
+});
+
+it('grup işaretleme reddedilirse okunmamış göstergesi geri gelir', async () => {
+  mocks.mark.mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+  show(page([group()]));
+  fireEvent.click(screen.getByRole('link', { name: /Profiline uyan yeni bir ilan/ }));
+  expect(await screen.findByText('Okunmadı')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Hepsini okundu yap' })).toBeEnabled();
 });

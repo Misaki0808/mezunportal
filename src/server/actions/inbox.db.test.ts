@@ -109,9 +109,20 @@ describe('rozet sayısı rotası', () => {
     expect(await (await unreadCount()).json()).toEqual({ unread: 0 });
   });
 
-  it('rıza vermemiş kullanıcı bile kendi sayısını görür (rozet kabuktadır), başkasınınkini değil', async () => {
+  it('rıza vermemiş kullanıcı rozet verisini okuyamaz', async () => {
     const lonely = await createUser(db);
     session.userId = lonely;
-    expect(await (await unreadCount()).json()).toEqual({ unread: 0 });
+    expect((await unreadCount()).status).toBe(401);
   });
+});
+
+it('zorunlu onayı olmayan hesabın rozet rotası iş verisi saymaz', async () => {
+  const user = await createUser(db);
+  await db.inAppNotification.create({
+    data: { userId: user, kind: 'contact', refId: 'riza-oncesi', key: `riza-oncesi-${user}` },
+  });
+  session.userId = user;
+  const response = await unreadCount();
+  expect(response.status).toBe(401);
+  expect(await getMyInbox()).toMatchObject({ ok: false, errorCode: 'CONSENT_REQUIRED' });
 });

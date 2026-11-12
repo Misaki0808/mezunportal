@@ -23,7 +23,12 @@ import {
   useAction,
   type IconChipTone,
 } from '@/components/ui';
-import type { InboxGroupView, InboxPage } from '@/contracts/inbox';
+import {
+  INBOX_MARK_MAX_IDS,
+  INBOX_UNREAD_CAP,
+  type InboxGroupView,
+  type InboxPage,
+} from '@/contracts/inbox';
 import { getMyInbox, markAllInboxRead, markInboxRead } from '@/server/actions/inbox';
 
 import { INBOX_CHANGED_EVENT } from './notification-bell';
@@ -81,10 +86,30 @@ export function InboxList({ initial, today }: { initial: InboxPage; today: strin
       current.map((item) => (item.key === group.key ? { ...item, unread: 0 } : item)),
     );
     setUnread((current) => Math.max(0, current - group.unread));
-    // Gezinmeyi beklemez; başarısızsa kayıt okunmamış kalır, zarar yoktur.
-    void markInboxRead({ ids: group.ids })
-      .then(announce)
-      .catch(() => undefined);
+    // Gezinmeyi bekletmez; büyük gün grupları eylemin kimlik sınırına uygun parçalarda işaretlenir.
+    const restore = () => {
+      setGroups((current) =>
+        current.map((item) => (item.key === group.key ? { ...item, unread: group.unread } : item)),
+      );
+      setUnread((current) => Math.min(INBOX_UNREAD_CAP, current + group.unread));
+    };
+    void (async () => {
+      try {
+        for (let index = 0; index < group.ids.length; index += INBOX_MARK_MAX_IDS) {
+          const result = await markInboxRead({
+            ids: group.ids.slice(index, index + INBOX_MARK_MAX_IDS),
+          });
+          if (!result.ok) {
+            restore();
+            return;
+          }
+        }
+      } catch {
+        restore();
+      } finally {
+        announce();
+      }
+    })();
   }
   const markAll = () =>
     void action.run(() => markAllInboxRead(), {

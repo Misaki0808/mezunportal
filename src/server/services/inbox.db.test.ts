@@ -319,3 +319,14 @@ describe('uygulama içi kutu: gün bazlı sayfalama', () => {
     expect(listInboxInputSchema.safeParse({ cursor: '2030-06-18' }).success).toBe(true);
   });
 });
+
+it('2000 üstü tek günün bütün kayıtları görünür; imleç hiçbir kaydı atlamaz', async () => {
+  const user = await createUser(db);
+  await seed(user, 'contact', '2030-06-18', 2001);
+  await seed(user, 'contact', '2030-06-17', 2);
+  const first = await listMyInbox(deps, user);
+  expect(first.groups.map((g) => [g.day, g.count])).toEqual([['2030-06-18', 2001]]);
+  const second = await listMyInbox(deps, user, { cursor: first.nextCursor! });
+  expect(second.groups.map((g) => [g.day, g.count])).toEqual([['2030-06-17', 2]]);
+  expect(new Set([...first.groups, ...second.groups].flatMap((g) => g.ids)).size).toBe(2003);
+});
