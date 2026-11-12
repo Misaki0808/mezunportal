@@ -85,6 +85,10 @@ test('öğrenci ilanı bildirir, yönetici kaldırır ve ilanın listeden kalkt�
     await expect(item).toBeVisible();
     await item.getByRole('button', { name: 'İlanı kaldır' }).click();
     const dialog = admin.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Onayla' }).click();
+    await expect(dialog.getByLabel(/Karar gerekçesi/)).toBeFocused();
+    await expect(dialog.getByLabel(/Karar gerekçesi/)).toHaveAttribute('aria-invalid', 'true');
+    await expect(dialog.getByText('En az 3 karakterlik bir gerekçe yaz.')).toBeVisible();
     await dialog.getByLabel(/Karar gerekçesi/).fill('Yanıltıcı ilan tespit edildi.');
     await dialog.getByRole('button', { name: 'Onayla' }).click();
     await expect(item).toHaveCount(0);

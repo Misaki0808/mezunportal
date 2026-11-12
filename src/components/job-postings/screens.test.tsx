@@ -376,10 +376,12 @@ it.each(['PUBLISH', 'REJECT'] as const)(
       this.removeAttribute('open');
     };
     const { PostingModeration } = await import('./manage');
-    const review = vi.fn().mockResolvedValue({
-      ok: true,
-      data: { postingId: 'job-1', status: decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED' },
-    });
+    const review = vi
+      .fn()
+      .mockResolvedValue({
+        ok: true,
+        data: { postingId: 'job-1', status: decision === 'PUBLISH' ? 'PUBLISHED' : 'REJECTED' },
+      });
     const { user } = renderWithToasts(
       <PostingModeration
         initial={{
@@ -403,3 +405,28 @@ it.each(['PUBLISH', 'REJECT'] as const)(
     );
   },
 );
+
+it('B3: boş ret ilk hatalı alana odaklanır ve alan altı açıklama taşır', async () => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute('open');
+  };
+  const { PostingModeration } = await import('./manage');
+  const review = vi.fn();
+  const { user } = renderWithToasts(
+    <PostingModeration
+      initial={{ items: [pendingItem], nextCursor: null }}
+      review={review}
+      list={vi.fn()}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: 'Reddet' }));
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+  const reason = screen.getByLabelText(/Ret gerekçesi/);
+  expect(reason).toHaveFocus();
+  expect(reason).toHaveAttribute('aria-invalid', 'true');
+  expect(reason).toHaveAccessibleDescription(/En az 3 karakterlik bir gerekçe yaz/);
+  expect(review).not.toHaveBeenCalled();
+});

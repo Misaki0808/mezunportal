@@ -1,7 +1,7 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import { useQueueFocus } from './use-queue-focus';
-import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { resolveJobPostingReportSchema, type JobPostingReportPage } from '@/contracts/job-postings';
@@ -13,6 +13,7 @@ import { Button, EmptyState, Field, Modal, Textarea, buttonClasses } from '@/com
 export function JobPostingReports({ initial }: { initial: JobPostingReportPage }) {
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
+  const admin = useTranslations('admin');
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
   const [choice, setChoice] = useState<{ id: string; decision: 'DISMISS' | 'TAKE_DOWN' }>();
@@ -20,12 +21,15 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<ErrorCode>();
   const [notice, setNotice] = useState(false);
-
+  const [reasonInvalid, setReasonInvalid] = useState(false);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
   const { rootRef, complete } = useQueueFocus(pending);
+
   function close() {
     if (pending) return;
     setChoice(undefined);
     setReason('');
+    setReasonInvalid(false);
     setError(undefined);
   }
 
@@ -37,10 +41,12 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
       reason,
     });
     if (!parsed.success) {
-      setError('VALIDATION_INVALID');
+      setReasonInvalid(true);
+      reasonRef.current?.focus();
       return;
     }
     setPending(true);
+    setReasonInvalid(false);
     setError(undefined);
     const result = await safeClientAction(() => resolveJobPostingReport(parsed.data));
     setPending(false);
@@ -109,6 +115,7 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
                   onClick={() => {
                     setError(undefined);
                     setReason('');
+                    setReasonInvalid(false);
                     setChoice({ id: item.id, decision: 'DISMISS' });
                   }}
                 >
@@ -120,6 +127,7 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
                   onClick={() => {
                     setError(undefined);
                     setReason('');
+                    setReasonInvalid(false);
                     setChoice({ id: item.id, decision: 'TAKE_DOWN' });
                   }}
                 >
@@ -150,10 +158,16 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
           </>
         }
       >
-        <Field label={t('reportDecisionReason')} hint={t('reportDecisionHint')} required>
+        <Field
+          label={t('reportDecisionReason')}
+          hint={t('reportDecisionHint')}
+          required
+          error={reasonInvalid ? admin('reasonInvalid') : undefined}
+        >
           {(props) => (
             <Textarea
               {...props}
+              ref={reasonRef}
               value={reason}
               maxLength={1000}
               rows={4}

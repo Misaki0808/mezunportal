@@ -137,3 +137,34 @@ it.each(['DISMISS', 'TAKE_DOWN'] as const)(
     );
   },
 );
+
+it('B3: boş karar gerekçesi alana odaklanır, mesaj alanla ilişkilidir', async () => {
+  mocks.resolve.mockReset();
+  const { user } = renderUi(
+    <JobPostingReports
+      initial={{
+        items: [
+          {
+            id: 'r1',
+            postingId: 'p1',
+            postingTitle: 'İlan',
+            postingStatus: 'PUBLISHED',
+            reason: 'Yanıltıcı ilan',
+            status: 'OPEN',
+            createdAt: new Date(),
+            reviewedAt: null,
+            resolutionNote: null,
+          },
+        ],
+        nextCursor: null,
+      }}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: 'İlanı kaldır' }));
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+  const reason = screen.getByLabelText(/Karar gerekçesi/);
+  expect(reason).toHaveFocus();
+  expect(reason).toHaveAttribute('aria-invalid', 'true');
+  expect(reason).toHaveAccessibleDescription(/En az 3 karakterlik bir gerekçe yaz/);
+  expect(mocks.resolve).not.toHaveBeenCalled();
+});

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { reviewJobPostingSchema } from '@/contracts/job-postings';
 import type {
@@ -221,6 +221,7 @@ export function PostingModeration({
   const hydrated = useHydrated();
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
+  const admin = useTranslations('admin');
   const router = useRouter();
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
@@ -229,6 +230,7 @@ export function PostingModeration({
   const [error, setError] = useState('');
   const [pending, start] = useTransition();
   const { rootRef, complete } = useQueueFocus(pending);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
   function loadMore() {
     if (!cursor) return;
     start(async () => {
@@ -251,7 +253,8 @@ export function PostingModeration({
         : { postingId: choice.id, decision: 'REJECT', reason },
     );
     if (!parsed.success) {
-      setError(t('requiredError'));
+      setError(reason.trim().length < 3 ? admin('reasonInvalid') : t('requiredError'));
+      reasonRef.current?.focus();
       return;
     }
     start(async () => {
@@ -353,7 +356,15 @@ export function PostingModeration({
       >
         {choice?.decision === 'REJECT' && (
           <Field label={t('reason')} required error={error}>
-            {(p) => <Textarea {...p} value={reason} onChange={(e) => setReason(e.target.value)} />}
+            {(p) => (
+              <Textarea
+                {...p}
+                ref={reasonRef}
+                maxLength={1000}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            )}
           </Field>
         )}
         {error && choice?.decision !== 'REJECT' && (
