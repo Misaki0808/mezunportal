@@ -3,6 +3,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
 import type { AdminReportPage, ListAdminReportsInput } from '@/contracts/admin';
+import type { JobPostingReportPage } from '@/contracts/job-postings';
 import {
   resolveExperienceReportSchema,
   type ResolveExperienceReportInput,
@@ -13,15 +14,17 @@ import { Button, EmptyState, Field, Modal, Textarea, buttonClasses } from '@/com
 import type { ErrorCode } from '@/lib/errors';
 import { AdminFrame } from './frame';
 import { ResponsiveRows } from './responsive-rows';
+import { JobPostingReports } from './job-posting-reports';
 
 type Props = {
   initial: AdminReportPage;
+  jobReports?: JobPostingReportPage;
   list: (input: ListAdminReportsInput) => Promise<ActionResult<AdminReportPage>>;
   resolve: (
     input: ResolveExperienceReportInput,
   ) => Promise<ActionResult<ResolveExperienceReportOutput>>;
 };
-export function AdminReports({ initial, list, resolve }: Props) {
+export function AdminReports({ initial, jobReports, list, resolve }: Props) {
   const t = useTranslations('admin');
   const errors = useTranslations('errors.codes');
   const [items, setItems] = useState(initial.items);
@@ -149,6 +152,7 @@ export function AdminReports({ initial, list, resolve }: Props) {
           {t('more')}
         </Button>
       )}
+      {jobReports && <JobPostingReports initial={jobReports} />}
       <Modal
         open={choice !== undefined}
         onClose={close}

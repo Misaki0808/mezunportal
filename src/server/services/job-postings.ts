@@ -571,7 +571,7 @@ export async function getJobPosting(
   });
 }
 
-/** Şikâyet (raportör kimliği hiçbir çıktıda yok): yalnız açık (yayında, süresi dolmamış) ve görünür ilan; günlük 10, tek açık şikâyet. */
+/** Şikâyet (raportör kimliği hiçbir çıktıda yok): yalnız açık (yayında, süresi dolmamış) ve görünür ilan; günlük 10, ilan başına kullanıcıdan tek şikâyet. */
 export async function reportJobPosting(
   deps: JobPostingDeps,
   userId: string,
@@ -618,7 +618,7 @@ export async function reportJobPosting(
     )
       throw codedNotFound('RESOURCE_NOT_FOUND');
     const existing = await tx.jobPostingReport.findFirst({
-      where: { postingId: parsed.postingId, reporterId: userId, status: 'OPEN' },
+      where: { postingId: parsed.postingId, reporterId: userId },
       select: { id: true },
     });
     if (existing) throw codedConflict('REPORT_ALREADY_OPEN');

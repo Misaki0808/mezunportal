@@ -159,11 +159,15 @@ function runVitest(extraArgs, outFile) {
 }
 
 export async function main() {
-  const scriptTests = readdirSync('scripts')
-    .filter((name) => name.endsWith('.test.mjs'))
-    .map((name) => join('scripts', name));
-  const nodeTests = spawnSync(process.execPath, ['--test', ...scriptTests], { stdio: 'inherit' });
-  if (nodeTests.status !== 0) return nodeTests.status ?? 1;
+  // `TEST_GATE_NESTED=1`: uçtan uca bekçi testi (test-gate.test.mjs) bu dosyayı sahte `pnpm` ile ÇOCUK süreçte koşar; betik
+  // testlerini yeniden başlatmak o testin kendisini yeniden koşturup sonsuz özyinelemeye girerdi, bu yüzden bu adım atlanır.
+  if (process.env.TEST_GATE_NESTED !== '1') {
+    const scriptTests = readdirSync('scripts')
+      .filter((name) => name.endsWith('.test.mjs'))
+      .map((name) => join('scripts', name));
+    const nodeTests = spawnSync(process.execPath, ['--test', ...scriptTests], { stdio: 'inherit' });
+    if (nodeTests.status !== 0) return nodeTests.status ?? 1;
+  }
   const out = join(tmpdir(), `vitest-gate-${process.pid}.json`);
   try {
     const first = await runVitest([], out);
