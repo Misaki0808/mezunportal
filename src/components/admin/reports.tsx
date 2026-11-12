@@ -15,6 +15,7 @@ import type { ErrorCode } from '@/lib/errors';
 import { AdminFrame } from './frame';
 import { ResponsiveRows } from './responsive-rows';
 import { JobPostingReports } from './job-posting-reports';
+import { useQueueFocus } from './use-queue-focus';
 
 type Props = {
   initial: AdminReportPage;
@@ -34,7 +35,10 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
   const [invalid, setInvalid] = useState(false);
   const [error, setError] = useState<ErrorCode>();
   const [pending, setPending] = useState(false);
+  const { rootRef, complete } = useQueueFocus(pending);
   const [notice, setNotice] = useState(false);
+  const [jobsEmpty, setJobsEmpty] = useState(!jobReports?.items.length && !jobReports?.nextCursor);
+  const allEmpty = items.length === 0 && !cursor && jobsEmpty;
   function close() {
     if (pending) return;
     setChoice(undefined);
@@ -61,6 +65,7 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
         setError(result.errorCode);
         return;
       }
+      complete(choice.id);
       setItems((current) => current.filter((item) => item.id !== choice.id));
       setChoice(undefined);
       setReason('');
@@ -101,58 +106,71 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
           {errors(error)}
         </p>
       )}
-      {items.length === 0 ? (
-        <EmptyState title={t('empty')} description={t('emptyDescription')} />
-      ) : (
-        <ResponsiveRows
-          headers={[t('name'), t('report.reason'), t('created'), t('actions')]}
-          rows={items.map((item) => ({
-            id: item.id,
-            cells: [
-              <div key="target">
-                <p>{item.target.organizationName ?? item.target.departmentName}</p>
-                <p className="text-fg-muted">
-                  {item.target.departmentName} ·{' '}
-                  {t('report.count', { count: item.target.openReportCount })}
-                </p>
-              </div>,
-              <p key="reason" className="whitespace-pre-line">
-                {item.reason}
-              </p>,
-              new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium' }).format(
-                new Date(item.createdAt),
-              ),
-              <div key="actions" className="flex flex-wrap gap-2">
-                <Link
-                  href={`/deneyim/${item.target.id}`}
-                  className={buttonClasses({ variant: 'secondary' })}
-                >
-                  {t('report.target')}
-                </Link>
-                <Button
-                  variant="secondary"
-                  onClick={() => setChoice({ id: item.id, decision: 'RESOLVED' })}
-                >
-                  {t('report.resolve')}
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="border-danger text-danger"
-                  onClick={() => setChoice({ id: item.id, decision: 'DISMISSED' })}
-                >
-                  {t('report.dismiss')}
-                </Button>
-              </div>,
-            ],
-          }))}
-        />
-      )}
+      <div ref={rootRef}>
+        {allEmpty ? (
+          <EmptyState title={t('report.emptyAll')} />
+        ) : (
+          <>
+            <h2 className="mb-4 text-xl font-semibold">{t('report.experiences')}</h2>
+            {items.length === 0 ? (
+              <EmptyState title={t('report.emptyExperiences')} />
+            ) : (
+              <ResponsiveRows
+                headers={[t('name'), t('report.reason'), t('created'), t('actions')]}
+                rows={items.map((item) => ({
+                  id: item.id,
+                  cells: [
+                    <div key="target">
+                      <p>{item.target.organizationName ?? item.target.departmentName}</p>
+                      <p className="text-fg-muted">
+                        {item.target.departmentName} ·{' '}
+                        {t('report.count', { count: item.target.openReportCount })}
+                      </p>
+                    </div>,
+                    <p key="reason" className="whitespace-pre-line">
+                      {item.reason}
+                    </p>,
+                    new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium' }).format(
+                      new Date(item.createdAt),
+                    ),
+                    <div key="actions" data-queue-row={item.id} className="flex flex-wrap gap-2">
+                      <Link
+                        href={`/deneyim/${item.target.id}`}
+                        className={buttonClasses({ variant: 'secondary' })}
+                      >
+                        {t('report.target')}
+                      </Link>
+                      <Button
+                        data-queue-action
+                        variant="secondary"
+                        onClick={() => setChoice({ id: item.id, decision: 'RESOLVED' })}
+                      >
+                        {t('report.resolve')}
+                      </Button>
+                      <Button
+                        data-queue-action
+                        variant="secondary"
+                        className="border-danger text-danger"
+                        onClick={() => setChoice({ id: item.id, decision: 'DISMISSED' })}
+                      >
+                        {t('report.dismiss')}
+                      </Button>
+                    </div>,
+                  ],
+                }))}
+              />
+            )}
+          </>
+        )}
+      </div>
       {cursor && (
         <Button className="mt-5" variant="secondary" loading={pending} onClick={() => void more()}>
           {t('more')}
         </Button>
       )}
-      {jobReports && <JobPostingReports initial={jobReports} />}
+      {jobReports && (
+        <JobPostingReports initial={jobReports} hideEmpty={allEmpty} onEmptyChange={setJobsEmpty} />
+      )}
       <Modal
         open={choice !== undefined}
         onClose={close}

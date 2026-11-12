@@ -639,7 +639,32 @@ describe('getMentorEntryPoints', () => {
       appointment: { available: true, reason: null },
       cvReview: { available: true, reason: null },
       contact: { available: true, reason: null },
+      availability: { available: true, reason: null, pausedUntil: null },
     });
+  });
+
+  it('profil müsaitliği dizin kartıyla birebir aynıdır: müsait, ara verdi, ara bitti ve kapasite doldu', async () => {
+    const viewer = await member();
+    const targets = [
+      await mentor(),
+      await mentor({ pausedUntil: new Date(NOW.getTime() + DAY) }),
+      await mentor({ pausedUntil: new Date(NOW.getTime() - DAY) }),
+      await mentor({ monthlyCapacity: 0 }),
+    ];
+    const company = `Müsaitlik ${tag()}`;
+    for (const target of targets) await position(target, { companyRaw: company });
+    const directory = await search(viewer, { company });
+    for (const target of targets) {
+      const card = directory.items.find((item) => item.userId === target);
+      expect(card).toBeDefined();
+      const entry = await run(viewer, target);
+      expect(entry).toHaveProperty('availability');
+      expect(entry.availability).toEqual(card!.availability);
+      expect(entry.appointment).toEqual({
+        available: card!.availability.available,
+        reason: card!.availability.reason,
+      });
+    }
   });
 
   it('sebepler: duraklatılmış, kapasite dolu, CV incelemesi kapalı ya da limit 0', async () => {

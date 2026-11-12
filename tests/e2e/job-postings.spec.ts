@@ -122,11 +122,17 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     await alumni!.goto('/bildirimler');
     await expect(alumni!.getByText(/lanın yayında\./).first()).toBeVisible();
     await student!.goto('/');
+    // Uygulama içi bildirimler tek yerdedir: tercih ekranında düz eşleşme geçmişi yok, kutuya bağlantı var.
     await student!.goto('/hesap/bildirimler');
     await expect(
       student!.getByRole('heading', { name: 'Sana uyan ilan bildirimleri' }),
+    ).toHaveCount(0);
+    await expect(student!.getByRole('link', { name: new RegExp(title) })).toHaveCount(0);
+    await student!.getByRole('link', { name: /Bildirim kutun/ }).click();
+    await student!.waitForURL('**/bildirimler');
+    await expect(
+      student!.getByRole('link', { name: /Profiline uyan yeni bir ilan var/ }),
     ).toBeVisible();
-    await expect(student!.getByRole('link', { name: new RegExp(title) })).toBeVisible();
     await student!.setViewportSize({ width: 360, height: 780 });
     await student!.goto('/ilanlar');
     await student!.getByLabel('Pozisyon veya kurum ara').fill(title);

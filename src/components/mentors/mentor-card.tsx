@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { MentorCard as MentorCardData } from '@/contracts/mentor-directory';
 import { Avatar, Badge, buttonClasses, cn } from '@/components/ui';
 import { withReturnPath } from '@/lib/return-path';
+import { MentorAvailabilityBadge } from './mentor-availability-badge';
 
 import type messages from '../../../messages/tr.json';
 
@@ -26,16 +27,7 @@ export function MentorCard({
   // Aynı adlı eylem bağlantıları kartın sahibiyle ayırt edilir: "Profili gör: Ad" (görünen metin değişmez).
   const named = (key: 'card.profile' | 'card.appointment' | 'card.contact') =>
     ui('namedAction', { action: t(key), target: mentor.displayName });
-  const date = (value: Date) =>
-    new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(value));
   const { availability, capacity } = mentor;
-  const availabilityText = availability.available
-    ? t('card.available')
-    : availability.reason === 'PAUSED'
-      ? availability.pausedUntil
-        ? t('card.pausedUntil', { date: date(availability.pausedUntil) })
-        : t('card.paused')
-      : t('card.full');
   const topics = mentor.topics.filter((slug) => tags.has(slug as TopicKey));
 
   return (
@@ -65,7 +57,7 @@ export function MentorCard({
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Badge tone={availability.available ? 'success' : 'warning'}>{availabilityText}</Badge>
+        <MentorAvailabilityBadge availability={availability} />
         <Badge tone="category">{t(`types.${mentor.mentorType}`)}</Badge>
       </div>
 

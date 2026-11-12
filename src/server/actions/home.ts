@@ -32,14 +32,3 @@ export async function getSuggestedJobs() {
     return failAction(error);
   }
 }
-
-/** Yalnız oturum sahibinin ilan bildirim geçmişi. */
-export async function getMyJobMatchNotifications() {
-  try {
-    const actor = await requireVerifiedMember({ roles: ['STUDENT'] });
-    const { listMyJobMatchNotifications } = await import('../services/job-match');
-    return actionOk(await listMyJobMatchNotifications(getDb(), actor.userId));
-  } catch (error) {
-    return failAction(error);
-  }
-}

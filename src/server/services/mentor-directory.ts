@@ -504,7 +504,7 @@ export async function getSimilarMentors(
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Hedef profil için randevu / CV incelemesi / iletişim talebi uygunluğu. Yalnız bayrak ve sebep döner; talebi
+ * Hedef profil için randevu / CV incelemesi / iletişim talebi uygunluğu ve dizindeki kamusal müsaitlik. Talebi
  * oluşturan eylemler kendi kartlarındadır. Görünür mentor değilse (olmayan, askıda, başka üniversite, mentor
  * değil) üç bayrak da `NOT_MENTOR`: varlık ayrımı yapılmaz. İletişim talebi görünür her üyeye açıktır (mentor olması
  * gerekmez).
@@ -581,6 +581,11 @@ export async function getMentorEntryPoints(
     now,
   });
   return mentorEntryPointsSchema.parse({
+    availability: {
+      available: availability.available,
+      reason: availability.reason,
+      pausedUntil: availability.pausedUntil,
+    },
     appointment: availability.available ? open : blocked(availability.reason!),
     cvReview:
       !mentor.cvReviewEnabled || mentor.cvReviewMonthlyLimit <= 0

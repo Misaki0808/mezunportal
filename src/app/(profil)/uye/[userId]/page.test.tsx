@@ -14,6 +14,9 @@ vi.mock('next-intl/server', () => ({
 }));
 vi.mock('@/server/actions/profile-content', () => ({ getProfile: mocks.profile }));
 vi.mock('@/server/actions/mentor-directory', () => ({ getMentorEntryPoints: mocks.entry }));
+vi.mock('@/server/actions/cv-review-request', () => ({
+  getCvReviewAvailability: async () => ({ ok: false, errorCode: 'AUTH_UNAUTHENTICATED' }),
+}));
 vi.mock('@/components/profile/profile-view', () => ({
   // Başlık yuvalarını (rozet + eylemler) çizer: gerçek bileşendeki gibi eylemler PROFİLİN İÇİNDEDİR, sayfa sonunda değil.
   ProfileView: ({ badges, actions }: { badges?: ReactNode; actions?: ReactNode }) => (
@@ -27,6 +30,7 @@ vi.mock('@/components/profile/profile-view', () => ({
 import Page from './page';
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.count.mockResolvedValue(3);
   mocks.profile.mockResolvedValue({ ok: true, data: {} });
   mocks.entry.mockResolvedValue({
     ok: true,
@@ -88,4 +92,32 @@ it('inceleyici: profil görünür değilse giriş sorgusu varlık ayrımı yapma
   renderUi(await Page({ params: Promise.resolve({ userId: 'hidden' }) }));
   expect(mocks.entry).not.toHaveBeenCalled();
   expect(screen.queryByText('Mentorla görüş')).not.toBeInTheDocument();
+});
+
+it.each([
+  [{ available: true, reason: null, pausedUntil: null }, 'Müsait'],
+  [
+    { available: false, reason: 'PAUSED', pausedUntil: new Date('2033-01-05T09:00:00Z') },
+    'Ara verdi · 5 Ocak 2033 tarihine kadar',
+  ],
+])('profil başlığında dizinle aynı müsaitlik rozeti görünür: %s', async (availability, label) => {
+  mocks.entry.mockResolvedValue({
+    ok: true,
+    data: {
+      contact: { available: true, reason: null },
+      appointment: { available: availability.available, reason: availability.reason },
+      cvReview: { available: false, reason: 'CV_REVIEW_DISABLED' },
+      availability,
+    },
+  });
+  renderUi(await Page({ params: Promise.resolve({ userId: 'mentor' }) }));
+  expect(within(screen.getByRole('article')).getByText(label)).toBeVisible();
+  expect(screen.getByText('profileCount: 3')).toBeVisible();
+});
+
+it('mentor olmayan veya kapalı hedefte müsaitlik rozeti uydurulmaz', async () => {
+  mocks.count.mockResolvedValue(0);
+  renderUi(await Page({ params: Promise.resolve({ userId: 'plain' }) }));
+  expect(screen.queryByText('Müsait')).not.toBeInTheDocument();
+  expect(screen.queryByText(/^Ara verdi/)).not.toBeInTheDocument();
 });
