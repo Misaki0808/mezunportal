@@ -25,6 +25,7 @@ import {
   Select,
   Textarea,
   buttonClasses,
+  useToast,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
@@ -71,7 +72,7 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [departmentError, setDepartmentError] = useState(false);
   const [error, setError] = useState<ErrorCode>();
-  const [notice, setNotice] = useState<'saved'>();
+  const toast = useToast();
   const [confirm, setConfirm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState<'save' | 'submit'>();
@@ -95,7 +96,6 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
 
   function update(patch: Partial<FormState>) {
     setState((current) => ({ ...current, ...patch }));
-    setNotice(undefined);
     // Düzenlenen alanın hatası, kullanıcı yazmaya başlayınca kalkar (liste alanlarında satır hataları dahil).
     setFieldErrors((current) => {
       const touched = Object.keys(patch);
@@ -149,7 +149,6 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
     locked.current = true;
     setPending(mode === 'draft' ? 'save' : 'submit');
     setError(undefined);
-    setNotice(undefined);
     try {
       const id = await persist(mode);
       if (id === false) {
@@ -157,7 +156,7 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
         return;
       }
       if (mode === 'draft') {
-        setNotice('saved');
+        toast.show({ message: t('form.draftSaved'), tone: 'success' });
         return;
       }
       const result = await submit({ experienceId: id });
@@ -619,11 +618,6 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
               {t('form.goToFirstError')}
             </button>
           </div>
-        )}
-        {notice === 'saved' && (
-          <p role="status" className="text-base text-on-success-soft">
-            {t('form.draftSaved')}
-          </p>
         )}
         <Button type="submit" size="lg" fullWidth loading={pending === 'submit'}>
           {t('form.submit')}
