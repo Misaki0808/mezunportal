@@ -3,11 +3,7 @@ import { getEnv } from '@/lib/env';
 import { getDb } from '../db';
 import { getLlm } from '../external/llm';
 import { getStorage } from '../external/storage';
-import {
-  createFakePdfTextExtractor,
-  getPdfTextExtractor,
-  withCvTextRedaction,
-} from '../external/pdf-text';
+import { getPdfTextExtractor, withCvTextRedaction } from '../external/pdf-text';
 import { markCvParseExhausted, processCvParse, type CvParseDeps } from '../services/cv-parse';
 import type { Tx } from '../services/cv-shared';
 import { createCvQueue, publishCvParse, startCvConsumer, startCvFailureConsumer } from './cv-queue';
@@ -25,9 +21,7 @@ export async function createCvRuntime(consume = false) {
       db: getDb(),
       storage: getStorage(),
       llm,
-      pdfTextExtractor: withCvTextRedaction(
-        llm?.provider === 'fake' ? createFakePdfTextExtractor() : getPdfTextExtractor(),
-      ),
+      pdfTextExtractor: withCvTextRedaction(getPdfTextExtractor()),
     };
   };
   try {
