@@ -46,7 +46,7 @@ export function SeekerContact({
       </Link>
       <PageHeader title={t('contactTitle')} description={t('contactDescription')} />
       {sent ? (
-        <div role="status" className="space-y-4 rounded-card border border-border p-5">
+        <div className="space-y-4 rounded-card border border-border p-5">
           <p>{t('contactSent')}</p>
           <Link
             href="/hesap/iletisim?box=OUTGOING"

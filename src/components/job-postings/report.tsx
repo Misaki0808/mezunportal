@@ -31,7 +31,7 @@ export function ReportPosting({ postingId }: { postingId: string }) {
     }
     setError(undefined);
     await action.run(() => reportJobPosting(parsed.data), {
-      success: t('reportSent'),
+      success: t('reportSentToast'),
       onOk: () => {
         setSent(true);
         setOpen(false);
@@ -43,7 +43,7 @@ export function ReportPosting({ postingId }: { postingId: string }) {
   return (
     <div className="mt-6">
       {sent ? (
-        <p role="status">{t('reportSent')}</p>
+        <p>{t('reportSent')}</p>
       ) : (
         <Button variant="secondary" onClick={() => setOpen(true)}>
           {t('reportTitle')}

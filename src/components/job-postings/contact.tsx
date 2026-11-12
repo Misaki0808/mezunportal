@@ -35,7 +35,7 @@ export function PostingContactForm({
   if (sent)
     return (
       <div className="space-y-5 rounded-card border border-border bg-surface p-5">
-        <p role="status">{t('sent')}</p>
+        <p>{t('sent')}</p>
         <Link href="/hesap/iletisim?box=OUTGOING" className={buttonClasses({ fullWidth: true })}>
           {t('sendDone')}
         </Link>

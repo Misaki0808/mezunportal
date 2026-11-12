@@ -45,7 +45,7 @@ export function ReportExperience({ experienceId, report }: Props) {
     setReasonInvalid(false);
     setError(undefined);
     await action.run(() => report(parsed.data), {
-      success: t('sent'),
+      success: t('sentToast'),
       onOk: () => {
         setSent(true);
         setOpen(false);
@@ -58,9 +58,7 @@ export function ReportExperience({ experienceId, report }: Props) {
   return (
     <>
       {sent ? (
-        <p role="status" className="text-base text-on-success-soft">
-          {t('sent')}
-        </p>
+        <p className="text-base text-on-success-soft">{t('sent')}</p>
       ) : (
         <Button variant="secondary" onClick={() => setOpen(true)}>
           {t('title')}
