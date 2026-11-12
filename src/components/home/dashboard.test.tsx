@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { screen, within } from '@testing-library/react';
+import Link from 'next/link';
 import { describe, expect, it } from 'vitest';
 
 import type { HomeSummary } from '@/contracts/home';
@@ -29,11 +30,34 @@ describe('ana sayfa panosu', () => {
     renderUi(<HomeDashboard summary={base} />);
     expect(screen.getByRole('heading', { level: 1, name: 'Merhaba, Mert' })).toBeVisible();
     expect(screen.getByText('Şu an bekleyen bir işin yok.')).toBeVisible();
+    // Boşken yer kaplamaz: bağlantı yok, eylemler hemen altındaki kısayollardır.
     const region = screen.getByRole('region', { name: 'Bekleyen işlerin' });
-    expect(within(region).getByRole('link', { name: 'Deneyimleri oku' })).toHaveAttribute(
-      'href',
-      '/deneyimler',
+    expect(within(region).queryByRole('link')).toBeNull();
+  });
+
+  it('karşılamanın altında rolüne göre sıcak tek cümle; bekleyen iş varsa sayıyı söyler', () => {
+    const { unmount } = renderUi(<HomeDashboard summary={base} />);
+    expect(screen.getByText('Staj yolculuğunda bugün ne yapmak istersin?')).toBeVisible();
+    unmount();
+    const { unmount: second } = renderUi(<HomeDashboard summary={{ ...base, role: 'MENTOR' }} />);
+    expect(screen.getByText('Öğrencilere bugün nasıl destek olmak istersin?')).toBeVisible();
+    second();
+    renderUi(
+      <HomeDashboard
+        summary={{ ...base, pending: { ...base.pending, contactRequests: 2, feedbackForms: 1 } }}
+      />,
     );
+    expect(screen.getByText('Seni bekleyen 3 iş var.')).toBeVisible();
+    expect(screen.queryByText('Staj yolculuğunda bugün ne yapmak istersin?')).toBeNull();
+  });
+
+  it('sıradaki adım kutusu karşılamanın ÖNÜNE geçmez (önce selam, sonra kutu)', () => {
+    renderUi(
+      <HomeDashboard summary={base} notice={<Link href="/baslangic">Başlangıca devam et</Link>} />,
+    );
+    const heading = screen.getByRole('heading', { level: 1, name: 'Merhaba, Mert' });
+    const notice = screen.getByRole('link', { name: 'Başlangıca devam et' });
+    expect(heading.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('ad boşsa yalnız "Merhaba" der', () => {
@@ -105,12 +129,12 @@ describe('ana sayfa panosu', () => {
   });
 });
 
-it('bekleyen iş yoksa mentor için tek anlamlı başlangıç eylemi gösterir', () => {
+it('bekleyen iş yoksa mentor için eylem yine kısayollardadır (deneyim paylaş, profil)', () => {
   renderUi(<HomeDashboard summary={{ ...base, role: 'MENTOR' }} />);
-  const region = screen.getByRole('region', { name: 'Bekleyen işlerin' });
-  expect(within(region).getAllByRole('link')).toHaveLength(1);
-  expect(within(region).getByRole('link', { name: 'Deneyimini paylaş' })).toHaveAttribute(
+  const shortcuts = within(screen.getByRole('region', { name: 'Kısayollar' }));
+  expect(shortcuts.getByRole('link', { name: /Deneyim yaz/ })).toHaveAttribute(
     'href',
     '/deneyim/yeni',
   );
+  expect(shortcuts.getByRole('link', { name: /Profil/ })).toHaveAttribute('href', '/profil');
 });

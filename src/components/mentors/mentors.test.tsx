@@ -137,6 +137,33 @@ describe('mentor kartı', () => {
     expect(document.body.textContent).not.toMatch(/@|\+90/);
   });
 
+  it('önce KİM: baş harf avatarı + ad + güncel konum; müsaitlik rozeti kimliğin altındadır', () => {
+    renderUi(<MentorCard mentor={mentor()} />);
+    const card = screen.getByRole('article');
+    // Avatar dekoratiftir (ad yanında yazıyor): ekran okuyucu adı iki kez okumaz.
+    const avatar = card.querySelector('span[aria-hidden="true"]');
+    expect(avatar).toHaveTextContent('MY');
+    const name = screen.getByRole('heading', { name: 'Mert Yıldız' });
+    const position = screen.getByText('Ürün Yöneticisi · Örnek A.Ş.');
+    const availability = screen.getByText('Müsait');
+    expect(name.compareDocumentPosition(position) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      position.compareDocumentPosition(availability) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Konum başlıktan sonra, serbest başlık satırı (headline) ondan sonra gelir.
+    const headline = screen.getByText('Ürün yöneticisi');
+    expect(
+      position.compareDocumentPosition(headline) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('kompakt kartta da avatar vardır', () => {
+    renderUi(<MentorCard mentor={mentor()} compact />);
+    expect(screen.getByRole('article').querySelector('span[aria-hidden="true"]')).toHaveTextContent(
+      'MY',
+    );
+  });
+
   it('ara verdi ve dolu durumları metinle (renk tek sinyal değil) gösterilir', () => {
     const { rerender } = renderUi(
       <MentorCard
@@ -242,6 +269,21 @@ describe('giriş noktaları', () => {
 
 describe('mentor dizini', () => {
   const dialogFilters = () => within(screen.getByRole('dialog'));
+
+  it('başlık hiyerarşisi atlamaz: sonuç listesinin üstünde h2, kartlarda h3 (mobilde filtre paneli kapalıyken de)', () => {
+    renderUi(
+      <MentorDirectory
+        filter={{}}
+        results={page([mentor()], 1)}
+        sectors={sectors}
+        similar={null}
+      />,
+    );
+    const results = screen.getByRole('heading', { level: 2, name: 'Mentorlar' });
+    const card = screen.getByRole('heading', { level: 3, name: 'Mert Yıldız' });
+    expect(results).toHaveClass('sr-only');
+    expect(results.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 
   it('sonuç sayısı, kartlar ve etkin filtre çipleri; çip kaldırınca URL güncellenir', async () => {
     const { user } = renderUi(

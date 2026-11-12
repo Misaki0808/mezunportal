@@ -2,7 +2,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 import type { MentorCard as MentorCardData } from '@/contracts/mentor-directory';
-import { Badge, buttonClasses, cn } from '@/components/ui';
+import { Avatar, Badge, buttonClasses, cn } from '@/components/ui';
 import { withReturnPath } from '@/lib/return-path';
 
 import type messages from '../../../messages/tr.json';
@@ -40,24 +40,34 @@ export function MentorCard({
 
   return (
     <article className="min-w-0 rounded-card border border-border bg-bg p-5 shadow-card [overflow-wrap:anywhere]">
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Önce KİM: baş harf avatarı + ad + güncel konum; müsaitlik ve tür rozetleri hemen altında. */}
+      <div className="flex items-start gap-3">
+        <Avatar name={mentor.displayName} size={compact ? 'md' : 'lg'} decorative />
+        <div className="min-w-0 flex-1">
+          <h3 className="break-words text-xl font-semibold text-fg">{mentor.displayName}</h3>
+          {mentor.position && (
+            <p className="mt-0.5 break-words text-base text-fg">
+              {mentor.position.title} · {mentor.position.company}
+            </p>
+          )}
+          {mentor.headline && (
+            <p className="mt-0.5 break-words text-base text-fg-muted">{mentor.headline}</p>
+          )}
+          <p className="mt-0.5 text-sm text-fg-muted">
+            {mentor.departmentName}
+            {mentor.graduationYear
+              ? ` · ${t('card.graduated', { year: mentor.graduationYear })}`
+              : ''}
+          </p>
+          {mentor.sectorName && (
+            <p className="text-sm text-fg-muted">{t('card.sector', { name: mentor.sectorName })}</p>
+          )}
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <Badge tone={availability.available ? 'success' : 'warning'}>{availabilityText}</Badge>
         <Badge tone="category">{t(`types.${mentor.mentorType}`)}</Badge>
       </div>
-      <h3 className="mt-3 break-words text-xl font-semibold text-fg">{mentor.displayName}</h3>
-      {mentor.headline && <p className="mt-1 break-words text-base text-fg">{mentor.headline}</p>}
-      {mentor.position && (
-        <p className="mt-1 break-words text-base text-fg-muted">
-          {mentor.position.title} · {mentor.position.company}
-        </p>
-      )}
-      <p className="mt-1 text-sm text-fg-muted">
-        {mentor.departmentName}
-        {mentor.graduationYear ? ` · ${t('card.graduated', { year: mentor.graduationYear })}` : ''}
-      </p>
-      {mentor.sectorName && (
-        <p className="text-sm text-fg-muted">{t('card.sector', { name: mentor.sectorName })}</p>
-      )}
 
       {!compact && (
         <>
