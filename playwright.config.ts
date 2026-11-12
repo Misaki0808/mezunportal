@@ -14,10 +14,9 @@ process.env.E2E_ORIGINAL_APP_URL = process.env.APP_URL;
 isolationRunId();
 mkdirSync('.data', { recursive: true });
 for (const index of [0, 1]) {
-  writeFileSync(
-    `.data/e2e-tsconfig-${index}.json`,
-    JSON.stringify({ extends: '../tsconfig.json' }),
-  );
+  const tsconfigPath = `.data/e2e-tsconfig-${index}.json`;
+  if (!existsSync(tsconfigPath))
+    writeFileSync(tsconfigPath, JSON.stringify({ extends: '../tsconfig.json' }));
 }
 const baseURL = workerBaseUrl(0);
 const webkitMode = process.env.E2E_WEBKIT;
