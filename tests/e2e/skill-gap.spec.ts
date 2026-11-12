@@ -113,6 +113,7 @@ test('mobilde hedef seç, güvenli beceri açığını ve filtreli mentoru gör'
     await expect(page).toHaveURL(/\/mentorlar\?skill=/);
     await expect(page.getByText(`Örnek Mezun ${key} 0`)).toBeVisible();
     await page.goto('/profil');
+    await page.getByRole('button', { name: 'Beceriler', exact: true }).click();
     const addSkill = page.getByLabel('Beceri ekle');
     await addSkill.fill(sql.name);
     await addSkill

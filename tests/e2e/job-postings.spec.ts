@@ -55,9 +55,7 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     await login(alumni!, 'alumniMentor');
     await alumni!.goto('/hesap');
     await expect(
-      alumni!
-        .getByRole('region', { name: 'GÖRÜŞMELER VE İÇERİKLER' })
-        .getByRole('link', { name: /İlanlarım/ }),
+      alumni!.getByRole('region', { name: 'STAJ VE İŞ' }).getByRole('link', { name: /İlanlarım/ }),
     ).toBeVisible();
     await alumni!.goto('/ilanlar/yeni');
     await waitForHydratedControl(alumni!, 'Devam et');

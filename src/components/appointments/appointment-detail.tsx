@@ -14,9 +14,19 @@ import {
   type SetMeetLinkInput,
 } from '@/contracts/appointment';
 import type { ActionResult } from '@/contracts/result';
-import { Button, Field, Input, Modal, PageHeader, Textarea, buttonClasses } from '@/components/ui';
+import {
+  Button,
+  Field,
+  Input,
+  Modal,
+  PageHeader,
+  Textarea,
+  buttonClasses,
+  cn,
+} from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
+import { AppointmentTimeline } from './appointment-timeline';
 import { AppointmentStatusBadge } from './status-badge';
 import { fullLabel, rangeLabel } from './time';
 
@@ -129,59 +139,19 @@ export function AppointmentDetail({
         </p>
       )}
 
-      <dl className="flex flex-col gap-3">
-        <div>
-          <dt className="text-base text-fg-muted">{t('when')}</dt>
-          <dd className="text-base text-fg">
-            {fullLabel(a.startsAt)}
-            <span className="block text-base text-fg-muted">
-              {rangeLabel(a.startsAt, a.endsAt)}
-            </span>
-          </dd>
-        </div>
-        <div>
-          <dt className="text-base text-fg-muted">{t('mode')}</dt>
-          <dd className="text-base text-fg">{modes(a.mode)}</dd>
-        </div>
-        {a.mode === 'IN_PERSON' && a.location && (
-          <div>
-            <dt className="text-base text-fg-muted">{t('location')}</dt>
-            <dd className="whitespace-pre-line break-words text-base text-fg">{a.location}</dd>
-          </div>
-        )}
-        <div>
-          <dt className="text-base text-fg-muted">{t('note')}</dt>
-          <dd className="whitespace-pre-line break-words text-base text-fg">
-            {a.note ?? t('noteNone')}
-          </dd>
-        </div>
-        {a.status === 'REQUESTED' && a.expiresAt && (
-          <div>
-            <dd className="text-base text-fg-muted">
-              {t('expiresAt', { date: fullLabel(a.expiresAt) })}
-            </dd>
-          </div>
-        )}
-        {(a.status === 'CANCELLED' || a.status === 'DECLINED' || a.status === 'EXPIRED') && (
-          <div>
-            {a.cancelledBy && (
-              <dd className="text-base text-fg">{t(`cancelledBy.${a.cancelledBy}`)}</dd>
-            )}
-            {a.cancelReason && (
-              <dd className="whitespace-pre-line break-words text-base text-fg-muted">
-                {t('cancelReasonShown', { reason: a.cancelReason })}
-              </dd>
-            )}
-          </div>
-        )}
-      </dl>
+      <AppointmentTimeline status={a.status} role={a.role} feedbackPending={feedbackAvailable} />
 
       {a.mode === 'ONLINE' && a.status === 'CONFIRMED' && (
         <section
-          className="flex flex-col gap-3 rounded-card border border-border p-4"
+          className={cn(
+            'flex flex-col gap-3 rounded-card border p-4',
+            a.meetUrl
+              ? 'border-primary bg-primary-soft text-on-primary-soft'
+              : 'border-border text-fg',
+          )}
           aria-labelledby="meet-title"
         >
-          <h2 id="meet-title" className="text-lg font-semibold text-fg">
+          <h2 id="meet-title" className="text-lg font-semibold">
             {t('meet')}
           </h2>
           {a.meetUrl ? (
@@ -223,6 +193,53 @@ export function AppointmentDetail({
           )}
         </section>
       )}
+
+      <dl className="flex flex-col divide-y divide-border rounded-card border border-border bg-bg px-4">
+        <div className="py-3">
+          <dt className="text-base text-fg-muted">{t('when')}</dt>
+          <dd className="text-lg font-semibold text-fg">
+            {fullLabel(a.startsAt)}
+            <span className="block text-base text-fg-muted">
+              {rangeLabel(a.startsAt, a.endsAt)}
+            </span>
+          </dd>
+        </div>
+        <div className="py-3">
+          <dt className="text-base text-fg-muted">{t('mode')}</dt>
+          <dd className="text-base text-fg">{modes(a.mode)}</dd>
+        </div>
+        {a.mode === 'IN_PERSON' && a.location && (
+          <div className="py-3">
+            <dt className="text-base text-fg-muted">{t('location')}</dt>
+            <dd className="whitespace-pre-line break-words text-base text-fg">{a.location}</dd>
+          </div>
+        )}
+        <div className="py-3">
+          <dt className="text-base text-fg-muted">{t('note')}</dt>
+          <dd className="whitespace-pre-line break-words text-base text-fg">
+            {a.note ?? t('noteNone')}
+          </dd>
+        </div>
+        {a.status === 'REQUESTED' && a.expiresAt && (
+          <div className="py-3">
+            <dd className="text-base text-fg-muted">
+              {t('expiresAt', { date: fullLabel(a.expiresAt) })}
+            </dd>
+          </div>
+        )}
+        {(a.status === 'CANCELLED' || a.status === 'DECLINED' || a.status === 'EXPIRED') && (
+          <div className="py-3">
+            {a.cancelledBy && (
+              <dd className="text-base text-fg">{t(`cancelledBy.${a.cancelledBy}`)}</dd>
+            )}
+            {a.cancelReason && (
+              <dd className="whitespace-pre-line break-words text-base text-fg-muted">
+                {t('cancelReasonShown', { reason: a.cancelReason })}
+              </dd>
+            )}
+          </div>
+        )}
+      </dl>
 
       <div className="flex flex-col gap-3">
         {feedbackAvailable && (
