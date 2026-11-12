@@ -160,3 +160,27 @@ it('açık işaret varken ikinci etkinliğin şüphesi ilk karar sonrasında yen
     revokedReason: 'FRAUD_CONFIRMED',
   });
 });
+
+it('boş veya eksik karar gerekçesi sunucuda reddedilir, durum ve işlem kaydı değişmez', async () => {
+  const w = await fixture();
+  const startsAt = new Date('2032-01-01T10:00:00Z');
+  const e = await createCampusEvent({ db }, w.admin, {
+    title: 'Gerekçe sınaması',
+    description: 'Yerel karar gerekçesi sınaması',
+    location: 'Kampüs',
+    startsAt: startsAt.toISOString(),
+    endsAt: new Date(+startsAt + 3600000).toISOString(),
+    capacity: 10,
+    departmentIds: [w.inst.deptA1],
+  });
+  const before = await db.adminAuditLog.count({ where: { targetId: e.id } });
+  for (const decision of ['PUBLISH', 'REJECT'] as const) {
+    for (const reason of [undefined, '', '   ', 'ab']) {
+      await expect(
+        reviewCampusEvent({ db }, w.admin, { eventId: e.id, decision, reason }),
+      ).rejects.toBeDefined();
+    }
+  }
+  expect((await db.campusEvent.findUniqueOrThrow({ where: { id: e.id } })).status).toBe('PENDING');
+  expect(await db.adminAuditLog.count({ where: { targetId: e.id } })).toBe(before);
+});

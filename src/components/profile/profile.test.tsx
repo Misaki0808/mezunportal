@@ -6,7 +6,8 @@ import type {
   MyProfile as MyProfileData,
   ProfileView as ProfileViewData,
 } from '@/contracts/profile-content';
-import { renderUi } from '@/test/render';
+import messages from '../../../messages/tr.json';
+import { renderWithToasts } from '@/test/render';
 
 import { MyProfile, type MyProfileActions } from './my-profile';
 import { ProfileView } from './profile-view';
@@ -57,8 +58,36 @@ function actions(overrides: Partial<MyProfileActions> = {}): MyProfileActions {
 }
 
 describe('kendi profilim', () => {
+  it('temel bilgiler: başarıda "Profilin güncellendi" bildirimi, çekmece kapanır', async () => {
+    const updateBasics = ok({ ...base, headline: 'Veri analisti adayı' });
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ updateBasics })} />,
+    );
+    await user.click(screen.getAllByRole('button', { name: 'Profilimi düzenle' })[0]!);
+    await user.type(screen.getByLabelText('Başlık'), 'Veri analisti adayı');
+    await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+    expect(await screen.findByText('Profilin güncellendi.')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('temel bilgiler hatası: çekmece açık kalır, yazılan metin korunur, hata YALNIZ çekmecede (bir kez) gösterilir', async () => {
+    const updateBasics = vi.fn().mockRejectedValue(new Error('ağ'));
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ updateBasics })} />,
+    );
+    await user.click(screen.getAllByRole('button', { name: 'Profilimi düzenle' })[0]!);
+    const headline = screen.getByLabelText('Başlık');
+    await user.type(headline, 'Yarım kalan başlık');
+    await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+    const message = messages.errors.codes.SERVER_UNEXPECTED;
+    expect(await screen.findAllByText(message)).toHaveLength(1);
+    expect(within(screen.getByRole('dialog')).getByText(message)).toBeInTheDocument();
+    expect(headline).toHaveValue('Yarım kalan başlık');
+    expect(screen.queryByText('Profilin güncellendi.')).toBeNull();
+  });
+
   it('tamamlama yüzdesi ve eksikler insan diliyle; CV bağlantısı var', () => {
-    renderUi(<MyProfile initial={base} actions={actions()} />);
+    renderWithToasts(<MyProfile initial={base} actions={actions()} />);
     expect(screen.getByText('Profilin %20 tamamlandı')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '20');
     expect(screen.getByText('Başlık ve şehir ekle')).toBeInTheDocument();
@@ -85,7 +114,9 @@ describe('kendi profilim', () => {
       ],
     };
     const saveEntry = ok(withEdu);
-    const { user } = renderUi(<MyProfile initial={base} actions={actions({ saveEntry })} />);
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ saveEntry })} />,
+    );
     const block = screen.getByRole('heading', { name: 'Eğitim' }).closest('section')!;
     await user.click(within(block).getByRole('button', { name: 'Ekle' }));
     const sheet = await screen.findByRole('dialog');
@@ -101,7 +132,9 @@ describe('kendi profilim', () => {
 
   it('boş zorunlu alan alt sayfada alan hatası verir, sunucuya gitmez', async () => {
     const saveEntry = ok(base);
-    const { user } = renderUi(<MyProfile initial={base} actions={actions({ saveEntry })} />);
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ saveEntry })} />,
+    );
     const block = screen.getByRole('heading', { name: 'Eğitim' }).closest('section')!;
     await user.click(within(block).getByRole('button', { name: 'Ekle' }));
     await user.click(
@@ -130,7 +163,9 @@ describe('kendi profilim', () => {
       ],
     };
     const deleteEntry = ok(base);
-    const { user } = renderUi(<MyProfile initial={withPos} actions={actions({ deleteEntry })} />);
+    const { user } = renderWithToasts(
+      <MyProfile initial={withPos} actions={actions({ deleteEntry })} />,
+    );
     expect(screen.getByText("CV'den")).toBeInTheDocument();
     expect(screen.getByText('Düzeltildi')).toBeInTheDocument();
     const block = screen.getByRole('heading', { name: 'Pozisyon' }).closest('section')!;
@@ -145,7 +180,7 @@ describe('kendi profilim', () => {
   it('bağlantılar: http ve izinsiz alan adı ekranda anlaşılır reddedilir, geçerli adres kanonik gider', async () => {
     const setLinkedinUrl = ok(base);
     const setSocialLinks = ok(base);
-    const { user } = renderUi(
+    const { user } = renderWithToasts(
       <MyProfile initial={base} actions={actions({ setLinkedinUrl, setSocialLinks })} />,
     );
     const block = screen.getByRole('heading', { name: 'Bağlantılar' }).closest('section')!;
@@ -179,19 +214,21 @@ describe('kendi profilim', () => {
     const suggestSkills = vi
       .fn()
       .mockResolvedValue({ ok: true, data: { skills: [{ label: 'TypeScript' }] } });
-    const { user } = renderUi(
+    const { user } = renderWithToasts(
       <MyProfile initial={base} actions={actions({ addSkill, suggestSkills })} />,
     );
     await user.type(screen.getByLabelText('Beceri ekle'), 'typ');
     await user.click(await screen.findByRole('button', { name: 'TypeScript' }));
     expect(addSkill).toHaveBeenCalledWith({ name: 'TypeScript' });
-    expect(await screen.findByRole('alert')).toHaveTextContent('üst sınıra ulaştın');
+    expect(await screen.findByText(/üst sınıra ulaştın/)).toBeVisible();
   });
 
   it('beceri kaldırma kimliğiyle gider', async () => {
     const removeSkill = ok(base);
     const withSkill = { ...base, skills: [{ tagId: 't1', label: 'SQL' }] };
-    const { user } = renderUi(<MyProfile initial={withSkill} actions={actions({ removeSkill })} />);
+    const { user } = renderWithToasts(
+      <MyProfile initial={withSkill} actions={actions({ removeSkill })} />,
+    );
     await user.click(screen.getByRole('button', { name: 'SQL becerisini kaldır' }));
     expect(removeSkill).toHaveBeenCalledWith({ tagId: 't1' });
   });
@@ -211,7 +248,7 @@ const view: ProfileViewData = {
 
 describe('başkasının profili', () => {
   it('yalnız gelen alanlar çizilir; gizli alan için hiçbir gösterge yoktur', () => {
-    renderUi(<ProfileView profile={view} />);
+    renderWithToasts(<ProfileView profile={view} />);
     expect(screen.getByRole('heading', { level: 1, name: 'Mert Yıldız' })).toBeInTheDocument();
     expect(screen.getByText('Mezun · Yönetim Bilişim Sistemleri')).toBeInTheDocument();
     expect(screen.getByText('SQL')).toBeInTheDocument();
@@ -221,7 +258,7 @@ describe('başkasının profili', () => {
   });
 
   it('açık iletişim alanı gelirse gösterilir; bağlantılar güvenli açılır', () => {
-    renderUi(
+    renderWithToasts(
       <ProfileView
         profile={{
           ...view,
@@ -240,7 +277,7 @@ describe('başkasının profili', () => {
   });
 
   it('hiçbir alan yoksa genel boş durum gösterilir', () => {
-    renderUi(<ProfileView profile={{ ...view, skills: [], memberships: [] }} />);
+    renderWithToasts(<ProfileView profile={{ ...view, skills: [], memberships: [] }} />);
     expect(screen.getByText('Gösterilecek bilgi yok')).toBeInTheDocument();
   });
 });

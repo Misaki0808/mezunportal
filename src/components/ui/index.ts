@@ -46,6 +46,8 @@ export type { TabItem, TabsProps } from './tabs';
 export { Tag } from './tag';
 export type { TagProps } from './tag';
 export { ToastProvider, useToast } from './toast';
+export { useAction } from './use-action';
+export type { RunOptions } from './use-action';
 export type { ToastInput, ToastTone } from './toast';
 export { Textarea } from './textarea';
 export type { TextareaProps } from './textarea';

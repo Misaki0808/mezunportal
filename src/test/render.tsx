@@ -6,6 +6,8 @@ import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement, ReactNode } from 'react';
 import { afterEach } from 'vitest';
 
+import { ToastProvider } from '@/components/ui';
+
 import messages from '../../messages/tr.json';
 
 // Vitest küresel `afterEach` sağlamadığı için RTL'nin otomatik temizliği burada elle bağlanır.
@@ -22,4 +24,20 @@ function Providers({ children }: { children: ReactNode }) {
 /** Bileşeni `tr` metin kataloğuyla çizer ve gerçek `userEvent` oturumu döner. */
 export function renderUi(ui: ReactElement) {
   return { user: userEvent.setup(), ...render(ui, { wrapper: Providers }) };
+}
+
+function ToastProviders({ children }: { children: ReactNode }) {
+  return (
+    <Providers>
+      <ToastProvider>{children}</ToastProvider>
+    </Providers>
+  );
+}
+
+/**
+ * Toast kullanan (başarıyı bildirimle gösteren) bileşenler için: `ToastProvider` gerçek bir `wrapper` olarak eklenir
+ * (`rerender` sağlayıcıyı düşürmez). Sağlayıcı kalıcı bir `role="alert"` bölgesi taşır: hata metinlerini `role` yerine metinle sorgula.
+ */
+export function renderWithToasts(ui: ReactElement) {
+  return { user: userEvent.setup(), ...render(ui, { wrapper: ToastProviders }) };
 }

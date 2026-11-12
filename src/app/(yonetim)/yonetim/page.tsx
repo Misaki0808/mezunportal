@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { hasAdminAccess } from '@/components/layout/admin-access';
 import {
+  Badge,
   BadgeCheckIcon,
   CalendarIcon,
   ClipboardCheckIcon,
@@ -23,7 +24,7 @@ export default async function AdminOverviewPage() {
   const t = await getTranslations('admin');
   const digest = await getTranslations('monthlyDigest');
   const campusEvents = await getTranslations('campusEvents');
-  const { capabilities } = overview.data;
+  const { capabilities, counts } = overview.data;
   const links = [
     { key: 'usageMetrics', href: '/yonetim/kullanim', visible: true },
     { key: 'users', href: '/yonetim/kullanicilar', visible: capabilities.users },
@@ -47,7 +48,18 @@ export default async function AdminOverviewPage() {
     { key: 'referrals', href: '/yonetim/referanslar', visible: true },
     { key: 'yearAlumni', href: '/yonetim/yilin-mezunu', visible: true },
     { key: 'alumniStory', href: '/yonetim/ayin-mezunu', visible: true },
+    { key: 'courses', href: '/yonetim/dersler', visible: true },
   ] as const;
+  const queueCounts: Partial<Record<(typeof links)[number]['key'], number | null>> = {
+    documents: counts.pendingGraduationDocuments,
+    experiences: counts.pendingExperiences,
+    faq: counts.pendingFaqRequests,
+    jobPostings: counts.pendingJobPostings,
+    referrals: counts.pendingReferrals,
+    alumniStory: counts.pendingAlumniStories,
+    reports: counts.openReports,
+    unmatchedValues: counts.openUnmatchedValues,
+  };
   // Renk dağılımı: moderasyon/kişi işleri İris, veri ve raporlar Nane, sistem ayarları Mercan (anlam taşımaz; metin asıl sinyaldir).
   const TONE = {
     users: 'primary',
@@ -64,6 +76,7 @@ export default async function AdminOverviewPage() {
     employmentReport: 'success',
     auditLog: 'success',
     dictionaries: 'accent',
+    courses: 'accent',
     invitations: 'accent',
     adminGrants: 'accent',
     points: 'accent',
@@ -84,6 +97,7 @@ export default async function AdminOverviewPage() {
     employmentReport: <BadgeCheckIcon width={22} height={22} />,
     auditLog: <ShieldCheckIcon width={22} height={22} />,
     dictionaries: <FileTextIcon width={22} height={22} />,
+    courses: <FileTextIcon width={22} height={22} />,
     invitations: <UsersIcon width={22} height={22} />,
     adminGrants: <ShieldCheckIcon width={22} height={22} />,
     points: <BadgeCheckIcon width={22} height={22} />,
@@ -102,7 +116,10 @@ export default async function AdminOverviewPage() {
         href="/yonetim/etkinlikler"
         className="press-row mt-3 flex min-h-14 items-center rounded-card border border-border p-4 font-semibold"
       >
-        {campusEvents('adminTitle')} →
+        <span>{campusEvents('adminTitle')} →</span>
+        <Badge tone={counts.pendingCampusEvents > 0 ? 'warning' : 'neutral'} className="ml-3">
+          {t('pendingCount', { count: counts.pendingCampusEvents })}
+        </Badge>
       </Link>
       <ul className="mt-7 grid gap-3 sm:grid-cols-2">
         {links
@@ -117,6 +134,14 @@ export default async function AdminOverviewPage() {
                 <span className="min-w-0">
                   <span className="block text-lg font-semibold text-fg">
                     {t(`sections.${link.key}`)} →
+                    {queueCounts[link.key] !== undefined && queueCounts[link.key] !== null && (
+                      <Badge
+                        tone={queueCounts[link.key]! > 0 ? 'warning' : 'neutral'}
+                        className="ml-2"
+                      >
+                        {t('pendingCount', { count: queueCounts[link.key]! })}
+                      </Badge>
+                    )}
                   </span>
                   <span className="mt-1 block text-base text-fg-muted">
                     {t(`intro.${link.key}`)}

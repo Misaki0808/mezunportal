@@ -34,6 +34,28 @@ describe('Button', () => {
     expect(button.getAttribute('aria-describedby')).toBe(reason.id);
   });
 
+  it('disabledReasonId: sebep başka yerde yazar; düğme sarmalanmaz, metin tekrarlanmaz, aria-describedby o öğeye bağlanır', () => {
+    renderUi(
+      <>
+        <p id="neden">Önce gerekçe yaz.</p>
+        <Button disabled disabledReasonId="neden">
+          Onayla
+        </Button>
+        <Button disabled disabledReasonId="neden">
+          Reddet
+        </Button>
+      </>,
+    );
+    expect(screen.getAllByText('Önce gerekçe yaz.')).toHaveLength(1);
+    for (const name of ['Onayla', 'Reddet']) {
+      const button = screen.getByRole('button', { name });
+      expect(button).toBeDisabled();
+      expect(button).toHaveAccessibleDescription('Önce gerekçe yaz.');
+      // Sarmalayıcı yok: etkinleşip kapanırken düğme öğesi yeniden oluşmaz.
+      expect(button.parentElement?.tagName).not.toBe('SPAN');
+    }
+  });
+
   it('yükleniyorken ikinci tıklamayı yutar ve durumu duyurur', async () => {
     const onClick = vi.fn();
     const { user } = renderUi(

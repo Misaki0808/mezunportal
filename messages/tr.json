@@ -350,7 +350,8 @@
     },
     "field": {
       "required": "zorunlu",
-      "toggleHelp": "Açıklamayı göster ya da gizle"
+      "toggleHelp": "Açıklamayı göster ya da gizle",
+      "dateUnset": "Gri görünüyorsa henüz seçmedin."
     },
     "tag": {
       "remove": "{label} etiketini kaldır"
@@ -784,7 +785,7 @@
       "cancel": "Vazgeç",
       "save": "Kaydet",
       "saving": "Kaydediliyor…",
-      "saved": "Kaydedildi.",
+      "saved": "Profilin güncellendi.",
       "fromCv": "CV'den",
       "manual": "Elle",
       "edited": "Düzeltildi",
@@ -1730,7 +1731,8 @@
       "referrals": "Referans inceleme",
       "yearAlumni": "Yılın Mezunu",
       "alumniStory": "Ayın mezunu",
-      "googleCalendar": "Google Takvim"
+      "googleCalendar": "Google Takvim",
+      "courses": "Ders sözlüğü"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1750,7 +1752,8 @@
       "referrals": "Referans ve işe kabul beyanlarını incele.",
       "yearAlumni": "Adayları incele ve bölüm adına karar ver.",
       "alumniStory": "Hikâyeleri incele ve ayın mezununu seç.",
-      "googleCalendar": "Çevrimiçi randevulara otomatik Meet bağlantısı için Google hesabını bağla."
+      "googleCalendar": "Çevrimiçi randevulara otomatik Meet bağlantısı için Google hesabını bağla.",
+      "courses": "Bölümünün derslerini ekle veya güncelle."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1984,7 +1987,8 @@
         "JOB_POSTING_SEARCH": "İlan araması",
         "JOB_SEEKER_SEARCH": "Aday araması"
       }
-    }
+    },
+    "pendingCount": "{count} bekliyor"
   },
   "search": {
     "eyebrow": "DENEYİMLER",
@@ -2099,7 +2103,17 @@
     "codeNeeded": "Altı haneli kodu eksiksiz yaz.",
     "adminDescription": "Etkinlik oluştur, başvuruları incele ve yayınlanan buluşmaları yönet.",
     "presentDescription": "Katılımcıların okutabilmesi için QR kodunu veya altı haneli kodu göster.",
-    "reasonHint": "İşlem gerekçesi en az 3 karakter olmalı."
+    "reasonHint": "İşlem gerekçesi en az 3 karakter olmalı.",
+    "dateTimeHint": "Tarihi ve saati seç. Gri görünüyorsa henüz seçmedin.",
+    "created": "Etkinliğin incelemeye gönderildi.",
+    "decidedPublished": "Etkinlik yayınlandı.",
+    "decidedRejected": "Etkinlik reddedildi.",
+    "decidedCancelled": "Etkinlik iptal edildi.",
+    "reviewConfirm": "Bu etkinlik için verdiğin karar işlem kaydına yazılacak.",
+    "pendingTitle": "Onay bekleyenler",
+    "pendingEmpty": "İncelenecek etkinlik yok",
+    "pendingEmptyDescription": "Yeni etkinlik başvuruları burada görünecek.",
+    "managedTitle": "Yayınlanan ve sonuçlananlar"
   },
   "monthlyDigest": {
     "subject": "Bu ay MezunPortal'da",
@@ -2974,6 +2988,8 @@
     "reject": "Reddet",
     "reason": "Ret gerekçesi",
     "confirm": "Onayla",
+    "publishText": "İlan yayımlanır ve paylaşan kişiye bildirim gider.",
+    "rejectText": "Yazdığın gerekçe ilanı paylaşan kişiye gösterilir.",
     "status": {
       "DRAFT": "Taslak",
       "PENDING": "İncelemede",
@@ -3015,7 +3031,8 @@
     "mineDescription": "Paylaştığın ilanların durumunu takip et.",
     "compactTitle": "Staj ve iş ilanları",
     "searchPlaceholder": "İlan ara",
-    "applyFilters": "Süzgeçleri uygula"
+    "applyFilters": "Süzgeçleri uygula",
+    "submittedToast": "İlanın incelemeye gönderildi."
   },
   "companies": {
     "title": "Şirketlere bak",
@@ -3235,6 +3252,15 @@
     "recalculateReason": "Yeniden hesaplama gerekçesi",
     "noCandidates": "Bu dönemde uygun aday bulunamadı.",
     "selected": "Yılın mezunu seçildi.",
+    "selectedNamed": "{name} yılın mezunu seçildi.",
+    "winnerBadge": "Bu yılın mezunu",
+    "alreadySelected": "Bu dönem için Yılın Mezunu zaten seçildi.",
+    "ceremonySaved": "Tören tarihi kaydedildi.",
+    "ceremonyRequired": "Tören tarihini seç.",
+    "ceremonyTooSoon": "Tören tarihi en az 30 gün sonra olmalı.",
+    "ceremonyRejected": "Bu tarih kaydedilemedi: tören en az 30 gün sonra olmalı ya da bu dönemin listesi zaten dondurulmuş.",
+    "recalculated": "Aday listesi yeniden hesaplandı.",
+    "reasonRequired": "Gerekçeyi en az {min} karakterle yaz.",
     "confirm": "Ödül kararını onayla",
     "confirmText": "Bu mezunu yılın mezunu seçmek üzeresin. Karar işlem kaydına yazılır.",
     "cancel": "Vazgeç",
