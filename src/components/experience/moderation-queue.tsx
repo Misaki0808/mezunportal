@@ -1,8 +1,9 @@
 'use client';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useRef, useState, type RefObject } from 'react';
 
 import {
   resolveExperienceReportSchema,
@@ -53,6 +54,7 @@ function DecisionModal({
   pending,
   error,
   reasonInvalid,
+  reasonInput,
   reason,
   setReason,
   onConfirm,
@@ -62,6 +64,7 @@ function DecisionModal({
   pending: boolean;
   error?: ErrorCode;
   reasonInvalid?: ErrorCode;
+  reasonInput: RefObject<HTMLTextAreaElement | null>;
   reason: string;
   setReason: (value: string) => void;
   onConfirm: () => void;
@@ -112,6 +115,7 @@ function DecisionModal({
           {(control) => (
             <Textarea
               {...control}
+              ref={reasonInput}
               rows={4}
               value={reason}
               onChange={(event) => setReason(event.target.value)}
@@ -137,6 +141,7 @@ function useDecision<Out>(
   const [reasonInvalid, setReasonInvalid] = useState<ErrorCode>();
   const [error, setError] = useState<ErrorCode>();
   const [pending, setPending] = useState(false);
+  const reasonInput = useRef<HTMLTextAreaElement>(null);
   const locked = useRef(false);
   function close() {
     if (pending) return;
@@ -150,6 +155,7 @@ function useDecision<Out>(
     const early = run(choice, reason);
     if (typeof early === 'string') {
       setReasonInvalid(early);
+      reasonInput.current?.focus();
       return;
     }
     locked.current = true;
@@ -162,8 +168,10 @@ function useDecision<Out>(
         onDone(choice);
         setChoice(undefined);
         setReason('');
-      } else if (result.fieldErrors?.reason) setReasonInvalid(result.fieldErrors.reason);
-      else setError(result.errorCode);
+      } else if (result.fieldErrors?.reason) {
+        setReasonInvalid(result.fieldErrors.reason);
+        reasonInput.current?.focus();
+      } else setError(result.errorCode);
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -171,7 +179,18 @@ function useDecision<Out>(
       setPending(false);
     }
   }
-  return { choice, setChoice, reason, setReason, reasonInvalid, error, pending, close, confirm };
+  return {
+    choice,
+    setChoice,
+    reason,
+    setReason,
+    reasonInvalid,
+    reasonInput,
+    error,
+    pending,
+    close,
+    confirm,
+  };
 }
 
 export function ModerationQueue({
@@ -182,6 +201,7 @@ export function ModerationQueue({
   listReports,
   resolve,
 }: Props) {
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const t = useTranslations('experiences');
   const errors = useTranslations('errors.codes');
   const [items, setItems] = useState(initialExperiences.items);
@@ -208,6 +228,7 @@ export function ModerationQueue({
       return review(parsed.data);
     },
     (choice) => {
+      completeDecision(choice.id);
       setItems((current) => current.filter((item) => item.id !== choice.id));
       setNotice(choice.kind === 'PUBLISH' ? t('queue.published') : t('queue.rejected'));
     },
@@ -224,6 +245,7 @@ export function ModerationQueue({
       return resolve(parsed.data);
     },
     (choice) => {
+      completeDecision(choice.id);
       setReports((current) => current.filter((item) => item.id !== choice.id));
       setNotice(t('queue.resolved'));
     },
@@ -271,7 +293,11 @@ export function ModerationQueue({
     ) : (
       <ul className="flex flex-col gap-4">
         {items.map((item) => (
-          <li key={item.id} className="rounded-card border border-border bg-bg p-5 shadow-card">
+          <li
+            data-queue-row={item.id}
+            key={item.id}
+            className="rounded-card border border-border bg-bg p-5 shadow-card"
+          >
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="category">{t(`types.${item.content.type}`)}</Badge>
               {item.isAnonymous && <Badge>{t('mine.anonymousNote')}</Badge>}
@@ -296,6 +322,7 @@ export function ModerationQueue({
             </details>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button
+                data-queue-action
                 onClick={() => experienceDecision.setChoice({ id: item.id, kind: 'PUBLISH' })}
               >
                 {t('queue.publish')}
@@ -326,7 +353,11 @@ export function ModerationQueue({
     ) : (
       <ul className="flex flex-col gap-4">
         {reports.map((report) => (
-          <li key={report.id} className="rounded-card border border-border bg-bg p-5 shadow-card">
+          <li
+            data-queue-row={report.id}
+            key={report.id}
+            className="rounded-card border border-border bg-bg p-5 shadow-card"
+          >
             <p className="text-sm text-fg-muted">
               {t('queue.reportDate', { date: dateOf(report.createdAt) })}
             </p>
@@ -339,7 +370,10 @@ export function ModerationQueue({
               >
                 {t('queue.reportedOn')}
               </Link>
-              <Button onClick={() => reportDecision.setChoice({ id: report.id, kind: 'RESOLVED' })}>
+              <Button
+                data-queue-action
+                onClick={() => reportDecision.setChoice({ id: report.id, kind: 'RESOLVED' })}
+              >
                 {t('queue.resolve')}
               </Button>
               <Button
@@ -360,7 +394,7 @@ export function ModerationQueue({
     );
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
+    <div ref={queueRef} className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
       <header className="mb-6">
         <p className="mb-2 text-base font-semibold text-primary">{t('queue.eyebrow')}</p>
         <h1 className="text-3xl font-semibold tracking-tight text-fg">{t('queue.title')}</h1>
@@ -390,6 +424,7 @@ export function ModerationQueue({
         choice={experienceDecision.choice}
         pending={experienceDecision.pending}
         error={experienceDecision.error}
+        reasonInput={experienceDecision.reasonInput}
         reasonInvalid={experienceDecision.reasonInvalid}
         reason={experienceDecision.reason}
         setReason={experienceDecision.setReason}
@@ -400,6 +435,7 @@ export function ModerationQueue({
         choice={reportDecision.choice}
         pending={reportDecision.pending}
         error={reportDecision.error}
+        reasonInput={reportDecision.reasonInput}
         reasonInvalid={reportDecision.reasonInvalid}
         reason={reportDecision.reason}
         setReason={reportDecision.setReason}

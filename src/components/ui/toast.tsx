@@ -86,7 +86,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div
         key={toast.id}
         className={cn(
-          'pointer-events-auto flex items-start gap-3 rounded-control border-l-4 p-3 shadow-overlay',
+          'toast-in pointer-events-auto flex items-start gap-3 rounded-control border-l-4 p-3 shadow-overlay',
           TONE_STYLES[toast.tone],
         )}
       >

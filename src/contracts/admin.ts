@@ -143,6 +143,11 @@ export const adminOverviewSchema = z
       .object({
         pendingGraduationDocuments: z.number().int().min(0),
         pendingExperiences: z.number().int().min(0),
+        pendingFaqRequests: z.number().int().min(0),
+        pendingJobPostings: z.number().int().min(0),
+        pendingReferrals: z.number().int().min(0),
+        pendingCampusEvents: z.number().int().min(0),
+        pendingAlumniStories: z.number().int().min(0),
         openReports: z.number().int().min(0),
         suspendedUsers: z.number().int().min(0),
         /** Yalnız sistem yöneticisinde; diğerlerinde `null`. */

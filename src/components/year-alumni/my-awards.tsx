@@ -12,6 +12,7 @@ import {
   PageHeader,
   Switch,
   buttonClasses,
+  useToast,
 } from '@/components/ui';
 import { setAwardPublication } from '@/server/actions/year-alumni';
 
@@ -21,6 +22,7 @@ function AwardCard({ initial }: { initial: MyAward }) {
   const [award, setAward] = useState(initial);
   const [publish, setPublish] = useState(initial.isPublic);
   const [message, setMessage] = useState('');
+  const toast = useToast();
   const [pending, start] = useTransition();
   function save() {
     start(async () => {
@@ -30,7 +32,7 @@ function AwardCard({ initial }: { initial: MyAward }) {
       );
       if (result.ok) {
         setAward(result.data);
-        setMessage(t('saved'));
+        toast.show({ message: t('saved'), tone: 'success' });
       } else setMessage(errors(result.errorCode));
     });
   }
@@ -47,7 +49,7 @@ function AwardCard({ initial }: { initial: MyAward }) {
             })
           : award.verificationUrl,
       );
-      setMessage(t('copied'));
+      toast.show({ message: t('copied'), tone: 'success' });
     } catch {
       setMessage(t('invalid'));
     }
@@ -71,12 +73,7 @@ function AwardCard({ initial }: { initial: MyAward }) {
           label={t('publication')}
           description={t('publicationHelp')}
         />
-        <Button
-          {...(pending
-            ? { disabled: true as const, disabledReason: t('saving') }
-            : { disabled: false as const })}
-          onClick={save}
-        >
+        <Button loading={pending} onClick={save}>
           {pending ? t('saving') : t('save')}
         </Button>
         {award.linkedinUrl && award.verificationUrl ? (
@@ -99,7 +96,7 @@ function AwardCard({ initial }: { initial: MyAward }) {
         ) : (
           <p className="text-fg-muted">{t('enablePublic')}</p>
         )}
-        {message && <p role="status">{message}</p>}
+        {message && <p role="alert">{message}</p>}
       </div>
     </Card>
   );

@@ -9,6 +9,7 @@ import {
   type ParsedCv,
 } from '@/contracts/cv';
 import type { Prisma } from '@/generated/prisma/client';
+import { isCodedError } from '@/lib/errors';
 
 import { CV_SYSTEM_INSTRUCTION, LlmError } from '../external/llm';
 import { hasActiveConsent } from '../rules/consent';
@@ -221,8 +222,12 @@ export async function processCvParse(
       sectionHints = (['experience', 'education', 'skills'] as const).filter(
         (key) => sections[key].length > 0,
       );
-    } catch {
-      return fail('CV_PARSE_UNAVAILABLE');
+    } catch (error) {
+      return fail(
+        isCodedError(error) && error.code === 'CV_PARSE_TIMEOUT'
+          ? 'CV_PARSE_TIMEOUT'
+          : 'CV_PARSE_UNAVAILABLE',
+      );
     }
   }
   let parsed: ParsedCv | null = null;

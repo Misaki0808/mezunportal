@@ -424,6 +424,11 @@ describe('genel bakış', () => {
       counts: {
         pendingGraduationDocuments: 1,
         pendingExperiences: 2,
+        pendingFaqRequests: 0,
+        pendingJobPostings: 0,
+        pendingReferrals: 0,
+        pendingCampusEvents: 0,
+        pendingAlumniStories: 0,
         openReports: 0,
         suspendedUsers: 0,
         openUnmatchedValues: null,

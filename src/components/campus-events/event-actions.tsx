@@ -1,9 +1,8 @@
 'use client';
-import { safeClientAction } from '@/lib/safe-client-action';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Badge, Button, CheckIcon, Field, Input } from '@/components/ui';
+import { Badge, Button, CheckIcon, Field, Input, useAction } from '@/components/ui';
 import { checkInCampusEvent, registerCampusEvent } from '@/server/actions/campus-events';
 
 export function EventActions({
@@ -18,12 +17,10 @@ export function EventActions({
   full: boolean;
 }) {
   const t = useTranslations('campusEvents'),
-    errors = useTranslations('errors.codes'),
-    router = useRouter();
-  const [pending, start] = useTransition(),
-    [code, setCode] = useState(''),
-    [codeError, setCodeError] = useState(''),
-    [status, setStatus] = useState('');
+    router = useRouter(),
+    action = useAction();
+  const [code, setCode] = useState(''),
+    [codeError, setCodeError] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => {
       const raw = sessionStorage.getItem('campus-event-checkin');
@@ -51,10 +48,9 @@ export function EventActions({
     return () => clearTimeout(timer);
   }, [eventId]);
   function register() {
-    start(async () => {
-      const result = await safeClientAction(() => registerCampusEvent({ eventId }));
-      setStatus(result.ok ? t('registered') : errors(result.errorCode));
-      if (result.ok) router.refresh();
+    void action.run(() => registerCampusEvent({ eventId }), {
+      success: t('registered'),
+      onOk: () => router.refresh(),
     });
   }
   function checkin() {
@@ -63,10 +59,13 @@ export function EventActions({
       setCodeError(t('codeNeeded'));
       return;
     }
-    start(async () => {
-      const result = await safeClientAction(() => checkInCampusEvent({ eventId, code }));
-      setStatus(result.ok && result.data.accepted ? t('checked') : t('codeInvalid'));
-      if (result.ok && result.data.accepted) router.refresh();
+    void action.run(() => checkInCampusEvent({ eventId, code }), {
+      success: (data) => (data.accepted ? t('checked') : undefined),
+      onOk: (data) => {
+        // Kod yanlışsa ya da süresi dolduysa girilen değer korunur, sebep alanın altında söylenir.
+        if (data.accepted) router.refresh();
+        else setCodeError(t('codeInvalid'));
+      },
     });
   }
   return (
@@ -81,13 +80,13 @@ export function EventActions({
         <Button
           size="lg"
           fullWidth
-          loading={pending}
+          loading={action.busy}
           onClick={register}
           {...(full
             ? { disabled: true as const, disabledReason: t('full') }
             : { disabled: false as const })}
         >
-          {pending ? t('registering') : t('register')}
+          {action.busy ? t('registering') : t('register')}
         </Button>
       )}
       {registered && !attended && (
@@ -109,8 +108,8 @@ export function EventActions({
               />
             )}
           </Field>
-          <Button size="lg" fullWidth loading={pending} onClick={checkin}>
-            {pending ? t('checking') : t('submitCode')}
+          <Button size="lg" fullWidth loading={action.busy} onClick={checkin}>
+            {action.busy ? t('checking') : t('submitCode')}
           </Button>
         </div>
       )}
@@ -120,9 +119,9 @@ export function EventActions({
           {t('attendedBadge')}
         </Badge>
       )}
-      {status && (
-        <p role="status" className="text-fg-muted">
-          {status}
+      {action.error && (
+        <p role="alert" className="text-danger">
+          {action.error}
         </p>
       )}
     </div>
