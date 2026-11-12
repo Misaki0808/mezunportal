@@ -74,7 +74,7 @@ describe('AppShell', () => {
 describe('AppShell: bildirim girişi', () => {
   it('giriş yapmış kullanıcıda üst çubukta ve yan menüde, okunmamış sayısıyla görünür', () => {
     renderUi(
-      <AppShell signedIn unreadNotifications={3}>
+      <AppShell signedIn canRefreshNotifications unreadNotifications={3}>
         x
       </AppShell>,
     );
@@ -90,7 +90,7 @@ describe('AppShell: bildirim girişi', () => {
 
   it('okunmamış yokken rozet yok; ad yalnız "Bildirimler"', () => {
     renderUi(
-      <AppShell signedIn unreadNotifications={0}>
+      <AppShell signedIn canRefreshNotifications unreadNotifications={0}>
         x
       </AppShell>,
     );

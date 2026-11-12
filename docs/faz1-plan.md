@@ -273,4 +273,4 @@ sonra veri değiştiren H3 migration'ı ve dağıtım işlemi PR başına kullan
 
 ## 6. Kapsam dışı
 
-`BACKLOG.md` “Ertelenmiş — Faz 2” ve D17. Faz 2 planı Faz 1 kapanınca yazılır.
+D17. Faz 2 planı `docs/faz2-plan.md`'dedir (tamamlandı; eski “Ertelenmiş — Faz 2” listesi Git geçmişinde).

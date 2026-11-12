@@ -13,13 +13,17 @@ export async function AppShell({ children }: { children: ReactNode }) {
     requireUserWithoutConsent().catch(() => null),
   ]);
   // Rozet süs bilgidir: sayım başarısız olursa sayfa açılır, rozet gizli kalır.
-  const unread = actor
-    ? await requireUser()
-        .then((consented) => countMyUnread({ db: getDb() }, consented.userId))
-        .catch(() => 0)
+  const consented = actor ? await requireUser().catch(() => null) : null;
+  const unread = consented
+    ? await countMyUnread({ db: getDb() }, consented.userId).catch(() => 0)
     : 0;
   return (
-    <AppShellClient showAdmin={showAdmin} signedIn={!!actor} unreadNotifications={unread}>
+    <AppShellClient
+      showAdmin={showAdmin}
+      signedIn={!!actor}
+      canRefreshNotifications={!!consented}
+      unreadNotifications={unread}
+    >
       {children}
     </AppShellClient>
   );

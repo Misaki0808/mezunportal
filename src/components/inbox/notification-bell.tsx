@@ -18,9 +18,11 @@ export const INBOX_CHANGED_EVENT = 'mezunportal:inbox-changed';
 export function NotificationBell({
   initial,
   layout,
+  refreshEnabled,
 }: {
   initial: number;
   layout: 'header' | 'side';
+  refreshEnabled: boolean;
 }) {
   const t = useTranslations('inbox.bell');
   const nav = useTranslations('nav');
@@ -32,10 +34,11 @@ export function NotificationBell({
     setSeen(initial);
     setFetched(null);
   }
-  const unread = fetched ?? initial;
+  const unread = refreshEnabled ? (fetched ?? initial) : 0;
   const first = useRef(true);
 
   useEffect(() => {
+    if (!refreshEnabled) return;
     let alive = true;
     async function refresh() {
       try {
@@ -65,7 +68,7 @@ export function NotificationBell({
       window.removeEventListener(INBOX_CHANGED_EVENT, onVisible);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [pathname]);
+  }, [pathname, refreshEnabled]);
 
   const overflow = unread >= INBOX_UNREAD_CAP;
   const label = overflow
