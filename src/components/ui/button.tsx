@@ -16,7 +16,13 @@ export type { ButtonSize, ButtonVariant };
  * zorunludur (tip düzeyinde) ve düğmenin altında görünür, `aria-describedby` ile bağlanır.
  */
 type DisabledProps =
-  { disabled?: false; disabledReason?: undefined } | { disabled: true; disabledReason: string };
+  | { disabled?: false; disabledReason?: undefined; disabledReasonId?: undefined }
+  | { disabled: true; disabledReason: string; disabledReasonId?: undefined }
+  /**
+   * Sebep sayfada BAŞKA yerde görünür (örn. alanın altındaki ipucu): düğmenin altında tekrarlanmaz, `aria-describedby` o öğeye
+   * bağlanır. Aynı sebebi paylaşan düğme grubunda (satır eylemleri) metin her düğmenin altında yinelenmesin diye kullanılır.
+   */
+  | { disabled: true; disabledReason?: undefined; disabledReasonId: string };
 
 export type ButtonProps = Omit<ComponentProps<'button'>, 'disabled'> &
   DisabledProps & {
@@ -38,7 +44,7 @@ function Spinner() {
       stroke="currentColor"
       strokeWidth="3"
       aria-hidden="true"
-      className="animate-spin"
+      className="animate-spin motion-reduce:animate-none"
     >
       <circle cx="12" cy="12" r="9" opacity="0.25" />
       <path d="M21 12a9 9 0 0 0-9-9" strokeLinecap="round" />
@@ -54,6 +60,7 @@ export function Button({
   leadingIcon,
   disabled = false,
   disabledReason,
+  disabledReasonId,
   className,
   children,
   type = 'button',
@@ -80,7 +87,7 @@ export function Button({
       disabled={disabled}
       aria-disabled={loading || undefined}
       aria-busy={loading || undefined}
-      aria-describedby={cn(disabledReason && reasonId, describedBy) || undefined}
+      aria-describedby={cn(disabledReason && reasonId, disabledReasonId, describedBy) || undefined}
       onClick={handleClick}
       className={cn(buttonClasses({ variant, size, fullWidth }), className)}
     >

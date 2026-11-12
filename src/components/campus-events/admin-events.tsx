@@ -1,8 +1,7 @@
 'use client';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import Link from 'next/link';
-import { safeClientAction } from '@/lib/safe-client-action';
-import { useRef, useState, useTransition } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -17,6 +16,7 @@ import {
   Input,
   Modal,
   Textarea,
+  useAction,
 } from '@/components/ui';
 import type { BadgeTone } from '@/components/ui';
 import {
@@ -53,10 +53,9 @@ export function AdminEvents({
   const t = useTranslations('campusEvents'),
     ui = useTranslations('ui'),
     errors = useTranslations('errors.codes'),
-    router = useRouter();
-  const [pending, start] = useTransition(),
-    [status, setStatus] = useState(''),
-    [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}),
+    router = useRouter(),
+    action = useAction();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}),
     [reason, setReason] = useState(''),
     [intent, setIntent] = useState<{ event: Item; kind: 'PUBLISH' | 'REJECT' | 'CANCEL' } | null>(
       null,
@@ -69,58 +68,57 @@ export function AdminEvents({
     REJECTED: t('rejected'),
     CANCELLED: t('cancelled'),
   };
-  function create(form: FormData) {
-    start(async () => {
-      const startAt = String(form.get('startsAt') ?? ''),
-        endAt = String(form.get('endsAt') ?? '');
-      const asIstanbul = (value: string) => `${value}${value.length === 16 ? ':00' : ''}+03:00`;
-      const startDate = new Date(asIstanbul(startAt)),
-        endDate = new Date(asIstanbul(endAt));
-      if (
-        !startAt ||
-        !endAt ||
-        Number.isNaN(startDate.getTime()) ||
-        Number.isNaN(endDate.getTime())
-      ) {
-        setFieldErrors({ startsAt: t('timeInvalid') });
-        return;
-      }
-      const parsed = createCampusEventSchema.safeParse({
-        title: form.get('title'),
-        description: form.get('description'),
-        location: form.get('location'),
-        startsAt: startDate.toISOString(),
-        endsAt: endDate.toISOString(),
-        capacity: Number(form.get('capacity')),
-        departmentIds: form.getAll('departments'),
-      });
-      if (!parsed.success) {
+  function create(formElement: HTMLFormElement) {
+    const form = new FormData(formElement);
+    const startAt = String(form.get('startsAt') ?? ''),
+      endAt = String(form.get('endsAt') ?? '');
+    const asIstanbul = (value: string) => `${value}${value.length === 16 ? ':00' : ''}+03:00`;
+    const startDate = new Date(asIstanbul(startAt)),
+      endDate = new Date(asIstanbul(endAt));
+    if (
+      !startAt ||
+      !endAt ||
+      Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime())
+    ) {
+      setFieldErrors({ startsAt: t('timeInvalid') });
+      return;
+    }
+    const parsed = createCampusEventSchema.safeParse({
+      title: form.get('title'),
+      description: form.get('description'),
+      location: form.get('location'),
+      startsAt: startDate.toISOString(),
+      endsAt: endDate.toISOString(),
+      capacity: Number(form.get('capacity')),
+      departmentIds: form.getAll('departments'),
+    });
+    if (!parsed.success) {
+      setFieldErrors(
+        Object.fromEntries(
+          parsed.error.issues.map((issue) => [String(issue.path[0]), errors('VALIDATION_INVALID')]),
+        ),
+      );
+      return;
+    }
+    // Başarıda form temizlenir ve toast gösterilir; hatada girilen HİÇBİR değer silinmez.
+    void action.run(() => createCampusEvent(parsed.data), {
+      success: t('created'),
+      onOk: () => {
+        setFieldErrors({});
+        formElement.reset();
+        router.refresh();
+      },
+      onFailure: (failure) =>
         setFieldErrors(
           Object.fromEntries(
-            parsed.error.issues.map((issue) => [
-              String(issue.path[0]),
-              errors('VALIDATION_INVALID'),
-            ]),
+            Object.entries(failure.fieldErrors ?? {}).map(([field, code]) => [field, errors(code)]),
           ),
-        );
-        return;
-      }
-      const result = await safeClientAction(() => createCampusEvent(parsed.data));
-      setFieldErrors(
-        result.ok
-          ? {}
-          : Object.fromEntries(
-              Object.entries(result.fieldErrors ?? {}).map(([field, code]) => [
-                field,
-                errors(code),
-              ]),
-            ),
-      );
-      setStatus(result.ok ? t('pending') : errors(result.errorCode));
-      if (result.ok) router.refresh();
+        ),
     });
   }
   function closeDecision() {
+    action.clear();
     setIntent(null);
     setReason('');
     setReasonError('');
@@ -128,11 +126,11 @@ export function AdminEvents({
   function openDecision(event: Item, kind: 'PUBLISH' | 'REJECT' | 'CANCEL') {
     setReason('');
     setReasonError('');
-    setStatus('');
+    action.clear();
     setIntent({ event, kind });
   }
   function decide() {
-    if (!intent || pending) return;
+    if (!intent || action.busy) return;
     const { event, kind } = intent;
     const input = { eventId: event.id, reason, ...(kind === 'CANCEL' ? {} : { decision: kind }) };
     const parsed = (
@@ -146,26 +144,27 @@ export function AdminEvents({
       return;
     }
     setReasonError('');
-    start(async () => {
-      const result =
+    void action.run(
+      () =>
         kind === 'CANCEL'
-          ? await safeClientAction(() =>
-              cancelCampusEvent({ eventId: event.id, reason: parsed.data.reason }),
-            )
-          : await safeClientAction(() =>
-              reviewCampusEvent({ eventId: event.id, decision: kind, reason: parsed.data.reason }),
-            );
-      setStatus(
-        result.ok
-          ? t(kind === 'PUBLISH' ? 'published' : kind === 'REJECT' ? 'rejected' : 'cancelled')
-          : errors(result.errorCode),
-      );
-      if (result.ok) {
-        if (kind !== 'CANCEL') completeDecision(event.id);
-        closeDecision();
-        router.refresh();
-      }
-    });
+          ? cancelCampusEvent({ eventId: event.id, reason: parsed.data.reason })
+          : reviewCampusEvent({ eventId: event.id, decision: kind, reason: parsed.data.reason }),
+      {
+        success: t(
+          kind === 'PUBLISH'
+            ? 'decidedPublished'
+            : kind === 'REJECT'
+              ? 'decidedRejected'
+              : 'decidedCancelled',
+        ),
+        // Başarıda pencere kapanır ve gerekçe silinir; hatada pencere ve gerekçe korunur.
+        onOk: () => {
+          if (kind !== 'CANCEL') completeDecision(event.id);
+          closeDecision();
+          router.refresh();
+        },
+      },
+    );
   }
   const fields = [
     ['title', 'name', 'text'],
@@ -203,14 +202,14 @@ export function AdminEvents({
               <div className="mt-4 flex flex-wrap gap-3">
                 <Button
                   data-queue-action
-                  loading={pending}
+                  loading={action.busy}
                   onClick={() => openDecision(event, 'PUBLISH')}
                 >
                   {t('approve')}
                 </Button>
                 <Button
                   variant="danger-outline"
-                  loading={pending}
+                  loading={action.busy}
                   onClick={() => openDecision(event, 'REJECT')}
                 >
                   {t('reject')}
@@ -238,9 +237,9 @@ export function AdminEvents({
   }
   return (
     <div ref={queueRef} className="space-y-8">
-      {status && (
-        <p role="status" className="text-fg-muted">
-          {status}
+      {action.error && !intent && (
+        <p role="alert" className="text-danger">
+          {action.error}
         </p>
       )}
       <section aria-label={t('pendingTitle')} className="space-y-4">
@@ -260,13 +259,19 @@ export function AdminEvents({
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          create(new FormData(event.currentTarget));
+          create(event.currentTarget);
         }}
       >
         <Card className="mt-6 space-y-5">
           <h2 className="text-xl font-semibold">{t('create')}</h2>
           {fields.map(([name, label, type]) => (
-            <Field key={name} label={t(label)} required error={fieldErrors[name]}>
+            <Field
+              key={name}
+              label={t(label)}
+              required
+              hint={type === 'datetime-local' ? t('dateTimeHint') : undefined}
+              error={fieldErrors[name]}
+            >
               {(control) =>
                 type === 'textarea' ? (
                   <Textarea {...control} name={name} />
@@ -293,8 +298,8 @@ export function AdminEvents({
               </p>
             )}
           </fieldset>
-          <Button type="submit" size="lg" fullWidth loading={pending}>
-            {pending ? t('registering') : t('submit')}
+          <Button type="submit" size="lg" fullWidth loading={action.busy}>
+            {action.busy ? t('registering') : t('submit')}
           </Button>
         </Card>
       </form>
@@ -307,7 +312,7 @@ export function AdminEvents({
       <Modal
         open={intent !== null}
         onClose={() => {
-          if (!pending) closeDecision();
+          if (!action.busy) closeDecision();
         }}
         title={t(
           intent?.kind === 'CANCEL' ? 'cancel' : intent?.kind === 'REJECT' ? 'reject' : 'approve',
@@ -315,12 +320,12 @@ export function AdminEvents({
         description={t(intent?.kind === 'CANCEL' ? 'cancelConfirm' : 'reviewConfirm')}
         footer={
           <>
-            <Button variant="secondary" loading={pending} onClick={closeDecision}>
+            <Button variant="secondary" loading={action.busy} onClick={closeDecision}>
               {t('dismiss')}
             </Button>
             <Button
               variant={intent?.kind === 'PUBLISH' ? 'primary' : 'danger'}
-              loading={pending}
+              loading={action.busy}
               onClick={decide}
             >
               {t(
@@ -345,7 +350,11 @@ export function AdminEvents({
             />
           )}
         </Field>
-        {status && <p role="alert">{status}</p>}
+        {action.error && (
+          <p role="alert" className="mt-3 text-danger">
+            {action.error}
+          </p>
+        )}
       </Modal>
     </div>
   );

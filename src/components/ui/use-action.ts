@@ -1,0 +1,88 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { useRef, useState } from 'react';
+
+import type { ActionFailure, ActionResult } from '@/contracts/result';
+
+import { useToast } from './toast';
+
+export type RunOptions<T> = {
+  /** Başarıda toast olarak gösterilen kısa, bağlama uygun metin ("Profilin güncellendi."). Boş/`undefined` ise toast yok. */
+  success?: string | ((data: T) => string | undefined);
+  /** Başarıda (toast'tan önce) çalışır: yenile, yönlendir, durumu güncelle. */
+  onOk?: (data: T) => void | Promise<void>;
+  /** Başarısızlıkta çalışır (alan hatalarını ekrana işlemek için). Girilen veri DOKUNULMAZ: temizlemek ekranın işidir. */
+  onFailure?: (failure: ActionFailure) => void;
+};
+
+/**
+ * Kullanıcı eyleminin ortak geri bildirim kalıbı (kart 207): bekleyen durum + çift gönderim kilidi + başarıda toast + hatada
+ * kararlı `errorCode` metni. Ağ/çalışma hatası formu düşürmez (`SERVER_UNEXPECTED`). Başarısızlıkta HİÇBİR alan sıfırlanmaz:
+ * ekran yerel durumunu yalnız başarıda değiştirir, kullanıcı aynı değerlerle yeniden dener.
+ *
+ * Kullanım: `const action = useAction(); <Button loading={action.busy} onClick={() => void action.run(...)}>`;
+ * hata `action.error` ile `role="alert"` bir paragrafta gösterilir.
+ */
+export function useAction() {
+  const toast = useToast();
+  const codes = useTranslations('errors.codes');
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<ActionFailure | null>(null);
+  const lock = useRef(false);
+
+  async function run<T>(
+    action: () => Promise<ActionResult<T>>,
+    options: RunOptions<T> = {},
+  ): Promise<boolean> {
+    if (lock.current) return false;
+    lock.current = true;
+    setBusy(true);
+    setFailure(null);
+    try {
+      const result = await action();
+      if (!result.ok) {
+        setFailure(result);
+        options.onFailure?.(result);
+        return false;
+      }
+      await options.onOk?.(result.data);
+      const message =
+        typeof options.success === 'function' ? options.success(result.data) : options.success;
+      if (message) toast.show({ message, tone: 'success' });
+      return true;
+    } catch {
+      const unexpected: ActionFailure = { ok: false, errorCode: 'SERVER_UNEXPECTED' };
+      setFailure(unexpected);
+      options.onFailure?.(unexpected);
+      return false;
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  }
+
+  return {
+    busy,
+    failure,
+    run,
+    clear: () => setFailure(null),
+    error: failure
+      ? codes(
+          failure.errorCode,
+          failure.params
+            ? Object.fromEntries(
+                Object.entries(failure.params).map(([key, value]) => [
+                  key,
+                  typeof value === 'boolean' ? String(value) : value,
+                ]),
+              )
+            : undefined,
+        )
+      : undefined,
+    fieldError: (field: string) => {
+      const code = failure?.fieldErrors?.[field];
+      return code ? codes(code) : undefined;
+    },
+  };
+}
