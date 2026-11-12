@@ -105,6 +105,10 @@ export function redactCvText(text: string, ownerName: string): string {
     marker.url,
   );
   result = result.replace(
+    /\b(?:linkedin|github|instagram|twitter)\s*(?:kullanıcı\s*adı|username|hesabı)?\s*[:：]\s*@?[\p{L}\p{N}_.-]+/giu,
+    marker.url,
+  );
+  result = result.replace(
     /(?<![\p{L}\p{N}_])@[\p{L}\p{N}_][\p{L}\p{N}_.-]{1,}(?![\p{L}\p{N}_])/gu,
     marker.url,
   );

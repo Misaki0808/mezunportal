@@ -20,6 +20,8 @@ describe('CV kişisel veri maskeleme', () => {
     ['linkedin.com/in/example', '[BAĞLANTI]'],
     ['github.com/example', '[BAĞLANTI]'],
     ['portfolio.example.com/example', '[BAĞLANTI]'],
+    ['LinkedIn: kisisel-hesap', '[BAĞLANTI]'],
+    ['GitHub kullanıcı adı: ornek123', '[BAĞLANTI]'],
     ['@kullanici_adi', '[BAĞLANTI]'],
     ['10000000146', '[KİMLİK]'],
     ['100 000 001 46', '[KİMLİK]'],
