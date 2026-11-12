@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { renderWithToasts } from '@/test/render';
@@ -48,6 +48,42 @@ async function fillInternship(user: ReturnType<typeof setup>['user']) {
 }
 
 describe('deneyim formu', () => {
+  it('taslağı çift kaydetme tek istektir; hata veriyi korur', async () => {
+    const gate = Promise.withResolvers<never>();
+    const save = vi.fn(() => gate.promise);
+    const { user } = setup({ save });
+    const organization = screen.getByLabelText(/Kurum ya da etkinlik adı/);
+    await user.type(organization, 'Korunan kurum');
+    const button = screen.getByRole('button', { name: 'Taslağı kaydet' });
+    act(() => {
+      button.click();
+      button.click();
+    });
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    await act(async () => gate.reject(new Error('ağ')));
+    expect(organization).toHaveValue('Korunan kurum');
+    expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
+  });
+  it('deneyimi çift gönderme tek kayıttır; hata alanları korur', async () => {
+    const gate = Promise.withResolvers<never>();
+    const save = vi.fn(() => gate.promise);
+    const { user } = setup({ save });
+    await fillInternship(user);
+    await user.click(screen.getByRole('button', { name: 'Moderasyona gönder' }));
+    const button = within(screen.getByRole('dialog')).getByRole('button', {
+      name: 'Moderasyona gönder',
+    });
+    act(() => {
+      button.click();
+      button.click();
+    });
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    await act(async () => gate.reject(new Error('ağ')));
+    expect(screen.getByLabelText(/Kurum ya da etkinlik adı/)).toHaveValue('Örnek A.Ş.');
+    expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
+  });
   it('tür değişince sorulan alanlar değişir (D9)', async () => {
     const { user } = setup();
     expect(screen.getByLabelText(/^Ücret/)).toBeInTheDocument();
@@ -113,7 +149,7 @@ describe('deneyim formu', () => {
       content: { type: 'INTERNSHIP', processSteps: [], interviewQuestions: [] },
       isAnonymous: true,
     });
-    expect(await screen.findByText('Taslak kaydedildi.')).toBeInTheDocument();
+    expect(await screen.findByText('Taslağın kaydedildi.')).toBeInTheDocument();
   });
   it('başvuru ayı yalnız özel kaydetme alanında gönderilir', async () => {
     const { user, save } = setup();
@@ -127,7 +163,7 @@ describe('deneyim formu', () => {
     const { user, save, submit } = setup();
     await fillInternship(user);
     await user.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
-    await screen.findByText('Taslak kaydedildi.');
+    await screen.findByText('Taslağın kaydedildi.');
     expect(save.mock.calls[0]![0]).not.toHaveProperty('experienceId');
     await user.click(screen.getByRole('button', { name: 'Moderasyona gönder' }));
     const dialog = await screen.findByRole('dialog');

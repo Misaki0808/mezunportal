@@ -1,55 +1,38 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { z } from 'zod';
 import type { ActionFailure, ActionResult } from '@/contracts/result';
 import { failureFromZod } from '@/lib/action-result';
-import { useToast } from '@/components/ui';
+import { useAction } from '@/components/ui';
 
 export function usePrivacyForm() {
-  const [failure, setFailure] = useState<ActionFailure | null>(null);
-  const [busy, setBusy] = useState(false);
-  const lock = useRef(false);
+  const [validation, setValidation] = useState<ActionFailure | null>(null);
+  const action = useAction();
   const codes = useTranslations('errors.codes');
-  const toast = useToast();
+  const failure = validation ?? action.failure;
   function parse<T>(schema: z.ZodType<T>, input: unknown): T | null {
     const result = schema.safeParse(input);
+    action.clear();
     if (!result.success) {
-      setFailure(failureFromZod(result.error));
+      setValidation(failureFromZod(result.error));
       return null;
     }
-    setFailure(null);
+    setValidation(null);
     return result.data;
   }
   async function run<T>(
-    action: () => Promise<ActionResult<T>>,
+    operation: () => Promise<ActionResult<T>>,
     success: (data: T) => void | Promise<void>,
     message?: string,
     onFailure?: (failure: ActionFailure) => void,
   ) {
-    if (lock.current) return;
-    lock.current = true;
-    setBusy(true);
-    setFailure(null);
-    try {
-      const result = await action();
-      if (!result.ok) {
-        setFailure(result);
-        onFailure?.(result);
-        return;
-      }
-      await success(result.data);
-      if (message) toast.show({ message, tone: 'success' });
-    } catch {
-      setFailure({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
-    } finally {
-      lock.current = false;
-      setBusy(false);
-    }
+    setValidation(null);
+    return action.run(operation, { onOk: success, success: message, onFailure });
   }
   return {
     failure,
-    busy,
+    busy: action.busy,
     parse,
     run,
     error: failure

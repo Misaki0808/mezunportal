@@ -27,9 +27,7 @@ export function ContactSendForm({
   if (sent)
     return (
       <Card className="space-y-5">
-        <p role="status" className="text-base">
-          {t('sent')}
-        </p>
+        <p className="text-base">{t('sent')}</p>
         <Link href="/hesap/iletisim?box=OUTGOING" className={buttonClasses({ fullWidth: true })}>
           {t('sendDone')}
         </Link>
@@ -46,6 +44,7 @@ export function ContactSendForm({
           void form.run(
             () => sendContactRequest(input),
             () => setSent(true),
+            t('sentToast'),
           );
       }}
     >

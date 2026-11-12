@@ -57,7 +57,7 @@ test('mobilde özel ay kaydı, toplu takvim ve takip', async ({ page }) => {
     await page.getByLabel('Kurum ya da etkinlik adı').fill(name);
     await page.getByLabel('Başvuru ayı (isteğe bağlı)').selectOption('4');
     await page.getByRole('button', { name: 'Taslağı kaydet' }).click();
-    await expect(page.getByText('Taslak kaydedildi.')).toBeVisible();
+    await expect(page.getByText('Taslağın kaydedildi.')).toBeVisible();
     const draft = await db.experience.findFirstOrThrow({
       where: { authorId: student!.id, organizationName: name, status: 'DRAFT' },
       select: { id: true, appliedMonth: true },
