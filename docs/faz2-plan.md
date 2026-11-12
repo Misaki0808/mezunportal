@@ -365,7 +365,7 @@ testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümle
 | Soru bankasında pozisyon süzgeci, "kaydet/çalış" | Faz 3 fikirleri (`BACKLOG.md`) |
 | Yerel profil fotoğrafı (ayın mezunu) | Faz 3 fikirleri (`BACKLOG.md`) |
 | Gruplu uygulama içi bildirim listesi | Ertelenmedi: Faz 2 tamamlama, W1 kartı 217; girince §12.1 ✓'ye çekilir (ilan şikâyeti ekranları #111 ile girdi) |
-| Stres hacminde arama/soru bankası, `test:gate` OOM kalıbı ve diğer teknik borç | `BACKLOG.md` TD-022, TD-023, TD-024, TD-026 |
+| Stres hacminde arama/soru bankası, `test:gate` OOM kalıbı ve diğer teknik borç | `BACKLOG.md` TD-022, TD-023, TD-024, TD-026, TD-027 |
 | Rıza metinlerinin hukuki okuması; LinkedIn kurum kimliği; Gemini ve Google Cloud anahtarları; platform hesabı | `BACKLOG.md` "Dış bağımlılık bekleyenler" (kullanıcı) ve PILOT-LEGAL |
 
 **Sayım (kart 217 girene kadar):** 14 adımın 9'u ✓ (P2-04, P2-06, P2-03, P2-09, P2-11, P2-08, P2-01, P2-12, P2-13), 5'i ◐ (P2-05, P2-10, P2-07, P2-02, P2-14); ✗ yok. Plandan sapmalar:

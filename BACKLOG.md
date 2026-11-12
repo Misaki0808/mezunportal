@@ -181,6 +181,11 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   (etkinlik detayı, deneyim sayfası sunucuda `buttonClasses` çağırır).
   Neden borç: kuralla çelişen kaynak taraması.
   Kapanış ölçütü: test saf işleve indirilir ya da kaldırılır, e2e koruması yeter.
+- [ ] **TD-027** · P2 · pg "Calling client.query() when the client is already executing a query" uyarısı (pg@9'da hataya döner)
+  Ne: Prisma 7'nin sorgu yorumlayıcısı (`@prisma/adapter-pg` 7.10.1 + `pg` 8.23.1) işlem içinde eşzamanlı sorgu atıyor; Node uyarıyı süreç başına bir kez yazar
+  (`--trace-deprecation` yığını `PgTransaction.performIO` ← `interpretNode`). Bizim kodumuzdan değil; dev'de Next "Issue" rozetini çıkarır.
+  Neden borç: pg@9 bu çağrıyı kaldırıyor; yükseltmede yaygın okuma yolları (işlem içinde ilişki yükleyen sorgular) hata verir.
+  Kapanış ölçütü: adapter/pg sürüm yükseltmesinde uyarı çıkmaz (ya da kaynak sorgular sıralı çalışacak biçimde düzeltilir); uyarıyı üreten bir test/koşu yoktur.
 
 ### Bilinçli kabul edilen sınırlar
 
