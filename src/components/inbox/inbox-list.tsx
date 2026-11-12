@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import {
   BellIcon,
@@ -20,11 +20,10 @@ import {
   UsersIcon,
   buttonClasses,
   cn,
-  useToast,
+  useAction,
   type IconChipTone,
 } from '@/components/ui';
 import type { InboxGroupView, InboxPage } from '@/contracts/inbox';
-import type { ActionResult } from '@/contracts/result';
 import { getMyInbox, markAllInboxRead, markInboxRead } from '@/server/actions/inbox';
 
 import { INBOX_CHANGED_EVENT } from './notification-bell';
@@ -70,40 +69,11 @@ function dayLabel(day: string, today: string, labels: { today: string; yesterday
  */
 export function InboxList({ initial, today }: { initial: InboxPage; today: string }) {
   const t = useTranslations('inbox');
-  const codes = useTranslations('errors.codes');
-  const toast = useToast();
-  const lock = useRef(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const action = useAction();
   const [groups, setGroups] = useState(initial.groups);
   const [cursor, setCursor] = useState(initial.nextCursor);
   const [unread, setUnread] = useState(initial.unread);
 
-  /** Çift gönderim kilitli; hata kararlı metinle gösterilir, ağ hatası sayfayı düşürmez. */
-  async function run<T>(
-    call: () => Promise<ActionResult<T>>,
-    onOk: (data: T) => void,
-    success?: string,
-  ) {
-    if (lock.current) return;
-    lock.current = true;
-    setBusy(true);
-    setError('');
-    try {
-      const result = await call();
-      if (!result.ok) {
-        setError(codes(result.errorCode));
-        return;
-      }
-      onOk(result.data);
-      if (success) toast.show({ message: success, tone: 'success' });
-    } catch {
-      setError(codes('SERVER_UNEXPECTED'));
-    } finally {
-      lock.current = false;
-      setBusy(false);
-    }
-  }
   const announce = () => window.dispatchEvent(new Event(INBOX_CHANGED_EVENT));
   function open(group: InboxGroupView) {
     if (!group.unread) return;
@@ -117,24 +87,22 @@ export function InboxList({ initial, today }: { initial: InboxPage; today: strin
       .catch(() => undefined);
   }
   const markAll = () =>
-    void run(
-      () => markAllInboxRead(),
-      () => {
+    void action.run(() => markAllInboxRead(), {
+      success: t('markAllDone'),
+      onOk: () => {
         setGroups((current) => current.map((item) => ({ ...item, unread: 0 })));
         setUnread(0);
         announce();
       },
-      t('markAllDone'),
-    );
+    });
   const loadMore = () =>
-    void run(
-      () => getMyInbox({ cursor: cursor ?? undefined }),
-      (page) => {
+    void action.run(() => getMyInbox({ cursor: cursor ?? undefined }), {
+      onOk: (page) => {
         setGroups((current) => [...current, ...page.groups]);
         setCursor(page.nextCursor);
         setUnread(page.unread);
       },
-    );
+    });
 
   const labels = { today: t('today'), yesterday: t('yesterday') };
   const days = [...new Set(groups.map((group) => group.day))];
@@ -145,7 +113,7 @@ export function InboxList({ initial, today }: { initial: InboxPage; today: strin
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
             <Button
               variant="secondary"
-              loading={busy}
+              loading={action.busy}
               onClick={markAll}
               {...(unread === 0
                 ? ({ disabled: true, disabledReason: t('markAllNone') } as const)
@@ -163,9 +131,9 @@ export function InboxList({ initial, today }: { initial: InboxPage; today: strin
         )}
       </PageHeader>
 
-      {error && (
+      {action.error && (
         <p role="alert" className="text-danger">
-          {error}
+          {action.error}
         </p>
       )}
 
@@ -238,7 +206,7 @@ export function InboxList({ initial, today }: { initial: InboxPage; today: strin
       )}
 
       {cursor && (
-        <Button variant="secondary" fullWidth loading={busy} onClick={loadMore}>
+        <Button variant="secondary" fullWidth loading={action.busy} onClick={loadMore}>
           {t('loadMore')}
         </Button>
       )}
