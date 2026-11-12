@@ -8,65 +8,9 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 ## Güncel durum
 
 Faz 0 (iskelet, veritabanı, yerel ortam, tasarım sistemi, ekip araçları), Faz 1 (çekirdek, tamamlayıcılar ve SSS ekranları dahil) ve
-Faz 2'nin (fırsatlar, mevcut veriden değer, rehberlik, tanınma; `docs/faz2-plan.md`) bütün plan adımları main'dedir. Canlı ortam
+Faz 2'nin (fırsatlar, mevcut veriden değer, rehberlik, tanınma; `docs/faz2-plan.md`) onaylanmış kod kapsamı main'dedir; bilinçli sapmalar planın §12 kapanış notundadır. Canlı ortam
 yoktur ve bilinçli ertelenmiştir: geliştirme, test ve ekran doğrulaması yerelde, birleştirme kapıları yerelde; CI az ve öz (≤ 5 dk, K-14
-kararı, `docs/engineering.md` "CI"). Kullanıcının komple test ve deneme turu başlayabilir (`docs/engineering.md` "Faz 2 deneme rehberi"). Ürün özellikleri aşağıdaki gibi çalışır; ayrıntı ve gerekçe `docs/decisions.md`'dedir.
-
-### Faz 1'de main'de olanlar
-
-- **Kimlik, üyelik, yetki (P1-01, P1-02):** kullanıcı, üyelik, yönetici yetkisi (bölüm/fakülte/sistem), işlem kaydı,
-  yetki korumaları, rol geçişi, sınıf kuralı; Better Auth ile e-posta bağlantısı girişi, e-posta değiştirme, alan adı
-  ile üyelik beyanı, mezun belgesi akışı (karar anında dosya silinir), askıya alma, test girişi (yalnız local/test).
-- **KVKK ve kontrollü iletişim (P1-03):** sürümlü rıza, alan görünürlüğü, iletişim talepleri, hesap silme/anonimleştirme,
-  kişisel veri dökümü; hukuki metinler taslaktır.
-- **İlk giriş ve profil (P1-04, P1-06):** kalıcı başlangıç adımları, profil yüzdesi (tek kaynak `rules/profileCompletion`),
-  K-08 mentor eşiği; profil düzenleme, beceri etiketleri, izinli bağlantılar; başkasının profili görünürlük süzgeçli.
-- **CV hattı (P1-05):** PDF denetimi, `cv.parse` işi, sözlük eşleme, fark/onay ekranı, staj davetleri, saklama kuralları.
-  Sağlayıcıdan bağımsızdır: `LLM_PROVIDER` boşsa özellik kapalı, `fake` yalnız local/test.
-- **Deneyim ve arama (P1-07, P1-08):** tür bazlı deneyim, anonim çıktı, kapsamlı moderasyon, şikâyet; Türkçe tam metin +
-  yazım hatası toleranslı arama, süzgeçler, K-07 üniversite görünürlüğü.
-- **Mentor ve randevu (P1-09, P1-10):** mentor dizini, "benzer yol izleyenler", mentor ayarları (kapasite, müsaitlik),
-  slot seçimi, talep → onay/ret/iptal, D11 zaman aşımı, exclusion constraint, `.ics`, hatırlatma, elle link; takvim
-  adaptörü yalnız sahte (`CALENDAR_PROVIDER=fake`, boşsa kapalı).
-- **Yönetim (P1-11, P1-13, P1-18'in davet kısmı):** panel (kullanıcılar, askı, üyelik düzeltme, yönetici atama, şikâyet,
-  belge kuyruğu, deneyim moderasyonu, sözlük/eşleşmeyen değer, işlem kaydı), mezun istihdam raporu ve kullanım
-  metrikleri (Excel, küçük hücre bastırma), toplu davet (şifreli niyet).
-- **Bildirimler (P1-12):** tercihler, yıllık doğrulama, hatırlatmalar; bildirim niyeti işlemle aynı veritabanı
-  işleminde yazılır (outbox), e-posta ayrı worker'da gider; çözülemeyen niyet beş denemeden (1/2/4/8 dk) sonra yükü
-  temizlenmiş kalıcı hataya düşer ve diğer niyetleri engellemez.
-- **Zamanlanmış bakım:** süresi geçmiş oturum/doğrulama kayıtları ve 24 ayı geçen olayların kullanıcı bağı günlük işlerle
-  temizlenir; dosya temizliği, görüşme formu hatırlatması ve puan işleri worker'dadır.
-- **Tamamlayıcılar (P1-14, P1-15, P1-16):** görüşme sonrası form ve güvenilirlik göstergesi; CV inceleme talebi (14 gün);
-  puan motoru (ikili tavan, azalan çarpan, gecikmeli puan, şüphe taraması, geriye dönük hesaplama, kurucu üye etiketi),
-  profilde katkı puanı ve `/yonetim/puan`.
-- **Canlıya alım altyapısı (P1-18):** çok aşamalı Dockerfile, başlangıçta `migrate deploy`, worker, kalıcı hacim, `/api/health`,
-  yedek ve geri yükleme betikleri; canlıda test girişi ve `/ui-ornekleri` kapalıdır.
-- **Ana sayfa ve ortak ekran davranışları:** girişli kullanıcıya rol bazlı kişisel pano; beklenen durumlar için ortak durum
-  ekranı; ekran klavyesi açıkken alt gezinme/eylem çubuğu davranışı.
-- **SSS (P1-17):** talep (hız sınırlı, benzer soru kapısı), mentor cevabı, moderatör yayın/ret/yönlendirme (yayında kimlik yok),
-  arama, yayında puan ve bildirim; ekranları da main'dedir (sayfa/arama, talep, mentor cevabı, yönetim moderasyonu); kullanım olayları bağlı.
-
-### Faz 2'de main'de olanlar
-
-- **İlanlar (P2-04, P2-05):** doğrulanmış mezun ve akademisyen ilan yazar (taslak, önizleme, bölüm yöneticisi moderasyonu, en çok 60 gün,
-  süre dolunca kendiliğinden kapanır; ilan puanı yayından 7 gün sonra kesinleşir, ayda 3 ilan puan getirir). Öğrenciye profiline uyan
-  ilanlar ana sayfada "Sana uyan ilanlar" olarak görünür; e-posta özeti günde en çok bir, haftada en çok 3. İlan sahibi eşleşenleri görmez,
-  yalnız "N kişiye ulaştı" sayısını görür. İlan sayfasında kullanıcı "Şikâyet et" ile bildirebilir; bölüm yöneticisi şikâyet kuyruğunda karar verir. Uygulama içi bildirim kutusu (`/bildirimler`): gün başlıklı gruplu liste, zil rozeti, tek dokunuşla ve toplu okundu.
-- **Ters yönlü arama (P2-06):** öğrenci açık rızayla "İş arayanlara görün"ü açar; işe alım beyanlı doğrulanmış mezun "Aday bul" ile maskeli kart
-  görür (ad, fotoğraf, iletişim yok); iletişim yalnız onaylı talepten sonra açılır (D7, kaynaktan bağımsız); hız sınırlı.
-- **Referans (P2-03):** mezun beyanı → öğrenci onayı → yönetici onayı; "referansla kabul" aşaması; puanlar gecikmeli ve iptalde geri alınır.
-- **Mevcut veriden değer (P2-09, P2-10, P2-11):** şirket sayfaları (puansız), mülakat soru bankası (türetilmiş, güvenli sayfalı), başvuru takvimi ve
-  takip hatırlatması; hepsi k ≥ 3, anonim deneyimin yazarı hiçbir türev çıktıdan çıkarılamaz.
-- **Rehber (P2-07, P2-08):** beceri açığı (hedef unvan sözlükten seçilir, k ≥ 5, bantlı sayılar); seçmeli ders rehberi (YBS'nin 89 dersi, mezun işaretleri).
-- **Tanınma (P2-01, P2-02):** Yılın Mezunu (akademik yıl, törenden 30 gün önce dondurulan aday listesi, bölüm yöneticisi kararı, rızalı herkese açık
-  doğrulama sayfası, LinkedIn "Add to Profile" bağlantısı); ayın mezunu kariyer hikâyeleri.
-- **Topluluk (P2-12, P2-13):** yönetici onaylı etkinlik, kayıt, QR ya da 6 haneli kısa ömürlü kodla katılım doğrulama (gecikmeli puan); kişiselleştirilmiş
-  aylık özet e-postası (yönetim önizlemesi, imzalı tek tıkla çıkış).
-- **Faz 2 sırasında eklenenler:** marka paleti (İris + Mercan) ve koyu tema, tanıtım sayfası, LinkedIn PDF içe aktarma, Google Takvim/Meet adaptörü
-  (anahtarlar gelince açılır; yerelde sahte takvim), CI (≤ 5 dk), SSS ekranları, Safari (WebKit) turu ve kaydırma kilidi, erişilebilirlik turu ve
-  giderilen bulgular, mobil ve metin turları, e-posta markalaması.
-- **Sertleştirme (P2-14):** deneme verisi (seed), performans bütçesi (10× veride tüm p95 ≤ 35 ms), etkinlik puanı geriye dönük hesabı, migration geri alma
-  tablosu (`docs/data.md`), test dayanıklılığı (`test:gate`), Faz 2 deneme rehberi (`docs/engineering.md`).
+kararı, `docs/engineering.md` "CI"). Kullanıcı denemesinin rehberi `docs/engineering.md` “Faz 2 deneme rehberi”dir; tamamlanan işler ve bilinçli sapmalar faz planlarında, gerekçeler `docs/decisions.md`'dedir.
 
 ### Dış bağımlılık bekleyenler
 
@@ -75,7 +19,7 @@ Hiçbiri kodla çözülemez; her biri aşağıdaki işi engeller. Kullanıcı/ho
 | Bekleyen | Neyi engelliyor |
 |---|---|
 | E3 — LinkedIn uygulaması + doğrulanmış şirket sayfası | P1-02 kabulü: LinkedIn ile giriş (kod yolu var, sınanmadı) |
-| K-04 — CV yapay zekâsı: kullanıcı kararı Gemini ücretsiz katman; API anahtarı kullanıcıdan gelecek, CV ve LinkedIn metni sağlayıcıya gitmeden önce yerelde maskelenir (hazır, kural tabanlı: ad, e-posta, telefon, kimlik, IBAN, URL, doğum tarihi, adres anahtarlı satırlar, referans/yönetici adları); gerçek adaptör yazılmadı (`LLM_PROVIDER` yalnız `fake`) | Gerçek CV ayrıştırma; TD-009 doğruluk tablosu |
+| K-04 — Seçilen Gemini ücretsiz katmanının API anahtarı; gerçek sağlayıcıya gönderim için yurt dışına aktarım rızası | Gerçek CV/LinkedIn ayrıştırma ve TD-009 doğruluk ölçümü. Metin yerelde maskelenir; gerçek adaptör henüz bağlı değildir (`docs/security.md`, CV hattı). |
 | E4 — Google Cloud projesi + OAuth anahtarları (`korunan/google.env`) | P1-10 kabulü: gerçek takvim daveti ve Meet linki (adaptör ve panelden bağlama hazır; anahtarlar gelince `CALENDAR_PROVIDER=google` + `/yonetim/google`) |
 | K-02 — sunucu ve dağıtım aracı; K-05 — canlı SMTP | Canlı ortam (PILOT-DEPLOY), gerçek e-posta teslimi |
 | K-03 — veri sorumlusu ve yöneticiler; hoca onayı | PILOT-LEGAL, gerçek yönetici atamaları, canlı açılış |
@@ -91,7 +35,7 @@ canlıya alım ile pilot kararları (K-02, K-05, K-03, K-12, hukuki okuma) kulla
 
 ### Bilinen kısıtlar
 
-- Para harcanmaz; yalnız kaçınılmaz küçük maliyet LLM API'sidir (CV ayrıştırma, sağlayıcıda harcama sınırıyla).
+- Ücretli servis açılmaz; CV için seçilen Gemini ücretsiz katmanının gerçek adaptörü ve anahtarı beklenir.
 - Öğrenci e-posta alanı ölçüldü; personel alanı, YBS fakültesi ve program dili teyit bekliyor (K-06).
 - CI az ve öz (K-14 kararı, ≤ 5 dk: tür, kalite, hızlı birim); veritabanı testleri, build ve e2e yerel PM birleştirme kapısındadır.
 
@@ -106,7 +50,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 |---|---|---|---|---|
 | K-02 | Canlı sunucu ve dağıtım aracı | Kullanıcı | Üniversite sunucusu (hocaya sor) ya da ücretsiz bir seçenek | P1-18 |
 | K-03 | Veri sorumlusu ve yöneticiler kim | Hoca | Hocaya sorulacak | P1-03, P1-18 |
-| K-04 | LLM sağlayıcısı | Kullanıcı | PDF girdisi + yapılandırılmış çıktı + API verisini eğitimde kullanmama politikası olan ücretli API | P1-05 |
 | K-05 | E-posta sağlayıcısı (canlı) | Kullanıcı | Üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | P1-18 |
 | K-06 | İÜ personel e-posta alanı, YBS'nin fakültesi ve program dili | PM ölçer, kullanıcı teyit eder | Geçici değerler `prisma/seed-data.ts`'te (`ogr.iu.edu.tr`, `istanbul.edu.tr`, İktisat Fakültesi); öğrenci alanı ölçüldü; kalanlar teyit bekler | P1-02 |
 | K-11 | Şüphe eşiklerinin sayısal değerleri (ağırlıklar kararlı) | PM | `SUSPICION_THRESHOLDS` (40 puan/24 saat; 90 günde ≥ 15 puanın ≥ %60'ı ve ≥ 3 kaydı tek karşı taraftan; ≤ 60 sn eşzamanlı yanıt ≥ 3) | Pilot öncesi |
@@ -185,7 +128,7 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   Ne: Prisma 7'nin sorgu yorumlayıcısı (`@prisma/adapter-pg` 7.10.1 + `pg` 8.23.1) işlem içinde eşzamanlı sorgu atıyor; Node uyarıyı süreç başına bir kez yazar
   (`--trace-deprecation` yığını `PgTransaction.performIO` ← `interpretNode`). Bizim kodumuzdan değil; dev'de Next "Issue" rozetini çıkarır.
   Neden borç: pg@9 bu çağrıyı kaldırıyor; yükseltmede yaygın okuma yolları (işlem içinde ilişki yükleyen sorgular) hata verir.
-  Kapanış ölçütü: adapter/pg sürüm yükseltmesinde uyarı çıkmaz (ya da kaynak sorgular sıralı çalışacak biçimde düzeltilir); uyarıyı üreten bir test/koşu yoktur.
+  Kapanış ölçütü: adapter/pg düzeltmesinden sonra kayıtlı yeniden üretim akışı uyarısız geçer; yalnız e2e sunucusundaki `--no-deprecation` kaldırılarak da doğrulanır.
 
 ### Bilinçli kabul edilen sınırlar
 
@@ -196,9 +139,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 ### Faz 2 sonrası ürün ve arayüz P3'leri
 
 - **İlan formu:** zorunlu alanlar yalnız son adımda denetleniyor ("Devam et" boş alanla da geçer); adım değişimi ekran okuyucuya duyurulmuyor.
-- **Ödül onay penceresinde bayat durum metni:** "Bu mezunu seç" penceresinde "Karar gerekçesi" alanının altında, tören tarihi kaydından kalan "Tercihin kaydedildi."
-  kırmızı hata gibi görünüyor (203 provası; `year-alumni/admin.tsx` sayfa mesajını alan hatası olarak veriyor). "Yayımla" onay penceresi gövdesiz;
-  tören tarihi 30 günden yakınsa genel "Formda eksik ya da uymayan bir alan var" hatası çıkıyor ("en az 30 gün sonrası" demeli).
 - **Küçük görünüm borcu:** klasik (kaplamasız) kaydırma çubuğunda modal açıkken sabit öğeler kayabilir (macOS/iOS'ta gözlenemez; Windows/Linux deneme turunda bakılır).
 
 ### Bakım kuralı
