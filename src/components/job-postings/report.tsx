@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { reportJobPostingSchema } from '@/contracts/job-postings';
 import { useTranslations } from 'next-intl';
-import { Button, Field, Modal, Select, Textarea } from '@/components/ui';
-import { safeClientAction } from '@/lib/safe-client-action';
+import { Button, Field, Modal, Select, Textarea, useAction } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 import { reportJobPosting } from '@/server/actions/job-postings';
 
@@ -16,12 +15,12 @@ export function ReportPosting({ postingId }: { postingId: string }) {
     'reportMisleading',
   );
   const [details, setDetails] = useState('');
-  const [pending, setPending] = useState(false);
+  const action = useAction();
+  const pending = action.busy;
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<ErrorCode>();
 
   async function submit() {
-    if (pending) return;
     const parsed = reportJobPostingSchema.safeParse({
       postingId,
       reason: [t(reason), details.trim()].filter(Boolean).join(': '),
@@ -30,16 +29,15 @@ export function ReportPosting({ postingId }: { postingId: string }) {
       setError('VALIDATION_INVALID');
       return;
     }
-    setPending(true);
     setError(undefined);
-    const result = await safeClientAction(() => reportJobPosting(parsed.data));
-    setPending(false);
-    if (!result.ok) {
-      setError(result.errorCode);
-      return;
-    }
-    setSent(true);
-    setOpen(false);
+    await action.run(() => reportJobPosting(parsed.data), {
+      success: t('reportSent'),
+      onOk: () => {
+        setSent(true);
+        setOpen(false);
+      },
+      onFailure: (failure) => setError(failure.errorCode),
+    });
   }
 
   return (
