@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import type { JobPostingReportPage } from '@/contracts/job-postings';
+import { resolveJobPostingReportSchema, type JobPostingReportPage } from '@/contracts/job-postings';
 import type { ErrorCode } from '@/lib/errors';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { listJobPostingReports, resolveJobPostingReport } from '@/server/actions/job-postings';
@@ -20,17 +20,27 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
   const [error, setError] = useState<ErrorCode>();
   const [notice, setNotice] = useState(false);
 
+  function close() {
+    if (pending) return;
+    setChoice(undefined);
+    setReason('');
+    setError(undefined);
+  }
+
   async function confirm() {
     if (!choice || pending) return;
-    if (reason.trim().length < 3) {
+    const parsed = resolveJobPostingReportSchema.safeParse({
+      reportId: choice.id,
+      decision: choice.decision,
+      reason,
+    });
+    if (!parsed.success) {
       setError('VALIDATION_INVALID');
       return;
     }
     setPending(true);
     setError(undefined);
-    const result = await safeClientAction(() =>
-      resolveJobPostingReport({ reportId: choice.id, decision: choice.decision, reason }),
-    );
+    const result = await safeClientAction(() => resolveJobPostingReport(parsed.data));
     setPending(false);
     if (!result.ok) {
       setError(result.errorCode);
@@ -88,6 +98,7 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
                   variant="secondary"
                   onClick={() => {
                     setError(undefined);
+                    setReason('');
                     setChoice({ id: item.id, decision: 'DISMISS' });
                   }}
                 >
@@ -97,6 +108,7 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
                   variant="danger-outline"
                   onClick={() => {
                     setError(undefined);
+                    setReason('');
                     setChoice({ id: item.id, decision: 'TAKE_DOWN' });
                   }}
                 >
@@ -114,21 +126,11 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
       )}
       <Modal
         open={!!choice}
-        onClose={() => {
-          if (!pending) {
-            setChoice(undefined);
-            setError(undefined);
-          }
-        }}
+        onClose={close}
         title={choice?.decision === 'TAKE_DOWN' ? t('reportTakeDown') : t('reportDismiss')}
         footer={
           <>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                if (!pending) setChoice(undefined);
-              }}
-            >
+            <Button variant="secondary" onClick={close}>
               {t('cancel')}
             </Button>
             <Button loading={pending} onClick={() => void confirm()}>

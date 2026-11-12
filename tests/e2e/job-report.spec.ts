@@ -12,7 +12,7 @@ test.afterAll(() => db.$disconnect());
 
 test('öğrenci ilanı bildirir, yönetici kaldırır ve ilanın listeden kalktığı görülür', async ({
   browser,
-}) => {
+}, testInfo) => {
   test.setTimeout(90_000);
   const title = `Şikâyet testi ${randomUUID()}`;
   const author = await db.user.findUniqueOrThrow({
@@ -46,6 +46,13 @@ test('öğrenci ilanı bildirir, yönetici kaldırır ve ilanın listeden kalkt�
       targets: { create: { departmentId: membership.departmentId } },
     },
   });
+  const reporter = await db.user.findUniqueOrThrow({
+    where: { email: TEST_PERSONAS.student.email },
+    select: { id: true, name: true, email: true },
+  });
+  const ownerContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const owner = await ownerContext.newPage();
+  const ownerViews: string[] = [];
   const studentContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const adminContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const student = await studentContext.newPage();
@@ -58,16 +65,20 @@ test('öğrenci ilanı bildirir, yönetici kaldırır ve ilanın listeden kalkt�
     await student.getByLabel('Şikâyet nedeni').selectOption({ label: 'Yanıltıcı ilan' });
     await student.getByLabel('Açıklama (isteğe bağlı)').fill('İlan bilgileri yanıltıcı görünüyor.');
     await student.screenshot({
-      path: '/Users/efe_baydemir/Okul/Bitirme Projem/pm-handoff/kanit/216-sikayet-390.png',
+      path: testInfo.outputPath('sikayet-390.png'),
       fullPage: true,
     });
     await student.setViewportSize({ width: 1440, height: 900 });
     await student.screenshot({
-      path: '/Users/efe_baydemir/Okul/Bitirme Projem/pm-handoff/kanit/216-sikayet-1440.png',
+      path: testInfo.outputPath('sikayet-1440.png'),
       fullPage: true,
     });
     await student.getByRole('button', { name: 'Şikâyeti gönder' }).click();
     await expect(student.getByText('Şikâyetin alındı. Teşekkürler.')).toBeVisible();
+    await loginAs(owner, 'alumniMentor');
+    const ownerBefore = await owner.goto('/ilanlarim');
+    ownerViews.push(await ownerBefore!.text());
+    await expect(owner.getByText(title, { exact: true })).toBeVisible();
     await loginAs(admin, 'systemAdmin');
     await admin.goto('/yonetim/sikayetler');
     const item = admin.locator('li').filter({ hasText: title });
@@ -77,13 +88,34 @@ test('öğrenci ilanı bildirir, yönetici kaldırır ve ilanın listeden kalkt�
     await dialog.getByLabel(/Karar gerekçesi/).fill('Yanıltıcı ilan tespit edildi.');
     await dialog.getByRole('button', { name: 'Onayla' }).click();
     await expect(item).toHaveCount(0);
+    const ownerAfter = await owner.goto('/ilanlarim');
+    ownerViews.push(await ownerAfter!.text());
+    await owner.screenshot({
+      path: testInfo.outputPath('sahip-karar-sonrasi-390.png'),
+      fullPage: true,
+    });
+    ownerViews.push(
+      JSON.stringify(
+        await db.adminAuditLog.findMany({
+          where: { targetType: 'REPORT', metadata: { path: ['postingId'], equals: posting.id } },
+        }),
+      ),
+    );
+    ownerViews.push(
+      JSON.stringify(await db.notificationIntent.findMany({ where: { userId: author.id } })),
+    );
+    for (const body of ownerViews)
+      for (const secret of [reporter.id, reporter.name, reporter.email, 'reporterId'])
+        expect(body).not.toContain(secret);
     await student.goto('/ilanlar');
     await expect(student.getByText(title)).toHaveCount(0);
+    const removedResponse = await student.goto(`/ilanlar/${posting.id}`);
+    expect(removedResponse?.status()).toBe(404);
     expect((await db.jobPosting.findUniqueOrThrow({ where: { id: posting.id } })).status).toBe(
       'CLOSED',
     );
   } finally {
-    await Promise.allSettled([studentContext.close(), adminContext.close()]);
+    await Promise.allSettled([studentContext.close(), adminContext.close(), ownerContext.close()]);
     await db.jobPosting.delete({ where: { id: posting.id } });
   }
 });

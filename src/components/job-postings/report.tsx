@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { reportJobPostingSchema } from '@/contracts/job-postings';
 import { useTranslations } from 'next-intl';
 import { Button, Field, Modal, Select, Textarea } from '@/components/ui';
 import { safeClientAction } from '@/lib/safe-client-action';
@@ -21,14 +22,17 @@ export function ReportPosting({ postingId }: { postingId: string }) {
 
   async function submit() {
     if (pending) return;
+    const parsed = reportJobPostingSchema.safeParse({
+      postingId,
+      reason: [t(reason), details.trim()].filter(Boolean).join(': '),
+    });
+    if (!parsed.success) {
+      setError('VALIDATION_INVALID');
+      return;
+    }
     setPending(true);
     setError(undefined);
-    const result = await safeClientAction(() =>
-      reportJobPosting({
-        postingId,
-        reason: [t(reason), details.trim()].filter(Boolean).join(': '),
-      }),
-    );
+    const result = await safeClientAction(() => reportJobPosting(parsed.data));
     setPending(false);
     if (!result.ok) {
       setError(result.errorCode);

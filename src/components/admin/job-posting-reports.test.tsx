@@ -55,3 +55,41 @@ it('ilanı kaldırmadan önce gerekçe ister ve kararı rapor kimliğiyle gönde
   );
   expect(await screen.findByText('Açık ilan şikâyeti yok.')).toBeVisible();
 });
+
+it.each(['cancel', 'dismiss'] as const)(
+  '%s sonrasında başka kaydın gerekçesi boş başlar',
+  (exit) => {
+    vi.clearAllMocks();
+    const row = {
+      postingStatus: 'PUBLISHED' as const,
+      reason: 'Yanıltıcı ilan',
+      status: 'OPEN' as const,
+      createdAt: new Date(),
+      reviewedAt: null,
+      resolutionNote: null,
+    };
+    renderUi(
+      <JobPostingReports
+        initial={{
+          items: [
+            { ...row, id: 'r1', postingId: 'p1', postingTitle: 'İlk ilan' },
+            { ...row, id: 'r2', postingId: 'p2', postingTitle: 'İkinci ilan' },
+          ],
+          nextCursor: null,
+        }}
+      />,
+    );
+    const rows = screen.getAllByRole('listitem');
+    fireEvent.click(within(rows[0]!).getByRole('button', { name: 'İlanı kaldır' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText(/Karar gerekçesi/), {
+      target: { value: 'Yalnız ilk ilana ait gerekçe' },
+    });
+    if (exit === 'cancel') fireEvent.click(within(dialog).getByRole('button', { name: 'Vazgeç' }));
+    else fireEvent(dialog, new Event('cancel', { bubbles: true, cancelable: true }));
+    fireEvent.click(within(rows[1]!).getByRole('button', { name: 'İlanı kaldır' }));
+    expect(within(screen.getByRole('dialog')).getByLabelText(/Karar gerekçesi/)).toHaveValue('');
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+    expect(mocks.resolve).not.toHaveBeenCalled();
+  },
+);
