@@ -80,7 +80,11 @@ test('öğrenci ilanı bildirir, yönetici kaldırır ve ilanın listeden kalkt�
     ownerViews.push(await ownerBefore!.text());
     await expect(owner.getByText(title, { exact: true })).toBeVisible();
     await loginAs(admin, 'systemAdmin');
+    await admin.goto('/yonetim');
+    await expect(admin.getByRole('link', { name: /Şikâyetler/ })).toContainText('1 bekliyor');
     await admin.goto('/yonetim/sikayetler');
+    await expect(admin.getByText('Açık deneyim şikâyeti yok.')).toBeVisible();
+    await expect(admin.getByRole('link', { name: `İncele: ${title}` })).toBeVisible();
     const item = admin.locator('li').filter({ hasText: title });
     await expect(item).toBeVisible();
     await item.getByRole('button', { name: 'İlanı kaldır' }).click();
