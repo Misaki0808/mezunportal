@@ -1,6 +1,11 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
-import { isolationRunId, workerBaseUrl, workerDatabaseUrl } from './tests/e2e/isolation';
+import {
+  e2eWorkerCount,
+  isolationRunId,
+  workerBaseUrl,
+  workerDatabaseUrl,
+} from './tests/e2e/isolation';
 
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
 if (!process.env.APP_URL) throw new Error('E2E için worktree APP_URL ayarı gerekli.');
@@ -20,17 +25,13 @@ for (const index of [0, 1]) {
 }
 const baseURL = workerBaseUrl(0);
 const webkitMode = process.env.E2E_WEBKIT;
-const workersArg =
-  process.argv.find((arg) => arg.startsWith('--workers='))?.split('=')[1] ??
-  (process.argv.includes('--workers')
-    ? process.argv[process.argv.indexOf('--workers') + 1]
-    : undefined);
-const serverIndices = workersArg === '1' ? [0] : [0, 1];
+const workers = e2eWorkerCount(process.env.E2E_WORKERS, process.argv);
+const serverIndices = Array.from({ length: workers }, (_, index) => index);
 
 export default defineConfig({
   testDir: './tests/e2e',
   // Her işçinin kendi seed veritabanı ve uygulama sunucusu vardır.
-  workers: 2,
+  workers,
   globalSetup: './tests/e2e/global-setup.ts',
   use: { baseURL },
   projects: [
