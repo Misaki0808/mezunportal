@@ -8,9 +8,9 @@ tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararl
 ## Güncel durum
 
 Faz 0 (iskelet, veritabanı, yerel ortam, tasarım sistemi, ekip araçları), Faz 1 (çekirdek, tamamlayıcılar ve SSS ekranları dahil) ve
-Faz 2'nin (fırsatlar, mevcut veriden değer, rehberlik, tanınma; `docs/faz2-plan.md`) adımları main'dedir; iki ekran eksiği tamamlama olarak sürüyor (aşağıda "Yakın hedef"). Canlı ortam
+Faz 2'nin (fırsatlar, mevcut veriden değer, rehberlik, tanınma; `docs/faz2-plan.md`) adımları main'dedir; bir ekran eksiği (gruplu uygulama içi bildirim listesi) tamamlama olarak sürüyor (aşağıda "Yakın hedef"). Canlı ortam
 yoktur ve bilinçli ertelenmiştir: geliştirme, test ve ekran doğrulaması yerelde, birleştirme kapıları yerelde; CI az ve öz (≤ 5 dk, K-14
-kararı, `docs/engineering.md` "CI"). Faz 2'nin kalan iki kalemi bitince kullanıcının komple test ve deneme turu başlar (`docs/engineering.md` "Faz 2 deneme rehberi"). Ürün özellikleri aşağıdaki gibi çalışır; ayrıntı ve gerekçe `docs/decisions.md`'dedir.
+kararı, `docs/engineering.md` "CI"). Faz 2'nin kalan kalemi bitince kullanıcının komple test ve deneme turu başlar (`docs/engineering.md` "Faz 2 deneme rehberi"). Ürün özellikleri aşağıdaki gibi çalışır; ayrıntı ve gerekçe `docs/decisions.md`'dedir.
 
 ### Faz 1'de main'de olanlar
 
@@ -51,7 +51,7 @@ kararı, `docs/engineering.md` "CI"). Faz 2'nin kalan iki kalemi bitince kullan�
 - **İlanlar (P2-04, P2-05):** doğrulanmış mezun ve akademisyen ilan yazar (taslak, önizleme, bölüm yöneticisi moderasyonu, en çok 60 gün,
   süre dolunca kendiliğinden kapanır; ilan puanı yayından 7 gün sonra kesinleşir, ayda 3 ilan puan getirir). Öğrenciye profiline uyan
   ilanlar ana sayfada "Sana uyan ilanlar" olarak görünür; e-posta özeti günde en çok bir, haftada en çok 3. İlan sahibi eşleşenleri görmez,
-  yalnız "N kişiye ulaştı" sayısını görür.
+  yalnız "N kişiye ulaştı" sayısını görür. İlan sayfasında kullanıcı "Şikâyet et" ile bildirebilir; bölüm yöneticisi şikâyet kuyruğunda karar verir.
 - **Ters yönlü arama (P2-06):** öğrenci açık rızayla "İş arayanlara görün"ü açar; işe alım beyanlı doğrulanmış mezun "Aday bul" ile maskeli kart
   görür (ad, fotoğraf, iletişim yok); iletişim yalnız onaylı talepten sonra açılır (D7, kaynaktan bağımsız); hız sınırlı.
 - **Referans (P2-03):** mezun beyanı → öğrenci onayı → yönetici onayı; "referansla kabul" aşaması; puanlar gecikmeli ve iptalde geri alınır.
@@ -85,8 +85,7 @@ Hiçbiri kodla çözülemez; her biri aşağıdaki işi engeller. Kullanıcı/ho
 
 ### Yakın hedef
 
-Faz 2'yi tamamlamak: ilan şikâyeti ekranları (plan P2-04: ilan sayfasında kullanıcı "Şikâyet et" düğmesi ve yönetimde şikâyet kuyruğu; servis ve testler hazır) ve
-gruplu uygulama içi bildirim listesi (plan P2-05). Sonra kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon test listesi;
+Faz 2'yi tamamlamak: gruplu uygulama içi bildirim listesi (plan P2-05). Sonra kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon test listesi;
 bulgular PM'de karta bölünür ya da bu belgeye borç olarak yazılır. Kullanıcının hesap isteyen işleri (Gemini anahtarı, Google Cloud anahtarları ve panelden bağlama, platform hesabı) ve
 canlıya alım ile pilot kararları (K-02, K-05, K-03, K-12, hukuki okuma) kullanıcı gündeme getirince ele alınır. Faz 3 pilottan sonra konuşulur.
 
@@ -169,22 +168,14 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   bütçesi 1 000 ms). Soru bankası k-anonim hesabı bütün aday şirketlerde yapılıp sonra sayfalanır (O(n); güvenlik gereği).
   Neden borç: veri büyüdükçe doğrusal artar; pilotta sorun değil, çok büyük kullanımda olur.
   Kapanış ölçütü: `ts_rank_cd` + `word_similarity` planı gözden geçirilir, soru bankası aday şirket sayısı sınırlanır ya da önbelleklenir; stres p95 < 300 ms.
-- [ ] **TD-023** · P2 · `test:gate` "Worker exited unexpectedly / ERR_WORKER_OUT_OF_MEMORY"u altyapı sayıyor; `main()` birim testsiz
-  Ne: gerçek bir bellek sızıntısı tek yeniden denemeyle geçebilir (ikinci koşuda düşerse kırmızı); `main()`'in yeniden koşu sonucunu yok sayan bir mutantını
-  yalnız dış betik yakalıyor (kapı betiği kendi testini koştuğu için `main()` testi özyineleme yaratır).
-  Neden borç: gerçek hatayı tek denemelik tolerans gizleyebilir; çıkış kodu mantığı repoda korunmuyor.
-  Kapanış ölçütü: `TEST_GATE_NESTED` bayrağı ile betik testlerini atlayan sahte `pnpm`'li 3 uçtan uca senaryo (yeniden koşu geçer / kırmızı / gerçek yakalanmamış hata) repoya girer; OOM kalıbı için karar yazılır.
-  Durum: uçtan uca testler taslak PR #108'de (R2 incelemesinde); girince madde yalnız OOM kalıbı kararına iner.
+- [ ] **TD-023** · P2 · `test:gate` "Worker exited unexpectedly / ERR_WORKER_OUT_OF_MEMORY"u altyapı sayıyor
+  Ne: gerçek bir bellek sızıntısı tek yeniden denemeyle geçebilir (ikinci koşuda düşerse kırmızı).
+  Neden borç: gerçek hatayı tek denemelik tolerans gizleyebilir.
+  Kapanış ölçütü: OOM kalıbı için karar yazılır (yeniden denenir mi, kırmızı mı kalır; `main()` çıkış kodu mantığı sahte `pnpm`'li uçtan uca testle korunuyor).
 - [ ] **TD-024** · P2 · `profile-content.db.test` yük altında bir kez 15 sn zaman aşımına düştü
   Ne: dosya normalde 3–5 sn, bir kapıda 50 sn; yeniden koşuda 3,1 sn yeşil (yük ya da veritabanı beklemesi).
   Neden borç: izleniyor, kök neden bilinmiyor.
   Kapanış ölçütü: bir daha düşerse kök neden kartı açılır; düşmeden bir faz geçerse silinir.
-- [ ] **TD-025** · P2 · e2e düzeneği: `webkit-iphone` projesi dosyasız koşulursa bütün spec'leri koşar
-  Ne: `E2E_WEBKIT=1 … --project=webkit-iphone` dosya verilmeden 106 test koşar (yalnız Safari turu 14); WebKit turunda `tour()` liste boşsa ayrıntı ekranlarını
-  sessizce atlıyor (`if (!href) continue`); ortak seed hesabını paylaşan spec grupları `--workers=2`'de yarışıyor (`--workers=1` güvenli).
-  Neden borç: yanlış kullanımda uzun ve anlamsız koşu; boş veride sahte yeşil.
-  Kapanış ölçütü: projeye `testMatch: /webkit-.*\.spec\.ts/`; `tour()` boş listede başarısız olur; yarış için ortak hesap yardımcısı (kart 209) ya da belgelenmiş `--workers=1`.
-  Durum: üç ölçüt de taslak PR #108'de (R2 incelemesinde; yarış için PM kararı: tek işçi kalır, `--workers=2` açık hatayla reddedilir); girince madde silinir.
 - [ ] **TD-026** · P2 · `src/components/ui/button-classes.test.ts` bileşen kaynağını metin olarak okuyor
   Ne: `'use client'` yönergesini ve barrel dışa aktarımını dosya metninden arıyor ("ekran kaynağını tarayan test yazılmaz" kuralına yakın); gerçek koruma e2e'de
   (etkinlik detayı, deneyim sayfası sunucuda `buttonClasses` çağırır).

@@ -332,7 +332,7 @@ testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümle
 
 | Adım | PR | Durum | Not |
 |---|---|---|---|
-| P2-04 Mezun staj ilanları | #62, #65, #69 | ◐ → kart 216 ile tamamlanıyor | Yazma, moderasyon, 60 gün sınırı ve kendiliğinden kapanma, ilan puanı (7 gün gecikmeli, ayda 3), arama, hız sınırı, görünürlük K-07 ✓. **İlan şikâyetinin ekranı yok:** servis, sözleşme ve testler hazır (`reportJobPosting`), kullanıcı düğmesi ve yönetim kuyruğu yazılmadı (`ReportTargetType` yalnız `EXPERIENCE`; ilan şikâyeti ayrı tablo) → PM kararı: P3 değil, Faz 2 tamamlama (kart 216) |
+| P2-04 Mezun staj ilanları | #62, #65, #69, #111 | ✓ | Yazma, moderasyon, 60 gün sınırı ve kendiliğinden kapanma, ilan puanı (7 gün gecikmeli, ayda 3), arama, hız sınırı, görünürlük K-07 ✓. İlan şikâyeti ekranları da tamam (kart 216, #111): ilan sayfasında kullanıcının "Şikâyet et" düğmesi ve bölüm yöneticisinin şikâyet kuyruğu. |
 | P2-05 İlan eşleştirme | #67, #69 | ◐ → kart 217 ile tamamlanıyor | Saf kural, outbox, günlük ve yedi günlük e-posta sınırı, "Sana uyan ilanlar" paneli, "Neden sana uygun?", ilan sahibine yalnız sayı ✓. Planın "uygulama içi bildirim listesi" yerine ana sayfa paneli yapıldı; gruplu bildirim listesi yok → PM kararı: P3 değil, Faz 2 tamamlama (kart 217) |
 | P2-06 Ters yönlü arama | #66 | ✓ | Rızalı görünürlük, işe alım beyanlı mezun, maskeli kart, hız sınırı; D7 çapraz kaynak yan kanalı kapatıldı. Rıza metninin hukuki onayı kullanıcıda (⏸ → PILOT-LEGAL) |
 | P2-03 Referans akışı | #68 | ✓ | Üç taraflı onay, "referansla kabul", gecikmeli puan, ikili tavan, şüphe kuralları |
@@ -353,8 +353,9 @@ testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümle
   e-posta markalaması (#94), erişilebilirlik turu ve düzeltmeleri (#90, #97).
 - **Güvenlik ve gizlilik:** SSS kimlik denetimi düzeltmesi (#58), zorunlu onay kapısı merkezileştirme (#61), D7 çapraz kaynak yan kanalının kapatılması ve ilan görünürlüğü (#66, #69),
   LinkedIn saklama ve hikâye gizliliği (#87), görüşme formu 404 (#93), altı giriş gerektiren ayrıntı rotasında gerçek 404 (#106).
-- **Yeni yetenekler:** LinkedIn profil PDF içe aktarma (#82), gerçek Google Takvim/Meet adaptörü (#84; anahtarlar gelince açılır), SSS ekranları.
-- **Altyapı ve test:** süreç/işçi temizliği (#63), CI az ve öz (#81), yük altı test payı ve `test:gate` (#86, #88, #102), küçük borçlar (#96), Safari turu ve kaydırma kilidi (#99), Safari diyalog Tab sırası (#104), ortak e2e girişi (#106).
+- **Yeni yetenekler:** LinkedIn profil PDF içe aktarma (#82) ve gerçek PDF metin çıkarıcı (#112; gerçek sağlayıcıya açılış maskeleyiciye bağlı), gerçek Google Takvim/Meet adaptörü (#84; anahtarlar gelince açılır), SSS ekranları.
+- **Yönetim ve kullanım:** yönetim kuyruklarında gerekçe, odak ve bekleyen sayılar (#109), kullanım hissi ve ortak geri bildirim kalıbı (#110).
+- **Altyapı ve test:** süreç/işçi temizliği (#63), CI az ve öz (#81), yük altı test payı ve `test:gate` (#86, #88, #102), küçük borçlar (#96), Safari turu ve kaydırma kilidi (#99), Safari diyalog Tab sırası (#104), ortak e2e girişi (#106), test düzeneği küçük borçları (#108).
 - **Deneme turu:** deneme rehberi provası ve düzeltmesi (kart 203, #101).
 
 ### 12.3 Bilinçli ertelenenler ve nereye
@@ -363,9 +364,9 @@ testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümle
 |---|---|
 | Soru bankasında pozisyon süzgeci, "kaydet/çalış" | Faz 3 fikirleri (`BACKLOG.md`) |
 | Yerel profil fotoğrafı (ayın mezunu) | Faz 3 fikirleri (`BACKLOG.md`) |
-| İlan şikâyeti ekranları, gruplu uygulama içi bildirim listesi | Ertelenmedi: Faz 2 tamamlama, W2 kartı 216 ve W1 kartı 217; girince §12.1 ✓'ye çekilir |
-| Stres hacminde arama/soru bankası, `test:gate` OOM kalıbı, e2e düzeneği ve diğer teknik borç | `BACKLOG.md` TD-022 … TD-026 |
+| Gruplu uygulama içi bildirim listesi | Ertelenmedi: Faz 2 tamamlama, W1 kartı 217; girince §12.1 ✓'ye çekilir (ilan şikâyeti ekranları #111 ile girdi) |
+| Stres hacminde arama/soru bankası, `test:gate` OOM kalıbı ve diğer teknik borç | `BACKLOG.md` TD-022, TD-023, TD-024, TD-026 |
 | Rıza metinlerinin hukuki okuması; LinkedIn kurum kimliği; Gemini ve Google Cloud anahtarları; platform hesabı | `BACKLOG.md` "Dış bağımlılık bekleyenler" (kullanıcı) ve PILOT-LEGAL |
 
-**Sayım (kart 216/217 girene kadar):** 14 adımın 8'i ✓ (P2-06, P2-03, P2-09, P2-11, P2-08, P2-01, P2-12, P2-13), 6'sı ◐ (P2-04, P2-05, P2-10, P2-07, P2-02, P2-14); ✗ yok. Plandan sapmalar: ilan şikâyetinin ekranı,
-uygulama içi bildirim kutusu, soru bankası pozisyon süzgeci, hedef unvanın sözlükten seçilmesi, uzak fotoğraf yerine baş harf, rapor PDF'lerinin üretilmemesi.
+**Sayım (kart 217 girene kadar):** 14 adımın 9'u ✓ (P2-04, P2-06, P2-03, P2-09, P2-11, P2-08, P2-01, P2-12, P2-13), 5'i ◐ (P2-05, P2-10, P2-07, P2-02, P2-14); ✗ yok. Plandan sapmalar:
+uygulama içi bildirim kutusu (kart 217 ile geliyor), soru bankası pozisyon süzgeci, hedef unvanın sözlükten seçilmesi, uzak fotoğraf yerine baş harf, rapor PDF'lerinin üretilmemesi.
