@@ -70,11 +70,11 @@ metrikleri.
 **Tamamlayıcılar:** görüşme sonrası form ve güvenilirlik göstergesi · CV inceleme talebi · puan
 motoru ve hile önleme · SSS akışı · canlıya alım ve pilot hazırlığı.
 
-### Faz 2 (sonra) — `docs/faz2-plan.md` (taslak), `BACKLOG.md` “Ertelenmiş”
+### Faz 2 (tamamlandı) — `docs/faz2-plan.md`
 
 Yılın Mezunu ve LinkedIn rozeti · ayın mezunu · referans akışı · mezun staj ilanları ve ilan
 eşleştirme · ters yönlü arama · beceri açığı analizi · seçmeli ders rehberi · şirket sayfaları
-(puansız) · mülakat soru bankası · staj başvuru takvimi · etkinlik modülü · aylık özet e-postası.
+(puansız) · mülakat soru bankası · staj başvuru takvimi · etkinlik modülü · aylık özet e-postası. Kapanış notu ve plan↔yapılan tablosu planın §12'sindedir; kullanıcı deneme turu `docs/engineering.md` “Faz 2 deneme rehberi”.
 
 ### Faz 3 (fikir)
 
