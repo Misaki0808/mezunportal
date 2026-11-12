@@ -119,6 +119,7 @@ describe('moderasyon kuyruğu', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Reddet' }));
     expect(review).not.toHaveBeenCalled();
     expect(within(dialog).getByRole('alert')).toHaveTextContent('kısa bir gerekçe');
+    expect(within(dialog).getByLabelText(/Ret gerekçesi/)).toHaveFocus();
     await user.type(within(dialog).getByLabelText(/Ret gerekçesi/), 'Süreç adımları eksik.');
     await user.click(within(dialog).getByRole('button', { name: 'Reddet' }));
     expect(review).toHaveBeenCalledWith({

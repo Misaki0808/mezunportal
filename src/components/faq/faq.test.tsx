@@ -363,6 +363,7 @@ describe('moderatör kuyruğu', () => {
     fireEvent.click(dialog().getByRole('button', { name: 'Reddet' }));
     expect(a.reject).not.toHaveBeenCalled();
     expect(await dialog().findByText('En az 3 karakter yaz.')).toBeVisible();
+    expect(dialog().getByLabelText(/Gerekçe/)).toHaveFocus();
     fireEvent.change(dialog().getByLabelText(/Gerekçe/), { target: { value: 'Çok genel' } });
     fireEvent.click(dialog().getByRole('button', { name: 'Reddet' }));
     await waitFor(() =>

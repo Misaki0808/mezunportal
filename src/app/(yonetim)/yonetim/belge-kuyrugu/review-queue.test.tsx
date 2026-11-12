@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -63,5 +63,36 @@ describe('ReviewQueue', () => {
       reason: 'Belge okunmuyor',
     });
     expect(screen.queryByText('Örnek Kişi')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Mezun belgesi başvuruları' })).toHaveFocus();
   });
+});
+
+it('onaylanan belgeden sıradaki başvurunun ilk kararına odaklanır', async () => {
+  const review = vi
+    .fn()
+    .mockResolvedValue({ ok: true, data: { documentId: 'doc-1', decision: 'APPROVE' } });
+  const { user } = renderUi(
+    <ReviewQueue
+      initial={{
+        ...initial,
+        items: [
+          initial.items[0]!,
+          { ...initial.items[0]!, id: 'doc-2', applicantName: 'İkinci Kişi' },
+        ],
+      }}
+      list={vi.fn()}
+      review={review}
+    />,
+  );
+  await user.click(
+    within(screen.getByText('Örnek Kişi').closest('li')!).getByRole('button', { name: 'Onayla' }),
+  );
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+  await waitFor(() =>
+    expect(
+      within(screen.getByText('İkinci Kişi').closest('li')!).getByRole('button', {
+        name: 'Onayla',
+      }),
+    ).toHaveFocus(),
+  );
 });
