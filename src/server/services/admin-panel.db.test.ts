@@ -855,6 +855,17 @@ it('yeni kuyruk sayaçları yetkili kapsam ve karar verilebilir durumlarla sın�
       },
     });
   }
+  for (const hidden of [{ banned: true }, { deletedAt: new Date() }]) {
+    const author = await person({ departmentId: scoped.deptA1, role: 'ALUMNI', ...hidden });
+    await db.alumniStory.create({
+      data: {
+        userId: author,
+        departmentId: scoped.deptA1,
+        body: 'Görünmemesi gereken mezunun sayaç kapsamı için örnek hikâyesi.',
+        status: 'PENDING',
+      },
+    });
+  }
   // Tek bölüm yöneticisi başka bölüme de hedeflenen etkinliği yönetemez.
   await db.campusEvent.create({
     data: {
@@ -886,4 +897,28 @@ it('yeni kuyruk sayaçları yetkili kapsam ve karar verilebilir durumlarla sın�
     pendingCampusEvents: 1,
     pendingAlumniStories: 1,
   });
+});
+
+it('geniş fakülte kapsamında hikâye sayacı bölüm başına sorgu veya JOIN çoğaltmadan tamamlanır', async () => {
+  const scoped = await createInstitution(db);
+  const manager = await adminOf('FACULTY', scoped.deptA1, { facultyId: scoped.facultyA });
+  const added = Array.from({ length: 128 }, (_, i) => ({
+    id: randomUUID(),
+    facultyId: scoped.facultyA,
+    name: `Sayaç bölümü ${i}`,
+    code: `Q${i}`,
+  }));
+  await db.department.createMany({ data: added });
+  const alumni = await person({ departmentId: scoped.deptA1, role: 'ALUMNI' });
+  await db.alumniStory.create({
+    data: {
+      userId: alumni,
+      departmentId: scoped.deptA1,
+      body: 'Geniş kapsamlı yönetim sayacı için yeterli uzunlukta örnek hikâye.',
+      status: 'PENDING',
+    },
+  });
+  const result = await getAdminOverview(deps, manager);
+  expect(result.departments).toHaveLength(130);
+  expect(result.counts.pendingAlumniStories).toBe(1);
 });
