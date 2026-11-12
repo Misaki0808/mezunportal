@@ -99,6 +99,8 @@ export async function getCvAvailability(deps: CvDeps, actor: Actor): Promise<CvA
     linkedinPdf: isLinkedinPdfReady(deps),
   };
   if (!deps.llm) return { ...base, available: false, reason: 'PROVIDER_NOT_CONFIGURED' };
+  if (deps.llm.provider !== 'fake' && !isLinkedinPdfReady(deps))
+    return { ...base, available: false, reason: 'PROVIDER_NOT_CONFIGURED' };
   if (!(await transferConsentGranted(deps.db, actor.userId))) {
     return { ...base, available: false, reason: 'TRANSFER_CONSENT_REQUIRED' };
   }
@@ -130,6 +132,8 @@ export async function uploadCv(
     !(deps.allowFakeLinkedin === true && deps.llm.provider === 'fake')
   )
     throw codedValidation('CV_LINKEDIN_UNAVAILABLE');
+  if (deps.llm.provider !== 'fake' && !isLinkedinPdfReady(deps))
+    throw codedValidation('CV_PROVIDER_NOT_CONFIGURED');
   if (!(await transferConsentGranted(db, actor.userId))) {
     throw codedValidation('CV_TRANSFER_CONSENT_REQUIRED');
   }
