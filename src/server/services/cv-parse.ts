@@ -205,22 +205,29 @@ export async function processCvParse(
 
   let sectionHints: ('experience' | 'education' | 'skills')[] | undefined;
   let redactedText: string | undefined;
-  if (upload.source === 'LINKEDIN_PDF') {
-    // Gerçek sağlayıcıya yalnız maskelenmiş metin gidebilir; üç port birlikte hazır olmalıdır.
+  if (upload.source === 'LINKEDIN_PDF' || deps.llm.provider !== 'fake') {
+    // Gerçek sağlayıcıya, kaynak türünden bağımsız olarak yalnız maskelenmiş metin gidebilir.
     if (deps.llm?.provider !== 'fake' && !isLinkedinPdfReady(deps))
       return fail('CV_PARSE_UNAVAILABLE');
     if (!deps.pdfTextExtractor) return fail('CV_PARSE_UNAVAILABLE');
     try {
       const text = await deps.pdfTextExtractor.extract(pdf);
       if (text.length > 200_000) return fail('CV_PARSE_UNAVAILABLE');
-      const sections = splitLinkedInSections(text);
       if (deps.llm?.provider !== 'fake') {
-        redactedText = await deps.pdfTextExtractor.redact!(text);
+        const owner = await db.user.findFirst({
+          where: { id: upload.userId, deletedAt: null },
+          select: { name: true },
+        });
+        if (!owner?.name.trim()) return fail('CV_PARSE_UNAVAILABLE');
+        redactedText = await deps.pdfTextExtractor.redact!(text, owner.name);
         if (!redactedText || redactedText.length > 200_000) return fail('CV_PARSE_UNAVAILABLE');
       }
-      sectionHints = (['experience', 'education', 'skills'] as const).filter(
-        (key) => sections[key].length > 0,
-      );
+      if (upload.source === 'LINKEDIN_PDF') {
+        const sections = splitLinkedInSections(text);
+        sectionHints = (['experience', 'education', 'skills'] as const).filter(
+          (key) => sections[key].length > 0,
+        );
+      }
     } catch {
       return fail('CV_PARSE_UNAVAILABLE');
     }

@@ -257,8 +257,10 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
 - **Çıktı temizliği:** `ParsedCv` bilinmeyen alanları atar (rol/kullanıcı kimliği şemada yok), görünmez ve çift
   yönlü biçim karakterlerini siler, liste ve metin uzunluklarını sınırlar; saklı çıktı uygulamada yeniden
   doğrulanır. Veritabanı kısıtları da metin uzunluğu ve tarih tutarlılığını zorlar.
-- **Modele yalnız PDF gider:** kullanıcı kimliği, e-posta, rol ve başka kullanıcı verisi isteğe girmez; yurt dışı
-  rızası yüklemede ve iş başında denetlenir.
+- **Gerçek modele yalnız maskelenmiş CV metni gider:** yükleyenin adı sunucudan alınır; kişisel veri kalıpları
+  yerelde maskelenir ve maskeleyici, çıkarıcı veya metin sağlayıcısı yoksa işlem kapalı kalır. Kural tabanlı
+  maskeleme alışılmadık veya gizlenmiş kişisel veriyi her zaman tanıyamayabilir; yurt dışı rızası yüklemede ve
+  iş başında denetlenir.
 - LLM girdisi ve çıktısı loglanmaz.
 
 ## Kötüye kullanım sınırları
