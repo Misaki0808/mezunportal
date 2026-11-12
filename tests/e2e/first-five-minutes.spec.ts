@@ -118,7 +118,7 @@ test('yeni öğrenci e-posta doğrulamasından ilk deneyim listesine ulaşır', 
     await editor.getByLabel('Şehir').fill('İstanbul');
     await editor.getByRole('button', { name: 'Kaydet' }).click();
     await expect(editor).toBeHidden();
-    await expect(page.getByText('Kaydedildi.')).toBeVisible();
+    await expect(page.getByText('Profilin güncellendi.')).toBeVisible();
     await page.locator('a[href="/deneyimler"]').last().click();
     await expect(page).toHaveURL(/\/deneyimler/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
