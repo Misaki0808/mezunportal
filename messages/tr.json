@@ -1802,7 +1802,10 @@
       "resolve": "Çözüldü olarak işaretle",
       "dismiss": "Şikâyeti reddet",
       "confirmTitle": "Şikâyet kararı onaylansın mı?",
-      "confirmDescription": "Kararın işlem kaydına eklenir."
+      "confirmDescription": "Kararın işlem kaydına eklenir.",
+      "experiences": "Deneyim şikâyetleri",
+      "emptyExperiences": "Açık deneyim şikâyeti yok.",
+      "emptyAll": "Açık şikâyet yok."
     },
     "dictionary": {
       "title": "Sözlük yönetimi",
@@ -2294,10 +2297,6 @@
       "successNo": "Yanıtın kaydedildi. İstersen profilindeki çalışma bilgilerini güncelle.",
       "invalid": "Bu bağlantı geçersiz, kullanılmış veya süresi dolmuş.",
       "profile": "Profiline git"
-    },
-    "jobMatches": {
-      "title": "Sana uyan ilan bildirimleri",
-      "empty": "Henüz ilan eşleşmesi bildirimin yok."
     },
     "inboxLink": "Bildirim kutun",
     "inboxNote": "Bildirim kutundaki kayıtlar bu tercihlerden etkilenmez; yalnız e-postaları seçersin."

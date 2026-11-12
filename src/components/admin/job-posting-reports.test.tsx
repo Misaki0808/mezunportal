@@ -168,3 +168,33 @@ it('B3: boş karar gerekçesi alana odaklanır, mesaj alanla ilişkilidir', asyn
   expect(reason).toHaveAccessibleDescription(/En az 3 karakterlik bir gerekçe yaz/);
   expect(mocks.resolve).not.toHaveBeenCalled();
 });
+
+it('İncele bağlantıları hedef ilan adıyla ayırt edilir, görünür metin değişmez', () => {
+  const base = {
+    postingStatus: 'PUBLISHED' as const,
+    reason: 'Yanıltıcı ilan',
+    status: 'OPEN' as const,
+    createdAt: new Date(),
+    reviewedAt: null,
+    resolutionNote: null,
+  };
+  renderUi(
+    <JobPostingReports
+      initial={{
+        items: [
+          { ...base, id: 'r1', postingId: 'p1', postingTitle: 'Yazılım stajı' },
+          { ...base, id: 'r2', postingId: 'p2', postingTitle: 'Veri stajı' },
+        ],
+        nextCursor: null,
+      }}
+    />,
+  );
+  for (const [title, id] of [
+    ['Yazılım stajı', 'p1'],
+    ['Veri stajı', 'p2'],
+  ]) {
+    const link = screen.getByRole('link', { name: `İncele: ${title}` });
+    expect(link).toHaveAttribute('href', `/ilanlar/${id}`);
+    expect(link).toHaveTextContent('İncele');
+  }
+});
