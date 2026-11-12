@@ -62,7 +62,7 @@ describe('CV kişisel veri maskeleme', () => {
     expect(redactCvText('İPEK IŞIK / ipek ışık / İpek Işık, İpekyolu', 'İpek Işık')).toBe(
       '[AD] [AD] / [AD] [AD] / [AD] [AD], İpekyolu',
     );
-    expect(redactCvText('ISIK ve IŞIK', 'Işık')).toBe('ISIK ve [AD]');
+    expect(redactCvText('ISIK ve IŞIK', 'Işık')).toBe('[AD] ve [AD]');
     expect(redactCvText('i\u0307pek I\u200bŞIK', 'İpek Işık')).toBe('[AD] [AD]');
   });
   it('kimlik algoritmasını uygular ve boş sunucu adında kapalı kalır', () => {
@@ -74,4 +74,135 @@ describe('CV kişisel veri maskeleme', () => {
     );
     expect(() => redactCvText('x'.repeat(200_001), 'Ali')).toThrow('CV_REDACTION_LIMIT');
   });
+});
+
+describe('R2 bağımsız kaçırma örnekleri', () => {
+  it('email-bracket-at', () => {
+    expect(redactCvText('selin [at] ogr.example.edu.tr', 'İpek Işık')).toContain('[E-POSTA]');
+  });
+  it('email-bracket-dot', () => {
+    expect(redactCvText('selin [at] ogr [dot] example [dot] edu [dot] tr', 'İpek Işık')).toContain(
+      '[E-POSTA]',
+    );
+  });
+  it('email-spaced', () => {
+    expect(redactCvText('selin . yilmaz @ ogr . example . edu . tr', 'İpek Işık')).toContain(
+      '[E-POSTA]',
+    );
+  });
+  it('email-newline-at', () => {
+    expect(redactCvText('selin.yilmaz@\nogr.example.edu.tr', 'İpek Işık')).toContain('[E-POSTA]');
+  });
+  it('email-newline-domain', () => {
+    expect(redactCvText('selin.yilmaz@ogr.\nexample.edu.tr', 'İpek Işık')).toContain('[E-POSTA]');
+  });
+  it('email-parenthesized', () => {
+    expect(redactCvText('selin(at)example(dot)org', 'İpek Işık')).toContain('[E-POSTA]');
+  });
+  it('email-fullwidth', () => {
+    expect(redactCvText('selin＠example.org', 'İpek Işık')).toContain('[E-POSTA]');
+  });
+  it('email-label', () => {
+    expect(redactCvText('E-posta: selin @ example.org', 'İpek Işık')).toContain('[E-POSTA]');
+  });
+  it('phone-plus90', () => {
+    expect(redactCvText('+90 532 123 45 67', 'İpek Işık')).toContain('[TELEFON]');
+  });
+  it('phone-0090', () => {
+    expect(redactCvText('0090 (532) 123-45-67', 'İpek Işık')).toContain('[TELEFON]');
+  });
+  it('phone-parentheses', () => {
+    expect(redactCvText('(0532)1234567', 'İpek Işık')).toContain('[TELEFON]');
+  });
+  it('phone-ten-digits', () => {
+    expect(redactCvText('5321234567', 'İpek Işık')).toContain('[TELEFON]');
+  });
+  it('phone-newline', () => {
+    expect(redactCvText('+90 532\n123 45 67', 'İpek Işık')).toContain('[TELEFON]');
+  });
+  it('phone-two', () => {
+    expect(redactCvText('0532 123 45 67 / 0542 123 45 67', 'İpek Işık')).toContain('[TELEFON]');
+  });
+  it('phone-international', () => {
+    expect(redactCvText('+49 151 23456789', 'İpek Işık')).toContain('[TELEFON]');
+  });
+  it('tc-dot', () => {
+    expect(redactCvText('100.000.001.46', 'İpek Işık')).toContain('[KİMLİK]');
+  });
+  it('tc-dash', () => {
+    expect(redactCvText('100-000-001-46', 'İpek Işık')).toContain('[KİMLİK]');
+  });
+  it('tc-slash', () => {
+    expect(redactCvText('100/000/001/46', 'İpek Işık')).toContain('[KİMLİK]');
+  });
+  it('tc-nbsp', () => {
+    expect(redactCvText('100 000 001 46', 'İpek Işık')).toContain('[KİMLİK]');
+  });
+  it('tc-newline', () => {
+    expect(redactCvText('100000\n00146', 'İpek Işık')).toContain('[KİMLİK]');
+  });
+  it('iban-nbsp', () => {
+    expect(redactCvText('TR33 0006 1005 1978 6457 8413 26', 'İpek Işık')).toContain('[IBAN]');
+  });
+  it('iban-newline', () => {
+    expect(redactCvText('TR33 0006 1005\n1978 6457 8413 26', 'İpek Işık')).toContain('[IBAN]');
+  });
+  it('short-url', () => {
+    expect(redactCvText('https://bit.ly/3Abcd', 'İpek Işık')).toContain('[BAĞLANTI]');
+  });
+  it('github-label', () => {
+    expect(redactCvText('github: kisisel-hesap', 'İpek Işık')).toContain('[BAĞLANTI]');
+  });
+  it('github-bare-domain', () => {
+    expect(redactCvText('github.com/kisisel-hesap', 'İpek Işık')).toContain('[BAĞLANTI]');
+  });
+  it('owner-uppercase', () => {
+    expect(redactCvText('İPEK IŞIK', 'İpek Işık')).toContain('[AD]');
+  });
+  it('owner-title', () => {
+    expect(redactCvText('Sayın İpek Işık', 'İpek Işık')).toContain('[AD]');
+  });
+  it('owner-reverse', () => {
+    expect(redactCvText('IŞIK, İPEK', 'İpek Işık')).toContain('[AD]');
+  });
+  it('owner-newline', () => {
+    expect(redactCvText('İpek\nIşık', 'İpek Işık')).toContain('[AD]');
+  });
+  it('owner-dot-separated', () => {
+    expect(redactCvText('İ.p.e.k I.ş.ı.k', 'İpek Işık')).toContain('[AD]');
+  });
+  it('owner-ascii-caps', () => {
+    expect(redactCvText('IPEK ISIK', 'İpek Işık')).toContain('[AD]');
+  });
+  it('owner-unicode', () => {
+    expect(redactCvText('İpek I​şık', 'İpek Işık')).toContain('[AD]');
+  });
+  it('preserve-school', () => {
+    expect(redactCvText('İstanbul Üniversitesi', 'İpek Işık')).toBe('İstanbul Üniversitesi');
+  });
+  it('preserve-company', () => {
+    expect(redactCvText('Örnek Teknoloji AŞ', 'İpek Işık')).toBe('Örnek Teknoloji AŞ');
+  });
+  it('preserve-position', () => {
+    expect(redactCvText('Kıdemli Veri Analisti', 'İpek Işık')).toBe('Kıdemli Veri Analisti');
+  });
+  it('preserve-skill', () => {
+    expect(redactCvText('SQL / Node.js / C++ / C#', 'İpek Işık')).toBe('SQL / Node.js / C++ / C#');
+  });
+  it('preserve-years', () => {
+    expect(redactCvText('2019–2023 / 2024', 'İpek Işık')).toBe('2019–2023 / 2024');
+  });
+  it('preserve-multiple-years', () => {
+    expect(redactCvText('2019 2020 2021 2022', 'İpek Işık')).toBe('2019 2020 2021 2022');
+  });
+});
+
+it('telefonun ardından gelen kimlik satırını geçersiz sayısal adayın içinde tüketmez', () => {
+  expect(redactCvText('+90 532\n123 45 67\n100.000.001.46\nSQL', 'İpek Işık')).toBe(
+    '[TELEFON]\n[KİMLİK]\nSQL',
+  );
+});
+
+it('tam telefonun ardından ayrı satırdaki eğitim yılı korunur', () => {
+  expect(redactCvText('+1 (212) 555-0123\n2023\nSQL', 'İpek Işık')).toBe('[TELEFON]\n2023\nSQL');
 });

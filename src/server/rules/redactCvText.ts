@@ -37,16 +37,32 @@ function isIban(value: string): boolean {
   return remainder === 1;
 }
 
-/** İ/ı ayrımı Türkçe harf kurallarıyla; harf sınırları diğer adların parçalarını eşlemez. */
+/** PDF ASCII/İ-ı varyantları ve harf arası noktalar; sınırlar başka sözcüklerin parçalarını eşlemez. */
 function namePattern(part: string): RegExp {
   const pattern = [...part.normalize('NFC')]
     .map((char) => {
-      const lower = char.toLocaleLowerCase('tr-TR');
+      const folded = char.toLocaleLowerCase('tr-TR');
+      const aliases: Record<string, string> = {
+        i: 'iİIı',
+        ı: 'iİIı',
+        s: 'sSşŞ',
+        ş: 'sSşŞ',
+        g: 'gGğĞ',
+        ğ: 'gGğĞ',
+        c: 'cCçÇ',
+        ç: 'cCçÇ',
+        u: 'uUüÜ',
+        ü: 'uUüÜ',
+        o: 'oOöÖ',
+        ö: 'oOöÖ',
+      };
+      if (aliases[folded]) return `[${aliases[folded]}]`;
+      const lower = folded;
       const upper = char.toLocaleUpperCase('tr-TR');
       if (lower.length === 1 && upper.length === 1 && lower !== upper) return `[${lower}${upper}]`;
       return char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     })
-    .join('');
+    .join('[.\\s]*');
   return new RegExp(`(?<![\\p{L}\\p{M}])${pattern}(?![\\p{L}\\p{M}])`, 'gu');
 }
 
@@ -60,8 +76,17 @@ export function redactCvText(text: string, ownerName: string): string {
   if (!parts.length || parts.length > 20) throw new Error('CV_OWNER_NAME_REQUIRED');
   let result = normalizeText(text);
   // Önce uzun, tekil kalıplar: telefonları veya URL'leri parçalamadan gizle.
+  // PDF satır kırıkları ve yaygın at/dot yazımları yalnız e-posta eşleşmesinde birleştirilir.
+  // Metnin geri kalanındaki boşluklar ve okul/iş/beceri adları değiştirilmez.
+  const emailDot = String.raw`(?:[.．]|\[\s*dot\s*\]|\(\s*dot\s*\))`;
+  const emailAt = String.raw`(?:[@＠]|\[\s*at\s*\]|\(\s*at\s*\))`;
+  const emailLocal = String.raw`[\p{L}\p{N}_%+-]+(?:\s*\.\s*[\p{L}\p{N}_%+-]+)*`;
+  const emailDomain = String.raw`(?:[\p{L}\p{N}-]+\s*${emailDot}\s*)+[\p{L}]{2,}`;
   result = result.replace(
-    /(?<![\p{L}\p{N}._%+-])[\p{L}\p{N}._%+-]+@[\p{L}\p{N}.-]+\.[\p{L}]{2,}(?![\p{L}\p{N}_-])/gu,
+    new RegExp(
+      String.raw`(?<![\p{L}\p{N}._%+-])${emailLocal}\s*${emailAt}\s*${emailDomain}(?![\p{L}\p{N}_-])`,
+      'giu',
+    ),
     marker.email,
   );
   for (const [country, length] of Object.entries({
@@ -76,14 +101,14 @@ export function redactCvText(text: string, ownerName: string): string {
     CH: 21,
   })) {
     const iban = new RegExp(
-      `(?<![\\p{L}\\p{N}])${country}[ \\t-]*\\d[ \\t-]*\\d(?:[ \\t-]*[A-Z0-9]){${length - 4}}(?![\\p{L}\\p{N}])`,
+      `(?<![\\p{L}\\p{N}])${country}[\\s-]*\\d[\\s-]*\\d(?:[\\s-]*[A-Z0-9]){${length - 4}}(?![\\p{L}\\p{N}])`,
       'giu',
     );
     result = result.replace(iban, marker.iban);
   }
   // Diğer ülkeler: bütün ülke kodları için IBAN mod-97 doğrulaması; ayırıcı sonrası metin korunur.
   result = result.replace(
-    /(?<![\p{L}\p{N}])[A-Z]{2}[ \t-]*\d[ \t-]*\d(?:[ \t-]*[A-Z0-9]){11,30}/giu,
+    /(?<![\p{L}\p{N}])[A-Z]{2}[\s-]*\d[\s-]*\d(?:[\s-]*[A-Z0-9]){11,30}/giu,
     (candidate) => {
       let compact = '';
       for (let index = 0; index < candidate.length; index += 1) {
@@ -97,9 +122,20 @@ export function redactCvText(text: string, ownerName: string): string {
       return candidate;
     },
   );
-  result = result.replace(/(?<!\d)\d(?:[ \t]?\d){10}(?!\d)/gu, (value) =>
-    isTurkishIdentityNumber(value.replace(/[ \t]/g, '')) ? marker.identity : value,
-  );
+  // Geçersiz bir aday, ardından gelen gerçek kimlik numarasının başlangıcını tüketmez.
+  // Önce tek satırlı tam adaylar; sonra PDF'de satıra bölünmüş adaylar değerlendirilir.
+  for (const gap of [String.raw`(?:[^\S\r\n]|[./-])*`, String.raw`[\s./-]*`]) {
+    const candidates = new RegExp(String.raw`(?<!\d)(?=(\d(?:${gap}\d){10}(?!\d)))`, 'gu');
+    const pieces: string[] = [];
+    let cursor = 0;
+    for (const match of result.matchAll(candidates)) {
+      const value = match[1]!;
+      if (match.index < cursor || !isTurkishIdentityNumber(value.replace(/\D/g, ''))) continue;
+      pieces.push(result.slice(cursor, match.index), marker.identity);
+      cursor = match.index + value.length;
+    }
+    result = pieces.join('') + result.slice(cursor);
+  }
   result = result.replace(
     /(?:https?:\/\/|www\.)[^\s<>]+|(?<![\p{L}\p{N}@])(?:[\p{L}\p{N}-]+\.)+[\p{L}]{2,}\/[^\s<>]*/giu,
     marker.url,
@@ -122,17 +158,20 @@ export function redactCvText(text: string, ownerName: string): string {
   );
   result = result.replace(/(?<!\d)\d{1,2}[.\/-]\d{1,2}[.\/-]\d{4}(?!\d)/gu, marker.birth);
   result = result.replace(/(?<!\d)\d{4}[.\/-]\d{2}[.\/-]\d{2}(?!\d)/gu, marker.birth);
-  result = result.replace(
-    /(?<![\p{L}\p{N}])\+?\(?\d[\d \t().-]{7,}\d(?![\p{L}\p{N}])/gu,
-    (value) => {
-      const digits = value.replace(/\D/g, '');
-      const valid =
-        value.startsWith('+') || digits.startsWith('00')
-          ? digits.length >= 10 && digits.length <= 15
-          : /^0?[2-5]\d{9}$|^1[2-9]\d{9}$/.test(digits);
-      return valid ? marker.phone : value;
-    },
-  );
+  // Önce tamamı aynı satırdaki numaralar: sonraki satırın eğitim yılı telefona eklenmez.
+  // İkinci tur yalnız PDF'de satıra bölünmüş numaraları da kapsar.
+  for (const gap of [String.raw`(?:[^\S\r\n]|[().-])*`, String.raw`[\s().-]*`]) {
+    for (const body of [
+      String.raw`(?:\+|00)${gap}\d(?:${gap}\d){9,14}`,
+      String.raw`\(?1${gap}[2-9](?:${gap}\d){9}`,
+      String.raw`\(?0?[2-5](?:${gap}\d){9}`,
+    ]) {
+      result = result.replace(
+        new RegExp(String.raw`(?<![\p{L}\p{N}_])${body}\)?(?![\p{L}\p{N}_])`, 'gu'),
+        marker.phone,
+      );
+    }
+  }
   result = result.replace(
     /^.*(?:\b(?:mah(?:alle(?:si)?)?|cad(?:de(?:si)?)?|sok(?:ak|ağı)?)\.?(?=\s|,|:|$)|\b(?:no|posta\s*kodu|adres|address)\s*[.:]|\b\d{5}\b).*$/gimu,
     marker.address,

@@ -260,7 +260,9 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
 - **Gerçek modele yalnız maskelenmiş CV metni gider:** yükleyenin adı sunucudan alınır; kişisel veri kalıpları
   yerelde maskelenir ve maskeleyici, çıkarıcı veya metin sağlayıcısı yoksa işlem kapalı kalır. Kural tabanlı
   maskeleme alışılmadık veya gizlenmiş kişisel veriyi her zaman tanıyamayabilir; yurt dışı rızası yüklemede ve
-  iş başında denetlenir.
+  iş başında denetlenir. Gizlilik önceliklidir: yükleyenin adıyla eşadlı kurum da kısmen maskelenebilir
+  (ör. sunucu adı “İpek Işık” iken “Işık Üniversitesi” → “[AD] Üniversitesi”); kurum eki maskeyi atlatma
+  istisnası değildir. Yapay zekâ yalnız öneri üretir; kullanıcı okul adını onay ekranında düzeltebilir.
 - LLM girdisi ve çıktısı loglanmaz.
 
 ## Kötüye kullanım sınırları

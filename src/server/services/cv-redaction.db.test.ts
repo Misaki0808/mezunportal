@@ -27,7 +27,7 @@ describe('gerçek sağlayıcı sınırı', () => {
         pdfTextExtractor: withCvTextRedaction({
           kind: 'real' as const,
           extract: async () =>
-            'İPEK IŞIK\nipek@example.com\n+90 532 123 45 67\nİstanbul Üniversitesi\nSQL',
+            'Sayın IPEK ISIK\nselin . yilmaz [at] ogr . example . edu . tr\n+90 532\n123 45 67\n100.000.001.46\nİstanbul Üniversitesi\nSQL',
         }),
       };
       const upload = await uploadCv(deps, actor, { ...pdfForm(), source });
@@ -35,7 +35,9 @@ describe('gerçek sağlayıcı sınırı', () => {
       expect(raw).not.toHaveBeenCalled();
       expect(redacted).toHaveBeenCalledOnce();
       const request = redacted.mock.calls[0]![0] as { text: string; pdf?: unknown };
-      expect(request.text).not.toMatch(/İPEK|IŞIK|ipek@example|532 123/);
+      expect(request.text).not.toMatch(/IPEK|ISIK|selin|yilmaz|ogr|532|100\.000/);
+      for (const token of ['[AD]', '[E-POSTA]', '[TELEFON]', '[KİMLİK]'])
+        expect(request.text).toContain(token);
       expect(request.text).toContain('İstanbul Üniversitesi');
       expect(request.text).toContain('SQL');
       expect(request).not.toHaveProperty('pdf');
@@ -100,7 +102,7 @@ describe('gerçek sağlayıcı sınırı', () => {
   );
   it('normal CV gerçek çıkarıcıyla okunur ve sağlayıcı yalnız maskeli metni görür', async () => {
     const { actor, userId } = await cvUser(db);
-    await db.user.update({ where: { id: userId }, data: { name: 'Efe Baydemir' } });
+    await db.user.update({ where: { id: userId }, data: { name: 'Suna Karaca' } });
     const kit = cvKit(db);
     const raw = vi.fn(async () => DEMO_CV_OUTPUT);
     const redacted = vi.fn(async (_request: RedactedCvRequest) => DEMO_CV_OUTPUT);
@@ -109,13 +111,13 @@ describe('gerçek sağlayıcı sınırı', () => {
       llm: { provider: 'real-test', parseCv: raw, parseRedactedCv: redacted },
       pdfTextExtractor: withCvTextRedaction(getPdfTextExtractor()),
     };
-    const pdf = buildRealTestPdf(['Efe Baydemir efe@example.com SQL']);
+    const pdf = buildRealTestPdf(['Suna Karaca suna@example.com SQL']);
     const upload = await uploadCv(deps, actor, rawForm(pdf));
     expect(await processCvParse(deps, upload.cvUploadId, fresh)).toBe('PARSED');
     expect(raw).not.toHaveBeenCalled();
     const request = redacted.mock.calls[0]![0];
     expect(request.text).toContain('SQL');
-    expect(request.text).not.toMatch(/Efe|Baydemir|efe@example/);
+    expect(request.text).not.toMatch(/Suna|Karaca|suna@example/);
     expect(request).not.toHaveProperty('pdf');
   });
   it('normal CV sıkıştırma bombasında bellek bekçisi sağlayıcı çağrısından önce kapatır', async () => {
@@ -140,3 +142,72 @@ describe('gerçek sağlayıcı sınırı', () => {
     expect(redacted).not.toHaveBeenCalled();
   });
 });
+
+it.each(['CV', 'LINKEDIN_PDF'] as const)(
+  '%s: boş maske sonucu ham PDF yoluna düşmez',
+  async (source) => {
+    const { actor } = await cvUser(db);
+    const kit = cvKit(db);
+    const raw = vi.fn(async () => DEMO_CV_OUTPUT);
+    const redacted = vi.fn(async (_request: RedactedCvRequest) => DEMO_CV_OUTPUT);
+    const deps = {
+      ...kit.deps,
+      llm: { provider: 'real-test', parseCv: raw, parseRedactedCv: redacted },
+      pdfTextExtractor: {
+        kind: 'real' as const,
+        extract: async () => 'SQL',
+        redact: async () => '',
+      },
+    };
+    const upload = await uploadCv(deps, actor, { ...pdfForm(), source });
+    expect(await processCvParse(deps, upload.cvUploadId, fresh)).toBe('FAILED');
+    expect(raw).not.toHaveBeenCalled();
+    expect(redacted).not.toHaveBeenCalled();
+  },
+);
+
+it.each(['CV', 'LINKEDIN_PDF'] as const)(
+  '%s: sağlayıcı hatasındaki metin veya ad günlüğe çıkmaz',
+  async (source) => {
+    const { actor, userId } = await cvUser(db);
+    await db.user.update({ where: { id: userId }, data: { name: 'Suna Karaca' } });
+    const kit = cvKit(db);
+    const confidential = 'Suna Karaca suna [at] example.org +90 532 123 45 67';
+    const raw = vi.fn(async () => DEMO_CV_OUTPUT);
+    const redacted = vi.fn(async (_request: RedactedCvRequest): Promise<unknown> => {
+      throw new Error(confidential);
+    });
+    const deps = {
+      ...kit.deps,
+      llm: { provider: 'real-test', parseCv: raw, parseRedactedCv: redacted },
+      pdfTextExtractor: withCvTextRedaction({ kind: 'real', extract: async () => confidential }),
+    };
+    const upload = await uploadCv(deps, actor, { ...pdfForm(), source });
+    const writes: string[] = [];
+    const log = vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => {
+      writes.push(String(chunk));
+      return true;
+    });
+    let result: unknown;
+    try {
+      result = await processCvParse(deps, upload.cvUploadId, fresh);
+    } finally {
+      log.mockRestore();
+    }
+    expect(result).toBe('FAILED');
+    expect(raw).not.toHaveBeenCalled();
+    expect(redacted).toHaveBeenCalledOnce();
+    const messages = writes.join('');
+    expect(messages).toContain('[cv] failed CV_PARSE_UNAVAILABLE');
+    for (const secret of [
+      confidential,
+      'Suna',
+      'Karaca',
+      'suna [at]',
+      '[AD]',
+      '[E-POSTA]',
+      '[TELEFON]',
+    ])
+      expect(messages).not.toContain(secret);
+  },
+);
