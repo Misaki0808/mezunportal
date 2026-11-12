@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import messages from '../../../messages/tr.json';
 import { renderUi, renderWithToasts } from '@/test/render';
@@ -142,11 +142,35 @@ it('ilan iletişimi yalnız ilan kimliği ve seçilen alanlarla gönderilir', as
   await waitFor(() =>
     expect(send).toHaveBeenCalledWith({ jobPostingId: 'ilan-123', fields: ['EMAIL'], message: '' }),
   );
-  expect(await screen.findByText(/Talebin gönderildi/)).toBeInTheDocument();
+  expect((await screen.findAllByText(/Talebin gönderildi/)).length).toBeGreaterThan(0);
+});
+it('ilan iletişiminde çift gönderim tek istektir ve hata notu korur', async () => {
+  const { PostingContactForm } = await import('./contact');
+  const gate = Promise.withResolvers<{
+    ok: true;
+    data: { requestId: string; status: 'PENDING' };
+  }>();
+  const send = vi.fn(() => gate.promise);
+  renderWithToasts(<PostingContactForm postingId="p" requestableFields={['EMAIL']} send={send} />);
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  const note = screen.getByLabelText(/Kısa not/);
+  fireEvent.change(note, { target: { value: 'Notum' } });
+  const button = screen.getByRole('button', { name: 'Talep gönder' });
+  fireEvent.submit(button.closest('form')!);
+  fireEvent.submit(button.closest('form')!);
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(button).toHaveAttribute('aria-busy', 'true');
+  await act(async () => gate.reject(new Error('ağ')));
+  expect(note).toHaveValue('Notum');
+  expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
 });
 it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderilir', async () => {
   const { addDays, istanbulDay } = await import('./model');
-  const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'draft-1' } });
+  const gate = Promise.withResolvers<never>();
+  const save = vi
+    .fn()
+    .mockReturnValueOnce(gate.promise)
+    .mockResolvedValue({ ok: true, data: { id: 'draft-1' } });
   const submit = vi
     .fn()
     .mockResolvedValue({ ok: true, data: { postingId: 'draft-1', status: 'PENDING' } });
@@ -168,7 +192,17 @@ it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderi
     target: { value: 'https://example.org/staj' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
-  fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  const button = screen.getByRole('button', { name: 'İncelemeye gönder' });
+  act(() => {
+    button.click();
+    button.click();
+  });
+  expect(save).toHaveBeenCalledTimes(1);
+  expect(button).toHaveAttribute('aria-busy', 'true');
+  await act(async () => gate.reject(new Error('ağ')));
+  expect(screen.getByText('Yazılım stajyeri')).toBeVisible();
+  expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
+  fireEvent.click(button);
   await waitFor(() => expect(submit).toHaveBeenCalledWith({ postingId: 'draft-1' }));
   expect(save).toHaveBeenCalledWith(
     expect.objectContaining({

@@ -25,7 +25,7 @@ import {
   Select,
   Textarea,
   buttonClasses,
-  useToast,
+  useAction,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
@@ -72,12 +72,12 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [departmentError, setDepartmentError] = useState(false);
   const [error, setError] = useState<ErrorCode>();
-  const toast = useToast();
+  const action = useAction();
   const [confirm, setConfirm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [pending, setPending] = useState<'save' | 'submit'>();
+  const [pendingMode, setPendingMode] = useState<'save' | 'submit'>();
+  const pending = action.busy ? pendingMode : undefined;
   const [focusTick, setFocusTick] = useState(0);
-  const locked = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const doneRef = useRef<HTMLHeadingElement>(null);
 
@@ -120,60 +120,49 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
     return all.some((key) => !fields.has(key) && filled(key));
   }
 
-  async function persist(mode: 'draft' | 'submit') {
+  async function run(mode: 'draft' | 'submit') {
     const validation = validate(state, mode);
     const noDepartment = departmentId === '';
     setFieldErrors(validation.ok ? {} : validation.errors);
     setDepartmentError(noDepartment);
     if (!validation.ok || noDepartment) {
       setFocusTick((tick) => tick + 1);
-      return false;
+      setConfirm(false);
+      return;
     }
-    const result = await save({
-      ...(experienceId ? { experienceId } : {}),
-      departmentId,
-      content: validation.content,
-      isAnonymous,
-      appliedMonth: state.type === 'INTERNSHIP' && appliedMonth ? Number(appliedMonth) : null,
-    });
-    if (!result.ok) {
-      setError(result.errorCode);
-      return false;
-    }
-    setExperienceId(result.data.id);
-    return result.data.id;
-  }
-
-  async function run(mode: 'draft' | 'submit') {
-    if (locked.current) return;
-    locked.current = true;
-    setPending(mode === 'draft' ? 'save' : 'submit');
     setError(undefined);
-    try {
-      const id = await persist(mode);
-      if (id === false) {
-        setConfirm(false);
-        return;
-      }
-      if (mode === 'draft') {
-        toast.show({ message: t('form.draftSaved'), tone: 'success' });
-        return;
-      }
-      const result = await submit({ experienceId: id });
-      if (!result.ok) {
-        setError(result.errorCode);
-        setConfirm(false);
-        return;
-      }
-      setConfirm(false);
-      setSubmitted(true);
-    } catch {
-      setError('SERVER_UNEXPECTED');
-      setConfirm(false);
-    } finally {
-      locked.current = false;
-      setPending(undefined);
-    }
+    await action.run(
+      async (): Promise<ActionResult<null>> => {
+        setPendingMode(mode === 'draft' ? 'save' : 'submit');
+        const saved = await save({
+          ...(experienceId ? { experienceId } : {}),
+          departmentId,
+          content: validation.content,
+          isAnonymous,
+          appliedMonth: state.type === 'INTERNSHIP' && appliedMonth ? Number(appliedMonth) : null,
+        });
+        if (!saved.ok) return saved;
+        setExperienceId(saved.data.id);
+        if (mode === 'submit') {
+          const sent = await submit({ experienceId: saved.data.id });
+          if (!sent.ok) return sent;
+        }
+        return { ok: true, data: null };
+      },
+      {
+        success: mode === 'draft' ? t('form.draftSaved') : t('form.submitted'),
+        onOk: () => {
+          if (mode === 'submit') {
+            setConfirm(false);
+            setSubmitted(true);
+          }
+        },
+        onFailure: (failure) => {
+          setError(failure.errorCode);
+          setConfirm(false);
+        },
+      },
+    );
   }
 
   function openConfirm() {

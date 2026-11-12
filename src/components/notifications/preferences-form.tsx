@@ -1,14 +1,14 @@
 'use client';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   setNotificationPreferencesSchema,
   type NotificationPreferences,
   type SetNotificationPreferencesInput,
 } from '@/contracts/notifications';
 import type { ActionResult } from '@/contracts/result';
-import { Button, PageHeader, Switch, useToast } from '@/components/ui';
+import { Button, PageHeader, Switch, useAction } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 type Props = {
@@ -20,13 +20,11 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
   const errors = useTranslations('errors.codes');
   const [items, setItems] = useState(initial.items);
   const [saved, setSaved] = useState(initial.items);
-  const [pending, setPending] = useState(false);
-  const toast = useToast();
+  const action = useAction();
+  const pending = action.busy;
   const [error, setError] = useState<ErrorCode>();
-  const locked = useRef(false);
   const dirty = items.some((item, index) => item.enabled !== saved[index]?.enabled);
   async function submit() {
-    if (locked.current) return;
     const parsed = setNotificationPreferencesSchema.safeParse({
       items: items.map(({ type, enabled }) => ({ type, enabled })),
     });
@@ -34,24 +32,15 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
       setError('VALIDATION_INVALID');
       return;
     }
-    locked.current = true;
-    setPending(true);
     setError(undefined);
-    try {
-      const result = await save(parsed.data);
-      if (!result.ok) {
-        setError(result.errorCode);
-        return;
-      }
-      setItems(result.data.items);
-      setSaved(result.data.items);
-      toast.show({ message: t('saved'), tone: 'success' });
-    } catch {
-      setError('SERVER_UNEXPECTED');
-    } finally {
-      locked.current = false;
-      setPending(false);
-    }
+    await action.run(() => save(parsed.data), {
+      success: t('saved'),
+      onOk: (data) => {
+        setItems(data.items);
+        setSaved(data.items);
+      },
+      onFailure: (failure) => setError(failure.errorCode),
+    });
   }
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 pb-8 pt-10 sm:pt-16">

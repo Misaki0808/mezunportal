@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type {
@@ -58,6 +58,27 @@ function actions(overrides: Partial<MyProfileActions> = {}): MyProfileActions {
 }
 
 describe('kendi profilim', () => {
+  it('profil kaydetme çift gönderimi engeller, hata alanı korur', async () => {
+    const gate = Promise.withResolvers<never>();
+    const updateBasics = vi.fn(() => gate.promise);
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ updateBasics })} />,
+    );
+    await user.click(screen.getAllByRole('button', { name: 'Profilimi düzenle' })[0]!);
+    const headline = screen.getByLabelText('Başlık');
+    await user.type(headline, 'Korunan başlık');
+    const button = screen.getByRole('button', { name: 'Kaydet' });
+    const form = document.getElementById(button.getAttribute('form')!)!;
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    expect(updateBasics).toHaveBeenCalledTimes(1);
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    await act(async () => gate.reject(new Error('ağ')));
+    expect(headline).toHaveValue('Korunan başlık');
+    expect(
+      within(screen.getByRole('dialog')).getByText(messages.errors.codes.SERVER_UNEXPECTED),
+    ).toBeVisible();
+  });
   it('temel bilgiler: başarıda "Profilin güncellendi" bildirimi, çekmece kapanır', async () => {
     const updateBasics = ok({ ...base, headline: 'Veri analisti adayı' });
     const { user } = renderWithToasts(
