@@ -2298,10 +2298,6 @@
       "invalid": "Bu bağlantı geçersiz, kullanılmış veya süresi dolmuş.",
       "profile": "Profiline git"
     },
-    "jobMatches": {
-      "title": "Sana uyan ilan bildirimleri",
-      "empty": "Henüz ilan eşleşmesi bildirimin yok."
-    },
     "inboxLink": "Bildirim kutun",
     "inboxNote": "Bildirim kutundaki kayıtlar bu tercihlerden etkilenmez; yalnız e-postaları seçersin."
   },

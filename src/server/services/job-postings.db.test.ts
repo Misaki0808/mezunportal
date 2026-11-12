@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { JOB_POSTING_SUBMIT_LIMIT } from '@/contracts/job-postings';
@@ -12,6 +13,7 @@ import {
 } from '@/test/fixtures';
 
 import { deleteAccount } from './accountDeletion';
+import { stageInboxNotification } from './notification-intent';
 import {
   listContactRequests,
   respondToContactRequest,
@@ -1716,6 +1718,70 @@ describe('okuma anında ilan görünürlüğü', () => {
 });
 
 describe('ilan eşleşmeleri', () => {
+  it('VERİ TAŞIMA: eski eşleşmeler kutuya OKUNMUŞ taşınır; yalnız ekler, idempotent, yalnız yayındaki ilan ve silinmemiş kullanıcı', async () => {
+    const migration = readFileSync(
+      'prisma/migrations/20261112040000_in_app_notification_backfill/migration.sql',
+      'utf8',
+    );
+    const w = await world();
+    const tag = await db.tag.create({
+      data: { kind: 'INTEREST', slug: `tasima-${w.student}`, curated: true },
+    });
+    const profile = await db.profile.create({ data: { userId: w.student } });
+    await db.profileTag.create({ data: { profileId: profile.id, tagId: tag.id } });
+    const id = await submitted(w, w.alumni, { tagIds: [tag.id], targetGrades: [] });
+    await reviewJobPosting(deps, w.moderator, { postingId: id, decision: 'PUBLISH' });
+    // Eski sürüm: eşleşme var, kutu kaydı yok (kutu sonradan eklendi).
+    await db.inAppNotification.deleteMany({ where: { userId: w.student } });
+    const snapshot = async () => ({
+      matches: await db.jobMatch.count(),
+      intents: await db.notificationIntent.count(),
+      postings: await db.jobPosting.count(),
+    });
+    const before = await snapshot();
+
+    await db.$executeRawUnsafe(migration);
+    const rows = await db.inAppNotification.findMany({ where: { userId: w.student } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      kind: 'jobMatchPosting',
+      refId: id,
+      key: `jobMatchPosting:${id}:${w.student}`,
+    });
+    // Okunmuş taşınır (rozet birden dolmaz), eşleşme zamanı korunur.
+    const match = await db.jobMatch.findFirstOrThrow({
+      where: { userId: w.student, postingId: id },
+    });
+    expect(rows[0]!.readAt).toEqual(match.createdAt);
+    expect(rows[0]!.createdAt).toEqual(match.createdAt);
+    // Kişisel veri yok: yalnız tür, ilan kimliği ve zaman.
+    expect(JSON.stringify(rows[0])).not.toMatch(/@/);
+
+    // Idempotent: ikinci çalıştırma çift kayıt üretmez.
+    await db.$executeRawUnsafe(migration);
+    expect(await db.inAppNotification.count({ where: { userId: w.student } })).toBe(1);
+    // Uygulamanın kendi yazdığı aynı anahtarlı kayıtla da çakışmaz.
+    await db.$transaction((tx) =>
+      stageInboxNotification(tx, w.student, { kind: 'jobMatchPosting', refId: id }),
+    );
+    expect(await db.inAppNotification.count({ where: { userId: w.student } })).toBe(1);
+    // Yalnız ekler: eşleşme, niyet ve ilan sayıları değişmez.
+    expect(await snapshot()).toEqual(before);
+
+    // Silinmiş (anonimleştirilmiş) kullanıcı için taşınmaz.
+    await db.inAppNotification.deleteMany({ where: { userId: w.student } });
+    await db.user.update({ where: { id: w.student }, data: { deletedAt: new Date() } });
+    await db.$executeRawUnsafe(migration);
+    expect(await db.inAppNotification.count({ where: { userId: w.student } })).toBe(0);
+    await db.user.update({ where: { id: w.student }, data: { deletedAt: null } });
+
+    // Kapatılan (artık yayında olmayan) ilanın eşleşmesi taşınmaz.
+    await closeJobPosting(deps, w.alumni, { postingId: id });
+    await db.inAppNotification.deleteMany({ where: { userId: w.student } });
+    await db.$executeRawUnsafe(migration);
+    expect(await db.inAppNotification.count({ where: { userId: w.student } })).toBe(0);
+  });
+
   it('açık etiket ve uygun bölümde yayında öğrenciye eşleşme ve aynı işlemde günlük niyet yazar', async () => {
     const w = await world();
     const tag = await db.tag.create({
