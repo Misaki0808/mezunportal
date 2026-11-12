@@ -4,6 +4,7 @@ import messages from '../../../messages/tr.json';
 import { useTranslations } from 'next-intl';
 import { parseApplyUrl, type JobPostingDetail } from '@/contracts/job-postings';
 import { Badge, Card, buttonClasses } from '@/components/ui';
+import { ReportPosting } from './report';
 
 export function PostingDetail({
   posting,
@@ -104,6 +105,7 @@ export function PostingDetail({
             </Link>
           )}
         </div>
+        <ReportPosting postingId={posting.id} />
       </Card>
     </div>
   );

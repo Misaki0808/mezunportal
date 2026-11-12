@@ -114,13 +114,20 @@ async function tour(
     let target = screen.path;
     if (screen.first) {
       await page.goto(screen.path, { waitUntil: 'networkidle' });
-      const href = await page
-        .locator(screen.first)
+      // Liste boşsa tur sessizce yeşil geçmesin ve 5 dakikalık test zaman aşımına da kadar beklemesin (eskiden
+      // `getAttribute` var olmayan öğeyi test süresince bekliyordu): önce kısa bekle, yoksa açık hata ver.
+      const links = page.locator(screen.first);
+      await links
         .first()
-        .getAttribute('href')
-        .catch(() => null);
-      if (!href) continue;
-      target = href;
+        .waitFor({ timeout: 10_000 })
+        .catch(() => undefined);
+      expect(
+        await links.count(),
+        `${screen.slug}: "${screen.path}" listesi boş, ayrıntı ekranı ölçülemedi`,
+      ).toBeGreaterThan(0);
+      const href = await links.first().getAttribute('href');
+      expect(href, `${screen.slug}: bağlantının href'i yok`).toBeTruthy();
+      target = href!;
     }
     for (const scheme of ['light', 'dark'] as const) {
       await page.emulateMedia({ colorScheme: scheme });
@@ -143,6 +150,8 @@ async function tour(
       }
     }
   }
+  // Her ekran açık + koyu ölçülmüş olmalı; atlanan ekran varsa tur yeşil sayılmaz.
+  expect(Object.keys(report).length, 'ölçülen ekran sayısı').toBe(screens.length * 2);
   if (OUT) {
     mkdirSync(OUT, { recursive: true });
     writeFileSync(

@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import test from 'node:test';
 
 import { classify, parseUnhandled, planRetry, unhandledInfraFiles } from './test-gate.mjs';
@@ -215,4 +219,90 @@ test('işçi hatası bloğunda başka bir hata cümlesi (ör. AssertionError) va
     unhandledInfraFiles(vitestText([workerTimeout(`${ROOT}/src/a.test.ts`)])).files,
     ['src/a.test.ts'],
   );
+});
+
+// --- main() uçtan uca: sahte `pnpm` ile gerçek giriş noktası (çıkış kodları ve yeniden koşunun kapsamı) ---
+const REPO = resolve(import.meta.dirname, '..');
+const GATE = join(REPO, 'scripts', 'test-gate.mjs');
+const passed = { testResults: [{ name: join(REPO, 'src/ok.test.ts'), status: 'passed' }] };
+const infra = {
+  testResults: [
+    file(
+      join(REPO, 'src/slow.test.ts'),
+      'failed',
+      '[vitest-pool-runner]: Timeout waiting for worker to respond',
+    ),
+  ],
+};
+const real = {
+  testResults: [
+    file(join(REPO, 'src/bad.test.ts'), 'failed', '', [['AssertionError: expected 1 to be 2']]),
+  ],
+};
+
+/** Sahte pnpm: her çağrıda sıradaki cevabı (çıkış kodu + JSON raporu) verir ve argümanlarını kaydeder. */
+function runGate(responses) {
+  const dir = mkdtempSync(join(tmpdir(), 'test-gate-e2e-'));
+  try {
+    writeFileSync(join(dir, 'responses.json'), JSON.stringify(responses));
+    const fake = join(dir, 'pnpm');
+    writeFileSync(
+      fake,
+      `#!/usr/bin/env node
+const fs = require('node:fs');
+const dir = ${JSON.stringify(dir)};
+const calls = fs.existsSync(dir + '/calls.json') ? JSON.parse(fs.readFileSync(dir + '/calls.json', 'utf8')) : [];
+const responses = JSON.parse(fs.readFileSync(dir + '/responses.json', 'utf8'));
+const response = responses[calls.length] ?? { code: 99, report: null };
+calls.push(process.argv.slice(2));
+fs.writeFileSync(dir + '/calls.json', JSON.stringify(calls));
+const out = process.argv.find((arg) => arg.startsWith('--outputFile.json='));
+if (out && response.report) fs.writeFileSync(out.slice('--outputFile.json='.length), JSON.stringify(response.report));
+process.exit(response.code);
+`,
+    );
+    chmodSync(fake, 0o755);
+    const result = spawnSync(process.execPath, [GATE], {
+      cwd: REPO,
+      env: { ...process.env, TEST_GATE_NESTED: '1', PATH: `${dir}:${process.env.PATH}` },
+      encoding: 'utf8',
+    });
+    const calls = JSON.parse(readFileSync(join(dir, 'calls.json'), 'utf8'));
+    return { status: result.status, calls, stderr: result.stderr };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test('main(): ilk koşu yeşilse çıkış 0 ve yeniden koşu yok', () => {
+  const run = runGate([{ code: 0, report: passed }]);
+  assert.equal(run.status, 0);
+  assert.equal(run.calls.length, 1);
+});
+
+test('main(): altyapı kaynaklı düşme YALNIZ o dosyayla bir kez yeniden koşulur; yeniden koşu yeşilse çıkış 0', () => {
+  const run = runGate([
+    { code: 1, report: infra },
+    { code: 0, report: passed },
+  ]);
+  assert.equal(run.status, 0);
+  assert.equal(run.calls.length, 2);
+  assert.deepEqual(run.calls[1].slice(-1), [join(REPO, 'src/slow.test.ts')]);
+  assert.ok(!run.calls[1].includes(join(REPO, 'src/ok.test.ts')));
+  assert.match(run.stderr, /ALTYAPI kaynaklı düştü/);
+});
+
+test('main(): yeniden koşu da kırmızıysa kapı kırmızı kalır (yeniden koşunun çıkış kodu YOK SAYILMAZ)', () => {
+  const run = runGate([
+    { code: 1, report: infra },
+    { code: 1, report: infra },
+  ]);
+  assert.equal(run.status, 1);
+  assert.equal(run.calls.length, 2);
+});
+
+test('main(): gerçek hata (assert) yeniden denenmez, ilk çıkış kodu aynen döner', () => {
+  const run = runGate([{ code: 3, report: real }]);
+  assert.equal(run.status, 3);
+  assert.equal(run.calls.length, 1);
 });

@@ -1161,6 +1161,108 @@ describe('D7 sızıntı bekçisi: ilan kaynaklı talepte hedef kimliği onaydan 
 });
 
 describe('şikâyet', () => {
+  it('hedef bölüm yöneticisi şikâyeti görüp karara bağlar; yazan bölüm yöneticisi ve ilan sahibi raportörü göremez', async () => {
+    const w = await world();
+    const id = await published(w, w.alumni, { targetDepartmentIds: [w.inst.deptB1] });
+    const report = await reportJobPosting(deps, w.student, {
+      postingId: id,
+      reason: 'Yanıltıcı ilan',
+    });
+    expect((await listJobPostingReports(deps, w.moderator, {})).items).toEqual([]);
+    const queue = await listJobPostingReports(deps, w.otherModerator, {});
+    expect(queue.items.map((item) => item.id)).toEqual([report.reportId]);
+    expect(JSON.stringify(queue)).not.toContain(w.student);
+    const authorView = JSON.stringify(await listMyJobPostings(deps, w.alumni, {}));
+    expect(authorView).not.toContain(w.student);
+    expect(authorView).not.toContain('Elif Demirtaş');
+    expect(
+      await code(
+        resolveJobPostingReport(deps, w.moderator, {
+          reportId: report.reportId,
+          decision: 'DISMISS',
+          reason: 'İncelendi',
+        }),
+      ),
+    ).toBe('AUTH_FORBIDDEN');
+    await resolveJobPostingReport(deps, w.otherModerator, {
+      reportId: report.reportId,
+      decision: 'DISMISS',
+      reason: 'İncelendi',
+    });
+    expect(await code(reportJobPosting(deps, w.student, { postingId: id, reason: 'Tekrar' }))).toBe(
+      'REPORT_ALREADY_OPEN',
+    );
+  });
+
+  it('eşzamanlı aynı kullanıcı şikâyeti tek kayıttır; karar sonrası da yinelenmez', async () => {
+    const w = await world();
+    const id = await published(w);
+    const attempts = await Promise.all([
+      code(reportJobPosting(deps, w.student, { postingId: id, reason: 'Yanıltıcı ilan' })),
+      code(reportJobPosting(deps, w.student, { postingId: id, reason: 'Yanıltıcı ilan' })),
+    ]);
+    expect(attempts.filter((result) => result === null)).toHaveLength(1);
+    expect(attempts.filter((result) => result === 'REPORT_ALREADY_OPEN')).toHaveLength(1);
+    const reports = await db.jobPostingReport.findMany({ where: { postingId: id } });
+    expect(reports).toHaveLength(1);
+    await resolveJobPostingReport(deps, w.moderator, {
+      reportId: reports[0]!.id,
+      decision: 'DISMISS',
+      reason: 'Sorun görülmedi',
+    });
+    expect(
+      await code(reportJobPosting(deps, w.student, { postingId: id, reason: 'Yeniden' })),
+    ).toBe('REPORT_ALREADY_OPEN');
+  });
+
+  it('şikâyetçinin kimliği yanıt, sahip verisi, bildirim yükü ve işlem kaydında yoktur', async () => {
+    const w = await world();
+    const id = await published(w);
+    const reporter = await db.user.findUniqueOrThrow({
+      where: { id: w.student },
+      select: { id: true, name: true, email: true },
+    });
+    const report = await reportJobPosting(deps, w.student, {
+      postingId: id,
+      reason: 'Yanıltıcı ilan',
+    });
+    const surfaces: unknown[] = [
+      report,
+      await listJobPostingReports(deps, w.moderator, {}),
+      await listMyJobPostings(deps, w.alumni, {}),
+      await getJobPosting(deps, w.alumni, { id }),
+    ];
+    const resolved = await resolveJobPostingReport(deps, w.moderator, {
+      reportId: report.reportId,
+      decision: 'TAKE_DOWN',
+      reason: 'İnceleme tamamlandı',
+    });
+    surfaces.push(
+      resolved,
+      await listMyJobPostings(deps, w.alumni, {}),
+      (await buildDataExport(db, w.alumni)).jobPostings,
+      await db.notificationIntent.findMany({ where: { userId: w.alumni } }),
+      await db.adminAuditLog.findMany({ where: { targetId: report.reportId } }),
+    );
+    for (const surface of surfaces) {
+      const text = JSON.stringify(surface);
+      for (const secret of [reporter.id, reporter.name, reporter.email, 'reporterId', 'reporter'])
+        expect(text).not.toContain(secret);
+    }
+    expect(await code(getJobPosting(deps, w.student, { id }))).toBe('RESOURCE_NOT_FOUND');
+    for (const actor of [w.student, w.alumni, w.unverified, w.otherModerator]) {
+      expect(
+        await code(
+          resolveJobPostingReport(deps, actor, {
+            reportId: report.reportId,
+            decision: 'DISMISS',
+            reason: 'Kapsam dışı',
+          }),
+        ),
+      ).toMatch(/AUTH_/);
+    }
+  });
+
   it('açık ve görünür ilan şikâyet edilir; çift açık şikâyet, görünmeyen ve süresi dolmuş ilan reddedilir', async () => {
     const w = await world();
     const id = await published(w);
