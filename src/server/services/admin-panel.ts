@@ -98,6 +98,11 @@ export async function getAdminOverview(
       const [
         pendingGraduationDocuments,
         pendingExperiences,
+        pendingFaqRequests,
+        pendingJobPostings,
+        pendingReferrals,
+        pendingCampusEvents,
+        pendingAlumniStoriesRows,
         openReports,
         suspendedUsers,
         unmatched,
@@ -108,6 +113,44 @@ export async function getAdminOverview(
         tx.experience.count({
           where: { status: 'PENDING', departmentIdAtWrite: { in: departmentIds } },
         }),
+        tx.faqRequest.count({
+          where: { status: 'OPEN', departmentIdAtWrite: { in: departmentIds } },
+        }),
+        tx.jobPosting.count({
+          where: { status: 'PENDING', departmentIdAtWrite: { in: departmentIds } },
+        }),
+        tx.referralClaim.count({
+          where: {
+            status: { in: ['STUDENT_CONFIRMED', 'ACCEPTED_ALUMNI_CONFIRMED'] },
+            departmentIdAtWrite: { in: departmentIds },
+          },
+        }),
+        tx.campusEvent.count({
+          where: {
+            status: 'PENDING',
+            departments: {
+              some: { departmentId: { in: departmentIds } },
+              every: { departmentId: { in: departmentIds } },
+            },
+          },
+        }),
+        // Bölüm başına OR, Prisma'da bölüm başına User JOIN'i üretir; sistem kapsamında plan şişer.
+        // Üyelik aynı hikâye bölümüne bağlı EXISTS ile doğrulanır: JOIN sayısı kapsamdan bağımsızdır.
+        tx.$queryRaw<{ count: bigint }[]>`
+          SELECT COUNT(*) AS "count"
+          FROM "AlumniStory" AS s
+          JOIN "User" AS u ON u."id" = s."userId"
+          WHERE s."status" = 'PENDING'
+            AND s."departmentId" = ANY(${departmentIds}::text[])
+            AND u."deletedAt" IS NULL
+            AND (u."banned" = false OR u."banExpires" <= ${now})
+            AND EXISTS (
+              SELECT 1 FROM "Membership" AS m
+              WHERE m."userId" = s."userId" AND m."departmentId" = s."departmentId"
+                AND m."role" = 'ALUMNI' AND m."verificationStatus" = 'VERIFIED'
+                AND m."endedAt" IS NULL
+            )
+        `,
         tx.report.count({
           where: { status: 'OPEN', target: { departmentIdAtWrite: { in: departmentIds } } },
         }),
@@ -135,6 +178,11 @@ export async function getAdminOverview(
         counts: {
           pendingGraduationDocuments,
           pendingExperiences,
+          pendingFaqRequests,
+          pendingJobPostings,
+          pendingReferrals,
+          pendingCampusEvents,
+          pendingAlumniStories: Number(pendingAlumniStoriesRows[0]!.count),
           openReports,
           suspendedUsers,
           openUnmatchedValues: unmatched,

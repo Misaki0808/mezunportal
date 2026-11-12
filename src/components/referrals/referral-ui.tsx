@@ -1,10 +1,11 @@
 'use client';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { safeClientAction } from '@/lib/safe-client-action';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, useTransition, type FormEvent } from 'react';
+import { useRef, useState, useTransition, type FormEvent } from 'react';
 import {
   proposeReferralSchema,
   reviewReferralSchema,
@@ -166,6 +167,8 @@ export function ReferralList({
   moderation?: boolean;
   canCreate?: boolean;
 }) {
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
+  const reviewReasonInput = useRef<HTMLTextAreaElement>(null);
   const t = useTranslations('referrals');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -190,7 +193,15 @@ export function ReferralList({
         reason: reason[row.id] ?? '',
       });
       if (!parsed.success) {
-        setReasonErrors((previous) => ({ ...previous, [row.id]: errors('VALIDATION_INVALID') }));
+        setReasonErrors((previous) => ({
+          ...previous,
+          [row.id]: errors(
+            (reason[row.id] ?? '').trim().length < 3
+              ? 'AUDIT_REASON_REQUIRED'
+              : 'AUDIT_REASON_INVALID',
+          ),
+        }));
+        reviewReasonInput.current?.focus();
         return;
       }
     }
@@ -226,9 +237,16 @@ export function ReferralList({
                   }),
                 );
       if (!result.ok) {
-        setError(errors(result.errorCode));
+        if (moderation && result.fieldErrors?.reason) {
+          setReasonErrors((previous) => ({
+            ...previous,
+            [row.id]: errors(result.fieldErrors!.reason!),
+          }));
+          reviewReasonInput.current?.focus();
+        } else setError(errors(result.errorCode));
         return;
       }
+      if (moderation) completeDecision(row.id);
       setCancelChoice(undefined);
       setReviewChoice(undefined);
       setPage((p) => ({
@@ -261,6 +279,7 @@ export function ReferralList({
   }
   return (
     <div
+      ref={queueRef}
       data-hydrated={hydrated ? 'true' : undefined}
       className="mx-auto max-w-3xl px-4 py-8 pb-32"
     >
@@ -296,6 +315,7 @@ export function ReferralList({
               (alumni && row.status === 'ACCEPTED_PROPOSED');
             return (
               <li
+                data-queue-row={row.id}
                 key={row.id}
                 className="min-w-0 rounded-card border border-border bg-surface p-5 shadow-card"
               >
@@ -342,6 +362,7 @@ export function ReferralList({
                 {canRespond && (
                   <div className="mt-4 flex flex-wrap gap-3">
                     <Button
+                      data-queue-action
                       loading={pending}
                       onClick={() =>
                         moderation
@@ -423,6 +444,7 @@ export function ReferralList({
             {(p) => (
               <Textarea
                 {...p}
+                ref={reviewReasonInput}
                 value={reason[reviewChoice.row.id] ?? ''}
                 maxLength={1000}
                 onChange={(e) => setReason({ ...reason, [reviewChoice.row.id]: e.target.value })}
