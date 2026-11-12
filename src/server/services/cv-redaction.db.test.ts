@@ -1,9 +1,10 @@
 import { afterAll, describe, expect, it, vi } from 'vitest';
 import { createTestPrisma } from '@/test/db';
-import { cvKit, cvUser, pdfForm } from '@/test/cv';
+import { cvKit, cvUser, pdfForm, rawForm } from '@/test/cv';
+import { buildFlateBombPdf, buildRealTestPdf } from '@/test/real-pdf';
 import { DEMO_CV_OUTPUT } from '../external/llm/fake';
 import type { RedactedCvRequest } from '../external/llm/types';
-import { withCvTextRedaction } from '../external/pdf-text';
+import { getPdfTextExtractor, withCvTextRedaction } from '../external/pdf-text';
 import { getCvAvailability, uploadCv } from './cv';
 import { processCvParse } from './cv-parse';
 
@@ -97,4 +98,45 @@ describe('gerçek sağlayıcı sınırı', () => {
       expect(redacted).not.toHaveBeenCalled();
     },
   );
+  it('normal CV gerçek çıkarıcıyla okunur ve sağlayıcı yalnız maskeli metni görür', async () => {
+    const { actor, userId } = await cvUser(db);
+    await db.user.update({ where: { id: userId }, data: { name: 'Efe Baydemir' } });
+    const kit = cvKit(db);
+    const raw = vi.fn(async () => DEMO_CV_OUTPUT);
+    const redacted = vi.fn(async (_request: RedactedCvRequest) => DEMO_CV_OUTPUT);
+    const deps = {
+      ...kit.deps,
+      llm: { provider: 'real-test', parseCv: raw, parseRedactedCv: redacted },
+      pdfTextExtractor: withCvTextRedaction(getPdfTextExtractor()),
+    };
+    const pdf = buildRealTestPdf(['Efe Baydemir efe@example.com SQL']);
+    const upload = await uploadCv(deps, actor, rawForm(pdf));
+    expect(await processCvParse(deps, upload.cvUploadId, fresh)).toBe('PARSED');
+    expect(raw).not.toHaveBeenCalled();
+    const request = redacted.mock.calls[0]![0];
+    expect(request.text).toContain('SQL');
+    expect(request.text).not.toMatch(/Efe|Baydemir|efe@example/);
+    expect(request).not.toHaveProperty('pdf');
+  });
+  it('normal CV sıkıştırma bombasında bellek bekçisi sağlayıcı çağrısından önce kapatır', async () => {
+    const { actor } = await cvUser(db);
+    const kit = cvKit(db);
+    const raw = vi.fn(async () => DEMO_CV_OUTPUT);
+    const redacted = vi.fn(async (_request: RedactedCvRequest) => DEMO_CV_OUTPUT);
+    const extractor = getPdfTextExtractor({ maxRssGrowthBytes: 48 * 1024 * 1024 });
+    const extract = vi.spyOn(extractor, 'extract');
+    const deps = {
+      ...kit.deps,
+      llm: { provider: 'real-test', parseCv: raw, parseRedactedCv: redacted },
+      pdfTextExtractor: withCvTextRedaction(extractor),
+    };
+    const upload = await uploadCv(deps, actor, rawForm(buildFlateBombPdf(160)));
+    expect(await processCvParse(deps, upload.cvUploadId, fresh)).toBe('FAILED');
+    expect(extract).toHaveBeenCalledOnce();
+    await expect(extract.mock.results[0]!.value).rejects.toMatchObject({
+      code: 'CV_PDF_UNREADABLE',
+    });
+    expect(raw).not.toHaveBeenCalled();
+    expect(redacted).not.toHaveBeenCalled();
+  });
 });

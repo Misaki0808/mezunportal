@@ -52,11 +52,12 @@ function namePattern(part: string): RegExp {
 
 /** Ad yalnız sunucudan gelir; eksikse çağıran sağlayıcıyı çalıştırmamalıdır. */
 export function redactCvText(text: string, ownerName: string): string {
+  if (text.length > 200_000 || ownerName.length > 256) throw new Error('CV_REDACTION_LIMIT');
   const parts = normalizeText(ownerName)
     .trim()
     .split(/[\s-]+/u)
     .filter(Boolean);
-  if (!parts.length) throw new Error('CV_OWNER_NAME_REQUIRED');
+  if (!parts.length || parts.length > 20) throw new Error('CV_OWNER_NAME_REQUIRED');
   let result = normalizeText(text);
   // Önce uzun, tekil kalıplar: telefonları veya URL'leri parçalamadan gizle.
   result = result.replace(
@@ -100,7 +101,7 @@ export function redactCvText(text: string, ownerName: string): string {
     isTurkishIdentityNumber(value.replace(/[ \t]/g, '')) ? marker.identity : value,
   );
   result = result.replace(
-    /(?:https?:\/\/|www\.)[^\s<>]+|\b(?:linkedin\.com|github\.com)\/[^\s<>]+/giu,
+    /(?:https?:\/\/|www\.)[^\s<>]+|(?<![\p{L}\p{N}@])(?:[\p{L}\p{N}-]+\.)+[\p{L}]{2,}\/[^\s<>]*/giu,
     marker.url,
   );
   result = result.replace(

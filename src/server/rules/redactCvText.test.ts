@@ -19,6 +19,7 @@ describe('CV kişisel veri maskeleme', () => {
     ['www.example.org', '[BAĞLANTI]'],
     ['linkedin.com/in/example', '[BAĞLANTI]'],
     ['github.com/example', '[BAĞLANTI]'],
+    ['portfolio.example.com/example', '[BAĞLANTI]'],
     ['@kullanici_adi', '[BAĞLANTI]'],
     ['10000000146', '[KİMLİK]'],
     ['100 000 001 46', '[KİMLİK]'],
@@ -46,6 +47,7 @@ describe('CV kişisel veri maskeleme', () => {
     'Veri Analisti',
     'Marmara Üniversitesi',
     'TypeScript',
+    'Node.js',
     'Deneyim: 2020-2023',
     '10000000147',
     'İSTANBUL',
@@ -65,5 +67,9 @@ describe('CV kişisel veri maskeleme', () => {
     expect(isTurkishIdentityNumber('10000000146')).toBe(true);
     expect(isTurkishIdentityNumber('10000000147')).toBe(false);
     expect(() => redactCvText('SQL', '  ')).toThrow('CV_OWNER_NAME_REQUIRED');
+    expect(() => redactCvText('SQL', Array(21).fill('Ali').join(' '))).toThrow(
+      'CV_OWNER_NAME_REQUIRED',
+    );
+    expect(() => redactCvText('x'.repeat(200_001), 'Ali')).toThrow('CV_REDACTION_LIMIT');
   });
 });
