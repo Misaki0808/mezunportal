@@ -1,4 +1,7 @@
 import { randomUUID } from 'node:crypto';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@/generated/prisma/client';
+import { listJobPostingReports } from './job-posting-moderation';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -921,4 +924,108 @@ it('geniş fakülte kapsamında hikâye sayacı bölüm başına sorgu veya JOIN
   const result = await getAdminOverview(deps, manager);
   expect(result.departments).toHaveLength(130);
   expect(result.counts.pendingAlumniStories).toBe(1);
+});
+
+it('ilan şikâyeti sayacı iki yöneticide listeyle aynı hedef kapsamındadır; yabancı ekleme sayıyı değiştirmez', async () => {
+  const scoped = await createInstitution(db);
+  const a = await adminOf('DEPARTMENT', scoped.deptA1, { departmentId: scoped.deptA1 });
+  const b = await adminOf('DEPARTMENT', scoped.deptB1, { departmentId: scoped.deptB1 });
+  const author = await person({ departmentId: scoped.deptB1, role: 'ALUMNI' });
+  async function posting(targets: string[], count: number) {
+    return db.jobPosting.create({
+      data: {
+        authorId: author,
+        departmentIdAtWrite: scoped.deptB1,
+        title: `Kapsam ${tag()}`,
+        targets: { create: targets.map((departmentId) => ({ departmentId })) },
+        reports: { create: Array.from({ length: count }, () => ({ reason: 'Örnek şikâyet' })) },
+      },
+    });
+  }
+  const own = await posting([scoped.deptA1], 2);
+  const foreign = await posting([scoped.deptB1], 3);
+  await posting([scoped.deptA1, scoped.deptB1], 1);
+  await posting([], 1);
+  await db.jobPostingReport.create({
+    data: {
+      postingId: own.id,
+      reason: 'Sonuçlanmış şikâyet',
+      status: 'DISMISSED',
+      reviewedById: a,
+      reviewedAt: new Date(),
+      resolutionNote: 'Örnek karar',
+    },
+  });
+  for (const departmentId of [scoped.deptA1, scoped.deptB1]) {
+    await db.experience.create({
+      data: {
+        authorId: author,
+        departmentIdAtWrite: departmentId,
+        type: 'INTERNSHIP',
+        reports: { create: { reason: 'Deneyim şikâyeti' } },
+      },
+    });
+  }
+  for (const [adminId, total] of [
+    [a, 4],
+    [b, 5],
+  ] as const) {
+    const jobs = await listJobPostingReports(deps, adminId, {});
+    const experiences = await listAdminReports(deps, adminId, {});
+    const overview = await getAdminOverview(deps, adminId);
+    expect(overview.counts.openReports).toBe(total);
+    expect(overview.counts.openReports).toBe(jobs.items.length + experiences.items.length);
+  }
+  await db.jobPostingReport.createMany({
+    data: [0, 1].map(() => ({ postingId: foreign.id, reason: 'Yabancı bölüm şikâyeti' })),
+  });
+  expect((await getAdminOverview(deps, a)).counts.openReports).toBe(4);
+  expect((await getAdminOverview(deps, b)).counts.openReports).toBe(7);
+  const page = await listJobPostingReports(deps, a, {});
+  expect(page.items.some((row) => row.postingId === foreign.id)).toBe(false);
+  expect((await listJobPostingReports(deps, a, { departmentId: scoped.deptB1 })).items).toEqual([]);
+});
+
+it('130 bölümde ilan şikâyeti sayacı sabit sorgu/JOIN sayısıyla ve hedef başına çoğaltmadan çalışır', async () => {
+  const scoped = await createInstitution(db);
+  const manager = await adminOf('FACULTY', scoped.deptA1, { facultyId: scoped.facultyA });
+  const extra = Array.from({ length: 128 }, (_, i) => ({
+    id: randomUUID(),
+    facultyId: scoped.facultyA,
+    name: `Sayaç hedefi ${i}`,
+    code: `T${i}`,
+  }));
+  await db.department.createMany({ data: extra });
+  const author = await person({ departmentId: scoped.deptB1, role: 'ALUMNI' });
+  await db.jobPosting.create({
+    data: {
+      authorId: author,
+      departmentIdAtWrite: scoped.deptB1,
+      title: 'Ortak kapsam ilanı',
+      targets: {
+        create: [scoped.deptA1, scoped.deptA2, ...extra.map((x) => x.id)].map((departmentId) => ({
+          departmentId,
+        })),
+      },
+      reports: { create: [{ reason: 'İlk şikâyet' }, { reason: 'İkinci şikâyet' }] },
+    },
+  });
+  const measured = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL_TEST! }),
+    log: [{ emit: 'event', level: 'query' }],
+  });
+  const queries: string[] = [];
+  measured.$on('query', (event) => {
+    if (event.query.includes('"JobPostingReport"')) queries.push(event.query);
+  });
+  try {
+    const overview = await getAdminOverview({ db: measured }, manager);
+    expect(overview.departments).toHaveLength(130);
+    expect(overview.counts.openReports).toBe(2);
+    expect(queries).toHaveLength(1);
+    expect(queries[0]!.length).toBeLessThan(5000);
+    expect(queries[0]!.match(/\bJOIN\b/gi)?.length ?? 0).toBeLessThanOrEqual(4);
+  } finally {
+    await measured.$disconnect();
+  }
 });

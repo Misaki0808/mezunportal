@@ -10,10 +10,19 @@ import { safeClientAction } from '@/lib/safe-client-action';
 import { listJobPostingReports, resolveJobPostingReport } from '@/server/actions/job-postings';
 import { Button, EmptyState, Field, Modal, Textarea, buttonClasses } from '@/components/ui';
 
-export function JobPostingReports({ initial }: { initial: JobPostingReportPage }) {
+export function JobPostingReports({
+  initial,
+  hideEmpty = false,
+  onEmptyChange,
+}: {
+  initial: JobPostingReportPage;
+  hideEmpty?: boolean;
+  onEmptyChange?: (empty: boolean) => void;
+}) {
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
   const admin = useTranslations('admin');
+  const ui = useTranslations('ui');
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
   const [choice, setChoice] = useState<{ id: string; decision: 'DISMISS' | 'TAKE_DOWN' }>();
@@ -54,15 +63,15 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
       setError(result.errorCode);
       return;
     }
-    complete(choice.id);
-    setItems((current) =>
-      current.filter(
-        (item) =>
-          item.id !== choice.id &&
-          (choice.decision !== 'TAKE_DOWN' ||
-            item.postingId !== items.find((row) => row.id === choice.id)?.postingId),
-      ),
+    const remaining = items.filter(
+      (item) =>
+        item.id !== choice.id &&
+        (choice.decision !== 'TAKE_DOWN' ||
+          item.postingId !== items.find((row) => row.id === choice.id)?.postingId),
     );
+    complete(choice.id);
+    onEmptyChange?.(remaining.length === 0 && !cursor);
+    setItems(remaining);
     setChoice(undefined);
     setReason('');
     setNotice(true);
@@ -76,14 +85,17 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
       setError(result.errorCode);
       return;
     }
+    onEmptyChange?.(items.length + result.data.items.length === 0 && !result.data.nextCursor);
     setItems((current) => [...current, ...result.data.items]);
     setCursor(result.data.nextCursor);
   }
   return (
     <div ref={rootRef} className="mt-10 space-y-4">
-      <h2 data-queue-heading className="text-xl font-semibold">
-        {t('reportQueue')}
-      </h2>
+      {!hideEmpty && (
+        <h2 data-queue-heading className="text-xl font-semibold">
+          {t('reportQueue')}
+        </h2>
+      )}
       {notice && <p role="status">{t('reportDecisionDone')}</p>}
       {error && !choice && (
         <p role="alert" className="text-danger">
@@ -91,7 +103,7 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
         </p>
       )}
       {items.length === 0 ? (
-        <EmptyState title={t('reportQueueEmpty')} />
+        !hideEmpty && <EmptyState title={t('reportQueueEmpty')} />
       ) : (
         <ul className="space-y-4">
           {items.map((item) => (
@@ -106,6 +118,10 @@ export function JobPostingReports({ initial }: { initial: JobPostingReportPage }
                 <Link
                   className={buttonClasses({ variant: 'secondary' })}
                   href={`/ilanlar/${item.postingId}`}
+                  aria-label={ui('namedAction', {
+                    action: t('open'),
+                    target: item.postingTitle ?? t('draftEmpty'),
+                  })}
                 >
                   {t('open')}
                 </Link>
