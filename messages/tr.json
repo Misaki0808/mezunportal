@@ -141,6 +141,11 @@
     "tagline": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için staj odaklı kariyer platformu. Mezunların deneyimlerini oku, bir mentorla görüş.",
     "greeting": "Merhaba, {name}",
     "greetingPlain": "Merhaba",
+    "subtitle": {
+      "STUDENT": "Staj yolculuğunda bugün ne yapmak istersin?",
+      "MENTOR": "Öğrencilere bugün nasıl destek olmak istersin?"
+    },
+    "pendingCount": "Seni bekleyen {count} iş var.",
     "pendingTitle": "Bekleyen işlerin",
     "pendingNone": "Şu an bekleyen bir işin yok.",
     "pending": {
@@ -187,9 +192,7 @@
       "empty": "Henüz sana uyan ilan yok. İlgi alanlarını eklersen uygun ilanlar burada görünür.",
       "profile": "Profilini düzenle"
     },
-    "welcome": "Hoş geldin!",
-    "emptyStudentAction": "Deneyimleri oku",
-    "emptyMentorAction": "Deneyimini paylaş"
+    "welcome": "Hoş geldin!"
   },
   "errors": {
     "codes": {
@@ -412,6 +415,7 @@
     "eyebrow": "MENTORLAR",
     "title": "Mentor bul",
     "description": "Mezun, akademisyen ve üst sınıf mentorlar burada. Müsait olanları süzüp randevu ya da iletişim isteyebilirsin.",
+    "resultsHeading": "Mentorlar",
     "filters": {
       "mentorTypes": "Mentor türü",
       "sector": "Sektör",
@@ -1245,7 +1249,8 @@
     },
     "detail": {
       "eyebrow": "DENEYİM",
-      "back": "Geri",
+      "backList": "Deneyimlere dön",
+      "backMine": "Deneyimlerim",
       "anonymousAuthor": "Anonim paylaşıldı",
       "by": "Yazan: {name}",
       "published": "Yayınlanma: {date}",

@@ -75,6 +75,18 @@ export default async function HomePage() {
     summary?.ok && summary.data.role === 'STUDENT'
       ? await getSuggestedJobs().catch(() => null)
       : null;
+  const onboardingBanner = showOnboarding ? (
+    <Link
+      href="/baslangic"
+      className="press-row flex min-h-20 flex-col gap-2 rounded-card border border-primary bg-primary-soft p-5 text-on-primary-soft"
+    >
+      <span className="text-lg font-semibold">{auth('onboardingTitle')}</span>
+      <span className="text-base">{auth('onboardingDescription')}</span>
+      <span className="text-base font-semibold underline underline-offset-4">
+        {auth('onboardingAction')}
+      </span>
+    </Link>
+  ) : null;
   return (
     <div
       className={`mx-auto flex max-w-2xl flex-col gap-6 px-5 py-10 sm:py-12 ${!actor ? 'min-h-[calc(100dvh-8rem)]' : ''}`}
@@ -100,20 +112,9 @@ export default async function HomePage() {
           </span>
         </Link>
       )}
-      {showOnboarding && (
-        <Link
-          href="/baslangic"
-          className="press-row flex min-h-20 flex-col gap-2 rounded-card border border-primary bg-primary-soft p-5 text-on-primary-soft"
-        >
-          <span className="text-lg font-semibold">{auth('onboardingTitle')}</span>
-          <span className="text-base">{auth('onboardingDescription')}</span>
-          <span className="text-base font-semibold underline underline-offset-4">
-            {auth('onboardingAction')}
-          </span>
-        </Link>
-      )}
+      {!summary?.ok && onboardingBanner}
       {summary?.ok ? (
-        <HomeDashboard summary={summary.data} feature={feature} />
+        <HomeDashboard summary={summary.data} feature={feature} notice={onboardingBanner} />
       ) : (
         <>
           {!needsVerification && <h1 className="text-3xl font-semibold">{t('title')}</h1>}

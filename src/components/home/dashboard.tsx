@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 
 import {
   BriefcaseIcon,
+  CheckIcon,
   ClipboardCheckIcon,
   FileTextIcon,
   IconChip,
@@ -49,17 +50,34 @@ const PENDING_LINKS = [
 /** Kısayol çipleri sırayla İris, Mercan, Nane (renk dağılımı; anlam taşımaz). */
 const CHIP_TONES = ['primary', 'accent', 'success', 'primary'] as const;
 
-export function HomeDashboard({ summary, feature }: { summary: HomeSummary; feature?: ReactNode }) {
+export function HomeDashboard({
+  summary,
+  feature,
+  notice,
+}: {
+  summary: HomeSummary;
+  feature?: ReactNode;
+  /** Karşılamadan SONRA gelen sıradaki-adım kutusu (örn. "Profilini tamamla"); karşılamanın önüne geçmez. */
+  notice?: ReactNode;
+}) {
   const t = useTranslations('home');
   const pending = PENDING_LINKS.map((item) => ({
     ...item,
     count: summary.pending[item.key],
   })).filter((item) => item.count > 0);
+  const total = pending.reduce((sum, item) => sum + item.count, 0);
   return (
     <>
-      <h1 className="text-3xl font-semibold tracking-tight">
-        {summary.firstName ? t('greeting', { name: summary.firstName }) : t('greetingPlain')}
-      </h1>
+      <header className="flex flex-col gap-1">
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {summary.firstName ? t('greeting', { name: summary.firstName }) : t('greetingPlain')}
+        </h1>
+        <p className="text-base text-fg-muted">
+          {total > 0 ? t('pendingCount', { count: total }) : t(`subtitle.${summary.role}`)}
+        </p>
+      </header>
+
+      {notice}
 
       {feature}
 
@@ -68,15 +86,13 @@ export function HomeDashboard({ summary, feature }: { summary: HomeSummary; feat
           {t('pendingTitle')}
         </h2>
         {pending.length === 0 ? (
-          <div className="flex flex-col items-start gap-2">
-            <p className="text-base text-fg-muted">{t('pendingNone')}</p>
-            <Link
-              className="press-row inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-4"
-              href={summary.role === 'STUDENT' ? '/deneyimler' : '/deneyim/yeni'}
-            >
-              {t(summary.role === 'STUDENT' ? 'emptyStudentAction' : 'emptyMentorAction')}
-            </Link>
-          </div>
+          // Boşken yer kaplamaz: tek satırlık sakin bir onay; asıl eylemler hemen altındaki kısayollardır.
+          <p className="flex items-center gap-3 rounded-card border border-border bg-surface p-3 text-base text-fg">
+            <IconChip tone="success">
+              <CheckIcon />
+            </IconChip>
+            {t('pendingNone')}
+          </p>
         ) : (
           <ul className="flex flex-col gap-2">
             {pending.map((item) => (
