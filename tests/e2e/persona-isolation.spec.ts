@@ -13,6 +13,7 @@ test.describe.configure({ mode: 'parallel' });
 for (const label of ['a', 'b']) {
   test(`eşzamanlı ${label}: aynı seed rolünün verisi diğer işçiden ayrıdır`, async ({
     page,
+    baseURL,
   }, info) => {
     test.setTimeout(120_000);
     test.skip(info.config.workers < 2, 'Bu yarış testi iki işçi gerektirir.');
@@ -40,6 +41,7 @@ for (const label of ['a', 'b']) {
         .toBe('hazır');
       expect((await db.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe(name);
       await loginAs(page, 'student');
+      expect(new URL(page.url()).origin).toBe(new URL(baseURL!).origin);
       await expect(page.getByRole('heading', { name: 'Hesabın' })).toBeVisible();
       expect((await db.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe(name);
     } finally {
