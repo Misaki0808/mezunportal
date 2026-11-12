@@ -21,14 +21,14 @@ const reply = (unread: unknown, ok = true) =>
 
 describe('NotificationBell: ad ve rozet', () => {
   it('okunmamış yokken rozet yok, ad yalnız "Bildirimler"; bildirim kutusuna bağlanır', () => {
-    renderUi(<NotificationBell initial={0} layout="header" />);
+    renderUi(<NotificationBell initial={0} layout="header" refreshEnabled />);
     const link = screen.getByRole('link', { name: 'Bildirimler' });
     expect(link).toHaveAttribute('href', '/bildirimler');
     expect(screen.queryByTestId('bell-badge')).toBeNull();
   });
 
   it('okunmamış sayısı erişilebilir adda yazılır; görsel rozet ekran okuyucudan gizlidir', () => {
-    renderUi(<NotificationBell initial={3} layout="header" />);
+    renderUi(<NotificationBell initial={3} layout="header" refreshEnabled />);
     expect(screen.getByRole('link', { name: 'Bildirimler, 3 okunmamış' })).toBeVisible();
     const badge = screen.getByTestId('bell-badge');
     expect(badge).toHaveTextContent('3');
@@ -36,13 +36,13 @@ describe('NotificationBell: ad ve rozet', () => {
   });
 
   it('üst sınırda "99+" gösterilir ve ad bunu söyler', () => {
-    renderUi(<NotificationBell initial={100} layout="header" />);
+    renderUi(<NotificationBell initial={100} layout="header" refreshEnabled />);
     expect(screen.getByRole('link', { name: 'Bildirimler, 99’dan fazla okunmamış' })).toBeVisible();
     expect(screen.getByTestId('bell-badge')).toHaveTextContent('99+');
   });
 
   it('yan menü düzeninde metin ve rozet birlikte görünür', () => {
-    renderUi(<NotificationBell initial={5} layout="side" />);
+    renderUi(<NotificationBell initial={5} layout="side" refreshEnabled />);
     expect(screen.getByRole('link', { name: 'Bildirimler, 5 okunmamış' })).toHaveTextContent(
       'Bildirimler',
     );
@@ -51,7 +51,7 @@ describe('NotificationBell: ad ve rozet', () => {
 
   it('bildirim sayfasındayken geçerli sayfa işaretlenir', () => {
     navigation.pathname = '/bildirimler';
-    renderUi(<NotificationBell initial={0} layout="side" />);
+    renderUi(<NotificationBell initial={0} layout="side" refreshEnabled />);
     expect(screen.getByRole('link', { name: 'Bildirimler' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -61,13 +61,13 @@ describe('NotificationBell: ad ve rozet', () => {
 
 describe('NotificationBell: sayı tazeleme', () => {
   it('ilk çizimde istek atmaz (sayı sunucudan gelir)', () => {
-    renderUi(<NotificationBell initial={2} layout="header" />);
+    renderUi(<NotificationBell initial={2} layout="header" refreshEnabled />);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('kutuda okundu işaretlenince sayıyı küçük bir GET ile yeniden okur ve rozeti günceller', async () => {
     reply(0);
-    renderUi(<NotificationBell initial={4} layout="header" />);
+    renderUi(<NotificationBell initial={4} layout="header" refreshEnabled />);
     expect(screen.getByTestId('bell-badge')).toHaveTextContent('4');
     act(() => void window.dispatchEvent(new Event(INBOX_CHANGED_EVENT)));
     await waitFor(() => expect(screen.queryByTestId('bell-badge')).toBeNull());
@@ -82,13 +82,13 @@ describe('NotificationBell: sayı tazeleme', () => {
 
   it('pencere odağa dönünce yenilenir', async () => {
     reply(7);
-    renderUi(<NotificationBell initial={1} layout="header" />);
+    renderUi(<NotificationBell initial={1} layout="header" refreshEnabled />);
     act(() => void window.dispatchEvent(new Event('focus')));
     await waitFor(() => expect(screen.getByTestId('bell-badge')).toHaveTextContent('7'));
   });
 
   it('sunucu hatası, ağ hatası ya da bozuk yanıt rozeti bozmaz', async () => {
-    renderUi(<NotificationBell initial={2} layout="header" />);
+    renderUi(<NotificationBell initial={2} layout="header" refreshEnabled />);
     for (const setup of [
       () => reply(0, false),
       () => fetchMock.mockRejectedValue(new Error('ağ yok')),
@@ -105,10 +105,31 @@ describe('NotificationBell: sayı tazeleme', () => {
 
   it('sunucu yeni sayı verince (yeni düzen çizimi) getirilen eski değer atılır', async () => {
     reply(9);
-    const { rerender } = renderUi(<NotificationBell initial={1} layout="header" />);
+    const { rerender } = renderUi(<NotificationBell initial={1} layout="header" refreshEnabled />);
     act(() => void window.dispatchEvent(new Event(INBOX_CHANGED_EVENT)));
     await waitFor(() => expect(screen.getByTestId('bell-badge')).toHaveTextContent('9'));
-    rerender(<NotificationBell initial={2} layout="header" />);
+    rerender(<NotificationBell initial={2} layout="header" refreshEnabled />);
     await waitFor(() => expect(screen.getByTestId('bell-badge')).toHaveTextContent('2'));
   });
+});
+
+it('rıza kapısında odak, görünürlük ve gezinme bildirim isteği başlatmaz; rıza sonrası yeniler', async () => {
+  reply(3);
+  navigation.pathname = '/onay';
+  const { rerender } = renderUi(
+    <NotificationBell initial={7} layout="header" refreshEnabled={false} />,
+  );
+  expect(screen.queryByTestId('bell-badge')).toBeNull();
+  act(() => {
+    window.dispatchEvent(new Event('focus'));
+    window.dispatchEvent(new Event(INBOX_CHANGED_EVENT));
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  navigation.pathname = '/hesap/gizlilik';
+  rerender(<NotificationBell initial={7} layout="header" refreshEnabled={false} />);
+  expect(fetchMock).not.toHaveBeenCalled();
+  rerender(<NotificationBell initial={0} layout="header" refreshEnabled />);
+  act(() => window.dispatchEvent(new Event('focus')));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(screen.getByTestId('bell-badge')).toHaveTextContent('3'));
 });
