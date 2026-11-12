@@ -9,17 +9,19 @@ function Queue({
   delayed = false,
   blocked = false,
   alternate = false,
+  headingTabIndex,
 }: {
   ids?: string[];
   delayed?: boolean;
   blocked?: boolean;
   alternate?: boolean;
+  headingTabIndex?: number;
 }) {
   const [rows, setRows] = useState(ids);
   const { rootRef, complete } = useQueueFocus();
   return (
     <div ref={rootRef}>
-      <h1>Kuyruk</h1>
+      <h1 tabIndex={headingTabIndex}>Kuyruk</h1>
       {rows.map((id) => (
         <div data-queue-row={id} key={id}>
           <button
@@ -74,4 +76,31 @@ it('sıradaki kaydın kullanılabilir eylemi yoksa odağı gövdede bırakmaz', 
   const { user } = renderUi(<Queue blocked />);
   await user.click(screen.getByRole('button', { name: 'first' }));
   expect(screen.getByRole('heading', { name: 'Kuyruk' })).toHaveFocus();
+});
+
+it('geçici başlık tabindex değeri blur sonrası kaldırılır', async () => {
+  const { user } = renderUi(<Queue ids={['first']} />);
+  await user.click(screen.getByRole('button', { name: 'first' }));
+  const heading = screen.getByRole('heading', { name: 'Kuyruk' });
+  expect(heading).toHaveFocus();
+  expect(heading).toHaveAttribute('tabindex', '-1');
+  heading.blur();
+  expect(heading).not.toHaveAttribute('tabindex');
+});
+
+it('başlığın mevcut tabindex değeri odak ve blur boyunca korunur', async () => {
+  const { user } = renderUi(<Queue ids={['first']} headingTabIndex={0} />);
+  await user.click(screen.getByRole('button', { name: 'first' }));
+  const heading = screen.getByRole('heading', { name: 'Kuyruk' });
+  expect(heading).toHaveFocus();
+  expect(heading).toHaveAttribute('tabindex', '0');
+  heading.blur();
+  expect(heading).toHaveAttribute('tabindex', '0');
+});
+it('blur olmadan bileşen kaldırılırsa geçici tabindex kalmaz', async () => {
+  const { user, unmount } = renderUi(<Queue ids={['first']} />);
+  await user.click(screen.getByRole('button', { name: 'first' }));
+  const heading = screen.getByRole('heading', { name: 'Kuyruk' });
+  unmount();
+  expect(heading).not.toHaveAttribute('tabindex');
 });

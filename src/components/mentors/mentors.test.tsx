@@ -6,6 +6,7 @@ import type { MentorCard as MentorCardData, MentorPage } from '@/contracts/mento
 import { renderUi } from '@/test/render';
 
 import { MentorCard } from './mentor-card';
+import { MentorAvailabilityBadge } from './mentor-availability-badge';
 import { MentorDirectory } from './mentor-directory';
 import { MentorEntryPoints } from './mentor-entry-points';
 import { SimilarMentors } from './similar-mentors';
@@ -56,6 +57,38 @@ const page = (items: MentorCardData[], total = items.length): MentorPage => ({
   hasMore: false,
 });
 const sectors = [{ id: 's1', name: 'Yazılım' }];
+
+describe('ortak müsaitlik rozeti', () => {
+  it.each<{ availability: MentorCardData['availability']; label: string; tone: string }>([
+    {
+      availability: { available: true, reason: null, pausedUntil: null },
+      label: 'Müsait',
+      tone: 'bg-success-soft',
+    },
+    {
+      availability: {
+        available: false,
+        reason: 'PAUSED',
+        pausedUntil: new Date('2033-01-05T09:00:00Z'),
+      },
+      label: 'Ara verdi · 5 Ocak 2033 tarihine kadar',
+      tone: 'bg-warning-soft',
+    },
+    {
+      availability: { available: false, reason: 'PAUSED', pausedUntil: null },
+      label: 'Ara verdi',
+      tone: 'bg-warning-soft',
+    },
+    {
+      availability: { available: false, reason: 'CAPACITY_FULL', pausedUntil: null },
+      label: 'Bu ay dolu',
+      tone: 'bg-warning-soft',
+    },
+  ])('$label: dizin ve profil için aynı metin ve durum rengi', ({ availability, label, tone }) => {
+    renderUi(<MentorAvailabilityBadge availability={availability} />);
+    expect(screen.getByText(label)).toHaveClass(tone);
+  });
+});
 
 describe('mentor kartı', () => {
   it('dizinden açılan "İletişim iste" kaynağa dönüş yolunu taşır; güvensiz yol eklenmez', () => {

@@ -267,6 +267,8 @@ export const mentorEntryPointsSchema = z
     appointment: entryPointSchema,
     cvReview: entryPointSchema,
     contact: entryPointSchema,
+    /** Görünür mentorun dizin kartında da gösterilen kamusal müsaitliği. */
+    availability: mentorAvailabilitySchema.optional(),
   })
   .strict();
 export type MentorEntryPoints = z.infer<typeof mentorEntryPointsSchema>;
