@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { ExperienceDetail } from '@/contracts/experience';
-import { renderUi } from '@/test/render';
+import { renderUi, renderWithToasts } from '@/test/render';
 
 import { ModerationQueue } from './moderation-queue';
 import { MyExperiences } from './my-experiences';
@@ -152,9 +152,30 @@ describe('moderasyon kuyruğu', () => {
 });
 
 describe('şikâyet alt sayfası', () => {
+  it('çift gönderim tek istektir; ağ hatasında gerekçe korunur', async () => {
+    const gate = Promise.withResolvers<never>();
+    const report = vi.fn(() => gate.promise);
+    const { user } = renderWithToasts(<ReportExperience experienceId="e1" report={report} />);
+    await user.click(screen.getByRole('button', { name: 'Bu deneyimi şikâyet et' }));
+    const dialog = screen.getByRole('dialog');
+    const reason = within(dialog).getByLabelText(/Neden şikâyet/);
+    await user.type(reason, 'Korunan gerekçe');
+    const button = within(dialog).getByRole('button', { name: 'Şikâyeti gönder' });
+    act(() => {
+      button.click();
+      button.click();
+    });
+    expect(report).toHaveBeenCalledTimes(1);
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    await act(async () => gate.reject(new Error('ağ')));
+    expect(reason).toHaveValue('Korunan gerekçe');
+    expect(within(dialog).getByText(/Beklenmeyen bir sorun/)).toBeVisible();
+  });
   it('kısa gerekçeyi göndermez; geçerli gerekçeyle gönderir ve teşekkür eder', async () => {
     const report = vi.fn().mockResolvedValue({ ok: true, data: { reportId: 'r', status: 'OPEN' } });
-    const { user } = renderUi(<ReportExperience experienceId="e1" report={report as never} />);
+    const { user } = renderWithToasts(
+      <ReportExperience experienceId="e1" report={report as never} />,
+    );
     await user.click(screen.getByRole('button', { name: 'Bu deneyimi şikâyet et' }));
     const dialog = screen.getByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: 'Şikâyeti gönder' }));
@@ -165,12 +186,16 @@ describe('şikâyet alt sayfası', () => {
     await user.type(within(dialog).getByLabelText(/Neden şikâyet/), 'Yanıltıcı bilgi');
     await user.click(within(dialog).getByRole('button', { name: 'Şikâyeti gönder' }));
     expect(report).toHaveBeenCalledWith({ experienceId: 'e1', reason: 'Yanıltıcı bilgi' });
-    expect(await screen.findByText('Şikâyetin alındı. Teşekkürler.')).toBeInTheDocument();
+    expect((await screen.findAllByText('Şikâyetin alındı. Teşekkürler.')).length).toBeGreaterThan(
+      0,
+    );
   });
 
   it('hız sınırı ve zaten açık şikâyet kodları ham koda dönmeden gösterilir', async () => {
     const report = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
-    const { user } = renderUi(<ReportExperience experienceId="e1" report={report as never} />);
+    const { user } = renderWithToasts(
+      <ReportExperience experienceId="e1" report={report as never} />,
+    );
     await user.click(screen.getByRole('button', { name: 'Bu deneyimi şikâyet et' }));
     const dialog = screen.getByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Neden şikâyet/), 'Yanıltıcı bilgi');

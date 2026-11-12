@@ -16,6 +16,7 @@ import {
   RadioGroup,
   Textarea,
   buttonClasses,
+  useAction,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
@@ -47,9 +48,9 @@ export function SlotPicker({ list, request }: Props) {
   const [note, setNote] = useState('');
   const [error, setError] = useState<ErrorCode>();
   const [needSlot, setNeedSlot] = useState(false);
-  const [pending, setPending] = useState(false);
+  const action = useAction();
+  const pending = action.busy;
   const [done, setDone] = useState(false);
-  const locked = useRef(false);
   const doneRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     if (done) doneRef.current?.focus();
@@ -62,7 +63,6 @@ export function SlotPicker({ list, request }: Props) {
     mode && modes.includes(mode as 'ONLINE') ? mode : modes.length === 1 ? modes[0] : undefined;
 
   async function submit() {
-    if (locked.current) return;
     if (!slot) {
       setNeedSlot(true);
       return;
@@ -78,16 +78,14 @@ export function SlotPicker({ list, request }: Props) {
       setError('VALIDATION_INVALID');
       return;
     }
-    locked.current = true;
-    setPending(true);
     setError(undefined);
     setNeedSlot(false);
-    try {
-      const result = await request(input as RequestAppointmentInput);
-      if (result.ok) setDone(true);
-      else {
-        setError(result.errorCode);
-        if (['APPOINTMENT_SLOT_TAKEN', 'APPOINTMENT_SLOT_INVALID'].includes(result.errorCode)) {
+    await action.run(() => request(parsed.data), {
+      success: t('sent'),
+      onOk: () => setDone(true),
+      onFailure: (failure) => {
+        setError(failure.errorCode);
+        if (['APPOINTMENT_SLOT_TAKEN', 'APPOINTMENT_SLOT_INVALID'].includes(failure.errorCode)) {
           setRejected((current) => ({
             source: list.slots,
             startsAt: [
@@ -99,13 +97,8 @@ export function SlotPicker({ list, request }: Props) {
           setMode(undefined);
           router.refresh();
         }
-      }
-    } catch {
-      setError('SERVER_UNEXPECTED');
-    } finally {
-      locked.current = false;
-      setPending(false);
-    }
+      },
+    });
   }
 
   const header = (

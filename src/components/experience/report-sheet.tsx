@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import {
   reportExperienceSchema,
@@ -9,7 +9,7 @@ import {
   type ReportExperienceOutput,
 } from '@/contracts/experience';
 import type { ActionResult } from '@/contracts/result';
-import { Button, Field, Sheet, Textarea } from '@/components/ui';
+import { Button, Field, Sheet, Textarea, useAction } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 type Props = {
@@ -26,8 +26,8 @@ export function ReportExperience({ experienceId, report }: Props) {
   const [reasonInvalid, setReasonInvalid] = useState(false);
   const [error, setError] = useState<ErrorCode>();
   const [sent, setSent] = useState(false);
-  const [pending, setPending] = useState(false);
-  const locked = useRef(false);
+  const action = useAction();
+  const pending = action.busy;
 
   function close() {
     if (pending) return;
@@ -37,29 +37,22 @@ export function ReportExperience({ experienceId, report }: Props) {
   }
 
   async function submit() {
-    if (locked.current) return;
     const parsed = reportExperienceSchema.safeParse({ experienceId, reason });
     if (!parsed.success) {
       setReasonInvalid(true);
       return;
     }
-    locked.current = true;
-    setPending(true);
     setReasonInvalid(false);
     setError(undefined);
-    try {
-      const result = await report(parsed.data);
-      if (result.ok) {
+    await action.run(() => report(parsed.data), {
+      success: t('sent'),
+      onOk: () => {
         setSent(true);
         setOpen(false);
         setReason('');
-      } else setError(result.errorCode);
-    } catch {
-      setError('SERVER_UNEXPECTED');
-    } finally {
-      locked.current = false;
-      setPending(false);
-    }
+      },
+      onFailure: (failure) => setError(failure.errorCode),
+    });
   }
 
   return (

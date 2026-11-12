@@ -1,12 +1,12 @@
 'use client';
 import Link from 'next/link';
 import { useHydrated } from '@/hooks/use-hydrated';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { CONTACT_FIELDS, type ContactField } from '@/contracts/privacy';
 import { CONTACT_MESSAGE_MAX, type SendContactRequestOutput } from '@/contracts/contact-request';
 import type { ActionResult } from '@/contracts/result';
-import { Button, Checkbox, Field, Textarea, buttonClasses } from '@/components/ui';
+import { Button, Checkbox, Field, Textarea, buttonClasses, useAction } from '@/components/ui';
 
 /** Yazar kimliği tarayıcıya gönderilmez; sunucu eylemi hedefi ilan kimliğiyle çözer. */
 export function PostingContactForm({
@@ -30,7 +30,8 @@ export function PostingContactForm({
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
-  const [pending, start] = useTransition();
+  const action = useAction();
+  const pending = action.busy;
   if (sent)
     return (
       <div className="space-y-5 rounded-card border border-border bg-surface p-5">
@@ -51,15 +52,10 @@ export function PostingContactForm({
           setError(t('fieldError'));
           return;
         }
-        start(async () => {
-          const result = await send({ jobPostingId: postingId, fields, message }).catch(
-            () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
-          );
-          if (!result.ok) {
-            setError(errors(result.errorCode));
-            return;
-          }
-          setSent(true);
+        void action.run(() => send({ jobPostingId: postingId, fields, message }), {
+          success: t('sent'),
+          onOk: () => setSent(true),
+          onFailure: (failure) => setError(errors(failure.errorCode)),
         });
       }}
     >

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithToasts } from '@/test/render';
 import { NotificationPreferencesForm } from './preferences-form';
@@ -11,6 +11,23 @@ describe('bildirim tercih ekranı', () => {
       { type: 'CONTACT_REQUEST' as const, enabled: true, mandatory: false },
     ],
   };
+  it('çift gönderim tek istektir ve ağ hatasında tercih korunur', async () => {
+    const gate = Promise.withResolvers<{ ok: true; data: typeof initial }>();
+    const save = vi.fn(() => gate.promise);
+    const { user } = renderWithToasts(
+      <NotificationPreferencesForm initial={initial} save={save} />,
+    );
+    const toggle = screen.getByRole('switch', { name: /İletişim talepleri/ });
+    await user.click(toggle);
+    const button = screen.getByRole('button', { name: 'Tercihleri kaydet' });
+    fireEvent.submit(button.closest('form')!);
+    fireEvent.submit(button.closest('form')!);
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    await act(async () => gate.reject(new Error('ağ')));
+    expect(toggle).not.toBeChecked();
+    expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
+  });
   it('güvenlik bildirimi kapatılamaz ve nedeni görünür', () => {
     renderWithToasts(<NotificationPreferencesForm initial={initial} save={vi.fn()} />);
     expect(screen.getByRole('switch', { name: /Hesap ve güvenlik/ })).toBeDisabled();
