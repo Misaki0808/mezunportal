@@ -35,6 +35,8 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
   const [error, setError] = useState<ErrorCode>();
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState(false);
+  const [jobsEmpty, setJobsEmpty] = useState(!jobReports?.items.length && !jobReports?.nextCursor);
+  const allEmpty = items.length === 0 && !cursor && jobsEmpty;
   function close() {
     if (pending) return;
     setChoice(undefined);
@@ -101,58 +103,67 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
           {errors(error)}
         </p>
       )}
-      {items.length === 0 ? (
-        <EmptyState title={t('empty')} description={t('emptyDescription')} />
+      {allEmpty ? (
+        <EmptyState title={t('report.emptyAll')} />
       ) : (
-        <ResponsiveRows
-          headers={[t('name'), t('report.reason'), t('created'), t('actions')]}
-          rows={items.map((item) => ({
-            id: item.id,
-            cells: [
-              <div key="target">
-                <p>{item.target.organizationName ?? item.target.departmentName}</p>
-                <p className="text-fg-muted">
-                  {item.target.departmentName} ·{' '}
-                  {t('report.count', { count: item.target.openReportCount })}
-                </p>
-              </div>,
-              <p key="reason" className="whitespace-pre-line">
-                {item.reason}
-              </p>,
-              new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium' }).format(
-                new Date(item.createdAt),
-              ),
-              <div key="actions" className="flex flex-wrap gap-2">
-                <Link
-                  href={`/deneyim/${item.target.id}`}
-                  className={buttonClasses({ variant: 'secondary' })}
-                >
-                  {t('report.target')}
-                </Link>
-                <Button
-                  variant="secondary"
-                  onClick={() => setChoice({ id: item.id, decision: 'RESOLVED' })}
-                >
-                  {t('report.resolve')}
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="border-danger text-danger"
-                  onClick={() => setChoice({ id: item.id, decision: 'DISMISSED' })}
-                >
-                  {t('report.dismiss')}
-                </Button>
-              </div>,
-            ],
-          }))}
-        />
+        <>
+          <h2 className="mb-4 text-xl font-semibold">{t('report.experiences')}</h2>
+          {items.length === 0 ? (
+            <EmptyState title={t('report.emptyExperiences')} />
+          ) : (
+            <ResponsiveRows
+              headers={[t('name'), t('report.reason'), t('created'), t('actions')]}
+              rows={items.map((item) => ({
+                id: item.id,
+                cells: [
+                  <div key="target">
+                    <p>{item.target.organizationName ?? item.target.departmentName}</p>
+                    <p className="text-fg-muted">
+                      {item.target.departmentName} ·{' '}
+                      {t('report.count', { count: item.target.openReportCount })}
+                    </p>
+                  </div>,
+                  <p key="reason" className="whitespace-pre-line">
+                    {item.reason}
+                  </p>,
+                  new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium' }).format(
+                    new Date(item.createdAt),
+                  ),
+                  <div key="actions" className="flex flex-wrap gap-2">
+                    <Link
+                      href={`/deneyim/${item.target.id}`}
+                      className={buttonClasses({ variant: 'secondary' })}
+                    >
+                      {t('report.target')}
+                    </Link>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setChoice({ id: item.id, decision: 'RESOLVED' })}
+                    >
+                      {t('report.resolve')}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="border-danger text-danger"
+                      onClick={() => setChoice({ id: item.id, decision: 'DISMISSED' })}
+                    >
+                      {t('report.dismiss')}
+                    </Button>
+                  </div>,
+                ],
+              }))}
+            />
+          )}
+        </>
       )}
       {cursor && (
         <Button className="mt-5" variant="secondary" loading={pending} onClick={() => void more()}>
           {t('more')}
         </Button>
       )}
-      {jobReports && <JobPostingReports initial={jobReports} />}
+      {jobReports && (
+        <JobPostingReports initial={jobReports} hideEmpty={allEmpty} onEmptyChange={setJobsEmpty} />
+      )}
       <Modal
         open={choice !== undefined}
         onClose={close}
