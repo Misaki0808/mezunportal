@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, fireEvent, screen, within } from '@testing-library/react';
+import Link from 'next/link';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type {
@@ -267,6 +268,17 @@ const view: ProfileViewData = {
   lastUpdatedAt: null,
 };
 
+const position = (over: Partial<ProfileViewData['positions'][number]> = {}) => ({
+  title: 'Stajyer',
+  company: 'Örnek A.Ş.',
+  employmentType: null,
+  startDate: null,
+  endDate: null,
+  isCurrent: false,
+  description: null,
+  ...over,
+});
+
 describe('başkasının profili', () => {
   it('yalnız gelen alanlar çizilir; gizli alan için hiçbir gösterge yoktur', () => {
     renderWithToasts(<ProfileView profile={view} />);
@@ -276,6 +288,55 @@ describe('başkasının profili', () => {
     for (const word of [/gizli/i, /paylaşmıyor/i, /E-posta/, /Telefon/, /LinkedIn/, /Hakkında/]) {
       expect(screen.queryByText(word)).not.toBeInTheDocument();
     }
+  });
+
+  it('başlık: baş harf avatarı, ad, güncel konum; serbest başlık altta soluk', () => {
+    renderWithToasts(
+      <ProfileView
+        profile={{
+          ...view,
+          headline: 'Ürün yöneticisi',
+          positions: [
+            position({ title: 'Eski rol', company: 'Eski A.Ş.' }),
+            position({ title: 'Ürün Yöneticisi', company: 'Örnek A.Ş.', isCurrent: true }),
+          ],
+        }}
+      />,
+    );
+    const header = screen
+      .getByRole('heading', { level: 1, name: 'Mert Yıldız' })
+      .closest('header')!;
+    // Avatar dekoratif: ad zaten yanında yazıyor.
+    expect(header.querySelector('span[aria-hidden="true"]')).toHaveTextContent('MY');
+    const current = within(header).getByText('Ürün Yöneticisi · Örnek A.Ş.');
+    expect(within(header).queryByText(/Eski rol/)).toBeNull();
+    expect(current).toHaveClass('text-fg');
+    expect(within(header).getByText('Ürün yöneticisi')).toHaveClass('text-fg-muted');
+  });
+
+  it('güncel konum işaretli değilse en üstteki kayıt öne çıkar; konum yoksa serbest başlık öne çıkar', () => {
+    const { unmount } = renderWithToasts(
+      <ProfileView profile={{ ...view, positions: [position()] }} />,
+    );
+    expect(screen.getByText('Stajyer · Örnek A.Ş.')).toBeVisible();
+    unmount();
+    renderWithToasts(<ProfileView profile={{ ...view, headline: 'Veri meraklısı' }} />);
+    expect(screen.getByText('Veri meraklısı')).toHaveClass('text-fg');
+  });
+
+  it('eylemler ve rozetler başlıkta yer alır: eylem içerikten ÖNCE gelir', () => {
+    renderWithToasts(
+      <ProfileView
+        profile={{ ...view, summary: 'Kısa özet metni.' }}
+        badges={<span>Referans verdi: 2</span>}
+        actions={<Link href="/randevu-al/u2">Randevu iste</Link>}
+      />,
+    );
+    const header = screen.getByRole('heading', { level: 1 }).closest('header')!;
+    expect(within(header).getByText('Referans verdi: 2')).toBeVisible();
+    const action = within(header).getByRole('link', { name: 'Randevu iste' });
+    const summary = screen.getByText('Kısa özet metni.');
+    expect(action.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('açık iletişim alanı gelirse gösterilir; bağlantılar güvenli açılır', () => {

@@ -1,5 +1,7 @@
 import { useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
 
+import { Avatar } from '@/components/ui';
 import type { ProfileView as ProfileViewData } from '@/contracts/profile-content';
 
 import { EntrySummary } from './entry-summary';
@@ -10,7 +12,17 @@ type Values = Record<string, unknown>;
  * Başkasının profili. Sunucunun süzdüğü alanlar çizilir: gizli alanın anahtarı yanıtta yoktur ve ekran onu
  * ARAMAZ, “gizli” göstergesi çizmez (var olduğunu bile sızdırmaz). Hiçbir alan yoksa genel “gösterilecek bilgi yok”.
  */
-export function ProfileView({ profile }: { profile: ProfileViewData }) {
+export function ProfileView({
+  profile,
+  badges,
+  actions,
+}: {
+  profile: ProfileViewData;
+  /** Rozet satırına eklenen küçük bilgi çipleri (örn. verdiği referans sayısı). */
+  badges?: ReactNode;
+  /** Başlığın hemen altında duran eylemler (örn. mentor giriş noktaları): birincil eylem kaydırmadan görünür. */
+  actions?: ReactNode;
+}) {
   const t = useTranslations('profile.view');
   const my = useTranslations('profile.my');
   const sections = useTranslations('profile.sections');
@@ -28,6 +40,14 @@ export function ProfileView({ profile }: { profile: ProfileViewData }) {
       profile.skills.length >
       0 ||
     Boolean(profile.socialLinks?.length || profile.linkedinUrl || profile.email || profile.phone);
+
+  // Güncel konum öne çıkar: şimdiki pozisyon ya da (yoksa) en üstteki kayıt.
+  const current = profile.positions.find((item) => item.isCurrent === true) ?? profile.positions[0];
+  const currentLine = current
+    ? [current.title, current.company]
+        .filter((part) => typeof part === 'string' && part)
+        .join(' · ')
+    : '';
 
   const list = (
     title: string,
@@ -49,14 +69,26 @@ export function ProfileView({ profile }: { profile: ProfileViewData }) {
 
   return (
     <article className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-10 pt-10 [overflow-wrap:anywhere] sm:pt-16">
-      <header>
-        <h1 className="break-words text-3xl font-semibold tracking-tight text-fg">
-          {profile.displayName}
-        </h1>
-        {profile.headline && <p className="mt-1 text-lg text-fg">{profile.headline}</p>}
-        {profile.city && <p className="mt-1 text-base text-fg-muted">{profile.city}</p>}
-        {profile.memberships.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-2" aria-label={t('memberships')}>
+      <header className="flex flex-col gap-4">
+        <div className="flex items-start gap-4">
+          <Avatar name={profile.displayName} size="lg" decorative />
+          <div className="min-w-0 flex-1">
+            <h1 className="break-words text-3xl font-semibold tracking-tight text-fg">
+              {profile.displayName}
+            </h1>
+            {currentLine && <p className="mt-1 break-words text-lg text-fg">{currentLine}</p>}
+            {profile.headline && (
+              <p
+                className={`break-words text-base ${currentLine ? 'text-fg-muted' : 'mt-1 text-lg text-fg'}`}
+              >
+                {profile.headline}
+              </p>
+            )}
+            {profile.city && <p className="mt-1 text-base text-fg-muted">{profile.city}</p>}
+          </div>
+        </div>
+        {(profile.memberships.length > 0 || badges) && (
+          <ul className="flex flex-wrap items-center gap-2" aria-label={t('memberships')}>
             {profile.memberships.map((membership, index) => (
               <li
                 key={index}
@@ -65,9 +97,11 @@ export function ProfileView({ profile }: { profile: ProfileViewData }) {
                 {t(`roles.${membership.role}`)} · {membership.departmentName}
               </li>
             ))}
+            {badges && <li>{badges}</li>}
           </ul>
         )}
-        {date && <p className="mt-2 text-sm text-fg-muted">{t('updated', { date })}</p>}
+        {date && <p className="text-sm text-fg-muted">{t('updated', { date })}</p>}
+        {actions}
       </header>
 
       {!hasBody && (
