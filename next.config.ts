@@ -36,6 +36,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  ...(process.env.APP_ENV === 'test' && /^[01]$/.test(process.env.E2E_NEXT_INSTANCE ?? '')
+    ? { distDir: `.next/e2e-${process.env.E2E_NEXT_INSTANCE}` }
+    : {}),
   output: 'standalone',
   // `next dev` varsayılan olarak AGENTS.md'ye kendi bloğunu yazar; bu dosya yalnız kullanıcı onaylı
   // kartla değişir (prompts/README.md), bu yüzden kapalı.

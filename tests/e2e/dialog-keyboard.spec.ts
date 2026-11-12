@@ -1,5 +1,5 @@
 import { loginAs } from './login';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixture';
 
 /** Ortak pencerede (Modal/Sheet) klavye: Tab içeride döner, Shift+Tab geri döner, Esc kapatır ve odak tetikleyiciye döner. */
 const loginAdmin = (page: Page) => loginAs(page, 'systemAdmin');

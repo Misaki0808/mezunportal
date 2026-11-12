@@ -1,5 +1,5 @@
 import { loginAs } from './login';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 import { waitForHydratedControl } from './hydration';
 
 test('öğrenci oturumuyla ilk giriş ekranları 390 px’te tamamlanır (sahte servis)', async ({

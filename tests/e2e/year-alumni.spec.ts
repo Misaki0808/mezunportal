@@ -1,6 +1,6 @@
 import { loginAs } from './login';
 import { randomBytes } from 'node:crypto';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 const db = new PrismaClient({

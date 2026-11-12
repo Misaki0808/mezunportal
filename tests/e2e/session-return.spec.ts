@@ -1,5 +1,5 @@
 import { loginAs } from './login';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 
 /**
  * Oturum düşmüşken (çerezler yok) bir sunucu eylemi gönderilince kullanıcı `/giris?donus=<bulunduğu yol>` adresine

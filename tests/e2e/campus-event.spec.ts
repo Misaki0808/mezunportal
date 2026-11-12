@@ -1,6 +1,6 @@
 import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { decodeQR } from 'qr/decode.js';
 import { PrismaClient } from '../../src/generated/prisma/client';

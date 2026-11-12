@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixture';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import messages from '../../messages/tr.json' with { type: 'json' };
 

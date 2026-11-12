@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 import { waitForHydratedControl, waitForHydratedForm } from './hydration';
 
 test('yeni öğrenci e-posta doğrulamasından ilk deneyim listesine ulaşır', async ({

@@ -1,5 +1,5 @@
 import { loginAs } from './login';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixture';
 
 test.skip(
   ({ browserName }) => browserName === 'webkit',
