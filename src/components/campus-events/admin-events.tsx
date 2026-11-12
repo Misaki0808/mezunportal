@@ -1,6 +1,7 @@
 'use client';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -18,7 +19,11 @@ import {
   useAction,
 } from '@/components/ui';
 import type { BadgeTone } from '@/components/ui';
-import { createCampusEventSchema } from '@/contracts/campus-events';
+import {
+  cancelCampusEventSchema,
+  createCampusEventSchema,
+  reviewCampusEventSchema,
+} from '@/contracts/campus-events';
 import {
   cancelCampusEvent,
   createCampusEvent,
@@ -31,7 +36,6 @@ type Item = {
   startsAt: Date;
   status: 'PENDING' | 'PUBLISHED' | 'REJECTED' | 'CANCELLED';
 };
-const REASON_HINT_ID = 'campus-reason-hint';
 const STATUS_TONES: Record<Item['status'], BadgeTone> = {
   PENDING: 'warning',
   PUBLISHED: 'success',
@@ -45,6 +49,7 @@ export function AdminEvents({
   departments: { id: string; name: string }[];
   events: Item[];
 }) {
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const t = useTranslations('campusEvents'),
     ui = useTranslations('ui'),
     errors = useTranslations('errors.codes'),
@@ -52,7 +57,11 @@ export function AdminEvents({
     action = useAction();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}),
     [reason, setReason] = useState(''),
-    [cancelId, setCancelId] = useState<string | null>(null);
+    [intent, setIntent] = useState<{ event: Item; kind: 'PUBLISH' | 'REJECT' | 'CANCEL' } | null>(
+      null,
+    ),
+    [reasonError, setReasonError] = useState('');
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
   const labels = {
     PENDING: t('pending'),
     PUBLISHED: t('published'),
@@ -108,17 +117,38 @@ export function AdminEvents({
         ),
     });
   }
-  const reasonOk = reason.trim().length >= 3;
-  /** Gerekçe yokken kararlar kapalıdır; sebep alanın altındaki ipucunda BİR kez yazar, düğmeler `aria-describedby` ile ona bağlanır. */
-  const reasonGate = reasonOk
-    ? ({ disabled: false } as const)
-    : ({ disabled: true, disabledReasonId: REASON_HINT_ID } as const);
-  function decide(eventId: string, kind: 'PUBLISH' | 'REJECT' | 'CANCEL') {
+  function closeDecision() {
+    action.clear();
+    setIntent(null);
+    setReason('');
+    setReasonError('');
+  }
+  function openDecision(event: Item, kind: 'PUBLISH' | 'REJECT' | 'CANCEL') {
+    setReason('');
+    setReasonError('');
+    action.clear();
+    setIntent({ event, kind });
+  }
+  function decide() {
+    if (!intent || action.busy) return;
+    const { event, kind } = intent;
+    const input = { eventId: event.id, reason, ...(kind === 'CANCEL' ? {} : { decision: kind }) };
+    const parsed = (
+      kind === 'CANCEL' ? cancelCampusEventSchema : reviewCampusEventSchema
+    ).safeParse(input);
+    if (!parsed.success) {
+      setReasonError(
+        reason.trim().length < 3 ? errors('AUDIT_REASON_REQUIRED') : errors('VALIDATION_INVALID'),
+      );
+      reasonRef.current?.focus();
+      return;
+    }
+    setReasonError('');
     void action.run(
       () =>
         kind === 'CANCEL'
-          ? cancelCampusEvent({ eventId, reason })
-          : reviewCampusEvent({ eventId, decision: kind, reason }),
+          ? cancelCampusEvent({ eventId: event.id, reason: parsed.data.reason })
+          : reviewCampusEvent({ eventId: event.id, decision: kind, reason: parsed.data.reason }),
       {
         success: t(
           kind === 'PUBLISH'
@@ -127,9 +157,10 @@ export function AdminEvents({
               ? 'decidedRejected'
               : 'decidedCancelled',
         ),
+        // Başarıda pencere kapanır ve gerekçe silinir; hatada pencere ve gerekçe korunur.
         onOk: () => {
-          setCancelId(null);
-          setReason('');
+          if (kind !== 'CANCEL') completeDecision(event.id);
+          closeDecision();
           router.refresh();
         },
       },
@@ -143,8 +174,88 @@ export function AdminEvents({
     ['endsAt', 'end', 'datetime-local'],
     ['capacity', 'capacity', 'number'],
   ] as const;
+  const pendingEvents = events.filter((event) => event.status === 'PENDING');
+  const otherEvents = events.filter((event) => event.status !== 'PENDING');
+  function eventCards(items: Item[]) {
+    return (
+      <ul className="space-y-3">
+        {items.map((event) => (
+          <Card
+            as="li"
+            data-queue-row={event.status === 'PENDING' ? event.id : undefined}
+            key={event.id}
+            className="list-none"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <h3 className="min-w-0 break-words font-semibold">{event.title}</h3>
+              <Badge tone={STATUS_TONES[event.status]}>{labels[event.status]}</Badge>
+            </div>
+            <p className="mt-2 flex items-center gap-1.5 text-fg-muted">
+              <CalendarIcon width={16} height={16} className="shrink-0" />
+              {new Intl.DateTimeFormat('tr-TR', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                timeZone: 'Europe/Istanbul',
+              }).format(new Date(event.startsAt))}
+            </p>
+            {event.status === 'PENDING' && (
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Button
+                  data-queue-action
+                  loading={action.busy}
+                  onClick={() => openDecision(event, 'PUBLISH')}
+                >
+                  {t('approve')}
+                </Button>
+                <Button
+                  variant="danger-outline"
+                  loading={action.busy}
+                  onClick={() => openDecision(event, 'REJECT')}
+                >
+                  {t('reject')}
+                </Button>
+              </div>
+            )}
+            {event.status === 'PUBLISHED' && (
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  className={buttonClasses({ variant: 'secondary' })}
+                  href={`/yonetim/etkinlikler/${event.id}`}
+                  aria-label={ui('namedAction', { action: t('present'), target: event.title })}
+                >
+                  {t('present')}
+                </Link>
+                <Button variant="danger-outline" onClick={() => openDecision(event, 'CANCEL')}>
+                  {t('cancel')}
+                </Button>
+              </div>
+            )}
+          </Card>
+        ))}
+      </ul>
+    );
+  }
   return (
-    <div className="space-y-8">
+    <div ref={queueRef} className="space-y-8">
+      {action.error && !intent && (
+        <p role="alert" className="text-danger">
+          {action.error}
+        </p>
+      )}
+      <section aria-label={t('pendingTitle')} className="space-y-4">
+        <h2 data-queue-heading className="text-xl font-semibold">
+          {t('pendingTitle')}
+        </h2>
+        {pendingEvents.length ? (
+          eventCards(pendingEvents)
+        ) : (
+          <EmptyState
+            icon={<CalendarIcon width={32} height={32} />}
+            title={t('pendingEmpty')}
+            description={t('pendingEmptyDescription')}
+          />
+        )}
+      </section>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -192,123 +303,58 @@ export function AdminEvents({
           </Button>
         </Card>
       </form>
-      {events.length === 0 ? (
-        <EmptyState
-          className="rounded-card border border-dashed border-border"
-          icon={<CalendarIcon width={32} height={32} strokeWidth={1.5} />}
-          title={t('emptyTitle')}
-          description={t('emptyDescription')}
-        />
-      ) : (
-        <section className="space-y-4">
-          <div className="space-y-1.5">
-            <Field label={t('reason')}>
-              {(control) => (
-                <Input
-                  {...control}
-                  aria-describedby={REASON_HINT_ID}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                />
-              )}
-            </Field>
-            <p id={REASON_HINT_ID} className="text-sm text-fg-muted">
-              {t('reasonHint')}
-            </p>
-          </div>
-          {action.error && (
-            <p role="alert" className="text-danger">
-              {action.error}
-            </p>
-          )}
-          <ul className="space-y-3">
-            {events.map((event) => (
-              <Card as="li" key={event.id} className="list-none">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <h2 className="min-w-0 break-words font-semibold">{event.title}</h2>
-                  <Badge tone={STATUS_TONES[event.status]}>{labels[event.status]}</Badge>
-                </div>
-                <p className="mt-2 flex items-center gap-1.5 text-fg-muted">
-                  <CalendarIcon width={16} height={16} className="shrink-0" />
-                  {new Intl.DateTimeFormat('tr-TR', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                    timeZone: 'Europe/Istanbul',
-                  }).format(new Date(event.startsAt))}
-                </p>
-                {event.status === 'PENDING' && (
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Button
-                      loading={action.busy}
-                      {...reasonGate}
-                      onClick={() => decide(event.id, 'PUBLISH')}
-                    >
-                      {t('approve')}
-                    </Button>
-                    <Button
-                      variant="danger-outline"
-                      loading={action.busy}
-                      {...reasonGate}
-                      onClick={() => decide(event.id, 'REJECT')}
-                    >
-                      {t('reject')}
-                    </Button>
-                  </div>
-                )}
-                {event.status === 'PUBLISHED' && (
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Link
-                      className={buttonClasses({ variant: 'secondary' })}
-                      href={`/yonetim/etkinlikler/${event.id}`}
-                      aria-label={ui('namedAction', { action: t('present'), target: event.title })}
-                    >
-                      {t('present')}
-                    </Link>
-                    <Button
-                      variant="danger-outline"
-                      {...reasonGate}
-                      onClick={() => {
-                        action.clear();
-                        setCancelId(event.id);
-                      }}
-                    >
-                      {t('cancel')}
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            ))}
-          </ul>
+      {otherEvents.length > 0 && (
+        <section aria-label={t('managedTitle')} className="space-y-4">
+          <h2 className="text-xl font-semibold">{t('managedTitle')}</h2>
+          {eventCards(otherEvents)}
         </section>
       )}
       <Modal
-        open={cancelId !== null}
-        onClose={() => setCancelId(null)}
-        title={t('cancel')}
-        description={t('cancelConfirm')}
+        open={intent !== null}
+        onClose={() => {
+          if (!action.busy) closeDecision();
+        }}
+        title={t(
+          intent?.kind === 'CANCEL' ? 'cancel' : intent?.kind === 'REJECT' ? 'reject' : 'approve',
+        )}
+        description={t(intent?.kind === 'CANCEL' ? 'cancelConfirm' : 'reviewConfirm')}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setCancelId(null)}>
+            <Button variant="secondary" loading={action.busy} onClick={closeDecision}>
               {t('dismiss')}
             </Button>
             <Button
-              variant="danger"
-              {...(action.busy || !reasonOk
-                ? {
-                    disabled: true as const,
-                    disabledReason: action.busy ? t('registering') : t('reason'),
-                  }
-                : { disabled: false as const })}
-              onClick={() => {
-                if (cancelId) decide(cancelId, 'CANCEL');
-              }}
+              variant={intent?.kind === 'PUBLISH' ? 'primary' : 'danger'}
+              loading={action.busy}
+              onClick={decide}
             >
-              {t('cancel')}
+              {t(
+                intent?.kind === 'CANCEL'
+                  ? 'cancel'
+                  : intent?.kind === 'REJECT'
+                    ? 'reject'
+                    : 'approve',
+              )}
             </Button>
           </>
         }
       >
-        {action.error && <p role="alert">{action.error}</p>}
+        <p className="mb-4 font-semibold">{intent?.event.title}</p>
+        <Field label={t('reason')} hint={t('reasonHint')} required error={reasonError || undefined}>
+          {(control) => (
+            <Textarea
+              {...control}
+              ref={reasonRef}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          )}
+        </Field>
+        {action.error && (
+          <p role="alert" className="mt-3 text-danger">
+            {action.error}
+          </p>
+        )}
       </Modal>
     </div>
   );

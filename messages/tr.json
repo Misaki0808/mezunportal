@@ -1730,7 +1730,8 @@
       "referrals": "Referans inceleme",
       "yearAlumni": "Yılın Mezunu",
       "alumniStory": "Ayın mezunu",
-      "googleCalendar": "Google Takvim"
+      "googleCalendar": "Google Takvim",
+      "courses": "Ders sözlüğü"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -1750,7 +1751,8 @@
       "referrals": "Referans ve işe kabul beyanlarını incele.",
       "yearAlumni": "Adayları incele ve bölüm adına karar ver.",
       "alumniStory": "Hikâyeleri incele ve ayın mezununu seç.",
-      "googleCalendar": "Çevrimiçi randevulara otomatik Meet bağlantısı için Google hesabını bağla."
+      "googleCalendar": "Çevrimiçi randevulara otomatik Meet bağlantısı için Google hesabını bağla.",
+      "courses": "Bölümünün derslerini ekle veya güncelle."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -1984,7 +1986,8 @@
         "JOB_POSTING_SEARCH": "İlan araması",
         "JOB_SEEKER_SEARCH": "Aday araması"
       }
-    }
+    },
+    "pendingCount": "{count} bekliyor"
   },
   "search": {
     "eyebrow": "DENEYİMLER",
@@ -2104,7 +2107,12 @@
     "created": "Etkinliğin incelemeye gönderildi.",
     "decidedPublished": "Etkinlik yayınlandı.",
     "decidedRejected": "Etkinlik reddedildi.",
-    "decidedCancelled": "Etkinlik iptal edildi."
+    "decidedCancelled": "Etkinlik iptal edildi.",
+    "reviewConfirm": "Bu etkinlik için verdiğin karar işlem kaydına yazılacak.",
+    "pendingTitle": "Onay bekleyenler",
+    "pendingEmpty": "İncelenecek etkinlik yok",
+    "pendingEmptyDescription": "Yeni etkinlik başvuruları burada görünecek.",
+    "managedTitle": "Yayınlanan ve sonuçlananlar"
   },
   "monthlyDigest": {
     "subject": "Bu ay MezunPortal'da",

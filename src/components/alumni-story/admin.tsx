@@ -1,6 +1,7 @@
 'use client';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { safeClientAction } from '@/lib/safe-client-action';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   monthlySelectionSchema,
@@ -17,6 +18,9 @@ import {
 
 type Intent = { mode: 'PUBLISH' | 'REJECT' | 'SELECT'; storyId: string };
 export function StoryAdmin({ departments }: { departments: { id: string; name: string }[] }) {
+  const reasonInput = useRef<HTMLTextAreaElement>(null),
+    monthInput = useRef<HTMLInputElement>(null);
+  const [reasonError, setReasonError] = useState('');
   const t = useTranslations('alumniStory'),
     errors = useTranslations('errors.codes');
   const [departmentId, setDepartment] = useState(departments[0]?.id ?? ''),
@@ -26,6 +30,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
     [intent, setIntent] = useState<Intent | null>(null),
     [message, setMessage] = useState('');
   const [pending, start] = useTransition();
+  const { rootRef: queueRef, complete: completeDecision } = useQueueFocus(pending);
   const disabled = (value: boolean, why: string) =>
     value ? { disabled: true as const, disabledReason: why } : { disabled: false as const };
   function load() {
@@ -40,6 +45,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
     if (!intent) return;
     start(async () => {
       setMessage('');
+      setReasonError('');
       if (intent.mode === 'SELECT') {
         const parsed = monthlySelectionSchema.safeParse({
           departmentId,
@@ -48,7 +54,15 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
           reason,
         });
         if (!parsed.success) {
-          setMessage(t('invalid'));
+          if (parsed.error.issues.some((issue) => issue.path[0] === 'reason')) {
+            setReasonError(
+              errors(reason.trim().length < 3 ? 'AUDIT_REASON_REQUIRED' : 'AUDIT_REASON_INVALID'),
+            );
+            reasonInput.current?.focus();
+          } else {
+            setMessage(t('invalid'));
+            monthInput.current?.focus();
+          }
           return;
         }
         const result = await safeClientAction(() => selectMonthlyAlumnus(parsed.data));
@@ -64,7 +78,10 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
           reason: reason || undefined,
         });
         if (!parsed.success) {
-          setMessage(t('invalid'));
+          setReasonError(
+            errors(reason.trim().length < 3 ? 'AUDIT_REASON_REQUIRED' : 'AUDIT_REASON_INVALID'),
+          );
+          reasonInput.current?.focus();
           return;
         }
         const result = await safeClientAction(() => reviewStory(parsed.data));
@@ -74,6 +91,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
         }
         setMessage(t('reviewSuccess'));
       }
+      completeDecision(intent.storyId);
       setIntent(null);
       setReason('');
       const result = await safeClientAction(() => listStoryModeration({ departmentId }));
@@ -81,12 +99,13 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
     });
   }
   function open(mode: Intent['mode'], storyId: string) {
+    setReasonError('');
     setReason('');
     setMessage('');
     setIntent({ mode, storyId });
   }
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-5 py-10">
+    <div ref={queueRef} className="mx-auto max-w-4xl space-y-6 px-5 py-10">
       <PageHeader title={t('adminTitle')} description={t('adminIntro')} />
       <Card className="space-y-4 p-5">
         <Field label={t('selectDepartment')}>
@@ -119,7 +138,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
         <>
           <ul className="space-y-4">
             {rows.map((story) => (
-              <li key={story.id}>
+              <li data-queue-row={story.id} key={story.id}>
                 <Card className="space-y-3 p-5">
                   <h2 className="text-lg font-semibold">{story.name}</h2>
                   <p>
@@ -133,6 +152,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
                     {story.status === 'PENDING' && (
                       <>
                         <Button
+                          data-queue-action
                           variant="secondary"
                           {...disabled(
                             pending || !story.consent,
@@ -143,6 +163,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
                           {t('review')}
                         </Button>
                         <Button
+                          data-queue-action
                           variant="secondary"
                           {...disabled(pending, t('pending'))}
                           onClick={() => open('REJECT', story.id)}
@@ -153,6 +174,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
                     )}
                     {story.status === 'PUBLISHED' && (
                       <Button
+                        data-queue-action
                         {...disabled(
                           pending || !story.consent || story.suspicious,
                           pending
@@ -196,6 +218,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
               {(props) => (
                 <Input
                   {...props}
+                  ref={monthInput}
                   type="month"
                   min={istanbulMonth(new Date())}
                   value={month}
@@ -205,13 +228,18 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
             </Field>
           )}
           {intent?.mode !== 'PUBLISH' && (
-            <Field label={t('reason')} error={message || undefined}>
+            <Field label={t('reason')} required error={reasonError || undefined}>
               {(props) => (
-                <Textarea {...props} value={reason} onChange={(e) => setReason(e.target.value)} />
+                <Textarea
+                  {...props}
+                  ref={reasonInput}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
               )}
             </Field>
           )}
-          {intent?.mode === 'PUBLISH' && message && <p role="alert">{message}</p>}
+          {message && !reasonError && <p role="alert">{message}</p>}
         </div>
       </Modal>
     </div>

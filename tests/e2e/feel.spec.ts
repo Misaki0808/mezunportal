@@ -190,7 +190,7 @@ test.describe('kullanım hissi: geri bildirim anları (390)', () => {
     }
   });
 
-  test('yönetim onay: gerekçe yokken kapalı sebepli; hatada gerekçe korunur; başarıda bildirim ve temizlik', async ({
+  test('yönetim onay: gerekçesiz onay sunucuya gitmez; hatada pencere ve gerekçe korunur; başarıda bildirim ve temizlik', async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -203,23 +203,38 @@ test.describe('kullanım hissi: geri bildirim anları (390)', () => {
       const state = await watchActions(page);
       await page.goto('/yonetim/etkinlikler', { waitUntil: 'networkidle' });
       const row = page.locator('li').filter({ hasText: pending!.title });
-      const approve = row.getByRole('button', { name: 'Onayla' });
-      await expect(approve).toBeDisabled();
-      await expect(approve, 'kapalı düğmenin sebebi bağlı').toHaveAccessibleDescription(
-        messages.campusEvents.reasonHint,
-      );
-      const reason = page.getByLabel(messages.campusEvents.reason);
+      await row.getByRole('button', { name: 'Onayla' }).click();
+      const dialog = page.getByRole('dialog');
+      // Gerekçesiz onay: pencerede açık sebep, sunucuya istek yok.
+      await dialog.getByRole('button', { name: 'Onayla' }).click();
+      await expect.soft(dialog.getByRole('alert')).toBeVisible();
+      expect(state.posts, 'gerekçesiz onay sunucuya gitmez').toBe(0);
+      const reason = dialog.getByLabel(/İşlem gerekçesi/);
       await reason.fill('Uygun bulundu');
       state.abort = true;
-      await approve.click();
-      await expect.soft(page.getByText(SERVER_ERROR).first()).toBeVisible();
+      await dialog.getByRole('button', { name: 'Onayla' }).click();
+      await expect.soft(dialog.getByText(SERVER_ERROR)).toBeVisible();
       await expect.soft(reason, 'hata sonrası gerekçe korunur').toHaveValue('Uygun bulundu');
       state.abort = false;
       state.delay = SLOW_MS;
-      await approve.dblclick();
+      await dialog.getByRole('button', { name: 'Onayla' }).dblclick();
       await expectPendingNow(page);
       await expect.soft(page.getByText('Etkinlik yayınlandı.')).toBeVisible();
-      await expect.soft(reason, 'başarıdan sonra gerekçe temizlenir').toHaveValue('');
+      await expect.soft(dialog, 'başarıda pencere kapanır').toBeHidden();
+      // Sonraki karar temiz açılır: eski gerekçe taşınmaz.
+      const next = page
+        .locator('li')
+        .filter({ has: page.getByRole('button', { name: 'Onayla' }) })
+        .first();
+      if (await next.count()) {
+        await next.getByRole('button', { name: 'Onayla' }).click();
+        await expect
+          .soft(
+            page.getByRole('dialog').getByLabel(/İşlem gerekçesi/),
+            'sonraki karar gerekçesiz açılır',
+          )
+          .toHaveValue('');
+      }
       expect(state.posts, 'çift tıklama tek istek (hatalı denemeden sonra 1)').toBe(2);
     } finally {
       await db.campusEvent.update({ where: { id: pending!.id }, data: { status: 'PENDING' } });
