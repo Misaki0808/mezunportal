@@ -88,11 +88,13 @@ describe('P1-07 sözleşmesi', () => {
       [TERM_SEASONS, TermSeason],
       [EXPERIENCE_PAY, ExperiencePay],
       [APPLICATION_CHANNELS, ApplicationChannel],
-      [REPORT_TARGET_TYPES, ReportTargetType],
       [REPORT_STATUSES, ReportStatus],
     ] as const) {
       expect([...values].sort()).toEqual(Object.values(prisma).sort());
     }
+    // Deneyim çıktısı yalnız deneyim hedefi taşır; ilanlar ayrı tablo kullanır.
+    expect(REPORT_TARGET_TYPES).toEqual(['EXPERIENCE']);
+    expect(Object.values(ReportTargetType).sort()).toEqual(['EXPERIENCE', 'JOB_POSTING']);
   });
   it.each(EXPERIENCE_TYPES)(
     '%s: eksik taslak kaydedilebilir; tam şablon zorunlu alanları ister',
