@@ -1,10 +1,11 @@
 import { afterAll, expect, it } from 'vitest';
 import { applyCvSchema } from '@/contracts/cv';
 import { createTestPrisma } from '@/test/db';
-import { cvKit, cvUser, pdfForm } from '@/test/cv';
+import { cvKit, cvUser, pdfForm, rawForm } from '@/test/cv';
+import { buildRealTestPdf } from '@/test/real-pdf';
 import { applyCv, discardCv, getCvReview, uploadCv } from './cv';
 import { processCvParse, purgeCvFiles } from './cv-parse';
-import { createFakePdfTextExtractor } from '../external/pdf-text';
+import { createFakePdfTextExtractor, getPdfTextExtractor } from '../external/pdf-text';
 import { buildDataExport } from './dataExport';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -243,3 +244,32 @@ it.each(['QUEUED', 'PARSING'] as const)(
     expect(kit.storage.files.has(row.storageKey!)).toBe(false);
   },
 );
+
+it('gerçek PDF metni çıkarılarak sahte sağlayıcıyla öneri üretilir, onay öncesi profile yazılmaz', async () => {
+  const { createFakeLlm, DEMO_CV_OUTPUT } = await import('../external/llm/fake');
+  const { actor, userId } = await cvUser(db);
+  const kit = cvKit(db);
+  let sections: unknown;
+  const llm = createFakeLlm({
+    scenarios: {
+      demo: (request) => {
+        sections = request.sectionHints;
+        return DEMO_CV_OUTPUT;
+      },
+    },
+  });
+  const deps = { ...kit.deps, llm, pdfTextExtractor: getPdfTextExtractor() };
+  const pdf = buildRealTestPdf([
+    'Experience',
+    'Sample Company',
+    'Education',
+    'Sample School',
+    'Skills',
+    'SQL',
+  ]);
+  const upload = await uploadCv(deps, actor, { ...rawForm(pdf), source: 'LINKEDIN_PDF' });
+  expect(await processCvParse(deps, upload.cvUploadId, fresh)).toBe('PARSED');
+  expect(sections).toEqual(['experience', 'education', 'skills']);
+  expect(await db.position.count({ where: { userId } })).toBe(0);
+  expect((await getCvReview(deps, actor, upload.cvUploadId)).items.length).toBeGreaterThan(0);
+});
