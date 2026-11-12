@@ -379,6 +379,26 @@ describe('randevu detayı', () => {
     expect(screen.getByText('Talebin mentora iletildi; yanıtını bekliyoruz.')).toBeInTheDocument();
   });
 
+  it('tamamlanan randevuda doldurulacak geri bildirim varsa son adım şu andır ve cümle çağırır', () => {
+    renderUi(
+      <AppointmentDetail
+        appointment={view(
+          { status: 'COMPLETED', role: 'MENTEE' },
+          { canConfirm: false, canDecline: false },
+        )}
+        feedbackAvailable
+        actions={detailActions()}
+      />,
+    );
+    const items = within(screen.getByRole('list', { name: 'Randevu yolu' })).getAllByRole(
+      'listitem',
+    );
+    expect(stepText(items[3]!)).toBe('Geri bildirim (şu an burada)');
+    expect(
+      screen.getByText('Görüşme nasıl geçti? Kısa bir geri bildirim bırakabilirsin.'),
+    ).toBeInTheDocument();
+  });
+
   it('reddedilen talepte çizelge orada durur, sonraki adımlar gösterilmez', () => {
     renderUi(
       <AppointmentDetail

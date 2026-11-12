@@ -337,6 +337,27 @@ describe('deneyim formu: kaydedilmemiş değişiklik uyarısı', () => {
     link.remove();
   });
 
+  it('dış site bağlantısı ve Ctrl/Cmd ile tıklama (yeni sekme) uygulama içi uyarıyı çıkarmaz', async () => {
+    const { user } = setup();
+    await user.type(screen.getByLabelText(/Kurum ya da etkinlik adı/), 'Taslak');
+    const external = document.createElement('a');
+    external.href = 'https://example.org/x';
+    external.textContent = 'Dış site';
+    const inner = pageLink();
+    for (const link of [external, inner]) {
+      link.addEventListener('click', (event) => event.preventDefault());
+      document.body.append(link);
+    }
+    await user.click(external);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.keyboard('{Control>}');
+    await user.click(inner);
+    await user.keyboard('{/Control}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    external.remove();
+    inner.remove();
+  });
+
   it('dokunulmamış formda bağlantı engellenmez', async () => {
     const { user } = setup();
     const link = pageLink();
