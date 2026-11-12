@@ -264,7 +264,9 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
   (ör. sunucu adı “İpek Işık” iken “Işık Üniversitesi” → “[AD] Üniversitesi”); kurum eki maskeyi atlatma
   istisnası değildir. Üçüncü kişilerin adları yalnız açık referans/yönetici/danışman başlığı ve bu başlığa
   bağlı bloklarda biçimsel olarak aranır; serbest metindeki adlar veya farklı yazılmış başlıklar kaçabilir,
-  başlık altındaki kişi dışı büyük harfli ifadeler de gizlenebilir. Kişisel alan adında en az üç harfli ad
+  başlık altındaki kişi dışı büyük harfli ifadeler de gizlenebilir (iş unvanı olarak tek başına yazılan "Yönetici"/"Danışman"
+  satırı başlık sayılmaz). Maskelenmeyenler: yaş ("25 yaşında"), anahtar sözcüksüz adres, yalnız ilçe/şehir adı ve tek sözcüklü
+  referans adı. Kişisel alan adında en az üç harfli ad
   parçası aranır; bu parça şirket alan adıyla çakışırsa alan adı da gizlenebilir. Yapay zekâ yalnız öneri
   üretir; kullanıcı okul adını onay ekranında düzeltebilir.
 - LLM girdisi ve çıktısı loglanmaz.
