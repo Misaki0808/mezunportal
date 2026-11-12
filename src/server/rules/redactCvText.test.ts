@@ -206,3 +206,87 @@ it('telefonun ardından gelen kimlik satırını geçersiz sayısal adayın içi
 it('tam telefonun ardından ayrı satırdaki eğitim yılı korunur', () => {
   expect(redactCvText('+1 (212) 555-0123\n2023\nSQL', 'İpek Işık')).toBe('[TELEFON]\n2023\nSQL');
 });
+
+describe('bağlamlı ek kişisel veri kalıpları', () => {
+  it.each([
+    'Doğum: 15 Mart 1999',
+    'D.T.: 15 Mart 1999',
+    'Date of birth: 15 March 1999',
+    'DOB: 15 March 1999',
+  ])('ay adlı doğum tarihini gizler: %s', (input) => {
+    expect(redactCvText(input, 'İpek Işık')).toBe('[DOĞUM TARİHİ]');
+  });
+
+  it.each([
+    ['Referans: Prof. Dr. Ahmet Yılmaz', 'Ahmet Yılmaz'],
+    ['Referanslar: Mehmet Kaya — Satış Müdürü', 'Mehmet Kaya'],
+    ['Referanslar\nAd Soyad: Mehmet Kaya\n\nBeceriler\nSQL', 'Mehmet Kaya'],
+    ['Referanslar\nE-posta: kisi@example.com\nAd Soyad: Mehmet Kaya', 'Mehmet Kaya'],
+    [
+      'References\nProf. Dr. Ahmet Yılmaz\nMehmet Kaya — Satış Müdürü\n\nBeceriler\nSQL',
+      'Ahmet Yılmaz',
+    ],
+    ['Yönetici: Mehmet Kaya', 'Mehmet Kaya'],
+    ['Danışman: Ayşe Demir', 'Ayşe Demir'],
+    ['Supervisor: John Smith', 'John Smith'],
+    ['İletişim kişisi: Deniz Arslan', 'Deniz Arslan'],
+    ['İLETİŞİM KİŞİSİ: Deniz Arslan', 'Deniz Arslan'],
+  ])('yalnız ilgili bağlamda üçüncü kişiyi gizler: %s', (input, name) => {
+    const result = redactCvText(input, 'İpek Işık');
+    expect(result).not.toContain(name);
+    expect(result).toContain('[KİŞİ]');
+    if (input.includes('Mehmet Kaya')) expect(result).not.toContain('Mehmet Kaya');
+  });
+
+  it('referans bloğundaki iletişimi gizler ve sonraki bölümü korur', () => {
+    const result = redactCvText(
+      'Referanslar\nAhmet Yılmaz — Satış Müdürü\nahmet@example.com / 0532 123 45 67\nBeceriler\nVeri Analisti',
+      'İpek Işık',
+    );
+    expect(result).toContain('[KİŞİ]');
+    expect(result).toContain('[E-POSTA]');
+    expect(result).toContain('[TELEFON]');
+    expect(result).toContain('Beceriler\nVeri Analisti');
+    expect(result).not.toContain('Ahmet Yılmaz');
+  });
+
+  it.each(['ipek-isik.dev', 'isik.me', 'IPEKISIK.com', 'www.ipek-isik.dev'])(
+    'sahibin alan adını gizler: %s',
+    (domain) => {
+      expect(redactCvText(domain, 'İpek Işık')).not.toMatch(/ipek|isik/iu);
+      expect(redactCvText(domain, 'İpek Işık')).toMatch(/\[(?:URL|BAĞLANTI)\]/u);
+    },
+  );
+
+  it.each([
+    'Mart 2023 – Haziran 2024',
+    'trendyol.com',
+    'Referans numarası: 12345',
+    'Ahmet Yılmaz ile çalıştım.',
+    'Deneyim: Satış Müdürü',
+  ])('bağlam dışı içeriği korur: %s', (input) => {
+    expect(redactCvText(input, 'İpek Işık')).toBe(input);
+  });
+
+  it.each([
+    ['Yönetici: Genel Müdür Mehmet Kaya', ['Mehmet', 'Kaya']],
+    ['Tez Danışmanı: Prof. Dr. Ali Veli', ['Ali', 'Veli']],
+    ['Proje Yöneticisi: Ayşe Kara', ['Ayşe', 'Kara']],
+  ])('büyük harfli unvan ve ekli rol başlığı soyadı bırakmaz: %s', (input, names) => {
+    const result = redactCvText(input, 'İpek Işık');
+    for (const name of names) expect(result).not.toContain(name);
+    expect(result).toContain('[KİŞİ]');
+  });
+
+  it('büyük harfli İ taşıyan doğum tarihi etiketini de gizler', () => {
+    expect(redactCvText('DOĞUM TARİHİ: 15 MART 1999', 'İpek Işık')).toBe('[DOĞUM TARİHİ]');
+  });
+
+  it.each(['Yönetici', 'Danışman', 'Proje Yöneticisi'])(
+    'tek başına satırdaki iş unvanı altındaki kurum adını maskelemez: %s',
+    (title) => {
+      const input = `${title}\nAcme Yazılım A.Ş.\nMart 2023 – Haziran 2024`;
+      expect(redactCvText(input, 'İpek Işık')).toBe(input);
+    },
+  );
+});
