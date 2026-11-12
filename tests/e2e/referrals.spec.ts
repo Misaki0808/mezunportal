@@ -77,6 +77,7 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
       .getByRole('button', { name: 'Onayla' })
       .click();
     await adminPage!.getByRole('dialog').getByRole('button', { name: 'Onayla' }).click();
+    await expect(adminPage!.getByRole('dialog')).toBeHidden({ timeout: 15_000 });
     await expect
       .poll(
         async () => (await db.referralClaim.findUniqueOrThrow({ where: { id: claim.id } })).status,
@@ -107,6 +108,7 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
       .getByRole('button', { name: 'Onayla' })
       .click();
     await adminPage!.getByRole('dialog').getByRole('button', { name: 'Onayla' }).click();
+    await expect(adminPage!.getByRole('dialog')).toBeHidden({ timeout: 15_000 });
     await expect
       .poll(
         async () => (await db.referralClaim.findUniqueOrThrow({ where: { id: claim.id } })).status,

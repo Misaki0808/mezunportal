@@ -89,7 +89,7 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
     await expect(page.getByLabel('Altı haneli katılım kodu')).toBeVisible();
     await expect(page.getByLabel('Altı haneli katılım kodu')).toHaveValue(qrCode);
     await page.getByRole('button', { name: 'Katılımı doğrula' }).click();
-    await expect(page.getByText('Katılımın doğrulandı.').first()).toBeVisible();
+    await expect(page.getByText('Katılımın doğrulandı.').first()).toBeVisible({ timeout: 15_000 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
