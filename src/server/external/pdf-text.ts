@@ -24,9 +24,17 @@ export function createFakePdfTextExtractor(): PdfTextExtractor {
 
 const MAX_TEXT = 200_000;
 const EXTRACTION_TIMEOUT_MS = 5_000;
+// V8 yığın sınırı (`maxOldGenerationSizeMb`) ArrayBuffer'ları kapsamaz: 5 MB'lık bir sıkıştırma bombası PDF.js'te
+// gigabaytlara açılıp süreci öldürebilir. Çıkarma sırasında süreç RSS'i bu kadar büyürse iş parçacığı sonlandırılır.
+const MAX_RSS_GROWTH_BYTES = 384 * 1024 * 1024;
+const WATCHDOG_INTERVAL_MS = 25;
 
-/** Güvenilmeyen PDF ayrı iş parçacığında sınırlanır; süre dolunca gerçekten sonlandırılır. */
-export function getPdfTextExtractor(): PdfTextExtractor {
+export type PdfTextLimits = { timeoutMs?: number; maxRssGrowthBytes?: number };
+
+/** Güvenilmeyen PDF ayrı iş parçacığında sınırlanır; süre ya da bellek dolunca gerçekten sonlandırılır. */
+export function getPdfTextExtractor(limits: PdfTextLimits = {}): PdfTextExtractor {
+  const timeoutMs = limits.timeoutMs ?? EXTRACTION_TIMEOUT_MS;
+  const maxRssGrowth = limits.maxRssGrowthBytes ?? MAX_RSS_GROWTH_BYTES;
   return {
     kind: 'real',
     async extract(pdf) {
@@ -43,12 +51,15 @@ export function getPdfTextExtractor(): PdfTextExtractor {
       worker.stdout.resume();
       worker.stderr.resume();
       let timer: ReturnType<typeof setTimeout> | undefined;
+      let watchdog: ReturnType<typeof setInterval> | undefined;
       try {
         return await new Promise<string>((resolve, reject) => {
-          timer = setTimeout(
-            () => reject(codedValidation('CV_PARSE_TIMEOUT')),
-            EXTRACTION_TIMEOUT_MS,
-          );
+          timer = setTimeout(() => reject(codedValidation('CV_PARSE_TIMEOUT')), timeoutMs);
+          const baseline = process.memoryUsage.rss();
+          watchdog = setInterval(() => {
+            if (process.memoryUsage.rss() - baseline > maxRssGrowth)
+              reject(codedValidation('CV_PDF_UNREADABLE'));
+          }, WATCHDOG_INTERVAL_MS);
           worker.once('message', (result: { text?: unknown; code?: ErrorCode }) => {
             if (typeof result.text === 'string') resolve(result.text);
             else
@@ -65,6 +76,7 @@ export function getPdfTextExtractor(): PdfTextExtractor {
         });
       } finally {
         if (timer) clearTimeout(timer);
+        if (watchdog) clearInterval(watchdog);
         await worker.terminate();
       }
     },

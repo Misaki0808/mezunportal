@@ -1,3 +1,5 @@
+import { deflateSync } from 'node:zlib';
+
 /** Gerçek PDF okuyucuların açabildiği, tamamı sentetik ASCII metinli test belgesi. */
 export function buildRealTestPdf(pages: string[]): Uint8Array {
   const pageIds = pages.map((_, index) => 3 + index * 2);
@@ -29,4 +31,21 @@ export function buildRealTestPdf(pages: string[]): Uint8Array {
     .join('');
   pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${start}\n%%EOF\n`;
   return new Uint8Array(Buffer.from(pdf));
+}
+
+/** Küçük dosya, `megabytes` MB'a açılan Flate içerik akışı (sıkıştırma bombası denemesi); metni yoktur. */
+export function buildFlateBombPdf(megabytes: number): Uint8Array {
+  const packed = deflateSync(Buffer.alloc(megabytes * 1024 * 1024), { level: 9 });
+  const head = Buffer.from(
+    '%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Count 1 /Kids [3 0 R] >>\nendobj\n' +
+      '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << >> /Contents 4 0 R >>\nendobj\n' +
+      `4 0 obj\n<< /Filter /FlateDecode /Length ${packed.length} >>\nstream\n`,
+  );
+  return new Uint8Array(
+    Buffer.concat([
+      head,
+      packed,
+      Buffer.from('\nendstream\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n'),
+    ]),
+  );
 }

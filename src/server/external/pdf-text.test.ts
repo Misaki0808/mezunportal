@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CV_MAX_BYTES, CV_MAX_PAGES } from '@/contracts/cv';
-import { buildRealTestPdf } from '@/test/real-pdf';
+import { buildFlateBombPdf, buildRealTestPdf } from '@/test/real-pdf';
 import { encryptedTestPdf } from '@/test/encrypted-pdf';
 import { getDocumentProxy } from 'unpdf';
 import { getPdfTextExtractor } from './pdf-text';
@@ -42,5 +42,19 @@ describe('gerçek PDF metin çıkarıcı', () => {
     await expect(getPdfTextExtractor().extract(encryptedTestPdf())).rejects.toMatchObject({
       code: 'CV_PDF_UNREADABLE',
     });
+  });
+  it('sıkıştırma bombası bellek sınırında sonlandırılır (yığın sınırı dış belleği saymaz)', async () => {
+    const bomb = buildFlateBombPdf(160);
+    expect(bomb.byteLength).toBeLessThan(CV_MAX_BYTES);
+    const started = Date.now();
+    await expect(
+      getPdfTextExtractor({ maxRssGrowthBytes: 48 * 1024 * 1024 }).extract(bomb),
+    ).rejects.toMatchObject({ code: 'CV_PDF_UNREADABLE' });
+    expect(Date.now() - started).toBeLessThan(4000);
+  });
+  it('gerçek iş parçacığı süre aşımında sonlandırılır ve kararlı kod döner', async () => {
+    await expect(
+      getPdfTextExtractor({ timeoutMs: 20 }).extract(buildFlateBombPdf(160)),
+    ).rejects.toMatchObject({ code: 'CV_PARSE_TIMEOUT' });
   });
 });
