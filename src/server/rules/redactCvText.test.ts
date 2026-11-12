@@ -267,4 +267,26 @@ describe('bağlamlı ek kişisel veri kalıpları', () => {
   ])('bağlam dışı içeriği korur: %s', (input) => {
     expect(redactCvText(input, 'İpek Işık')).toBe(input);
   });
+
+  it.each([
+    ['Yönetici: Genel Müdür Mehmet Kaya', ['Mehmet', 'Kaya']],
+    ['Tez Danışmanı: Prof. Dr. Ali Veli', ['Ali', 'Veli']],
+    ['Proje Yöneticisi: Ayşe Kara', ['Ayşe', 'Kara']],
+  ])('büyük harfli unvan ve ekli rol başlığı soyadı bırakmaz: %s', (input, names) => {
+    const result = redactCvText(input, 'İpek Işık');
+    for (const name of names) expect(result).not.toContain(name);
+    expect(result).toContain('[KİŞİ]');
+  });
+
+  it('büyük harfli İ taşıyan doğum tarihi etiketini de gizler', () => {
+    expect(redactCvText('DOĞUM TARİHİ: 15 MART 1999', 'İpek Işık')).toBe('[DOĞUM TARİHİ]');
+  });
+
+  it.each(['Yönetici', 'Danışman', 'Proje Yöneticisi'])(
+    'tek başına satırdaki iş unvanı altındaki kurum adını maskelemez: %s',
+    (title) => {
+      const input = `${title}\nAcme Yazılım A.Ş.\nMart 2023 – Haziran 2024`;
+      expect(redactCvText(input, 'İpek Işık')).toBe(input);
+    },
+  );
 });

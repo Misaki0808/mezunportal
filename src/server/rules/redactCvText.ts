@@ -68,15 +68,19 @@ function namePattern(part: string): RegExp {
 }
 
 function redactReferencedPeople(text: string): string {
-  const heading =
-    /^(\s*(?:referans(?:lar)?|references?|yönetici|danışman|supervisor|iletişim kişisi)\s*)(?::\s*|$)/u;
+  const heading = /^(\s*(?:referans(?:lar)?|references?)\s*)(?::\s*|$)/u;
+  // Kişi rolü sözcükleri ("Yönetici", "Danışman", "Tez Danışmanı", "Proje Yöneticisi"…) YALNIZ iki nokta ile başlık sayılır:
+  // tek başına satırdaki "Yönetici"/"Danışman" bir iş unvanıdır ve altındaki kurum satırı maskelenmemelidir.
+  const labeledHeading =
+    /^(\s*(?:(?:tez|proje|bölüm|takım|grup)\s+)?(?:yönetici(?:si)?|danışman(?:ı)?|supervisor|advisor|iletişim kişisi)\s*)(?::\s*)/u;
   const person =
-    /(?<![\p{L}])(?:(?:Prof|Dr|Doç|Mr|Mrs|Ms)\.\s*)*(?:[\p{Lu}][\p{Ll}]+|[\p{Lu}]{2,})(?:\s+(?:[\p{Lu}][\p{Ll}]+|[\p{Lu}]{2,})){1,2}(?![\p{L}])/gu;
+    /(?<![\p{L}])(?:(?:Prof|Dr|Doç|Mr|Mrs|Ms)\.\s*)*(?:[\p{Lu}][\p{Ll}]+|[\p{Lu}]{2,})(?:\s+(?:[\p{Lu}][\p{Ll}]+|[\p{Lu}]{2,})){1,3}(?![\p{L}])/gu;
   let inBlock = false;
   return text
     .split('\n')
     .map((line) => {
-      const match = line.toLocaleLowerCase('tr-TR').match(heading);
+      const lower = line.toLocaleLowerCase('tr-TR');
+      const match = lower.match(heading) ?? lower.match(labeledHeading);
       if (match) {
         inBlock = true;
         return (
@@ -205,7 +209,7 @@ export function redactCvText(text: string, ownerName: string): string {
     marker.url,
   );
   result = result.replace(
-    /(?:doğum(?:\s*(?:tarihi|günü|yılı))?|d\s*\.\s*t\.|birth\s*(?:date|day)|date\s*of\s*birth|dob)\s*[:\-]?\s*(?:\d{1,4}[.\/-]\d{1,2}[.\/-]\d{2,4}|\d{1,2}\s+[\p{L}]+\s+\d{4}|\d{4})/giu,
+    /(?:doğum(?:\s*(?:tar[iİ]h[iİ]|g[üÜ]n[üÜ]|y[ıI]l[ıI]))?|d\s*\.\s*t\.|birth\s*(?:date|day)|date\s*of\s*birth|dob)\s*[:\-]?\s*(?:\d{1,4}[.\/-]\d{1,2}[.\/-]\d{2,4}|\d{1,2}\s+[\p{L}]+\s+\d{4}|\d{4})/giu,
     marker.birth,
   );
   result = result.replace(
