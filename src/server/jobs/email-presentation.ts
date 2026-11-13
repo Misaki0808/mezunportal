@@ -94,7 +94,10 @@ export function decorateEmail(message: QueuedEmail, appUrl: string): QueuedEmail
   for (const match of message.text.matchAll(/https?:\/\/[^\s<>]+/g)) {
     const url = match[0];
     const before = message.text.slice(last, match.index);
-    html += escapeText(choice ? before.replace(/(?:Evet|Hayır):\s*$/, '') : before);
+    const lead = choice ? before.replace(/(?:Evet|Hayır):\s*$/, '') : before;
+    html += escapeText(lead);
+    // Düğme cümlenin ortasında kalmaz: satır başında değilse kendi satırına iner.
+    const ownLine = lead === '' || /\n\s*$/.test(lead) ? '' : '<br>';
     let internal = false;
     try {
       internal = new URL(url).origin === base.origin;
@@ -102,11 +105,11 @@ export function decorateEmail(message: QueuedEmail, appUrl: string): QueuedEmail
       /* Bağlantı düz metin kalır. */
     }
     if (internal && !hasButton) {
-      html += button(url);
+      html += ownLine + button(url);
       hasButton = true;
       buttons += 1;
     } else if (internal && choice && buttons === 1) {
-      html += button(url, t('ctaStillThereNo'), true);
+      html += ownLine + button(url, t('ctaStillThereNo'), true);
       buttons += 1;
     } else if (internal)
       html += `<a href="${escapeHtml(url)}" style="color:#3730a3;overflow-wrap:anywhere;word-break:break-word">${escapeHtml(displayUrl(url))}</a>`;

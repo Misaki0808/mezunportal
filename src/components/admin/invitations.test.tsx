@@ -47,6 +47,31 @@ describe('Toplu davet', () => {
     expect(send).toHaveBeenCalledTimes(1);
   });
 
+  it('kilit hata ve başarıdan sonra açılır: yeniden gönderim her seferinde yeni istek yapar', async () => {
+    send.mockReset();
+    send
+      .mockRejectedValueOnce(new Error('ağ'))
+      .mockResolvedValueOnce({ ok: true, data: { queued: 1, skipped: 0 } })
+      .mockResolvedValueOnce({ ok: true, data: { queued: 1, skipped: 0 } });
+    const { user } = renderUi(<Invitations />);
+    await user.type(screen.getByLabelText(/E-posta adresleri/), 'ayse@example.test');
+    const button = screen.getByRole('button', { name: 'Davetleri gönder' });
+    const settled = (calls: number) =>
+      waitFor(() => {
+        expect(send).toHaveBeenCalledTimes(calls);
+        expect(button).not.toHaveAttribute('aria-busy', 'true');
+      });
+
+    // Hata (istek düşer): `finally` kilidi açmazsa ikinci tıklama sessizce yutulur.
+    await user.click(button);
+    await settled(1);
+    // Başarı: sonuçtan sonra da kilit açılır.
+    await user.click(button);
+    await settled(2);
+    await user.click(button);
+    await settled(3);
+  });
+
   it("adres alanı kit alanıdır: zorunlu, ipucu açıklama, sınırı kontrol sınırı token'ı (koyu temada 3:1)", () => {
     renderUi(<Invitations />);
 

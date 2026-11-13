@@ -156,6 +156,32 @@ it('evet ve hayır iki ayrı düğmedir: farklı anlam, farklı bağlantı, ham 
   expect(result.text).toContain(`bünyesinde misin?\n\nEvet: ${yes}\n\nHayır: ${no}\n\n`);
 });
 
+it('ana eylem düğmesi cümle ortasında kalmaz: satır başında değilse kendi satırına iner', () => {
+  const html = (text: string) =>
+    decorateEmail(
+      {
+        to: 'test@example.invalid',
+        subject: 'Örnek',
+        template: 'contact.requested',
+        idempotencyKey: '1',
+        text,
+      },
+      'https://portal.invalid',
+    ).html!;
+  // Bağlantı cümlenin sonunda: düğmeden önce satır sonu.
+  expect(html('Ayrıntı için: https://portal.invalid/x')).toContain(
+    'Ayrıntı için: <br><a class="email-button" href="https://portal.invalid/x"',
+  );
+  // Bağlantı zaten kendi satırında: fazladan satır sonu yok.
+  expect(html('Tıkla:\nhttps://portal.invalid/x')).toContain(
+    'Tıkla:<br><a class="email-button" href="https://portal.invalid/x"',
+  );
+  // Bağlantı metnin başında: önüne boşluk eklenmez.
+  expect(html('https://portal.invalid/x Sonra')).toContain(
+    '<div style="white-space:pre-line;margin:0"><a class="email-button"',
+  );
+});
+
 it('ikincil iç bağlantı ham jetonu değil kısa adresi gösterir ama hedefini korur', () => {
   const unsubscribe = 'https://portal.invalid/aylik-ozet/abonelikten-cik#token=dXNlci0x.imza';
   const result = decorateEmail(
