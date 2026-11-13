@@ -40,6 +40,19 @@ afterEach(() => {
 
 beforeEach(() => vi.clearAllMocks());
 
+it('ödül yokken nötr başlık ve katkıya yönlendiren açıklama gösterir', () => {
+  renderWithToasts(<MyAwards awards={[]} />);
+  expect(screen.getByRole('heading', { name: 'Ödüllerin' })).toBeVisible();
+  expect(screen.getByText('Henüz bir ödülün yok.')).toBeVisible();
+  expect(screen.queryByText('Katkınla ilham verdin')).toBeNull();
+  expect(screen.queryByText(messages.yearAlumni.intro)).toBeNull();
+});
+it('ödül varken tebrik başlığı korunur', () => {
+  renderWithToasts(<MyAwards awards={[award]} />);
+  expect(screen.getByRole('heading', { name: 'Katkınla ilham verdin' })).toBeVisible();
+  expect(screen.queryByText('Henüz bir ödülün yok.')).toBeNull();
+});
+
 describe('MyAwards: yayın tercihi geri bildirimi', () => {
   it('başarıda toast; kaydederken düğme bekleyen durumu duyurur ve ikinci tıklama gitmez', async () => {
     let release: (() => void) | undefined;

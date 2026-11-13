@@ -3,7 +3,7 @@ import { safeClientAction } from '@/lib/safe-client-action';
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Button, Field, Input, Switch, Textarea } from '@/components/ui';
+import { Button, EmptyState, Field, Input, Switch, Textarea, buttonClasses } from '@/components/ui';
 import {
   answerCvReviewRequestSchema,
   cvReviewSettingsSchema,
@@ -153,6 +153,19 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
         ← {t('back')}
       </Link>
       <h1 className="mt-3 text-3xl font-semibold">{t('title')}</h1>
+      {!student && !mentor && !settings && (
+        <div className="mt-8">
+          <EmptyState
+            title={t('setupTitle')}
+            description={t('setupDescription')}
+            action={
+              <Link href="/mentor/ayarlar" className={buttonClasses()}>
+                {t('setupAction')}
+              </Link>
+            }
+          />
+        </div>
+      )}
       {error && (
         <p role="alert" className="mt-4 text-danger">
           {error}
