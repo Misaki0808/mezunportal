@@ -261,6 +261,37 @@ describe('deneyim formu: kaydedilmemiş değişiklik uyarısı', () => {
     expect(closing()).toBe(false);
   });
 
+  it('taslak kaydı başarılı ama moderasyon gönderimi hatalıysa kaydedilmiş içerik için çıkış uyarısı vermez', async () => {
+    const submit = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
+    const { user, save } = setup({ submit });
+    await fillInternship(user);
+    await user.click(screen.getByRole('button', { name: 'Moderasyona gönder' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: 'Moderasyona gönder',
+      }),
+    );
+    expect(await screen.findByText(/Çok fazla deneme/)).toBeVisible();
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(submit).toHaveBeenCalledWith({ experienceId: 'e1' });
+    expect(closing()).toBe(false);
+    await user.type(screen.getByLabelText(/Kurum ya da etkinlik adı/), ' güncelleme');
+    expect(closing()).toBe(true);
+  });
+
+  it('kayıt sürerken yazılan yeni değişiklik sunucuya giden eski içerikle kaydedilmiş sayılmaz', async () => {
+    const { user, save } = setup();
+    const gate = Promise.withResolvers<ReturnType<typeof detail>>();
+    save.mockReturnValueOnce(gate.promise);
+    const field = screen.getByLabelText(/Kurum ya da etkinlik adı/);
+    await user.type(field, 'İlk içerik');
+    await user.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+    await user.type(field, ' yeni değişiklik');
+    await act(async () => gate.resolve(detail()));
+    expect(field).toHaveValue('İlk içerik yeni değişiklik');
+    expect(closing()).toBe(true);
+  });
+
   it('yazıldıktan sonra sekme kapatma sorulur; yazılan silinip eski hale gelirse sorulmaz', async () => {
     const { user } = setup();
     const field = screen.getByLabelText(/Kurum ya da etkinlik adı/);

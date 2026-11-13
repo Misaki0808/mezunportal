@@ -156,7 +156,11 @@ export function AppointmentDetail({
           </h2>
           {a.meetUrl ? (
             <a
-              className={buttonClasses({ size: 'lg', fullWidth: true })}
+              className={buttonClasses({
+                size: 'lg',
+                fullWidth: true,
+                variant: feedbackAvailable ? 'secondary' : 'primary',
+              })}
               href={a.meetUrl}
               target="_blank"
               rel="noopener noreferrer"

@@ -334,6 +334,23 @@ const detailActions = () => ({
 const stepText = (item: HTMLElement) => item.textContent!.replace(/^\d+/, '');
 
 describe('randevu detayı', () => {
+  it('onaylı geçmiş görüşmede form açılmışsa geri bildirim tek birincildir, Meet bağlantısı ikincildir', () => {
+    renderUi(
+      <AppointmentDetail
+        appointment={view(
+          { status: 'CONFIRMED', meetUrl: 'https://meet.example.com/feedback' },
+          { canConfirm: false, canDecline: false, canCancel: false, canDownloadIcs: true },
+        )}
+        feedbackAvailable
+        actions={detailActions()}
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Formu doldur' })).toHaveClass('bg-primary');
+    expect(screen.getByRole('link', { name: 'Görüşmeye katıl' })).not.toHaveClass('bg-primary');
+    expect(
+      screen.getByText('Görüşme nasıl geçti? Kısa bir geri bildirim bırakabilirsin.'),
+    ).toBeVisible();
+  });
   it('bekleyen talepte onay çalışır ve sunucu verisi yenilenir', async () => {
     const actions = detailActions();
     const { user } = renderUi(<AppointmentDetail appointment={view()} actions={actions} />);

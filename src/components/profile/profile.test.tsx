@@ -59,6 +59,22 @@ function actions(overrides: Partial<MyProfileActions> = {}): MyProfileActions {
 }
 
 describe('kendi profilim', () => {
+  it('beceri kaydı hatası bölüm kapatılsa da görünür; alan içeriği tekrar açılınca korunur', async () => {
+    const addSkill = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
+    const { user } = renderWithToasts(<MyProfile initial={base} actions={actions({ addSkill })} />);
+    const toggle = screen.getByRole('button', { name: 'Beceriler' });
+    await user.click(toggle);
+    await user.type(screen.getByLabelText('Beceri ekle'), 'SQL');
+    await user.click(
+      within(document.getElementById('profile-skills')!).getByRole('button', { name: 'Ekle' }),
+    );
+    expect(await screen.findByText(messages.errors.codes.RATE_LIMITED)).toBeVisible();
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText(messages.errors.codes.RATE_LIMITED)).toBeVisible();
+    await user.click(toggle);
+    expect(screen.getByLabelText('Beceri ekle')).toHaveValue('SQL');
+  });
   it('profil kaydetme çift gönderimi engeller, hata alanı korur', async () => {
     const gate = Promise.withResolvers<never>();
     const updateBasics = vi.fn(() => gate.promise);

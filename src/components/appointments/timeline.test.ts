@@ -8,6 +8,11 @@ const states = (status: AppointmentStatus, feedbackPending = false) =>
   buildTimeline({ status }, feedbackPending).map((item) => `${item.id}:${item.state}`);
 
 describe('randevu zaman çizelgesi', () => {
+  it('onaylı geçmiş görüşmede sunucu geri bildirim açtıysa gelecek görüşmeye hazırlan demez', () => {
+    expect(timelineHint({ status: 'CONFIRMED', role: 'MENTOR' }, true)).toBe('feedback');
+    expect(timelineHint({ status: 'CONFIRMED', role: 'MENTEE' }, true)).toBe('feedback');
+    expect(timelineHint({ status: 'CONFIRMED', role: 'MENTOR' }, false)).toBe('confirmed');
+  });
   it('bekleyen talepte yol baştadır: talep şu an, kalanlar sırada', () => {
     expect(states('REQUESTED')).toEqual([
       'requested:current',

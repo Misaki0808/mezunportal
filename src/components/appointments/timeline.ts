@@ -60,7 +60,8 @@ export function timelineHint(
   feedbackPending: boolean,
 ): 'requestedMentor' | 'requestedMentee' | 'confirmed' | 'feedback' | null {
   if (a.status === 'REQUESTED') return a.role === 'MENTOR' ? 'requestedMentor' : 'requestedMentee';
-  if (a.status === 'CONFIRMED') return 'confirmed';
+  // İki tarafın formu tamamlanana kadar durum CONFIRMED kalır; açık form görüşme sonrası yönlendirmedir.
+  if (a.status === 'CONFIRMED') return feedbackPending ? 'feedback' : 'confirmed';
   if (a.status === 'COMPLETED' && feedbackPending) return 'feedback';
   return null;
 }

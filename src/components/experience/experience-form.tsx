@@ -200,6 +200,8 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
         });
         if (!saved.ok) return saved;
         setExperienceId(saved.data.id);
+        // Gönderme ayrı bir istektir; o adım hata verse de bu içerik taslakta kaydedilmiştir.
+        setSavedSnapshot(savedNow);
         if (mode === 'submit') {
           const sent = await submit({ experienceId: saved.data.id });
           if (!sent.ok) return sent;
@@ -210,7 +212,6 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
         success: mode === 'draft' ? t('form.draftSaved') : t('form.submitted'),
         onOk: () => {
           ok = true;
-          setSavedSnapshot(savedNow);
           if (mode === 'submit') {
             setConfirm(false);
             setSubmitted(true);
