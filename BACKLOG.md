@@ -17,10 +17,10 @@ hiçbiri geliştirmeyi durdurmaz; her biri ilgili işe gelince sorulur.
 
 ### Yakın hedef
 
-Kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon listesi (70 kutu, Git dışı
-`pm-handoff/faz2-kapanis/`). R2'nin provası (13 Kas, `f063d21` derlemesi, Chromium 390 px) 60 kutuyu geçirdi, 0 kaldı; 10 kutu gerçek cihaz
-ister: "Gerçek iPhone'da bak" bölümünün 6 kutusu, QR'ı telefon kamerasıyla okutma, ekran klavyesi, ana ekrana ekleme ve telefona ağ adresiyle
-açma adımı. Bulgular PM'de karta bölünür ya da bu belgeye borç olarak yazılır. Hesap isteyen işler ile canlıya alım ve pilot kararları
+Kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon listesi (72 kutu, Git dışı
+`pm-handoff/faz2-kapanis/`; güncel main'e göre yenilendi). R2'nin provaları (13 Kas: masaüstü Chromium 390 px ve Android emülatör) ilk 70 kutudan
+64'ünü geçirdi, 0 kaldı; 6 kutu gerçek cihaz ister: telefona ağ adresiyle açma, QR'ı telefon kamerasıyla okutma, ana ekrana ekleme, iPhone çentik ve
+güvenli alan, iPhone ekran klavyesi ve Safari'de Tab. Bulgular PM'de karta bölünür ya da bu belgeye borç olarak yazılır. Hesap isteyen işler ile canlıya alım ve pilot kararları
 kullanıcı gündeme getirince ele alınır. Faz 3 pilottan sonra konuşulur.
 
 ### Bilinen kısıtlar
@@ -68,7 +68,7 @@ Açık PM kararı yok.
   (`src/contracts/privacy.ts`) ve ekranda metin taslak diye işaretlidir. Biter: alanlar dolar, hoca onaylar, üniversite KVKK birimi ya da bir
   hukukçu okur, onaylı sürüm köke taşınır ve sürüm numarası artar (kullanıcılar yeniden onay verir). Önkoşul K-03.
 - [ ] **PILOT-TEST** Test planı iki belgededir: `docs/engineering.md` "Faz 2 deneme rehberi" ve telefon listesi (70 kutu, Git dışı); `docs/faz1-plan.md`'ya
-  ayrı bölüm yazılmadı. R2 provası geçti (60 geçti, 0 kaldı, 10 gerçek cihaz bekliyor, bkz. "Yakın hedef"). Biter: kullanıcı turu bir kez koşar,
+  ayrı bölüm yazılmadı. R2 provaları geçti (64 geçti, 0 kaldı, 6 gerçek cihaz bekliyor, bkz. "Yakın hedef"). Biter: kullanıcı turu bir kez koşar,
   bulgular kapanır ya da borç yazılır. Canlıda ayrıca P1-18 kabul adımları koşulur (PILOT-DEPLOY).
 - [ ] **PILOT-DEPLOY** Kod tarafı hazır: çok aşamalı `Dockerfile` (web ve worker aynı imajdan), açılışta `migrate deploy` (seed yok),
   `/api/health` (durum, ortam, commit, DB), `scripts/backup.sh` ve `scripts/restore.sh`, toplu davet, prod'da test girişi ve `/ui-ornekleri` 404, yerel imaj
