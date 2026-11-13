@@ -12,7 +12,17 @@ export { addDays } from '@/server/rules/jobPosting';
 /** Ekrandaki sıralama: ilk hataya odaklanmak ve sunucudan gelen yolu aynı adıma taşımak için. */
 export const postingStepFields = [
   ['kind', 'title', 'organizationName', 'departmentId'],
-  ['description', 'location', 'deadlineOn', 'targetDepartmentIds', 'applyUrl'],
+  [
+    'description',
+    'location',
+    'isRemote',
+    'deadlineOn',
+    'targetDepartmentIds',
+    'tagIds',
+    'targetGrades',
+    'applyMethod',
+    'applyUrl',
+  ],
 ] as const;
 
 export function postingFieldStep(field: string): 0 | 1 | undefined {

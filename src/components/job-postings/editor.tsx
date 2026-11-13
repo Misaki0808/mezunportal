@@ -163,9 +163,10 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
           }
         },
         onFailure: (failure) => {
-          const serverFields = Object.keys(failure.fieldErrors ?? {}).map(
-            (key) => key.replace(/^content\./, '').split('.')[0]!,
-          );
+          const serverFields = Object.keys(failure.fieldErrors ?? {}).map((key) => {
+            const field = key.replace(/^content\./, '').split('.')[0]!;
+            return field === 'companyId' ? 'organizationName' : field;
+          });
           const ordered = postingStepFields.flat().filter((field) => serverFields.includes(field));
           showError(errors(failure.errorCode), ordered);
         },
@@ -180,8 +181,12 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
     departmentId: t('authorDepartment'),
     description: t('descriptionLabel'),
     location: t('locationLabel'),
+    isRemote: t('remoteQuestion'),
     deadlineOn: t('deadline'),
     targetDepartmentIds: t('targetDepartments'),
+    tagIds: t('matchTags'),
+    targetGrades: t('matchGrades'),
+    applyMethod: t('applyMethod'),
     applyUrl: t('applyUrl'),
   };
   return (
@@ -253,7 +258,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
         </h2>
         {step === 0 && (
           <>
-            <Field label={t('kind')} required>
+            <Field label={t('kind')} required error={bad('kind')}>
               {(p) => (
                 <Select
                   {...p}
@@ -336,11 +341,19 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               <input
                 className="size-5 accent-primary"
                 type="checkbox"
+                data-error-field="isRemote"
+                aria-invalid={invalid.has('isRemote') || undefined}
+                aria-describedby={invalid.has('isRemote') ? 'posting-remote-error' : undefined}
                 checked={remote}
                 onChange={(e) => setRemote(e.target.checked)}
               />
               {t('remoteQuestion')}
             </label>
+            {bad('isRemote') && (
+              <p id="posting-remote-error" role="alert" className="text-danger">
+                {bad('isRemote')}
+              </p>
+            )}
             <Field
               label={t('deadline')}
               hint={`${t('deadlineHint')} ${fieldText('dateUnset')}`}
@@ -404,9 +417,19 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 ))}
               </div>
             </fieldset>
-            <fieldset>
+            <fieldset
+              tabIndex={-1}
+              data-error-field="tagIds"
+              aria-invalid={invalid.has('tagIds') || undefined}
+              aria-describedby={invalid.has('tagIds') ? 'posting-tags-error' : undefined}
+            >
               <legend className="font-semibold">{t('matchTags')}</legend>
               <p className="mt-1 text-sm text-fg-muted">{t('matchTagsHint')}</p>
+              {bad('tagIds') && (
+                <p id="posting-tags-error" role="alert" className="text-danger">
+                  {bad('tagIds')}
+                </p>
+              )}
               <div className="mt-2 flex flex-wrap gap-2">
                 {context.availableTags.map((tag) => (
                   <label
@@ -432,9 +455,19 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 ))}
               </div>
             </fieldset>
-            <fieldset>
+            <fieldset
+              tabIndex={-1}
+              data-error-field="targetGrades"
+              aria-invalid={invalid.has('targetGrades') || undefined}
+              aria-describedby={invalid.has('targetGrades') ? 'posting-grades-error' : undefined}
+            >
               <legend className="font-semibold">{t('matchGrades')}</legend>
               <p className="mt-1 text-sm text-fg-muted">{t('matchGradesHint')}</p>
+              {bad('targetGrades') && (
+                <p id="posting-grades-error" role="alert" className="text-danger">
+                  {bad('targetGrades')}
+                </p>
+              )}
               <div className="mt-2 flex flex-wrap gap-2">
                 {[1, 2, 3, 4].map((grade) => (
                   <label
@@ -456,10 +489,11 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 ))}
               </div>
             </fieldset>
-            <Field label={t('applyMethod')} required>
+            <Field label={t('applyMethod')} required error={bad('applyMethod')}>
               {(p) => (
                 <Select
                   {...p}
+                  data-error-field="applyMethod"
                   value={method}
                   onChange={(e) => setMethod(e.target.value as typeof method)}
                 >

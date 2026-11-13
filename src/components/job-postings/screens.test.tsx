@@ -283,12 +283,20 @@ const pendingItem = {
   endedAt: null,
   author: { displayName: 'Yetkili kişi', role: 'ALUMNI' as const },
 };
-it('son adımda sunucunun önceki adıma ait alan hatası doğru alana götürür', async () => {
+it.each([
+  ['title', /Pozisyon adı/],
+  ['kind', /İlan türü/],
+  ['companyId', /Kurum adı/],
+  ['isRemote', /Uzaktan çalışılabilir/],
+  ['tagIds', /İlan etiketleri/],
+  ['targetGrades', /Hedef sınıflar/],
+  ['applyMethod', /Başvuru yolu/],
+])('son adımda sunucunun %s alan hatası doğru alana götürür', async (field, label) => {
   const { addDays, istanbulDay } = await import('./model');
   const save = vi.fn().mockResolvedValue({
     ok: false,
     errorCode: 'VALIDATION_INVALID',
-    fieldErrors: { 'content.title': 'VALIDATION_INVALID' },
+    fieldErrors: { [`content.${field}`]: 'VALIDATION_INVALID' },
   });
   const initial = {
     ...pendingItem,
@@ -302,10 +310,13 @@ it('son adımda sunucunun önceki adıma ait alan hatası doğru alana götürü
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
   fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
-  const title = await screen.findByLabelText(/Pozisyon adı/);
-  await waitFor(() => expect(title).toHaveFocus());
-  expect(title).toHaveAttribute('aria-invalid', 'true');
-  expect(title).toHaveAttribute('aria-describedby');
+  const control =
+    field === 'tagIds' || field === 'targetGrades'
+      ? await screen.findByRole('group', { name: label })
+      : await screen.findByLabelText(label);
+  await waitFor(() => expect(control).toHaveFocus());
+  expect(control).toHaveAttribute('aria-invalid', 'true');
+  expect(control).toHaveAttribute('aria-describedby');
 });
 it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () => {
   HTMLDialogElement.prototype.showModal = function () {
