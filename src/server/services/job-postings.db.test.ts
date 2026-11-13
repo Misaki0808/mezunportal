@@ -895,6 +895,36 @@ describe('ilan üzerinden iletişim (D7)', () => {
     );
   });
 
+  it('ilan iletişiminde yabancı, olmayan, askıdaki ve silinmiş yazar aynı genel yanıtı verir', async () => {
+    const w = await world();
+    const id = await contactPosting(w);
+    const missing = await previewJobPostingContact(deps, w.student, { jobPostingId: 'yok' });
+    const missingCode = await code(
+      requestJobPostingContact(deps, w.student, { jobPostingId: 'yok', fields: ['EMAIL'] }),
+    );
+    expect(missingCode).toBe('RESOURCE_NOT_FOUND');
+    expect(await previewJobPostingContact(deps, w.foreignStudent, { jobPostingId: id })).toEqual(
+      missing,
+    );
+    expect(
+      await code(
+        requestJobPostingContact(deps, w.foreignStudent, { jobPostingId: id, fields: ['EMAIL'] }),
+      ),
+    ).toBe(missingCode);
+    for (const state of [{ banned: true }, { banned: false, deletedAt: new Date() }]) {
+      await db.user.update({ where: { id: w.academic }, data: state });
+      expect(await previewJobPostingContact(deps, w.student, { jobPostingId: id })).toEqual(
+        missing,
+      );
+      expect(
+        await code(
+          requestJobPostingContact(deps, w.student, { jobPostingId: id, fields: ['EMAIL'] }),
+        ),
+      ).toBe(missingCode);
+    }
+    expect(await db.contactRequest.count({ where: { targetId: w.academic } })).toBe(0);
+  });
+
   it('talep gönderir: kayıt ilan bağlamıyla, yazara bildirim; çıktıda yazar kimliği yoktur', async () => {
     const w = await world();
     const id = await contactPosting(w);

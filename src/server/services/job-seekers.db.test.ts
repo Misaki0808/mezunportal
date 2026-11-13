@@ -328,6 +328,32 @@ describe('P2-06 K-07 ve görünürlük kapsamı', () => {
     ).toBe('RESOURCE_NOT_FOUND');
   });
 
+  it('aday iletişiminde yabancı, olmayan, askıdaki ve silinmiş aday aynı genel yanıtı verir', async () => {
+    const own = await makeStudent();
+    const theirs = await makeStudent({ institution: other });
+    const alumnus = await makeAlumnus();
+    const missingRef = 'missing-audit-reference';
+    const missing = await previewSeekerContact(deps, alumnus, { ref: missingRef });
+    const missingCode = await code(
+      requestSeekerContact(deps, alumnus, { ref: missingRef, fields: ['EMAIL'] }),
+    );
+    expect(missingCode).toBe('RESOURCE_NOT_FOUND');
+    expect(await previewSeekerContact(deps, alumnus, { ref: theirs.ref! })).toEqual(missing);
+    expect(
+      await code(requestSeekerContact(deps, alumnus, { ref: theirs.ref!, fields: ['EMAIL'] })),
+    ).toBe(missingCode);
+    for (const state of [{ banned: true }, { banned: false, deletedAt: new Date() }]) {
+      await db.user.update({ where: { id: own.userId }, data: state });
+      expect(await previewSeekerContact(deps, alumnus, { ref: own.ref! })).toEqual(missing);
+      expect(
+        await code(requestSeekerContact(deps, alumnus, { ref: own.ref!, fields: ['EMAIL'] })),
+      ).toBe(missingCode);
+    }
+    expect(
+      await db.contactRequest.count({ where: { targetId: { in: [own.userId, theirs.userId] } } }),
+    ).toBe(0);
+  });
+
   it('süzgeçler: bölüm, dönem, etiketlerin HEPSİ; kapalı/askıdaki/silinen öğrenci hiç çıkmaz', async () => {
     const tagged = await makeStudent({
       tags: ['alpha-x', 'beta-x'],
