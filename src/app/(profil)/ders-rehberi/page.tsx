@@ -10,6 +10,7 @@ import {
   PageHeader,
 } from '@/components/ui';
 import { CourseFilters } from '@/components/course-guide/course-filters';
+import { groupGuideCourses } from '@/components/course-guide/group-courses';
 import { getCourseGuide } from '@/server/actions/course-guide';
 
 export const dynamic = 'force-dynamic';
@@ -25,10 +26,7 @@ export default async function CourseGuidePage({
   const result = await getCourseGuide({ semester, elective, query: query.q?.slice(0, 100) });
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   const t = await getTranslations('courseGuide');
-  const groups = [
-    result.data.filter((c) => c.code.startsWith('YBSB')),
-    result.data.filter((c) => !c.code.startsWith('YBSB')),
-  ];
+  const groups = groupGuideCourses(result.data);
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
       <PageHeader title={t('title')} description={t('description')} />
@@ -47,39 +45,64 @@ export default async function CourseGuidePage({
         />
       )}
       {groups.map(
-        (courses, index) =>
-          courses.length > 0 && (
-            <section key={index} className="space-y-3">
+        ({ category, reviewed, semesters }) =>
+          (reviewed.length > 0 || semesters.length > 0) && (
+            <section key={category} className="space-y-3">
               <h2 className="text-xl font-semibold text-fg">
-                {t(index === 0 ? 'departmentCourses' : 'commonCourses')}
+                {t(category === 'department' ? 'departmentCourses' : 'commonCourses')}
               </h2>
-              <div className="grid gap-3 md:grid-cols-2">
-                {courses.map((c) => (
-                  <Card as="article" key={c.id}>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
-                      <Badge tone="category">{t(c.elective ? 'elective' : 'required')}</Badge>
-                      <span>
-                        {c.code} · {t('semesterNumber', { count: c.semester })}
-                      </span>
-                    </div>
-                    <h3 className="mt-2 break-words font-semibold text-fg">{c.name}</h3>
-                    <div className="mt-3">
-                      {c.count === null ? (
-                        <span className="text-sm text-fg-muted">{t('notEnoughShort')}</span>
-                      ) : (
-                        <Badge tone="success">{t('alumniBadge', { count: c.count })}</Badge>
+              {reviewed.length > 0 && (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {reviewed.map((c) => (
+                    <Card as="article" key={c.id} data-course-code={c.code}>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
+                        <Badge tone="category">{t(c.elective ? 'elective' : 'required')}</Badge>
+                        <span>
+                          {c.code} · {t('semesterNumber', { count: c.semester })}
+                        </span>
+                      </div>
+                      <h3 className="mt-2 break-words font-semibold text-fg">{c.name}</h3>
+                      <div className="mt-3">
+                        <Badge tone="success">{t('alumniBadge', { count: c.count! })}</Badge>
+                      </div>
+                      {c.sectors.length > 0 && (
+                        <ul className="mt-3 flex flex-wrap gap-2">
+                          {c.sectors.map((name) => (
+                            <li key={name}>
+                              <Badge tone="info">{name}</Badge>
+                            </li>
+                          ))}
+                        </ul>
                       )}
-                    </div>
-                    {c.sectors.length > 0 && (
-                      <ul className="mt-3 flex flex-wrap gap-2">
-                        {c.sectors.map((name) => (
-                          <li key={name}>
-                            <Badge tone="info">{name}</Badge>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </Card>
+                    </Card>
+                  ))}
+                </div>
+              )}
+              <div className="grid gap-1 md:grid-cols-2 md:items-start">
+                {semesters.map(({ semester, courses }) => (
+                  <div
+                    key={semester}
+                    className="rounded-card border border-border bg-surface px-2.5 py-0.5"
+                  >
+                    <h3 className="text-sm font-semibold text-fg-muted">
+                      {t('semesterNumber', { count: semester })} · {t('notEnoughShort')}
+                    </h3>
+                    <ul className="mt-1">
+                      {courses.map((course) => (
+                        <li
+                          key={course.id}
+                          data-course-code={course.code}
+                          className="flex items-baseline gap-1 text-sm leading-[1.125rem]"
+                        >
+                          <span className="shrink-0 text-xs text-fg-muted">{course.code}</span>
+                          <span className="min-w-0 flex-1 break-words text-fg">{course.name}</span>
+                          <Badge tone="category" className="shrink-0 px-1 py-0 text-xs">
+                            {t(course.elective ? 'elective' : 'required')}
+                          </Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
               </div>
             </section>
