@@ -60,6 +60,44 @@ describe('ana sayfa panosu', () => {
     expect(heading.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it('kod sırası telefon sırasıyla aynı (selam, kutu, hikâye, bekleyenler, kısayollar, yönetim, ilanlar); masaüstünde iki sütuna bölünür', () => {
+    const { container } = renderUi(
+      <HomeDashboard
+        summary={{ ...base, adminPending: 2, pending: { ...base.pending, contactRequests: 1 } }}
+        notice={<Link href="/baslangic">Başlangıca devam et</Link>}
+        feature={<Link href="/hikayeler">Hikâye arşivi</Link>}
+        aside={<p>Sana uyan ilanlar burada</p>}
+      />,
+    );
+    const order = [
+      screen.getByRole('heading', { level: 1 }),
+      screen.getByRole('link', { name: 'Başlangıca devam et' }),
+      screen.getByRole('link', { name: 'Hikâye arşivi' }),
+      screen.getByRole('region', { name: 'Bekleyen işlerin' }),
+      screen.getByRole('region', { name: 'Kısayollar' }),
+      screen.getByRole('link', { name: /Yönetim/ }),
+      screen.getByText('Sana uyan ilanlar burada'),
+    ];
+    for (let i = 1; i < order.length; i += 1) {
+      expect(
+        order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+    // Sol sütun: selam → bekleyenler; sağ sütun: kısayollar → yönetim → ilanlar (≥1024 px'te yan yana).
+    const [left, right] = Array.from(container.firstElementChild!.children);
+    expect(left).toContainElement(order[3]!);
+    expect(left).not.toContainElement(order[4]!);
+    expect(right).toContainElement(order[4]!);
+    expect(right).toContainElement(order[6]!);
+    expect(container.firstElementChild).toHaveClass('lg:grid-cols-2');
+  });
+
+  it('mentorda da sağ sütun doludur (kısayollar sağda); ilan paneli yoksa yalnız aside boş kalır', () => {
+    const { container } = renderUi(<HomeDashboard summary={{ ...base, role: 'MENTOR' }} />);
+    const right = container.firstElementChild!.children[1]!;
+    expect(right).toContainElement(screen.getByRole('region', { name: 'Kısayollar' }));
+  });
+
   it('ad boşsa yalnız "Merhaba" der', () => {
     renderUi(<HomeDashboard summary={{ ...base, firstName: '' }} />);
     expect(screen.getByRole('heading', { level: 1, name: 'Merhaba' })).toBeVisible();
