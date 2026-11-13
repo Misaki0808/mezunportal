@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   start: vi.fn(),
   stop: vi.fn(),
   purgeAuth: vi.fn(),
+  purgeFailed: vi.fn(),
   purgeLinkedin: vi.fn(),
   detach: vi.fn(),
   freezeAwards: vi.fn(),
@@ -28,6 +29,9 @@ vi.mock('@/lib/env', () => ({
 vi.mock('../db', () => ({ getDb: () => mocks.db }));
 vi.mock('../external/storage', () => ({ getStorage: () => ({}) }));
 vi.mock('../services/auth-cleanup', () => ({ purgeExpiredAuth: mocks.purgeAuth }));
+vi.mock('../services/notification-intent-cleanup', () => ({
+  purgeFailedNotificationIntents: mocks.purgeFailed,
+}));
 vi.mock('../services/event', () => ({ detachOldEvents: mocks.detach }));
 vi.mock('../services/year-alumni', () => ({ freezeDueAwardCycles: mocks.freezeAwards }));
 vi.mock('../services/alumni-story', () => ({ rotateMonthlyAlumni: mocks.rotateMonthly }));
@@ -44,9 +48,9 @@ import { createNotificationRuntime } from './notification-worker';
 
 describe('günlük bakım işlerinin kaydı', () => {
   beforeEach(() => vi.clearAllMocks());
-  it('iki işi İstanbul saatinde günlük zamanlar ve gerçek bakım işlerine bağlar', async () => {
+  it('bakım işlerini İstanbul saatinde günlük zamanlar ve gerçek bakım işlerine bağlar', async () => {
     await createNotificationRuntime();
-    for (const name of ['auth.purge', 'events.detach']) {
+    for (const name of ['auth.purge', 'events.detach', 'notification.purgeFailed']) {
       expect(mocks.createQueue).toHaveBeenCalledWith(name, expect.any(Object));
       expect(mocks.schedule).toHaveBeenCalledWith(
         name,
@@ -59,6 +63,7 @@ describe('günlük bakım işlerinin kaydı', () => {
       await worker();
     }
     expect(mocks.purgeAuth).toHaveBeenCalledWith(mocks.db);
+    expect(mocks.purgeFailed).toHaveBeenCalledWith(mocks.db);
     expect(mocks.detach).toHaveBeenCalledWith(mocks.db, expect.any(Date));
   });
   it('ödül listesi dondurma işini her dakika zamanlar', async () => {

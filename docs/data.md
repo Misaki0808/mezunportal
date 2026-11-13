@@ -189,6 +189,7 @@ kullanıcı verisini siler; PR'da onay ister. `p2_04_*`, `p2_06_*`, `contact_req
 
 - Mezun belgesi karar anında silinir. CV'de son dosya tutulur; eski dosyalar uygulama anında
   silinir (açık incelemeye bağlı olan hariç). Ayrıştırma çıktısı uygulama/atma anında temizlenir.
+- `NotificationIntent` kalıcı hataları (`FAILED`), `failedAt` üzerinden 90 günü aşınca günlük işte silinir; diğer durumlar bu temizliğe girmez.
 - `EmailLog` 6 ay; `Event` 24 ay sonra kullanıcıdan koparılır (userId `null`).
 - Hesap silmede kişisel alanlar anında temizlenir, dosyalar silinir; yayınlanmış içerik kullanıcının
   seçimine göre silinir (varsayılan) ya da yazar bağı koparılarak kalır (K-09, `docs/decisions.md`).

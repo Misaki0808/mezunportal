@@ -91,13 +91,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   yerinde duruyor (hesap silme hâlâ eski satırları siler).
   Neden borç: ölü tablo ve yanıltıcı model.
   Kapanış ölçütü: daraltma migration'ı tabloyu kaldırır (geri alma adımıyla), `Skill` sözlüğü yalnız eşleme için kalır.
-- [ ] **TD-018** · P2 · Outbox `FAILED` niyet kayıtlarının saklama süresi yok
-  Ne: Beş denemeden sonra `FAILED` olan `NotificationIntent` satırı (yük temizlenmiş, yalnız sabit hata kodu ve zamanlar)
-  hesap silinene kadar kalır; temizleyen iş yok.
-  Neden borç: tablo büyümesi ve veri en azlığı; operatörün incelemesi için sınırsız tutmanın gerekçesi yok.
-  Kapanış ölçütü: günlük iş `failedAt` üzerinden belirlenen süreyi (karar gerekir) aşan `FAILED` satırlarını siler (idempotent, testli).
-
-
 - [ ] **TD-021** · P1 · Canlıya alımda (K-02) güvenilir proxy ayarı
   Ne: `getRequestContext` şu anda istemcinin değiştirebildiği X-Forwarded-For değerini kullanır; IP kotası
   yalnız tamamlayıcı korumadır. Bu durum bütün kamuya açık hız sınırlarını etkiler.
@@ -119,11 +112,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   Ne: dosya normalde 3–5 sn, bir kapıda 50 sn; yeniden koşuda 3,1 sn yeşil (yük ya da veritabanı beklemesi).
   Neden borç: izleniyor, kök neden bilinmiyor.
   Kapanış ölçütü: bir daha düşerse kök neden kartı açılır; düşmeden bir faz geçerse silinir.
-- [ ] **TD-026** · P2 · `src/components/ui/button-classes.test.ts` bileşen kaynağını metin olarak okuyor
-  Ne: `'use client'` yönergesini ve barrel dışa aktarımını dosya metninden arıyor ("ekran kaynağını tarayan test yazılmaz" kuralına yakın); gerçek koruma e2e'de
-  (etkinlik detayı, deneyim sayfası sunucuda `buttonClasses` çağırır).
-  Neden borç: kuralla çelişen kaynak taraması.
-  Kapanış ölçütü: test saf işleve indirilir ya da kaldırılır, e2e koruması yeter.
 - [ ] **TD-027** · P2 · pg "Calling client.query() when the client is already executing a query" uyarısı (pg@9'da hataya döner)
   Ne: Prisma 7'nin sorgu yorumlayıcısı (`@prisma/adapter-pg` 7.10.1 + `pg` 8.23.1) işlem içinde eşzamanlı sorgu atıyor; Node uyarıyı süreç başına bir kez yazar
   (`--trace-deprecation` yığını `PgTransaction.performIO` ← `interpretNode`). Bizim kodumuzdan değil; dev'de Next "Issue" rozetini çıkarır.
