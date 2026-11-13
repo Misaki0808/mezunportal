@@ -5,6 +5,7 @@ import { createNotificationRuntime } from './notification-worker';
 import { createPointsRuntime } from './points';
 import { getDb } from '../db';
 import { isLlmConfigured } from '../external/llm';
+import { createWorkerShutdown, stopWorkerRuntimes } from './worker-shutdown';
 import { pathToFileURL } from 'node:url';
 async function main() {
   const runtime = await createEmailRuntime(true);
@@ -36,27 +37,24 @@ async function main() {
   const heartbeat = () => process.stdout.write('worker: ok\n');
   heartbeat();
   const timer = setInterval(heartbeat, 30_000);
-  let stopping = false;
-  const stop = async () => {
-    if (stopping) return;
-    stopping = true;
-    clearInterval(timer);
-    try {
-      await notifications.stop();
-      await pointsRuntime.stop();
-      await appointmentRuntime.stop();
-      await cvRuntime?.stop();
-      await runtime.stop();
-      await getDb().$disconnect();
-    } catch {
-      process.stderr.write('worker: stop failed\n');
-      process.exitCode = 1;
-    }
-  };
-  for (const signal of ['SIGINT', 'SIGTERM'] as const)
-    process.on(signal, () => {
-      void stop();
-    });
+  const onSignal = createWorkerShutdown({
+    stop: () => {
+      clearInterval(timer);
+      return stopWorkerRuntimes(
+        [
+          () => notifications.stop(),
+          () => pointsRuntime.stop(),
+          () => appointmentRuntime.stop(),
+          async () => cvRuntime?.stop(),
+          () => runtime.stop(),
+        ],
+        () => getDb().$disconnect(),
+      );
+    },
+    exit: (code) => process.exit(code),
+    write: (line) => process.stderr.write(line),
+  });
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, onSignal);
 }
 // Modül bağımlılıkları yan etkisiz yüklenebilir; gerçek worker yalnız giriş noktası olarak çalışır.
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {

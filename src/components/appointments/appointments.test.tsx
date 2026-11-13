@@ -155,6 +155,27 @@ describe('slot seçici', () => {
     expect(screen.getByText(text)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Randevu talep et' })).not.toBeInTheDocument();
   });
+
+  it('boş durumda tek eylem "Mentor bul"dur ve mentor listesine gider', () => {
+    renderWithToasts(
+      <SlotPicker
+        list={slotList({ slots: [], unavailableReason: 'NO_AVAILABILITY' })}
+        request={vi.fn()}
+      />,
+    );
+    const links = screen.getAllByRole('link');
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveTextContent('Mentor bul');
+    expect(links[0]).toHaveAttribute('href', '/mentorlar');
+  });
+
+  it('müsait saat kalmadıysa da aynı sıcak boş durum ve tek eylem görünür', () => {
+    renderWithToasts(
+      <SlotPicker list={slotList({ slots: [], unavailableReason: null })} request={vi.fn()} />,
+    );
+    expect(screen.getByText(/Önümüzdeki 3 hafta için müsait saat yok/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mentor bul' })).toHaveAttribute('href', '/mentorlar');
+  });
 });
 
 const settingsView = (over: Partial<MentorSettingsView> = {}): MentorSettingsView => ({
@@ -309,7 +330,27 @@ const detailActions = () => ({
   setMeetLink: vi.fn().mockResolvedValue({ ok: true, data: {} }),
 });
 
+/** Çizelge satırının okunan metni (baştaki işaret rakamı aria-hidden'dır, atılır). */
+const stepText = (item: HTMLElement) => item.textContent!.replace(/^\d+/, '');
+
 describe('randevu detayı', () => {
+  it('onaylı geçmiş görüşmede form açılmışsa geri bildirim tek birincildir, Meet bağlantısı ikincildir', () => {
+    renderUi(
+      <AppointmentDetail
+        appointment={view(
+          { status: 'CONFIRMED', meetUrl: 'https://meet.example.com/feedback' },
+          { canConfirm: false, canDecline: false, canCancel: false, canDownloadIcs: true },
+        )}
+        feedbackAvailable
+        actions={detailActions()}
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Formu doldur' })).toHaveClass('bg-primary');
+    expect(screen.getByRole('link', { name: 'Görüşmeye katıl' })).not.toHaveClass('bg-primary');
+    expect(
+      screen.getByText('Görüşme nasıl geçti? Kısa bir geri bildirim bırakabilirsin.'),
+    ).toBeVisible();
+  });
   it('bekleyen talepte onay çalışır ve sunucu verisi yenilenir', async () => {
     const actions = detailActions();
     const { user } = renderUi(<AppointmentDetail appointment={view()} actions={actions} />);
@@ -331,6 +372,90 @@ describe('randevu detayı', () => {
     expect(button).toBeDisabled();
     expect(screen.getByText('Bu ayki kapasiten dolu; onaylayamazsın.')).toBeInTheDocument();
     expect(button).toHaveAccessibleDescription('Bu ayki kapasiten dolu; onaylayamazsın.');
+  });
+
+  it('zaman çizelgesi randevunun yolunu gösterir: şu anki adım işaretli, durum metni okunur', () => {
+    renderUi(<AppointmentDetail appointment={view()} actions={detailActions()} />);
+    const path = screen.getByRole('list', { name: 'Randevu yolu' });
+    const items = within(path).getAllByRole('listitem');
+    expect(items.map(stepText)).toEqual([
+      'Talep (şu an burada)',
+      'Mentor onayı (sırada)',
+      'Görüşme (sırada)',
+      'Geri bildirim (sırada)',
+    ]);
+    expect(items[0]).toHaveAttribute('aria-current', 'step');
+    expect(items.filter((item) => item.hasAttribute('aria-current'))).toHaveLength(1);
+    expect(screen.getByText('Bu talebe yanıt vermeni bekliyoruz.')).toBeInTheDocument();
+  });
+
+  it('talep eden için çizelge altındaki cümle yanıtın beklendiğini söyler', () => {
+    renderUi(
+      <AppointmentDetail appointment={view({ role: 'MENTEE' })} actions={detailActions()} />,
+    );
+    expect(screen.getByText('Talebin mentora iletildi; yanıtını bekliyoruz.')).toBeInTheDocument();
+  });
+
+  it('tamamlanan randevuda doldurulacak geri bildirim varsa son adım şu andır ve cümle çağırır', () => {
+    renderUi(
+      <AppointmentDetail
+        appointment={view(
+          { status: 'COMPLETED', role: 'MENTEE' },
+          { canConfirm: false, canDecline: false },
+        )}
+        feedbackAvailable
+        actions={detailActions()}
+      />,
+    );
+    const items = within(screen.getByRole('list', { name: 'Randevu yolu' })).getAllByRole(
+      'listitem',
+    );
+    expect(stepText(items[3]!)).toBe('Geri bildirim (şu an burada)');
+    expect(
+      screen.getByText('Görüşme nasıl geçti? Kısa bir geri bildirim bırakabilirsin.'),
+    ).toBeInTheDocument();
+  });
+
+  it('reddedilen talepte çizelge orada durur, sonraki adımlar gösterilmez', () => {
+    renderUi(
+      <AppointmentDetail
+        appointment={view(
+          { status: 'DECLINED', cancelledBy: 'MENTOR' },
+          { canConfirm: false, canDecline: false },
+        )}
+        actions={detailActions()}
+      />,
+    );
+    const path = screen.getByRole('list', { name: 'Randevu yolu' });
+    expect(within(path).getAllByRole('listitem').map(stepText)).toEqual([
+      'Talep (tamamlandı)',
+      'Mentor reddetti (burada durdu)',
+    ]);
+    expect(within(path).queryByText(/Görüşme/)).not.toBeInTheDocument();
+  });
+
+  it('onaylı online randevuda Meet bağlantısı bilgi kartından ÖNCE gelir ve tek birincil eylemdir', () => {
+    renderUi(
+      <AppointmentDetail
+        appointment={view(
+          {
+            status: 'CONFIRMED',
+            meetUrl: 'https://meet.google.com/abc-defg-hij',
+            decidedAt: new Date('2026-11-08T07:00:00Z'),
+            expiresAt: null,
+          },
+          { canConfirm: false, canDecline: false, canCancel: true, canDownloadIcs: true },
+        )}
+        actions={detailActions()}
+      />,
+    );
+    const join = screen.getByRole('link', { name: 'Görüşmeye katıl' });
+    const when = screen.getByText('Zaman');
+    expect(join.compareDocumentPosition(when) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Diğer eylemler ikincil: takvim bağlantısı ve iptal birincil değildir.
+    const ics = screen.getByRole('link', { name: 'Takvime ekle (.ics)' });
+    expect(join.className).not.toBe(ics.className);
+    expect(screen.getByRole('button', { name: 'Randevuyu iptal et' })).toBeInTheDocument();
   });
 
   it('ret penceresi isteğe bağlı gerekçeyle gider', async () => {

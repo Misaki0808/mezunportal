@@ -74,6 +74,8 @@ test('CV onayı: kalem kalem kabul → profile yazılır; elle ekleme ve düzelt
   expect(await db.language.count({ where: { userId: student.id } })).toBe(0);
 
   await page.getByRole('link', { name: 'Profilime git' }).click();
+  // Bilgi bölümleri varsayılan kapalıdır: içeriği görmek için bölüm açılır.
+  await page.getByRole('button', { name: 'Eğitim', exact: true }).click();
   await expect(page.getByText('E2E Üniversitesi', { exact: true })).toBeVisible();
   await expect(page.getByText("CV'den", { exact: true }).first()).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
@@ -145,6 +147,12 @@ test('geçerli en uzun profil alanları ve beceri 360/390/1440 görünümünde t
       for (const path of ['/profil', `/uye/${user.id}`]) {
         await page.goto(path);
         await page.waitForLoadState('networkidle');
+        if (path === '/profil') {
+          // Uzun alanlar ancak açık bölümde görünür: taşma ölçümü açık haliyle yapılır.
+          for (const name of ['Temel bilgiler', 'Beceriler']) {
+            await page.getByRole('button', { name, exact: true }).click();
+          }
+        }
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
         if (path === '/profil') {
           const remove = page.getByRole('button', { name: `${label} becerisini kaldır` });

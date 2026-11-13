@@ -6,7 +6,7 @@ import { useRef, useState } from 'react';
 
 import type { AppointmentPage, ListMyAppointmentsInput } from '@/contracts/appointment';
 import type { ActionResult } from '@/contracts/result';
-import { Button, EmptyState, PageHeader, Tabs, buttonClasses } from '@/components/ui';
+import { Button, CalendarIcon, EmptyState, PageHeader, Tabs, buttonClasses } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { AppointmentStatusBadge } from './status-badge';
@@ -64,6 +64,7 @@ export function MyAppointments({ initial, initialRole, showSettings, list }: Pro
       )}
       {items.length === 0 && !pending ? (
         <EmptyState
+          icon={<CalendarIcon width={32} height={32} strokeWidth={1.5} />}
           title={role === 'MENTOR' ? t('emptyIncoming') : t('emptyOutgoing')}
           description={
             role === 'MENTOR' ? t('emptyIncomingDescription') : t('emptyOutgoingDescription')

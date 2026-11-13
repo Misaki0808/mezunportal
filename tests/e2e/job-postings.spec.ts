@@ -55,9 +55,7 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     await login(alumni!, 'alumniMentor');
     await alumni!.goto('/hesap');
     await expect(
-      alumni!
-        .getByRole('region', { name: 'GÖRÜŞMELER VE İÇERİKLER' })
-        .getByRole('link', { name: /İlanlarım/ }),
+      alumni!.getByRole('region', { name: 'STAJ VE İŞ' }).getByRole('link', { name: /İlanlarım/ }),
     ).toBeVisible();
     await alumni!.goto('/ilanlar/yeni');
     await waitForHydratedControl(alumni!, 'Devam et');
@@ -292,4 +290,80 @@ test('mobil ilk ekranda iki ilan kartı ve erişilebilir süzgeç alt sayfası g
   } finally {
     await db.jobPosting.deleteMany({ where: { id: { in: ids } } });
   }
+});
+
+test('ilan adımları klavyeyle doğrulanır, başlık duyurulur ve geri dönünce veri korunur', async ({
+  page,
+}) => {
+  const { addDays, istanbulDay } = await import('../../src/components/job-postings/model');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page, 'alumniMentor');
+  await page.goto('/ilanlar/yeni');
+  await waitForHydratedControl(page, 'Devam et');
+  const tabTo = async (target: import('@playwright/test').Locator) => {
+    for (let i = 0; i < 45; i++) {
+      if (await target.evaluate((element) => element === document.activeElement)) return;
+      await page.keyboard.press('Tab');
+    }
+    throw new Error('Klavye hedefe ulaşamadı');
+  };
+  const next = page.getByRole('button', { name: 'Devam et' });
+  await tabTo(next);
+  await page.keyboard.press('Enter');
+  const title = page.getByLabel('Pozisyon adı', { exact: false });
+  await expect(title).toBeFocused();
+  const focusedBox = await title.boundingBox();
+  const stickyButton = await next.boundingBox();
+  expect(focusedBox).not.toBeNull();
+  expect(stickyButton).not.toBeNull();
+  expect(focusedBox!.y + focusedBox!.height).toBeLessThan(stickyButton!.y);
+  await expect(title).toHaveAttribute('aria-invalid', 'true');
+  const described = await title.getAttribute('aria-describedby');
+  expect(described).toBeTruthy();
+  await expect(page.locator(`[id="${described}"]`)).toContainText('Bu alanı kontrol et.');
+  await page.keyboard.type('Yazılım stajyeri');
+  const organization = page.getByLabel('Kurum adı', { exact: false });
+  await tabTo(organization);
+  await page.keyboard.type('Örnek Kurum');
+  await tabTo(next);
+  await page.keyboard.press('Enter');
+  const heading = page.getByRole('heading', { name: /Ayrıntılar ve başvuru$/ });
+  await expect(heading).toBeFocused();
+  await expect(page.locator('[aria-current="step"]')).toHaveText(
+    'Adım 2 / 3: Ayrıntılar ve başvuru',
+  );
+  const description = page.getByLabel('Açıklama', { exact: false });
+  await tabTo(next);
+  await page.keyboard.press('Enter');
+  await expect(description).toBeFocused();
+  await expect(description).toHaveAttribute('aria-invalid', 'true');
+  await page.keyboard.type(
+    'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
+  );
+  const location = page.getByLabel('Konum', { exact: false });
+  await tabTo(location);
+  await page.keyboard.type('İstanbul');
+  const deadline = page.getByLabel('Son başvuru tarihi', { exact: false });
+  await tabTo(deadline);
+  const expectedDay = addDays(istanbulDay(), 14);
+  const [year, month, day] = expectedDay.split('-');
+  await page.keyboard.type(`${month}${day}${year}`);
+  await expect(deadline).toHaveValue(expectedDay);
+  const department = page.getByRole('checkbox', { name: /Yönetim Bilişim Sistemleri/ }).first();
+  await tabTo(department);
+  await page.keyboard.press('Space');
+  const url = page.getByLabel('HTTPS başvuru bağlantısı', { exact: false });
+  await tabTo(url);
+  await page.keyboard.type('https://example.org/staj');
+  await tabTo(next);
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: /İlan önizlemesi$/ })).toBeFocused();
+  const previous = page.getByRole('button', { name: 'Geri' });
+  await tabTo(previous);
+  await page.keyboard.press('Enter');
+  await expect(heading).toBeFocused();
+  await expect(description).toHaveValue(
+    'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

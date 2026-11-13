@@ -7,7 +7,7 @@ import {
   type ExperienceDraftTemplate,
 } from '@/contracts/experience';
 
-import { fieldsOf, type ExperienceType, type FieldKey } from './field-map';
+import { fieldsOf, isRequired, type ExperienceType, type FieldKey } from './field-map';
 
 /**
  * Form durumu metin tutar (giriş kutuları metindir); sözleşme içeriği `toContent` ile üretilir. Tür
@@ -171,4 +171,54 @@ export function validate(state: FormState, mode: 'draft' | 'submit'): Validation
     errors[key] ??= describeIssue(issue, head, state);
   }
   return { ok: false, errors };
+}
+
+const SNAPSHOT_KEYS = Object.keys(emptyState()) as (keyof FormState)[];
+
+/**
+ * Formun o anki içeriğinin karşılaştırılabilir özeti. "Kaydedilmemiş değişiklik var mı?" sorusu bunun
+ * son kayıtla farkına bakar: yazıp silen kullanıcı eski haline dönmüş sayılır, uyarı çıkmaz.
+ */
+export function formSnapshot(input: {
+  state: FormState;
+  appliedMonth: string;
+  departmentId: string;
+  isAnonymous: boolean;
+}): string {
+  return JSON.stringify([
+    SNAPSHOT_KEYS.map((key) => input.state[key]),
+    input.appliedMonth,
+    input.departmentId,
+    input.isAnonymous,
+  ]);
+}
+
+/** Alanda kullanıcının yazdığı bir şey var mı? (Boşluk sayılmaz; liste alanında en az bir dolu satır.) */
+export function fieldFilled(state: FormState, key: FieldKey): boolean {
+  const value = state[key as keyof FormState];
+  if (Array.isArray(value)) {
+    return value.some((item) =>
+      typeof item === 'string'
+        ? item.trim() !== ''
+        : item.title.trim() !== '' || item.description.trim() !== '',
+    );
+  }
+  return typeof value === 'string' && value.trim() !== '';
+}
+
+/** Liste alanları şemada "zorunlu" olsa da boş liste geçerlidir (gönderme boş listeyle başarılı olur): bölümü bekletmez. */
+const LIST_FIELDS: ReadonlySet<FieldKey> = new Set(['processSteps', 'interviewQuestions']);
+
+/**
+ * Bölüm "tamam" mı (ilerleme göstergesi için; gönderme doğrulamasının yerine geçmez): bu türde sorulan ve
+ * zorunlu olan her tekil alan dolu; zorunlu tekil alan yoksa en az bir alan dolu. Bu türde hiç alanı olmayan
+ * bölüm tamamdır.
+ */
+export function sectionComplete(state: FormState, keys: readonly FieldKey[]): boolean {
+  const asked = fieldsOf(state.type);
+  const visible = keys.filter((key) => asked.has(key));
+  if (visible.length === 0) return true;
+  const required = visible.filter((key) => !LIST_FIELDS.has(key) && isRequired(state.type, key));
+  if (required.length > 0) return required.every((key) => fieldFilled(state, key));
+  return visible.some((key) => fieldFilled(state, key));
 }

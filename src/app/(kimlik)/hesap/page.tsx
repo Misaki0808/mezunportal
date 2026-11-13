@@ -1,5 +1,4 @@
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 
 import { hasAdminAccess } from '@/components/layout/admin-access';
 import {
@@ -8,7 +7,6 @@ import {
   CalendarIcon,
   ErrorState,
   FileTextIcon,
-  IconChip,
   InboxIcon,
   LogOutIcon,
   MailIcon,
@@ -16,6 +14,7 @@ import {
   ShieldCheckIcon,
   UserIcon,
 } from '@/components/ui';
+import { AccountLink } from '@/components/account/account-link';
 import { PrivacyAccountLinks } from '@/components/privacy/account-links';
 import { getVerificationState } from '@/server/actions/auth';
 import { getMyMentorSettings } from '@/server/actions/appointment';
@@ -336,7 +335,8 @@ export default async function AccountPage() {
         ]
       : []),
   ];
-  // Gruplar: hub 17'ye kadar kart içerebilir; başlıklı bölümlere ayrılır (tarama kolaylığı). Sıra grup içinde korunur.
+  // Gruplar: hub 17'ye kadar bağlantı içerebilir; amaca göre başlıklı bölümlere ayrılır (tarama kolaylığı). Sıra grup içinde korunur.
+  // "Gizlilik ve veriler" bağlantıları ayrı bileşenden gelir (PrivacyAccountLinks); yönetim yalnız yetkili kullanıcıda dolu olur.
   const GROUPS = [
     {
       key: 'profile',
@@ -344,25 +344,34 @@ export default async function AccountPage() {
       hrefs: ['/profil', '/dogrulama', '/ders-rehberi', '/profil/dersler'],
     },
     {
-      key: 'activity',
+      key: 'meetings',
       tone: 'accent',
       hrefs: [
         '/randevular',
-        '/adaylar',
-        '/hesap/staj-ariyorum',
         '/mentor/ayarlar',
-        '/deneyimlerim',
-        '/hesap/referanslar',
-        '/ilanlarim',
         '/hesap/gorusmeler',
         '/hesap/guvenilirlik',
-        '/hesap/cv-inceleme',
-        '/sss',
-        '/hesap/sss',
-        '/mentor/sss',
+        '/etkinlikler',
       ],
     },
-    { key: 'settings', tone: 'success', hrefs: ['/hesap/bildirimler', '/hesap/e-posta'] },
+    {
+      key: 'career',
+      tone: 'success',
+      hrefs: [
+        '/hesap/staj-ariyorum',
+        '/adaylar',
+        '/ilanlarim',
+        '/hesap/referanslar',
+        '/hesap/cv-inceleme',
+      ],
+    },
+    {
+      key: 'content',
+      tone: 'primary',
+      hrefs: ['/deneyimlerim', '/hesap/hikayem', '/odullerim', '/sss', '/hesap/sss', '/mentor/sss'],
+    },
+    { key: 'notifications', tone: 'accent', hrefs: ['/hesap/bildirimler', '/hesap/e-posta'] },
+    { key: 'privacy', tone: 'success', hrefs: [] },
     {
       key: 'admin',
       tone: 'primary',
@@ -375,41 +384,37 @@ export default async function AccountPage() {
       ],
     },
   ] as const;
-  // Gruba yazılmamış bağlantı (ör. yeni eklenen sayfa) sessizce düşmez: "Görüşmeler ve içerikler" grubunda görünür.
+  // Gruba yazılmamış bağlantı (ör. yeni eklenen sayfa) sessizce düşmez: "Yazdıklarım ve sorular" grubunda görünür.
+  const FALLBACK_GROUP = 'content';
   const groupOf = (href: string) =>
-    GROUPS.find((group) => (group.hrefs as readonly string[]).includes(href)) ?? GROUPS[1];
-  const linkClasses =
-    'press-row flex min-h-20 items-center gap-4 rounded-card border border-border bg-bg p-4 text-fg';
+    GROUPS.find((group) => (group.hrefs as readonly string[]).includes(href))?.key ??
+    FALLBACK_GROUP;
+  // Telefonda grup tek çerçeveli, bölücülü liste (15 ayrı kart yerine 8 sakin blok); geniş ekranda iki sütun ayrı kart.
+  const listClasses =
+    'mt-3 divide-y divide-border overflow-hidden rounded-card border border-border md:grid md:grid-cols-2 md:gap-3 md:divide-y-0 md:overflow-visible md:rounded-none md:border-0';
+  const headingClasses = 'text-sm font-semibold tracking-wider text-fg-muted';
   return (
-    <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:py-16">
+    <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-16">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       {GROUPS.map((group) => {
-        const items = links.filter((link) => groupOf(link.href)?.key === group.key);
-        const showPrivacy = group.key === 'settings';
+        const items = links.filter((link) => groupOf(link.href) === group.key);
+        const showPrivacy = group.key === 'privacy';
         if (items.length === 0 && !showPrivacy) return null;
         return (
           <section key={group.key} aria-labelledby={`account-${group.key}`} className="mt-8">
-            <h2
-              id={`account-${group.key}`}
-              className="text-sm font-semibold tracking-wider text-fg-muted"
-            >
+            <h2 id={`account-${group.key}`} className={headingClasses}>
               {t(`groups.${group.key}`)}
             </h2>
-            <ul className="mt-3 flex flex-col gap-3">
+            <ul className={listClasses}>
               {items.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className={linkClasses}>
-                    <IconChip tone={group.tone}>
-                      <link.icon />
-                    </IconChip>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-lg font-semibold">{link.title}</span>
-                      <span className="mt-1 block text-base text-fg-muted">{link.description}</span>
-                    </span>
-                    <span aria-hidden="true" className="text-xl text-primary">
-                      ›
-                    </span>
-                  </Link>
+                  <AccountLink
+                    href={link.href}
+                    title={link.title}
+                    description={link.description}
+                    icon={link.icon}
+                    tone={group.tone}
+                  />
                 </li>
               ))}
               {showPrivacy && <PrivacyAccountLinks />}
@@ -418,25 +423,18 @@ export default async function AccountPage() {
         );
       })}
       <section aria-labelledby="account-session" className="mt-8">
-        <h2 id="account-session" className="text-sm font-semibold tracking-wider text-fg-muted">
+        <h2 id="account-session" className={headingClasses}>
           {t('groups.session')}
         </h2>
-        <ul className="mt-3 flex flex-col gap-3">
+        <ul className={listClasses}>
           <li>
-            <Link href="/cikis" className={linkClasses}>
-              <IconChip tone="accent">
-                <LogOutIcon />
-              </IconChip>
-              <span className="min-w-0 flex-1">
-                <span className="block text-lg font-semibold">{t('signOut')}</span>
-                <span className="mt-1 block text-base text-fg-muted">
-                  {t('signOutDescription')}
-                </span>
-              </span>
-              <span aria-hidden="true" className="text-xl text-primary">
-                ›
-              </span>
-            </Link>
+            <AccountLink
+              href="/cikis"
+              title={t('signOut')}
+              description={t('signOutDescription')}
+              icon={LogOutIcon}
+              tone="accent"
+            />
           </li>
         </ul>
       </section>

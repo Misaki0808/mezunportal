@@ -34,3 +34,45 @@ it('serbest ve sözlük kurum seçimi aynı URL ile doğru alana çevrilir', () 
     parseJobFilters(new URLSearchParams('organization=Bağımsız+Kurum'), options),
   ).toMatchObject({ organizationName: 'Bağımsız Kurum' });
 });
+it('adım denetimi sözleşmenin uzunluk, bağlantı ve koşullu alan kurallarını kullanır', async () => {
+  const { postingStepErrors } = await import('./model');
+  const content = {
+    kind: 'INTERNSHIP',
+    title: 'ab',
+    organizationName: 'K',
+    companyId: null,
+    location: null,
+    isRemote: false,
+    description: '',
+    deadlineOn: '',
+    applyMethod: 'URL',
+    applyUrl: '',
+    targetDepartmentIds: [],
+    tagIds: [],
+    targetGrades: [],
+  };
+  expect(postingStepErrors(content, 'dep', 0, '2026-11-13')).toEqual(['title', 'organizationName']);
+  expect(postingStepErrors(content, 'dep', 1, '2026-11-13')).toEqual([
+    'description',
+    'location',
+    'deadlineOn',
+    'targetDepartmentIds',
+    'applyUrl',
+  ]);
+  const valid = {
+    ...content,
+    title: 'Staj',
+    organizationName: 'Kurum',
+    isRemote: true,
+    description: 'Otuz karakterden uzun bir iş tanımı örneği.',
+    deadlineOn: '2026-11-20',
+    applyMethod: 'CONTACT_REQUEST',
+    applyUrl: null,
+    targetDepartmentIds: ['dep'],
+  };
+  expect(postingStepErrors(valid, 'dep', 0, '2026-11-13')).toEqual([]);
+  expect(postingStepErrors(valid, 'dep', 1, '2026-11-13')).toEqual([]);
+  expect(
+    postingStepErrors({ ...valid, deadlineOn: '2027-02-20' }, 'dep', 1, '2026-11-13'),
+  ).toContain('deadlineOn');
+});
