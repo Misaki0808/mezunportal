@@ -37,11 +37,24 @@ beforeEach(() => {
     ],
   });
 });
+/**
+ * Satır düğmeleri listeyle birlikte belirir ama yükleme geçişi (`useTransition`) bitene dek devre dışıdır
+ * (`disabled(pending, …)`); devre dışı düğmeye tıklamak sessizce hiçbir şey yapmaz. Makine yüklüyken test, geçiş bitmeden
+ * tıklayabiliyordu: pencere hiç açılmıyor, `<dialog>` çocuksuz kalıyordu (PM kapısı, kart 313). Bu yüzden önce düğmenin
+ * etkinleşmesi beklenir.
+ */
+async function clickWhenEnabled(
+  user: { click: (element: Element) => Promise<void> },
+  button: HTMLElement,
+) {
+  await waitFor(() => expect(button).toBeEnabled());
+  await user.click(button);
+}
 async function open() {
   const { user } = renderUi(<StoryAdmin departments={[{ id: 'd1', name: 'YBS' }]} />);
   await user.click(screen.getByRole('button', { name: 'Hikâyeleri göster' }));
-  await user.click(await screen.findByRole('button', { name: 'Düzenleme iste' }));
-  return { user, dialog: within(screen.getByRole('dialog')) };
+  await clickWhenEnabled(user, await screen.findByRole('button', { name: 'Düzenleme iste' }));
+  return { user, dialog: within(await screen.findByRole('dialog')) };
 }
 it('boş ret gerekçesinde alan altındaki açıklama ve odak birlikte gelir', async () => {
   const { user, dialog } = await open();
@@ -80,13 +93,14 @@ it('sonraki hikâyede yayın kapalıysa gerekçeli ret eylemine devam eder', asy
   mocks.review.mockResolvedValue({ ok: true, data: {} });
   const { user } = renderUi(<StoryAdmin departments={[{ id: 'd1', name: 'YBS' }]} />);
   await user.click(screen.getByRole('button', { name: 'Hikâyeleri göster' }));
-  await user.click(
+  await clickWhenEnabled(
+    user,
     await screen
       .findAllByRole('button', { name: 'Hikâyeyi onayla' })
       .then((buttons) => buttons[0]!),
   );
   await user.click(
-    within(screen.getByRole('dialog')).getByRole('button', { name: 'Kararı onayla' }),
+    within(await screen.findByRole('dialog')).getByRole('button', { name: 'Kararı onayla' }),
   );
   const row = within(screen.getByText('Diğer mezun').closest('li')!);
   await waitFor(() => expect(row.getByRole('button', { name: 'Düzenleme iste' })).toHaveFocus());
