@@ -21,6 +21,20 @@ describe('E2E geçici ortam güvenliği', () => {
     expect(() => e2eWorkerCount('2', ['--workers=3'])).toThrow();
     expect(() => e2eWorkerCount('3', [])).toThrow();
   });
+  it('-j ve -jN de --workers gibi okunur; env olmadan iki işçiyi açamaz', () => {
+    expect(() => e2eWorkerCount(undefined, ['-j', '2'])).toThrow('E2E_WORKERS=2');
+    expect(() => e2eWorkerCount(undefined, ['-j2'])).toThrow('E2E_WORKERS=2');
+    expect(() => e2eWorkerCount('1', ['--workers', '2'])).toThrow('E2E_WORKERS=2');
+    expect(() => e2eWorkerCount('2', ['-j', '3'])).toThrow();
+    expect(() => e2eWorkerCount('2', ['-j4'])).toThrow();
+    expect(e2eWorkerCount('2', ['-j', '2'])).toBe(2);
+    expect(e2eWorkerCount('2', ['-j2'])).toBe(2);
+    expect(e2eWorkerCount('2', ['-j', '1'])).toBe(1);
+    expect(e2eWorkerCount(undefined, ['-j1'])).toBe(1);
+    // Sonuncusu geçerli: önce 2 sonra 1 verilirse tek işçi.
+    expect(e2eWorkerCount('2', ['-j', '2', '--workers=1'])).toBe(1);
+    expect(() => e2eWorkerCount(undefined, ['--workers=1', '-j', '2'])).toThrow('E2E_WORKERS=2');
+  });
   it('yalnız ilgili worktree ve sıkı geçici adlarla eşleşir', () => {
     const prefix = e2eDatabasePrefix('postgresql://localhost/mezun_w2_e2e_deadbeef0001_0_test');
     expect(prefix).toBe('mezun_w2_e2e_');

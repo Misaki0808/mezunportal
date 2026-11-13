@@ -1,5 +1,5 @@
-import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { startEmailWorker, stopEmailWorker } from './email-worker';
 import { expect, test } from './fixture';
 import { waitForHydratedControl, waitForHydratedForm } from './hydration';
 
@@ -12,23 +12,7 @@ test('yeni öğrenci e-posta doğrulamasından ilk deneyim listesine ulaşır', 
   await page.setViewportSize({ width: 390, height: 844 });
   const testIp = `198.51.100.${Math.floor(Math.random() * 253) + 1}`;
   await context.setExtraHTTPHeaders({ 'x-forwarded-for': testIp });
-  const worker = spawn(
-    process.execPath,
-    ['--conditions=react-server', '--import', 'tsx', 'src/server/jobs/email-worker.ts'],
-    {
-      env: {
-        ...process.env,
-        APP_ENV: 'local',
-        SMTP_HOST: '127.0.0.1',
-        SMTP_PORT: '1025',
-        SMTP_SECURE: 'false',
-        SMTP_USER: '',
-        SMTP_PASSWORD: '',
-      },
-      stdio: 'ignore',
-    },
-  );
-  const stopped = new Promise<void>((resolve) => worker.once('exit', () => resolve()));
+  const worker = startEmailWorker();
   try {
     const email = `first-five-${randomUUID()}@ogr.iu.edu.tr`;
     await page.goto('/');
@@ -126,11 +110,6 @@ test('yeni öğrenci e-posta doğrulamasından ilk deneyim listesine ulaşır', 
       true,
     );
   } finally {
-    if (worker.exitCode === null && worker.signalCode === null) worker.kill('SIGTERM');
-    await Promise.race([stopped, new Promise<void>((resolve) => setTimeout(resolve, 8_000))]);
-    if (worker.exitCode === null && worker.signalCode === null) {
-      worker.kill('SIGKILL');
-      await stopped;
-    }
+    await stopEmailWorker(worker);
   }
 });
