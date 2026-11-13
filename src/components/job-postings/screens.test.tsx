@@ -84,20 +84,67 @@ it('detayda yalnız güvenli dış bağlantı ve yazarın kimliği yoktur', () =
   );
   expect(screen.queryByRole('link', { name: 'İletişim iste' })).not.toBeInTheDocument();
 });
-it('eksik form hatası özetlenir ve odaklanır, işlem çağrılmaz', async () => {
+it('her adım yalnız kendi alanlarını doğrular, odak ve girilen değerler korunur', async () => {
   const save = vi.fn(),
     submit = vi.fn();
+  const { addDays, istanbulDay } = await import('./model');
   renderWithToasts(<PostingEditor context={context} save={save} submit={submit} />);
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  const title = screen.getByLabelText(/Pozisyon adı/);
+  await waitFor(() => expect(title).toHaveFocus());
+  expect(title).toHaveAttribute('aria-invalid', 'true');
+  expect(title).toHaveAttribute('aria-describedby');
+  expect(document.getElementById(title.getAttribute('aria-describedby')!)).toHaveTextContent(
+    'Bu alanı kontrol et.',
+  );
+  expect(screen.getByRole('heading', { name: /İlanı anlat$/ })).toBeVisible();
+  fireEvent.change(title, { target: { value: 'Yazılım stajyeri' } });
+  fireEvent.change(screen.getByLabelText(/Kurum adı/), { target: { value: 'Örnek Kurum' } });
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
-  fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
-  const message = await screen.findByText('İşaretli alanları kontrol et.');
-  const alert = message.closest('[role=alert]');
-  await waitFor(() => expect(alert).toHaveFocus());
-  expect(alert).toHaveTextContent('Pozisyon adı');
-  fireEvent.click(screen.getByRole('button', { name: 'Açıklama' }));
-  await waitFor(() => expect(screen.getByLabelText(/Açıklama/)).toHaveFocus());
+  const details = screen.getByRole('heading', { name: /Ayrıntılar ve başvuru$/ });
+  await waitFor(() => expect(details).toHaveFocus());
+  expect(details).toHaveAccessibleName('Adım 2 / 3: Ayrıntılar ve başvuru');
+  expect(details).toHaveAttribute('tabindex', '-1');
+  expect(screen.getByText('Adım 2 / 3: Ayrıntılar ve başvuru')).toHaveAttribute(
+    'aria-current',
+    'step',
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  const description = screen.getByLabelText(/^Açıklama/);
+  await waitFor(() => expect(description).toHaveFocus());
+  expect(details).not.toHaveAttribute('tabindex');
+  expect(description).toHaveAttribute('aria-invalid', 'true');
+  expect(description).toHaveAttribute('aria-describedby');
+  fireEvent.change(description, {
+    target: { value: 'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.' },
+  });
+  fireEvent.change(screen.getByLabelText(/^Konum/), { target: { value: 'İstanbul' } });
+  fireEvent.change(screen.getByLabelText(/Son başvuru tarihi/), {
+    target: { value: addDays(istanbulDay(), 14) },
+  });
+  fireEvent.click(screen.getByRole('checkbox', { name: /YBS/ }));
+  fireEvent.change(screen.getByLabelText(/HTTPS başvuru bağlantısı/), {
+    target: { value: 'https://example.org/staj' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  await waitFor(() =>
+    expect(screen.getByRole('heading', { name: /İlan önizlemesi$/ })).toHaveFocus(),
+  );
+  const newFocus = vi.fn();
+  screen.getByRole('heading', { name: /İlan önizlemesi$/ }).addEventListener('focus', newFocus);
+  fireEvent.click(screen.getByRole('button', { name: 'Geri' }));
+  await waitFor(() =>
+    expect(screen.getByRole('heading', { name: /Ayrıntılar ve başvuru$/ })).toHaveFocus(),
+  );
+  await waitFor(() => expect(newFocus).toHaveBeenCalled());
+  expect(screen.getByLabelText(/^Açıklama/)).toHaveValue(
+    'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Geri' }));
+  await waitFor(() => expect(screen.getByRole('heading', { name: /İlanı anlat$/ })).toHaveFocus());
+  expect(screen.getByLabelText(/Pozisyon adı/)).toHaveValue('Yazılım stajyeri');
   expect(save).not.toHaveBeenCalled();
+  expect(submit).not.toHaveBeenCalled();
 });
 it('iletişim eylemi yazar kimliği taşımadan ilan üzerinden açılır', () => {
   renderWithToasts(
@@ -236,6 +283,41 @@ const pendingItem = {
   endedAt: null,
   author: { displayName: 'Yetkili kişi', role: 'ALUMNI' as const },
 };
+it.each([
+  ['title', /Pozisyon adı/],
+  ['kind', /İlan türü/],
+  ['companyId', /Kurum adı/],
+  ['isRemote', /Uzaktan çalışılabilir/],
+  ['tagIds', /İlan etiketleri/],
+  ['targetGrades', /Hedef sınıflar/],
+  ['applyMethod', /Başvuru yolu/],
+])('son adımda sunucunun %s alan hatası doğru alana götürür', async (field, label) => {
+  const { addDays, istanbulDay } = await import('./model');
+  const save = vi.fn().mockResolvedValue({
+    ok: false,
+    errorCode: 'VALIDATION_INVALID',
+    fieldErrors: { [`content.${field}`]: 'VALIDATION_INVALID' },
+  });
+  const initial = {
+    ...pendingItem,
+    title: 'Yazılım stajyeri',
+    description: 'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
+    deadlineOn: addDays(istanbulDay(), 14),
+  };
+  renderWithToasts(
+    <PostingEditor context={context} initial={initial} save={save} submit={vi.fn()} />,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  const control =
+    field === 'tagIds' || field === 'targetGrades'
+      ? await screen.findByRole('group', { name: label })
+      : await screen.findByLabelText(label);
+  await waitFor(() => expect(control).toHaveFocus());
+  expect(control).toHaveAttribute('aria-invalid', 'true');
+  expect(control).toHaveAttribute('aria-describedby');
+});
 it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () => {
   HTMLDialogElement.prototype.showModal = function () {
     this.setAttribute('open', '');
@@ -354,6 +436,8 @@ it('60 gün sınırındaki taslak kaydedilir, 61. gün istemcide reddedilir', as
     const { addDays, istanbulDay } = await import('./model');
     const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'date-boundary' } });
     renderWithToasts(<PostingEditor context={context} save={save} submit={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/Pozisyon adı/), { target: { value: 'Staj' } });
+    fireEvent.change(screen.getByLabelText(/Kurum adı/), { target: { value: 'Kurum' } });
     fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
     const date = screen.getByLabelText(/Son başvuru tarihi/);
     expect(date).toHaveAttribute('max', addDays(istanbulDay(), 60));
