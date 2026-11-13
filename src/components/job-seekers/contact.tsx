@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button, PageHeader, Textarea, useAction } from '@/components/ui';
+import { Button, Checkbox, PageHeader, Textarea, useAction } from '@/components/ui';
 import { CONTACT_FIELDS, type ContactField } from '@/contracts/privacy';
 import type { SeekerContactPreview } from '@/contracts/job-seekers';
 import { requestSeekerContact } from '@/server/actions/job-seekers';
@@ -66,20 +66,17 @@ export function SeekerContact({
             <legend className="font-semibold">{t('fields')}</legend>
             <p className="mb-3 text-fg-muted">{t('fieldsHint')}</p>
             {CONTACT_FIELDS.map((field) => (
-              <label key={field} className="flex min-h-11 items-center gap-3">
-                <input
-                  className="size-5 accent-primary"
-                  type="checkbox"
-                  disabled={!preview.requestableFields.includes(field) || pending}
-                  checked={fields.includes(field)}
-                  onChange={(e) =>
-                    setFields((old) =>
-                      e.target.checked ? [...old, field] : old.filter((x) => x !== field),
-                    )
-                  }
-                />
-                {fieldsText(field)}
-              </label>
+              <Checkbox
+                key={field}
+                label={fieldsText(field)}
+                disabled={!preview.requestableFields.includes(field) || pending}
+                checked={fields.includes(field)}
+                onChange={(e) =>
+                  setFields((old) =>
+                    e.target.checked ? [...old, field] : old.filter((x) => x !== field),
+                  )
+                }
+              />
             ))}
           </fieldset>
           <label className="block space-y-2">

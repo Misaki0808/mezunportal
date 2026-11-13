@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button, PageHeader, Select, Switch } from '@/components/ui';
+import { Button, Checkbox, PageHeader, Select, Switch } from '@/components/ui';
 import { recordConsents } from '@/server/actions/privacy';
 import { setSeekerSettings } from '@/server/actions/job-seekers';
 import type { SeekerSettings, SeekerTermSeason } from '@/contracts/job-seekers';
@@ -119,15 +119,11 @@ export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
           >
             {t('consentLink')}
           </Link>
-          <label className="flex min-h-11 items-start gap-3">
-            <input
-              className="mt-1 size-5 accent-primary"
-              type="checkbox"
-              checked={agree}
-              onChange={(e) => setAgree(e.target.checked)}
-            />
-            {t('consentAgree')}
-          </label>
+          <Checkbox
+            label={t('consentAgree')}
+            checked={agree}
+            onChange={(e) => setAgree(e.target.checked)}
+          />
         </div>
       )}
       <div className="space-y-3 rounded-card border border-border p-5">

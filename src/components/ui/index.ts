@@ -36,6 +36,8 @@ export type { PageHeaderProps } from './page-header';
 export { PageSkeleton } from './page-skeleton';
 export { Pagination } from './pagination';
 export type { PaginationProps } from './pagination';
+export { Radio } from './radio';
+export type { RadioProps } from './radio';
 export { RadioGroup } from './radio-group';
 export type { RadioGroupProps, RadioOption } from './radio-group';
 export { Select } from './select';

@@ -4,6 +4,7 @@ import { useId } from 'react';
 
 import { cn } from './cn';
 import { AlertIcon } from './icons';
+import { Radio } from './radio';
 
 export type RadioOption = {
   value: string;
@@ -61,8 +62,7 @@ export function RadioGroup({
           key={option.value}
           className="flex min-h-11 cursor-pointer items-start gap-3 py-2 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
         >
-          <input
-            type="radio"
+          <Radio
             name={name}
             value={option.value}
             disabled={option.disabled}
@@ -71,7 +71,6 @@ export function RadioGroup({
               ? { checked: value === option.value }
               : { defaultChecked: defaultValue === option.value })}
             onChange={() => onValueChange?.(option.value)}
-            className="mt-0.5 size-6 shrink-0 cursor-pointer appearance-none rounded-full border-2 border-border-control bg-bg checked:border-[7px] checked:border-primary"
           />
           <span className="flex flex-col">
             <span className="text-base text-fg">{option.label}</span>
