@@ -2039,7 +2039,7 @@
     "title": "Deneyimlere bak",
     "description": "Başka öğrencilerin ve mezunların staj, Erasmus ve yarışma deneyimlerini oku.",
     "query": "Deneyim ara",
-    "queryHint": "Kurum veya konu",
+    "queryHint": "Kurum, konu",
     "submit": "Ara",
     "clear": "Filtreleri temizle",
     "all": "Tümü",
