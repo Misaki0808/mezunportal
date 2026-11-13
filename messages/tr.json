@@ -1185,7 +1185,7 @@
     "form": {
       "newTitle": "Deneyim yaz",
       "editTitle": "Deneyimi düzenle",
-      "description": "İstediğin an taslak olarak kaydedebilirsin; yarım bırakırsan kaldığın yerden devam edersin.",
+      "description": "Daha sonra devam etmek için ayrılmadan önce taslağı kaydet.",
       "typeLegend": "Deneyim türü",
       "typeChanged": "Tür değişti: bu türde sorulmayan alanlar kaydedilmez.",
       "department": "Bölüm",
