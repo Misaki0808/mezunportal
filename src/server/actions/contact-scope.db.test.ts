@@ -117,3 +117,29 @@ it('diğer profil, mentor, CV ve randevu kapılarında yabancı/askı/silinen he
   expect(result[0]!.cvRequest).toBe('CV_REVIEW_UNAVAILABLE');
   expect(result[0]!.cv).toEqual({ available: false, reason: 'NOT_MENTOR' });
 });
+
+it('kapsam dışı hedef denemeleri de istek hız sınırını tüketir', async () => {
+  const requester = await createUser(db);
+  const membership = await db.membership.findFirstOrThrow({ where: { userId: same } });
+  await addMembership(db, {
+    userId: requester,
+    departmentId: membership.departmentId,
+    role: 'STUDENT',
+  });
+  await grantRequiredConsents(db, requester);
+  session.userId = requester;
+  try {
+    for (let i = 0; i < 10; i++)
+      expect(await sendContactRequest({ targetUserId: foreign, fields: ['EMAIL'] })).toMatchObject({
+        ok: false,
+        errorCode: 'RESOURCE_NOT_FOUND',
+      });
+    expect(await sendContactRequest({ targetUserId: foreign, fields: ['EMAIL'] })).toMatchObject({
+      ok: false,
+      errorCode: 'RATE_LIMITED',
+    });
+    expect(await db.contactRequest.count({ where: { requesterId: requester } })).toBe(0);
+  } finally {
+    session.userId = viewer;
+  }
+});
