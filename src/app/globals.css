@@ -228,6 +228,13 @@
   }
 }
 
+/* Odaklanan ya da `scrollIntoView({ block: 'nearest' })` ile gösterilen öğe, sabit alt gezinmenin (4,5 rem) ve yapışkan eylem
+   çubuğunun ARKASINDA kalmasın: tarayıcı bu payı korur. WebKit `focus()` ile kaydırmaz; bu yüzden çağıran odaktan sonra
+   `scrollIntoView({ block: 'nearest' })` de çağırır (WebKit ve Chromium ikisi de payı bu çağrıda uygular). */
+@utility scroll-above-bars {
+  scroll-margin-bottom: calc(9rem + env(safe-area-inset-bottom));
+}
+
 /* Ekran klavyesi açıkken alt gezinme gizlenir. */
 :root[data-keyboard='open'] [data-bottom-nav] {
   display: none;

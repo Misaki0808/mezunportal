@@ -46,9 +46,13 @@ export function CopyButton({
   const fieldRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (!failed) return;
-    fieldRef.current?.focus();
-    fieldRef.current?.select();
+    const field = fieldRef.current;
+    if (!failed || !field) return;
+    // `focus()` tarayıcıya bağlı kaydırır (WebKit hiç kaydırmaz, Chromium alanı kenarda bırakır): alan sabit alt gezinmenin
+    // arkasında yarım kalırdı. Kaydırmayı biz yaparız; `scroll-above-bars` payı iki motorda da bu çağrıda uygulanır.
+    field.focus({ preventScroll: true });
+    field.select();
+    field.scrollIntoView?.({ block: 'nearest' });
   }, [failed]);
 
   async function copy() {
@@ -76,6 +80,7 @@ export function CopyButton({
                   ref={fieldRef}
                   readOnly
                   rows={3}
+                  className="scroll-above-bars"
                   value={text}
                   onFocus={(event) => event.currentTarget.select()}
                 />
@@ -84,6 +89,7 @@ export function CopyButton({
                   {...control}
                   ref={fieldRef}
                   readOnly
+                  className="scroll-above-bars"
                   value={text}
                   onFocus={(event) => event.currentTarget.select()}
                 />
