@@ -2,14 +2,17 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, expect, it, vi } from 'vitest';
 
 import { createTestPrisma } from '@/test/db';
-import { createUser } from '@/test/fixtures';
+import { addMembership, createInstitution, createUser } from '@/test/fixtures';
 
 const state = vi.hoisted(() => ({ db: null as unknown, actorId: '' }));
 vi.mock('@/server/db', () => ({ getDb: () => state.db }));
 vi.mock('@/server/permissions', () => ({
   requireUser: async () => ({ userId: state.actorId }),
   requireUserWithoutConsent: async () => ({ userId: state.actorId }),
-  requireVerifiedMember: async () => ({ userId: state.actorId }),
+  requireVerifiedMember: async () => {
+    const { loadActor } = await import('../permissions/actor');
+    return loadActor(state.db as ReturnType<typeof createTestPrisma>, state.actorId, new Date());
+  },
 }));
 
 import { GET } from '@/app/api/hesabim/veri-dokumu/route';
@@ -24,6 +27,9 @@ it('eylem ve indirme yanıtlarında karşı tarafın gizli verisi yoktur', async
   const actor = await createUser(db);
   const other = await createUser(db);
   const outsider = await createUser(db);
+  const institution = await createInstitution(db);
+  await addMembership(db, { userId: actor, departmentId: institution.deptA1, role: 'STUDENT' });
+  await addMembership(db, { userId: other, departmentId: institution.deptA1, role: 'STUDENT' });
   const secretEmail = `test-${randomUUID()}@example.test`;
   const secretPhone = `+90${Date.now()}${Math.floor(Math.random() * 10000)}`;
   const ownEmail = `test-${randomUUID()}@example.test`;
