@@ -28,6 +28,7 @@ import {
   buttonClasses,
 } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
+import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 type Box = 'INCOMING' | 'OUTGOING';
 type Closing = { id: string; kind: 'reject' | 'revoke' | 'withdraw' };
@@ -44,6 +45,7 @@ export function ContactList({
   const common = useTranslations('privacyScreens.common');
   const format = useFormatter();
   const form = usePrivacyForm();
+  const { rootRef, complete } = useQueueFocus(form.busy);
   const [loading, setLoading] = useState(false);
   const [box, setBox] = useState<Box>(initialBox);
   const [page, setPage] = useState(initial);
@@ -64,9 +66,10 @@ export function ContactList({
     );
     setLoading(false);
   }
-  async function refresh() {
+  async function refresh(decidedId: string) {
     const result = await safeClientAction(() => listContactRequests({ box }));
     if (!result.ok) throw new Error('refresh');
+    complete(decidedId);
     setPage(result.data);
     setClosing(null);
   }
@@ -75,7 +78,12 @@ export function ContactList({
       requestId: item.id,
       decision: 'APPROVE',
     });
-    if (input) void form.run(() => respondToContactRequest(input), refresh, t('changed'));
+    if (input)
+      void form.run(
+        () => respondToContactRequest(input),
+        () => refresh(item.id),
+        t('changed'),
+      );
   }
   function close() {
     if (!closing) return;
@@ -85,13 +93,18 @@ export function ContactList({
         requestId: id,
         decision: 'REJECT',
       });
-      if (input) void form.run(() => respondToContactRequest(input), refresh, t('changed'));
+      if (input)
+        void form.run(
+          () => respondToContactRequest(input),
+          () => refresh(id),
+          t('changed'),
+        );
     } else {
       const input = form.parse(closeContactRequestSchema, { requestId: id });
       if (input)
         void form.run(
           () => (kind === 'revoke' ? revokeContactRequest(input) : withdrawContactRequest(input)),
-          refresh,
+          () => refresh(id),
           t('changed'),
         );
     }
@@ -115,7 +128,11 @@ export function ContactList({
         />
       ) : (
         page.items.map((item) => (
-          <Card key={item.id} className="space-y-4">
+          <Card
+            key={item.id}
+            data-queue-row={item.status === 'PENDING' ? item.id : undefined}
+            className="space-y-4"
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="break-words text-lg font-semibold">
@@ -211,10 +228,11 @@ export function ContactList({
             <div className="flex flex-wrap gap-3">
               {box === 'INCOMING' && item.status === 'PENDING' && (
                 <>
-                  <Button loading={form.busy} onClick={() => approve(item)}>
+                  <Button data-queue-action loading={form.busy} onClick={() => approve(item)}>
                     {t('approve')}
                   </Button>
                   <Button
+                    data-queue-action
                     variant="secondary"
                     loading={form.busy}
                     onClick={() => setClosing({ id: item.id, kind: 'reject' })}
@@ -234,6 +252,7 @@ export function ContactList({
               )}
               {box === 'OUTGOING' && item.status === 'PENDING' && (
                 <Button
+                  data-queue-action
                   variant="secondary"
                   loading={form.busy}
                   onClick={() => setClosing({ id: item.id, kind: 'withdraw' })}
@@ -253,7 +272,7 @@ export function ContactList({
     </div>
   );
   return (
-    <div data-hydrated={hydrated ? 'true' : undefined}>
+    <div ref={rootRef} data-hydrated={hydrated ? 'true' : undefined}>
       <Tabs
         label={t('tabs')}
         value={box}
@@ -275,8 +294,20 @@ export function ContactList({
         onClose={() => {
           if (!form.busy) setClosing(null);
         }}
-        title={t('confirmTitle')}
-        description={t('confirmDescription')}
+        title={t(
+          closing?.kind === 'reject'
+            ? 'rejectTitle'
+            : closing?.kind === 'withdraw'
+              ? 'withdrawTitle'
+              : 'confirmTitle',
+        )}
+        description={t(
+          closing?.kind === 'reject'
+            ? 'rejectDescription'
+            : closing?.kind === 'withdraw'
+              ? 'withdrawDescription'
+              : 'confirmDescription',
+        )}
         footer={
           <>
             <Button variant="secondary" onClick={() => setClosing(null)}>
