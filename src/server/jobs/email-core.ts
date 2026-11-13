@@ -16,8 +16,44 @@ export const queuedEmailSchema = emailMessageSchema.extend({
     .regex(/^[a-zA-Z0-9_.-]+$/),
   idempotencyKey: z.string().min(1).max(200),
   recipientUserId: z.string().min(1).max(200).optional(),
+  /**
+   * Aylık özette gönderim anı bayatlık denetimi: özetin VERİ parmak izi (`digestFingerprint`; gövde, adres ya da jeton
+   * değil). ŞEMADA OLMALI: şemada olmazsa `safeParse` alanı siler ve denetim sessizce eski metin karşılaştırmasına döner.
+   * Yoksa (parmak izinden önce kuyruğa alınmış kayıt) eski metin denetimi geçiş dönemi için sürer.
+   */
+  digestFingerprint: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .optional(),
 });
 export type QueuedEmail = z.infer<typeof queuedEmailSchema>;
+
+/**
+ * Çıkış kutusu satırının `errorCode`'u: İÇ dizge, kullanıcıya dönmez (kullanıcıya dönen hatalar `src/lib/errors.ts`'tedir).
+ * `EMAIL_PREFERENCE_DISABLED` yalnız kullanıcı bildirimi gerçekten kapattığında yazılır. Taşıma hataları
+ * (`EMAIL_TRANSPORT_UNAVAILABLE`, `EMAIL_DELIVERY_REJECTED`) `EmailTransportError.message`'dan gelir.
+ */
+export type EmailFailureCode =
+  | 'EMAIL_PREFERENCE_DISABLED'
+  | 'EMAIL_RECIPIENT_INELIGIBLE'
+  | 'DIGEST_STALE'
+  | 'JOB_MATCH_STALE'
+  | 'APPLICATION_WINDOW_STALE'
+  | 'EMAIL_DELIVERY_EXHAUSTED';
+/** Gönderim anı kararı. `boolean` eski çağıranlar içindir: `false` = `EMAIL_PREFERENCE_DISABLED`. */
+export type SendDecision = { send: true } | { send: false; errorCode: EmailFailureCode };
+const STALE_CODES: ReadonlySet<EmailFailureCode> = new Set([
+  'DIGEST_STALE',
+  'JOB_MATCH_STALE',
+  'APPLICATION_WINDOW_STALE',
+]);
+function toDecision(result: boolean | SendDecision): SendDecision {
+  if (result === true) return { send: true };
+  if (result === false) return { send: false, errorCode: 'EMAIL_PREFERENCE_DISABLED' };
+  return result;
+}
 export type EmailRecord = { id: string; status: 'QUEUED' | 'SENT' | 'FAILED'; attempts: number };
 export interface EmailUnitOfWork {
   find(key: string): Promise<EmailRecord | null>;
@@ -45,14 +81,18 @@ export function createEmailService(
   outbox: EmailOutbox,
   transport: EmailTransport,
   logger: EmailLogger = logEmailEvent,
-  maySend: (message: QueuedEmail) => Promise<boolean> = async () => true,
+  maySend: (message: QueuedEmail) => Promise<boolean | SendDecision> = async () => true,
 ) {
   return {
     async enqueueEmail(input: QueuedEmail): Promise<{ emailLogId: string | null }> {
       // Ham Zod hatası kullanıcıya/loga taşınmaz (taşıma yardımcısı yalnız sunucu içindir).
       const parsed = queuedEmailSchema.safeParse(input);
       if (!parsed.success) throw new Error('EMAIL_INPUT_INVALID');
-      if (!(await maySend(parsed.data))) return { emailLogId: null };
+      const decision = toDecision(await maySend(parsed.data));
+      if (!decision.send) {
+        if (STALE_CODES.has(decision.errorCode)) logger('stale', maskEmail(parsed.data.to));
+        return { emailLogId: null };
+      }
       return outbox.withKey(parsed.data.idempotencyKey, async (work) => {
         const existing = await work.find(parsed.data.idempotencyKey);
         if (existing) return { emailLogId: existing.id };
@@ -85,13 +125,15 @@ export function createEmailService(
         const row = await work.find(message.idempotencyKey);
         if (!row) throw new Error('EMAIL_LOG_MISSING');
         if (row.status !== 'QUEUED') return null;
-        if (!(await maySend(message))) {
+        const decision = toDecision(await maySend(message));
+        if (!decision.send) {
           await work.mark(row.id, {
             status: 'FAILED',
             attempts: row.attempts,
-            errorCode: 'EMAIL_PREFERENCE_DISABLED',
+            errorCode: decision.errorCode,
             sentAt: null,
           });
+          if (STALE_CODES.has(decision.errorCode)) logger('stale', maskEmail(message.to));
           return null;
         }
         const attempts = row.attempts + 1;

@@ -22,7 +22,7 @@ import { getCompany, companySlug, mergeCompanies } from './companies';
 import { getInterviewQuestions } from './interview-questions';
 import { searchExperiences } from './search';
 import { buildDataExport } from './dataExport';
-import { maySendNotification } from './notification-preferences';
+import { decideNotification, maySendNotification } from './notification-preferences';
 import { scheduleApplicationWindows } from '../jobs/application-window-task';
 import { sendNotificationIntent } from '../jobs/notification-intent-worker';
 import { createEmailService, type QueuedEmail } from '../jobs/email-core';
@@ -124,7 +124,7 @@ function emailPort() {
     createEmailOutbox(db, { send }),
     transport,
     () => {},
-    (input) => maySendNotification(db, input, START),
+    (input) => decideNotification(db, input, START),
   );
   mail.mockImplementation((input: QueuedEmail) => service.enqueueEmail(input));
   return { service, published, transport, send };
@@ -254,7 +254,7 @@ it('aşama sonrası tercih kapatma, takip kaldırma ve anonim kaynak teslimi dur
   expect(port.transport.sent).toHaveLength(0);
   expect(await db.emailLog.findFirst({ where: { recipientUserId: w.student } })).toMatchObject({
     status: 'FAILED',
-    errorCode: 'EMAIL_PREFERENCE_DISABLED',
+    errorCode: 'APPLICATION_WINDOW_STALE',
   });
   await setApplicationFollow(db, w.student, { scope: w.scope, following: false }, START);
   expect(await maySendNotification(db, port.published[0]!, START)).toBe(false);

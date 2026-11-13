@@ -79,6 +79,60 @@ describe('e-posta giden kutusu', () => {
       errorCode: 'EMAIL_PREFERENCE_DISABLED',
     });
   });
+  it('karar sebebiyle döner: bayat içerik DIGEST_STALE yazar ve `stale` günlüğü atar; tercih kodu yazılmaz', async () => {
+    const { outbox, transport, logger, rows, published } = fixture();
+    let decision: Awaited<ReturnType<NonNullable<Parameters<typeof createEmailService>[3]>>> = true;
+    const service = createEmailService(outbox, transport, logger, async () => decision);
+    await service.enqueueEmail(message);
+    decision = { send: false, errorCode: 'DIGEST_STALE' };
+    await service.deliver(message, 0, 2);
+    expect(transport.sent).toHaveLength(0);
+    expect(rows.get(message.idempotencyKey)).toMatchObject({
+      status: 'FAILED',
+      errorCode: 'DIGEST_STALE',
+    });
+    expect(logger.mock.calls.map(([event]) => event)).toEqual(['queued', 'stale']);
+    for (const [, recipient] of logger.mock.calls) expect(recipient).toBe('***@***');
+    const logged = JSON.stringify(logger.mock.calls);
+    expect(logged).not.toContain(message.to);
+    expect(logged).not.toContain(message.text);
+    expect(published).toHaveLength(1);
+  });
+
+  it('kuyruğa alırken bayat çıkan içerik de `stale` günlüğü atar; alıcı uygun değilse atmaz', async () => {
+    const { outbox, transport, logger, published } = fixture();
+    const decisions = [
+      { send: false, errorCode: 'JOB_MATCH_STALE' },
+      { send: false, errorCode: 'EMAIL_RECIPIENT_INELIGIBLE' },
+    ] as const;
+    let index = 0;
+    const service = createEmailService(outbox, transport, logger, async () => decisions[index++]!);
+    expect(await service.enqueueEmail(message)).toEqual({ emailLogId: null });
+    expect(await service.enqueueEmail(message)).toEqual({ emailLogId: null });
+    expect(published).toHaveLength(0);
+    expect(logger.mock.calls.map(([event]) => event)).toEqual(['stale']);
+  });
+
+  it('kuyruk şeması aylık özet parmak izini korur: şemadan düşerse denetim sessizce eski metne dönerdi', async () => {
+    const { outbox, transport, logger } = fixture();
+    const seen: Array<string | undefined> = [];
+    const service = createEmailService(outbox, transport, logger, async (queued) => {
+      seen.push(queued.digestFingerprint);
+      return true;
+    });
+    await service.enqueueEmail({ ...message, digestFingerprint: 'parmak-izi_ABC-123' });
+    await service.deliver({ ...message, digestFingerprint: 'parmak-izi_ABC-123' }, 0, 2);
+    // Hem kuyruğa alırken hem teslimde `safeParse` sonrası değer gelir (şemada olmasaydı `undefined` olurdu).
+    expect(seen).toEqual(['parmak-izi_ABC-123', 'parmak-izi_ABC-123']);
+    await expect(
+      service.enqueueEmail({
+        ...message,
+        idempotencyKey: 'k2',
+        digestFingerprint: 'geçersiz karakter!',
+      }),
+    ).rejects.toThrow('EMAIL_INPUT_INVALID');
+  });
+
   it('başarı yolunda da (kuyruğa yazma, gönderim) günlüğe yalnız maskeli alıcı gider', async () => {
     const { service, logger } = fixture();
     await service.enqueueEmail(message);
