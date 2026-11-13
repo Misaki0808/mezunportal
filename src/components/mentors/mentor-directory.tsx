@@ -40,12 +40,20 @@ type Props = {
   results: MentorPage;
   sectors: { id: string; name: string }[];
   similar: SimilarMentors | null;
+  /** Mentor olabilen ama profili henüz kapalı kullanıcı: boş dizinde eylem "mentorluğu aç" olur. */
+  canOpenMentoring?: boolean;
 };
 
 const BASE_PATH = '/mentorlar';
 
 /** Mentor bul: filtreler URL'de; mobilde alt sayfa, geniş ekranda kenar paneli (ortak `FilterShell`). */
-export function MentorDirectory({ filter, results, sectors, similar }: Props) {
+export function MentorDirectory({
+  filter,
+  results,
+  sectors,
+  similar,
+  canOpenMentoring = false,
+}: Props) {
   const t = useTranslations('mentors');
   const directory = useTranslations('directory');
   const experienceTypes = useTranslations('experiences.types');
@@ -238,6 +246,8 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
   );
 
   const hasFilter = active.length > 0;
+  // Aralık dışı sayfa: toplam var ama bu sayfa boş; "henüz mentor yok" demek çelişir.
+  const outOfRange = results.items.length === 0 && results.page > 1;
   return (
     <div className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:pt-14">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
@@ -254,15 +264,36 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
         }}
         lead={similar ? <SimilarSection data={similar} /> : undefined}
         results={
-          results.items.length === 0 ? (
+          outOfRange ? (
+            <EmptyState
+              title={directory('pageEmptyTitle')}
+              description={directory('pageEmptyDescription')}
+              action={
+                <Link
+                  href={href({ ...filter, page: 1 })}
+                  className={buttonClasses({ variant: 'secondary' })}
+                >
+                  {directory('firstPage')}
+                </Link>
+              }
+            />
+          ) : results.items.length === 0 ? (
             <EmptyState
               title={hasFilter ? t('empty.title') : t('empty.none')}
-              description={hasFilter ? t('empty.description') : t('empty.noneDescription')}
+              description={
+                hasFilter
+                  ? t('empty.description')
+                  : t(canOpenMentoring ? 'empty.noneMentorDescription' : 'empty.noneDescription')
+              }
               action={
                 hasFilter ? (
                   <Button variant="secondary" onClick={() => go({})}>
                     {directory('clear')}
                   </Button>
+                ) : canOpenMentoring ? (
+                  <Link href="/mentor/ayarlar" className={buttonClasses()}>
+                    {t('empty.noneMentorAction')}
+                  </Link>
                 ) : (
                   <Link href="/deneyimler" className={buttonClasses()}>
                     {t('empty.noneAction')}

@@ -71,10 +71,18 @@ describe('deneyimlerim', () => {
   it('boş durumda yönlendirir', () => {
     renderUi(<MyExperiences initial={page([])} list={vi.fn()} />);
     expect(screen.getByText('Henüz deneyim yazmadın')).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Deneyim yaz' })[0]).toHaveAttribute(
-      'href',
-      '/deneyim/yeni',
-    );
+    // Boşken tek eylem: boş durumun düğmesi kalır, alttaki yapışkan çubuk gizlenir.
+    const write = screen.getAllByRole('link', { name: 'Deneyim yaz' });
+    expect(write).toHaveLength(1);
+    expect(write[0]).toHaveAttribute('href', '/deneyim/yeni');
+    expect(write[0]!.closest('.sticky-actions')).toBeNull();
+  });
+
+  it('doluyken "Deneyim yaz" alttaki yapışkan çubukta kalır (bugünkü düzen)', () => {
+    renderUi(<MyExperiences initial={page(items)} list={vi.fn()} />);
+    const write = screen.getAllByRole('link', { name: 'Deneyim yaz' });
+    expect(write).toHaveLength(1);
+    expect(write[0]!.closest('.sticky-actions')).not.toBeNull();
   });
 
   it('durum sekmesi sunucudan o duruma göre yeniden listeler', async () => {

@@ -52,4 +52,27 @@ describe('deneyim araması: boş durum', () => {
     expect(screen.getByText('Bu filtrelerle deneyim bulunamadı')).toBeVisible();
     expect(screen.getByText('0 sonuç')).toBeVisible();
   });
+
+  it('aralık dışı sayfada "henüz yok" ya da "0 sonuç" denmez: bu sayfa boş, ilk sayfaya dön (süzgeç korunur)', () => {
+    renderUi(
+      <SearchScreen filter={{ q: 'veri analizi' }} results={{ ...empty, page: 5 }} sectors={[]} />,
+    );
+    expect(screen.getByText('Bu sayfada sonuç yok')).toBeVisible();
+    expect(screen.queryByText('Henüz yayınlanmış deneyim yok')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Bu filtrelerle/)).not.toBeInTheDocument();
+    expect(screen.queryByText('0 sonuç')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'İlk sayfaya dön' })).toHaveAttribute(
+      'href',
+      '/deneyimler?q=veri+analizi',
+    );
+  });
+
+  it('aralık dışı sayfada süzgeç yoksa ilk sayfa bağlantısı yalın adrestir', () => {
+    renderUi(<SearchScreen filter={{}} results={{ ...empty, page: 3 }} sectors={[]} />);
+    expect(screen.getByRole('link', { name: 'İlk sayfaya dön' })).toHaveAttribute(
+      'href',
+      '/deneyimler',
+    );
+    expect(screen.queryByText('Henüz yayınlanmış deneyim yok')).not.toBeInTheDocument();
+  });
 });

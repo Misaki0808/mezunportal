@@ -7,6 +7,7 @@ import {
   mentorFilterToParams,
   searchMentorsSchema,
 } from '@/contracts/mentor-directory';
+import { getMyMentorSettings } from '@/server/actions/appointment';
 import { getSimilarMentors, searchMentors } from '@/server/actions/mentor-directory';
 import { listSearchSectors } from '@/server/actions/search';
 
@@ -25,11 +26,13 @@ async function Results({ params }: { params: Params }) {
     );
   }
   const filtered = mentorFilterToParams(parsed.data).toString() !== '';
-  const [results, sectors, similar] = await Promise.all([
+  const [results, sectors, similar, mine] = await Promise.all([
     searchMentors(parsed.data),
     listSearchSectors(),
     // “Sana benzer” yalnız filtresiz ilk sayfada gösterilir (filtreleri bölmesin).
     filtered ? Promise.resolve(null) : getSimilarMentors(),
+    // Boş dizinde rolüne uygun eylem için: mentor olabilir mi, profili açık mı?
+    getMyMentorSettings().catch(() => null),
   ]);
   if (!results.ok) return <ErrorState errorCode={results.errorCode} />;
   // Sektör listesi ya da öneriler yüklenemezse sayfa yine çalışır (süzgeç/öneri kapanır).
@@ -40,6 +43,7 @@ async function Results({ params }: { params: Params }) {
       results={results.data}
       sectors={sectors.ok ? sectors.data.sectors : []}
       similar={similar?.ok ? similar.data : null}
+      canOpenMentoring={Boolean(mine?.ok && mine.data.eligible && !mine.data.settings?.isActive)}
     />
   );
 }

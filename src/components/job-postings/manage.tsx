@@ -92,9 +92,11 @@ export function MyPostings({
           </Link>
           <PageHeader title={t('listTitle')} />
         </div>
-        <Link href="/ilanlar/yeni" className={buttonClasses()}>
-          {t('post')}
-        </Link>
+        {items.length > 0 && (
+          <Link href="/ilanlar/yeni" className={buttonClasses()}>
+            {t('post')}
+          </Link>
+        )}
       </div>
       {items.length ? (
         <ul className="grid gap-4 lg:grid-cols-2">
