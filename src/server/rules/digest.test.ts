@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { digestFingerprint, monthlyDigestCycle, selectDigest, type DigestInput } from './digest';
+import {
+  DIGEST_MAX_REGENERATIONS,
+  digestCycleOfKey,
+  digestFingerprint,
+  monthlyDigestCycle,
+  monthlyDigestKey,
+  selectDigest,
+  type DigestInput,
+} from './digest';
 import { queuedEmailSchema } from '../jobs/email-core';
 
 const empty = (): DigestInput => ({
@@ -114,5 +122,34 @@ describe('özet veri parmak izi (TD-028: bayatlık denetimi metne değil veriye 
       events: [{ id: 'v1', label: 'Yeniden adlandırılmış etkinlik' }],
     };
     expect(fp(relabeled)).toBe(fp(base()));
+  });
+});
+
+describe('aylık özet anahtarı (kart 307)', () => {
+  it('ilk deneme eksiz, yeniden üretim :rN ekli; ay ikisinde de okunur', () => {
+    expect(monthlyDigestKey('u1', '2026-03')).toBe('monthly-digest:u1:2026-03');
+    expect(monthlyDigestKey('u1', '2026-03', 1)).toBe('monthly-digest:u1:2026-03:r1');
+    for (const attempt of [0, 1, 2]) {
+      expect(digestCycleOfKey(monthlyDigestKey('u-1_x', '2026-03', attempt))).toBe('2026-03');
+    }
+  });
+
+  it('başka biçimler ay vermez; abonelik jetonu ve iş eşleşmesi anahtarı karışmaz', () => {
+    for (const key of [
+      'monthly-digest:u1:2026-3',
+      'monthly-digest:u1:2026-03:x1',
+      'monthly-digest:u1:2026-03:r',
+      'job-match:u1:2026-03-01',
+      'u1:2026-03',
+      '',
+    ]) {
+      expect(digestCycleOfKey(key)).toBeUndefined();
+    }
+  });
+
+  it('yeniden üretim hakkı ay başına tek ve sabit; anahtar kuyruk şemasının sınırını aşmaz', () => {
+    expect(DIGEST_MAX_REGENERATIONS).toBe(1);
+    const longest = monthlyDigestKey('x'.repeat(64), '2026-03', DIGEST_MAX_REGENERATIONS);
+    expect(longest.length).toBeLessThan(200);
   });
 });

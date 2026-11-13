@@ -135,7 +135,8 @@ export async function decideNotification(
       return stale('APPLICATION_WINDOW_STALE');
   }
   if (type === 'MONTHLY_DIGEST') {
-    const cycle = message.idempotencyKey.split(':').at(-1);
+    const { digestCycleOfKey } = await import('../rules/digest');
+    const cycle = digestCycleOfKey(message.idempotencyKey);
     const { istanbulDay } = await import('../rules/jobPosting');
     if (!cycle || cycle !== istanbulDay(now).slice(0, 7)) return stale('DIGEST_STALE');
     const { buildMonthlyDigest } = await import('./monthly-digest');

@@ -335,6 +335,40 @@ describe('ön izleme metni (preheader)', () => {
     expect(preheaderOf(text)).toBe(expected);
   });
 
+  it('306 P3-3: appointment.feedback ön izlemesi randevu genel cümlesine düşmez, kendi ilk cümlesini taşır', () => {
+    const feedback = decorateEmail(
+      {
+        to: 'test@example.invalid',
+        subject: 'Görüşmen nasıl geçti?',
+        template: 'appointment.feedback',
+        idempotencyKey: 'feedback-1',
+        text: 'Merhaba,\n\nGörüşmen hakkındaki kısa formu doldur: https://portal.invalid/hesap/gorusmeler',
+      },
+      'https://portal.invalid',
+    );
+    const confirmed = decorateEmail(
+      {
+        to: 'test@example.invalid',
+        subject: 'Randevu onaylandı',
+        template: 'appointment.confirmed',
+        idempotencyKey: 'randevu-1',
+        text: 'Merhaba,\n\nZeynep ile 4 Aralık 14:30 için görüşmen onaylandı.\n\nYer: Beyazıt',
+      },
+      'https://portal.invalid',
+    );
+    const preheaderOfHtml = (html: string) =>
+      new DOMParser()
+        .parseFromString(html, 'text/html')
+        .querySelector('.email-preheader')!
+        .textContent!.replace(/[\u200c\u00a0]/g, '');
+    const genericAppointment = 'Randevularınla ilgili bir güncelleme var.';
+    // Diğer randevu e-postaları (karşı taraf adı, yer, gerekçe taşıyabilir) genel cümleye düşer
+    expect(preheaderOfHtml(confirmed.html!)).toBe(genericAppointment);
+    // Geri bildirim e-postası yalnız sabit cümle taşır: kendi ilk cümlesi korunur
+    expect(preheaderOfHtml(feedback.html!)).not.toBe(genericAppointment);
+    expect(preheaderOfHtml(feedback.html!)).toBe('Görüşmen hakkındaki kısa formu doldur');
+  });
+
   it('uzun ilk cümleyi kelime sınırında 100 karakterde keser', () => {
     const long = `${'kelime '.repeat(30)}son`;
     const out = preheaderOf(long);

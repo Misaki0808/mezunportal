@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { INSECURE_DEV_AUTH_SECRET } from '@/lib/env';
+import { CURRENT_CONSENT_VERSIONS, REQUIRED_CONSENT_DOCUMENTS } from '@/contracts/privacy';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { createTestPrisma } from '@/test/db';
 import {
@@ -15,6 +16,7 @@ import { decorateEmail } from '../jobs/email-presentation';
 import { scheduleMonthlyDigests } from '../jobs/monthly-digest-task';
 import { sendNotificationIntent } from '../jobs/notification-intent-worker';
 import { relayNotificationIntents } from './notification-intent';
+import { monthlyDigestKey } from '../rules/digest';
 import { decideNotification } from './notification-preferences';
 
 const db = createTestPrisma(),
@@ -163,7 +165,7 @@ it('TD-028: APP_URL, BETTER_AUTH_SECRET, altbilgi ve metin değişince kuyruktak
   expect(logger.mock.calls.map(([event]) => event)).toEqual(['queued', 'sent']);
 });
 
-it('TD-028: veri değişince özet gitmez ve DIGEST_STALE yazar (tercih kodu değil); ay içinde yeniden denenmez', async () => {
+it('TD-028: veri değişince özet gitmez ve DIGEST_STALE yazar (tercih kodu değil)', async () => {
   const { userId, point, message } = await queuedDigest();
   await db.pointEntry.update({ where: { id: point.id }, data: { points: 8, basePoints: 8 } });
   expect(await decideNotification(db, message, clock)).toEqual({
@@ -180,10 +182,6 @@ it('TD-028: veri değişince özet gitmez ve DIGEST_STALE yazar (tercih kodu de�
   // Günlükte yalnız kararlı olay adı ve maskeli alıcı
   expect(logger.mock.calls.map(([event]) => event)).toEqual(['queued', 'stale']);
   expect(JSON.stringify(logger.mock.calls)).not.toContain('@example');
-  // Kalıcı e-posta anahtarı kaldığı için ay içinde yeni özet üretilmez
-  clock = new Date('2026-03-02T05:00:00Z');
-  await stage(userId);
-  expect(await db.notificationIntent.count({ where: { userId } })).toBe(0);
 });
 
 it('TD-028: bayatlığın başka yolları DIGEST_STALE yazar; EMAIL_PREFERENCE_DISABLED yalnız tercih gerçekten kapalıyken', async () => {
@@ -251,4 +249,233 @@ it('TD-028: alıcı artık uygun değilse (hesap silindi, yasaklandı) EMAIL_PRE
     status: 'FAILED',
     errorCode: 'EMAIL_RECIPIENT_INELIGIBLE',
   });
+});
+
+// ---- Kart 307: bayat özet o ay kaybolmaz (ay başına en çok 1 yeniden üretim) ----
+const day = (n: number) => new Date(`2026-03-0${n}T05:00:00Z`);
+const keyOf = (userId: string, attempt = 0) => monthlyDigestKey(userId, '2026-03', attempt);
+const logsOf = (userId: string) =>
+  db.emailLog.findMany({
+    where: { recipientUserId: userId },
+    orderBy: { idempotencyKey: 'asc' },
+    select: { idempotencyKey: true, status: true, errorCode: true },
+  });
+const intents = (userId: string) => db.notificationIntent.count({ where: { userId } });
+/** İlk özet kuyruğa alındı, sonra veri değişti ve teslimde DIGEST_STALE ile düştü. */
+async function staleFirstDigest() {
+  const ctx = await queuedDigest();
+  await db.pointEntry.update({ where: { id: ctx.point.id }, data: { points: 8, basePoints: 8 } });
+  await service.deliver(ctx.message, 0, 3);
+  expect(send).not.toHaveBeenCalled();
+  queued = [];
+  return ctx;
+}
+
+it('kart 307: bayat çıkan özet ertesi koşuda taze veriyle yeniden üretilir ve tek kez gider', async () => {
+  const { userId, message } = await staleFirstDigest();
+  clock = day(2);
+  await stage(userId);
+  expect(await intents(userId)).toBe(1);
+  await relay(userId);
+  expect(queued).toHaveLength(1);
+  const again = queued[0]!;
+  expect(again.idempotencyKey).toBe(keyOf(userId, 1));
+  // Taze veri: parmak izi ilkinden farklı (puan 7 → 8) ve bu anki veriyle doğrulanır
+  expect(again.digestFingerprint).not.toBe(message.digestFingerprint);
+  expect(await decideNotification(db, again, clock)).toEqual({ send: true });
+  await service.deliver(again, 0, 3);
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(await logsOf(userId)).toEqual([
+    { idempotencyKey: keyOf(userId), status: 'FAILED', errorCode: 'DIGEST_STALE' },
+    { idempotencyKey: keyOf(userId, 1), status: 'SENT', errorCode: null },
+  ]);
+  // Gitti: sonraki günlerde yeni özet yok, bayat satır da yeniden üretim doğurmaz
+  for (const n of [3, 4, 5]) {
+    clock = day(n);
+    await stage(userId);
+  }
+  expect(await intents(userId)).toBe(0);
+  expect(await logsOf(userId)).toHaveLength(2);
+});
+
+it('kart 307: yeniden üretilen özet de bayat çıkarsa ay biter (en çok 1 yeniden üretim, döngü yok)', async () => {
+  const { userId, point } = await staleFirstDigest();
+  clock = day(2);
+  await stage(userId);
+  await relay(userId);
+  expect(queued).toHaveLength(1);
+  await db.pointEntry.update({ where: { id: point.id }, data: { points: 9, basePoints: 9 } });
+  await service.deliver(queued[0]!, 0, 3);
+  expect(send).not.toHaveBeenCalled();
+  expect(await logsOf(userId)).toEqual([
+    { idempotencyKey: keyOf(userId), status: 'FAILED', errorCode: 'DIGEST_STALE' },
+    { idempotencyKey: keyOf(userId, 1), status: 'FAILED', errorCode: 'DIGEST_STALE' },
+  ]);
+  // Ayın ilk haftasının kalan günlerinde üçüncü bir özet üretilmez; DIGEST_STALE kalır
+  for (const n of [3, 4, 5, 6, 7]) {
+    clock = day(n);
+    await stage(userId);
+  }
+  expect(await intents(userId)).toBe(0);
+  expect(await logsOf(userId)).toHaveLength(2);
+  expect(await db.emailLog.count({ where: { idempotencyKey: keyOf(userId, 2) } })).toBe(0);
+});
+
+it('kart 307: kuyrukta bekleyen ya da gitmiş özet için yeniden üretim yok', async () => {
+  const { userId, message } = await queuedDigest();
+  // ilk özet QUEUED: bayat değil, uçuşta; ertesi gün ikinci bir özet üretilmemeli
+  clock = day(2);
+  await stage(userId);
+  expect(await intents(userId)).toBe(0);
+  await service.deliver(message, 0, 3);
+  expect(send).toHaveBeenCalledTimes(1);
+  clock = day(3);
+  await stage(userId);
+  expect(await intents(userId)).toBe(0);
+  expect(await logsOf(userId)).toHaveLength(1);
+});
+
+it('kart 307: tercih kapalıysa yeniden üretim yok (sahnelenmiş niyet de e-posta üretmez)', async () => {
+  const { userId } = await staleFirstDigest();
+  // 1) tercih bayatlıktan sonra kapandı: planlayıcı niyet sahnelemez
+  await db.notificationPreference.create({
+    data: { userId, type: 'MONTHLY_DIGEST', enabled: false },
+  });
+  clock = day(2);
+  await stage(userId);
+  expect(await intents(userId)).toBe(0);
+  // 2) niyet sahnelendikten SONRA kapandı: gönderim anı kararı satırı hiç yazmaz
+  await db.notificationPreference.deleteMany({ where: { userId } });
+  await stage(userId);
+  expect(await intents(userId)).toBe(1);
+  await db.notificationPreference.create({
+    data: { userId, type: 'MONTHLY_DIGEST', enabled: false },
+  });
+  await relay(userId);
+  expect(queued).toHaveLength(0);
+  expect(await db.emailLog.count({ where: { idempotencyKey: keyOf(userId, 1) } })).toBe(0);
+  expect(send).not.toHaveBeenCalled();
+});
+
+it('kart 307: tercih ya da uygunluk yüzünden düşen özet bayat sayılmaz, yeniden üretilmez', async () => {
+  const first = await queuedDigest();
+  await db.notificationPreference.create({
+    data: { userId: first.userId, type: 'MONTHLY_DIGEST', enabled: false },
+  });
+  await service.deliver(first.message, 0, 3);
+  expect(await logsOf(first.userId)).toEqual([
+    {
+      idempotencyKey: keyOf(first.userId),
+      status: 'FAILED',
+      errorCode: 'EMAIL_PREFERENCE_DISABLED',
+    },
+  ]);
+  // kullanıcı tercihi geri açsa bile bu ay yeni özet yok (yalnız DIGEST_STALE yeniden üretim hakkı doğurur)
+  await db.notificationPreference.deleteMany({ where: { userId: first.userId } });
+  clock = day(2);
+  await stage(first.userId);
+  expect(await intents(first.userId)).toBe(0);
+
+  clock = day(1);
+  queued = [];
+  const second = await queuedDigest();
+  await db.user.update({ where: { id: second.userId }, data: { banned: true, banExpires: null } });
+  await service.deliver(second.message, 0, 3);
+  expect(await logsOf(second.userId)).toEqual([
+    {
+      idempotencyKey: keyOf(second.userId),
+      status: 'FAILED',
+      errorCode: 'EMAIL_RECIPIENT_INELIGIBLE',
+    },
+  ]);
+  await db.user.update({ where: { id: second.userId }, data: { banned: false } });
+  clock = day(2);
+  await stage(second.userId);
+  expect(await intents(second.userId)).toBe(0);
+});
+
+it('kart 307: aynı anda iki işçi aynı bayat özeti yeniden üretmeye kalkarsa tek e-posta gider', async () => {
+  const { userId } = await staleFirstDigest();
+  clock = day(2);
+  await stage(userId);
+  const [row] = await db.notificationIntent.findMany({ where: { userId } });
+  expect(row).toBeDefined();
+  await Promise.all([
+    sendNotificationIntent(db, row!, clock),
+    sendNotificationIntent(db, row!, clock),
+  ]);
+  expect(queued).toHaveLength(1);
+  expect(await db.emailLog.count({ where: { idempotencyKey: keyOf(userId, 1) } })).toBe(1);
+  await service.deliver(queued[0]!, 0, 3);
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(await logsOf(userId)).toHaveLength(2);
+});
+
+it('kart 307: yeniden üretilen anahtarın (:r1) ayı doğru okunur; ay geçmişse yine bayat', async () => {
+  const { userId } = await staleFirstDigest();
+  clock = day(2);
+  await stage(userId);
+  await relay(userId);
+  const again = queued[0]!;
+  expect(again.idempotencyKey.endsWith(':r1')).toBe(true);
+  expect(await decideNotification(db, again, clock)).toEqual({ send: true });
+  expect(await decideNotification(db, again, new Date('2026-04-01T05:00:00Z'))).toEqual({
+    send: false,
+    errorCode: 'DIGEST_STALE',
+  });
+});
+
+// ---- W1'in kaçan üç mutantı (306 P3-1, P3-2) ----
+it('306 P3-1: özet kurulamıyorsa (zorunlu onay geri çekildi ya da üyelik doğrulanmamış) alıcı uygun değildir, bayat değil', async () => {
+  const { userId, message } = await queuedDigest();
+  // üyelik doğrulaması düştü → requireVerifiedMember kodlu hata verir
+  await db.membership.updateMany({
+    where: { userId },
+    data: { verificationStatus: 'PENDING', verifiedAt: null },
+  });
+  expect(await decideNotification(db, message, clock)).toEqual({
+    send: false,
+    errorCode: 'EMAIL_RECIPIENT_INELIGIBLE',
+  });
+  await db.membership.updateMany({
+    where: { userId },
+    data: { verificationStatus: 'VERIFIED', verifiedAt: new Date() },
+  });
+  expect(await decideNotification(db, message, clock)).toEqual({ send: true });
+  // zorunlu onay geri çekildi → requireConsent kodlu hata verir
+  await db.consent.create({
+    data: {
+      userId,
+      documentType: REQUIRED_CONSENT_DOCUMENTS[0]!,
+      version: CURRENT_CONSENT_VERSIONS[REQUIRED_CONSENT_DOCUMENTS[0]!],
+      granted: false,
+    },
+  });
+  expect(await decideNotification(db, message, clock)).toEqual({
+    send: false,
+    errorCode: 'EMAIL_RECIPIENT_INELIGIBLE',
+  });
+  await service.deliver(message, 0, 3);
+  expect(await logsOf(userId)).toEqual([
+    { idempotencyKey: keyOf(userId), status: 'FAILED', errorCode: 'EMAIL_RECIPIENT_INELIGIBLE' },
+  ]);
+  expect(logger.mock.calls.map(([event]) => event)).not.toContain('stale');
+});
+
+it('306 P3-2: tercihe bağlı şablonda alıcı kimliği yoksa EMAIL_RECIPIENT_INELIGIBLE (bayat/kapalı değil)', async () => {
+  const base = {
+    to: 'alici@example.invalid',
+    subject: 'Örnek',
+    text: 'Örnek metin',
+  };
+  for (const [template, idempotencyKey] of [
+    ['contact.requested', 'contact-requested:istek-1'],
+    ['jobMatch.digest', 'job-match:kullanici:2026-03-01'],
+    ['monthlyDigest.summary', `monthly-digest:kullanici:2026-03`],
+  ] as const) {
+    expect(await decideNotification(db, { ...base, template, idempotencyKey }, clock)).toEqual({
+      send: false,
+      errorCode: 'EMAIL_RECIPIENT_INELIGIBLE',
+    });
+  }
 });

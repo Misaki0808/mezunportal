@@ -67,3 +67,17 @@ export function monthlyDigestCycle(now: Date): string | null {
   const day = istanbulDay(now);
   return day.endsWith('-01') ? day.slice(0, 7) : null;
 }
+
+/**
+ * Aylık özet e-postasının kalıcı anahtarı. Bayat çıkan özet o ay kaybolmasın diye ay başına EN ÇOK
+ * `DIGEST_MAX_REGENERATIONS` kez taze veriyle yeniden üretilir; her deneme kendi anahtarını alır (`:r1`), böylece
+ * bayat satır denetim izi olarak olduğu gibi kalır, anahtar el değiştirmez ve yeniden gelen teslim işi eski satırı bulur.
+ */
+export const DIGEST_MAX_REGENERATIONS = 1;
+export function monthlyDigestKey(userId: string, cycle: string, attempt = 0): string {
+  return `monthly-digest:${userId}:${cycle}${attempt > 0 ? `:r${attempt}` : ''}`;
+}
+/** Anahtardaki ay (`YYYY-AA`): deneme eki (`:r1`) aydan sonra gelir, bu yüzden son parça alınmaz. */
+export function digestCycleOfKey(key: string): string | undefined {
+  return /^monthly-digest:.+:(\d{4}-\d{2})(?::r\d+)?$/.exec(key)?.[1];
+}
