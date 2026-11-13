@@ -45,7 +45,7 @@ gerekçe `docs/decisions.md`'ye yazılır. Ücretli servis hiçbir satırda yokt
 | K-05 | Canlı e-posta (SMTP): üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | K-02 ile birlikte | Gerçek e-posta teslimi |
 | K-04 | Gemini ücretsiz katman API anahtarını `korunan/gemini.env`'e koy (kimseye yazma); gerçek sağlayıcıya gönderim ayrıca yurt dışı aktarım rızası metninin onayına bağlı | Gerçek CV/LinkedIn ayrıştırmayı denemek istediğinde | TD-009 doğruluk ölçümü |
 | E4 | Google Cloud projesi, OAuth onay ekranı ve takvim izni; anahtarlar `korunan/google.env`'e; sonra `CALENDAR_PROVIDER=google` ve `/yonetim/google` | Gerçek takvim daveti ve Meet linki denemek istediğinde; yapılmazsa mentor linki elle ekler | P1-10 kabulü |
-| E3 | LinkedIn'de şirket sayfası + uygulama ("Sign In with LinkedIn using OpenID Connect"); client id ve secret `korunan/`'a | LinkedIn ile giriş istendiğinde; yapılmazsa e-posta bağlantısıyla giriş çalışır, LinkedIn düğmesi sebebiyle birlikte devre dışı görünür | P1-02 kabulü (LinkedIn yolu) |
+| E3 | LinkedIn'de şirket sayfası + uygulama ("Sign In with LinkedIn using OpenID Connect"); client id ve secret `korunan/`'a | LinkedIn ile giriş istendiğinde; yapılmazsa e-posta bağlantısıyla giriş çalışır, LinkedIn seçeneği giriş ekranında görünmez | P1-02 kabulü (LinkedIn yolu) |
 | Platform hesabı | Kurumsal kimlik: platformun adı ve LinkedIn kurum sayfası, canlı alan adı | Acelesiz; ödül paylaşımından (P2-01) ve canlı adresten önce | P2-01 paylaşımı, canlı alan adı |
 
 ### Hoca (kullanıcı üzerinden)
