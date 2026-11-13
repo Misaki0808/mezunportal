@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
 
 import { Checkbox } from './checkbox';
+import { Radio } from './radio';
 import { RadioGroup } from './radio-group';
 import { Switch } from './switch';
 
@@ -16,6 +17,39 @@ describe('Checkbox', () => {
     expect(checkbox).not.toBeChecked();
     await user.click(screen.getByText('Haberleri al'));
     expect(checkbox).toBeChecked();
+  });
+});
+
+describe('Radio', () => {
+  it('kit radyosu: yerli çizim kapalı, 24 px, ad/değer/seçili/zorunlu/devre dışı aynen geçer', () => {
+    renderUi(
+      <>
+        <Radio name="grup" value="a" aria-label="Seçenek A" defaultChecked required />
+        <Radio name="grup" value="b" aria-label="Seçenek B" disabled />
+      </>,
+    );
+
+    const a = screen.getByRole('radio', { name: 'Seçenek A' }) as HTMLInputElement;
+    const b = screen.getByRole('radio', { name: 'Seçenek B' }) as HTMLInputElement;
+    expect(a).toHaveClass('appearance-none', 'size-6', 'border-border-control');
+    expect([a.name, a.value, a.checked, a.required]).toEqual(['grup', 'a', true, true]);
+    expect([b.name, b.value, b.checked, b.disabled]).toEqual(['grup', 'b', false, true]);
+  });
+
+  it('sınıf eklenebilir ama kit çizimini kaldırmaz; ok tuşu gruptaki seçeneği seçer', async () => {
+    const { user } = renderUi(
+      <>
+        <Radio name="g" value="1" aria-label="Bir" className="mt-1" defaultChecked />
+        <Radio name="g" value="2" aria-label="İki" />
+      </>,
+    );
+    const one = screen.getByRole('radio', { name: 'Bir' });
+    expect(one).toHaveClass('mt-1', 'appearance-none', 'size-6');
+
+    one.focus();
+    await user.keyboard('{ArrowDown}');
+
+    expect(screen.getByRole('radio', { name: 'İki' })).toBeChecked();
   });
 });
 
@@ -80,5 +114,29 @@ describe('RadioGroup', () => {
     const group = screen.getByRole('group', { name: 'Görüşme biçimi' });
     expect(group).toHaveAttribute('aria-invalid', 'true');
     expect(group.getAttribute('aria-describedby')).toBe(screen.getByRole('alert').id);
+  });
+});
+
+describe('RadioGroup · Radio ile aynı çizim', () => {
+  it('seçenek girdileri kit Radio sınıflarını taşır ve seçim davranışı değişmedi', async () => {
+    const onValueChange = vi.fn();
+    const { user } = renderUi(
+      <RadioGroup
+        legend="Süre"
+        name="sure"
+        defaultValue="20"
+        onValueChange={onValueChange}
+        options={[
+          { value: '15', label: '15 dakika' },
+          { value: '20', label: '20 dakika' },
+        ]}
+      />,
+    );
+
+    for (const radio of screen.getAllByRole('radio'))
+      expect(radio).toHaveClass('appearance-none', 'size-6', 'border-border-control');
+    expect(screen.getByRole('radio', { name: '20 dakika' })).toBeChecked();
+    await user.click(screen.getByText('15 dakika'));
+    expect(onValueChange).toHaveBeenCalledWith('15');
   });
 });

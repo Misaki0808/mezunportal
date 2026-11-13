@@ -1,17 +1,52 @@
 // @vitest-environment jsdom
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
 import { Invitations } from './invitations';
 
-vi.mock('@/server/actions/invitations', () => ({ sendInvitations: vi.fn() }));
+const send = vi.hoisted(() => vi.fn());
+vi.mock('@/server/actions/invitations', () => ({ sendInvitations: send }));
 
 const csv = (bytes: number, name = 'liste.csv') =>
   new File([new Uint8Array(bytes).fill(97)], name, { type: 'text/csv' });
 
 describe('Toplu davet', () => {
+  it('gönder düğmesi çift gönderim yapmaz: iki hızlı tıklama tek istek, bekleme boyunca kilitli', async () => {
+    const gate = Promise.withResolvers<{ ok: true; data: { queued: number; skipped: number } }>();
+    send.mockReset();
+    send.mockReturnValueOnce(gate.promise);
+    const { user } = renderUi(<Invitations />);
+    await user.type(
+      screen.getByLabelText(/E-posta adresleri/),
+      'ayse@example.test, ali@example.test',
+    );
+    const button = screen.getByRole('button', { name: 'Davetleri gönder' });
+
+    act(() => {
+      button.click();
+      button.click();
+    });
+
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledWith('ayse@example.test, ali@example.test');
+    // Kit Button bekleme sırasında `aria-disabled` + `aria-busy` taşır (odak kaybolmasın diye `disabled` değil).
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(button).toHaveTextContent('Kuyruğa ekleniyor');
+
+    await act(async () => {
+      gate.resolve({ ok: true, data: { queued: 2, skipped: 0 } });
+    });
+    expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Davetleri gönder' })).not.toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
   it("adres alanı kit alanıdır: zorunlu, ipucu açıklama, sınırı kontrol sınırı token'ı (koyu temada 3:1)", () => {
     renderUi(<Invitations />);
 

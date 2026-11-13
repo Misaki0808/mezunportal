@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Button, Field, Textarea } from '@/components/ui';
+import { Button, Field, Radio, Textarea } from '@/components/ui';
 import type { FeedbackView } from '@/contracts/feedback';
 import type { ErrorCode } from '@/lib/errors';
 import { submitSessionFeedback } from '@/server/actions/feedback';
@@ -73,8 +73,7 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
                   key={String(value)}
                   className="flex min-h-12 items-center gap-3 rounded-control border border-border px-4"
                 >
-                  <input
-                    type="radio"
+                  <Radio
                     name="happened"
                     required
                     checked={happened === value}
@@ -96,8 +95,7 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
                     key={String(value)}
                     className="flex min-h-12 items-center gap-3 rounded-control border border-border px-4"
                   >
-                    <input
-                      type="radio"
+                    <Radio
                       name="helpful"
                       checked={helpful === value}
                       onChange={() => setHelpful(value)}

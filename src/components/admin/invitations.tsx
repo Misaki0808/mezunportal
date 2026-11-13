@@ -1,7 +1,7 @@
 'use client';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useTranslations } from 'next-intl';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { sendInvitations } from '@/server/actions/invitations';
 import { Button, Field, FilePicker, Textarea } from '@/components/ui';
 import { AdminFrame } from './frame';
@@ -15,18 +15,26 @@ export function Invitations() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ queued: number; skipped: number } | null>(null);
   const [pending, start] = useTransition();
+  // Eşzamanlı kilit: iki hızlı tıklama aynı React grubuna düşerse `pending` henüz `true` olmaz; diğer formlar gibi `ref` ile engellenir.
+  const locked = useRef(false);
   return (
     <AdminFrame title={t('title')} description={t('description')}>
       <form
         className="max-w-2xl space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
+          if (locked.current) return;
+          locked.current = true;
           setError(null);
           setResult(null);
           start(async () => {
-            const response = await safeClientAction(() => sendInvitations(text));
-            if (response.ok) setResult(response.data);
-            else setError(response.errorCode);
+            try {
+              const response = await safeClientAction(() => sendInvitations(text));
+              if (response.ok) setResult(response.data);
+              else setError(response.errorCode);
+            } finally {
+              locked.current = false;
+            }
           });
         }}
       >
