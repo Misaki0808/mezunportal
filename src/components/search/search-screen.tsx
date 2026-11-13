@@ -39,6 +39,7 @@ type Props = {
 export function SearchScreen({ filter, results, sectors }: Props) {
   const t = useTranslations('search');
   const companies = useTranslations('companies');
+  const directory = useTranslations('directory');
   const router = useRouter();
   const [draft, setDraft] = useState<Filter>(filter);
   const [invalid, setInvalid] = useState(false);
@@ -107,6 +108,8 @@ export function SearchScreen({ filter, results, sectors }: Props) {
   }));
   // Filtre ya da arama sözcüğü yoksa boş sonuç "filtre" değil "henüz kimse paylaşmadı" demektir.
   const searched = active.length > 0 || Boolean(filter.q?.trim());
+  // Aralık dışı sayfa: kayıt var ama bu sayfa boş. "Henüz yok" ya da "0 sonuç" demek yanlış olur (toplam pencere sayımıyla 0 gelir).
+  const outOfRange = results.items.length === 0 && results.page > 1;
   const filters = (
     <div className="flex flex-col gap-5">
       <Field label={t('type')}>
@@ -285,13 +288,26 @@ export function SearchScreen({ filter, results, sectors }: Props) {
         )}
         active={active}
         total={results.total}
-        hideCount={!searched && results.total === 0}
+        hideCount={(!searched && results.total === 0) || outOfRange}
         pending={pending}
         onApply={() => go({ ...draft, page: 1 })}
         onReset={() => setDraft(filter)}
         onClear={() => go({ q: filter.q, page: 1 })}
         results={
-          results.items.length === 0 && !searched ? (
+          outOfRange ? (
+            <EmptyState
+              title={directory('pageEmptyTitle')}
+              description={directory('pageEmptyDescription')}
+              action={
+                <Link
+                  href={href({ ...filter, page: 1 })}
+                  className={buttonClasses({ variant: 'secondary' })}
+                >
+                  {directory('firstPage')}
+                </Link>
+              }
+            />
+          ) : results.items.length === 0 && !searched ? (
             <EmptyState
               title={t('emptyNoneTitle')}
               description={t('emptyNoneDescription')}

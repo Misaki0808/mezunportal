@@ -135,6 +135,7 @@ export function PostingList({
   canPost: boolean;
 }) {
   const t = useTranslations('jobs');
+  const directory = useTranslations('directory');
   const filterFormId = useId();
   const [query, setQuery] = useState(filters.q ?? '');
   const [open, setOpen] = useState(false);
@@ -336,7 +337,20 @@ export function PostingList({
           </Link>
         )}
       </div>
-      {page.items.length ? (
+      {page.items.length === 0 && page.total > 0 ? (
+        // Aralık dışı sayfa: ilan var ama bu sayfa boş; "henüz ilan yok" demek sayaçla çelişir.
+        <div className="rounded-card border border-dashed border-border bg-surface">
+          <EmptyState
+            title={directory('pageEmptyTitle')}
+            description={directory('pageEmptyDescription')}
+            action={
+              <Link href={pageHref(1)} className={buttonClasses({ variant: 'secondary' })}>
+                {directory('firstPage')}
+              </Link>
+            }
+          />
+        </div>
+      ) : page.items.length ? (
         <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
           {page.items.map((posting) => (
             <PostingCard key={posting.id} posting={posting} />

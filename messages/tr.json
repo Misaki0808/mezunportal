@@ -415,6 +415,9 @@
     "clear": "Filtreleri temizle",
     "active": "Etkin filtreler",
     "resultCount": "{count} sonuç",
+    "pageEmptyTitle": "Bu sayfada sonuç yok",
+    "pageEmptyDescription": "Sonuçların bu sayfası boş kaldı; baştan başlayabilirsin.",
+    "firstPage": "İlk sayfaya dön",
     "loading": "Sonuçlar yükleniyor"
   },
   "mentors": {

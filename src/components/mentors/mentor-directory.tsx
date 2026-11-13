@@ -246,6 +246,8 @@ export function MentorDirectory({
   );
 
   const hasFilter = active.length > 0;
+  // Aralık dışı sayfa: toplam var ama bu sayfa boş; "henüz mentor yok" demek çelişir.
+  const outOfRange = results.items.length === 0 && results.page > 1;
   return (
     <div className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:pt-14">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
@@ -262,7 +264,20 @@ export function MentorDirectory({
         }}
         lead={similar ? <SimilarSection data={similar} /> : undefined}
         results={
-          results.items.length === 0 ? (
+          outOfRange ? (
+            <EmptyState
+              title={directory('pageEmptyTitle')}
+              description={directory('pageEmptyDescription')}
+              action={
+                <Link
+                  href={href({ ...filter, page: 1 })}
+                  className={buttonClasses({ variant: 'secondary' })}
+                >
+                  {directory('firstPage')}
+                </Link>
+              }
+            />
+          ) : results.items.length === 0 ? (
             <EmptyState
               title={hasFilter ? t('empty.title') : t('empty.none')}
               description={

@@ -72,6 +72,24 @@ it('ilan varken ilan veren rolde "İlan ver" başlıkta kalır (bugünkü düzen
   expect(post).toHaveLength(1);
   expect(post[0]!.closest('header')).not.toBeNull();
 });
+it('aralık dışı sayfada sayaç ile "henüz ilan yok" çelişmez: bu sayfa boş, ilk sayfaya dön', () => {
+  renderWithToasts(
+    <PostingList
+      canPost={false}
+      filters={{ q: 'staj' }}
+      options={options}
+      page={{ items: [], total: 12, page: 5, pageSize: 20 }}
+    />,
+  );
+  expect(screen.getByText('12 ilan')).toBeVisible();
+  expect(screen.getByText('Bu sayfada sonuç yok')).toBeVisible();
+  expect(screen.queryByText('Henüz ilan paylaşılmadı')).not.toBeInTheDocument();
+  expect(screen.queryByText('Henüz ilan bulunamadı')).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'İlk sayfaya dön' })).toHaveAttribute(
+    'href',
+    '/ilanlar?q=staj',
+  );
+});
 it('filtreyle ilan bulunamayınca sayaç ve temizleme kalır, "henüz paylaşılmadı" denmez', () => {
   renderWithToasts(
     <PostingList canPost={false} filters={{ q: 'staj' }} options={options} page={emptyPage} />,

@@ -52,6 +52,23 @@ describe('SSS sayfası ve arama', () => {
     expect(document.body.textContent).not.toMatch(/@|\+90/);
   });
 
+  it('aralık dışı sayfada sayaç ve "henüz yok" yerine "bu sayfa boş" der; ilk sayfa bağlantısı aramayı korur', () => {
+    const { unmount } = renderUi(
+      <FaqList canAsk={true} result={page({ items: [], total: 0, page: 4 })} q="cv" />,
+    );
+    expect(screen.getByText('Bu sayfada sonuç yok')).toBeVisible();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByText('Soru bulunamadı.')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'İlk sayfaya dön' })).toHaveAttribute(
+      'href',
+      '/sss?q=cv',
+    );
+    unmount();
+    renderUi(<FaqList canAsk={true} result={page({ items: [], total: 0, page: 3 })} />);
+    expect(screen.queryByText('Henüz yayınlanmış soru yok.')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'İlk sayfaya dön' })).toHaveAttribute('href', '/sss');
+  });
+
   it('arama sayacı: arama yokken toplam, arama varken aranan sözcükle; sonuç yokken de sayaç "0 soru" der', () => {
     const { unmount } = renderUi(<FaqList canAsk={true} result={page()} />);
     expect(screen.getByRole('status')).toHaveTextContent(/^45 soru$/);
