@@ -64,7 +64,7 @@ test('mobilde özel ay kaydı, toplu takvim ve takip', async ({ page }) => {
     });
     expect(draft.appliedMonth).toBe(4);
     await page.goto(`/sirketler/${company.id}`);
-    await page.getByRole('tab', { name: 'Başvuru dönemi' }).click();
+    await page.getByRole('tab', { name: 'Başvuru' }).click();
     await expect(page.getByRole('button', { name: 'Takip et', exact: true })).toBeVisible();
     await expect(page.getByRole('table')).toContainText('Mart');
     await page.getByRole('button', { name: 'Takip et', exact: true }).click();

@@ -43,15 +43,15 @@ test('360 px: mezun beş ders seçer, öğrenci YBS/ortak ayrımını ve seçmel
     const viewer = await context.newPage();
     await login(viewer, 'student');
     await viewer.goto('/ders-rehberi');
-    await expect(viewer.locator('article')).toHaveCount(89);
-    // Otomatik bekleyen doğrulama: başlıklar makale sayısıyla aynı anda hazır olmayabilir (tek seferlik okuma yarışırdı).
+    await expect(viewer.locator('[data-course-code]')).toHaveCount(89);
+    // Kartlar ve kompakt satırlar aynı ders kümesini korur; başlıklar otomatik beklenir.
     await expect(viewer.locator('#main-content section > h2')).toHaveText([
       t.departmentCourses,
       t.commonCourses,
     ]);
     await viewer.getByRole('combobox', { name: t.kind, exact: true }).selectOption('elective');
     await viewer.getByRole('button', { name: t.filter, exact: true }).click();
-    await expect(viewer.locator('article')).toHaveCount(53);
+    await expect(viewer.locator('[data-course-code]')).toHaveCount(53);
     expect(await viewer.evaluate(() => document.documentElement.scrollWidth)).toBe(360);
   } finally {
     await context.close().catch(() => undefined);
@@ -61,4 +61,15 @@ test('360 px: mezun beş ders seçer, öğrenci YBS/ortak ayrımını ve seçmel
         data: original.map(({ courseId }) => ({ userId: alumni.id, courseId })),
       });
   }
+});
+
+test('390 px: değerlendirmesiz dersler kısadır, tüm dersler korunur ve taşma yoktur', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page, 'student');
+  await page.goto('/ders-rehberi');
+  await expect(page.locator('[data-course-code]')).toHaveCount(89);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(4000);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

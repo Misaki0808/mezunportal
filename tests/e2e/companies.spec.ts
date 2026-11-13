@@ -62,7 +62,17 @@ test('şirketi takma adla bulur; anonim deneyim ve güvenli boş dönem görün�
     await expect(page.getByRole('tab', { name: 'Deneyimler' })).toBeInViewport();
     await expect(page.getByText('Anonim', { exact: true })).toBeVisible();
     expect(await page.content()).not.toContain(student.id);
-    await page.getByRole('tab', { name: 'Başvuru dönemi' }).click();
+    const applications = page.getByRole('tab', { name: 'Başvuru' });
+    expect(
+      await applications.evaluate((tab) => {
+        const rect = tab.getBoundingClientRect();
+        const container = tab.closest('[role=tablist]')!.getBoundingClientRect();
+        return (
+          rect.left >= container.left && rect.right <= container.right && rect.right <= innerWidth
+        );
+      }),
+    ).toBe(true);
+    await applications.click();
     await expect(page.getByText('Henüz yeterli veri yok')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
