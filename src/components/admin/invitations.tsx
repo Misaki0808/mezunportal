@@ -11,6 +11,7 @@ export function Invitations() {
   const errors = useTranslations('errors.codes');
   const [text, setText] = useState('');
   const [fileName, setFileName] = useState('');
+  const [fileError, setFileError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ queued: number; skipped: number } | null>(null);
   const [pending, start] = useTransition();
@@ -40,7 +41,7 @@ export function Invitations() {
             />
           )}
         </Field>
-        <Field label={t('file')}>
+        <Field label={t('file')} error={fileError ?? undefined}>
           {(control) => (
             <FilePicker
               {...control}
@@ -52,9 +53,10 @@ export function Invitations() {
                   setText(await file.text());
                   setFileName(file.name);
                   setError(null);
+                  setFileError(null);
                 } else if (file) {
                   setFileName('');
-                  setError('VALIDATION_INVALID');
+                  setFileError(t('fileTooLarge'));
                 }
               }}
             />

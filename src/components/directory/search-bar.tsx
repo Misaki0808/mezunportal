@@ -3,7 +3,7 @@
 import { useId } from 'react';
 import type { ComponentProps, FormEvent, ReactNode } from 'react';
 
-import { AlertIcon, Button, Input } from '@/components/ui';
+import { AlertIcon, Button, Input, cn } from '@/components/ui';
 
 type InputPassThrough = Omit<
   ComponentProps<typeof Input>,
@@ -21,20 +21,31 @@ type Props = {
   /** Satırın sonuna, "Ara"nın yanına girer (örn. telefonda "Filtreler" düğmesi). */
   trailing?: ReactNode;
   /**
+   * Satır sonundaki öğe UZAMIŞSA (etkin filtre sayısıyla "Filtreler (3)") `true`: girdi en az 10 rem (160 px) kalır, sığmayan
+   * düğme alt satıra iner (360 px'te girdi 105 px'e düşüyordu). Varsayılan `false`: girdi daralabilir ve satır TEK kalır; sabit bir
+   * alt sınır, filtre yokken de düğmeyi alt satıra itip mobil ilk ekrandaki sonuçları aşağı kaydırırdı (`/ilanlar` 360 px).
+   */
+  wideTrailing?: boolean;
+  /**
    * Gönderim sürerken verilir: "Ara" GERÇEKTEN `disabled` olur (çift gönderim yok) ve `aria-busy` taşır; sebep ("… yükleniyor")
    * satırı kaplamasın diye görünmez bir öğeye yazılır ve düğmeye `aria-describedby` ile bağlanır.
    */
   pendingReason?: string;
   action?: string;
   onSubmit?: (event: FormEvent<HTMLFormElement>) => void;
+  /** Dış boşluk çağırandan gelir (`mt-6`, `mb-4`…): bileşen kendi marjını koymaz, çünkü `cn` çakışan sınıfı ayıklamaz. */
+  className?: string;
+  /** Aynı formun içinde, arama satırının altına girer (örn. masaüstünde açılan süzgeç alanları: `q` ile birlikte gönderilir). */
+  children?: ReactNode;
   /** Girdiye geçen alanlar: `name`, `value`/`defaultValue`, `onChange`, `maxLength`, `autoComplete`… */
   input: InputPassThrough;
 };
 
 /**
- * Dizin ve arama ekranlarının ORTAK tek satırlık arama bloğu (`/ilanlar` kalıbı): `[ara] [Ara] [Filtreler]`. Etiket görünmez
- * (yer tutucu ipucu verir), ipucu ayrı satır kaplamaz: telefonda ilk ekranın üst yarısı sonuçlara kalır. Etiket yine de vardır
- * (`label.sr-only`): yer tutucu etiketin yerini tutmaz.
+ * Dizin ve arama ekranlarının ORTAK tek satırlık arama bloğu (`/ilanlar`, `/deneyimler`, `/sirketler`): `[ara] [Ara] [Filtreler]`.
+ * Etiket görünmez (yer tutucu ipucu verir), ipucu ayrı satır kaplamaz: telefonda ilk ekranın üst yarısı sonuçlara kalır. Etiket
+ * yine de vardır (`label.sr-only`): yer tutucu etiketin yerini tutmaz. Satır sarabilir (`wideTrailing` ile): filtre
+ * uygulanmışken uzayan "Filtreler (3)" düğmesi gerekirse alt satıra iner, girdi geniş kalır.
  */
 export function SearchBar({
   label,
@@ -42,9 +53,12 @@ export function SearchBar({
   submitLabel,
   error,
   trailing,
+  wideTrailing = false,
   pendingReason,
   action,
   onSubmit,
+  className,
+  children,
   input,
 }: Props) {
   const baseId = useId();
@@ -59,9 +73,9 @@ export function SearchBar({
       role="search"
       action={action}
       onSubmit={onSubmit}
-      className="mt-6 rounded-card border border-border bg-surface p-3 shadow-sm sm:p-5"
+      className={cn('rounded-card border border-border bg-surface p-3 shadow-sm sm:p-5', className)}
     >
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <label htmlFor={inputId} className="sr-only">
           {label}
         </label>
@@ -72,7 +86,7 @@ export function SearchBar({
           placeholder={hint}
           aria-describedby={describedBy}
           invalid={error ? true : undefined}
-          className="min-w-0 flex-1"
+          className={cn(wideTrailing ? 'min-w-40' : 'min-w-0', 'flex-1')}
         />
         <Button
           type="submit"
@@ -86,6 +100,7 @@ export function SearchBar({
         </Button>
         {trailing}
       </div>
+      {children}
       {pendingReason && (
         <span id={pendingId} className="sr-only">
           {pendingReason}

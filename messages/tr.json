@@ -2379,6 +2379,7 @@
     "label": "E-posta adresleri",
     "help": "En çok 100 adres gir. Satır, virgül veya noktalı virgül ile ayır; tekrarlar bir kez işlenir.",
     "file": "CSV veya metin dosyası yükle",
+    "fileTooLarge": "Dosya çok büyük. En fazla 30 KB yükleyebilirsin.",
     "submit": "Davetleri gönder",
     "sending": "Kuyruğa ekleniyor…",
     "result": "Gönderilmek üzere kaydedilen: {queued} · mevcut hesap: {skipped}",

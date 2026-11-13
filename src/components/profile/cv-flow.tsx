@@ -234,6 +234,7 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
                     name="file"
                     accept="application/pdf"
                     chooseLabel={t('chooseFile')}
+                    onChange={() => setFileError(undefined)}
                   />
                 )}
               </Field>
