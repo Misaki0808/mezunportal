@@ -919,6 +919,82 @@ describe('iptal ve link', () => {
 
 // =============================================================================================
 describe('okuma', () => {
+  it('iş sırası: yanıt bekleyen → yaklaşan → geçmiş; eşit tarih ve üç grup arasında imleç kayıpsızdır', async () => {
+    const mentor = await mentorWith({ capacity: 40 });
+    const h = harness();
+    const definitions = [
+      { id: 'ff2650000000000000000001', status: 'COMPLETED', offset: -10 * DAY },
+      { id: 'ee2650000000000000000002', status: 'COMPLETED', offset: -HOUR },
+      { id: 'dd2650000000000000000003', status: 'COMPLETED', offset: -HOUR },
+      { id: 'cc2650000000000000000004', status: 'CONFIRMED', offset: 0 },
+      { id: 'bb2650000000000000000005', status: 'CONFIRMED', offset: HOUR },
+      { id: '01265000-0000-4000-8000-000000000006', status: 'REQUESTED', offset: 2 * DAY },
+      { id: '00265000-0000-4000-8000-000000000007', status: 'REQUESTED', offset: DAY },
+    ] as const;
+    for (const row of definitions) {
+      const startsAt = new Date(NOW.getTime() + row.offset);
+      await db.appointment.create({
+        data: {
+          id: row.id,
+          mentorId: mentor,
+          menteeId: await person(),
+          startsAt,
+          endsAt: new Date(startsAt.getTime() + 30 * 60_000),
+          mode: 'ONLINE',
+          status: row.status,
+          expiresAt: new Date(startsAt.getTime() - HOUR),
+          decidedAt: row.status === 'REQUESTED' ? null : new Date(startsAt.getTime() - HOUR),
+        },
+      });
+    }
+    const expected = [
+      definitions[6].id,
+      definitions[5].id,
+      definitions[3].id,
+      definitions[4].id,
+      definitions[2].id,
+      definitions[1].id,
+      definitions[0].id,
+    ];
+    expect(
+      (await listMyAppointments(h.deps, mentor, { role: 'MENTOR' })).items.map((row) => row.id),
+    ).toEqual(expected);
+    // Her sınırı kes: aynı saatli iki geçmiş kayıt ve iki grup geçişi dahil.
+    for (const limit of [1, 2, 3, 4]) {
+      const ids: string[] = [];
+      let cursor: string | undefined;
+      for (let page = 0; page < definitions.length + 1; page++) {
+        const result = await listMyAppointments(h.deps, mentor, { role: 'MENTOR', limit, cursor });
+        ids.push(...result.items.map((row) => row.id));
+        if (!result.nextCursor) break;
+        cursor = result.nextCursor;
+      }
+      expect(ids, `limit=${limit}`).toEqual(expected);
+    }
+    const stranger = await person();
+    expect(
+      (await listMyAppointments(h.deps, stranger, { role: 'MENTOR', cursor: expected[0] })).items,
+    ).toEqual([]);
+    for (const cursor of [expected[0], 'olmayan-imlec']) {
+      expect(
+        (
+          await listMyAppointments(h.deps, mentor, {
+            role: 'MENTOR',
+            statuses: ['COMPLETED'],
+            cursor,
+          })
+        ).items,
+      ).toEqual([]);
+    }
+    expect(
+      (await listMyAppointments(h.deps, mentor, { role: 'MENTEE', cursor: expected[0] })).items,
+    ).toEqual([]);
+    expect(
+      (
+        await listMyAppointments(h.deps, mentor, { role: 'MENTOR', statuses: ['COMPLETED'] })
+      ).items.map((row) => row.id),
+    ).toEqual(expected.slice(4));
+  });
   it('liste yalnız kendi randevuları; rol ve durum süzgeci; sayfalama; karşı taraf adı, e-posta yok', async () => {
     const h = harness();
     const mentor = await mentorWith({ capacity: 10 });

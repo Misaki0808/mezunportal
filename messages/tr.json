@@ -171,7 +171,7 @@
       },
       "cvInbox": {
         "title": "CV incelemeleri",
-        "description": "Gelen talepleri yanıtla."
+        "description": "İnceleme tercihlerini ayarla, gelen talepleri yanıtla."
       },
       "write": {
         "title": "Deneyim yaz",
@@ -1481,7 +1481,11 @@
       "targetUnavailableDescription": "Bu kişiye şu anda iletişim talebi gönderemezsin.",
       "targetBack": "Taleplerime dön",
       "fieldUnavailable": "Bu alan için talep gönderilemiyor.",
-      "originSeekerProfile": "Aday: {title} · {organization}"
+      "originSeekerProfile": "Aday: {title} · {organization}",
+      "rejectTitle": "Talebi reddet",
+      "rejectDescription": "Bu talep reddedilecek; istediği bilgiler bu talep üzerinden paylaşılmayacak. Devam etmek istiyor musun?",
+      "withdrawTitle": "Talebi geri çek",
+      "withdrawDescription": "Bekleyen talebin geri çekilecek; karşı taraf bu talebe artık yanıt veremeyecek. Devam etmek istiyor musun?"
     },
     "delete": {
       "title": "Hesabını silmeden önce",
@@ -2437,7 +2441,10 @@
     "loading": "Yükleniyor…",
     "more": "Daha fazla göster",
     "requestLink": "CV incelemesi iste",
-    "backProfile": "Mentor profiline dön"
+    "backProfile": "Mentor profiline dön",
+    "setupTitle": "CV incelemelerine hazırlan",
+    "setupDescription": "Öğrencilerden CV inceleme talebi alabilmek için önce mentor ayarlarını kaydet. Ardından inceleme tercihlerini buradan belirleyebilirsin.",
+    "setupAction": "Mentor ayarlarını aç"
   },
   "appointments": {
     "account": {
@@ -2484,11 +2491,11 @@
       "inPersonNoteHint": "Örneğin kampüste bir buluşma noktası. Yüz yüze seçiliyse zorunlu.",
       "active": "Mentor listesinde görün",
       "activeHint": "Kapalıyken mentor dizininde görünmez ve talep almazsın.",
-      "saveGeneral": "Ayarları kaydet",
+      "saveGeneral": "Genel ayarları kaydet",
       "pause": "Müsait değilim",
       "pauseHint": "Seçtiğin tarihe kadar yeni talep almazsın.",
       "pauseUntil": "Şu tarihe kadar",
-      "pauseSave": "Kaydet",
+      "pauseSave": "Ara verme durumunu kaydet",
       "pausedNow": "{date} tarihine kadar yeni talep almıyorsun.",
       "weekly": "Haftalık müsaitlik",
       "weeklyHint": "Her gün için açıp saat aralıkları ekle. Saatler İstanbul saatidir.",
@@ -2499,7 +2506,7 @@
       "to": "Bitiş",
       "rangeMode": "Biçim",
       "rangeModeAny": "İkisi de",
-      "saveWeekly": "Müsaitliği kaydet",
+      "saveWeekly": "Haftalık saatleri kaydet",
       "saved": "Kaydedildi.",
       "summary": "Bu hafta {count} aralık açık.",
       "errors": {
@@ -3355,7 +3362,9 @@
     "awardDescription": "Ödülünü ve yayın tercihini görüntüle.",
     "share": "Paylaşım metnini kopyala",
     "shareText": "{university} {department} bölümünde {year} akademik yılı Yılın Mezunu ödülünü aldım. Doğrula: {url}",
-    "awardNeedsReview": "Bu ödül için sonradan doğrulanmış şüphe var. Geçerli katkıları ve ödül kararını yeniden incele."
+    "awardNeedsReview": "Bu ödül için sonradan doğrulanmış şüphe var. Geçerli katkıları ve ödül kararını yeniden incele.",
+    "emptyTitle": "Ödüllerin",
+    "emptyDescription": "Deneyimlerini paylaşarak ve öğrencilere yardımcı olarak topluluğa katkıda bulunabilirsin; ödül seçimi bölüm yöneticisinin kararıdır."
   },
   "alumniStory": {
     "title": "Ayın mezunu",

@@ -291,7 +291,7 @@ export function MentorSettings({
           onChange={(event) => setIsActive(event.target.checked)}
         />
         <Button
-          variant="secondary"
+          variant="primary"
           size="lg"
           fullWidth
           loading={pending === 'general'}
@@ -323,7 +323,13 @@ export function MentorSettings({
             )}
           </Field>
         )}
-        <Button variant="secondary" fullWidth loading={pending === 'pause'} onClick={savePause}>
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
+          loading={pending === 'pause'}
+          onClick={savePause}
+        >
           {t('pauseSave')}
         </Button>
       </section>
