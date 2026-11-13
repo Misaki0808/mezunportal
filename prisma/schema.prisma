@@ -1377,6 +1377,7 @@ model Experience {
   @@index([status, publishedAt])
   @@index([type, termYear])
   @@index([companyId, status])
+  @@index([departmentIdAtWrite, companyId, id, status, authorId], map: "Experience_question_context_idx")
   @@index([searchVector], type: Gin, map: "Experience_searchVector_idx")
   @@index([searchKeys(ops: raw("gin_trgm_ops"))], type: Gin, map: "Experience_searchKeys_trgm")
 }

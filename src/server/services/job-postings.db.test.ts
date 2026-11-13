@@ -47,7 +47,7 @@ import {
   requestJobPostingContact,
 } from './job-posting-contact';
 import { awardForJobPosting, runPointBackfill } from './points';
-import { visibleJobPostingIds } from '../repositories/job-postings';
+import { searchJobPostingRows, visibleJobPostingIds } from '../repositories/job-postings';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -1881,4 +1881,105 @@ describe('ilan eşleşmeleri', () => {
       await db.notificationIntent.count({ where: { userId: w.student, kind: 'jobMatch' } }),
     ).toBe(0);
   });
+});
+
+it('üyelik görünürlüğünün önceki ve yeni sorgusu aynı sıralı sonuçları ve toplamı üretir', async () => {
+  const w = await world();
+  const good = await published(w, w.alumni, { title: 'Veri analisti A' });
+  const other = await published(w, w.academic, { title: 'Veri analisti B' });
+  const atLimit = await published(w, w.alumni, { title: 'Veri analisti E' });
+  const missingTargets = await published(w, w.alumni, { title: 'Veri analisti C' });
+  const foreignTarget = await published(w, w.academic, { title: 'Veri analisti D' });
+  const departed = await w.make('ALUMNI', 'Ayrılmış mezun');
+  await published(w, departed, { title: 'Veri analisti F' });
+  await db.membership.updateMany({ where: { userId: departed }, data: { endedAt: NOW } });
+  for (const state of ['PENDING', 'DELETED', 'BANNED', 'STUDENT', 'FOREIGN'] as const) {
+    const author = await w.make('ALUMNI', `Görünmeyen yazar ${state}`);
+    const id = await published(w, author, { title: `Veri analisti ${state}` });
+    if (state === 'PENDING')
+      await db.membership.updateMany({
+        where: { userId: author },
+        data: { verificationStatus: 'PENDING', verifiedAt: null },
+      });
+    else if (state === 'DELETED')
+      await db.user.update({ where: { id: author }, data: { deletedAt: NOW } });
+    else if (state === 'BANNED')
+      await db.user.update({ where: { id: author }, data: { banned: true, banExpires: null } });
+    else if (state === 'STUDENT')
+      await db.membership.updateMany({
+        where: { userId: author },
+        data: {
+          role: 'STUDENT',
+          verificationMethod: 'STUDENT_EMAIL',
+          entryYear: 2024,
+          graduationYear: null,
+        },
+      });
+    else {
+      const foreignAuthor = await w.make('ALUMNI', 'Başka üniversitede mezun', w.foreign.deptA1);
+      await db.jobPosting.update({ where: { id }, data: { authorId: foreignAuthor } });
+    }
+  }
+  await db.jobPostingDepartment.deleteMany({ where: { postingId: missingTargets } });
+  const departments = await db.department.createManyAndReturn({
+    data: Array.from({ length: 10 }, (_, i) => ({
+      facultyId: w.inst.facultyA,
+      code: `P${i}`,
+      name: `Performans ${i}`,
+    })),
+    select: { id: true },
+  });
+  await db.jobPostingDepartment.createMany({
+    data: [
+      ...departments
+        .slice(0, 9)
+        .map((department) => ({ postingId: atLimit, departmentId: department.id })),
+      ...departments.map((department) => ({ postingId: other, departmentId: department.id })),
+    ],
+  });
+  await db.jobPostingDepartment.create({
+    data: { postingId: foreignTarget, departmentId: w.foreign.deptA1 },
+  });
+  let rewrites = 0;
+  const previous = {
+    $transaction: (fn: (tx: unknown) => unknown) =>
+      db.$transaction(
+        (tx) =>
+          fn(
+            new Proxy(tx, {
+              get(target, property, receiver) {
+                if (property !== '$queryRaw') return Reflect.get(target, property, receiver);
+                return (query: { text: string; values: unknown[] }, ...rest: unknown[]) => {
+                  if (typeof query.text !== 'string')
+                    return target.$queryRaw(query as never, ...(rest as never[]));
+                  const oldSql = query.text.replace(
+                    /EXISTS \(SELECT 1 FROM "Membership" m\s+WHERE m\."userId" = i\."authorId" AND m\."departmentId" = i\."departmentIdAtWrite"\s+AND m\."role" IN \('ALUMNI', 'ACADEMIC'\) AND m\."verificationStatus" = 'VERIFIED'\s+AND m\."endedAt" IS NULL OFFSET 0\)/g,
+                    '(i."authorId", i."departmentIdAtWrite") IN (SELECT m."userId", m."departmentId" FROM "Membership" m WHERE m."role" IN (\'ALUMNI\', \'ACADEMIC\') AND m."verificationStatus" = \'VERIFIED\' AND m."endedAt" IS NULL)',
+                  );
+                  if (oldSql !== query.text) rewrites++;
+                  return target.$queryRawUnsafe(oldSql, ...query.values);
+                };
+              },
+            }),
+          ) as never,
+      ),
+  } as unknown as typeof db;
+  for (const q of [undefined, 'veri analisti']) {
+    for (const page of [1, 2, 3]) {
+      const input = {
+        universityIds: [w.inst.universityId],
+        today: '2030-06-20',
+        now: NOW,
+        page,
+        pageSize: 1,
+        q,
+      };
+      const before = await searchJobPostingRows(previous, input);
+      const after = await searchJobPostingRows(db, input);
+      expect(after).toEqual(before);
+      expect(after.total).toBe(2);
+      expect(after.rows.every((row) => [good, atLimit].includes(row.id))).toBe(true);
+    }
+  }
+  expect(rewrites).toBeGreaterThan(0);
 });
