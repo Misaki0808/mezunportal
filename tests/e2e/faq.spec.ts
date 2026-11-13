@@ -35,7 +35,7 @@ test('SSS: öğrenci talep eder → mentor cevaplar → moderatör yayımlar →
     await expect(s!.locator('a[href="/mentor/sss"]')).toHaveCount(0);
     await s!.goto('/hesap/sss');
     await s!.waitForLoadState('networkidle');
-    await s!.getByLabel(/Sorun/).fill(question);
+    await s!.getByLabel(/Sorduğun soru/).fill(question);
     await s!.getByRole('button', { name: 'Talebi gönder' }).click();
     await expect(s!.getByRole('status').filter({ hasText: 'Talebin alındı' })).toBeVisible();
     await expect(s!.getByRole('region', { name: 'Taleplerim' }).getByText(question)).toBeVisible();
