@@ -1,6 +1,6 @@
-import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
+import { startEmailWorker, stopEmailWorker } from './email-worker';
 import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
@@ -24,22 +24,7 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
   const db = new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
   });
-  const worker = spawn(
-    process.execPath,
-    ['--conditions=react-server', '--import', 'tsx', 'src/server/jobs/email-worker.ts'],
-    {
-      env: {
-        ...process.env,
-        APP_ENV: 'local',
-        SMTP_HOST: '127.0.0.1',
-        SMTP_PORT: '1025',
-        SMTP_SECURE: 'false',
-        SMTP_USER: '',
-        SMTP_PASSWORD: '',
-      },
-      stdio: 'ignore',
-    },
-  );
+  const worker = startEmailWorker();
   try {
     const email = `e2e-${randomUUID()}@ogr.iu.edu.tr`;
     const started = Date.now();
@@ -168,7 +153,7 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await waitForHydratedControl(page, 'Devam et');
     await expect(page.getByRole('checkbox', { name: 'Yazılım geliştirme' })).toBeChecked();
   } finally {
-    worker.kill('SIGTERM');
+    await stopEmailWorker(worker);
     await db.$disconnect();
   }
 });
