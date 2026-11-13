@@ -87,8 +87,18 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
                 <CompanyCard key={company.id} company={company} />
               ))}
             </ul>
-          ) : (
+          ) : query ? (
             <EmptyState title={t('none')} description={t('noneHint')} />
+          ) : (
+            <EmptyState
+              title={t('noneYet')}
+              description={t('noneYetHint')}
+              action={
+                <Link href="/deneyim/yeni" className={buttonClasses()}>
+                  {t('noneYetAction')}
+                </Link>
+              }
+            />
           )}
         </section>
       )}

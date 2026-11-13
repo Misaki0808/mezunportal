@@ -126,7 +126,9 @@ export function QuestionBank({
         </div>
       </form>
       <div className="mt-8">
-        <p className="mb-4 text-fg-muted">{t('totalCompanies', { count: data.total })}</p>
+        {data.total > 0 && (
+          <p className="mb-4 text-fg-muted">{t('totalCompanies', { count: data.total })}</p>
+        )}
         <QuestionCards groups={data.groups} insufficient={data.insufficient} />
         {pageCount > 1 && (
           <nav aria-label={t('pagination')} className="mt-6 flex flex-wrap items-center gap-3">

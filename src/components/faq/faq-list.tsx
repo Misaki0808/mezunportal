@@ -77,13 +77,18 @@ export function FaqList({
           {t('askLink')}
         </Link>
       )}
-      <p role="status" className="text-sm text-fg-muted">
-        {q
-          ? t('resultCountFor', { count: result.total, q })
-          : t('resultCount', { count: result.total })}
-      </p>
+      {(result.total > 0 || q) && (
+        <p role="status" className="text-sm text-fg-muted">
+          {q
+            ? t('resultCountFor', { count: result.total, q })
+            : t('resultCount', { count: result.total })}
+        </p>
+      )}
       {result.items.length === 0 ? (
-        <EmptyState title={t('empty')} description={q ? t('emptySearch') : t('emptyAll')} />
+        <EmptyState
+          title={q ? t('empty') : t('emptyAll')}
+          description={q ? t('emptySearch') : t('emptyAllHint')}
+        />
       ) : (
         <ul className="flex flex-col gap-3">
           {result.items.map((item) => (

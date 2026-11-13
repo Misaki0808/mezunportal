@@ -376,10 +376,17 @@ describe('mentor dizini', () => {
       />,
     );
     expect(screen.getByText('Bu filtrelerle mentor bulunamadı')).toBeInTheDocument();
+    expect(screen.getByText('0 sonuç')).toBeInTheDocument();
     await user.click(screen.getAllByRole('button', { name: 'Filtreleri temizle' })[0]!);
     expect(router.push).toHaveBeenCalledWith('/mentorlar');
     rerender(<MentorDirectory filter={{}} results={page([])} sectors={sectors} similar={null} />);
     expect(screen.getByText('Henüz listelenecek mentor yok')).toBeInTheDocument();
+    // Filtre yokken: sıfır sayaç yok, tek eylem mezun deneyimlerine gider (mentör yokken çıkmaz sokak değil).
+    expect(screen.queryByText('0 sonuç')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Deneyimlere bak' })).toHaveAttribute(
+      'href',
+      '/deneyimler',
+    );
   });
 
   it('benzer mentorlar bölümü sonuçların üstünde, gerekçeleriyle çizilir', () => {
