@@ -104,8 +104,8 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   Neden borç: izleniyor, kök neden bilinmiyor.
   Kapanış ölçütü: bir daha düşerse kök neden kartı açılır; düşmeden bir faz geçerse silinir.
 - [ ] **TD-027** · P2 · pg "Calling client.query() when the client is already executing a query" uyarısı (pg@9'da hataya döner)
-  Ne: Prisma 7.10.1 + `@prisma/adapter-pg` 7.10.1 + pg 8.23.1 ile işlem içindeki çok ilişkili actor okuması ve bazı eşzamanlı sorgular tek istemciye üst üste sorgu gönderiyor. `scripts/td027-probe.ts` kayıtlı yeniden üretimdir; komut ve seçenekler `docs/decisions.md`'de.
-  Neden borç: uyarı pg@9'da hataya dönüşebilir; ilişkileri sırayla okumak bir yolu düzeltir ama uygulamadaki tüm kaynakları kapatmaz. Yukarı akış kaydı: https://github.com/prisma/prisma/issues/29407.
+  Ne: Prisma 7.10.1 + `@prisma/adapter-pg` 7.10.1 + pg 8.23.1 ile `src/server/permissions/actor.ts:17` içindeki çok ilişkili actor okuması ve bazı eşzamanlı sorgular tek istemciye üst üste sorgu gönderiyor. `scripts/td027-probe.ts` kayıtlı yeniden üretimdir; komut ve seçenekler `docs/decisions.md`'de.
+  Neden borç: uyarı pg@9'da hataya dönüşebilir; ilişkileri sırayla okumak bir yolu düzeltir ama uygulamadaki tüm kaynakları kapatmaz. Yukarı akış kaydı: https://github.com/prisma/orm/issues/29407.
   Kapanış ölçütü: gerçek düzeltmeyle kayıtlı yeniden üretim ve uygulamanın dev/e2e sunucuları uyarısız çalışır; e2e `--no-deprecation` istisnası kaldırılır, ilgili sonuç eşitliği ve kapılar geçer.
 
 ### Bilinçli kabul edilen sınırlar

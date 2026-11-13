@@ -5,9 +5,28 @@ import { PrismaClient } from '../src/generated/prisma/client';
 import { loadActor } from '../src/server/permissions/actor';
 
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
-if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL gerekli');
+function localDatabaseUrl(value: string | undefined): string {
+  const message = 'TD-027 yalnız yerel PostgreSQL adresiyle çalışır';
+  if (!value) throw new Error(message);
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(message);
+  }
+  if (
+    !['postgres:', 'postgresql:'].includes(url.protocol) ||
+    !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) ||
+    url.searchParams.has('host') ||
+    url.searchParams.has('hostaddr')
+  )
+    throw new Error(message);
+  return value;
+}
+
+const databaseUrl = localDatabaseUrl(process.env.DATABASE_URL);
 const db = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  adapter: new PrismaPg({ connectionString: databaseUrl }),
 });
 let warnings = 0;
 const onWarning = (warning: Error) => {
