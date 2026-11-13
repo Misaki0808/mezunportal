@@ -1,6 +1,6 @@
 # BACKLOG.md — Güncel durum, açık işler ve kararlar
 
-Son güncelleme: **2026-11-12**. Tek durum belgesidir: güncel durum, açık kararlar, pilot kapıları,
+Son güncelleme: **2026-11-13**. Tek durum belgesidir: güncel durum, açık kararlar, pilot kapıları,
 teknik borç ve ertelenmiş işler. Tamamlanan madde silinir; geçmiş Git'tedir. Çalışma günlüğü
 tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararların gerekçesi
 `docs/decisions.md`'dedir.
@@ -12,59 +12,72 @@ Faz 2'nin (fırsatlar, mevcut veriden değer, rehberlik, tanınma; `docs/faz2-pl
 yoktur ve bilinçli ertelenmiştir: geliştirme, test ve ekran doğrulaması yerelde, birleştirme kapıları yerelde; CI az ve öz (≤ 5 dk, K-14
 kararı, `docs/engineering.md` "CI"). Kullanıcı denemesinin rehberi `docs/engineering.md` “Faz 2 deneme rehberi”dir; tamamlanan işler ve bilinçli sapmalar faz planlarında, gerekçeler `docs/decisions.md`'dedir.
 
-### Dış bağımlılık bekleyenler
-
-Hiçbiri kodla çözülemez; her biri aşağıdaki işi engeller. Kullanıcı/hoca kararı ilgili adıma gelince sorulur.
-
-| Bekleyen | Neyi engelliyor |
-|---|---|
-| E3 — LinkedIn uygulaması + doğrulanmış şirket sayfası | P1-02 kabulü: LinkedIn ile giriş (kod yolu var, sınanmadı) |
-| K-04 — Seçilen Gemini ücretsiz katmanının API anahtarı; gerçek sağlayıcıya gönderim için yurt dışına aktarım rızası | Gerçek CV/LinkedIn ayrıştırma ve TD-009 doğruluk ölçümü. Metin yerelde maskelenir; gerçek adaptör henüz bağlı değildir (`docs/security.md`, CV hattı). |
-| E4 — Google Cloud projesi + OAuth anahtarları (`korunan/google.env`) | P1-10 kabulü: gerçek takvim daveti ve Meet linki (adaptör ve panelden bağlama hazır; anahtarlar gelince `CALENDAR_PROVIDER=google` + `/yonetim/google`) |
-| K-02 — sunucu ve dağıtım aracı; K-05 — canlı SMTP | Canlı ortam (PILOT-DEPLOY), gerçek e-posta teslimi |
-| K-03 — veri sorumlusu ve yöneticiler; hoca onayı | PILOT-LEGAL, gerçek yönetici atamaları, canlı açılış |
-| K-12 — pilot kimler, ne zaman, başarı ölçütleri | Pilot kararı, P1-18 başarı ölçütleri kutusu |
-| Kurumsal kimlik ve platform hesabı (kullanıcı görevi, acelesiz) | LinkedIn kurum sayfası ve ödül paylaşımının kurum adı/kimliği (P2-01), canlı alan adı |
-| Hukuki metinlerin üniversite KVKK birimi ya da bir hukukçu tarafından okunması | PILOT-LEGAL; belgeler resmî "siz" dilinde kalır, taslak hâli pilot ve deneme için yeterlidir |
+Kullanıcıyı, hocayı ve PM'i bekleyen her şey tek listededir: aşağıdaki "Açık ürün kararları". Hiçbiri kodla çözülemez ve
+hiçbiri geliştirmeyi durdurmaz; her biri ilgili işe gelince sorulur.
 
 ### Yakın hedef
 
-Kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon test listesi;
-bulgular PM'de karta bölünür ya da bu belgeye borç olarak yazılır. Kullanıcının hesap isteyen işleri (Gemini anahtarı, Google Cloud anahtarları ve panelden bağlama, platform hesabı) ve
-canlıya alım ile pilot kararları (K-02, K-05, K-03, K-12, hukuki okuma) kullanıcı gündeme getirince ele alınır. Faz 3 pilottan sonra konuşulur.
+Kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon listesi (72 kutu, Git dışı
+`pm-handoff/faz2-kapanis/`; güncel main'e göre yenilendi). R2'nin provaları (13 Kas: masaüstü Chromium 390 px ve Android emülatör) ilk 70 kutudan
+64'ünü geçirdi, 0 kaldı; 6 kutu gerçek cihaz ister: telefona ağ adresiyle açma, QR'ı telefon kamerasıyla okutma, ana ekrana ekleme, iPhone çentik ve
+güvenli alan, iPhone ekran klavyesi ve Safari'de Tab. Bulgular PM'de karta bölünür ya da bu belgeye borç olarak yazılır. Hesap isteyen işler ile canlıya alım ve pilot kararları
+kullanıcı gündeme getirince ele alınır. Faz 3 pilottan sonra konuşulur.
 
 ### Bilinen kısıtlar
 
-- Ücretli servis açılmaz; CV için seçilen Gemini ücretsiz katmanının gerçek adaptörü ve anahtarı beklenir.
-- Öğrenci e-posta alanı ölçüldü; personel alanı, YBS fakültesi ve program dili teyit bekliyor (K-06).
+- Ücretli servis açılmaz. CV için seçilen Gemini ücretsiz katmanının adaptörü yazılmadı (`LLM_PROVIDER` yalnız `fake` kabul eder; prod'da `fake` reddedilir): anahtar ve aktarım rızası metninin onayı gelince yazılır, o zamana kadar canlıda CV ayrıştırma kapalı, elle giriş açıktır.
+- Öğrenci e-posta alanı doğrulandı (kullanıcının kendi hesabıyla); personel alanı, YBS fakültesi ve program dili teyit bekliyor (K-06, geçici değerler `prisma/seed-data.ts`'te).
 - CI az ve öz (K-14 kararı, ≤ 5 dk: tür, kalite, hızlı birim); veritabanı testleri, build ve e2e yerel PM birleştirme kapısındadır.
 
 ## Açık ürün kararları
 
-“Kim” sütunu kararı kimin vereceğini söyler: **PM** ürün/UX kararını kendisi verir ve panoda
-“📝 PM kararları”na yazar (kullanıcı değiştirebilir); **Kullanıcı** (hesap, para, repo) ve
-**Hoca** (kullanıcı üzerinden) kararları ilgili adıma gelmeden sorulur, hepsi birden değil.
-Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
+Tek liste: kullanıcıya "benim kararımı bekleyen ne var" sorulduğunda bakılacak yer. Önce **Kullanıcı** (hesap, para, repo, elle iş),
+sonra **Hoca** (kullanıcı üzerinden sorulur), sonra **PM**. Hepsi birden değil, ilgili işe gelince sorulur. Karar verilince madde silinir ve
+gerekçe `docs/decisions.md`'ye yazılır. Ücretli servis hiçbir satırda yoktur.
 
-| No | Karar | Kim | Öneri | Bekleyen |
-|---|---|---|---|---|
-| K-02 | Canlı sunucu ve dağıtım aracı | Kullanıcı | Üniversite sunucusu (hocaya sor) ya da ücretsiz bir seçenek | P1-18 |
-| K-03 | Veri sorumlusu ve yöneticiler kim | Hoca | Hocaya sorulacak | P1-03, P1-18 |
-| K-05 | E-posta sağlayıcısı (canlı) | Kullanıcı | Üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | P1-18 |
-| K-06 | İÜ personel e-posta alanı, YBS'nin fakültesi ve program dili | PM ölçer, kullanıcı teyit eder | Geçici değerler `prisma/seed-data.ts`'te (`ogr.iu.edu.tr`, `istanbul.edu.tr`, İktisat Fakültesi); öğrenci alanı ölçüldü; kalanlar teyit bekler | P1-02 |
-| K-11 | Şüphe eşiklerinin sayısal değerleri (ağırlıklar kararlı) | PM | `SUSPICION_THRESHOLDS` (40 puan/24 saat; 90 günde ≥ 15 puanın ≥ %60'ı ve ≥ 3 kaydı tek karşı taraftan; ≤ 60 sn eşzamanlı yanıt ≥ 3) | Pilot öncesi |
-| K-12 | Pilot: kimler, ne zaman, başarı ölçütleri | Hoca | Hocayla | P1-18 |
-| K-15 | Gelecekteki commit e-posta gizliliği | Kullanıcı | GitHub gizli adresi veya mevcut ayar | Yeni commit yapılandırması |
+### Kullanıcı
+
+| No | Ne gerekiyor | Ne zaman | Neyi engelliyor |
+|---|---|---|---|
+| K-15 | Commit'lerde kişisel Gmail adresin görünüyor ve repo herkese açık: sonraki commit'ler için GitHub'ın gizli adresini kullanmak mı, böyle kalmak mı? | Bir cümle, istediğin an; karar verilene kadar yeni commit'ler de aynı adresle gider, geçmiş commit'ler değişmez | Yeni commit yapılandırması |
+| K-06 | Teyit: personel e-posta alanı (`istanbul.edu.tr`), YBS'nin fakültesi (İktisat Fakültesi) ve program dili (Türkçe mi İngilizce mi). Yanlışsa yalnız `prisma/seed-data.ts` değişir | Gerçek kullanıcı kaydından önce; personel alanı akademisyen doğrulamasını belirler | P1-02'nin canlı kabulü |
+| K-02 | Canlı sunucu ve dağıtım aracı: üniversite sunucusu (hocaya sor) ya da ücretsiz bir seçenek | Pilota geçmeye karar verince | PILOT-DEPLOY |
+| K-05 | Canlı e-posta (SMTP): üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | K-02 ile birlikte | Gerçek e-posta teslimi |
+| K-04 | Gemini ücretsiz katman API anahtarını `korunan/gemini.env`'e koy (kimseye yazma); gerçek sağlayıcıya gönderim ayrıca yurt dışı aktarım rızası metninin onayına bağlı | Gerçek CV/LinkedIn ayrıştırmayı denemek istediğinde | TD-009 doğruluk ölçümü |
+| E4 | Google Cloud projesi, OAuth onay ekranı ve takvim izni; anahtarlar `korunan/google.env`'e; sonra `CALENDAR_PROVIDER=google` ve `/yonetim/google` | Gerçek takvim daveti ve Meet linki denemek istediğinde; yapılmazsa mentor linki elle ekler | P1-10 kabulü |
+| E3 | LinkedIn'de şirket sayfası + uygulama ("Sign In with LinkedIn using OpenID Connect"); client id ve secret `korunan/`'a | LinkedIn ile giriş istendiğinde; yapılmazsa e-posta bağlantısıyla giriş çalışır, LinkedIn seçeneği giriş ekranında görünmez | P1-02 kabulü (LinkedIn yolu) |
+| Platform hesabı | Kurumsal kimlik: platformun adı ve LinkedIn kurum sayfası, canlı alan adı | Acelesiz; ödül paylaşımından (P2-01) ve canlı adresten önce | P2-01 paylaşımı, canlı alan adı |
+
+### Hoca (kullanıcı üzerinden)
+
+| No | Ne gerekiyor | Ne zaman | Neyi engelliyor |
+|---|---|---|---|
+| K-03 | Veri sorumlusu kim (üniversite, bölüm ya da kullanıcı) ve sistem/bölüm yöneticileri kimler; cevabı aynen yazmak yeter | Pilot ve canlıdan önce | PILOT-LEGAL (metinlerin boş alanları), gerçek yönetici atamaları |
+| K-12 | Pilot: kimler, ne zaman, başarı ölçütleri (Faz 2 taslağı `docs/faz2-plan.md` §1'de) | Pilot tarihi konuşulurken | Pilot kararı, başarı ölçütleri kutusu |
+| PILOT-LEGAL | Hukuki metinlerin hocanın onayı ve üniversite KVKK birimi ya da bir hukukçu tarafından okunması | Canlıya almadan önce; taslak hâli pilot ve deneme için yeterli | Canlı açılış |
+
+### PM
+
+Açık PM kararı yok.
 
 ## Pilot öncesi kapılar
 
-- [ ] **PILOT-LEGAL** Hukuki metinlerin (`docs/legal-drafts.md`) hoca/üniversite onayı, **canlıya almadan önce üniversite KVKK birimi ya da bir
-  hukukçu okuması** ve yayın sürümünün köke taşınması. Önkoşul K-03.
-- [ ] **PILOT-TEST** Manuel uçtan uca test planı Faz 1 tamamlayıcıları bitince
-  `docs/faz1-plan.md` sonuna “Manuel test planı” bölümü olarak yazılır ve pilot öncesi bir kez
-  koşulur.
-- [ ] **PILOT-DEPLOY** Canlıya alım (P1-18). Önkoşul K-02, K-05.
-- [ ] **PILOT-ROZET** Pilot bitince `FOUNDING_MEMBER_UNTIL` doldurulur (K-10; boşsa kurucu üye etiketi sürer).
+- [ ] **PILOT-LEGAL** Hukuki metinler `docs/legal-drafts.md`'de yedi taslak bölümdür (§1-§7: aydınlatma, yurt dışı aktarım rızası, kullanım
+  şartları, staj arayan görünürlüğü, Yılın Mezunu doğrulaması, Ayın mezunu rızası, Faz 2 ekleri); hepsi `taslak-1` ve "hoca / hukuk onayı
+  bekliyor". Veri sorumlusu, sağlayıcı adı ve hukuk görüşü alanları köşeli parantezle boştur (K-03, K-04, K-05); kod aynı sürümü kullanır
+  (`src/contracts/privacy.ts`) ve ekranda metin taslak diye işaretlidir. Biter: alanlar dolar, hoca onaylar, üniversite KVKK birimi ya da bir
+  hukukçu okur, onaylı sürüm köke taşınır ve sürüm numarası artar (kullanıcılar yeniden onay verir). Önkoşul K-03.
+- [ ] **PILOT-TEST** Test planı iki belgededir: `docs/engineering.md` "Faz 2 deneme rehberi" ve telefon listesi (70 kutu, Git dışı); `docs/faz1-plan.md`'ya
+  ayrı bölüm yazılmadı. R2 provaları geçti (64 geçti, 0 kaldı, 6 gerçek cihaz bekliyor, bkz. "Yakın hedef"). Biter: kullanıcı turu bir kez koşar,
+  bulgular kapanır ya da borç yazılır. Canlıda ayrıca P1-18 kabul adımları koşulur (PILOT-DEPLOY).
+- [ ] **PILOT-DEPLOY** Kod tarafı hazır: çok aşamalı `Dockerfile` (web ve worker aynı imajdan), açılışta `migrate deploy` (seed yok),
+  `/api/health` (durum, ortam, commit, DB), `scripts/backup.sh` ve `scripts/restore.sh`, toplu davet, prod'da test girişi ve `/ui-ornekleri` 404, yerel imaj
+  provası `docker-compose.image.yml`; rehber `docs/engineering.md` "Canlıya alım". Kalan: sunucu (K-02), canlı SMTP (K-05), gerçek yönetici ve
+  kurum verisi (K-03), TD-021 (güvenilir proxy; kapanmadan canlıya alınmaz), başarı ölçütleri kutusu (K-12; `/yonetim/kullanim` ekranı var, kutu
+  kodda yok). Canlı kabul: `/api/health` `env: "prod"` ve `sha` dağıtılan commit, yedek geri yüklenip doğrulanır, davet edilen gerçek kullanıcı
+  (kullanıcının kendisi) uçtan uca kayıt olur, seed verisi girmemiş. Bu adımdan sonra veri değiştiren migration ve dağıtım PR başına kullanıcı onayı ister.
+- [ ] **PILOT-ROZET** Kod hazır: `FOUNDING_MEMBER_UNTIL` boşken kurucu üye etiketi sürer (`.env.example`, `src/lib/env.ts`, `src/server/services/points.ts`; K-10).
+  Biter: pilot bitince canlı ortamda tarih doldurulur (pilot tarihi K-12 ile belli olur).
 
 ## Teknik borç
 
@@ -83,7 +96,7 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 
 - [ ] **TD-009** · P1 · CV doğruluk tablosu sahte adaptörle, gerçek LLM ile değil
   Ne: 5 sentetik örnek CV + ölçüm düzeneği (`src/test/cv-accuracy.ts`) hazır; sahte adaptörde sonuç hat
-  bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04, E: API anahtarı + harcama sınırı).
+  bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04: Gemini ücretsiz katman anahtarı bekleniyor).
   Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
   Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
