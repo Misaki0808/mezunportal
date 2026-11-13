@@ -87,9 +87,38 @@ export default async function HomePage() {
       </span>
     </Link>
   ) : null;
+  const jobMatches = suggestedJobs?.ok ? (
+    <section aria-labelledby="home-job-matches" className="flex flex-col gap-3">
+      <h2 id="home-job-matches" className="text-xl font-semibold">
+        {t('jobMatches.title')}
+      </h2>
+      {suggestedJobs.data.length ? (
+        <ul className="flex flex-col gap-2">
+          {suggestedJobs.data.map((job) => (
+            <li key={job.id}>
+              <Link
+                href={`/ilanlar/${job.id}`}
+                className="press-row flex min-h-14 flex-col rounded-card border border-border p-4"
+              >
+                <span className="font-semibold">{job.title}</span>
+                <span className="text-fg-muted">{job.organizationName}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-fg-muted">
+          {t('jobMatches.empty')}{' '}
+          <Link className="font-semibold text-primary underline" href="/profil">
+            {t('jobMatches.profile')}
+          </Link>
+        </p>
+      )}
+    </section>
+  ) : null;
   return (
     <div
-      className={`mx-auto flex max-w-2xl flex-col gap-6 px-5 py-10 sm:py-12 ${!actor ? 'min-h-[calc(100dvh-8rem)]' : ''}`}
+      className={`mx-auto flex max-w-2xl flex-col gap-6 px-5 py-10 sm:py-12 ${summary?.ok ? 'lg:max-w-5xl' : ''} ${!actor ? 'min-h-[calc(100dvh-8rem)]' : ''}`}
     >
       {needsVerification && <h1 className="text-3xl font-semibold">{t('welcome')}</h1>}
       {needsVerification && (
@@ -114,42 +143,18 @@ export default async function HomePage() {
       )}
       {!summary?.ok && onboardingBanner}
       {summary?.ok ? (
-        <HomeDashboard summary={summary.data} feature={feature} notice={onboardingBanner} />
+        <HomeDashboard
+          summary={summary.data}
+          feature={feature}
+          notice={onboardingBanner}
+          aside={jobMatches}
+        />
       ) : (
         <>
           {!needsVerification && <h1 className="text-3xl font-semibold">{t('title')}</h1>}
           <p className="text-base leading-relaxed">{t('tagline')}</p>
           {feature}
         </>
-      )}
-      {suggestedJobs?.ok && (
-        <section aria-labelledby="home-job-matches" className="flex flex-col gap-3">
-          <h2 id="home-job-matches" className="text-xl font-semibold">
-            {t('jobMatches.title')}
-          </h2>
-          {suggestedJobs.data.length ? (
-            <ul className="flex flex-col gap-2">
-              {suggestedJobs.data.map((job) => (
-                <li key={job.id}>
-                  <Link
-                    href={`/ilanlar/${job.id}`}
-                    className="press-row flex min-h-14 flex-col rounded-card border border-border p-4"
-                  >
-                    <span className="font-semibold">{job.title}</span>
-                    <span className="text-fg-muted">{job.organizationName}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-fg-muted">
-              {t('jobMatches.empty')}{' '}
-              <Link className="font-semibold text-primary underline" href="/profil">
-                {t('jobMatches.profile')}
-              </Link>
-            </p>
-          )}
-        </section>
       )}
       {!actor && (
         <Link

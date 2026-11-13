@@ -29,6 +29,11 @@ type Props = {
   /** Sonuçların üstünde, filtrelerden bağımsız öne çıkan bölüm (örn. “Sana benzer”). */
   lead?: ReactNode;
   pagination?: ReactNode;
+  /**
+   * Arama satırı: verilirse kabuk onu en üstte çizer ve telefondaki "Filtreler" düğmesini ona geçirir (satırda "Ara"nın yanına
+   * girer: `[ara] [Ara] [Filtreler]`, ayrı satır kaplamaz). Verilmezse düğme kendi satırında kalır (mentor dizini).
+   */
+  search?: (filtersButton: ReactNode) => ReactNode;
 };
 
 /**
@@ -47,6 +52,7 @@ export function FilterShell({
   results,
   lead,
   pagination,
+  search,
 }: Props) {
   const t = useTranslations('directory');
   const [open, setOpen] = useState(false);
@@ -59,14 +65,27 @@ export function FilterShell({
     setOpen(false);
   }
 
+  const filtersLabel = `${t('filters')}${active.length > 0 ? ` (${active.length})` : ''}`;
+
   return (
     <>
-      <div className="mt-6 lg:hidden">
-        <Button variant="secondary" onClick={() => setOpen(true)}>
-          {t('filters')}
-          {active.length > 0 ? ` (${active.length})` : ''}
-        </Button>
-      </div>
+      {search ? (
+        search(
+          <Button
+            variant="secondary"
+            className="shrink-0 whitespace-nowrap lg:hidden"
+            onClick={() => setOpen(true)}
+          >
+            {filtersLabel}
+          </Button>,
+        )
+      ) : (
+        <div className="mt-6 lg:hidden">
+          <Button variant="secondary" onClick={() => setOpen(true)}>
+            {filtersLabel}
+          </Button>
+        </div>
+      )}
       <Sheet
         open={open}
         onClose={close}
