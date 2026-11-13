@@ -19,7 +19,7 @@ import {
   type RejectFaqInput,
 } from '@/contracts/faq';
 import type { ActionResult } from '@/contracts/result';
-import { Button, EmptyState, Field, Modal, Textarea } from '@/components/ui';
+import { Button, EmptyState, Field, Modal, Radio, Textarea } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { formatDate } from './format';
@@ -149,13 +149,11 @@ function ModerationCard({
               {item.answers.map((a, index) => (
                 <li key={a.id} className="min-w-0">
                   <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-card border border-border p-3 has-[:checked]:border-primary has-[:checked]:bg-surface">
-                    <input
-                      type="radio"
+                    <Radio
                       name={groupId}
                       value={a.id}
                       checked={selected === a.id}
                       onChange={() => choose(a.id)}
-                      className="mt-1 size-5 shrink-0"
                     />
                     <span className="min-w-0">
                       <span className="block text-sm font-medium text-fg-muted">

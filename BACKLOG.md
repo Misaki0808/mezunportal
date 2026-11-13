@@ -99,15 +99,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
   son hop'u kullanır, istemcinin XFF'sine güvenmez. Node doğrudan dışarı açılmaz; bütün kamuya açık
   kotalarda sahte başlık, eşzamanlı sınır ve pencere yenilenmesi testleri geçer.
 
-- [ ] **TD-022** · P2 · Stres hacminde metin araması ve soru bankası hesabı büyüyor
-  Ne: pilot yılının çok üstündeki stres verisinde ilan arama 295 ms, deneyim arama 197 ms, soru bankası 385 ms (10× deneme verisinde hepsi ≤ 35 ms; stres
-  bütçesi 1 000 ms). Soru bankası k-anonim hesabı bütün aday şirketlerde yapılıp sonra sayfalanır (O(n); güvenlik gereği).
-  Neden borç: veri büyüdükçe doğrusal artar; pilotta sorun değil, çok büyük kullanımda olur.
-  Kapanış ölçütü: `ts_rank_cd` + `word_similarity` planı gözden geçirilir, soru bankası aday şirket sayısı sınırlanır ya da önbelleklenir; stres p95 < 300 ms.
-- [ ] **TD-023** · P2 · `test:gate` "Worker exited unexpectedly / ERR_WORKER_OUT_OF_MEMORY"u altyapı sayıyor
-  Ne: gerçek bir bellek sızıntısı tek yeniden denemeyle geçebilir (ikinci koşuda düşerse kırmızı).
-  Neden borç: gerçek hatayı tek denemelik tolerans gizleyebilir.
-  Kapanış ölçütü: OOM kalıbı için karar yazılır (yeniden denenir mi, kırmızı mı kalır; `main()` çıkış kodu mantığı sahte `pnpm`'li uçtan uca testle korunuyor).
 - [ ] **TD-024** · P2 · `profile-content.db.test` yük altında bir kez 15 sn zaman aşımına düştü
   Ne: dosya normalde 3–5 sn, bir kapıda 50 sn; yeniden koşuda 3,1 sn yeşil (yük ya da veritabanı beklemesi).
   Neden borç: izleniyor, kök neden bilinmiyor.

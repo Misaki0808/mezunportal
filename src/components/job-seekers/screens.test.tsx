@@ -80,6 +80,34 @@ it('mezun beyan vermeden arama eylemi sunulmaz', () => {
   expect(screen.getByText('Aday aramak için işe alım yaptığını beyan et.')).toBeVisible();
   expect(screen.queryByRole('button', { name: 'Aday ara' })).not.toBeInTheDocument();
 });
+it('rıza onay kutusu kit onay kutusudur (24 px, tüm satır tıklanır, 44 px hedef)', () => {
+  renderUi(<SeekerSettingsScreen initial={initial} />);
+  fireEvent.click(screen.getByRole('switch', { name: /İş arayanlara görün/ }));
+
+  const consent = screen.getByRole('checkbox', { name: /Metni okudum/ });
+  expect(consent).toHaveClass('appearance-none', 'size-6');
+  expect(consent.closest('label')).toHaveClass('min-h-11');
+  expect(consent).not.toBeChecked();
+  fireEvent.click(screen.getByText(/Metni okudum/));
+  expect(consent).toBeChecked();
+});
+it('iletişim alanları kit onay kutusudur: dörtü de 44 px hedefli, kapalı alan devre dışı', () => {
+  renderWithToasts(
+    <SeekerContact
+      candidateRef="opaque"
+      preview={{ canRequest: true, card: initial.preview!, requestableFields: ['EMAIL'] }}
+    />,
+  );
+
+  const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[];
+  expect(boxes).toHaveLength(4);
+  for (const box of boxes) {
+    expect(box).toHaveClass('appearance-none', 'size-6');
+    expect(box.closest('label')).toHaveClass('min-h-11');
+  }
+  expect(screen.getByRole('checkbox', { name: 'E-posta' })).toBeEnabled();
+  expect(screen.getByRole('checkbox', { name: 'Telefon' })).toBeDisabled();
+});
 it('iletişim için en az bir alan istenir, sunucu kapalı alanı seçtirmez', async () => {
   renderWithToasts(
     <SeekerContact

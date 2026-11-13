@@ -25,6 +25,7 @@ import { searchJobPostings } from '@/server/services/job-postings';
 import { setHiringDeclaration, searchSeekers } from '@/server/services/job-seekers';
 import { buildMonthlyDigest } from '@/server/services/monthly-digest';
 import { searchExperiences } from '@/server/services/search';
+import { questionPlans } from './trace-question-plan';
 
 /**
  * Faz 2 performans ölçümü (P2-14; `pnpm test:perf`, YALNIZ yerel): kullanıcının deneme verisinin ~10 katı hacimde (3.000 yayınlanmış
@@ -36,7 +37,7 @@ const db = createTestPrisma();
 const BUDGET = Number(process.env.PERF_BUDGET_MS ?? 300);
 /** Stres hacmi bir pilot yılının üstüdür: hedef değil, gerilemeye karşı üst sınır (bilinen sınırlar docs/engineering.md "Performans"). */
 const STRESS_BUDGET = Number(process.env.PERF_STRESS_BUDGET_MS ?? 1000);
-const RUNS = 12;
+const RUNS = 30;
 const report: Record<string, { p50: number; p95: number; max: number }> = {};
 const plans: Record<string, string> = {};
 
@@ -62,7 +63,7 @@ async function time(name: string, run: () => Promise<unknown>) {
   samples.sort((a, b) => a - b);
   report[name] = {
     p50: Math.round(samples[Math.floor(RUNS / 2)]!),
-    p95: Math.round(samples[Math.floor(RUNS * 0.95) - 1] ?? samples.at(-1)!),
+    p95: Math.round(samples[Math.ceil(RUNS * 0.95) - 1] ?? samples.at(-1)!),
     max: Math.round(samples.at(-1)!),
   };
 }
@@ -94,7 +95,7 @@ async function explainReal(name: string, run: (client: typeof db) => Promise<unk
   const main = captured.filter((c) => /\bSELECT\b/i.test(c.text) && !/set_config/i.test(c.text));
   for (const [index, statement] of main.entries()) {
     const rows = await db.$queryRawUnsafe<{ 'QUERY PLAN': string }[]>(
-      `EXPLAIN (ANALYZE, TIMING OFF) ${statement.text}`,
+      `EXPLAIN (ANALYZE, BUFFERS, TIMING OFF) ${statement.text}`,
       ...statement.values,
     );
     plans[`gerçek: ${name} #${index + 1}`] = rows.map((r) => r['QUERY PLAN']).join('\n');
@@ -397,7 +398,16 @@ async function measureAll(label: string, budget: number) {
     return searchSeekers({ db }, alumnus, { pageSize: 20 });
   });
   const own = Object.entries(report).filter(([name]) => name.startsWith(label));
-  for (const [name, value] of own) expect(value.p95, `${name} p95`).toBeLessThan(budget);
+  for (const [name, value] of own) {
+    const required =
+      label === 'stres' &&
+      ['ilan arama (metin)', 'deneyim arama (metin)', 'soru bankası'].some((namePart) =>
+        name.endsWith(` · ${namePart}`),
+      )
+        ? 300
+        : budget;
+    expect(value.p95, `${name} p95`).toBeLessThan(required);
+  }
 }
 
 describe('Faz 2 liste ve arama yanıt süreleri', () => {
@@ -438,10 +448,19 @@ describe('kritik planlar indeks kullanır (stres hacmi)', () => {
       `SELECT id FROM "Experience" WHERE "companyId" = '${companyIds[0]}' AND status = 'PUBLISHED'`,
     );
     const actor = (await loadActor(db, viewer, new Date()))!;
-    await explainReal('ilan listesi', (client) => searchJobPostings({ db: client }, viewer, {}));
-    await explainReal('soru bankası', (client) =>
-      getInterviewQuestions(client, viewer, { q: '', companyId: '', sectorId: '' }),
+    await explainReal('ilan arama', (client) =>
+      searchJobPostings({ db: client }, viewer, { q: 'veri analizi' }),
     );
+    const questionQueries = await questionPlans(viewer);
+    expect(questionQueries.length).toBeGreaterThan(0);
+    questionQueries.forEach((questionPlan, index) => {
+      plans[`gerçek: soru bankası #${index + 1}`] = questionPlan;
+    });
+    const companyQuestions = await questionPlans(viewer, companyIds[0]!);
+    expect(companyQuestions.length).toBeGreaterThan(0);
+    companyQuestions.forEach((questionPlan, index) => {
+      plans[`gerçek: soru bankası şirket #${index + 1}`] = questionPlan;
+    });
     await explainReal('deneyim arama', (client) =>
       searchExperiences(
         { db: client },

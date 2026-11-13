@@ -12,6 +12,7 @@ import type {
 } from '@/contracts/job-postings';
 import {
   Button,
+  Checkbox,
   Card,
   Badge,
   IconChip,
@@ -205,16 +206,13 @@ export function PostingList({
           </Select>
         )}
       </Field>
-      <label className="flex min-h-11 items-center gap-3 font-medium">
-        <input
-          type="checkbox"
-          name="remote"
-          value="true"
-          defaultChecked={filters.remote === true}
-          className="size-5 accent-primary"
-        />
-        {t('remote')}
-      </label>
+      <Checkbox
+        label={t('remote')}
+        name="remote"
+        value="true"
+        defaultChecked={filters.remote === true}
+        className="font-medium"
+      />
     </div>
   );
   const filtered = Boolean(

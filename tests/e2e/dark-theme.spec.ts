@@ -27,17 +27,50 @@ const SCREENS = {
 
 type Issue = { kind: string; el: string; text?: string; ratio: number; need: number };
 
-const SCAN = (): Issue[] => {
+const SCAN = (probe?: string[]): { issues: Issue[]; colors: number[][] } => {
   type RGBA = { r: number; g: number; b: number; a: number };
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+  const colorCache = new Map<string, RGBA>();
+  // Hesaplanmış rengi (rgb, oklab, color-mix, saydam…) tarayıcının KENDİ renk motoruyla çözer: siyah ve beyaz zemine çizip alfa ve
+  // renk geri çıkarılır (Tailwind `/NN` saydamlığı `oklab`/`color-mix` döndürebilir; `rgb()` regex'i onu şeffaf sayıyordu).
+  // Çözülemeyen değer sessizce "şeffaf" sayılmaz: hata verir, böylece tarama boşuna yeşil olmaz.
   const parse = (value: string): RGBA => {
-    const m = value.match(/rgba?\(([^)]+)\)/);
-    if (!m) return { r: 0, g: 0, b: 0, a: 0 };
-    const p = m[1]!
-      .split(/[ ,/]+/)
-      .filter(Boolean)
-      .map(Number);
-    return { r: p[0]!, g: p[1]!, b: p[2]!, a: p[3] ?? 1 };
+    const cached = colorCache.get(value);
+    if (cached) return cached;
+    ctx.fillStyle = '#010203';
+    ctx.fillStyle = value;
+    if (value.trim().toLowerCase() !== '#010203' && ctx.fillStyle === '#010203')
+      throw new Error(`çözümlenemeyen renk: ${value}`);
+    const paint = (base: string) => {
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, 1, 1);
+      ctx.fillStyle = value;
+      ctx.fillRect(0, 0, 1, 1);
+      return ctx.getImageData(0, 0, 1, 1).data;
+    };
+    const black = paint('#000000');
+    const white = paint('#ffffff');
+    const a =
+      1 - (white[0]! - black[0]! + (white[1]! - black[1]!) + (white[2]! - black[2]!)) / (3 * 255);
+    const out: RGBA =
+      a <= 0.004
+        ? { r: 0, g: 0, b: 0, a: 0 }
+        : { r: black[0]! / a, g: black[1]! / a, b: black[2]! / a, a };
+    colorCache.set(value, out);
+    return out;
   };
+  if (probe)
+    return {
+      issues: [],
+      colors: probe.map((value) => {
+        const c = parse(value);
+        return [Math.round(c.r), Math.round(c.g), Math.round(c.b), Math.round(c.a * 100) / 100];
+      }),
+    };
   const over = (top: RGBA, bottom: RGBA): RGBA => {
     const a = top.a + bottom.a * (1 - top.a);
     if (a === 0) return { r: 0, g: 0, b: 0, a: 0 };
@@ -136,17 +169,41 @@ const SCAN = (): Issue[] => {
     );
     if (r < 3) issues.push({ kind: 'kontrol-siniri', el: sel(el), ratio: r, need: 3 });
   }
-  return issues;
+  return { issues, colors: [] };
 };
 
 async function scan(page: Page, route: string) {
-  await page.goto(route);
+  const response = await page.goto(route);
+  // Var olmayan ya da başka yere yönlenen bir rota taranmış sayılmaz (404 sayfası da koyu temada "temiz" çıkardı).
+  expect(response?.status(), `yanıt durumu: ${route}`).toBe(200);
   await page.waitForLoadState('networkidle');
+  expect(new URL(page.url()).pathname, `son adres: ${route}`).toBe(route);
   expect(
     await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme),
   ).toContain('dark');
-  return page.evaluate(SCAN);
+  return (await page.evaluate(SCAN)).issues;
 }
+
+test('koyu tema taraması renkleri doğru çözer: oklab, color-mix ve saydam renk şeffaf sayılmaz', async ({
+  page,
+}) => {
+  await page.goto('/giris');
+  const { colors } = await page.evaluate(SCAN, [
+    'rgb(255, 0, 0)',
+    'rgba(0, 0, 0, 0.5)',
+    'oklab(1 0 0)',
+    'color-mix(in srgb, #ff0000 50%, transparent)',
+    'rgba(0, 0, 0, 0)',
+  ]);
+  expect(colors[0]).toEqual([255, 0, 0, 1]);
+  expect(colors[1]![3]).toBeCloseTo(0.5, 1);
+  expect(colors[2]).toEqual([255, 255, 255, 1]);
+  expect(colors[3]!.slice(0, 3)).toEqual([255, 0, 0]);
+  expect(colors[3]![3]).toBeCloseTo(0.5, 1);
+  expect(colors[4]![3]).toBe(0);
+  // Çözülemeyen değer sessizce şeffaf sayılmaz.
+  await expect(page.evaluate(SCAN, ['bu-bir-renk-degil'])).rejects.toThrow(/çözümlenemeyen renk/);
+});
 
 for (const [persona, routes] of Object.entries(SCREENS)) {
   test(`koyu tema (390 px, ${persona}): metin, yer tutucu ve kontrol sınırı WCAG AA`, async ({

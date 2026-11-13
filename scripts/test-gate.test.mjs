@@ -306,3 +306,60 @@ test('main(): gerçek hata (assert) yeniden denenmez, ilk çıkış kodu aynen d
   assert.equal(run.status, 3);
   assert.equal(run.calls.length, 1);
 });
+
+for (const reason of ['Worker exited unexpectedly', 'ERR_WORKER_OUT_OF_MEMORY']) {
+  test(`main(): DOM assertion'ında ${reason} beklenen metni altyapı sayılmaz`, () => {
+    const message = `Error: expect(element).toHaveTextContent()\nExpected: ${reason}\nReceived: hata`;
+    const failed = {
+      testResults: [file(join(REPO, 'src/dom.test.tsx'), 'failed', message, [[message]])],
+    };
+    const run = runGate([
+      { code: 1, report: failed },
+      { code: 0, report: passed },
+    ]);
+    assert.equal(run.status, 1);
+    assert.equal(run.calls.length, 1);
+  });
+
+  test(`main(): gerçek assertion ${reason} metnini içerse de yeniden denenmez`, () => {
+    const message = `\x1b[31mAssertionError: expected result.errorCode to equal ${reason}\x1b[39m`;
+    const failed = {
+      testResults: [file(join(REPO, 'src/assertion.test.ts'), 'failed', message, [[message]])],
+    };
+    const run = runGate([
+      { code: 1, report: failed },
+      { code: 0, report: passed },
+    ]);
+    assert.equal(run.status, 1);
+    assert.equal(run.calls.length, 1);
+    assert.doesNotMatch(run.stderr, /bir kez yeniden koşuluyor/);
+  });
+
+  test(`main(): ${reason} görünür biçimde yalnız bir kez denenir; ikinci hata kırmızı`, () => {
+    const failed = { testResults: [file(join(REPO, 'src/slow.test.ts'), 'failed', reason)] };
+    const run = runGate([
+      { code: 1, report: failed },
+      { code: 1, report: failed },
+    ]);
+    assert.equal(run.status, 1);
+    assert.equal(run.calls.length, 2);
+    assert.match(run.stderr, /bir kez yeniden koşuluyor/);
+    assert.match(run.stderr, /bellek/);
+    const recovered = runGate([
+      { code: 1, report: failed },
+      { code: 0, report: passed },
+    ]);
+    assert.equal(recovered.status, 0);
+    assert.equal(recovered.calls.length, 2);
+    assert.match(recovered.stderr, /bir kez yeniden koşuluyor/);
+  });
+}
+
+test('yakalanmamış işçi hatasının içinde gerçek assertion varsa altyapı sayılmaz', () => {
+  const block =
+    workerTimeout(`${ROOT}/src/assertion.test.ts`) +
+    '\nCaused by: AssertionError: expected ERR_WORKER_OUT_OF_MEMORY';
+  const text = vitestText([block]);
+  assert.equal(unhandledInfraFiles(text), null);
+  assert.equal(planRetry({ code: 1, report: passedReport, text }), null);
+});

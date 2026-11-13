@@ -105,10 +105,7 @@ it('her adım yalnız kendi alanlarını doğrular, odak ve girilen değerler ko
   await waitFor(() => expect(details).toHaveFocus());
   expect(details).toHaveAccessibleName('Adım 2 / 3: Ayrıntılar ve başvuru');
   expect(details).toHaveAttribute('tabindex', '-1');
-  expect(screen.getByText('Adım 2 / 3: Ayrıntılar ve başvuru')).toHaveAttribute(
-    'aria-current',
-    'step',
-  );
+  expect(screen.getByText('Adım 2 / 3: Ayrıntılar ve başvuru')).not.toHaveAttribute('aria-current');
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
   const description = screen.getByLabelText(/^Açıklama/);
   await waitFor(() => expect(description).toHaveFocus());
@@ -572,6 +569,8 @@ it('tek adım duyurusu ve odaktaki alan açıklaması kullanılır; fieldset oda
   const title = screen.getByLabelText(/Pozisyon adı/);
   await waitFor(() => expect(title).toHaveFocus());
   expect(title).toHaveAccessibleDescription('Bu alanı kontrol et.');
+  const message = document.getElementById(title.getAttribute('aria-describedby')!)!;
+  expect(message.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
   expect(document.querySelectorAll('[data-hydrated] [role=alert]')).toHaveLength(0);
   fireEvent.change(title, { target: { value: 'Yazılım stajyeri' } });
   fireEvent.change(screen.getByLabelText(/Kurum adı/), { target: { value: 'Kurum' } });
@@ -621,7 +620,7 @@ it.each([
       : await screen.findByLabelText(label);
   await waitFor(() => expect(target).toHaveFocus());
   expect(target).toHaveAttribute('aria-invalid', 'true');
-  expect(target).toHaveAccessibleDescription();
+  expect(target).toHaveAccessibleDescription(expect.stringContaining(messages.errors.codes[code]));
 });
 
 it('sunucu hatası özetindeki başka adım bağlantısı o alanı açar ve odaklar', async () => {
@@ -658,4 +657,64 @@ it('alanı bilinmeyen sunucu hatası özette kalır ve odağı alır', async () 
   const summary = (await screen.findByText(messages.errors.codes.SERVER_UNEXPECTED)).parentElement!;
   await waitFor(() => expect(summary).toHaveFocus());
   expect(summary.querySelectorAll('button')).toHaveLength(0);
+  expect(summary).toHaveAttribute('tabindex', '-1');
+  screen.getByRole('button', { name: 'Taslağı kaydet' }).focus();
+  expect(summary).not.toHaveAttribute('tabindex');
+});
+
+it('kit onay kutuları etiket ve klavyeyle değişir; taslak değerleri ve sınır korunur', async () => {
+  const tags = Array.from({ length: 6 }, (_, i) => ({
+    id: `tag-${i}`,
+    slug: `custom-${i}`,
+    label: `Etiket ${i}`,
+  }));
+  const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'draft-1' } });
+  const { user } = renderWithToasts(
+    <PostingEditor context={{ ...context, availableTags: tags }} save={save} submit={vi.fn()} />,
+  );
+  await user.type(screen.getByLabelText(/Pozisyon adı/), 'Yazılım stajyeri');
+  await user.type(screen.getByLabelText(/Kurum adı/), 'Örnek Kurum');
+  await user.click(screen.getByRole('button', { name: 'Devam et' }));
+  await waitFor(() =>
+    expect(screen.getByRole('heading', { name: /Ayrıntılar ve başvuru$/ })).toHaveFocus(),
+  );
+  const remote = screen.getByRole('checkbox', { name: /Uzaktan çalışılabilir/ });
+  remote.focus();
+  await user.keyboard(' ');
+  expect(remote).toBeChecked();
+  await user.click(screen.getByText('YBS · İşletme'));
+  expect(screen.getByRole('checkbox', { name: 'YBS · İşletme' })).toBeChecked();
+  for (let i = 0; i < 5; i++) await user.click(screen.getByText(`Etiket ${i}`));
+  expect(screen.getByRole('checkbox', { name: 'Etiket 5' })).toBeDisabled();
+  await user.click(screen.getByText('3. sınıf'));
+  await user.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+  await waitFor(() =>
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.objectContaining({
+          isRemote: true,
+          targetDepartmentIds: ['dep'],
+          tagIds: tags.slice(0, 5).map((tag) => tag.id),
+          targetGrades: [3],
+        }),
+      }),
+    ),
+  );
+});
+
+it('uzaktan filtre kutusu forma aynı ad ve değeri taşır', async () => {
+  renderWithToasts(
+    <PostingList
+      canPost={false}
+      filters={{ remote: true }}
+      options={options}
+      page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
+    />,
+  );
+  const remote = document.querySelector<HTMLInputElement>('input[name="remote"]')!;
+  expect(remote).toBeChecked();
+  expect(remote.value).toBe('true');
+  const form = remote.closest('form');
+  expect(form).not.toBeNull();
+  expect(new FormData(form!).get('remote')).toBe('true');
 });
