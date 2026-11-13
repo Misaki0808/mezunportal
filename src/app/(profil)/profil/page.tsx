@@ -29,9 +29,9 @@ export default async function ProfilePage() {
     <>
       <MyProfile
         initial={result.data}
-        beforeCompletion={
+        beforeCompletion={points?.ok && <ContributionSummary summary={points.data.summary} />}
+        afterSections={
           <>
-            {points?.ok && <ContributionSummary summary={points.data.summary} />}
             {gap?.ok && titles?.ok && <SkillGapPanel data={gap.data} titles={titles.data} />}
             {gap?.ok && !titles?.ok && (
               <ErrorState

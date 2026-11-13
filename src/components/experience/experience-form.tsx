@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import {
   APPLICATION_CHANNELS,
@@ -23,6 +24,7 @@ import {
   PageHeader,
   RadioGroup,
   Select,
+  Stepper,
   Textarea,
   buttonClasses,
   useAction,
@@ -36,7 +38,14 @@ import {
   type ExperienceType,
   type FieldKey,
 } from './field-map';
-import { emptyState, validate, type FieldErrors, type FormState } from './form-state';
+import {
+  emptyState,
+  formSnapshot,
+  sectionComplete,
+  validate,
+  type FieldErrors,
+  type FormState,
+} from './form-state';
 
 export type DepartmentOption = { id: string; name: string };
 export type InitialExperience = {
@@ -64,10 +73,11 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
   const [state, setState] = useState<FormState>(initial?.state ?? emptyState());
   const [appliedMonth, setAppliedMonth] = useState(initial?.appliedMonth?.toString() ?? '');
   const calendar = useTranslations('applicationCalendar');
-  const [departmentId, setDepartmentId] = useState(
-    initial?.departmentId ?? (departments.length === 1 ? departments[0]!.id : ''),
-  );
+  const initialDepartmentId =
+    initial?.departmentId ?? (departments.length === 1 ? departments[0]!.id : '');
+  const [departmentId, setDepartmentId] = useState(initialDepartmentId);
   const [isAnonymous, setIsAnonymous] = useState(initial?.isAnonymous ?? false);
+  const router = useRouter();
   const [experienceId, setExperienceId] = useState(initial?.id);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [departmentError, setDepartmentError] = useState(false);
@@ -75,6 +85,16 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
   const action = useAction();
   const [confirm, setConfirm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  // Son kaydedilen (ya da ilk yüklenen) içeriğin özeti: farklıysa "kaydedilmemiş değişiklik" vardır.
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    formSnapshot({
+      state: initial?.state ?? emptyState(),
+      appliedMonth: initial?.appliedMonth?.toString() ?? '',
+      departmentId: initialDepartmentId,
+      isAnonymous: initial?.isAnonymous ?? false,
+    }),
+  );
+  const [leaveTo, setLeaveTo] = useState<string>();
   const [pendingMode, setPendingMode] = useState<'save' | 'submit'>();
   const pending = action.busy ? pendingMode : undefined;
   const [focusTick, setFocusTick] = useState(0);
@@ -82,6 +102,8 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
   const doneRef = useRef<HTMLHeadingElement>(null);
 
   const type = state.type;
+  const snapshot = formSnapshot({ state, appliedMonth, departmentId, isAnonymous });
+  const dirty = !submitted && snapshot !== savedSnapshot;
   const fields = fieldsOf(type);
   const departmentName = departments.find((item) => item.id === departmentId)?.name;
 
@@ -93,6 +115,38 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
   useEffect(() => {
     if (submitted) doneRef.current?.focus();
   }, [submitted]);
+
+  // Kaydedilmemiş değişiklik varken sekmeyi kapatma/yenileme tarayıcı uyarısıyla sorulur.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+
+  // Uygulama içi bağlantıyla çıkış tarayıcı olayı vermez: tıklama yakalanır, "taslağı kaydet / kaydetmeden çık" sorulur.
+  useEffect(() => {
+    if (!dirty) return;
+    const intercept = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = (event.target as Element | null)?.closest?.('a[href]');
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      if ((anchor.target && anchor.target !== '_self') || anchor.hasAttribute('download')) return;
+      const url = new URL(anchor.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname === window.location.pathname && url.search === window.location.search)
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      setLeaveTo(`${url.pathname}${url.search}${url.hash}`);
+    };
+    document.addEventListener('click', intercept, true);
+    return () => document.removeEventListener('click', intercept, true);
+  }, [dirty]);
 
   function update(patch: Partial<FormState>) {
     setState((current) => ({ ...current, ...patch }));
@@ -120,7 +174,8 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
     return all.some((key) => !fields.has(key) && filled(key));
   }
 
-  async function run(mode: 'draft' | 'submit') {
+  /** Kaydeder (ve istenirse gönderir); başarıda `true` döner. Doğrulama ya da sunucu hatasında `false`. */
+  async function run(mode: 'draft' | 'submit'): Promise<boolean> {
     const validation = validate(state, mode);
     const noDepartment = departmentId === '';
     setFieldErrors(validation.ok ? {} : validation.errors);
@@ -128,9 +183,11 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
     if (!validation.ok || noDepartment) {
       setFocusTick((tick) => tick + 1);
       setConfirm(false);
-      return;
+      return false;
     }
     setError(undefined);
+    const savedNow = snapshot;
+    let ok = false;
     await action.run(
       async (): Promise<ActionResult<null>> => {
         setPendingMode(mode === 'draft' ? 'save' : 'submit');
@@ -143,6 +200,8 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
         });
         if (!saved.ok) return saved;
         setExperienceId(saved.data.id);
+        // Gönderme ayrı bir istektir; o adım hata verse de bu içerik taslakta kaydedilmiştir.
+        setSavedSnapshot(savedNow);
         if (mode === 'submit') {
           const sent = await submit({ experienceId: saved.data.id });
           if (!sent.ok) return sent;
@@ -152,6 +211,7 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
       {
         success: mode === 'draft' ? t('form.draftSaved') : t('form.submitted'),
         onOk: () => {
+          ok = true;
           if (mode === 'submit') {
             setConfirm(false);
             setSubmitted(true);
@@ -163,6 +223,15 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
         },
       },
     );
+    return ok;
+  }
+
+  /** "Taslağı kaydet ve çık": kayıt başarısızsa (alan hatası, sunucu hatası) yerinde kalır ve hata görünür. */
+  async function saveAndLeave() {
+    const target = leaveTo;
+    const saved = await run('draft');
+    setLeaveTo(undefined);
+    if (saved && target) router.push(target);
   }
 
   function openConfirm() {
@@ -204,7 +273,17 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
   const required = (key: FieldKey) => isRequired(type, key);
   const hintOf = (key: FieldKey) =>
     (
-      ['organizationName', 'durationWeeks', 'whatLearned', 'advice', 'interviewQuestions'] as const
+      [
+        'organizationName',
+        'termYear',
+        'country',
+        'city',
+        'durationWeeks',
+        'pay',
+        'whatLearned',
+        'advice',
+        'interviewQuestions',
+      ] as const
     ).includes(key as 'organizationName')
       ? t(`form.hints.${key as 'organizationName'}`)
       : undefined;
@@ -274,7 +353,13 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
     }
     if (key === 'pay') {
       return (
-        <Field key={key} label={label(key)} error={errorOf(key)} required={required(key)}>
+        <Field
+          key={key}
+          label={label(key)}
+          hint={hintOf(key)}
+          error={errorOf(key)}
+          required={required(key)}
+        >
           {(control) => (
             <Select
               {...control}
@@ -455,10 +540,28 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
   }
 
   const sectionTitle = {
+    type: t('form.sections.type'),
     about: t('form.sections.about'),
     process: t('form.sections.process'),
     story: t('form.sections.story'),
+    privacy: t('form.sections.privacy'),
   };
+  // Adım hissi: bölümler sırayla numaralanır; ilerleme şeridi ilk eksik bölümü "şu anki adım" gösterir.
+  // Yalnız sunum: doğrulama ve gönderme akışı değişmez, bölümler istenen sırayla doldurulabilir.
+  const visibleSections = FIELD_SECTIONS.filter((section) =>
+    section.fields.some((key) => fields.has(key)),
+  );
+  const steps = [
+    { id: 'type', done: departmentId !== '' },
+    ...visibleSections.map((section) => ({
+      id: section.id,
+      done: sectionComplete(state, section.fields),
+    })),
+    { id: 'privacy', done: true },
+  ];
+  const firstOpen = steps.findIndex((step) => !step.done);
+  const currentStep = firstOpen === -1 ? steps.length - 1 : firstOpen;
+  const numberOf = (id: string) => steps.findIndex((step) => step.id === id) + 1;
 
   return (
     <form
@@ -483,71 +586,91 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
         </section>
       )}
 
-      <div className="mt-6 flex flex-col gap-5">
-        <Field label={t('form.typeLegend')} required>
-          {(control) => (
-            <Select
-              {...control}
-              value={type}
-              onChange={(event) => update({ type: event.target.value as ExperienceType })}
-            >
-              {EXPERIENCE_TYPES.map((value) => (
-                <option key={value} value={value}>
-                  {t(`types.${value}`)}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        {droppedFields() && (
-          <p
-            role="status"
-            className="rounded-control bg-warning-soft p-3 text-base text-on-warning-soft"
-          >
-            {t('form.typeChanged')}
-          </p>
-        )}
+      <Stepper
+        steps={steps.map((step) => ({
+          id: step.id,
+          label: sectionTitle[step.id as keyof typeof sectionTitle],
+        }))}
+        current={currentStep}
+        className="mt-6"
+      />
 
-        {initial ? (
-          <div>
-            <p className="font-medium text-fg">{t('form.department')}</p>
-            <p className="text-base text-fg">{departmentName}</p>
-            <p className="text-sm text-fg-muted">{t('form.departmentLocked')}</p>
-          </div>
-        ) : departments.length > 1 ? (
-          <Field
-            label={t('form.department')}
-            error={departmentError ? t('fieldErrors.required') : undefined}
-            required
-          >
+      <div className="mt-6 flex flex-col gap-4">
+        <FormSection
+          id="type"
+          number={numberOf('type')}
+          title={sectionTitle.type}
+          intro={t('form.intro.type')}
+        >
+          <Field label={t('form.typeLegend')} required>
             {(control) => (
               <Select
                 {...control}
-                value={departmentId}
-                onChange={(event) => setDepartmentId(event.target.value)}
+                value={type}
+                onChange={(event) => update({ type: event.target.value as ExperienceType })}
               >
-                <option value="">{t('form.departmentPlaceholder')}</option>
-                {departments.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
+                {EXPERIENCE_TYPES.map((value) => (
+                  <option key={value} value={value}>
+                    {t(`types.${value}`)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-        ) : (
-          <div>
-            <p className="font-medium text-fg">{t('form.department')}</p>
-            <p className="text-base text-fg">{departmentName}</p>
-          </div>
-        )}
+          {droppedFields() && (
+            <p
+              role="status"
+              className="rounded-control bg-warning-soft p-3 text-base text-on-warning-soft"
+            >
+              {t('form.typeChanged')}
+            </p>
+          )}
 
-        {FIELD_SECTIONS.map((section) => {
+          {initial ? (
+            <div>
+              <p className="font-medium text-fg">{t('form.department')}</p>
+              <p className="text-base text-fg">{departmentName}</p>
+              <p className="text-sm text-fg-muted">{t('form.departmentLocked')}</p>
+            </div>
+          ) : departments.length > 1 ? (
+            <Field
+              label={t('form.department')}
+              error={departmentError ? t('fieldErrors.required') : undefined}
+              required
+            >
+              {(control) => (
+                <Select
+                  {...control}
+                  value={departmentId}
+                  onChange={(event) => setDepartmentId(event.target.value)}
+                >
+                  <option value="">{t('form.departmentPlaceholder')}</option>
+                  {departments.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+          ) : (
+            <div>
+              <p className="font-medium text-fg">{t('form.department')}</p>
+              <p className="text-base text-fg">{departmentName}</p>
+            </div>
+          )}
+        </FormSection>
+
+        {visibleSections.map((section) => {
           const visible = section.fields.filter((key) => fields.has(key));
-          if (visible.length === 0) return null;
           return (
-            <section key={section.id} className="flex flex-col gap-5">
-              <h2 className="text-xl font-semibold text-fg">{sectionTitle[section.id]}</h2>
+            <FormSection
+              key={section.id}
+              id={section.id}
+              number={numberOf(section.id)}
+              title={sectionTitle[section.id]}
+              intro={t(`form.intro.${section.id}`)}
+            >
               {visible.map(renderField)}
               {section.id === 'process' && type === 'INTERNSHIP' && (
                 <Field label={calendar('monthLabel')} hint={calendar('monthHint')}>
@@ -567,12 +690,16 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
                   )}
                 </Field>
               )}
-            </section>
+            </FormSection>
           );
         })}
 
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xl font-semibold text-fg">{t('form.sections.privacy')}</h2>
+        <FormSection
+          id="privacy"
+          number={numberOf('privacy')}
+          title={sectionTitle.privacy}
+          intro={t('form.intro.privacy')}
+        >
           <RadioGroup
             legend={t('form.anonymousLegend')}
             name="anonymous"
@@ -587,7 +714,7 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
               },
             ]}
           />
-        </section>
+        </FormSection>
       </div>
 
       <div className="sticky-actions z-20 mt-8 space-y-2 bg-bg pt-4 pb-2 lg:pt-8">
@@ -639,6 +766,82 @@ export function ExperienceForm({ departments, initial, save, submit }: Props) {
       >
         {null}
       </Modal>
+
+      <Modal
+        open={leaveTo !== undefined}
+        onClose={() => !pending && setLeaveTo(undefined)}
+        title={t('form.leave.title')}
+        description={t('form.leave.description')}
+        footer={
+          <>
+            <Button fullWidth loading={pending === 'save'} onClick={() => void saveAndLeave()}>
+              {t('form.leave.save')}
+            </Button>
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => {
+                if (pending) return;
+                const target = leaveTo;
+                setLeaveTo(undefined);
+                if (target) router.push(target);
+              }}
+            >
+              {t('form.leave.discard')}
+            </Button>
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={() => {
+                if (!pending) setLeaveTo(undefined);
+              }}
+            >
+              {t('form.leave.stay')}
+            </Button>
+          </>
+        }
+      >
+        {null}
+      </Modal>
     </form>
+  );
+}
+
+/** Numaralı bölüm kartı: adım numarası, başlık ve tek cümlelik sıcak bir giriş. */
+function FormSection({
+  id,
+  number,
+  title,
+  intro,
+  children,
+}: {
+  id: string;
+  number: number;
+  title: string;
+  intro: string;
+  children: ReactNode;
+}) {
+  const headingId = `section-${id}`;
+  return (
+    <section
+      aria-labelledby={headingId}
+      className="flex flex-col gap-5 rounded-card border border-border p-4"
+    >
+      <div className="flex items-start gap-3">
+        <span
+          aria-hidden="true"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-on-primary-soft"
+        >
+          {number}
+        </span>
+        <div className="min-w-0">
+          <h2 id={headingId} className="text-xl font-semibold text-fg">
+            {title}
+          </h2>
+          <p className="mt-0.5 text-base text-fg-muted">{intro}</p>
+        </div>
+      </div>
+      {children}
+    </section>
   );
 }
