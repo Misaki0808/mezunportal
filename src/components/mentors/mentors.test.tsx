@@ -389,6 +389,59 @@ describe('mentor dizini', () => {
     );
   });
 
+  it('aralık dışı sayfada toplam sayı ile "henüz mentor yok" çelişmez: bu sayfa boş, ilk sayfaya dön', () => {
+    renderUi(
+      <MentorDirectory
+        filter={{ onlyAvailable: true }}
+        results={{ ...page([], 12), page: 4 }}
+        sectors={sectors}
+        similar={null}
+      />,
+    );
+    expect(screen.getByText('12 sonuç')).toBeInTheDocument();
+    expect(screen.getByText('Bu sayfada sonuç yok')).toBeVisible();
+    expect(screen.queryByText('Henüz listelenecek mentor yok')).not.toBeInTheDocument();
+    expect(screen.queryByText('Bu filtrelerle mentor bulunamadı')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'İlk sayfaya dön' })).toHaveAttribute(
+      'href',
+      '/mentorlar?onlyAvailable=1',
+    );
+  });
+
+  it('mentor olabilen ama profili kapalı kullanıcıda boş dizinin tek eylemi mentorluğu açmaktır', () => {
+    renderUi(
+      <MentorDirectory
+        filter={{}}
+        results={page([])}
+        sectors={sectors}
+        similar={null}
+        canOpenMentoring
+      />,
+    );
+    expect(screen.getByText('Henüz listelenecek mentor yok')).toBeInTheDocument();
+    expect(screen.getByText(/İlk mentorlardan biri sen olabilirsin/)).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Mentor ayarlarını aç' })).toHaveAttribute(
+      'href',
+      '/mentor/ayarlar',
+    );
+    // Öğrencinin bugünkü eylemi ("Deneyimlere bak") bu rolde çıkmaz; tek eylem var.
+    expect(screen.queryByRole('link', { name: 'Deneyimlere bak' })).not.toBeInTheDocument();
+  });
+
+  it('filtre varken mentorluğu açabilen rol da "filtreleri temizle" görür, mentorluk çağrısı çıkmaz', () => {
+    renderUi(
+      <MentorDirectory
+        filter={{ onlyAvailable: true }}
+        results={page([])}
+        sectors={sectors}
+        similar={null}
+        canOpenMentoring
+      />,
+    );
+    expect(screen.getByText('Bu filtrelerle mentor bulunamadı')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Mentor ayarlarını aç' })).not.toBeInTheDocument();
+  });
+
   it('benzer mentorlar bölümü sonuçların üstünde, gerekçeleriyle çizilir', () => {
     renderUi(
       <MentorDirectory

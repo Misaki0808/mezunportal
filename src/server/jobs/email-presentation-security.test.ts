@@ -245,3 +245,129 @@ it('tamlık: ham ön izlemesine yer tutucu sızan her e-posta metni kilit ekran�
   }
   expect(leaking.sort()).toEqual([...POLICY_COVERED].sort());
 });
+
+// ---- Ret sonucu önizlemede yok (PM kararı, kart 305): konu satırında "reddedildi" yazılmadığı gibi ön izleme de sonucu söylemez;
+// nötr "incelendi; ayrıntılar e-postada" der, sonuç gövdede kalır.
+const RESULT_WORDS =
+  /yayınlanmad|yayınlanamad|onaylanamad|reddedil|kabul edilemed|kabul edilmed|uygun görülmed|herkese açık bir soru olmadığı/i;
+const url = `${app}/hesap`;
+const REJECTIONS: Array<{
+  template: string;
+  preview: string;
+  body: RegExp;
+  message: () => Promise<QueuedEmail> | QueuedEmail;
+}> = [
+  {
+    template: 'experience.moderation-rejected',
+    preview: messages.notifications.email.preheaderReviewedExperience,
+    body: /Gerekçeyi görmek/,
+    message: () => ({
+      to: 'a@example.invalid',
+      template: 'experience.moderation-rejected',
+      idempotencyKey: 'k1',
+      subject: messages.notifications.email.moderationRejectedSubject,
+      text: notificationCopy('moderationRejectedText', { url }),
+    }),
+  },
+  {
+    template: 'faq.rejected',
+    preview: messages.notifications.email.preheaderReviewedFaq,
+    body: /yayınlanmadı/,
+    message: () => ({
+      to: 'a@example.invalid',
+      template: 'faq.rejected',
+      idempotencyKey: 'k2',
+      subject: messages.notifications.email.faqRejectedSubject,
+      text: notificationCopy('faqRejectedText', { url }),
+    }),
+  },
+  {
+    template: 'faq.redirected',
+    preview: messages.notifications.email.preheaderReviewedFaq,
+    body: /mentorla görüşmeni öneriyoruz/,
+    message: () => ({
+      to: 'a@example.invalid',
+      template: 'faq.redirected',
+      idempotencyKey: 'k3',
+      subject: messages.notifications.email.faqRedirectedSubject,
+      text: notificationCopy('faqRedirectedText', { url }),
+    }),
+  },
+  {
+    template: 'jobPosting.rejected',
+    preview: messages.notifications.email.preheaderReviewedJobPosting,
+    body: /yayınlanmadı/,
+    message: () => ({
+      to: 'a@example.invalid',
+      template: 'jobPosting.rejected',
+      idempotencyKey: 'k4',
+      subject: messages.notifications.email.jobPostingRejectedSubject,
+      text: notificationCopy('jobPostingRejectedText', { url }),
+    }),
+  },
+  {
+    template: 'graduation-document.rejected',
+    preview: messages.notifications.email.preheaderReviewedDocument,
+    body: /onaylanamadı/,
+    message: async () => {
+      const sent: QueuedEmail[] = [];
+      await createAuthEmailPort(async (input) => {
+        sent.push(input as QueuedEmail);
+        return { emailLogId: null };
+      }).sendGraduationDocumentDecision({
+        to: 'a@example.invalid',
+        userId: 'u',
+        documentId: 'd',
+        decision: 'REJECTED',
+        reason: secret.reason,
+      });
+      return sent[0]!;
+    },
+  },
+];
+
+it.each(REJECTIONS)(
+  'ret e-postası ($template): ön izleme sonucu söylemez, nötr cümledir; sonuç gövdede kalır',
+  async ({ preview: expected, body, message }) => {
+    const built = await message();
+    // Sonuç yalnız gövdede (ret cümlesi ya da gerekçe bağlantısı).
+    expect(built.text).toMatch(body);
+    const preview = previewOf(built);
+    expect(preview).toBe(expected);
+    expect(preview).not.toMatch(RESULT_WORDS);
+    expect(preview).toContain('incelendi');
+  },
+);
+
+it('randevu reddi (declined) zaten genel cümledir: sonuç sözcüğü yok', () => {
+  const notice = buildAppointmentEmail({
+    event: 'declined',
+    appointmentId: 'appointment',
+    recipient: { userId: 'recipient', email: 'test@example.invalid' },
+    counterpartName: secret.name,
+    startsAt: new Date('2030-01-01T09:00:00Z'),
+    mode: 'ONLINE',
+    reason: secret.reason,
+  });
+  expect(notice.text).toMatch(/kabul edemedi/);
+  expect(previewOf({ ...notice, to: 'test@example.invalid' })).not.toMatch(RESULT_WORDS);
+});
+
+// Tamlık: katalogda adı ret/yönlendirme/red diyen her e-posta metni burada kayıtlıdır; yeni bir ret metni eklenince bu liste ve
+// `preheaderFor` (REVIEWED_PREVIEW) birlikte güncellenmezse test kırılır, ret sonucu sessizce kilit ekranına sızmaz.
+it('tamlık: katalogdaki her ret/yönlendirme metni ön izleme politikasında kayıtlıdır', () => {
+  const rejectionPaths = emailTemplates()
+    .map(({ path }) => path)
+    .filter((path) => /reject|redirect|declin/i.test(path))
+    .sort();
+  expect(rejectionPaths).toEqual([
+    'emails.appointment.declined.text',
+    'emails.documentRejected.text',
+    'notifications.email.faqRedirectedText',
+    'notifications.email.faqRejectedText',
+    'notifications.email.jobPostingRejectedText',
+    'notifications.email.moderationRejectedText',
+  ]);
+  // Politikadaki şablon sayısı: beş ret/yönlendirme şablonu + randevu reddi (genel cümleyle zaten kapsanır).
+  expect(REJECTIONS.map((r) => r.template)).toHaveLength(5);
+});

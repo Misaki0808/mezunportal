@@ -62,8 +62,21 @@ export function preheaderOf(text: string): string {
 }
 
 /**
- * Kilit ekranı politikası: ön izleme kişi adı, e-posta adresi, işveren adı ve gerekçe taşımaz (konu satırında "reddedildi"
- * yazılmamasıyla aynı gerekçe; ayrıntı gövdede kalır). İlk cümlesi böyle bilgi taşıyan şablonlar sabit, genel bir cümle
+ * Ret ve yönlendirme e-postaları (PM kararı, kart 305): konu satırında "reddedildi" yazılmadığı gibi ön izleme de SONUCU söylemez
+ * ("…yayınlanmadı", "…onaylanamadı", "herkese açık değil"); nötr "incelendi; ayrıntılar e-postada" der, sonuç gövdede kalır.
+ * Yeni bir ret şablonu eklenirse buraya ve `email-presentation-security.test.ts` tamlık denetimine eklenmelidir.
+ */
+const REVIEWED_PREVIEW = {
+  'experience.moderation-rejected': 'preheaderReviewedExperience',
+  'faq.rejected': 'preheaderReviewedFaq',
+  'faq.redirected': 'preheaderReviewedFaq',
+  'jobPosting.rejected': 'preheaderReviewedJobPosting',
+  'graduation-document.rejected': 'preheaderReviewedDocument',
+} as const;
+
+/**
+ * Kilit ekranı politikası: ön izleme kişi adı, e-posta adresi, işveren adı, gerekçe ve ret sonucu taşımaz (konu satırında
+ * "reddedildi" yazılmamasıyla aynı gerekçe; ayrıntı gövdede kalır). İlk cümlesi böyle bilgi taşıyan şablonlar sabit, genel bir cümle
  * kullanır: randevu e-postaları (karşı tarafın adı), e-posta değişikliği onayı (yeni adres), "hâlâ çalışıyor musun" (işveren).
  * Savunma: başka bir şablonun ilk cümlesinde e-posta adresi çıkarsa genel cümleye düşer. Yeni şablon bu kurala uymuyorsa
  * `email-presentation-security.test.ts` kırılır.
@@ -74,6 +87,8 @@ function preheaderFor(message: Pick<QueuedEmail, 'template' | 'text'>): string {
     return t('preheaderAppointment');
   if (template === 'auth.change-email-confirmation') return t('preheaderChangeEmail');
   if (template === 'alumni.still-there') return t('preheaderStillThere');
+  if (template in REVIEWED_PREVIEW)
+    return t(REVIEWED_PREVIEW[template as keyof typeof REVIEWED_PREVIEW]);
   const own = preheaderOf(message.text);
   return /\S+@\S+/.test(own) ? t('preheaderGeneric') : own;
 }

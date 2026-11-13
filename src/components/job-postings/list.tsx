@@ -135,6 +135,7 @@ export function PostingList({
   canPost: boolean;
 }) {
   const t = useTranslations('jobs');
+  const directory = useTranslations('directory');
   const filterFormId = useId();
   const [query, setQuery] = useState(filters.q ?? '');
   const [open, setOpen] = useState(false);
@@ -251,9 +252,11 @@ export function PostingList({
         </div>
         {canPost && (
           <div className="flex shrink-0 flex-col items-stretch gap-1 sm:flex-row sm:gap-3">
-            <Link className={buttonClasses()} href="/ilanlar/yeni">
-              {t('post')}
-            </Link>
+            {(page.total > 0 || filtered) && (
+              <Link className={buttonClasses()} href="/ilanlar/yeni">
+                {t('post')}
+              </Link>
+            )}
             <Link className={buttonClasses({ variant: 'secondary' })} href="/ilanlarim">
               {t('mine')}
             </Link>
@@ -334,7 +337,20 @@ export function PostingList({
           </Link>
         )}
       </div>
-      {page.items.length ? (
+      {page.items.length === 0 && page.total > 0 ? (
+        // Aralık dışı sayfa: ilan var ama bu sayfa boş; "henüz ilan yok" demek sayaçla çelişir.
+        <div className="rounded-card border border-dashed border-border bg-surface">
+          <EmptyState
+            title={directory('pageEmptyTitle')}
+            description={directory('pageEmptyDescription')}
+            action={
+              <Link href={pageHref(1)} className={buttonClasses({ variant: 'secondary' })}>
+                {directory('firstPage')}
+              </Link>
+            }
+          />
+        </div>
+      ) : page.items.length ? (
         <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
           {page.items.map((posting) => (
             <PostingCard key={posting.id} posting={posting} />

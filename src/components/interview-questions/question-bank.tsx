@@ -18,12 +18,46 @@ type Group = InterviewQuestionBank['groups'][number];
 export function QuestionCards({
   groups,
   insufficient,
+  total = 0,
+  filtered = false,
+  firstPageHref = '/mulakat-sorulari',
 }: {
   groups: Group[];
   insufficient: boolean;
+  /** Süzgece uyan toplam şirket: sayfa boşken bile > 0 ise sorun "kayıt yok" değil "bu sayfa boş"tur. */
+  total?: number;
+  /** Şirket, sektör ya da arama süzgeci var: boş sonuç "henüz yok" değil "eşleşme yok" demektir. */
+  filtered?: boolean;
+  firstPageHref?: string;
 }) {
   const t = useTranslations('interviewBank');
-  if (!groups.length)
+  if (!groups.length) {
+    // Aralık dışı sayfa: toplam var, bu sayfa boş (gizlilik ya da "henüz yok" değil).
+    if (total > 0)
+      return (
+        <EmptyState
+          title={t('pageEmpty')}
+          description={t('pageEmptyHint')}
+          action={
+            <Link href={firstPageHref} className={buttonClasses({ variant: 'secondary' })}>
+              {t('firstPage')}
+            </Link>
+          }
+        />
+      );
+    // Süzgeçle eşleşme yok (gizlilik eşiği değil): arama dili, tek eylem süzgeci temizlemek.
+    if (filtered && !insufficient)
+      return (
+        <EmptyState
+          title={t('noMatch')}
+          description={t('noMatchHint')}
+          action={
+            <Link href="/mulakat-sorulari" className={buttonClasses({ variant: 'secondary' })}>
+              {t('clear')}
+            </Link>
+          }
+        />
+      );
     return (
       <EmptyState
         title={insufficient ? t('insufficient') : t('empty')}
@@ -35,6 +69,7 @@ export function QuestionCards({
         }
       />
     );
+  }
   return (
     <div className="grid gap-7">
       {groups.map((group) => (
@@ -129,7 +164,13 @@ export function QuestionBank({
         {data.total > 0 && (
           <p className="mb-4 text-fg-muted">{t('totalCompanies', { count: data.total })}</p>
         )}
-        <QuestionCards groups={data.groups} insufficient={data.insufficient} />
+        <QuestionCards
+          groups={data.groups}
+          insufficient={data.insufficient}
+          total={data.total}
+          filtered={Boolean(filters.companyId || filters.sectorId || filters.q)}
+          firstPageHref={pageLink(1)}
+        />
         {pageCount > 1 && (
           <nav aria-label={t('pagination')} className="mt-6 flex flex-wrap items-center gap-3">
             {data.page > 1 && (

@@ -50,6 +50,9 @@ export function FaqList({
   canAsk: boolean;
 }) {
   const t = useTranslations('faq');
+  const directory = useTranslations('directory');
+  // Aralık dışı sayfa: kayıt var ama bu sayfa boş; sayaç (pencere sayımı 0) ve "henüz yok" yanlış olur.
+  const outOfRange = result.items.length === 0 && result.page > 1;
   const pageCount = Math.max(1, Math.ceil(result.total / result.pageSize));
   return (
     <div className="mx-auto flex w-full max-w-3xl min-w-0 flex-col gap-5 px-5 pb-12 pt-10 sm:pt-14">
@@ -77,14 +80,24 @@ export function FaqList({
           {t('askLink')}
         </Link>
       )}
-      {(result.total > 0 || q) && (
+      {!outOfRange && (result.total > 0 || q) && (
         <p role="status" className="text-sm text-fg-muted">
           {q
             ? t('resultCountFor', { count: result.total, q })
             : t('resultCount', { count: result.total })}
         </p>
       )}
-      {result.items.length === 0 ? (
+      {outOfRange ? (
+        <EmptyState
+          title={directory('pageEmptyTitle')}
+          description={directory('pageEmptyDescription')}
+          action={
+            <Link href={hrefFor(q)(1)} className={buttonClasses({ variant: 'secondary' })}>
+              {directory('firstPage')}
+            </Link>
+          }
+        />
+      ) : result.items.length === 0 ? (
         <EmptyState
           title={q ? t('empty') : t('emptyAll')}
           description={q ? t('emptySearch') : t('emptyAllHint')}

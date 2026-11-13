@@ -57,3 +57,54 @@ it('kayıt yokken sıfır sayaç yazmaz; gizlilik eşiğini ve tek eylemi söyle
     '/deneyim/yeni',
   );
 });
+
+const bank = (over: Partial<Parameters<typeof QuestionBank>[0]['data']> = {}) => ({
+  companies: [],
+  sectors: [],
+  insufficient: false,
+  total: 0,
+  page: 1,
+  pageSize: 10,
+  groups: [],
+  ...over,
+});
+
+it('süzgeçle eşleşme yokken "henüz yok"/gizlilik değil arama dili: tek eylem süzgeci temizlemek', () => {
+  renderUi(<QuestionBank filters={{ companyId: '', sectorId: '', q: 'xyz' }} data={bank()} />);
+  expect(screen.getByText('Bu seçimle eşleşen soru yok')).toBeVisible();
+  expect(screen.queryByText('Henüz gösterilebilecek soru yok.')).not.toBeInTheDocument();
+  expect(screen.queryByText(/en az üç farklı kişinin/)).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Filtreleri temizle' })).toHaveAttribute(
+    'href',
+    '/mulakat-sorulari',
+  );
+  expect(screen.queryByRole('link', { name: 'Deneyim paylaş' })).not.toBeInTheDocument();
+});
+
+it('süzgeçli ama seçim gizlilik eşiğinin altındaysa (az deneyim) gizlilik gerekçesi söylenir', () => {
+  renderUi(
+    <QuestionBank
+      filters={{ companyId: 'a', sectorId: '', q: '' }}
+      data={bank({ insufficient: true })}
+    />,
+  );
+  expect(screen.getByText('Bu seçim için az sayıda deneyim var.')).toBeVisible();
+  expect(screen.getByText(/en az üç farklı kişinin/)).toBeVisible();
+  expect(screen.queryByText('Bu seçimle eşleşen soru yok')).not.toBeInTheDocument();
+});
+
+it('aralık dışı sayfada toplam sayı ile "henüz yok" çelişmez: bu sayfa boş, ilk sayfaya dön', () => {
+  renderUi(
+    <QuestionBank
+      filters={{ companyId: '', sectorId: 'sektor', q: 'veri' }}
+      data={bank({ total: 12, page: 5 })}
+    />,
+  );
+  expect(screen.getByText('12 şirketten soru bulundu.')).toBeVisible();
+  expect(screen.getByText('Bu sayfada soru yok')).toBeVisible();
+  expect(screen.queryByText('Henüz gösterilebilecek soru yok.')).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'İlk sayfaya dön' })).toHaveAttribute(
+    'href',
+    '/mulakat-sorulari?sectorId=sektor&q=veri&page=1',
+  );
+});

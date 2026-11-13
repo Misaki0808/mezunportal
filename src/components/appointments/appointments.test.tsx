@@ -630,6 +630,38 @@ describe('randevularım', () => {
     expect(await screen.findByText('Henüz randevu istemedin')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Mentor bul' })).toHaveAttribute('href', '/mentorlar');
   });
+
+  it('dizinde hiç mentor yokken boş Giden durumu "Mentor bul" ile boş sayfaya göndermez: deneyimlere yönlendirir', () => {
+    renderUi(
+      <MyAppointments
+        initial={page([])}
+        initialRole="MENTEE"
+        showSettings={false}
+        mentorsAvailable={false}
+        list={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Henüz mentor listelenmiyor')).toBeInTheDocument();
+    expect(screen.queryByText('Henüz randevu istemedin')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Mentor bul' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Deneyimlere bak' })).toHaveAttribute(
+      'href',
+      '/deneyimler',
+    );
+  });
+
+  it('mentor varken (varsayılan) Giden boş durumu bugünkü gibi "Mentor bul" der', () => {
+    renderUi(
+      <MyAppointments
+        initial={page([])}
+        initialRole="MENTEE"
+        showSettings={false}
+        list={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Henüz randevu istemedin')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mentor bul' })).toHaveAttribute('href', '/mentorlar');
+  });
 });
 
 it('inceleyici: SLOT_TAKEN sonrası eski seçimi bırakır ve sunucunun slot listesini yeniler', async () => {

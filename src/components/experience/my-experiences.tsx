@@ -59,6 +59,8 @@ export function MyExperiences({ initial, list }: Props) {
   const date = (value: Date) =>
     new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium' }).format(new Date(value));
 
+  // Boşken tek eylem: boş durumun kendi düğmesi kalır, alttaki yapışkan "Deneyim yaz" çubuğu gizlenir.
+  const empty = items.length === 0 && !pending;
   const body = (
     <div className="flex flex-col gap-4" aria-busy={pending}>
       {error && (
@@ -66,7 +68,7 @@ export function MyExperiences({ initial, list }: Props) {
           {errors(error)}
         </p>
       )}
-      {items.length === 0 && !pending ? (
+      {empty ? (
         <EmptyState
           title={filter === 'ALL' ? t('mine.emptyTitle') : t('mine.emptyFilteredTitle')}
           description={
@@ -156,11 +158,13 @@ export function MyExperiences({ initial, list }: Props) {
         }}
         items={filters.map((id) => ({ id, label: t(`mine.tabs.${id}`), content: body }))}
       />
-      <div className="sticky-actions z-20 mt-6 bg-bg pt-4 pb-2">
-        <Link className={buttonClasses({ size: 'lg', fullWidth: true })} href="/deneyim/yeni">
-          {t('mine.write')}
-        </Link>
-      </div>
+      {!empty && (
+        <div className="sticky-actions z-20 mt-6 bg-bg pt-4 pb-2">
+          <Link className={buttonClasses({ size: 'lg', fullWidth: true })} href="/deneyim/yeni">
+            {t('mine.write')}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
