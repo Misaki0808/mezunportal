@@ -322,6 +322,24 @@ const actions = (over: Partial<ModerationActions> = {}): ModerationActions => ({
 const dialog = () => within(screen.getByRole('dialog'));
 
 describe('moderatör kuyruğu', () => {
+  it('cevap seçenekleri kit radyosudur: ortak ad, değer cevap kimliği, ilk cevap varsayılan seçili, ok tuşu seçimi taşır', async () => {
+    const { user } = renderUi(
+      <FaqModerationQueue initial={{ items: [item()], nextCursor: null }} actions={actions()} />,
+    );
+
+    const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+    expect(radios.map((r) => r.value)).toEqual(['a1', 'a2']);
+    expect(new Set(radios.map((r) => r.name)).size).toBe(1);
+    expect(radios[0]!.name).not.toBe('');
+    for (const radio of radios) expect(radio).toHaveClass('appearance-none', 'size-6');
+    expect(radios[0]).toBeChecked();
+
+    radios[0]!.focus();
+    await user.keyboard('{ArrowDown}');
+    expect(radios[1]).toBeChecked();
+    expect(radios[0]).not.toBeChecked();
+  });
+
   it('seçilen cevap ve düzenlenen metinle yayımlar; satır kuyruktan çıkar', async () => {
     const a = actions();
     renderUi(<FaqModerationQueue initial={{ items: [item()], nextCursor: null }} actions={a} />);
