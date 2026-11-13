@@ -138,7 +138,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 
 ### Faz 2 sonrası ürün ve arayüz P3'leri
 
-- **İlan formu:** zorunlu alanlar yalnız son adımda denetleniyor ("Devam et" boş alanla da geçer); adım değişimi ekran okuyucuya duyurulmuyor.
 - **Küçük görünüm borcu:** klasik (kaplamasız) kaydırma çubuğunda modal açıkken sabit öğeler kayabilir (macOS/iOS'ta gözlenemez; Windows/Linux deneme turunda bakılır).
 
 ### Bakım kuralı
