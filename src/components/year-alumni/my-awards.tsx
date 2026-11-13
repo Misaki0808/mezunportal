@@ -7,6 +7,7 @@ import {
   BadgeCheckIcon,
   Button,
   Card,
+  CopyButton,
   EmptyState,
   IconChip,
   PageHeader,
@@ -35,24 +36,6 @@ function AwardCard({ initial }: { initial: MyAward }) {
         toast.show({ message: t('saved'), tone: 'success' });
       } else setMessage(errors(result.errorCode));
     });
-  }
-  async function copy(share = false) {
-    try {
-      if (!award.verificationUrl) return;
-      await navigator.clipboard.writeText(
-        share
-          ? t('shareText', {
-              university: award.university,
-              department: award.department,
-              year: award.year,
-              url: award.verificationUrl,
-            })
-          : award.verificationUrl,
-      );
-      toast.show({ message: t('copied'), tone: 'success' });
-    } catch {
-      setMessage(t('invalid'));
-    }
   }
   return (
     <Card className="relative overflow-hidden p-6">
@@ -86,12 +69,28 @@ function AwardCard({ initial }: { initial: MyAward }) {
             >
               {t('linkedin')}
             </a>
-            <Button variant="secondary" onClick={() => copy()}>
+            <CopyButton
+              text={award.verificationUrl}
+              copiedMessage={t('copied')}
+              failedMessage={t('copyFailed')}
+              fieldLabel={t('copyFieldLabel')}
+            >
               {t('copy')}
-            </Button>
-            <Button variant="secondary" onClick={() => copy(true)}>
+            </CopyButton>
+            <CopyButton
+              text={t('shareText', {
+                university: award.university,
+                department: award.department,
+                year: award.year,
+                url: award.verificationUrl,
+              })}
+              copiedMessage={t('shareCopied')}
+              failedMessage={t('shareFailed')}
+              fieldLabel={t('shareFieldLabel')}
+              multiline
+            >
               {t('share')}
-            </Button>
+            </CopyButton>
           </div>
         ) : (
           <p className="text-fg-muted">{t('enablePublic')}</p>
