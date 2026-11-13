@@ -120,6 +120,30 @@ it('iletişim için en az bir alan istenir, sunucu kapalı alanı seçtirmez', a
   expect(await screen.findByText(/En az bir/)).toBeInTheDocument();
   expect(mocks.request).not.toHaveBeenCalled();
 });
+it('iletişim isteği beklerken onay kutuları kilitlidir, sonuçtan sonra açılır', async () => {
+  const { act } = await import('@testing-library/react');
+  const gate = Promise.withResolvers<{ ok: false; errorCode: string }>();
+  mocks.request.mockReturnValueOnce(gate.promise);
+  renderWithToasts(
+    <SeekerContact
+      candidateRef="opaque"
+      preview={{ canRequest: true, card: initial.preview!, requestableFields: ['EMAIL'] }}
+    />,
+  );
+  const email = screen.getByRole('checkbox', { name: 'E-posta' });
+  fireEvent.click(email);
+  expect(email).toBeEnabled();
+
+  fireEvent.click(screen.getByRole('button', { name: 'İstek gönder' }));
+  // İstek giderken seçim değiştirilemez (gönderilen alanlar ekrandakiyle ayrışmasın).
+  expect(email).toBeDisabled();
+  expect(email).toBeChecked();
+
+  await act(async () => gate.resolve({ ok: false, errorCode: 'SERVER_UNEXPECTED' }));
+  await waitFor(() => expect(email).toBeEnabled());
+  // Kapalı alan bekleme bittikten sonra da kilitli kalır (kilit yalnız sunucu iznine bağlı).
+  expect(screen.getByRole('checkbox', { name: 'Telefon' })).toBeDisabled();
+});
 it('aday iletişiminde çift tıklama tek istek ve ağ hatasında not korunur', async () => {
   const { act } = await import('@testing-library/react');
   const gate = Promise.withResolvers<never>();

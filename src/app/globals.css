@@ -239,3 +239,8 @@
 :root[data-keyboard='open'] [data-bottom-nav] {
   display: none;
 }
+
+/* Utility katmanından sonra: kilitte sabit çubuklar gövdeyle hizalı kalır; dialog ve kaplama çubuk etkilenmez. */
+:root[data-scroll-lock-gutter] .fixed.inset-x-0:not(dialog) {
+  right: var(--scroll-lock-gutter);
+}
