@@ -105,6 +105,8 @@ export function SearchScreen({ filter, results, sectors }: Props) {
     label: chip.label,
     onRemove: () => go({ ...filter, ...chip.remove, page: 1 }),
   }));
+  // Filtre ya da arama sözcüğü yoksa boş sonuç "filtre" değil "henüz kimse paylaşmadı" demektir.
+  const searched = active.length > 0 || Boolean(filter.q?.trim());
   const filters = (
     <div className="flex flex-col gap-5">
       <Field label={t('type')}>
@@ -280,12 +282,23 @@ export function SearchScreen({ filter, results, sectors }: Props) {
         )}
         active={active}
         total={results.total}
+        hideCount={!searched && results.total === 0}
         pending={pending}
         onApply={() => go({ ...draft, page: 1 })}
         onReset={() => setDraft(filter)}
         onClear={() => go({ q: filter.q, page: 1 })}
         results={
-          results.items.length === 0 ? (
+          results.items.length === 0 && !searched ? (
+            <EmptyState
+              title={t('emptyNoneTitle')}
+              description={t('emptyNoneDescription')}
+              action={
+                <Link href="/deneyim/yeni" className={buttonClasses()}>
+                  {t('write')}
+                </Link>
+              }
+            />
+          ) : results.items.length === 0 ? (
             <EmptyState
               title={t('emptyTitle')}
               description={t('emptyDescription')}

@@ -67,6 +67,15 @@ describe('SSS sayfası ve arama', () => {
     expect(screen.getByRole('search')).toBeVisible();
   });
 
+  it('arama yokken tek cümle: henüz yayınlanmış soru yok; sıfır sayaç yazmaz', () => {
+    renderUi(<FaqList canAsk={true} result={page({ items: [], total: 0, page: 1 })} />);
+    expect(screen.getByText('Henüz yayınlanmış soru yok.')).toBeVisible();
+    expect(screen.getByText(/moderatör onayından sonra burada yayımlanır/)).toBeVisible();
+    expect(screen.queryByText('Soru bulunamadı.')).not.toBeInTheDocument();
+    expect(screen.queryByText('0 soru')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   it('boş sonuçta açıklayıcı durum gösterir', () => {
     renderUi(<FaqList canAsk={true} result={page({ items: [], total: 0, page: 1 })} q="xyz" />);
     expect(screen.getByText('Soru bulunamadı.')).toBeVisible();

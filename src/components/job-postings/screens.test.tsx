@@ -35,6 +35,34 @@ const context: JobPostingFormContext = {
   targetDepartments: [{ id: 'dep', name: 'YBS', facultyName: 'İşletme' }],
   limits: { maxDays: 60, submitLimit: 5, submitWindowDays: 30, maxTargets: 10 },
 };
+const emptyPage = { items: [], total: 0, page: 1, pageSize: 20 };
+it('ilan yokken öğrenci: sıfır sayaç yok, ilanları kimin paylaştığı ve tek eylem (profil) yazılır', () => {
+  renderWithToasts(<PostingList canPost={false} filters={{}} options={options} page={emptyPage} />);
+  expect(screen.getByText('Henüz ilan paylaşılmadı')).toBeVisible();
+  expect(screen.getByText(/İlgi alanlarını eklersen, ilan çıktıkça sana uyanlar/)).toBeVisible();
+  expect(screen.queryByText('0 ilan')).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'İlan ver' })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Profilini düzenle' })).toHaveAttribute(
+    'href',
+    '/profil',
+  );
+});
+it('ilan yokken ilan verebilen rol: öğrenciye söylenen metin değil, ilk ilanı sen paylaş', () => {
+  renderWithToasts(<PostingList canPost filters={{}} options={options} page={emptyPage} />);
+  expect(screen.getByText(/ilk ilanı sen paylaşabilirsin/)).toBeVisible();
+  expect(screen.queryByText(/ilgi alanlarını eklersen/i)).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Profilini düzenle' })).not.toBeInTheDocument();
+  expect(screen.queryByText('0 ilan')).not.toBeInTheDocument();
+});
+it('filtreyle ilan bulunamayınca sayaç ve temizleme kalır, "henüz paylaşılmadı" denmez', () => {
+  renderWithToasts(
+    <PostingList canPost={false} filters={{ q: 'staj' }} options={options} page={emptyPage} />,
+  );
+  expect(screen.getByText('0 ilan')).toBeVisible();
+  expect(screen.getByText('Henüz ilan bulunamadı')).toBeVisible();
+  expect(screen.queryByText('Henüz ilan paylaşılmadı')).not.toBeInTheDocument();
+  expect(screen.getByText('Filtreleri değiştirerek yeniden deneyebilirsin.')).toBeVisible();
+});
 it('"İncele" bağlantıları ilan başlığıyla adlanır; görünen metin aynı kalır', () => {
   const other: JobPostingCard = { ...posting, id: 'job-2', title: 'Veri analizi stajyeri' };
   renderUi(

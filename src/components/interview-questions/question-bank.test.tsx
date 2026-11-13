@@ -33,3 +33,27 @@ it('güvenli şirket toplamını gösterir, sayfalarken arama ve sektörü korur
     '/mulakat-sorulari?sectorId=sektor&q=veri+analizi&page=2',
   );
 });
+
+it('kayıt yokken sıfır sayaç yazmaz; gizlilik eşiğini ve tek eylemi söyler', () => {
+  renderUi(
+    <QuestionBank
+      filters={{ companyId: '', sectorId: '', q: '' }}
+      data={{
+        companies: [],
+        sectors: [],
+        insufficient: false,
+        total: 0,
+        page: 1,
+        pageSize: 10,
+        groups: [],
+      }}
+    />,
+  );
+  expect(screen.queryByText(/şirketten soru bulundu/)).not.toBeInTheDocument();
+  expect(screen.getByText('Henüz gösterilebilecek soru yok.')).toBeVisible();
+  expect(screen.getByText(/en az üç farklı kişinin deneyiminde geçince/)).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Deneyim paylaş' })).toHaveAttribute(
+    'href',
+    '/deneyim/yeni',
+  );
+});
