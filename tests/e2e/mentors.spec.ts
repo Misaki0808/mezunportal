@@ -1,5 +1,5 @@
 import { loginAs } from './login';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 import { TEST_PERSONA_EMAILS } from '../../src/server/auth/test-personas';
 
 const login = loginAs;

@@ -1,6 +1,6 @@
 import { loginAs } from './login';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
 

@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { devices, expect, test, type Page } from '@playwright/test';
+import { devices, expect, test, type Page } from './fixture';
 import { PrismaClient } from '../../src/generated/prisma/client';
 
 /**

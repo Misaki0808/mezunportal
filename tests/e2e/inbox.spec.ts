@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 import { TEST_PERSONAS } from '../../prisma/seed-data';

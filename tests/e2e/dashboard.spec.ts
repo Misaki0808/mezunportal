@@ -1,5 +1,5 @@
 import { loginAs } from './login';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 import { PrismaClient } from '../../src/generated/prisma/client';

@@ -2,7 +2,7 @@ import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile, rm, access } from 'node:fs/promises';
 import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 const db = new PrismaClient({

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 
 test('girişsiz karşılama ekranının birincil eylemi girişe götürür', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 780 });
