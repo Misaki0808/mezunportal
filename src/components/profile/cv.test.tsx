@@ -313,6 +313,22 @@ describe('CV akışı', () => {
     expect(input).not.toHaveAttribute('aria-invalid');
   });
 
+  it('"CV\'yi oku" çubuğu dosya seçilmeden yapışkan değildir (seçicinin yarısını örtmesin), seçilince yapışır, dosya kalkarsa akışa döner', async () => {
+    const { user } = renderUi(
+      <CvFlow availability={available} latest={null} actions={actions({})} />,
+    );
+    const input = screen.getByLabelText(/CV dosyası/);
+    const bar = screen.getByRole('button', { name: "CV'yi oku" }).parentElement!;
+    // 390×664'te yapışkan çubuk seçicinin %44'ünü, 375'te %38'ini, 320'de %60'ını örtüyordu.
+    expect(bar).not.toHaveClass('sticky-actions');
+
+    await user.upload(input, new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' }));
+    expect(bar).toHaveClass('sticky-actions');
+
+    fireEvent.change(input, { target: { files: [] } });
+    expect(bar).not.toHaveClass('sticky-actions');
+  });
+
   it('geçerli PDF yüklenir → işleniyor → sonuç hazır olunca onay ekranı açılır', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {

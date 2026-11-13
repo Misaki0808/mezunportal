@@ -16,7 +16,7 @@ import {
   type DiscardCvOutput,
 } from '@/contracts/cv';
 import type { ActionResult } from '@/contracts/result';
-import { Button, buttonClasses, Field, FilePicker, RadioGroup, Sheet } from '@/components/ui';
+import { Button, buttonClasses, cn, Field, FilePicker, RadioGroup, Sheet } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { CvReview } from './cv-review';
@@ -71,6 +71,7 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
   const errors = useTranslations('errors.codes');
   const [view, setView] = useState<View>(() => viewOf(latest, initialReview));
   const [fileError, setFileError] = useState<ErrorCode>();
+  const [hasFile, setHasFile] = useState(false);
   const [error, setError] = useState<ErrorCode>();
   const [pending, setPending] = useState(false);
   const [guide, setGuide] = useState(false);
@@ -234,7 +235,10 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
                     name="file"
                     accept="application/pdf"
                     chooseLabel={t('chooseFile')}
-                    onChange={() => setFileError(undefined)}
+                    onChange={(event) => {
+                      setFileError(undefined);
+                      setHasFile((event.target.files?.length ?? 0) > 0);
+                    }}
                   />
                 )}
               </Field>
@@ -246,7 +250,9 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
                   {errors(error)}
                 </p>
               )}
-              <div className="sticky-actions z-20 bg-bg pt-2 pb-2">
+              {/* Dosya seçilmeden "CV'yi oku" bir işe yaramaz: yapışkan olursa kısa ekranda (664 px) seçicinin yarısını örter
+                  (%44 / %38 / %60 örtüyordu). Dosya seçilince yapışır; seçici de `scroll-above-bars` payıyla çubuğun üstüne alınır. */}
+              <div className={cn(hasFile && 'sticky-actions', 'z-20 bg-bg pt-2 pb-2')}>
                 <Button type="submit" size="lg" fullWidth loading={pending}>
                   {pending ? t('uploading') : t('submit')}
                 </Button>

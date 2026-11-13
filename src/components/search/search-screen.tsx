@@ -249,12 +249,15 @@ export function SearchScreen({ filter, results, sectors }: Props) {
   return (
     <div className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:pt-14">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')}>
-        <Link href="/deneyimlerim" className={`${buttonClasses({ variant: 'secondary' })} mt-4`}>
-          {t('mine')}
-        </Link>
-        <Link href="/sirketler" className={`${buttonClasses({ variant: 'secondary' })} ml-2 mt-4`}>
-          {companies('title')}
-        </Link>
+        {/* Tek kapsayıcı: dar ekranda (320 px) ikinci düğme alt satıra sarınca soldan hizalı kalır (`ml-2` onu 8 px içeri iterdi). */}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/deneyimlerim" className={buttonClasses({ variant: 'secondary' })}>
+            {t('mine')}
+          </Link>
+          <Link href="/sirketler" className={buttonClasses({ variant: 'secondary' })}>
+            {companies('title')}
+          </Link>
+        </div>
       </PageHeader>
       <FilterShell
         search={(filtersButton) => (

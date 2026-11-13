@@ -4,6 +4,9 @@ import { useId } from 'react';
 import type { ComponentProps, FormEvent, ReactNode } from 'react';
 
 import { AlertIcon, Button, Input, cn } from '@/components/ui';
+import { useHydrated } from '@/hooks/use-hydrated';
+
+import { omitEmptyFields } from './omit-empty-fields';
 
 type InputPassThrough = Omit<
   ComponentProps<typeof Input>,
@@ -22,8 +25,10 @@ type Props = {
   trailing?: ReactNode;
   /**
    * Satır sonundaki öğe UZAMIŞSA (etkin filtre sayısıyla "Filtreler (3)") `true`: girdi en az 10 rem (160 px) kalır, sığmayan
-   * düğme alt satıra iner (360 px'te girdi 105 px'e düşüyordu). Varsayılan `false`: girdi daralabilir ve satır TEK kalır; sabit bir
-   * alt sınır, filtre yokken de düğmeyi alt satıra itip mobil ilk ekrandaki sonuçları aşağı kaydırırdı (`/ilanlar` 360 px).
+   * düğme alt satıra iner (360 px'te girdi 105 px'e düşüyordu). Varsayılan `false`: girdi en az 7,5 rem (120 px) kalır. 360 px'te
+   * girdi 127-135 px olur ve satır TEK kalır; 10 rem alt sınırı filtre yokken de düğmeyi alt satıra itip mobil ilk ekrandaki
+   * sonuçları aşağı kaydırırdı (`/ilanlar` 360 px). 320 px'te girdi 87-95 px'e düşer ("ornek" yerli temizle düğmesiyle sığmaz):
+   * 120 px'in altına inince "Filtreler" alt satıra geçer, girdi geniş kalır.
    */
   wideTrailing?: boolean;
   /**
@@ -62,6 +67,7 @@ export function SearchBar({
   input,
 }: Props) {
   const baseId = useId();
+  const hydrated = useHydrated();
   const inputId = `${baseId}-input`;
   const hintId = `${baseId}-hint`;
   const errorId = `${baseId}-error`;
@@ -70,8 +76,10 @@ export function SearchBar({
 
   return (
     <form
+      ref={omitEmptyFields}
       role="search"
       action={action}
+      data-hydrated={hydrated ? 'true' : undefined}
       onSubmit={onSubmit}
       className={cn('rounded-card border border-border bg-surface p-3 shadow-sm sm:p-5', className)}
     >
@@ -86,7 +94,7 @@ export function SearchBar({
           placeholder={hint}
           aria-describedby={describedBy}
           invalid={error ? true : undefined}
-          className={cn(wideTrailing ? 'min-w-40' : 'min-w-0', 'flex-1')}
+          className={cn(wideTrailing ? 'min-w-40' : 'min-w-30', 'flex-1')}
         />
         <Button
           type="submit"

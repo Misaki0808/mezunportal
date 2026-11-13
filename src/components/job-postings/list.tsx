@@ -23,6 +23,7 @@ import {
   Sheet,
   buttonClasses,
 } from '@/components/ui';
+import { omitEmptyFields } from '@/components/directory/omit-empty-fields';
 import { SearchBar } from '@/components/directory/search-bar';
 
 export function PostingCard({ posting }: { posting: JobPostingCard }) {
@@ -310,6 +311,7 @@ export function PostingList({
         }
       >
         <form
+          ref={omitEmptyFields}
           id={filterFormId}
           key={filterEpoch}
           action="/ilanlar"
