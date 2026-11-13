@@ -81,16 +81,39 @@ it('süzgeçle eşleşme yokken "henüz yok"/gizlilik değil arama dili: tek eyl
   expect(screen.queryByRole('link', { name: 'Deneyim paylaş' })).not.toBeInTheDocument();
 });
 
-it('süzgeçli ama seçim gizlilik eşiğinin altındaysa (az deneyim) gizlilik gerekçesi söylenir', () => {
+it.each([
+  { companyId: 'a', sectorId: '', q: '' },
+  { companyId: '', sectorId: '', q: 'mülakat' },
+])(
+  'süzgeçli ve seçim gizlilik eşiğinin altındaysa arama dili ile gizlilik gerekçesi birlikte söylenir, eylem süzgeci temizlemektir: %o',
+  (filters) => {
+    renderUi(<QuestionBank filters={filters} data={bank({ insufficient: true })} />);
+    expect(screen.getByText('Bu seçimle eşleşen soru yok')).toBeVisible();
+    expect(screen.getByText(/en az üç farklı kişinin/)).toBeVisible();
+    // Metin sayı ya da "şu şirkette az deneyim var" gibi bir şey söylemez (gizlilik).
+    expect(screen.queryByText(/az sayıda deneyim/)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Filtreleri temizle' })).toHaveAttribute(
+      'href',
+      '/mulakat-sorulari',
+    );
+    expect(screen.queryByRole('link', { name: 'Deneyim paylaş' })).not.toBeInTheDocument();
+  },
+);
+
+it('süzgeçsiz ama gizlilik eşiğinin altında kalan şirket varsa bugünkü gizlilik boş durumu ve "Deneyim paylaş" kalır', () => {
   renderUi(
     <QuestionBank
-      filters={{ companyId: 'a', sectorId: '', q: '' }}
+      filters={{ companyId: '', sectorId: '', q: '' }}
       data={bank({ insufficient: true })}
     />,
   );
   expect(screen.getByText('Bu seçim için az sayıda deneyim var.')).toBeVisible();
   expect(screen.getByText(/en az üç farklı kişinin/)).toBeVisible();
-  expect(screen.queryByText('Bu seçimle eşleşen soru yok')).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Filtreleri temizle' })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Deneyim paylaş' })).toHaveAttribute(
+    'href',
+    '/deneyim/yeni',
+  );
 });
 
 it('aralık dışı sayfada toplam sayı ile "henüz yok" çelişmez: bu sayfa boş, ilk sayfaya dön', () => {

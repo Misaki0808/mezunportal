@@ -21,6 +21,8 @@ export async function AppShell({ children }: { children: ReactNode }) {
     <AppShellClient
       showAdmin={showAdmin}
       signedIn={!!actor}
+      // Oturum var ama güncel onay yok: onay ekranı dışındaki her sayfa onaya geri yollar; gezinme kapalı kalır.
+      consentPending={!!actor && !consented}
       canRefreshNotifications={!!consented}
       unreadNotifications={unread}
     >

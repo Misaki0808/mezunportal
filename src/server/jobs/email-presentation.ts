@@ -17,6 +17,9 @@ function actionFor(template: string): { label: string; path: string } {
   if (template === 'auth.sign-in-link') return { label: t('ctaSignIn'), path: '/giris' };
   if (template.startsWith('auth.change-email'))
     return { label: t('ctaVerifyEmail'), path: '/hesap/e-posta' };
+  // Onay: sıradaki adım başlangıçtır (durum sayfası araya girmez). Ret: yeniden başvuru durum sayfasından.
+  if (template === 'graduation-document.approved')
+    return { label: t('ctaGraduationApproved'), path: '/baslangic' };
   if (template.startsWith('graduation-document.'))
     return { label: t('ctaGraduation'), path: '/dogrulama' };
   if (template === 'appointment.feedback')

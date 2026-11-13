@@ -36,6 +36,7 @@ describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
     expect(shell.type).toBe(AppShellClient);
     expect(shell.props).toMatchObject({
       signedIn: true,
+      consentPending: false,
       canRefreshNotifications: true,
       unreadNotifications: 4,
     });
@@ -47,6 +48,7 @@ describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
     const shell = await render();
     expect(shell.props).toMatchObject({
       signedIn: false,
+      consentPending: false,
       canRefreshNotifications: false,
       unreadNotifications: 0,
     });
@@ -71,6 +73,8 @@ it('rızası eksik kullanıcı giriş yapmış görünür ama rozet iş verisi o
   const shell = await render();
   expect(shell.props).toMatchObject({
     signedIn: true,
+    // Oturum var, onay yok: gezinme kapalı (kart 316); girişsiz ziyaretçiye bu bayrak verilmez.
+    consentPending: true,
     canRefreshNotifications: false,
     unreadNotifications: 0,
   });

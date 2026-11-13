@@ -235,6 +235,12 @@
   scroll-margin-bottom: calc(9rem + env(safe-area-inset-bottom));
 }
 
+/* Zorunlu onay beklerken alt gezinme çizilmez (AppShellClient `consentPending`): yapışkan eylem çubuğu ekranın dibine iner,
+   gezinmenin yüksekliği kadar boşluk bırakmaz. */
+[data-no-nav] .sticky-actions {
+  bottom: env(safe-area-inset-bottom);
+}
+
 /* Ekran klavyesi açıkken alt gezinme gizlenir. */
 :root[data-keyboard='open'] [data-bottom-nav] {
   display: none;

@@ -45,12 +45,13 @@ export function QuestionCards({
           }
         />
       );
-    // Süzgeçle eşleşme yok (gizlilik eşiği değil): arama dili, tek eylem süzgeci temizlemek.
-    if (filtered && !insufficient)
+    // Süzgeçle eşleşme yok: arama dili, tek eylem süzgeci temizlemek. Gizlilik eşiğinin altında kalan bir şirket de varsa
+    // (pilotta şirket başına 1-2 yazar olası) gerekçe aynı cümleye eklenir; hesap ve eşik değişmez, metin sayı vermez.
+    if (filtered)
       return (
         <EmptyState
           title={t('noMatch')}
-          description={t('noMatchHint')}
+          description={insufficient ? t('noMatchPrivacyHint') : t('noMatchHint')}
           action={
             <Link href="/mulakat-sorulari" className={buttonClasses({ variant: 'secondary' })}>
               {t('clear')}

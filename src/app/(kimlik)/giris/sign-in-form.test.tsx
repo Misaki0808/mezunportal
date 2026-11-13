@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
+import { readSignInAddress } from './sign-in-address';
 import { SignInForm } from './sign-in-form';
 
 const push = vi.fn();
@@ -18,6 +19,7 @@ describe('SignInForm', () => {
   beforeEach(() => {
     push.mockClear();
     startLinkedIn.mockReset();
+    window.sessionStorage.clear();
   });
   it('LinkedIn kapalıysa düğme ve veya ayracı görünmez', () => {
     renderUi(
@@ -82,6 +84,22 @@ describe('SignInForm', () => {
       await waitFor(() => expect(push).toHaveBeenCalledWith('/giris/epostani-kontrol-et'));
     },
   );
+  it('bağlantı istenen adresi yalnız başarıda, sonraki ekranda göstermek üzere bu sekmenin belleğine yazar', async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, errorCode: 'RATE_LIMITED' })
+      .mockResolvedValueOnce({ ok: true, data: { status: 'CHECK_EMAIL' } });
+    const { user } = renderUi(
+      <SignInForm options={disabledOptions} requestLink={request} startLinkedIn={startLinkedIn} />,
+    );
+    await user.type(screen.getByLabelText(/E-posta adresi/), 'ayse@ogr.iu.edu.tr');
+    await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
+    await screen.findByRole('alert');
+    expect(readSignInAddress()).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/giris/epostani-kontrol-et'));
+    expect(readSignInAddress()).toBe('ayse@ogr.iu.edu.tr');
+  });
   it('sunucu hata kodunu katalog metni olarak gösterir', async () => {
     const request = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
     const { user } = renderUi(

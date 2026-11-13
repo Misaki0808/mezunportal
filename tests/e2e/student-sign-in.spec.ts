@@ -37,6 +37,13 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await page.getByLabel('E-posta adresi').fill(email);
     await page.getByRole('button', { name: 'Giriş bağlantısı gönder' }).click();
     await expect(page).toHaveURL(/\/giris\/epostani-kontrol-et$/);
+    // Yazılan adres görünür (yanlış yazdıysa fark etsin), çıkış ve başka tarayıcı açıklaması yazılı.
+    await expect(page.getByText(email)).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Farklı adres gir' })).toHaveAttribute(
+      'href',
+      '/giris',
+    );
+    await expect(page.getByText(/başka bir tarayıcıda ya da cihazda açtıysan/)).toBeVisible();
     let link: string | undefined;
     await expect
       .poll(
@@ -85,11 +92,15 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await page.goto('/hesap');
     await expect(page).toHaveURL(/\/onay(?:\?.*)?$/);
     await waitForHydratedForm(page, 'Seçimlerimi kaydet');
+    // Onay beklerken alt sekme çubuğu yok: sekmeler yine onaya geri yollar.
+    await expect(page.locator('[data-bottom-nav]')).toHaveCount(0);
     const consents = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
     await consents.nth(0).check();
     await consents.nth(1).check();
     await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
     await expect(page).toHaveURL(/\/hesap$/);
+    // Onay verilince gezinme geri gelir.
+    await expect(page.locator('[data-bottom-nav]')).toBeVisible();
     await page.goto('/');
     await expect(page.getByText('Doğrulamanı tamamla')).toBeVisible();
     await page.getByRole('link', { name: 'Doğrulamaya git' }).click();
