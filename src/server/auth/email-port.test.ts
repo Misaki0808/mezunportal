@@ -111,7 +111,7 @@ describe('kimlik doğrulama e-postaları (R2 kuyruk imzasına göre)', () => {
     expect(calls[0]?.idempotencyKey).toBe(calls[1]?.idempotencyKey);
     expect(calls[2]).toMatchObject({
       template: 'graduation-document.rejected',
-      subject: 'Mezun belgen onaylanamadı',
+      subject: 'Mezun belgen incelendi',
     });
     expect(calls[2]?.text).toContain('Gerekçe: Barkod doğrulanamadı.');
     expect(calls[2]?.idempotencyKey).not.toBe(calls[0]?.idempotencyKey);
