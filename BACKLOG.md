@@ -117,7 +117,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 
 ### Faz 2 sonrası ürün ve arayüz P3'leri
 
-- **Küçük görünüm borcu:** klasik (kaplamasız) kaydırma çubuğunda modal açıkken sabit öğeler kayabilir (macOS/iOS'ta gözlenemez; Windows/Linux deneme turunda bakılır).
 
 ### Bakım kuralı
 
