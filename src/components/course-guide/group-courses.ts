@@ -1,4 +1,4 @@
-/** Sorgu sırasını kategori içinde korur; gizlenen sayıları hesaplamaz veya yeniden üretmez. */
+/** Sorgu sırasını her grup içinde korur; gizlenen sayıları hesaplamaz veya yeniden üretmez. */
 export function groupGuideCourses<
   T extends { code: string; semester: number; count: number | null },
 >(courses: readonly T[]) {
