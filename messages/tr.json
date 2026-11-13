@@ -478,7 +478,8 @@
       "title": "Bu filtrelerle mentor bulunamadı",
       "description": "Filtreleri gevşetmeyi ya da müsait olanlar seçeneğini kapatmayı dene.",
       "none": "Henüz listelenecek mentor yok",
-      "noneDescription": "Mentorlar profillerini etkinleştirdikçe burada görünür."
+      "noneDescription": "Mentorlar profillerini açtıkça burada görünür. O zamana kadar mezunların deneyimlerinden yararlanabilirsin.",
+      "noneAction": "Deneyimlere bak"
     },
     "entry": {
       "title": "Mentorla görüş",
@@ -2057,6 +2058,8 @@
     "pay": "Ücret",
     "emptyTitle": "Bu filtrelerle deneyim bulunamadı",
     "emptyDescription": "Filtreleri biraz gevşet ya da bu konuda ilk deneyimi sen paylaş.",
+    "emptyNoneTitle": "Henüz yayınlanmış deneyim yok",
+    "emptyNoneDescription": "İlk deneyimi sen paylaş; senden sonra gelenlere hangi şirkette ne yaşandığını anlatmış olursun. Yayınlanmadan önce bölüm yöneticisi inceler.",
     "write": "Deneyim yaz",
     "anonymous": "Anonim paylaşıldı",
     "by": "{name} tarafından paylaşıldı",
@@ -2812,6 +2815,7 @@
     "empty": "Soru bulunamadı.",
     "emptySearch": "Başka sözcüklerle aramayı dene.",
     "emptyAll": "Henüz yayınlanmış soru yok.",
+    "emptyAllHint": "Mentorların cevapladığı sorular, moderatör onayından sonra burada yayımlanır.",
     "backToList": "Tüm sorulara dön",
     "entry": {
       "browse": "Sık sorulan sorular",
@@ -3016,7 +3020,10 @@
     "fourteenDays": "Son 14 gün",
     "results": "{count} ilan",
     "emptyTitle": "Henüz ilan bulunamadı",
-    "emptyBody": "Yeni ilanlar eklenince burada görünür.",
+    "emptyNoneTitle": "Henüz ilan paylaşılmadı",
+    "emptyBody": "İlgi alanlarını eklersen, ilan çıktıkça sana uyanlar burada ve ana sayfada öne çıkar.",
+    "emptyBodyPoster": "Bölümünün öğrencilerine ilk ilanı sen paylaşabilirsin. Yayınlanmadan önce bölüm yöneticisi inceler.",
+    "emptyProfile": "Profilini düzenle",
     "emptyFiltered": "Filtreleri değiştirerek yeniden deneyebilirsin.",
     "today": "Bugün son gün",
     "daysLeft": "Son {count} gün",
@@ -3063,7 +3070,7 @@
     "closeConfirm": "Bu ilanı kapatmak istediğine emin misin?",
     "cancel": "Vazgeç",
     "moderationTitle": "İlan inceleme kuyruğu",
-    "moderationEmpty": "İncelenecek ilan yok.",
+    "moderationEmpty": "İncelenecek ilan yok. Yeni ilanlar burada görünecek.",
     "publish": "Yayımla",
     "reject": "Reddet",
     "reason": "Ret gerekçesi",
@@ -3141,6 +3148,9 @@
     "results": "Şirketler",
     "none": "Şirket bulunamadı",
     "noneHint": "Başka bir ad veya yazım deneyebilirsin.",
+    "noneYet": "Henüz şirket sayfası yok",
+    "noneYetHint": "Gizlilik için bir şirketin sayfası, o şirketten en az üç farklı kişinin deneyimi yayınlanınca açılır. İlk deneyimi sen paylaşabilirsin.",
+    "noneYetAction": "Deneyim yaz",
     "back": "Şirketlere dön",
     "sectorUnknown": "Sektör bilgisi yok",
     "tabs": "Şirket bilgileri",
@@ -3200,7 +3210,7 @@
     "next": "Sonraki",
     "insufficient": "Bu seçim için az sayıda deneyim var.",
     "empty": "Henüz gösterilebilecek soru yok.",
-    "emptyHint": "Daha fazla deneyim paylaşıldığında soruları burada görebilirsin.",
+    "emptyHint": "Gizlilik için bir soru, en az üç farklı kişinin deneyiminde geçince gösterilir. Deneyimini paylaşarak sen de katkı sağlayabilirsin.",
     "share": "Deneyim paylaş",
     "tab": "Mülakat",
     "link": "Mülakat sorularına bak"
@@ -3293,7 +3303,7 @@
       "12": "Aralık"
     },
     "tab": "Başvuru dönemi",
-    "empty": "Henüz yeterli veri yok",
+    "empty": "Henüz yeterli veri yok. Gizlilik için bir dönem, en az üç kişinin deneyiminden çıkınca gösterilir.",
     "note": "Ayı belirtilmeyen deneyimler için mevsimin üç ayı yaklaşık kabul edilir.",
     "month": "Ay",
     "count": "Kişi sayısı",
@@ -3309,7 +3319,7 @@
     "allSectors": "Sektör seç",
     "noSectors": "Henüz sektör yok.",
     "allCompanies": "Şirket seç",
-    "chooseScope": "Bir şirket veya sektör seçerek başvuru dönemlerini görebilirsin."
+    "chooseScope": "Bir şirket veya sektör seçerek başvuru dönemlerini görebilirsin. Gizlilik için bir dönem, en az üç kişinin deneyiminden çıkınca gösterilir."
   },
   "yearAlumni": {
     "awardName": "Yılın Mezunu",
@@ -3483,7 +3493,7 @@
   },
   "courseGuide": {
     "title": "Seçmeli ders rehberi",
-    "description": "Mezunların iş hayatında işe yaradığını söylediği dersleri gör.",
+    "description": "Mezunların iş hayatında işe yaradığını söylediği dersleri gör. Gizlilik için bir dersin sonucu, en az üç mezun seçince görünür.",
     "search": "Ders ara",
     "semester": "Yarıyıl",
     "kind": "Ders türü",

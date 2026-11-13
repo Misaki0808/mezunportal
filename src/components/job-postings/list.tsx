@@ -322,7 +322,9 @@ export function PostingList({
         </form>
       </Sheet>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
-        <p className="font-semibold text-fg">{t('results', { count: page.total })}</p>
+        {(page.total > 0 || filtered) && (
+          <p className="font-semibold text-fg">{t('results', { count: page.total })}</p>
+        )}
         {filtered && (
           <Link
             href="/ilanlar"
@@ -341,8 +343,8 @@ export function PostingList({
       ) : (
         <div className="rounded-card border border-dashed border-border bg-surface">
           <EmptyState
-            title={t('emptyTitle')}
-            description={t(filtered ? 'emptyFiltered' : 'emptyBody')}
+            title={t(filtered ? 'emptyTitle' : 'emptyNoneTitle')}
+            description={t(filtered ? 'emptyFiltered' : canPost ? 'emptyBodyPoster' : 'emptyBody')}
             action={
               filtered ? (
                 <Link href="/ilanlar" className={buttonClasses({ variant: 'secondary' })}>
@@ -352,7 +354,11 @@ export function PostingList({
                 <Link href="/ilanlar/yeni" className={buttonClasses()}>
                   {t('post')}
                 </Link>
-              ) : undefined
+              ) : (
+                <Link href="/profil" className={buttonClasses({ variant: 'secondary' })}>
+                  {t('emptyProfile')}
+                </Link>
+              )
             }
           />
         </div>

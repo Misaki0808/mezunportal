@@ -15,6 +15,8 @@ type Props = {
   /** Etkin filtreler çip olarak listelenir; her çip tek dokunuşla kaldırılır. */
   active: readonly ActiveFilter[];
   total: number;
+  /** Hiç kayıt yokken ve filtre/arama yokken "0 sonuç" yazmaz (boş durum zaten durumu anlatır). */
+  hideCount?: boolean;
   /**
    * Filtreler uygulanır (URL'e yazılır). Geçersiz girdi `false` döner: alt sayfa AÇIK kalır ve alan hatası görünür
    * (kullanıcı hatayı göremeden sayfa kapanmaz).
@@ -45,6 +47,7 @@ export function FilterShell({
   children,
   active,
   total,
+  hideCount = false,
   onApply,
   onReset,
   onClear,
@@ -122,9 +125,13 @@ export function FilterShell({
         <section aria-busy={pending} className="min-w-0">
           {lead}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="font-semibold" aria-live="polite">
-              {t('resultCount', { count: total })}
-            </p>
+            {hideCount ? (
+              <span aria-live="polite" />
+            ) : (
+              <p className="font-semibold" aria-live="polite">
+                {t('resultCount', { count: total })}
+              </p>
+            )}
             {active.length > 0 && (
               <Button variant="secondary" onClick={onClear}>
                 {t('clear')}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
@@ -16,6 +17,7 @@ import {
 } from '@/contracts/mentor-directory';
 import {
   Button,
+  buttonClasses,
   Checkbox,
   EmptyState,
   Field,
@@ -242,6 +244,7 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
       <FilterShell
         active={active}
         total={results.total}
+        hideCount={!hasFilter && results.total === 0}
         pending={pending}
         onApply={() => go({ ...draft, page: 1 })}
         onReset={() => setDraft(filter)}
@@ -260,7 +263,11 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
                   <Button variant="secondary" onClick={() => go({})}>
                     {directory('clear')}
                   </Button>
-                ) : undefined
+                ) : (
+                  <Link href="/deneyimler" className={buttonClasses()}>
+                    {t('empty.noneAction')}
+                  </Link>
+                )
               }
             />
           ) : (
