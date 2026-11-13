@@ -115,9 +115,6 @@ Karar verilince madde silinir ve gerekçe `docs/decisions.md`'ye yazılır.
 - e-Devlet mezun belgesi elle doğrulanır (otomatik doğrulama için açık API yok).
 - Bölüm bilgisi beyandır; e-posta alan adı yalnız üniversiteyi doğrular.
 
-### Faz 2 sonrası ürün ve arayüz P3'leri
-
-
 ### Bakım kuralı
 
 Reviewer'ın kapsam dışı bulduğu ama engel olmayan borç PM'ye gider; PM onaylarsa bir sonraki

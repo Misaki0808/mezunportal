@@ -3,7 +3,7 @@ import { expect, test } from './fixture';
 import { workerBaseUrl } from './isolation';
 import { loginAs } from './login';
 
-/** Başvuru formundaki gerçek Modal: klasik çubukta sabit çubuklar ve içerik aynı yerde kalır. */
+/** Deneyim formundaki gerçek Modal: klasik çubukta sabit çubuklar ve içerik aynı yerde kalır. */
 for (const classic of [true, false]) {
   for (const width of [390, 1440]) {
     test(`${classic ? 'klasik' : 'kaplama'} çubuk ${width}px: pencere aç/kapa yatay konumu korur`, async ({}, info) => {
