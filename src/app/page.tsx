@@ -123,7 +123,11 @@ export default async function HomePage() {
       {needsVerification && <h1 className="text-3xl font-semibold">{t('welcome')}</h1>}
       {needsVerification && (
         <Link
-          href="/dogrulama"
+          href={
+            state.data.status === 'NOT_STARTED' && state.data.emailKind !== 'OTHER'
+              ? '/dogrulama/uyelik'
+              : '/dogrulama'
+          }
           className="press-row flex min-h-20 flex-col gap-2 rounded-card border border-primary bg-primary-soft p-5 text-on-primary-soft"
         >
           <span className="text-lg font-semibold">
@@ -133,7 +137,9 @@ export default async function HomePage() {
             {auth(
               state.data.status === 'AWAITING_REVIEW'
                 ? 'reviewDescription'
-                : 'verificationDescription',
+                : state.data.status === 'NOT_STARTED' && state.data.emailKind === 'OTHER'
+                  ? 'verificationDescriptionAlumni'
+                  : 'verificationDescription',
             )}
           </span>
           <span className="text-base font-semibold underline underline-offset-4">

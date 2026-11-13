@@ -38,4 +38,10 @@ it('başarılı işlemden sonra başlık güncellenir', async () => {
   await user.type(screen.getByLabelText(/Üniversiteye giriş yılı/), '2024');
   await user.click(screen.getByRole('button', { name: 'Doğrulamayı tamamla' }));
   expect(await screen.findByRole('heading', { name: 'Doğrulama tamamlandı' })).toBeVisible();
+  // Tek eylem sıradaki adıma gider (durum sayfası araya girmez).
+  expect(screen.getByRole('link', { name: 'Başlangıç adımlarına geç' })).toHaveAttribute(
+    'href',
+    '/baslangic',
+  );
+  expect(screen.queryByRole('link', { name: 'Durumu gör' })).not.toBeInTheDocument();
 });

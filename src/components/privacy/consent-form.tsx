@@ -65,7 +65,8 @@ export function ConsentForm({
           void form.run(
             () => recordConsents(input),
             () => {
-              if (state.blocking) router.replace(returnTo ?? '/hesap');
+              // Yeni kullanıcının sıradaki adımı (doğrulama, başlangıç) ana sayfada kart olarak yazılıdır; hesap ayarları sayfası değil.
+              if (state.blocking) router.replace(returnTo ?? '/');
               router.refresh();
             },
             t('saved'),

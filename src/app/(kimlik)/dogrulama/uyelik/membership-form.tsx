@@ -90,8 +90,8 @@ export function MembershipForm({
           {t('success')}
         </p>
         <div className="mt-auto pt-8">
-          <Link href="/dogrulama" className={buttonClasses({ fullWidth: true, size: 'lg' })}>
-            {t('status')}
+          <Link href="/baslangic" className={buttonClasses({ fullWidth: true, size: 'lg' })}>
+            {t('start')}
           </Link>
         </div>
       </div>
