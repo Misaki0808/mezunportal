@@ -69,20 +69,19 @@ test('yeni öğrenci e-posta doğrulamasından ilk deneyim listesine ulaşır', 
     await required.nth(0).check();
     await required.nth(1).check();
     await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
-    await expect(page).not.toHaveURL(/\/onay/);
-    await page.goto('/');
+    // Onaydan sonra hesap ayarlarına değil ana sayfaya düşer; sıradaki adım orada kart olarak yazılıdır.
+    await expect(page).toHaveURL(/\/$/);
     await page.getByRole('link', { name: 'Doğrulamaya git' }).click();
-    await expect(page).toHaveURL(/\/dogrulama$/);
-    await page.getByRole('link', { name: 'Üyeliğini doğrula' }).click();
+    // Kart doğrudan üyelik formuna gider (araya durum sayfası girmez).
+    await expect(page).toHaveURL(/\/dogrulama\/uyelik$/);
     await waitForHydratedForm(page, 'Doğrulamayı tamamla');
     await page.getByLabel('Bölüm').selectOption({ index: 1 });
     await page.getByLabel('Üniversiteye giriş yılı').fill('2024');
     await page.getByRole('button', { name: 'Doğrulamayı tamamla' }).click();
     await expect(page.getByText('Üyeliğin doğrulandı.')).toBeVisible();
-    await page.getByRole('link', { name: 'Durumu gör' }).click();
-    await page.getByRole('link', { name: 'Ana sayfaya dön' }).click();
-    await expect(page).toHaveURL(/\/$/);
-    await page.getByRole('link', { name: /Profilini tamamla/ }).click();
+    // Başarı ekranının tek eylemi sıradaki adıma götürür.
+    await page.getByRole('link', { name: 'Başlangıç adımlarına geç' }).click();
+    await expect(page).toHaveURL(/\/baslangic$/);
     await waitForHydratedControl(page, 'Devam et');
     await page.getByRole('checkbox', { name: 'Yazılım geliştirme' }).check();
     await page.getByRole('button', { name: 'Devam et' }).click();

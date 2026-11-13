@@ -73,13 +73,55 @@ describe('HomePage', () => {
   });
   it('doğrulanmamış oturuma sunucu durumundan doğrulama bağlantısı gösterir', async () => {
     mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
-    mocks.getVerificationState.mockResolvedValue({ ok: true, data: { status: 'NOT_STARTED' } });
+    mocks.getVerificationState.mockResolvedValue({
+      ok: true,
+      data: { status: 'NOT_STARTED', emailKind: 'OTHER' },
+    });
     renderUi(await HomePage());
     expect(screen.getByRole('heading', { level: 1, name: 'welcome' })).toBeVisible();
     expect(screen.getByRole('link', { name: /verificationTitle/ })).toHaveAttribute(
       'href',
       '/dogrulama',
     );
+  });
+  it('yeni öğrenci ve akademisyen doğrulama bağlantısı doğrudan üyelik formuna gider (araya durum sayfası girmez)', async () => {
+    mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
+    for (const emailKind of ['STUDENT_DOMAIN', 'STAFF_DOMAIN']) {
+      mocks.getVerificationState.mockResolvedValue({
+        ok: true,
+        data: { status: 'NOT_STARTED', emailKind },
+      });
+      const { unmount } = renderUi(await HomePage());
+      expect(screen.getByRole('link', { name: /verificationTitle/ })).toHaveAttribute(
+        'href',
+        '/dogrulama/uyelik',
+      );
+      expect(screen.getByText('verificationDescription')).toBeVisible();
+      unmount();
+    }
+  });
+  it('yeni mezun (kişisel e-posta) için bağlantı durum sayfasına ve açıklama belge yüklemeye gider', async () => {
+    mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
+    mocks.getVerificationState.mockResolvedValue({
+      ok: true,
+      data: { status: 'NOT_STARTED', emailKind: 'OTHER' },
+    });
+    renderUi(await HomePage());
+    expect(screen.getByText('verificationDescriptionAlumni')).toBeVisible();
+    expect(screen.queryByText('verificationDescription')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /verificationTitle/ })).toHaveAttribute(
+      'href',
+      '/dogrulama',
+    );
+  });
+  it('inceleme bekleyen mezunun bağlantısı durum sayfasına gider (üyelik formuna değil)', async () => {
+    mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });
+    mocks.getVerificationState.mockResolvedValue({
+      ok: true,
+      data: { status: 'AWAITING_REVIEW', emailKind: 'STUDENT_DOMAIN' },
+    });
+    renderUi(await HomePage());
+    expect(screen.getByRole('link', { name: /reviewTitle/ })).toHaveAttribute('href', '/dogrulama');
   });
   it('doğrulanmış üyeye doğrulama uyarısı göstermez', async () => {
     mocks.requireUser.mockResolvedValue({ facts: { memberships: [] } });

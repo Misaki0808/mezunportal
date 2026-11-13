@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { ActionLink } from '../../action-link';
 import { PageHeader } from '@/components/ui';
+import { SIGN_IN_LINK_MINUTES } from '@/server/auth/email-port';
 
 /** Kayıtlı ve kayıtsız adresler aynı yönlendirmeyi ve metni görür. */
 export default async function CheckEmailPage() {
@@ -35,8 +36,9 @@ export default async function CheckEmailPage() {
           })}
         >
           <p className="mt-6 rounded-card bg-surface p-4 text-base text-fg-muted">
-            {t('security')}
+            {t('security', { minutes: SIGN_IN_LINK_MINUTES })}
           </p>
+          <p className="mt-3 text-base text-fg-muted">{t('wrongAddress')}</p>
         </PageHeader>
       </div>
       <ActionLink href="/giris" secondary>

@@ -62,15 +62,21 @@ export function preheaderOf(text: string): string {
 }
 
 /**
- * Ret ve yönlendirme e-postaları (PM kararı, kart 305): konu satırında "reddedildi" yazılmadığı gibi ön izleme de SONUCU söylemez
- * ("…yayınlanmadı", "…onaylanamadı", "herkese açık değil"); nötr "incelendi; ayrıntılar e-postada" der, sonuç gövdede kalır.
- * Yeni bir ret şablonu eklenirse buraya ve `email-presentation-security.test.ts` tamlık denetimine eklenmelidir.
+ * İnceleme sonucu e-postaları (PM kararları, kart 305 ve 313): ret ve yönlendirme VE onay: konu satırında sonuç yazılmadığı gibi
+ * ön izleme de SONUCU söylemez ("…yayınlanmadı", "…onaylanamadı", "herkese açık değil", "…yayınlandı"); hepsi nötr "incelendi;
+ * ayrıntılar e-postada" der, sonuç gövdede kalır. Yalnız ret nötr olsaydı "nötr = olumsuz" çıkarımı mümkün kalırdı; bu yüzden onay
+ * da aynı cümleyi taşır. Yeni bir inceleme sonucu şablonu eklenirse buraya ve `email-presentation-security.test.ts` tamlık
+ * denetimine eklenmelidir.
  */
 const REVIEWED_PREVIEW = {
+  'experience.moderation-approved': 'preheaderReviewedExperience',
   'experience.moderation-rejected': 'preheaderReviewedExperience',
+  'faq.published': 'preheaderReviewedFaq',
   'faq.rejected': 'preheaderReviewedFaq',
   'faq.redirected': 'preheaderReviewedFaq',
+  'jobPosting.published': 'preheaderReviewedJobPosting',
   'jobPosting.rejected': 'preheaderReviewedJobPosting',
+  'graduation-document.approved': 'preheaderReviewedDocument',
   'graduation-document.rejected': 'preheaderReviewedDocument',
 } as const;
 

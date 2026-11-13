@@ -57,7 +57,8 @@ it('zorunlu kutular seçilmeden kayıt göndermez; isteğe bağlı kutuyu zorlam
   await user.click(boxes[1]!);
   mocks.record.mockResolvedValue({ ok: true, data: { ...state, blocking: false } });
   await user.click(screen.getByRole('button', { name: 'Seçimlerimi kaydet' }));
-  await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/hesap'));
+  // İlk onaydan sonra hesap ayarları değil ana sayfa: sıradaki adım (doğrulama/başlangıç) orada kart olarak yazılıdır.
+  await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/'));
   expect(
     mocks.record.mock.calls[0]![0].decisions.find(
       (d: { documentType: string }) => d.documentType === 'CROSS_BORDER_TRANSFER',

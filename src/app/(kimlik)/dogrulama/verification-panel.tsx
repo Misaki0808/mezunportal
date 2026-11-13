@@ -7,15 +7,17 @@ import { PageHeader } from '@/components/ui';
 
 export async function VerificationPanel({ state }: { state: VerificationState }) {
   const t = await getTranslations('authScreens.verification');
+  // Kişisel e-postayla gelen (mezun) yeni kullanıcı: yol belge yüklemektir; metin ve düğme bunu açıkça söyler.
+  const alumniStart = state.status === 'NOT_STARTED' && state.emailKind === 'OTHER';
   const title = {
     VERIFIED: t('verified'),
-    NOT_STARTED: t('notStarted'),
+    NOT_STARTED: t(alumniStart ? 'notStartedAlumni' : 'notStarted'),
     AWAITING_REVIEW: t('awaiting'),
     REJECTED: t('rejected'),
   }[state.status];
   const description = {
     VERIFIED: t('verifiedDescription'),
-    NOT_STARTED: t('notStartedDescription'),
+    NOT_STARTED: t(alumniStart ? 'notStartedAlumniDescription' : 'notStartedDescription'),
     AWAITING_REVIEW: t('awaitingDescription'),
     REJECTED: t('rejectedDescription'),
   }[state.status];
@@ -59,7 +61,7 @@ export async function VerificationPanel({ state }: { state: VerificationState })
             }
           >
             {showUpload
-              ? t(state.status === 'REJECTED' ? 'uploadAgain' : 'upload')
+              ? t(state.status === 'REJECTED' ? 'uploadAgain' : 'uploadAlumni')
               : showDeclaration
                 ? t('declare')
                 : state.status === 'AWAITING_REVIEW'

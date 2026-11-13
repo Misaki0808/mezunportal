@@ -93,18 +93,15 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await page.goto('/');
     await expect(page.getByText('Doğrulamanı tamamla')).toBeVisible();
     await page.getByRole('link', { name: 'Doğrulamaya git' }).click();
-    await expect(page).toHaveURL(/\/dogrulama$/);
-    await page.getByRole('link', { name: 'Üyeliğini doğrula' }).click();
+    // Kart doğrudan üyelik formuna gider (araya durum sayfası girmez).
     await expect(page).toHaveURL(/\/dogrulama\/uyelik$/);
     await waitForHydratedForm(page, 'Doğrulamayı tamamla');
     await page.getByLabel('Bölüm').selectOption({ index: 1 });
     await page.getByLabel('Üniversiteye giriş yılı').fill('2024');
     await page.getByRole('button', { name: 'Doğrulamayı tamamla' }).click();
     await expect(page.getByText('Üyeliğin doğrulandı.')).toBeVisible();
-    await page.getByRole('link', { name: 'Durumu gör' }).click();
-    await expect(page.getByRole('heading', { name: 'Üyeliğin doğrulandı' })).toBeVisible();
-    await page.goto('/');
-    await page.getByRole('link', { name: /Profilini tamamla/ }).click();
+    // Başarı ekranının tek eylemi sıradaki adıma götürür; durum sayfası hâlâ açıktır.
+    await page.getByRole('link', { name: 'Başlangıç adımlarına geç' }).click();
     await expect(page).toHaveURL(/\/baslangic$/);
     await waitForHydratedControl(page, 'Devam et');
     await page.getByRole('checkbox', { name: 'Yazılım geliştirme' }).check();
