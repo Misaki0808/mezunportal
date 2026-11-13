@@ -15,7 +15,7 @@ import { decorateEmail } from '../jobs/email-presentation';
 import { scheduleMonthlyDigests } from '../jobs/monthly-digest-task';
 import { sendNotificationIntent } from '../jobs/notification-intent-worker';
 import { relayNotificationIntents } from './notification-intent';
-import { maySendNotification } from './notification-preferences';
+import { decideNotification, maySendNotification } from './notification-preferences';
 import { buildMonthlyDigest } from './monthly-digest';
 
 const db = createTestPrisma(),
@@ -54,7 +54,7 @@ beforeEach(() => {
     }),
     { send, close: () => undefined },
     () => {},
-    (message) => maySendNotification(db, message, clock),
+    (message) => decideNotification(db, message, clock),
   );
   mail.mockImplementation((message: QueuedEmail) =>
     service.enqueueEmail(decorateEmail(message, url)),
@@ -164,10 +164,18 @@ it('teslimden önce tercih veya içerik değişirse eski özet gönderilmez; ge�
   const message = queued[0]!;
   expect(await maySendNotification(db, message, clock)).toBe(true);
   expect(await maySendNotification(db, message, new Date('2026-03-31T21:00:00Z'))).toBe(false);
+  expect(await decideNotification(db, message, new Date('2026-03-31T21:00:00Z'))).toEqual({
+    send: false,
+    errorCode: 'DIGEST_STALE',
+  });
   await db.notificationPreference.create({
     data: { userId, type: 'MONTHLY_DIGEST', enabled: false },
   });
   expect(await maySendNotification(db, message, clock)).toBe(false);
+  expect(await decideNotification(db, message, clock)).toEqual({
+    send: false,
+    errorCode: 'EMAIL_PREFERENCE_DISABLED',
+  });
   await db.notificationPreference.update({
     where: { userId_type: { userId, type: 'MONTHLY_DIGEST' } },
     data: { enabled: true },
@@ -177,7 +185,7 @@ it('teslimden önce tercih veya içerik değişirse eski özet gönderilmez; ge�
   expect(send).not.toHaveBeenCalled();
   expect(await db.emailLog.findFirst({ where: { recipientUserId: userId } })).toMatchObject({
     status: 'FAILED',
-    errorCode: 'EMAIL_PREFERENCE_DISABLED',
+    errorCode: 'DIGEST_STALE',
   });
 });
 

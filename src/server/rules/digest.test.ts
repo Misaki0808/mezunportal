@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { monthlyDigestCycle, selectDigest, type DigestInput } from './digest';
+import { digestFingerprint, monthlyDigestCycle, selectDigest, type DigestInput } from './digest';
+import { queuedEmailSchema } from '../jobs/email-core';
 
 const empty = (): DigestInput => ({
   experiences: [],
@@ -46,5 +47,72 @@ describe('aylık özet seçimi', () => {
     ['2027-01-01T21:00:00Z', null],
   ])('İstanbul ay sınırını kullanır: %s', (date, expected) => {
     expect(monthlyDigestCycle(new Date(date))).toBe(expected);
+  });
+});
+
+describe('özet veri parmak izi (TD-028: bayatlık denetimi metne değil veriye bakar)', () => {
+  const base = (): DigestInput => ({
+    experiences: [
+      { id: 'e1', label: 'Staj' },
+      { id: 'e2', label: 'Yarı zamanlı iş' },
+    ],
+    jobs: [{ id: 'j1', title: 'Junior ERP Danışmanı', organization: 'Örnek A.Ş.' }],
+    contribution: { earned: 5, pending: 2 },
+    applicationWindows: [{ label: 'Örnek Firma' }],
+    events: [{ id: 'v1', label: 'Kariyer günü' }],
+  });
+  const fp = (input: DigestInput, cycle = '2026-03') =>
+    digestFingerprint(selectDigest(input)!, cycle);
+
+  it('aynı veri aynı parmak izi: sıra önemsiz, biçim sabit ve kuyruk şemasından geçer', () => {
+    const reordered = { ...base(), experiences: [...base().experiences].reverse() };
+    expect(fp(reordered)).toBe(fp(base()));
+    expect(fp(base())).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(
+      queuedEmailSchema.safeParse({
+        to: 'a@example.invalid',
+        subject: 's',
+        text: 't',
+        template: 'monthlyDigest.summary',
+        idempotencyKey: 'k',
+        digestFingerprint: fp(base()),
+      }).success,
+    ).toBe(true);
+  });
+
+  it('veri değişince değişir: dönem, deneyim/ilan/etkinlik kimliği, başvuru dönemi, puan', () => {
+    const reference = fp(base());
+    const changed: Record<string, string> = {
+      dönem: fp(base(), '2026-04'),
+      deneyim: fp({ ...base(), experiences: [{ id: 'e1', label: 'Staj' }] }),
+      'deneyim kimliği': fp({
+        ...base(),
+        experiences: [
+          { id: 'e1', label: 'Staj' },
+          { id: 'e3', label: 'Yarı zamanlı iş' },
+        ],
+      }),
+      ilan: fp({ ...base(), jobs: [{ id: 'j2', title: 'X', organization: 'Y' }] }),
+      etkinlik: fp({ ...base(), events: [{ id: 'v2', label: 'Kariyer günü' }] }),
+      'başvuru dönemi': fp({ ...base(), applicationWindows: [{ label: 'Başka Firma' }] }),
+      'kazanılan puan': fp({ ...base(), contribution: { earned: 6, pending: 2 } }),
+      'bekleyen puan': fp({ ...base(), contribution: { earned: 5, pending: 3 } }),
+    };
+    for (const [what, value] of Object.entries(changed)) expect(value, what).not.toBe(reference);
+    expect(new Set(Object.values(changed)).size).toBe(Object.keys(changed).length);
+  });
+
+  it('metin etiketleri girmez: deneyim türü adı, ilan başlığı/kurumu ve etkinlik başlığı değişse de aynı', () => {
+    const relabeled: DigestInput = {
+      experiences: [
+        { id: 'e1', label: 'FARKLI ETİKET 1' },
+        { id: 'e2', label: 'FARKLI ETİKET 2' },
+      ],
+      jobs: [{ id: 'j1', title: 'Yeniden adlandırılmış ilan', organization: 'Başka Kurum' }],
+      contribution: { earned: 5, pending: 2 },
+      applicationWindows: [{ label: 'Örnek Firma' }],
+      events: [{ id: 'v1', label: 'Yeniden adlandırılmış etkinlik' }],
+    };
+    expect(fp(relabeled)).toBe(fp(base()));
   });
 });

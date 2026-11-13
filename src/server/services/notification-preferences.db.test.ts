@@ -3,6 +3,7 @@ import { buildAppointmentEmail } from './appointment-notifier';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import {
+  decideNotification,
   getNotificationPreferences,
   maySendNotification,
   setNotificationPreferences,
@@ -31,6 +32,10 @@ describe('bildirim tercihi', () => {
       items: [{ type: 'CONTACT_REQUEST', enabled: false }],
     });
     expect(await maySendNotification(db, msg)).toBe(false);
+    expect(await decideNotification(db, msg)).toEqual({
+      send: false,
+      errorCode: 'EMAIL_PREFERENCE_DISABLED',
+    });
     expect(await maySendNotification(db, { ...msg, template: 'auth.sign-in-link' })).toBe(true);
     await expect(
       setNotificationPreferences(db, user.id, {
@@ -41,6 +46,11 @@ describe('bildirim tercihi', () => {
       'NOTIFICATION_TEMPLATE_UNKNOWN',
     );
     expect(await maySendNotification(db, { ...msg, to: 'eski@example.invalid' })).toBe(false);
+    // Adres değişti: kullanıcı bildirimi KAPATMADI, alıcı artık o adreste değil (sebep kodu tercih değil).
+    expect(await decideNotification(db, { ...msg, to: 'eski@example.invalid' })).toEqual({
+      send: false,
+      errorCode: 'EMAIL_RECIPIENT_INELIGIBLE',
+    });
   });
   it('bütün randevu olayları aynı tercih kapısından geçer ve tekrar anahtarı değişmez', async () => {
     const user = await db.user.create({

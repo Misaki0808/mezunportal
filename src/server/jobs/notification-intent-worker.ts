@@ -15,6 +15,7 @@ import { sendNotification } from '../services/notification-email';
 import { hasCurrentApplicationWindow } from '../services/application-window';
 import { buildMonthlyDigest } from '../services/monthly-digest';
 import { monthlyDigestEmail } from '../services/monthly-digest-email';
+import { digestFingerprint } from '../rules/digest';
 import {
   notificationIntentPayload,
   openPilotInvitation,
@@ -82,6 +83,8 @@ export async function sendNotificationIntent(
       const env = getAuthEnv();
       await enqueueEmail({
         ...monthlyDigestEmail(digest, row.userId, env.BETTER_AUTH_SECRET, env.APP_URL),
+        // Gönderim anı bayatlık denetimi bu veri parmak iziyle yapılır (metinle değil): TD-028.
+        digestFingerprint: digestFingerprint(digest, payload.cycle),
         to: user.email,
         recipientUserId: row.userId,
         template: 'monthlyDigest.summary',

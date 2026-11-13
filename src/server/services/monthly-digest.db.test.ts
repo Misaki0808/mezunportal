@@ -12,7 +12,7 @@ import { scheduleMonthlyDigests } from '../jobs/monthly-digest-task';
 import { sendNotificationIntent } from '../jobs/notification-intent-worker';
 import { buildMonthlyDigest } from './monthly-digest';
 import { monthlyDigestEmail } from './monthly-digest-email';
-import { maySendNotification } from './notification-preferences';
+import { decideNotification, maySendNotification } from './notification-preferences';
 
 const db = createTestPrisma();
 const mail = vi.hoisted(() => vi.fn().mockResolvedValue({ emailLogId: 'queued-email' }));
@@ -142,10 +142,19 @@ it('boş hesap niyet üretmez; anonim yazar gizli, kapsam dışı deneyim dışa
     update: { enabled: false },
   });
   expect(await maySendNotification(db, queued, now)).toBe(false);
+  expect(await decideNotification(db, queued, now)).toEqual({
+    send: false,
+    errorCode: 'EMAIL_PREFERENCE_DISABLED',
+  });
   await db.notificationPreference.update({
     where: { userId_type: { userId, type: 'MONTHLY_DIGEST' } },
     data: { enabled: true },
   });
   await db.experience.delete({ where: { id: row.id } });
   expect(await maySendNotification(db, queued, now)).toBe(false);
+  // Parmak izinden ÖNCE kuyruğa alınmış kayıt (geçiş dönemi): eski metin denetimi, bayatsa DIGEST_STALE.
+  expect(await decideNotification(db, queued, now)).toEqual({
+    send: false,
+    errorCode: 'DIGEST_STALE',
+  });
 });

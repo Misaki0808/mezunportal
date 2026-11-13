@@ -61,6 +61,23 @@ export function preheaderOf(text: string): string {
   return first.length > 100 ? `${first.slice(0, 99).replace(/\s+\S*$/, '')}…` : first;
 }
 
+/**
+ * Kilit ekranı politikası: ön izleme kişi adı, e-posta adresi, işveren adı ve gerekçe taşımaz (konu satırında "reddedildi"
+ * yazılmamasıyla aynı gerekçe; ayrıntı gövdede kalır). İlk cümlesi böyle bilgi taşıyan şablonlar sabit, genel bir cümle
+ * kullanır: randevu e-postaları (karşı tarafın adı), e-posta değişikliği onayı (yeni adres), "hâlâ çalışıyor musun" (işveren).
+ * Savunma: başka bir şablonun ilk cümlesinde e-posta adresi çıkarsa genel cümleye düşer. Yeni şablon bu kurala uymuyorsa
+ * `email-presentation-security.test.ts` kırılır.
+ */
+function preheaderFor(message: Pick<QueuedEmail, 'template' | 'text'>): string {
+  const { template } = message;
+  if (template.startsWith('appointment.') && template !== 'appointment.feedback')
+    return t('preheaderAppointment');
+  if (template === 'auth.change-email-confirmation') return t('preheaderChangeEmail');
+  if (template === 'alumni.still-there') return t('preheaderStillThere');
+  const own = preheaderOf(message.text);
+  return /\S+@\S+/.test(own) ? t('preheaderGeneric') : own;
+}
+
 /** İkincil iç bağlantının görünen adı: adres ve yol; jeton/sorgu ekranda uzun dize olarak görünmez. */
 function displayUrl(url: string): string {
   const parsed = new URL(url);
@@ -124,6 +141,6 @@ export function decorateEmail(message: QueuedEmail, appUrl: string): QueuedEmail
   return {
     ...message,
     text,
-    html: `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>${escapeHtml(message.subject)}</title><style>@media (prefers-color-scheme:dark){.email-outer{background:#0e1a38!important;color:#f2f4fc!important}.email-header,.email-body{background:#15254a!important;color:#f2f4fc!important}.email-content a:not(.email-button),.email-footer a{color:#b8b8ff!important}.email-brand-portal{color:#a3a3ff!important}.email-brand-dot{color:#ff8798!important}.email-button{background:#a3a3ff!important;color:#0e1a38!important}.email-button-secondary{background:transparent!important;color:#b8b8ff!important;border-color:#a3a3ff!important}.email-footer{color:#d4d7eb!important}}</style></head><body class="email-outer" style="margin:0;background:#fff1e3;color:#202038;font-family:Arial,sans-serif;line-height:1.6"><div class="email-preheader" style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;mso-hide:all">${escapeHtml(preheaderOf(message.text))}${'&zwnj;&nbsp;'.repeat(40)}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse"><tr><td align="center" style="padding:24px 16px"><table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse"><tr><td class="email-header" style="background:#fffaf4;color:#1d1b33;font-size:24px;font-weight:800;letter-spacing:-0.5px;padding:18px 20px;border-bottom:3px solid #5b5bf6">mezun<span class="email-brand-portal" style="color:#5b5bf6">portal</span><span class="email-brand-dot" style="color:#ff6b7f">.</span></td></tr><tr><td class="email-body email-content" style="background:#ffffff;color:#202038;padding:20px;overflow-wrap:anywhere;word-break:break-word"><div style="white-space:pre-line;margin:0">${html}</div></td></tr><tr><td class="email-footer" style="padding:6px 4px 18px;color:#4e4b62;font-size:14px"><a href="${escapeHtml(preferenceUrl)}" style="color:#3730a3;display:inline-block;padding:12px 0">${escapeHtml(t('footerPreferences'))}</a><br>${escapeHtml(t('footerTagline'))}</td></tr></table></td></tr></table></body></html>`,
+    html: `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>${escapeHtml(message.subject)}</title><style>@media (prefers-color-scheme:dark){.email-outer{background:#0e1a38!important;color:#f2f4fc!important}.email-header,.email-body{background:#15254a!important;color:#f2f4fc!important}.email-content a:not(.email-button),.email-footer a{color:#b8b8ff!important}.email-brand-portal{color:#a3a3ff!important}.email-brand-dot{color:#ff8798!important}.email-button{background:#a3a3ff!important;color:#0e1a38!important}.email-button-secondary{background:transparent!important;color:#b8b8ff!important;border-color:#a3a3ff!important}.email-footer{color:#d4d7eb!important}}</style></head><body class="email-outer" style="margin:0;background:#fff1e3;color:#202038;font-family:Arial,sans-serif;line-height:1.6"><div class="email-preheader" style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;mso-hide:all">${escapeHtml(preheaderFor(message))}${'&zwnj;&nbsp;'.repeat(40)}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse"><tr><td align="center" style="padding:24px 16px"><table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse"><tr><td class="email-header" style="background:#fffaf4;color:#1d1b33;font-size:24px;font-weight:800;letter-spacing:-0.5px;padding:18px 20px;border-bottom:3px solid #5b5bf6">mezun<span class="email-brand-portal" style="color:#5b5bf6">portal</span><span class="email-brand-dot" style="color:#ff6b7f">.</span></td></tr><tr><td class="email-body email-content" style="background:#ffffff;color:#202038;padding:20px;overflow-wrap:anywhere;word-break:break-word"><div style="white-space:pre-line;margin:0">${html}</div></td></tr><tr><td class="email-footer" style="padding:6px 4px 18px;color:#4e4b62;font-size:14px"><a href="${escapeHtml(preferenceUrl)}" style="color:#3730a3;display:inline-block;padding:12px 0">${escapeHtml(t('footerPreferences'))}</a><br>${escapeHtml(t('footerTagline'))}</td></tr></table></td></tr></table></body></html>`,
   };
 }
