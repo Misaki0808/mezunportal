@@ -345,7 +345,7 @@ test('ilan adımları klavyeyle doğrulanır, başlık duyurulur ve geri dönün
   const deadline = page.getByLabel('Son başvuru tarihi', { exact: false });
   await tabTo(deadline);
   await deadline.fill(addDays(istanbulDay(), 14));
-  const department = page.getByRole('checkbox', { name: /YBS/ }).first();
+  const department = page.getByRole('checkbox', { name: /Yönetim Bilişim Sistemleri/ }).first();
   await tabTo(department);
   await page.keyboard.press('Space');
   const url = page.getByLabel('HTTPS başvuru bağlantısı', { exact: false });
