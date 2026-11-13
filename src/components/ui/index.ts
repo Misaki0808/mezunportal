@@ -12,6 +12,8 @@ export type { CardProps } from './card';
 export { Checkbox } from './checkbox';
 export type { CheckboxProps } from './checkbox';
 export { cn } from './cn';
+export { CopyButton } from './copy-button';
+export type { CopyButtonProps } from './copy-button';
 export { Modal, Sheet } from './dialog';
 export type { DialogProps } from './dialog';
 export { EmptyState } from './empty-state';
