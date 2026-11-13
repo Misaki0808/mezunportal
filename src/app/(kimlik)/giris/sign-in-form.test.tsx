@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
-import { readSignInAddress } from './sign-in-address';
+import { readSignInAddress } from '@/lib/sign-in-address';
 import { SignInForm } from './sign-in-form';
 
 const push = vi.fn();

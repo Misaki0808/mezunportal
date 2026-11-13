@@ -8,6 +8,7 @@ import type { SignOutOutput } from '@/contracts/auth';
 import type { ActionResult } from '@/contracts/result';
 import { Button } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
+import { forgetSignInAddress } from '@/lib/sign-in-address';
 
 export function SignOutButton({ submit }: { submit: () => Promise<ActionResult<SignOutOutput>> }) {
   const t = useTranslations('authScreens.signOut');
@@ -25,6 +26,8 @@ export function SignOutButton({ submit }: { submit: () => Promise<ActionResult<S
     try {
       const result = await submit();
       if (result.ok) {
+        // Ortak bilgisayarda sonraki kişi bu sekmede öncekinin giriş adresini görmesin.
+        forgetSignInAddress();
         router.replace('/giris');
         router.refresh();
       } else setError(result.errorCode);

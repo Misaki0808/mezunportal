@@ -18,7 +18,7 @@ import type { ActionResult } from '@/contracts/result';
 import { Button, Field, Input } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
-import { rememberSignInAddress } from './sign-in-address';
+import { rememberSignInAddress } from '@/lib/sign-in-address';
 
 type Props = {
   options: SignInOptions;

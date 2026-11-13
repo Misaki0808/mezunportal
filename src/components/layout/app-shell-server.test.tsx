@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { codedForbidden } from '@/lib/errors';
+
 const mocks = vi.hoisted(() => ({
   admin: vi.fn(),
   actor: vi.fn(),
@@ -69,7 +71,7 @@ describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
 
 it('rızası eksik kullanıcı giriş yapmış görünür ama rozet iş verisi okunmaz', async () => {
   mocks.actor.mockResolvedValue({ userId: 'u1' });
-  mocks.consented.mockRejectedValue(new Error('CONSENT_REQUIRED'));
+  mocks.consented.mockRejectedValue(codedForbidden('CONSENT_REQUIRED'));
   const shell = await render();
   expect(shell.props).toMatchObject({
     signedIn: true,
@@ -80,3 +82,22 @@ it('rızası eksik kullanıcı giriş yapmış görünür ama rozet iş verisi o
   });
   expect(mocks.count).not.toHaveBeenCalled();
 });
+
+it.each([
+  ['veritabanı hatası', () => new Error('veritabanı')],
+  ['başka bir yasak kodu', () => codedForbidden('AUTH_FORBIDDEN')],
+])(
+  'rıza dışındaki bir hata (%s) gezinmeyi gizlemez: yalnız CONSENT_REQUIRED gizler',
+  async (_ad, makeError) => {
+    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.consented.mockRejectedValue(makeError());
+    const shell = await render();
+    expect(shell.props).toMatchObject({
+      signedIn: true,
+      consentPending: false,
+      canRefreshNotifications: false,
+      unreadNotifications: 0,
+    });
+    expect(mocks.count).not.toHaveBeenCalled();
+  },
+);

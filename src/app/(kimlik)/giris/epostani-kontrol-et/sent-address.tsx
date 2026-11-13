@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useSyncExternalStore } from 'react';
 
-import { readSignInAddress } from '../sign-in-address';
+import { readSignInAddress } from '@/lib/sign-in-address';
 
 const subscribe = () => () => {};
 

@@ -4,7 +4,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
-import { rememberSignInAddress } from '../sign-in-address';
+import { rememberSignInAddress } from '@/lib/sign-in-address';
 import { SentAddress } from './sent-address';
 
 beforeEach(() => window.sessionStorage.clear());

@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
 import { SIGN_IN_LINK_MINUTES } from '@/server/auth/email-port';
-import { rememberSignInAddress } from '../sign-in-address';
+import { rememberSignInAddress } from '@/lib/sign-in-address';
 
 // Çeviri: anahtar + değerler görünür olsun; `rich` anahtarı döner.
 vi.mock('next-intl/server', () => ({

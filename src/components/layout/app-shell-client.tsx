@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 import {
@@ -16,6 +17,8 @@ import {
 } from '@/components/ui';
 
 import { NotificationBell } from '@/components/inbox/notification-bell';
+
+import { forgetSignInAddress } from '@/lib/sign-in-address';
 
 import { KeyboardState } from './keyboard-state';
 import { BrandLogo } from '@/components/brand/logo';
@@ -79,6 +82,11 @@ export function AppShellClient({
 }) {
   const t = useTranslations('nav');
   const pathname = usePathname();
+
+  // Giriş tamamlandı (oturumlu bir ekran çizildi): "E-postanı kontrol et" ekranı için tutulan adres bu sekmede kalmasın.
+  useEffect(() => {
+    if (signedIn) forgetSignInAddress();
+  }, [signedIn]);
 
   // Girişsiz karşılama sayfası kendi gezinmesini ve ana içeriğini sunar.
   if (!signedIn && pathname === '/') return <>{children}</>;
