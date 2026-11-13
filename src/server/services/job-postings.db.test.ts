@@ -1893,6 +1893,33 @@ it('üyelik görünürlüğünün önceki ve yeni sorgusu aynı sıralı sonuçl
   const departed = await w.make('ALUMNI', 'Ayrılmış mezun');
   await published(w, departed, { title: 'Veri analisti F' });
   await db.membership.updateMany({ where: { userId: departed }, data: { endedAt: NOW } });
+  for (const state of ['PENDING', 'DELETED', 'BANNED', 'STUDENT', 'FOREIGN'] as const) {
+    const author = await w.make('ALUMNI', `Görünmeyen yazar ${state}`);
+    const id = await published(w, author, { title: `Veri analisti ${state}` });
+    if (state === 'PENDING')
+      await db.membership.updateMany({
+        where: { userId: author },
+        data: { verificationStatus: 'PENDING', verifiedAt: null },
+      });
+    else if (state === 'DELETED')
+      await db.user.update({ where: { id: author }, data: { deletedAt: NOW } });
+    else if (state === 'BANNED')
+      await db.user.update({ where: { id: author }, data: { banned: true, banExpires: null } });
+    else if (state === 'STUDENT')
+      await db.membership.updateMany({
+        where: { userId: author },
+        data: {
+          role: 'STUDENT',
+          verificationMethod: 'STUDENT_EMAIL',
+          entryYear: 2024,
+          graduationYear: null,
+        },
+      });
+    else {
+      const foreignAuthor = await w.make('ALUMNI', 'Başka üniversitede mezun', w.foreign.deptA1);
+      await db.jobPosting.update({ where: { id }, data: { authorId: foreignAuthor } });
+    }
+  }
   await db.jobPostingDepartment.deleteMany({ where: { postingId: missingTargets } });
   const departments = await db.department.createManyAndReturn({
     data: Array.from({ length: 10 }, (_, i) => ({

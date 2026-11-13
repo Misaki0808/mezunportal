@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 const INFRA =
   /\[vitest-pool(?:-runner)?\]|Timeout (?:waiting for worker|starting .* runner|terminating)|Worker exited unexpectedly|ERR_WORKER_OUT_OF_MEMORY/i;
+const ASSERTION_FAILURE = /^\s*(?:Caused by:\s*)?(?:AssertionError\b|Error:\s*expect\()/m;
 
 /** Rapordaki düşen dosyaları ayırır: yalnız altyapı mesajı taşıyanlar `infraFiles`, geri kalan her şey `real`. */
 export function classify(report) {
@@ -26,7 +27,13 @@ export function classify(report) {
         .filter((assertion) => assertion.status === 'failed')
         .flatMap((assertion) => assertion.failureMessages ?? []),
     ];
-    if (messages.length > 0 && messages.every((message) => INFRA.test(String(message))))
+    if (
+      messages.length > 0 &&
+      messages.every((message) => {
+        const text = String(message).replace(ANSI, '');
+        return !ASSERTION_FAILURE.test(text) && INFRA.test(text);
+      })
+    )
       infraFiles.push(file.name);
     else real += 1;
   }
@@ -80,6 +87,7 @@ export function unhandledInfraFiles(text) {
   if (!parsed || !parsed.trusted) return null;
   const files = [];
   for (const block of parsed.blocks) {
+    if (ASSERTION_FAILURE.test(block)) return null;
     const start = WORKER_START.exec(block);
     if (!start || !CAUSE.test(block)) return null;
     // Aynı blokta başka bir hata cümlesi (ör. "AssertionError: …") varsa blok yalnız işçi hatası DEĞİLDİR: kalıp eşleşmesi onu gizlemesin.
