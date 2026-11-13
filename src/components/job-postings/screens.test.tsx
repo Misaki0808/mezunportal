@@ -444,7 +444,7 @@ it('60 gün sınırındaki taslak kaydedilir, 61. gün istemcide reddedilir', as
     fireEvent.change(date, { target: { value: addDays(istanbulDay(), 61) } });
     fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
     expect(
-      await screen.findByText('Bugünden başlayarak en fazla 60 gün sonrası seçilebilir.'),
+      (await screen.findAllByText('Bugünden başlayarak en fazla 60 gün sonrası seçilebilir.'))[0],
     ).toBeVisible();
     expect(save).not.toHaveBeenCalled();
     fireEvent.change(date, { target: { value: addDays(istanbulDay(), 60) } });
@@ -545,4 +545,89 @@ it('B3: boş ret ilk hatalı alana odaklanır ve alan altı açıklama taşır',
   expect(reason).toHaveAttribute('aria-invalid', 'true');
   expect(reason).toHaveAccessibleDescription(/En az 3 karakterlik bir gerekçe yaz/);
   expect(review).not.toHaveBeenCalled();
+});
+
+it('tek adım duyurusu ve odaktaki alan açıklaması kullanılır; fieldset odağı geçicidir', async () => {
+  renderWithToasts(<PostingEditor context={context} save={vi.fn()} submit={vi.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  const title = screen.getByLabelText(/Pozisyon adı/);
+  await waitFor(() => expect(title).toHaveFocus());
+  expect(title).toHaveAccessibleDescription('Bu alanı kontrol et.');
+  expect(document.querySelectorAll('[data-hydrated] [role=alert]')).toHaveLength(0);
+  fireEvent.change(title, { target: { value: 'Yazılım stajyeri' } });
+  fireEvent.change(screen.getByLabelText(/Kurum adı/), { target: { value: 'Kurum' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  const heading = screen.getByRole('heading', { name: 'Adım 2 / 3: Ayrıntılar ve başvuru' });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(
+    screen.getByText('Adım 2 / 3: Ayrıntılar ve başvuru').closest('[aria-hidden]'),
+  ).toHaveAttribute('aria-hidden', 'true');
+  expect(document.querySelectorAll('fieldset[tabindex]')).toHaveLength(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  const summary = screen.getByText(messages.jobs.formSummary).parentElement!;
+  const targetLink = within(summary).getByRole('button', { name: 'Hedef bölümler' });
+  fireEvent.click(targetLink);
+  const target = screen.getByRole('group', { name: /Hedef bölümler/ });
+  await waitFor(() => expect(target).toHaveFocus());
+  expect(target).toHaveAttribute('tabindex', '-1');
+  expect(target).toHaveAccessibleDescription('Bu alanı kontrol et.');
+  screen.getByLabelText(/^Açıklama/).focus();
+  expect(target).not.toHaveAttribute('tabindex');
+  expect(document.querySelectorAll('[data-hydrated] [role=alert]')).toHaveLength(0);
+});
+
+it.each([
+  ['JOB_POSTING_DEADLINE_INVALID', /Son başvuru tarihi/],
+  ['JOB_POSTING_TARGET_INVALID', /Hedef bölümler/],
+  ['JOB_POSTING_URL_INVALID', /HTTPS başvuru bağlantısı/],
+] as const)('alan verilmeyen %s sunucu hatası ilgili alana götürür', async (code, label) => {
+  const { addDays, istanbulDay } = await import('./model');
+  const initial = {
+    ...pendingItem,
+    title: 'Yazılım stajyeri',
+    description: 'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
+    deadlineOn: addDays(istanbulDay(), 14),
+  };
+  const save = vi.fn().mockResolvedValue({ ok: true, data: initial });
+  const submit = vi.fn().mockResolvedValue({ ok: false, errorCode: code });
+  renderWithToasts(
+    <PostingEditor context={context} initial={initial} save={save} submit={submit} />,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  const target =
+    code === 'JOB_POSTING_TARGET_INVALID'
+      ? await screen.findByRole('group', { name: label })
+      : await screen.findByLabelText(label);
+  await waitFor(() => expect(target).toHaveFocus());
+  expect(target).toHaveAttribute('aria-invalid', 'true');
+  expect(target).toHaveAccessibleDescription();
+});
+
+it('sunucu hatası özetindeki başka adım bağlantısı o alanı açar ve odaklar', async () => {
+  const { addDays, istanbulDay } = await import('./model');
+  const initial = {
+    ...pendingItem,
+    title: 'Yazılım stajyeri',
+    description: 'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
+    deadlineOn: addDays(istanbulDay(), 14),
+  };
+  const save = vi.fn().mockResolvedValue({
+    ok: false,
+    errorCode: 'VALIDATION_INVALID',
+    fieldErrors: {
+      'content.title': 'VALIDATION_INVALID',
+      'content.description': 'VALIDATION_INVALID',
+    },
+  });
+  renderWithToasts(
+    <PostingEditor context={context} initial={initial} save={save} submit={vi.fn()} />,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  await waitFor(() => expect(screen.getByLabelText(/Pozisyon adı/)).toHaveFocus());
+  fireEvent.click(screen.getByRole('button', { name: 'Açıklama', exact: true }));
+  await waitFor(() => expect(screen.getByLabelText(/^Açıklama/)).toHaveFocus());
 });

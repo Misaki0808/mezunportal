@@ -4,7 +4,7 @@ import messages from '../../../messages/tr.json';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import {
   JOB_POSTING_MAX_DAYS,
   type JobPostingFormContext,
@@ -14,7 +14,15 @@ import {
   type SubmitJobPostingOutput,
 } from '@/contracts/job-postings';
 import type { ActionResult } from '@/contracts/result';
-import { Button, Field, Input, Select, Textarea, useAction } from '@/components/ui';
+import {
+  Button,
+  Field,
+  Input,
+  Select,
+  Textarea,
+  useAction,
+  type FieldProps,
+} from '@/components/ui';
 import {
   addDays,
   istanbulDay,
@@ -23,6 +31,31 @@ import {
   postingStepFields,
 } from './model';
 import { deadlineProblem } from '@/server/rules/jobPosting';
+
+/** Hata odağa bağlı okunur; diğer alanların eşzamanlı canlı duyurusu tekrarı önler. */
+function PostingField({ error, children, ...props }: FieldProps) {
+  const errorId = useId();
+  return (
+    <Field {...props}>
+      {(control) => (
+        <>
+          {children({
+            ...control,
+            invalid: error ? true : control.invalid,
+            'aria-describedby':
+              [control['aria-describedby'], error && errorId].filter(Boolean).join(' ') ||
+              undefined,
+          })}
+          {error && (
+            <p id={errorId} className="text-sm text-danger">
+              {error}
+            </p>
+          )}
+        </>
+      )}
+    </Field>
+  );
+}
 
 type Props = {
   context: JobPostingFormContext;
@@ -168,12 +201,26 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
             return field === 'companyId' ? 'organizationName' : field;
           });
           const ordered = postingStepFields.flat().filter((field) => serverFields.includes(field));
-          showError(errors(failure.errorCode), ordered);
+          const mapped = {
+            JOB_POSTING_DEADLINE_INVALID: 'deadlineOn',
+            JOB_POSTING_TARGET_INVALID: 'targetDepartmentIds',
+            JOB_POSTING_URL_INVALID: method === 'URL' ? 'applyUrl' : 'applyMethod',
+          } as const;
+          const fallback = mapped[failure.errorCode as keyof typeof mapped];
+          showError(
+            errors(failure.errorCode),
+            ordered.length ? ordered : fallback ? [fallback] : [],
+          );
         },
       },
     );
   }
-  const bad = (field: string) => (invalid.has(field) ? t('requiredError') : undefined);
+  const bad = (field: string) =>
+    invalid.has(field)
+      ? invalid.size === 1 && error !== t('formSummary')
+        ? error
+        : t('requiredError')
+      : undefined;
   const fieldNames: Record<string, string> = {
     kind: t('kind'),
     title: t('titleLabel'),
@@ -206,7 +253,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
         <p className="mt-2 text-fg-muted">{t('newSubtitle')}</p>
       </header>
       <div className="mb-5">
-        <p className="text-sm font-semibold text-fg-muted">
+        <p aria-hidden="true" className="text-sm font-semibold text-fg-muted">
           <span aria-current="step">{stepLabel}</span>
         </p>
         <div className="mt-2 flex gap-2" aria-hidden="true">
@@ -222,7 +269,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
         <div
           ref={summary}
           tabIndex={-1}
-          role="alert"
           className="mb-5 rounded-control border border-danger bg-surface p-4 font-medium text-danger"
         >
           <p>{error}</p>
@@ -238,9 +284,9 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                       onClick={() => {
                         setStep(postingFieldStep(field) ?? 0);
                         requestAnimationFrame(() =>
-                          document
-                            .querySelector<HTMLElement>(`[data-error-field="${field}"]`)
-                            ?.focus(),
+                          focusTemporarily(
+                            document.querySelector<HTMLElement>(`[data-error-field="${field}"]`),
+                          ),
                         );
                       }}
                     >
@@ -258,7 +304,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
         </h2>
         {step === 0 && (
           <>
-            <Field label={t('kind')} required error={bad('kind')}>
+            <PostingField label={t('kind')} required error={bad('kind')}>
               {(p) => (
                 <Select
                   {...p}
@@ -270,8 +316,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   <option value="JOB">{t('JOB')}</option>
                 </Select>
               )}
-            </Field>
-            <Field label={t('titleLabel')} required error={bad('title')}>
+            </PostingField>
+            <PostingField label={t('titleLabel')} required error={bad('title')}>
               {(p) => (
                 <Input
                   {...p}
@@ -281,8 +327,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   onChange={(e) => setTitle(e.target.value)}
                 />
               )}
-            </Field>
-            <Field label={t('organization')} required error={bad('organizationName')}>
+            </PostingField>
+            <PostingField label={t('organization')} required error={bad('organizationName')}>
               {(p) => (
                 <Input
                   {...p}
@@ -293,8 +339,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   autoComplete="organization"
                 />
               )}
-            </Field>
-            <Field label={t('authorDepartment')} required error={bad('departmentId')}>
+            </PostingField>
+            <PostingField label={t('authorDepartment')} required error={bad('departmentId')}>
               {(p) => (
                 <Select
                   {...p}
@@ -309,12 +355,12 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   ))}
                 </Select>
               )}
-            </Field>
+            </PostingField>
           </>
         )}
         {step === 1 && (
           <>
-            <Field label={t('descriptionLabel')} required error={bad('description')}>
+            <PostingField label={t('descriptionLabel')} required error={bad('description')}>
               {(p) => (
                 <Textarea
                   {...p}
@@ -325,8 +371,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   onChange={(e) => setDescription(e.target.value)}
                 />
               )}
-            </Field>
-            <Field label={t('locationLabel')} error={bad('location')}>
+            </PostingField>
+            <PostingField label={t('locationLabel')} error={bad('location')}>
               {(p) => (
                 <Input
                   {...p}
@@ -336,7 +382,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   onChange={(e) => setLocation(e.target.value)}
                 />
               )}
-            </Field>
+            </PostingField>
             <label className="flex min-h-11 items-center gap-3">
               <input
                 className="size-5 accent-primary"
@@ -350,11 +396,11 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               {t('remoteQuestion')}
             </label>
             {bad('isRemote') && (
-              <p id="posting-remote-error" role="alert" className="text-danger">
+              <p id="posting-remote-error" className="text-danger">
                 {bad('isRemote')}
               </p>
             )}
-            <Field
+            <PostingField
               label={t('deadline')}
               hint={`${t('deadlineHint')} ${fieldText('dateUnset')}`}
               required
@@ -371,9 +417,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   onChange={(e) => setDeadline(e.target.value)}
                 />
               )}
-            </Field>
+            </PostingField>
             <fieldset
-              tabIndex={-1}
               data-error-field="targetDepartmentIds"
               aria-invalid={invalid.has('targetDepartmentIds') || undefined}
               aria-describedby={
@@ -385,7 +430,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 {t('targetLimit', { count: context.limits.maxTargets })}
               </p>
               {bad('targetDepartmentIds') && (
-                <p id="posting-target-error" role="alert" className="text-danger">
+                <p id="posting-target-error" className="text-danger">
                   {bad('targetDepartmentIds')}
                 </p>
               )}
@@ -418,7 +463,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               </div>
             </fieldset>
             <fieldset
-              tabIndex={-1}
               data-error-field="tagIds"
               aria-invalid={invalid.has('tagIds') || undefined}
               aria-describedby={invalid.has('tagIds') ? 'posting-tags-error' : undefined}
@@ -426,7 +470,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               <legend className="font-semibold">{t('matchTags')}</legend>
               <p className="mt-1 text-sm text-fg-muted">{t('matchTagsHint')}</p>
               {bad('tagIds') && (
-                <p id="posting-tags-error" role="alert" className="text-danger">
+                <p id="posting-tags-error" className="text-danger">
                   {bad('tagIds')}
                 </p>
               )}
@@ -456,7 +500,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               </div>
             </fieldset>
             <fieldset
-              tabIndex={-1}
               data-error-field="targetGrades"
               aria-invalid={invalid.has('targetGrades') || undefined}
               aria-describedby={invalid.has('targetGrades') ? 'posting-grades-error' : undefined}
@@ -464,7 +507,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               <legend className="font-semibold">{t('matchGrades')}</legend>
               <p className="mt-1 text-sm text-fg-muted">{t('matchGradesHint')}</p>
               {bad('targetGrades') && (
-                <p id="posting-grades-error" role="alert" className="text-danger">
+                <p id="posting-grades-error" className="text-danger">
                   {bad('targetGrades')}
                 </p>
               )}
@@ -489,7 +532,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 ))}
               </div>
             </fieldset>
-            <Field label={t('applyMethod')} required error={bad('applyMethod')}>
+            <PostingField label={t('applyMethod')} required error={bad('applyMethod')}>
               {(p) => (
                 <Select
                   {...p}
@@ -501,9 +544,9 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   <option value="CONTACT_REQUEST">{t('contactMethod')}</option>
                 </Select>
               )}
-            </Field>
+            </PostingField>
             {method === 'URL' && (
-              <Field label={t('applyUrl')} required error={bad('applyUrl')}>
+              <PostingField label={t('applyUrl')} required error={bad('applyUrl')}>
                 {(p) => (
                   <Input
                     {...p}
@@ -515,7 +558,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                     onChange={(e) => setUrl(e.target.value)}
                   />
                 )}
-              </Field>
+              </PostingField>
             )}
           </>
         )}
