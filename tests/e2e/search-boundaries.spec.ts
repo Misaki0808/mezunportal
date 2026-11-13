@@ -1,5 +1,6 @@
 import { loginAs } from './login';
 import { expect, test, type Page } from './fixture';
+import { waitForHydratedForm } from './hydration';
 
 const login = (page: Page) => loginAs(page, 'academic');
 
@@ -93,4 +94,83 @@ test('arama yüklenirken düğme kilitlidir', async ({ page }) => {
     release();
   }
   await expect(page).toHaveURL(/q=Teknoloji/);
+});
+
+test('arama adresi boş alan taşımaz: ilanlar, deneyimler, şirketler ve filtre alt sayfası', async ({
+  page,
+}) => {
+  await loginAs(page, 'student');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const query = () => Object.fromEntries(new URL(page.url()).searchParams);
+  for (const path of ['/ilanlar', '/deneyimler', '/sirketler']) {
+    await page.goto(path);
+    await waitForHydratedForm(page, 'Ara');
+    await page.getByRole('searchbox').fill('ornek');
+    await page.getByRole('button', { name: 'Ara', exact: true }).click();
+    await page.waitForURL(/q=ornek/);
+    // `/ilanlar` aynı formda 5 süzgeç alanı taşır (`departmentId=&organization=&…`): boşlar adrese girmez.
+    expect(query(), path).toEqual({ q: 'ornek' });
+  }
+
+  await page.goto('/ilanlar');
+  await waitForHydratedForm(page, 'Ara');
+  await page.getByRole('button', { name: /^Filtreler/ }).click();
+  const sheet = page.locator('dialog[open]');
+  const kind = sheet.locator('select[name="kind"]');
+  const [firstKind] = await kind
+    .locator('option')
+    .evaluateAll((options) =>
+      options.map((option) => (option as HTMLOptionElement).value).filter(Boolean),
+    );
+  await kind.selectOption(firstKind!);
+  await sheet.getByRole('button', { name: 'Filtreleri uygula' }).click();
+  await page.waitForURL(/kind=/);
+  expect(query()).toEqual({ kind: firstKind });
+
+  // Süzgeç uygulanmışken arama da yalnız dolu alanları taşır: önceki süzgeç ve yeni arama.
+  await waitForHydratedForm(page, 'Ara');
+  await page.getByRole('searchbox').fill('stajyer');
+  await page.getByRole('button', { name: 'Ara', exact: true }).click();
+  await page.waitForURL(/q=stajyer/);
+  expect(query()).toEqual({ kind: firstKind, q: 'stajyer' });
+});
+
+test('320 pikselde arama girdisi okunur kalır, süzgeç düğmesi alt satıra iner; başlık düğmeleri hizalı sarar', async ({
+  page,
+}) => {
+  await loginAs(page, 'student');
+  const boxOf = async (locator: ReturnType<Page['locator']>) => (await locator.boundingBox())!;
+  const horizontalOverflow = () =>
+    page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto('/deneyimler');
+  const search = await boxOf(page.getByRole('searchbox'));
+  const filters = await boxOf(page.getByRole('button', { name: /^Filtreler/ }).first());
+  // 87 px'e düşüyordu ve yerli temizle (×) düğmesi "ornek"i kesiyordu: en az 7,5 rem (120 px) kalır, düğme alt satıra iner.
+  expect(search.width, 'arama girdisi (320 px)').toBeGreaterThanOrEqual(120);
+  expect(filters.y, 'Filtreler alt satırda (320 px)').toBeGreaterThanOrEqual(
+    search.y + search.height,
+  );
+  const mine = await boxOf(page.getByRole('link', { name: 'Deneyimlerim', exact: true }));
+  const companies = await boxOf(page.getByRole('link', { name: 'Şirketlere bak', exact: true }));
+  // Alt alta sarınca ikinci düğme 8 px içeriden başlıyordu (`ml-2`): aynı soldan hizalı.
+  expect(companies.y, 'başlık düğmeleri sarar (320 px)').toBeGreaterThan(mine.y);
+  expect(companies.x, 'başlık düğmeleri soldan hizalı (320 px)').toBeCloseTo(mine.x, 0);
+  expect(await horizontalOverflow()).toBe(0);
+
+  // 360 px'te satır TEK kalır (alt sınır 160 px olsaydı ilk ekrandaki sonuçlar aşağı kayardı) ve başlık düğmeleri yan yana durur.
+  await page.setViewportSize({ width: 360, height: 740 });
+  const wide = await boxOf(page.getByRole('searchbox'));
+  const wideFilters = await boxOf(page.getByRole('button', { name: /^Filtreler/ }).first());
+  expect(wideFilters.y, 'Filtreler aynı satırda (360 px)').toBeLessThan(wide.y + wide.height);
+  expect(
+    Math.abs(
+      (await boxOf(page.getByRole('link', { name: 'Şirketlere bak', exact: true }))).y -
+        (await boxOf(page.getByRole('link', { name: 'Deneyimlerim', exact: true }))).y,
+    ),
+  ).toBeLessThan(2);
+  expect(await horizontalOverflow()).toBe(0);
 });

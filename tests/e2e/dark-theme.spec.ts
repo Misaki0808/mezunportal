@@ -200,7 +200,7 @@ test('koyu tema taraması renkleri doğru çözer: oklab, color-mix ve saydam re
   expect(colors[2]).toEqual([255, 255, 255, 1]);
   expect(colors[3]!.slice(0, 3)).toEqual([255, 0, 0]);
   expect(colors[3]![3]).toBeCloseTo(0.5, 1);
-  expect(colors[4]![3]).toBe(0);
+  expect(colors[4]).toEqual([0, 0, 0, 0]);
   // Çözülemeyen değer sessizce şeffaf sayılmaz.
   await expect(page.evaluate(SCAN, ['bu-bir-renk-degil'])).rejects.toThrow(/çözümlenemeyen renk/);
 });

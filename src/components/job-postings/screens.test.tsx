@@ -746,3 +746,44 @@ it('uzaktan filtre kutusu forma aynı ad ve değeri taşır', async () => {
   expect(form).not.toBeNull();
   expect(new FormData(form!).get('remote')).toBe('true');
 });
+
+it('hedef bölüm sınırına ulaşınca yalnız seçilmemiş bölümler kilitlenir, seçim kaldırılınca yenisi seçilebilir', async () => {
+  const departments = Array.from({ length: 11 }, (_, i) => ({
+    id: `department-${i}`,
+    name: `Bölüm ${i}`,
+    facultyName: 'Fakülte',
+  }));
+  const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'draft-1' } });
+  renderWithToasts(
+    <PostingEditor
+      context={{ ...context, targetDepartments: departments }}
+      save={save}
+      submit={vi.fn()}
+    />,
+  );
+  fireEvent.change(screen.getByLabelText(/Pozisyon adı/), { target: { value: 'Veri analisti' } });
+  fireEvent.change(screen.getByLabelText(/Kurum adı/), { target: { value: 'Örnek Kurum' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  for (let i = 0; i < 10; i++)
+    fireEvent.click(screen.getByRole('checkbox', { name: `Bölüm ${i} · Fakülte` }));
+  const first = screen.getByRole('checkbox', { name: 'Bölüm 0 · Fakülte' });
+  const extra = screen.getByRole('checkbox', { name: 'Bölüm 10 · Fakülte' });
+  expect(first).toBeChecked();
+  expect(first).toBeEnabled();
+  expect(extra).toBeDisabled();
+  fireEvent.click(first);
+  expect(extra).toBeEnabled();
+  fireEvent.click(extra);
+  expect(extra).toBeChecked();
+  expect(first).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+  await waitFor(() =>
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.objectContaining({
+          targetDepartmentIds: departments.slice(1).map((item) => item.id),
+        }),
+      }),
+    ),
+  );
+});

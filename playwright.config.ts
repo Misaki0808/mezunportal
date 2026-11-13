@@ -6,6 +6,7 @@ import {
   workerBaseUrl,
   workerDatabaseUrl,
 } from './tests/e2e/isolation';
+import { chromiumSpecFilter, webkitSpecFilter } from './tests/e2e/webkit-specs';
 
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
 if (!process.env.APP_URL) throw new Error('E2E için worktree APP_URL ayarı gerekli.');
@@ -35,8 +36,10 @@ export default defineConfig({
   globalSetup: './tests/e2e/global-setup.ts',
   use: { baseURL },
   projects: [
-    // `webkit-*.spec.ts` yalnız Safari projesinde koşar; varsayılan çalıştırma (ve CI) değişmez.
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /webkit-.*\.spec\.ts/ },
+    // `webkit-*.spec.ts` yalnız Safari projesinde koşar; varsayılan çalıştırma (ve CI) değişmez. Desen dosya adına bağlıdır
+    // (`tests/e2e/webkit-specs.ts`): yolunda `webkit-` geçen çalışma kopyası bütün spec'leri yok saymaz. 0 test bulan koşu hata
+    // verir (çıkış 1); `--pass-with-no-tests` kullanılmaz.
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, ...chromiumSpecFilter },
     // İsteğe bağlı Safari (WebKit) + iPhone turu (docs/engineering.md "Test"):
     //  - E2E_WEBKIT=1: proje YALNIZ `webkit-*.spec.ts` dosyalarını koşar; `--project` verilmese bile bütün testler WebKit'e kaymaz.
     //  - E2E_WEBKIT=all: kasıtlı kapı; seçtiğin tek tek spec'leri WebKit'te koşmak için (`--project=webkit-iphone tests/e2e/<dosya>`).
@@ -45,7 +48,7 @@ export default defineConfig({
           {
             name: 'webkit-iphone',
             use: { ...devices['iPhone 13'] },
-            ...(webkitMode === '1' ? { testMatch: /webkit-.*\.spec\.ts/ } : {}),
+            ...webkitSpecFilter(webkitMode),
           },
         ]
       : []),
