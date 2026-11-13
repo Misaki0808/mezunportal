@@ -301,21 +301,21 @@ describe('belge başlığı', () => {
 });
 
 describe('ön izleme metni (preheader)', () => {
-  it('gizli bir öğedir ve ilk cümleyi taşır; selamlama, bağlantı ve gerekçe girmez', () => {
+  it('gizli bir öğedir ve ilk cümleyi taşır; selamlama, bağlantı ve not girmez (ret şablonları ayrı: nötr cümle, güvenlik testinde)', () => {
     const result = decorateEmail(
       {
         to: 'test@example.invalid',
         subject: 'Örnek',
-        template: 'graduation-document.rejected',
+        template: 'cv.review.answered',
         idempotencyKey: '1',
-        text: 'Merhaba,\n\nMezun belgen onaylanamadı. Gerekçe: Belgedeki ad okunamıyor.\n\nhttps://portal.invalid/dogrulama',
+        text: 'Merhaba,\n\nCV incelemen yanıtlandı. Not: Belgedeki ad okunamıyor.\n\nhttps://portal.invalid/hesap/cv-inceleme',
       },
       'https://portal.invalid',
     );
     const document = new DOMParser().parseFromString(result.html!, 'text/html');
     const pre = document.querySelector('.email-preheader') as HTMLElement;
     expect(pre.style.display).toBe('none');
-    expect(pre.textContent!.replace(/[\u200c\u00a0]/g, '')).toBe('Mezun belgen onaylanamadı.');
+    expect(pre.textContent!.replace(/[\u200c\u00a0]/g, '')).toBe('CV incelemen yanıtlandı.');
     expect(document.body.firstElementChild).toBe(pre);
   });
 
