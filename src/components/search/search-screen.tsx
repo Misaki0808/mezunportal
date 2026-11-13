@@ -17,6 +17,7 @@ import {
   type SearchPage,
 } from '@/contracts/search';
 import { FilterShell, type ActiveFilter } from '@/components/directory/filter-shell';
+import { SearchBar } from '@/components/directory/search-bar';
 import {
   Badge,
   Button,
@@ -255,43 +256,26 @@ export function SearchScreen({ filter, results, sectors }: Props) {
           {companies('title')}
         </Link>
       </PageHeader>
-      <form
-        className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-start"
-        onSubmit={(event) => {
-          event.preventDefault();
-          go({ ...draft, page: 1 });
-        }}
-      >
-        <Field
-          className="flex-1"
-          label={t('query')}
-          hint={t('queryHint')}
-          error={invalid && draft.q && draft.q.trim().length < 2 ? t('invalid') : undefined}
-        >
-          {(props) => (
-            <Input
-              {...props}
-              type="search"
-              maxLength={100}
-              value={draft.q ?? ''}
-              onChange={(e) => update({ q: e.target.value || undefined, sort: undefined })}
-            />
-          )}
-        </Field>
-        {/* Düğme girdiyle hizalı: etiket satırı (1,75 rem) + boşluk (0,375 rem) kadar aşağıda; ipucu satırı hizayı bozmaz. */}
-        <div className="sm:mt-[2.125rem]">
-          <Button
-            type="submit"
-            loading={pending}
-            {...(pending
-              ? { disabled: true as const, disabledReason: t('loading') }
-              : { disabled: false as const })}
-          >
-            {t('submit')}
-          </Button>
-        </div>
-      </form>
       <FilterShell
+        search={(filtersButton) => (
+          <SearchBar
+            label={t('query')}
+            hint={t('queryHint')}
+            submitLabel={t('submit')}
+            pending={pending}
+            error={invalid && draft.q && draft.q.trim().length < 2 ? t('invalid') : undefined}
+            trailing={filtersButton}
+            onSubmit={(event) => {
+              event.preventDefault();
+              go({ ...draft, page: 1 });
+            }}
+            input={{
+              maxLength: 100,
+              value: draft.q ?? '',
+              onChange: (e) => update({ q: e.target.value || undefined, sort: undefined }),
+            }}
+          />
+        )}
         active={active}
         total={results.total}
         pending={pending}

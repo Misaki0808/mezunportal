@@ -16,7 +16,7 @@ import {
   type DiscardCvOutput,
 } from '@/contracts/cv';
 import type { ActionResult } from '@/contracts/result';
-import { Button, buttonClasses, Field, Sheet } from '@/components/ui';
+import { Button, buttonClasses, Field, FilePicker, RadioGroup, Sheet } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { CvReview } from './cv-review';
@@ -186,37 +186,22 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
               {t('applied')}
             </p>
           )}
-          <fieldset className="mt-6 space-y-2">
-            <legend className="font-semibold">{t('linkedin.chooseSource')}</legend>
-            <label className="flex min-h-11 items-center gap-3 rounded-control border border-border p-3">
-              <input
-                type="radio"
-                name="source"
-                value="CV"
-                disabled={!availability.available}
-                checked={source === 'CV'}
-                onChange={() => setSource('CV')}
-              />
-              {t('linkedin.normalCv')}
-            </label>
-            <label className="flex min-h-11 items-center gap-3 rounded-control border border-border p-3">
-              <input
-                type="radio"
-                name="source"
-                value="LINKEDIN_PDF"
-                disabled={!availability.available || !availability.linkedinPdf}
-                aria-describedby={!availability.linkedinPdf ? 'linkedin-unavailable' : undefined}
-                checked={source === 'LINKEDIN_PDF'}
-                onChange={() => setSource('LINKEDIN_PDF')}
-              />
-              {t('linkedin.importAction')}
-            </label>
-          </fieldset>
-          {!availability.linkedinPdf && (
-            <p id="linkedin-unavailable" className="text-sm text-fg-muted">
-              {t('linkedin.comingSoon')}
-            </p>
-          )}
+          <RadioGroup
+            className="mt-6"
+            legend={t('linkedin.chooseSource')}
+            name="source"
+            value={source}
+            onValueChange={(next) => setSource(next === 'LINKEDIN_PDF' ? 'LINKEDIN_PDF' : 'CV')}
+            hint={!availability.linkedinPdf ? t('linkedin.comingSoon') : undefined}
+            options={[
+              { value: 'CV', label: t('linkedin.normalCv'), disabled: !availability.available },
+              {
+                value: 'LINKEDIN_PDF',
+                label: t('linkedin.importAction'),
+                disabled: !availability.available || !availability.linkedinPdf,
+              },
+            ]}
+          />
           {!availability.available && availability.reason ? (
             <div className="mt-6 rounded-card border border-border bg-surface p-4">
               <p role="status" className="text-base text-fg">
@@ -243,14 +228,12 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
                 error={fileError ? errors(fileError) : undefined}
                 required
               >
-                {({ invalid, ...control }) => (
-                  <input
+                {(control) => (
+                  <FilePicker
                     {...control}
-                    type="file"
                     name="file"
                     accept="application/pdf"
-                    aria-invalid={invalid || undefined}
-                    className="block min-h-11 w-full rounded-control border border-border-control bg-bg p-2 text-base text-fg file:mr-3 file:min-h-9 file:rounded-control file:border-0 file:bg-primary-soft file:px-3 file:text-on-primary-soft"
+                    chooseLabel={t('chooseFile')}
                   />
                 )}
               </Field>

@@ -12,7 +12,15 @@ import {
   type UploadGraduationDocumentOutput,
 } from '@/contracts/graduation-document';
 import type { ActionResult, FieldErrors } from '@/contracts/result';
-import { Button, EmptyState, Field, Input, Select, buttonClasses } from '@/components/ui';
+import {
+  Button,
+  EmptyState,
+  Field,
+  FilePicker,
+  Input,
+  Select,
+  buttonClasses,
+} from '@/components/ui';
 import { isErrorCode, type ErrorCode } from '@/lib/errors';
 
 export function DocumentForm({
@@ -26,7 +34,6 @@ export function DocumentForm({
   const errors = useTranslations('errors.codes');
   const locked = useRef(false);
   const [pending, setPending] = useState(false);
-  const [fileName, setFileName] = useState('');
   const [complete, setComplete] = useState(false);
   const [fields, setFields] = useState<FieldErrors>({});
   const [error, setError] = useState<ErrorCode>();
@@ -144,26 +151,19 @@ export function DocumentForm({
         required
       >
         {(control) => (
-          <div className="relative flex min-h-11 items-center rounded-control border border-border-control bg-bg px-3 py-2 focus-within:ring-2 focus-within:ring-primary">
-            <span aria-hidden="true" className="min-w-0 truncate text-base text-fg">
-              {fileName || t('chooseFile')}
-            </span>
-            <Input
-              {...control}
-              name="file"
-              type="file"
-              accept="application/pdf,.pdf"
-              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              onChange={(event) => {
-                setFileName(event.target.files?.[0]?.name ?? '');
-                setFields((current) => {
-                  const next = { ...current };
-                  delete next.file;
-                  return next;
-                });
-              }}
-            />
-          </div>
+          <FilePicker
+            {...control}
+            name="file"
+            accept="application/pdf,.pdf"
+            chooseLabel={t('chooseFile')}
+            onChange={() =>
+              setFields((current) => {
+                const next = { ...current };
+                delete next.file;
+                return next;
+              })
+            }
+          />
         )}
       </Field>
       {error && (

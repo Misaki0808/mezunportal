@@ -385,7 +385,7 @@ it('mobil süzgeçler alt sayfada uygulanır ve arama metni korunur', async () =
       page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
     />,
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Süzgeçler' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Filtreler' }));
   const dialog = screen.getByRole('dialog');
   expect(dialog).toHaveTextContent('Konum');
   for (const label of ['Kurum', 'Konum', 'Hedef bölüm', 'İlan türü', 'Kalan süre']) {
@@ -394,7 +394,7 @@ it('mobil süzgeçler alt sayfada uygulanır ve arama metni korunur', async () =
       'SELECT',
     );
   }
-  const apply = screen.getByRole('button', { name: 'Süzgeçleri uygula' });
+  const apply = screen.getByRole('button', { name: 'Filtreleri uygula' });
   const form = document.getElementById(apply.getAttribute('form')!);
   expect(form).toHaveAttribute('action', '/ilanlar');
   expect(new FormData(form as HTMLFormElement).get('q')).toBe('tasarım');

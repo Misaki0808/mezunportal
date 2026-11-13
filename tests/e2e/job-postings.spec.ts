@@ -223,7 +223,7 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
   }
 });
 
-test('mobil ilk ekranda iki ilan kartı ve erişilebilir süzgeç alt sayfası görünür', async ({
+test('mobil ilk ekranda iki ilan kartı ve erişilebilir filtre alt sayfası görünür', async ({
   page,
 }) => {
   const author = await db.user.findUniqueOrThrow({
@@ -280,7 +280,7 @@ test('mobil ilk ekranda iki ilan kartı ve erişilebilir süzgeç alt sayfası g
         const box = await article.boundingBox();
         expect(box!.y + box!.height).toBeLessThanOrEqual(nav!.y);
       }
-      const filters = page.getByRole('button', { name: 'Süzgeçler', exact: true });
+      const filters = page.getByRole('button', { name: 'Filtreler', exact: true });
       await expect(filters).toBeInViewport({ ratio: 1 });
       await filters.focus();
       await page.keyboard.press('Enter');

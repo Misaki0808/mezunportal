@@ -279,6 +279,25 @@ describe('CV akışı', () => {
     expect(upload).not.toHaveBeenCalled();
   });
 
+  it('dosya seçici Türkçe: seçilmeden "PDF seç", seçilince dosya adı; hata dosya alanına bağlı', async () => {
+    const upload = vi.fn();
+    const { user } = renderUi(
+      <CvFlow availability={available} latest={null} actions={actions({ upload })} />,
+    );
+    const input = screen.getByLabelText(/CV dosyası/);
+    expect(screen.getByText('PDF seç')).toBeInTheDocument();
+    expect(screen.getByText('Henüz dosya seçilmedi')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: "CV'yi oku" }));
+    const error = await screen.findByText('Bir PDF dosyası seç.');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input.getAttribute('aria-describedby')).toContain(error.closest('p')!.id);
+
+    await user.upload(input, new File(['%PDF-1.4'], 'cv-efe.pdf', { type: 'application/pdf' }));
+    expect(screen.getByText('cv-efe.pdf')).toBeInTheDocument();
+    expect(screen.getByText('Dosyayı değiştir')).toBeInTheDocument();
+  });
+
   it('geçerli PDF yüklenir → işleniyor → sonuç hazır olunca onay ekranı açılır', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {

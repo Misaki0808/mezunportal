@@ -22,6 +22,8 @@ export { ErrorState } from './error-state';
 export type { ErrorStateProps } from './error-state';
 export { Field } from './field';
 export type { FieldControlProps, FieldProps } from './field';
+export { FilePicker } from './file-picker';
+export type { FilePickerProps } from './file-picker';
 export { IconButton } from './icon-button';
 export { IconChip } from './icon-chip';
 export type { IconChipTone } from './icon-chip';
