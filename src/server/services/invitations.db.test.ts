@@ -14,7 +14,7 @@ import {
   openPilotInvitation,
   stagePilotInvitation,
 } from './notification-intent';
-import { maySendNotification } from './notification-preferences';
+import { decideNotification, maySendNotification } from './notification-preferences';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -62,6 +62,14 @@ describe('toplu davet', () => {
     expect(await maySendNotification(db, sent)).toBe(true);
     expect(await maySendNotification(db, { ...sent, to: existing })).toBe(false);
     expect(await maySendNotification(db, { ...sent, recipientUserId: admin })).toBe(false);
+    for (const blocked of [
+      { ...sent, to: existing },
+      { ...sent, recipientUserId: admin },
+    ])
+      expect(await decideNotification(db, blocked)).toEqual({
+        send: false,
+        errorCode: 'EMAIL_RECIPIENT_INELIGIBLE',
+      });
     const audit = await db.adminAuditLog.findFirstOrThrow({
       where: { actorId: admin, action: 'BULK_INVITATION' },
     });

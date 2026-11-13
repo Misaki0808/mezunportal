@@ -1,7 +1,7 @@
 import 'server-only';
 import { getEnv, parseSmtpEnv } from '@/lib/env';
 import { getDb } from '../db';
-import { maySendNotification } from '../services/notification-preferences';
+import { decideNotification } from '../services/notification-preferences';
 import { FakeEmailTransport } from '../external/email/fake';
 import { createSmtpTransport } from '../external/email/smtp';
 import { createEmailService, type QueuedEmail } from './email-core';
@@ -18,7 +18,7 @@ export async function createEmailRuntime(consume = false) {
       : createSmtpTransport(parseSmtpEnv(process.env));
   const boss = await createEmailQueue(env.DATABASE_URL, { supervise: consume });
   const service = createEmailService(createEmailOutbox(db, boss), transport, undefined, (message) =>
-    maySendNotification(db, message),
+    decideNotification(db, message),
   );
   try {
     if (consume) {

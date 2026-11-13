@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { istanbulDay } from './jobPosting';
 
 /** Veriler çağıran tarafından yetki ve görünürlük denetiminden geçirilmiş olmalıdır. */
@@ -35,6 +36,30 @@ export function selectDigest(input: DigestInput) {
     ...(applicationWindows.length ? { applicationWindows } : {}),
     ...(events.length ? { events } : {}),
   };
+}
+
+export type Digest = NonNullable<ReturnType<typeof selectDigest>>;
+
+/**
+ * Aylık özetin VERİ parmak izi: gönderim anı bayatlık denetimi bunu karşılaştırır (işlenmiş metni DEĞİL). Yalnız özetin neyi
+ * seçtiğini tutar: dönem, deneyim/ilan/etkinlik KİMLİKLERİ (küme: sıra önemsiz), başvuru dönemi etiketleri (firma/sektör
+ * adı, veri) ve puanlar. Metin, adres, jeton, `APP_URL`, gizli anahtar ve `tr.json` etiketleri girmez; bu yüzden altbilgi,
+ * şablon ya da ortam değişikliği kuyruktaki özeti düşürmez, veri değişince parmak izi değişir.
+ */
+export function digestFingerprint(digest: Digest, cycle: string): string {
+  const sorted = (values: readonly string[] | undefined) => [...(values ?? [])].sort();
+  const identity = {
+    v: 1,
+    cycle,
+    experiences: sorted(digest.experiences?.map(({ id }) => id)),
+    jobs: sorted(digest.jobs?.map(({ id }) => id)),
+    events: sorted(digest.events?.map(({ id }) => id)),
+    windows: sorted(digest.applicationWindows?.map(({ label }) => label)),
+    contribution: digest.contribution
+      ? [digest.contribution.earned, digest.contribution.pending]
+      : null,
+  };
+  return createHash('sha256').update(JSON.stringify(identity)).digest('base64url');
 }
 
 /** İstanbul'da ayın ilk günü; yıl sınırında da yerel takvim kullanılır. */

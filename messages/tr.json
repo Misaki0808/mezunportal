@@ -892,7 +892,7 @@
       "text": "Merhaba,\n\nMezun belgen onaylandı; mezun üyeliğin doğrulandı. Yüklediğin belge dosyası silindi.\n\nMezunPortal'a girerek devam edebilirsin."
     },
     "documentRejected": {
-      "subject": "Mezun belgen onaylanamadı",
+      "subject": "Mezun belgen incelendi",
       "text": "Merhaba,\n\nMezun belgen onaylanamadı. Gerekçe: {reason}\n\nYüklediğin belge dosyası silindi. Yeni bir belge yükleyerek yeniden başvurabilirsin."
     },
     "appointment": {
@@ -2322,6 +2322,10 @@
       "ctaChangeEmail": "E-postanı güncelle",
       "ctaStillThere": "Evet, hâlâ çalışıyorum",
       "ctaStillThereNo": "Hayır, artık çalışmıyorum",
+      "preheaderAppointment": "Randevularınla ilgili bir güncelleme var.",
+      "preheaderChangeEmail": "Hesabının e-posta adresini değiştirme isteğini onaylaman gerekiyor.",
+      "preheaderStillThere": "Çalışma bilgini güncel tutmak için kısa bir sorumuz var.",
+      "preheaderGeneric": "MezunPortal'dan yeni bir bildirimin var.",
       "ctaFaq": "Soruyu gör",
       "ctaMentor": "Mentorları gör",
       "ctaReferral": "Referansı gör",

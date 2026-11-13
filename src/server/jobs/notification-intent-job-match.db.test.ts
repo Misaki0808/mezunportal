@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import { addMembership, createInstitution, createUser } from '@/test/fixtures';
-import { maySendNotification } from '../services/notification-preferences';
+import { decideNotification, maySendNotification } from '../services/notification-preferences';
 const mocks = vi.hoisted(() => ({ enqueue: vi.fn() }));
 vi.mock('./email', () => ({ enqueueEmail: mocks.enqueue }));
 vi.mock('@/lib/env', () => ({ getAuthEnv: () => ({ APP_URL: 'https://example.org' }) }));
@@ -141,6 +141,10 @@ describe('ilan özeti gerçek PostgreSQL', () => {
       data: { status: 'CLOSED', endedAt: new Date() },
     });
     expect(await maySendNotification(db, message)).toBe(false);
+    expect(await decideNotification(db, message)).toEqual({
+      send: false,
+      errorCode: 'JOB_MATCH_STALE',
+    });
   });
   it('askıya alınan yazarın ilanı özet kuyruğuna ve teslimine giremez', async () => {
     const f = await fixture();
