@@ -18,6 +18,7 @@ import {
   Tabs,
   buttonClasses,
 } from '@/components/ui';
+import { SearchBar } from '@/components/directory/search-bar';
 import { MentorCard } from '@/components/mentors/mentor-card';
 import { mergeCompanies, searchCompanies } from '@/server/actions/companies';
 import type { InterviewQuestionBank } from '@/contracts/interview-questions';
@@ -59,12 +60,13 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
           {t('calendarLink')}
         </Link>
       </div>
-      <form action="/sirketler" className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-end">
-        <Field className="min-w-0 flex-1" label={t('searchLabel')}>
-          {(p) => <Input {...p} name="q" defaultValue={query} autoComplete="organization" />}
-        </Field>
-        <Button type="submit">{t('search')}</Button>
-      </form>
+      <SearchBar
+        action="/sirketler"
+        label={t('searchLabel')}
+        hint={t('searchHint')}
+        submitLabel={t('search')}
+        input={{ name: 'q', defaultValue: query, autoComplete: 'organization' }}
+      />
       {data.popular.length > 0 && !query && (
         <section className="mt-9">
           <h2 className="text-xl font-semibold">{t('popular')}</h2>

@@ -3,6 +3,7 @@ import { safeClientAction } from '@/lib/safe-client-action';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { sendInvitations } from '@/server/actions/invitations';
+import { Field, FilePicker } from '@/components/ui';
 import { AdminFrame } from './frame';
 
 export function Invitations() {
@@ -42,32 +43,26 @@ export function Invitations() {
         <p id="invitation-help" className="text-fg-muted">
           {t('help')}
         </p>
-        <div>
-          <input
-            id="invitation-file"
-            className="peer sr-only"
-            type="file"
-            accept=".csv,.txt,text/csv,text/plain"
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              if (file && file.size <= 30000) {
-                setText(await file.text());
-                setFileName(file.name);
-                setError(null);
-              } else if (file) {
-                setFileName('');
-                setError('VALIDATION_INVALID');
-              }
-            }}
-          />
-          <label
-            htmlFor="invitation-file"
-            className="inline-flex min-h-11 cursor-pointer items-center rounded-lg border border-border px-4 font-medium text-primary peer-focus-visible:outline peer-focus-visible:outline-2"
-          >
-            {t('file')}
-          </label>
-          {fileName && <p className="mt-2 break-all text-fg-muted">{fileName}</p>}
-        </div>
+        <Field label={t('file')}>
+          {(control) => (
+            <FilePicker
+              {...control}
+              accept=".csv,.txt,text/csv,text/plain"
+              fileName={fileName}
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (file && file.size <= 30000) {
+                  setText(await file.text());
+                  setFileName(file.name);
+                  setError(null);
+                } else if (file) {
+                  setFileName('');
+                  setError('VALIDATION_INVALID');
+                }
+              }}
+            />
+          )}
+        </Field>
         {error && (
           <p role="alert" className="text-danger">
             {errors(error as Parameters<typeof errors>[0])}

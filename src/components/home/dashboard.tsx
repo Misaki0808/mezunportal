@@ -54,11 +54,14 @@ export function HomeDashboard({
   summary,
   feature,
   notice,
+  aside,
 }: {
   summary: HomeSummary;
   feature?: ReactNode;
   /** Karşılamadan SONRA gelen sıradaki-adım kutusu (örn. "Profilini tamamla"); karşılamanın önüne geçmez. */
   notice?: ReactNode;
+  /** Sağ sütunun sonuna giren, sayfada zaten hazır içerik (örn. "Sana uyan ilanlar"); telefonda en altta kalır. */
+  aside?: ReactNode;
 }) {
   const t = useTranslations('home');
   const pending = PENDING_LINKS.map((item) => ({
@@ -66,97 +69,105 @@ export function HomeDashboard({
     count: summary.pending[item.key],
   })).filter((item) => item.count > 0);
   const total = pending.reduce((sum, item) => sum + item.count, 0);
+  // Kod sırası telefon sırasıyla aynıdır (odak sırası görsel sırayı izler); ≥1024 px'te iki sütun: solda karşılama, onay kutusu,
+  // hikâye ve bekleyen işler; sağda kısayollar, yönetim ve ilanlar. İç içe `flex-col gap-6` telefonda eski aralıkla aynıdır.
   return (
-    <>
-      <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {summary.firstName ? t('greeting', { name: summary.firstName }) : t('greetingPlain')}
-        </h1>
-        <p className="text-base text-fg-muted">
-          {total > 0 ? t('pendingCount', { count: total }) : t(`subtitle.${summary.role}`)}
-        </p>
-      </header>
-
-      {notice}
-
-      {feature}
-
-      <section aria-labelledby="home-pending" className="flex flex-col gap-3">
-        <h2 id="home-pending" className="text-xl font-semibold">
-          {t('pendingTitle')}
-        </h2>
-        {pending.length === 0 ? (
-          // Boşken yer kaplamaz: tek satırlık sakin bir onay; asıl eylemler hemen altındaki kısayollardır.
-          <p className="flex items-center gap-3 rounded-card border border-border bg-surface p-3 text-base text-fg">
-            <IconChip tone="success">
-              <CheckIcon />
-            </IconChip>
-            {t('pendingNone')}
+    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
+      <div className="flex min-w-0 flex-col gap-6">
+        <header className="flex flex-col gap-1">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {summary.firstName ? t('greeting', { name: summary.firstName }) : t('greetingPlain')}
+          </h1>
+          <p className="text-base text-fg-muted">
+            {total > 0 ? t('pendingCount', { count: total }) : t(`subtitle.${summary.role}`)}
           </p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {pending.map((item) => (
+        </header>
+
+        {notice}
+
+        {feature}
+
+        <section aria-labelledby="home-pending" className="flex flex-col gap-3">
+          <h2 id="home-pending" className="text-xl font-semibold">
+            {t('pendingTitle')}
+          </h2>
+          {pending.length === 0 ? (
+            // Boşken yer kaplamaz: tek satırlık sakin bir onay; asıl eylemler hemen altındaki kısayollardır.
+            <p className="flex items-center gap-3 rounded-card border border-border bg-surface p-3 text-base text-fg">
+              <IconChip tone="success">
+                <CheckIcon />
+              </IconChip>
+              {t('pendingNone')}
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {pending.map((item) => (
+                <li key={item.key}>
+                  <Link
+                    href={item.href}
+                    className="press-row flex min-h-14 items-center justify-between gap-3 rounded-card border border-border px-4 py-3 shadow-card"
+                  >
+                    <span className="text-base font-medium text-fg">
+                      {t(`pending.${item.key}`, { count: item.count })}
+                    </span>
+                    <span aria-hidden="true" className="text-primary">
+                      →
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-6">
+        <section aria-labelledby="home-shortcuts" className="flex flex-col gap-3">
+          <h2 id="home-shortcuts" className="text-xl font-semibold">
+            {t('shortcutsTitle')}
+          </h2>
+          <ul className="grid grid-cols-2 gap-3">
+            {SHORTCUTS[summary.role].map((item, index) => (
               <li key={item.key}>
                 <Link
                   href={item.href}
-                  className="press-row flex min-h-14 items-center justify-between gap-3 rounded-card border border-border px-4 py-3 shadow-card"
+                  className="press-row flex h-full min-h-32 flex-col gap-2 rounded-card border border-border p-4 shadow-card"
                 >
-                  <span className="text-base font-medium text-fg">
-                    {t(`pending.${item.key}`, { count: item.count })}
+                  <IconChip tone={CHIP_TONES[index % CHIP_TONES.length]}>{item.icon}</IconChip>
+                  <span className="text-lg font-semibold text-fg">
+                    {t(`shortcuts.${item.key}.title`)}
                   </span>
-                  <span aria-hidden="true" className="text-primary">
-                    →
+                  <span className="text-base text-fg-muted">
+                    {t(`shortcuts.${item.key}.description`)}
                   </span>
                 </Link>
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
 
-      <section aria-labelledby="home-shortcuts" className="flex flex-col gap-3">
-        <h2 id="home-shortcuts" className="text-xl font-semibold">
-          {t('shortcutsTitle')}
-        </h2>
-        <ul className="grid grid-cols-2 gap-3">
-          {SHORTCUTS[summary.role].map((item, index) => (
-            <li key={item.key}>
-              <Link
-                href={item.href}
-                className="press-row flex h-full min-h-32 flex-col gap-2 rounded-card border border-border p-4 shadow-card"
-              >
-                <IconChip tone={CHIP_TONES[index % CHIP_TONES.length]}>{item.icon}</IconChip>
-                <span className="text-lg font-semibold text-fg">
-                  {t(`shortcuts.${item.key}.title`)}
+        {summary.adminPending !== null && (
+          <Link
+            href="/yonetim"
+            className="press-row flex min-h-16 items-center justify-between gap-3 rounded-card border border-primary bg-primary-soft px-4 py-3 text-on-primary-soft"
+          >
+            <span className="flex items-center gap-3">
+              <ShieldCheckIcon {...ICON_PROPS} />
+              <span className="flex flex-col">
+                <span className="text-lg font-semibold">{t('admin.title')}</span>
+                <span className="text-base">
+                  {summary.adminPending > 0
+                    ? t('admin.pending', { count: summary.adminPending })
+                    : t('admin.none')}
                 </span>
-                <span className="text-base text-fg-muted">
-                  {t(`shortcuts.${item.key}.description`)}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {summary.adminPending !== null && (
-        <Link
-          href="/yonetim"
-          className="press-row flex min-h-16 items-center justify-between gap-3 rounded-card border border-primary bg-primary-soft px-4 py-3 text-on-primary-soft"
-        >
-          <span className="flex items-center gap-3">
-            <ShieldCheckIcon {...ICON_PROPS} />
-            <span className="flex flex-col">
-              <span className="text-lg font-semibold">{t('admin.title')}</span>
-              <span className="text-base">
-                {summary.adminPending > 0
-                  ? t('admin.pending', { count: summary.adminPending })
-                  : t('admin.none')}
               </span>
             </span>
-          </span>
-          <span aria-hidden="true">→</span>
-        </Link>
-      )}
-    </>
+            <span aria-hidden="true">→</span>
+          </Link>
+        )}
+
+        {aside}
+      </div>
+    </div>
   );
 }

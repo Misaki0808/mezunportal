@@ -7,7 +7,8 @@ export async function seedFeedback(prisma: PrismaClient) {
   const id = seedId('appointment', 'feedback-example');
   const mentorId = seedUserId('alumniMentor');
   const menteeId = seedUserId('student');
-  const base = seedTime(-365 * 24 * 60);
+  // 365 gün önce, UTC 08:00 = İstanbul 11:00 (UTC+3 sabit): deneme turunda "gece 03:00 görüşme" gibi tuhaf durmasın.
+  const base = seedTime(-365 * 24 * 60 + 8 * 60);
   const later = (minutes: number) => new Date(base.getTime() + minutes * 60_000);
   await prisma.appointment.upsert({
     where: { id },

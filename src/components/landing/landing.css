@@ -296,6 +296,52 @@
   position: absolute;
   inset: 0;
 }
+/*
+ * Telefonda (< 768 px) sayı kartları tek kompakt satır: üç kart alt alta tam genişlikte ~110 px'lik üç blok yer kaplıyordu.
+ * Kart başına sayı + kısa etiket (etiket iki satıra kayabilir), küçük simge. 6 sütunlu ızgara 1–5 kartı da dengeler: normalde
+ * her kart 2 sütun (üç kart tek satır), satırda tek kalan tam genişlik, son satırda iki kalan yarı yarıya. ≥ 768 px DEĞİŞMEZ.
+ */
+@media (max-width: 47.99rem) {
+  .landing-stats-inner {
+    gap: 1rem;
+    padding-block: 1.5rem;
+  }
+  .landing-stats dl {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .landing-stats dl > div {
+    grid-column: span 2;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.75rem 0.375rem;
+    text-align: center;
+  }
+  .landing-stats dl > div:last-child:nth-child(3n + 1) {
+    grid-column: span 6;
+  }
+  .landing-stats dl > div:nth-last-child(2):nth-child(3n + 1),
+  .landing-stats dl > div:last-child:nth-child(3n + 2) {
+    grid-column: span 3;
+  }
+  .landing-stats dl > div > :first-child {
+    width: 2rem;
+    height: 2rem;
+  }
+  .landing-stats dl > div > :first-child svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  .landing-stats dd {
+    margin: 0.25rem 0 0;
+    font-size: clamp(1.5rem, 7vw, 1.875rem);
+  }
+  .landing-stats dt {
+    font-size: 0.8125rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+}
 
 /* Bölümler */
 .landing-section {
