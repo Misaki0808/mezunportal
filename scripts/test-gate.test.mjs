@@ -306,3 +306,24 @@ test('main(): gerçek hata (assert) yeniden denenmez, ilk çıkış kodu aynen d
   assert.equal(run.status, 3);
   assert.equal(run.calls.length, 1);
 });
+
+for (const reason of ['Worker exited unexpectedly', 'ERR_WORKER_OUT_OF_MEMORY']) {
+  test(`main(): ${reason} görünür biçimde yalnız bir kez denenir; ikinci hata kırmızı`, () => {
+    const failed = { testResults: [file(join(REPO, 'src/slow.test.ts'), 'failed', reason)] };
+    const run = runGate([
+      { code: 1, report: failed },
+      { code: 1, report: failed },
+    ]);
+    assert.equal(run.status, 1);
+    assert.equal(run.calls.length, 2);
+    assert.match(run.stderr, /bir kez yeniden koşuluyor/);
+    assert.match(run.stderr, /bellek/);
+    const recovered = runGate([
+      { code: 1, report: failed },
+      { code: 0, report: passed },
+    ]);
+    assert.equal(recovered.status, 0);
+    assert.equal(recovered.calls.length, 2);
+    assert.match(recovered.stderr, /bir kez yeniden koşuluyor/);
+  });
+}

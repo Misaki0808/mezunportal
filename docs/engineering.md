@@ -155,6 +155,8 @@ gerekirse önbellek/özet tablosu sonraki fazda değerlendirilir. Metin araması
 
 Kart 205 sonrası yerel tekrar ölçümünde soru bankası 10× hacimde 18/25 ms, stres hacminde 377/391 ms (p50/p95); güvenli sonuçların sayfalanması hesap karmaşıklığını değiştirmez.
 
+TD-022 ölçümü: 30 ısınmış tekrar ve `EXPLAIN (ANALYZE, BUFFERS)` ile 10× ve stres yeniden ölçülür; üç hedef (ilan/deneyim metin araması ve tüm şirketlerin soru bankası) için stres p95 < 300 ms beklenir. Şirket süzgeçli soru bankasında kapsam indeksi kullanılabilir; tüm şirketlerde planlayıcı farklı indeks seçebilir. Kimlik ve k-anonim denetimleri sayfalamadan önce çalışır.
+
 ## Komutlar
 
 ```bash

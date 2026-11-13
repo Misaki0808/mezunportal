@@ -176,7 +176,7 @@ export async function main() {
     // Rapor yoksa, gerçek bir kırmızı ya da kalıba uymayan/dosyası çıkarılamayan yakalanmamış hata varsa yeniden deneme YOK.
     if (!files) return first.code;
     process.stderr.write(
-      `\ntest-gate: ${files.length} dosya ALTYAPI kaynaklı düştü (işçi zaman aşımı), yalnız bunlar bir kez yeniden koşuluyor:\n${files.map((f) => `  ${f}`).join('\n')}\n\n`,
+      `\ntest-gate: ${files.length} dosya ALTYAPI kaynaklı düştü (işçi çökmesi, bellek veya zaman aşımı), yalnız bunlar bir kez yeniden koşuluyor:\n${files.map((f) => `  ${f}`).join('\n')}\n\n`,
     );
     return (await runVitest(files, out)).code;
   } finally {
