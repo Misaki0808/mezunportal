@@ -1,5 +1,5 @@
 import { loginAs } from './login';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixture';
 
 // Faz 2 deneme verisiyle (pnpm db:seed → prisma/seed-phase2.ts) uçtan uca gezinti (P2-14): kullanıcının test turunda ilk açacağı
 // ekranların örnek içerikle dolu geldiğini ve gizlilik kurallarının (K-07, yazar adı, incelemedeki kayıt) ekranda korunduğunu doğrular.

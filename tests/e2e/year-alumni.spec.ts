@@ -1,6 +1,6 @@
 import { loginAs } from './login';
 import { randomBytes } from 'node:crypto';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 const db = new PrismaClient({
@@ -23,6 +23,8 @@ test('mezun yayın iznini açar, doğrulama sayfasını görür ve geri alır', 
   page,
   request,
 }) => {
+  // Altmış gerçek HTTP isteğiyle hız sınırını da doğrulayan bu akış, soğuk derlemede uzayabilir.
+  test.setTimeout(90_000);
   await page.setViewportSize({ width: 390, height: 844 });
   const member = await db.membership.findFirstOrThrow({
     where: {

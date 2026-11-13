@@ -1,5 +1,11 @@
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
+import {
+  e2eWorkerCount,
+  isolationRunId,
+  workerBaseUrl,
+  workerDatabaseUrl,
+} from './tests/e2e/isolation';
 
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
 if (!process.env.APP_URL) throw new Error('E2E için worktree APP_URL ayarı gerekli.');
@@ -8,14 +14,24 @@ const port = Number(configuredUrl.port);
 if (!Number.isInteger(port) || port < 1024 || port > 65535) {
   throw new Error('E2E için APP_URL açık bir worktree portu içermeli.');
 }
-const baseURL = `http://127.0.0.1:${port}`;
+process.env.E2E_ORIGINAL_DATABASE_URL = process.env.DATABASE_URL;
+process.env.E2E_ORIGINAL_APP_URL = process.env.APP_URL;
+isolationRunId();
+mkdirSync('.data', { recursive: true });
+for (const index of [0, 1]) {
+  const tsconfigPath = `.data/e2e-tsconfig-${index}.json`;
+  if (!existsSync(tsconfigPath))
+    writeFileSync(tsconfigPath, JSON.stringify({ extends: '../tsconfig.json' }));
+}
+const baseURL = workerBaseUrl(0);
 const webkitMode = process.env.E2E_WEBKIT;
+const workers = e2eWorkerCount(process.env.E2E_WORKERS, process.argv);
+const serverIndices = Array.from({ length: workers }, (_, index) => index);
 
 export default defineConfig({
   testDir: './tests/e2e',
-  // Testler ortak seed hesaplarının rıza ve oturum durumunu değiştirir; eşzamanlı dosyalar yarışır.
-  // `--workers=2` gibi bir üst değer global-setup.ts'te açık hatayla reddedilir.
-  workers: 1,
+  // Her işçinin kendi seed veritabanı ve uygulama sunucusu vardır.
+  workers,
   globalSetup: './tests/e2e/global-setup.ts',
   use: { baseURL },
   projects: [
@@ -34,19 +50,19 @@ export default defineConfig({
         ]
       : []),
   ],
-  webServer: {
-    // Doğrudan Next: dev betiğinin yerel env yüklemesi test ortamını değiştiremez.
-    command: `node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port ${port}`,
-    url: baseURL,
+  webServer: serverIndices.map((index) => ({
+    command: `node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port ${new URL(workerBaseUrl(index)).port}`,
+    // Sunucular DB kurulmadan başlar; giriş sayfası DB'ye bağlanmadan hazır olabilir.
+    url: `${workerBaseUrl(index)}/giris`,
     reuseExistingServer: false,
     timeout: 120_000,
     env: {
       APP_ENV: 'test',
-      APP_URL: baseURL,
-      // pg'nin "client.query() already executing" uyarısı (BACKLOG TD-027, Prisma 7 kaynaklı) dev sunucudan tarayıcıya iletilir ve
-      // Next hata katmanı 390 px'te alt gezinmeyi örten "1 Issue" rozeti çizer (tek spec koşusunda tıklamayı keser). Yalnız bu test
-      // sunucusunda Node kullanımdan kaldırma uyarıları kapalıdır; normal dev ve birim/DB koşuları uyarıyı görmeye devam eder.
+      APP_URL: workerBaseUrl(index),
+      DATABASE_URL: workerDatabaseUrl(index),
+      E2E_NEXT_INSTANCE: String(index),
+      // Yalnız test sunucusunda pg kullanımdan kaldırma uyarısı Next hata katmanına taşınmaz.
       NODE_OPTIONS: [process.env.NODE_OPTIONS, '--no-deprecation'].filter(Boolean).join(' '),
     },
-  },
+  })),
 });
