@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -108,6 +108,82 @@ describe('FilePicker', () => {
 
     expect(screen.queryByText('mezuniyet-belgesi.pdf')).not.toBeInTheDocument();
     expect(screen.getByText('Henüz dosya seçilmedi')).toBeInTheDocument();
+  });
+
+  describe('sabit alt gezinmenin ve yapışkan çubuğun arkasında kalmaz', () => {
+    function withScroll(run: (scroll: ReturnType<typeof vi.fn>) => Promise<void> | void) {
+      return async () => {
+        const scroll = vi.fn();
+        (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView = scroll;
+        try {
+          await run(scroll);
+        } finally {
+          delete (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView;
+        }
+      };
+    }
+    const picker = () =>
+      renderUi(<Field label="CV">{(control) => <FilePicker {...control} />}</Field>);
+
+    it('girdi alt payı taşır (scroll-above-bars)', () => {
+      picker();
+
+      expect(screen.getByLabelText('CV')).toHaveClass('scroll-above-bars');
+    });
+
+    it(
+      'dosya seçilince girdi payın üstüne kaydırılır (odak olmadan, yalnız seçim olayıyla)',
+      withScroll((scroll) => {
+        picker();
+        const input = screen.getByLabelText('CV');
+
+        // `user.upload` önce odaklanır ve odak yolu da kaydırır: seçim yolunu ayrı sınamak için yalnız `change` gönderilir.
+        fireEvent.change(input, { target: { files: [pdf()] } });
+
+        expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
+        expect(scroll.mock.contexts.at(-1)).toBe(input);
+      }),
+    );
+
+    it(
+      'klavyeyle gelen odakta kaydırılır',
+      withScroll((scroll) => {
+        picker();
+        const input = screen.getByLabelText('CV');
+        vi.spyOn(input, 'matches').mockImplementation((selector) => selector === ':focus-visible');
+
+        fireEvent.focus(input);
+
+        expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
+      }),
+    );
+
+    it(
+      'dokunma/fare odağında KAYDIRMAZ (basma ile bırakma arasında sayfa kayarsa tıklama alana ulaşmayabilir)',
+      withScroll((scroll) => {
+        picker();
+        const input = screen.getByLabelText('CV');
+        vi.spyOn(input, 'matches').mockReturnValue(false);
+
+        fireEvent.focus(input);
+
+        expect(scroll).not.toHaveBeenCalled();
+      }),
+    );
+
+    it(
+      'odak seçici desteklenmiyorsa (eski motor) sessizce kaydırmaz ve hata vermez',
+      withScroll((scroll) => {
+        picker();
+        const input = screen.getByLabelText('CV');
+        vi.spyOn(input, 'matches').mockImplementation(() => {
+          throw new SyntaxError('bilinmeyen seçici');
+        });
+
+        expect(() => fireEvent.focus(input)).not.toThrow();
+        expect(scroll).not.toHaveBeenCalled();
+      }),
+    );
   });
 
   it('devre dışıyken seçilemez', () => {

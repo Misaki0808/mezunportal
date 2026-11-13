@@ -108,7 +108,7 @@ describe('SearchBar', () => {
     expect(form).not.toHaveClass('mt-6');
   });
 
-  it('satır sarabilir; girdi varsayılanda daralabilir (tek satır), uzamış satır sonu öğesinde en az 10 rem kalır', () => {
+  it('satır sarabilir; girdi varsayılanda en az 7,5 rem kalır, uzamış satır sonu öğesinde en az 10 rem', () => {
     const { unmount } = renderUi(
       <SearchBar
         label="Ara"
@@ -117,10 +117,11 @@ describe('SearchBar', () => {
         input={{}}
       />,
     );
-    // Filtre yokken sabit alt sınır YOK: 360 px'te düğmeyi alt satıra itip ilk ekrandaki sonuçları kaydırırdı.
+    // Filtre yokken alt sınır 7,5 rem (120 px): 360 px'te girdi 127-135 px, satır tek kalır; 320 px'te (87-95 px) düğme alt satıra iner.
+    // 10 rem olsaydı 360 px'te de alt satıra inip ilk ekrandaki sonuçları kaydırırdı.
     expect(screen.getByRole('searchbox').parentElement).toHaveClass('flex-wrap');
-    expect(screen.getByRole('searchbox')).toHaveClass('min-w-0', 'flex-1');
-    expect(screen.getByRole('searchbox')).not.toHaveClass('min-w-40');
+    expect(screen.getByRole('searchbox')).toHaveClass('min-w-30', 'flex-1');
+    expect(screen.getByRole('searchbox')).not.toHaveClass('min-w-0', 'min-w-40');
     unmount();
 
     renderUi(
@@ -134,7 +135,7 @@ describe('SearchBar', () => {
     );
     // "Filtreler (3)" ile girdi 360 px'te 105 px'e düşüyordu: alt sınır 160 px, sığmayan düğme alt satıra iner.
     expect(screen.getByRole('searchbox')).toHaveClass('min-w-40', 'flex-1');
-    expect(screen.getByRole('searchbox')).not.toHaveClass('min-w-0');
+    expect(screen.getByRole('searchbox')).not.toHaveClass('min-w-30');
   });
 
   it('children aynı formun içinde, arama satırının altına girer (süzgeç alanları q ile birlikte gider)', () => {
@@ -153,6 +154,24 @@ describe('SearchBar', () => {
     expect(form).toContainElement(select);
     expect(box.compareDocumentPosition(select) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(box.parentElement).not.toContainElement(select);
+  });
+
+  it('GET gönderiminde boş alanlar adrese girmez (formdata dinleyicisi bağlı); form hazır olunca işaretlenir', () => {
+    renderUi(
+      <SearchBar label="Ara" submitLabel="Ara" input={{ name: 'q' }}>
+        <select aria-label="Tür" name="kind" defaultValue="" />
+      </SearchBar>,
+    );
+
+    const form = screen.getByRole('search');
+    // jsdom `formdata` olayını kendisi tetiklemez: olayı elle gönderiyoruz (gerçek tarayıcı: e2e `search-boundaries`).
+    const formData = new FormData();
+    formData.append('q', 'ornek');
+    formData.append('kind', '');
+    form.dispatchEvent(Object.assign(new Event('formdata'), { formData }));
+
+    expect([...formData.entries()]).toEqual([['q', 'ornek']]);
+    expect(form).toHaveAttribute('data-hydrated', 'true');
   });
 
   it('gönderim sürmüyorken "Ara" kilitli değildir', () => {

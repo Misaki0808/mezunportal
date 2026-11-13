@@ -85,6 +85,42 @@ describe('CopyButton', () => {
     expect(screen.queryByRole('textbox')).toBeNull();
   });
 
+  it('başarısızlıkta alan sabit alt gezinmenin arkasında kalmaz: payı taşır, odak kaydırmaz, görünür yere biz kaydırırız', async () => {
+    const scroll = vi.fn();
+    (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView = scroll;
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+    try {
+      const { user } = view();
+      clipboard(undefined);
+      await user.click(screen.getByRole('button', { name: 'Kopyala' }));
+      const field = await screen.findByRole('textbox', { name: 'Doğrulama bağlantısı' });
+      // `focus()` kaydırması tarayıcıya bağlı (WebKit hiç kaydırmaz, Chromium alanı kenarda bırakır): kendimiz kaydırırız.
+      expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+      expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
+      expect(scroll.mock.contexts.at(-1)).toBe(field);
+      expect(field).toHaveClass('scroll-above-bars');
+    } finally {
+      focus.mockRestore();
+      delete (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView;
+    }
+  });
+
+  it('çok satırlı alan da aynı payı taşır ve kaydırılır', async () => {
+    const scroll = vi.fn();
+    (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView = scroll;
+    try {
+      const { user } = view(true, 'uzun paylaşım metni ' + URL_TEXT);
+      clipboard(undefined);
+      await user.click(screen.getByRole('button', { name: 'Kopyala' }));
+      const field = await screen.findByRole('textbox', { name: 'Doğrulama bağlantısı' });
+      expect(field.tagName).toBe('TEXTAREA');
+      expect(field).toHaveClass('scroll-above-bars');
+      expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
+    } finally {
+      delete (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView;
+    }
+  });
+
   it('uzun metinde çok satırlı alan kullanır ve metni tamamen seçer', async () => {
     const sentence = 'İstanbul Üniversitesi YBS bölümünde ödül aldım. Doğrula: ' + URL_TEXT;
     const { user } = view(true, sentence);
