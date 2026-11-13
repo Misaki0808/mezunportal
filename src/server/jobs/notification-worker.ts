@@ -9,6 +9,7 @@ import { relayPendingNotifications } from './notification-intent-worker';
 import { purgeFiles } from '../services/files-purge';
 import { purgeExpiredLinkedinFiles } from '../services/cv-parse';
 import { purgeExpiredAuth } from '../services/auth-cleanup';
+import { purgeFailedNotificationIntents } from '../services/notification-intent-cleanup';
 import { detachOldEvents } from '../services/event';
 import { expireJobPostings } from '../services/job-postings';
 import { runDailyPoints } from '../services/points';
@@ -42,6 +43,7 @@ export async function createNotificationRuntime() {
         notify: createCvReviewNotifier(getDb()),
       }),
     'notification.relay': () => relayPendingNotifications(),
+    'notification.purgeFailed': () => purgeFailedNotificationIntents(getDb()),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
     'linkedin.purge': () =>
       purgeExpiredLinkedinFiles({ db: getDb(), storage: getStorage(), llm: null }),
