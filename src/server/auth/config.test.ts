@@ -63,7 +63,14 @@ describe('Better Auth yapılandırması', () => {
 
   it('hız sınırı AÇIK (varsayılan yalnız prod) ve veritabanında saklanır', () => {
     const o = options();
-    expect(o.rateLimit).toMatchObject({ enabled: true, storage: 'database' });
+    expect(o.rateLimit).toMatchObject({
+      enabled: true,
+      storage: 'database',
+      window: 60,
+      max: 1000,
+    });
+    expect(o.rateLimit.customRules['/magic-link/verify']).toEqual({ window: 300, max: 120 });
+    expect(o.rateLimit.customRules['/verify-email']).toEqual({ window: 300, max: 120 });
     expect(Object.keys(o.rateLimit.customRules)).toEqual([
       '/magic-link/verify',
       '/verify-email',

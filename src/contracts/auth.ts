@@ -49,6 +49,7 @@ export const SIGN_IN_CALLBACK_ERROR_CODES = [
   'AUTH_ACCOUNT_SUSPENDED',
   'AUTH_PROVIDER_FAILED',
   'RATE_LIMITED',
+  'AUTH_IP_RATE_LIMITED',
 ] as const satisfies readonly ErrorCode[];
 
 // ---------------------------------------------------------------------------------------------
@@ -260,7 +261,7 @@ export type SignOutOutput = z.infer<typeof signOutOutputSchema>;
 export const AUTH_ACTION_ERRORS = {
   getSignInOptions: [],
   startLinkedInSignIn: ['AUTH_PROVIDER_NOT_CONFIGURED', 'RATE_LIMITED'],
-  requestSignInLink: ['VALIDATION_INVALID', 'RATE_LIMITED'],
+  requestSignInLink: ['VALIDATION_INVALID', 'RATE_LIMITED', 'AUTH_IP_RATE_LIMITED'],
   requestEmailChange: [
     'VALIDATION_INVALID',
     'EMAIL_CHANGE_SAME_ADDRESS',

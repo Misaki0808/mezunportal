@@ -204,6 +204,7 @@
       "RESOURCE_NOT_FOUND": "Aradığın kayıt bulunamadı.",
       "RESOURCE_CONFLICT": "Aynı anda başka bir işlem yapılmış. Sayfayı yenileyip tekrar dene.",
       "RATE_LIMITED": "Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.",
+      "AUTH_IP_RATE_LIMITED": "Şu an çok yoğun, birkaç dakika sonra tekrar dene.",
       "SERVER_UNEXPECTED": "Beklenmeyen bir sorun oluştu. Biraz sonra tekrar dene.",
       "DB_UNAVAILABLE": "Şu an kayıtlara ulaşamıyoruz. Biraz sonra tekrar dene.",
       "AUDIT_REASON_REQUIRED": "Bu işlem için kısa bir gerekçe yazmalısın.",

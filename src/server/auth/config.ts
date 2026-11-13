@@ -142,10 +142,10 @@ export function buildAuthOptions(deps: AuthDeps) {
       enabled: true,
       storage: 'database',
       window: 60,
-      max: 30,
+      max: 1000,
       customRules: {
-        '/magic-link/verify': { window: 300, max: 10 },
-        '/verify-email': { window: 300, max: 10 },
+        '/magic-link/verify': { window: 300, max: 120 },
+        '/verify-email': { window: 300, max: 120 },
         '/callback/linkedin': { window: 300, max: 10 },
       },
     },
@@ -195,7 +195,7 @@ export function buildAuthOptions(deps: AuthDeps) {
         storeToken: 'hashed',
         // Kayıtsız e-posta da bağlantı alır (yeni üye ilk girişte oluşur); kayıt durumu sızmaz.
         disableSignUp: false,
-        rateLimit: { window: 300, max: 10 },
+        rateLimit: { window: 300, max: 120 },
         sendMagicLink: async ({ email: to, url, token }) => {
           await email.sendSignInLink({ to, url, token });
         },

@@ -19,7 +19,7 @@ import {
   type ReviewJobPostingInput,
   type ReviewJobPostingOutput,
 } from '@/contracts/job-postings';
-import { codedConflict, codedForbidden, codedNotFound, codedValidation } from '@/lib/errors';
+import { codedConflict, codedNotFound, codedValidation } from '@/lib/errors';
 
 import { dayOfDateColumn, deadlineProblem, istanbulDay } from '../rules/jobPosting';
 import {
@@ -74,7 +74,8 @@ async function requireInScope(
   postingId: string,
 ) {
   const row = await lockedPosting(tx, postingId);
-  if (!(await covers(tx, admin, row.departmentIdAtWrite))) throw codedForbidden('AUTH_FORBIDDEN');
+  if (!(await covers(tx, admin, row.departmentIdAtWrite)))
+    throw codedNotFound('RESOURCE_NOT_FOUND');
   return row;
 }
 
@@ -284,7 +285,7 @@ export async function resolveJobPostingReport(
         break;
       }
     }
-    if (!inScope) throw codedForbidden('AUTH_FORBIDDEN');
+    if (!inScope) throw codedNotFound('RESOURCE_NOT_FOUND');
     await requireConsent(tx, adminId);
     const report = await tx.jobPostingReport.findUnique({
       where: { id: parsed.reportId },
