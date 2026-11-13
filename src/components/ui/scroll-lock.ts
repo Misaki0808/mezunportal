@@ -6,7 +6,14 @@
  * kaybolunca düzen kaymasın diye çubuk genişliği kadar sağ boşluk bırakılır.
  */
 let locks = 0;
-let saved: { htmlOverflow: string; bodyOverflow: string; bodyPaddingRight: string } | null = null;
+let saved: {
+  htmlOverflow: string;
+  bodyOverflow: string;
+  bodyPaddingRight: string;
+  gutter: string;
+  gutterPriority: string;
+  lockAttribute: string | null;
+} | null = null;
 
 export function lockScroll(): () => void {
   const root = document.documentElement;
@@ -16,11 +23,18 @@ export function lockScroll(): () => void {
       htmlOverflow: root.style.overflow,
       bodyOverflow: body.style.overflow,
       bodyPaddingRight: body.style.paddingRight,
+      gutter: root.style.getPropertyValue('--scroll-lock-gutter'),
+      gutterPriority: root.style.getPropertyPriority('--scroll-lock-gutter'),
+      lockAttribute: root.getAttribute('data-scroll-lock-gutter'),
     };
     const scrollbar = window.innerWidth - root.clientWidth;
     root.style.overflow = 'hidden';
     body.style.overflow = 'hidden';
-    if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
+    if (scrollbar > 0) {
+      body.style.paddingRight = `${scrollbar}px`;
+      root.style.setProperty('--scroll-lock-gutter', `${scrollbar}px`);
+      root.setAttribute('data-scroll-lock-gutter', '');
+    }
   }
   locks += 1;
   let released = false;
@@ -32,6 +46,11 @@ export function lockScroll(): () => void {
       root.style.overflow = saved.htmlOverflow;
       body.style.overflow = saved.bodyOverflow;
       body.style.paddingRight = saved.bodyPaddingRight;
+      if (saved.gutter)
+        root.style.setProperty('--scroll-lock-gutter', saved.gutter, saved.gutterPriority);
+      else root.style.removeProperty('--scroll-lock-gutter');
+      if (saved.lockAttribute === null) root.removeAttribute('data-scroll-lock-gutter');
+      else root.setAttribute('data-scroll-lock-gutter', saved.lockAttribute);
       saved = null;
     }
   };
