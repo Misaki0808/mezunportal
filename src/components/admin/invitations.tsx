@@ -3,7 +3,7 @@ import { safeClientAction } from '@/lib/safe-client-action';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { sendInvitations } from '@/server/actions/invitations';
-import { Field, FilePicker } from '@/components/ui';
+import { Button, Field, FilePicker, Textarea } from '@/components/ui';
 import { AdminFrame } from './frame';
 
 export function Invitations() {
@@ -29,20 +29,17 @@ export function Invitations() {
           });
         }}
       >
-        <label htmlFor="invitation-list" className="block font-medium">
-          {t('label')}
-        </label>
-        <textarea
-          id="invitation-list"
-          className="min-h-48 w-full rounded-lg border border-border bg-surface p-3 text-fg"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          required
-          aria-describedby="invitation-help"
-        />
-        <p id="invitation-help" className="text-fg-muted">
-          {t('help')}
-        </p>
+        {/* Kit `Textarea`: ham `<textarea>` dekoratif `border` token'ıyla çizilmişti (koyu temada 1,77:1; kontrol sınırı 3:1 ister). */}
+        <Field label={t('label')} hint={t('help')} required>
+          {(control) => (
+            <Textarea
+              {...control}
+              className="min-h-48"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+            />
+          )}
+        </Field>
         <Field label={t('file')}>
           {(control) => (
             <FilePicker
@@ -69,13 +66,9 @@ export function Invitations() {
           </p>
         )}
         {result && <p role="status">{t('result', result)}</p>}
-        <button
-          disabled={pending}
-          className="min-h-11 rounded-lg bg-primary px-5 py-3 font-semibold text-on-primary disabled:opacity-50"
-          type="submit"
-        >
+        <Button type="submit" loading={pending}>
           {pending ? t('sending') : t('submit')}
-        </button>
+        </Button>
       </form>
     </AdminFrame>
   );
