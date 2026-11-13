@@ -1,5 +1,5 @@
 import { loginAs } from './login';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 
@@ -14,6 +14,7 @@ const login = loginAs;
 test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → mentor onaylar', async ({
   browser,
 }) => {
+  test.setTimeout(60_000); // İki oturum ve soğuk sayfa derlemeleri tek 30 sn'lik bütçeyi aşabilir.
   const mentor = await db.user.findUniqueOrThrow({
     where: { email: 'alumni-mentor@test.mezunportal.local' },
   });

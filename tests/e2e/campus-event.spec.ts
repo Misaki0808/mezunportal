@@ -1,6 +1,6 @@
 import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { decodeQR } from 'qr/decode.js';
 import { PrismaClient } from '../../src/generated/prisma/client';
@@ -89,7 +89,7 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
     await expect(page.getByLabel('Altı haneli katılım kodu')).toBeVisible();
     await expect(page.getByLabel('Altı haneli katılım kodu')).toHaveValue(qrCode);
     await page.getByRole('button', { name: 'Katılımı doğrula' }).click();
-    await expect(page.getByText('Katılımın doğrulandı.').first()).toBeVisible();
+    await expect(page.getByText('Katılımın doğrulandı.').first()).toBeVisible({ timeout: 15_000 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

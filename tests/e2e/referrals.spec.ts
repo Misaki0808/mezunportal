@@ -1,7 +1,7 @@
 import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
 
@@ -77,6 +77,7 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
       .getByRole('button', { name: 'Onayla' })
       .click();
     await adminPage!.getByRole('dialog').getByRole('button', { name: 'Onayla' }).click();
+    await expect(adminPage!.getByRole('dialog')).toBeHidden({ timeout: 15_000 });
     await expect
       .poll(
         async () => (await db.referralClaim.findUniqueOrThrow({ where: { id: claim.id } })).status,
@@ -107,6 +108,7 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
       .getByRole('button', { name: 'Onayla' })
       .click();
     await adminPage!.getByRole('dialog').getByRole('button', { name: 'Onayla' }).click();
+    await expect(adminPage!.getByRole('dialog')).toBeHidden({ timeout: 15_000 });
     await expect
       .poll(
         async () => (await db.referralClaim.findUniqueOrThrow({ where: { id: claim.id } })).status,

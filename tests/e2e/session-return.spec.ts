@@ -1,5 +1,5 @@
 import { loginAs } from './login';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture';
 
 /**
  * Oturum düşmüşken (çerezler yok) bir sunucu eylemi gönderilince kullanıcı `/giris?donus=<bulunduğu yol>` adresine
@@ -35,8 +35,8 @@ test('oturum düşmüşken eylem gönderilince girişe, giriş sonrası aynı sa
   await expect(page.getByRole('switch', { name: /İletişim talepleri/ })).toBeVisible();
 });
 
-test('dış adres dönüş yolu olarak kabul edilmez', async ({ page }) => {
+test('dış adres dönüş yolu olarak kabul edilmez', async ({ page, baseURL }) => {
   await signIn(page, `&donus=${encodeURIComponent('https://kotu.example/x')}`);
   await page.waitForURL(/\/(hesap|onay)$/);
-  expect(new URL(page.url()).origin).toBe(new URL(test.info().project.use.baseURL!).origin);
+  expect(new URL(page.url()).origin).toBe(new URL(baseURL!).origin);
 });

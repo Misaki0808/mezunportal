@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixture';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { loginAs } from './login';
 import { waitForHydratedForm } from './hydration';
@@ -323,6 +323,9 @@ test.describe('kullanım hissi: geri bildirim anları (390)', () => {
       await expectPendingNow(page);
       await expect.soft(page.getByText('Etkinlik yayınlandı.')).toBeVisible();
       await expect.soft(dialog, 'başarıda pencere kapanır').toBeHidden();
+      // Toast, router.refresh tamamlanmadan görünebilir. Eski satırı sonraki karar sanma.
+      await expect(row.getByRole('button', { name: 'Onayla' })).toHaveCount(0);
+      await page.waitForLoadState('networkidle');
       // Sonraki karar temiz açılır: eski gerekçe taşınmaz.
       const next = page
         .locator('li')
