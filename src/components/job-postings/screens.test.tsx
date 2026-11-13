@@ -454,6 +454,25 @@ it('60 gün sınırındaki taslak kaydedilir, 61. gün istemcide reddedilir', as
     vi.useRealTimers();
   }
 });
+it('ilan araması ortak SearchBar: ipucu açıklama olarak okunur; Ara ve Filtreler aynı satırda, filtre alanları aynı formda', () => {
+  renderWithToasts(
+    <PostingList
+      canPost={false}
+      filters={{}}
+      options={options}
+      page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
+    />,
+  );
+
+  const box = screen.getByRole('searchbox', { name: 'Pozisyon veya kurum ara' });
+  expect(box).toHaveAccessibleDescription('İlan ara');
+  expect(box.parentElement).toBe(screen.getByRole('button', { name: 'Ara' }).parentElement);
+  expect(box.parentElement).toBe(screen.getByRole('button', { name: 'Filtreler' }).parentElement);
+  expect(box.closest('form')).toContainElement(
+    screen.getByText('Filtreler', { selector: 'summary' }),
+  );
+});
+
 it('mobil süzgeçler alt sayfada uygulanır ve arama metni korunur', async () => {
   HTMLDialogElement.prototype.showModal = function () {
     this.setAttribute('open', '');

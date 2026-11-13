@@ -100,6 +100,45 @@ describe('SearchBar', () => {
     expect(screen.getByText('Deneyimler yükleniyor')).toHaveClass('sr-only');
   });
 
+  it('dış boşluk çağırandan gelir (bileşen marj koymaz); satır dar ekranda sarar ve girdi en az 10 rem kalır', () => {
+    renderUi(
+      <SearchBar
+        label="Ara"
+        submitLabel="Ara"
+        className="mb-4"
+        trailing={<Button variant="secondary">Filtreler (3)</Button>}
+        input={{}}
+      />,
+    );
+
+    const form = screen.getByRole('search');
+    const box = screen.getByRole('searchbox');
+    expect(form).toHaveClass('mb-4');
+    expect(form).not.toHaveClass('mt-6');
+    // 360 px'te "Filtreler (3)" ile girdi 105 px'e düşüyordu: satır sarar, düğme alt satıra iner, girdi geniş kalır.
+    expect(box.parentElement).toHaveClass('flex-wrap');
+    expect(box).toHaveClass('min-w-40', 'flex-1');
+    expect(box).not.toHaveClass('min-w-0');
+  });
+
+  it('children aynı formun içinde, arama satırının altına girer (süzgeç alanları q ile birlikte gider)', () => {
+    renderUi(
+      <SearchBar label="Ara" submitLabel="Ara" input={{ name: 'q' }}>
+        <details>
+          <summary>Filtreler</summary>
+          <select aria-label="Tür" name="kind" />
+        </details>
+      </SearchBar>,
+    );
+
+    const form = screen.getByRole('search');
+    const box = screen.getByRole('searchbox');
+    const select = screen.getByLabelText('Tür');
+    expect(form).toContainElement(select);
+    expect(box.compareDocumentPosition(select) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(box.parentElement).not.toContainElement(select);
+  });
+
   it('gönderim sürmüyorken "Ara" kilitli değildir', () => {
     renderUi(<SearchBar label="Ara" submitLabel="Ara" input={{}} />);
 

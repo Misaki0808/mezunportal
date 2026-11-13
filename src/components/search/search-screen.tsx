@@ -259,6 +259,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
       <FilterShell
         search={(filtersButton) => (
           <SearchBar
+            className="mt-6"
             label={t('query')}
             hint={t('queryHint')}
             submitLabel={t('submit')}

@@ -298,6 +298,21 @@ describe('CV akışı', () => {
     expect(screen.getByText('Dosyayı değiştir')).toBeInTheDocument();
   });
 
+  it('dosya seçilince "Bir PDF dosyası seç." hatası hemen kalkar ve alan geçersiz işaretli kalmaz', async () => {
+    const { user } = renderUi(
+      <CvFlow availability={available} latest={null} actions={actions({})} />,
+    );
+    const input = screen.getByLabelText(/CV dosyası/);
+    await user.click(screen.getByRole('button', { name: "CV'yi oku" }));
+    expect(await screen.findByText('Bir PDF dosyası seç.')).toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+
+    await user.upload(input, new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' }));
+
+    expect(screen.queryByText('Bir PDF dosyası seç.')).not.toBeInTheDocument();
+    expect(input).not.toHaveAttribute('aria-invalid');
+  });
+
   it('geçerli PDF yüklenir → işleniyor → sonuç hazır olunca onay ekranı açılır', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {

@@ -136,6 +136,27 @@ describe('mezun belgesi yükleme formu', () => {
     expect(Object.keys(input).sort()).toEqual(['departmentId', 'file', 'graduationYear']);
     expect(graduationDocumentFormSchema.safeParse(input).success).toBe(true);
   });
+
+  it('dosya SEÇİLMEMİŞSE tarayıcının adsız boş File\'ı "eksik" sayılır; adı olan boş dosya DOCUMENT_EMPTY kalır', () => {
+    const form = (file: File) => {
+      const formData = new FormData();
+      formData.set('departmentId', 'd1');
+      formData.set('graduationYear', '2024');
+      formData.set('file', file);
+      return formData;
+    };
+
+    const unselected = graduationDocumentFormInput(form(new File([], '')));
+    expect(unselected.file).toBeNull();
+    expect(fieldErrors(unselected)).toEqual({ file: 'DOCUMENT_REQUIRED' });
+
+    const emptyChosen = graduationDocumentFormInput(
+      form(new File([], 'bos.pdf', { type: 'application/pdf' })),
+    );
+    expect(fieldErrors(emptyChosen)).toEqual({ file: 'DOCUMENT_EMPTY' });
+
+    expect(graduationDocumentFormInput(new FormData()).file).toBeNull();
+  });
 });
 
 describe('yönetici kararı', () => {
