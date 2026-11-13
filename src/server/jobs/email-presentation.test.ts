@@ -1,5 +1,7 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { decorateEmail } from './email-presentation';
+import { decorateEmail, preheaderOf } from './email-presentation';
+import messages from '../../../messages/tr.json';
 describe('e-posta sunumu', () => {
   it('gövdeyi HTML olarak kaçışlar, yalnız uygulama bağlantılarını tıklanabilir yapar', () => {
     const result = decorateEmail(
@@ -118,20 +120,59 @@ it('gövdesinde iç bağlantı olmayan randevuda dış URL düz kalır ve eylem 
   expect(result.html).toContain('class="email-button" href="https://portal.invalid/randevular"');
   expect(result.html).toContain('Randevuyu gör');
 });
-it('evet ve hayır bağlantıları farklı anlamlarını korur', () => {
-  const result = decorateEmail(
+const stillThere = (yes: string, no: string) =>
+  decorateEmail(
     {
       to: 'test@example.invalid',
       subject: 'Örnek',
       template: 'alumni.still-there',
       idempotencyKey: '1',
-      text: 'Evet: https://portal.invalid/yes Hayır: https://portal.invalid/no',
+      text: messages.notifications.email.stillThereText
+        .replace('{company}', 'Anadolu Teknoloji A.Ş.')
+        .replace('{yesUrl}', yes)
+        .replace('{noUrl}', no),
     },
     'https://portal.invalid',
   );
-  expect(result.html).toContain('href="https://portal.invalid/yes"');
-  expect(result.html).toContain('Evet, hâlâ çalışıyorum');
-  expect(result.html).toContain('Hayır: <a href="https://portal.invalid/no"');
+
+it('evet ve hayır iki ayrı düğmedir: farklı anlam, farklı bağlantı, ham adres ve ön ek yok', () => {
+  const yes = 'https://portal.invalid/bildirim-yanit#token=YES.abc&choice=YES';
+  const no = 'https://portal.invalid/bildirim-yanit#token=NO.abc&choice=NO';
+  const result = stillThere(yes, no);
+  const document = new DOMParser().parseFromString(result.html!, 'text/html');
+  const links = [...document.querySelectorAll('a.email-button')];
+  expect(links.map((a) => a.textContent)).toEqual([
+    'Evet, hâlâ çalışıyorum',
+    'Hayır, artık çalışmıyorum',
+  ]);
+  expect(links.map((a) => a.getAttribute('href'))).toEqual([yes, no]);
+  // Yalnız "evet" birincil eylemdir; "hayır" ikincil (çerçeveli) düğmedir ve gövde metninde ön ek/ham adres kalmaz.
+  expect(links[0]!.className).toBe('email-button');
+  expect(links[1]!.className).toBe('email-button email-button-secondary');
+  const body = document.querySelector('.email-body')!.textContent!;
+  expect(body).not.toMatch(/Evet:|Hayır:|https?:\/\//);
+  expect(body).toContain('Anadolu Teknoloji A.Ş. bünyesinde misin?');
+  // Düz metin okunur: soru ve iki bağlantı ayrı satırlarda.
+  expect(result.text).toContain(`bünyesinde misin?\n\nEvet: ${yes}\n\nHayır: ${no}\n\n`);
+});
+
+it('ikincil iç bağlantı ham jetonu değil kısa adresi gösterir ama hedefini korur', () => {
+  const unsubscribe = 'https://portal.invalid/aylik-ozet/abonelikten-cik#token=dXNlci0x.imza';
+  const result = decorateEmail(
+    {
+      to: 'test@example.invalid',
+      subject: 'Örnek',
+      template: 'monthlyDigest.summary',
+      idempotencyKey: '1',
+      text: `Uygulamada görüntüle: https://portal.invalid/hesap/aylik-ozet\n\nAboneliği kapat: ${unsubscribe}`,
+    },
+    'https://portal.invalid',
+  );
+  const document = new DOMParser().parseFromString(result.html!, 'text/html');
+  const link = document.querySelector('a:not(.email-button)[href*="abonelikten-cik"]')!;
+  expect(link.getAttribute('href')).toBe(unsubscribe);
+  expect(link.textContent).toBe('portal.invalid/aylik-ozet/abonelikten-cik');
+  expect(document.querySelector('.email-body')!.textContent).not.toContain('dXNlci0x');
 });
 
 it('eksik tek kullanımlık bağlantı yerine onay veya evet eylemi varmış gibi sunmaz', () => {
@@ -187,4 +228,92 @@ it.each([
     'https://portal.invalid',
   );
   expect(result.html).toContain(`>${label}</a>`);
+});
+
+const headMail = (subject = 'Randevun onaylandı & <hazır>') => {
+  const result = decorateEmail(
+    {
+      to: 'test@example.invalid',
+      subject,
+      template: 'contact.requested',
+      idempotencyKey: '1',
+      text: 'Merhaba',
+    },
+    'https://portal.invalid',
+  );
+  return new DOMParser().parseFromString(result.html!, 'text/html');
+};
+
+describe('belge başlığı', () => {
+  it('dil Türkçe, karakter kodlaması UTF-8 olarak belirtilir', () => {
+    const document = headMail();
+    expect(document.documentElement.lang).toBe('tr');
+    expect(document.querySelector('meta[charset]')?.getAttribute('charset')).toBe('utf-8');
+  });
+
+  it('sayfa başlığı konu satırıdır ve kaçışlıdır', () => {
+    expect(headMail().title).toBe('Randevun onaylandı & <hazır>');
+  });
+
+  it('açık ve koyu kip hem standart hem eski istemci başlığıyla bildirilir', () => {
+    const document = headMail();
+    expect(document.querySelector('meta[name="color-scheme"]')?.getAttribute('content')).toBe(
+      'light dark',
+    );
+    expect(
+      document.querySelector('meta[name="supported-color-schemes"]')?.getAttribute('content'),
+    ).toBe('light dark');
+  });
+
+  it('altbilgi en az 14 px ve tercih bağlantısı dokunmatikte ≥ 44 px (dikey dolgu)', () => {
+    const footer = headMail().querySelector('.email-footer') as HTMLElement;
+    expect(footer.style.fontSize).toBe('14px');
+    expect(footer.querySelector('a')!.getAttribute('style')).toContain(
+      'display:inline-block;padding:12px 0',
+    );
+  });
+});
+
+describe('ön izleme metni (preheader)', () => {
+  it('gizli bir öğedir ve ilk cümleyi taşır; selamlama, bağlantı ve gerekçe girmez', () => {
+    const result = decorateEmail(
+      {
+        to: 'test@example.invalid',
+        subject: 'Örnek',
+        template: 'graduation-document.rejected',
+        idempotencyKey: '1',
+        text: 'Merhaba,\n\nMezun belgen onaylanamadı. Gerekçe: Belgedeki ad okunamıyor.\n\nhttps://portal.invalid/dogrulama',
+      },
+      'https://portal.invalid',
+    );
+    const document = new DOMParser().parseFromString(result.html!, 'text/html');
+    const pre = document.querySelector('.email-preheader') as HTMLElement;
+    expect(pre.style.display).toBe('none');
+    expect(pre.textContent!.replace(/[\u200c\u00a0]/g, '')).toBe('Mezun belgen onaylanamadı.');
+    expect(document.body.firstElementChild).toBe(pre);
+  });
+
+  it.each([
+    [
+      "MezunPortal'a girmek için bu bağlantıya tıkla:\nhttps://portal.invalid/x",
+      "MezunPortal'a girmek için bu bağlantıya tıkla",
+    ],
+    ['Hâlâ Anadolu A.Ş. bünyesinde misin? Evet', 'Hâlâ Anadolu A.Ş. bünyesinde misin?'],
+    [
+      'Zeynep ile 4 Aralık 14:30 için görüşmen onaylandı.\n\nYer: Beyazıt',
+      'Zeynep ile 4 Aralık 14:30 için görüşmen onaylandı.',
+    ],
+    ['https://portal.invalid/yalniz-baglanti', ''],
+    ['Merhaba,', ''],
+  ])('%j → %j', (text, expected) => {
+    expect(preheaderOf(text)).toBe(expected);
+  });
+
+  it('uzun ilk cümleyi kelime sınırında 100 karakterde keser', () => {
+    const long = `${'kelime '.repeat(30)}son`;
+    const out = preheaderOf(long);
+    expect(out.length).toBeLessThanOrEqual(100);
+    expect(out.endsWith('…')).toBe(true);
+    expect(out).not.toMatch(/\s…$/);
+  });
 });
