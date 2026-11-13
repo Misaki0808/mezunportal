@@ -2,7 +2,7 @@ import 'server-only';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { isCodedError } from '@/lib/errors';
 import { istanbulDay } from '../rules/jobPosting';
-import { buildMonthlyDigest } from '../services/monthly-digest';
+import { buildMonthlyDigest, nextMonthlyDigestKey } from '../services/monthly-digest';
 import { stageNotification } from '../services/notification-intent';
 
 /** Ay başındaki tekrarlar aynı alıcı ve aya yalnız bir e-posta üretebilir. */
@@ -26,13 +26,8 @@ export async function scheduleMonthlyDigests(
     if (!users.length) break;
     for (const { id } of users) {
       try {
-        if (
-          await db.emailLog.findUnique({
-            where: { idempotencyKey: `monthly-digest:${id}:${cycle}` },
-            select: { id: true },
-          })
-        )
-          continue;
+        // Ay için sıradaki anahtar yoksa (gitti, kuyrukta, başka nedenle düştü ya da bayat yeniden üretim hakkı bitti) atla.
+        if (!(await nextMonthlyDigestKey(db, id, cycle))) continue;
         const preference = await db.notificationPreference.findUnique({
           where: { userId_type: { userId: id, type: 'MONTHLY_DIGEST' } },
           select: { enabled: true },

@@ -2,7 +2,7 @@ import 'server-only';
 import messages from '../../../messages/tr.json';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { createPermissions } from '../permissions/guards';
-import { selectDigest } from '../rules/digest';
+import { DIGEST_MAX_REGENERATIONS, monthlyDigestKey, selectDigest } from '../rules/digest';
 import { istanbulDay } from '../rules/jobPosting';
 import { aggregateApplicationMonths } from './application-window';
 import { listMyJobMatchNotifications, sharedJobMatchTags } from './job-match';
@@ -120,4 +120,31 @@ export async function buildMonthlyDigest(db: PrismaClient, userId: string, now =
       .map(({ id, title, organizationName }) => ({ id, title, organization: organizationName })),
     events: scoped.events,
   });
+}
+
+/**
+ * Bu alıcı ve ay için SIRADAKİ özet anahtarı; `null` = bu ay özet üretilmez. Kural: hiç satır yoksa ilk anahtar; ilk
+ * satır yalnız `DIGEST_STALE` ile düşmüşse (kuyruktayken veri değişti) bir kez `:r1`; gönderilmiş, kuyrukta bekleyen ya da
+ * başka nedenle (tercih kapalı, alıcı uygun değil, taşıma hatası) düşmüş satırdan sonra yeniden üretim YOK. `:r1` de bayat
+ * çıkarsa ay biter. İki işçi yarışırsa ikincisi kendi satırını `:r1`'de bulur; anahtar tekilliği çift gönderimi engeller.
+ */
+export async function nextMonthlyDigestKey(
+  db: Pick<PrismaClient, 'emailLog'>,
+  userId: string,
+  cycle: string,
+): Promise<string | null> {
+  const keys = Array.from({ length: DIGEST_MAX_REGENERATIONS + 1 }, (_, attempt) =>
+    monthlyDigestKey(userId, cycle, attempt),
+  );
+  const rows = await db.emailLog.findMany({
+    where: { idempotencyKey: { in: keys } },
+    select: { idempotencyKey: true, status: true, errorCode: true },
+  });
+  const byKey = new Map(rows.map((row) => [row.idempotencyKey, row]));
+  for (const key of keys) {
+    const row = byKey.get(key);
+    if (!row) return key;
+    if (row.status !== 'FAILED' || row.errorCode !== 'DIGEST_STALE') return null;
+  }
+  return null;
 }

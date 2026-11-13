@@ -13,7 +13,7 @@ import {
 } from '../services/appointment-notifier';
 import { sendNotification } from '../services/notification-email';
 import { hasCurrentApplicationWindow } from '../services/application-window';
-import { buildMonthlyDigest } from '../services/monthly-digest';
+import { buildMonthlyDigest, nextMonthlyDigestKey } from '../services/monthly-digest';
 import { monthlyDigestEmail } from '../services/monthly-digest-email';
 import { digestFingerprint } from '../rules/digest';
 import {
@@ -62,9 +62,9 @@ export async function sendNotificationIntent(
         select: { email: true, deletedAt: true },
       });
       if (!user || user.deletedAt) return;
-      const key = `monthly-digest:${row.userId}:${payload.cycle}`;
-      if (await tx.emailLog.findUnique({ where: { idempotencyKey: key }, select: { id: true } }))
-        return;
+      // Kilit altında ve işlemin içinde: yarışan ikinci işçi birincinin satırını görür ve çıkar (çift gönderim yok).
+      const key = await nextMonthlyDigestKey(tx, row.userId, payload.cycle);
+      if (!key) return;
       if (
         await tx.jobMatchDigest.findUnique({
           where: { userId_day: { userId: row.userId, day: today } },
