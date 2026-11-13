@@ -72,5 +72,15 @@ it('değerlendirilmiş ders kartta, eşiğin altındakiler yarıyıl sırasıyla
   const lists = within(section).getAllByRole('list');
   expect(within(lists[lists.length - 2]!).getByText('İlk yarıyıl dersi')).toBeVisible();
   expect(within(lists[lists.length - 1]!).getByText('Üçüncü yarıyıl dersi')).toBeVisible();
+  expect(
+    within(section.querySelector('[data-course-code="YBSB1"]') as HTMLElement).getByText(
+      'required',
+    ),
+  ).toBeVisible();
+  expect(
+    within(section.querySelector('[data-course-code="YBSB3"]') as HTMLElement).getByText(
+      'elective',
+    ),
+  ).toBeVisible();
   expect(screen.getByRole('heading', { name: 'commonCourses' })).toBeVisible();
 });

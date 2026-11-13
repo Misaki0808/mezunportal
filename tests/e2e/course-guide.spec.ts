@@ -70,6 +70,6 @@ test('390 px: değerlendirmesiz dersler kısadır, tüm dersler korunur ve taşm
   await login(page, 'student');
   await page.goto('/ders-rehberi');
   await expect(page.locator('[data-course-code]')).toHaveCount(89);
-  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(4000);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(5000);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

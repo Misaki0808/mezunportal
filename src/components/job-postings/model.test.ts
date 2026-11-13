@@ -76,3 +76,17 @@ it('adım denetimi sözleşmenin uzunluk, bağlantı ve koşullu alan kuralları
     postingStepErrors({ ...valid, deadlineOn: '2027-02-20' }, 'dep', 1, '2026-11-13'),
   ).toContain('deadlineOn');
 });
+
+it('sözleşmedeki görünür alanların her biri tam bir adımda listelidir', async () => {
+  const { jobPostingContentSchema } = await import('@/contracts/job-postings');
+  const { postingStepFields, postingStepErrors } = await import('./model');
+  const hiddenContentFields = ['companyId'];
+  const visibleFields = Object.keys(jobPostingContentSchema.shape).filter(
+    (key) => !hiddenContentFields.includes(key),
+  );
+  const mappedContentFields = postingStepFields.flat().filter((key) => key !== 'departmentId');
+  expect([...mappedContentFields].sort()).toEqual(visibleFields.sort());
+  expect(new Set(postingStepFields.flat()).size).toBe(postingStepFields.flat().length);
+  expect(postingStepErrors({}, '', 0, '2026-11-13')).toContain('departmentId');
+  expect(postingStepErrors({}, 'dep', 0, '2026-11-13')).not.toContain('departmentId');
+});
