@@ -335,7 +335,10 @@ test('ilan adımları klavyeyle doğrulanır, başlık duyurulur ve geri dönün
     'Adım 2 / 3: Ayrıntılar ve başvuru',
   );
   const description = page.getByLabel('Açıklama', { exact: false });
-  await tabTo(description);
+  await tabTo(next);
+  await page.keyboard.press('Enter');
+  await expect(description).toBeFocused();
+  await expect(description).toHaveAttribute('aria-invalid', 'true');
   await page.keyboard.type(
     'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
   );
@@ -344,7 +347,10 @@ test('ilan adımları klavyeyle doğrulanır, başlık duyurulur ve geri dönün
   await page.keyboard.type('İstanbul');
   const deadline = page.getByLabel('Son başvuru tarihi', { exact: false });
   await tabTo(deadline);
-  await deadline.fill(addDays(istanbulDay(), 14));
+  const expectedDay = addDays(istanbulDay(), 14);
+  const [year, month, day] = expectedDay.split('-');
+  await page.keyboard.type(`${month}${day}${year}`);
+  await expect(deadline).toHaveValue(expectedDay);
   const department = page.getByRole('checkbox', { name: /Yönetim Bilişim Sistemleri/ }).first();
   await tabTo(department);
   await page.keyboard.press('Space');
