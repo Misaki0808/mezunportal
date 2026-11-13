@@ -773,7 +773,7 @@ vermez (etiket herkese görünür, anonimlik sızmasın). Geri alınan etiket ke
 `FOUNDING_MEMBER_UNTIL` (`YYYY-MM-DD`, İstanbul günü dahil; boşsa pilot açık) env'inde; bitiş sonradan değişince verilmiş etiket
 korunur. Etiket, kaynağı olan puan kaydına bağlıdır: o kayıt geri alınırsa etiket düşer.
 
-**Şüphe taraması (K-11 eşikleri — PM teyidi bekler).** `rules/pointsSuspicion.ts` `SUSPICION_THRESHOLDS`: 24 saatte ≥ 40 puan
+**Şüphe taraması (K-11 eşikleri, PM onayladı).** `rules/pointsSuspicion.ts` `SUSPICION_THRESHOLDS`: 24 saatte ≥ 40 puan
 (`BURST`); son 90 günde toplam ≥ 15 puanın ≥ %60'ı ve ≥ 3 kaydı tek karşı taraftan (`SINGLE_COUNTERPART`); aynı ikilide iki
 tarafın görüşme yanıtı ≤ 60 sn arayla ≥ 3 kez, 180 günde (`SYNC_FEEDBACK`). İşaret ceza değildir: puanı geri almaz; yalnız karar
 verilene dek kullanıcının BEKLEYEN puanı kesinleşmez. Aynı kanıt (`evidenceKey`) iki kez, aynı (kullanıcı, kural) için iki açık işaret

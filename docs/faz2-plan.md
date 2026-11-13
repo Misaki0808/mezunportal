@@ -365,7 +365,7 @@ testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümle
 | Soru bankasında pozisyon süzgeci, "kaydet/çalış" | Faz 3 fikirleri (`BACKLOG.md`) |
 | Yerel profil fotoğrafı (ayın mezunu) | Faz 3 fikirleri (`BACKLOG.md`) |
 | Stres hacminde arama/soru bankası, `test:gate` OOM kalıbı ve diğer teknik borç | `BACKLOG.md` TD-022, TD-023, TD-024, TD-026, TD-027 |
-| Rıza metinlerinin hukuki okuması; LinkedIn kurum kimliği; Gemini ve Google Cloud anahtarları; platform hesabı | `BACKLOG.md` "Dış bağımlılık bekleyenler" (kullanıcı) ve PILOT-LEGAL |
+| Rıza metinlerinin hukuki okuması; LinkedIn kurum kimliği; Gemini ve Google Cloud anahtarları; platform hesabı | `BACKLOG.md` "Açık ürün kararları" (Kullanıcı, Hoca) ve PILOT-LEGAL |
 
 **Sayım:** 14 adımın 10'u ✓ (P2-04, P2-05, P2-06, P2-03, P2-09, P2-11, P2-08, P2-01, P2-12, P2-13), 4'ü ◐ (P2-10, P2-07, P2-02, P2-14); ✗ yok. Plandan sapmalar:
 soru bankası pozisyon süzgeci, hedef unvanın sözlükten seçilmesi, uzak fotoğraf yerine baş harf, rapor PDF'lerinin üretilmemesi.
