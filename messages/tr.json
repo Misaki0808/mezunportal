@@ -891,7 +891,7 @@
       "text": "Merhaba,\n\nBu adresi MezunPortal hesabının yeni e-postası yapmak için doğrulaman gerekiyor. Doğrulamak için bu bağlantıya tıkla:\n{url}\n\nBu isteği sen yapmadıysan bu e-postayı yok sayabilirsin."
     },
     "documentApproved": {
-      "subject": "Mezun belgen onaylandı",
+      "subject": "Mezun belgen incelendi",
       "text": "Merhaba,\n\nMezun belgen onaylandı; mezun üyeliğin doğrulandı. Yüklediğin belge dosyası silindi.\n\nMezunPortal'a girerek devam edebilirsin."
     },
     "documentRejected": {
@@ -2278,21 +2278,21 @@
     },
     "email": {
       "footer": "Bildirim tercihlerin: {url}",
-      "moderationApprovedSubject": "Deneyimin yayınlandı",
+      "moderationApprovedSubject": "Deneyimin incelendi",
       "moderationApprovedText": "Deneyimin incelendi ve yayınlandı. Ayrıntıyı görüntüle: {url}",
       "moderationRejectedSubject": "Deneyimin incelendi",
       "moderationRejectedText": "Deneyimin incelendi. Gerekçeyi görmek ve düzenlemek için: {url}",
-      "faqPublishedSubject": "Sorduğun soru SSS'de yayınlandı",
+      "faqPublishedSubject": "SSS talebin incelendi",
       "faqPublishedText": "Sorduğun soru incelendi ve sık sorulan sorulara eklendi. Görüntüle: {url}",
       "faqRejectedSubject": "SSS talebin incelendi",
       "faqRejectedText": "SSS talebin incelendi ve yayınlanmadı. Gerekçeyi görmek için: {url}",
-      "faqRedirectedSubject": "SSS talebin mentora yönlendirildi",
+      "faqRedirectedSubject": "SSS talebin incelendi",
       "faqRedirectedText": "Sorun herkese açık bir soru olmadığı için bir mentorla görüşmeni öneriyoruz. Ayrıntı için: {url}",
       "faqAnswerPublishedSubject": "Cevabın SSS'de kullanıldı",
       "faqAnswerPublishedText": "Yazdığın cevap sık sorulan sorulara katkı sağladı. Görüntüle: {url}",
       "referralUpdatedSubject": "Referansında güncelleme var",
       "referralUpdatedText": "Referans akışında bir güncelleme var. Ayrıntı için: {url}",
-      "jobPostingPublishedSubject": "İlanın yayınlandı",
+      "jobPostingPublishedSubject": "İlanın incelendi",
       "jobPostingPublishedText": "Verdiğin ilan incelendi ve yayınlandı; öğrenciler artık görebilir. Görüntüle: {url}",
       "jobPostingRejectedSubject": "İlanın incelendi",
       "jobPostingRejectedText": "Verdiğin ilan incelendi ve yayınlanmadı. Gerekçeyi görüp düzenlemek için: {url}",

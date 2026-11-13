@@ -104,7 +104,7 @@ describe('kimlik doğrulama e-postaları (R2 kuyruk imzasına göre)', () => {
 
     expect(calls[0]).toMatchObject({
       template: 'graduation-document.approved',
-      subject: 'Mezun belgen onaylandı',
+      subject: 'Mezun belgen incelendi',
       recipientUserId: 'u1',
     });
     expect(calls[0]?.text).toContain('silindi');
