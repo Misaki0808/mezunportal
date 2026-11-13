@@ -600,6 +600,25 @@ describe('randevularım', () => {
     expect(await screen.findByText('Onaylandı')).toBeInTheDocument();
   });
 
+  it('geniş ekranda (xl) kapsayıcı genişler ve kartlar iki sütun; telefon ve tablet sütunu aynı kalır', () => {
+    renderUi(
+      <MyAppointments
+        initial={page([view(), view({ id: 'a2' })])}
+        initialRole="MENTOR"
+        showSettings={false}
+        list={vi.fn()}
+      />,
+    );
+
+    const container = screen.getByRole('heading', { level: 1 }).closest('.max-w-lg');
+    // 1920'de 1664 px ana alanda 512 px'lik sütun kalıyordu (%31); ≥1280 px'te genişler, altı (390/768) değişmez.
+    expect(container).toHaveClass('max-w-lg', 'xl:max-w-5xl');
+    const list = screen.getAllByRole('listitem')[0]!.parentElement;
+    expect(list).toHaveClass('flex', 'flex-col', 'xl:grid', 'xl:grid-cols-2');
+    // Ekran genişliği ayrımı yalnız xl: daha küçük bir kırılma (md/lg) tablet sütununu bozardı.
+    expect(container!.className).not.toMatch(/\b(?:md|lg|sm):max-w-/);
+  });
+
   it('boş durumlar yönlendirir', async () => {
     const list = vi.fn().mockResolvedValue({ ok: true, data: page([]) });
     const { user } = renderUi(

@@ -339,3 +339,32 @@ test('inceleyici: izin verilen uzun yer notu 360/390/1440 genişliğinde taşmaz
     });
   }
 });
+
+// Kart 275 EK 2: /randevular 1920'de telefon genişliğinde (max-w-lg = 512 px, ana alanın %31'i) kalıyordu. ≥1280 px'te genişler;
+// 390 ve 768 px'teki sütun aynı kalır.
+test("randevularım: sütun 390/768 px'te 512 px, ≥1280 px'te genişler; taşma yok", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await login(page, 'student');
+  const widths: Record<number, number> = {};
+  for (const width of [390, 768, 1279, 1280, 1920]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto('/randevular');
+    await page.waitForLoadState('networkidle');
+    const m = await page.evaluate(() => {
+      const column = document.querySelector('main .max-w-lg')!;
+      return {
+        column: Math.round(column.getBoundingClientRect().width),
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    expect(m.overflow, `sayfa taşması (${width} px)`).toBeLessThanOrEqual(0);
+    widths[width] = m.column;
+  }
+  expect(widths[390], '390 px').toBeLessThanOrEqual(390);
+  expect(widths[768], '768 px').toBe(512);
+  expect(widths[1279], '1279 px').toBe(512);
+  expect(widths[1280], '1280 px').toBeGreaterThan(900);
+  expect(widths[1920], '1920 px').toBeGreaterThan(900);
+});
