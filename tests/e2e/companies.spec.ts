@@ -73,6 +73,9 @@ test('şirketi takma adla bulur; anonim deneyim ve güvenli boş dönem görün�
       }),
     ).toBe(true);
     await applications.click();
+    await expect(
+      page.getByRole('heading', { name: 'Başvuru dönemleri', exact: true }),
+    ).toBeVisible();
     await expect(page.getByText('Henüz yeterli veri yok')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,

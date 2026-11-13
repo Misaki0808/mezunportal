@@ -61,6 +61,7 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
         </Link>
       </div>
       <SearchBar
+        className="mt-6"
         action="/sirketler"
         label={t('searchLabel')}
         hint={t('searchHint')}
@@ -154,7 +155,14 @@ export function CompanyScreen({
     {
       id: 'periods',
       label: t('periods'),
-      content: <CalendarView scope={{ kind: 'COMPANY', id: company.id }} data={calendar} />,
+      content: (
+        <section aria-labelledby="company-application-periods">
+          <h2 id="company-application-periods" className="mb-4 text-xl font-semibold">
+            {t('periodsTitle')}
+          </h2>
+          <CalendarView scope={{ kind: 'COMPANY', id: company.id }} data={calendar} />
+        </section>
+      ),
     },
     {
       id: 'mentors',

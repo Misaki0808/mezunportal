@@ -444,7 +444,7 @@ it('60 gün sınırındaki taslak kaydedilir, 61. gün istemcide reddedilir', as
     fireEvent.change(date, { target: { value: addDays(istanbulDay(), 61) } });
     fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
     expect(
-      await screen.findByText('Bugünden başlayarak en fazla 60 gün sonrası seçilebilir.'),
+      (await screen.findAllByText('Bugünden başlayarak en fazla 60 gün sonrası seçilebilir.'))[0],
     ).toBeVisible();
     expect(save).not.toHaveBeenCalled();
     fireEvent.change(date, { target: { value: addDays(istanbulDay(), 60) } });
@@ -454,6 +454,25 @@ it('60 gün sınırındaki taslak kaydedilir, 61. gün istemcide reddedilir', as
     vi.useRealTimers();
   }
 });
+it('ilan araması ortak SearchBar: ipucu açıklama olarak okunur; Ara ve Filtreler aynı satırda, filtre alanları aynı formda', () => {
+  renderWithToasts(
+    <PostingList
+      canPost={false}
+      filters={{}}
+      options={options}
+      page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
+    />,
+  );
+
+  const box = screen.getByRole('searchbox', { name: 'Pozisyon veya kurum ara' });
+  expect(box).toHaveAccessibleDescription('İlan ara');
+  expect(box.parentElement).toBe(screen.getByRole('button', { name: 'Ara' }).parentElement);
+  expect(box.parentElement).toBe(screen.getByRole('button', { name: 'Filtreler' }).parentElement);
+  expect(box.closest('form')).toContainElement(
+    screen.getByText('Filtreler', { selector: 'summary' }),
+  );
+});
+
 it('mobil süzgeçler alt sayfada uygulanır ve arama metni korunur', async () => {
   HTMLDialogElement.prototype.showModal = function () {
     this.setAttribute('open', '');
@@ -545,4 +564,98 @@ it('B3: boş ret ilk hatalı alana odaklanır ve alan altı açıklama taşır',
   expect(reason).toHaveAttribute('aria-invalid', 'true');
   expect(reason).toHaveAccessibleDescription(/En az 3 karakterlik bir gerekçe yaz/);
   expect(review).not.toHaveBeenCalled();
+});
+
+it('tek adım duyurusu ve odaktaki alan açıklaması kullanılır; fieldset odağı geçicidir', async () => {
+  renderWithToasts(<PostingEditor context={context} save={vi.fn()} submit={vi.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  const title = screen.getByLabelText(/Pozisyon adı/);
+  await waitFor(() => expect(title).toHaveFocus());
+  expect(title).toHaveAccessibleDescription('Bu alanı kontrol et.');
+  expect(document.querySelectorAll('[data-hydrated] [role=alert]')).toHaveLength(0);
+  fireEvent.change(title, { target: { value: 'Yazılım stajyeri' } });
+  fireEvent.change(screen.getByLabelText(/Kurum adı/), { target: { value: 'Kurum' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  const heading = screen.getByRole('heading', { name: 'Adım 2 / 3: Ayrıntılar ve başvuru' });
+  await waitFor(() => expect(heading).toHaveFocus());
+  expect(
+    screen.getByText('Adım 2 / 3: Ayrıntılar ve başvuru').closest('[aria-hidden]'),
+  ).toHaveAttribute('aria-hidden', 'true');
+  expect(document.querySelectorAll('fieldset[tabindex]')).toHaveLength(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  const summary = screen.getByText(messages.jobs.formSummary).parentElement!;
+  const targetLink = within(summary).getByRole('button', { name: 'Hedef bölümler' });
+  fireEvent.click(targetLink);
+  const target = screen.getByRole('group', { name: /Hedef bölümler/ });
+  await waitFor(() => expect(target).toHaveFocus());
+  expect(target).toHaveAttribute('tabindex', '-1');
+  expect(target).toHaveAccessibleDescription('Bu alanı kontrol et.');
+  screen.getByLabelText(/^Açıklama/).focus();
+  expect(target).not.toHaveAttribute('tabindex');
+  expect(document.querySelectorAll('[data-hydrated] [role=alert]')).toHaveLength(0);
+});
+
+it.each([
+  ['JOB_POSTING_DEADLINE_INVALID', /Son başvuru tarihi/],
+  ['JOB_POSTING_TARGET_INVALID', /Hedef bölümler/],
+  ['JOB_POSTING_URL_INVALID', /HTTPS başvuru bağlantısı/],
+] as const)('alan verilmeyen %s sunucu hatası ilgili alana götürür', async (code, label) => {
+  const { addDays, istanbulDay } = await import('./model');
+  const initial = {
+    ...pendingItem,
+    title: 'Yazılım stajyeri',
+    description: 'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
+    deadlineOn: addDays(istanbulDay(), 14),
+  };
+  const save = vi.fn().mockResolvedValue({ ok: true, data: initial });
+  const submit = vi.fn().mockResolvedValue({ ok: false, errorCode: code });
+  renderWithToasts(
+    <PostingEditor context={context} initial={initial} save={save} submit={submit} />,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  const target =
+    code === 'JOB_POSTING_TARGET_INVALID'
+      ? await screen.findByRole('group', { name: label })
+      : await screen.findByLabelText(label);
+  await waitFor(() => expect(target).toHaveFocus());
+  expect(target).toHaveAttribute('aria-invalid', 'true');
+  expect(target).toHaveAccessibleDescription();
+});
+
+it('sunucu hatası özetindeki başka adım bağlantısı o alanı açar ve odaklar', async () => {
+  const { addDays, istanbulDay } = await import('./model');
+  const initial = {
+    ...pendingItem,
+    title: 'Yazılım stajyeri',
+    description: 'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
+    deadlineOn: addDays(istanbulDay(), 14),
+  };
+  const save = vi.fn().mockResolvedValue({
+    ok: false,
+    errorCode: 'VALIDATION_INVALID',
+    fieldErrors: {
+      'content.title': 'VALIDATION_INVALID',
+      'content.description': 'VALIDATION_INVALID',
+    },
+  });
+  renderWithToasts(
+    <PostingEditor context={context} initial={initial} save={save} submit={vi.fn()} />,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  await waitFor(() => expect(screen.getByLabelText(/Pozisyon adı/)).toHaveFocus());
+  fireEvent.click(screen.getByRole('button', { name: /^Açıklama$/ }));
+  await waitFor(() => expect(screen.getByLabelText(/^Açıklama/)).toHaveFocus());
+});
+
+it('alanı bilinmeyen sunucu hatası özette kalır ve odağı alır', async () => {
+  const save = vi.fn().mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+  renderWithToasts(<PostingEditor context={context} save={save} submit={vi.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+  const summary = (await screen.findByText(messages.errors.codes.SERVER_UNEXPECTED)).parentElement!;
+  await waitFor(() => expect(summary).toHaveFocus());
+  expect(summary.querySelectorAll('button')).toHaveLength(0);
 });

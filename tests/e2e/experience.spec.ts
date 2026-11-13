@@ -107,3 +107,34 @@ test('deneyim: yaz → moderasyon → yayın → okuyucu anonim yazarı görmez'
     await readerContext.close();
   }
 });
+
+// Kart 275: adım göstergesi ekran genişliğine (md) bağlıyken yatay liste (en dar hâli ≈ 629 px) 472 px'lik form sütunundan taşıyordu;
+// sayfa yatay kayması yalnız kabın sol kenarı + 629 px görüntü alanını aştığı genişliklerde (768, 769, 1024, 1025) göründü.
+test('deneyim yazma: adım göstergesi 360–1280 arası ne sayfayı ne kendi kabını taşırır', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await login(page, 'student');
+  for (const width of [360, 390, 600, 767, 768, 769, 800, 1023, 1024, 1025, 1280]) {
+    await page.setViewportSize({ width, height: 1024 });
+    await page.goto('/deneyim/yeni');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('navigation', { name: 'Adımlar' })).toBeVisible();
+    const m = await page.evaluate(() => {
+      const nav = document.querySelector('nav[aria-label="Adımlar"]')!;
+      const list = nav.querySelector('ol')!;
+      const summary = nav.querySelector('p')!;
+      const listShown = getComputedStyle(list).display !== 'none';
+      return {
+        pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        listShown,
+        listOverflow: listShown ? list.scrollWidth - list.clientWidth : 0,
+        summaryShown: summary.getBoundingClientRect().width > 0,
+      };
+    });
+    expect(m.pageOverflow, `sayfa taşması (${width} px)`).toBeLessThanOrEqual(0);
+    expect(m.listOverflow, `liste kabından taşması (${width} px)`).toBeLessThanOrEqual(0);
+    // Tam olarak biri görünür: özet ya da liste.
+    expect(m.listShown !== m.summaryShown, `özet/liste (${width} px)`).toBe(true);
+  }
+});

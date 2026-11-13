@@ -259,12 +259,14 @@ export function SearchScreen({ filter, results, sectors }: Props) {
       <FilterShell
         search={(filtersButton) => (
           <SearchBar
+            className="mt-6"
             label={t('query')}
             hint={t('queryHint')}
             submitLabel={t('submit')}
             pendingReason={pending ? t('loading') : undefined}
             error={invalid && draft.q && draft.q.trim().length < 2 ? t('invalid') : undefined}
             trailing={filtersButton}
+            wideTrailing={active.length > 0}
             onSubmit={(event) => {
               event.preventDefault();
               go({ ...draft, page: 1 });

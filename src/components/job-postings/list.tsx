@@ -17,12 +17,12 @@ import {
   IconChip,
   EmptyState,
   Field,
-  Input,
   Pagination,
   Select,
   Sheet,
   buttonClasses,
 } from '@/components/ui';
+import { SearchBar } from '@/components/directory/search-bar';
 
 export function PostingCard({ posting }: { posting: JobPostingCard }) {
   const t = useTranslations('jobs');
@@ -133,7 +133,6 @@ export function PostingList({
   canPost: boolean;
 }) {
   const t = useTranslations('jobs');
-  const searchId = useId();
   const filterFormId = useId();
   const [query, setQuery] = useState(filters.q ?? '');
   const [open, setOpen] = useState(false);
@@ -262,30 +261,15 @@ export function PostingList({
           </div>
         )}
       </header>
-      <form
-        role="search"
+      <SearchBar
         action="/ilanlar"
+        className="mb-4 sm:mb-8"
+        label={t('search')}
+        hint={t('searchPlaceholder')}
+        submitLabel={t('searchButton')}
+        pendingReason={navigating ? t('loading') : undefined}
         onSubmit={() => setNavigating(true)}
-        className="mb-4 rounded-card border border-border bg-surface p-3 shadow-sm sm:mb-8 sm:p-5"
-      >
-        <div className="flex gap-2">
-          <label htmlFor={searchId} className="sr-only">
-            {t('search')}
-          </label>
-          <Input
-            id={searchId}
-            className="min-w-0 flex-1"
-            type="search"
-            name="q"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t('searchPlaceholder')}
-            minLength={2}
-            maxLength={100}
-          />
-          <Button type="submit" className="shrink-0 whitespace-nowrap" loading={navigating}>
-            {t('searchButton')}
-          </Button>
+        trailing={
           <Button
             variant="secondary"
             className="shrink-0 whitespace-nowrap lg:hidden"
@@ -296,14 +280,22 @@ export function PostingList({
           >
             {t('filters')}
           </Button>
-        </div>
+        }
+        input={{
+          name: 'q',
+          value: query,
+          onChange: (event) => setQuery(event.target.value),
+          minLength: 2,
+          maxLength: 100,
+        }}
+      >
         <details className="mt-4 hidden lg:block" open={filtered}>
           <summary className="press-control flex min-h-11 cursor-pointer items-center font-semibold text-primary">
             {t('filters')}
           </summary>
           {filterFields}
         </details>
-      </form>
+      </SearchBar>
       <Sheet
         open={open}
         onClose={() => setOpen(false)}

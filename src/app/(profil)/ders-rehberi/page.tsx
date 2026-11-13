@@ -92,7 +92,7 @@ export default async function CourseGuidePage({
                         <li
                           key={course.id}
                           data-course-code={course.code}
-                          className="flex items-baseline gap-1 text-sm leading-[1.125rem]"
+                          className="flex items-baseline gap-1 py-0.5 text-sm leading-[1.125rem]"
                         >
                           <span className="shrink-0 text-xs text-fg-muted">{course.code}</span>
                           <span className="min-w-0 flex-1 break-words text-fg">{course.name}</span>

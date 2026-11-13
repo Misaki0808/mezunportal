@@ -45,6 +45,17 @@ test('uzun şirket etiketi 360 ve 390 pikselde kısalır, kaldırma erişilebili
     expect(box).not.toBeNull();
     expect(box!.x + box!.width).toBeLessThanOrEqual(width);
     expect(await label.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
+    // Filtre uygulanmışken "Filtreler (1)" uzar; arama girdisi 360 px'te 105 px'e düşüyordu: en az 10 rem (160 px) kalır,
+    // sığmayan düğme alt satıra iner ama ekrandan taşmaz.
+    const search = await page.getByRole('searchbox').boundingBox();
+    expect(search!.width, `arama girdisi (${width} px)`).toBeGreaterThanOrEqual(160);
+    const filters = await page
+      .getByRole('button', { name: /^Filtreler/ })
+      .first()
+      .boundingBox();
+    expect(filters!.x + filters!.width, `Filtreler düğmesi (${width} px)`).toBeLessThanOrEqual(
+      width,
+    );
   }
   await removeChip(page, company);
 });

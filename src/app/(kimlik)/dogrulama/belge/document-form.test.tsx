@@ -29,6 +29,16 @@ describe('DocumentForm', () => {
     expect(screen.getByText('Yalnız PDF dosyası yükleyebilirsin.')).toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();
   });
+  it('dosya seçmeden gönderince "Bir PDF dosyası seç." der (boş dosya metni değil) ve eylemi çağırmaz', async () => {
+    const submit = vi.fn();
+    const { user } = renderUi(<DocumentForm departments={departments} submit={submit} />);
+    await user.selectOptions(screen.getByLabelText(/Bölüm/), 'ybs');
+    await user.type(screen.getByLabelText(/Mezuniyet yılı/), '2024');
+    await user.click(screen.getByRole('button', { name: 'Belgeyi gönder' }));
+    expect(screen.getByText('Bir PDF dosyası seç.')).toBeInTheDocument();
+    expect(screen.queryByText('Seçtiğin dosya boş.')).not.toBeInTheDocument();
+    expect(submit).not.toHaveBeenCalled();
+  });
   it('5 MB üstündeki PDF dosyasını reddeder', async () => {
     const submit = vi.fn();
     const { user } = renderUi(<DocumentForm departments={departments} submit={submit} />);
