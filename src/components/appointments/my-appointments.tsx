@@ -78,7 +78,7 @@ export function MyAppointments({ initial, initialRole, showSettings, list }: Pro
           }
         />
       ) : (
-        <ul className="flex flex-col gap-4">
+        <ul className="flex flex-col gap-4 xl:grid xl:grid-cols-2 xl:items-start">
           {items.map((item) => (
             <li key={item.id} className="rounded-card border border-border bg-bg p-5 shadow-card">
               <div className="flex flex-wrap items-center gap-2">
@@ -117,7 +117,7 @@ export function MyAppointments({ initial, initialRole, showSettings, list }: Pro
   );
 
   return (
-    <div className="[&_.text-sm]:text-base mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16">
+    <div className="[&_.text-sm]:text-base mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16 xl:max-w-5xl">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')}>
         {showSettings && (
           <Link

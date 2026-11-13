@@ -48,10 +48,16 @@ export type GraduationDocumentForm = z.output<typeof graduationDocumentFormSchem
 
 /** `FormData`'dan YALNIZ bilinen alanları alır (fazladan alanlar sessizce atılır). */
 export function graduationDocumentFormInput(formData: FormData): Record<string, unknown> {
+  const file = formData.get('file');
   return {
     departmentId: formData.get('departmentId'),
     graduationYear: formData.get('graduationYear'),
-    file: formData.get('file'),
+    // Tarayıcı dosya SEÇİLMEDİĞİNDE adsız, 0 baytlık boş bir `File` gönderir: bu "seçilmedi"dir (DOCUMENT_REQUIRED). Seçilmiş
+    // ama boş bir dosyanın adı vardır ve DOCUMENT_EMPTY olarak kalır.
+    file:
+      typeof File !== 'undefined' && file instanceof File && file.name === '' && file.size === 0
+        ? null
+        : file,
   };
 }
 

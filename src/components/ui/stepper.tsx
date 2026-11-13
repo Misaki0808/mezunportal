@@ -12,14 +12,20 @@ export type StepperProps = {
   className?: string;
 };
 
-/** Çok adımlı akış göstergesi. Mobilde “Adım 2 / 4: Ad” özeti, geniş ekranda tam liste. */
+/**
+ * Çok adımlı akış göstergesi. Dar kapta “Adım 2 / 4: Ad” özeti + ilerleme çubuğu, geniş kapta (≥ 48 rem) tam liste.
+ * Karar EKRANIN değil KABIN genişliğine göredir (`@container`): yatay listenin en dar hâli adım sayısı ve etiket uzunluğuyla
+ * büyür (deneyim formunda 5 adımda ≈ 629 px), form sütunu ise 472 px'tir. Ekran genişliğine (`md`) bağlıyken liste 768 px ve
+ * üstündeki her ekranda sütundan taştı, sayfa yatay kayması da kabın sol kenarı + 629 px görüntü alanını aştığı genişliklerde
+ * (768, 769, 1024, 1025) çıktı.
+ */
 export function Stepper({ steps, current, className }: StepperProps) {
   const t = useTranslations('ui.stepper');
   const currentStep = steps[current];
 
   return (
-    <nav aria-label={t('label')} className={cn('w-full', className)}>
-      <div className="md:hidden">
+    <nav aria-label={t('label')} className={cn('@container w-full', className)}>
+      <div className="@3xl:hidden">
         <p className="text-sm font-medium text-fg">
           {t('status', { current: current + 1, total: steps.length })}
           {currentStep ? `: ${currentStep.label}` : ''}
@@ -34,7 +40,7 @@ export function Stepper({ steps, current, className }: StepperProps) {
           />
         </div>
       </div>
-      <ol className="hidden items-center gap-2 md:flex">
+      <ol className="hidden items-center gap-2 @3xl:flex">
         {steps.map((step, index) => {
           const done = index < current;
           const isCurrent = index === current;

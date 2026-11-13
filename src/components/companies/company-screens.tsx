@@ -61,6 +61,7 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
         </Link>
       </div>
       <SearchBar
+        className="mt-6"
         action="/sirketler"
         label={t('searchLabel')}
         hint={t('searchHint')}

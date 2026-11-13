@@ -67,6 +67,17 @@ describe('Stepper', () => {
     renderUi(<Stepper steps={steps} current={1} />);
     expect(screen.getByText('Adım 2 / 3: Doğrulama')).toBeInTheDocument();
   });
+
+  it('özet ile liste ARASINDAKİ geçiş kabın genişliğine bağlıdır, ekranın değil (taşma kök nedeni)', () => {
+    renderUi(<Stepper steps={steps} current={1} />);
+
+    const nav = screen.getByRole('navigation', { name: 'Adımlar' });
+    expect(nav).toHaveClass('@container');
+    expect(screen.getByText('Adım 2 / 3: Doğrulama').parentElement).toHaveClass('@3xl:hidden');
+    expect(screen.getByRole('list')).toHaveClass('hidden', '@3xl:flex');
+    // Ekran genişliği (md/lg) ayrımı geri gelirse dar form sütununda liste yine taşar.
+    expect(nav.innerHTML).not.toMatch(/\b(?:md|lg|xl):(?:hidden|flex)\b/);
+  });
 });
 
 describe('ErrorState', () => {
