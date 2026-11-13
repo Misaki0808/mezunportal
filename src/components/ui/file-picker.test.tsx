@@ -60,8 +60,12 @@ describe('FilePicker', () => {
 
     await user.upload(screen.getByLabelText('CV'), pdf());
 
-    const data = new FormData(container.querySelector('form')!);
-    expect((data.get('file') as File).name).toBe('mezuniyet-belgesi.pdf');
+    // jsdom `FormData` dosya adını boş bırakır (belge formu da dosyayı `input.files[0]`'dan alır); bu yüzden gerçek girdinin
+    // formun içinde `name="file"` ile durduğu ve dosyayı taşıdığı doğrulanır.
+    const form = container.querySelector('form')!;
+    const input = form.elements.namedItem('file') as HTMLInputElement;
+    expect(input.files?.[0]?.name).toBe('mezuniyet-belgesi.pdf');
+    expect(new FormData(form).has('file')).toBe(true);
   });
 
   it('klavyeyle odaklanabilir (Tab girdiye gelir; display:none/hidden değil)', async () => {

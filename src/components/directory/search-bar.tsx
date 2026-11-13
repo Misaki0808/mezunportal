@@ -20,8 +20,11 @@ type Props = {
   error?: string;
   /** Satırın sonuna, "Ara"nın yanına girer (örn. telefonda "Filtreler" düğmesi). */
   trailing?: ReactNode;
-  /** Gönderim sürerken "Ara" kilitlenir ve duyurulur (`Button loading`); sebep satırı kaplamaz. */
-  pending?: boolean;
+  /**
+   * Gönderim sürerken verilir: "Ara" GERÇEKTEN `disabled` olur (çift gönderim yok) ve `aria-busy` taşır; sebep ("… yükleniyor")
+   * satırı kaplamasın diye görünmez bir öğeye yazılır ve düğmeye `aria-describedby` ile bağlanır.
+   */
+  pendingReason?: string;
   action?: string;
   onSubmit?: (event: FormEvent<HTMLFormElement>) => void;
   /** Girdiye geçen alanlar: `name`, `value`/`defaultValue`, `onChange`, `maxLength`, `autoComplete`… */
@@ -39,7 +42,7 @@ export function SearchBar({
   submitLabel,
   error,
   trailing,
-  pending,
+  pendingReason,
   action,
   onSubmit,
   input,
@@ -48,6 +51,7 @@ export function SearchBar({
   const inputId = `${baseId}-input`;
   const hintId = `${baseId}-hint`;
   const errorId = `${baseId}-error`;
+  const pendingId = `${baseId}-pending`;
   const describedBy = [hint && hintId, error && errorId].filter(Boolean).join(' ') || undefined;
 
   return (
@@ -70,11 +74,23 @@ export function SearchBar({
           invalid={error ? true : undefined}
           className="min-w-0 flex-1"
         />
-        <Button type="submit" className="shrink-0 whitespace-nowrap" loading={pending}>
+        <Button
+          type="submit"
+          className="shrink-0 whitespace-nowrap"
+          loading={Boolean(pendingReason)}
+          {...(pendingReason
+            ? { disabled: true as const, disabledReasonId: pendingId }
+            : { disabled: false as const })}
+        >
           {submitLabel}
         </Button>
         {trailing}
       </div>
+      {pendingReason && (
+        <span id={pendingId} className="sr-only">
+          {pendingReason}
+        </span>
+      )}
       {hint && (
         <span id={hintId} className="sr-only">
           {hint}

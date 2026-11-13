@@ -87,10 +87,24 @@ describe('SearchBar', () => {
     expect(box).toHaveValue('staj ybs');
   });
 
-  it('gönderim sürerken "Ara" kilitlenir ve bekliyor olarak duyurulur', () => {
-    renderUi(<SearchBar label="Ara" submitLabel="Ara" pending input={{}} />);
+  it('gönderim sürerken "Ara" GERÇEKTEN kilitlenir (disabled + aria-busy); sebep ekran okuyucuya açıklama olur', () => {
+    renderUi(
+      <SearchBar label="Ara" submitLabel="Ara" pendingReason="Deneyimler yükleniyor" input={{}} />,
+    );
 
     const submit = screen.getByRole('button', { name: /Ara/ });
+    expect(submit).toBeDisabled();
     expect(submit).toHaveAttribute('aria-busy', 'true');
+    expect(submit).toHaveAccessibleDescription('Deneyimler yükleniyor');
+    // Sebep satırı kaplamaz: görünür bir metin değil, ekran okuyucuya özel.
+    expect(screen.getByText('Deneyimler yükleniyor')).toHaveClass('sr-only');
+  });
+
+  it('gönderim sürmüyorken "Ara" kilitli değildir', () => {
+    renderUi(<SearchBar label="Ara" submitLabel="Ara" input={{}} />);
+
+    const submit = screen.getByRole('button', { name: 'Ara' });
+    expect(submit).toBeEnabled();
+    expect(submit).not.toHaveAttribute('aria-busy', 'true');
   });
 });

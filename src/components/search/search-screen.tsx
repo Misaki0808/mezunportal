@@ -262,7 +262,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
             label={t('query')}
             hint={t('queryHint')}
             submitLabel={t('submit')}
-            pending={pending}
+            pendingReason={pending ? t('loading') : undefined}
             error={invalid && draft.q && draft.q.trim().length < 2 ? t('invalid') : undefined}
             trailing={filtersButton}
             onSubmit={(event) => {
