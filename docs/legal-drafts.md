@@ -10,6 +10,10 @@ sürüm numarası `Consent` kayıtlarına bağlanır.
 | §1 Aydınlatma metni | KVKK aydınlatma metni (m. 10) | K-03 veri sorumlusu |
 | §2 Yurt dışı açık rıza | Yurt dışına aktarım açık rızası (CV ayrıştırma, takvim daveti) | K-04 LLM sağlayıcısı |
 | §3 Kullanım şartları | Kullanım şartları (topluluk kuralları, puan, moderasyon) | Hoca görüşü |
+| §4 Staj arayan görünürlüğü | "Staj arıyorum" görünürlük açık rızası (P2-06) | Hoca / hukuk onayı |
+| §5 Yılın Mezunu | Ödülün kamuya açık doğrulaması (P2-01) | Hoca / hukuk onayı |
+| §6 Ayın mezunu | Hikâye yayın rızası (P2-02) | Hoca / hukuk onayı |
+| §7 Faz 2 ekleri | Faz 2 aydınlatma ekleri (P2-14) | Hoca / hukuk onayı |
 
 Kurallar:
 
