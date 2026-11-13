@@ -373,7 +373,7 @@ Hesaplar: `student` Deniz (öğrenci), `seniorMentor` Elif, `alumniMentor` Mert 
 | Bildirim kutusu | `student`: üst çubuktaki zil ("Bildirimler, N okunmamış") → `/bildirimler`: gün başlıklı gruplu liste; bir bildirime dokunmak onu okundu yapar; "Hepsini okundu yap"; kutu boşken "Henüz bildirimin yok" |
 | Ters arama | `student`: `/hesap/staj-ariyorum` ("İş arayanlara görün") → anahtarı aç → açılan rıza kutusunu işaretle → "Kaydet"; "Mezunlar seni böyle görür" önizlemesinde ad yok; `alumniMentor`: `/adaylar` → "İşe alım yapıyorum"u aç → "Aday ara" → kartta ad yok → "İletişim iste" → "İstek gönder"; öğrenci anahtarı kapatıp kaydedince kart aranmada yok |
 | Referans | `alumniMentor`: `/referans/yeni` (öğrenciyle önceden onaylı iletişim talebi gerekir, öğrenci listede görünür) → "Beyan gönder"; `student`: `/hesap/referanslar` → "Onayla"; sonra `departmentAdmin`: `/yonetim/referanslar` → "Onayla" (öğrenci onaylamadan yönetimde görünmez); mentorun puanı `/profil` sayfasındaki "Katkı puanın" bölümünde (`/hesap/guvenilirlik` yalnız öğrenci hesabında açılır) |
-| Şirket sayfaları | `student`: `/sirketler` → "Örnek Yazılım A.Ş." → "Başvuru dönemi" sekmesi (üç kişiden az olan aylar "Gizli" yazar; "Takip et" burada) |
+| Şirket sayfaları | `student`: `/sirketler` → "Örnek Yazılım A.Ş." → "Başvuru" sekmesi (üç kişiden az olan aylar "Gizli" yazar; "Takip et" burada) |
 | Soru bankası | `student`: `/mulakat-sorulari` (en az üç farklı yazardan gelen gruplar) |
 | Başvuru takvimi | `student`: `/basvuru-takvimi` → şirket seç → "Takvimi göster" (aylar, "+ Takip et", anonim deneyim varken kesit gizlenir) |
 | Beceri açığı | `student`: `/profil` → "Hedefime ne kadar yakınım?" (hedef pozisyon seç → "Hedefi kaydet") |

@@ -628,6 +628,15 @@ it('sunucu hatası özetindeki başka adım bağlantısı o alanı açar ve odak
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
   fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
   await waitFor(() => expect(screen.getByLabelText(/Pozisyon adı/)).toHaveFocus());
-  fireEvent.click(screen.getByRole('button', { name: 'Açıklama', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: /^Açıklama$/ }));
   await waitFor(() => expect(screen.getByLabelText(/^Açıklama/)).toHaveFocus());
+});
+
+it('alanı bilinmeyen sunucu hatası özette kalır ve odağı alır', async () => {
+  const save = vi.fn().mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+  renderWithToasts(<PostingEditor context={context} save={save} submit={vi.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+  const summary = (await screen.findByText(messages.errors.codes.SERVER_UNEXPECTED)).parentElement!;
+  await waitFor(() => expect(summary).toHaveFocus());
+  expect(summary.querySelectorAll('button')).toHaveLength(0);
 });
