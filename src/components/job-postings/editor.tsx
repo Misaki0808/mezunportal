@@ -7,7 +7,6 @@ import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import {
   JOB_POSTING_MAX_DAYS,
-  jobPostingContentSchema,
   type JobPostingFormContext,
   type JobPostingIdInput,
   type MyJobPostingView,
@@ -16,7 +15,13 @@ import {
 } from '@/contracts/job-postings';
 import type { ActionResult } from '@/contracts/result';
 import { Button, Field, Input, Select, Textarea, useAction } from '@/components/ui';
-import { addDays, istanbulDay } from './model';
+import {
+  addDays,
+  istanbulDay,
+  postingFieldStep,
+  postingStepErrors,
+  postingStepFields,
+} from './model';
 import { deadlineProblem } from '@/server/rules/jobPosting';
 
 type Props = {
@@ -56,8 +61,11 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
   const summary = useRef<HTMLDivElement>(null);
+  const stepHeading = useRef<HTMLHeadingElement>(null);
   const today = istanbulDay();
   const max = addDays(today, JOB_POSTING_MAX_DAYS);
+  const stepTitle = t(step === 0 ? 'formBasics' : step === 1 ? 'formDetails' : 'formPreview');
+  const stepLabel = `${t('step', { current: step + 1, total: 3 })}: ${stepTitle}`;
   const content = {
     kind,
     title,
@@ -74,10 +82,49 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
     tagIds,
     targetGrades,
   };
+  function focusTemporarily(element: HTMLElement | null) {
+    if (!element) return;
+    // Fareyle önceki/sonraki adıma basıldığında başlık zaten odaktaysa da yeni adım duyurulsun.
+    if (document.activeElement === element) element.blur();
+    if (
+      !element.hasAttribute('tabindex') &&
+      !element.matches('input,select,textarea,button,a[href]')
+    ) {
+      element.setAttribute('tabindex', '-1');
+      element.addEventListener('blur', () => element.removeAttribute('tabindex'), { once: true });
+    }
+    element.focus();
+    // Mobilde yapışkan işlem çubuğu ve alt gezinme odaklanan alanı örtmemeli.
+    element.scrollIntoView?.({ block: 'center', inline: 'nearest' });
+  }
+  function changeStep(next: number) {
+    setError('');
+    setInvalid(new Set());
+    setStep(next);
+    requestAnimationFrame(() => focusTemporarily(stepHeading.current));
+  }
   function showError(message: string, fields: string[] = []) {
     setError(message);
     setInvalid(new Set(fields));
-    requestAnimationFrame(() => summary.current?.focus());
+    const first = fields.find((field) => postingFieldStep(field) !== undefined);
+    if (first) setStep(postingFieldStep(first)!);
+    requestAnimationFrame(() => {
+      if (first)
+        focusTemporarily(document.querySelector<HTMLElement>(`[data-error-field="${first}"]`));
+      else summary.current?.focus();
+    });
+  }
+  function validateStep(current: 0 | 1) {
+    // Boş tarih sözleşmeye metin olarak verilir: diğer alanların koşullu kontrolleri de çalışır.
+    return postingStepErrors({ ...content, deadlineOn: deadline }, departmentId, current, today);
+  }
+  function nextStep() {
+    const fields = validateStep(step as 0 | 1);
+    if (fields.length) {
+      showError(t('formSummary'), fields);
+      return;
+    }
+    changeStep(step + 1);
   }
   function saveDraft(thenSubmit: boolean) {
     setError('');
@@ -86,15 +133,12 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
       return;
     }
     if (deadline && deadlineProblem(deadline, today)) {
-      setStep(1);
       showError(t('invalidDate'), ['deadlineOn']);
       return;
     }
     if (thenSubmit) {
-      const parsed = jobPostingContentSchema.safeParse(content);
-      if (!parsed.success) {
-        const fields = parsed.error.issues.map((issue) => String(issue.path[0]));
-        setStep(fields.some((x) => ['title', 'organizationName', 'kind'].includes(x)) ? 0 : 1);
+      const fields = [...validateStep(0), ...validateStep(1)];
+      if (fields.length) {
         showError(t('formSummary'), fields);
         return;
       }
@@ -118,19 +162,31 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
             router.refresh();
           }
         },
-        onFailure: (failure) => showError(errors(failure.errorCode)),
+        onFailure: (failure) => {
+          const serverFields = Object.keys(failure.fieldErrors ?? {}).map((key) => {
+            const field = key.replace(/^content\./, '').split('.')[0]!;
+            return field === 'companyId' ? 'organizationName' : field;
+          });
+          const ordered = postingStepFields.flat().filter((field) => serverFields.includes(field));
+          showError(errors(failure.errorCode), ordered);
+        },
       },
     );
   }
   const bad = (field: string) => (invalid.has(field) ? t('requiredError') : undefined);
   const fieldNames: Record<string, string> = {
+    kind: t('kind'),
     title: t('titleLabel'),
     organizationName: t('organization'),
     departmentId: t('authorDepartment'),
     description: t('descriptionLabel'),
     location: t('locationLabel'),
+    isRemote: t('remoteQuestion'),
     deadlineOn: t('deadline'),
     targetDepartmentIds: t('targetDepartments'),
+    tagIds: t('matchTags'),
+    targetGrades: t('matchGrades'),
+    applyMethod: t('applyMethod'),
     applyUrl: t('applyUrl'),
   };
   return (
@@ -151,7 +207,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
       </header>
       <div className="mb-5">
         <p className="text-sm font-semibold text-fg-muted">
-          {t('step', { current: step + 1, total: 3 })}
+          <span aria-current="step">{stepLabel}</span>
         </p>
         <div className="mt-2 flex gap-2" aria-hidden="true">
           {[0, 1, 2].map((i) => (
@@ -180,9 +236,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                       type="button"
                       className="min-h-11 text-left underline"
                       onClick={() => {
-                        setStep(
-                          ['title', 'organizationName', 'departmentId'].includes(field) ? 0 : 1,
-                        );
+                        setStep(postingFieldStep(field) ?? 0);
                         requestAnimationFrame(() =>
                           document
                             .querySelector<HTMLElement>(`[data-error-field="${field}"]`)
@@ -199,15 +253,16 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
         </div>
       )}
       <section className="space-y-5 rounded-card border border-border bg-surface p-5 sm:p-7">
-        <h2 className="text-xl font-bold">
-          {t(step === 0 ? 'formBasics' : step === 1 ? 'formDetails' : 'formPreview')}
+        <h2 ref={stepHeading} aria-label={stepLabel} className="text-xl font-bold">
+          {stepTitle}
         </h2>
         {step === 0 && (
           <>
-            <Field label={t('kind')} required>
+            <Field label={t('kind')} required error={bad('kind')}>
               {(p) => (
                 <Select
                   {...p}
+                  data-error-field="kind"
                   value={kind}
                   onChange={(e) => setKind(e.target.value as typeof kind)}
                 >
@@ -286,11 +341,19 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               <input
                 className="size-5 accent-primary"
                 type="checkbox"
+                data-error-field="isRemote"
+                aria-invalid={invalid.has('isRemote') || undefined}
+                aria-describedby={invalid.has('isRemote') ? 'posting-remote-error' : undefined}
                 checked={remote}
                 onChange={(e) => setRemote(e.target.checked)}
               />
               {t('remoteQuestion')}
             </label>
+            {bad('isRemote') && (
+              <p id="posting-remote-error" role="alert" className="text-danger">
+                {bad('isRemote')}
+              </p>
+            )}
             <Field
               label={t('deadline')}
               hint={`${t('deadlineHint')} ${fieldText('dateUnset')}`}
@@ -309,13 +372,22 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 />
               )}
             </Field>
-            <fieldset tabIndex={-1} data-error-field="targetDepartmentIds">
+            <fieldset
+              tabIndex={-1}
+              data-error-field="targetDepartmentIds"
+              aria-invalid={invalid.has('targetDepartmentIds') || undefined}
+              aria-describedby={
+                invalid.has('targetDepartmentIds') ? 'posting-target-error' : undefined
+              }
+            >
               <legend className="font-semibold">{t('targetDepartments')}</legend>
               <p className="mt-1 text-sm text-fg-muted">
                 {t('targetLimit', { count: context.limits.maxTargets })}
               </p>
               {bad('targetDepartmentIds') && (
-                <p className="text-danger">{bad('targetDepartmentIds')}</p>
+                <p id="posting-target-error" role="alert" className="text-danger">
+                  {bad('targetDepartmentIds')}
+                </p>
               )}
               <div className="mt-2 grid gap-2">
                 {context.targetDepartments.map((d) => (
@@ -345,9 +417,19 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 ))}
               </div>
             </fieldset>
-            <fieldset>
+            <fieldset
+              tabIndex={-1}
+              data-error-field="tagIds"
+              aria-invalid={invalid.has('tagIds') || undefined}
+              aria-describedby={invalid.has('tagIds') ? 'posting-tags-error' : undefined}
+            >
               <legend className="font-semibold">{t('matchTags')}</legend>
               <p className="mt-1 text-sm text-fg-muted">{t('matchTagsHint')}</p>
+              {bad('tagIds') && (
+                <p id="posting-tags-error" role="alert" className="text-danger">
+                  {bad('tagIds')}
+                </p>
+              )}
               <div className="mt-2 flex flex-wrap gap-2">
                 {context.availableTags.map((tag) => (
                   <label
@@ -373,9 +455,19 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 ))}
               </div>
             </fieldset>
-            <fieldset>
+            <fieldset
+              tabIndex={-1}
+              data-error-field="targetGrades"
+              aria-invalid={invalid.has('targetGrades') || undefined}
+              aria-describedby={invalid.has('targetGrades') ? 'posting-grades-error' : undefined}
+            >
               <legend className="font-semibold">{t('matchGrades')}</legend>
               <p className="mt-1 text-sm text-fg-muted">{t('matchGradesHint')}</p>
+              {bad('targetGrades') && (
+                <p id="posting-grades-error" role="alert" className="text-danger">
+                  {bad('targetGrades')}
+                </p>
+              )}
               <div className="mt-2 flex flex-wrap gap-2">
                 {[1, 2, 3, 4].map((grade) => (
                   <label
@@ -397,10 +489,11 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 ))}
               </div>
             </fieldset>
-            <Field label={t('applyMethod')} required>
+            <Field label={t('applyMethod')} required error={bad('applyMethod')}>
               {(p) => (
                 <Select
                   {...p}
+                  data-error-field="applyMethod"
                   value={method}
                   onChange={(e) => setMethod(e.target.value as typeof method)}
                 >
@@ -445,11 +538,11 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
           {t('saveDraft')}
         </Button>
         {step > 0 && (
-          <Button variant="secondary" onClick={() => setStep(step - 1)}>
+          <Button variant="secondary" onClick={() => changeStep(step - 1)}>
             {t('previous')}
           </Button>
         )}
-        <Button loading={busy} onClick={() => (step < 2 ? setStep(step + 1) : saveDraft(true))}>
+        <Button loading={busy} onClick={() => (step < 2 ? nextStep() : saveDraft(true))}>
           {t(step < 2 ? 'next' : 'submit')}
         </Button>
       </div>
