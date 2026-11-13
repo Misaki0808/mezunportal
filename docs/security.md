@@ -298,6 +298,13 @@ yığın izi kullanıcıya gösterilmez. Ayrıntı `docs/architecture.md` “Dı
 - `.env*` repoya girmez; değerler Git dışı `korunan/` klasöründe ve yerel `.env.local`'dadır.
 - Loglanmaz: jeton, parola, giriş bağlantısı, CV/belge içeriği, LLM girdi/çıktısı. E-posta ve
   telefon maskeli (`src/lib/mask.ts`: `maskEmail`, `maskPhone`, serbest metin için `maskPersonalData`).
+- **Beklenmedik hata günlüğü (`src/server/unexpected-log.ts`):** kodlu olmayan hata (sunucu eylemi, rota, işçi görevi) TEK satır
+  yapılandırılmış olay olarak stderr'e yazılır: `{"event":"action|route|job.unexpected","source":"<sabit ad>","errorName":"<sınıf>",
+  "errorCode":"<P2034|40001|ECONNRESET>","requestId":"…","actionId":"…"}`. İleti (`err.message`), yığın izi, girdi, e-posta, kullanıcı kimliği
+  ve değerler YAZILMAZ; her alan dar bir desenden geçer, uymayan değer yazılmaz. Kodlu hatalar (kullanıcıya dönen `errorCode`), doğrulama
+  hataları ve Next.js akış denetimi (yönlendirme, bulunamadı) sessiz kalır. Sunucu eylemleri `failAction(error, '<eylem adı>')` ile adlandırılır
+  (adı zorunlu; bekçi testi her çağrıyı ve adın işlevle eşleşmesini denetler); yeni rota ya da kuyruk görevi aynı yardımcıyı (`logUnexpected`,
+  `loggedJob`) çağırır.
 - Geliştirme sunucusu da (telefon testi `dev:lan` ile yapılır) bu kurala uyar: Next.js'in sunucu eylemi
   argüman ve istek URL günlükleri kapalıdır; kullanıcı girdisi, kodlanmış jetonlar ve kişisel veri
   URL içinde de bulunabilir (`src/lib/dev-logging.ts`, `next.config.ts` `logging`).

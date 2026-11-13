@@ -21,7 +21,7 @@ export async function getMyNotificationPreferences(): Promise<
     const actor = await requireUser();
     return actionOk(await preferences.getNotificationPreferences(getDb(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getMyNotificationPreferences');
   }
 }
 export async function updateMyNotificationPreferences(
@@ -35,7 +35,7 @@ export async function updateMyNotificationPreferences(
       await preferences.setNotificationPreferences(getDb(), actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'updateMyNotificationPreferences');
   }
 }
 
@@ -53,6 +53,6 @@ export async function answerStillThere(
     );
     return actionOk(choice ? { choice } : null);
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'answerStillThere');
   }
 }

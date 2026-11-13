@@ -2,6 +2,7 @@ import { getDb } from '@/server/db';
 import { getStorage } from '@/server/external/storage';
 import { getSessionUserId } from '@/server/permissions/session';
 import { readFile } from '@/server/services/cv-review-request';
+import { logUnexpected } from '@/server/unexpected-log';
 export const dynamic = 'force-dynamic';
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const userId = await getSessionUserId();
@@ -19,7 +20,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
         'content-security-policy': "default-src 'none'; sandbox",
       },
     });
-  } catch {
+  } catch (error) {
+    logUnexpected('route', 'cvIncelemeDosya', error);
     return new Response(null, { status: 403, headers: { 'cache-control': 'no-store' } });
   }
 }

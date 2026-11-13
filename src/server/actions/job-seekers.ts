@@ -31,7 +31,7 @@ export async function getMySeekerSettings(input: GetMySeekerSettingsInput = {}) 
     if (!parsed.ok) return parsed.failure;
     return actionOk(await seekers.getMySeekerSettings(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getMySeekerSettings');
   }
 }
 export async function setSeekerSettings(input: SetSeekerSettingsInput) {
@@ -41,7 +41,7 @@ export async function setSeekerSettings(input: SetSeekerSettingsInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await seekers.setSeekerSettings(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'setSeekerSettings');
   }
 }
 export async function getMyHiringDeclaration(input: GetMyHiringDeclarationInput = {}) {
@@ -51,7 +51,7 @@ export async function getMyHiringDeclaration(input: GetMyHiringDeclarationInput 
     if (!parsed.ok) return parsed.failure;
     return actionOk(await seekers.getMyHiringDeclaration(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getMyHiringDeclaration');
   }
 }
 export async function setHiringDeclaration(input: SetHiringDeclarationInput) {
@@ -61,7 +61,7 @@ export async function setHiringDeclaration(input: SetHiringDeclarationInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await seekers.setHiringDeclaration(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'setHiringDeclaration');
   }
 }
 export async function searchSeekers(input: SearchSeekersInput = {}) {
@@ -71,7 +71,7 @@ export async function searchSeekers(input: SearchSeekersInput = {}) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await seekers.searchSeekers(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'searchSeekers');
   }
 }
 export async function previewSeekerContact(input: PreviewSeekerContactInput) {
@@ -81,7 +81,7 @@ export async function previewSeekerContact(input: PreviewSeekerContactInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await seekers.previewSeekerContact(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'previewSeekerContact');
   }
 }
 export async function requestSeekerContact(input: RequestSeekerContactInput) {
@@ -91,6 +91,6 @@ export async function requestSeekerContact(input: RequestSeekerContactInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await seekers.requestSeekerContact(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'requestSeekerContact');
   }
 }

@@ -28,7 +28,7 @@ export async function searchMentors(input: SearchMentorsInput): Promise<ActionRe
     if (!parsed.ok) return parsed.failure;
     return actionOk(await directory.searchMentors({ db: getDb() }, actor, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'searchMentors');
   }
 }
 
@@ -38,7 +38,7 @@ export async function getSimilarMentors(): Promise<ActionResult<SimilarMentors>>
     const actor = await requireVerifiedMember();
     return actionOk(await directory.getSimilarMentors({ db: getDb() }, actor));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getSimilarMentors');
   }
 }
 
@@ -52,6 +52,6 @@ export async function getMentorEntryPoints(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await directory.getMentorEntryPoints({ db: getDb() }, actor, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getMentorEntryPoints');
   }
 }

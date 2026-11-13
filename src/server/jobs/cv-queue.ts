@@ -1,6 +1,7 @@
 import 'server-only';
 import { PgBoss, fromPrisma, type JobWithMetadata } from 'pg-boss';
 import type { Tx } from '../services/cv-shared';
+import { logUnexpected } from '../unexpected-log';
 
 /**
  * `cv.parse` kuyruğu (pg-boss; docs/architecture.md "Bildirimler ve zamanlanmış işler"). Yükleme kaydı ve iş AYNI
@@ -96,8 +97,9 @@ export async function startCvConsumer(
             return outcome === 'RETRY'
               ? { id: job.id, status: 'failed' as const, output: { errorCode: 'CV_PARSE_RETRY' } }
               : { id: job.id, status: 'completed' as const };
-          } catch {
-            // Beklenmeyen hata: ayrıntı loglanmaz; deneme hakkı bitince ölü mektup kuyruğuna düşer.
+          } catch (error) {
+            // Beklenmeyen hata: ayrıntı (ileti, girdi) loglanmaz, yalnız tek satır olay; deneme hakkı bitince ölü mektup kuyruğuna düşer.
+            logUnexpected('job', 'cv.parse', error);
             return {
               id: job.id,
               status: 'failed' as const,
@@ -116,7 +118,8 @@ export async function startCvFailureConsumer(
   return boss.work<CvParseJob>(CV_PARSE_FAILED_QUEUE, async (jobs) => {
     try {
       for (const job of jobs) await exhausted(job.data);
-    } catch {
+    } catch (error) {
+      logUnexpected('job', 'cv.failureRecord', error);
       throw new Error('CV_FAILURE_RECORD_UNAVAILABLE');
     }
   });

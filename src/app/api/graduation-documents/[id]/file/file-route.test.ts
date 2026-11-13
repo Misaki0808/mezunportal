@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { codedForbidden, codedNotFound } from '@/lib/errors';
 
@@ -62,5 +62,36 @@ describe('GET /api/graduation-documents/[id]/file', () => {
     mocks.read.mockResolvedValue(new Uint8Array());
     await call('baska-birinin-kimligi');
     expect(mocks.read.mock.calls[0]?.[1]).toBe('admin1');
+  });
+
+  describe('beklenmedik hata günlüğü (route.unexpected)', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('kodsuz depolama/veritabanı hatası 404 verir ve TEK satır yazılır (ileti yok)', async () => {
+      const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      mocks.getSessionUserId.mockResolvedValue('admin1');
+      mocks.read.mockRejectedValue(
+        Object.assign(new Error('disk dolu ayse@ogr.iu.edu.tr'), { code: 'ENOSPC' }),
+      );
+      expect((await call()).status).toBe(404);
+      expect(write).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(String(write.mock.calls[0]![0]).trim())).toEqual({
+        event: 'route.unexpected',
+        source: 'mezunBelgesiDosya',
+        errorName: 'Error',
+        errorCode: 'ENOSPC',
+      });
+      expect(String(write.mock.calls[0]![0])).not.toMatch(/disk dolu|ayse/);
+    });
+
+    it('kodlu hata (yetkisiz, olmayan belge) aynı 404 ama günlüğe yazılmaz', async () => {
+      const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      mocks.getSessionUserId.mockResolvedValue('admin1');
+      for (const error of [codedForbidden('AUTH_FORBIDDEN'), codedNotFound('RESOURCE_NOT_FOUND')]) {
+        mocks.read.mockRejectedValue(error);
+        expect((await call()).status).toBe(404);
+      }
+      expect(write).not.toHaveBeenCalled();
+    });
   });
 });

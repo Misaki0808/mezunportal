@@ -17,7 +17,7 @@ export async function getHomeSummary(): Promise<ActionResult<HomeSummary>> {
     await requireConsent(getDb(), actor.userId);
     return actionOk(await loadSummary({ db: getDb() }, actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getHomeSummary');
   }
 }
 
@@ -29,6 +29,6 @@ export async function getSuggestedJobs() {
     const { listSuggestedJobMatches } = await import('../services/job-match');
     return actionOk(await listSuggestedJobMatches(getDb(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getSuggestedJobs');
   }
 }

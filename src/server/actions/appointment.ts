@@ -44,7 +44,7 @@ export async function getMyMentorSettings(): Promise<ActionResult<MentorSettings
     const actor = await requireVerifiedMember();
     return actionOk(await appointments.getMyMentorSettings(appointmentDeps(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getMyMentorSettings');
   }
 }
 
@@ -59,7 +59,7 @@ export async function saveMentorSettings(
       await appointments.saveMentorSettings(appointmentDeps(), actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'saveMentorSettings');
   }
 }
 
@@ -75,7 +75,7 @@ export async function saveAvailability(
       await appointments.saveAvailability(appointmentDeps(), actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'saveAvailability');
   }
 }
 
@@ -87,7 +87,7 @@ export async function setPause(input: SetPauseInput): Promise<ActionResult<Mento
     if (!parsed.ok) return parsed.failure;
     return actionOk(await appointments.setPause(appointmentDeps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'setPause');
   }
 }
 
@@ -98,7 +98,7 @@ export async function listSlots(input: ListSlotsInput): Promise<ActionResult<Slo
     if (!parsed.ok) return parsed.failure;
     return actionOk(await appointments.listSlots(appointmentDeps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listSlots');
   }
 }
 
@@ -113,7 +113,7 @@ export async function requestAppointment(
       await appointments.requestAppointment(appointmentDeps(), actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'requestAppointment');
   }
 }
 
@@ -129,7 +129,7 @@ export async function respondAppointment(
       await appointments.respondAppointment(appointmentDeps(), actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'respondAppointment');
   }
 }
 
@@ -144,7 +144,7 @@ export async function cancelAppointment(
       await appointments.cancelAppointment(appointmentDeps(), actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'cancelAppointment');
   }
 }
 
@@ -156,7 +156,7 @@ export async function setMeetLink(input: SetMeetLinkInput): Promise<ActionResult
     if (!parsed.ok) return parsed.failure;
     return actionOk(await appointments.setMeetLink(appointmentDeps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'setMeetLink');
   }
 }
 
@@ -171,7 +171,7 @@ export async function listMyAppointments(
       await appointments.listMyAppointments(appointmentDeps(), actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listMyAppointments');
   }
 }
 
@@ -186,6 +186,6 @@ export async function getAppointment(
       await appointments.getAppointment(appointmentDeps(), actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getAppointment');
   }
 }

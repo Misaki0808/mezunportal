@@ -15,7 +15,7 @@ export async function getSkillGap(): Promise<ActionResult<SkillGapResult>> {
     const actor = await requireVerifiedMember({ roles: ['STUDENT'] });
     return actionOk(await service.getSkillGap(getDb(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getSkillGap');
   }
 }
 export async function listSkillGapTitles(): Promise<ActionResult<{ id: string; name: string }[]>> {
@@ -23,7 +23,7 @@ export async function listSkillGapTitles(): Promise<ActionResult<{ id: string; n
     const actor = await requireVerifiedMember({ roles: ['STUDENT'] });
     return actionOk(await service.listSkillGapTitles(getDb(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listSkillGapTitles');
   }
 }
 export async function selectSkillGoal(
@@ -35,6 +35,6 @@ export async function selectSkillGoal(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.selectSkillGoal(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'selectSkillGoal');
   }
 }

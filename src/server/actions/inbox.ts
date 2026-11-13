@@ -22,7 +22,7 @@ export async function getMyInbox(input: ListInboxInput = {}): Promise<ActionResu
     if (!parsed.ok) return parsed.failure;
     return actionOk(await inbox.listMyInbox({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getMyInbox');
   }
 }
 
@@ -37,7 +37,7 @@ export async function markInboxRead(
     const result = await inbox.markInboxRead({ db: getDb() }, actor.userId, parsed.data);
     return actionOk(result);
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'markInboxRead');
   }
 }
 
@@ -47,6 +47,6 @@ export async function markAllInboxRead(): Promise<ActionResult<{ marked: number 
     const result = await inbox.markAllInboxRead({ db: getDb() }, actor.userId);
     return actionOk(result);
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'markAllInboxRead');
   }
 }

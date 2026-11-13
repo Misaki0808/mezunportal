@@ -54,7 +54,7 @@ export async function getAdminOverview(): Promise<ActionResult<AdminOverview>> {
 
     return actionOk(await panel.getAdminOverview(adminUserDeps(), admin.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getAdminOverview');
   }
 }
 
@@ -68,7 +68,7 @@ export async function listAdminReports(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await panel.listAdminReports(adminUserDeps(), admin.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listAdminReports');
   }
 }
 
@@ -84,7 +84,7 @@ export async function getEmploymentReport(
       await employment.getEmploymentReport(adminUserDeps(), admin.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getEmploymentReport');
   }
 }
 
@@ -99,7 +99,7 @@ export async function listDictionaryEntries(
       await dictionary.listDictionaryEntries(adminUserDeps(), admin.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listDictionaryEntries');
   }
 }
 
@@ -115,7 +115,7 @@ export async function createDictionaryEntry(
       await dictionary.createDictionaryEntry(adminUserDeps(), admin.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'createDictionaryEntry');
   }
 }
 
@@ -130,7 +130,7 @@ export async function updateDictionaryEntry(
       await dictionary.updateDictionaryEntry(adminUserDeps(), admin.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'updateDictionaryEntry');
   }
 }
 
@@ -146,7 +146,7 @@ export async function deleteDictionaryEntry(
       await dictionary.deleteDictionaryEntry(adminUserDeps(), admin.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'deleteDictionaryEntry');
   }
 }
 
@@ -161,7 +161,7 @@ export async function listUnmatchedValues(
       await dictionary.listUnmatchedValues(adminUserDeps(), admin.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listUnmatchedValues');
   }
 }
 
@@ -177,7 +177,7 @@ export async function resolveUnmatchedValue(
       await dictionary.resolveUnmatchedValue(adminUserDeps(), admin.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'resolveUnmatchedValue');
   }
 }
 
@@ -189,6 +189,6 @@ export async function listAuditLog(input: ListAuditLogInput): Promise<ActionResu
     if (!parsed.ok) return parsed.failure;
     return actionOk(await panel.listAuditLog(adminUserDeps(), admin.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listAuditLog');
   }
 }

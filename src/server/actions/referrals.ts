@@ -36,7 +36,7 @@ export async function listReferralCandidates(): Promise<ActionResult<ReferralCan
       ),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listReferralCandidates');
   }
 }
 
@@ -49,7 +49,7 @@ export async function proposeReferral(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.proposeReferral({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'proposeReferral');
   }
 }
 
@@ -62,7 +62,7 @@ export async function listMyReferrals(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.listMyReferrals({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listMyReferrals');
   }
 }
 
@@ -75,7 +75,7 @@ export async function respondReferral(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.respondReferral({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'respondReferral');
   }
 }
 
@@ -90,7 +90,7 @@ export async function proposeReferralAcceptance(
       await service.proposeReferralAcceptance({ db: getDb() }, actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'proposeReferralAcceptance');
   }
 }
 
@@ -105,7 +105,7 @@ export async function respondReferralAcceptance(
       await service.respondReferralAcceptance({ db: getDb() }, actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'respondReferralAcceptance');
   }
 }
 
@@ -120,7 +120,7 @@ export async function listReferralModeration(
       await service.listReferralModeration({ db: getDb() }, actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listReferralModeration');
   }
 }
 
@@ -133,7 +133,7 @@ export async function reviewReferral(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.reviewReferral({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'reviewReferral');
   }
 }
 
@@ -146,6 +146,6 @@ export async function cancelReferral(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.cancelReferral({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'cancelReferral');
   }
 }

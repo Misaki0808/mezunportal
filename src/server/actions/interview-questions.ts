@@ -20,6 +20,6 @@ export async function getInterviewQuestions(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await search(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getInterviewQuestions');
   }
 }

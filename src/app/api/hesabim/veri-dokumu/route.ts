@@ -5,6 +5,7 @@ import { getDb } from '@/server/db';
 import { requireUserWithoutConsent } from '@/server/permissions';
 import { buildDataExport } from '@/server/services/dataExport';
 import { RATE_LIMITS, consumeRateLimit } from '@/server/services/rateLimit';
+import { logUnexpected } from '@/server/unexpected-log';
 
 // Veri dökümü (KVKK m. 11): yalnız oturumdaki kullanıcının kendi verisi; her istekte taze, önbelleksiz.
 export const dynamic = 'force-dynamic';
@@ -30,6 +31,7 @@ export async function GET() {
         { status: error.status, headers: { 'Cache-Control': 'no-store' } },
       );
     }
+    logUnexpected('route', 'veriDokumu', error);
     return NextResponse.json(
       { errorCode: 'SERVER_UNEXPECTED' },
       { status: 500, headers: { 'Cache-Control': 'no-store' } },

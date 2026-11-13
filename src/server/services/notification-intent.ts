@@ -5,6 +5,7 @@ import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { notificationRetry } from '../rules/notification-retry';
 import type { InboxKind } from '../rules/inbox';
 import type { AppointmentNotice } from './appointment-notifier';
+import { logUnexpected } from '../unexpected-log';
 
 const generic = z
   .object({
@@ -288,7 +289,9 @@ export async function relayNotificationIntents(
               return 'SKIPPED';
             try {
               await send(intent);
-            } catch {
+            } catch (error) {
+              // Her başarısız deneme tek satır (olay, hata sınıfı, kod); adres, kimlik ve ileti yazılmaz.
+              logUnexpected('job', 'notification.intent', error);
               const retry = notificationRetry(intent.attemptCount + 1, now);
               await tx.notificationIntent.update({
                 where: { id },
@@ -311,7 +314,8 @@ export async function relayNotificationIntents(
           // Operatör uyarısı: kimlik, sağlayıcı hatası, adres veya şifreli yük taşınmaz.
           if (changed === 'FAILED') process.stderr.write('notification.intent: RETRY_EXHAUSTED\n');
         }
-      } catch {
+      } catch (error) {
+        logUnexpected('job', 'notification.relay', error);
         failed++;
       }
     }

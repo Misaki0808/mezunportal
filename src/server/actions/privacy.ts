@@ -31,7 +31,7 @@ export async function getConsentState(): Promise<ActionResult<ConsentState>> {
     const actor = await requireUserWithoutConsent();
     return actionOk(await privacy.getConsentState(getDb(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getConsentState');
   }
 }
 
@@ -44,7 +44,7 @@ export async function recordConsents(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await privacy.recordConsents(getDb(), actor.userId, parsed.data.decisions));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'recordConsents');
   }
 }
 
@@ -53,7 +53,7 @@ export async function getFieldVisibility(): Promise<ActionResult<FieldVisibility
     const actor = await requireUserWithoutConsent();
     return actionOk(await privacy.getFieldVisibility(getDb(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getFieldVisibility');
   }
 }
 
@@ -66,7 +66,7 @@ export async function setFieldVisibility(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await privacy.setFieldVisibility(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'setFieldVisibility');
   }
 }
 
@@ -89,6 +89,6 @@ export async function deleteAccount(
       }),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'deleteAccount');
   }
 }

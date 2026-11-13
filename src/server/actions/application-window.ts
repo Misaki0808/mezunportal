@@ -21,7 +21,7 @@ export async function getApplicationCalendar(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.getApplicationCalendar(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getApplicationCalendar');
   }
 }
 export async function setApplicationFollow(
@@ -33,6 +33,6 @@ export async function setApplicationFollow(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.setApplicationFollow(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'setApplicationFollow');
   }
 }

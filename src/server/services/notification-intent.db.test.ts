@@ -115,3 +115,46 @@ describe('işlemsel bildirim niyeti', () => {
     expect(transport.sent).toHaveLength(1);
   });
 });
+
+describe('niyet aktarımı: başarısız deneme günlüğü (job.unexpected)', () => {
+  it('gönderim hatası tek satır yazar (olay, hata sınıfı, kod); ileti, adres ve kimlik yazılmaz; niyet yine yeniden denenmek üzere kalır', async () => {
+    const user = await createUser(db),
+      id = randomUUID();
+    await db.$transaction((tx) =>
+      stageNotification(tx, user, {
+        type: 'generic',
+        event: 'contact',
+        eventId: id,
+        path: '/hesap/iletisim',
+      }),
+    );
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      const broken = async (row: { userId: string }) => {
+        if (row.userId !== user) throw new Error('başka test');
+        throw Object.assign(new Error('kuyruk çöktü ayse@ogr.iu.edu.tr postgres://gizli'), {
+          code: 'P2034',
+        });
+      };
+      expect((await relayNotificationIntents(db, broken)).failed).toBeGreaterThan(0);
+      const lines = write.mock.calls
+        .map(([line]) => String(line))
+        .filter((line) => line.startsWith('{') && line.includes('notification.intent'));
+      const mine = lines
+        .map((line) => JSON.parse(line.trim()))
+        .filter((e) => e.errorCode === 'P2034');
+      expect(mine).toEqual([
+        {
+          event: 'job.unexpected',
+          source: 'notification.intent',
+          errorName: 'Error',
+          errorCode: 'P2034',
+        },
+      ]);
+      expect(lines.join('')).not.toMatch(/ayse|postgres|gizli|kuyruk çöktü/);
+      expect(await db.notificationIntent.count({ where: { userId: user } })).toBe(1);
+    } finally {
+      write.mockRestore();
+    }
+  });
+});

@@ -24,7 +24,7 @@ export async function configureAwardCycle(input: ConfigureAwardCycleInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.configureAwardCycle({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'configureAwardCycle');
   }
 }
 export async function listAwardCandidates(input: AwardCycleInput) {
@@ -34,7 +34,7 @@ export async function listAwardCandidates(input: AwardCycleInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.listAwardCandidates({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listAwardCandidates');
   }
 }
 export async function recalculateAwardCycle(input: RecalculateAwardCycleInput) {
@@ -46,7 +46,7 @@ export async function recalculateAwardCycle(input: RecalculateAwardCycleInput) {
       await service.recalculateAwardCycle({ db: getDb() }, actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'recalculateAwardCycle');
   }
 }
 export async function selectYearAlumnus(input: SelectYearAlumnusInput) {
@@ -56,7 +56,7 @@ export async function selectYearAlumnus(input: SelectYearAlumnusInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.selectYearAlumnus({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'selectYearAlumnus');
   }
 }
 export async function listMyAwards() {
@@ -64,7 +64,7 @@ export async function listMyAwards() {
     const actor = await requireVerifiedMember({ roles: ['ALUMNI'] });
     return actionOk(await service.listMyAwards({ db: getDb() }, actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listMyAwards');
   }
 }
 export async function setAwardPublication(input: SetAwardPublicationInput) {
@@ -74,6 +74,6 @@ export async function setAwardPublication(input: SetAwardPublicationInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.setAwardPublication({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'setAwardPublication');
   }
 }

@@ -23,7 +23,7 @@ export async function getOnboardingState(): Promise<ActionResult<OnboardingState
     const actor = await requireUser();
     return actionOk(await profile.getOnboardingState(getDb(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getOnboardingState');
   }
 }
 export async function listProfileTags(
@@ -35,7 +35,7 @@ export async function listProfileTags(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await profile.listProfileTags(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listProfileTags');
   }
 }
 export async function saveOnboardingStep(
@@ -47,7 +47,7 @@ export async function saveOnboardingStep(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await profile.saveOnboardingStep(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'saveOnboardingStep');
   }
 }
 export async function skipOnboardingStep(
@@ -59,6 +59,6 @@ export async function skipOnboardingStep(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await profile.skipOnboardingStep(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'skipOnboardingStep');
   }
 }

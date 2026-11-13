@@ -3,6 +3,7 @@ import { isCodedError } from '@/lib/errors';
 import { getDb } from '@/server/db';
 import { getSessionUserId } from '@/server/permissions/session';
 import { exportUsageMetrics } from '@/server/services/usage-metrics';
+import { logUnexpected } from '@/server/unexpected-log';
 
 // Kullanım metrikleri (Excel). Yetki kontrollü rota: oturum + kapsamı olan doğrulanmış yönetici. Dosya yalnız toplu sayılar
 // içerir; her dışa aktarma `DATA_EXPORT` işlem kaydı yazar ve hız sınırına tabidir.
@@ -50,6 +51,7 @@ export async function GET(request: Request) {
       if (error.kind === 'validation') return failure(400);
       return failure(403);
     }
+    logUnexpected('route', 'raporKullanim', error);
     return failure(500);
   }
 }
