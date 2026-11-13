@@ -110,7 +110,7 @@ function student(over: Record<string, unknown> = {}) {
   return props;
 }
 const typeQuestion = (value: string) =>
-  fireEvent.change(screen.getByLabelText(/Sorun/), { target: { value } });
+  fireEvent.change(screen.getByLabelText(/Sorduğun soru/), { target: { value } });
 
 describe('SSS talebi gönder (öğrenci)', () => {
   it('yazma durunca benzer SSS gösterilir; her tuşta istek gitmez', async () => {

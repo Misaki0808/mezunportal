@@ -50,9 +50,27 @@ it('ilan yokken öğrenci: sıfır sayaç yok, ilanları kimin paylaştığı ve
 it('ilan yokken ilan verebilen rol: öğrenciye söylenen metin değil, ilk ilanı sen paylaş', () => {
   renderWithToasts(<PostingList canPost filters={{}} options={options} page={emptyPage} />);
   expect(screen.getByText(/ilk ilanı sen paylaşabilirsin/)).toBeVisible();
+  // Boşken tek "İlan ver": başlıktaki gizlenir, boş durumun düğmesi kalır ("İlanlarım" başka eylemdir).
+  const post = screen.getAllByRole('link', { name: 'İlan ver' });
+  expect(post).toHaveLength(1);
+  expect(post[0]!.closest('header')).toBeNull();
+  expect(screen.getByRole('link', { name: 'İlanlarım' })).toBeVisible();
   expect(screen.queryByText(/ilgi alanlarını eklersen/i)).not.toBeInTheDocument();
   expect(screen.queryByRole('link', { name: 'Profilini düzenle' })).not.toBeInTheDocument();
   expect(screen.queryByText('0 ilan')).not.toBeInTheDocument();
+});
+it('ilan varken ilan veren rolde "İlan ver" başlıkta kalır (bugünkü düzen)', () => {
+  renderWithToasts(
+    <PostingList
+      canPost
+      filters={{}}
+      options={options}
+      page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
+    />,
+  );
+  const post = screen.getAllByRole('link', { name: 'İlan ver' });
+  expect(post).toHaveLength(1);
+  expect(post[0]!.closest('header')).not.toBeNull();
 });
 it('filtreyle ilan bulunamayınca sayaç ve temizleme kalır, "henüz paylaşılmadı" denmez', () => {
   renderWithToasts(

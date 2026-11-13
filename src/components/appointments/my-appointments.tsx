@@ -18,11 +18,19 @@ type Props = {
   initialRole: Role;
   /** Mentor ayarları bağlantısı yalnız mentor olabilen kullanıcıya gösterilir. */
   showSettings: boolean;
+  /** Dizinde bu kullanıcının görebildiği hiç mentor yoksa `false`: boş "Giden" durumu "Mentor bul" yerine deneyimlere yönlendirir. */
+  mentorsAvailable?: boolean;
   list: (input: ListMyAppointmentsInput) => Promise<ActionResult<AppointmentPage>>;
 };
 
 /** Randevularım: Gelen (mentor) / Giden (talep eden) sekmeleri, durum rozetleri, boş durumlar. */
-export function MyAppointments({ initial, initialRole, showSettings, list }: Props) {
+export function MyAppointments({
+  initial,
+  initialRole,
+  showSettings,
+  mentorsAvailable = true,
+  list,
+}: Props) {
   const t = useTranslations('appointments.mine');
   const modes = useTranslations('appointments.modes');
   const errors = useTranslations('errors.codes');
@@ -65,14 +73,27 @@ export function MyAppointments({ initial, initialRole, showSettings, list }: Pro
       {items.length === 0 && !pending ? (
         <EmptyState
           icon={<CalendarIcon width={32} height={32} strokeWidth={1.5} />}
-          title={role === 'MENTOR' ? t('emptyIncoming') : t('emptyOutgoing')}
+          title={
+            role === 'MENTOR'
+              ? t('emptyIncoming')
+              : t(mentorsAvailable ? 'emptyOutgoing' : 'emptyOutgoingNoMentor')
+          }
           description={
-            role === 'MENTOR' ? t('emptyIncomingDescription') : t('emptyOutgoingDescription')
+            role === 'MENTOR'
+              ? t('emptyIncomingDescription')
+              : t(
+                  mentorsAvailable
+                    ? 'emptyOutgoingDescription'
+                    : 'emptyOutgoingNoMentorDescription',
+                )
           }
           action={
             role === 'MENTEE' ? (
-              <Link className={buttonClasses({ size: 'lg' })} href="/mentorlar">
-                {t('findMentor')}
+              <Link
+                className={buttonClasses({ size: 'lg' })}
+                href={mentorsAvailable ? '/mentorlar' : '/deneyimler'}
+              >
+                {t(mentorsAvailable ? 'findMentor' : 'browseExperiences')}
               </Link>
             ) : undefined
           }

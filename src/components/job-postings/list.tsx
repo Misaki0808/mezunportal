@@ -251,9 +251,11 @@ export function PostingList({
         </div>
         {canPost && (
           <div className="flex shrink-0 flex-col items-stretch gap-1 sm:flex-row sm:gap-3">
-            <Link className={buttonClasses()} href="/ilanlar/yeni">
-              {t('post')}
-            </Link>
+            {(page.total > 0 || filtered) && (
+              <Link className={buttonClasses()} href="/ilanlar/yeni">
+                {t('post')}
+              </Link>
+            )}
             <Link className={buttonClasses({ variant: 'secondary' })} href="/ilanlarim">
               {t('mine')}
             </Link>

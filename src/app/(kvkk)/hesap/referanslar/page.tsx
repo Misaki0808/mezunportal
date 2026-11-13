@@ -10,8 +10,16 @@ export default async function MyReferralsPage() {
   const canCreate = actor.facts.memberships.some(
     (m) => m.role === 'ALUMNI' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
   );
+  const canReceive = actor.facts.memberships.some(
+    (m) => m.role === 'STUDENT' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
+  );
   return result.ok ? (
-    <ReferralList initial={result.data} userId={actor.userId} canCreate={canCreate} />
+    <ReferralList
+      initial={result.data}
+      userId={actor.userId}
+      canCreate={canCreate}
+      canReceive={canReceive}
+    />
   ) : (
     <ErrorState errorCode={result.errorCode} />
   );

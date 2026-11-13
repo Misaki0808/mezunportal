@@ -156,16 +156,23 @@ export function ReferralCreate({
   );
 }
 
+const CREATE_LINK =
+  'mt-5 inline-flex min-h-11 items-center rounded-control bg-primary px-5 font-semibold text-on-primary';
+
 export function ReferralList({
   initial,
   userId,
   moderation = false,
   canCreate = false,
+  canReceive = false,
 }: {
   initial: ReferralPage;
   userId: string;
   moderation?: boolean;
+  /** Referans beyanını başlatabilen rol (doğrulanmış mezun). */
   canCreate?: boolean;
+  /** Referans gösterilebilen rol (doğrulanmış öğrenci): boşken "neden yok" cümlesi onun içindir. */
+  canReceive?: boolean;
 }) {
   const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const reviewReasonInput = useRef<HTMLTextAreaElement>(null);
@@ -287,11 +294,8 @@ export function ReferralList({
         title={t(moderation ? 'moderationTitle' : 'title')}
         description={t(moderation ? 'moderationDescription' : 'description')}
       />
-      {canCreate && (
-        <Link
-          href="/referans/yeni"
-          className="mt-5 inline-flex min-h-11 items-center rounded-control bg-primary px-5 font-semibold text-on-primary"
-        >
+      {canCreate && page.items.length > 0 && (
+        <Link href="/referans/yeni" className={CREATE_LINK}>
           {t('create')}
         </Link>
       )}
@@ -302,7 +306,34 @@ export function ReferralList({
       )}
       {!page.items.length ? (
         <div className="mt-8">
-          <EmptyState title={t('empty')} />
+          {/* Boşken tek eylem: başlatabilen rol için düğme burada; öğrenci ve diğerleri için eylem yok, nedeni yazılı. */}
+          <EmptyState
+            title={t(
+              moderation
+                ? 'empty'
+                : canCreate
+                  ? 'emptyAlumni'
+                  : canReceive
+                    ? 'emptyStudent'
+                    : 'emptyOther',
+            )}
+            description={t(
+              moderation
+                ? 'emptyModerationDescription'
+                : canCreate
+                  ? 'emptyAlumniDescription'
+                  : canReceive
+                    ? 'emptyStudentDescription'
+                    : 'emptyOtherDescription',
+            )}
+            action={
+              canCreate && !moderation ? (
+                <Link href="/referans/yeni" className={CREATE_LINK}>
+                  {t('create')}
+                </Link>
+              ) : undefined
+            }
+          />
         </div>
       ) : (
         <ul className="mt-7 grid gap-4">

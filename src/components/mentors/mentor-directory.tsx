@@ -40,12 +40,20 @@ type Props = {
   results: MentorPage;
   sectors: { id: string; name: string }[];
   similar: SimilarMentors | null;
+  /** Mentor olabilen ama profili henüz kapalı kullanıcı: boş dizinde eylem "mentorluğu aç" olur. */
+  canOpenMentoring?: boolean;
 };
 
 const BASE_PATH = '/mentorlar';
 
 /** Mentor bul: filtreler URL'de; mobilde alt sayfa, geniş ekranda kenar paneli (ortak `FilterShell`). */
-export function MentorDirectory({ filter, results, sectors, similar }: Props) {
+export function MentorDirectory({
+  filter,
+  results,
+  sectors,
+  similar,
+  canOpenMentoring = false,
+}: Props) {
   const t = useTranslations('mentors');
   const directory = useTranslations('directory');
   const experienceTypes = useTranslations('experiences.types');
@@ -257,12 +265,20 @@ export function MentorDirectory({ filter, results, sectors, similar }: Props) {
           results.items.length === 0 ? (
             <EmptyState
               title={hasFilter ? t('empty.title') : t('empty.none')}
-              description={hasFilter ? t('empty.description') : t('empty.noneDescription')}
+              description={
+                hasFilter
+                  ? t('empty.description')
+                  : t(canOpenMentoring ? 'empty.noneMentorDescription' : 'empty.noneDescription')
+              }
               action={
                 hasFilter ? (
                   <Button variant="secondary" onClick={() => go({})}>
                     {directory('clear')}
                   </Button>
+                ) : canOpenMentoring ? (
+                  <Link href="/mentor/ayarlar" className={buttonClasses()}>
+                    {t('empty.noneMentorAction')}
+                  </Link>
                 ) : (
                   <Link href="/deneyimler" className={buttonClasses()}>
                     {t('empty.noneAction')}
