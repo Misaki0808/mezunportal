@@ -266,6 +266,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
             pendingReason={pending ? t('loading') : undefined}
             error={invalid && draft.q && draft.q.trim().length < 2 ? t('invalid') : undefined}
             trailing={filtersButton}
+            wideTrailing={active.length > 0}
             onSubmit={(event) => {
               event.preventDefault();
               go({ ...draft, page: 1 });

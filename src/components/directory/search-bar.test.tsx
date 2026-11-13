@@ -100,25 +100,41 @@ describe('SearchBar', () => {
     expect(screen.getByText('Deneyimler yükleniyor')).toHaveClass('sr-only');
   });
 
-  it('dış boşluk çağırandan gelir (bileşen marj koymaz); satır dar ekranda sarar ve girdi en az 10 rem kalır', () => {
+  it('dış boşluk çağırandan gelir (bileşen marj koymaz)', () => {
+    renderUi(<SearchBar label="Ara" submitLabel="Ara" className="mb-4" input={{}} />);
+
+    const form = screen.getByRole('search');
+    expect(form).toHaveClass('mb-4');
+    expect(form).not.toHaveClass('mt-6');
+  });
+
+  it('satır sarabilir; girdi varsayılanda daralabilir (tek satır), uzamış satır sonu öğesinde en az 10 rem kalır', () => {
+    const { unmount } = renderUi(
+      <SearchBar
+        label="Ara"
+        submitLabel="Ara"
+        trailing={<Button variant="secondary">Filtreler</Button>}
+        input={{}}
+      />,
+    );
+    // Filtre yokken sabit alt sınır YOK: 360 px'te düğmeyi alt satıra itip ilk ekrandaki sonuçları kaydırırdı.
+    expect(screen.getByRole('searchbox').parentElement).toHaveClass('flex-wrap');
+    expect(screen.getByRole('searchbox')).toHaveClass('min-w-0', 'flex-1');
+    expect(screen.getByRole('searchbox')).not.toHaveClass('min-w-40');
+    unmount();
+
     renderUi(
       <SearchBar
         label="Ara"
         submitLabel="Ara"
-        className="mb-4"
+        wideTrailing
         trailing={<Button variant="secondary">Filtreler (3)</Button>}
         input={{}}
       />,
     );
-
-    const form = screen.getByRole('search');
-    const box = screen.getByRole('searchbox');
-    expect(form).toHaveClass('mb-4');
-    expect(form).not.toHaveClass('mt-6');
-    // 360 px'te "Filtreler (3)" ile girdi 105 px'e düşüyordu: satır sarar, düğme alt satıra iner, girdi geniş kalır.
-    expect(box.parentElement).toHaveClass('flex-wrap');
-    expect(box).toHaveClass('min-w-40', 'flex-1');
-    expect(box).not.toHaveClass('min-w-0');
+    // "Filtreler (3)" ile girdi 360 px'te 105 px'e düşüyordu: alt sınır 160 px, sığmayan düğme alt satıra iner.
+    expect(screen.getByRole('searchbox')).toHaveClass('min-w-40', 'flex-1');
+    expect(screen.getByRole('searchbox')).not.toHaveClass('min-w-0');
   });
 
   it('children aynı formun içinde, arama satırının altına girer (süzgeç alanları q ile birlikte gider)', () => {
