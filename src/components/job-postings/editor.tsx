@@ -16,6 +16,7 @@ import {
 import type { ActionResult } from '@/contracts/result';
 import {
   Button,
+  Checkbox,
   Field,
   Input,
   Select,
@@ -23,6 +24,7 @@ import {
   useAction,
   type FieldProps,
 } from '@/components/ui';
+import { AlertIcon } from '@/components/ui/icons';
 import {
   addDays,
   istanbulDay,
@@ -47,8 +49,9 @@ function PostingField({ error, children, ...props }: FieldProps) {
               undefined,
           })}
           {error && (
-            <p id={errorId} className="text-sm text-danger">
-              {error}
+            <p id={errorId} className="flex items-start gap-1.5 text-sm text-danger">
+              <AlertIcon className="mt-0.5 shrink-0" width={16} height={16} />
+              <span>{error}</span>
             </p>
           )}
         </>
@@ -144,7 +147,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
     requestAnimationFrame(() => {
       if (first)
         focusTemporarily(document.querySelector<HTMLElement>(`[data-error-field="${first}"]`));
-      else summary.current?.focus();
+      else focusTemporarily(summary.current);
     });
   }
   function validateStep(current: 0 | 1) {
@@ -254,7 +257,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
       </header>
       <div className="mb-5">
         <p aria-hidden="true" className="text-sm font-semibold text-fg-muted">
-          <span aria-current="step">{stepLabel}</span>
+          {stepLabel}
         </p>
         <div className="mt-2 flex gap-2" aria-hidden="true">
           {[0, 1, 2].map((i) => (
@@ -268,7 +271,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
       {error && (
         <div
           ref={summary}
-          tabIndex={-1}
           className="mb-5 rounded-control border border-danger bg-surface p-4 font-medium text-danger"
         >
           <p>{error}</p>
@@ -383,18 +385,14 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 />
               )}
             </PostingField>
-            <label className="flex min-h-11 items-center gap-3">
-              <input
-                className="size-5 accent-primary"
-                type="checkbox"
-                data-error-field="isRemote"
-                aria-invalid={invalid.has('isRemote') || undefined}
-                aria-describedby={invalid.has('isRemote') ? 'posting-remote-error' : undefined}
-                checked={remote}
-                onChange={(e) => setRemote(e.target.checked)}
-              />
-              {t('remoteQuestion')}
-            </label>
+            <Checkbox
+              label={t('remoteQuestion')}
+              data-error-field="isRemote"
+              aria-invalid={invalid.has('isRemote') || undefined}
+              aria-describedby={invalid.has('isRemote') ? 'posting-remote-error' : undefined}
+              checked={remote}
+              onChange={(e) => setRemote(e.target.checked)}
+            />
             {bad('isRemote') && (
               <p id="posting-remote-error" className="text-danger">
                 {bad('isRemote')}
@@ -436,29 +434,22 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               )}
               <div className="mt-2 grid gap-2">
                 {context.targetDepartments.map((d) => (
-                  <label
+                  <Checkbox
                     key={d.id}
-                    className="flex min-h-11 items-center gap-3 rounded-control border border-border px-3"
-                  >
-                    <input
-                      type="checkbox"
-                      className="size-5 accent-primary"
-                      checked={targets.includes(d.id)}
-                      disabled={
-                        !targets.includes(d.id) && targets.length >= context.limits.maxTargets
-                      }
-                      onChange={(e) =>
-                        setTargets((old) =>
-                          e.target.checked
-                            ? [...old, d.id].slice(0, context.limits.maxTargets)
-                            : old.filter((x) => x !== d.id),
-                        )
-                      }
-                    />
-                    <span>
-                      {d.name} · {d.facultyName}
-                    </span>
-                  </label>
+                    label={`${d.name} · ${d.facultyName}`}
+                    className="rounded-control border border-border px-3"
+                    checked={targets.includes(d.id)}
+                    disabled={
+                      !targets.includes(d.id) && targets.length >= context.limits.maxTargets
+                    }
+                    onChange={(e) =>
+                      setTargets((old) =>
+                        e.target.checked
+                          ? [...old, d.id].slice(0, context.limits.maxTargets)
+                          : old.filter((x) => x !== d.id),
+                      )
+                    }
+                  />
                 ))}
               </div>
             </fieldset>
@@ -476,26 +467,23 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               )}
               <div className="mt-2 flex flex-wrap gap-2">
                 {context.availableTags.map((tag) => (
-                  <label
+                  <Checkbox
                     key={tag.id}
-                    className="flex min-h-11 items-center gap-2 rounded-control border border-border px-3"
-                  >
-                    <input
-                      type="checkbox"
-                      className="size-5 accent-primary"
-                      checked={tagIds.includes(tag.id)}
-                      disabled={!tagIds.includes(tag.id) && tagIds.length >= 5}
-                      onChange={(e) =>
-                        setTagIds((old) =>
-                          e.target.checked ? [...old, tag.id] : old.filter((id) => id !== tag.id),
-                        )
-                      }
-                    />
-                    {tag.label ??
+                    label={
+                      tag.label ??
                       (tag.slug in messages.profileTags
                         ? tagLabels(tag.slug as keyof typeof messages.profileTags)
-                        : tag.slug)}
-                  </label>
+                        : tag.slug)
+                    }
+                    className="rounded-control border border-border px-3"
+                    checked={tagIds.includes(tag.id)}
+                    disabled={!tagIds.includes(tag.id) && tagIds.length >= 5}
+                    onChange={(e) =>
+                      setTagIds((old) =>
+                        e.target.checked ? [...old, tag.id] : old.filter((id) => id !== tag.id),
+                      )
+                    }
+                  />
                 ))}
               </div>
             </fieldset>
@@ -513,22 +501,17 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               )}
               <div className="mt-2 flex flex-wrap gap-2">
                 {[1, 2, 3, 4].map((grade) => (
-                  <label
+                  <Checkbox
                     key={grade}
-                    className="flex min-h-11 items-center gap-2 rounded-control border border-border px-3"
-                  >
-                    <input
-                      type="checkbox"
-                      className="size-5 accent-primary"
-                      checked={targetGrades.includes(grade)}
-                      onChange={(e) =>
-                        setTargetGrades((old) =>
-                          e.target.checked ? [...old, grade] : old.filter((n) => n !== grade),
-                        )
-                      }
-                    />
-                    {t('matchGrade', { grade })}
-                  </label>
+                    label={t('matchGrade', { grade })}
+                    className="rounded-control border border-border px-3"
+                    checked={targetGrades.includes(grade)}
+                    onChange={(e) =>
+                      setTargetGrades((old) =>
+                        e.target.checked ? [...old, grade] : old.filter((n) => n !== grade),
+                      )
+                    }
+                  />
                 ))}
               </div>
             </fieldset>

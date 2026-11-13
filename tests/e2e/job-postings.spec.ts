@@ -329,9 +329,8 @@ test('ilan adımları klavyeyle doğrulanır, başlık duyurulur ve geri dönün
   await page.keyboard.press('Enter');
   const heading = page.getByRole('heading', { name: /Ayrıntılar ve başvuru$/ });
   await expect(heading).toBeFocused();
-  await expect(page.locator('[aria-current="step"]')).toHaveText(
-    'Adım 2 / 3: Ayrıntılar ve başvuru',
-  );
+  await expect(page.getByText('Adım 2 / 3: Ayrıntılar ve başvuru', { exact: true })).toBeVisible();
+  await expect(heading).toHaveAccessibleName('Adım 2 / 3: Ayrıntılar ve başvuru');
   const description = page.getByLabel('Açıklama', { exact: false });
   await tabTo(next);
   await page.keyboard.press('Enter');
