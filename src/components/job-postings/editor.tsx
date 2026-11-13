@@ -84,6 +84,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   };
   function focusTemporarily(element: HTMLElement | null) {
     if (!element) return;
+    // Fareyle önceki/sonraki adıma basıldığında başlık zaten odaktaysa da yeni adım duyurulsun.
+    if (document.activeElement === element) element.blur();
     if (
       !element.hasAttribute('tabindex') &&
       !element.matches('input,select,textarea,button,a[href]')

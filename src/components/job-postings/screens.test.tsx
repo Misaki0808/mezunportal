@@ -130,10 +130,13 @@ it('her adım yalnız kendi alanlarını doğrular, odak ve girilen değerler ko
   await waitFor(() =>
     expect(screen.getByRole('heading', { name: /İlan önizlemesi$/ })).toHaveFocus(),
   );
+  const newFocus = vi.fn();
+  screen.getByRole('heading', { name: /İlan önizlemesi$/ }).addEventListener('focus', newFocus);
   fireEvent.click(screen.getByRole('button', { name: 'Geri' }));
   await waitFor(() =>
     expect(screen.getByRole('heading', { name: /Ayrıntılar ve başvuru$/ })).toHaveFocus(),
   );
+  await waitFor(() => expect(newFocus).toHaveBeenCalled());
   expect(screen.getByLabelText(/^Açıklama/)).toHaveValue(
     'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
   );
