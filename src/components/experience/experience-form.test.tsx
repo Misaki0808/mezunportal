@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 import { act, screen, within } from '@testing-library/react';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderWithToasts } from '@/test/render';
 
 import { ExperienceForm } from './experience-form';
 import { emptyState } from './form-state';
+
+const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => router }));
 
 // jsdom'da <dialog>.showModal/close yok; açık/kapalı niteliği taklit edilir (dialog.test.tsx ile aynı).
 beforeAll(() => {
@@ -211,5 +214,187 @@ describe('deneyim formu', () => {
     expect(screen.getByLabelText('1. soru')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Soruyu sil' }));
     expect(screen.queryByLabelText('1. soru')).not.toBeInTheDocument();
+  });
+});
+
+describe('deneyim formu: adım hissi', () => {
+  it('bölümler numaralı kartlardır ve ilerleme şeridi ilk eksik bölümü gösterir', async () => {
+    const { user } = setup();
+    // Bölüm tek seçenek olduğu için "Başlangıç" tamam; ilk eksik bölüm "Genel bilgi".
+    expect(screen.getByText('Adım 2 / 5: Genel bilgi')).toBeInTheDocument();
+    for (const name of ['Başlangıç', 'Genel bilgi', 'Başvuru süreci', 'Deneyimin', 'Görünürlük']) {
+      expect(screen.getByRole('heading', { name })).toBeInTheDocument();
+    }
+    await fillInternship(user);
+    // Zorunlu alanlar dolunca şerit son adıma (gönderimden önce görünürlük) geçer.
+    expect(screen.getByText('Adım 5 / 5: Görünürlük')).toBeInTheDocument();
+  });
+
+  it('alan ipuçları kısa ve sıcaktır; ücret alanı tutar istemediğini söyler', () => {
+    setup();
+    expect(screen.getByLabelText(/^Ücret/)).toHaveAccessibleDescription(/Tutar yazman gerekmiyor/);
+    expect(screen.getByLabelText(/^Ülke/)).toHaveAccessibleDescription('İsteğe bağlı.');
+  });
+});
+
+describe('deneyim formu: kaydedilmemiş değişiklik uyarısı', () => {
+  beforeEach(() => {
+    router.push.mockClear();
+  });
+
+  const closing = () => {
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  };
+  /** Sayfadaki uygulama içi bağlantıyı taklit eder (gerçek sayfada üst çubuk/menü bağlantıları). */
+  const pageLink = () => {
+    const link = document.createElement('a');
+    link.href = '/hesap';
+    link.textContent = 'Hesabım';
+    document.body.append(link);
+    return link;
+  };
+
+  it('dokunulmamış formda sekme kapatılırken uyarı çıkmaz', () => {
+    setup();
+    expect(closing()).toBe(false);
+  });
+
+  it('taslak kaydı başarılı ama moderasyon gönderimi hatalıysa kaydedilmiş içerik için çıkış uyarısı vermez', async () => {
+    const submit = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
+    const { user, save } = setup({ submit });
+    await fillInternship(user);
+    await user.click(screen.getByRole('button', { name: 'Moderasyona gönder' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: 'Moderasyona gönder',
+      }),
+    );
+    expect(await screen.findByText(/Çok fazla deneme/)).toBeVisible();
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(submit).toHaveBeenCalledWith({ experienceId: 'e1' });
+    expect(closing()).toBe(false);
+    await user.type(screen.getByLabelText(/Kurum ya da etkinlik adı/), ' güncelleme');
+    expect(closing()).toBe(true);
+  });
+
+  it('kayıt sürerken yazılan yeni değişiklik sunucuya giden eski içerikle kaydedilmiş sayılmaz', async () => {
+    const { user, save } = setup();
+    const gate = Promise.withResolvers<ReturnType<typeof detail>>();
+    save.mockReturnValueOnce(gate.promise);
+    const field = screen.getByLabelText(/Kurum ya da etkinlik adı/);
+    await user.type(field, 'İlk içerik');
+    await user.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+    await user.type(field, ' yeni değişiklik');
+    await act(async () => gate.resolve(detail()));
+    expect(field).toHaveValue('İlk içerik yeni değişiklik');
+    expect(closing()).toBe(true);
+  });
+
+  it('yazıldıktan sonra sekme kapatma sorulur; yazılan silinip eski hale gelirse sorulmaz', async () => {
+    const { user } = setup();
+    const field = screen.getByLabelText(/Kurum ya da etkinlik adı/);
+    await user.type(field, 'Taslak');
+    expect(closing()).toBe(true);
+    await user.clear(field);
+    expect(closing()).toBe(false);
+  });
+
+  it('taslak kaydedilince uyarı kalkar, sonraki değişiklikte yeniden başlar', async () => {
+    const { user } = setup();
+    const field = screen.getByLabelText(/Kurum ya da etkinlik adı/);
+    await user.type(field, 'Taslak');
+    await user.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+    await screen.findByRole('button', { name: 'Taslağı kaydet' });
+    expect(closing()).toBe(false);
+    await user.type(field, ' devam');
+    expect(closing()).toBe(true);
+  });
+
+  it('kaydedilmemiş değişiklikle uygulama içi bağlantıya basınca sorulur; "Burada kal" gezinmeyi iptal eder', async () => {
+    const { user } = setup();
+    await user.type(screen.getByLabelText(/Kurum ya da etkinlik adı/), 'Taslak');
+    const link = pageLink();
+    await user.click(link);
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Kaydedilmemiş değişikliklerin var')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Burada kal' }));
+    expect(router.push).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(/Kurum ya da etkinlik adı/)).toHaveValue('Taslak');
+    link.remove();
+  });
+
+  it('"Kaydetmeden çık" kaydetmeden gider; "Taslağı kaydet ve çık" önce kaydeder, sonra gider', async () => {
+    const first = setup();
+    await first.user.type(screen.getByLabelText(/Kurum ya da etkinlik adı/), 'Taslak');
+    const link = pageLink();
+    await first.user.click(link);
+    await first.user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Kaydetmeden çık' }),
+    );
+    expect(first.save).not.toHaveBeenCalled();
+    expect(router.push).toHaveBeenCalledWith('/hesap');
+    first.unmount();
+    router.push.mockClear();
+
+    const second = setup();
+    await second.user.type(screen.getByLabelText(/Kurum ya da etkinlik adı/), 'Taslak');
+    await second.user.click(link);
+    await second.user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: 'Taslağı kaydet ve çık',
+      }),
+    );
+    expect(second.save).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(router.push).toHaveBeenCalledWith('/hesap'));
+    link.remove();
+  });
+
+  it('kayıt başarısızsa "kaydet ve çık" gitmez; hata görünür ve yazılan korunur', async () => {
+    const save = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
+    const { user } = setup({ save: save as never });
+    await user.type(screen.getByLabelText(/Kurum ya da etkinlik adı/), 'Taslak');
+    const link = pageLink();
+    await user.click(link);
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: 'Taslağı kaydet ve çık',
+      }),
+    );
+    expect(await screen.findByText(/Çok fazla deneme/)).toBeInTheDocument();
+    expect(router.push).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(/Kurum ya da etkinlik adı/)).toHaveValue('Taslak');
+    link.remove();
+  });
+
+  it('dış site bağlantısı ve Ctrl/Cmd ile tıklama (yeni sekme) uygulama içi uyarıyı çıkarmaz', async () => {
+    const { user } = setup();
+    await user.type(screen.getByLabelText(/Kurum ya da etkinlik adı/), 'Taslak');
+    const external = document.createElement('a');
+    external.href = 'https://example.org/x';
+    external.textContent = 'Dış site';
+    const inner = pageLink();
+    for (const link of [external, inner]) {
+      link.addEventListener('click', (event) => event.preventDefault());
+      document.body.append(link);
+    }
+    await user.click(external);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.keyboard('{Control>}');
+    await user.click(inner);
+    await user.keyboard('{/Control}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    external.remove();
+    inner.remove();
+  });
+
+  it('dokunulmamış formda bağlantı engellenmez', async () => {
+    const { user } = setup();
+    const link = pageLink();
+    link.addEventListener('click', (event) => event.preventDefault());
+    await user.click(link);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    link.remove();
   });
 });

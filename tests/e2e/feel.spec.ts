@@ -44,12 +44,13 @@ async function watchActions(page: Page) {
 
 /**
  * Bekleyen durumun ANINDA göründüğünü doğrular (eylem yavaşken; yoksa düğme "donmuş" hissi verir). Bekleyen düğmenin adı
- * değişebilir ("Katılıyorum" → "Kaydediliyor…"): ada değil `aria-busy` taşıyan düğmeye bakılır.
+ * değişebilir ("Katılıyorum" → "Kaydediliyor…"): ada değil `aria-busy` taşıyan GÖRÜNÜR düğmeye bakılır (kapalı katlanır
+ * bölümlerdeki ya da kapalı çekmecelerdeki bekleyen düğmeler kullanıcıya görünmez, sayılmaz).
  */
 async function expectPendingNow(page: Page) {
   await expect
     .soft(
-      page.locator('button[aria-busy="true"]').first(),
+      page.locator('button[aria-busy="true"]:visible').first(),
       'basınca anında bekleyen düğme (aria-busy)',
     )
     .toBeVisible({ timeout: 500 });

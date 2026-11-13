@@ -10,6 +10,7 @@ import { APPOINTMENT_NOTE_MAX, requestAppointmentSchema } from '@/contracts/appo
 import type { ActionResult } from '@/contracts/result';
 import {
   Button,
+  CalendarIcon,
   EmptyState,
   Field,
   PageHeader,
@@ -125,7 +126,8 @@ export function SlotPicker({ list, request }: Props) {
     );
   }
 
-  if (list.unavailableReason) {
+  // Boş durum: sebep sıcak bir dille yazılır; tek eylem "Mentor bul" (başka mentora geçmek).
+  if (list.unavailableReason || groups.length === 0) {
     return (
       <div className="mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16">
         {header}
@@ -135,33 +137,14 @@ export function SlotPicker({ list, request }: Props) {
           </p>
         )}
         <EmptyState
+          icon={<CalendarIcon width={32} height={32} strokeWidth={1.5} />}
           title={t('unavailableTitle')}
-          description={t(`unavailable.${list.unavailableReason}`)}
-          action={
-            <Link className={buttonClasses({ variant: 'secondary' })} href="/mentorlar">
-              {t('back')}
-            </Link>
+          description={
+            list.unavailableReason ? t(`unavailable.${list.unavailableReason}`) : t('noSlots')
           }
-        />
-      </div>
-    );
-  }
-
-  if (groups.length === 0) {
-    return (
-      <div className="mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16">
-        {header}
-        {error && (
-          <p role="alert" className="mt-4 text-base text-danger">
-            {errors(error)}
-          </p>
-        )}
-        <EmptyState
-          title={t('unavailableTitle')}
-          description={t('noSlots')}
           action={
-            <Link className={buttonClasses({ variant: 'secondary' })} href="/mentorlar">
-              {t('back')}
+            <Link className={buttonClasses({ size: 'lg' })} href="/mentorlar">
+              {t('findMentor')}
             </Link>
           }
         />

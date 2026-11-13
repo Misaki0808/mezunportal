@@ -1,11 +1,20 @@
 import { randomBytes } from 'node:crypto';
 
+/** Playwright işçi sayısı seçenekleri: `--workers N`, `--workers=N`, `-j N`, `-jN`. Sonuncusu geçerlidir. */
+function cliWorkerOption(args: string[]): string | undefined {
+  let option: string | undefined;
+  args.forEach((arg, index) => {
+    if (arg === '--workers' || arg === '-j') option = args[index + 1];
+    else if (arg.startsWith('--workers=')) option = arg.slice('--workers='.length);
+    else if (arg.startsWith('-j') && arg.length > 2) option = arg.slice(2);
+  });
+  return option;
+}
+
 export function e2eWorkerCount(env: string | undefined, args: string[]): 1 | 2 {
   if (env !== undefined && env !== '1' && env !== '2')
     throw new Error('E2E_WORKERS yalnız 1 veya 2 olabilir');
-  const option =
-    args.find((arg) => arg.startsWith('--workers='))?.split('=')[1] ??
-    (args.includes('--workers') ? args[args.indexOf('--workers') + 1] : undefined);
+  const option = cliWorkerOption(args);
   if (option !== undefined && option !== '1' && option !== '2')
     throw new Error('E2E işçi sayısı yalnız 1 veya 2 olabilir');
   if (option === '2' && env !== '2') throw new Error('İki işçi için E2E_WORKERS=2 gerekli');
