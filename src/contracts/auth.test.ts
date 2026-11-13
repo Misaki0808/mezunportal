@@ -73,7 +73,7 @@ describe('giriş bağlantısı ve e-posta değiştirme', () => {
 
   it('giriş isteğinin olası hataları kayıt durumunu ele vermez', () => {
     const codes: readonly string[] = AUTH_ACTION_ERRORS.requestSignInLink;
-    expect(codes).toEqual(['VALIDATION_INVALID', 'RATE_LIMITED']);
+    expect(codes).toEqual(['VALIDATION_INVALID', 'RATE_LIMITED', 'AUTH_IP_RATE_LIMITED']);
     for (const leaking of [
       'AUTH_ACCOUNT_SUSPENDED',
       'RESOURCE_NOT_FOUND',
