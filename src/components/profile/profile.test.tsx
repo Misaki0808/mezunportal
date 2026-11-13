@@ -59,6 +59,22 @@ function actions(overrides: Partial<MyProfileActions> = {}): MyProfileActions {
 }
 
 describe('kendi profilim', () => {
+  it('beceri kaydı hatası bölüm kapatılsa da görünür; alan içeriği tekrar açılınca korunur', async () => {
+    const addSkill = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
+    const { user } = renderWithToasts(<MyProfile initial={base} actions={actions({ addSkill })} />);
+    const toggle = screen.getByRole('button', { name: 'Beceriler' });
+    await user.click(toggle);
+    await user.type(screen.getByLabelText('Beceri ekle'), 'SQL');
+    await user.click(
+      within(document.getElementById('profile-skills')!).getByRole('button', { name: 'Ekle' }),
+    );
+    expect(await screen.findByText(messages.errors.codes.RATE_LIMITED)).toBeVisible();
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText(messages.errors.codes.RATE_LIMITED)).toBeVisible();
+    await user.click(toggle);
+    expect(screen.getByLabelText('Beceri ekle')).toHaveValue('SQL');
+  });
   it('profil kaydetme çift gönderimi engeller, hata alanı korur', async () => {
     const gate = Promise.withResolvers<never>();
     const updateBasics = vi.fn(() => gate.promise);
@@ -118,6 +134,47 @@ describe('kendi profilim', () => {
     expect(screen.getByText('Henüz güncellenmedi')).toBeInTheDocument();
   });
 
+  it('ilk ekranda tek "sıradaki adım" önerilir; diğer eksikler kapalı bir listede durur', async () => {
+    const { user } = renderWithToasts(<MyProfile initial={base} actions={actions()} />);
+    // Eksikler: BASICS, EDUCATION, SKILLS, CV → öneri sırası BASICS'i öne alır; CV zaten ayrı kartta.
+    const next = screen.getByRole('button', { name: 'Başlık ve şehir ekle' });
+    expect(screen.getByText('Sıradaki adım')).toBeInTheDocument();
+    const others = screen.getByRole('button', { name: 'Diğer eksikler (3)' });
+    expect(others).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('En az 3 beceri ekle')).not.toBeVisible();
+    await user.click(others);
+    expect(others).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('En az 3 beceri ekle')).toBeVisible();
+    await user.click(next);
+    expect(within(await screen.findByRole('dialog')).getByLabelText('Başlık')).toBeInTheDocument();
+  });
+
+  it('doğrulama eksikse sıradaki adım sayfa bağlantısıdır', () => {
+    const unverified: MyProfileData = {
+      ...base,
+      completion: { percent: 0, missing: ['MEMBERSHIP', 'BASICS'] },
+    };
+    renderWithToasts(<MyProfile initial={unverified} actions={actions()} />);
+    expect(screen.getByRole('link', { name: 'Üyeliğini doğrula' })).toHaveAttribute(
+      'href',
+      '/dogrulama',
+    );
+  });
+
+  it('bilgi bölümleri varsayılan kapalıdır, özetini söyler; başlığa basınca açılır', async () => {
+    const { user } = renderWithToasts(<MyProfile initial={base} actions={actions()} />);
+    const toggle = screen.getByRole('button', { name: 'Eğitim' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveAccessibleDescription('Henüz eklenmedi');
+    const panel = document.getElementById(toggle.getAttribute('aria-controls')!)!;
+    expect(panel).not.toBeVisible();
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(panel).toBeVisible();
+    await user.click(toggle);
+    expect(panel).not.toBeVisible();
+  });
+
   it('eğitim ekle: alt sayfada doldurulur, sözleşme biçiminde gider, yanıttaki profil çizilir', async () => {
     const withEdu: MyProfileData = {
       ...base,
@@ -150,6 +207,11 @@ describe('kendi profilim', () => {
     });
     expect(await screen.findByText('İstanbul Üniversitesi', { selector: 'p' })).toBeInTheDocument();
     expect(screen.getByText('Elle')).toBeInTheDocument();
+    // Kayıttan sonra bölüm açılır: eklenen kalem görünür olur (kapalı bırakılsaydı kullanıcı sonucu görmezdi).
+    expect(within(block).getByRole('button', { name: 'Eğitim' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
   });
 
   it('boş zorunlu alan alt sayfada alan hatası verir, sunucuya gitmez', async () => {
@@ -191,6 +253,7 @@ describe('kendi profilim', () => {
     expect(screen.getByText("CV'den")).toBeInTheDocument();
     expect(screen.getByText('Düzeltildi')).toBeInTheDocument();
     const block = screen.getByRole('heading', { name: 'Pozisyon' }).closest('section')!;
+    await user.click(within(block).getByRole('button', { name: 'Pozisyon' }));
     await user.click(within(block).getByRole('button', { name: 'Sil' }));
     expect(deleteEntry).not.toHaveBeenCalled();
     await user.click(
@@ -239,6 +302,7 @@ describe('kendi profilim', () => {
     const { user } = renderWithToasts(
       <MyProfile initial={base} actions={actions({ addSkill, suggestSkills })} />,
     );
+    await user.click(screen.getByRole('button', { name: 'Beceriler' }));
     await user.type(screen.getByLabelText('Beceri ekle'), 'typ');
     await user.click(await screen.findByRole('button', { name: 'TypeScript' }));
     expect(addSkill).toHaveBeenCalledWith({ name: 'TypeScript' });
@@ -251,6 +315,7 @@ describe('kendi profilim', () => {
     const { user } = renderWithToasts(
       <MyProfile initial={withSkill} actions={actions({ removeSkill })} />,
     );
+    await user.click(screen.getByRole('button', { name: 'Beceriler' }));
     await user.click(screen.getByRole('button', { name: 'SQL becerisini kaldır' }));
     expect(removeSkill).toHaveBeenCalledWith({ tagId: 't1' });
   });

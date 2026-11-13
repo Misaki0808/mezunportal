@@ -761,7 +761,6 @@
       "title": "Profilim",
       "description": "Bilgilerini güncel tut. Kimlerin görebileceğini Gizlilik ayarlarından seçersin.",
       "completion": "Profilin %{percent} tamamlandı",
-      "missingTitle": "Tamamlayabileceklerin",
       "onboardingLink": "Başlangıç adımlarına git",
       "missing": {
         "MEMBERSHIP": "Üyeliğini doğrula",
@@ -832,7 +831,14 @@
       },
       "linksEdit": "Bağlantıları düzenle",
       "linkDuplicate": "Her site için en fazla bir bağlantı ekleyebilirsin.",
-      "editShortcut": "Profilimi düzenle"
+      "editShortcut": "Profilimi düzenle",
+      "nextStep": "Sıradaki adım",
+      "othersMissing": "Diğer eksikler ({count})",
+      "metaEmpty": "Henüz eklenmedi",
+      "metaFilled": "Dolduruldu",
+      "metaEntries": "{count} kayıt",
+      "metaSkills": "{count} beceri",
+      "metaLinks": "{count} bağlantı"
     },
     "view": {
       "back": "Geri",
@@ -1050,8 +1056,11 @@
     "account": {
       "groups": {
         "profile": "PROFİL VE DOĞRULAMA",
-        "activity": "GÖRÜŞMELER VE İÇERİKLER",
-        "settings": "BİLDİRİM, GİZLİLİK VE VERİLER",
+        "meetings": "GÖRÜŞMELER VE MENTORLUK",
+        "career": "STAJ VE İŞ",
+        "content": "YAZDIKLARIM VE SORULAR",
+        "notifications": "BİLDİRİMLER",
+        "privacy": "GİZLİLİK VE VERİLER",
         "admin": "YÖNETİM",
         "session": "OTURUM"
       },
@@ -1176,7 +1185,7 @@
     "form": {
       "newTitle": "Deneyim yaz",
       "editTitle": "Deneyimi düzenle",
-      "description": "Bir tür seç; sorular türe göre değişir. İstediğin an taslak olarak kaydedebilirsin.",
+      "description": "Daha sonra devam etmek için ayrılmadan önce taslağı kaydet.",
       "typeLegend": "Deneyim türü",
       "typeChanged": "Tür değişti: bu türde sorulmayan alanlar kaydedilmez.",
       "department": "Bölüm",
@@ -1186,7 +1195,8 @@
         "about": "Genel bilgi",
         "process": "Başvuru süreci",
         "story": "Deneyimin",
-        "privacy": "Görünürlük"
+        "privacy": "Görünürlük",
+        "type": "Başlangıç"
       },
       "fields": {
         "organizationName": "Kurum ya da etkinlik adı",
@@ -1203,11 +1213,15 @@
         "advice": "Sonrakilere tavsiyen"
       },
       "hints": {
-        "organizationName": "Örneğin şirket, üniversite ya da yarışma adı.",
-        "durationWeeks": "Yaklaşık hafta sayısı yeterli.",
-        "whatLearned": "Neyi öğrendiğini ve nelerin zor olduğunu yaz.",
-        "advice": "Başvuracak birine ne söylerdin?",
-        "interviewQuestions": "Hatırladığın soruları tek tek ekle."
+        "organizationName": "Örn. şirket, üniversite ya da yarışma adı.",
+        "termYear": "Hangi yıl yaptın?",
+        "country": "İsteğe bağlı.",
+        "city": "İsteğe bağlı.",
+        "durationWeeks": "Yaklaşık hafta sayısı yeter.",
+        "pay": "Tutar yazman gerekmiyor; yalnız ücretli olup olmadığını seç.",
+        "whatLearned": "Neyi öğrendin, nerede zorlandın? Birkaç cümle yeter.",
+        "advice": "Başvurmayı düşünen birine ne söylerdin?",
+        "interviewQuestions": "Aklında kalan soruları tek tek ekle."
       },
       "select": "Seç",
       "addStep": "Adım ekle",
@@ -1238,7 +1252,21 @@
       "notEditableTitle": "Bu deneyim düzenlenemez",
       "notEditableDescription": "İncelemedeki ya da yayındaki deneyim düzenlenemez.",
       "fixErrors": "Hatalı alanları düzeltip tekrar dene.",
-      "goToFirstError": "İlk sorunlu alana git"
+      "goToFirstError": "İlk sorunlu alana git",
+      "intro": {
+        "type": "Sorular seçtiğin türe göre değişir.",
+        "about": "Ne zaman, nerede, ne kadar sürdü? Kısa tutabilirsin.",
+        "process": "Başvuruyu nasıl yaptığını ve sürecin nasıl ilerlediğini anlat.",
+        "story": "En değerli kısım burası; kendi sözlerinle yaz.",
+        "privacy": "Adını gösterip göstermeyeceğine sen karar verirsin."
+      },
+      "leave": {
+        "title": "Kaydedilmemiş değişikliklerin var",
+        "description": "Taslak olarak kaydedersen kaldığın yerden devam edebilirsin.",
+        "save": "Taslağı kaydet ve çık",
+        "discard": "Kaydetmeden çık",
+        "stay": "Burada kal"
+      }
     },
     "fieldErrors": {
       "required": "Bu alan zorunlu.",
@@ -2512,13 +2540,13 @@
       "sentDescription": "Mentor 72 saat içinde yanıt vermezse ya da görüşmeye 12 saatten az kalırsa talep süresi dolar.",
       "sentAction": "Randevularıma git",
       "unavailable": {
-        "PAUSED": "Bu mentor şu an ara vermiş; yeni talep almıyor.",
-        "CAPACITY_FULL": "Bu mentorun bu ayki kapasitesi dolu.",
-        "NO_AVAILABILITY": "Bu mentor henüz müsait saat eklememiş."
+        "PAUSED": "Bu mentor şimdilik ara vermiş; yeni talep almıyor. Bu arada başka bir mentora göz atabilirsin.",
+        "CAPACITY_FULL": "Bu mentorun bu ayki kapasitesi dolu. Başka bir mentora bakabilir ya da gelecek ay yeniden uğrayabilirsin.",
+        "NO_AVAILABILITY": "Bu mentor henüz müsait saat eklememiş. Başka bir mentora göz atabilirsin; saat eklenince buradan randevu alabilirsin."
       },
-      "unavailableTitle": "Şu an randevu alınamıyor",
-      "back": "Mentorlara dön",
-      "noSlots": "Önümüzdeki 3 hafta için müsait saat yok."
+      "unavailableTitle": "Şimdilik randevu açık değil",
+      "noSlots": "Önümüzdeki 3 hafta için müsait saat yok. Başka bir mentora göz atabilirsin.",
+      "findMentor": "Mentor bul"
     },
     "mine": {
       "eyebrow": "RANDEVULARIM",
@@ -2532,7 +2560,7 @@
       "emptyIncoming": "Gelen talep yok",
       "emptyIncomingDescription": "Öğrenciler randevu istediğinde burada görünür.",
       "emptyOutgoing": "Henüz randevu istemedin",
-      "emptyOutgoingDescription": "Bir mentor seçip müsait bir saat için talep gönder.",
+      "emptyOutgoingDescription": "Bir mentor seç, sana uyan bir saat bul; talebin ona hemen iletilir.",
       "findMentor": "Mentor bul",
       "open": "Aç",
       "more": "Daha fazla göster",
@@ -2580,6 +2608,33 @@
       "expiresAt": "Yanıt son tarihi: {date}",
       "done": "İşlem kaydedildi.",
       "emailShared": "Takvim davetinde iki tarafın e-posta adresi birbirine gösterilmez; yalnız Google'a aktarılır."
+    },
+    "timeline": {
+      "label": "Randevu yolu",
+      "steps": {
+        "requested": "Talep",
+        "confirmed": "Mentor onayı",
+        "meeting": "Görüşme",
+        "feedback": "Geri bildirim"
+      },
+      "stops": {
+        "DECLINED": "Mentor reddetti",
+        "CANCELLED": "Randevu iptal",
+        "EXPIRED": "Yanıt gelmedi",
+        "NO_SHOW": "Görüşme olmadı"
+      },
+      "state": {
+        "done": "tamamlandı",
+        "current": "şu an burada",
+        "upcoming": "sırada",
+        "stopped": "burada durdu"
+      },
+      "hint": {
+        "requestedMentor": "Bu talebe yanıt vermeni bekliyoruz.",
+        "requestedMentee": "Talebin mentora iletildi; yanıtını bekliyoruz.",
+        "confirmed": "Randevu onaylandı; saatinde görüşürsünüz.",
+        "feedback": "Görüşme nasıl geçti? Kısa bir geri bildirim bırakabilirsin."
+      }
     }
   },
   "points": {
