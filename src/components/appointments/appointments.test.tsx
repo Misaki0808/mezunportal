@@ -198,6 +198,26 @@ const settingsActions = () => ({
 });
 
 describe('mentor ayarları', () => {
+  it('üç bölümün kaydı açık adlandırılır ve her düğme yalnız kendi bölümünü kaydeder', async () => {
+    const actions = settingsActions();
+    const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
+    const general = screen.getByRole('button', { name: 'Genel ayarları kaydet' });
+    const pause = screen.getByRole('button', { name: 'Ara verme durumunu kaydet' });
+    const weekly = screen.getByRole('button', { name: 'Haftalık saatleri kaydet' });
+    expect(general).toHaveClass('bg-primary');
+    expect(pause).toHaveClass('bg-primary');
+    expect(weekly).toHaveClass('bg-primary');
+    await user.click(general);
+    expect(actions.saveSettings).toHaveBeenCalledTimes(1);
+    expect(actions.setPause).not.toHaveBeenCalled();
+    expect(actions.saveAvailability).not.toHaveBeenCalled();
+    await user.click(pause);
+    expect(actions.setPause).toHaveBeenCalledWith({ pausedUntil: null });
+    await user.click(weekly);
+    expect(actions.saveAvailability).toHaveBeenCalledTimes(1);
+    expect(actions.saveSettings).toHaveBeenCalledTimes(1);
+    expect(actions.setPause).toHaveBeenCalledTimes(1);
+  });
   it('uygun olmayan kullanıcıya sebep gösterilir', () => {
     renderUi(
       <MentorSettings
@@ -222,7 +242,7 @@ describe('mentor ayarları', () => {
       <MentorSettings initial={settingsView({ rules: [] })} actions={actions} />,
     );
     await user.click(screen.getByRole('switch', { name: 'Pazartesi günü müsait' }));
-    await user.click(screen.getByRole('button', { name: 'Müsaitliği kaydet' }));
+    await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
     expect(actions.saveAvailability).toHaveBeenCalledWith({
       rules: [{ weekday: 1, startMinute: 540, endMinute: 720, mode: null }],
     });
@@ -244,13 +264,13 @@ describe('mentor ayarları', () => {
     const starts = within(monday).getAllByLabelText('Başlangıç');
     await user.clear(starts[1]!);
     await user.type(starts[1]!, '11:00');
-    await user.click(screen.getByRole('button', { name: 'Müsaitliği kaydet' }));
+    await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
     expect(actions.saveAvailability).not.toHaveBeenCalled();
     expect(within(monday).getByText('Aynı gündeki aralıklar çakışamaz.')).toBeInTheDocument();
     const ends = within(monday).getAllByLabelText('Bitiş');
     await user.clear(ends[0]!);
     await user.type(ends[0]!, '08:00');
-    await user.click(screen.getByRole('button', { name: 'Müsaitliği kaydet' }));
+    await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
     expect(within(monday).getByText('Bitiş, başlangıçtan sonra olmalı.')).toBeInTheDocument();
   });
 
@@ -258,17 +278,17 @@ describe('mentor ayarları', () => {
     const actions = settingsActions();
     const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
     await user.click(screen.getByRole('checkbox', { name: 'Yüz yüze' }));
-    await user.click(screen.getByRole('button', { name: 'Ayarları kaydet' }));
+    await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
     expect(actions.saveSettings).not.toHaveBeenCalled();
     expect(screen.getByText('Yüz yüze için yer notu yaz.')).toBeInTheDocument();
     await user.type(screen.getByLabelText(/Yüz yüze görüşme yeri/), 'Kampüs kafe');
     await user.clear(screen.getByLabelText(/Aylık görüşme kapasitesi/));
     await user.type(screen.getByLabelText(/Aylık görüşme kapasitesi/), '99');
-    await user.click(screen.getByRole('button', { name: 'Ayarları kaydet' }));
+    await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
     expect(screen.getByText('1 ile 40 arasında bir sayı gir.')).toBeInTheDocument();
     await user.clear(screen.getByLabelText(/Aylık görüşme kapasitesi/));
     await user.type(screen.getByLabelText(/Aylık görüşme kapasitesi/), '5');
-    await user.click(screen.getByRole('button', { name: 'Ayarları kaydet' }));
+    await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
     expect(actions.saveSettings).toHaveBeenCalledWith({
       monthlyCapacity: 5,
       sessionMinutes: 30,
@@ -282,11 +302,11 @@ describe('mentor ayarları', () => {
     const actions = settingsActions();
     const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
     await user.click(screen.getAllByRole('switch', { name: /Müsait değilim/ })[0]!);
-    await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+    await user.click(screen.getByRole('button', { name: 'Ara verme durumunu kaydet' }));
     expect(actions.setPause).not.toHaveBeenCalled();
     expect(screen.getByText('Geçerli bir tarih seç.')).toBeInTheDocument();
     await user.type(screen.getByLabelText(/Şu tarihe kadar/), '2026-12-01');
-    await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+    await user.click(screen.getByRole('button', { name: 'Ara verme durumunu kaydet' }));
     expect(actions.setPause).toHaveBeenCalledWith({
       pausedUntil: new Date('2026-12-01T23:59:00+03:00'),
     });
@@ -672,7 +692,7 @@ it('inceleyici: gün sonu 1440 dakikalık kural geçerli 00:00 alanıyla görün
     />,
   );
   expect(screen.getByLabelText('Bitiş')).toHaveValue('00:00');
-  await user.click(screen.getByRole('button', { name: 'Müsaitliği kaydet' }));
+  await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
   expect(actions.saveAvailability).toHaveBeenCalledWith({
     rules: [{ weekday: 7, startMinute: 1380, endMinute: 1440, mode: null }],
   });

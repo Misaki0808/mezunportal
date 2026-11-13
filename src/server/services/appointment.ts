@@ -812,16 +812,58 @@ export async function listMyAppointments(
   const now = nowOf(deps);
   return deps.db.$transaction(async (tx) => {
     await requireMember(tx, userId, now);
-    const rows = await tx.appointment.findMany({
-      where: {
-        ...(parsed.role === 'MENTOR' ? { mentorId: userId } : { menteeId: userId }),
-        ...(parsed.statuses ? { status: { in: parsed.statuses } } : {}),
-        ...(parsed.cursor ? { id: { lt: parsed.cursor } } : {}),
-      },
-      select: appointmentSelect,
-      orderBy: { id: 'desc' },
-      take: parsed.limit + 1,
-    });
+    const scope: Prisma.AppointmentWhereInput = {
+      ...(parsed.role === 'MENTOR' ? { mentorId: userId } : { menteeId: userId }),
+      ...(parsed.statuses ? { status: { in: parsed.statuses } } : {}),
+    };
+    // İmleç hâlâ kayıt kimliğidir; sıralama anahtarı aynı katılımcı/durum kapsamında çözülür.
+    // Başkasının, silinmiş ya da filtre dışındaki kaydıyla başka bir sayfa açılamaz.
+    const cursor = parsed.cursor
+      ? await tx.appointment.findFirst({
+          where: { AND: [scope, { id: parsed.cursor }] },
+          select: { id: true, status: true, startsAt: true },
+        })
+      : null;
+    if (parsed.cursor && !cursor) return { items: [], nextCursor: null };
+    const cursorGroup = cursor
+      ? cursor.status === 'REQUESTED'
+        ? 0
+        : cursor.startsAt >= now
+          ? 1
+          : 2
+      : 0;
+    const groups: { where: Prisma.AppointmentWhereInput; direction: 'asc' | 'desc' }[] = [
+      { where: { status: 'REQUESTED' }, direction: 'asc' },
+      { where: { status: { not: 'REQUESTED' }, startsAt: { gte: now } }, direction: 'asc' },
+      { where: { status: { not: 'REQUESTED' }, startsAt: { lt: now } }, direction: 'desc' },
+    ];
+    const rows: AppointmentRow[] = [];
+    for (const [index, group] of groups.entries()) {
+      if (index < cursorGroup) continue;
+      const after: Prisma.AppointmentWhereInput =
+        cursor && index === cursorGroup
+          ? {
+              OR: [
+                {
+                  startsAt:
+                    group.direction === 'asc' ? { gt: cursor.startsAt } : { lt: cursor.startsAt },
+                },
+                { startsAt: cursor.startsAt, id: { gt: cursor.id } },
+              ],
+            }
+          : {};
+      // En çok üç sınırlı sorgu: bütün geçmişi belleğe almadan grup sınırını geçer.
+      // Aynı saatte id artan yalnız kararlı eşitlik bağıdır; tarihin yerine kullanılmaz.
+      rows.push(
+        ...(await tx.appointment.findMany({
+          where: { AND: [scope, group.where, after] },
+          select: appointmentSelect,
+          orderBy: [{ startsAt: group.direction }, { id: 'asc' }],
+          take: parsed.limit + 1 - rows.length,
+        })),
+      );
+      if (rows.length > parsed.limit) break;
+    }
     const items = rows.slice(0, parsed.limit);
     const full = (await fullMonthsForRows(tx, items, userId)).get(userId) ?? new Set<string>();
     return appointmentPageSchema.parse({

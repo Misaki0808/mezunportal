@@ -52,7 +52,7 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
     for (const day of ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']) {
       await m.getByRole('switch', { name: `${day} günü müsait` }).check();
     }
-    await m.getByRole('button', { name: 'Müsaitliği kaydet' }).click();
+    await m.getByRole('button', { name: 'Haftalık saatleri kaydet' }).click();
     await expect(m.getByText('Kaydedildi.')).toBeVisible();
     expect(await db.availabilityRule.count({ where: { mentorId: mentor.id } })).toBe(7);
 
