@@ -5,7 +5,7 @@ import {
 } from '@/contracts/admin';
 import { isCodedError } from '@/lib/errors';
 import { getDb } from '@/server/db';
-import { getSessionUserId } from '@/server/permissions/session';
+import { readRouteSession } from '@/server/permissions/route-session';
 import { exportEmploymentReport } from '@/server/services/admin-employment';
 import { logUnexpected } from '@/server/unexpected-log';
 
@@ -34,8 +34,9 @@ function parseFilter(url: URL): EmploymentReportFilter | null {
 }
 
 export async function GET(request: Request) {
-  const userId = await getSessionUserId();
-  if (!userId) return failure(401);
+  const session = await readRouteSession('raporIstihdam');
+  if (!session.ok) return session.response;
+  const userId = session.userId;
 
   const filter = parseFilter(new URL(request.url));
   if (!filter) return failure(400);

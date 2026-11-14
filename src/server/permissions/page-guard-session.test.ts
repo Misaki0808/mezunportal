@@ -6,7 +6,9 @@ const state = vi.hoisted(() => ({
   consent: vi.fn(),
   content: vi.fn(),
 }));
-vi.mock('next/headers', () => ({ headers: async () => new Headers() }));
+vi.mock('next/headers', () => ({
+  headers: async () => new Headers({ cookie: 'mezun.session_token=abc' }),
+}));
 vi.mock('../auth', () => ({ getAuth: () => ({ api: { getSession: state.session } }) }));
 vi.mock('../auth/log', () => ({ logAuthFailure: state.authLog }));
 vi.mock('../db', () => ({ getDb: state.db }));
@@ -63,8 +65,8 @@ it('yönetim sayfası kapısında oturum altyapı hatası da genel hatadır', as
 });
 it('mevcut sayfa dışı koruma gerçek oturum hatasında yine fail-closed kalır', async () => {
   state.session.mockRejectedValue(new Error('private'));
-  await expect(requireVerifiedMember()).rejects.toMatchObject({ code: 'AUTH_UNAUTHENTICATED' });
-  expect(state.authLog).toHaveBeenCalledOnce();
+  await expect(requireVerifiedMember()).rejects.toThrow('private');
+  expect(state.authLog).not.toHaveBeenCalled();
   expect(state.db).not.toHaveBeenCalled();
 });
 it('gerçek boş oturum sayfada kodlu ret ve günlük yoktur', async () => {

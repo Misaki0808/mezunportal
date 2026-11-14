@@ -1,7 +1,7 @@
 import { isCodedError } from '@/lib/errors';
 import { getStorage } from '@/server/external/storage';
 import { getDb } from '@/server/db';
-import { getSessionUserId } from '@/server/permissions/session';
+import { readRouteSession } from '@/server/permissions/route-session';
 import { readGraduationDocumentFile } from '@/server/services/graduation-document';
 import { logUnexpected } from '@/server/unexpected-log';
 
@@ -24,8 +24,9 @@ const status = (code: number) =>
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const adminUserId = await getSessionUserId();
-  if (!adminUserId) return status(401);
+  const session = await readRouteSession('mezunBelgesiDosya');
+  if (!session.ok) return session.response;
+  const adminUserId = session.userId;
 
   try {
     const bytes = await readGraduationDocumentFile(

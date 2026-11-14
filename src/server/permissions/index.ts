@@ -21,10 +21,10 @@ const permissions = createPermissions({
 });
 
 // Sayfa kapısında oturum altyapı hatası sessiz yetki reddine dönüşmesin.
-// Diğer çağıranların önceki fail-closed oturum davranışı değişmez.
+// Tüm çağıranlar oturum altyapı hatasını fail-closed olarak aktarır.
 const pagePermissions = createPermissions({
   db: getDb,
-  getSessionUserId: () => getSessionUserId({ propagateUnexpected: true }),
+  getSessionUserId,
   now: () => new Date(),
 });
 export const requirePageUserWithoutConsent = pagePermissions.requireUser;

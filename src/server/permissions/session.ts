@@ -1,30 +1,37 @@
 import 'server-only';
 
+import { getSessionCookie } from 'better-auth/cookies';
+import { cache } from 'react';
 import { headers } from 'next/headers';
 import { unstable_rethrow } from 'next/navigation';
 
 import { getAuth } from '../auth';
-import { logAuthFailure } from '../auth/log';
 
-/**
- * Oturumdaki kullanıcının kimliği — yetki katmanının TEK oturum bağlantı noktası (P1-01 sözleşmesi).
- * Better Auth veritabanı oturumunu çerezden çözer; çerez önbelleği kapalıdır (askı/silme anında etkili).
- *
- * FAIL-CLOSED: gerçek yapılandırma ya da çözümleme hatasında `null` döner (oturumsuz); hata türü günlüğe
- * yazılır, ayrıntısı yazılmaz. Sayfa kapısı altyapı hatasını ayırmak için `propagateUnexpected` ister; bu durumda
- * günlük ve hata sonucu çağıran kapıya bırakılır. Next kontrol sinyalleri yeniden fırlatılır. Yalnız “kim” sorulur —
- * hesap durumu (askı/silinme) ve yetki `loadActor` + `rules/authorization` içindedir.
+/** Çerez kimlik veya yetki değildir; yalnız oturum çözümünü gereksiz yere başlatmamak içindir.
+ * Geçersiz/sonlanmış oturumu Better Auth reddeder. Altyapı hatası fail-closed olarak çağırana aktarılır;
+ * eylem veya ortak sayfa sınırı bunu güvenli, tek satırlık günlük ve geçici hataya çevirir.
  */
-export async function getSessionUserId(options?: {
-  propagateUnexpected?: boolean;
-}): Promise<string | null> {
+export const getSessionUserId = cache(async (): Promise<string | null> => {
+  let requestHeaders: Awaited<ReturnType<typeof headers>>;
   try {
-    const session = await getAuth().api.getSession({ headers: await headers() });
-    return session?.user.id ?? null;
+    requestHeaders = await headers();
   } catch (error) {
     unstable_rethrow(error);
-    if (options?.propagateUnexpected) throw error;
-    logAuthFailure('getSession', error);
-    return null;
+    // İstek kapsamı olmayan betik/birim testi: okunacak çerez yok. Diğer hatalar gizlenmez.
+    if (
+      error instanceof Error &&
+      error.message ===
+        '`headers` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context'
+    )
+      return null;
+    throw error;
   }
-}
+  if (!getSessionCookie(requestHeaders, { cookiePrefix: 'mezun' })) return null;
+  try {
+    const session = await getAuth().api.getSession({ headers: requestHeaders });
+    return session?.user?.id ?? null;
+  } catch (error) {
+    unstable_rethrow(error);
+    throw error;
+  }
+});
