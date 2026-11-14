@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { unstable_rethrow } from 'next/navigation';
 
 import { hasAdminAccess } from './admin-access';
 import { AppShellClient } from './app-shell-client';
@@ -11,7 +12,10 @@ import { countMyUnread } from '@/server/services/inbox';
 export async function AppShell({ children }: { children: ReactNode }) {
   const [showAdmin, actor] = await Promise.all([
     hasAdminAccess(),
-    requireUserWithoutConsent().catch(() => null),
+    requireUserWithoutConsent().catch((error: unknown) => {
+      unstable_rethrow(error);
+      return null;
+    }),
   ]);
   // Rozet süs bilgidir: sayım başarısız olursa sayfa açılır, rozet gizli kalır. Gezinme YALNIZ güncel onay eksikse
   // (CONSENT_REQUIRED) kapanır: veritabanı gibi başka bir hata gezinmeyi gizlememeli.
@@ -21,6 +25,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
     try {
       consented = await requireUser();
     } catch (error) {
+      unstable_rethrow(error);
       consentPending = isCodedError(error) && error.code === 'CONSENT_REQUIRED';
     }
   }

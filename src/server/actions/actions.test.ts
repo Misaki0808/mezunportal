@@ -186,6 +186,18 @@ describe('giriş eylemleri', () => {
     expect(mocks.declareService).not.toHaveBeenCalled();
   });
 
+  it('çıkışta Next dinamik kontrol sinyali günlüğe yazılmadan aynen fırlatılır', async () => {
+    const signal = Object.assign(new Error('dynamic'), { digest: 'DYNAMIC_SERVER_USAGE' });
+    mocks.getAuth.mockReturnValue({ api: { signOut: vi.fn().mockRejectedValue(signal) } });
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      await expect(signOut()).rejects.toBe(signal);
+      expect(write).not.toHaveBeenCalled();
+    } finally {
+      write.mockRestore();
+    }
+  });
+
   it('giriş seçenekleri LinkedIn kapalıyken sebebi taşır; çıkış idempotenttir (oturum yoksa da başarılı)', async () => {
     expect(await getSignInOptions()).toEqual({
       ok: true,

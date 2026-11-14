@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { redirect, unstable_rethrow } from 'next/navigation';
 
 import type { ActionFailure } from '@/contracts/result';
 import { actionFailure } from '@/lib/action-result';
@@ -26,6 +26,7 @@ export function signInPathFor(requestPath: string | null): string {
  * hatalar sessiz kalır.
  */
 export async function failAction(error: unknown, source: string): Promise<ActionFailure> {
+  unstable_rethrow(error);
   const failure = actionFailure(error);
   if (failure.errorCode === 'SERVER_UNEXPECTED') {
     logUnexpected('action', source, error);
@@ -34,7 +35,8 @@ export async function failAction(error: unknown, source: string): Promise<Action
   let requestPath: string | null;
   try {
     requestPath = (await headers()).get(REQUEST_PATH_HEADER);
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
     return failure;
   }
   redirect(signInPathFor(requestPath));
