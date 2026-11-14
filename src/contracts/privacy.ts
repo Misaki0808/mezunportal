@@ -341,6 +341,62 @@ export const dataExportSchema = z.object({
     phone: z.string().nullable(),
     createdAt: z.string(),
   }),
+  notifications: z.array(
+    z
+      .object({
+        id: z.string(),
+        kind: z.string(),
+        refId: z.string(),
+        createdAt: z.string(),
+        readAt: z.string().nullable(),
+      })
+      .strict(),
+  ),
+  notificationPreferences: z.array(
+    z.object({ type: z.string(), enabled: z.boolean(), updatedAt: z.string() }).strict(),
+  ),
+  mentorSettings: z
+    .object({
+      isActive: z.boolean(),
+      monthlyCapacity: z.number().int(),
+      sessionMinutes: z.number().int(),
+      meetingModes: z.array(z.string()),
+      inPersonNote: z.string().nullable(),
+      pausedUntil: z.string().nullable(),
+      cvReviewEnabled: z.boolean(),
+      cvReviewMonthlyLimit: z.number().int(),
+      createdAt: z.string(),
+      updatedAt: z.string(),
+    })
+    .strict()
+    .nullable(),
+  availability: z.array(
+    z
+      .object({
+        id: z.string(),
+        weekday: z.number().int(),
+        startMinute: z.number().int(),
+        endMinute: z.number().int(),
+        mode: z.string().nullable(),
+        createdAt: z.string(),
+        updatedAt: z.string(),
+      })
+      .strict(),
+  ),
+  graduationDocuments: z.array(
+    z
+      .object({
+        id: z.string(),
+        departmentId: z.string(),
+        graduationYear: z.number().int(),
+        status: z.string(),
+        rejectReason: z.string().nullable(),
+        reviewedAt: z.string().nullable(),
+        createdAt: z.string(),
+        updatedAt: z.string(),
+      })
+      .strict(),
+  ),
   profile: exportedProfileSchema.nullable(),
   experiences: z.array(exportedExperienceSchema),
   courseMarks: z.array(z.object({ courseId: z.string(), createdAt: z.string() }).strict()),
@@ -535,9 +591,12 @@ export const dataExportSchema = z.object({
             points: z.number().int(),
             experienceCount: z.number().int(),
             meetingCount: z.number().int(),
-            breakdown: z.array(
-              z.object({ action: z.enum(POINT_ACTIONS), points: z.number().int() }).strict(),
-            ),
+            breakdown: z.union([
+              z.array(
+                z.object({ action: z.enum(POINT_ACTIONS), points: z.number().int() }).strict(),
+              ),
+              z.literal('UNREADABLE'),
+            ]),
           })
           .strict(),
       ),

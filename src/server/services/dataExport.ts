@@ -12,6 +12,7 @@ import { awardCandidateSchema } from '@/contracts/year-alumni';
 import { toYearMonth } from './cv-shared';
 import { loadVisibilityLevels } from './privacy';
 import { experienceFields, experienceSelect } from './experienceProjection';
+import { logUnexpected } from '../unexpected-log';
 
 /**
  * Veri dökümü (KVKK m. 11): YALNIZ kullanıcının kendi verisi. İletişim taleplerinde karşı taraf yalnız
@@ -187,6 +188,66 @@ export async function buildDataExport(
       orderBy: { createdAt: 'asc' },
     }),
   ]);
+  const [
+    notifications,
+    notificationPreferences,
+    mentorSettings,
+    availability,
+    graduationDocuments,
+  ] = await Promise.all([
+    db.inAppNotification.findMany({
+      where: { userId },
+      select: { id: true, kind: true, refId: true, createdAt: true, readAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+    db.notificationPreference.findMany({
+      where: { userId },
+      select: { type: true, enabled: true, updatedAt: true },
+      orderBy: { type: 'asc' },
+    }),
+    db.mentorProfile.findUnique({
+      where: { userId },
+      select: {
+        isActive: true,
+        monthlyCapacity: true,
+        sessionMinutes: true,
+        meetingModes: true,
+        inPersonNote: true,
+        pausedUntil: true,
+        cvReviewEnabled: true,
+        cvReviewMonthlyLimit: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+    db.availabilityRule.findMany({
+      where: { mentorId: userId },
+      select: {
+        id: true,
+        weekday: true,
+        startMinute: true,
+        endMinute: true,
+        mode: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { id: 'asc' },
+    }),
+    db.graduationDocument.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        departmentId: true,
+        graduationYear: true,
+        status: true,
+        rejectReason: true,
+        reviewedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ]);
   const cv = await loadCvExport(db, userId, iso);
   const appointments = await loadAppointmentExport(db, userId);
   const contribution = await loadContributionExport(db, userId, iso);
@@ -314,6 +375,34 @@ export async function buildDataExport(
     companyFollows: user.companyFollows.map((follow) => ({
       ...follow,
       createdAt: follow.createdAt.toISOString(),
+    })),
+    notifications: notifications.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+      readAt: iso(row.readAt),
+    })),
+    notificationPreferences: notificationPreferences.map((row) => ({
+      ...row,
+      updatedAt: row.updatedAt.toISOString(),
+    })),
+    mentorSettings: mentorSettings
+      ? {
+          ...mentorSettings,
+          pausedUntil: iso(mentorSettings.pausedUntil),
+          createdAt: mentorSettings.createdAt.toISOString(),
+          updatedAt: mentorSettings.updatedAt.toISOString(),
+        }
+      : null,
+    availability: availability.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    })),
+    graduationDocuments: graduationDocuments.map((row) => ({
+      ...row,
+      reviewedAt: iso(row.reviewedAt),
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
     })),
     profile: user.profile
       ? exportedProfileSchema.parse({
@@ -576,6 +665,14 @@ async function loadContributionExport(
         orderBy: { createdAt: 'asc' },
       }),
     ]);
+  let unreadableBreakdown = false;
+  const candidacies = awardCandidacies.map(({ cycle, breakdown, ...row }) => {
+    const parsed = awardCandidateSchema.shape.breakdown.safeParse(breakdown);
+    if (!parsed.success) unreadableBreakdown = true;
+    return { ...row, ...cycle, breakdown: parsed.success ? parsed.data : ('UNREADABLE' as const) };
+  });
+  // Bozuk değeri veya Zod'un içeriği içerebilen hata nesnesini günlüğe taşıma.
+  if (unreadableBreakdown) logUnexpected('route', 'veriDokumu.breakdown', new Error());
   return {
     awardPublicationDecisions: awardPublicationDecisions.map((row) => ({
       ...row,
@@ -586,11 +683,7 @@ async function loadContributionExport(
       createdAt: row.createdAt.toISOString(),
       publicConsentAt: iso(row.publicConsentAt),
     })),
-    awardCandidacies: awardCandidacies.map(({ cycle, breakdown, ...row }) => ({
-      ...row,
-      ...cycle,
-      breakdown: awardCandidateSchema.shape.breakdown.parse(breakdown),
-    })),
+    awardCandidacies: candidacies,
     entries: entries.map((row) => ({
       ...row,
       eventAt: row.eventAt.toISOString(),
