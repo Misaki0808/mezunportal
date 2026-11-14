@@ -95,6 +95,13 @@ Vitest 5 saniyeyi aşan yavaş testleri raporlar; sürekli yavaşlayan testi dü
 Standart raporlayıcı açıkça seçilidir; ajan ortamının otomatik minimal raporu yavaş testin
 adını ve süresini gizleyemez.
 
+**macOS'te uzun test/kapı koşusu:** Mac'in boşta uyumasını koşunun tamamı boyunca engelle
+(ör. `caffeinate -i pnpm test:gate`; etkin koruma `pmset -g assertions` ile görülür).
+Kısa süreli bir korumanın koşu bitmeden sona ermemesine dikkat et. Maintenance Sleep sırasında
+Node ve Docker birlikte durabilir; 15 saniyelik testin 10 dakika sonra zaman aşımına düşmesi
+SQL kilidi sanılabilir (TD-024'ün doğrulanmış kök nedeni). Uykuya denk gelen koşuyu uyanınca
+yeniden başlat; test süresi ve gerçek hata için yeniden deneme kuralları korunur.
+
 Kapsam yüzdesi için test yazılmaz; yanlış aktör, yanlış durum, tekrar ve hata yolları kanıtlanır.
 Ekran kaynağı deseni testle değil lint kuralıyla korunur.
 
