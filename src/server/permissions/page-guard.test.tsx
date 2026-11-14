@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { notFound, redirect } from 'next/navigation';
-import { codedForbidden, codedUnauthenticated } from '@/lib/errors';
+import { codedForbidden, codedUnauthenticated, codedNotFound } from '@/lib/errors';
 import { ErrorState } from '@/components/ui';
 
 const spies = vi.hoisted(() => ({
@@ -42,44 +42,20 @@ for (const [path, name] of [
 ] as const)
   vi.doMock(path, () => ({ [name]: () => null }));
 const pages = [
-  ['hesap/aylik-ozet', () => import('@/app/(kimlik)/hesap/aylik-ozet/page'), 'AUTH_FORBIDDEN'],
-  [
-    'hesap/cv-inceleme',
-    () => import('@/app/(kimlik)/hesap/cv-inceleme/page'),
-    'AUTH_UNAUTHENTICATED',
-  ],
-  ['hesap/referanslar', () => import('@/app/(kvkk)/hesap/referanslar/page'), 'AUTH_FORBIDDEN'],
-  ['hesap/hikayem', () => import('@/app/(profil)/hesap/hikayem/page'), 'AUTH_FORBIDDEN'],
-  ['yonetim/aylik-ozet', () => import('@/app/(yonetim)/yonetim/aylik-ozet/page'), 'AUTH_FORBIDDEN'],
-  [
-    'yonetim/ayin-mezunu',
-    () => import('@/app/(yonetim)/yonetim/ayin-mezunu/page'),
-    'AUTH_FORBIDDEN',
-  ],
-  [
-    'yonetim/etkinlikler',
-    () => import('@/app/(yonetim)/yonetim/etkinlikler/page'),
-    'AUTH_FORBIDDEN',
-  ],
-  [
-    'yonetim/referanslar',
-    () => import('@/app/(yonetim)/yonetim/referanslar/page'),
-    'AUTH_FORBIDDEN',
-  ],
-  [
-    'yonetim/yilin-mezunu',
-    () => import('@/app/(yonetim)/yonetim/yilin-mezunu/page'),
-    'AUTH_FORBIDDEN',
-  ],
+  ['hesap/aylik-ozet', () => import('@/app/(kimlik)/hesap/aylik-ozet/page')],
+  ['hesap/cv-inceleme', () => import('@/app/(kimlik)/hesap/cv-inceleme/page')],
+  ['hesap/referanslar', () => import('@/app/(kvkk)/hesap/referanslar/page')],
+  ['hesap/hikayem', () => import('@/app/(profil)/hesap/hikayem/page')],
+  ['yonetim/aylik-ozet', () => import('@/app/(yonetim)/yonetim/aylik-ozet/page')],
+  ['yonetim/ayin-mezunu', () => import('@/app/(yonetim)/yonetim/ayin-mezunu/page')],
+  ['yonetim/etkinlikler', () => import('@/app/(yonetim)/yonetim/etkinlikler/page')],
+  ['yonetim/referanslar', () => import('@/app/(yonetim)/yonetim/referanslar/page')],
+  ['yonetim/yilin-mezunu', () => import('@/app/(yonetim)/yonetim/yilin-mezunu/page')],
 ] as const;
-const cases: [string, () => Promise<unknown>, string][] = [
+const cases: [string, () => Promise<unknown>][] = [
   ...pages.map(
-    ([name, load, denied]) =>
-      [name, async () => (await load()).default(), denied] as [
-        string,
-        () => Promise<unknown>,
-        string,
-      ],
+    ([name, load]) =>
+      [name, async () => (await load()).default()] as [string, () => Promise<unknown>],
   ),
   [
     'yonetim/etkinlikler/[id]',
@@ -87,7 +63,6 @@ const cases: [string, () => Promise<unknown>, string][] = [
       (await import('@/app/(yonetim)/yonetim/etkinlikler/[id]/page')).default({
         params: Promise.resolve({ id: 'test' }),
       }),
-    'AUTH_FORBIDDEN',
   ],
 ];
 const capture = (fn: () => never): unknown => {
@@ -108,17 +83,21 @@ beforeEach(() => {
   vi.resetAllMocks();
   spies.admin.mockResolvedValue(true);
 });
-for (const [name, run, denied] of cases) {
+for (const [name, run] of cases) {
   it(`${name}: kodlu ret sessiz ve veri sorgusu yok`, async () => {
     const out = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     try {
       for (const error of [
         codedForbidden('AUTH_FORBIDDEN'),
         codedUnauthenticated('AUTH_UNAUTHENTICATED'),
+        codedForbidden('AUTH_NOT_VERIFIED'),
+        codedForbidden('AUTH_ACCOUNT_SUSPENDED'),
+        codedForbidden('CONSENT_REQUIRED'),
+        codedNotFound('RESOURCE_NOT_FOUND'),
       ]) {
         spies.guard.mockRejectedValue(error);
         const value = await run();
-        expect(value).toMatchObject({ type: ErrorState, props: { errorCode: denied } });
+        expect(value).toMatchObject({ type: ErrorState, props: { errorCode: error.code } });
         untouched();
         expect(out).not.toHaveBeenCalled();
       }
