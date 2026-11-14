@@ -14,7 +14,7 @@ import { createEmailOutbox } from './email-outbox';
 // istekler "timeout exceeded when trying to connect" ile düşerdi.
 const POOL = 3;
 const url = process.env.DATABASE_URL_TEST!;
-const small = new PrismaClient({
+const small: PrismaClient = new PrismaClient({
   adapter: new PrismaPg({ connectionString: url, max: POOL, connectionTimeoutMillis: 2_000 }),
   omit: PRISMA_OMIT,
 });
