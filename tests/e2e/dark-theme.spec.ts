@@ -218,3 +218,22 @@ for (const [persona, routes] of Object.entries(SCREENS)) {
     }
   });
 }
+
+// Ayar ekranının ilk yüklemesi başarı metnini içermez; Kaydet sonrasındaki gerçek durumu da ölç.
+for (const colorScheme of ['light', 'dark'] as const) {
+  test.describe(`iş arayan ayarı başarı iletisi (${colorScheme})`, () => {
+    test.use({ colorScheme });
+    test('kaydedilen tercih görünür ve WCAG AA karşıtlığında', async ({ page }) => {
+      await loginAs(page, 'student');
+      await page.goto('/hesap/staj-ariyorum');
+      await page.waitForLoadState('networkidle');
+      await page.getByRole('button', { name: 'Kaydet', exact: true }).click();
+      const saved = page.getByRole('status').filter({ hasText: 'Tercihin kaydedildi.' });
+      await expect(saved).toBeVisible();
+      expect(
+        await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme),
+      ).toContain(colorScheme);
+      expect((await page.evaluate(SCAN)).issues).toEqual([]);
+    });
+  });
+}

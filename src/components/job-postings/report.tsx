@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { reportJobPostingSchema } from '@/contracts/job-postings';
 import { useTranslations } from 'next-intl';
 import { Button, Field, Modal, Select, Textarea, useAction } from '@/components/ui';
@@ -19,6 +19,11 @@ export function ReportPosting({ postingId }: { postingId: string }) {
   const pending = action.busy;
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<ErrorCode>();
+  const sentRef = useRef<HTMLParagraphElement>(null);
+  // Şikâyet düğmesi gönderimden sonra kalkar; odak sonuç metnine taşınır.
+  useEffect(() => {
+    if (sent) sentRef.current?.focus();
+  }, [sent]);
 
   async function submit() {
     const parsed = reportJobPostingSchema.safeParse({
@@ -43,7 +48,9 @@ export function ReportPosting({ postingId }: { postingId: string }) {
   return (
     <div className="mt-6">
       {sent ? (
-        <p>{t('reportSent')}</p>
+        <p ref={sentRef} tabIndex={-1}>
+          {t('reportSent')}
+        </p>
       ) : (
         <Button variant="secondary" onClick={() => setOpen(true)}>
           {t('reportTitle')}

@@ -63,3 +63,15 @@ it('ilan şikâyetinde çift tıklama tek istek, ağ hatasında açıklama korun
   expect(details).toHaveValue('Korunan açıklama');
   expect(within(dialog).getByText(/Beklenmeyen bir sorun/)).toBeVisible();
 });
+
+it('şikâyet gönderilince odak kalkan düğmeden sonuç metnine taşınır', async () => {
+  mocks.report.mockResolvedValueOnce({ ok: true, data: { reportId: 'r', status: 'OPEN' } });
+  const { container } = renderWithToasts(<ReportPosting postingId="ilan-4" />);
+  fireEvent.click(screen.getByRole('button', { name: 'Bu ilanı şikâyet et' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Şikâyeti gönder' }));
+  await waitFor(() => {
+    const sent = container.querySelector('p[tabindex="-1"]');
+    expect(sent).toHaveTextContent('Şikâyetin alındı. Teşekkürler.');
+    expect(sent).toHaveFocus();
+  });
+});

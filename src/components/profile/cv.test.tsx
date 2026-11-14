@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { CvReview as CvReviewData } from '@/contracts/cv';
@@ -478,4 +478,46 @@ it('gerçek çıkarıcı ve maskeleme yokken LinkedIn seçimi kapalı ve sebebi 
   renderUi(<CvFlow availability={available} latest={null} actions={actions()} />);
   expect(screen.getByRole('radio', { name: 'LinkedIn profilini içe aktar' })).toBeDisabled();
   expect(screen.getByText('LinkedIn PDF içe aktarma yakında kullanıma açılacak.')).toBeVisible();
+});
+
+describe('CV onay ekranı: karar sonrası odak', () => {
+  const row = (text: string) => within(screen.getByText(text).closest('li')!);
+  it('kabul edince odak aynı kalemin "Kararı geri al" düğmesine geçer', async () => {
+    const { user } = setupReview();
+    await user.click(row('İstanbul Üniversitesi').getByRole('button', { name: 'Kabul et' }));
+    expect(
+      row('İstanbul Üniversitesi').getByRole('button', { name: 'Kararı geri al' }),
+    ).toHaveFocus();
+  });
+  it('reddedince de aynı kalemin "Kararı geri al" düğmesine geçer', async () => {
+    const { user } = setupReview();
+    await user.click(row('Yazılım Stajyeri').getByRole('button', { name: 'Reddet' }));
+    expect(row('Yazılım Stajyeri').getByRole('button', { name: 'Kararı geri al' })).toHaveFocus();
+  });
+  it('kararı geri alınca odak o kalemin "Kabul et" düğmesine döner', async () => {
+    const { user } = setupReview();
+    await user.click(row('İstanbul Üniversitesi').getByRole('button', { name: 'Kabul et' }));
+    await user.click(row('İstanbul Üniversitesi').getByRole('button', { name: 'Kararı geri al' }));
+    expect(row('İstanbul Üniversitesi').getByRole('button', { name: 'Kabul et' })).toHaveFocus();
+  });
+  it('düzeltip kabul edince odak o kalemin "Kararı geri al" düğmesine geçer', async () => {
+    const { user } = setupReview();
+    await user.click(row('İstanbul Üniversitesi').getByRole('button', { name: 'Düzelt' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Kabul et' }),
+    );
+    await waitFor(() =>
+      expect(
+        row('İstanbul Üniversitesi').getByRole('button', { name: 'Kararı geri al' }),
+      ).toHaveFocus(),
+    );
+  });
+  it('çakışan kalem "üzerine yaz" seçilmeden kabul edilemezken odak yer değiştirmez', async () => {
+    const { user } = setupReview();
+    const conflicts = screen.getByRole('heading', { name: /Çakışmalar/ }).closest('section')!;
+    const accept = within(conflicts).getByRole('button', { name: 'Kabul et' });
+    await user.click(accept);
+    expect(accept).toHaveFocus();
+    expect(within(conflicts).queryByRole('button', { name: 'Kararı geri al' })).toBeNull();
+  });
 });

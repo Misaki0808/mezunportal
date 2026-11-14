@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Badge, Button, CheckIcon, Field, Input, useAction } from '@/components/ui';
@@ -21,6 +21,19 @@ export function EventActions({
     action = useAction();
   const [code, setCode] = useState(''),
     [codeError, setCodeError] = useState('');
+  // Kayıt ve katılım doğrulaması sunucu yenilemesiyle durum değiştirir; basılan düğme kalkınca odak sonuç rozetine gelir.
+  const registeredRef = useRef<HTMLDivElement>(null),
+    attendedRef = useRef<HTMLDivElement>(null),
+    focusNext = useRef<'registered' | 'attended' | null>(null);
+  useEffect(() => {
+    if (focusNext.current === 'registered' && registered) {
+      registeredRef.current?.focus();
+      focusNext.current = null;
+    } else if (focusNext.current === 'attended' && attended) {
+      attendedRef.current?.focus();
+      focusNext.current = null;
+    }
+  }, [registered, attended]);
   useEffect(() => {
     const timer = setTimeout(() => {
       const raw = sessionStorage.getItem('campus-event-checkin');
@@ -50,7 +63,10 @@ export function EventActions({
   function register() {
     void action.run(() => registerCampusEvent({ eventId }), {
       success: t('registered'),
-      onOk: () => router.refresh(),
+      onOk: () => {
+        focusNext.current = 'registered';
+        router.refresh();
+      },
     });
   }
   function checkin() {
@@ -63,8 +79,10 @@ export function EventActions({
       success: (data) => (data.accepted ? t('checked') : undefined),
       onOk: (data) => {
         // Kod yanlışsa ya da süresi dolduysa girilen değer korunur, sebep alanın altında söylenir.
-        if (data.accepted) router.refresh();
-        else setCodeError(t('codeInvalid'));
+        if (data.accepted) {
+          focusNext.current = 'attended';
+          router.refresh();
+        } else setCodeError(t('codeInvalid'));
       },
     });
   }
@@ -91,7 +109,9 @@ export function EventActions({
       )}
       {registered && !attended && (
         <div className="space-y-3">
-          <Badge tone="success">{t('registeredBadge')}</Badge>
+          <div ref={registeredRef} tabIndex={-1} className="w-fit rounded-full">
+            <Badge tone="success">{t('registeredBadge')}</Badge>
+          </div>
           <Field label={t('codeLabel')} hint={t('codeHint')} error={codeError || undefined}>
             {(control) => (
               <Input
@@ -114,10 +134,12 @@ export function EventActions({
         </div>
       )}
       {attended && (
-        <Badge tone="success" className="gap-1.5">
-          <CheckIcon width={16} height={16} strokeWidth={3} />
-          {t('attendedBadge')}
-        </Badge>
+        <div ref={attendedRef} tabIndex={-1} className="w-fit rounded-full">
+          <Badge tone="success" className="gap-1.5">
+            <CheckIcon width={16} height={16} strokeWidth={3} />
+            {t('attendedBadge')}
+          </Badge>
+        </div>
       )}
       {action.error && (
         <p role="alert" className="text-danger">
