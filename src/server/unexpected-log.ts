@@ -6,7 +6,8 @@ import { isCodedError } from '@/lib/errors';
 
 /**
  * Beklenmedik (kodlu olmayan) hatanın TEK satırlık yapılandırılmış günlüğü (docs/security.md "Sır ve loglama").
- * Yazılan alanlar: olay adı, işlem adı (sabit dize), sabit izin listesindeki hata sınıfı ve isteğe bağlı hata kodu.
+ * Yazılan alanlar: olay adı, işlem adı (sabit dize), sabit izin listesindeki hata sınıfı ve isteğe bağlı hata kodu
+ * (`errorCode`); Prisma sürücü hatasında ayrıca sabit listedeki sürücü kodu (`driverCode`).
  * İstemciden gelen kimlik, `message`, yığın izi, girdi, e-posta, kullanıcı kimliği ve değerler ASLA yazılmaz.
  * Kodlu hatalar (kullanıcıya dönen `errorCode`), doğrulama hataları ve Next.js'in akış denetimi hataları (yönlendirme,
  * bulunamadı) günlüğe düşmez: gürültü olmaz, yalnız gerçekten beklenmedik hata görünür.
@@ -107,6 +108,22 @@ function codeOf(error: unknown): string | undefined {
   return safeCode((cause as Loose).code) ?? safeCode((cause as Loose).originalCode);
 }
 
+/**
+ * Prisma 7, sürücü (pg) hatasını `PrismaClientKnownRequestError` içine sarar ve üst `code`'u genel tutar (ham sorgu
+ * `P2010`, model sorgusu `P2039`...). Asıl pg kodu (`57014`, `57P01`, `55P03`, `40P01`) `meta.driverAdapterError.cause`
+ * içindedir (kart 330, ölçüldü). Yalnız bu iki alan ve yalnız sabit listeden okunur; adres, ileti, ana makine yazılmaz.
+ */
+function driverCodeOf(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') return undefined;
+  const meta = (error as { meta?: unknown }).meta;
+  if (!meta || typeof meta !== 'object') return undefined;
+  const adapterError = (meta as { driverAdapterError?: unknown }).driverAdapterError;
+  if (!adapterError || typeof adapterError !== 'object') return undefined;
+  const cause = (adapterError as { cause?: unknown }).cause;
+  if (!cause || typeof cause !== 'object') return undefined;
+  return safeCode((cause as Loose).originalCode) ?? safeCode((cause as Loose).code);
+}
+
 function nameOf(error: unknown): string {
   const name = error instanceof Error ? error.name : 'NonError';
   return NAMES.has(name) ? name : error instanceof Error ? 'Error' : 'NonError';
@@ -126,11 +143,13 @@ export function unexpectedLogLine(
 ): string | null {
   if (isCodedError(error) || error instanceof z.ZodError || isControlFlow(error)) return null;
   const code = codeOf(error);
+  const driverCode = driverCodeOf(error);
   return JSON.stringify({
     event: `${kind}.unexpected`,
     source: SOURCE.test(source) ? source : 'bilinmeyen',
     errorName: nameOf(error),
     ...(code ? { errorCode: code } : {}),
+    ...(driverCode ? { driverCode } : {}),
   });
 }
 

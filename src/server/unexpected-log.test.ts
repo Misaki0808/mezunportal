@@ -200,6 +200,111 @@ describe('izin listeleri (kart 330): yük altı hata kodları ve uygulamanın ke
   });
 });
 
+describe('driverCode (kart 330 b): Prisma sürücü hatasındaki pg kodu', () => {
+  /** Kendi sürücümde ölçülen şekil: üst kod genel, pg kodu `meta.driverAdapterError.cause`'ta. */
+  const prismaDriverError = (code: string, cause: Record<string, unknown>) =>
+    leakyError('PrismaClientKnownRequestError', {
+      code,
+      meta: { driverAdapterError: { name: 'DriverAdapterError', cause } },
+    });
+
+  it('statement_timeout: errorCode genel P2010, driverCode asıl pg kodu; ileti, ana makine ve ayrıntı yazılmaz', () => {
+    const line = unexpectedLogLine(
+      'action',
+      'x',
+      prismaDriverError('P2010', {
+        originalCode: '57014',
+        originalMessage: 'canceling statement ayse@ogr.iu.edu.tr',
+        kind: 'postgres',
+        code: '57014',
+        message: 'canceling statement ayse@ogr.iu.edu.tr',
+        detail: 'postgres://mezun:parola@db/x',
+      }),
+    );
+    expect(parse(line)).toEqual({
+      event: 'action.unexpected',
+      source: 'x',
+      errorName: 'PrismaClientKnownRequestError',
+      errorCode: 'P2010',
+      driverCode: '57014',
+    });
+    expect(line).not.toMatch(/ayse|postgres|parola|canceling/);
+  });
+
+  it('yalnız originalCode taşıyan (kilitlenme) ve bağlantı sonlandırma şekilleri', () => {
+    expect(
+      parse(
+        unexpectedLogLine(
+          'job',
+          'x',
+          prismaDriverError('P2010', { originalCode: '40P01', kind: 'TransactionWriteConflict' }),
+        ),
+      ),
+    ).toMatchObject({ errorCode: 'P2010', driverCode: '40P01' });
+    expect(
+      parse(
+        unexpectedLogLine(
+          'job',
+          'x',
+          prismaDriverError('P2039', { originalCode: '55P03', code: '55P03' }),
+        ),
+      ),
+    ).toMatchObject({ errorCode: 'P2039', driverCode: '55P03' });
+  });
+
+  it('originalCode önce, code sonra aranır', () => {
+    const line = unexpectedLogLine(
+      'job',
+      'x',
+      prismaDriverError('P2010', { originalCode: '57P01', code: '57014' }),
+    );
+    expect(parse(line)).toMatchObject({ driverCode: '57P01' });
+  });
+
+  it('kodsuz sürücü hatası (bağlantı reddi) ve listede olmayan sürücü kodu: driverCode yok, ana makine/kapı yazılmaz', () => {
+    for (const cause of [
+      { kind: 'DatabaseNotReachable', host: '10.1.2.3', port: 5432 },
+      { originalCode: '12345678901', code: 'ayse@ogr.iu.edu.tr' },
+      { originalCode: 'P9999' },
+    ]) {
+      const line = unexpectedLogLine('job', 'x', prismaDriverError('P1001', cause));
+      expect(parse(line)).not.toHaveProperty('driverCode');
+      expect(parse(line)).toMatchObject({ errorCode: 'P1001' });
+      expect(line).not.toMatch(/ayse|10\.1\.2\.3|5432|12345678901/);
+    }
+  });
+
+  it('beklenmeyen yapı (meta ya da iç alanlar nesne değil) hata fırlatmaz, driverCode yazmaz', () => {
+    for (const meta of [
+      null,
+      'metin',
+      42,
+      [],
+      {},
+      { driverAdapterError: 'x' },
+      { driverAdapterError: null },
+      { driverAdapterError: { cause: 'x' } },
+      { driverAdapterError: { cause: null } },
+    ]) {
+      const line = unexpectedLogLine('job', 'x', leakyError('Error', { meta }));
+      expect(parse(line)).not.toHaveProperty('driverCode');
+    }
+  });
+
+  it('üst kod olmasa da sürücü kodu yazılır; errorCode anlamı değişmez', () => {
+    const line = unexpectedLogLine(
+      'job',
+      'x',
+      leakyError('Error', {
+        meta: { driverAdapterError: { cause: { originalCode: '53300' } } },
+      }),
+    );
+    const parsed = parse(line);
+    expect(parsed).toMatchObject({ driverCode: '53300' });
+    expect(parsed).not.toHaveProperty('errorCode');
+  });
+});
+
 describe('logUnexpected / loggedJob: stderr', () => {
   afterEach(() => vi.restoreAllMocks());
   const stderr = () => vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
