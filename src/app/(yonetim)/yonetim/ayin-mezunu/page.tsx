@@ -5,11 +5,7 @@ import { getDb } from '@/server/db';
 import { requirePageAnyAdmin as requireAnyAdmin, managedDepartmentIds } from '@/server/permissions';
 export const dynamic = 'force-dynamic';
 export default async function StoryAdminPage() {
-  const guarded = await guardPage(
-    'page.adminMonthlyAlumni',
-    () => requireAnyAdmin(),
-    'AUTH_FORBIDDEN',
-  );
+  const guarded = await guardPage('page.adminMonthlyAlumni', () => requireAnyAdmin());
   if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
   const actor = guarded.value;
   const ids = await managedDepartmentIds(actor);

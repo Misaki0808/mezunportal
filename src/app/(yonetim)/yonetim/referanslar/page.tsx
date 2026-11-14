@@ -5,7 +5,7 @@ import { listReferralModeration } from '@/server/actions/referrals';
 import { requirePageAnyAdmin as requireAnyAdmin } from '@/server/permissions';
 export const dynamic = 'force-dynamic';
 export default async function ReferralModerationPage() {
-  const guarded = await guardPage('page.adminReferrals', () => requireAnyAdmin(), 'AUTH_FORBIDDEN');
+  const guarded = await guardPage('page.adminReferrals', () => requireAnyAdmin());
   if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
   const actor = guarded.value;
   const result = await listReferralModeration({});

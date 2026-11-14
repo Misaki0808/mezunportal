@@ -6,10 +6,8 @@ import { listMyStories } from '@/server/actions/alumni-story';
 import { requirePageVerifiedMember as requireVerifiedMember } from '@/server/permissions';
 export const dynamic = 'force-dynamic';
 export default async function MyStoryPage() {
-  const guarded = await guardPage(
-    'page.myStory',
-    () => requireVerifiedMember({ roles: ['ALUMNI'] }),
-    'AUTH_FORBIDDEN',
+  const guarded = await guardPage('page.myStory', () =>
+    requireVerifiedMember({ roles: ['ALUMNI'] }),
   );
   if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
   const actor = guarded.value;

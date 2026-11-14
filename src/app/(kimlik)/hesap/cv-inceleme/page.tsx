@@ -5,11 +5,7 @@ import { listCvReviewRequests, getCvReviewSettings } from '@/server/actions/cv-r
 import { ReviewInbox } from '@/components/cv-review/review-inbox';
 export const dynamic = 'force-dynamic';
 export default async function Page() {
-  const guarded = await guardPage(
-    'page.cvReview',
-    () => requireVerifiedMember(),
-    'AUTH_UNAUTHENTICATED',
-  );
+  const guarded = await guardPage('page.cvReview', () => requireVerifiedMember());
   if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
   const actor = guarded.value;
   const student = actor.facts.memberships.some(

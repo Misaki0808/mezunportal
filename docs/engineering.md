@@ -56,6 +56,12 @@ Ajanların eğitim verisinde eski sürümlerin örnekleri çoktur; kurulumda saa
 - Her kod `messages/tr.json` `errors.codes` altına eklenir. **Bekçi testleri:** kayıt ↔ metin
   eşleşmesi ve kodsuz `throw` sayısının sıfır olması.
 - Ekrana ham `err.message` basılmaz; `errorCode` → metin üzerinden gösterilir.
+- Sayfa koruması `guardPage` kodlu ret nedenini korur: oturumsuzluk girişe, eksik üyelik
+  doğrulamaya, rol reddi rol durumuna, eksik zorunlu onay onay ekranına yönelten mevcut
+  `ErrorState` ile gösterilir. Askı ve silinmiş hesap için mevcut yetki kodları değişmez;
+  silinmiş hesap oturumsuz sayılır. Ret sonrasında sayfanın içerik sorgusu çalışmaz.
+  Next kontrol sinyalleri aynen fırlatılır; kodsuz arıza tek güvenli günlük ve
+  `SERVER_UNEXPECTED` olur.
 
 ## Yerel paralel çalışma
 
