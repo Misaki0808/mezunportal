@@ -35,7 +35,8 @@ vi.mock('@/components/landing/landing', () => ({
     </>
   ),
 }));
-vi.mock('next/navigation', () => ({
+vi.mock('next/navigation', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next/navigation')>()),
   redirect: () => {
     throw new Error('onay-redirect');
   },
@@ -63,6 +64,11 @@ describe('HomePage', () => {
     mocks.getCurrentStory.mockReset().mockResolvedValue({ ok: true, data: null });
     mocks.getHomeSummary.mockReset();
     mocks.getHomeSummary.mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+  });
+  it('oturumdaki Next kontrol sinyalini girişsiz sayfa olarak yutmaz', async () => {
+    const signal = Object.assign(new Error('dynamic'), { digest: 'DYNAMIC_SERVER_USAGE' });
+    mocks.requireUser.mockRejectedValue(signal);
+    await expect(HomePage()).rejects.toBe(signal);
   });
   it('oturum yokken doğrulama eylemini göstermez', async () => {
     mocks.requireUser.mockRejectedValue(new Error('unauthenticated'));

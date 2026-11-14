@@ -14,6 +14,17 @@ describe('hasAdminAccess', () => {
     guards.requireUser.mockReset();
     guards.requireAdmin.mockReset();
   });
+  it('oturumdaki Next kontrol sinyalini yutmaz', async () => {
+    const signal = Object.assign(new Error('dynamic'), { digest: 'DYNAMIC_SERVER_USAGE' });
+    guards.requireUser.mockRejectedValue(signal);
+    await expect(hasAdminAccess()).rejects.toBe(signal);
+  });
+  it('yönetim korumasındaki Next kontrol sinyalini yutmaz', async () => {
+    const signal = Object.assign(new Error('dynamic'), { digest: 'DYNAMIC_SERVER_USAGE' });
+    guards.requireUser.mockResolvedValue({ facts: { grants: [{ scope: 'SYSTEM' }] } });
+    guards.requireAdmin.mockRejectedValue(signal);
+    await expect(hasAdminAccess()).rejects.toBe(signal);
+  });
   it('oturum yoksa yönetime erişimi göstermez', async () => {
     guards.requireUser.mockRejectedValue(new Error('no session'));
     expect(await hasAdminAccess()).toBe(false);

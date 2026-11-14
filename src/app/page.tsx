@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { redirect, unstable_rethrow } from 'next/navigation';
 import { getConsentState } from '@/server/actions/privacy';
 import { getOnboardingState } from '@/server/actions/profile';
 import { getHomeSummary, getSuggestedJobs } from '@/server/actions/home';
@@ -34,7 +34,10 @@ export default async function HomePage() {
     getTranslations('home'),
     getTranslations('authScreens.home'),
   ]);
-  const actor = await requireUserWithoutConsent().catch(() => null);
+  const actor = await requireUserWithoutConsent().catch((error: unknown) => {
+    unstable_rethrow(error);
+    return null;
+  });
   if (!actor) return <Landing stats={await getLandingStats()} />;
   if (actor) {
     const consent = await getConsentState();

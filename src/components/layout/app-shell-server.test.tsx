@@ -31,6 +31,18 @@ beforeEach(() => {
 });
 
 describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
+  it('oturumdaki Next kontrol sinyalini yutmaz', async () => {
+    const signal = Object.assign(new Error('dynamic'), { digest: 'DYNAMIC_SERVER_USAGE' });
+    mocks.actor.mockRejectedValue(signal);
+    await expect(render()).rejects.toBe(signal);
+  });
+  it('rıza sorgusundaki Next kontrol sinyalini yutmaz', async () => {
+    const signal = Object.assign(new Error('dynamic'), { digest: 'DYNAMIC_SERVER_USAGE' });
+    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.consented.mockRejectedValue(signal);
+    await expect(render()).rejects.toBe(signal);
+  });
+
   it('giriş yapmış kullanıcının kendi sayısı istemci kabuğuna verilir; sayı oturumdaki kimlikle sorulur', async () => {
     mocks.actor.mockResolvedValue({ userId: 'u1' });
     mocks.count.mockResolvedValue(4);

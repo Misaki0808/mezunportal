@@ -1,6 +1,7 @@
 'use server';
 
 import { headers } from 'next/headers';
+import { unstable_rethrow } from 'next/navigation';
 
 import {
   declareMembershipSchema,
@@ -141,6 +142,7 @@ export async function signOut(): Promise<ActionResult<SignOutOutput>> {
   try {
     await getAuth().api.signOut({ headers: await headers() });
   } catch (error) {
+    unstable_rethrow(error);
     logAuthFailure('signOut', error);
   }
   return actionOk({ signedOut: true });

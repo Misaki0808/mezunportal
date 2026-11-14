@@ -39,6 +39,24 @@ describe('signInPathFor (açık yönlendirme yok)', () => {
 });
 
 describe('failAction', () => {
+  it('Next kontrol sinyalini hata değerine dönüştürmeden ve günlüğe yazmadan fırlatır', async () => {
+    const signal = Object.assign(new Error('dynamic'), { digest: 'DYNAMIC_SERVER_USAGE' });
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      await expect(failAction(signal, 'testEylemi')).rejects.toBe(signal);
+      expect(write).not.toHaveBeenCalled();
+    } finally {
+      write.mockRestore();
+    }
+  });
+  it('oturum yönlendirmesinde headers kontrol sinyalini yutmaz', async () => {
+    const signal = Object.assign(new Error('dynamic'), { digest: 'DYNAMIC_SERVER_USAGE' });
+    mocks.headers.mockRejectedValue(signal);
+    await expect(
+      failAction(codedUnauthenticated('AUTH_UNAUTHENTICATED'), 'testEylemi'),
+    ).rejects.toBe(signal);
+  });
+
   it('oturum düşmüşse girişe dönüş yoluyla yönlendirir (hata değeri dönmez)', async () => {
     withPath('/deneyim/yeni');
     await expect(
