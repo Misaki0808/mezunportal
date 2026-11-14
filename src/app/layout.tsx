@@ -2,11 +2,15 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { unstable_rethrow } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { AppShell } from '@/components/layout/app-shell';
 import { getEnv } from '@/lib/env';
 import { ToastProvider } from '@/components/ui';
+import { SessionUnavailable } from '@/components/layout/session-unavailable';
+import { getSessionUserId } from '@/server/permissions/session';
+import { logUnexpected } from '@/server/unexpected-log';
 
 import './globals.css';
 
@@ -44,13 +48,21 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   const locale = await getLocale();
+  let sessionUnavailable = false;
+  try {
+    await getSessionUserId();
+  } catch (error) {
+    unstable_rethrow(error);
+    logUnexpected('route', 'session.resolve', error);
+    sessionUnavailable = true;
+  }
 
   return (
     <html lang={locale} className={`${bodyFont.variable} ${headingFont.variable}`}>
       <body>
         <NextIntlClientProvider>
           <ToastProvider>
-            <AppShell>{children}</AppShell>
+            {sessionUnavailable ? <SessionUnavailable /> : <AppShell>{children}</AppShell>}
           </ToastProvider>
         </NextIntlClientProvider>
       </body>

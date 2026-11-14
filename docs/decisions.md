@@ -1005,3 +1005,6 @@ Kullanıcının verdiği 89 ders resmî seed listesidir; daha önceki hoca onay�
 
 
 **Profil metni ve bekleyen iletişim isteği (kart 360).** SSS'de kullanılan kişisel veri biçimi denetimi tek saf yardımcıya taşındı; profil özeti/hedefi ve aynı şekilde doğrudan görünen diğer metinlerde telefon/e-posta/kimlik biçimi sunucuda reddedilir. CV onayı bu yazım kapısını aşamaz. Mevcut veri otomatik temizlenmez; yalnız eşleşme sayısı ölçülür. Profil iletişim formu yalnız aynı PROFILE bağlamındaki bekleyen isteği önceden açıklar ve yeni gönderimi kapatır; başka kaynakta/bağlamda bekleyen istek D7 gereği bu formu engellemez. Yabancı/olmayan hedef yanıtı ve hız sınırı değişmez.
+**Oturum altyapı hatası (kart 351).** Çerez yokluğu, geçersiz oturum ve DB erişim hatası ayrılır: hata, girişe yönlendirmek yerine ortak geçici hata sınırına ve eylemlerde kararlı hata koduna gider. Çerez yalnız çözümlemeyi başlatır, yetki sağlamaz; veri erişimi fail-closed kalır.
+
+**Oturum kesintisinde dosya ve rapor rotaları (kart 351 EK).** Oturum çözümü arızası altı korumalı rotada ortak sınırla 503 ve güvenli günlük üretir; yetkisiz ve kapsam dışı yanıtlar değişmez. İstek içi oturum sonucu paylaşılır, hata ekranı yeniden deneme sunar.

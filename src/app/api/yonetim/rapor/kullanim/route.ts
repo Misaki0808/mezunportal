@@ -1,7 +1,7 @@
 import { usageMetricsFilterSchema, type UsageMetricsFilter } from '@/contracts/metrics';
 import { isCodedError } from '@/lib/errors';
 import { getDb } from '@/server/db';
-import { getSessionUserId } from '@/server/permissions/session';
+import { readRouteSession } from '@/server/permissions/route-session';
 import { exportUsageMetrics } from '@/server/services/usage-metrics';
 import { logUnexpected } from '@/server/unexpected-log';
 
@@ -27,8 +27,9 @@ function parseFilter(url: URL): UsageMetricsFilter | null {
 }
 
 export async function GET(request: Request) {
-  const userId = await getSessionUserId();
-  if (!userId) return failure(401);
+  const session = await readRouteSession('raporKullanim');
+  if (!session.ok) return session.response;
+  const userId = session.userId;
   const filter = parseFilter(new URL(request.url));
   if (!filter) return failure(400);
   try {
