@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -64,11 +64,49 @@ describe('DocumentForm', () => {
       new File(['%PDF-ornek'], 'ornek.pdf', { type: 'application/pdf' }),
     );
     await user.click(screen.getByRole('button', { name: 'Belgeyi gönder' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('Belgen incelemeye gönderildi.');
+    // Form kalkar; odak BODY'ye düşmez, sonuç metnine gider (klavye/ekran okuyucu yerini kaybetmez).
+    expect(await screen.findByText('Belgen incelemeye gönderildi.')).toHaveFocus();
     expect(submit).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('link', { name: 'Doğrulama durumunu gör' })).toHaveAttribute(
       'href',
       '/dogrulama',
     );
+  });
+  it('boş gönderimde odak ilk hatalı alana gider ve ileti alana bağlıdır', async () => {
+    const submit = vi.fn();
+    const { user } = renderUi(<DocumentForm departments={departments} submit={submit} />);
+    await user.click(screen.getByRole('button', { name: 'Belgeyi gönder' }));
+    const department = screen.getByLabelText(/Bölüm/);
+    expect(department).toHaveFocus();
+    expect(department).toHaveAttribute('aria-invalid', 'true');
+    expect(department).toHaveAccessibleDescription('Bölümünü listeden seç.');
+    expect(screen.getByLabelText(/Mezuniyet yılı/)).toHaveAccessibleDescription(
+      '1950 ile gelecek yıl arasında bir mezuniyet yılı yaz.',
+    );
+    expect(screen.getByText('Bir PDF dosyası seç.')).toBeVisible();
+    expect(submit).not.toHaveBeenCalled();
+  });
+  it('bölüm seçilince ikinci gönderimde odak sıradaki hatalı alana geçer', async () => {
+    const { user } = renderUi(<DocumentForm departments={departments} submit={vi.fn()} />);
+    await user.click(screen.getByRole('button', { name: 'Belgeyi gönder' }));
+    await user.selectOptions(screen.getByLabelText(/Bölüm/), 'ybs');
+    await user.click(screen.getByRole('button', { name: 'Belgeyi gönder' }));
+    expect(screen.getByLabelText(/Mezuniyet yılı/)).toHaveFocus();
+  });
+  it('sunucu alan hatasında da odak hatalı alana gider', async () => {
+    const submit = vi.fn().mockResolvedValue({
+      ok: false,
+      errorCode: 'VALIDATION_INVALID',
+      fieldErrors: { graduationYear: 'VALIDATION_INVALID' },
+    });
+    const { user } = renderUi(<DocumentForm departments={departments} submit={submit} />);
+    await user.selectOptions(screen.getByLabelText(/Bölüm/), 'ybs');
+    await user.type(screen.getByLabelText(/Mezuniyet yılı/), '2024');
+    await user.upload(
+      screen.getByLabelText(/Mezun belgesi/),
+      new File(['%PDF-ornek'], 'ornek.pdf', { type: 'application/pdf' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Belgeyi gönder' }));
+    await waitFor(() => expect(screen.getByLabelText(/Mezuniyet yılı/)).toHaveFocus());
   });
 });

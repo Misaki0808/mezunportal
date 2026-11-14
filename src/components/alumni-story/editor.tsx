@@ -1,9 +1,19 @@
 'use client';
 import { safeClientAction } from '@/lib/safe-client-action';
-import { useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { saveStorySchema, type MyStory } from '@/contracts/alumni-story';
-import { Button, Card, Field, PageHeader, Select, Switch, Textarea } from '@/components/ui';
+import {
+  Button,
+  Card,
+  Field,
+  PageHeader,
+  Select,
+  Switch,
+  Textarea,
+  captureFocus,
+  rescueFocus,
+} from '@/components/ui';
 import { saveStory, setStoryConsent, submitStory } from '@/server/actions/alumni-story';
 
 export function StoryEditor({
@@ -20,8 +30,30 @@ export function StoryEditor({
   const initialStory = initial.find((s) => s.departmentId === departments[0]?.id);
   const [body, setBody] = useState(initialStory?.body ?? ''),
     [consent, setConsent] = useState(initialStory?.consent ?? false),
-    [message, setMessage] = useState('');
+    // Başarı metni (durum) ile hata (uyarı) ayrı tutulur: aynı metin hem `alert` hem `status` olarak iki kez duyurulmaz,
+    // yeni bir işlem başlayınca ya da başka bölüm seçilince ikisi de silinir (bayat "Kaydedildi." kalmaz).
+    [notice, setNotice] = useState(''),
+    [problem, setProblem] = useState<{ text: string; field: 'body' | 'consent' | 'form' }>();
   const [pending, start] = useTransition();
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const consentRef = useRef<HTMLInputElement>(null);
+  const focusWanted = useRef<'body' | 'consent'>(undefined);
+  const [focusTick, setFocusTick] = useState(0);
+  // Hatalı alana odak: işlem sürerken izin anahtarı pasif olduğundan işlem bitince (pending=false) odaklanır.
+  useEffect(() => {
+    if (!focusWanted.current || pending) return;
+    (focusWanted.current === 'body' ? bodyRef : consentRef).current?.focus();
+    focusWanted.current = undefined;
+  }, [focusTick, pending]);
+  const clearMessages = () => {
+    setNotice('');
+    setProblem(undefined);
+  };
+  /** Hatayı gösterir; odaklanacak alanı (varsa) döner. */
+  const fail = (text: string, field: 'body' | 'consent' | 'form') => {
+    setProblem({ text, field });
+    return field === 'form' ? undefined : field;
+  };
   const story = all.find((s) => s.departmentId === departmentId);
   const alreadyApproved = story?.status === 'PUBLISHED' && story.body === body;
   const disabled = (condition: boolean, reason: string) =>
@@ -35,57 +67,69 @@ export function StoryEditor({
     setDepartment(id);
     setBody(found?.body ?? '');
     setConsent(found?.consent ?? false);
-    setMessage('');
+    clearMessages();
   }
   function save(send: boolean) {
+    // Kaydet/Gönder işlem sürerken pasifleşir (odak BODY'ye düşer); bitince düğmeye geri döner.
+    const trigger = captureFocus();
     start(async () => {
-      setMessage('');
-      const parsed = saveStorySchema.safeParse({ departmentId, body, consent });
-      if (!parsed.success) {
-        setMessage(t('invalid'));
-        return;
-      }
-      if (send && !consent) {
-        setMessage(t('missingConsent'));
-        return;
-      }
-      const saved = await safeClientAction(() => saveStory(parsed.data));
-      if (!saved.ok) {
-        setMessage(errors(saved.errorCode));
-        return;
-      }
-      remember(saved.data);
-      if (!send) {
-        setMessage(t('saved'));
-        return;
-      }
-      const submitted = await safeClientAction(() => submitStory({ storyId: saved.data.id }));
-      if (!submitted.ok) {
-        setMessage(errors(submitted.errorCode));
-        return;
-      }
-      remember(submitted.data);
-      setMessage(t('submitted'));
+      const field = await persist(send);
+      if (field) {
+        focusWanted.current = field;
+        setFocusTick((tick) => tick + 1);
+      } else rescueFocus(trigger);
     });
   }
+  async function persist(send: boolean): Promise<'body' | 'consent' | undefined> {
+    clearMessages();
+    const parsed = saveStorySchema.safeParse({ departmentId, body, consent });
+    if (!parsed.success) {
+      return fail(t('invalid'), 'body');
+    }
+    if (send && !consent) {
+      return fail(t('missingConsent'), 'consent');
+    }
+    const saved = await safeClientAction(() => saveStory(parsed.data));
+    if (!saved.ok) {
+      return fail(errors(saved.errorCode), 'form');
+    }
+    remember(saved.data);
+    if (!send) {
+      setNotice(t('saved'));
+      return undefined;
+    }
+    const submitted = await safeClientAction(() => submitStory({ storyId: saved.data.id }));
+    if (!submitted.ok) {
+      return fail(errors(submitted.errorCode), 'form');
+    }
+    remember(submitted.data);
+    setNotice(t('submitted'));
+    return undefined;
+  }
   function changeConsent(next: boolean) {
+    clearMessages();
     if (!story) {
       setConsent(next);
       return;
     }
     const previous = consent;
     setConsent(next);
+    const trigger = captureFocus();
     start(async () => {
-      const result = await safeClientAction(() =>
-        setStoryConsent({ storyId: story.id, consent: next }),
-      );
-      if (!result.ok) {
-        setConsent(previous);
-        setMessage(errors(result.errorCode));
-        return;
+      try {
+        const result = await safeClientAction(() =>
+          setStoryConsent({ storyId: story.id, consent: next }),
+        );
+        if (!result.ok) {
+          setConsent(previous);
+          fail(errors(result.errorCode), 'form');
+          return;
+        }
+        remember(result.data);
+        setNotice(t('consentSaved'));
+      } finally {
+        rescueFocus(trigger);
       }
-      remember(result.data);
-      setMessage(t('consentSaved'));
     });
   }
   return (
@@ -116,18 +160,12 @@ export function StoryEditor({
         <Field
           label={t('body')}
           hint={t('bodyHint')}
-          error={
-            message &&
-            message !== t('saved') &&
-            message !== t('submitted') &&
-            message !== t('consentSaved')
-              ? message
-              : undefined
-          }
+          error={problem?.field === 'body' ? problem.text : undefined}
         >
           {(props) => (
             <Textarea
               {...props}
+              ref={bodyRef}
               rows={10}
               maxLength={3000}
               value={body}
@@ -135,13 +173,23 @@ export function StoryEditor({
             />
           )}
         </Field>
-        <Switch
-          disabled={pending}
-          checked={consent}
-          label={t('consent')}
-          description={t('consentHelp')}
-          onChange={(event) => changeConsent(event.target.checked)}
-        />
+        <div>
+          <Switch
+            ref={consentRef}
+            disabled={pending}
+            checked={consent}
+            label={t('consent')}
+            description={t('consentHelp')}
+            aria-invalid={problem?.field === 'consent' || undefined}
+            aria-describedby={problem?.field === 'consent' ? 'story-consent-error' : undefined}
+            onChange={(event) => changeConsent(event.target.checked)}
+          />
+          {problem?.field === 'consent' && (
+            <p id="story-consent-error" role="alert" className="text-sm text-danger">
+              {problem.text}
+            </p>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button
             {...disabled(
@@ -160,7 +208,22 @@ export function StoryEditor({
             {t('save')}
           </Button>
         </div>
-        {message && <p role="status">{message}</p>}
+        {/* Kaydet/Gönder düğmesi işlem sürerken yer değiştirir; odak sonuç metnine taşınır (data-focus-result). */}
+        {notice && (
+          <p role="status" tabIndex={-1} data-focus-result className="focus:outline-none">
+            {notice}
+          </p>
+        )}
+        {problem?.field === 'form' && (
+          <p
+            role="alert"
+            tabIndex={-1}
+            data-focus-result
+            className="text-base text-danger focus:outline-none"
+          >
+            {problem.text}
+          </p>
+        )}
       </Card>
     </div>
   );

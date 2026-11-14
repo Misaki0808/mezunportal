@@ -93,6 +93,13 @@ export function AppointmentDetail({
     }
   }
 
+  // Pencere açılırken önceki "İşlem kaydedildi."/hata iletisi bayat kalmaz (pencerenin arkasında başarı yazısı durmasın).
+  function openDialog(kind: 'decline' | 'cancel') {
+    setNotice(false);
+    setError(undefined);
+    setDialog(kind);
+  }
+
   function saveLink() {
     setLinkError(undefined);
     const parsed = setMeetLinkSchema.safeParse({ appointmentId: a.id, url: link });
@@ -281,7 +288,7 @@ export function AppointmentDetail({
           </Button>
         )}
         {a.actions.canDecline && (
-          <Button variant="secondary" fullWidth onClick={() => setDialog('decline')}>
+          <Button variant="secondary" fullWidth onClick={() => openDialog('decline')}>
             {t('decline')}
           </Button>
         )}
@@ -295,7 +302,7 @@ export function AppointmentDetail({
           </a>
         )}
         {a.actions.canCancel && (
-          <Button variant="ghost" fullWidth onClick={() => setDialog('cancel')}>
+          <Button variant="ghost" fullWidth onClick={() => openDialog('cancel')}>
             {t('cancel')}
           </Button>
         )}

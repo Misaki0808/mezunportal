@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -127,5 +128,136 @@ describe('useAction', () => {
     await user.click(screen.getByRole('button', { name: 'Gönder' }));
     await waitFor(() => expect(screen.queryByTestId('error')).toBeNull());
     expect(await screen.findByText('Tamam')).toBeInTheDocument();
+  });
+
+  it("odak: düğme eylemle kalkarsa odak sayfa başlığına taşınır (BODY'ye düşmez)", async () => {
+    function Gone() {
+      const a = useAction();
+      const [done, setDone] = useState(false);
+      return (
+        <main>
+          <h1>Liste</h1>
+          {!done && (
+            <button
+              onClick={() =>
+                void a.run(async () => ({ ok: true, data: 1 }), { onOk: () => setDone(true) })
+              }
+            >
+              Onayla
+            </button>
+          )}
+        </main>
+      );
+    }
+    const { user } = renderUi(wrap(<Gone />));
+    await user.click(screen.getByRole('button', { name: 'Onayla' }));
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Liste' })).toHaveFocus());
+  });
+
+  it('odak: eylem sonrası düğme pasifleşip sebebiyle yer değiştirirse başlığa taşınır', async () => {
+    function Swap() {
+      const a = useAction();
+      const [spent, setSpent] = useState(false);
+      return (
+        <main>
+          <h1>Bildirimler</h1>
+          {spent ? (
+            <span>
+              <button disabled>Hepsi okundu</button>
+              <span>Okunmamış yok.</span>
+            </span>
+          ) : (
+            <button
+              onClick={() =>
+                void a.run(async () => ({ ok: true, data: 1 }), { onOk: () => setSpent(true) })
+              }
+            >
+              Hepsini oku
+            </button>
+          )}
+        </main>
+      );
+    }
+    const { user } = renderUi(wrap(<Swap />));
+    await user.click(screen.getByRole('button', { name: 'Hepsini oku' }));
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Bildirimler' })).toHaveFocus());
+  });
+
+  it('odak: eylem düğmeyi bırakıyorsa (hata, düğme duruyor) odak düğmede kalır', async () => {
+    const { user } = renderUi(
+      wrap(
+        <main>
+          <h1>Başlık</h1>
+          <Harness action={async () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' })} />
+        </main>,
+      ),
+    );
+    await user.click(screen.getByRole('button', { name: 'Gönder' }));
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(screen.getByRole('button', { name: 'Gönder' })).toHaveFocus();
+  });
+
+  it('odak: onOk odağı kendisi taşıdıysa ona dokunulmaz', async () => {
+    function Own() {
+      const a = useAction();
+      const [done, setDone] = useState(false);
+      return (
+        <main>
+          <h1>Başlık</h1>
+          <input aria-label="Sonraki alan" />
+          {!done && (
+            <button
+              onClick={() =>
+                void a.run(async () => ({ ok: true, data: 1 }), {
+                  onOk: () => {
+                    setDone(true);
+                    document.querySelector<HTMLElement>('input')?.focus();
+                  },
+                })
+              }
+            >
+              Gönder
+            </button>
+          )}
+        </main>
+      );
+    }
+    const { user } = renderUi(wrap(<Own />));
+    await user.click(screen.getByRole('button', { name: 'Gönder' }));
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(screen.getByLabelText('Sonraki alan')).toHaveFocus();
+  });
+
+  it('odak: focusTarget verilirse kurtarma oraya gider; false ise kapalıdır', async () => {
+    function Custom({ off }: { off?: boolean }) {
+      const a = useAction();
+      const [done, setDone] = useState(false);
+      return (
+        <main>
+          <h1>Başlık</h1>
+          <p id="ozel">Özel hedef</p>
+          {!done && (
+            <button
+              onClick={() =>
+                void a.run(async () => ({ ok: true, data: 1 }), {
+                  onOk: () => setDone(true),
+                  focusTarget: off ? false : () => document.getElementById('ozel'),
+                })
+              }
+            >
+              Gönder
+            </button>
+          )}
+        </main>
+      );
+    }
+    const first = renderUi(wrap(<Custom />));
+    await first.user.click(screen.getByRole('button', { name: 'Gönder' }));
+    await waitFor(() => expect(document.getElementById('ozel')).toHaveFocus());
+    first.unmount();
+    const second = renderUi(wrap(<Custom off />));
+    await second.user.click(screen.getByRole('button', { name: 'Gönder' }));
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(document.body).toHaveFocus();
   });
 });

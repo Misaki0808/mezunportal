@@ -78,4 +78,51 @@ describe('Toast', () => {
     expect(() => renderUi(<Trigger />)).toThrow();
     spy.mockRestore();
   });
+
+  it('aynı ileti ardışık gelirse iki kutu yığılmaz; süre yeniden başlar', async () => {
+    const { user } = renderUi(
+      <ToastProvider>
+        <Trigger />
+      </ToastProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Göster' }));
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+    await user.click(screen.getByRole('button', { name: 'Göster' }));
+    expect(screen.getAllByText('Kaydedildi')).toHaveLength(1);
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+    expect(screen.getByText('Kaydedildi')).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(2200);
+    });
+    expect(screen.queryByText('Kaydedildi')).not.toBeInTheDocument();
+  });
+
+  it('farklı iletiler yığılır', async () => {
+    function Two() {
+      const toast = useToast();
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            toast.show({ message: 'Birinci' });
+            toast.show({ message: 'İkinci' });
+          }}
+        >
+          İkisi
+        </button>
+      );
+    }
+    const { user } = renderUi(
+      <ToastProvider>
+        <Two />
+      </ToastProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'İkisi' }));
+    expect(screen.getByText('Birinci')).toBeInTheDocument();
+    expect(screen.getByText('İkinci')).toBeInTheDocument();
+  });
 });

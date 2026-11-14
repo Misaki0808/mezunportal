@@ -213,6 +213,37 @@ describe('InboxList: okundu işaretleme', () => {
     expect(screen.getByText('Okunmamış bildirimin yok.')).toBeVisible();
   });
 
+  it('"Hepsini okundu yap" sonrası odak BODY\'ye düşmez: sayfa başlığına gider', async () => {
+    const { user } = renderUi(
+      <main>
+        <ToastProvider>
+          <InboxList initial={page([group({ unread: 2 })])} today={TODAY} />
+        </ToastProvider>
+      </main>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Hepsini okundu yap' }));
+    expect(await screen.findByText('Bildirimlerin okundu olarak işaretlendi.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Hepsini okundu yap' })).toBeDisabled();
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 1, name: 'Bildirimler' })).toHaveFocus(),
+    );
+  });
+
+  it('"Hepsini okundu yap" hata verirse düğme açık kalır ve odak onda durur', async () => {
+    mocks.markAll.mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+    const { user } = renderUi(
+      <main>
+        <ToastProvider>
+          <InboxList initial={page([group({ unread: 2 })])} today={TODAY} />
+        </ToastProvider>
+      </main>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Hepsini okundu yap' }));
+    expect(await screen.findByText(SERVER_ERROR)).toBeVisible();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(screen.getByRole('button', { name: 'Hepsini okundu yap' })).toHaveFocus();
+  });
+
   it('çift tıklama tek istek gönderir', async () => {
     let release!: () => void;
     mocks.markAll.mockImplementation(
