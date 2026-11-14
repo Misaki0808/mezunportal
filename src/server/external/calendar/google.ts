@@ -32,8 +32,10 @@ const CONFERENCE_POLL_DELAY_MS = 1_000;
 export type GoogleCalendarDeps = {
   clientId: string;
   clientSecret: string;
-  /** Yenileme jetonu (düz metin, bellekte kısa ömürlü). Bağlı değilse `null`; çözülemiyorsa fırlatabilir (bağlı değil sayılır). */
+  /** Yenileme jetonu (düz metin, bellekte kısa ömürlü). Bağlı değilse ya da jeton çözülemiyorsa `null`; fırlatırsa geçici altyapı hatasıdır (yeniden denenir). */
   loadRefreshToken: () => Promise<string | null>;
+  /** Ayrı süreçteki önbellek de bağlantı kesilince eski erişim jetonunu kullanamaz. */
+  isConnected?: () => Promise<boolean>;
   /** Yenileme jetonu Google tarafından reddedildi (`invalid_grant`): bağlantı "yeniden bağla" durumuna alınır. */
   onTokenRejected: () => Promise<void>;
   fetchImpl?: typeof fetch;
@@ -101,7 +103,9 @@ export function createGoogleCalendar(deps: GoogleCalendarDeps): CalendarPort {
     try {
       refreshToken = await deps.loadRefreshToken();
     } catch {
-      refreshToken = null;
+      // Okuyucu çözülemeyen jetonu `null` ile bildirir (deposu bunu yapar); fırlatan, geçici altyapı (veritabanı) hatasıdır:
+      // kalıcı "bağlı değil" değil, yeniden denenebilir (kart 377).
+      throw new CalendarError('CALENDAR_UNAVAILABLE', true);
     }
     if (!refreshToken) throw new CalendarError('CALENDAR_NOT_CONNECTED', false);
     const response = await send(
@@ -142,6 +146,19 @@ export function createGoogleCalendar(deps: GoogleCalendarDeps): CalendarPort {
   }
 
   async function accessToken(signal: AbortSignal | undefined, force = false): Promise<string> {
+    if (deps.isConnected) {
+      let connected: boolean;
+      try {
+        connected = await deps.isConnected();
+      } catch {
+        // Geçici veritabanı hatası bağlantının kesildiği anlamına gelmez: kalıcı "bağlı değil" değil, yeniden denenebilir (kart 377).
+        throw new CalendarError('CALENDAR_UNAVAILABLE', true);
+      }
+      if (!connected) {
+        cached = null;
+        throw new CalendarError('CALENDAR_NOT_CONNECTED', false);
+      }
+    }
     if (!force && cached && cached.expiresAt - TOKEN_SKEW_MS > now()) return cached.token;
     // Tek uçuş: eşzamanlı çağrılar aynı yenilemeyi bekler (Google'a gereksiz istek ve yarış yok).
     inflight ??= refresh(signal).finally(() => {

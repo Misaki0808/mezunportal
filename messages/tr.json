@@ -1696,7 +1696,8 @@
           }
         }
       }
-    }
+    },
+    "erasedPersonalText": "Hesap silindiği için temizlendi."
   },
   "onboarding": {
     "eyebrow": "SANA ÖZEL BİR BAŞLANGIÇ",

@@ -113,6 +113,8 @@ it('sürüm 2: sahibin yeni kayıtları dolu ve doğru değerlerle, başkasını
     data: { targetType: 'EXPERIENCE', targetId: experience.id, reporterId: other, reason: secret },
   });
   // Dış hesap: başkası bağladıysa owner'ın dökümünde yok; owner bağlayınca etiket var, jeton yok.
+  // Sağlayıcı başına tek satır: başka test dosyalarının bıraktığı bağlantı bu testi bozmasın.
+  await db.integrationConnection.deleteMany({});
   await db.integrationConnection.create({
     data: {
       provider: 'GOOGLE_CALENDAR',
