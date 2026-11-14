@@ -815,6 +815,7 @@
       "goalsLabel": "Hedeflerin",
       "skillAdd": "Beceri ekle",
       "skillHint": "En az 2 harf yaz; öneriler çıkar.",
+      "summaryHint": "Telefon ve e-posta yazma; iletişim bilgilerini Gizlilik ayarlarından yönetirsin.",
       "skillSuggestions": "Öneriler",
       "skillRemove": "{name} becerisini kaldır",
       "skillAddButton": "Ekle",
@@ -2624,7 +2625,7 @@
     "detail": {
       "eyebrow": "RANDEVU",
       "back": "Randevularım",
-      "with": "{name} ile",
+      "with": "{name} ile randevu",
       "when": "Zaman",
       "mode": "Biçim",
       "location": "Yer",

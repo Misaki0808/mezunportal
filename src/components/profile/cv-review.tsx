@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import type {
   ApplyCvInput,
@@ -53,6 +53,19 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
   const [pending, setPending] = useState<'apply' | 'discard'>();
   const locked = useRef(false);
   const editFormId = useId();
+  // Karar verilince kalemin düğmeleri yer değiştirir (Kabul/Düzelt/Reddet → Kararı geri al). "Kabul et" ile "Kararı geri al"
+  // aynı yerdeki ilk düğme olduğundan React onu yeniden kullanır ve odak kalır; "Düzelt" ve "Reddet" ise kalkar. Odak, o kalemin
+  // "Kararı geri al" düğmesine taşınır, sayfa başına düşmez.
+  const focusUndoOf = useRef<string | null>(null);
+  useEffect(() => {
+    const key = focusUndoOf.current;
+    if (!key) return;
+    focusUndoOf.current = null;
+    const row = Array.from(document.querySelectorAll<HTMLElement>('[data-cv-item]')).find(
+      (element) => element.dataset.cvItem === key,
+    );
+    row?.querySelector<HTMLElement>('[data-cv-undo]')?.focus();
+  }, [decisions]);
 
   const accepted = Object.entries(decisions).filter(([, decision]) => decision.kind === 'accept');
 
@@ -198,6 +211,7 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
                 return (
                   <li
                     key={item.key}
+                    data-cv-item={item.key}
                     className={
                       'rounded-card border bg-bg p-4 shadow-card ' +
                       (group === 'CONFLICT' ? 'border-warning' : 'border-border')
@@ -293,14 +307,21 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
                         </Button>
                         <Button
                           variant="secondary"
-                          onClick={() => decide(item.key, { kind: 'reject', overwrite: false })}
+                          onClick={() => {
+                            focusUndoOf.current = item.key;
+                            decide(item.key, { kind: 'reject', overwrite: false });
+                          }}
                         >
                           {t('reject')}
                         </Button>
                       </div>
                     ) : (
                       <div className="mt-2">
-                        <Button variant="ghost" onClick={() => decide(item.key, undefined)}>
+                        <Button
+                          variant="ghost"
+                          data-cv-undo=""
+                          onClick={() => decide(item.key, undefined)}
+                        >
                           {t('undo')}
                         </Button>
                       </div>
@@ -370,6 +391,7 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
                 values,
                 overwrite: editing.status === 'CONFLICT',
               });
+              focusUndoOf.current = editing.key;
               setEditing(undefined);
             }}
           />

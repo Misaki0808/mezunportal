@@ -5,11 +5,7 @@ import { listMyReferrals } from '@/server/actions/referrals';
 import { requirePageVerifiedMember as requireVerifiedMember } from '@/server/permissions';
 export const dynamic = 'force-dynamic';
 export default async function MyReferralsPage() {
-  const guarded = await guardPage(
-    'page.myReferrals',
-    () => requireVerifiedMember(),
-    'AUTH_FORBIDDEN',
-  );
+  const guarded = await guardPage('page.myReferrals', () => requireVerifiedMember());
   if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
   const actor = guarded.value;
   const result = await listMyReferrals({});

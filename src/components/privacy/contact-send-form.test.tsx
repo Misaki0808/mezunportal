@@ -39,3 +39,34 @@ it('profil iletişiminde çift gönderim tek istek ve ağ hatasında mesaj korun
   expect(note).toHaveValue('Merhaba');
   expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
 });
+it('talep gönderilince odak kalkan formdan sonuç metnine taşınır', async () => {
+  const { sendContactRequest } = await import('@/server/actions/contact-request');
+  const { fireEvent, waitFor } = await import('@testing-library/react');
+  vi.mocked(sendContactRequest).mockResolvedValueOnce({ ok: true, data: {} } as never);
+  renderUi(
+    <ToastProvider>
+      <ContactSendForm targetUserId="target" requestableFields={['EMAIL']} />
+    </ToastProvider>,
+  );
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  fireEvent.submit(screen.getByRole('button', { name: 'Talep gönder' }).closest('form')!);
+  const sent = await screen.findByText(/Yanıtı Gönderilen kutusundan/);
+  await waitFor(() => expect(sent).toHaveFocus());
+});
+it('talep gönderilemezse form yerinde kalır ve odak taşınmaz', async () => {
+  const { sendContactRequest } = await import('@/server/actions/contact-request');
+  const { fireEvent } = await import('@testing-library/react');
+  vi.mocked(sendContactRequest).mockResolvedValueOnce({
+    ok: false,
+    errorCode: 'SERVER_UNEXPECTED',
+  } as never);
+  renderUi(
+    <ToastProvider>
+      <ContactSendForm targetUserId="target" requestableFields={['EMAIL']} />
+    </ToastProvider>,
+  );
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  fireEvent.submit(screen.getByRole('button', { name: 'Talep gönder' }).closest('form')!);
+  expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
+  expect(screen.queryByText(/Yanıtı Gönderilen kutusundan/)).toBeNull();
+});

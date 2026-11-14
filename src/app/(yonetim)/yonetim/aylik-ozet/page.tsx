@@ -12,11 +12,7 @@ export default async function MonthlyDigestPreview() {
   const admin = await guardPage('page.adminDigestAccess', hasAdminAccessStrict);
   if (!admin.ok) return <ErrorState errorCode={admin.errorCode} />;
   if (!admin.value) return <ErrorState errorCode="AUTH_FORBIDDEN" />;
-  const guarded = await guardPage(
-    'page.adminDigest',
-    () => requireVerifiedMember(),
-    'AUTH_FORBIDDEN',
-  );
+  const guarded = await guardPage('page.adminDigest', () => requireVerifiedMember());
   if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
   const actor = guarded.value;
   const t = await getTranslations('monthlyDigest');
