@@ -19,6 +19,7 @@ import type { ActionResult } from '@/contracts/result';
 import {
   Button,
   Field,
+  FieldAnnounceContext,
   Input,
   Modal,
   PageHeader,
@@ -67,7 +68,19 @@ type Props = {
 const MAX_LIST = 20;
 const SCALAR_TEXT: readonly FieldKey[] = ['organizationName', 'country', 'city'];
 
-export function ExperienceForm({ departments, initial, save, submit }: Props) {
+/**
+ * Alan hataları sessizdir (`aria-describedby` ile bağlı, ilk hatalı alana odak gider); duyuru tek özet uyarıdır
+ * (`form.fixErrors`). Aksi halde 8 alanlık formda "Bu alan zorunlu." sekiz ayrı `alert` olarak okunur (kart 352).
+ */
+export function ExperienceForm(props: Props) {
+  return (
+    <FieldAnnounceContext.Provider value={false}>
+      <ExperienceFormBody {...props} />
+    </FieldAnnounceContext.Provider>
+  );
+}
+
+function ExperienceFormBody({ departments, initial, save, submit }: Props) {
   const t = useTranslations('experiences');
   const errorsT = useTranslations('errors.codes');
   const [state, setState] = useState<FormState>(initial?.state ?? emptyState());

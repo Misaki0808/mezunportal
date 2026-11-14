@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 
 import type { ActionFailure, ActionResult } from '@/contracts/result';
 
+import { captureFocus, rescueFocus } from './focus-rescue';
 import { useToast } from './toast';
 
 export type RunOptions<T> = {
@@ -14,6 +15,11 @@ export type RunOptions<T> = {
   onOk?: (data: T) => void | Promise<void>;
   /** Başarısızlıkta çalışır (alan hatalarını ekrana işlemek için). Girilen veri DOKUNULMAZ: temizlemek ekranın işidir. */
   onFailure?: (failure: ActionFailure) => void;
+  /**
+   * Eylemden sonra odak kaybolursa (düğme kalktı, pasifleşti, sayfa değişti) nereye gideceği; verilmezse sayfanın
+   * `[data-focus-result]` öğesi, yoksa `main h1` (`focus-rescue.ts`). `false`: kurtarma kapalı.
+   */
+  focusTarget?: (() => HTMLElement | null) | false;
 };
 
 /**
@@ -36,6 +42,7 @@ export function useAction() {
     options: RunOptions<T> = {},
   ): Promise<boolean> {
     if (lock.current) return false;
+    const trigger = options.focusTarget === false ? null : captureFocus();
     lock.current = true;
     setBusy(true);
     setFailure(null);
@@ -71,6 +78,8 @@ export function useAction() {
     } finally {
       lock.current = false;
       setBusy(false);
+      // Odak eylem sırasında/sonunda kaybolduysa (BODY) klavye kullanıcısı sayfa başına düşmesin.
+      rescueFocus(trigger, options.focusTarget ? { target: options.focusTarget } : {});
     }
   }
 

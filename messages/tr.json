@@ -1006,6 +1006,8 @@
       "privacy": "Belgen bölüm yöneticisi tarafından incelenir ve karar verildiğinde silinir.",
       "department": "Bölüm",
       "departmentPlaceholder": "Bölüm seç",
+      "departmentError": "Bölümünü listeden seç.",
+      "yearError": "1950 ile gelecek yıl arasında bir mezuniyet yılı yaz.",
       "year": "Mezuniyet yılı",
       "file": "Mezun belgesi",
       "fileHint": "Yalnız PDF · en fazla 5 MB",
