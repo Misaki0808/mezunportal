@@ -11,6 +11,7 @@ import {
   SKILLS_MIN_FOR_COMPLETION,
   SOCIAL_LINK_KINDS,
   PROFILE_TEXT_LIMITS,
+  updateProfileBasicsSchema,
   normalizeLinkedinUrl,
   normalizeSocialLink,
   type AddProfileSkillInput,
@@ -43,6 +44,7 @@ import {
   useAction,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
+import { hasPersonalDataPattern } from '@/lib/personal-data';
 
 import { EntryEditor } from './entry-editor';
 import { EntrySummary } from './entry-summary';
@@ -665,22 +667,26 @@ function BasicsForm({
   const [city, setCity] = useState(profile.city ?? '');
   const [summary, setSummary] = useState(profile.summary ?? '');
   const [goals, setGoals] = useState(profile.goals ?? '');
-  const tooLong = (value: string, max: number) => value.trim().length > max;
   const e = useTranslations('profile.entryErrors');
-  const bad = {
-    headline: tooLong(headline, PROFILE_TEXT_LIMITS.headline),
-    city: tooLong(city, PROFILE_TEXT_LIMITS.city),
-    summary: tooLong(summary, PROFILE_TEXT_LIMITS.summary),
-    goals: tooLong(goals, PROFILE_TEXT_LIMITS.goals),
-  };
+  const codes = useTranslations('errors.codes');
+  const parsed = updateProfileBasicsSchema.safeParse({ headline, city, summary, goals });
+  const bad: Partial<Record<'headline' | 'summary' | 'city' | 'goals', string>> = {};
+  if (!parsed.success)
+    for (const issue of parsed.error.issues) {
+      const field = issue.path[0] as keyof typeof bad;
+      bad[field] ??=
+        issue.message === 'PROFILE_TEXT_PERSONAL_DATA'
+          ? codes('PROFILE_TEXT_PERSONAL_DATA')
+          : e('tooLong');
+    }
   return (
     <form
       id={formId}
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        if (Object.values(bad).some(Boolean)) return;
-        onSave({ headline, city, summary, goals });
+        if (!parsed.success) return;
+        onSave(parsed.data);
       }}
       className="flex flex-col gap-4"
     >
@@ -689,7 +695,7 @@ function BasicsForm({
           {serverError}
         </p>
       )}
-      <Field label={f('headline')} error={bad.headline ? e('tooLong') : undefined}>
+      <Field label={f('headline')} error={bad.headline}>
         {(control) => (
           <Input
             {...control}
@@ -699,16 +705,12 @@ function BasicsForm({
           />
         )}
       </Field>
-      <Field label={f('city')} error={bad.city ? e('tooLong') : undefined}>
+      <Field label={f('city')} error={bad.city}>
         {(control) => (
           <Input {...control} value={city} onChange={(event) => setCity(event.target.value)} />
         )}
       </Field>
-      <Field
-        label={f('summary')}
-        hint={t('summaryHint')}
-        error={bad.summary ? e('tooLong') : undefined}
-      >
+      <Field label={f('summary')} hint={t('summaryHint')} error={bad.summary}>
         {(control) => (
           <Textarea
             {...control}
@@ -718,7 +720,7 @@ function BasicsForm({
           />
         )}
       </Field>
-      <Field label={t('goalsLabel')} error={bad.goals ? e('tooLong') : undefined}>
+      <Field label={t('goalsLabel')} error={bad.goals}>
         {(control) => (
           <Textarea
             {...control}
@@ -901,6 +903,8 @@ function SkillsBlock({
   onToggle: () => void;
 }) {
   const t = useTranslations('profile.my');
+  const codes = useTranslations('errors.codes');
+  const [personalData, setPersonalData] = useState(false);
   const [name, setName] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   // Kaldırılan becerinin düğmesi yok olur; odak sıradaki (yoksa önceki) beceriye, hiç kalmadıysa bölüm başlığına geçer.
@@ -941,6 +945,11 @@ function SkillsBlock({
   }, [name, actions]);
 
   async function add(value: string) {
+    if (hasPersonalDataPattern(value)) {
+      setPersonalData(true);
+      return;
+    }
+    setPersonalData(false);
     const failed = await run(
       () => actions.addSkill({ name: value }),
       () => {
@@ -991,9 +1000,20 @@ function SkillsBlock({
           }}
           className="flex flex-col gap-3"
         >
-          <Field label={t('skillAdd')} hint={t('skillHint')}>
+          <Field
+            label={t('skillAdd')}
+            hint={t('skillHint')}
+            error={personalData ? codes('PROFILE_TEXT_PERSONAL_DATA') : undefined}
+          >
             {(control) => (
-              <Input {...control} value={name} onChange={(event) => setName(event.target.value)} />
+              <Input
+                {...control}
+                value={name}
+                onChange={(event) => {
+                  setName(event.target.value);
+                  setPersonalData(false);
+                }}
+              />
             )}
           </Field>
           {name.trim().length >= 2 && suggestions.length > 0 && (

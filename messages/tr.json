@@ -315,7 +315,8 @@
       "STORY_IDENTITY_LEAK": "Hikâyendeki başka kişilere ait adları ve iletişim bilgilerini çıkarıp tekrar dene.",
       "STORY_INVALID_STATE": "Bu işlem için hikâyenin durumunu ve yayın iznini kontrol et.",
       "STORY_MONTH_ALREADY_SELECTED": "Bu bölüm için bu ayın mezunu zaten seçildi.",
-      "CV_LINKEDIN_UNAVAILABLE": "LinkedIn PDF içe aktarma henüz açık değil. Normal CV yükleyebilir ya da bilgilerini elle girebilirsin."
+      "CV_LINKEDIN_UNAVAILABLE": "LinkedIn PDF içe aktarma henüz açık değil. Normal CV yükleyebilir ya da bilgilerini elle girebilirsin.",
+      "PROFILE_TEXT_PERSONAL_DATA": "Bu alana telefon, e-posta veya kimlik numarası yazma. İletişim bilgilerini Gizlilik ayarlarından yönet."
     }
   },
   "nav": {
@@ -1505,7 +1506,8 @@
       "rejectTitle": "Talebi reddet",
       "rejectDescription": "Bu talep reddedilecek; istediği bilgiler bu talep üzerinden paylaşılmayacak. Devam etmek istiyor musun?",
       "withdrawTitle": "Talebi geri çek",
-      "withdrawDescription": "Bekleyen talebin geri çekilecek; karşı taraf bu talebe artık yanıt veremeyecek. Devam etmek istiyor musun?"
+      "withdrawDescription": "Bekleyen talebin geri çekilecek; karşı taraf bu talebe artık yanıt veremeyecek. Devam etmek istiyor musun?",
+      "pendingRequest": "Bu kişiye bekleyen bir isteğin var."
     },
     "delete": {
       "title": "Hesabını silmeden önce",

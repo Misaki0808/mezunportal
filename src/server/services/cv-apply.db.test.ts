@@ -984,3 +984,20 @@ describe('beceriler Tag (SKILL) olarak yazılır', () => {
     expect((await getCvReview(kit.deps, actor, id)).items).toEqual([]);
   });
 });
+
+it('CV onayı profil iletişim biçimi kuralını atlayamaz; çok kalemli karar atomik reddedilir', async () => {
+  const { userId, actor, kit, id } = await parsedUpload(
+    cv({
+      profile: { headline: null, summary: 'ornek@example.org', city: null },
+      languages: [{ name: 'İngilizce', level: 'B2' }],
+    }),
+  );
+  const review = await getCvReview(kit.deps, actor, id);
+  const before = await counts(userId);
+  await expectCode(
+    applyCv(kit.deps, actor, parseApply(id, accept(review.items.map((item) => item.key)))),
+    'PROFILE_TEXT_PERSONAL_DATA',
+  );
+  expect(await counts(userId)).toEqual(before);
+  expect((await db.cvUpload.findUniqueOrThrow({ where: { id } })).status).toBe('PARSED');
+});

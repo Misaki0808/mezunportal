@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
+import { hasPersonalDataPattern } from '@/lib/personal-data';
 
 import {
   CV_LIMITS,
@@ -215,7 +216,10 @@ const optionalText = (max: number) =>
     .trim()
     .max(max, { error: INVALID })
     .transform((value) => (value === '' ? null : value))
-    .nullable();
+    .nullable()
+    .refine((value) => value === null || !hasPersonalDataPattern(value), {
+      error: 'PROFILE_TEXT_PERSONAL_DATA',
+    });
 
 /** Verilmeyen alan değişmez; `null` ya da boş metin alanı temizler. En az bir alan verilmelidir. */
 export const updateProfileBasicsSchema = z
@@ -254,28 +258,43 @@ export const PROFILE_SKILL_LIMIT = CV_LIMITS.skills;
  * Kalem ekle/güncelle: `id` yoksa yeni kalem (kaynak `MANUAL`), varsa kendi kalemin güncellenir ve "elle
  * düzeltilmiş" olur. Değerler CV ayrıştırmasıyla AYNI şemalardır (tarihler `YYYY` / `YYYY-MM`).
  */
-export const saveProfileEntrySchema = z.discriminatedUnion(
-  'section',
-  [
-    z
-      .object({ section: z.literal('EDUCATION'), id: id.optional(), values: parsedEducationSchema })
-      .strict(),
-    z
-      .object({ section: z.literal('POSITION'), id: id.optional(), values: parsedPositionSchema })
-      .strict(),
-    z
-      .object({ section: z.literal('LANGUAGE'), id: id.optional(), values: parsedLanguageSchema })
-      .strict(),
-    z
-      .object({
-        section: z.literal('CERTIFICATION'),
-        id: id.optional(),
-        values: parsedCertificationSchema,
-      })
-      .strict(),
-  ],
-  { error: INVALID },
-);
+export const saveProfileEntrySchema = z
+  .discriminatedUnion(
+    'section',
+    [
+      z
+        .object({
+          section: z.literal('EDUCATION'),
+          id: id.optional(),
+          values: parsedEducationSchema,
+        })
+        .strict(),
+      z
+        .object({ section: z.literal('POSITION'), id: id.optional(), values: parsedPositionSchema })
+        .strict(),
+      z
+        .object({ section: z.literal('LANGUAGE'), id: id.optional(), values: parsedLanguageSchema })
+        .strict(),
+      z
+        .object({
+          section: z.literal('CERTIFICATION'),
+          id: id.optional(),
+          values: parsedCertificationSchema,
+        })
+        .strict(),
+    ],
+    { error: INVALID },
+  )
+  .superRefine((input, ctx) => {
+    for (const [field, value] of Object.entries(input.values)) {
+      if (typeof value === 'string' && hasPersonalDataPattern(value))
+        ctx.addIssue({
+          code: 'custom',
+          path: ['values', field],
+          message: 'PROFILE_TEXT_PERSONAL_DATA',
+        });
+    }
+  });
 export type SaveProfileEntryInput = z.input<typeof saveProfileEntrySchema>;
 
 export const deleteProfileEntrySchema = z
@@ -284,7 +303,13 @@ export const deleteProfileEntrySchema = z
 export type DeleteProfileEntryInput = z.input<typeof deleteProfileEntrySchema>;
 
 /** Serbest metin beceri: normalleştirilir (büyük/küçük harf, Türkçe harf), aynı beceri ikinci kez eklenmez. */
-export const addProfileSkillSchema = z.object({ name: parsedSkillSchema }).strict();
+export const addProfileSkillSchema = z
+  .object({
+    name: parsedSkillSchema.refine((value) => !hasPersonalDataPattern(value), {
+      error: 'PROFILE_TEXT_PERSONAL_DATA',
+    }),
+  })
+  .strict();
 export type AddProfileSkillInput = z.input<typeof addProfileSkillSchema>;
 export const removeProfileSkillSchema = z.object({ tagId: id }).strict();
 export type RemoveProfileSkillInput = z.input<typeof removeProfileSkillSchema>;
@@ -451,7 +476,7 @@ const linkErrors = [
 export const PROFILE_CONTENT_ACTION_ERRORS = {
   getMyProfile: [...authErrors],
   getProfile: [...memberErrors, 'VALIDATION_INVALID', 'RESOURCE_NOT_FOUND'],
-  updateProfileBasics: [...authErrors, 'VALIDATION_INVALID'],
+  updateProfileBasics: [...authErrors, 'VALIDATION_INVALID', 'PROFILE_TEXT_PERSONAL_DATA'],
   setSocialLinks: [...authErrors, 'VALIDATION_INVALID', ...linkErrors],
   setLinkedinUrl: [...authErrors, 'VALIDATION_INVALID', ...linkErrors],
   saveProfileEntry: [
@@ -459,9 +484,15 @@ export const PROFILE_CONTENT_ACTION_ERRORS = {
     'VALIDATION_INVALID',
     'RESOURCE_NOT_FOUND',
     'PROFILE_LIMIT_REACHED',
+    'PROFILE_TEXT_PERSONAL_DATA',
   ],
   deleteProfileEntry: [...authErrors, 'VALIDATION_INVALID', 'RESOURCE_NOT_FOUND'],
-  addProfileSkill: [...authErrors, 'VALIDATION_INVALID', 'PROFILE_LIMIT_REACHED'],
+  addProfileSkill: [
+    ...authErrors,
+    'VALIDATION_INVALID',
+    'PROFILE_LIMIT_REACHED',
+    'PROFILE_TEXT_PERSONAL_DATA',
+  ],
   removeProfileSkill: [...authErrors, 'VALIDATION_INVALID', 'RESOURCE_NOT_FOUND'],
   suggestSkills: [...authErrors, 'VALIDATION_INVALID'],
 } as const satisfies Record<string, readonly ErrorCode[]>;
