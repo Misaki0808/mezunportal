@@ -1,3 +1,4 @@
+import { unstable_rethrow } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
@@ -20,7 +21,10 @@ export default async function ExperienceDetailPage({
   const { id } = await params;
   const [detail, actor, t] = await Promise.all([
     requestExperienceDetail(id).catch(() => null),
-    requireUser().catch(() => null),
+    requireUser().catch((error: unknown) => {
+      unstable_rethrow(error);
+      return null;
+    }),
     getTranslations('experiences'),
   ]);
   if (!detail) return <ErrorState errorCode="SERVER_UNEXPECTED" />;

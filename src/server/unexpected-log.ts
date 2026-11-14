@@ -144,7 +144,7 @@ function kindOf(error: unknown): ErrorKind | undefined {
   return typeof message === 'string' ? MESSAGE_KINDS.get(message) : undefined;
 }
 
-function nameOf(error: unknown): string {
+export function safeErrorName(error: unknown): string {
   const name = error instanceof Error ? error.name : 'NonError';
   return NAMES.has(name) ? name : error instanceof Error ? 'Error' : 'NonError';
 }
@@ -168,7 +168,7 @@ export function unexpectedLogLine(
   return JSON.stringify({
     event: `${kind}.unexpected`,
     source: SOURCE.test(source) ? source : 'bilinmeyen',
-    errorName: nameOf(error),
+    errorName: safeErrorName(error),
     ...(code ? { errorCode: code } : {}),
     ...(driverCode ? { driverCode } : {}),
     ...(errorKind ? { errorKind } : {}),
