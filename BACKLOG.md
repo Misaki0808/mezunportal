@@ -1,6 +1,6 @@
 # BACKLOG.md — Güncel durum, açık işler ve kararlar
 
-Son güncelleme: **2026-11-13**. Tek durum belgesidir: güncel durum, açık kararlar, pilot kapıları,
+Son güncelleme: **2026-11-14**. Tek durum belgesidir: güncel durum, açık kararlar, pilot kapıları,
 teknik borç ve ertelenmiş işler. Tamamlanan madde silinir; geçmiş Git'tedir. Çalışma günlüğü
 tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararların gerekçesi
 `docs/decisions.md`'dedir.
@@ -17,11 +17,11 @@ hiçbiri geliştirmeyi durdurmaz; her biri ilgili işe gelince sorulur.
 
 ### Yakın hedef
 
-Kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon listesi (72 kutu, Git dışı
-`pm-handoff/faz2-kapanis/`; güncel main'e göre yenilendi). R2'nin provaları (13 Kas: masaüstü Chromium 390 px ve Android emülatör) ilk 70 kutudan
-64'ünü geçirdi, 0 kaldı; 6 kutu gerçek cihaz ister: telefona ağ adresiyle açma, QR'ı telefon kamerasıyla okutma, ana ekrana ekleme, iPhone çentik ve
-güvenli alan, iPhone ekran klavyesi ve Safari'de Tab. Bulgular PM'de karta bölünür ya da bu belgeye borç olarak yazılır. Hesap isteyen işler ile canlıya alım ve pilot kararları
-kullanıcı gündeme getirince ele alınır. Faz 3 pilottan sonra konuşulur.
+Kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon listesi (84 kutu, Git dışı
+`pm-handoff/faz2-kapanis/`). Masaüstü Chromium 390 px ve Android emülatör provalarında ilk 70 kutunun 64'ü geçti, 6'sı gerçek cihaz bekliyor;
+"0. İlk giriş" bölümündeki 12 kutunun tamamı gerçek e-posta bağlantısıyla geçti. Gerçek cihazda telefona ağ adresiyle açma, QR'ı telefon kamerasıyla
+okutma, ana ekrana ekleme, iPhone çentik ve güvenli alan, iPhone ekran klavyesi ve Safari'de Tab denenir. Bulgular PM'de karta bölünür ya da bu
+belgeye borç olarak yazılır. Hesap isteyen işler ile canlıya alım ve pilot kararları kullanıcı gündeme getirince ele alınır. Faz 3 pilottan sonra konuşulur.
 
 ### Bilinen kısıtlar
 
@@ -67,9 +67,9 @@ Açık PM kararı yok.
   bekliyor". Veri sorumlusu, sağlayıcı adı ve hukuk görüşü alanları köşeli parantezle boştur (K-03, K-04, K-05); kod aynı sürümü kullanır
   (`src/contracts/privacy.ts`) ve ekranda metin taslak diye işaretlidir. Biter: alanlar dolar, hoca onaylar, üniversite KVKK birimi ya da bir
   hukukçu okur, onaylı sürüm köke taşınır ve sürüm numarası artar (kullanıcılar yeniden onay verir). Önkoşul K-03.
-- [ ] **PILOT-TEST** Test planı iki belgededir: `docs/engineering.md` "Faz 2 deneme rehberi" ve telefon listesi (70 kutu, Git dışı); `docs/faz1-plan.md`'ya
-  ayrı bölüm yazılmadı. R2 provaları geçti (64 geçti, 0 kaldı, 6 gerçek cihaz bekliyor, bkz. "Yakın hedef"). Biter: kullanıcı turu bir kez koşar,
-  bulgular kapanır ya da borç yazılır. Canlıda ayrıca P1-18 kabul adımları koşulur (PILOT-DEPLOY).
+- [ ] **PILOT-TEST** Test planı iki belgededir: `docs/engineering.md` "Faz 2 deneme rehberi" ve telefon listesi (84 kutu, Git dışı); `docs/faz1-plan.md`'ya
+  ayrı bölüm yazılmadı. Ön provalar ve gerçek cihazda bekleyen adımlar için bkz. "Yakın hedef". Biter: kullanıcı turu bir kez koşar, bulgular kapanır
+  ya da borç yazılır. Canlıda ayrıca P1-18 kabul adımları koşulur (PILOT-DEPLOY).
 - [ ] **PILOT-DEPLOY** Kod tarafı hazır: çok aşamalı `Dockerfile` (web ve worker aynı imajdan), açılışta `migrate deploy` (seed yok),
   `/api/health` (durum, ortam, commit, DB), `scripts/backup.sh` ve `scripts/restore.sh`, toplu davet, prod'da test girişi ve `/ui-ornekleri` 404, yerel imaj
   provası `docker-compose.image.yml`; rehber `docs/engineering.md` "Canlıya alım". Kalan: sunucu (K-02), canlı SMTP (K-05), gerçek yönetici ve
