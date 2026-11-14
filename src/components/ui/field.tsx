@@ -1,12 +1,19 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useId, useState } from 'react';
+import { createContext, useContext, useId, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { cn } from './cn';
 import { AlertIcon, InfoIcon } from './icons';
 import { IconButton } from './icon-button';
+
+/**
+ * Alan hatası varsayılan olarak `role="alert"` ile duyurulur. Çok alanlı formlar (deneyim formu) tek özet duyuru kullanıp
+ * alan hatalarını sessiz bırakmak için bağlamı `false` yapar: hata metni yine `aria-describedby` ile alana bağlıdır ve ilk
+ * hatalı alana odak gidince okunur; 8 alanlık bir formda "Bu alan zorunlu." sekiz kez duyurulmaz.
+ */
+export const FieldAnnounceContext = createContext(true);
 
 /** `Field`'ın kontrole verdiği özellikler: `<Input {...props} />` olarak yayılır. */
 export type FieldControlProps = {
@@ -41,6 +48,7 @@ export function Field({ label, hint, help, error, required, className, children 
   const helpId = `${baseId}-help`;
   const errorId = `${baseId}-error`;
   const [helpOpen, setHelpOpen] = useState(false);
+  const announce = useContext(FieldAnnounceContext);
 
   const describedBy =
     [hint && hintId, help && helpOpen && helpId, error && errorId].filter(Boolean).join(' ') ||
@@ -93,7 +101,11 @@ export function Field({ label, hint, help, error, required, className, children 
         </p>
       )}
       {error && (
-        <p id={errorId} role="alert" className="flex items-start gap-1.5 text-sm text-danger">
+        <p
+          id={errorId}
+          role={announce ? 'alert' : undefined}
+          className="flex items-start gap-1.5 text-sm text-danger"
+        >
           <AlertIcon className="mt-0.5 shrink-0" width={16} height={16} />
           <span>{error}</span>
         </p>

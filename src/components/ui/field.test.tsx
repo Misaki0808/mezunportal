@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
-import { Field } from './field';
+import { Field, FieldAnnounceContext } from './field';
 import { Input } from './input';
 
 describe('Field', () => {
@@ -74,5 +74,19 @@ describe('Field', () => {
     await user.click(toggle);
     expect(help).toHaveAttribute('hidden');
     expect(input).toHaveAccessibleDescription('Kısa ipucu');
+  });
+
+  it('duyuru bağlamı kapalıysa hata metni görünür ve alana bağlı kalır ama kendi başına duyurulmaz', () => {
+    renderUi(
+      <FieldAnnounceContext.Provider value={false}>
+        <Field label="Şehir" error="Bu alan zorunlu.">
+          {(control) => <Input {...control} />}
+        </Field>
+      </FieldAnnounceContext.Provider>,
+    );
+    const input = screen.getByLabelText('Şehir');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAccessibleDescription('Bu alan zorunlu.');
   });
 });
