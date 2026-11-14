@@ -11,15 +11,19 @@ import { logAuthFailure } from '../auth/log';
  * Better Auth veritabanı oturumunu çerezden çözer; çerez önbelleği kapalıdır (askı/silme anında etkili).
  *
  * FAIL-CLOSED: gerçek yapılandırma ya da çözümleme hatasında `null` döner (oturumsuz); hata türü günlüğe
- * yazılır, ayrıntısı yazılmaz. Next kontrol sinyalleri yeniden fırlatılır. Burada yalnız “kim” sorusu cevaplanır —
+ * yazılır, ayrıntısı yazılmaz. Sayfa kapısı altyapı hatasını ayırmak için `propagateUnexpected` ister; bu durumda
+ * günlük ve hata sonucu çağıran kapıya bırakılır. Next kontrol sinyalleri yeniden fırlatılır. Yalnız “kim” sorulur —
  * hesap durumu (askı/silinme) ve yetki `loadActor` + `rules/authorization` içindedir.
  */
-export async function getSessionUserId(): Promise<string | null> {
+export async function getSessionUserId(options?: {
+  propagateUnexpected?: boolean;
+}): Promise<string | null> {
   try {
     const session = await getAuth().api.getSession({ headers: await headers() });
     return session?.user.id ?? null;
   } catch (error) {
     unstable_rethrow(error);
+    if (options?.propagateUnexpected) throw error;
     logAuthFailure('getSession', error);
     return null;
   }

@@ -5,9 +5,11 @@ const guards = vi.hoisted(() => ({ requireUser: vi.fn(), requireAdmin: vi.fn() }
 vi.mock('@/server/permissions', () => ({
   ...guards,
   requireUserWithoutConsent: guards.requireUser,
+  requirePageUserWithoutConsent: guards.requireUser,
+  requirePageAdmin: guards.requireAdmin,
 }));
 
-import { hasAdminAccess } from './admin-access';
+import { hasAdminAccess, hasAdminAccessStrict } from './admin-access';
 
 describe('hasAdminAccess', () => {
   beforeEach(() => {
@@ -52,4 +54,17 @@ describe('hasAdminAccess', () => {
     expect(await hasAdminAccess()).toBe(true);
     expect(guards.requireAdmin).toHaveBeenCalledWith({ kind: 'SYSTEM' });
   });
+});
+
+it('sayfa kontrolü oturum altyapı hatasını yutmaz; gezinme görünürlüğü eski fail-closed durumda kalır', async () => {
+  const error = new Error('private');
+  guards.requireUser.mockRejectedValue(error);
+  await expect(hasAdminAccessStrict()).rejects.toBe(error);
+  expect(await hasAdminAccess()).toBe(false);
+});
+it('sayfa kontrolü yönetici kapsamı altyapı hatasını yutmaz', async () => {
+  const error = new Error('private');
+  guards.requireUser.mockResolvedValue({ facts: { grants: [{ scope: 'SYSTEM' }] } });
+  guards.requireAdmin.mockRejectedValue(error);
+  await expect(hasAdminAccessStrict()).rejects.toBe(error);
 });

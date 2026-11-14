@@ -1,11 +1,17 @@
+import { guardPage } from '@/server/permissions/page-guard';
 import { ErrorState } from '@/components/ui';
-import { requireVerifiedMember } from '@/server/permissions';
+import { requirePageVerifiedMember as requireVerifiedMember } from '@/server/permissions';
 import { listCvReviewRequests, getCvReviewSettings } from '@/server/actions/cv-review-request';
 import { ReviewInbox } from '@/components/cv-review/review-inbox';
 export const dynamic = 'force-dynamic';
 export default async function Page() {
-  const actor = await requireVerifiedMember().catch(() => null);
-  if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
+  const guarded = await guardPage(
+    'page.cvReview',
+    () => requireVerifiedMember(),
+    'AUTH_UNAUTHENTICATED',
+  );
+  if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
+  const actor = guarded.value;
   const student = actor.facts.memberships.some(
     (m) => m.role === 'STUDENT' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
   );

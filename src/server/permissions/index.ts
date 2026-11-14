@@ -20,6 +20,15 @@ const permissions = createPermissions({
   now: () => new Date(),
 });
 
+// Sayfa kapısında oturum altyapı hatası sessiz yetki reddine dönüşmesin.
+// Diğer çağıranların önceki fail-closed oturum davranışı değişmez.
+const pagePermissions = createPermissions({
+  db: getDb,
+  getSessionUserId: () => getSessionUserId({ propagateUnexpected: true }),
+  now: () => new Date(),
+});
+export const requirePageUserWithoutConsent = pagePermissions.requireUser;
+
 // Yalnız kimlik/kayıt ve kişinin kendi KVKK işlemleri bu korumayı açıkça kullanır.
 export const requireUserWithoutConsent = permissions.requireUser;
 
@@ -27,6 +36,13 @@ async function withConsent(actor: Actor): Promise<Actor> {
   await requireConsent(getDb(), actor.userId);
   return actor;
 }
+
+// Sayfa kapıları aynı yetki ve rıza kurallarını, yalnız hata aktarımı farklı olarak kullanır.
+export const requirePageVerifiedMember = async (filter?: MemberFilter) =>
+  withConsent(await pagePermissions.requireVerifiedMember(filter));
+export const requirePageAnyAdmin = async () => withConsent(await pagePermissions.requireAnyAdmin());
+export const requirePageAdmin = async (target: AdminTargetInput) =>
+  withConsent(await pagePermissions.requireAdmin(target));
 
 // Rol/yetki denetimi önce, güncel zorunlu onay denetimi hemen sonra yapılır.
 export const requireUser = async () => withConsent(await permissions.requireUser());

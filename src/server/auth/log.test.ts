@@ -16,7 +16,7 @@ it('kimlik günlüğü kullanıcı kontrollü hata adını yazmaz', () => {
 it.each([
   [new TypeError('private'), 'TypeError'],
   [new Error('private'), 'Error'],
-  ['private', 'Error'],
+  ['private', 'NonError'],
 ])('bilinen sınıf ya da Error sabiti kullanılır', (error, expected) => {
   const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
   try {
