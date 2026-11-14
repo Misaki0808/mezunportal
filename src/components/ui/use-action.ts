@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { ActionFailure, ActionResult } from '@/contracts/result';
 
-import { captureFocus, focusElement, rescueFocus, resultTarget } from './focus-rescue';
+import { captureFocus, rescueFocus } from './focus-rescue';
 import { useToast } from './toast';
 
 export type RunOptions<T> = {
@@ -38,24 +38,12 @@ export function useAction() {
   const lock = useRef(false);
   const mounted = useRef(true);
   const cancelFocus = useRef<(() => void) | undefined>(undefined);
-  const focusContext = useRef<{ trigger: HTMLElement; target: HTMLElement | null } | null>(null);
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
-      const context = cancelFocus.current ? focusContext.current : null;
-      cancelFocus.current?.();
-      cancelFocus.current = undefined;
-      focusContext.current = null;
-      if (context) {
-        // React yeni sayfayı aynı commit'te yerleştirirse, iptal edilmiş yoklamanın hedefini bir kez devral.
-        queueMicrotask(() => {
-          if (typeof document === 'undefined' || context.trigger.ownerDocument !== document) return;
-          if (context.trigger.isConnected || document.activeElement !== document.body) return;
-          const target = resultTarget(false);
-          if (target && target !== context.target) focusElement(target);
-        });
-      }
+      // Gezinmede yeni sayfanın başlığı gecikmeli gelebilir; başlamış kurtarma belge içinde sürer.
+      // Belge kapanır/değişirse rescueFocus kendi korumasıyla durur.
     };
   }, []);
 
@@ -67,7 +55,6 @@ export function useAction() {
     cancelFocus.current?.();
     cancelFocus.current = undefined;
     const trigger = options.focusTarget === false ? null : captureFocus();
-    focusContext.current = trigger ? { trigger, target: resultTarget(false) } : null;
     lock.current = true;
     setBusy(true);
     setFailure(null);

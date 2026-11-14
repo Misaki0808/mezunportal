@@ -263,31 +263,6 @@ describe('useAction', () => {
 });
 
 describe('odak kurtarma yaşam döngüsü', () => {
-  it('eylem sonrası bileşen kaldırılınca bekleyen yoklamayı iptal eder', async () => {
-    vi.useFakeTimers();
-    const timer = vi.spyOn(globalThis, 'setTimeout');
-    const clear = vi.spyOn(globalThis, 'clearTimeout');
-    try {
-      const view = renderUi(wrap(<Harness action={async () => ({ ok: true, data: { id: 1 } })} />));
-      const button = screen.getByRole('button', { name: 'Gönder' });
-      button.focus();
-      await act(async () => {
-        fireEvent.click(button);
-        await Promise.resolve();
-      });
-      const index = timer.mock.calls.findIndex(([, delay]) => delay === 60);
-      expect(index).toBeGreaterThanOrEqual(0);
-      const handle = timer.mock.results[index]?.value;
-      view.unmount();
-      expect(clear).toHaveBeenCalledWith(handle);
-    } finally {
-      vi.clearAllTimers();
-      timer.mockRestore();
-      clear.mockRestore();
-      vi.useRealTimers();
-    }
-  });
-
   it('bileşen bekleyen eylem bitmeden kalkarsa sonradan yoklama başlatmaz', async () => {
     vi.useFakeTimers();
     const timer = vi.spyOn(globalThis, 'setTimeout');

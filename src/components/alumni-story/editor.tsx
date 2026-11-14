@@ -45,8 +45,6 @@ export function StoryEditor({
     mounted.current = true;
     return () => {
       mounted.current = false;
-      cancelFocus.current?.();
-      cancelFocus.current = undefined;
     };
   }, []);
   function scheduleFocus(trigger: HTMLElement | null) {
