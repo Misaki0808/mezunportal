@@ -1,3 +1,4 @@
+import { unstable_rethrow } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { hasAdminAccess } from '@/components/layout/admin-access';
@@ -24,7 +25,10 @@ import { evaluateAccess } from '@/server/rules/authorization';
 export const dynamic = 'force-dynamic';
 
 export default async function AccountPage() {
-  const actor = await requireUser().catch(() => null);
+  const actor = await requireUser().catch((error: unknown) => {
+    unstable_rethrow(error);
+    return null;
+  });
   if (!actor) return <ErrorState errorCode="AUTH_UNAUTHENTICATED" />;
   const [
     state,
