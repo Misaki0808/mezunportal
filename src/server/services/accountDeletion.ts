@@ -253,13 +253,38 @@ export async function deleteAccount(
     await tx.account.deleteMany({ where: { userId } });
     // Bekleyen giriş bağlantıları (Better Auth `Verification`) silinen kişinin e-postasını taşır ve süre dolana kadar
     // kalırdı; hesap silme onları da iptal eder (kart 371). E-posta anonimleştirmeden ÖNCE okunmuştur.
-    await tx.verification.deleteMany({
+    const verificationCandidates = await tx.verification.findMany({
       where: {
         OR: [
           { identifier: { equals: user.email, mode: 'insensitive' } },
           { value: { contains: user.email, mode: 'insensitive' } },
         ],
       },
+      select: { id: true, identifier: true, value: true },
+    });
+    const normalizedEmail = user.email.toLowerCase();
+    const ownedVerifications = verificationCandidates.filter((row) => {
+      if (
+        row.identifier.toLowerCase() === normalizedEmail ||
+        row.value.toLowerCase() === normalizedEmail
+      )
+        return true;
+      try {
+        const value: unknown = JSON.parse(row.value);
+        return (
+          value !== null &&
+          typeof value === 'object' &&
+          'email' in value &&
+          typeof value.email === 'string' &&
+          value.email.toLowerCase() === normalizedEmail
+        );
+      } catch {
+        return false;
+      }
+    });
+    // Alt dize yalnız aday bulur; ör. xali@... adresi ali@... hesabının kaydı değildir.
+    await tx.verification.deleteMany({
+      where: { id: { in: ownedVerifications.map((row) => row.id) } },
     });
     await tx.membership.updateMany({ where: { userId, endedAt: null }, data: { endedAt: now } });
     await tx.mentorProfile.updateMany({

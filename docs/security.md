@@ -231,7 +231,8 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
   deneyimi yazar bağı kopuk bırakır. Kişinin şikâyet metinleri silinir. Deneyim yazımı aynı User kilidini alır.
   Better Auth'un kendi yazımları da silmeyle yarışmaz (`auth/deleted-user-guard.ts`, kart 371): oturum ve hesap bağlama aynı
   kullanıcı satırında `FOR SHARE` alır ve silinmişi reddeder, kullanıcı güncelleme `deletedAt IS NULL` ister (silme sürerken
-  tıklanan yeni adres doğrulaması anonim e-postayı geri yazamaz); silme, e-postayı taşıyan bekleyen doğrulama kayıtlarını iptal eder.
+  tıklanan yeni adres doğrulaması anonim e-postayı geri yazamaz); silme, tam adresle eşleşen bekleyen doğrulama kayıtlarını iptal eder.
+  JSON değerindeki `email` alanı tam eşitlikle denetlenir; benzer/son eki aynı olan başka adreslerin bağlantıları silinmez.
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11); kendi profilinin
   kişisel alanları, ilk giriş adım durumları ve etiketleri dahildir. Profil yoksa `profile: null` döner.
   Deneyimler bütün durumlarıyla yalnız kendi içeriklerinden oluşur; yazar/moderatör kimlikleri deneyim

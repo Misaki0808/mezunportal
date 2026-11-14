@@ -148,6 +148,7 @@ describe('hesap silme ile Better Auth yazımları (kart 371)', () => {
       clickMagicLink(harness, token),
     );
     const after = await state(userId);
+    expect(waited).toBe(true);
     expect(after.sessions).toBe(0);
     expect(after.user.name).toBe(DELETED_USER_NAME);
     expect(after.user.emailVerified).toBe(false);
@@ -414,7 +415,7 @@ describe('hesap silme ile Better Auth yazımları (kart 371)', () => {
     });
     const confirm =
       new URL(harness.sent.changeConfirmations[0]?.url ?? '').searchParams.get('token') ?? '';
-    await whileDeletionOpen(userId, address, () =>
+    const { waited } = await whileDeletionOpen(userId, address, () =>
       harness.auth.api
         .verifyEmail({
           query: { token: confirm, callbackURL: '/' },
@@ -425,9 +426,25 @@ describe('hesap silme ile Better Auth yazımları (kart 371)', () => {
     );
     const after = await state(userId);
     // Silinen hesap için yeni adrese doğrulama e-postası da gitmez.
+    expect(waited).toBe(true);
     expect(harness.sent.changeVerifications).toHaveLength(0);
     expect(after.user.email).toBe(deletedEmailFor(userId));
     expect(after.user.name).toBe(DELETED_USER_NAME);
     expect(after.sessions).toBe(0);
   });
+});
+
+it('R2: silinen adresi son ek olarak içeren başka kişinin ilk giriş bağlantısı korunur', async () => {
+  const { harness, address, userId } = await signedUpUser();
+  const otherAddress = `x${address}`;
+  const token = await issueMagicLink(harness, otherAddress);
+  const pending = await prisma.verification.findFirstOrThrow({
+    where: { value: { contains: otherAddress } },
+    select: { id: true },
+  });
+  await del(userId, address);
+  expect(await prisma.verification.findUnique({ where: { id: pending.id } })).not.toBeNull();
+  const response = await clickMagicLink(harness, token);
+  expect(response.cookie).toBe(true);
+  expect(await prisma.user.count({ where: { email: otherAddress, deletedAt: null } })).toBe(1);
 });
