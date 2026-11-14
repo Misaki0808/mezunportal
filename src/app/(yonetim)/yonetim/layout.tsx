@@ -5,22 +5,9 @@ import { ErrorState } from '@/components/ui';
 import { PrivacyGuard } from '@/components/privacy/server-guard';
 import { metricsAccess } from '@/components/metrics/access';
 import { adminAccess } from '@/components/admin/access';
-import type { AdminOverview } from '@/contracts/admin';
+import { adminCapabilityFor } from '@/components/admin/path-capability';
 import { REQUEST_PATH_HEADER } from '@/lib/return-path';
 import { getUserDetail } from '@/server/actions/admin-users';
-
-const capabilities: Record<string, keyof AdminOverview['capabilities']> = {
-  sozlukler: 'dictionaries',
-  eslesmeyenler: 'unmatchedValues',
-  yetkiler: 'adminGrants',
-  // Yalnız sistem yöneticisi: haritada olmayan yol varsayılan 'users' izniyle (bölüm yöneticisi dahil) geçer ve
-  // sayfa içi ret 200 döner; 404 yalnız buradan gelir.
-  puan: 'adminGrants',
-  davetler: 'dictionaries',
-  'islem-kaydi': 'auditLog',
-  istihdam: 'employmentReport',
-  sikayetler: 'reports',
-};
 
 /** İzin reddi loading sınırının üstünde ölçülür; yanıt başlamadan gerçek 404 döner. Sayfa/eylem kontrolleri de korunur. */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -46,7 +33,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   // Oturum/rıza yönlendirmeleri ve hesap hataları önceki kapıyla aynı kalır.
   if (guarded !== children) return guarded;
 
-  const access = await adminAccess(capabilities[path[1] ?? ''] ?? 'users');
+  const access = await adminAccess(adminCapabilityFor(path[1]));
   if (!access.ok) {
     if (access.errorCode === 'AUTH_FORBIDDEN') notFound();
     return <ErrorState errorCode={access.errorCode} />;

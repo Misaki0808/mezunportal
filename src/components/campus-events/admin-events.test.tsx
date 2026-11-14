@@ -256,3 +256,68 @@ describe('AdminEvents: geri bildirim kalıbı (kart 207)', () => {
     expect(screen.queryByText('Etkinliğin incelemeye gönderildi.')).toBeNull();
   });
 });
+
+describe('AdminEvents iptal sonrası odak', () => {
+  it('yayınlanmış etkinlik iptal edilince odak, durumu değişen kartın kendisine gelir', async () => {
+    const { user, rerender } = renderWithToasts(
+      <AdminEvents departments={DEPARTMENTS} events={EVENTS} />,
+    );
+    await user.click(row('Kariyer Sohbeti').getByRole('button', { name: 'Etkinliği iptal et' }));
+    const d = await screen.findByRole('dialog');
+    await user.type(within(d).getByLabelText(/İşlem gerekçesi/), 'Salon kullanılamıyor');
+    await user.click(within(d).getByRole('button', { name: 'Etkinliği iptal et' }));
+    await waitFor(() => expect(mocks.cancel).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    // Sunucu yenilemesi: aynı etkinlik artık iptal edilmiş, iptal düğmesi kalkmış.
+    rerender(
+      <AdminEvents
+        departments={DEPARTMENTS}
+        events={EVENTS.map((e) =>
+          e.id === EVENTS[1]!.id ? { ...e, status: 'CANCELLED' as const } : e,
+        )}
+      />,
+    );
+    const card = screen.getByText('Kariyer Sohbeti', { exact: true }).closest('li')!;
+    expect(within(card).queryByRole('button', { name: 'Etkinliği iptal et' })).toBeNull();
+    await waitFor(() => expect(card).toHaveFocus());
+    expect(document.body).not.toHaveFocus();
+    // Odak ayrılınca kart ek sekme durağı bırakmaz.
+    card.blur();
+    expect(card).not.toHaveAttribute('tabindex');
+  });
+
+  it('yenileme gelmeden (durum hâlâ yayında) odağı çalmaz; durum değişince verir', async () => {
+    const { user, rerender } = renderWithToasts(
+      <AdminEvents departments={DEPARTMENTS} events={EVENTS} />,
+    );
+    await user.click(row('Kariyer Sohbeti').getByRole('button', { name: 'Etkinliği iptal et' }));
+    const d = await screen.findByRole('dialog');
+    await user.type(within(d).getByLabelText(/İşlem gerekçesi/), 'Salon kullanılamıyor');
+    await user.click(within(d).getByRole('button', { name: 'Etkinliği iptal et' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    // Durumu değişmemiş bir yenileme (ör. başka bir kayıt güncellendi) odağı almaz.
+    rerender(<AdminEvents departments={DEPARTMENTS} events={[...EVENTS]} />);
+    const card = screen.getByText('Kariyer Sohbeti', { exact: true }).closest('li')!;
+    expect(card).not.toHaveFocus();
+    rerender(
+      <AdminEvents
+        departments={DEPARTMENTS}
+        events={EVENTS.map((e) =>
+          e.id === EVENTS[1]!.id ? { ...e, status: 'CANCELLED' as const } : e,
+        )}
+      />,
+    );
+    await waitFor(() => expect(card).toHaveFocus());
+  });
+
+  it('başarısız iptalde kart odağı almaz; pencere ve hata kalır', async () => {
+    mocks.cancel.mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+    const { user } = renderWithToasts(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
+    await user.click(row('Kariyer Sohbeti').getByRole('button', { name: 'Etkinliği iptal et' }));
+    const d = await screen.findByRole('dialog');
+    await user.type(within(d).getByLabelText(/İşlem gerekçesi/), 'Salon kullanılamıyor');
+    await user.click(within(d).getByRole('button', { name: 'Etkinliği iptal et' }));
+    expect(await within(d).findByText(/Beklenmeyen bir sorun oluştu/)).toBeVisible();
+    expect(screen.getByRole('dialog')).toBeVisible();
+  });
+});

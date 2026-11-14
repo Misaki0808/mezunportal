@@ -23,6 +23,7 @@ import {
   Modal,
   Select,
   Textarea,
+  useToast,
 } from '@/components/ui';
 import * as actions from '@/server/actions/referrals';
 import { useHydrated } from '@/hooks/use-hydrated';
@@ -179,6 +180,7 @@ export function ReferralList({
   const t = useTranslations('referrals');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
+  const toast = useToast();
   const hydrated = useHydrated();
   const [cancelChoice, setCancelChoice] = useState<ReferralView>();
   const [reviewChoice, setReviewChoice] = useState<{
@@ -253,7 +255,14 @@ export function ReferralList({
         } else setError(errors(result.errorCode));
         return;
       }
-      if (moderation) completeDecision(row.id);
+      if (moderation) {
+        completeDecision(row.id);
+        // Karar satırı kuyruktan kalkar; yönetici sonucu görünür bildirimle görür.
+        toast.show({
+          message: t(operation === 'REJECT' ? 'moderationRejected' : 'moderationApproved'),
+          tone: 'success',
+        });
+      }
       setCancelChoice(undefined);
       setReviewChoice(undefined);
       setPage((p) => ({

@@ -26,6 +26,7 @@ import {
   PageHeader,
   Textarea,
   buttonClasses,
+  useToast,
 } from '@/components/ui';
 
 export function MyPostings({
@@ -62,6 +63,8 @@ export function MyPostings({
   }
   function confirm() {
     if (!choice) return;
+    // Önceki denemenin hatası, bu deneme başarılı olunca sayfada kalmasın.
+    setError('');
     start(async () => {
       const result = await close({ postingId: choice }).catch(
         () => ({ ok: false, errorCode: 'SERVER_UNEXPECTED' }) as const,
@@ -225,6 +228,7 @@ export function PostingModeration({
   const errors = useTranslations('errors.codes');
   const admin = useTranslations('admin');
   const router = useRouter();
+  const toast = useToast();
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
   const [choice, setChoice] = useState<{ id: string; decision: 'PUBLISH' | 'REJECT' }>();
@@ -249,6 +253,8 @@ export function PostingModeration({
   }
   function confirm() {
     if (!choice) return;
+    // Her denemede önceki hata silinir: doğrulama hatası düzeltilip karar verilince ekranda kalmaz.
+    setError('');
     const parsed = reviewJobPostingSchema.safeParse(
       choice.decision === 'PUBLISH'
         ? { postingId: choice.id, decision: 'PUBLISH' }
@@ -270,6 +276,10 @@ export function PostingModeration({
       complete(choice.id);
       setItems((all) => all.filter((item) => item.id !== choice.id));
       setChoice(undefined);
+      toast.show({
+        message: t(choice.decision === 'PUBLISH' ? 'published' : 'rejected'),
+        tone: 'success',
+      });
       router.refresh();
     });
   }

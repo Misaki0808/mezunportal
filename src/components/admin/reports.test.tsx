@@ -179,3 +179,32 @@ for (const desktop of [false, true]) {
     });
   }
 }
+
+it('boş gerekçe hatası, geçerli karardan sonra sıradaki şikâyetin penceresinde kalmaz', async () => {
+  const resolve = vi
+    .fn()
+    .mockResolvedValue({ ok: true, data: { reportId: experience.id, status: 'DISMISSED' } });
+  const next = { ...experience, id: 'next-report', reason: 'İkinci şikâyet' };
+  const { user } = renderUi(
+    <main>
+      <AdminReports
+        initial={{ items: [experience, next], nextCursor: null }}
+        list={vi.fn()}
+        resolve={resolve}
+      />
+    </main>,
+  );
+  const invalid = 'En az 3 karakterlik bir gerekçe yaz.';
+  await user.click(screen.getAllByRole('button', { name: 'Şikâyeti reddet' })[0]!);
+  let dialog = within(screen.getByRole('dialog'));
+  await user.click(dialog.getByRole('button', { name: 'Onayla' }));
+  expect(dialog.getByText(invalid)).toBeVisible();
+  expect(resolve).not.toHaveBeenCalled();
+  await user.type(dialog.getByRole('textbox'), 'İçerik incelendi, ihlal bulunmadı.');
+  await user.click(dialog.getByRole('button', { name: 'Onayla' }));
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  expect(resolve).toHaveBeenCalledTimes(1);
+  await user.click(screen.getAllByRole('button', { name: 'Şikâyeti reddet' })[0]!);
+  dialog = within(screen.getByRole('dialog'));
+  expect(dialog.queryByText(invalid)).toBeNull();
+});

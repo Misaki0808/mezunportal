@@ -58,6 +58,7 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
       return;
     }
     setPending(true);
+    setInvalid(false);
     setError(undefined);
     try {
       const result = await resolve(parsed.data);
