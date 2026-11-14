@@ -116,43 +116,69 @@ describe('işlemsel bildirim niyeti', () => {
   });
 });
 
-describe('niyet aktarımı: başarısız deneme günlüğü (job.unexpected)', () => {
-  it('gönderim hatası tek satır yazar (olay, hata sınıfı, kod); ileti, adres ve kimlik yazılmaz; niyet yine yeniden denenmek üzere kalır', async () => {
-    const user = await createUser(db),
-      id = randomUUID();
+describe('niyet aktarımı: günlük (job.unexpected)', () => {
+  const stage = async () => {
+    const user = await createUser(db);
     await db.$transaction((tx) =>
       stageNotification(tx, user, {
         type: 'generic',
         event: 'contact',
-        eventId: id,
+        eventId: randomUUID(),
         path: '/hesap/iletisim',
       }),
     );
+    return user;
+  };
+
+  it('yönetilen yeniden deneme: gönderim hatası `job.unexpected` yazmaz; niyet yeniden denenmek üzere kalır', async () => {
+    const user = await stage();
     const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     try {
       const broken = async (row: { userId: string }) => {
-        if (row.userId !== user) throw new Error('başka test');
+        if (row.userId !== user) return;
         throw Object.assign(new Error('kuyruk çöktü ayse@ogr.iu.edu.tr postgres://gizli'), {
           code: 'P2034',
         });
       };
       expect((await relayNotificationIntents(db, broken)).failed).toBeGreaterThan(0);
-      const lines = write.mock.calls
-        .map(([line]) => String(line))
-        .filter((line) => line.startsWith('{') && line.includes('notification.intent'));
-      const mine = lines
-        .map((line) => JSON.parse(line.trim()))
-        .filter((e) => e.errorCode === 'P2034');
-      expect(mine).toEqual([
-        {
+      expect(write.mock.calls.map(([line]) => String(line)).join('')).not.toContain(
+        'job.unexpected',
+      );
+      expect(await db.notificationIntent.count({ where: { userId: user } })).toBe(1);
+    } finally {
+      write.mockRestore();
+    }
+  });
+
+  it('aktarım işleminin kendi hatası tek satır yazar (olay, kaynak, hata sınıfı, kod); ileti, adres ve kimlik yazılmaz', async () => {
+    await stage();
+    const brokenDb = new Proxy(db, {
+      get(target, prop) {
+        if (prop === '$transaction')
+          return async () => {
+            throw Object.assign(new Error('işlem çöktü ayse@ogr.iu.edu.tr postgres://gizli'), {
+              code: 'P2034',
+            });
+          };
+        const value: unknown = Reflect.get(target, prop);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      expect(
+        (await relayNotificationIntents(brokenDb, async () => undefined)).failed,
+      ).toBeGreaterThan(0);
+      const lines = write.mock.calls.map(([line]) => String(line));
+      expect(lines.length).toBeGreaterThan(0);
+      for (const line of lines)
+        expect(JSON.parse(line.trim())).toEqual({
           event: 'job.unexpected',
-          source: 'notification.intent',
+          source: 'notification.relay',
           errorName: 'Error',
           errorCode: 'P2034',
-        },
-      ]);
-      expect(lines.join('')).not.toMatch(/ayse|postgres|gizli|kuyruk çöktü/);
-      expect(await db.notificationIntent.count({ where: { userId: user } })).toBe(1);
+        });
+      expect(lines.join('')).not.toMatch(/ayse|postgres|gizli|işlem çöktü/);
     } finally {
       write.mockRestore();
     }

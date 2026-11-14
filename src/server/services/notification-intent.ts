@@ -289,9 +289,10 @@ export async function relayNotificationIntents(
               return 'SKIPPED';
             try {
               await send(intent);
-            } catch (error) {
-              // Her başarısız deneme tek satır (olay, hata sınıfı, kod); adres, kimlik ve ileti yazılmaz.
-              logUnexpected('job', 'notification.intent', error);
+            } catch {
+              // Yönetilen yeniden deneme: gönderim hatası (sınıfı ne olursa olsun) bekleme ya da kalıcı hata olarak
+              // kayda geçer, operatöre yalnız kalıcı hatada güvenli uyarıyla bildirilir. Her deneme `job.unexpected`
+              // yazmaz (gürültü); yalnız aktarımın kendi işlemi çökerse aşağıdaki `notification.relay` satırı düşer.
               const retry = notificationRetry(intent.attemptCount + 1, now);
               await tx.notificationIntent.update({
                 where: { id },
