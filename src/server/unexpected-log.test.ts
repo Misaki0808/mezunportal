@@ -5,7 +5,13 @@ import { z } from 'zod';
 
 import { codedForbidden, codedNotFound } from '@/lib/errors';
 
-import { loggedJob, logUnexpected, unexpectedLogLine } from './unexpected-log';
+import {
+  fieldsLogLine,
+  loggedJob,
+  logFields,
+  logUnexpected,
+  unexpectedLogLine,
+} from './unexpected-log';
 
 const SECRET_MESSAGE = 'ayse.yilmaz@ogr.iu.edu.tr token=abc123 postgres://mezun:parola@db/x';
 
@@ -487,4 +493,52 @@ it('güvenli görünümlü kişisel veri hata adı ve hata kodundan sızmaz', ()
   e.name = 'AyseYilmaz';
   const line = unexpectedLogLine('action', 'saveConsents', e)!;
   expect(line).not.toMatch(/AyseYilmaz|12345678901|ayse\.yilmaz|1234567890123456/);
+});
+
+describe('fieldsLogLine / logFields (kart 372): alan düzeyi bozukluk, yalnız sözleşme yolu', () => {
+  it('bozuk ve fazlalık yollarını tek satırda yazar, değer ya da kimlik yazmaz', () => {
+    const line = fieldsLogLine('veriDokumu.alan', {
+      unreadable: ['profile.completionScore', 'contribution.awardCandidacies[0].breakdown'],
+      removed: ['user.gizli'],
+    });
+    expect(JSON.parse(line!)).toEqual({
+      event: 'route.unexpected',
+      source: 'veriDokumu.alan',
+      errorName: 'Error',
+      okunamayan: ['profile.completionScore', 'contribution.awardCandidacies[0].breakdown'],
+      fazlalik: ['user.gizli'],
+    });
+    expect(line).not.toContain('\n');
+  });
+  it('boş listede null; desene uymayan yol (değer sızıntısı) atlanır ve sayıya girer', () => {
+    expect(fieldsLogLine('veriDokumu.alan', {})).toBeNull();
+    expect(fieldsLogLine('veriDokumu.alan', { unreadable: [], removed: [] })).toBeNull();
+    const line = JSON.parse(
+      fieldsLogLine('veriDokumu.alan', {
+        unreadable: ['profile.city', 'ayse@example.org', 'profil bilgisi: gizli', 'a b'],
+      })!,
+    );
+    expect(line.okunamayan).toEqual(['profile.city']);
+    expect(line.digerleri).toBe(3);
+    expect(JSON.stringify(line)).not.toContain('example.org');
+  });
+  it('en fazla 10 yol yazılır, fazlası sayıyla; geçersiz kaynak adı bilinmeyen olur', () => {
+    const many = Array.from({ length: 14 }, (_, i) => `contribution.entries[${i}].points`);
+    const line = JSON.parse(fieldsLogLine('boşluklu kaynak', { unreadable: many })!);
+    expect(line.source).toBe('bilinmeyen');
+    expect(line.okunamayan).toHaveLength(10);
+    expect(line.digerleri).toBe(4);
+  });
+  it('logFields stderr’e tek satır yazar; yol yoksa yazmaz', () => {
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      expect(logFields('veriDokumu.alan', {})).toBe(false);
+      expect(write).not.toHaveBeenCalled();
+      expect(logFields('veriDokumu.alan', { unreadable: ['profile.city'] })).toBe(true);
+      expect(write).toHaveBeenCalledTimes(1);
+      expect(String(write.mock.calls[0]?.[0]).endsWith('\n')).toBe(true);
+    } finally {
+      write.mockRestore();
+    }
+  });
 });
