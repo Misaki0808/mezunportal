@@ -1,13 +1,15 @@
+import { guardPage } from '@/server/permissions/page-guard';
 import { getTranslations } from 'next-intl/server';
 import { ErrorState, PageHeader } from '@/components/ui';
 import { AdminEvents } from '@/components/campus-events/admin-events';
 import { listCampusEventModeration } from '@/server/actions/campus-events';
 import { getDb } from '@/server/db';
-import { managedDepartmentIds, requireAnyAdmin } from '@/server/permissions';
+import { managedDepartmentIds, requirePageAnyAdmin as requireAnyAdmin } from '@/server/permissions';
 export const dynamic = 'force-dynamic';
 export default async function AdminCampusEventsPage() {
-  const actor = await requireAnyAdmin().catch(() => null);
-  if (!actor) return <ErrorState errorCode="AUTH_FORBIDDEN" />;
+  const guarded = await guardPage('page.adminEvents', () => requireAnyAdmin(), 'AUTH_FORBIDDEN');
+  if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
+  const actor = guarded.value;
   const [ids, result, t] = await Promise.all([
     managedDepartmentIds(actor),
     listCampusEventModeration(),

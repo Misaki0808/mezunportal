@@ -1,12 +1,18 @@
+import { guardPage } from '@/server/permissions/page-guard';
 import { ErrorState } from '@/components/ui';
 import { StoryEditor } from '@/components/alumni-story/editor';
 import { getDb } from '@/server/db';
 import { listMyStories } from '@/server/actions/alumni-story';
-import { requireVerifiedMember } from '@/server/permissions';
+import { requirePageVerifiedMember as requireVerifiedMember } from '@/server/permissions';
 export const dynamic = 'force-dynamic';
 export default async function MyStoryPage() {
-  const actor = await requireVerifiedMember({ roles: ['ALUMNI'] }).catch(() => null);
-  if (!actor) return <ErrorState errorCode="AUTH_FORBIDDEN" />;
+  const guarded = await guardPage(
+    'page.myStory',
+    () => requireVerifiedMember({ roles: ['ALUMNI'] }),
+    'AUTH_FORBIDDEN',
+  );
+  if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
+  const actor = guarded.value;
   const ids = actor.facts.memberships
     .filter((m) => m.role === 'ALUMNI' && m.verificationStatus === 'VERIFIED' && m.endedAt === null)
     .map((m) => m.departmentId);

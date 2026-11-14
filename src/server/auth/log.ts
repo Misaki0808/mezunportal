@@ -13,6 +13,6 @@ type AuthOperation =
 
 /** Beklenmeyen bir kimlik doğrulama hatasını günlüğe yazar: yalnız işlem adı ve hata TÜRÜ (ileti, değer, adres yok). */
 export function logAuthFailure(operation: AuthOperation, error: unknown): void {
-  const kind = error instanceof Error ? safeErrorName(error) : 'Error';
+  const kind = safeErrorName(error);
   process.stderr.write(`[auth] ${operation} başarısız: ${kind}\n`);
 }

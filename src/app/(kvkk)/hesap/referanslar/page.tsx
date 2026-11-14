@@ -1,11 +1,17 @@
+import { guardPage } from '@/server/permissions/page-guard';
 import { ReferralList } from '@/components/referrals/referral-ui';
 import { ErrorState } from '@/components/ui';
 import { listMyReferrals } from '@/server/actions/referrals';
-import { requireVerifiedMember } from '@/server/permissions';
+import { requirePageVerifiedMember as requireVerifiedMember } from '@/server/permissions';
 export const dynamic = 'force-dynamic';
 export default async function MyReferralsPage() {
-  const actor = await requireVerifiedMember().catch(() => null);
-  if (!actor) return <ErrorState errorCode="AUTH_FORBIDDEN" />;
+  const guarded = await guardPage(
+    'page.myReferrals',
+    () => requireVerifiedMember(),
+    'AUTH_FORBIDDEN',
+  );
+  if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
+  const actor = guarded.value;
   const result = await listMyReferrals({});
   const canCreate = actor.facts.memberships.some(
     (m) => m.role === 'ALUMNI' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,

@@ -1,14 +1,20 @@
+import { guardPage } from '@/server/permissions/page-guard';
 import { getTranslations } from 'next-intl/server';
 import { DigestView } from '@/components/notifications/digest-view';
 import { ErrorState, PageHeader } from '@/components/ui';
 import { getDb } from '@/server/db';
-import { requireVerifiedMember } from '@/server/permissions';
+import { requirePageVerifiedMember as requireVerifiedMember } from '@/server/permissions';
 import { buildMonthlyDigest } from '@/server/services/monthly-digest';
 
 export const dynamic = 'force-dynamic';
 export default async function MonthlyDigestPage() {
-  const actor = await requireVerifiedMember().catch(() => null);
-  if (!actor) return <ErrorState errorCode="AUTH_FORBIDDEN" />;
+  const guarded = await guardPage(
+    'page.monthlyDigest',
+    () => requireVerifiedMember(),
+    'AUTH_FORBIDDEN',
+  );
+  if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
+  const actor = guarded.value;
   const t = await getTranslations('monthlyDigest');
   const digest = await buildMonthlyDigest(getDb(), actor.userId);
   return (

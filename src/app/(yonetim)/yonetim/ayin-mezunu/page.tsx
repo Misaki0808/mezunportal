@@ -1,11 +1,17 @@
+import { guardPage } from '@/server/permissions/page-guard';
 import { ErrorState } from '@/components/ui';
 import { StoryAdmin } from '@/components/alumni-story/admin';
 import { getDb } from '@/server/db';
-import { requireAnyAdmin, managedDepartmentIds } from '@/server/permissions';
+import { requirePageAnyAdmin as requireAnyAdmin, managedDepartmentIds } from '@/server/permissions';
 export const dynamic = 'force-dynamic';
 export default async function StoryAdminPage() {
-  const actor = await requireAnyAdmin().catch(() => null);
-  if (!actor) return <ErrorState errorCode="AUTH_FORBIDDEN" />;
+  const guarded = await guardPage(
+    'page.adminMonthlyAlumni',
+    () => requireAnyAdmin(),
+    'AUTH_FORBIDDEN',
+  );
+  if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
+  const actor = guarded.value;
   const ids = await managedDepartmentIds(actor);
   const departments = await getDb().department.findMany({
     where: { id: { in: ids } },
