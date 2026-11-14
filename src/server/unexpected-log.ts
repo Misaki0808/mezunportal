@@ -37,6 +37,7 @@ const NAMES = new Set([
   'PrismaClientValidationError',
   // Uygulamanın kendi hata sınıfları (her biri `this.name`'i sabit kurar; yeni sınıf eklenince bekçi testi listeyi zorlar)
   'AuditPolicyError',
+  'DeletedUserError',
   'CalendarError',
   'EmailTransportError',
   'EnvValidationError',
