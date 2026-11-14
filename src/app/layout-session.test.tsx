@@ -8,6 +8,9 @@ vi.mock('next/font/google', () => ({
 vi.mock('next-intl/server', () => ({ getLocale: async () => 'tr', getTranslations: vi.fn() }));
 vi.mock('next-intl', () => ({ NextIntlClientProvider: 'intl-provider' }));
 vi.mock('@/components/layout/app-shell', () => ({ AppShell: 'app-shell' }));
+vi.mock('@/components/layout/session-unavailable', () => ({
+  SessionUnavailable: 'session-unavailable',
+}));
 vi.mock('@/components/ui', () => ({ ErrorState: 'error-state', ToastProvider: 'toast-provider' }));
 vi.mock('@/server/permissions/session', () => ({ getSessionUserId: state.session }));
 vi.mock('@/server/unexpected-log', () => ({ logUnexpected: state.log }));
@@ -21,8 +24,7 @@ it('oturum çözümü başarısızsa ortak sınır içeriği açmaz, geçici hat
   state.session.mockRejectedValue(new Error('sentetik'));
   const root = await RootLayout({ children: <div>gizli veri</div> });
   const toast = root.props.children.props.children.props.children;
-  expect(toast.props.children.type).toBe('main');
-  expect(toast.props.children.props.children.props.errorCode).toBe('SERVER_UNEXPECTED');
+  expect(toast.props.children.type).toBe('session-unavailable');
   expect(state.log).toHaveBeenCalledOnce();
 });
 it('oturum yoksa normal uygulama ağacı korunur', async () => {

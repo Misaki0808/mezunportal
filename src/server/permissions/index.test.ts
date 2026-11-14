@@ -65,6 +65,10 @@ describe('getSessionUserId (oturum bağlantısı)', () => {
       expect(await getSessionUserId()).toBeNull();
     },
   );
+  it('kullanıcısız oturum güvenle null döner', async () => {
+    state.getSession.mockResolvedValue({ session: {} });
+    expect(await getSessionUserId()).toBeNull();
+  });
   it('çerez varken altyapı hatası null yapılmaz', async () => {
     const error = new Error('sentetik');
     state.getSession.mockRejectedValue(error);

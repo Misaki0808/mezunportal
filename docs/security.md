@@ -20,7 +20,7 @@ kural sunucuda zorlanır.
 
 - Better Auth: e-posta bağlantısıyla giriş (parolasız) ve LinkedIn ile giriş. Veritabanı oturumu;
   çerez `httpOnly`, `secure`, `sameSite=lax`.
-- Oturum çerezi yoksa çözümleme/veritabanı sorgusu yapılmaz; çerez varsa yalnız Better Auth kimlik doğrular. Oturum çözümündeki altyapı hatası oturumsuzluk sayılmaz: ortak sınır geçici sorun gösterir, eylem kararlı hata döner; yetki ve veri erişimi kapalı kalır. Günlük tek satırdır, çerez veya hata iletisi içermez.
+- Oturum çerezi yoksa çözümleme/veritabanı sorgusu yapılmaz; çerez varsa yalnız Better Auth kimlik doğrular. Oturum çözümündeki altyapı hatası oturumsuzluk sayılmaz: ortak sınır geçici sorun gösterir, eylem kararlı hata döner; yetki ve veri erişimi kapalı kalır. Günlük tek satırdır, çerez veya hata iletisi içermez. Dosya, takvim ve rapor rotaları oturum altyapısı arızasında veri açmadan 503 ve Retry-After döner; aynı istek içindeki oturum çözümü paylaşılır.
 - Giriş ekranı e-postanın kayıtlı olup olmadığını sızdırmaz; her durumda “bağlantı gönderildi”.
 - Giriş bağlantısı 10 dakika geçerli, **tek kullanımlıdır** ve veritabanında özetli saklanır. Hız sınırı
   (veritabanı destekli, sabit pencere): bir e-postaya saatte 5 bağlantı, bir istemci adresinden saatte 200

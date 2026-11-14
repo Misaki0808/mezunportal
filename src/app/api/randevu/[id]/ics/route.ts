@@ -2,7 +2,7 @@ import { APPOINTMENT_ICS_CONTENT_TYPE } from '@/contracts/appointment';
 import { isCodedError } from '@/lib/errors';
 import { getDb } from '@/server/db';
 import { createRecordingNotifier } from '@/server/services/appointment-notifier';
-import { getSessionUserId } from '@/server/permissions/session';
+import { readRouteSession } from '@/server/permissions/route-session';
 import { getAppointmentIcs } from '@/server/services/appointment';
 import { logUnexpected } from '@/server/unexpected-log';
 
@@ -15,8 +15,9 @@ const status = (code: number) =>
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const userId = await getSessionUserId();
-  if (!userId) return status(401);
+  const session = await readRouteSession('randevuIcs');
+  if (!session.ok) return session.response;
+  const userId = session.userId;
   try {
     // Okuma yolu bildirim ve takvim kullanmaz.
     const text = await getAppointmentIcs(

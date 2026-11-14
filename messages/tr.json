@@ -384,6 +384,7 @@
     "errorState": {
       "title": "Bir sorun oluştu",
       "retry": "Tekrar dene",
+      "sessionRetry": "Yeniden dene",
       "expected": {
         "AUTH_FORBIDDEN": "Bu sayfa senin rolün için değil",
         "AUTH_UNAUTHENTICATED": "Giriş yapman gerekiyor",

@@ -7,7 +7,8 @@ import type { ReactNode } from 'react';
 
 import { AppShell } from '@/components/layout/app-shell';
 import { getEnv } from '@/lib/env';
-import { ErrorState, ToastProvider } from '@/components/ui';
+import { ToastProvider } from '@/components/ui';
+import { SessionUnavailable } from '@/components/layout/session-unavailable';
 import { getSessionUserId } from '@/server/permissions/session';
 import { logUnexpected } from '@/server/unexpected-log';
 
@@ -61,13 +62,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body>
         <NextIntlClientProvider>
           <ToastProvider>
-            {sessionUnavailable ? (
-              <main>
-                <ErrorState errorCode="SERVER_UNEXPECTED" />
-              </main>
-            ) : (
-              <AppShell>{children}</AppShell>
-            )}
+            {sessionUnavailable ? <SessionUnavailable /> : <AppShell>{children}</AppShell>}
           </ToastProvider>
         </NextIntlClientProvider>
       </body>

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getSessionCookie } from 'better-auth/cookies';
+import { cache } from 'react';
 import { headers } from 'next/headers';
 import { unstable_rethrow } from 'next/navigation';
 
@@ -10,7 +11,7 @@ import { getAuth } from '../auth';
  * Geçersiz/sonlanmış oturumu Better Auth reddeder. Altyapı hatası fail-closed olarak çağırana aktarılır;
  * eylem veya ortak sayfa sınırı bunu güvenli, tek satırlık günlük ve geçici hataya çevirir.
  */
-export async function getSessionUserId(): Promise<string | null> {
+export const getSessionUserId = cache(async (): Promise<string | null> => {
   let requestHeaders: Awaited<ReturnType<typeof headers>>;
   try {
     requestHeaders = await headers();
@@ -28,9 +29,9 @@ export async function getSessionUserId(): Promise<string | null> {
   if (!getSessionCookie(requestHeaders, { cookiePrefix: 'mezun' })) return null;
   try {
     const session = await getAuth().api.getSession({ headers: requestHeaders });
-    return session?.user.id ?? null;
+    return session?.user?.id ?? null;
   } catch (error) {
     unstable_rethrow(error);
     throw error;
   }
-}
+});
