@@ -16,6 +16,8 @@ export const ADMIN_ACTIONS = {
   ROLE_CORRECT: { reasonRequired: true },
   /** Rol geçişi (öğrenci → mezun). */
   ROLE_TRANSITION: { reasonRequired: false },
+  /** Kullanıcının kendi adını değiştirmesi (kart 353). Eski/yeni ad kayda girmez; yalnız "ad değişti". */
+  USER_NAME_CHANGE: { reasonRequired: false },
   USER_SUSPEND: { reasonRequired: true },
   USER_UNSUSPEND: { reasonRequired: true },
   MODERATION_PUBLISH: { reasonRequired: false },

@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import {
   BriefcaseIcon,
   CalendarIcon,
+  FileTextIcon,
   HomeIcon,
   InboxIcon,
   UserIcon,
@@ -47,7 +48,7 @@ type NavId = 'home' | 'experiences' | 'jobs' | 'mentors' | 'appointments' | 'pro
  */
 const NAV_ITEMS: readonly { id: NavId; href?: string; icon: ReactNode }[] = [
   { id: 'home', href: '/', icon: <HomeIcon /> },
-  { id: 'experiences', href: '/deneyimler', icon: <BriefcaseIcon /> },
+  { id: 'experiences', href: '/deneyimler', icon: <FileTextIcon /> },
   { id: 'jobs', href: '/ilanlar', icon: <BriefcaseIcon /> },
   { id: 'mentors', href: '/mentorlar', icon: <UsersIcon /> },
   { id: 'appointments', href: '/randevular', icon: <CalendarIcon /> },

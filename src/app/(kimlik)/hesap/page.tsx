@@ -18,6 +18,7 @@ import {
 import { AccountLink } from '@/components/account/account-link';
 import { PrivacyAccountLinks } from '@/components/privacy/account-links';
 import { getVerificationState } from '@/server/actions/auth';
+import { getMyAccountName } from '@/server/actions/account';
 import { getMyMentorSettings } from '@/server/actions/appointment';
 import { requireUser } from '@/server/permissions';
 import { evaluateAccess } from '@/server/rules/authorization';
@@ -50,6 +51,8 @@ export default async function AccountPage() {
     alumniStory,
     courseGuide,
     campusEvents,
+    name,
+    myName,
   ] = await Promise.all([
     getVerificationState().catch(() => null),
     hasAdminAccess(),
@@ -70,6 +73,8 @@ export default async function AccountPage() {
     getTranslations('alumniStory'),
     getTranslations('courseGuide'),
     getTranslations('campusEvents'),
+    getTranslations('accountName'),
+    getMyAccountName().catch(() => null),
   ]);
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
@@ -139,6 +144,12 @@ export default async function AccountPage() {
       href: '/profil',
       title: t('profile'),
       description: t('profileDescription'),
+      icon: UserIcon,
+    },
+    {
+      href: '/hesap/ad-soyad',
+      title: name('link'),
+      description: myName?.ok ? myName.data.name : name('linkDescription'),
       icon: UserIcon,
     },
     {
@@ -345,7 +356,7 @@ export default async function AccountPage() {
     {
       key: 'profile',
       tone: 'primary',
-      hrefs: ['/profil', '/dogrulama', '/ders-rehberi', '/profil/dersler'],
+      hrefs: ['/profil', '/hesap/ad-soyad', '/dogrulama', '/ders-rehberi', '/profil/dersler'],
     },
     {
       key: 'meetings',

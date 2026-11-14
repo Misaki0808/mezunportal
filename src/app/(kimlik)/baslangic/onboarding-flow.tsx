@@ -3,7 +3,7 @@ import { useHydrated } from '@/hooks/use-hydrated';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import {
   saveOnboardingStepSchema,
@@ -38,6 +38,7 @@ export function OnboardingFlow({
   initialVisibility,
   saveVisibility,
   editInitially = false,
+  nameCard,
 }: {
   initialState: OnboardingState;
   interests: Tag[];
@@ -49,6 +50,8 @@ export function OnboardingFlow({
     input: SetFieldVisibilityInput,
   ) => Promise<ActionResult<FieldVisibilitySettings>>;
   editInitially?: boolean;
+  /** Ad soyad kartı (kart 353): türetilmiş adı onaylama/düzeltme; son "hazırsın" ekranında gösterilmez. */
+  nameCard?: ReactNode;
 }) {
   const hydrated = useHydrated();
   const t = useTranslations('onboarding');
@@ -257,6 +260,7 @@ export function OnboardingFlow({
         {title}
       </h1>
       <p className="mt-3 text-base leading-relaxed text-fg-muted">{description}</p>
+      {!done && step !== 'COMPLETE' && nameCard}
       {showTags &&
         (availableChoices.length ? (
           <fieldset className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
