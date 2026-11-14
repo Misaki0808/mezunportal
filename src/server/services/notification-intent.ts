@@ -249,7 +249,8 @@ export async function relayNotificationIntents(
   const now = (options.now ?? (() => new Date()))();
   let after = '',
     sent = 0,
-    failed = 0;
+    failed = 0,
+    relayLogged = false;
   for (;;) {
     const rows = await db.notificationIntent.findMany({
       where: { id: { gt: after }, status: 'PENDING', nextAttemptAt: { lte: now } },
@@ -316,7 +317,10 @@ export async function relayNotificationIntents(
           if (changed === 'FAILED') process.stderr.write('notification.intent: RETRY_EXHAUSTED\n');
         }
       } catch (error) {
-        logUnexpected('job', 'notification.relay', error);
+        // Tur başına TEK satır: havuz/bağlantı ortada çökerse sayfa başına 100 kayıt aynı hatayı üretir (kart 330 d).
+        if (!relayLogged) {
+          relayLogged = logUnexpected('job', 'notification.relay', error);
+        }
         failed++;
       }
     }

@@ -150,8 +150,8 @@ describe('niyet aktarımı: günlük (job.unexpected)', () => {
     }
   });
 
-  it('aktarım işleminin kendi hatası tek satır yazar (olay, kaynak, hata sınıfı, kod); ileti, adres ve kimlik yazılmaz', async () => {
-    await stage();
+  it('aktarım işleminin kendi hatası TUR başına tek satır yazar (olay, kaynak, hata sınıfı, kod), kayıt sayısı kadar değil; ileti, adres ve kimlik yazılmaz', async () => {
+    await Promise.all([stage(), stage(), stage()]);
     const brokenDb = new Proxy(db, {
       get(target, prop) {
         if (prop === '$transaction')
@@ -166,18 +166,18 @@ describe('niyet aktarımı: günlük (job.unexpected)', () => {
     });
     const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     try {
+      // Üç kayıt da başarısız sayılır (aynı hata üç kez oluşur), ama günlüğe tek satır düşer.
       expect(
         (await relayNotificationIntents(brokenDb, async () => undefined)).failed,
-      ).toBeGreaterThan(0);
+      ).toBeGreaterThanOrEqual(3);
       const lines = write.mock.calls.map(([line]) => String(line));
-      expect(lines.length).toBeGreaterThan(0);
-      for (const line of lines)
-        expect(JSON.parse(line.trim())).toEqual({
-          event: 'job.unexpected',
-          source: 'notification.relay',
-          errorName: 'Error',
-          errorCode: 'P2034',
-        });
+      expect(lines).toHaveLength(1);
+      expect(JSON.parse(lines[0]!.trim())).toEqual({
+        event: 'job.unexpected',
+        source: 'notification.relay',
+        errorName: 'Error',
+        errorCode: 'P2034',
+      });
       expect(lines.join('')).not.toMatch(/ayse|postgres|gizli|işlem çöktü/);
     } finally {
       write.mockRestore();

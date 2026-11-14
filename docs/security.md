@@ -300,9 +300,9 @@ yığın izi kullanıcıya gösterilmez. Ayrıntı `docs/architecture.md` “Dı
   telefon maskeli (`src/lib/mask.ts`: `maskEmail`, `maskPhone`, serbest metin için `maskPersonalData`).
 - **Beklenmedik hata günlüğü (`src/server/unexpected-log.ts`):** kodlu olmayan hata (sunucu eylemi, rota, işçi görevi) TEK satır
   yapılandırılmış olay olarak stderr'e yazılır: `{"event":"action|route|job.unexpected","source":"<sabit ad>","errorName":"<sınıf>",
-  "errorCode":"<P2034|40001|ECONNRESET>"}`. İleti (`err.message`), yığın izi, girdi, e-posta, kullanıcı kimliği
-  ve değerler YAZILMAZ; hata sınıfı ve kodu sabit izin listesinden seçilir. İstemci kontrolündeki istek/eylem kimlikleri yazılmaz. Kodlu hatalar (kullanıcıya dönen `errorCode`), doğrulama
-  hataları ve Next.js akış denetimi (yönlendirme, bulunamadı) sessiz kalır; kendi yeniden deneme/kalıcı hata yönetimi olan yol (bildirim niyeti aktarımı) yönetilen hatayı yazmaz. Sunucu eylemleri `failAction(error, '<eylem adı>')` ile adlandırılır
+  "errorCode":"<P2034|40001|ECONNRESET>","driverCode":"<57014|57P01|55P03>","errorKind":"<pool_timeout|connection_lost>"}` (`driverCode` yalnız Prisma sürücü hatasında, `meta.driverAdapterError.cause.originalCode|code`'dan ve yalnız sabit listeden; `errorKind` pg'nin kodsuz iki yük hatası için, havuz dolu ve bağlantı koptu). İleti okunur ama yazılmaz, yalnız sabit etiket: ileti yalnız kütüphanenin sabit ifadeleriyle TAM eşleşme ile karşılaştırılır (regex, startsWith, includes yok), kişisel veri taşıyan ileti etiket de almaz. İleti (`err.message`), yığın izi, girdi, e-posta, kullanıcı kimliği
+  ve değerler YAZILMAZ; hata sınıfı ve kodu sabit izin listesinden seçilir (yük altı Prisma/pg kodları, uygulamanın kendi hata sınıfları ve sabit kodları; yeni `class X extends Error` bekçi testiyle listeye eklenmeden geçemez). İstemci kontrolündeki istek/eylem kimlikleri yazılmaz. Kodlu hatalar (kullanıcıya dönen `errorCode`), doğrulama
+  hataları ve Next.js akış denetimi (yönlendirme, bulunamadı) sessiz kalır; kendi yeniden deneme/kalıcı hata yönetimi olan yol (bildirim niyeti aktarımı) yönetilen hatayı yazmaz, aktarımın kendi işlem hatası tur başına tek satırdır. Sunucu eylemleri `failAction(error, '<eylem adı>')` ile adlandırılır
   (adı zorunlu; bekçi testi her çağrıyı ve adın işlevle eşleşmesini denetler); yeni rota ya da kuyruk görevi aynı yardımcıyı (`logUnexpected`,
   `loggedJob`) çağırır.
 - Geliştirme sunucusu da (telefon testi `dev:lan` ile yapılır) bu kurala uyar: Next.js'in sunucu eylemi

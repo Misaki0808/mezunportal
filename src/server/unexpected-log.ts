@@ -6,7 +6,9 @@ import { isCodedError } from '@/lib/errors';
 
 /**
  * Beklenmedik (kodlu olmayan) hatanın TEK satırlık yapılandırılmış günlüğü (docs/security.md "Sır ve loglama").
- * Yazılan alanlar: olay adı, işlem adı (sabit dize), sabit izin listesindeki hata sınıfı ve isteğe bağlı hata kodu.
+ * Yazılan alanlar: olay adı, işlem adı (sabit dize), sabit izin listesindeki hata sınıfı ve isteğe bağlı hata kodu
+ * (`errorCode`); Prisma sürücü hatasında ayrıca sabit listedeki sürücü kodu (`driverCode`); pg'nin kodsuz iki yük hatası için
+ * sabit etiket (`errorKind`: `pool_timeout`, `connection_lost`).
  * İstemciden gelen kimlik, `message`, yığın izi, girdi, e-posta, kullanıcı kimliği ve değerler ASLA yazılmaz.
  * Kodlu hatalar (kullanıcıya dönen `errorCode`), doğrulama hataları ve Next.js'in akış denetimi hataları (yönlendirme,
  * bulunamadı) günlüğe düşmez: gürültü olmaz, yalnız gerçekten beklenmedik hata görünür.
@@ -17,6 +19,7 @@ const SOURCE = /^[A-Za-z0-9_.:-]{1,64}$/;
 // İletiyle aynı güven sınırında olan `name` ve `code` serbest metin olabilir.
 // Desen kontrolü kişisel veriyi elemez; yalnız sabit, bilinen değerleri kabul et.
 const NAMES = new Set([
+  // JavaScript çekirdeği
   'Error',
   'TypeError',
   'RangeError',
@@ -25,20 +28,47 @@ const NAMES = new Set([
   'URIError',
   'EvalError',
   'AggregateError',
+  // Prisma istemcisi. Adaptör hatası (`DriverAdapterError`) uygulamaya SIZMAZ: istemci onu `PrismaClientKnownRequestError`
+  // içine sarar (ayrıntısı `meta.driverAdapterError`'da), bu yüzden listede yoktur (kart 330, kendi sürücüyle ölçüldü).
   'PrismaClientKnownRequestError',
   'PrismaClientUnknownRequestError',
   'PrismaClientInitializationError',
   'PrismaClientRustPanicError',
   'PrismaClientValidationError',
+  // Uygulamanın kendi hata sınıfları (her biri `this.name`'i sabit kurar; yeni sınıf eklenince bekçi testi listeyi zorlar)
+  'AuditPolicyError',
+  'CalendarError',
+  'EmailTransportError',
+  'EnvValidationError',
+  'GoogleOAuthError',
+  'LlmError',
+  'NotImplementedError',
+  'SecretBoxError',
+  'StorageError',
 ]);
 const CODES = new Set([
-  'P2002',
-  'P2003',
-  'P2025',
-  'P2034',
-  '40001',
-  '40P01',
-  '57014',
+  // Prisma
+  'P1001', // veritabanına ulaşılamıyor
+  'P1002', // veritabanı sunucusu zaman aşımı
+  'P1008', // işlem zaman aşımı
+  'P1017', // sunucu bağlantıyı kapattı
+  'P2002', // benzersizlik ihlali
+  'P2003', // yabancı anahtar ihlali
+  'P2010', // ham sorgu başarısız (ayrıntı `driverCode`'da)
+  'P2024', // bağlantı havuzu zaman aşımı
+  'P2025', // kayıt bulunamadı
+  'P2028', // işlem API hatası (zaman aşımı, kapanmış işlem)
+  'P2034', // yazma çakışması / kilitlenme
+  'P2037', // çok fazla bağlantı
+  'P2039', // model sorgusunda sürücü hatası (`meta.driverAdapterError`)
+  // PostgreSQL
+  '40001', // serileştirme hatası
+  '40P01', // kilitlenme
+  '53300', // çok fazla bağlantı
+  '55P03', // kilit alınamadı (kilit zaman aşımı)
+  '57014', // sorgu iptal (statement_timeout)
+  '57P01', // yönetici bağlantıyı sonlandırdı
+  // Node ağ hataları
   'ECONNRESET',
   'ECONNREFUSED',
   'ETIMEDOUT',
@@ -46,6 +76,18 @@ const CODES = new Set([
   'ENOTFOUND',
   'EAI_AGAIN',
   'ENOSPC',
+  // Uygulamanın kendi sabit kodları (`LlmError`, `CalendarError`, `GoogleOAuthError`)
+  'TIMEOUT',
+  'UNAVAILABLE',
+  'REJECTED',
+  'CALENDAR_UNAVAILABLE',
+  'CALENDAR_TIMEOUT',
+  'CALENDAR_REJECTED',
+  'CALENDAR_NOT_CONNECTED',
+  'GOOGLE_STATE_INVALID',
+  'GOOGLE_STATE_EXPIRED',
+  'GOOGLE_EXCHANGE_FAILED',
+  'GOOGLE_NO_REFRESH_TOKEN',
 ]);
 const CONTROL_FLOW =
   /^(NEXT_|DYNAMIC_SERVER_USAGE|BAILOUT_TO_CLIENT_SIDE_RENDERING|HTTP_ERROR_FALLBACK)/;
@@ -67,6 +109,41 @@ function codeOf(error: unknown): string | undefined {
   return safeCode((cause as Loose).code) ?? safeCode((cause as Loose).originalCode);
 }
 
+/**
+ * Prisma 7, sürücü (pg) hatasını `PrismaClientKnownRequestError` içine sarar ve üst `code`'u genel tutar (ham sorgu
+ * `P2010`, model sorgusu `P2039`...). Asıl pg kodu (`57014`, `57P01`, `55P03`, `40P01`) `meta.driverAdapterError.cause`
+ * içindedir (kart 330, ölçüldü). Yalnız bu iki alan ve yalnız sabit listeden okunur; adres, ileti, ana makine yazılmaz.
+ */
+function driverCodeOf(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') return undefined;
+  const meta = (error as { meta?: unknown }).meta;
+  if (!meta || typeof meta !== 'object') return undefined;
+  const adapterError = (meta as { driverAdapterError?: unknown }).driverAdapterError;
+  if (!adapterError || typeof adapterError !== 'object') return undefined;
+  const cause = (adapterError as { cause?: unknown }).cause;
+  if (!cause || typeof cause !== 'object') return undefined;
+  return safeCode((cause as Loose).originalCode) ?? safeCode((cause as Loose).code);
+}
+
+export type ErrorKind = 'pool_timeout' | 'connection_lost';
+
+/**
+ * Yükte en çok görülen iki hata kodsuz, düz `Error` gelir (kendi sürücümde ölçüldü): havuz dolunca pg-pool, bağlantı
+ * kopunca pg. Ad ve kod listeleri onları ayırt edemez. İleti OKUNUR ama ASLA YAZILMAZ: yalnız kütüphanenin sabit
+ * ifadeleriyle TAM eşleşirse (genel regex, startsWith, includes yok) satıra sabit etiket yazılır; başka her iletide
+ * (kişisel veri taşıyan dahil) etiket de yoktur ve iletinin kendisi hiçbir koşulda satıra girmez.
+ */
+const MESSAGE_KINDS: ReadonlyMap<string, ErrorKind> = new Map<string, ErrorKind>([
+  ['timeout exceeded when trying to connect', 'pool_timeout'],
+  ['Connection terminated unexpectedly', 'connection_lost'],
+]);
+
+function kindOf(error: unknown): ErrorKind | undefined {
+  if (!(error instanceof Error)) return undefined;
+  const message: unknown = error.message;
+  return typeof message === 'string' ? MESSAGE_KINDS.get(message) : undefined;
+}
+
 function nameOf(error: unknown): string {
   const name = error instanceof Error ? error.name : 'NonError';
   return NAMES.has(name) ? name : error instanceof Error ? 'Error' : 'NonError';
@@ -86,22 +163,30 @@ export function unexpectedLogLine(
 ): string | null {
   if (isCodedError(error) || error instanceof z.ZodError || isControlFlow(error)) return null;
   const code = codeOf(error);
+  const driverCode = driverCodeOf(error);
+  const errorKind = kindOf(error);
   return JSON.stringify({
     event: `${kind}.unexpected`,
     source: SOURCE.test(source) ? source : 'bilinmeyen',
     errorName: nameOf(error),
     ...(code ? { errorCode: code } : {}),
+    ...(driverCode ? { driverCode } : {}),
+    ...(errorKind ? { errorKind } : {}),
   });
 }
 
 /** Günlüğe yazar; günlük yazımı asla hata fırlatmaz ve çağıranın akışını değiştirmez. */
-export function logUnexpected(kind: UnexpectedKind, source: string, error: unknown): void {
+export function logUnexpected(kind: UnexpectedKind, source: string, error: unknown): boolean {
   try {
     const line = unexpectedLogLine(kind, source, error);
-    if (line) process.stderr.write(`${line}\n`);
+    if (line) {
+      process.stderr.write(`${line}\n`);
+      return true;
+    }
   } catch {
     // Günlük kullanılamıyorsa sessiz kal: asıl hata yolu bozulmasın.
   }
+  return false;
 }
 
 /** Zamanlanmış/kuyruk işini sarar: beklenmedik hatayı tek satır günlüğe yazar ve AYNEN yeniden fırlatır (pg-boss yeniden deneme davranışı değişmez). */
