@@ -305,6 +305,85 @@ describe('driverCode (kart 330 b): Prisma sürücü hatasındaki pg kodu', () =>
   });
 });
 
+describe('errorKind (kart 330 c): kodsuz yük hatalarına sabit etiket, ileti yazılmaz', () => {
+  const POOL = 'timeout exceeded when trying to connect';
+  const LOST = 'Connection terminated unexpectedly';
+  const plain = (message: string, extra: Record<string, unknown> = {}) =>
+    Object.assign(new Error(message), extra);
+
+  it('tam eşleşme: yalnız etiket yazılır, iletinin kendisi satıra girmez', () => {
+    const pool = unexpectedLogLine('action', 'x', plain(POOL));
+    const lost = unexpectedLogLine('job', 'x', plain(LOST));
+    expect(parse(pool)).toEqual({
+      event: 'action.unexpected',
+      source: 'x',
+      errorName: 'Error',
+      errorKind: 'pool_timeout',
+    });
+    expect(parse(lost)).toEqual({
+      event: 'job.unexpected',
+      source: 'x',
+      errorName: 'Error',
+      errorKind: 'connection_lost',
+    });
+    expect(pool).not.toMatch(/exceeded|when trying/);
+    expect(lost).not.toMatch(/terminated|unexpectedly/);
+  });
+
+  it('kişisel veri taşıyan ileti: etiket YOK, ileti ve kişisel veri satırda yok', () => {
+    for (const message of [
+      `${POOL} ayse@ogr.iu.edu.tr`,
+      `${POOL}: postgres://mezun:parola@db/x`,
+      `${LOST} (kullanıcı ayse)`,
+      `ayse@ogr.iu.edu.tr ${LOST}`,
+    ]) {
+      const line = unexpectedLogLine('job', 'x', plain(message));
+      expect(parse(line)).not.toHaveProperty('errorKind');
+      expect(line).not.toMatch(/ayse|postgres|parola|terminated|exceeded/);
+    }
+  });
+
+  it('yalnız TAM eşleşme: önek, sonek, büyük/küçük harf, boşluk ve satır sonu etiket vermez', () => {
+    for (const message of [
+      POOL.toUpperCase(),
+      POOL[0]!.toUpperCase() + POOL.slice(1),
+      ` ${POOL}`,
+      `${POOL} `,
+      `${POOL}\n`,
+      POOL.slice(0, -1),
+      `${POOL}${POOL}`,
+      LOST.toLowerCase(),
+      `${LOST}.`,
+      '',
+    ])
+      expect(parse(unexpectedLogLine('job', 'x', plain(message)))).not.toHaveProperty('errorKind');
+  });
+
+  it('Error olmayan değer ya da dize olmayan ileti etiket vermez ve hata fırlatmaz', () => {
+    expect(parse(unexpectedLogLine('job', 'x', { message: POOL }))).not.toHaveProperty('errorKind');
+    expect(parse(unexpectedLogLine('job', 'x', POOL))).not.toHaveProperty('errorKind');
+    const hostile = new Error('x');
+    Object.defineProperty(hostile, 'message', {
+      value: {
+        toString() {
+          throw new Error('çağrılmamalı');
+        },
+      },
+    });
+    expect(parse(unexpectedLogLine('job', 'x', hostile))).not.toHaveProperty('errorKind');
+  });
+
+  it('etiket ad ve kodla birlikte yazılır', () => {
+    expect(parse(unexpectedLogLine('job', 'x', plain(LOST, { code: 'ECONNRESET' })))).toMatchObject(
+      {
+        errorName: 'Error',
+        errorCode: 'ECONNRESET',
+        errorKind: 'connection_lost',
+      },
+    );
+  });
+});
+
 describe('logUnexpected / loggedJob: stderr', () => {
   afterEach(() => vi.restoreAllMocks());
   const stderr = () => vi.spyOn(process.stderr, 'write').mockImplementation(() => true);

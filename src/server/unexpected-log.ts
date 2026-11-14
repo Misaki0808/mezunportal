@@ -7,7 +7,8 @@ import { isCodedError } from '@/lib/errors';
 /**
  * Beklenmedik (kodlu olmayan) hatanın TEK satırlık yapılandırılmış günlüğü (docs/security.md "Sır ve loglama").
  * Yazılan alanlar: olay adı, işlem adı (sabit dize), sabit izin listesindeki hata sınıfı ve isteğe bağlı hata kodu
- * (`errorCode`); Prisma sürücü hatasında ayrıca sabit listedeki sürücü kodu (`driverCode`).
+ * (`errorCode`); Prisma sürücü hatasında ayrıca sabit listedeki sürücü kodu (`driverCode`); pg'nin kodsuz iki yük hatası için
+ * sabit etiket (`errorKind`: `pool_timeout`, `connection_lost`).
  * İstemciden gelen kimlik, `message`, yığın izi, girdi, e-posta, kullanıcı kimliği ve değerler ASLA yazılmaz.
  * Kodlu hatalar (kullanıcıya dönen `errorCode`), doğrulama hataları ve Next.js'in akış denetimi hataları (yönlendirme,
  * bulunamadı) günlüğe düşmez: gürültü olmaz, yalnız gerçekten beklenmedik hata görünür.
@@ -124,6 +125,25 @@ function driverCodeOf(error: unknown): string | undefined {
   return safeCode((cause as Loose).originalCode) ?? safeCode((cause as Loose).code);
 }
 
+export type ErrorKind = 'pool_timeout' | 'connection_lost';
+
+/**
+ * Yükte en çok görülen iki hata kodsuz, düz `Error` gelir (kendi sürücümde ölçüldü): havuz dolunca pg-pool, bağlantı
+ * kopunca pg. Ad ve kod listeleri onları ayırt edemez. İleti OKUNUR ama ASLA YAZILMAZ: yalnız kütüphanenin sabit
+ * ifadeleriyle TAM eşleşirse (genel regex, startsWith, includes yok) satıra sabit etiket yazılır; başka her iletide
+ * (kişisel veri taşıyan dahil) etiket de yoktur ve iletinin kendisi hiçbir koşulda satıra girmez.
+ */
+const MESSAGE_KINDS: ReadonlyMap<string, ErrorKind> = new Map<string, ErrorKind>([
+  ['timeout exceeded when trying to connect', 'pool_timeout'],
+  ['Connection terminated unexpectedly', 'connection_lost'],
+]);
+
+function kindOf(error: unknown): ErrorKind | undefined {
+  if (!(error instanceof Error)) return undefined;
+  const message: unknown = error.message;
+  return typeof message === 'string' ? MESSAGE_KINDS.get(message) : undefined;
+}
+
 function nameOf(error: unknown): string {
   const name = error instanceof Error ? error.name : 'NonError';
   return NAMES.has(name) ? name : error instanceof Error ? 'Error' : 'NonError';
@@ -144,12 +164,14 @@ export function unexpectedLogLine(
   if (isCodedError(error) || error instanceof z.ZodError || isControlFlow(error)) return null;
   const code = codeOf(error);
   const driverCode = driverCodeOf(error);
+  const errorKind = kindOf(error);
   return JSON.stringify({
     event: `${kind}.unexpected`,
     source: SOURCE.test(source) ? source : 'bilinmeyen',
     errorName: nameOf(error),
     ...(code ? { errorCode: code } : {}),
     ...(driverCode ? { driverCode } : {}),
+    ...(errorKind ? { errorKind } : {}),
   });
 }
 

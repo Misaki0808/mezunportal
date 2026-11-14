@@ -69,4 +69,38 @@ describe('gerçek sürücü hataları: errorCode genel, driverCode asıl pg kodu
     expect(JSON.parse(logged)).not.toHaveProperty('driverCode');
     expect(logged).not.toMatch(/127\.0\.0\.1|localhost|:1\b/);
   });
+
+  it('havuz dolu (bağlantı zaman aşımı): düz Error, kodsuz; etiket pool_timeout, ileti satırda yok', async () => {
+    const db = client({ max: 1, connectionTimeoutMillis: 300 });
+    const hold = db
+      .$transaction(async (tx) => tx.$executeRawUnsafe('SELECT pg_sleep(1.5)'), { timeout: 5000 })
+      .catch(() => undefined);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const error = await caught(() => db.$queryRaw`SELECT 1`);
+    await hold;
+    const logged = unexpectedLogLine('job', 'dbTest', error)!;
+    expect(JSON.parse(logged)).toEqual({
+      event: 'job.unexpected',
+      source: 'dbTest',
+      errorName: 'Error',
+      errorKind: 'pool_timeout',
+    });
+    expect(logged).not.toMatch(/exceeded|trying to connect/);
+  });
+
+  it('bağlantı işlem içinde koptu: düz Error, kodsuz; etiket connection_lost', async () => {
+    const db = client({ max: 1 });
+    const error = await caught(() =>
+      db.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT pg_terminate_backend(pg_backend_pid())`.catch(() => undefined);
+        await tx.user.findFirst();
+      }),
+    );
+    expect(line(error)).toEqual({
+      event: 'job.unexpected',
+      source: 'dbTest',
+      errorName: 'Error',
+      errorKind: 'connection_lost',
+    });
+  });
 });
