@@ -452,3 +452,69 @@ it('ayrı süreçte önceden önbelleklenmiş Google erişimi, hesap silme sonra
   });
   expect(fetchImpl).toHaveBeenCalledTimes(2);
 });
+
+it('eşzamanlı başka yöneticiye geçen Google bağlantısını silme temizlemez', async () => {
+  const owner = await createUser(db),
+    other = await createUser(db);
+  const email = (await db.user.findUniqueOrThrow({ where: { id: owner } })).email;
+  const encrypted = encryptSecret('old-owner-token', secret, context);
+  const nextToken = encryptSecret('new-owner-token', secret, context);
+  await db.integrationConnection.upsert({
+    where: { provider: 'GOOGLE_CALENDAR' },
+    create: {
+      provider: 'GOOGLE_CALENDAR',
+      connectedById: owner,
+      refreshTokenEnc: encrypted,
+      scope: 'calendar.events',
+      status: 'ACTIVE',
+    },
+    update: { connectedById: owner, refreshTokenEnc: encrypted, status: 'ACTIVE' },
+  });
+  const entered = barrier(),
+    finish = barrier();
+  const transfer = db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "IntegrationConnection" WHERE provider='GOOGLE_CALENDAR' FOR UPDATE`;
+    entered.release();
+    await finish.wait;
+    await tx.integrationConnection.update({
+      where: { provider: 'GOOGLE_CALENDAR' },
+      data: {
+        connectedById: other,
+        refreshTokenEnc: nextToken,
+        accountLabel: 'Yeni bağlantı',
+        status: 'ACTIVE',
+      },
+    });
+  });
+  await entered.wait;
+  const revoke = vi.fn(async () => {});
+  const deletion = deleteAccount(
+    db,
+    owner,
+    { confirmEmail: email, publishedContent: 'DELETE' },
+    { removeStoredFiles: null, revokeCalendarToken: revoke },
+  );
+  try {
+    await vi.waitFor(
+      async () => {
+        const [row] = await db.$queryRaw<
+          Array<{ n: bigint }>
+        >`SELECT count(*) AS n FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE '%UPDATE%IntegrationConnection%'`;
+        expect(Number(row!.n)).toBeGreaterThan(0);
+      },
+      { timeout: 3000, interval: 10 },
+    );
+  } finally {
+    finish.release();
+    await Promise.all([transfer, deletion]);
+  }
+  expect(
+    await db.integrationConnection.findUniqueOrThrow({ where: { provider: 'GOOGLE_CALENDAR' } }),
+  ).toMatchObject({
+    connectedById: other,
+    status: 'ACTIVE',
+    refreshTokenEnc: nextToken,
+    accountLabel: 'Yeni bağlantı',
+  });
+  expect(revoke).not.toHaveBeenCalled();
+});

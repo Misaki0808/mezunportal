@@ -78,9 +78,10 @@ export async function deleteAccount(
       where: { provider: 'GOOGLE_CALENDAR', connectedById: userId },
       select: { id: true, refreshTokenEnc: true },
     });
+    let erasedConnectionToken: string | null = null;
     if (connection) {
-      await tx.integrationConnection.update({
-        where: { id: connection.id },
+      const erased = await tx.integrationConnection.updateMany({
+        where: { id: connection.id, connectedById: userId },
         data: {
           refreshTokenEnc: ERASED_GOOGLE_TOKEN,
           accountLabel: null,
@@ -88,6 +89,8 @@ export async function deleteAccount(
           lastErrorCode: 'GOOGLE_OWNER_DELETED',
         },
       });
+      // Okuma ile yazma arasında yeni yönetici bağladıysa onun bağlantısı/jetonu korunur.
+      if (erased.count) erasedConnectionToken = connection.refreshTokenEnc;
     }
     for (const handler of [...PUBLISHED_CONTENT_HANDLERS, ...(deps.handlers ?? [])]) {
       await handler(tx, userId, input.publishedContent);
@@ -321,7 +324,7 @@ export async function deleteAccount(
     // Hata durumunda belge anahtarları ve hesap transaction ile korunur; yeniden denenebilir.
     // Depolama idempotenttir: kısmen silinen dosyalar yeniden silinebilir.
     if (fileKeys.length > 0 && deps.removeStoredFiles) await deps.removeStoredFiles(fileKeys);
-    return connection?.refreshTokenEnc ?? null;
+    return erasedConnectionToken;
   }, ACCOUNT_DELETION_TX_OPTIONS);
   if (disconnectedToken !== null) {
     resetCalendar();
