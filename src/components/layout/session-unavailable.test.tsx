@@ -14,3 +14,22 @@ it('marka, geçici hata ve klavyeyle ulaşılabilir yeniden deneme gösterir', (
   button.focus();
   expect(button).toHaveFocus();
 });
+
+it('yeniden dene düğmesi mevcut sayfayı yeniler', async () => {
+  const reload = vi.fn();
+  const actual = window;
+  const proxy = new Proxy(actual, {
+    get(target, property, receiver) {
+      if (property === 'location') return { reload };
+      return Reflect.get(target, property, receiver);
+    },
+  });
+  vi.stubGlobal('window', proxy);
+  try {
+    const { user } = renderUi(<SessionUnavailable />);
+    await user.click(screen.getByRole('button', { name: 'Yeniden dene' }));
+    expect(reload).toHaveBeenCalledOnce();
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
