@@ -1,5 +1,10 @@
 import type { PrismaClient } from '../src/generated/prisma/client';
-import { INSTITUTION_SEED, TEST_PERSONAS, type TestPersonaKey } from './seed-data';
+import {
+  INSTITUTION_SEED,
+  SEED_MENTOR_AVAILABILITY,
+  TEST_PERSONAS,
+  type TestPersonaKey,
+} from './seed-data';
 import { seedId, seedTime } from './seed-util';
 
 type Persona = (typeof TEST_PERSONAS)[TestPersonaKey];
@@ -106,6 +111,12 @@ export async function seedAccounts(prisma: PrismaClient) {
         create: { userId, createdAt: verifiedAt, ...mentor },
         update: mentor,
       });
+      // Müsaitlik yalnız hiç kuralı olmayan mentora yazılır: mentorun kendi düzenlemesi yeniden seed'le ezilmez.
+      if ((await prisma.availabilityRule.count({ where: { mentorId: userId } })) === 0) {
+        await prisma.availabilityRule.createMany({
+          data: SEED_MENTOR_AVAILABILITY.map((rule) => ({ mentorId: userId, ...rule })),
+        });
+      }
     }
 
     if ('grant' in persona) {
