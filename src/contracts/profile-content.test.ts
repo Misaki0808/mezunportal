@@ -251,3 +251,17 @@ describe('hata kodu kaydı', () => {
     }
   });
 });
+
+it('profil kalemi ve beceri alanlarından iletişim biçimi geçirilemez', () => {
+  expect(addProfileSkillSchema.safeParse({ name: 'SQL ornek@example.org' }).success).toBe(false);
+  const value = {
+    section: 'POSITION',
+    values: { company: 'Örnek', title: 'Analist', description: '+90 532 123 45 67' },
+  };
+  const parsed = saveProfileEntrySchema.safeParse(value);
+  expect(parsed.success).toBe(false);
+  if (!parsed.success)
+    expect(failureFromZod(parsed.error)).toMatchObject({
+      fieldErrors: { 'values.description': 'PROFILE_TEXT_PERSONAL_DATA' },
+    });
+});

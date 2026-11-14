@@ -51,7 +51,11 @@ async function ContactTarget({ userId, returnTo }: { userId: string; returnTo: s
       description={t('sendDescription')}
       back={back}
     >
-      <ContactSendForm targetUserId={userId} requestableFields={preview.data.requestableFields} />
+      <ContactSendForm
+        targetUserId={userId}
+        requestableFields={preview.data.requestableFields}
+        pendingRequest={preview.data.pendingRequest}
+      />
     </PrivacyFrame>
   );
 }

@@ -37,6 +37,7 @@ const NAMES = new Set([
   'PrismaClientValidationError',
   // Uygulamanın kendi hata sınıfları (her biri `this.name`'i sabit kurar; yeni sınıf eklenince bekçi testi listeyi zorlar)
   'AuditPolicyError',
+  'DeletedUserError',
   'CalendarError',
   'EmailTransportError',
   'EnvValidationError',
@@ -185,6 +186,53 @@ export function logUnexpected(kind: UnexpectedKind, source: string, error: unkno
     }
   } catch {
     // Günlük kullanılamıyorsa sessiz kal: asıl hata yolu bozulmasın.
+  }
+  return false;
+}
+
+/** Sözleşme yolu (`profile.completionScore`, `contribution.awardCandidacies[0].breakdown`): değer içermez, yalnız şema adları ve sıra numarası. */
+const FIELD_PATH = /^[A-Za-z0-9_.[\]]{1,120}$/;
+const FIELD_LIMIT = 10;
+
+/**
+ * Alan düzeyinde yutulan bozukluğun (ör. veri dökümünde şemaya uymayan değer) TEK satırlık günlüğü. Yalnız sözleşme yolları
+ * yazılır (değer, kimlik, ileti yok); desene uymayan yol atlanır, en fazla 10 yol, fazlası sayıyla. Boş listede `null`.
+ */
+export function fieldsLogLine(
+  source: string,
+  fields: { unreadable?: readonly string[]; removed?: readonly string[] },
+): string | null {
+  const unreadable = fields.unreadable ?? [];
+  const removed = fields.removed ?? [];
+  if (!unreadable.length && !removed.length) return null;
+  const pick = (paths: readonly string[]) => paths.filter((path) => FIELD_PATH.test(path));
+  const room = (paths: readonly string[], used: number) => pick(paths).slice(0, FIELD_LIMIT - used);
+  const bad = room(unreadable, 0);
+  const extra = room(removed, bad.length);
+  const hidden = unreadable.length + removed.length - bad.length - extra.length;
+  return JSON.stringify({
+    event: 'route.unexpected',
+    source: SOURCE.test(source) ? source : 'bilinmeyen',
+    errorName: 'Error',
+    ...(bad.length ? { okunamayan: bad } : {}),
+    ...(extra.length ? { fazlalik: extra } : {}),
+    ...(hidden > 0 ? { digerleri: hidden } : {}),
+  });
+}
+
+/** Alan düzeyi bozukluğu günlüğe yazar; günlük yazımı asla hata fırlatmaz. */
+export function logFields(
+  source: string,
+  fields: { unreadable?: readonly string[]; removed?: readonly string[] },
+): boolean {
+  try {
+    const line = fieldsLogLine(source, fields);
+    if (line) {
+      process.stderr.write(`${line}\n`);
+      return true;
+    }
+  } catch {
+    // Günlük kullanılamıyorsa sessiz kal.
   }
   return false;
 }

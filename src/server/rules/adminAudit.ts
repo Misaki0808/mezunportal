@@ -1,3 +1,6 @@
+import { looksLikePersonalData } from '@/lib/personal-data';
+export { looksLikePersonalData } from '@/lib/personal-data';
+
 /**
  * Yönetici işlem kaydı politikası (D6, `docs/security.md` “Yönetici işlem kaydı”): hangi eylemler
  * kaydedilir, hangisi gerekçe ister ve kayıt KİŞİSEL VERİ taşımaz (yalnız kimlikler). Saf işlevler;
@@ -130,15 +133,6 @@ const FORBIDDEN_KEY_WORDS = new Set([
   'link',
   'url',
 ]);
-
-const EMAIL_PATTERN = /[^\s@]+@[^\s@]+\.[^\s@]+/;
-// Türkiye cep telefonu (0 / +90 / 90 önekli ya da öneksiz, ayraçlı ya da bitişik) ve 11 haneli kimlik numarası.
-const PHONE_PATTERN = /(?:\+?90|0)?[\s.-]?\(?5\d{2}\)?[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}(?!\d)/;
-const NATIONAL_ID_PATTERN = /(?<!\d)\d{11}(?!\d)/;
-
-export function looksLikePersonalData(text: string): boolean {
-  return EMAIL_PATTERN.test(text) || PHONE_PATTERN.test(text) || NATIONAL_ID_PATTERN.test(text);
-}
 
 // Yalnız tam UUID (RFC varyantı) veya seedId'nin 24 hex biçimi. Serbest metin/gerekçe
 // bu istisnaya girmez; kimlik anahtarı tek başına telefon/e-postayı aklamaz.

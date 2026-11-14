@@ -19,6 +19,7 @@ import {
   userCreateBefore,
 } from './hooks';
 import { emitEvent } from '../services/event';
+import { guardDeletedUsers, isUserDeleted } from './deleted-user-guard';
 import { SIGN_IN_LINK_MINUTES, type AuthEmailPort } from './email-port';
 import { testLoginPlugin } from './test-login-plugin';
 
@@ -76,7 +77,9 @@ export function buildAuthOptions(deps: AuthDeps) {
     baseURL: env.APP_URL,
     secret: env.BETTER_AUTH_SECRET,
     trustedOrigins: [env.APP_URL],
-    database: prismaAdapter(db, { provider: 'postgresql' }),
+    // Silme yarışı (kart 371): oturum/hesap oluşturma kullanıcıyı kilitleyip silinmişi reddeder, kullanıcı güncelleme
+    // silinmişe yazmaz. `emitEvent` gibi kendi sorgularımız ham `db`'yi kullanır.
+    database: prismaAdapter(guardDeletedUsers(db), { provider: 'postgresql' }),
     telemetry: { enabled: false },
 
     // Parolasız giriş: e-posta/parola kapalı.
@@ -117,6 +120,8 @@ export function buildAuthOptions(deps: AuthDeps) {
       sendOnSignIn: false,
       // Yalnız e-posta değiştirmenin 2. adımında kullanılır: `user.email` YENİ adrestir.
       sendVerificationEmail: async ({ user, url, token }) => {
+        // Silme sürerken tıklanan eski adres onayı yeni adrese e-posta göndermez (kart 371).
+        if (await isUserDeleted(db, user.id)) return;
         // 2. adımın bağlantısı ayrı ekrana döner (`?adim=tamamlandi`); 1. adımınki `eski-onaylandi`.
         await email.sendChangeEmailVerification({
           to: user.email,

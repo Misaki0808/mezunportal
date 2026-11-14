@@ -32,7 +32,7 @@ import { codedConflict, codedForbidden, codedNotFound, codedValidation } from '@
 import { createPermissions, errorForDenyReason } from '../permissions/guards';
 import type { Actor } from '../permissions/actor';
 import { findFaqRow, searchFaqRows, similarFaqRows } from '../repositories/faq';
-import { hasPersonalDataPattern } from '../rules/faq';
+import { hasPersonalDataPattern } from '@/lib/personal-data';
 import { idCursorWhere, toPage } from './admin-access';
 import { emitEvent, subjectFromActor } from './event';
 import { requireConsent } from './privacy';

@@ -12,9 +12,11 @@ import { usePrivacyForm } from './form-state';
 export function ContactSendForm({
   targetUserId,
   requestableFields,
+  pendingRequest = false,
 }: {
   targetUserId: string;
   requestableFields: ContactField[];
+  pendingRequest?: boolean;
 }) {
   const hydrated = useHydrated();
   const t = useTranslations('privacyScreens.contacts');
@@ -29,6 +31,20 @@ export function ContactSendForm({
   useEffect(() => {
     if (sent) sentRef.current?.focus();
   }, [sent]);
+  if (pendingRequest)
+    return (
+      <Card className="space-y-5">
+        <p id="contact-pending" role="status">
+          {t('pendingRequest')}
+        </p>
+        <Button fullWidth disabled disabledReasonId="contact-pending">
+          {t('send')}
+        </Button>
+        <Link href="/hesap/iletisim?box=OUTGOING" className={buttonClasses({ fullWidth: true })}>
+          {t('sendDone')}
+        </Link>
+      </Card>
+    );
   if (sent)
     return (
       <Card className="space-y-5">

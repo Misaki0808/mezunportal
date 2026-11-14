@@ -80,6 +80,8 @@ export const contactTargetPreviewSchema = z.discriminatedUnion('canRequest', [
     .object({
       canRequest: z.literal(true),
       displayName: z.string(),
+      /** Yalnız aynı PROFILE bağlamında mevcut kullanıcının bekleyen isteği. */
+      pendingRequest: z.boolean(),
       /** Yalnız hedefin `ON_APPROVED_REQUEST` seviyesindeki alanları (en az bir). */
       requestableFields: z.array(z.enum(CONTACT_FIELDS)).min(1),
     })

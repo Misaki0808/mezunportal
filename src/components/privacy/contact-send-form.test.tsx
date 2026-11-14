@@ -70,3 +70,23 @@ it('talep gönderilemezse form yerinde kalır ve odak taşınmaz', async () => {
   expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
   expect(screen.queryByText(/Yanıtı Gönderilen kutusundan/)).toBeNull();
 });
+
+it('bekleyen PROFILE talebi önceden açıklanır; form doldurulmaz ve yeni gönderim yapılamaz', async () => {
+  const { sendContactRequest } = await import('@/server/actions/contact-request');
+  vi.mocked(sendContactRequest).mockClear();
+  const { user } = renderUi(
+    <ToastProvider>
+      <ContactSendForm targetUserId="target" requestableFields={['EMAIL']} pendingRequest />
+    </ToastProvider>,
+  );
+  const submit = screen.getByRole('button', { name: 'Talep gönder' });
+  expect(submit).toBeDisabled();
+  expect(submit).toHaveAccessibleDescription('Bu kişiye bekleyen bir isteğin var.');
+  expect(screen.queryByRole('textbox')).toBeNull();
+  await user.click(submit);
+  expect(sendContactRequest).not.toHaveBeenCalled();
+  expect(screen.getByRole('link', { name: 'Taleplerime git' })).toHaveAttribute(
+    'href',
+    '/hesap/iletisim?box=OUTGOING',
+  );
+});

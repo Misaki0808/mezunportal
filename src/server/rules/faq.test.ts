@@ -1,12 +1,7 @@
+import { hasPersonalDataPattern } from '@/lib/personal-data';
 import { describe, expect, it } from 'vitest';
 
-import {
-  analyzeIdentity,
-  findIdentityLeak,
-  foldTr,
-  hasPersonalDataPattern,
-  nameTokens,
-} from './faq';
+import { analyzeIdentity, findIdentityLeak, foldTr, nameTokens } from './faq';
 
 describe('foldTr', () => {
   it.each([

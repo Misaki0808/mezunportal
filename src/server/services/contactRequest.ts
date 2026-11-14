@@ -130,7 +130,22 @@ export async function previewContactTarget(
     (field) => effectiveLevel(field, levels) === 'ON_APPROVED_REQUEST',
   );
   if (requestableFields.length === 0) return CONTACT_TARGET_NOT_REQUESTABLE;
-  return { canRequest: true, displayName: target.name, requestableFields };
+  const pending = await db.contactRequest.findFirst({
+    where: {
+      requesterId,
+      targetId: target.id,
+      source: 'PROFILE',
+      jobPostingId: null,
+      status: 'PENDING',
+    },
+    select: { id: true },
+  });
+  return {
+    canRequest: true,
+    displayName: target.name,
+    requestableFields,
+    pendingRequest: pending !== null,
+  };
 }
 
 type Transition = {

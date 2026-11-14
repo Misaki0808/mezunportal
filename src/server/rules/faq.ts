@@ -1,4 +1,4 @@
-import { looksLikePersonalData } from './adminAudit';
+import { looksLikePersonalData } from '@/lib/personal-data';
 
 /**
  * SSS gizlilik kuralları (saf). Yayında hiçbir isim/kimlik olmamalıdır: yayın metni, talebe dahil herkesin
@@ -130,9 +130,4 @@ export function findIdentityLeak(
   identifiers: readonly string[] = [],
 ): boolean {
   return analyzeIdentity(text, names, identifiers).blocked;
-}
-
-/** Talep/cevap metninde yayına girmeden önce reddedilen kişisel veri biçimleri (e-posta, telefon, kimlik numarası). */
-export function hasPersonalDataPattern(text: string): boolean {
-  return looksLikePersonalData(text);
 }

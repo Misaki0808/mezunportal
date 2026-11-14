@@ -1,18 +1,14 @@
 import 'server-only';
 
-import {
-  DATA_EXPORT_FORMAT_VERSION,
-  exportedProfileSchema,
-  type DataExport,
-} from '@/contracts/privacy';
+import { DATA_EXPORT_FORMAT_VERSION, type DataExport } from '@/contracts/privacy';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { codedNotFound } from '@/lib/errors';
-import { awardCandidateSchema } from '@/contracts/year-alumni';
 
 import { toYearMonth } from './cv-shared';
 import { loadVisibilityLevels } from './privacy';
 import { experienceFields, experienceSelect } from './experienceProjection';
-import { logUnexpected } from '../unexpected-log';
+import { logFields } from '../unexpected-log';
+import { sealDataExport } from './dataExportSeal';
 
 /**
  * Veri dökümü (KVKK m. 11): YALNIZ kullanıcının kendi verisi. İletişim taleplerinde karşı taraf yalnız
@@ -67,6 +63,7 @@ export async function buildDataExport(
       name: true,
       email: true,
       phone: true,
+      image: true,
       createdAt: true,
       deletedAt: true,
       experiences: { select: experienceSelect, orderBy: { id: 'asc' } },
@@ -248,6 +245,103 @@ export async function buildDataExport(
       orderBy: { createdAt: 'asc' },
     }),
   ]);
+  const [
+    experienceReports,
+    jobPostingReports,
+    integrations,
+    sessions,
+    emailLog,
+    adminGrants,
+    events,
+    jobMatchDigests,
+    notificationActions,
+  ] = await Promise.all([
+    db.report.findMany({
+      where: { reporterId: userId },
+      select: {
+        id: true,
+        targetType: true,
+        targetId: true,
+        reason: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { id: 'asc' },
+    }),
+    db.jobPostingReport.findMany({
+      where: { reporterId: userId },
+      select: { id: true, postingId: true, reason: true, status: true, createdAt: true },
+      orderBy: { id: 'asc' },
+    }),
+    db.integrationConnection.findMany({
+      where: { connectedById: userId },
+      select: {
+        provider: true,
+        status: true,
+        accountLabel: true,
+        connectedAt: true,
+        updatedAt: true,
+      },
+      orderBy: { provider: 'asc' },
+    }),
+    // Oturum jetonu ve oturum kimliği ASLA seçilmez; yönetici adına açıldıysa yalnız bayrak.
+    db.session.findMany({
+      where: { userId },
+      select: {
+        createdAt: true,
+        expiresAt: true,
+        ipAddress: true,
+        userAgent: true,
+        impersonatedBy: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+    db.emailLog.findMany({
+      where: { recipientUserId: userId },
+      select: {
+        template: true,
+        status: true,
+        attempts: true,
+        errorCode: true,
+        sentAt: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+    db.adminGrant.findMany({
+      where: { userId },
+      select: {
+        scope: true,
+        facultyId: true,
+        departmentId: true,
+        createdAt: true,
+        revokedAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+    db.event.findMany({
+      where: { userId },
+      select: { type: true, role: true, departmentId: true, props: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+    db.jobMatchDigest.findMany({
+      where: { userId },
+      select: { day: true, createdAt: true },
+      orderBy: { day: 'asc' },
+    }),
+    db.notificationAction.findMany({
+      where: { userId },
+      select: {
+        positionId: true,
+        cycle: true,
+        expiresAt: true,
+        usedAt: true,
+        choice: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ]);
   const cv = await loadCvExport(db, userId, iso);
   const appointments = await loadAppointmentExport(db, userId);
   const contribution = await loadContributionExport(db, userId, iso);
@@ -317,7 +411,7 @@ export async function buildDataExport(
   });
   const levels = (await loadVisibilityLevels(db, [userId])).get(userId) ?? new Map();
 
-  return {
+  const result: DataExport = {
     formatVersion: DATA_EXPORT_FORMAT_VERSION,
     exportedAt: now.toISOString(),
     alumniStories: alumniStories.map((row) => ({
@@ -335,6 +429,7 @@ export async function buildDataExport(
       name: user.name,
       email: user.email,
       phone: user.phone,
+      image: user.image,
       createdAt: user.createdAt.toISOString(),
     },
     experiences: user.experiences.map((row) => ({
@@ -405,8 +500,12 @@ export async function buildDataExport(
       updatedAt: row.updatedAt.toISOString(),
     })),
     profile: user.profile
-      ? exportedProfileSchema.parse({
+      ? {
           ...user.profile,
+          // Ham JSON geçer; şemaya uymazsa `sealDataExport` alanı `UNREADABLE` yapar, dökümü düşürmez.
+          socialLinks: user.profile.socialLinks as NonNullable<
+            DataExport['profile']
+          >['socialLinks'],
           hiringDeclaredAt: iso(user.profile.hiringDeclaredAt),
           cvUpdatedAt: iso(user.profile.cvUpdatedAt),
           lastFreshnessPromptAt: iso(user.profile.lastFreshnessPromptAt),
@@ -418,7 +517,7 @@ export async function buildDataExport(
             assignedAt: createdAt.toISOString(),
             updatedAt: updatedAt.toISOString(),
           })),
-        })
+        }
       : null,
     memberships: user.memberships.map(({ department, ...membership }) => ({
       ...membership,
@@ -458,7 +557,65 @@ export async function buildDataExport(
       answeredAt: iso(row.answeredAt),
       helpfulAt: iso(row.helpfulAt),
     })),
+    reports: [
+      ...experienceReports.map((row) => ({
+        id: row.id,
+        targetType: row.targetType,
+        targetId: row.targetId,
+        reason: row.reason,
+        status: row.status,
+        createdAt: row.createdAt.toISOString(),
+      })),
+      ...jobPostingReports.map((row) => ({
+        id: row.id,
+        targetType: 'JOB_POSTING' as const,
+        targetId: row.postingId,
+        reason: row.reason,
+        status: row.status,
+        createdAt: row.createdAt.toISOString(),
+      })),
+    ],
+    integrations: integrations.map((row) => ({
+      ...row,
+      connectedAt: row.connectedAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    })),
+    sessions: sessions.map(({ impersonatedBy, ...row }) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+      expiresAt: row.expiresAt.toISOString(),
+      impersonated: impersonatedBy !== null,
+    })),
+    emailLog: emailLog.map((row) => ({
+      ...row,
+      sentAt: iso(row.sentAt),
+      createdAt: row.createdAt.toISOString(),
+    })),
+    adminGrants: adminGrants.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+      revokedAt: iso(row.revokedAt),
+    })),
+    events: events.map((row) => ({
+      ...row,
+      props: row.props as DataExport['events'][number]['props'],
+      createdAt: row.createdAt.toISOString(),
+    })),
+    jobMatchDigests: jobMatchDigests.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+    })),
+    notificationActions: notificationActions.map((row) => ({
+      ...row,
+      expiresAt: row.expiresAt.toISOString(),
+      usedAt: iso(row.usedAt),
+      createdAt: row.createdAt.toISOString(),
+    })),
   };
+  // Tek geçişte mühürle: şemaya uymayan alan `UNREADABLE`, sözleşmede olmayan anahtar atılır, çağrı başına tek satır günlük (değersiz).
+  const sealed = sealDataExport(result);
+  logFields('veriDokumu.alan', { unreadable: sealed.unreadable, removed: sealed.removed });
+  return sealed.data;
 }
 
 /**
@@ -665,14 +822,6 @@ async function loadContributionExport(
         orderBy: { createdAt: 'asc' },
       }),
     ]);
-  let unreadableBreakdown = false;
-  const candidacies = awardCandidacies.map(({ cycle, breakdown, ...row }) => {
-    const parsed = awardCandidateSchema.shape.breakdown.safeParse(breakdown);
-    if (!parsed.success) unreadableBreakdown = true;
-    return { ...row, ...cycle, breakdown: parsed.success ? parsed.data : ('UNREADABLE' as const) };
-  });
-  // Bozuk değeri veya Zod'un içeriği içerebilen hata nesnesini günlüğe taşıma.
-  if (unreadableBreakdown) logUnexpected('route', 'veriDokumu.breakdown', new Error());
   return {
     awardPublicationDecisions: awardPublicationDecisions.map((row) => ({
       ...row,
@@ -683,7 +832,12 @@ async function loadContributionExport(
       createdAt: row.createdAt.toISOString(),
       publicConsentAt: iso(row.publicConsentAt),
     })),
-    awardCandidacies: candidacies,
+    // Ham JSON geçer; şemaya uymazsa `sealDataExport` alanı `UNREADABLE` yapar.
+    awardCandidacies: awardCandidacies.map(({ cycle, breakdown, ...row }) => ({
+      ...row,
+      ...cycle,
+      breakdown: breakdown as DataExport['contribution']['awardCandidacies'][number]['breakdown'],
+    })),
     entries: entries.map((row) => ({
       ...row,
       eventAt: row.eventAt.toISOString(),
