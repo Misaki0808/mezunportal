@@ -823,3 +823,36 @@ it('hedef bölüm sınırına ulaşınca yalnız seçilmemiş bölümler kilitle
     ),
   );
 });
+
+it('sunucu alan hatasında odak, animasyon karesi React commitinden önce çalışsa da doğru alana gider', async () => {
+  const frame = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+    callback(0);
+    return 0;
+  });
+  try {
+    const { addDays, istanbulDay } = await import('./model');
+    const initial = {
+      ...pendingItem,
+      title: 'Yazılım stajyeri',
+      description: 'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.',
+      deadlineOn: addDays(istanbulDay(), 14),
+    };
+    const save = vi.fn().mockResolvedValue({
+      ok: false,
+      errorCode: 'VALIDATION_INVALID',
+      fieldErrors: { 'content.title': 'VALIDATION_INVALID' },
+    });
+    renderWithToasts(
+      <PostingEditor context={context} initial={initial} save={save} submit={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+    fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+    const field = await screen.findByLabelText(/Pozisyon adı/);
+    await waitFor(() => expect(field).toHaveFocus());
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    expect(field).toHaveAccessibleDescription(messages.errors.codes.VALIDATION_INVALID);
+  } finally {
+    frame.mockRestore();
+  }
+});

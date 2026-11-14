@@ -1011,3 +1011,6 @@ Kullanıcının verdiği 89 ders resmî seed listesidir; daha önceki hoca onay�
 **Oturum altyapı hatası (kart 351).** Çerez yokluğu, geçersiz oturum ve DB erişim hatası ayrılır: hata, girişe yönlendirmek yerine ortak geçici hata sınırına ve eylemlerde kararlı hata koduna gider. Çerez yalnız çözümlemeyi başlatır, yetki sağlamaz; veri erişimi fail-closed kalır.
 
 **Oturum kesintisinde dosya ve rapor rotaları (kart 351 EK).** Oturum çözümü arızası altı korumalı rotada ortak sınırla 503 ve güvenli günlük üretir; yetkisiz ve kapsam dışı yanıtlar değişmez. İstek içi oturum sonucu paylaşılır, hata ekranı yeniden deneme sunar.
+
+
+**İlan formu alan hatasında odak (kart 360, #173 CI ek düzeltmesi).** Son adımda sunucunun önceki adıma ait alan hatası geldiğinde animasyon karesi React'in o adımı commit etmesinden önce çalışabilir; alan henüz DOM'da yoksa odak eski adım başlığında kalır. Yerel form odağı kare zamanlamasına bırakılmaz: en son odak isteği commit sonrası ve gönderim pasifliği bittikten sonra uygulanır. Ortak odak kurtarma davranışı değiştirilmez; form kendi hatalı alanını odakladığında yardımcı başka öğenin odağını çalmaz.
