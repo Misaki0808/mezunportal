@@ -4,6 +4,7 @@ const state = vi.hoisted(() => ({
   authLog: vi.fn(),
   db: vi.fn(),
   consent: vi.fn(),
+  content: vi.fn(),
 }));
 vi.mock('next/headers', () => ({
   headers: async () => new Headers({ cookie: 'mezun.session_token=abc' }),
@@ -12,6 +13,10 @@ vi.mock('../auth', () => ({ getAuth: () => ({ api: { getSession: state.session }
 vi.mock('../auth/log', () => ({ logAuthFailure: state.authLog }));
 vi.mock('../db', () => ({ getDb: state.db }));
 vi.mock('../services/privacy', () => ({ requireConsent: state.consent }));
+vi.mock('@/server/actions/cv-review-request', () => ({
+  listCvReviewRequests: state.content,
+  getCvReviewSettings: state.content,
+}));
 import { requirePageAnyAdmin, requirePageVerifiedMember, requireVerifiedMember } from './index';
 import { guardPage } from './page-guard';
 import { hasAdminAccessStrict } from '@/components/layout/admin-access';
@@ -70,7 +75,7 @@ it('gerçek boş oturum sayfada kodlu ret ve günlük yoktur', async () => {
   try {
     expect(await guardPage('page.test', () => requirePageVerifiedMember())).toEqual({
       ok: false,
-      errorCode: 'AUTH_FORBIDDEN',
+      errorCode: 'AUTH_UNAUTHENTICATED',
     });
     expect(write).not.toHaveBeenCalled();
     expect(state.authLog).not.toHaveBeenCalled();
@@ -118,7 +123,7 @@ it.each([
       state.consent.mockRejectedValue(codedForbidden('CONSENT_REQUIRED'));
       expect(await guardPage('page.test', call)).toEqual({
         ok: false,
-        errorCode: 'AUTH_FORBIDDEN',
+        errorCode: 'CONSENT_REQUIRED',
       });
       expect(state.consent).toHaveBeenCalledOnce();
       expect(write).not.toHaveBeenCalled();
@@ -141,4 +146,51 @@ it('hasAdminAccessStrict: doğrulanmış ama yönetici olmayan üye için false,
   expect(await guardPage('admin.access', hasAdminAccessStrict)).toEqual({ ok: true, value: false });
   signedIn();
   expect(await guardPage('admin.access', hasAdminAccessStrict)).toEqual({ ok: true, value: true });
+});
+
+it.each([
+  ['üyelik yok', { ...member, memberships: [] }, 'AUTH_NOT_VERIFIED'],
+  [
+    'bekleyen üyelik',
+    { ...member, memberships: [{ ...member.memberships[0], verificationStatus: 'PENDING' }] },
+    'AUTH_NOT_VERIFIED',
+  ],
+  ['askıda hesap', { ...member, banned: true }, 'AUTH_ACCOUNT_SUSPENDED'],
+  ['silinmiş hesap', { ...member, deletedAt: new Date() }, 'AUTH_UNAUTHENTICATED'],
+  ['bulunmayan hesap', null, 'AUTH_UNAUTHENTICATED'],
+] as const)(
+  '%s: gerçek izin zinciri ret nedenini korur ve içerik sorgulamaz',
+  async (_name, user, code) => {
+    const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      signedIn(user);
+      expect(await guardPage('page.test', () => requirePageVerifiedMember())).toEqual({
+        ok: false,
+        errorCode: code,
+      });
+      expect(state.consent).not.toHaveBeenCalled();
+      expect(state.content).not.toHaveBeenCalled();
+      expect(write).not.toHaveBeenCalled();
+    } finally {
+      write.mockRestore();
+    }
+  },
+);
+
+it('aktif üyelik başka roldeyse rol reddi korunur', async () => {
+  signedIn();
+  expect(
+    await guardPage('page.test', () => requirePageVerifiedMember({ roles: ['ALUMNI'] })),
+  ).toEqual({ ok: false, errorCode: 'AUTH_FORBIDDEN' });
+  expect(state.consent).not.toHaveBeenCalled();
+});
+
+it('350 B1: açık oturum, sonlandırılmış üyelik; gerçek CV sayfası giriş değil üyelik mesajı ve içerik yok', async () => {
+  signedIn({ ...member, memberships: [{ ...member.memberships[0], endedAt: new Date() }] });
+  const page = (await import('@/app/(kimlik)/hesap/cv-inceleme/page')).default;
+  const result = await page();
+  expect(result).toMatchObject({ props: { errorCode: 'AUTH_NOT_VERIFIED' } });
+  expect(state.session).toHaveBeenCalled();
+  expect(state.consent).not.toHaveBeenCalled();
+  expect(state.content).not.toHaveBeenCalled();
 });
