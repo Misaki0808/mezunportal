@@ -1,7 +1,7 @@
 'use client';
 import { useTranslations } from 'next-intl';
 import { useHydrated } from '@/hooks/use-hydrated';
-import { DATA_EXPORT_HREF, dataExportSchema } from '@/contracts/privacy';
+import { DATA_EXPORT_FORMAT_VERSION, DATA_EXPORT_HREF } from '@/contracts/privacy';
 import { isErrorCode } from '@/lib/errors';
 import { Button } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
@@ -30,9 +30,13 @@ export function ExportButton() {
                     : 'SERVER_UNEXPECTED';
                 return { ok: false, errorCode: code };
               }
-              const parsed = dataExportSchema.safeParse(data);
-              return parsed.success
-                ? { ok: true, data: parsed.data }
+              // Sunucu dökümü sözleşmeye karşı mühürlemiştir (bozuk alan "UNREADABLE", fazlalık atılır). İstemci yeniden ayrıştırmaz:
+              // ayrıştırma bilinmeyen anahtarı düşürür ve işaretli alanı hata sayardı; kullanıcı dosyayı hiç indiremezdi.
+              return data &&
+                typeof data === 'object' &&
+                'formatVersion' in data &&
+                data.formatVersion === DATA_EXPORT_FORMAT_VERSION
+                ? { ok: true, data }
                 : { ok: false, errorCode: 'SERVER_UNEXPECTED' };
             },
             (data) => {

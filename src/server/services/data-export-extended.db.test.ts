@@ -76,7 +76,13 @@ it('yeni bölümler yalnız sahibin verisidir; bozuk aday 200 ve kişisel veri i
     const response = await GET();
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(dataExportSchema.safeParse(body).success).toBe(true);
+    // Bozuk aday `UNREADABLE` işaretlidir (alan düzeyi mühür); işaretli alan çıkarılınca döküm sözleşmeye tam uyar.
+    expect(
+      dataExportSchema.safeParse({
+        ...body,
+        contribution: { ...body.contribution, awardCandidacies: [] },
+      }).success,
+    ).toBe(true);
     expect(body.notifications).toHaveLength(1);
     expect(body.notifications[0]).toMatchObject({ kind: 'jobMatchPosting', readAt: null });
     expect(body.notificationPreferences).toMatchObject([{ type: 'FAQ', enabled: true }]);
@@ -92,8 +98,9 @@ it('yeni bölümler yalnız sahibin verisidir; bozuk aday 200 ve kişisel veri i
     const line = String(log.mock.calls[0]?.[0]);
     expect(JSON.parse(line)).toEqual({
       event: 'route.unexpected',
-      source: 'veriDokumu.breakdown',
+      source: 'veriDokumu.alan',
       errorName: 'Error',
+      okunamayan: ['contribution.awardCandidacies[0].breakdown'],
     });
     expect(line).not.toContain(secret);
   } finally {
