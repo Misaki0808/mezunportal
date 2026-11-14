@@ -16,6 +16,6 @@ export async function sendInvitations(input: string) {
       await inviteUsers({ db: getDb(), secret: env.BETTER_AUTH_SECRET }, actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'sendInvitations');
   }
 }

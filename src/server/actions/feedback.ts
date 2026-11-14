@@ -19,7 +19,7 @@ export async function getFeedbackView(appointmentId: string): Promise<ActionResu
     if (!parsed.ok) return parsed.failure;
     return actionOk(await feedback.feedbackView(getDb(), actor.userId, parsed.data.appointmentId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getFeedbackView');
   }
 }
 export async function submitSessionFeedback(
@@ -31,7 +31,7 @@ export async function submitSessionFeedback(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await feedback.submitFeedback(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'submitSessionFeedback');
   }
 }
 export async function getMyReliability(): Promise<ActionResult<Reliability>> {
@@ -46,7 +46,7 @@ export async function getMyReliability(): Promise<ActionResult<Reliability>> {
     await requireConsent(getDb(), actor.userId);
     return actionOk(await feedback.studentReliability(getDb(), actor.userId, actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getMyReliability');
   }
 }
 
@@ -56,6 +56,6 @@ export async function getFeedbackOverview() {
     await requireConsent(getDb(), actor.userId);
     return actionOk(await feedback.feedbackOverview(getDb(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getFeedbackOverview');
   }
 }

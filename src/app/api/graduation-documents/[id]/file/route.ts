@@ -3,6 +3,7 @@ import { getStorage } from '@/server/external/storage';
 import { getDb } from '@/server/db';
 import { getSessionUserId } from '@/server/permissions/session';
 import { readGraduationDocumentFile } from '@/server/services/graduation-document';
+import { logUnexpected } from '@/server/unexpected-log';
 
 // Mezun belgesi dosyası YALNIZ bu yetki kontrollü rotadan akıtılır: oturum + belgenin bölümünü kapsayan
 // doğrulanmış yönetici. Başvuran kendi belgesini görmez. Karar verilmiş belgenin dosyası yoktur (404).
@@ -36,6 +37,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   } catch (error) {
     if (isCodedError(error) && error.kind === 'unauthenticated') return status(401);
     // Yetkisiz, askıda, doğrulanmamış, olmayan belge, karar verilmiş: ayırt edilmez (404).
+    logUnexpected('route', 'mezunBelgesiDosya', error);
     return status(404);
   }
 }

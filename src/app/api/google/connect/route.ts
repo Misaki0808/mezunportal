@@ -7,6 +7,7 @@ import { getDb } from '@/server/db';
 import { OAUTH_STATE_COOKIE } from '@/server/external/calendar/google-oauth';
 import { requireAdmin } from '@/server/permissions';
 import { beginGoogleAuthorization } from '@/server/services/google-calendar-connection';
+import { logUnexpected } from '@/server/unexpected-log';
 
 // Google Takvim'i bağlama başlangıcı (kart 174): yalnız sistem yöneticisi. Yönlendirme adresindeki `state`/PKCE bilgisi imzalı, httpOnly
 // çerezde de durur; dönüşte (`/api/google/callback`) eşleşmezse bağlama reddedilir. Yanıtlar önbelleğe alınmaz.
@@ -40,6 +41,7 @@ export async function GET() {
       login.searchParams.set('donus', GOOGLE_ADMIN_HREF);
       return NextResponse.redirect(login, { status: 303, headers: NO_STORE });
     }
+    logUnexpected('route', 'googleConnect', error);
     return new Response(null, { status: isCodedError(error) ? 403 : 500, headers: NO_STORE });
   }
 }

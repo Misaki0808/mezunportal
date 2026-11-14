@@ -26,7 +26,7 @@ export async function searchCompanies(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.searchCompanies({ db: getDb() }, actor.userId, parsed.data.q));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'searchCompanies');
   }
 }
 export async function getCompany(input: CompanySlugInput): Promise<ActionResult<CompanyDetail>> {
@@ -36,7 +36,7 @@ export async function getCompany(input: CompanySlugInput): Promise<ActionResult<
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.getCompany({ db: getDb() }, actor.userId, parsed.data.slug));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getCompany');
   }
 }
 export async function mergeCompanies(
@@ -55,6 +55,6 @@ export async function mergeCompanies(
       ),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'mergeCompanies');
   }
 }

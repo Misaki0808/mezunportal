@@ -26,6 +26,6 @@ export async function getUsageMetrics(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await usage.getUsageMetrics({ db: getDb() }, admin.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getUsageMetrics');
   }
 }

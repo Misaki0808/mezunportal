@@ -27,7 +27,7 @@ export async function searchExperiences(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await search.searchExperiences({ db: getDb() }, actor, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'searchExperiences');
   }
 }
 
@@ -37,6 +37,6 @@ export async function listSearchSectors(): Promise<ActionResult<SearchSectors>> 
     const actor = await requireVerifiedMember();
     return actionOk(await search.listSearchSectors({ db: getDb() }, actor));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listSearchSectors');
   }
 }

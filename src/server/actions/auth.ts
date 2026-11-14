@@ -46,7 +46,7 @@ export async function getSignInOptions(): Promise<ActionResult<SignInOptions>> {
   try {
     return actionOk(authFlow.getSignInOptions(getAuthEnv()));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getSignInOptions');
   }
 }
 
@@ -56,7 +56,7 @@ export async function startLinkedInSignIn(): Promise<ActionResult<StartLinkedInS
     const context = await getRequestContext();
     return actionOk(await authFlow.startLinkedInSignIn(authFlowDeps(), context));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'startLinkedInSignIn');
   }
 }
 
@@ -76,7 +76,7 @@ export async function requestSignInLink(
       }),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'requestSignInLink');
   }
 }
 
@@ -96,7 +96,7 @@ export async function requestEmailChange(
       }),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'requestEmailChange');
   }
 }
 
@@ -110,7 +110,7 @@ export async function declareMembership(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await authFlow.declareMembership(authFlowDeps(), actor, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'declareMembership');
   }
 }
 
@@ -122,7 +122,7 @@ export async function listSelectableDepartments(): Promise<
     const actor = await requireUserWithoutConsent();
     return actionOk(await authFlow.listSelectableDepartments(getDb(), actor));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listSelectableDepartments');
   }
 }
 
@@ -132,7 +132,7 @@ export async function getVerificationState(): Promise<ActionResult<VerificationS
     const actor = await requireUserWithoutConsent();
     return actionOk(await authFlow.getVerificationState(getDb(), actor));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getVerificationState');
   }
 }
 
@@ -167,6 +167,6 @@ export async function signInAsTestPersona(
     }
     return actionOk({ signedIn: true });
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'signInAsTestPersona');
   }
 }

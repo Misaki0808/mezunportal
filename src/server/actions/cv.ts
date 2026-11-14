@@ -37,7 +37,7 @@ export async function getCvAvailability(): Promise<ActionResult<CvAvailability>>
     const actor = await requireUser();
     return actionOk(await cv.getCvAvailability(cvDeps(), actor));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getCvAvailability');
   }
 }
 
@@ -50,7 +50,7 @@ export async function uploadCv(formData: FormData): Promise<ActionResult<CvUploa
     if (!parsed.ok) return parsed.failure;
     return actionOk(await cv.uploadCv(cvDeps(), actor, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'uploadCv');
   }
 }
 
@@ -60,7 +60,7 @@ export async function getLatestCv(): Promise<ActionResult<CvStatusOutput | null>
     const actor = await requireUser();
     return actionOk(await cv.getLatestCv(cvDeps(), actor));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getLatestCv');
   }
 }
 
@@ -71,7 +71,7 @@ export async function getCvStatus(input: CvIdInput): Promise<ActionResult<CvStat
     if (!parsed.ok) return parsed.failure;
     return actionOk(await cv.getCvStatus(cvDeps(), actor, parsed.data.cvUploadId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getCvStatus');
   }
 }
 
@@ -83,7 +83,7 @@ export async function getCvReview(input: CvIdInput): Promise<ActionResult<CvRevi
     if (!parsed.ok) return parsed.failure;
     return actionOk(await cv.getCvReview(cvDeps(), actor, parsed.data.cvUploadId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getCvReview');
   }
 }
 
@@ -97,7 +97,7 @@ export async function applyCv(input: ApplyCvInput): Promise<ActionResult<ApplyCv
     const result = await cv.applyCv(deps, actor, parsed.data);
     return actionOk(result);
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'applyCv');
   }
 }
 
@@ -109,7 +109,7 @@ export async function discardCv(input: CvIdInput): Promise<ActionResult<DiscardC
     if (!parsed.ok) return parsed.failure;
     return actionOk(await cv.discardCv(cvDeps(), actor, parsed.data.cvUploadId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'discardCv');
   }
 }
 
@@ -121,7 +121,7 @@ export async function listExperienceInvitations(): Promise<
     const actor = await requireUser();
     return actionOk(await cv.listExperienceInvitations(cvDeps(), actor));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listExperienceInvitations');
   }
 }
 
@@ -136,6 +136,6 @@ export async function dismissExperienceInvitation(
       await cv.dismissExperienceInvitation(cvDeps(), actor, parsed.data.invitationId),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'dismissExperienceInvitation');
   }
 }

@@ -6,6 +6,7 @@ import { getEnv } from '@/lib/env';
 
 import { getDb } from '../db';
 import { runPointBackfill } from '../services/points';
+import { loggedJob } from '../unexpected-log';
 
 /**
  * `points.backfill` (pg-boss): puan motoru devreye girdiğinde BİR KEZ çalışan geriye dönük hesaplama. Sistem yöneticisi
@@ -39,7 +40,7 @@ export async function createPointsRuntime(
     });
     if (consume) {
       await boss.work(POINTS_BACKFILL_QUEUE, { batchSize: 1 }, async () => {
-        await runPointBackfill({ db: getDb() });
+        await loggedJob('points.backfill', () => runPointBackfill({ db: getDb() }));
       });
     }
   } catch {

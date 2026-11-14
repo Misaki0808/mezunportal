@@ -18,7 +18,7 @@ export async function listCampusEvents() {
     const actor = await requireVerifiedMember();
     return actionOk(await events.listCampusEvents({ db: getDb() }, actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listCampusEvents');
   }
 }
 export async function listCampusEventModeration() {
@@ -26,7 +26,7 @@ export async function listCampusEventModeration() {
     const actor = await requireAnyAdmin();
     return actionOk(await events.listCampusEventModeration({ db: getDb() }, actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listCampusEventModeration');
   }
 }
 export async function createCampusEvent(input: unknown) {
@@ -36,7 +36,7 @@ export async function createCampusEvent(input: unknown) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await events.createCampusEvent({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'createCampusEvent');
   }
 }
 export async function reviewCampusEvent(input: unknown) {
@@ -46,7 +46,7 @@ export async function reviewCampusEvent(input: unknown) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await events.reviewCampusEvent({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'reviewCampusEvent');
   }
 }
 export async function cancelCampusEvent(input: unknown) {
@@ -56,7 +56,7 @@ export async function cancelCampusEvent(input: unknown) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await events.cancelCampusEvent({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'cancelCampusEvent');
   }
 }
 export async function registerCampusEvent(input: unknown) {
@@ -66,7 +66,7 @@ export async function registerCampusEvent(input: unknown) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await events.registerCampusEvent({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'registerCampusEvent');
   }
 }
 export async function getCampusEventCode(input: unknown) {
@@ -85,7 +85,7 @@ export async function getCampusEventCode(input: unknown) {
       ),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getCampusEventCode');
   }
 }
 export async function checkInCampusEvent(input: unknown) {
@@ -102,6 +102,6 @@ export async function checkInCampusEvent(input: unknown) {
       ),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'checkInCampusEvent');
   }
 }

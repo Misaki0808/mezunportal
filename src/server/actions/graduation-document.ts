@@ -37,7 +37,7 @@ export async function uploadGraduationDocument(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await documents.uploadGraduationDocument(documentDeps(), actor, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'uploadGraduationDocument');
   }
 }
 
@@ -53,7 +53,7 @@ export async function listPendingGraduationDocuments(
       await documents.listPendingGraduationDocuments({ db: getDb() }, actor, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listPendingGraduationDocuments');
   }
 }
 
@@ -67,6 +67,6 @@ export async function reviewGraduationDocument(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await documents.reviewGraduationDocument(documentDeps(), actor, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'reviewGraduationDocument');
   }
 }

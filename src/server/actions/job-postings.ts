@@ -63,7 +63,7 @@ export async function getJobPostingFormContext(): Promise<ActionResult<JobPostin
     const actor = await requireVerifiedMember({ roles: ['ALUMNI', 'ACADEMIC'] });
     return actionOk(await jobPostings.getJobPostingFormContext(deps(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getJobPostingFormContext');
   }
 }
 
@@ -76,7 +76,7 @@ export async function saveJobPostingDraft(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.saveJobPostingDraft(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'saveJobPostingDraft');
   }
 }
 
@@ -89,7 +89,7 @@ export async function submitJobPosting(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.submitJobPosting(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'submitJobPosting');
   }
 }
 
@@ -102,7 +102,7 @@ export async function closeJobPosting(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.closeJobPosting(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'closeJobPosting');
   }
 }
 
@@ -115,7 +115,7 @@ export async function listMyJobPostings(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.listMyJobPostings(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listMyJobPostings');
   }
 }
 
@@ -128,7 +128,7 @@ export async function searchJobPostings(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.searchJobPostings(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'searchJobPostings');
   }
 }
 
@@ -137,7 +137,7 @@ export async function getJobPostingFilterOptions(): Promise<ActionResult<JobPost
     const actor = await requireVerifiedMember();
     return actionOk(await jobPostings.getJobPostingFilterOptions(deps(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getJobPostingFilterOptions');
   }
 }
 
@@ -150,7 +150,7 @@ export async function getJobPosting(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.getJobPosting(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getJobPosting');
   }
 }
 
@@ -163,7 +163,7 @@ export async function reportJobPosting(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.reportJobPosting(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'reportJobPosting');
   }
 }
 
@@ -178,7 +178,7 @@ export async function listJobPostingModerationQueue(
       await moderation.listJobPostingModerationQueue(deps(), actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listJobPostingModerationQueue');
   }
 }
 
@@ -191,7 +191,7 @@ export async function reviewJobPosting(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await moderation.reviewJobPosting(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'reviewJobPosting');
   }
 }
 
@@ -204,7 +204,7 @@ export async function listJobPostingReports(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await moderation.listJobPostingReports(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listJobPostingReports');
   }
 }
 
@@ -217,7 +217,7 @@ export async function resolveJobPostingReport(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await moderation.resolveJobPostingReport(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'resolveJobPostingReport');
   }
 }
 
@@ -231,7 +231,7 @@ export async function previewJobPostingContact(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await contact.previewJobPostingContact(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'previewJobPostingContact');
   }
 }
 
@@ -245,6 +245,6 @@ export async function requestJobPostingContact(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await contact.requestJobPostingContact(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'requestJobPostingContact');
   }
 }

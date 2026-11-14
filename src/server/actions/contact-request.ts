@@ -63,7 +63,7 @@ export async function sendContactRequest(
     const result = await service.sendContactRequest(getDb(), actor.userId, parsed.data);
     return actionOk(result);
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'sendContactRequest');
   }
 }
 
@@ -76,7 +76,7 @@ export async function respondToContactRequest(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.respondToContactRequest(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'respondToContactRequest');
   }
 }
 
@@ -89,7 +89,7 @@ export async function withdrawContactRequest(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.withdrawContactRequest(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'withdrawContactRequest');
   }
 }
 
@@ -102,7 +102,7 @@ export async function revokeContactRequest(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.revokeContactRequest(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'revokeContactRequest');
   }
 }
 
@@ -115,7 +115,7 @@ export async function listContactRequests(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.listContactRequests(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listContactRequests');
   }
 }
 
@@ -137,6 +137,6 @@ export async function previewContactTarget(
         : CONTACT_TARGET_NOT_REQUESTABLE,
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'previewContactTarget');
   }
 }

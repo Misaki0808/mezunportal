@@ -4,6 +4,7 @@ import { getDb } from '@/server/db';
 import { createRecordingNotifier } from '@/server/services/appointment-notifier';
 import { getSessionUserId } from '@/server/permissions/session';
 import { getAppointmentIcs } from '@/server/services/appointment';
+import { logUnexpected } from '@/server/unexpected-log';
 
 // Randevu `.ics`: yalnız iki katılımcıya, yalnız onaylı randevu için. Yetkisiz/olmayan/onaylı olmayan: ayırt edilmez (404).
 export const dynamic = 'force-dynamic';
@@ -35,6 +36,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     });
   } catch (error) {
     if (isCodedError(error) && error.kind === 'unauthenticated') return status(401);
+    logUnexpected('route', 'randevuIcs', error);
     return status(404);
   }
 }

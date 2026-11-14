@@ -8,6 +8,7 @@ import { resetCalendar } from '@/server/external/calendar';
 import { OAUTH_STATE_COOKIE } from '@/server/external/calendar/google-oauth';
 import { requireAdmin } from '@/server/permissions';
 import { completeGoogleAuthorization } from '@/server/services/google-calendar-connection';
+import { logUnexpected } from '@/server/unexpected-log';
 
 // Google dönüşü (kart 174). Yetkilendirme kodu ve `state` yalnız bu istekte okunur; yönlendirme adresine, loga ve hataya GİRMEZ.
 // Çerez her sonuçta temizlenir (tek kullanım). Yalnız sonuç anahtarı (`durum`) yönetim sayfasına taşınır.
@@ -54,6 +55,7 @@ export async function GET(request: NextRequest) {
       login.searchParams.set('donus', GOOGLE_ADMIN_HREF);
       return clear(NextResponse.redirect(login, { status: 303, headers: NO_STORE }));
     }
+    logUnexpected('route', 'googleCallback', error);
     return clear(
       new Response(null, { status: isCodedError(error) ? 403 : 500, headers: NO_STORE }),
     );

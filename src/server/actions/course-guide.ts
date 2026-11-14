@@ -18,7 +18,7 @@ export async function getCourseGuide(input: CourseFilterInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.listCourseGuide(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getCourseGuide');
   }
 }
 export async function getAlumniCourses() {
@@ -26,7 +26,7 @@ export async function getAlumniCourses() {
     const actor = await requireVerifiedMember({ roles: ['ALUMNI'] });
     return actionOk(await service.listAlumniCourses(getDb(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getAlumniCourses');
   }
 }
 export async function saveAlumniCourses(input: CourseSelectionInput) {
@@ -36,7 +36,7 @@ export async function saveAlumniCourses(input: CourseSelectionInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.saveAlumniCourses(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'saveAlumniCourses');
   }
 }
 export async function getManagedCourses() {
@@ -45,7 +45,7 @@ export async function getManagedCourses() {
     const actor = await requireAnyAdmin();
     return actionOk(await service.listManagedCourses(getDb(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getManagedCourses');
   }
 }
 export async function saveCourse(input: import('@/contracts/course-guide').SaveCourseInput) {
@@ -57,6 +57,6 @@ export async function saveCourse(input: import('@/contracts/course-guide').SaveC
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.saveCourse(getDb(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'saveCourse');
   }
 }

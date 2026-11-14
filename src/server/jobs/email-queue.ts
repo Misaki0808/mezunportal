@@ -2,6 +2,7 @@ import 'server-only';
 import { PgBoss, type JobWithMetadata } from 'pg-boss';
 import { EmailTransportError } from '../external/email/types';
 import type { QueuedEmail } from './email-core';
+import { logUnexpected } from '../unexpected-log';
 
 export const EMAIL_QUEUE = 'email.send';
 export const EMAIL_FAILED_QUEUE = 'email.failed';
@@ -71,6 +72,8 @@ export async function startEmailConsumer(
             await deliver(job.data, job.retryCount, job.retryLimit);
             return { id: job.id, status: 'completed' as const };
           } catch (error) {
+            // Beklenen taşıma hataları e-posta olaylarında görünür; geri kalanı (veritabanı, kod hatası) burada tek satır yazılır.
+            if (!(error instanceof EmailTransportError)) logUnexpected('job', 'email.send', error);
             const safe = error instanceof EmailTransportError ? error : new EmailTransportError();
             return {
               id: job.id,
@@ -91,7 +94,8 @@ export async function startEmailFailureConsumer(
   return boss.work<QueuedEmail>(EMAIL_FAILED_QUEUE, async (jobs) => {
     try {
       for (const job of jobs) await fail(job.data);
-    } catch {
+    } catch (error) {
+      logUnexpected('job', 'email.failureRecord', error);
       throw new Error('EMAIL_FAILURE_RECORD_UNAVAILABLE');
     }
   });

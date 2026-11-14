@@ -7,6 +7,7 @@ import { isCodedError } from '@/lib/errors';
 import { getDb } from '@/server/db';
 import { getSessionUserId } from '@/server/permissions/session';
 import { exportEmploymentReport } from '@/server/services/admin-employment';
+import { logUnexpected } from '@/server/unexpected-log';
 
 // Mezun istihdam raporu (Excel). Yetki kontrollü rotadan akıtılır: oturum + kapsamı olan doğrulanmış yönetici.
 // Dosya yalnız toplu sayılar içerir; her dışa aktarma `DATA_EXPORT` işlem kaydı yazar ve hız sınırına tabidir.
@@ -60,6 +61,7 @@ export async function GET(request: Request) {
       // Askıda, doğrulanmamış, yetkisiz: ayırt edilmez.
       return failure(403);
     }
+    logUnexpected('route', 'raporIstihdam', error);
     return failure(500);
   }
 }

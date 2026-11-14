@@ -24,7 +24,7 @@ export async function listMyStories() {
     const actor = await requireVerifiedMember({ roles: ['ALUMNI'] });
     return actionOk(await service.listMyStories({ db: getDb() }, actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listMyStories');
   }
 }
 export async function saveStory(input: SaveStoryInput) {
@@ -34,7 +34,7 @@ export async function saveStory(input: SaveStoryInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.saveStory({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'saveStory');
   }
 }
 export async function setStoryConsent(input: StoryConsentInput) {
@@ -44,7 +44,7 @@ export async function setStoryConsent(input: StoryConsentInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.setStoryConsent({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'setStoryConsent');
   }
 }
 export async function submitStory(input: StoryIdInput) {
@@ -54,7 +54,7 @@ export async function submitStory(input: StoryIdInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.submitStory({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'submitStory');
   }
 }
 export async function listStoryModeration(input: StoriesScopeInput) {
@@ -64,7 +64,7 @@ export async function listStoryModeration(input: StoriesScopeInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.listStoryModeration({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listStoryModeration');
   }
 }
 export async function reviewStory(input: ReviewStoryInput) {
@@ -74,7 +74,7 @@ export async function reviewStory(input: ReviewStoryInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.reviewStory({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'reviewStory');
   }
 }
 export async function selectMonthlyAlumnus(input: MonthlySelectionInput) {
@@ -84,7 +84,7 @@ export async function selectMonthlyAlumnus(input: MonthlySelectionInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.selectMonthlyAlumnus({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'selectMonthlyAlumnus');
   }
 }
 export async function listPublishedStories() {
@@ -92,7 +92,7 @@ export async function listPublishedStories() {
     const actor = await requireVerifiedMember();
     return actionOk(await service.listPublishedStories({ db: getDb() }, actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'listPublishedStories');
   }
 }
 export async function getPublishedStory(input: StoryIdInput) {
@@ -102,7 +102,7 @@ export async function getPublishedStory(input: StoryIdInput) {
     if (!parsed.ok) return parsed.failure;
     return actionOk(await service.getPublishedStory({ db: getDb() }, actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getPublishedStory');
   }
 }
 export async function getCurrentStory() {
@@ -110,6 +110,6 @@ export async function getCurrentStory() {
     const actor = await requireVerifiedMember();
     return actionOk(await service.getCurrentStory({ db: getDb() }, actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getCurrentStory');
   }
 }

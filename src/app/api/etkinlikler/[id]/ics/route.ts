@@ -2,6 +2,7 @@ import { getDb } from '@/server/db';
 import { getSessionUserId } from '@/server/permissions/session';
 import { buildIcs } from '@/server/rules/ics';
 import { listCampusEvents } from '@/server/services/campus-event';
+import { logUnexpected } from '@/server/unexpected-log';
 export const dynamic = 'force-dynamic';
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const userId = await getSessionUserId();
@@ -27,7 +28,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
         'x-content-type-options': 'nosniff',
       },
     });
-  } catch {
+  } catch (error) {
+    logUnexpected('route', 'etkinlikIcs', error);
     return new Response(null, { status: 404, headers: { 'cache-control': 'no-store' } });
   }
 }

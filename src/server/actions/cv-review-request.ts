@@ -32,7 +32,7 @@ export async function getCvReviewSettings() {
     const a = await requireVerifiedMember();
     return actionOk(await service.getSettings(deps(), a.userId));
   } catch (e) {
-    return failAction(e);
+    return failAction(e, 'getCvReviewSettings');
   }
 }
 export async function saveCvReviewSettings(input: CvReviewSettings) {
@@ -42,7 +42,7 @@ export async function saveCvReviewSettings(input: CvReviewSettings) {
     if (!p.ok) return p.failure;
     return actionOk(await service.saveSettings(deps(), a.userId, p.data));
   } catch (e) {
-    return failAction(e);
+    return failAction(e, 'saveCvReviewSettings');
   }
 }
 export async function getCvReviewAvailability(input: { mentorId: string }) {
@@ -52,7 +52,7 @@ export async function getCvReviewAvailability(input: { mentorId: string }) {
     if (!p.ok) return p.failure;
     return actionOk(await service.getAvailability(deps(), a.userId, p.data.mentorId));
   } catch (e) {
-    return failAction(e);
+    return failAction(e, 'getCvReviewAvailability');
   }
 }
 export async function createCvReviewRequest(input: CreateCvReviewRequestInput) {
@@ -62,7 +62,7 @@ export async function createCvReviewRequest(input: CreateCvReviewRequestInput) {
     if (!p.ok) return p.failure;
     return actionOk(await service.createRequest(deps(), a.userId, p.data));
   } catch (e) {
-    return failAction(e);
+    return failAction(e, 'createCvReviewRequest');
   }
 }
 export async function answerCvReviewRequest(input: AnswerCvReviewRequestInput) {
@@ -72,7 +72,7 @@ export async function answerCvReviewRequest(input: AnswerCvReviewRequestInput) {
     if (!p.ok) return p.failure;
     return actionOk(await service.answerRequest(deps(), a.userId, p.data));
   } catch (e) {
-    return failAction(e);
+    return failAction(e, 'answerCvReviewRequest');
   }
 }
 export async function markCvReviewHelpful(input: { requestId: string }) {
@@ -82,7 +82,7 @@ export async function markCvReviewHelpful(input: { requestId: string }) {
     if (!p.ok) return p.failure;
     return actionOk(await service.markHelpful(deps(), a.userId, p.data.requestId));
   } catch (e) {
-    return failAction(e);
+    return failAction(e, 'markCvReviewHelpful');
   }
 }
 export async function listCvReviewRequests(input: ListCvReviewRequestsInput) {
@@ -92,6 +92,6 @@ export async function listCvReviewRequests(input: ListCvReviewRequestsInput) {
     if (!p.ok) return p.failure;
     return actionOk(await service.listRequests(deps(), a.userId, p.data));
   } catch (e) {
-    return failAction(e);
+    return failAction(e, 'listCvReviewRequests');
   }
 }

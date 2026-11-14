@@ -32,7 +32,7 @@ export async function getGoogleCalendarStatus(
       await connection.getGoogleCalendarStatus({ db: getDb() }, actor.userId, parsed.data),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getGoogleCalendarStatus');
   }
 }
 
@@ -51,6 +51,6 @@ export async function disconnectGoogleCalendar(
       ),
     );
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'disconnectGoogleCalendar');
   }
 }

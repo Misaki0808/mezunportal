@@ -43,7 +43,7 @@ export async function getMyProfile(): Promise<ActionResult<MyProfile>> {
     const actor = await requireUser();
     return actionOk(await content.getMyProfile(deps(), actor.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getMyProfile');
   }
 }
 
@@ -55,7 +55,7 @@ export async function getProfile(input: GetProfileInput): Promise<ActionResult<P
     if (!parsed.ok) return parsed.failure;
     return actionOk(await content.getProfile(deps(), actor.userId, parsed.data.userId));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'getProfile');
   }
 }
 
@@ -68,7 +68,7 @@ export async function updateProfileBasics(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await content.updateProfileBasics(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'updateProfileBasics');
   }
 }
 
@@ -80,7 +80,7 @@ export async function setSocialLinks(input: SetSocialLinksInput): Promise<Action
     if (!parsed.ok) return parsed.failure;
     return actionOk(await content.setSocialLinks(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'setSocialLinks');
   }
 }
 
@@ -91,7 +91,7 @@ export async function setLinkedinUrl(input: SetLinkedinUrlInput): Promise<Action
     if (!parsed.ok) return parsed.failure;
     return actionOk(await content.setLinkedinUrl(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'setLinkedinUrl');
   }
 }
 
@@ -104,7 +104,7 @@ export async function saveProfileEntry(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await content.saveProfileEntry(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'saveProfileEntry');
   }
 }
 
@@ -117,7 +117,7 @@ export async function deleteProfileEntry(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await content.deleteProfileEntry(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'deleteProfileEntry');
   }
 }
 
@@ -130,7 +130,7 @@ export async function addProfileSkill(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await content.addProfileSkill(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'addProfileSkill');
   }
 }
 
@@ -143,7 +143,7 @@ export async function removeProfileSkill(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await content.removeProfileSkill(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'removeProfileSkill');
   }
 }
 
@@ -156,6 +156,6 @@ export async function suggestSkills(
     if (!parsed.ok) return parsed.failure;
     return actionOk(await content.suggestSkills(deps(), actor.userId, parsed.data));
   } catch (error) {
-    return failAction(error);
+    return failAction(error, 'suggestSkills');
   }
 }

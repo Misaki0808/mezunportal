@@ -9,6 +9,7 @@ import { getCalendar } from '../external/calendar';
 import { createAppointmentNotifier } from '../services/appointment-notifier';
 import { runAppointmentSweep } from '../services/appointment-jobs';
 import { enqueueEmail } from './email';
+import { loggedJob } from '../unexpected-log';
 
 /**
  * `appointment.sweep` (pg-boss, dakikada bir): yanıt süresi (D11) dolan talepleri kapatır, onaylı online randevulara
@@ -47,11 +48,13 @@ export async function createAppointmentRuntime(
         APPOINTMENT_SWEEP_QUEUE,
         { pollingIntervalSeconds: 5, batchSize: 1 },
         async () => {
-          await runAppointmentSweep({
-            db: getDb(),
-            calendar: getCalendar(),
-            notifier: createAppointmentNotifier(enqueueEmail),
-          });
+          await loggedJob('appointment.sweep', () =>
+            runAppointmentSweep({
+              db: getDb(),
+              calendar: getCalendar(),
+              notifier: createAppointmentNotifier(enqueueEmail),
+            }),
+          );
         },
       );
     }

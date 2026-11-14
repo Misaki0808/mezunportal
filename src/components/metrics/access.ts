@@ -1,5 +1,6 @@
 import 'server-only';
 import { actionFailure, actionOk } from '@/lib/action-result';
+import { logUnexpected } from '@/server/unexpected-log';
 import { getDb } from '@/server/db';
 import { requireAnyAdmin } from '@/server/permissions';
 import { requireConsent } from '@/server/services/privacy';
@@ -10,6 +11,7 @@ export async function metricsAccess() {
     await requireConsent(getDb(), actor.userId);
     return actionOk(null);
   } catch (error) {
+    logUnexpected('route', 'metricsAccess', error);
     return actionFailure(error);
   }
 }

@@ -21,6 +21,7 @@ import { scheduleMonthlyDigests } from './monthly-digest-task';
 import { freezeDueAwardCycles } from '../services/year-alumni';
 import { rotateMonthlyAlumni } from '../services/alumni-story';
 import { purgeCampusEventNetworks } from '../services/campus-event';
+import { loggedJob } from '../unexpected-log';
 
 /** Görev adları dışında kişi, bağlantı ve sağlayıcı hata bilgisi günlüğe yazılmaz. */
 export async function createNotificationRuntime() {
@@ -66,7 +67,9 @@ export async function createNotificationRuntime() {
     for (const [name, task] of Object.entries(tasks)) {
       await boss.createQueue(name, { retryLimit: 3, retryDelay: 60, retryBackoff: true });
       await boss.work(name, { batchSize: 1 }, async () => {
-        await task();
+        await loggedJob(name, async () => {
+          await task();
+        });
       });
       await boss.schedule(
         name,
