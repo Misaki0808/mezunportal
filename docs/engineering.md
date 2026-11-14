@@ -106,7 +106,7 @@ Kapsam yüzdesi için test yazılmaz; yanlış aktör, yanlış durum, tekrar ve
 Ekran kaynağı deseni testle değil lint kuralıyla korunur.
 
 **Ekran kaynağını tarayan test yazılmaz** (bileşen dosyasını metin olarak okuyup desen arayan
-test); kural saf işleve çıkarılır, test onu sınar. Vitest eşzamanlılığı `--maxWorkers=4`.
+test); kural saf işleve çıkarılır, test onu sınar. Vitest eşzamanlılığı en çok `--maxWorkers=2`.
 
 **Çekirdek akış testleri:** her çekirdek adım kendi akışı için bir Playwright testi bırakır
 (giriş, ilk giriş akışı, CV onayı, deneyim yazma/moderasyon, arama, randevu, yönetim). CI bunları
@@ -232,8 +232,11 @@ son adımıdır (P1-18).
 
 ### Yerel geliştirme
 
-Makinede aynı anda yalnız bir ağır iş çalıştırılır; `pm-handoff/araclar/agir-is.sh` ile sıraya girer.
-Vitest ve Playwright en çok iki işçi kullanır; Playwright yalnız ilgili senaryolarda koşulur.
+Önkoşullar: `.nvmrc` ile eşleşen Node.js, `package.json` içindeki pnpm sürümü ve çalışan Docker.
+Komutları klonun kök dizininde sırayla çalıştır.
+Makinede aynı anda yalnız bir ağır iş çalıştırılır. Ekip provalarında Git dışı
+`pm-handoff/araclar/agir-is.sh` sırayı yönetir; temiz klonun kurulum komutları aşağıdadır.
+Vitest en çok iki, Playwright bir işçi (`--workers=1`) kullanır; Playwright yalnız ilgili senaryolarda koşulur.
 Watch modu kullanma; iş bitince açtığın geliştirme sunucusunu, worker ve tarayıcı süreçlerini kapat.
 
 ```bash
@@ -245,7 +248,8 @@ pnpm db:deploy && pnpm db:seed   # şema + deterministik sahte veri
 pnpm dev:all                     # web + worker
 ```
 
-`worktree-env.sh` yoksa oluşturur, varsa `.env.local` dosyasını ve veritabanlarını korur.
+`worktree-env.sh`, `.env.example` kopyasındaki uygulama adresini ve iki veritabanı adını
+bu çalışma kopyasına göre ayarlayıp `.env.local` dosyasını oluşturur; mevcut dosyayı ve veritabanlarını korur.
 Adı worktree'den üretir; `w1-`, `w2-`, `r1-`, `r2-`, `pm-` öneklerinin port dilimleri
 sırasıyla 3100, 3200, 3300, 3400, 3900'den başlar (100 port). Ana kopya 3000 kullanır.
 Adın sabit özetinden sapma seçer; dolu/diğer worktree'ye ayrılmış portta sıradakini dener.
@@ -259,6 +263,8 @@ bakıyorsa değiştirmeden durur; ayarı elle incele. Veritabanlarını yalnız 
 `--port` ile verir; Next.js aksi halde `.env.local` içindeki portu seçmez. `dev:all` web ile
 ayrı Node worker sürecini başlatır. Worker `email.send` kuyruğunu ve kalıcı başarısızlık kuyruğunu işler; sağlık satırı da üretir. Ctrl+C veya süreçlerden birinin çıkışı ikisini de kapatır. Worker kapanışı 20 sn ile sınırlıdır: temiz kapanışta çıkış 0; hata ya da süre aşımında sabit satır ve çıkış 1 (süreç yetim kalmaz); ilk sinyalden 1 sn sonra gelen ikinci sinyal hemen çıkar.
 Normal geliştirme yalnız `127.0.0.1`'e açılır; LAN modu aşağıdadır.
+Tarayıcıda `.env.local` içindeki `APP_URL` adresini kullan. Yalnız 127.0.0.1 ile prova yapacaksan
+bu adresin ana makinesini de `127.0.0.1` olarak ayarla; portu koru.
 
 - **PostgreSQL kimliği** (`mezun` / `mezun`) yalnız `127.0.0.1`'e bağlı yerel konteynere aittir;
   sır değildir ve canlıya taşınmaz. Veritabanı adresi biçimi:
@@ -281,15 +287,16 @@ Normal geliştirme yalnız `127.0.0.1`'e açılır; LAN modu aşağıdadır.
 - **Seed:** kurumlar ve rol başına altı test kullanıcısı hazırdır (öğrenci, üst sınıf mentor, mezun mentor,
   akademisyen, bölüm yöneticisi, sistem yöneticisi: doğrulanmış üyelik, mentor profili, yönetici yetkisi).
   Modül sırası ve deterministik kimlik/zaman üreticisi `prisma/seed-framework.ts`'tedir. E-postalar
-  `@test.mezunportal.local` (gerçek alan adı değil) ve giriş bilgisi yoktur; test girişi ve Better Auth
-  oturumları P1-02'de gelir, bilgileri Git dışı `korunan/test-hesaplari.md`'de tutulur. Sonraki özellikler
+  `@test.mezunportal.local` (gerçek alan adı değil); parola üretilmez. Yerel test girişi hazırdır;
+  hesap bilgileri Git dışı `korunan/test-hesaplari.md`'de tutulur. Sonraki özellikler
   kendi örnek verisini modül sırasına ekler.
 - **Giriş ve e-posta:** e-posta bağlantıları `getAuthEmailPort()` üzerinden işlemli giden kutusuna
   (`enqueueEmail`) yazılır; teslim için `pnpm dev:all` çalışmalıdır. Telefon ve
   yerel denemede **test girişi** (`signInAsTestPersona`, yalnız `local`/`test`) seed kullanıcısı olarak
   e-posta olmadan oturum açar. Giriş akışı Mailpit'ten (`http://localhost:8025`) denenir.
-- Dış servisler yerelde de gerçek çalışabilir (LLM, Google Takvim, LinkedIn); anahtar yoksa sahte
-  adaptör seçilir.
+- `.env.example`, CV ve takvim için `fake` sağlayıcıyı seçer; bu yerel kurulumda gerçek dış servis
+  anahtarı gerekmez. Sağlayıcıyı boş bırakmak o hattı kapatır; aşağıdaki env grupları davranışı açıklar.
+  Google Takvim ve LinkedIn'i gerçek hesapla bağlamak için ilgili anahtarları ayrıca yapılandır.
 
 ### Env grupları
 
@@ -366,7 +373,9 @@ Hocaya gösterim de aynı yolla, bilgisayardan ya da telefondan, sahte veriyle y
 #### Faz 2 deneme rehberi (kullanıcının test turu)
 
 Hazırlık: `pnpm db:deploy && pnpm db:seed` (Faz 2 örnek verisi gelir: "Örnek …" şirketler, altı yayınlanmış deneyim, üç yayında + biri incelemede + bir taslak ilan, bir yayında + bir incelemede etkinlik;
-tarihler seed'i koştuğun ana göredir, yeniden koşmak tazeler). `pnpm dev:lan` ile telefonda aç; her hesap için `/giris/test?persona=<hesap>` adresini aç ve **"Test hesabıyla giriş yap"** düğmesine bas
+tarihler seed'i koştuğun ana göredir, yeniden koşmak tazeler). Bilgisayarda `pnpm dev:all` açıkken
+`APP_URL` adresinde başlayabilirsin; e-posta teslimi için worker da çalışır. Telefon için yukarıdaki
+“Telefon testi” adımlarını izle. Her hesap için `/giris/test?persona=<hesap>` adresini aç ve **"Test hesabıyla giriş yap"** düğmesine bas
 (rol seçici: `/giris/test`; hesaplar orada "Öğrenci", "Üst sınıf mentor", "Mezun mentor", "Akademisyen", "Bölüm yöneticisi", "Sistem yöneticisi" adıyla durur). **Onaylarını tamamla:** onay ekranı açılmadıysa `/onay` adresine git; iki "Okudum ve onaylıyorum." kutusunu işaretle, "Seçimlerimi kaydet"e bas (bu ekranda alt sekme çubuğu yoktur; kaydedince ana sayfaya, bir sayfadan yönlendirildiysen o sayfaya dönersin). Ardından `/hesap` üzerinden denemeye devam et.
 Hesaplar: `student` Deniz (öğrenci), `seniorMentor` Elif, `alumniMentor` Mert (mezun), `academic` Selin,
 `departmentAdmin` Kerem (bölüm yöneticisi), `systemAdmin`. E-postalar Mailpit'te (`http://localhost:8025`). Bulgularını aşağıdaki küçük tabloya ya da pm-handoff'taki
