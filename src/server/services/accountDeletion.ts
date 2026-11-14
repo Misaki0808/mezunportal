@@ -251,6 +251,16 @@ export async function deleteAccount(
     await tx.notificationAction.deleteMany({ where: { userId } });
     await tx.session.deleteMany({ where: { userId } });
     await tx.account.deleteMany({ where: { userId } });
+    // Bekleyen giriş bağlantıları (Better Auth `Verification`) silinen kişinin e-postasını taşır ve süre dolana kadar
+    // kalırdı; hesap silme onları da iptal eder (kart 371). E-posta anonimleştirmeden ÖNCE okunmuştur.
+    await tx.verification.deleteMany({
+      where: {
+        OR: [
+          { identifier: { equals: user.email, mode: 'insensitive' } },
+          { value: { contains: user.email, mode: 'insensitive' } },
+        ],
+      },
+    });
     await tx.membership.updateMany({ where: { userId, endedAt: null }, data: { endedAt: now } });
     await tx.mentorProfile.updateMany({
       where: { userId },

@@ -6,8 +6,9 @@ import { testAuthEnv, createFakeEmail } from '@/test/auth';
 import { buildAuthOptions, SESSION_EXPIRES_IN_SECONDS } from './config';
 import { TEST_LOGIN_PLUGIN_ID } from './test-login-plugin';
 
-// Yapılandırma saf kurulur (veritabanına bağlanmaz): sahte istemci yeterli.
-const db = {} as PrismaClient;
+// Yapılandırma saf kurulur (veritabanına bağlanmaz): sahte istemci yeterli. Silinmiş kullanıcı koruması (kart 371) istemciyi
+// `$extends` ile sarar; sahte istemci yalnız bunu bilir, hiçbir sorgu çalışmaz.
+const db = { $extends: () => ({}) } as unknown as PrismaClient;
 const options = (env = testAuthEnv()) =>
   buildAuthOptions({ db, env, email: createFakeEmail().port });
 const pluginIds = (env = testAuthEnv()) => options(env).plugins.map((plugin) => plugin.id);
