@@ -32,6 +32,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       try {
         await loginAs(page, 'student');
         await page.goto('/profil');
+        await page.waitForLoadState('networkidle');
         await page.getByRole('button', { name: 'Profilimi düzenle', exact: true }).first().click();
         const dialog = page.getByRole('dialog');
         const summary = dialog.getByLabel('Özet', { exact: true });

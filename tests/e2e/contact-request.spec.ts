@@ -69,7 +69,8 @@ test('iletişim: talep → onay → alanları gör → geri al → alanlar kaybo
     await page.getByRole('checkbox', { name: 'Telefon', exact: true }).check();
     await page.getByLabel('Kısa not').fill('Staj deneyimin hakkında danışmak istiyorum.');
     await page.getByRole('button', { name: 'Talep gönder', exact: true }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'Talebin gönderildi.' })).toBeVisible();
+    // #169 sonuç metnine odak veriyor; toast ile çift canlı duyuru yok.
+    await expect(page.getByText(/Yanıtı Gönderilen kutusundan/)).toBeFocused();
     await page.getByRole('link', { name: 'Taleplerime git' }).click();
     await expect(page.locator('body')).not.toContainText(alumni.email);
     await target.goto('/hesap/iletisim');
