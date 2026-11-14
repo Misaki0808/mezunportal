@@ -21,6 +21,8 @@ describe('hesap adı doğrulaması', () => {
     'Ali Veli Öztürk',
     'Al',
     'Ayşe’nin Kızı',
+    'e\u0302\u0303 Aydın',
+    'Ayşe'.normalize('NFD'),
   ])('geçerli: %s', (name) => {
     expect(parse(name).success).toBe(true);
   });
@@ -39,6 +41,10 @@ describe('hesap adı doğrulaması', () => {
     ['Ayşe-', 'sondaki tire'],
     ['Ayşe  - Yılmaz', 'ayraç dizisi'],
     ['😀 Ayşe', 'emoji'],
+    ['\u0301\u0301', 'yalnız birleşim işaretleri (görünmez ad)'],
+    ['\u0301a', 'sözcük işaretle başlar'],
+    ['Ayşe \u0301\u0301', 'ikinci sözcük yalnız işaret'],
+    ['\u0301-\u0301', 'işaret-tire-işaret'],
   ])('geçersiz: %s (%s)', (name) => {
     expect(parse(name).success).toBe(false);
   });

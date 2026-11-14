@@ -17,10 +17,11 @@ const NAME_INVALID = 'ACCOUNT_NAME_INVALID' satisfies ErrorCode;
 export const ACCOUNT_NAME_LIMITS = { min: 2, max: 80 } as const;
 
 /**
- * Harf (Türkçe dahil) sözcükleri; aralarında tek boşluk, kesme işareti ya da tire. Rakam, nokta, `@` ve başka simge yoktur
- * (e-postadan türeyen "ayse yilmaz1989" ya da "r1" bu yüzden düzeltilmeden kaydedilemez).
+ * Harf (Türkçe dahil) sözcükleri; aralarında tek boşluk, kesme işareti ya da tire. Her sözcük bir HARFLE başlar, birleşim
+ * işaretleri (aksan) yalnız harften sonra gelir: yalnız işaretlerden oluşan görünmez ad geçersizdir. Rakam, nokta, `@` ve başka
+ * simge yoktur (e-postadan türeyen "ayse yilmaz1989" ya da "r1" bu yüzden düzeltilmeden kaydedilemez).
  */
-export const ACCOUNT_NAME_PATTERN = /^[\p{L}\p{M}]+(?:[ '’-][\p{L}\p{M}]+)*$/u;
+export const ACCOUNT_NAME_PATTERN = /^\p{L}[\p{L}\p{M}]*(?:[ '’-]\p{L}[\p{L}\p{M}]*)*$/u;
 
 /** Kırpar, ardışık boşlukları teke indirir, Unicode'u birleşik biçime (NFC) çevirir. */
 export function normalizeAccountName(raw: string): string {

@@ -112,6 +112,35 @@ describe('ad soyad formu', () => {
     );
   });
 
+  it('başarılı kayıttan sonra "E-postandan türetildi" ipucu kalkar; geçersiz ad hâlâ kayıtlıysa kalır', async () => {
+    const { user } = renderWithToasts(
+      <NameForm initialName="ayse yilmaz1989" update={update} variant="onboarding" />,
+    );
+    expect(field()).toHaveAccessibleDescription(/E-postandan türetildi ve eksik görünüyor/);
+    await user.clear(field());
+    await user.type(field(), 'Ayşe Yılmaz');
+    // Yazarken (henüz kaydedilmeden) ipucu değişmez: ölçüt kaydedilmiş ad.
+    expect(field()).toHaveAccessibleDescription(/E-postandan türetildi ve eksik görünüyor/);
+    await user.click(save());
+    expect(await screen.findByText('Adın güncellendi.')).toBeVisible();
+    expect(field()).toHaveAccessibleDescription(
+      'Mentor kartında ve randevu e-postalarında görünür.',
+    );
+    expect(field()).not.toHaveAccessibleDescription(/E-postandan türetildi/);
+  });
+
+  it('kayıt başarısızsa türetilmiş ad ipucu kalır', async () => {
+    update.mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
+    const { user } = renderWithToasts(
+      <NameForm initialName="r1" update={update} variant="onboarding" />,
+    );
+    await user.clear(field());
+    await user.type(field(), 'Ayşe Yılmaz');
+    await user.click(save());
+    await screen.findByText('Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.');
+    expect(field()).toHaveAccessibleDescription(/E-postandan türetildi ve eksik görünüyor/);
+  });
+
   it('ayarlar sayfasında kural ipucu görünür, kart başlığı yoktur', () => {
     renderWithToasts(<NameForm initialName="Ayşe Yılmaz" update={update} />);
     expect(field()).toHaveAccessibleDescription(/Harf, boşluk, kesme işareti ve tire kullan/);

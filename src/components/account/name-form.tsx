@@ -34,10 +34,12 @@ export function NameForm({
   const errors = useTranslations('errors.codes');
   const action = useAction();
   const [name, setName] = useState(initialName);
+  // Son KAYDEDİLMİŞ ad: türetilmiş-ad ipucu kayıttan sonra kalkar (yalnız ilk yüklemedeki ada bağlı değildir).
+  const [savedName, setSavedName] = useState(initialName);
   const [fieldError, setFieldError] = useState<string>();
   const input = useRef<HTMLInputElement>(null);
   // E-postadan türetilen ad çoğu zaman geçersizdir ("ayse yilmaz1989"); kullanıcı bunu baştan görür.
-  const derivedLooksWrong = variant === 'onboarding' && !isValidAccountName(initialName);
+  const derivedLooksWrong = variant === 'onboarding' && !isValidAccountName(savedName);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -50,7 +52,10 @@ export function NameForm({
     setFieldError(undefined);
     void action.run(() => update(parsed.data), {
       success: (data) => (data.changed ? t('saved') : t('unchanged')),
-      onOk: (data) => setName(data.name),
+      onOk: (data) => {
+        setName(data.name);
+        setSavedName(data.name);
+      },
       onFailure: (failure) => {
         const code = failure.fieldErrors?.name;
         if (code) {
