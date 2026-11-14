@@ -54,8 +54,15 @@ function toDecision(result: boolean | SendDecision): SendDecision {
   if (result === false) return { send: false, errorCode: 'EMAIL_PREFERENCE_DISABLED' };
   return result;
 }
-export type EmailRecord = { id: string; status: 'QUEUED' | 'SENT' | 'FAILED'; attempts: number };
+export type EmailRecord = {
+  id: string;
+  status: 'QUEUED' | 'SENT' | 'FAILED';
+  attempts: number;
+  recipientUserId?: string | null;
+};
 export interface EmailUnitOfWork {
+  /** Kuyruktaki kayıttan veya bilinen giriş adresinden çözülen alıcı. */
+  recipientUserId?: string;
   find(key: string): Promise<EmailRecord | null>;
   create(input: QueuedEmail): Promise<EmailRecord>;
   publish(id: string, input: QueuedEmail): Promise<void>;
@@ -71,7 +78,11 @@ export interface EmailUnitOfWork {
 }
 export interface EmailOutbox {
   // Kilit aynı idempotency anahtarı için enqueue ve worker yarışlarını da sıralar.
-  withKey<T>(key: string, run: (work: EmailUnitOfWork) => Promise<T>): Promise<T>;
+  withKey<T>(
+    key: string,
+    run: (work: EmailUnitOfWork) => Promise<T>,
+    recipient?: Pick<QueuedEmail, 'to' | 'template' | 'recipientUserId'>,
+  ): Promise<T>;
 }
 export function emailMessageId(key: string): string {
   return `<${createHash('sha256').update(key).digest('hex')}@mezunportal.local>`;
@@ -88,19 +99,27 @@ export function createEmailService(
       // Ham Zod hatası kullanıcıya/loga taşınmaz (taşıma yardımcısı yalnız sunucu içindir).
       const parsed = queuedEmailSchema.safeParse(input);
       if (!parsed.success) throw new Error('EMAIL_INPUT_INVALID');
-      const decision = toDecision(await maySend(parsed.data));
-      if (!decision.send) {
-        if (STALE_CODES.has(decision.errorCode)) logger('stale', maskEmail(parsed.data.to));
-        return { emailLogId: null };
-      }
-      return outbox.withKey(parsed.data.idempotencyKey, async (work) => {
-        const existing = await work.find(parsed.data.idempotencyKey);
-        if (existing) return { emailLogId: existing.id };
-        const row = await work.create(parsed.data);
-        await work.publish(row.id, parsed.data);
-        logger('queued', maskEmail(parsed.data.to));
-        return { emailLogId: row.id };
-      });
+      return outbox.withKey(
+        parsed.data.idempotencyKey,
+        async (work) => {
+          const message = work.recipientUserId
+            ? { ...parsed.data, recipientUserId: work.recipientUserId }
+            : parsed.data;
+          // Alıcı kilidi alındıktan sonra denetle: silmeyle yarışan üretici eski kararla iş açamaz.
+          const decision = toDecision(await maySend(message));
+          if (!decision.send) {
+            if (STALE_CODES.has(decision.errorCode)) logger('stale', maskEmail(message.to));
+            return { emailLogId: null };
+          }
+          const existing = await work.find(message.idempotencyKey);
+          if (existing) return { emailLogId: existing.id };
+          const row = await work.create(message);
+          await work.publish(row.id, message);
+          logger('queued', maskEmail(message.to));
+          return { emailLogId: row.id };
+        },
+        parsed.data,
+      );
     },
     async markExhausted(input: QueuedEmail): Promise<void> {
       const parsed = queuedEmailSchema.safeParse(input);
@@ -121,46 +140,59 @@ export function createEmailService(
       const parsed = queuedEmailSchema.safeParse(input);
       if (!parsed.success) throw new EmailTransportError(false);
       const message = parsed.data;
-      const outcome = await outbox.withKey(message.idempotencyKey, async (work) => {
-        const row = await work.find(message.idempotencyKey);
-        if (!row) throw new Error('EMAIL_LOG_MISSING');
-        if (row.status !== 'QUEUED') return null;
-        const decision = toDecision(await maySend(message));
-        if (!decision.send) {
+      const outcome = await outbox.withKey(
+        message.idempotencyKey,
+        async (work) => {
+          const row = await work.find(message.idempotencyKey);
+          if (!row) throw new Error('EMAIL_LOG_MISSING');
+          if (row.status !== 'QUEUED') return null;
+          const recipientUserId =
+            work.recipientUserId ?? row.recipientUserId ?? message.recipientUserId;
+          const decision = toDecision(
+            await maySend(recipientUserId ? { ...message, recipientUserId } : message),
+          );
+          if (!decision.send) {
+            await work.mark(row.id, {
+              status: 'FAILED',
+              attempts: row.attempts,
+              errorCode: decision.errorCode,
+              sentAt: null,
+            });
+            if (STALE_CODES.has(decision.errorCode)) logger('stale', maskEmail(message.to));
+            return null;
+          }
+          const attempts = row.attempts + 1;
+          try {
+            await transport.send({
+              to: message.to,
+              subject: message.subject,
+              text: message.text,
+              html: message.html,
+              messageId: emailMessageId(message.idempotencyKey),
+            });
+          } catch (cause) {
+            const error = cause instanceof EmailTransportError ? cause : new EmailTransportError();
+            const final = !error.retryable || retryCount >= retryLimit;
+            await work.mark(row.id, {
+              status: final ? 'FAILED' : 'QUEUED',
+              attempts,
+              errorCode: error.message,
+              sentAt: null,
+            });
+            logger(final ? 'failed' : 'retry', maskEmail(message.to));
+            return error;
+          }
           await work.mark(row.id, {
-            status: 'FAILED',
-            attempts: row.attempts,
-            errorCode: decision.errorCode,
-            sentAt: null,
-          });
-          if (STALE_CODES.has(decision.errorCode)) logger('stale', maskEmail(message.to));
-          return null;
-        }
-        const attempts = row.attempts + 1;
-        try {
-          await transport.send({
-            to: message.to,
-            subject: message.subject,
-            text: message.text,
-            html: message.html,
-            messageId: emailMessageId(message.idempotencyKey),
-          });
-        } catch (cause) {
-          const error = cause instanceof EmailTransportError ? cause : new EmailTransportError();
-          const final = !error.retryable || retryCount >= retryLimit;
-          await work.mark(row.id, {
-            status: final ? 'FAILED' : 'QUEUED',
+            status: 'SENT',
             attempts,
-            errorCode: error.message,
-            sentAt: null,
+            errorCode: null,
+            sentAt: new Date(),
           });
-          logger(final ? 'failed' : 'retry', maskEmail(message.to));
-          return error;
-        }
-        await work.mark(row.id, { status: 'SENT', attempts, errorCode: null, sentAt: new Date() });
-        logger('sent', maskEmail(message.to));
-        return null;
-      });
+          logger('sent', maskEmail(message.to));
+          return null;
+        },
+        message,
+      );
       // Durum işlemi commit olduktan sonra pg-boss'a yalnız kararlı hata verilir.
       if (outcome) throw outcome;
     },

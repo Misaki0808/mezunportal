@@ -34,6 +34,8 @@ export type GoogleCalendarDeps = {
   clientSecret: string;
   /** Yenileme jetonu (düz metin, bellekte kısa ömürlü). Bağlı değilse `null`; çözülemiyorsa fırlatabilir (bağlı değil sayılır). */
   loadRefreshToken: () => Promise<string | null>;
+  /** Ayrı süreçteki önbellek de bağlantı kesilince eski erişim jetonunu kullanamaz. */
+  isConnected?: () => Promise<boolean>;
   /** Yenileme jetonu Google tarafından reddedildi (`invalid_grant`): bağlantı "yeniden bağla" durumuna alınır. */
   onTokenRejected: () => Promise<void>;
   fetchImpl?: typeof fetch;
@@ -142,6 +144,10 @@ export function createGoogleCalendar(deps: GoogleCalendarDeps): CalendarPort {
   }
 
   async function accessToken(signal: AbortSignal | undefined, force = false): Promise<string> {
+    if (deps.isConnected && !(await deps.isConnected().catch(() => false))) {
+      cached = null;
+      throw new CalendarError('CALENDAR_NOT_CONNECTED', false);
+    }
     if (!force && cached && cached.expiresAt - TOKEN_SKEW_MS > now()) return cached.token;
     // Tek uçuş: eşzamanlı çağrılar aynı yenilemeyi bekler (Google'a gereksiz istek ve yarış yok).
     inflight ??= refresh(signal).finally(() => {

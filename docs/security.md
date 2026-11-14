@@ -227,6 +227,15 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
   sözlüğü korunur. Profil yazımı aynı kullanıcı kilidi altında hesap durumunu yeniden doğrular.
   Deneyim taslak/bekleyen/ret kayıtları her iki seçimde silinir; anonimleştirme yalnız yayınlanmış
   deneyimi yazar bağı kopuk bırakır. Kişinin şikâyet metinleri silinir. Deneyim yazımı aynı User kilidini alır.
+  Hesap silmede yasak gerekçesi, karar verilmiş belge ret gerekçesi, ilan şikâyeti gerekçesi ve
+  gönderilmiş iletişim taleplerinin mesaj/kaynak metinleri temizlenir; karşı tarafın tarihçesi kalır.
+  SQL'nin boş geçirmediği tarihsel metinlerde yalnız sabit, kişisel veri içermeyen temizlendi ifadesi saklanır.
+  Bağlayan yönetici silinirse Google bağlantısı NEEDS_RECONNECT olur; etiket ve eski şifreli jeton kaldırılır,
+  adaptör önbelleği sıfırlanır; ayrı süreçlerdeki adaptör de her çağrıda kalıcı bağlantı durumunu denetler.
+  Sağlayıcı iptali commit sonrası en iyi çabadır ve ağ hatası silmeyi engellemez.
+  Bekleyen e-posta teslimleri aynı işlemde FAILED/EMAIL_RECIPIENT_INELIGIBLE olur, bekleyen pg-boss yükleri
+  kaldırılır. Bilinen giriş alıcısı da kimliğine bağlanır; eski kimliksiz işler adresle bulunur. Gönderim ve silme
+  aynı User kilidinde sıralanır; zorunlu güvenlik e-postası silinmiş alıcıya gönderim istisnası değildir.
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11); kendi profilinin
   kişisel alanları, ilk giriş adım durumları ve etiketleri dahildir. Profil yoksa `profile: null` döner.
   Deneyimler bütün durumlarıyla yalnız kendi içeriklerinden oluşur; yazar/moderatör kimlikleri deneyim
