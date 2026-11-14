@@ -954,7 +954,7 @@
     "saved": "Adın güncellendi.",
     "unchanged": "Adın zaten böyle kayıtlı.",
     "onboardingTitle": "Adın doğru mu?",
-    "onboardingDescription": "Adın giriş e-postandan türetildi. Mentor kartında ve randevu e-postalarında görünür; gerekirse düzelt.",
+    "onboardingHint": "Mentor kartında ve randevu e-postalarında görünür.",
     "link": "Ad soyad",
     "linkDescription": "Kartlarda ve e-postalarda görünen adını düzelt."
   },

@@ -107,6 +107,14 @@ describe('ad soyad formu', () => {
     expect(field()).toHaveAccessibleDescription(/E-postandan türetildi ve eksik görünüyor/);
     unmount();
     renderWithToasts(<NameForm initialName="Ayşe Yılmaz" update={update} variant="onboarding" />);
+    expect(field()).toHaveAccessibleDescription(
+      'Mentor kartında ve randevu e-postalarında görünür.',
+    );
+  });
+
+  it('ayarlar sayfasında kural ipucu görünür, kart başlığı yoktur', () => {
+    renderWithToasts(<NameForm initialName="Ayşe Yılmaz" update={update} />);
     expect(field()).toHaveAccessibleDescription(/Harf, boşluk, kesme işareti ve tire kullan/);
+    expect(screen.queryByRole('heading', { name: 'Adın doğru mu?' })).toBeNull();
   });
 });

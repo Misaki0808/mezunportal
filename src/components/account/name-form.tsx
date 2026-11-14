@@ -70,7 +70,13 @@ export function NameForm({
     >
       <Field
         label={t('label')}
-        hint={derivedLooksWrong ? t('derivedHint') : t('hint')}
+        hint={
+          derivedLooksWrong
+            ? t('derivedHint')
+            : variant === 'onboarding'
+              ? t('onboardingHint')
+              : t('hint')
+        }
         error={fieldError}
       >
         {(control) => (
@@ -105,10 +111,9 @@ export function NameForm({
       aria-labelledby="account-name-title"
       className="mt-6 rounded-card border border-border bg-surface p-5"
     >
-      <h2 id="account-name-title" className="text-lg font-semibold text-fg">
+      <h2 id="account-name-title" className="mb-4 text-lg font-semibold text-fg">
         {t('onboardingTitle')}
       </h2>
-      <p className="mb-4 mt-1 text-base text-fg-muted">{t('onboardingDescription')}</p>
       {form}
     </section>
   );
