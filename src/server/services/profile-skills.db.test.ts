@@ -13,7 +13,12 @@ import { listProfileTags } from './profile';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
-const tag = () => `zx${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+// Rastgele test etiketi telefon biçimine tesadüfen benzemesin; benzersizlik korunur.
+const tag = () =>
+  `zx${randomUUID()
+    .replace(/-/g, '')
+    .slice(0, 10)
+    .replace(/\d/g, (digit) => String.fromCharCode(103 + Number(digit)))}`;
 
 describe('beceri taşıma migration’ı (UserSkill → Tag + ProfileTag)', () => {
   const sql = readFileSync(

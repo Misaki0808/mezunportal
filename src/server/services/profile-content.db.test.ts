@@ -43,7 +43,12 @@ const student = async (
   });
   return userId;
 };
-const tag = () => `zx${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+// Etiket rastgele kimliktir; rakam dizisi üretip telefon biçimi denetimine tesadüfen takılmasın.
+const tag = () =>
+  `zx${randomUUID()
+    .replace(/-/g, '')
+    .slice(0, 10)
+    .replace(/\d/g, (digit) => String.fromCharCode(103 + Number(digit)))}`;
 
 // =============================================================================================
 // Kendi profilim
@@ -710,5 +715,47 @@ describe('getProfile — görünürlük süzgeci (sızıntı testi)', () => {
     await expect(content.getProfile(deps, otherDepartment, userId)).resolves.toBeDefined();
     const own = await content.getProfile(deps, userId, userId);
     expect('email' in own).toBe(true);
+  });
+});
+
+describe('serbest profil alanlarında ortak iletişim biçimi reddi', () => {
+  it('doğrudan servis çağrısı her temel alanda reddedilir; hiçbir profil verisi değişmez', async () => {
+    const userId = await student();
+    await content.updateProfileBasics(deps, userId, {
+      summary: '2026 yılında 3 proje geliştirdim.',
+    });
+    const before = await db.profile.findUniqueOrThrow({ where: { userId } });
+    for (const field of ['headline', 'summary', 'city', 'goals'])
+      for (const value of ['ornek@example.org', '+90 532 123 45 67']) {
+        await expectCode(
+          content.updateProfileBasics(deps, userId, { [field]: value }),
+          'PROFILE_TEXT_PERSONAL_DATA',
+        );
+        expect(await db.profile.findUniqueOrThrow({ where: { userId } })).toEqual(before);
+      }
+  });
+  it('kalem/başlık/açıklama ve beceri de aynı kuralı atlayamaz', async () => {
+    const userId = await student();
+    await expectCode(
+      content.saveProfileEntry(deps, userId, {
+        section: 'POSITION',
+        values: {
+          company: 'Örnek',
+          title: 'Analist',
+          employmentType: null,
+          startDate: null,
+          endDate: null,
+          isCurrent: false,
+          description: 'ornek@example.org',
+        },
+      }),
+      'PROFILE_TEXT_PERSONAL_DATA',
+    );
+    await expectCode(
+      content.addProfileSkill(deps, userId, { name: '05321234567' }),
+      'PROFILE_TEXT_PERSONAL_DATA',
+    );
+    expect(await db.position.count({ where: { userId } })).toBe(0);
+    expect(await db.profileTag.count({ where: { profile: { userId } } })).toBe(0);
   });
 });

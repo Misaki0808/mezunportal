@@ -4,7 +4,7 @@ import messages from '../../../messages/tr.json';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import {
   JOB_POSTING_MAX_DAYS,
   type JobPostingFormContext,
@@ -98,6 +98,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   const [error, setError] = useState('');
   const summary = useRef<HTMLDivElement>(null);
   const stepHeading = useRef<HTMLHeadingElement>(null);
+  const pendingFocus = useRef<(() => HTMLElement | null) | null>(null);
+  const [, setFocusTick] = useState(0);
   const today = istanbulDay();
   const max = addDays(today, JOB_POSTING_MAX_DAYS);
   const stepTitle = t(step === 0 ? 'formBasics' : step === 1 ? 'formDetails' : 'formPreview');
@@ -133,22 +135,35 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
     // Mobilde yapışkan işlem çubuğu ve alt gezinme odaklanan alanı örtmemeli.
     element.scrollIntoView?.({ block: 'center', inline: 'nearest' });
   }
+  // Bir animasyon karesi React'in adım commit'inden önce çalışabilir. Alan DOM'a geldikten ve
+  // gönderim pasifliği bittikten sonra odağı taşı; eski adımın başlık isteği yenisini ezmesin.
+  useEffect(() => {
+    if (busy) return;
+    const target = pendingFocus.current?.();
+    if (!target) return;
+    pendingFocus.current = null;
+    focusTemporarily(target);
+  });
+  function requestFocus(target: () => HTMLElement | null) {
+    pendingFocus.current = target;
+    setFocusTick((tick) => tick + 1);
+  }
   function changeStep(next: number) {
     setError('');
     setInvalid(new Set());
     setStep(next);
-    requestAnimationFrame(() => focusTemporarily(stepHeading.current));
+    requestFocus(() => stepHeading.current);
   }
   function showError(message: string, fields: string[] = []) {
     setError(message);
     setInvalid(new Set(fields));
     const first = fields.find((field) => postingFieldStep(field) !== undefined);
     if (first) setStep(postingFieldStep(first)!);
-    requestAnimationFrame(() => {
-      if (first)
-        focusTemporarily(document.querySelector<HTMLElement>(`[data-error-field="${first}"]`));
-      else focusTemporarily(summary.current);
-    });
+    requestFocus(() =>
+      first
+        ? document.querySelector<HTMLElement>(`[data-error-field="${first}"]`)
+        : summary.current,
+    );
   }
   function validateStep(current: 0 | 1) {
     // Boş tarih sözleşmeye metin olarak verilir: diğer alanların koşullu kontrolleri de çalışır.
@@ -285,10 +300,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                       className="min-h-11 text-left underline"
                       onClick={() => {
                         setStep(postingFieldStep(field) ?? 0);
-                        requestAnimationFrame(() =>
-                          focusTemporarily(
-                            document.querySelector<HTMLElement>(`[data-error-field="${field}"]`),
-                          ),
+                        requestFocus(() =>
+                          document.querySelector<HTMLElement>(`[data-error-field="${field}"]`),
                         );
                       }}
                     >

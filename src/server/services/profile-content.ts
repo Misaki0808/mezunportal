@@ -1,4 +1,5 @@
 import 'server-only';
+import { hasPersonalDataPattern } from '@/lib/personal-data';
 
 import {
   PROFILE_ENTRY_LIMITS,
@@ -43,6 +44,15 @@ export type ProfileContentDeps = { db: PrismaClient; now?: () => Date };
 type Tx = Prisma.TransactionClient;
 const nowOf = (deps: { now?: () => Date }) => (deps.now ?? (() => new Date()))();
 const TX = { timeout: 20_000, maxWait: 10_000 } as const;
+
+function rejectPersonalText(values: object) {
+  if (
+    Object.values(values).some(
+      (value) => typeof value === 'string' && hasPersonalDataPattern(value),
+    )
+  )
+    throw codedValidation('PROFILE_TEXT_PERSONAL_DATA');
+}
 
 // ---------------------------------------------------------------------------------------------
 // Ortak
@@ -232,6 +242,7 @@ export function updateProfileBasics(
   },
 ) {
   return mutate(deps, userId, async (tx, profileId) => {
+    rejectPersonalText(input);
     const current = await tx.profile.findUniqueOrThrow({
       where: { id: profileId },
       select: { manualFields: true },
@@ -334,6 +345,7 @@ async function ownsEntry(tx: Tx, section: ProfileEntrySection, userId: string, i
 
 export function saveProfileEntry(deps: ProfileContentDeps, userId: string, input: EntryInput) {
   return mutate(deps, userId, async (tx) => {
+    rejectPersonalText(input.values);
     if (input.id) {
       if (!(await ownsEntry(tx, input.section, userId, input.id))) {
         throw codedNotFound('RESOURCE_NOT_FOUND');
@@ -457,6 +469,7 @@ export function deleteProfileEntry(
 
 export function addProfileSkill(deps: ProfileContentDeps, userId: string, input: { name: string }) {
   return mutate(deps, userId, async (tx, profileId) => {
+    rejectPersonalText(input);
     const match = await matchDictionaryName(tx, 'SKILL', input.name);
     const owned = await tx.profileTag.count({
       where: { profileId, tag: { kind: 'SKILL' } },

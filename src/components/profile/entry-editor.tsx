@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type { ZodIssue } from 'zod';
+import { hasPersonalDataPattern } from '@/lib/personal-data';
 
 import {
   EDUCATION_LEVELS,
@@ -139,7 +140,7 @@ const SCHEMAS = {
   CERTIFICATION: parsedCertificationSchema,
 } as const;
 
-type ErrorKind = 'required' | 'invalid' | 'tooLong' | 'dateOrder';
+type ErrorKind = 'required' | 'invalid' | 'tooLong' | 'dateOrder' | 'personalData';
 
 export type EntryValidation =
   { ok: true; values: Values } | { ok: false; errors: Partial<Record<FieldKey, ErrorKind>> };
@@ -165,6 +166,14 @@ function REQUIRED_BLANK(field: FieldKey, state: State): boolean {
 
 /** Düzenleme formu durumunu sözleşme şemasından geçirir; alan bazlı hata türü döner. */
 export function validateEntry(section: CvSection, state: State): EntryValidation {
+  const contactErrors: Partial<Record<FieldKey, ErrorKind>> = {};
+  for (const key of SECTION_FIELDS[section]) {
+    const value = state[key];
+    if (typeof value === 'string' && hasPersonalDataPattern(value))
+      contactErrors[key] = 'personalData';
+  }
+  if (Object.keys(contactErrors).length > 0) return { ok: false, errors: contactErrors };
+
   if (section === 'SKILL') {
     const parsed = parsedSkillSchema.safeParse(state.name);
     if (parsed.success) return { ok: true, values: { name: parsed.data } };
@@ -211,6 +220,7 @@ export function EntryEditor({
 }: Props) {
   const t = useTranslations('profile');
   const e = useTranslations('profile.entryErrors');
+  const codes = useTranslations('errors.codes');
   const [state, setState] = useState<State>(() => initialState(initial));
   const [errors, setErrors] = useState<Partial<Record<FieldKey, ErrorKind>>>({});
   const fields = SECTION_FIELDS[section];
@@ -236,7 +246,12 @@ export function EntryEditor({
 
   const label = (key: FieldKey) =>
     key === 'name' && section === 'SKILL' ? t('fields.skill') : t(`fields.${key}`);
-  const err = (key: FieldKey) => (errors[key] ? e(errors[key]!) : undefined);
+  const err = (key: FieldKey) =>
+    errors[key] === 'personalData'
+      ? codes('PROFILE_TEXT_PERSONAL_DATA')
+      : errors[key]
+        ? e(errors[key]!)
+        : undefined;
 
   return (
     <form

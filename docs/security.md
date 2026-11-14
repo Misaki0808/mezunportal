@@ -262,6 +262,12 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
   çıktısından yazılmaz; modele araç/çağrı yetkisi verilmez.
 - **Yükleme denetimi içeriğe bakar:** şifreli PDF ve 6 sayfadan uzun PDF reddedilir; maliyet sınırları (5 MB,
   günlük hak, sağlayıcı harcama sınırı) sayfa sayımının sezgisel olmasını telafi eder.
+- **Profil serbest metni:** özet/hedef, başlık/şehir, profil kalemleri ve beceriler sunucuda SSS ile aynı
+  e-posta/Türkiye cep telefonu/kimlik numarası biçim denetiminden geçer (`src/lib/personal-data.ts`). CV onayından
+  gelen yazım da aynı kuralı atlayamaz; kararlardan biri uygunsuzsa işlem bütünüyle reddedilir. Alan hatası kararlı
+  `PROFILE_TEXT_PERSONAL_DATA` koduyla gösterilir. Bu bir biçim denetimidir: yıl, sıradan sayılar ve normal URL kabul edilir;
+  “at/nokta” gibi yazıyla gizlemeler mevcut SSS kuralının da kapsamı dışındadır. Eski veriler otomatik silinmez/değiştirilmez.
+  Hikâye ve deneyim yayını kendi rıza/moderasyon kapılarından geçer; bu kural o yayın sürecini değiştirmez.
 - **Başkasının profili:** görünürlük kararı `rules/visibility.ts` tablosundadır ve yanıt sunucuda süzülür: gizli
   e-posta/telefon/sosyal bağlantı/LinkedIn alanının anahtarı bile yanıtta yoktur (rastgele işaretli sızıntı testi).
   Hedef silinmiş/askıda/doğrulanmamışsa ya da bakanla ortak üniversite yoksa `RESOURCE_NOT_FOUND`. Sosyal bağlantılar

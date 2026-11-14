@@ -532,3 +532,23 @@ describe('kendi profilim: işlemden sonra odak ve ipucu', () => {
     );
   });
 });
+
+it('profil iletişim biçimini alan altında açıklar ve göndermez; düzeltince kaydeder', async () => {
+  const updateBasics = ok({ ...base, summary: '2026 yılında üç proje geliştirdim.' });
+  const { user } = renderWithToasts(
+    <MyProfile initial={base} actions={actions({ updateBasics })} />,
+  );
+  await user.click(screen.getAllByRole('button', { name: 'Profilimi düzenle' })[0]!);
+  const summary = screen.getByLabelText('Özet');
+  await user.type(summary, 'ornek@example.org');
+  await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+  expect(summary).toHaveAttribute('aria-invalid', 'true');
+  expect(summary).toHaveAccessibleDescription(
+    expect.stringContaining(messages.errors.codes.PROFILE_TEXT_PERSONAL_DATA),
+  );
+  expect(updateBasics).not.toHaveBeenCalled();
+  await user.clear(summary);
+  await user.type(summary, '2026 yılında üç proje geliştirdim.');
+  await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+  expect(updateBasics).toHaveBeenCalledTimes(1);
+});

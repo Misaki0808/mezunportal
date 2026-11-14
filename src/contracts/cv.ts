@@ -518,6 +518,7 @@ export const CV_ACTION_ERRORS = {
     'CV_NOT_READY',
     'CV_REVIEW_STALE',
     'CV_CONFLICT_UNRESOLVED',
+    'PROFILE_TEXT_PERSONAL_DATA',
   ],
   discardCv: [...SESSION, 'VALIDATION_INVALID', 'RESOURCE_NOT_FOUND', 'CV_NOT_READY'],
   listExperienceInvitations: [...SESSION],
