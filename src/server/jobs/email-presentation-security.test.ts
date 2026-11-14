@@ -149,6 +149,36 @@ it('e-posta değişikliği onayı: ön izleme yeni adresi taşımaz, gövde taş
     });
 });
 
+it('belge kararı e-postasının düğmesi: onay başlangıca, ret durum sayfasına gider (araya durum sayfası girmez)', async () => {
+  const button = async (decision: 'APPROVED' | 'REJECTED') => {
+    const sent: QueuedEmail[] = [];
+    await createAuthEmailPort(async (input) => {
+      sent.push(input as QueuedEmail);
+      return { emailLogId: null };
+    }).sendGraduationDocumentDecision({
+      to: 'a@example.invalid',
+      userId: 'u',
+      documentId: 'd',
+      decision,
+      ...(decision === 'REJECTED' ? { reason: secret.reason } : {}),
+    });
+    const document = new DOMParser().parseFromString(
+      decorateEmail(sent[0]!, app).html!,
+      'text/html',
+    );
+    const link = document.querySelector('a.email-button');
+    return { href: link?.getAttribute('href'), label: link?.textContent?.trim() };
+  };
+  expect(await button('APPROVED')).toEqual({
+    href: `${app}/baslangic`,
+    label: messages.notifications.email.ctaGraduationApproved,
+  });
+  expect(await button('REJECTED')).toEqual({
+    href: `${app}/dogrulama`,
+    label: messages.notifications.email.ctaGraduation,
+  });
+});
+
 it('belge reddi: ön izleme gerekçeyi taşımaz; konu "onaylanamadı" demez', async () => {
   const sent: QueuedEmail[] = [];
   const port = createAuthEmailPort(async (input) => {
@@ -253,12 +283,15 @@ const RESULT_WORDS =
 const url = `${app}/hesap`;
 const REJECTIONS: Array<{
   template: string;
+  /** Katalogdaki ham metnin yolu (içerik tabanlı tamlık denetimi için). */
+  textPath: string;
   preview: string;
   body: RegExp;
   message: () => Promise<QueuedEmail> | QueuedEmail;
 }> = [
   {
     template: 'experience.moderation-approved',
+    textPath: 'notifications.email.moderationApprovedText',
     preview: messages.notifications.email.preheaderReviewedExperience,
     body: /yayınlandı/,
     message: () => ({
@@ -271,6 +304,7 @@ const REJECTIONS: Array<{
   },
   {
     template: 'faq.published',
+    textPath: 'notifications.email.faqPublishedText',
     preview: messages.notifications.email.preheaderReviewedFaq,
     body: /eklendi/,
     message: () => ({
@@ -283,6 +317,7 @@ const REJECTIONS: Array<{
   },
   {
     template: 'jobPosting.published',
+    textPath: 'notifications.email.jobPostingPublishedText',
     preview: messages.notifications.email.preheaderReviewedJobPosting,
     body: /yayınlandı/,
     message: () => ({
@@ -295,6 +330,7 @@ const REJECTIONS: Array<{
   },
   {
     template: 'graduation-document.approved',
+    textPath: 'emails.documentApproved.text',
     preview: messages.notifications.email.preheaderReviewedDocument,
     body: /onaylandı/,
     message: async () => {
@@ -313,6 +349,7 @@ const REJECTIONS: Array<{
   },
   {
     template: 'experience.moderation-rejected',
+    textPath: 'notifications.email.moderationRejectedText',
     preview: messages.notifications.email.preheaderReviewedExperience,
     body: /Gerekçeyi görmek/,
     message: () => ({
@@ -325,6 +362,7 @@ const REJECTIONS: Array<{
   },
   {
     template: 'faq.rejected',
+    textPath: 'notifications.email.faqRejectedText',
     preview: messages.notifications.email.preheaderReviewedFaq,
     body: /yayınlanmadı/,
     message: () => ({
@@ -337,6 +375,7 @@ const REJECTIONS: Array<{
   },
   {
     template: 'faq.redirected',
+    textPath: 'notifications.email.faqRedirectedText',
     preview: messages.notifications.email.preheaderReviewedFaq,
     body: /mentorla görüşmeni öneriyoruz/,
     message: () => ({
@@ -349,6 +388,7 @@ const REJECTIONS: Array<{
   },
   {
     template: 'jobPosting.rejected',
+    textPath: 'notifications.email.jobPostingRejectedText',
     preview: messages.notifications.email.preheaderReviewedJobPosting,
     body: /yayınlanmadı/,
     message: () => ({
@@ -361,6 +401,7 @@ const REJECTIONS: Array<{
   },
   {
     template: 'graduation-document.rejected',
+    textPath: 'emails.documentRejected.text',
     preview: messages.notifications.email.preheaderReviewedDocument,
     body: /onaylanamadı/,
     message: async () => {
@@ -410,25 +451,36 @@ it('randevu reddi (declined) zaten genel cümledir: sonuç sözcüğü yok', () 
   expect(previewOf({ ...notice, to: 'test@example.invalid' })).not.toMatch(RESULT_WORDS);
 });
 
-// Tamlık: katalogda adı ret/yönlendirme/red diyen her e-posta metni burada kayıtlıdır; yeni bir ret metni eklenince bu liste ve
-// `preheaderFor` (REVIEWED_PREVIEW) birlikte güncellenmezse test kırılır, ret sonucu sessizce kilit ekranına sızmaz.
-it('tamlık: katalogdaki her inceleme sonucu (onay, ret, yönlendirme) metni ön izleme politikasında kayıtlıdır', () => {
-  const rejectionPaths = emailTemplates()
-    .map(({ path }) => path)
-    .filter((path) => /reject|redirect|declin|approved|(?<!answer)published/i.test(path))
-    .sort();
-  expect(rejectionPaths).toEqual([
-    'emails.appointment.declined.text',
-    'emails.documentApproved.text',
-    'emails.documentRejected.text',
-    'notifications.email.faqPublishedText',
-    'notifications.email.faqRedirectedText',
-    'notifications.email.faqRejectedText',
-    'notifications.email.jobPostingPublishedText',
-    'notifications.email.jobPostingRejectedText',
-    'notifications.email.moderationApprovedText',
-    'notifications.email.moderationRejectedText',
-  ]);
-  // Politikadaki şablon sayısı: dokuz inceleme sonucu şablonu (onay + ret + yönlendirme) + randevu reddi (genel cümleyle zaten kapsanır).
-  expect(REJECTIONS.map((r) => r.template)).toHaveLength(9);
+// Tamlık (içerik tabanlı, kart 316 / R1 312 notu): şablonun ADINA bakılmaz; katalogdaki her e-posta metninin ham ön izlemesine
+// (ilk cümle) bakılır. Sonuç sözcüğü taşıyan her metin ya yukarıdaki nötr cümleye bağlı olmalı (REJECTIONS) ya da burada gerekçesiyle
+// "bilerek serbest" yazılmalı. Yeni bir şablon (adı ne olursa olsun) ilk cümlesinde "yayınlandı/onaylandı/reddedildi…" derse test kırılır.
+const RESULT_PREVIEW_ON_PURPOSE: Record<string, string> = {
+  // PM kararı (kart 316): randevu e-postası "Randevun onaylandı" gizli değil, kullanıcıya işe yarar; karşı taraf adı ön izlemede zaten yok.
+  'emails.appointment.confirmed.text': 'randevu onayı',
+  // Karar değil, işlem bildirimi (bağlantı eklendi); sonuç ya da gerekçe taşımaz.
+  'emails.appointment.linkAdded.text': 'bağlantı eklendi',
+};
+it('tamlık (içerik tabanlı): ham ön izlemesi sonuç sözcüğü taşıyan her e-posta metni nötr cümleye bağlıdır ya da bilerek serbesttir', () => {
+  const templates = emailTemplates();
+  const neutral = new Set(REJECTIONS.map((r) => r.textPath));
+  const revealing = templates
+    .filter(({ text }) => {
+      const filled = text.replace(/\{(\w+)\}/g, (_m, name: string) =>
+        /url$/i.test(name) ? `${app}/x` : `«${name}»`,
+      );
+      return RESULT_WORDS.test(preheaderOf(filled));
+    })
+    .map(({ path }) => path);
+  const uncovered = revealing.filter(
+    (path) => !neutral.has(path) && !(path in RESULT_PREVIEW_ON_PURPOSE),
+  );
+  expect(uncovered, 'sonucu ön izlemede söyleyen ve kayıtsız şablon').toEqual([]);
+  // Listeler bayatlamasın: kayıtlı her yol katalogda var; "bilerek serbest" her yol gerçekten sonuç söylüyor.
+  const catalog = new Set(templates.map(({ path }) => path));
+  for (const path of [...neutral, ...Object.keys(RESULT_PREVIEW_ON_PURPOSE)])
+    expect(catalog.has(path), `katalogda yok: ${path}`).toBe(true);
+  for (const path of Object.keys(RESULT_PREVIEW_ON_PURPOSE))
+    expect(revealing, `artık sonuç söylemiyor, listeden çıkar: ${path}`).toContain(path);
+  // Her nötr şablonun gerçek ön izlemesi yukarıdaki it.each ile ayrıca denetlenir; burada sayı çıpalanır.
+  expect(REJECTIONS).toHaveLength(9);
 });

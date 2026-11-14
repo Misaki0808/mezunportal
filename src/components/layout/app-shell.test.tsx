@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
+import { readSignInAddress, rememberSignInAddress } from '@/lib/sign-in-address';
+
 import { AppShellClient as AppShell } from './app-shell-client';
 
 const navigation = vi.hoisted(() => ({ pathname: '/' }));
@@ -40,6 +42,43 @@ describe('AppShell', () => {
 
     expect(screen.getByRole('navigation', { name: 'Ana gezinme' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Yan menü' })).toBeInTheDocument();
+  });
+
+  it('zorunlu onay beklerken alt gezinme ve yan menü çizilmez; gövde alt boşluğu gezinme yüksekliği kadar değildir', () => {
+    renderUi(
+      <AppShell signedIn consentPending>
+        x
+      </AppShell>,
+    );
+    expect(screen.queryByRole('navigation', { name: 'Ana gezinme' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Yan menü' })).not.toBeInTheDocument();
+    expect(document.querySelector('[data-bottom-nav]')).toBeNull();
+    const main = screen.getByRole('main');
+    expect(main.className).not.toContain('4.5rem');
+    // Yapışkan eylem çubuğu ekranın dibine inmek için kabuk işareti taşır (globals.css).
+    expect(main.closest('[data-no-nav]')).not.toBeNull();
+    // Üst çubuk ve marka kalır: kullanıcı yönünü kaybetmez.
+    expect(screen.getAllByRole('link', { name: 'MezunPortal' }).length).toBeGreaterThan(0);
+  });
+
+  it('onay beklenmiyorsa gezinme ve gövde boşluğu bugünkü gibidir', () => {
+    renderUi(<AppShell signedIn>x</AppShell>);
+    expect(screen.getByRole('navigation', { name: 'Ana gezinme' })).toBeInTheDocument();
+    expect(document.querySelector('[data-bottom-nav]')).not.toBeNull();
+    expect(screen.getByRole('main').className).toContain('4.5rem');
+    expect(document.querySelector('[data-no-nav]')).toBeNull();
+  });
+
+  it('giriş tamamlanınca (oturumlu ekran çizilince) kontrol ekranı için tutulan adres silinir; girişsizken dokunulmaz', () => {
+    window.sessionStorage.clear();
+    navigation.pathname = '/giris/epostani-kontrol-et';
+    rememberSignInAddress('ayse@ogr.iu.edu.tr');
+    const { unmount } = renderUi(<AppShell>x</AppShell>);
+    expect(readSignInAddress()).toBe('ayse@ogr.iu.edu.tr');
+    unmount();
+    navigation.pathname = '/';
+    renderUi(<AppShell signedIn>x</AppShell>);
+    expect(readSignInAddress()).toBeNull();
   });
 
   it('bulunulan sayfa aria-current="page" taşır', () => {

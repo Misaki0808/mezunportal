@@ -1,6 +1,7 @@
 // Sahte/örnek veri sabitleri. Kurum değerleri TEK YERDE burada durur.
 //
-// K-06 GEÇİCİ: e-posta alan adları ve YBS'nin fakültesi kaynaktan zayıf ölçüldü, kullanıcı teyidi
+// K-06 KISMEN TEYİTLİ: öğrenci e-posta alanı (ogr.iu.edu.tr) kullanıcının kendi hesabıyla doğrulandı.
+// Personel e-posta alanı, YBS'nin fakültesi ve program dili kaynaktan zayıf ölçüldü, kullanıcı teyidi
 // bekleniyor (BACKLOG.md K-06). Teyitte yalnız bu dosya değişir. İÜ-Cerrahpaşa (iuc.edu.tr) ayrı
 // üniversitedir ve seed'e girmez.
 

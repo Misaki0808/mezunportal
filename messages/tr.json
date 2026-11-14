@@ -945,8 +945,10 @@
       "title": "<email>E-postanı</email> kontrol et",
       "description": "Bağlantıyı <email>e-posta</email> adresine gönderdik. Gelen kutunu ve gerekirse istenmeyen posta klasörünü kontrol et.",
       "security": "Bağlantıyı kimseyle paylaşma. {minutes} dakika geçerlidir ve yalnız bir kez kullanılabilir.",
-      "wrongAddress": "Adresi yanlış yazdıysan ya da e-posta gelmediyse girişe dönüp yeniden dene.",
-      "back": "Girişe dön"
+      "sentTo": "Bağlantıyı şu adrese gönderdik:",
+      "wrongAddress": "Adres yanlışsa ya da e-posta gelmediyse farklı bir adres girerek yeniden dene.",
+      "otherBrowser": "Bağlantıyı başka bir tarayıcıda ya da cihazda açtıysan orada giriş yapmış olursun; bu sekmeyi kapatabilirsin. Burada giriş yapmak için bağlantıyı bu tarayıcıda aç.",
+      "back": "Farklı adres gir"
     },
     "emailChange": {
       "eyebrow": "HESAP GÜVENLİĞİ",
@@ -2318,6 +2320,7 @@
       "ctaSignIn": "Giriş yap",
       "ctaVerifyEmail": "E-posta değişikliğini onayla",
       "ctaGraduation": "Doğrulama durumunu gör",
+      "ctaGraduationApproved": "Başlangıç adımlarına geç",
       "ctaAppointment": "Randevuyu gör",
       "ctaFeedback": "Görüşmeni değerlendir",
       "ctaContact": "Talebi incele",
@@ -3229,6 +3232,7 @@
     "emptyHint": "Gizlilik için bir soru, en az üç farklı kişinin deneyiminde geçince gösterilir. Deneyimini paylaşarak sen de katkı sağlayabilirsin.",
     "noMatch": "Bu seçimle eşleşen soru yok",
     "noMatchHint": "Başka bir şirket, sektör ya da sözcük deneyebilirsin.",
+    "noMatchPrivacyHint": "Gizlilik için bir soru, en az üç farklı kişinin deneyiminde geçince gösterilir; bu seçimde henüz gösterilebilecek soru yok. Başka bir şirket, sektör ya da sözcük deneyebilirsin.",
     "clear": "Filtreleri temizle",
     "pageEmpty": "Bu sayfada soru yok",
     "pageEmptyHint": "Sonuçların bu sayfası boş kaldı; baştan başlayabilirsin.",

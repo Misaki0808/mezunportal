@@ -18,6 +18,8 @@ import type { ActionResult } from '@/contracts/result';
 import { Button, Field, Input } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
+import { rememberSignInAddress } from '@/lib/sign-in-address';
+
 type Props = {
   options: SignInOptions;
   callbackError?: ErrorCode;
@@ -59,8 +61,11 @@ export function SignInForm({
     setPending('email');
     try {
       const result = await requestLink(parsed.data);
-      if (result.ok) router.push('/giris/epostani-kontrol-et');
-      else if (result.fieldErrors?.email) {
+      if (result.ok) {
+        // Sonraki ekran adresi gösterir (yanlış yazdıysa fark etsin); yalnız bu sekmenin belleğinde.
+        rememberSignInAddress(parsed.data.email);
+        router.push('/giris/epostani-kontrol-et');
+      } else if (result.fieldErrors?.email) {
         setFieldError(result.fieldErrors.email);
         focusFirstInvalid();
       } else setError(result.errorCode);

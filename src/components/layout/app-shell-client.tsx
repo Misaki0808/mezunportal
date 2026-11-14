@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 import {
@@ -16,6 +17,8 @@ import {
 } from '@/components/ui';
 
 import { NotificationBell } from '@/components/inbox/notification-bell';
+
+import { forgetSignInAddress } from '@/lib/sign-in-address';
 
 import { KeyboardState } from './keyboard-state';
 import { BrandLogo } from '@/components/brand/logo';
@@ -64,18 +67,26 @@ export function AppShellClient({
   children,
   showAdmin = false,
   signedIn = false,
+  consentPending = false,
   canRefreshNotifications = false,
   unreadNotifications = 0,
 }: {
   children: ReactNode;
   showAdmin?: boolean;
   signedIn?: boolean;
+  /** Oturum açık ama zorunlu onay eksik: gezinme henüz kullanılamayan yerlere götürür, bu yüzden çizilmez. */
+  consentPending?: boolean;
   canRefreshNotifications?: boolean;
   /** Okunmamış bildirim sayısı (üst sınırlı); yalnız oturum açıkken anlamlıdır. */
   unreadNotifications?: number;
 }) {
   const t = useTranslations('nav');
   const pathname = usePathname();
+
+  // Giriş tamamlandı (oturumlu bir ekran çizildi): "E-postanı kontrol et" ekranı için tutulan adres bu sekmede kalmasın.
+  useEffect(() => {
+    if (signedIn) forgetSignInAddress();
+  }, [signedIn]);
 
   // Girişsiz karşılama sayfası kendi gezinmesini ve ana içeriğini sunar.
   if (!signedIn && pathname === '/') return <>{children}</>;
@@ -143,7 +154,7 @@ export function AppShellClient({
   }
 
   return (
-    <div className="min-h-dvh lg:pl-64">
+    <div className="min-h-dvh lg:pl-64" data-no-nav={consentPending ? 'true' : undefined}>
       <SkipLink className="lg:focus:top-2 lg:focus:left-[17rem]">{t('skipToContent')}</SkipLink>
 
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-bg px-4 lg:hidden">
@@ -179,7 +190,7 @@ export function AppShellClient({
             {t('signIn')}
           </Link>
         )}
-        <nav aria-label={t('labelSide')}>
+        <nav aria-label={t('labelSide')} hidden={consentPending}>
           <ul className="flex flex-col gap-1">
             {NAV_ITEMS.map((item) => (
               <li key={item.id}>{renderItem(item, 'side')}</li>
@@ -218,22 +229,29 @@ export function AppShellClient({
       <main
         id="main-content"
         tabIndex={-1}
-        className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] outline-none lg:pb-0"
+        className={cn(
+          'outline-none lg:pb-0',
+          consentPending
+            ? 'pb-[env(safe-area-inset-bottom)]'
+            : 'pb-[calc(4.5rem+env(safe-area-inset-bottom))]',
+        )}
       >
         {children}
       </main>
 
-      <nav
-        data-bottom-nav
-        aria-label={t('labelBottom')}
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg pb-[env(safe-area-inset-bottom)] lg:hidden"
-      >
-        <ul className="grid grid-cols-6">
-          {NAV_ITEMS.map((item) => (
-            <li key={item.id}>{renderItem(item, 'bottom')}</li>
-          ))}
-        </ul>
-      </nav>
+      {!consentPending && (
+        <nav
+          data-bottom-nav
+          aria-label={t('labelBottom')}
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg pb-[env(safe-area-inset-bottom)] lg:hidden"
+        >
+          <ul className="grid grid-cols-6">
+            {NAV_ITEMS.map((item) => (
+              <li key={item.id}>{renderItem(item, 'bottom')}</li>
+            ))}
+          </ul>
+        </nav>
+      )}
     </div>
   );
 }
