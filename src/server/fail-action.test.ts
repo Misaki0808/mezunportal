@@ -109,6 +109,20 @@ describe('beklenmedik hata günlüğü (action.unexpected)', () => {
   const line = (write: ReturnType<typeof stderr>) =>
     JSON.parse(String(write.mock.calls[0]![0]).trim());
 
+  it('istemcinin istek ve eylem başlıkları günlüğe girmez', async () => {
+    mocks.headers.mockResolvedValue(
+      new Headers({
+        'x-request-id': 'ayse.yilmaz',
+        'next-action': '1234567890123456',
+      }),
+    );
+    const write = stderr();
+    await failAction(new Error('synthetic'), 'saveConsents');
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(String(write.mock.calls[0]![0])).not.toMatch(/ayse\.yilmaz|1234567890123456/);
+    expect(mocks.headers).not.toHaveBeenCalled();
+  });
+
   it('kodsuz hata: SERVER_UNEXPECTED döner ve eylem adı + hata sınıfı + kodla TEK satır yazılır; ileti ve yığın yok', async () => {
     const write = stderr();
     mocks.headers.mockResolvedValue(
@@ -127,8 +141,6 @@ describe('beklenmedik hata günlüğü (action.unexpected)', () => {
       source: 'saveConsents',
       errorName: 'Error',
       errorCode: 'P2034',
-      requestId: 'req-77',
-      actionId: '40' + 'cd'.repeat(20),
     });
     expect(String(write.mock.calls[0]![0])).not.toMatch(/ayse|postgres|gizli/);
   });

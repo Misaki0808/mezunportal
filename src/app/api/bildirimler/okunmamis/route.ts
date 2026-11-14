@@ -14,6 +14,11 @@ export async function GET() {
     return null;
   });
   if (!actor) return new Response(null, { status: 401, headers: { 'cache-control': 'no-store' } });
-  const unread = await countMyUnread({ db: getDb() }, actor.userId);
-  return Response.json({ unread }, { headers: { 'cache-control': 'private, no-store' } });
+  try {
+    const unread = await countMyUnread({ db: getDb() }, actor.userId);
+    return Response.json({ unread }, { headers: { 'cache-control': 'private, no-store' } });
+  } catch (error) {
+    logUnexpected('route', 'bildirimlerOkunmamis', error);
+    return new Response(null, { status: 500, headers: { 'cache-control': 'no-store' } });
+  }
 }

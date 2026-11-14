@@ -98,25 +98,6 @@ describe('unexpectedLogLine (saf): tek satır, yalnız güvenli alanlar', () => 
     expect(line).not.toContain('ayse');
   });
 
-  it('istek ve eylem kimliği yalnız güvenli biçimdeyse yazılır', () => {
-    expect(
-      parse(
-        unexpectedLogLine('action', 'x', new Error('a'), {
-          requestId: 'req-1.A_b',
-          actionId: '40' + 'ab'.repeat(20),
-        }),
-      ),
-    ).toMatchObject({ requestId: 'req-1.A_b', actionId: '40' + 'ab'.repeat(20) });
-    const sahte = parse(
-      unexpectedLogLine('action', 'x', new Error('a'), {
-        requestId: 'ayse@ogr.iu.edu.tr',
-        actionId: 'ZZ gizli',
-      }),
-    );
-    expect(sahte).not.toHaveProperty('requestId');
-    expect(sahte).not.toHaveProperty('actionId');
-  });
-
   it('kodlu hata, doğrulama hatası ve Next.js akış denetimi günlüğe DÜŞMEZ', () => {
     expect(unexpectedLogLine('action', 'x', codedForbidden('AUTH_FORBIDDEN'))).toBeNull();
     expect(unexpectedLogLine('route', 'x', codedNotFound('RESOURCE_NOT_FOUND'))).toBeNull();
@@ -236,4 +217,11 @@ describe('bekçi: rota işleyicileri beklenmedik hatayı sessizce yutmaz', () =>
     const var_ = new Set(routes(root).map((path) => path.slice(root.length + 1)));
     for (const rel of Object.keys(SERBEST)) expect(var_.has(rel), rel).toBe(true);
   });
+});
+
+it('güvenli görünümlü kişisel veri hata adı ve hata kodundan sızmaz', () => {
+  const e = Object.assign(new Error('gizli'), { code: '12345678901' });
+  e.name = 'AyseYilmaz';
+  const line = unexpectedLogLine('action', 'saveConsents', e)!;
+  expect(line).not.toMatch(/AyseYilmaz|12345678901|ayse\.yilmaz|1234567890123456/);
 });
