@@ -74,7 +74,10 @@ let cancelPrevious: (() => void) | undefined;
  * başka bir öğe odağı aldıysa durur. Sayfa değişimi (`router.push`) eylemden SONRA tamamlandığı için yoklama süresi boyunca
  * sürer: düğme kalkınca yeni sayfanın başlığına gider.
  */
-export function rescueFocus(trigger: HTMLElement | null, options: RescueOptions = {}): void {
+export function rescueFocus(
+  trigger: HTMLElement | null,
+  options: RescueOptions = {},
+): (() => void) | undefined {
   if (!trigger || typeof window === 'undefined') return;
   cancelPrevious?.();
   const deadline = Date.now() + (options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
@@ -84,7 +87,8 @@ export function rescueFocus(trigger: HTMLElement | null, options: RescueOptions 
   let stopped = false;
   const stop = () => {
     stopped = true;
-    if (timer) clearTimeout(timer);
+    if (timer !== undefined) clearTimeout(timer);
+    if (cancelPrevious === stop) cancelPrevious = undefined;
   };
   cancelPrevious = stop;
   const toTarget = () => {
@@ -96,6 +100,8 @@ export function rescueFocus(trigger: HTMLElement | null, options: RescueOptions 
   };
   const tick = () => {
     if (stopped) return;
+    // Gecikmiş yoklama kapanmış/değişmiş bir belgeye aitse artık odak kurtarılamaz.
+    if (typeof document === 'undefined' || trigger.ownerDocument !== document) return stop();
     const active = document.activeElement;
     // Başka bir öğe odakta: pencere kendi dönüşünü yaptı ya da kullanıcı başka yere geçti.
     if (active && active !== document.body && active !== holder) return stop();
@@ -113,8 +119,9 @@ export function rescueFocus(trigger: HTMLElement | null, options: RescueOptions 
         if (disabledTicks >= SETTLED_DISABLED_TICKS) toTarget();
       }
     }
-    if (Date.now() < deadline) timer = setTimeout(tick, POLL_MS);
+    if (!stopped && Date.now() < deadline) timer = setTimeout(tick, POLL_MS);
     else stop();
   };
   timer = setTimeout(tick, POLL_MS);
+  return stop;
 }
