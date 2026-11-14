@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MyStory } from '@/contracts/alumni-story';
@@ -151,4 +151,27 @@ describe('hikâye editörü: odak ve duyurular', () => {
     );
     await waitFor(() => expect(message).toHaveFocus());
   });
+});
+
+it('yeni işlem sürerken önceki başarı iletisi hemen temizlenir', async () => {
+  const { user } = show([story({ consent: true })]);
+  await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+  await screen.findByText('Hikâyen kaydedildi.');
+  let release!: (value: unknown) => void;
+  mocks.save.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
+  await user.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  try {
+    expect(mocks.save).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText('Hikâyen kaydedildi.')).toBeNull();
+  } finally {
+    await act(async () => {
+      release({ ok: true, data: story({ consent: true }) });
+    });
+  }
+  expect(await screen.findByText('Hikâyen incelemeye gönderildi.')).toBeVisible();
 });

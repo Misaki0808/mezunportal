@@ -72,6 +72,7 @@ export function StoryEditor({
   function save(send: boolean) {
     // Kaydet/Gönder işlem sürerken pasifleşir (odak BODY'ye düşer); bitince düğmeye geri döner.
     const trigger = captureFocus();
+    clearMessages();
     start(async () => {
       const field = await persist(send);
       if (field) {
@@ -81,7 +82,6 @@ export function StoryEditor({
     });
   }
   async function persist(send: boolean): Promise<'body' | 'consent' | undefined> {
-    clearMessages();
     const parsed = saveStorySchema.safeParse({ departmentId, body, consent });
     if (!parsed.success) {
       return fail(t('invalid'), 'body');
