@@ -179,3 +179,12 @@ it('yönetim özeti ön kapısı arızalanırsa genel hata döner ve ikinci kap�
     write.mockRestore();
   }
 });
+
+it('yönetim özeti: yönetici olmayan doğrulanmış üye yetki hatası alır; üye kapısı ve özet çalışmaz', async () => {
+  const page = (await import('@/app/(yonetim)/yonetim/aylik-ozet/page')).default;
+  spies.admin.mockResolvedValue(false);
+  spies.guard.mockResolvedValue({ userId: 'member' });
+  expect(await page()).toMatchObject({ type: ErrorState, props: { errorCode: 'AUTH_FORBIDDEN' } });
+  expect(spies.guard).not.toHaveBeenCalled();
+  untouched();
+});
