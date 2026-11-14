@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { ActionFailure, ActionResult } from '@/contracts/result';
 
@@ -36,12 +36,24 @@ export function useAction() {
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<ActionFailure | null>(null);
   const lock = useRef(false);
+  const mounted = useRef(true);
+  const cancelFocus = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      // Gezinmede yeni sayfanın başlığı gecikmeli gelebilir; başlamış kurtarma belge içinde sürer.
+      // Belge kapanır/değişirse rescueFocus kendi korumasıyla durur.
+    };
+  }, []);
 
   async function run<T>(
     action: () => Promise<ActionResult<T>>,
     options: RunOptions<T> = {},
   ): Promise<boolean> {
     if (lock.current) return false;
+    cancelFocus.current?.();
+    cancelFocus.current = undefined;
     const trigger = options.focusTarget === false ? null : captureFocus();
     lock.current = true;
     setBusy(true);
@@ -77,9 +89,14 @@ export function useAction() {
       return true;
     } finally {
       lock.current = false;
-      setBusy(false);
-      // Odak eylem sırasında/sonunda kaybolduysa (BODY) klavye kullanıcısı sayfa başına düşmesin.
-      rescueFocus(trigger, options.focusTarget ? { target: options.focusTarget } : {});
+      if (mounted.current) {
+        setBusy(false);
+        // Odak eylem sırasında/sonunda kaybolduysa (BODY) klavye kullanıcısı sayfa başına düşmesin.
+        cancelFocus.current = rescueFocus(
+          trigger,
+          options.focusTarget ? { target: options.focusTarget } : {},
+        );
+      }
     }
   }
 
