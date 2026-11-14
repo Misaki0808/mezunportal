@@ -2,6 +2,7 @@
 import { screen } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import { renderUi } from '@/test/render';
+import messages from '../../../messages/tr.json';
 import { QuestionBank } from './question-bank';
 
 it('güvenli şirket toplamını gösterir, sayfalarken arama ve sektörü korur', () => {
@@ -88,7 +89,9 @@ it.each([
   'süzgeçli ve seçim gizlilik eşiğinin altındaysa arama dili ile gizlilik gerekçesi birlikte söylenir, eylem süzgeci temizlemektir: %o',
   (filters) => {
     renderUi(<QuestionBank filters={filters} data={bank({ insufficient: true })} />);
-    expect(screen.getByText('Bu seçimle eşleşen soru yok')).toBeVisible();
+    // Eşik altındayken "eşleşen yok" fazla kesin: soru var ama gösterilemiyor olabilir.
+    expect(screen.getByText('Bu seçimde henüz gösterilebilecek soru yok')).toBeVisible();
+    expect(screen.queryByText('Bu seçimle eşleşen soru yok')).not.toBeInTheDocument();
     expect(screen.getByText(/en az üç farklı kişinin/)).toBeVisible();
     // Metin sayı ya da "şu şirkette az deneyim var" gibi bir şey söylemez (gizlilik).
     expect(screen.queryByText(/az sayıda deneyim/)).not.toBeInTheDocument();
@@ -130,4 +133,29 @@ it('aralık dışı sayfada toplam sayı ile "henüz yok" çelişmez: bu sayfa b
     'href',
     '/mulakat-sorulari?sectorId=sektor&q=veri&page=1',
   );
+});
+
+it.each([
+  { companyId: 'a', sectorId: '', q: 'xyz' },
+  { companyId: '', sectorId: 'sektor', q: '' },
+])(
+  'eşik altı gizlilik boş durumunun metninde sayı yok (rakam da yer tutucu da): bugün sabit dize, ileride biri sayı eklerse kırılır: %o',
+  (filters) => {
+    renderUi(<QuestionBank filters={filters} data={bank({ insufficient: true })} />);
+    const empty = screen.getByRole('heading', {
+      name: 'Bu seçimde henüz gösterilebilecek soru yok',
+    }).parentElement!;
+    expect(empty).toHaveTextContent(/en az üç farklı kişinin/);
+    // Şirket ya da yazar sayısı hiçbir biçimde görünmez ("üç" yalnız herkese açık eşik kuralıdır).
+    expect(empty.textContent).not.toMatch(/\d/);
+    expect(empty.textContent).not.toMatch(/[{}]/);
+  },
+);
+
+it('katalogdaki eşik altı gizlilik metinleri sabit dizedir: rakam ve yer tutucu içermez', () => {
+  for (const key of ['noMatchInsufficient', 'noMatchPrivacyHint', 'insufficient'] as const) {
+    const text = messages.interviewBank[key];
+    expect(text, key).not.toMatch(/\d/);
+    expect(text, key).not.toMatch(/[{}]/);
+  }
 });
