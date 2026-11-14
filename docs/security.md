@@ -232,7 +232,17 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11); kendi profilinin
   kişisel alanları, ilk giriş adım durumları ve etiketleri dahildir. Profil yoksa `profile: null` döner.
   Deneyimler bütün durumlarıyla yalnız kendi içeriklerinden oluşur; yazar/moderatör kimlikleri deneyim
-  döküm nesnesine eklenmez.
+  döküm nesnesine eklenmez. Bildirim kutusu/tercihleri, mentor ayarları ve müsaitliği ile mezun
+  belgesi başvurularının dosyasız metaverisi de yer alır. Bozuk ödül aday ayrıntısı `UNREADABLE`
+  işaretiyle döner; sabit bir olay günlüğü değeri veya kimliği içermez.
+  Otomatik dökümün bilinen sınırları (erişim talebinin tamamı için ayrıca değerlendirilmelidir):
+  - Oturum IP/user-agent ve oturum jetonu: güvenlik oturumu kaydı; otomatik döküme konmaz.
+  - Event ve EmailLog: operasyon/ölçüm kayıtları; ileti gövdesi değildir ve dökümde yoktur.
+  - JobMatchDigest ve NotificationAction: iş/tek kullanımlık bağlantı durumları; jeton yüzeyini büyütmemek için yoktur.
+  - AdminGrant: yetki ve üçüncü kişi referansları içeren yönetim kaydı; otomatik döküme konmaz.
+  - Eski UserSkill: taşınmış eski tablo; güncel beceriler profil/CV bölümündedir.
+  - İlan/deneyim şikâyet metinleri: üçüncü kişilere ilişkin serbest metin içerebildiğinden otomatik döküme konmaz.
+  - User.image: üçüncü taraf görsel adresi olabildiğinden otomatik döküme konmaz.
 - **Çerezler:** yalnız zorunlu oturum çerezi; üçüncü taraf analitik ve reklam çerezi yok
   (metrikler kendi tablomuzda). Çerez bandı yerine aydınlatma metninde çerez bölümü yeterli
   görünür; son değerlendirme hukuki metin onayıyla (PILOT-LEGAL).
