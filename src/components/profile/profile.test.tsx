@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import Link from 'next/link';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -426,5 +426,109 @@ describe('başkasının profili', () => {
   it('hiçbir alan yoksa genel boş durum gösterilir', () => {
     renderWithToasts(<ProfileView profile={{ ...view, skills: [], memberships: [] }} />);
     expect(screen.getByText('Gösterilecek bilgi yok')).toBeInTheDocument();
+  });
+});
+
+describe('kendi profilim: işlemden sonra odak ve ipucu', () => {
+  const two = {
+    ...base,
+    skills: [
+      { tagId: 't1', label: 'SQL' },
+      { tagId: 't2', label: 'Excel' },
+    ],
+  };
+  async function openSkills(initial: MyProfileData, removeSkill: ReturnType<typeof ok>) {
+    const view = renderWithToasts(
+      <MyProfile initial={initial} actions={actions({ removeSkill })} />,
+    );
+    await view.user.click(screen.getByRole('button', { name: 'Beceriler' }));
+    return view;
+  }
+  it('beceri kaldırılınca odak sıradaki becerinin kaldır düğmesine geçer', async () => {
+    const { user } = await openSkills(
+      two,
+      ok({ ...base, skills: [{ tagId: 't2', label: 'Excel' }] }),
+    );
+    await user.click(screen.getByRole('button', { name: 'SQL becerisini kaldır' }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Excel becerisini kaldır' })).toHaveFocus(),
+    );
+  });
+  it('son sıradaki beceri kaldırılınca odak öncekine, hiç kalmazsa bölüm başlığına geçer', async () => {
+    const afterLast = { ...base, skills: [{ tagId: 't1', label: 'SQL' }] };
+    const { user } = await openSkills(two, ok(afterLast));
+    await user.click(screen.getByRole('button', { name: 'Excel becerisini kaldır' }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'SQL becerisini kaldır' })).toHaveFocus(),
+    );
+  });
+  it('tek beceri kaldırılınca odak "Beceriler" bölüm başlığına geçer', async () => {
+    const { user } = await openSkills(
+      { ...base, skills: [{ tagId: 't1', label: 'SQL' }] },
+      ok(base),
+    );
+    await user.click(screen.getByRole('button', { name: 'SQL becerisini kaldır' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Beceriler' })).toHaveFocus());
+  });
+  it('beceri kaldırma başarısızsa odak taşınmaz, hata görünür', async () => {
+    const removeSkill = vi.fn().mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+    const { user } = await openSkills(two, removeSkill);
+    await user.click(screen.getByRole('button', { name: 'SQL becerisini kaldır' }));
+    expect(await screen.findByText(messages.errors.codes.SERVER_UNEXPECTED)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Excel becerisini kaldır' })).not.toHaveFocus();
+  });
+  it('başarısız kaldırmanın odak hedefi, sonradan gelen başka bir güncellemede odağı çalmaz', async () => {
+    const removeSkill = vi.fn().mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+    const added = {
+      ...two,
+      skills: [...two.skills, { tagId: 't3', label: 'Python' }],
+    };
+    const view = renderWithToasts(
+      <MyProfile initial={two} actions={actions({ removeSkill, addSkill: ok(added) })} />,
+    );
+    await view.user.click(screen.getByRole('button', { name: 'Beceriler' }));
+    await view.user.click(screen.getByRole('button', { name: 'SQL becerisini kaldır' }));
+    expect(await screen.findByText(messages.errors.codes.SERVER_UNEXPECTED)).toBeVisible();
+    await view.user.type(screen.getByLabelText('Beceri ekle'), 'Python{Enter}');
+    expect(await screen.findByRole('button', { name: 'Python becerisini kaldır' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Excel becerisini kaldır' })).not.toHaveFocus();
+  });
+  it('kalem silinince odak o bölümün başlığına geçer', async () => {
+    const withEdu: MyProfileData = {
+      ...base,
+      education: [
+        {
+          id: 'e1',
+          source: 'MANUAL',
+          manuallyEdited: false,
+          institution: 'İstanbul Üniversitesi',
+          level: 'BACHELOR',
+          fieldOfStudy: 'YBS',
+          startDate: '2022-09',
+          endDate: null,
+          isCurrent: true,
+        },
+      ],
+    };
+    const { user } = renderWithToasts(
+      <MyProfile initial={withEdu} actions={actions({ deleteEntry: ok(base) })} />,
+    );
+    const block = screen.getByRole('heading', { name: 'Eğitim' }).closest('section')!;
+    await user.click(within(block).getByRole('button', { name: 'Eğitim' }));
+    await user.click(within(block).getByRole('button', { name: 'Sil' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Evet, sil' }),
+    );
+    await waitFor(() =>
+      expect(within(block).getByRole('button', { name: 'Eğitim' })).toHaveFocus(),
+    );
+  });
+  it('özet ve hedef alanı telefon ya da e-posta yazılmamasını söyler', async () => {
+    const { user } = renderWithToasts(<MyProfile initial={base} actions={actions()} />);
+    await user.click(screen.getAllByRole('button', { name: 'Profilimi düzenle' })[0]!);
+    const dialog = within(screen.getByRole('dialog'));
+    expect(dialog.getByLabelText('Özet')).toHaveAccessibleDescription(
+      'Telefon ve e-posta yazma; iletişim bilgilerini Gizlilik ayarlarından yönetirsin.',
+    );
   });
 });

@@ -174,17 +174,18 @@ export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
         )}
         <p className="text-sm text-fg-muted">{t('viewCount', { count: data.viewCount })}</p>
       </section>
-      {error && (
-        <p role="alert" className="text-danger">
-          {error}
-        </p>
-      )}
-      {saved && (
-        <p role="status" className="text-success">
-          {t('saved')}
-        </p>
-      )}
-      <div className="sticky bottom-20 rounded-control bg-bg py-3 lg:static">
+      {/* Mesajlar Kaydet'in yanında durur: sayfa uzun, çubuk ekrana yapışık; altta kalan bir mesaj telefonda görünmezdi. */}
+      <div className="sticky bottom-20 space-y-3 rounded-control bg-bg py-3 lg:static">
+        {error && (
+          <p role="alert" className="text-danger">
+            {error}
+          </p>
+        )}
+        {saved && (
+          <p role="status" className="text-on-success-soft">
+            {t('saved')}
+          </p>
+        )}
         <Button className="w-full" loading={pending} onClick={save}>
           {t('save')}
         </Button>

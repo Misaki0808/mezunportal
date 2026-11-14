@@ -168,3 +168,19 @@ it('aday iletişiminde çift tıklama tek istek ve ağ hatasında not korunur', 
   expect(note).toHaveValue('Merhaba');
   expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
 });
+
+it('hata ve kayıt mesajı Kaydet düğmesiyle aynı yapışkan çubukta durur (uzun sayfada altta kalıp görünmez olmaz)', async () => {
+  renderUi(<SeekerSettingsScreen initial={initial} />);
+  const save = screen.getByRole('button', { name: 'Kaydet' });
+  fireEvent.click(screen.getByRole('switch', { name: /İş arayanlara görün/ }));
+  fireEvent.click(save);
+  const error = await screen.findByRole('alert');
+  expect(error.parentElement).toContainElement(save);
+  expect(error.parentElement).toHaveClass('sticky');
+  fireEvent.click(screen.getByRole('checkbox', { name: /Metni okudum/ }));
+  fireEvent.click(save);
+  const saved = await screen.findByRole('status');
+  expect(saved).toHaveTextContent('Tercihin kaydedildi.');
+  expect(saved.parentElement).toContainElement(save);
+  expect(screen.queryByRole('alert')).toBeNull();
+});
