@@ -176,13 +176,17 @@ export function unexpectedLogLine(
 }
 
 /** Günlüğe yazar; günlük yazımı asla hata fırlatmaz ve çağıranın akışını değiştirmez. */
-export function logUnexpected(kind: UnexpectedKind, source: string, error: unknown): void {
+export function logUnexpected(kind: UnexpectedKind, source: string, error: unknown): boolean {
   try {
     const line = unexpectedLogLine(kind, source, error);
-    if (line) process.stderr.write(`${line}\n`);
+    if (line) {
+      process.stderr.write(`${line}\n`);
+      return true;
+    }
   } catch {
     // Günlük kullanılamıyorsa sessiz kal: asıl hata yolu bozulmasın.
   }
+  return false;
 }
 
 /** Zamanlanmış/kuyruk işini sarar: beklenmedik hatayı tek satır günlüğe yazar ve AYNEN yeniden fırlatır (pg-boss yeniden deneme davranışı değişmez). */

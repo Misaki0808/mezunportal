@@ -319,8 +319,7 @@ export async function relayNotificationIntents(
       } catch (error) {
         // Tur başına TEK satır: havuz/bağlantı ortada çökerse sayfa başına 100 kayıt aynı hatayı üretir (kart 330 d).
         if (!relayLogged) {
-          relayLogged = true;
-          logUnexpected('job', 'notification.relay', error);
+          relayLogged = logUnexpected('job', 'notification.relay', error);
         }
         failed++;
       }
