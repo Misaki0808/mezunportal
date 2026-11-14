@@ -265,18 +265,36 @@ describe('Google Takvim adaptörü: jeton yönetimi', () => {
     expect(h.calls).toHaveLength(1);
   });
 
-  it('bağlantı yoksa ya da jeton çözülemiyorsa Google çağrılmaz', async () => {
-    for (const loadRefreshToken of [
-      async () => null,
-      async () => Promise.reject(new Error('çözülemedi')),
+  it('bağlantı yoksa ya da jeton çözülemiyorsa (okuyucu null döner) Google çağrılmaz', async () => {
+    const h = harness({ loadRefreshToken: async () => null });
+    expect(await code(h.calendar.createEvent(request))).toEqual({
+      code: 'CALENDAR_NOT_CONNECTED',
+      retryable: false,
+    });
+    expect(h.calls).toHaveLength(0);
+  });
+
+  it('geçici veritabanı hatası kalıcı "bağlı değil" olmaz: yeniden denenebilir kararlı kod, Google çağrılmaz (kart 377)', async () => {
+    for (const overrides of [
+      { isConnected: async () => Promise.reject(new Error('veritabanı gizli ayrıntı')) },
+      { loadRefreshToken: async () => Promise.reject(new Error('veritabanı gizli ayrıntı')) },
     ]) {
-      const h = harness({ loadRefreshToken });
+      const h = harness(overrides);
       expect(await code(h.calendar.createEvent(request))).toEqual({
-        code: 'CALENDAR_NOT_CONNECTED',
-        retryable: false,
+        code: 'CALENDAR_UNAVAILABLE',
+        retryable: true,
       });
       expect(h.calls).toHaveLength(0);
     }
+  });
+
+  it('bağlantı kesikse (isConnected false) kalıcı "bağlı değil" kalır, Google çağrılmaz', async () => {
+    const h = harness({ isConnected: async () => false });
+    expect(await code(h.calendar.createEvent(request))).toEqual({
+      code: 'CALENDAR_NOT_CONNECTED',
+      retryable: false,
+    });
+    expect(h.calls).toHaveLength(0);
   });
 
   it('yanlış istemci sırrı kalıcı reddir; Google 5xx/429 yeniden denenebilir', async () => {

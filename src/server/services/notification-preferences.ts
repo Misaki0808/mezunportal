@@ -75,12 +75,16 @@ export async function decideNotification(
   }
   const type = notificationTypeForTemplate(message.template);
   if (!type) throw new Error('NOTIFICATION_TEMPLATE_UNKNOWN');
+  const user = message.recipientUserId
+    ? await db.user.findUnique({
+        where: { id: message.recipientUserId },
+        select: { email: true, deletedAt: true, banned: true, banExpires: true },
+      })
+    : null;
+  // Güvenlik iletisi tercihten muaftır; silinmiş hesaba teslimden muaf değildir.
+  if (message.recipientUserId && (!user || user.deletedAt)) return INELIGIBLE;
   if (NOTIFICATION_CATALOG[type].mandatory) return SEND;
   if (!message.recipientUserId) return INELIGIBLE;
-  const user = await db.user.findUnique({
-    where: { id: message.recipientUserId },
-    select: { email: true, deletedAt: true, banned: true, banExpires: true },
-  });
   if (
     !user ||
     user.deletedAt ||

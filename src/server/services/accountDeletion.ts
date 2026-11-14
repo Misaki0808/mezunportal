@@ -3,6 +3,10 @@ import 'server-only';
 import type { DeleteAccountOutput } from '@/contracts/privacy';
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { codedNotFound, codedValidation } from '@/lib/errors';
+import messages from '../../../messages/tr.json';
+import { cancelUserEmails } from '../jobs/email-outbox';
+import { resetCalendar } from '../external/calendar';
+import { revokeErasedGoogleToken } from './google-calendar-connection';
 
 import { pruneOrphanSkillTags } from './profile-skills';
 import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
@@ -19,6 +23,12 @@ import { eraseExperienceContent } from './experiencePrivacy';
  */
 
 export const DELETED_USER_NAME = 'Silinmiş kullanıcı';
+/** SQL'de boş geçilemeyen tarihsel alanlarda kişisel veri taşımayan sabit yer tutucu. */
+export const ERASED_PERSONAL_TEXT = messages.privacyScreens.erasedPersonalText;
+// SQL şifreli biçim kısıtını korur; geçerli şifreli jeton değildir ve ACTIVE yapılmaz.
+export const ERASED_GOOGLE_TOKEN = 'v1.erased.erased.erased';
+// Teslimin 25 sn bütçesi içindeki User kilidini beklemeye ve temizliğe pay bırak.
+const ACCOUNT_DELETION_TX_OPTIONS = { timeout: 30_000, maxWait: 10_000 };
 export const deletedEmailFor = (userId: string) => `deleted-${userId}@deleted.invalid`;
 
 export type PublishedContentChoice = 'DELETE' | 'ANONYMIZE';
@@ -39,6 +49,8 @@ export type AccountDeletionDeps = {
   removeStoredFiles: ((keys: readonly string[]) => Promise<void>) | null;
   /** Ek işleyiciler; zorunlu kişisel veri temizliğinin yerine geçmez. */
   handlers?: readonly PublishedContentHandler[];
+  /** Commit sonrası en iyi çaba; testte sağlayıcıya gerçek ağ çağrısı yapılmaz. */
+  revokeCalendarToken?: (encryptedToken: string) => Promise<void>;
 };
 
 export async function deleteAccount(
@@ -49,7 +61,7 @@ export async function deleteAccount(
   now: Date = new Date(),
 ): Promise<DeleteAccountOutput> {
   await consumeRateLimit(db, RATE_LIMITS.accountDeletion, userId, now);
-  await db.$transaction(async (tx) => {
+  const disconnectedToken = await db.$transaction(async (tx) => {
     // Yükleme de aynı satırı kilitler; eski bir oturumla başlayan yükleme silmeyle yarışamaz.
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
     const user = await tx.user.findUnique({
@@ -61,6 +73,25 @@ export async function deleteAccount(
       throw codedValidation('ACCOUNT_DELETE_CONFIRMATION_MISMATCH');
     }
     await tx.user.update({ where: { id: userId }, data: { deletedAt: now } });
+    await cancelUserEmails(tx, userId, user.email);
+    const connection = await tx.integrationConnection.findFirst({
+      where: { provider: 'GOOGLE_CALENDAR', connectedById: userId },
+      select: { id: true, refreshTokenEnc: true },
+    });
+    let erasedConnectionToken: string | null = null;
+    if (connection) {
+      const erased = await tx.integrationConnection.updateMany({
+        where: { id: connection.id, connectedById: userId },
+        data: {
+          refreshTokenEnc: ERASED_GOOGLE_TOKEN,
+          accountLabel: null,
+          status: 'NEEDS_RECONNECT',
+          lastErrorCode: 'GOOGLE_OWNER_DELETED',
+        },
+      });
+      // Okuma ile yazma arasında yeni yönetici bağladıysa onun bağlantısı/jetonu korunur.
+      if (erased.count) erasedConnectionToken = connection.refreshTokenEnc;
+    }
     for (const handler of [...PUBLISHED_CONTENT_HANDLERS, ...(deps.handlers ?? [])]) {
       await handler(tx, userId, input.publishedContent);
     }
@@ -81,6 +112,10 @@ export async function deleteAccount(
       throw new Error('Dosya silme bağlı değil; hesap silme başlatılmadı');
     }
     await tx.graduationDocument.deleteMany({ where: { userId, status: 'PENDING' } });
+    await tx.graduationDocument.updateMany({
+      where: { userId, status: 'REJECTED' },
+      data: { rejectReason: ERASED_PERSONAL_TEXT },
+    });
     await tx.experienceInvitation.deleteMany({ where: { userId } });
     await tx.alumniCourseMark.deleteMany({ where: { userId } });
     await tx.position.deleteMany({ where: { userId } });
@@ -149,7 +184,10 @@ export async function deleteAccount(
     await tx.faqRequest.updateMany({ where: { askerId: userId }, data: { askerId: null } });
     await tx.faqAnswer.deleteMany({ where: { mentorId: userId, isSelected: false } });
     await tx.faqAnswer.updateMany({ where: { mentorId: userId }, data: { mentorId: null } });
-    await tx.faqRequest.updateMany({ where: { decidedById: userId }, data: { decidedById: null } });
+    await tx.faqRequest.updateMany({
+      where: { decidedById: userId },
+      data: { decidedById: null },
+    });
     await tx.faqItem.updateMany({
       where: { publishedById: userId },
       data: { publishedById: null },
@@ -181,7 +219,17 @@ export async function deleteAccount(
     await tx.jobPosting.deleteMany({ where: { authorId: userId } });
     await tx.jobPostingReport.updateMany({
       where: { reporterId: userId },
-      data: { reporterId: null },
+      data: { reporterId: null, reason: ERASED_PERSONAL_TEXT },
+    });
+
+    // Karşı tarafın tarihçesi kalır; gönderenin serbest metni tüm kaynak/durumlarda temizlenir.
+    await tx.contactRequest.updateMany({
+      where: { requesterId: userId },
+      data: { message: null },
+    });
+    await tx.contactRequest.updateMany({
+      where: { requesterId: userId, source: { not: 'PROFILE' } },
+      data: { sourceTitle: ERASED_PERSONAL_TEXT, sourceOrganization: ERASED_PERSONAL_TEXT },
     });
 
     // Katkı puanı (P1-16): kişiye ait puan kayıtları, etiketler ve şüphe işaretleri silinir; başkalarının kayıtlarındaki
@@ -304,13 +352,23 @@ export async function deleteAccount(
         image: null,
         phone: null,
         lastSeenAt: null,
+        banReason: null,
         deletedAt: now,
       },
     });
     // Hata durumunda belge anahtarları ve hesap transaction ile korunur; yeniden denenebilir.
     // Depolama idempotenttir: kısmen silinen dosyalar yeniden silinebilir.
     if (fileKeys.length > 0 && deps.removeStoredFiles) await deps.removeStoredFiles(fileKeys);
-  });
+    return erasedConnectionToken;
+  }, ACCOUNT_DELETION_TX_OPTIONS);
+  if (disconnectedToken !== null) {
+    resetCalendar();
+    try {
+      await (deps.revokeCalendarToken ?? revokeErasedGoogleToken)(disconnectedToken);
+    } catch {
+      // En iyi çaba: yerel silme commit oldu; sağlayıcı hatası sonucu değiştirmez.
+    }
+  }
   // Kilitli yükleme yolu sonrasında kalmış kayıtlı anahtar varsa tekrar temizle.
   const remaining = await db.graduationDocument.findMany({
     where: { userId, storageKey: { not: null } },

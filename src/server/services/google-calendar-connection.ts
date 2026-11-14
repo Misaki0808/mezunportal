@@ -79,6 +79,13 @@ const isConfigured = (s: GoogleSettings) => s.mode === 'GOOGLE' && !!s.clientId 
  */
 export function createGoogleTokenStore(db: PrismaClient, secret: string) {
   return {
+    async isConnected(): Promise<boolean> {
+      const row = await db.integrationConnection.findUnique({
+        where: { provider: PROVIDER },
+        select: { status: true },
+      });
+      return row?.status === 'ACTIVE';
+    },
     async loadRefreshToken(): Promise<string | null> {
       const row = await db.integrationConnection.findUnique({
         where: { provider: PROVIDER },
@@ -282,4 +289,18 @@ export async function disconnectGoogleCalendar(
   deps.onChanged?.();
   const revoked = plain?.token ? await revokeToken(plain.token, deps.fetchImpl) : false;
   return disconnectGoogleCalendarOutputSchema.parse({ disconnected: true, revoked });
+}
+
+/** Silinen bağlantı sahibinin eski jetonu: yalnız commit sonrası, en iyi çaba; veri/log üretmez. */
+export async function revokeErasedGoogleToken(
+  encryptedToken: string,
+  deps: Pick<GoogleConnectionDeps, 'settings' | 'fetchImpl'> = {},
+): Promise<void> {
+  try {
+    const settings = (deps.settings ?? readGoogleSettings)();
+    const token = decryptSecret(encryptedToken, settings.secret, SECRET_CONTEXT);
+    await revokeToken(token, deps.fetchImpl);
+  } catch {
+    // Yerel bağlantı zaten kesildi; bozuk şifreleme/env/ağ hatası hesap silmeyi geri almaz.
+  }
 }

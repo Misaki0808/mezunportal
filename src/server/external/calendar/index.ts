@@ -30,6 +30,7 @@ export function getCalendar(): CalendarPort | null {
         clientId: env.GOOGLE_CLIENT_ID!,
         clientSecret: env.GOOGLE_CLIENT_SECRET!,
         loadRefreshToken: store.loadRefreshToken,
+        isConnected: store.isConnected,
         onTokenRejected: store.markRejected,
       });
     } else cached = null;
