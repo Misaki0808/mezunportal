@@ -219,4 +219,45 @@ describe('e-posta giden kutusu', () => {
     ).rejects.toThrow('EMAIL_INPUT_INVALID');
     expect(published).toHaveLength(0);
   });
+
+  it('kuyruğa alma kararı işlem AÇILMADAN verilir: işlem içinde ikinci havuz bağlantısı tutulmaz (kart 377)', async () => {
+    const { work, transport, logger } = fixture();
+    let inTransaction = false;
+    const seen: boolean[] = [];
+    const outbox: EmailOutbox = {
+      withKey: async (_key, run) => {
+        inTransaction = true;
+        try {
+          return await run(work);
+        } finally {
+          inTransaction = false;
+        }
+      },
+    };
+    const service = createEmailService(outbox, transport, logger, async () => {
+      seen.push(inTransaction);
+      return true;
+    });
+    await service.enqueueEmail(message);
+    expect(seen).toEqual([false]);
+  });
+  it('alıcı kilit sonrası silinmiş görünürse iş açılmaz ve satır yazılmaz (silme yarışı)', async () => {
+    const { work, transport, logger, rows, published } = fixture();
+    const outbox: EmailOutbox = {
+      withKey: async (_key, run) => run({ ...work, recipientUserId: 'u1', recipientDeleted: true }),
+    };
+    const decide = vi.fn(async () => true);
+    const service = createEmailService(outbox, transport, logger, decide);
+    expect(await service.enqueueEmail(message)).toEqual({ emailLogId: null });
+    expect(published).toHaveLength(0);
+    expect(rows.size).toBe(0);
+    expect(decide).toHaveBeenCalledTimes(1);
+  });
+  it('karar reddederse işlem hiç açılmaz', async () => {
+    const { transport, logger } = fixture();
+    const withKey = vi.fn();
+    const service = createEmailService({ withKey }, transport, logger, async () => false);
+    expect(await service.enqueueEmail(message)).toEqual({ emailLogId: null });
+    expect(withKey).not.toHaveBeenCalled();
+  });
 });

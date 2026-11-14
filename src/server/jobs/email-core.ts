@@ -63,6 +63,13 @@ export type EmailRecord = {
 export interface EmailUnitOfWork {
   /** Kuyruktaki kayıttan veya bilinen giriş adresinden çözülen alıcı. */
   recipientUserId?: string;
+  /**
+   * Alıcı kilidi alındıktan sonra, İŞLEMİN KENDİ bağlantısıyla okunan güncel durum: alıcı yok ya da silinmişse `true`. Silmeyle
+   * yarışı bu kapatır (silme FOR UPDATE alır, kilit sonrası okuma silmeyi görür). Kararın geri kalanı (tercih, bayatlık) işlemden
+   * ÖNCE verilir: işlem içinde havuzdan ikinci bağlantı almak her kuyruğa almada iki bağlantı tutar ve eşzamanlı yoğunlukta
+   * (havuz boyutu kadar istek) havuzu kilitler (kart 377).
+   */
+  recipientDeleted?: boolean;
   find(key: string): Promise<EmailRecord | null>;
   create(input: QueuedEmail): Promise<EmailRecord>;
   publish(id: string, input: QueuedEmail): Promise<void>;
@@ -99,18 +106,20 @@ export function createEmailService(
       // Ham Zod hatası kullanıcıya/loga taşınmaz (taşıma yardımcısı yalnız sunucu içindir).
       const parsed = queuedEmailSchema.safeParse(input);
       if (!parsed.success) throw new Error('EMAIL_INPUT_INVALID');
+      // Karar işlemden ÖNCE (havuzdan tek bağlantı, işlem açılmadan); silme yarışı işlem içinde `recipientDeleted` ile kapanır.
+      const decision = toDecision(await maySend(parsed.data));
+      if (!decision.send) {
+        if (STALE_CODES.has(decision.errorCode)) logger('stale', maskEmail(parsed.data.to));
+        return { emailLogId: null };
+      }
       return outbox.withKey(
         parsed.data.idempotencyKey,
         async (work) => {
           const message = work.recipientUserId
             ? { ...parsed.data, recipientUserId: work.recipientUserId }
             : parsed.data;
-          // Alıcı kilidi alındıktan sonra denetle: silmeyle yarışan üretici eski kararla iş açamaz.
-          const decision = toDecision(await maySend(message));
-          if (!decision.send) {
-            if (STALE_CODES.has(decision.errorCode)) logger('stale', maskEmail(message.to));
-            return { emailLogId: null };
-          }
+          // Alıcı kilidi alındıktan sonra güncel durum: silmeyle yarışan üretici eski kararla iş açamaz.
+          if (work.recipientDeleted) return { emailLogId: null };
           const existing = await work.find(message.idempotencyKey);
           if (existing) return { emailLogId: existing.id };
           const row = await work.create(message);

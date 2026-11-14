@@ -238,6 +238,9 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
   Bekleyen e-posta teslimleri aynı işlemde FAILED/EMAIL_RECIPIENT_INELIGIBLE olur, bekleyen pg-boss yükleri
   kaldırılır. Bilinen giriş alıcısı da kimliğine bağlanır; eski kimliksiz işler adresle bulunur. Gönderim ve silme
   aynı User kilidinde sıralanır; zorunlu güvenlik e-postası silinmiş alıcıya gönderim istisnası değildir.
+  Kuyruğa alma kararı (tercih, bayatlık) işlemden ÖNCE verilir; silmeyle yarış, alıcı kilidinden sonra İŞLEMİN KENDİ
+  bağlantısıyla okunur: işlem içinde havuzdan ikinci bağlantı tutulmaz (havuz 10; eşzamanlı giriş bağlantısı isteğinde
+  havuzu kilitlerdi). Takvim bağdaştırıcısı geçici veritabanı hatasını kalıcı "bağlı değil" saymaz, yeniden dener.
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11); kendi profilinin
   kişisel alanları, ilk giriş adım durumları ve etiketleri dahildir. Profil yoksa `profile: null` döner.
   Deneyimler bütün durumlarıyla yalnız kendi içeriklerinden oluşur; yazar/moderatör kimlikleri deneyim

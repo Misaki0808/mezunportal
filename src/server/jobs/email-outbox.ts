@@ -25,13 +25,21 @@ export function createEmailOutbox(db: PrismaClient, boss: Pick<PgBoss, 'send'>):
           }
           // Silme FOR UPDATE alır. Önce kullanıcı, sonra iş anahtarı: teslim silmeden önce tamamlanır
           // veya silme commit'inden sonra güncel uygunlukla reddedilir; SMTP silmeden sonra başlayamaz.
+          let recipientDeleted = false;
           if (recipientUserId) {
             await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${recipientUserId} FOR SHARE`;
+            // Kilit sonrası okuma işlemin kendi bağlantısında: ikinci havuz bağlantısı yok (kart 377).
+            const user = await tx.user.findUnique({
+              where: { id: recipientUserId },
+              select: { deletedAt: true },
+            });
+            recipientDeleted = !user || user.deletedAt !== null;
           }
           // Aynı anahtarda hem eşzamanlı enqueue hem yinelenen worker teslimlerini sırala.
           await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))::text`;
           return run({
             recipientUserId,
+            recipientDeleted,
             async find(idempotencyKey) {
               return tx.emailLog.findUnique({
                 where: { idempotencyKey },
