@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -259,5 +259,76 @@ describe('useAction', () => {
     await second.user.click(screen.getByRole('button', { name: 'Gönder' }));
     await new Promise((resolve) => setTimeout(resolve, 250));
     expect(document.body).toHaveFocus();
+  });
+});
+
+describe('odak kurtarma yaşam döngüsü', () => {
+  it('bileşen bekleyen eylem bitmeden kalkarsa sonradan yoklama başlatmaz', async () => {
+    vi.useFakeTimers();
+    const timer = vi.spyOn(globalThis, 'setTimeout');
+    const clear = vi.spyOn(globalThis, 'clearTimeout');
+    try {
+      let finish!: (value: { ok: true; data: { id: number } }) => void;
+      const action = () =>
+        new Promise<{ ok: true; data: { id: number } }>((resolve) => {
+          finish = resolve;
+        });
+      const view = renderUi(wrap(<Harness action={action} />));
+      const button = screen.getByRole('button', { name: 'Gönder' });
+      button.focus();
+      fireEvent.click(button);
+      view.unmount();
+      await act(async () => {
+        finish({ ok: true, data: { id: 1 } });
+        await Promise.resolve();
+      });
+      expect(timer.mock.calls.filter(([, delay]) => delay === 60)).toHaveLength(0);
+    } finally {
+      vi.clearAllTimers();
+      timer.mockRestore();
+      clear.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it('yeni eylem başlarken eski kurtarma yoklamasını iptal eder', async () => {
+    vi.useFakeTimers();
+    const timer = vi.spyOn(globalThis, 'setTimeout');
+    const clear = vi.spyOn(globalThis, 'clearTimeout');
+    try {
+      let finish!: (value: { ok: true; data: { id: number } }) => void;
+      const action = vi
+        .fn()
+        .mockResolvedValueOnce({ ok: true, data: { id: 1 } })
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              finish = resolve;
+            }),
+        );
+      const view = renderUi(wrap(<Harness action={action} />));
+      const button = screen.getByRole('button', { name: 'Gönder' });
+      button.focus();
+      await act(async () => {
+        fireEvent.click(button);
+        await Promise.resolve();
+      });
+      const index = timer.mock.calls.findIndex(([, delay]) => delay === 60);
+      expect(index).toBeGreaterThanOrEqual(0);
+      const handle = timer.mock.results[index]?.value;
+      fireEvent.click(button);
+      expect(clear).toHaveBeenCalledWith(handle);
+      view.unmount();
+      await act(async () => {
+        finish({ ok: true, data: { id: 2 } });
+        await Promise.resolve();
+      });
+      expect(timer.mock.calls.filter(([, delay]) => delay === 60)).toHaveLength(1);
+    } finally {
+      vi.clearAllTimers();
+      timer.mockRestore();
+      clear.mockRestore();
+      vi.useRealTimers();
+    }
   });
 });
