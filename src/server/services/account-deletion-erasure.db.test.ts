@@ -311,7 +311,7 @@ async function waitingForUserLock(kind: 'SHARE' | 'UPDATE') {
     { timeout: 3000, interval: 10 },
   );
 }
-it('teslim önce kilit alırsa silme SMTP bitişini bekler; silmeden sonra SENT yazımı yoktur', async () => {
+it('teslim önce kilit alırsa silme 5 saniyeyi aşan SMTP bitişini bekler', async () => {
   const owner = await createUser(db),
     email = (await db.user.findUniqueOrThrow({ where: { id: owner } })).email;
   const entered = barrier(),
@@ -341,13 +341,19 @@ it('teslim önce kilit alırsa silme SMTP bitişini bekler; silmeden sonra SENT 
     owner,
     { confirmEmail: email, publishedContent: 'DELETE' },
     { removeStoredFiles: null },
+  ).then(
+    () => true,
+    () => false,
   );
   try {
     await waitingForUserLock('UPDATE');
+    // SMTP soketi 10 sn'ye kadar bekleyebilir; Prisma'nın varsayılan 5 sn süresi silmeyi düşürmemeli.
+    await new Promise((resolve) => setTimeout(resolve, 5200));
   } finally {
     finish.release();
-    await Promise.all([delivery, deletion]);
+    await delivery;
   }
+  expect(await deletion).toBe(true);
   expect(send).toHaveBeenCalledOnce();
   expect((await db.emailLog.findUniqueOrThrow({ where: { id: emailLogId! } })).status).toBe('SENT');
   expect((await db.user.findUniqueOrThrow({ where: { id: owner } })).deletedAt).not.toBeNull();

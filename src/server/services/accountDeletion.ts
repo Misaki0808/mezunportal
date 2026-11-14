@@ -27,6 +27,8 @@ export const DELETED_USER_NAME = 'Silinmiş kullanıcı';
 export const ERASED_PERSONAL_TEXT = messages.privacyScreens.erasedPersonalText;
 // SQL şifreli biçim kısıtını korur; geçerli şifreli jeton değildir ve ACTIVE yapılmaz.
 export const ERASED_GOOGLE_TOKEN = 'v1.erased.erased.erased';
+// Teslimin 25 sn bütçesi içindeki User kilidini beklemeye ve temizliğe pay bırak.
+const ACCOUNT_DELETION_TX_OPTIONS = { timeout: 30_000, maxWait: 10_000 };
 export const deletedEmailFor = (userId: string) => `deleted-${userId}@deleted.invalid`;
 
 export type PublishedContentChoice = 'DELETE' | 'ANONYMIZE';
@@ -179,7 +181,10 @@ export async function deleteAccount(
     await tx.faqRequest.updateMany({ where: { askerId: userId }, data: { askerId: null } });
     await tx.faqAnswer.deleteMany({ where: { mentorId: userId, isSelected: false } });
     await tx.faqAnswer.updateMany({ where: { mentorId: userId }, data: { mentorId: null } });
-    await tx.faqRequest.updateMany({ where: { decidedById: userId }, data: { decidedById: null } });
+    await tx.faqRequest.updateMany({
+      where: { decidedById: userId },
+      data: { decidedById: null },
+    });
     await tx.faqItem.updateMany({
       where: { publishedById: userId },
       data: { publishedById: null },
@@ -215,7 +220,10 @@ export async function deleteAccount(
     });
 
     // Karşı tarafın tarihçesi kalır; gönderenin serbest metni tüm kaynak/durumlarda temizlenir.
-    await tx.contactRequest.updateMany({ where: { requesterId: userId }, data: { message: null } });
+    await tx.contactRequest.updateMany({
+      where: { requesterId: userId },
+      data: { message: null },
+    });
     await tx.contactRequest.updateMany({
       where: { requesterId: userId, source: { not: 'PROFILE' } },
       data: { sourceTitle: ERASED_PERSONAL_TEXT, sourceOrganization: ERASED_PERSONAL_TEXT },
@@ -314,7 +322,7 @@ export async function deleteAccount(
     // Depolama idempotenttir: kısmen silinen dosyalar yeniden silinebilir.
     if (fileKeys.length > 0 && deps.removeStoredFiles) await deps.removeStoredFiles(fileKeys);
     return connection?.refreshTokenEnc ?? null;
-  });
+  }, ACCOUNT_DELETION_TX_OPTIONS);
   if (disconnectedToken !== null) {
     resetCalendar();
     try {
