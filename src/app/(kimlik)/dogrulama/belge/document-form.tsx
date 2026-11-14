@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import type { SelectableDepartment } from '@/contracts/auth';
@@ -20,6 +20,7 @@ import {
   Input,
   Select,
   buttonClasses,
+  focusFirstInvalid,
 } from '@/components/ui';
 import { isErrorCode, type ErrorCode } from '@/lib/errors';
 
@@ -37,6 +38,25 @@ export function DocumentForm({
   const [complete, setComplete] = useState(false);
   const [fields, setFields] = useState<FieldErrors>({});
   const [error, setError] = useState<ErrorCode>();
+  const formRef = useRef<HTMLFormElement>(null);
+  const doneRef = useRef<HTMLParagraphElement>(null);
+  const [focusTick, setFocusTick] = useState(0);
+
+  // Hatalı gönderimde odak ilk hatalı alana gider (alan mesajı `aria-describedby` ile okunur); başarıda sonuç metnine.
+  useEffect(() => {
+    if (focusTick > 0) focusFirstInvalid(formRef.current);
+  }, [focusTick]);
+  useEffect(() => {
+    if (complete) doneRef.current?.focus();
+  }, [complete]);
+
+  // Genel "Formda eksik ya da uymayan bir alan var." her alanda aynı metinle çıkmasın: bölüm ve yıl kendi cümlesini söyler;
+  // dosya alanı ve sunucunun verdiği özel kodlar kendi metnini korur.
+  function fieldMessage(field: string, specific: string) {
+    const code = fields[field];
+    if (!code) return undefined;
+    return code === 'VALIDATION_INVALID' ? specific : errors(code);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,6 +76,7 @@ export function DocumentForm({
           next[field] = isErrorCode(issue.message) ? issue.message : 'VALIDATION_INVALID';
       }
       setFields(next);
+      setFocusTick((tick) => tick + 1);
       return;
     }
     locked.current = true;
@@ -66,6 +87,7 @@ export function DocumentForm({
       else {
         setFields(result.fieldErrors ?? {});
         setError(result.errorCode);
+        if (Object.keys(result.fieldErrors ?? {}).length > 0) setFocusTick((tick) => tick + 1);
       }
     } catch {
       setError('SERVER_UNEXPECTED');
@@ -77,8 +99,12 @@ export function DocumentForm({
 
   if (complete)
     return (
-      <div role="status" className="flex flex-1 flex-col">
-        <p className="rounded-card bg-success-soft p-5 text-base text-on-success-soft">
+      <div className="flex flex-1 flex-col">
+        <p
+          ref={doneRef}
+          tabIndex={-1}
+          className="rounded-card bg-success-soft p-5 text-base text-on-success-soft focus:outline-none"
+        >
           {t('success')}
         </p>
         <div className="mt-auto pt-8">
@@ -91,11 +117,11 @@ export function DocumentForm({
   if (!departments.length)
     return <EmptyState title={t('emptyTitle')} description={t('emptyDescription')} />;
   return (
-    <form noValidate onSubmit={handleSubmit} className="flex flex-1 flex-col gap-5">
+    <form ref={formRef} noValidate onSubmit={handleSubmit} className="flex flex-1 flex-col gap-5">
       <Field
         className="[&_p]:text-base"
         label={t('department')}
-        error={fields.departmentId ? errors(fields.departmentId) : undefined}
+        error={fieldMessage('departmentId', t('departmentError'))}
         required
       >
         {(control) => (
@@ -123,7 +149,7 @@ export function DocumentForm({
       <Field
         className="[&_p]:text-base"
         label={t('year')}
-        error={fields.graduationYear ? errors(fields.graduationYear) : undefined}
+        error={fieldMessage('graduationYear', t('yearError'))}
         required
       >
         {(control) => (

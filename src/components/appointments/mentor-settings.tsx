@@ -92,6 +92,13 @@ export function MentorSettings({
   const [pending, setPending] = useState<string>();
   const locked = useRef(false);
 
+  // Yeni bir kaydetme denemesi (doğrulama hatası dahil) önceki "Kaydedildi."/hata iletisini siler: bayat başarı iletisi sonraki
+  // hatanın yanında kalmaz.
+  function clearResult() {
+    setNotice(undefined);
+    setError(undefined);
+  }
+
   async function run(section: string, action: () => Result) {
     if (locked.current) return;
     locked.current = true;
@@ -119,6 +126,7 @@ export function MentorSettings({
   }
 
   function saveGeneral() {
+    clearResult();
     const input = {
       monthlyCapacity: Number(capacity),
       sessionMinutes: Number(session),
@@ -143,6 +151,7 @@ export function MentorSettings({
   }
 
   function savePause() {
+    clearResult();
     if (paused && (!pausedUntil || Number.isNaN(pauseDate(pausedUntil).getTime()))) {
       setFieldErrors({ pause: t('errors.pauseDate') });
       return;
@@ -154,6 +163,7 @@ export function MentorSettings({
   }
 
   function saveWeekly() {
+    clearResult();
     const found: Record<string, string> = {};
     const rules: SaveAvailabilityInput['rules'] = [];
     for (const weekday of WEEKDAYS) {

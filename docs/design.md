@@ -130,6 +130,11 @@ kipi. Kısa cümle, sen dili (“Profilini tamamla”), resmî kurum dili yok.
 - Görünür odak, mantıklı sekme sırası, modal odak tuzağı ve dönüşü, klavyeyle tamamlanabilir akış.
 - Görsellerde alternatif metin; ikon düğmelerde erişilebilir ad.
 - Async sonuç ve form hatası uygun canlı bölgeyle duyurulur.
+- **Eylemden sonra odak kaybolmaz (kart 352):** düğme eylemle kalkar ya da pasifleşirse odak `BODY`'ye düşmez. `useAction` (elle gerekirse
+  `captureFocus` + `rescueFocus`, `src/components/ui/focus-rescue.ts`) odağı önce düğmeye, düğme gittiyse sonuç işaretli öğeye (`data-focus-result`),
+  yoksa sayfanın `h1`'ine taşır; başka öğe odağı almışsa (pencere kendi dönüşünü yaptı) dokunmaz. Hatalı gönderimde odak ilk hatalı alana gider;
+  çok alanlı formda alan iletileri sessizdir (`FieldAnnounceContext`) ve tek özet uyarı duyurulur. Aynı ileti ardışık gelirse tek toast olur;
+  yeni işlem ya da pencere açılınca önceki başarı/hata iletisi silinir.
 
 ## Tasarım görevi akışı
 

@@ -49,26 +49,43 @@ export function useToast(): ToastApi {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const t = useTranslations('ui.toast');
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const items = useRef<ToastItem[]>([]);
   const nextId = useRef(1);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
 
-  const dismiss = useCallback((id: number) => {
-    const timer = timers.current.get(id);
-    if (timer) clearTimeout(timer);
-    timers.current.delete(id);
-    setToasts((current) => current.filter((toast) => toast.id !== id));
+  const commit = useCallback((next: ToastItem[]) => {
+    items.current = next;
+    setToasts(next);
   }, []);
+
+  const dismiss = useCallback(
+    (id: number) => {
+      const timer = timers.current.get(id);
+      if (timer) clearTimeout(timer);
+      timers.current.delete(id);
+      commit(items.current.filter((toast) => toast.id !== id));
+    },
+    [commit],
+  );
 
   const show = useCallback(
     ({ message, tone = 'info' }: ToastInput) => {
+      // Ardışık iki eylem aynı iletiyi verirse ("Talep güncellendi." iki kez) iki kutu yığılmaz: eskisi kalkar, yenisi gelir
+      // (yeni ileti yine duyurulur, süre yeniden başlar).
+      const same = items.current.find((toast) => toast.message === message && toast.tone === tone);
+      if (same) {
+        const timer = timers.current.get(same.id);
+        if (timer) clearTimeout(timer);
+        timers.current.delete(same.id);
+      }
       const id = nextId.current++;
-      setToasts((current) => [...current, { id, message, tone }]);
+      commit([...items.current.filter((toast) => toast !== same), { id, message, tone }]);
       timers.current.set(
         id,
         setTimeout(() => dismiss(id), DISMISS_AFTER_MS),
       );
     },
-    [dismiss],
+    [commit, dismiss],
   );
 
   useEffect(() => {

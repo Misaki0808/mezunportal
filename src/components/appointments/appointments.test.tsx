@@ -249,6 +249,44 @@ describe('mentor ayarları', () => {
     expect(await screen.findByText('Kaydedildi.')).toBeInTheDocument();
   });
 
+  it('başarı iletisi sonraki doğrulama hatasında bayat kalmaz', async () => {
+    const actions = settingsActions();
+    const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
+    await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
+    expect(await screen.findByText('Kaydedildi.')).toBeInTheDocument();
+    await user.clear(screen.getByLabelText(/Aylık görüşme kapasitesi/));
+    await user.type(screen.getByLabelText(/Aylık görüşme kapasitesi/), '99');
+    await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
+    expect(screen.getByText('1 ile 40 arasında bir sayı gir.')).toBeInTheDocument();
+    expect(screen.queryByText('Kaydedildi.')).toBeNull();
+  });
+
+  it('başarı iletisi ara verme doğrulama hatasında da bayat kalmaz', async () => {
+    const actions = settingsActions();
+    const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
+    await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
+    expect(await screen.findByText('Kaydedildi.')).toBeInTheDocument();
+    await user.click(screen.getByRole('switch', { name: /Müsait değilim/ }));
+    await user.click(screen.getByRole('button', { name: 'Ara verme durumunu kaydet' }));
+    expect(actions.setPause).not.toHaveBeenCalled();
+    expect(screen.queryByText('Kaydedildi.')).toBeNull();
+  });
+
+  it('başarı iletisi haftalık saatlerde sonraki doğrulama hatasında da bayat kalmaz', async () => {
+    const actions = settingsActions();
+    const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
+    await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
+    expect(await screen.findByText('Kaydedildi.')).toBeInTheDocument();
+    const tuesday = screen.getByRole('switch', { name: 'Salı günü müsait' }).closest('li')!;
+    const end = within(tuesday).getByLabelText('Bitiş');
+    await user.clear(end);
+    await user.type(end, '08:00');
+    await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
+    expect(within(tuesday).getByText('Bitiş, başlangıçtan sonra olmalı.')).toBeInTheDocument();
+    expect(screen.queryByText('Kaydedildi.')).toBeNull();
+    expect(actions.saveAvailability).toHaveBeenCalledTimes(1);
+  });
+
   it('çakışan ve ters aralık sunucuya gitmeden alan hatası verir', async () => {
     const actions = settingsActions();
     const { user } = renderUi(
@@ -354,6 +392,26 @@ const detailActions = () => ({
 const stepText = (item: HTMLElement) => item.textContent!.replace(/^\d+/, '');
 
 describe('randevu detayı', () => {
+  it('"İşlem kaydedildi." sonraki pencere açılınca bayat kalmaz', async () => {
+    const { user } = renderUi(<AppointmentDetail appointment={view()} actions={detailActions()} />);
+    await user.click(screen.getByRole('button', { name: 'Onayla' }));
+    expect(await screen.findByText('İşlem kaydedildi.')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Reddet' }));
+    expect(await screen.findByRole('dialog')).toBeVisible();
+    expect(screen.queryByText('İşlem kaydedildi.')).toBeNull();
+  });
+
+  it('önceki hata, yeni pencere açılınca silinir', async () => {
+    const actions = detailActions();
+    actions.respond.mockResolvedValueOnce({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+    const { user } = renderUi(<AppointmentDetail appointment={view()} actions={actions} />);
+    await user.click(screen.getByRole('button', { name: 'Onayla' }));
+    expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Reddet' }));
+    expect(await screen.findByRole('dialog')).toBeVisible();
+    expect(screen.queryByText(/Beklenmeyen bir sorun/)).toBeNull();
+  });
+
   it('onaylı geçmiş görüşmede form açılmışsa geri bildirim tek birincildir, Meet bağlantısı ikincildir', () => {
     renderUi(
       <AppointmentDetail

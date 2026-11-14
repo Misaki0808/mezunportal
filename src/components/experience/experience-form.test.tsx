@@ -119,6 +119,20 @@ describe('deneyim formu', () => {
     expect(screen.getAllByText('Bu alan zorunlu.').length).toBeGreaterThan(3);
   });
 
+  it('boş gönderimde duyuru tek özet uyarıdır: alan hataları ayrı `alert` olmaz', async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Moderasyona gönder' }));
+    expect(screen.getAllByText('Bu alan zorunlu.').length).toBeGreaterThan(3);
+    // ToastProvider'ın kalıcı (boş) `alert` bölgesi sayılmaz: yalnız metin taşıyan uyarılar duyurudur.
+    const alerts = screen.getAllByRole('alert').filter((alert) => alert.textContent);
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent('Hatalı alanları düzeltip tekrar dene.');
+    // Metinler yine alana bağlıdır: odaklanınca ekran okuyucu hata metnini okur.
+    expect(screen.getByLabelText(/Kurum ya da etkinlik adı/)).toHaveAccessibleDescription(
+      /Bu alan zorunlu\./,
+    );
+  });
+
   it('genel hata özeti renge atıf yapmaz ve "İlk sorunlu alana git" odağı taşır', async () => {
     const { user } = setup();
     await user.click(screen.getByRole('button', { name: 'Moderasyona gönder' }));

@@ -1,10 +1,11 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { ActionFailure, ActionResult } from '@/contracts/result';
 
+import { captureFocus, rescueFocus } from './focus-rescue';
 import { useToast } from './toast';
 
 export type RunOptions<T> = {
@@ -14,6 +15,11 @@ export type RunOptions<T> = {
   onOk?: (data: T) => void | Promise<void>;
   /** Başarısızlıkta çalışır (alan hatalarını ekrana işlemek için). Girilen veri DOKUNULMAZ: temizlemek ekranın işidir. */
   onFailure?: (failure: ActionFailure) => void;
+  /**
+   * Eylemden sonra odak kaybolursa (düğme kalktı, pasifleşti, sayfa değişti) nereye gideceği; verilmezse sayfanın
+   * `[data-focus-result]` öğesi, yoksa `main h1` (`focus-rescue.ts`). `false`: kurtarma kapalı.
+   */
+  focusTarget?: (() => HTMLElement | null) | false;
 };
 
 /**
@@ -30,12 +36,25 @@ export function useAction() {
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<ActionFailure | null>(null);
   const lock = useRef(false);
+  const mounted = useRef(true);
+  const cancelFocus = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      // Gezinmede yeni sayfanın başlığı gecikmeli gelebilir; başlamış kurtarma belge içinde sürer.
+      // Belge kapanır/değişirse rescueFocus kendi korumasıyla durur.
+    };
+  }, []);
 
   async function run<T>(
     action: () => Promise<ActionResult<T>>,
     options: RunOptions<T> = {},
   ): Promise<boolean> {
     if (lock.current) return false;
+    cancelFocus.current?.();
+    cancelFocus.current = undefined;
+    const trigger = options.focusTarget === false ? null : captureFocus();
     lock.current = true;
     setBusy(true);
     setFailure(null);
@@ -70,7 +89,14 @@ export function useAction() {
       return true;
     } finally {
       lock.current = false;
-      setBusy(false);
+      if (mounted.current) {
+        setBusy(false);
+        // Odak eylem sırasında/sonunda kaybolduysa (BODY) klavye kullanıcısı sayfa başına düşmesin.
+        cancelFocus.current = rescueFocus(
+          trigger,
+          options.focusTarget ? { target: options.focusTarget } : {},
+        );
+      }
     }
   }
 

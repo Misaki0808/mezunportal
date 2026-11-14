@@ -20,7 +20,7 @@ export { EmptyState } from './empty-state';
 export type { EmptyStateProps } from './empty-state';
 export { ErrorState } from './error-state';
 export type { ErrorStateProps } from './error-state';
-export { Field } from './field';
+export { Field, FieldAnnounceContext } from './field';
 export type { FieldControlProps, FieldProps } from './field';
 export { FilePicker } from './file-picker';
 export type { FilePickerProps } from './file-picker';
@@ -52,6 +52,13 @@ export type { TabItem, TabsProps } from './tabs';
 export { Tag } from './tag';
 export type { TagProps } from './tag';
 export { ToastProvider, useToast } from './toast';
+export {
+  captureFocus,
+  focusElement,
+  focusFirstInvalid,
+  rescueFocus,
+  resultTarget,
+} from './focus-rescue';
 export { useAction } from './use-action';
 export type { RunOptions } from './use-action';
 export type { ToastInput, ToastTone } from './toast';
