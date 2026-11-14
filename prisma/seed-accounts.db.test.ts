@@ -6,6 +6,7 @@ import { computeClassStanding, isUpperClass } from '../src/server/rules/classYea
 import { createTestPrisma } from '../src/test/db';
 import {
   INSTITUTION_SEED,
+  SEED_MENTOR_AVAILABILITY,
   TEST_EMAIL_DOMAIN,
   TEST_PERSONAS,
   type TestPersonaKey,
@@ -99,6 +100,36 @@ describe('seedAccounts', () => {
     expect(
       await prisma.membership.count({ where: { userId: id, verificationStatus: 'VERIFIED' } }),
     ).toBe(1);
+  });
+
+  it('mentor personalarına hafta içi mesai müsaitliği yazılır; yeniden seed çoğaltmaz, mentorun düzenlemesini ezmez', async () => {
+    await seedAll();
+    const mentorIds = (['seniorMentor', 'alumniMentor'] as const).map(seedUserId);
+    const rules = (mentorId: string) =>
+      prisma.availabilityRule.findMany({ where: { mentorId }, orderBy: [{ weekday: 'asc' }] });
+    for (const mentorId of mentorIds) {
+      expect(await rules(mentorId)).toHaveLength(SEED_MENTOR_AVAILABILITY.length);
+    }
+    // Mentor olmayan personaların müsaitliği yoktur.
+    expect(
+      await prisma.availabilityRule.count({
+        where: { mentorId: { in: [seedUserId('student'), seedUserId('academic')] } },
+      }),
+    ).toBe(0);
+
+    await seedAccounts(prisma);
+    for (const mentorId of mentorIds) {
+      expect(await rules(mentorId)).toHaveLength(SEED_MENTOR_AVAILABILITY.length);
+    }
+
+    // Mentor kendi saatlerini değiştirmişse yeniden seed onları geri yazmaz.
+    const mine = mentorIds[1]!;
+    await prisma.availabilityRule.deleteMany({ where: { mentorId: mine } });
+    await prisma.availabilityRule.create({
+      data: { mentorId: mine, weekday: 6, startMinute: 600, endMinute: 660 },
+    });
+    await seedAccounts(prisma);
+    expect(await rules(mine)).toEqual([expect.objectContaining({ weekday: 6 })]);
   });
 
   it('e-postalar gerçek alan adında değil, test alan adındadır; yer tutucu anahtarlarla eşleşir', () => {

@@ -112,6 +112,8 @@ kişisel veri (e-posta, telefon, kimlik numarası, ad alanları) içeremez ve ya
 mezun belgesi onay/ret, rol düzeltme, askıya alma/kaldırma, moderasyon kararları, puan iptali,
 şüphe kararı, yönetici atama/kaldırma, sözlük değişikliği, eşleşmeyen değer çözümü, dışa aktarma.
 Kayıt yalnız eklenir; kişisel veri içermez (yalnız kimlikler). Sistem yöneticisi panelden görür.
+Kullanıcının kendi adını değiştirmesi de (`USER_NAME_CHANGE`) aynı işlemde yazılır: eylemi yapan ve hedef aynı kullanıcıdır, kayda eski/yeni ad girmez (yalnız
+"ad değişti"); ad sunucuda doğrulanır (harf + boşluk/kesme/tire, 2–80 karakter) ve saatte 10 değişiklikle sınırlıdır.
 
 ### Kullanım metrikleri (P1-13)
 

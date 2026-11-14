@@ -231,6 +231,7 @@
       "CONTACT_FIELD_NOT_REQUESTABLE": "İstediğin bilgilerden biri talep edilemiyor. Seçimini değiştirip tekrar dene.",
       "ACCOUNT_DELETE_CONFIRMATION_MISMATCH": "Yazdığın e-posta hesabının e-postasıyla aynı değil.",
       "EMAIL_CHANGE_SAME_ADDRESS": "Bu zaten kullandığın adres. Farklı bir e-posta adresi yaz.",
+      "ACCOUNT_NAME_INVALID": "Adını yalnız harf, boşluk, kesme işareti ve tire kullanarak 2–80 karakter yaz.",
       "CV_PDF_UNREADABLE": "Bu PDF açılamadı ya da şifreli. Şifresiz bir PDF yükle ya da bilgilerini elle gir.",
       "CV_TOO_MANY_PAGES": "CV en fazla 6 sayfa olabilir. Daha kısa bir sürümünü yükle.",
       "CV_PROVIDER_NOT_CONFIGURED": "CV okuma şu an kapalı. Bilgilerini elle girebilirsin.",
@@ -939,6 +940,23 @@
       "reasonLine": "\nNot: {reason}",
       "reminderLine": "\n\nGörüşme 24 saatten kısa süre içinde başlıyor; ayrıca hatırlatma gönderilmeyecek."
     }
+  },
+  "accountName": {
+    "eyebrow": "HESABIM",
+    "title": "Ad soyad",
+    "description": "Mentor kartlarında, randevularda ve e-postalarda görünen adın. Gerçek adını yaz.",
+    "back": "Hesabıma dön",
+    "label": "Ad soyad",
+    "hint": "Harf, boşluk, kesme işareti ve tire kullan; 2–80 karakter.",
+    "derivedHint": "E-postandan türetildi ve eksik görünüyor; gerçek ad ve soyadını yaz.",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor…",
+    "saved": "Adın güncellendi.",
+    "unchanged": "Adın zaten böyle kayıtlı.",
+    "onboardingTitle": "Adın doğru mu?",
+    "onboardingDescription": "Adın giriş e-postandan türetildi. Mentor kartında ve randevu e-postalarında görünür; gerekirse düzelt.",
+    "link": "Ad soyad",
+    "linkDescription": "Kartlarda ve e-postalarda görünen adını düzelt."
   },
   "authScreens": {
     "checkEmail": {
@@ -1913,6 +1931,7 @@
         "DOCUMENT_REJECT": "Belge reddi",
         "ROLE_CORRECT": "Üyelik düzeltmesi",
         "ROLE_TRANSITION": "Rol geçişi",
+        "USER_NAME_CHANGE": "Kullanıcı adı değişti",
         "USER_SUSPEND": "Hesabı askıya alma",
         "USER_UNSUSPEND": "Askıyı kaldırma",
         "MODERATION_PUBLISH": "İçerik yayını",
@@ -2824,6 +2843,11 @@
     "historyLink": "Puan geçmişine git"
   },
   "faq": {
+    "mentorSetup": {
+      "title": "SSS sorularını yanıtlamak için mentor ayarını aç",
+      "description": "Sorulara mentor olarak cevap verirsin. Önce mentor ayarlarını kaydedip etkinleştir; ardından gelen sorular burada görünür.",
+      "action": "Mentor ayarlarını aç"
+    },
     "eyebrow": "SSS",
     "title": "Sık sorulan sorular",
     "description": "Mentorların cevapladığı, moderatörün yayımladığı sorular. Yayında kimsenin adı görünmez.",

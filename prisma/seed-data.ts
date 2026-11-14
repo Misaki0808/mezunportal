@@ -30,6 +30,16 @@ export const INSTITUTION_SEED = {
 
 export const TEST_EMAIL_DOMAIN = 'test.mezunportal.local';
 
+/**
+ * Mentor personalarının haftalık müsaitliği (kart 353): hafta içi mesai saati, İstanbul saati. Kurallar HAFTALIK tekrarlıdır
+ * (`AvailabilityRule`), yani tarihe bağlı değildir ve seed ne zaman koşarsa koşsun gelecek günlerde slot üretir; öğrenci
+ * ilk denemede randevu alabilir. Dakikalar günün başından sayılır (10:00 = 600).
+ */
+export const SEED_MENTOR_AVAILABILITY = [1, 2, 3, 4, 5].flatMap((weekday) => [
+  { weekday, startMinute: 10 * 60, endMinute: 12 * 60 },
+  { weekday, startMinute: 14 * 60, endMinute: 16 * 60 },
+]);
+
 export const TEST_PERSONAS = {
   student: {
     name: 'Deniz Aksoy',

@@ -100,6 +100,17 @@ describe('AppShell', () => {
     );
   });
 
+  it('Deneyimler ve İlanlar sekmeleri ayrı simge taşır (alt çubukta ve yan menüde)', () => {
+    renderUi(<AppShell signedIn>x</AppShell>);
+    for (const name of ['Ana gezinme', 'Yan menü']) {
+      const nav = screen.getByRole('navigation', { name });
+      const icon = (label: RegExp) =>
+        within(nav).getByRole('link', { name: label }).querySelector('svg')!.innerHTML;
+      expect(icon(/Deneyimler/)).not.toBe('');
+      expect(icon(/Deneyimler/)).not.toBe(icon(/İlanlar/));
+    }
+  });
+
   it('Mentorlar sekmesi mentor dizinine bağlanır', () => {
     renderUi(<AppShell signedIn>x</AppShell>);
     const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });

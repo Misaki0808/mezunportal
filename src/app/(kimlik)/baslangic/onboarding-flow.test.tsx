@@ -33,6 +33,25 @@ const goals = [{ id: 'g', kind: 'GOAL' as const, slug: 'internship' }];
 const saveVisibility = vi.fn();
 
 describe('ilk giriş akışı', () => {
+  it('ad soyad kartı ilk adımlarda görünür, son "hazırsın" ekranında görünmez', () => {
+    const card = <p>Ad kartı</p>;
+    const props = {
+      interests,
+      goals,
+      initialVisibility: { fields: [...visibility.fields] },
+      save: vi.fn(),
+      skip: vi.fn(),
+      saveVisibility,
+      nameCard: card,
+    };
+    const { unmount } = renderUi(<OnboardingFlow initialState={initial} {...props} />);
+    expect(screen.getByText('Ad kartı')).toBeVisible();
+    unmount();
+    renderUi(
+      <OnboardingFlow initialState={{ ...initial, step: 'COMPLETE' as const }} {...props} />,
+    );
+    expect(screen.queryByText('Ad kartı')).toBeNull();
+  });
   it('geri gidip dönünce kaydedilmiş ilgi ve henüz kaydedilmemiş hedef seçimlerini korur', async () => {
     const save = vi
       .fn()

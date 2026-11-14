@@ -34,6 +34,8 @@ export const RATE_LIMITS = {
   seekerCards: { name: 'seeker-cards', limit: 50, windowMs: 24 * 60 * 60 * 1000 },
   /** Aday kartı üzerinden iletişim talebi (P2-06): mezun başına 30 günde 20. */
   seekerContact: { name: 'seeker-contact', limit: 20, windowMs: 30 * 24 * 60 * 60 * 1000 },
+  /** Hesap adı değişikliği (kart 353): her değişiklik işlem kaydı yazar; kullanıcı başına saatte 10. */
+  accountName: { name: 'account-name', limit: 10, windowMs: 60 * 60 * 1000 },
   /** İlan şikâyeti (P2-04): kullanıcı başına günde 10. */
   jobPostingReport: { name: 'job-posting-report', limit: 10, windowMs: 24 * 60 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitRule>;
