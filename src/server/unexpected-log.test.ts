@@ -121,6 +121,85 @@ describe('unexpectedLogLine (saf): tek satır, yalnız güvenli alanlar', () => 
   });
 });
 
+describe('izin listeleri (kart 330): yük altı hata kodları ve uygulamanın kendi sınıfları', () => {
+  // Bilerek elle yazılmış: kaynak listeden bir üye silinirse bu test düşer.
+  const PRISMA = ['P1001', 'P1002', 'P1008', 'P1017', 'P2010', 'P2024', 'P2028', 'P2037', 'P2039'];
+  const PG = ['53300', '55P03', '57P01', '40P01', '57014'];
+  const APP_CODES = [
+    'TIMEOUT',
+    'UNAVAILABLE',
+    'REJECTED',
+    'CALENDAR_UNAVAILABLE',
+    'CALENDAR_TIMEOUT',
+    'CALENDAR_REJECTED',
+    'CALENDAR_NOT_CONNECTED',
+    'GOOGLE_STATE_INVALID',
+    'GOOGLE_STATE_EXPIRED',
+    'GOOGLE_EXCHANGE_FAILED',
+    'GOOGLE_NO_REFRESH_TOKEN',
+  ];
+  const APP_NAMES = [
+    'AuditPolicyError',
+    'CalendarError',
+    'EmailTransportError',
+    'EnvValidationError',
+    'GoogleOAuthError',
+    'LlmError',
+    'NotImplementedError',
+    'SecretBoxError',
+    'StorageError',
+  ];
+
+  it.each([...PRISMA, ...PG, ...APP_CODES])('listedeki kod %s satırda görünür', (code) => {
+    const line = unexpectedLogLine('job', 'x', leakyError('Error', { code }));
+    expect(parse(line)).toMatchObject({ errorCode: code });
+    expect(line).not.toMatch(/ayse|token|postgres/);
+  });
+
+  it.each(APP_NAMES)('listedeki sınıf adı %s satırda görünür', (name) => {
+    const line = unexpectedLogLine('job', 'x', leakyError(name));
+    expect(parse(line)).toMatchObject({ errorName: name });
+    expect(line).not.toMatch(/ayse|token|postgres/);
+  });
+
+  it('listede olmayan ad ve kod: ad "Error"a düşer, kod yazılmaz', () => {
+    for (const code of ['P9999', '99999', 'KULLANICI_ADI', 'ayse@ogr.iu.edu.tr', '12345678901']) {
+      const line = unexpectedLogLine('job', 'x', leakyError('Error', { code }));
+      expect(parse(line)).not.toHaveProperty('errorCode');
+      expect(line).not.toContain('ayse');
+    }
+    for (const name of ['AyseYilmaz', 'DriverAdapterError', 'lisanslıHata'])
+      expect(parse(unexpectedLogLine('job', 'x', leakyError(name)))).toMatchObject({
+        errorName: 'Error',
+      });
+  });
+
+  it('bekçi: kaynaktaki her uygulama hata sınıfı adıyla listede (yeni sınıf listeye eklenmeden geçemez)', () => {
+    const names = new Set<string>();
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir)) {
+        const path = join(dir, entry);
+        if (statSync(path).isDirectory()) {
+          if (entry !== 'generated' && entry !== 'node_modules') walk(path);
+        } else if (/\.tsx?$/.test(entry) && !/\.test\./.test(entry)) {
+          for (const match of readFileSync(path, 'utf8').matchAll(
+            /class\s+(\w+)\s+extends\s+(?:Error|\w*Error)\b/g,
+          ))
+            names.add(match[1]!);
+        }
+      }
+    };
+    walk(join(process.cwd(), 'src'));
+    names.delete('CodedError'); // kodlu hata günlüğe hiç düşmez (isCodedError)
+    expect(names.size).toBeGreaterThanOrEqual(APP_NAMES.length);
+    for (const name of names)
+      expect(
+        parse(unexpectedLogLine('job', 'x', leakyError(name))),
+        `${name}: hata sınıfı adı NAMES listesine eklenmeli (src/server/unexpected-log.ts)`,
+      ).toMatchObject({ errorName: name });
+  });
+});
+
 describe('logUnexpected / loggedJob: stderr', () => {
   afterEach(() => vi.restoreAllMocks());
   const stderr = () => vi.spyOn(process.stderr, 'write').mockImplementation(() => true);

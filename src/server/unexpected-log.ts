@@ -17,6 +17,7 @@ const SOURCE = /^[A-Za-z0-9_.:-]{1,64}$/;
 // İletiyle aynı güven sınırında olan `name` ve `code` serbest metin olabilir.
 // Desen kontrolü kişisel veriyi elemez; yalnız sabit, bilinen değerleri kabul et.
 const NAMES = new Set([
+  // JavaScript çekirdeği
   'Error',
   'TypeError',
   'RangeError',
@@ -25,20 +26,47 @@ const NAMES = new Set([
   'URIError',
   'EvalError',
   'AggregateError',
+  // Prisma istemcisi. Adaptör hatası (`DriverAdapterError`) uygulamaya SIZMAZ: istemci onu `PrismaClientKnownRequestError`
+  // içine sarar (ayrıntısı `meta.driverAdapterError`'da), bu yüzden listede yoktur (kart 330, kendi sürücüyle ölçüldü).
   'PrismaClientKnownRequestError',
   'PrismaClientUnknownRequestError',
   'PrismaClientInitializationError',
   'PrismaClientRustPanicError',
   'PrismaClientValidationError',
+  // Uygulamanın kendi hata sınıfları (her biri `this.name`'i sabit kurar; yeni sınıf eklenince bekçi testi listeyi zorlar)
+  'AuditPolicyError',
+  'CalendarError',
+  'EmailTransportError',
+  'EnvValidationError',
+  'GoogleOAuthError',
+  'LlmError',
+  'NotImplementedError',
+  'SecretBoxError',
+  'StorageError',
 ]);
 const CODES = new Set([
-  'P2002',
-  'P2003',
-  'P2025',
-  'P2034',
-  '40001',
-  '40P01',
-  '57014',
+  // Prisma
+  'P1001', // veritabanına ulaşılamıyor
+  'P1002', // veritabanı sunucusu zaman aşımı
+  'P1008', // işlem zaman aşımı
+  'P1017', // sunucu bağlantıyı kapattı
+  'P2002', // benzersizlik ihlali
+  'P2003', // yabancı anahtar ihlali
+  'P2010', // ham sorgu başarısız (ayrıntı `driverCode`'da)
+  'P2024', // bağlantı havuzu zaman aşımı
+  'P2025', // kayıt bulunamadı
+  'P2028', // işlem API hatası (zaman aşımı, kapanmış işlem)
+  'P2034', // yazma çakışması / kilitlenme
+  'P2037', // çok fazla bağlantı
+  'P2039', // model sorgusunda sürücü hatası (`meta.driverAdapterError`)
+  // PostgreSQL
+  '40001', // serileştirme hatası
+  '40P01', // kilitlenme
+  '53300', // çok fazla bağlantı
+  '55P03', // kilit alınamadı (kilit zaman aşımı)
+  '57014', // sorgu iptal (statement_timeout)
+  '57P01', // yönetici bağlantıyı sonlandırdı
+  // Node ağ hataları
   'ECONNRESET',
   'ECONNREFUSED',
   'ETIMEDOUT',
@@ -46,6 +74,18 @@ const CODES = new Set([
   'ENOTFOUND',
   'EAI_AGAIN',
   'ENOSPC',
+  // Uygulamanın kendi sabit kodları (`LlmError`, `CalendarError`, `GoogleOAuthError`)
+  'TIMEOUT',
+  'UNAVAILABLE',
+  'REJECTED',
+  'CALENDAR_UNAVAILABLE',
+  'CALENDAR_TIMEOUT',
+  'CALENDAR_REJECTED',
+  'CALENDAR_NOT_CONNECTED',
+  'GOOGLE_STATE_INVALID',
+  'GOOGLE_STATE_EXPIRED',
+  'GOOGLE_EXCHANGE_FAILED',
+  'GOOGLE_NO_REFRESH_TOKEN',
 ]);
 const CONTROL_FLOW =
   /^(NEXT_|DYNAMIC_SERVER_USAGE|BAILOUT_TO_CLIENT_SIDE_RENDERING|HTTP_ERROR_FALLBACK)/;
