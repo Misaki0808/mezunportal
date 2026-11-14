@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import type { CvSection } from '@/contracts/cv';
 import {
@@ -560,7 +560,16 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
                 deleting &&
                 void run(
                   () => actions.deleteEntry(deleting),
-                  () => setDeleting(undefined),
+                  () => {
+                    setDeleting(undefined);
+                    // Silinen kalemin düğmesi yok olur; odak, o bölümün başlığına gelir (sayfa başına düşmez).
+                    const key = ENTRY_SECTIONS.find(
+                      (item) => item.section === deleting.section,
+                    )?.key;
+                    requestAnimationFrame(() =>
+                      document.querySelector<HTMLElement>(`#profile-${key} h2 button`)?.focus(),
+                    );
+                  },
                 )
               }
             >
@@ -695,7 +704,11 @@ function BasicsForm({
           <Input {...control} value={city} onChange={(event) => setCity(event.target.value)} />
         )}
       </Field>
-      <Field label={f('summary')} error={bad.summary ? e('tooLong') : undefined}>
+      <Field
+        label={f('summary')}
+        hint={t('summaryHint')}
+        error={bad.summary ? e('tooLong') : undefined}
+      >
         {(control) => (
           <Textarea
             {...control}
@@ -890,6 +903,27 @@ function SkillsBlock({
   const t = useTranslations('profile.my');
   const [name, setName] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  // Kaldırılan becerinin düğmesi yok olur; odak sıradaki (yoksa önceki) beceriye, hiç kalmadıysa bölüm başlığına geçer.
+  const removeButtons = useRef(new Map<string, HTMLButtonElement>());
+  const focusAfterRemove = useRef<string | null>(null);
+  useEffect(() => {
+    const next = focusAfterRemove.current;
+    if (next === null) return;
+    focusAfterRemove.current = null;
+    const target = next
+      ? removeButtons.current.get(next)
+      : document.querySelector<HTMLElement>('#profile-skills h2 button');
+    target?.focus();
+  }, [profile.skills]);
+  async function remove(tagId: string) {
+    const order = profile.skills.map((skill) => skill.tagId);
+    const index = order.indexOf(tagId);
+    const rest = order.filter((id) => id !== tagId);
+    // Hedef, profil güncellenmeden önce belirlenir; yenilenen beceri listesi çizilince odak oraya taşınır.
+    focusAfterRemove.current = rest[index] ?? rest[index - 1] ?? '';
+    const failed = await run(() => actions.removeSkill({ tagId }));
+    if (failed) focusAfterRemove.current = null;
+  }
 
   // Öneri: en az 2 karakter; yarış olmasın diye yalnız son istek uygulanır.
   useEffect(() => {
@@ -935,8 +969,12 @@ function SkillsBlock({
               <button
                 type="button"
                 aria-label={t('skillRemove', { name: skill.label })}
+                ref={(element) => {
+                  if (element) removeButtons.current.set(skill.tagId, element);
+                  else removeButtons.current.delete(skill.tagId);
+                }}
                 className="press-control inline-flex size-11 shrink-0 items-center justify-center rounded-full text-fg-muted hover:text-danger"
-                onClick={() => void run(() => actions.removeSkill({ tagId: skill.tagId }))}
+                onClick={() => void remove(skill.tagId)}
               >
                 ×
               </button>

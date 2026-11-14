@@ -7,7 +7,7 @@ import { getDb } from '@/server/db';
 import { managedDepartmentIds, requirePageAnyAdmin as requireAnyAdmin } from '@/server/permissions';
 export const dynamic = 'force-dynamic';
 export default async function AdminCampusEventsPage() {
-  const guarded = await guardPage('page.adminEvents', () => requireAnyAdmin(), 'AUTH_FORBIDDEN');
+  const guarded = await guardPage('page.adminEvents', () => requireAnyAdmin());
   if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
   const actor = guarded.value;
   const [ids, result, t] = await Promise.all([

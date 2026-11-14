@@ -748,3 +748,37 @@ it('inceleyici: gün sonu 1440 dakikalık kural geçerli 00:00 alanıyla görün
     rules: [{ weekday: 7, startMinute: 1380, endMinute: 1440, mode: null }],
   });
 });
+
+describe('randevu detayı: başlık ve eylem sonrası odak', () => {
+  it('başlık cümlesi tamamdır: "<ad> ile randevu"', () => {
+    renderUi(<AppointmentDetail appointment={view()} actions={detailActions()} />);
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Deniz Aksoy ile randevu' }),
+    ).toBeVisible();
+  });
+  it('onaydan sonra odak kalkan düğmeden sonuç metnine taşınır', async () => {
+    const { user } = renderUi(<AppointmentDetail appointment={view()} actions={detailActions()} />);
+    await user.click(screen.getByRole('button', { name: 'Onayla' }));
+    expect(await screen.findByText('İşlem kaydedildi.')).toHaveFocus();
+  });
+  it('talep edenin iptalinden sonra da odak sonuç metnine taşınır', async () => {
+    const mentee = view(
+      { role: 'MENTEE' },
+      { canConfirm: false, canDecline: false, canCancel: true },
+    );
+    const { user } = renderUi(<AppointmentDetail appointment={mentee} actions={detailActions()} />);
+    await user.click(screen.getByRole('button', { name: 'Randevuyu iptal et' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Evet, iptal et' }),
+    );
+    expect(await screen.findByText('İşlem kaydedildi.')).toHaveFocus();
+  });
+  it('eylem başarısızsa odak hata metnine taşınır ve başarı metni görünmez', async () => {
+    const actions = detailActions();
+    actions.respond.mockResolvedValueOnce({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+    const { user } = renderUi(<AppointmentDetail appointment={view()} actions={actions} />);
+    await user.click(screen.getByRole('button', { name: 'Onayla' }));
+    expect(await screen.findByRole('alert')).toHaveFocus();
+    expect(screen.queryByText('İşlem kaydedildi.')).toBeNull();
+  });
+});

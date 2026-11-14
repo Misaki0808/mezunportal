@@ -8,11 +8,7 @@ import { buildMonthlyDigest } from '@/server/services/monthly-digest';
 
 export const dynamic = 'force-dynamic';
 export default async function MonthlyDigestPage() {
-  const guarded = await guardPage(
-    'page.monthlyDigest',
-    () => requireVerifiedMember(),
-    'AUTH_FORBIDDEN',
-  );
+  const guarded = await guardPage('page.monthlyDigest', () => requireVerifiedMember());
   if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
   const actor = guarded.value;
   const t = await getTranslations('monthlyDigest');

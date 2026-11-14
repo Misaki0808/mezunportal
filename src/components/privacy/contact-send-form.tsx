@@ -1,6 +1,6 @@
 'use client';
 import { useHydrated } from '@/hooks/use-hydrated';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { CONTACT_FIELDS, type ContactField } from '@/contracts/privacy';
@@ -24,10 +24,17 @@ export function ContactSendForm({
   const [fields, setFields] = useState<ContactField[]>([]);
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
+  const sentRef = useRef<HTMLParagraphElement>(null);
+  // Form kalkıp yerine sonuç gelir; odak formdaki düğmede kalamaz, sonuca taşınır.
+  useEffect(() => {
+    if (sent) sentRef.current?.focus();
+  }, [sent]);
   if (sent)
     return (
       <Card className="space-y-5">
-        <p className="text-base">{t('sent')}</p>
+        <p ref={sentRef} tabIndex={-1} className="text-base">
+          {t('sent')}
+        </p>
         <Link href="/hesap/iletisim?box=OUTGOING" className={buttonClasses({ fullWidth: true })}>
           {t('sendDone')}
         </Link>
