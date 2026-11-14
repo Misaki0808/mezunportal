@@ -433,7 +433,7 @@ describe('moderasyon', () => {
     for (const user of [w.otherModerator, w.alumni, w.student])
       expect(
         await code(reviewJobPosting(deps, user, { postingId: id, decision: 'PUBLISH' })),
-      ).toMatch(/AUTH_/);
+      ).toMatch(user === w.otherModerator ? /^RESOURCE_NOT_FOUND$/ : /^AUTH_/);
     expect((await db.jobPosting.findUniqueOrThrow({ where: { id } })).status).toBe('PENDING');
     expect(await db.pointEntry.count({ where: { sourceId: id } })).toBe(0);
     expect(
@@ -1215,7 +1215,7 @@ describe('şikâyet', () => {
           reason: 'İncelendi',
         }),
       ),
-    ).toBe('AUTH_FORBIDDEN');
+    ).toBe('RESOURCE_NOT_FOUND');
     await resolveJobPostingReport(deps, w.otherModerator, {
       reportId: report.reportId,
       decision: 'DISMISS',
@@ -1291,7 +1291,7 @@ describe('şikâyet', () => {
             reason: 'Kapsam dışı',
           }),
         ),
-      ).toMatch(/AUTH_/);
+      ).toMatch(actor === w.otherModerator ? /^RESOURCE_NOT_FOUND$/ : /^AUTH_/);
     }
   });
 
@@ -1418,7 +1418,7 @@ describe('şikâyet', () => {
           reason: 'Yetkisiz',
         }),
       ),
-    ).toMatch(/AUTH_/);
+    ).toBe('RESOURCE_NOT_FOUND');
     expect(
       await code(
         resolveJobPostingReport(deps, w.moderator, {

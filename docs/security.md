@@ -22,10 +22,10 @@ kural sunucuda zorlanır.
   çerez `httpOnly`, `secure`, `sameSite=lax`.
 - Giriş ekranı e-postanın kayıtlı olup olmadığını sızdırmaz; her durumda “bağlantı gönderildi”.
 - Giriş bağlantısı 10 dakika geçerli, **tek kullanımlıdır** ve veritabanında özetli saklanır. Hız sınırı
-  (veritabanı destekli, sabit pencere): bir e-postaya saatte 5 bağlantı, bir istemci adresinden saatte 20
+  (veritabanı destekli, sabit pencere): bir e-postaya saatte 5 bağlantı, bir istemci adresinden saatte 200
   (adres başlıkla taklit edilebildiği için tamamlayıcıdır; asıl koruma e-posta başınadır), e-posta
   değiştirme kullanıcı başına saatte 3, mezun belgesi yükleme kullanıcı başına saatte 5. Sayaç anahtarları
-  HMAC ile özetlenir; ham e-posta/kimlik tabloya yazılmaz.
+  HMAC ile özetlenir; ham e-posta/kimlik tabloya yazılmaz. Kampüs NAT arkasındaki bir sınıfın yaklaşık 80 kullanıcısı için doğrulama ve bağlantı eklentisi sınırları 5 dakikada 120, genel sınır dakikada 1000 IP başına istektir; güvenilir istemci IP yapılandırması TD-021 kapsamındadır.
 - **HTTP yüzeyi beyaz listedir** (`rules/authRoutePolicy.ts`): `/api/auth/` altında yalnız bağlantıya
   tıklamayla tetiklenen GET uçları (`magic-link/verify`, `verify-email`, `callback/linkedin`) açıktır;
   Better Auth'un admin (impersonation dahil), kayıt, parola, oturum ve doğrudan giriş uçlarının hepsi 404

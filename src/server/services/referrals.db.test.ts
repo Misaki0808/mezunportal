@@ -184,7 +184,7 @@ it('üçlü onay ve kabul sırasını, yönetici kapsamını ve iptalde puan ger
   await respondReferral(deps, student, { referralId: claim.referralId, decision: 'CONFIRM' });
   expect(await code(reviewReferral(deps, alumni, review))).toBe('AUTH_FORBIDDEN');
   expect((await listReferralModeration(deps, outsider, {})).items).toHaveLength(0);
-  expect(await code(reviewReferral(deps, outsider, review))).toBe('AUTH_FORBIDDEN');
+  expect(await code(reviewReferral(deps, outsider, review))).toBe('RESOURCE_NOT_FOUND');
   await reviewReferral(deps, admin, review);
   expect(await db.pointEntry.findFirst({ where: { sourceId: claim.referralId } })).toMatchObject({
     points: 20,

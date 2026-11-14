@@ -9,7 +9,7 @@ import type { ErrorCode } from '@/lib/errors';
 export function authErrorCodeFor(raw: string | null | undefined, pathname: string): ErrorCode {
   const value = (raw ?? '').toLowerCase();
   if (value.includes('banned')) return 'AUTH_ACCOUNT_SUSPENDED';
-  if (value.includes('rate') || value === '429') return 'RATE_LIMITED';
+  if (value.includes('rate') || value === '429') return 'AUTH_IP_RATE_LIMITED';
   if (value.includes('token') || value === 'invalid_token' || value === 'expired_token') {
     return 'AUTH_LINK_INVALID';
   }

@@ -137,6 +137,7 @@ export function visibleMentorWhere(
               some: {
                 status: 'PUBLISHED',
                 isAnonymous: false,
+                department: { faculty: { universityId: { in: universityIds } } },
                 type: { in: filter.experienceTypes },
               },
             },
