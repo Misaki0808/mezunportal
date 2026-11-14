@@ -46,6 +46,7 @@ async function enforceLimit(
   scope: string,
   value: string,
   rule: (typeof AUTH_LIMITS)[keyof typeof AUTH_LIMITS],
+  code: 'RATE_LIMITED' | 'AUTH_IP_RATE_LIMITED' = 'RATE_LIMITED',
 ): Promise<void> {
   const result: RateLimitResult = await consumeRateLimit(
     deps.db,
@@ -54,7 +55,7 @@ async function enforceLimit(
     nowOf(deps),
   );
   if (!result.allowed) {
-    throw codedRateLimited('RATE_LIMITED', { retryAfterSeconds: result.retryAfterSeconds });
+    throw codedRateLimited(code, { retryAfterSeconds: result.retryAfterSeconds });
   }
 }
 
@@ -78,7 +79,13 @@ export async function requestSignInLink(
 ): Promise<CheckEmailResponse> {
   await enforceLimit(deps, 'magic-link:email', input.email, AUTH_LIMITS.magicLinkPerEmail);
   if (input.clientIp) {
-    await enforceLimit(deps, 'magic-link:ip', input.clientIp, AUTH_LIMITS.magicLinkPerIp);
+    await enforceLimit(
+      deps,
+      'magic-link:ip',
+      input.clientIp,
+      AUTH_LIMITS.magicLinkPerIp,
+      'AUTH_IP_RATE_LIMITED',
+    );
   }
   try {
     await deps.auth.api.signInMagicLink({

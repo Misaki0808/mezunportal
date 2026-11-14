@@ -472,12 +472,12 @@ describe('requestSignInLink: kayıtlı/kayıtsız e-postaya AYNI yanıt, hız s�
     expect(keys.every((k) => !k.key.includes('@') && !k.key.includes('bombardiman'))).toBe(true);
   });
 
-  it('istemci adresi başına saatte 20 istek (adres bilinirse); adres yoksa yalnız e-posta sınırı işler', async () => {
+  it('istemci adresi başına saatte 200 istek (adres bilinirse); adres yoksa yalnız e-posta sınırı işler', async () => {
     const harness = createTestAuth(prisma);
     const deps = { db: prisma, ...harness, now: () => NOW };
     const ip = `203.0.113.${Math.floor(Math.random() * 200) + 1}`;
     let rejectedAt = -1;
-    for (let i = 0; i < 25; i += 1) {
+    for (let i = 0; i < 205; i += 1) {
       try {
         await flow.requestSignInLink(deps, {
           email: uniqueAddress('ornek.test'),
@@ -485,14 +485,14 @@ describe('requestSignInLink: kayıtlı/kayıtsız e-postaya AYNI yanıt, hız s�
           clientIp: ip,
         });
       } catch (error) {
-        if (isCodedError(error) && error.code === 'RATE_LIMITED') {
+        if (isCodedError(error) && error.code === 'AUTH_IP_RATE_LIMITED') {
           rejectedAt = i;
           break;
         }
         throw error;
       }
     }
-    expect(rejectedAt).toBe(20);
+    expect(rejectedAt).toBe(200);
   });
 });
 

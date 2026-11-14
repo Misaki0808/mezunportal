@@ -102,7 +102,7 @@ export async function reviewCampusEvent(deps: Deps, userId: string, input: unkno
     });
     if (!event) throw codedNotFound('RESOURCE_NOT_FOUND');
     for (const { departmentId } of event.departments)
-      if (!(await covers(tx, actor, departmentId))) throw codedForbidden('AUTH_FORBIDDEN');
+      if (!(await covers(tx, actor, departmentId))) throw codedNotFound('RESOURCE_NOT_FOUND');
     if (event.status !== 'PENDING') throw codedConflict('VALIDATION_INVALID');
     await recordAdminAction(tx, {
       actor,
@@ -136,7 +136,7 @@ export async function cancelCampusEvent(deps: Deps, userId: string, input: unkno
     });
     if (!event) throw codedNotFound('RESOURCE_NOT_FOUND');
     for (const { departmentId } of event.departments)
-      if (!(await covers(tx, actor, departmentId))) throw codedForbidden('AUTH_FORBIDDEN');
+      if (!(await covers(tx, actor, departmentId))) throw codedNotFound('RESOURCE_NOT_FOUND');
     if (event.status !== 'PUBLISHED') throw codedConflict('VALIDATION_INVALID');
     await recordAdminAction(tx, {
       actor,
@@ -285,7 +285,7 @@ export async function getCampusEventCode(
     });
     if (!event) throw codedNotFound('RESOURCE_NOT_FOUND');
     for (const { departmentId } of event.departments)
-      if (!(await covers(tx, actor, departmentId))) throw codedForbidden('AUTH_FORBIDDEN');
+      if (!(await covers(tx, actor, departmentId))) throw codedNotFound('RESOURCE_NOT_FOUND');
     if (event.status !== 'PUBLISHED' || now < event.startsAt || now >= event.endsAt)
       throw codedNotFound('RESOURCE_NOT_FOUND');
     const code = campusEventCode(eventId, secret, now);

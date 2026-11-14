@@ -627,7 +627,7 @@ it('şikâyet hız sınırı, tek açık kayıt, kapsamlı kuyruk ve atomik çö
       { reportId: reports[0]!.reportId, decision: 'DISMISSED', reason: 'İhlal yok' },
       NOW,
     ),
-  ).rejects.toMatchObject({ code: 'AUTH_FORBIDDEN' });
+  ).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' });
   await expect(
     service.resolveExperienceReport(
       db,

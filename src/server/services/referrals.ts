@@ -266,9 +266,10 @@ export async function reviewReferral(
   return deps.db.$transaction(async (tx) => {
     const row = await lockedClaim(tx, parsed.referralId, userId);
     const admin = await loadAnyAdmin(tx, userId, now);
+    if (!(await covers(tx, admin, row.departmentIdAtWrite)))
+      throw codedNotFound('RESOURCE_NOT_FOUND');
     if (userId === row.alumnusId || userId === row.studentId)
       throw codedForbidden('AUTH_FORBIDDEN');
-    if (!(await covers(tx, admin, row.departmentIdAtWrite))) throw codedForbidden('AUTH_FORBIDDEN');
     if (
       row.status !==
       (parsed.stage === 'REFERRAL' ? 'STUDENT_CONFIRMED' : 'ACCEPTED_ALUMNI_CONFIRMED')

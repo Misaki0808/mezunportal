@@ -842,3 +842,57 @@ describe('getSimilarMentors', () => {
     await expectCode(similar(unverified), 'AUTH_NOT_VERIFIED');
   });
 });
+
+it('deneyim türü yalnız arayanın üniversitesindeki yayından sinyal alır', async () => {
+  const viewer = await member(inst.deptA1);
+  const person = await mentor({ departmentId: inst.deptA2 });
+  await addMembership(db, {
+    userId: person,
+    departmentId: other.deptA1,
+    role: 'ALUMNI',
+    graduationYear: 2021,
+  });
+  const row = await db.experience.create({
+    data: {
+      authorId: person,
+      departmentIdAtWrite: other.deptA1,
+      type: 'ERASMUS',
+      status: 'PUBLISHED',
+      publishedAt: NOW,
+      moderatedAt: NOW,
+      moderatedById: viewer,
+      organizationName: 'Sentetik kurum',
+      termYear: 2026,
+      termSeason: 'SUMMER',
+      durationWeeks: 8,
+      applicationChannel: 'COMPANY_SITE',
+      country: 'Almanya',
+      whatLearned: 'Öğrendim',
+      advice: 'Başvur',
+      isAnonymous: false,
+    },
+  });
+  expect(ids(await search(viewer, { experienceTypes: ['ERASMUS'] }))).not.toContain(person);
+  await db.experience.create({
+    data: {
+      authorId: person,
+      departmentIdAtWrite: inst.deptA2,
+      type: 'ERASMUS',
+      status: 'PUBLISHED',
+      publishedAt: NOW,
+      moderatedAt: NOW,
+      moderatedById: viewer,
+      organizationName: 'Sentetik kurum',
+      termYear: 2026,
+      termSeason: 'SUMMER',
+      durationWeeks: 8,
+      applicationChannel: 'COMPANY_SITE',
+      country: 'Almanya',
+      whatLearned: 'Öğrendim',
+      advice: 'Başvur',
+      isAnonymous: false,
+    },
+  });
+  expect(ids(await search(viewer, { experienceTypes: ['ERASMUS'] }))).toContain(person);
+  expect(row.departmentIdAtWrite).toBe(other.deptA1);
+});
