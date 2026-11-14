@@ -1,7 +1,7 @@
 'use client';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -42,6 +42,12 @@ const STATUS_TONES: Record<Item['status'], BadgeTone> = {
   REJECTED: 'danger',
   CANCELLED: 'neutral',
 };
+/** Satırı geçici olarak odaklanabilir yapar; odak ayrılınca ek sekme durağı bırakmaz. */
+function focusTemporarily(element: HTMLElement) {
+  element.setAttribute('tabindex', '-1');
+  element.addEventListener('blur', () => element.removeAttribute('tabindex'), { once: true });
+  element.focus();
+}
 export function AdminEvents({
   departments,
   events,
@@ -62,6 +68,19 @@ export function AdminEvents({
     ),
     [reasonError, setReasonError] = useState('');
   const reasonRef = useRef<HTMLTextAreaElement>(null);
+  // İptalde kart kuyruktan değil yalnız durumundan çıkar; iptal düğmesi kalkınca odak kartın kendisine gelir.
+  const cancelledId = useRef<string | null>(null);
+  useEffect(() => {
+    const id = cancelledId.current;
+    if (!id) return;
+    const row = Array.from(
+      queueRef.current?.querySelectorAll<HTMLElement>('[data-event-row]') ?? [],
+    ).find((element) => element.dataset.eventRow === id);
+    // Sunucu yenilemesi sürerken durum henüz değişmedi: bekle.
+    if (row && row.dataset.eventStatus !== 'CANCELLED') return;
+    cancelledId.current = null;
+    if (row) focusTemporarily(row);
+  }, [events, queueRef]);
   const labels = {
     PENDING: t('pending'),
     PUBLISHED: t('published'),
@@ -159,7 +178,8 @@ export function AdminEvents({
         ),
         // Başarıda pencere kapanır ve gerekçe silinir; hatada pencere ve gerekçe korunur.
         onOk: () => {
-          if (kind !== 'CANCEL') completeDecision(event.id);
+          if (kind === 'CANCEL') cancelledId.current = event.id;
+          else completeDecision(event.id);
           closeDecision();
           router.refresh();
         },
@@ -183,6 +203,8 @@ export function AdminEvents({
           <Card
             as="li"
             data-queue-row={event.status === 'PENDING' ? event.id : undefined}
+            data-event-row={event.id}
+            data-event-status={event.status}
             key={event.id}
             className="list-none"
           >
