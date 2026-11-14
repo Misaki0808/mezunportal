@@ -46,11 +46,12 @@ export function QuestionCards({
         />
       );
     // Süzgeçle eşleşme yok: arama dili, tek eylem süzgeci temizlemek. Gizlilik eşiğinin altında kalan bir şirket de varsa
-    // (pilotta şirket başına 1-2 yazar olası) gerekçe aynı cümleye eklenir; hesap ve eşik değişmez, metin sayı vermez.
+    // (pilotta şirket başına 1-2 yazar olası) "eşleşen yok" demek fazla kesindir: soru var ama gösterilemiyor olabilir; başlık
+    // bunu söyler ("henüz gösterilebilecek soru yok") ve gerekçe altına yazılır. Hesap ve eşik değişmez, metin sayı vermez.
     if (filtered)
       return (
         <EmptyState
-          title={t('noMatch')}
+          title={insufficient ? t('noMatchInsufficient') : t('noMatch')}
           description={insufficient ? t('noMatchPrivacyHint') : t('noMatchHint')}
           action={
             <Link href="/mulakat-sorulari" className={buttonClasses({ variant: 'secondary' })}>
