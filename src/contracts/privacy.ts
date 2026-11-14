@@ -188,7 +188,16 @@ export type DeleteAccountOutput = z.infer<typeof deleteAccountOutputSchema>;
  * taleplerinde karşı taraf yalnız kullanıcı kimliğiyle tanımlanır). Yeni bölümler sonraki adımlarda eklenir.
  */
 export const DATA_EXPORT_HREF = '/api/hesabim/veri-dokumu';
-export const DATA_EXPORT_FORMAT_VERSION = 1;
+/**
+ * Sürüm 2 (kart 372): her alan `"UNREADABLE"` olabilir (şemaya uymayan tek değer dökümü düşürmez, `dataExportSeal`),
+ * bildirimler/tercihler/mentör/belge/şikâyet/oturum/e-posta/olay/yetki kayıtları eklendi, `user.image` eklendi.
+ */
+export const DATA_EXPORT_FORMAT_VERSION = 2;
+/**
+ * Şemaya uymayan (bozuk) alanın dökümdeki değeri. Sözleşmedeki HER alan yerine bu dize gelebilir; çevresindeki alanlar ve
+ * satırlar eksiksiz kalır. Dosyayı okuyan taraf alanı bu değerle karşılaştırmalıdır.
+ */
+export const DATA_EXPORT_UNREADABLE = 'UNREADABLE';
 
 /** Yalnız talep satırının skalerleri; karşı tarafın kullanıcı/iletişim nesnesi eklenemez. */
 export const exportedContactRequestSchema = z
@@ -210,9 +219,9 @@ export const exportedContactRequestSchema = z
   .strict();
 
 /** CV ve profil kalemleri (P1-05). Dosya anahtarı ve sözlük kimlikleri dökülmez; yalnız kullanıcının kendi verisi. */
-export const exportedCvSchema = z.object({
+export const exportedCvSchema = z.strictObject({
   uploads: z.array(
-    z.object({
+    z.strictObject({
       id: z.string(),
       status: z.enum(['QUEUED', 'PARSING', 'PARSED', 'FAILED', 'APPLIED', 'DISCARDED']),
       source: z.enum(['CV', 'LINKEDIN_PDF']),
@@ -230,7 +239,7 @@ export const exportedCvSchema = z.object({
   languages: z.array(z.record(z.string(), z.unknown())),
   certifications: z.array(z.record(z.string(), z.unknown())),
   skills: z.array(z.record(z.string(), z.unknown())),
-  experienceInvitations: z.array(z.object({ positionId: z.string(), status: z.string() })),
+  experienceInvitations: z.array(z.strictObject({ positionId: z.string(), status: z.string() })),
 });
 export type ExportedCv = z.infer<typeof exportedCvSchema>;
 /** Kullanıcının kendi profili; ilişkiler yalnız etiket sözlüğüne açılır, başka kullanıcıya değil. */
@@ -259,7 +268,9 @@ export const exportedProfileSchema = z
     lastStillThereCheckAt: z.string().nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
-    tags: z.array(profileTagSchema.extend({ assignedAt: z.string(), updatedAt: z.string() })),
+    tags: z.array(
+      profileTagSchema.extend({ assignedAt: z.string(), updatedAt: z.string() }).strict(),
+    ),
   })
   .strict();
 
@@ -306,7 +317,7 @@ export const exportedAppointmentSchema = z
   })
   .strict();
 
-export const dataExportSchema = z.object({
+export const dataExportSchema = z.strictObject({
   formatVersion: z.literal(DATA_EXPORT_FORMAT_VERSION),
   exportedAt: z.string(),
   alumniStories: z.array(
@@ -334,11 +345,12 @@ export const dataExportSchema = z.object({
       })
       .strict(),
   ),
-  user: z.object({
+  user: z.strictObject({
     id: z.string(),
     name: z.string(),
     email: z.string(),
     phone: z.string().nullable(),
+    image: z.string().nullable(),
     createdAt: z.string(),
   }),
   notifications: z.array(
@@ -446,7 +458,7 @@ export const dataExportSchema = z.object({
   ),
   memberships: z.array(z.record(z.string(), z.unknown())),
   consents: z.array(
-    z.object({
+    z.strictObject({
       documentType: z.enum(CONSENT_DOCUMENTS),
       version: z.string(),
       granted: z.boolean(),
@@ -454,9 +466,9 @@ export const dataExportSchema = z.object({
     }),
   ),
   fieldVisibility: z.array(
-    z.object({ field: z.enum(CONTACT_FIELDS), level: z.enum(VISIBILITY_LEVELS) }),
+    z.strictObject({ field: z.enum(CONTACT_FIELDS), level: z.enum(VISIBILITY_LEVELS) }),
   ),
-  contactRequests: z.object({
+  contactRequests: z.strictObject({
     sent: z.array(exportedContactRequestSchema),
     received: z.array(exportedContactRequestSchema),
   }),
@@ -591,12 +603,9 @@ export const dataExportSchema = z.object({
             points: z.number().int(),
             experienceCount: z.number().int(),
             meetingCount: z.number().int(),
-            breakdown: z.union([
-              z.array(
-                z.object({ action: z.enum(POINT_ACTIONS), points: z.number().int() }).strict(),
-              ),
-              z.literal('UNREADABLE'),
-            ]),
+            breakdown: z.array(
+              z.object({ action: z.enum(POINT_ACTIONS), points: z.number().int() }).strict(),
+            ),
           })
           .strict(),
       ),
@@ -623,6 +632,97 @@ export const dataExportSchema = z.object({
       ),
     })
     .strict(),
+  // Kart 372 (R1 370 P3-3): "silmede kişisel sayılan her metin ya dökümde ya gerekçeli" kuralı; yalnız KENDİ kayıtların.
+  /** Şikâyetlerin (deneyim + ilan): kendi yazdığın metin; moderatör notu ve karar veren kimliği çıkmaz. */
+  reports: z.array(
+    z
+      .object({
+        id: z.string(),
+        targetType: z.enum(['EXPERIENCE', 'JOB_POSTING']),
+        targetId: z.string(),
+        reason: z.string(),
+        status: z.string(),
+        createdAt: z.string(),
+      })
+      .strict(),
+  ),
+  /** Senin bağladığın dış hesap (Google Takvim): hesap etiketi ve durum; yenileme jetonu asla çıkmaz. */
+  integrations: z.array(
+    z
+      .object({
+        provider: z.string(),
+        status: z.string(),
+        accountLabel: z.string().nullable(),
+        connectedAt: z.string(),
+        updatedAt: z.string(),
+      })
+      .strict(),
+  ),
+  /** Oturum kayıtların: zaman, IP ve tarayıcı bilgisi; oturum jetonu ve oturum kimliği çıkmaz. */
+  sessions: z.array(
+    z
+      .object({
+        createdAt: z.string(),
+        expiresAt: z.string(),
+        ipAddress: z.string().nullable(),
+        userAgent: z.string().nullable(),
+        /** Oturumu bir yönetici adına açtıysa `true`; yöneticinin kimliği çıkmaz. */
+        impersonated: z.boolean(),
+      })
+      .strict(),
+  ),
+  /** Sana gönderilen e-postaların kaydı: şablon, durum, zaman. İleti gövdesi ve tekrar-önleme anahtarı çıkmaz. */
+  emailLog: z.array(
+    z
+      .object({
+        template: z.string(),
+        status: z.string(),
+        attempts: z.number().int(),
+        errorCode: z.string().nullable(),
+        sentAt: z.string().nullable(),
+        createdAt: z.string(),
+      })
+      .strict(),
+  ),
+  /** Yönetici yetkilerin: kapsam ve tarihler; yetkiyi veren/geri alan kişinin kimliği çıkmaz. */
+  adminGrants: z.array(
+    z
+      .object({
+        scope: z.string(),
+        facultyId: z.string().nullable(),
+        departmentId: z.string().nullable(),
+        createdAt: z.string(),
+        revokedAt: z.string().nullable(),
+      })
+      .strict(),
+  ),
+  /** Kullanım olayların: tür, rol, bölüm ve sabit değerli ayrıntı (`props` kişisel veri taşımaz, strict şemadan geçer). */
+  events: z.array(
+    z
+      .object({
+        type: z.string(),
+        role: z.string().nullable(),
+        departmentId: z.string().nullable(),
+        props: z.json(),
+        createdAt: z.string(),
+      })
+      .strict(),
+  ),
+  /** İş eşleşme özeti gönderildiği günler. */
+  jobMatchDigests: z.array(z.object({ day: z.string(), createdAt: z.string() }).strict()),
+  /** "Hâlâ orada mısın" bildirimine verdiğin yanıtlar; tek kullanımlık bağlantı kimliği çıkmaz. */
+  notificationActions: z.array(
+    z
+      .object({
+        positionId: z.string(),
+        cycle: z.string(),
+        expiresAt: z.string(),
+        usedAt: z.string().nullable(),
+        choice: z.string().nullable(),
+        createdAt: z.string(),
+      })
+      .strict(),
+  ),
 });
 export type DataExport = z.infer<typeof dataExportSchema>;
 

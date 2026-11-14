@@ -232,17 +232,25 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11); kendi profilinin
   kişisel alanları, ilk giriş adım durumları ve etiketleri dahildir. Profil yoksa `profile: null` döner.
   Deneyimler bütün durumlarıyla yalnız kendi içeriklerinden oluşur; yazar/moderatör kimlikleri deneyim
-  döküm nesnesine eklenmez. Bildirim kutusu/tercihleri, mentor ayarları ve müsaitliği ile mezun
-  belgesi başvurularının dosyasız metaverisi de yer alır. Bozuk ödül aday ayrıntısı `UNREADABLE`
-  işaretiyle döner; sabit bir olay günlüğü değeri veya kimliği içermez.
-  Otomatik dökümün bilinen sınırları (erişim talebinin tamamı için ayrıca değerlendirilmelidir):
-  - Oturum IP/user-agent ve oturum jetonu: güvenlik oturumu kaydı; otomatik döküme konmaz.
-  - Event ve EmailLog: operasyon/ölçüm kayıtları; ileti gövdesi değildir ve dökümde yoktur.
-  - JobMatchDigest ve NotificationAction: iş/tek kullanımlık bağlantı durumları; jeton yüzeyini büyütmemek için yoktur.
-  - AdminGrant: yetki ve üçüncü kişi referansları içeren yönetim kaydı; otomatik döküme konmaz.
-  - Eski UserSkill: taşınmış eski tablo; güncel beceriler profil/CV bölümündedir.
-  - İlan/deneyim şikâyet metinleri: üçüncü kişilere ilişkin serbest metin içerebildiğinden otomatik döküme konmaz.
-  - User.image: üçüncü taraf görsel adresi olabildiğinden otomatik döküme konmaz.
+  döküm nesnesine eklenmez. Bildirim kutusu/tercihleri, mentor ayarları ve müsaitliği, mezun belgesi
+  başvurularının dosyasız metaverisi (ret gerekçesi dahil), kendi şikâyet metinlerin (deneyim + ilan),
+  bağladığın dış hesabın etiketi, oturum kayıtların (zaman, IP, tarayıcı), sana giden e-postaların kaydı
+  (şablon, durum, zaman), yönetici yetkilerin, kullanım olayların (`props` kişisel veri taşımaz), iş
+  eşleşme özeti günleri, bildirim eylemi yanıtların ve `User.image` de yer alır.
+  **Sürüm 2 ve mühür (kart 372):** döküm, tüm alanlarıyla sözleşmeye (`dataExportSchema`, her nesne
+  `strict`) karşı TEK geçişte doğrulanır (`dataExportSeal`). Şemaya uymayan alan (aralık dışı sayı, bozuk
+  JSON) dökümü düşürmez: değeri `"UNREADABLE"` olur, çevresi eksiksiz kalır. Sözleşmede olmayan anahtar
+  çıktıdan atılır (yanlışlıkla eklenen alan, karşı tarafın kimliği ya da dosya anahtarı kullanıcıya gitmez).
+  Çağrı başına tek günlük satırı (`veriDokumu.alan`): yalnız sözleşme yolları (`okunamayan`, `fazlalik`),
+  değer ve kimlik yok. Dosyada `"UNREADABLE"` gören kullanıcı o kaydın okunamadığını bilir; istemci dosyayı
+  yeniden ayrıştırmaz, sunucunun mühürlediği dosya iner. `formatVersion` 2'dir.
+  **Kural:** silmede kişisel sayılıp silinen ya da temizlenen her metin ya dökümde yer alır ya da gerekçesi
+  burada yazılır. Dökümde OLMAYANLAR ve gerekçeleri:
+  - Oturum jetonu ve kimliği, bildirim eylemi bağlantı kimliği, e-posta tekrar-önleme anahtarı, dış hesap
+    yenileme jetonu: gizli değer; açığa çıkması hesabı ele geçirmeye yarar.
+  - Moderatör/yönetici yazısı ve karar veren kimliği (şikâyet çözüm notu, belge `reviewedById`, yetkiyi
+    veren kişi): yönetici yazısı ya da üçüncü kişi referansı; kullanıcının kendi verisi değil.
+  - Eski UserSkill: uygulama bu tabloya yazmaz; güncel beceriler profil/CV bölümündedir.
 - **Çerezler:** yalnız zorunlu oturum çerezi; üçüncü taraf analitik ve reklam çerezi yok
   (metrikler kendi tablomuzda). Çerez bandı yerine aydınlatma metninde çerez bölümü yeterli
   görünür; son değerlendirme hukuki metin onayıyla (PILOT-LEGAL).
