@@ -39,6 +39,19 @@ export function StoryEditor({
   const consentRef = useRef<HTMLInputElement>(null);
   const focusWanted = useRef<'body' | 'consent'>(undefined);
   const [focusTick, setFocusTick] = useState(0);
+  const mounted = useRef(true);
+  const cancelFocus = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  function scheduleFocus(trigger: HTMLElement | null) {
+    cancelFocus.current?.();
+    cancelFocus.current = mounted.current ? rescueFocus(trigger) : undefined;
+  }
+
   // Hatalı alana odak: işlem sürerken izin anahtarı pasif olduğundan işlem bitince (pending=false) odaklanır.
   useEffect(() => {
     if (!focusWanted.current || pending) return;
@@ -71,6 +84,8 @@ export function StoryEditor({
   }
   function save(send: boolean) {
     // Kaydet/Gönder işlem sürerken pasifleşir (odak BODY'ye düşer); bitince düğmeye geri döner.
+    cancelFocus.current?.();
+    cancelFocus.current = undefined;
     const trigger = captureFocus();
     clearMessages();
     start(async () => {
@@ -78,7 +93,7 @@ export function StoryEditor({
       if (field) {
         focusWanted.current = field;
         setFocusTick((tick) => tick + 1);
-      } else rescueFocus(trigger);
+      } else scheduleFocus(trigger);
     });
   }
   async function persist(send: boolean): Promise<'body' | 'consent' | undefined> {
@@ -107,6 +122,8 @@ export function StoryEditor({
     return undefined;
   }
   function changeConsent(next: boolean) {
+    cancelFocus.current?.();
+    cancelFocus.current = undefined;
     clearMessages();
     if (!story) {
       setConsent(next);
@@ -128,7 +145,7 @@ export function StoryEditor({
         remember(result.data);
         setNotice(t('consentSaved'));
       } finally {
-        rescueFocus(trigger);
+        scheduleFocus(trigger);
       }
     });
   }
