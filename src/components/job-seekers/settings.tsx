@@ -182,7 +182,7 @@ export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
           </p>
         )}
         {saved && (
-          <p role="status" className="text-success">
+          <p role="status" className="text-on-success-soft">
             {t('saved')}
           </p>
         )}
