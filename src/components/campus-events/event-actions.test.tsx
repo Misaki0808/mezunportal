@@ -44,6 +44,38 @@ describe('EventActions', () => {
     expect(screen.getByLabelText('Altı haneli katılım kodu')).toBeInTheDocument();
   });
 
+  it('kayıttan sonra odak kalkan düğme yerine "Kayıtlısın" rozetine gelir', async () => {
+    const { user, rerender } = renderWithToasts(
+      <EventActions eventId={ID} registered={false} attended={false} full={false} />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Katılıyorum' }));
+    await waitFor(() => expect(mocks.refresh).toHaveBeenCalled());
+    rerender(<EventActions eventId={ID} registered attended={false} full={false} />);
+    await waitFor(() => {
+      expect(document.activeElement).toHaveAttribute('tabindex', '-1');
+      expect(document.activeElement).toHaveTextContent('Kayıtlısın');
+    });
+  });
+
+  it('sayfa zaten kayıtlı açılınca odak çalınmaz', () => {
+    renderWithToasts(<EventActions eventId={ID} registered attended={false} full={false} />);
+    expect(document.body).toHaveFocus();
+  });
+
+  it('katılım doğrulanınca odak "Katılımın doğrulandı" rozetine gelir', async () => {
+    const { user, rerender } = renderWithToasts(
+      <EventActions eventId={ID} registered attended={false} full={false} />,
+    );
+    await user.type(screen.getByLabelText('Altı haneli katılım kodu'), '123456');
+    await user.click(screen.getByRole('button', { name: 'Katılımı doğrula' }));
+    await waitFor(() => expect(mocks.refresh).toHaveBeenCalled());
+    rerender(<EventActions eventId={ID} registered attended full={false} />);
+    await waitFor(() => {
+      expect(document.activeElement).toHaveAttribute('tabindex', '-1');
+      expect(document.activeElement).toHaveTextContent('Katılımın doğrulandı');
+    });
+  });
+
   it('eksik kodda sunucuya gitmez; sebep alanın altında söylenir, yazınca silinir', async () => {
     const { user } = renderWithToasts(
       <EventActions eventId={ID} registered attended={false} full={false} />,

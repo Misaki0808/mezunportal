@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   appointmentIcsHref,
@@ -64,6 +64,15 @@ export function AppointmentDetail({
   const [notice, setNotice] = useState(false);
   const [pending, setPending] = useState<string>();
   const locked = useRef(false);
+  const noticeRef = useRef<HTMLParagraphElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  // İptal/onay/ret düğmesi eylemden sonra kalkar; odak kaybolmasın, sonuç (ya da hata) metnine taşınır.
+  useEffect(() => {
+    if (notice) noticeRef.current?.focus();
+  }, [notice]);
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
   const a = appointment;
 
   async function run(name: string, action: () => Result, onFail?: (code: ErrorCode) => void) {
@@ -134,6 +143,8 @@ export function AppointmentDetail({
 
       {notice && (
         <p
+          ref={noticeRef}
+          tabIndex={-1}
           role="status"
           className="rounded-control bg-success-soft p-3 text-base text-on-success-soft"
         >
@@ -141,7 +152,7 @@ export function AppointmentDetail({
         </p>
       )}
       {error && (
-        <p role="alert" className="text-base text-danger">
+        <p ref={errorRef} tabIndex={-1} role="alert" className="text-base text-danger">
           {errors(error)}
         </p>
       )}
