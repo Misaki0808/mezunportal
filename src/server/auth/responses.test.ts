@@ -14,7 +14,7 @@ describe('authErrorCodeFor', () => {
     ['invalid_token', '/api/auth/verify-email', 'AUTH_LINK_INVALID'],
     ['BANNED_USER', '/api/auth/magic-link/verify', 'AUTH_ACCOUNT_SUSPENDED'],
     ['banned', '/api/auth/callback/linkedin', 'AUTH_ACCOUNT_SUSPENDED'],
-    ['429', '/api/auth/magic-link/verify', 'RATE_LIMITED'],
+    ['429', '/api/auth/magic-link/verify', 'AUTH_IP_RATE_LIMITED'],
     ['access_denied', '/api/auth/callback/linkedin', 'AUTH_PROVIDER_FAILED'],
     ['unable_to_link_account', '/api/auth/callback/linkedin', 'AUTH_PROVIDER_FAILED'],
     ['bilinmeyen', '/api/auth/magic-link/verify', 'AUTH_LINK_INVALID'],
@@ -61,10 +61,10 @@ describe('mapAuthResponse', () => {
     expect(mapped.headers.get('set-cookie')).toBeNull();
   });
 
-  it('hız sınırı (429) RATE_LIMITED; diğer hatalar bağlantı geçersiz / sağlayıcı hatası', async () => {
+  it('hız sınırı (429) AUTH_IP_RATE_LIMITED; diğer hatalar bağlantı geçersiz / sağlayıcı hatası', async () => {
     expect(
       (await mapAuthResponse(json(429, {}), '/api/auth/magic-link/verify')).headers.get('location'),
-    ).toBe('/giris?hata=RATE_LIMITED');
+    ).toBe('/giris?hata=AUTH_IP_RATE_LIMITED');
     expect(
       (await mapAuthResponse(json(500, {}), '/api/auth/magic-link/verify')).headers.get('location'),
     ).toBe('/giris?hata=AUTH_LINK_INVALID');

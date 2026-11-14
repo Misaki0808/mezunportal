@@ -425,6 +425,7 @@ export async function resolveExperienceReport(
 ): Promise<ResolveExperienceReportOutput> {
   return asMember(db, userId, now, async (tx, actor, permissions) => {
     const parsed = resolveExperienceReportSchema.parse(input);
+    if (actor.facts.grants.length === 0) throw codedForbidden('AUTH_FORBIDDEN');
     // Silme Experience → Report sırasındadır; burada da önce hedefi kilitle, sonra güncel raporu oku.
     const target = await tx.report.findUnique({
       where: { id: parsed.reportId },
@@ -433,7 +434,7 @@ export async function resolveExperienceReport(
     if (!target) throw codedNotFound('RESOURCE_NOT_FOUND');
     const row = await loadExperience(tx, target.targetId, true);
     if (!(await permissions.canModerate(actor, row.departmentIdAtWrite)))
-      throw codedForbidden('AUTH_FORBIDDEN');
+      throw codedNotFound('RESOURCE_NOT_FOUND');
     await requireConsent(tx, userId);
     const report = await tx.report.findUnique({
       where: { id: parsed.reportId },
