@@ -112,10 +112,6 @@ Açık PM kararı yok.
   son hop'u kullanır, istemcinin XFF'sine güvenmez. Node doğrudan dışarı açılmaz; bütün kamuya açık
   kotalarda sahte başlık, eşzamanlı sınır ve pencere yenilenmesi testleri geçer.
 
-- [ ] **TD-024** · P2 · `profile-content.db.test` yük altında bir kez 15 sn zaman aşımına düştü
-  Ne: dosya normalde 3–5 sn, bir kapıda 50 sn; yeniden koşuda 3,1 sn yeşil (yük ya da veritabanı beklemesi).
-  Neden borç: izleniyor, kök neden bilinmiyor.
-  Kapanış ölçütü: bir daha düşerse kök neden kartı açılır; düşmeden bir faz geçerse silinir.
 - [ ] **TD-027** · P2 · pg "Calling client.query() when the client is already executing a query" uyarısı (pg@9'da hataya döner)
   Ne: Prisma 7.10.1 + `@prisma/adapter-pg` 7.10.1 + pg 8.23.1 ile `src/server/permissions/actor.ts:17` içindeki çok ilişkili actor okuması ve bazı eşzamanlı sorgular tek istemciye üst üste sorgu gönderiyor. `scripts/td027-probe.ts` kayıtlı yeniden üretimdir; komut ve seçenekler `docs/decisions.md`'de.
   Neden borç: uyarı pg@9'da hataya dönüşebilir; ilişkileri sırayla okumak bir yolu düzeltir ama uygulamadaki tüm kaynakları kapatmaz. Yukarı akış kaydı: https://github.com/prisma/orm/issues/29407.
