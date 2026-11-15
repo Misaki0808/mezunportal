@@ -17,7 +17,6 @@ import {
   Field,
   Input,
   PageHeader,
-  Select,
   Sheet,
   buttonClasses,
 } from '@/components/ui';
@@ -217,7 +216,17 @@ export function AlumniDirectory({
               ))}
           </div>
         )}
-        {results.items.length === 0 ? (
+        {results.items.length === 0 && results.total > 0 && filter.page > 1 ? (
+          <EmptyState
+            title={t('pageEmpty')}
+            description={t('pageEmptyDescription')}
+            action={
+              <Button variant="secondary" onClick={() => navigate(draft, 1)}>
+                {t('firstPage')}
+              </Button>
+            }
+          />
+        ) : results.items.length === 0 ? (
           <EmptyState
             title={t('empty')}
             description={t('emptyDescription')}

@@ -42,6 +42,19 @@ it('uygulanmış sektörü gösterir ve tek yongayla kaldırır', async () => {
   await user.click(active.querySelector('button')!);
   expect(router.push).toHaveBeenCalledWith('/mezunlar');
 });
+
+it('boş kalmış ileri sayfada ilk sayfaya yönlendirir', async () => {
+  const { user } = renderUi(
+    <AlumniDirectory
+      filter={{ page: 9 }}
+      sectors={[]}
+      results={{ page: 9, total: 1, hasMore: false, items: [] }}
+    />,
+  );
+  expect(screen.getByRole('heading', { name: 'Bu sayfada mezun yok' })).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'İlk sayfaya dön' }));
+  expect(router.push).toHaveBeenCalledWith('/mezunlar');
+});
 it('rehber tercihi varsayılan kapalıdır ve yalnız açık seçimi kaydeder', async () => {
   const save = vi.fn().mockResolvedValue({ ok: true, data: { visible: true, eligible: true } });
   const { user } = renderUi(

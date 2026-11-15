@@ -19,11 +19,11 @@ test('mezun açıkça katılır, aynı üniversitenin öğrencisi bulur; kapatı
   });
   await db.profile.upsert({
     where: { userId: alumnus.id },
-    create: { userId: alumnus.id, alumniDirectoryVisible: false },
-    update: { alumniDirectoryVisible: false },
+    create: { userId: alumnus.id, alumniDirectoryVisible: false, onboardingStep: 'VISIBILITY' },
+    update: { alumniDirectoryVisible: false, onboardingStep: 'VISIBILITY' },
   });
   await loginAs(page, 'alumniMentor');
-  await page.goto('/profil');
+  await page.goto('/baslangic');
   const checkbox = page.getByRole('checkbox', { name: /Mezun rehberinde görün/ });
   await expect(checkbox.locator('xpath=ancestor::section[1]')).toHaveAttribute(
     'data-hydrated',
@@ -32,6 +32,8 @@ test('mezun açıkça katılır, aynı üniversitenin öğrencisi bulur; kapatı
   await expect(checkbox).not.toBeChecked();
   await checkbox.check();
   await expect(page.getByText('Tercihin kaydedildi.')).toBeVisible();
+  await page.goto('/profil');
+  await expect(checkbox).toBeChecked();
   await page.context().clearCookies();
   await loginAs(page, 'student');
   await page.goto('/mezunlar');

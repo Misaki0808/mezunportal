@@ -38,6 +38,14 @@ it('yalnız aynı üniversitedeki katılmış ve doğrulanmış mezunu döndür�
   const military = await db.sector.create({
     data: { name: `Savunma ${key}`, normalizedName: `savunma ${key}` },
   });
+  const parentCompany = await db.company.create({
+    data: {
+      name: `Grup ${key}`,
+      normalizedName: `group ${key}`,
+      sectorId: aviation.id,
+      aliases: [],
+    },
+  });
   for (const [id, sectorId] of [
     [visible, aviation.id],
     [hidden, aviation.id],
@@ -52,6 +60,7 @@ it('yalnız aynı üniversitedeki katılmış ve doğrulanmış mezunu döndür�
         titleRaw: 'Analist',
         source: 'MANUAL',
         isCurrent: true,
+        ...(id === defense ? { companyId: parentCompany.id } : {}),
       },
     });
   }

@@ -60,7 +60,10 @@ export async function searchAlumni(
   const positions: Prisma.PositionWhereInput[] = [];
   if (filter.sectorId)
     positions.push({
-      OR: [{ sectorId: filter.sectorId }, { company: { sectorId: filter.sectorId } }],
+      OR: [
+        { sectorId: filter.sectorId },
+        { sectorId: null, company: { sectorId: filter.sectorId } },
+      ],
     });
   if (filter.company)
     positions.push({

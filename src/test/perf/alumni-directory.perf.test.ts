@@ -74,6 +74,6 @@ it('5.000 mezun: gerçek dizin sorgusunda p95 300 ms altı', async () => {
   }
   samples.sort((a, b) => a - b);
   const p95 = samples[Math.ceil(samples.length * 0.95) - 1]!;
-  console.log(`alumni-directory: 5000 kişi, 30 ölçüm, p95 ${p95.toFixed(1)} ms`);
+  process.stdout.write(`alumni-directory: 5000 kişi, 30 ölçüm, p95 ${p95.toFixed(1)} ms\n`);
   expect(p95).toBeLessThan(300);
 });
