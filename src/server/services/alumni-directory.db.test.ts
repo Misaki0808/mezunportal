@@ -32,6 +32,19 @@ it('yalnız aynı üniversitedeki katılmış ve doğrulanmış mezunu döndür�
   const hidden = await mk(one.deptA1, false, `Havacı ${key}`);
   const foreign = await mk(other.deptA1, true, `Havacı ${key}`);
   const defense = await mk(one.deptA1, true, `Havacı ${key}`);
+  const suspended = await mk(one.deptA1, true, `Havacı ${key}`);
+  await db.user.update({ where: { id: suspended }, data: { banned: true } });
+  const unverified = await createUser(db, { name: `Havacı ${key}` });
+  await addMembership(db, {
+    userId: unverified,
+    departmentId: one.deptA1,
+    role: 'ALUMNI',
+    graduationYear: 2021,
+    status: 'PENDING',
+  });
+  await db.profile.create({
+    data: { userId: unverified, alumniDirectoryVisible: true, city: 'İstanbul' },
+  });
   const aviation = await db.sector.create({
     data: { name: `Havacılık ${key}`, normalizedName: `havacilik ${key}` },
   });
@@ -50,6 +63,8 @@ it('yalnız aynı üniversitedeki katılmış ve doğrulanmış mezunu döndür�
     [visible, aviation.id],
     [hidden, aviation.id],
     [foreign, aviation.id],
+    [suspended, aviation.id],
+    [unverified, aviation.id],
     [defense, military.id],
   ]) {
     await db.position.create({

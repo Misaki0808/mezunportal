@@ -128,7 +128,11 @@ export async function searchAlumni(
         },
         positions: {
           ...(positions.length ? { where: { isCurrent: true, AND: positions } } : {}),
-          orderBy: [{ isCurrent: 'desc' }, { startYear: 'desc' }, { id: 'asc' }],
+          orderBy: [
+            { isCurrent: 'desc' },
+            { startYear: { sort: 'desc', nulls: 'last' } },
+            { id: 'asc' },
+          ],
           take: 1,
           select: {
             companyRaw: true,
