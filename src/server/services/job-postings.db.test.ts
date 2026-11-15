@@ -59,6 +59,18 @@ beforeAll(async () => {
 const NOW = new Date('2030-06-20T09:00:00Z'); // İstanbul 12:00, 20 Haziran
 const at = (iso: string) => ({ db, now: () => new Date(iso) });
 const deps = { db, now: () => NOW };
+// Genel süresi dolma işini yalnız bu testin ilanlarına uygula; komşu dosyaların verisini değiştirme.
+const dbForJobIds = (ids: string[]) =>
+  db.$extends({
+    query: {
+      jobPosting: {
+        async findMany({ args, query }) {
+          args.where = { AND: [args.where ?? {}, { id: { in: ids } }] };
+          return query(args);
+        },
+      },
+    },
+  }) as unknown as typeof db;
 
 type World = Awaited<ReturnType<typeof world>>;
 async function world() {
@@ -484,7 +496,11 @@ describe('ilan puanı: gecikme, aylık tavan, geri çekme', () => {
       ids.push(await published(w, w.alumni, { title: `İlan numarası ${i + 1}` }));
     // hız sınırı 5: dördüncü ilan sonrası bir tane daha hakkımız var
     const entries = await pointsOf(w.alumni);
-    expect(entries.map((e) => [e.multiplierPercent, e.points])).toEqual([
+    expect(
+      ids
+        .map((id) => entries.find((entry) => entry.sourceId === id))
+        .map((e) => [e?.multiplierPercent, e?.points]),
+    ).toEqual([
       [100, 5],
       [100, 5],
       [100, 5],
@@ -493,7 +509,10 @@ describe('ilan puanı: gecikme, aylık tavan, geri çekme', () => {
     // ilk ilanı çek: bekleyen puan geri alınır; ay hakkı serbest kalır
     await closeJobPosting(deps, w.alumni, { postingId: ids[0]! });
     const afterClose = await pointsOf(w.alumni);
-    expect(afterClose[0]).toMatchObject({ status: 'REVOKED', revokedReason: 'POSTING_WITHDRAWN' });
+    expect(afterClose.find((entry) => entry.sourceId === ids[0])).toMatchObject({
+      status: 'REVOKED',
+      revokedReason: 'POSTING_WITHDRAWN',
+    });
     const fifth = await published(w, w.alumni, { title: 'Beşinci ilan' });
     const fifthEntry = (await pointsOf(w.alumni)).find((e) => e.sourceId === fifth)!;
     expect(fifthEntry).toMatchObject({ multiplierPercent: 100, points: 5 });
@@ -549,20 +568,55 @@ describe('ilan puanı: gecikme, aylık tavan, geri çekme', () => {
   it('süre dolumu puanı geri almaz; geri doldurma (backfill) idempotenttir ve CLOSED ilana puan yazmaz', async () => {
     const w = await world();
     const id = await published(w);
-    await expireJobPostings(at('2030-07-20T09:00:00Z'));
+    const ownedIds = [id];
+    // Backfill üretimde tüm kaynakları tarar; testte yalnız bu senaryonun satırları işlenir.
+    const scoped = db.$extends({
+      query: {
+        $allModels: {
+          async findMany({ model, args, query }) {
+            const sourceModels = [
+              'Experience',
+              'Appointment',
+              'CvReviewRequest',
+              'FaqRequest',
+              'JobPosting',
+              'ReferralClaim',
+              'EventAttendance',
+            ];
+            if (sourceModels.includes(model)) {
+              const input = args as { where?: unknown };
+              input.where = {
+                AND: [
+                  input.where ?? {},
+                  model === 'EventAttendance'
+                    ? { userId: { in: [] } }
+                    : { id: { in: model === 'JobPosting' ? ownedIds : [] } },
+                ],
+              };
+            }
+            return query(args);
+          },
+        },
+      },
+    }) as unknown as typeof db;
+    await expireJobPostings({ db: scoped, now: () => new Date('2030-07-20T09:00:00Z') });
     expect((await db.jobPosting.findUniqueOrThrow({ where: { id } })).status).toBe('EXPIRED');
     expect((await pointsOf(w.alumni))[0]).toMatchObject({ status: 'PENDING' });
     // kaçırılmış puanı backfill yazar; ikinci koşu sonucu değiştirmez
     await db.pointEntry.deleteMany({ where: { sourceId: id } });
-    const first = await runPointBackfill({ db, now: () => NOW });
-    expect(first.jobPostings).toBeGreaterThanOrEqual(1);
+    const unrelated = await published(w, w.academic, { title: 'Başka ilan kaynağı' });
+    await db.pointEntry.deleteMany({ where: { sourceId: unrelated } });
+    const first = await runPointBackfill({ db: scoped, now: () => NOW });
+    expect(first.jobPostings).toBe(1);
+    expect(await db.pointEntry.count({ where: { sourceId: unrelated } })).toBe(0);
     expect(await pointsOf(w.alumni)).toHaveLength(1);
-    await runPointBackfill({ db, now: () => NOW });
+    await runPointBackfill({ db: scoped, now: () => NOW });
     expect(await pointsOf(w.alumni)).toHaveLength(1);
     const closed = await published(w, w.academic);
+    ownedIds.push(closed);
     await closeJobPosting(deps, w.academic, { postingId: closed });
     await db.pointEntry.deleteMany({ where: { sourceId: closed } });
-    await runPointBackfill({ db, now: () => NOW });
+    await runPointBackfill({ db: scoped, now: () => NOW });
     expect(await pointsOf(w.academic)).toEqual([]);
   });
 });
@@ -1445,9 +1499,9 @@ describe('postings.expire', () => {
       reason: 'Uygunsuz',
     });
     const later = at('2030-07-01T09:00:00Z');
-    // Paylaşılan test veritabanında başka testlerin süresi dolmuş ilanları da kapanabilir: en az bu ikisi.
-    expect((await expireJobPostings(later)).expired).toBeGreaterThanOrEqual(2);
-    expect(await expireJobPostings(later)).toEqual({ expired: 0 });
+    const isolated = { ...later, db: dbForJobIds([live, keep, pending, draftRow.id, rejected]) };
+    expect((await expireJobPostings(isolated)).expired).toBe(2);
+    expect(await expireJobPostings(isolated)).toEqual({ expired: 0 });
     const status = async (id: string) =>
       (await db.jobPosting.findUniqueOrThrow({ where: { id } })).status;
     expect(await status(live)).toBe('EXPIRED');
@@ -1468,12 +1522,15 @@ describe('postings.expire', () => {
   it('son gün bugünse ilan açık kalır; ertesi İstanbul günü kapanır', async () => {
     const w = await world();
     const id = await published(w, w.alumni, { deadlineOn: '2030-06-20' });
-    expect(await expireJobPostings({ db, now: () => new Date('2030-06-20T20:59:00Z') })).toEqual({
+    const isolated = dbForJobIds([id]);
+    expect(
+      await expireJobPostings({ db: isolated, now: () => new Date('2030-06-20T20:59:00Z') }),
+    ).toEqual({
       expired: 0,
     });
     expect((await db.jobPosting.findUniqueOrThrow({ where: { id } })).status).toBe('PUBLISHED');
     expect(
-      await expireJobPostings({ db, now: () => new Date('2030-06-20T21:00:00Z') }),
+      await expireJobPostings({ db: isolated, now: () => new Date('2030-06-20T21:00:00Z') }),
     ).toMatchObject({
       expired: expect.any(Number),
     });
@@ -1728,7 +1785,7 @@ describe('okuma anında ilan görünürlüğü', () => {
       await code(reportJobPosting(deps, w.student, { postingId: id, reason: 'Sahte içerik' })),
     ).toBe('RESOURCE_NOT_FOUND');
     const expired = await submitted(w, w.academic);
-    await expireJobPostings(at('2030-07-20T09:00:00Z'));
+    await expireJobPostings({ ...at('2030-07-20T09:00:00Z'), db: dbForJobIds([expired]) });
     expect(
       await code(
         reportJobPosting(at('2030-07-20T09:00:00Z'), w.student, {

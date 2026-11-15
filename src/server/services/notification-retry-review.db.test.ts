@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { Prisma } from '@/generated/prisma/client';
@@ -29,7 +30,7 @@ describe('TD-017 bağımsız inceleme senaryoları', () => {
   it('bozuk yük (Zod hatası) 130 niyetin başında olsa da hepsi aynı çalıştırmada gider; bozuk niyet 5 denemede FAILED olur', async () => {
     const poisoned = await createUser(db);
     const healthy = await createUser(db);
-    const tag = `rv-${Date.now()}`;
+    const tag = `rv-${randomUUID()}`;
     // uuid v7 sıralı: bozuk niyet en küçük kimlikle (ilk sayfada) oluşturulur
     const bad = await db.notificationIntent.create({
       data: { key: `${tag}-bad`, userId: poisoned, kind: 'generic', payload: { garbage: true } },
@@ -78,37 +79,49 @@ describe('TD-017 bağımsız inceleme senaryoları', () => {
   it('başka bir işlemin kilitlediği niyet atlanır (SKIP LOCKED), diğerleri gider ve kilitli niyetin sayacı değişmez', async () => {
     const owner = await createUser(db);
     const other = await createUser(db);
-    const tag = `rv-lock-${Date.now()}`;
+    const tag = `rv-lock-${randomUUID()}`;
+    const unrelatedTag = `rv-unrelated-${randomUUID()}`;
+    const unrelated = await createUser(db);
     const locked = await db.notificationIntent.create({
       data: { key: `${tag}-a`, userId: owner, kind: 'generic', payload: good(`${tag}-a`) },
     });
     await db.notificationIntent.create({
       data: { key: `${tag}-b`, userId: other, kind: 'generic', payload: good(`${tag}-b`) },
     });
+    await db.notificationIntent.create({
+      data: { key: unrelatedTag, userId: unrelated, kind: 'generic', payload: good(unrelatedTag) },
+    });
     const now = new Date(Date.now() + 1000);
     const sent: string[] = [];
     let release: () => void = () => undefined;
+    let signalLocked: () => void = () => undefined;
     const held = new Promise<void>((resolve) => (release = resolve));
+    const acquired = new Promise<void>((resolve) => (signalLocked = resolve));
     const blocker = db.$transaction(
       async (tx) => {
         await tx.$queryRaw`SELECT "id" FROM "NotificationIntent" WHERE "id"=${locked.id} FOR UPDATE`;
+        signalLocked();
         await held;
       },
       { timeout: 20_000 },
     );
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    const result = await relayNotificationIntents(db, sender(sent), { now: () => now });
-    release();
-    await blocker;
-    expect(sent).toEqual([`${tag}-b`]);
-    expect(result.failed).toBe(0);
+    await acquired;
+    try {
+      await relayNotificationIntents(db, sender(sent), { now: () => now });
+    } finally {
+      release();
+      await blocker;
+    }
+    expect(sent.filter((id) => id.startsWith(tag))).toEqual([`${tag}-b`]);
+    expect(sent).toContain(unrelatedTag);
+    expect(await db.notificationIntent.count({ where: { userId: other } })).toBe(0);
     const row = await db.notificationIntent.findUniqueOrThrow({ where: { id: locked.id } });
     expect(row).toMatchObject({ status: 'PENDING', attemptCount: 0 });
   });
 
   it('başarılı gönderim denemeyi saymaz: bir kez hata, sonra başarı niyeti siler', async () => {
     const userId = await createUser(db);
-    const tag = `rv-flaky-${Date.now()}`;
+    const tag = `rv-flaky-${randomUUID()}`;
     const row = await db.notificationIntent.create({
       data: { key: tag, userId, kind: 'generic', payload: good(tag) },
     });
