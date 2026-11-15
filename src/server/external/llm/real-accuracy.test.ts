@@ -43,8 +43,16 @@ it.skipIf(process.env.RUN_LLM_ACCURACY !== '1' || process.env.LLM_PROVIDER !== '
       dates: [0, 0],
     };
     for (const sample of samples) {
-      const text = await extractor.extract(buildRealTestPdf([sample.text]));
+      // Tek satır bir PDF sayfasının dışına taşarsa metin çıkarıcı kalan alanları görmez.
+      const pages = sample.text.split(/(?<=\.)\s+/);
+      const text = await extractor.extract(buildRealTestPdf(pages));
+      expect(text).toContain(sample.education);
+      expect(text).toContain(sample.company);
+      for (const skill of sample.skills) expect(text).toContain(skill);
+      for (const date of sample.dates) expect(text).toContain(date);
       const masked = await extractor.redact!(text, sample.name);
+      expect(masked).toContain(sample.company);
+      for (const skill of sample.skills) expect(masked).toContain(skill);
       expect(masked).not.toContain(sample.name);
       const raw = await llm.parseRedactedCv!({
         text: masked,
