@@ -441,7 +441,8 @@
       "all": "Tümü",
       "noSectors": "Henüz seçilebilir sektör yok.",
       "invalid": "En az 2 karakter yaz.",
-      "skill": "Beceri"
+      "skill": "Beceri",
+      "more": "Diğer filtreler"
     },
     "types": {
       "ALUMNI": "Mezun",
@@ -3187,7 +3188,8 @@
     "reportDismiss": "Şikâyeti yoksay",
     "reportDecisionReason": "Karar gerekçesi",
     "reportDecisionHint": "En az 3 karakter yaz.",
-    "reportDecisionDone": "Karar kaydedildi."
+    "reportDecisionDone": "Karar kaydedildi.",
+    "searchInvalid": "En az 2 karakter gir veya alanı boş bırak."
   },
   "companies": {
     "title": "Şirketlere bak",
