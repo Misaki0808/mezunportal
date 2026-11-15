@@ -332,9 +332,21 @@ başına). Sürücüler `src/server/external/storage/` (yerel, bellek/sahte); ar
 `.env.local` dosyalarına eklenmesi gerekmez; yeni worktree'ler `.env.example`'dan alır.
 **CV ayrıştırma / LLM grubu** (`getLlmEnv()`, varsayılanlı): `LLM_PROVIDER` boşsa CV ayrıştırma KAPALIDIR
 (yükleme `CV_PROVIDER_NOT_CONFIGURED` ile reddedilir, ekran sebebi gösterir, elle giriş açık); `fake` deterministik
-sahte adaptördür ve yalnız `local`/`test`'te kabul edilir (`prod`'da env doğrulamasını düşürür). Gerçek sağlayıcı
-(K-04) ayrı kartla gelir; `LLM_API_KEY` ve `LLM_MODEL` o zamana kadar okunmaz. `CV_PARSE_DAILY_LIMIT`
-(1–50, varsayılan 5) kullanıcı başına günlük ayrıştırma sınırıdır. Adaptörler `src/server/external/llm/`. Worker (`pnpm dev:all`) `cv.parse` kuyruğunu yalnız `LLM_PROVIDER` doluyken dinler.
+sahte adaptördür ve yalnız `local`/`test`'te kabul edilir (`prod`'da env doğrulamasını düşürür).
+`openai-compatible` için `LLM_BASE_URL` ve `LLM_MODEL` gerekir; `LLM_API_KEY` yerel Ollama'da boş olabilir.
+Canlıda HTTPS zorunludur (yalnız localhost/127.0.0.1 HTTP istisnası). Uzak sağlayıcı seçimi K-04'e bağlıdır.
+`CV_PARSE_DAILY_LIMIT` (1–50, varsayılan 5) kullanıcı başına günlük sınırdır. Worker (`pnpm dev:all`)
+`cv.parse` kuyruğunu yalnız sağlayıcı seçiliyken dinler. Ortam ayarı değişince web ve worker yeniden başlatılır. Yerel model için:
+
+```bash
+brew install ollama
+ollama serve
+ollama pull <model>
+# .env.local: LLM_PROVIDER=openai-compatible, LLM_BASE_URL=http://127.0.0.1:11434/v1, LLM_MODEL=<model>, LLM_API_KEY=
+```
+
+Yerel model ilk yüklemede yavaş olabilir: tek çağrı 90 sn, iki çıktı denemesi ve PDF işlemi için kuyruk 240 sn.
+İsteğe bağlı sentetik PDF ölçümü: `RUN_LLM_ACCURACY=1 LLM_PROVIDER=openai-compatible pnpm exec vitest run --project unit src/server/external/llm/real-accuracy.test.ts --maxWorkers=1` (diğer LLM değişkenleri yerel ortamda verilmiş olmalı).
 
 **Takvim / Meet grubu** (`getCalendarEnv()`, varsayılanlı): `CALENDAR_PROVIDER` boşsa takvim KAPALIDIR (online randevu
 yine onaylanır; mentor görüşme linkini elle ekler); `fake` deterministik sahte adaptördür ve yalnız `local`/`test`'te
