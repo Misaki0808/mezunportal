@@ -288,7 +288,7 @@ export function MentorDirectory({
     go(next);
   };
   const chipClass = (selected: boolean) =>
-    `press-control inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary ${selected ? 'border-primary bg-primary text-white' : 'border-border-control bg-surface text-fg'}`;
+    `press-control inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary ${selected ? 'border-primary bg-primary text-white' : 'border-border-control bg-surface text-fg'}`;
   const close = () => {
     setDraft(filter);
     setOpen(false);
@@ -306,7 +306,7 @@ export function MentorDirectory({
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       <div className="mt-6 flex min-w-0 flex-wrap items-start gap-2">
         <SearchBar
-          className="min-w-0 flex-[1_1_18rem] !rounded-none !border-0 !bg-transparent !p-0 !shadow-none"
+          className="min-w-0 flex-[1_1_100%] !rounded-none !border-0 !bg-transparent !p-0 !shadow-none lg:flex-[1_1_15rem]"
           label={t('search')}
           hint={t('searchPlaceholder')}
           submitLabel={t('searchButton')}
@@ -326,7 +326,7 @@ export function MentorDirectory({
           }}
         />
         <div
-          className="flex min-w-0 flex-[2_1_34rem] items-center gap-2 overflow-x-auto pb-2"
+          className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-2 lg:flex-[2_1_38rem]"
           role="group"
           aria-label={directory('filters')}
         >
