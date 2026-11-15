@@ -22,7 +22,7 @@ export function Card({
     <Tag
       {...rest}
       className={cn(
-        'rounded-card border border-border bg-bg shadow-card',
+        'rounded-card border border-border bg-surface shadow-card',
         PADDING[padding],
         interactive &&
           'press-control cursor-pointer transition-[border-color,box-shadow] duration-150 hover:border-border-control hover:shadow-overlay',

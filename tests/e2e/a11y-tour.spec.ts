@@ -57,7 +57,7 @@ async function audit(page: Page, path: string, scheme: 'light' | 'dark') {
   expect.soft(report.lowContrast, `${where}: AA altı metin`).toEqual([]);
   const luminance = luminanceOf(report.background);
   if (scheme === 'dark') expect(luminance, `${where}: koyu zemin`).toBeLessThan(0.08);
-  else expect.soft(luminance, `${where}: açık (krem) zemin`).toBeGreaterThan(0.85);
+  else expect.soft(luminance, `${where}: açık (kâğıt) zemin`).toBeGreaterThan(0.85);
   const keyboard = await tabThrough(page, 30);
   expect.soft(keyboard.problems, `${where}: klavye`).toEqual([]);
   expect.soft(keyboard.distinct, `${where}: odak bir yere sıkışmamalı`).toBeGreaterThanOrEqual(3);

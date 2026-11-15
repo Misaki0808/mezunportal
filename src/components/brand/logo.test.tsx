@@ -7,6 +7,20 @@ import { BrandLogo, BrandMark } from './logo';
 import { WORDMARK } from './logo-geometry';
 
 describe('mezunportal. logosu', () => {
+  it('on-dark değişkeni koyu zeminde okunur sabit renkler verir (yan menü iki temada da lacivert)', () => {
+    const html = renderToStaticMarkup(<BrandLogo label="x" variant="on-dark" />);
+    for (const [name, value] of [
+      ['ink', '#f4f2ff'],
+      ['iris', '#a3a3ff'],
+      ['cap', '#a3a3ff'],
+      ['tassel', '#ff8798'],
+      ['dot', '#ff8798'],
+    ])
+      expect(html).toContain(`--brand-${name}:${value}`);
+    // Varsayılan değişken sabit renk içermez (koyu temada kendiliğinden döner).
+    expect(renderToStaticMarkup(<BrandLogo label="x" />)).not.toContain('--brand-ink:');
+  });
+
   it('etiketli çizim erişilebilir ad taşır; etiketsiz çizim dekoratiftir', () => {
     const named = renderToStaticMarkup(<BrandLogo label="mezunportal." />);
     expect(named).toContain('role="img"');
