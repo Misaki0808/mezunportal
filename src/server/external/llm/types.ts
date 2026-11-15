@@ -23,6 +23,8 @@ export type RedactedCvRequest = Omit<LlmCvRequest, 'pdf'> & { text: string };
 
 export interface LlmAdapter {
   readonly provider: string;
+  /** Tek çağrı için sağlayıcının sınırı; yoksa servis varsayılanı kullanılır. */
+  readonly timeoutMs?: number;
   parseCv(request: LlmCvRequest): Promise<unknown>;
   parseRedactedCv?(request: RedactedCvRequest): Promise<unknown>;
 }

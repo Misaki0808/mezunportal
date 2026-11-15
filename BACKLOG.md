@@ -25,7 +25,7 @@ belgeye borç olarak yazılır. Hesap isteyen işler ile canlıya alım ve pilot
 
 ### Bilinen kısıtlar
 
-- Ücretli servis açılmaz. CV için seçilen Gemini ücretsiz katmanının adaptörü yazılmadı (`LLM_PROVIDER` yalnız `fake` kabul eder; prod'da `fake` reddedilir): anahtar ve aktarım rızası metninin onayı gelince yazılır, o zamana kadar canlıda CV ayrıştırma kapalı, elle giriş açıktır.
+- Ücretli servis açılmaz. CV için OpenAI uyumlu adaptör ve ücretsiz yerel Ollama yolu hazırdır; canlı sağlayıcı seçimi ve uzak aktarım kararı K-04 kapsamındadır.
 - Öğrenci e-posta alanı doğrulandı (kullanıcının kendi hesabıyla); personel alanı, YBS fakültesi ve program dili teyit bekliyor (K-06, geçici değerler `prisma/seed-data.ts`'te).
 - CI az ve öz (K-14 kararı, ≤ 5 dk: tür, kalite, hızlı birim); veritabanı testleri, build ve e2e yerel PM birleştirme kapısındadır.
 
@@ -43,7 +43,7 @@ gerekçe `docs/decisions.md`'ye yazılır. Ücretli servis hiçbir satırda yokt
 | K-06 | Teyit: personel e-posta alanı (`istanbul.edu.tr`), YBS'nin fakültesi (İktisat Fakültesi) ve program dili (Türkçe mi İngilizce mi). Yanlışsa yalnız `prisma/seed-data.ts` değişir | Gerçek kullanıcı kaydından önce; personel alanı akademisyen doğrulamasını belirler | P1-02'nin canlı kabulü |
 | K-02 | Canlı sunucu ve dağıtım aracı: üniversite sunucusu (hocaya sor) ya da ücretsiz bir seçenek | Pilota geçmeye karar verince | PILOT-DEPLOY |
 | K-05 | Canlı e-posta (SMTP): üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | K-02 ile birlikte | Gerçek e-posta teslimi |
-| K-04 | Gemini ücretsiz katman API anahtarını `korunan/gemini.env`'e koy (kimseye yazma); gerçek sağlayıcıya gönderim ayrıca yurt dışı aktarım rızası metninin onayına bağlı | Gerçek CV/LinkedIn ayrıştırmayı denemek istediğinde | TD-009 doğruluk ölçümü |
+| K-04 | Canlı CV sağlayıcısını ve uzak aktarım koşullarını seç; gerekiyorsa anahtarı yalnız `korunan/` altında tut | Canlı sağlayıcı kullanılmadan önce | TD-009 doğruluk ölçümü |
 | E4 | Google Cloud projesi, OAuth onay ekranı ve takvim izni; anahtarlar `korunan/google.env`'e; sonra `CALENDAR_PROVIDER=google` ve `/yonetim/google` | Gerçek takvim daveti ve Meet linki denemek istediğinde; yapılmazsa mentor linki elle ekler | P1-10 kabulü |
 | E3 | LinkedIn'de şirket sayfası + uygulama ("Sign In with LinkedIn using OpenID Connect"); client id ve secret `korunan/`'a | LinkedIn ile giriş istendiğinde; yapılmazsa e-posta bağlantısıyla giriş çalışır, LinkedIn seçeneği giriş ekranında görünmez | P1-02 kabulü (LinkedIn yolu) |
 | Platform hesabı | Kurumsal kimlik: platformun adı ve LinkedIn kurum sayfası, canlı alan adı | Acelesiz; ödül paylaşımından (P2-01) ve canlı adresten önce | P2-01 paylaşımı, canlı alan adı |
@@ -96,7 +96,7 @@ Açık PM kararı yok.
 
 - [ ] **TD-009** · P1 · CV doğruluk tablosu sahte adaptörle, gerçek LLM ile değil
   Ne: 5 sentetik örnek CV + ölçüm düzeneği (`src/test/cv-accuracy.ts`) hazır; sahte adaptörde sonuç hat
-  bütünlüğünü gösterir, LLM doğruluğunu değil. Gerçek adaptör yok (K-04: Gemini ücretsiz katman anahtarı bekleniyor).
+  bütünlüğünü gösterir, LLM doğruluğunu değil. OpenAI uyumlu adaptör hazır; gerçek model doğruluğu ve canlı sağlayıcı seçimi K-04 kapsamında ölçülecek.
   Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
   Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
