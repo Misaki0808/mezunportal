@@ -1023,3 +1023,34 @@ Kullanıcının verdiği 89 ders resmî seed listesidir; daha önceki hoca onay�
 **Better Auth yazımları hesap silmeyle yarışmaz (kart 371, #171 notu).** Hesap silme kullanıcı satırını `FOR UPDATE` ile kilitler, ama Better Auth kendi işleminde çalışır. Gerçek eşzamanlı DB testiyle ölçüldü (silme işlemi handler ile açık tutuldu, yazma yolu başladı): (1) **P1:** silme sürerken tıklanan yeni adres doğrulaması anonimleştirilmiş `User.email`'i gerçek yeni adrese ve `emailVerified`'i `true`'ya geri yazıyordu (Prisma `update` önce bulup sonra id ile yazar; silme araya girince koşulsuz yazar); (2) silme sürerken tıklanan giriş bağlantısı silinmiş kullanıcıya oturum bırakıyordu (oturum satırı FK kilidinde bekleyip silme bitince yazılır; `accountStatusOf` `DELETED` döndüğü için bu oturum yetki vermez, ama "oturumlar silinir" sözü bozuluyordu); (3) hesap bağlama (LinkedIn) silinen kişinin sağlayıcı kimliğini geri yazabiliyordu; (4) silmeden sonra bekleyen giriş bağlantısı kayıtları (`Verification`) silinen kişinin e-postasını süre dolana kadar taşıyordu. Sıralı yollar (silmeden sonra tıklanan bağlantı, eski/yeni adres onayı) zaten güvenliydi: e-posta anonimleşince kullanıcı e-postayla bulunamaz. Karar: kanca ya da migration değil, ADAPTÖR düzeyinde tek yer: `guardDeletedUsers` Prisma istemcisini sarar. Oturum ve hesap oluşturma aynı işlemde kullanıcı satırına `FOR SHARE` alıp `deletedAt`'i okur (silme kilidi tutarken bekler, bitince silinmişi görür ve `DeletedUserError` ile reddeder; silme de bu yazma bitene kadar bekler, yani yazma silmenin temizliğinden sonra sızamaz); kullanıcı `update`/`updateMany` `deletedAt IS NULL` koşulu ister. `kanca` yetmezdi: Better Auth kancası hem veri yoksa hem satır kilidi alamadan çalışır, ve güncelleme kancası hedef kimliği görmez. Silme ayrıca e-postayı kimlik ya da değer olarak taşıyan `Verification` kayıtlarını iptal eder (önceden alınmış giriş bağlantısı artık geçersizdir, silinen hesap dirilmez ve yeni hesap da açmaz). Silinmeden önce e-posta değiştiyse silme onayı eşleşmez ve kararlı kodla reddedilir; hesap sağlam kalır (testte gözlendi). Şema değişmedi. Silme sürerken tıklanan ESKİ adres onayı (veritabanına yazmaz) yeni adrese doğrulama e-postası gönderiyordu (P3, ölçüldü); gönderim öncesi aynı `FOR SHARE` bakışıyla durdurulur (`isUserDeleted`).
 
 **CV modeli — sağlayıcıdan bağımsız bağlantı (kart 382).** Kullanıcı: “CV ile otomatik doldurma özelliği olmazsa bu uygulamanın pek bir anlamı kalmıyor”. Ücretsiz yerel Ollama ile başlamak ve canlı sağlayıcıyı ortam ayarıyla değiştirebilmek için tek OpenAI uyumlu adaptör kullanılır; gerçek sağlayıcıya yalnız yerelde maskelenmiş metin gider. Canlı sağlayıcı seçimi K-04 kapsamında açıktır.
+## 2026-11-14 · Kullanıcı kararları: program dili (K-06), veri sorumlusu (K-03), pilot zamanı (K-12)
+
+**K-06, kurum değerleri.** Kullanıcı: “personel e-posta alanı doğru. ybs iktisat fakültesinde. program ingilizce.” Seed'teki değerler
+(personel alanı `istanbul.edu.tr`, İktisat Fakültesi, YBS) doğru çıktı; öğrenci alanı (`ogr.iu.edu.tr`) daha önce kullanıcının kendi hesabıyla
+doğrulanmıştı. YBS programının dili İngilizcedir. Program dili şemada ve arayüzde bir alan olmadığı için kod değişmedi ve alan eklenmedi
+(tüketicisi yok, migration gerekmez); karar `prisma/seed-data.ts` açıklamasında durur, "geçici" işaretleri kalktı. Değerleri `prisma/seed-data.test.ts`
+sabitler. Seed'deki ders listesi zaten İngilizce programla uyumludur (hazırlık yarıyılı, İngilizce ders adları). Bölüm adına (`Department.name`) "(İngilizce)" gibi
+bir ek yazılmadı: karar programın dilini söylüyor, adı değiştirmiyor.
+
+**K-03, veri sorumlusu.** Kullanıcı: “veri sorumlusu şu an benim çünkü siteyi ben yaptım bunu üniversiteye yıkamayız. bölüme belki yıkabiliriz ama o da
+şu an değil … belki ileride … pilot uygulama ayakları yere bastığı zaman olabilir”. Veri sorumlusu şimdilik proje sahibidir (Efe Baydemir, gerçek kişi);
+üniversiteye devredilmez, bölüme devri pilot oturunca yeniden değerlendirilebilir. Hukuki metin taslaklarında (`docs/legal-drafts.md` §1, §3, §7 ve
+`messages/tr.json` karşılıkları) **ad** yazıldı. İletişim ve başvuru adresi için kullanıcı 15 Kasım'da platform hesabını açtı
+(`mezunportal.iu@gmail.com`); aydınlatma metninin iletişim satırına (§1), hak başvurusuna (§8) ve §7 notuna bu adres yazıldı, kişisel adres hiçbir metinde geçmez.
+Ekrandaki taslak uyarısından "iletişim adresi henüz kesinleşmedi" cümlesi kalktı (artık doğru değil); kalan köşeli alanlar sağlayıcı adı ve hukuk görüşüdür (K-04, K-05),
+bu yüzden "köşeli alanlar doldurulmadan metin yayına girmez" kuralı onlar için işlemeye devam eder. **Sürüm artmadı:**
+`taslak-1` taslağın sürümüdür, pilot başlamadı ve gerçek kullanıcı bu metni onaylamadı ve önceki taslak eklemeleri (P2-14 ekleri) da sürümü artırmadı; sürüm, hoca ve
+hukuk onaylı metin köke taşınırken artar (`BACKLOG.md` PILOT-LEGAL). Kalan: hoca onayı, hukuk okuması (gerçek kişi veri sorumlusunun
+sicil/bildirim yükümlülüğü ve üniversiteyle ilişkinin metinde nasıl anlatılacağı hukukçuya sorulur).
+
+**K-12, pilot zamanı.** Kullanıcı: “finaller bitsin 1 aylık tatilde pilotu çıkarır uygulamayı kullandırmaya başlarım”. Pilot, finaller bittikten sonraki
+yaklaşık bir aylık tatilde başlar; kesin tarih yok. Pilotun kimlerle yapılacağı ve başarı ölçütleri hâlâ açıktır (`docs/faz2-plan.md` §1). Bu karar canlıya alım
+işlerinin (sunucu K-02, SMTP K-05, güvenilir proxy TD-021) tatilden önce bitmesi gerektiği anlamına gelir; işler ayrı kartlarla açılır.
+
+## 2026-11-15 · LinkedIn ile giriş kapalı kalır
+
+Kullanıcı: “iş geçmişi, okul ve yetenekleri alamayacaksam linkedin ile girişin ne anlamı var” ve LinkedIn ile girişin bırakılmasını istedi. LinkedIn'in açık
+katmanı ("Sign In with LinkedIn using OpenID Connect") yalnız ad, e-posta ve fotoğraf verir; iş geçmişi, okul ve yetenekler ortaklık onayı ister (D1 ve "LinkedIn'den yalnız giriş; iş geçmişi PDF ile"
+kararındaki kısıt değişmedi). Giriş yalnız e-posta bağlantısıyladır. Kod **silinmedi**: anahtarlar (`LINKEDIN_CLIENT_ID/SECRET`) verilmediği sürece düğme zaten gizlidir ve
+sağlayıcı kapalıdır, ileride istenirse yeniden açmak anahtar vermekten ibarettir. LinkedIn kurum sayfası, uygulaması ve anahtarları artık bekleyen iş değil (`BACKLOG.md` E3 ertelendi);
+LinkedIn profil PDF'iyle otomatik doldurma ayrı bir karardır (K-04, Gemini) ve bu kayıttan etkilenmez.

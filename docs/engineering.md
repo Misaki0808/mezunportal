@@ -153,6 +153,14 @@ bilinmeyen ya da karışık hata asla yeniden denenmez, kırmızı kalır). Birl
 react-server koşulu) `src/test/subprocess.ts` süreleriyle yazılır: test 30 sn, alt süreç 25 sn, `beforeAll(warmUpSubprocess)` ile tek seferlik ısınma (birim varsayılanı 5 sn yük altında
 yetmiyordu). Yeni bir alt süreç testi aynı yardımcıyı kullanır.
 
+### Bileşen testinde bayat düğüm (kart 379)
+
+Düğmeyi bir kez sorgulayıp "etkinleşmesini" beklemek yük altında rastgele düşer. `Button` sebep yazan devre dışı hâlde düğmeyi `<span>` içine sarar, etkinleşince
+sarmalayıcıyı bırakır; React düğmeyi yeni bir düğümle değiştirir. Devre dışıyken yakalanan düğüm DOM'dan çıkar ve sonsuza dek devre dışı kalır; sorgu geçişin ortasına
+denk gelirse `expect(düğüm).toBeEnabled()` 1 sn sonra düşer (`alumni-story/admin.test.tsx`: yük altında 80 koşuda 2 kırmızı, düzeltmeden sonra 0/80). Kural: yük altında
+değişebilen durumu (devre dışı ↔ etkin, yükleniyor ↔ hazır) beklerken öğeyi **her yoklamada yeniden sorgula** (`waitFor(() => expect(screen.getByRole(...)).toBeEnabled())`),
+tıklamayı da taze düğüme yap. Anlık `expect(...)` yalnız aynı React işlemiyle yazılan duruma bakar (örn. `useAction` hatası ve `busy` aynı turda gelir).
+
 ### Performans (P2-14)
 
 `pnpm test:perf` (yalnız yerel; `pnpm test` ve CI'da koşmaz) iki hacimde liste/arama yanıt sürelerini ve kritik planları ölçer: **10× deneme verisi**

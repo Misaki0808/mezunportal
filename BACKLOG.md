@@ -26,7 +26,6 @@ belgeye borç olarak yazılır. Hesap isteyen işler ile canlıya alım ve pilot
 ### Bilinen kısıtlar
 
 - Ücretli servis açılmaz. CV için OpenAI uyumlu adaptör ve ücretsiz yerel Ollama yolu hazırdır; canlı sağlayıcı seçimi ve uzak aktarım kararı K-04 kapsamındadır.
-- Öğrenci e-posta alanı doğrulandı (kullanıcının kendi hesabıyla); personel alanı, YBS fakültesi ve program dili teyit bekliyor (K-06, geçici değerler `prisma/seed-data.ts`'te).
 - CI az ve öz (K-14 kararı, ≤ 5 dk: tür, kalite, hızlı birim); veritabanı testleri, build ve e2e yerel PM birleştirme kapısındadır.
 
 ## Açık ürün kararları
@@ -40,20 +39,19 @@ gerekçe `docs/decisions.md`'ye yazılır. Ücretli servis hiçbir satırda yokt
 | No | Ne gerekiyor | Ne zaman | Neyi engelliyor |
 |---|---|---|---|
 | K-15 | Commit'lerde kişisel Gmail adresin görünüyor ve repo herkese açık: sonraki commit'ler için GitHub'ın gizli adresini kullanmak mı, böyle kalmak mı? | Bir cümle, istediğin an; karar verilene kadar yeni commit'ler de aynı adresle gider, geçmiş commit'ler değişmez | Yeni commit yapılandırması |
-| K-06 | Teyit: personel e-posta alanı (`istanbul.edu.tr`), YBS'nin fakültesi (İktisat Fakültesi) ve program dili (Türkçe mi İngilizce mi). Yanlışsa yalnız `prisma/seed-data.ts` değişir | Gerçek kullanıcı kaydından önce; personel alanı akademisyen doğrulamasını belirler | P1-02'nin canlı kabulü |
 | K-02 | Canlı sunucu ve dağıtım aracı: üniversite sunucusu (hocaya sor) ya da ücretsiz bir seçenek | Pilota geçmeye karar verince | PILOT-DEPLOY |
 | K-05 | Canlı e-posta (SMTP): üniversite SMTP'si; olmazsa ücretsiz katmanlı bir servis | K-02 ile birlikte | Gerçek e-posta teslimi |
 | K-04 | Canlı CV sağlayıcısını ve uzak aktarım koşullarını seç; gerekiyorsa anahtarı yalnız `korunan/` altında tut | Canlı sağlayıcı kullanılmadan önce | TD-009 doğruluk ölçümü |
 | E4 | Google Cloud projesi, OAuth onay ekranı ve takvim izni; anahtarlar `korunan/google.env`'e; sonra `CALENDAR_PROVIDER=google` ve `/yonetim/google` | Gerçek takvim daveti ve Meet linki denemek istediğinde; yapılmazsa mentor linki elle ekler | P1-10 kabulü |
-| E3 | LinkedIn'de şirket sayfası + uygulama ("Sign In with LinkedIn using OpenID Connect"); client id ve secret `korunan/`'a | LinkedIn ile giriş istendiğinde; yapılmazsa e-posta bağlantısıyla giriş çalışır, LinkedIn seçeneği giriş ekranında görünmez | P1-02 kabulü (LinkedIn yolu) |
+| E3 | LinkedIn ile giriş **ertelendi** (kullanıcı kararı, `docs/decisions.md` 15 Kas): açık katman iş geçmişi, okul ve yetenek vermiyor; uygulama ve anahtar istenmez. Kod duruyor, anahtar yoksa düğme gizli | Kullanıcı LinkedIn ile girişi yeniden isterse (şirket sayfası + "Sign In with LinkedIn using OpenID Connect" uygulaması, anahtarlar `korunan/`'a) | Hiçbir şeyi; giriş e-posta bağlantısıyla çalışır |
 | Platform hesabı | Kurumsal kimlik: platformun adı ve LinkedIn kurum sayfası, canlı alan adı | Acelesiz; ödül paylaşımından (P2-01) ve canlı adresten önce | P2-01 paylaşımı, canlı alan adı |
 
 ### Hoca (kullanıcı üzerinden)
 
 | No | Ne gerekiyor | Ne zaman | Neyi engelliyor |
 |---|---|---|---|
-| K-03 | Veri sorumlusu kim (üniversite, bölüm ya da kullanıcı) ve sistem/bölüm yöneticileri kimler; cevabı aynen yazmak yeter | Pilot ve canlıdan önce | PILOT-LEGAL (metinlerin boş alanları), gerçek yönetici atamaları |
-| K-12 | Pilot: kimler, ne zaman, başarı ölçütleri (Faz 2 taslağı `docs/faz2-plan.md` §1'de) | Pilot tarihi konuşulurken | Pilot kararı, başarı ölçütleri kutusu |
+| K-03 | Veri sorumlusu **karar verildi**: şimdilik proje sahibi, gerçek kişi (`docs/decisions.md`). İletişim ve başvuru adresi yazıldı (platform hesabı, `docs/legal-drafts.md` §1). Kalan: gerçek sistem/bölüm yöneticileri kimler; cevabı aynen yazmak yeter | Pilot ve canlıdan önce | Gerçek yönetici atamaları |
+| K-12 | Pilot zamanı **belli**: finaller bittikten sonraki ~1 aylık tatil (`docs/decisions.md`). Kalan: pilot kimlerle yapılacak ve başarı ölçütleri (Faz 2 taslağı `docs/faz2-plan.md` §1'de) | Tatil başlamadan önce | Pilot kararı, başarı ölçütleri kutusu |
 | PILOT-LEGAL | Hukuki metinlerin hocanın onayı ve üniversite KVKK birimi ya da bir hukukçu tarafından okunması | Canlıya almadan önce; taslak hâli pilot ve deneme için yeterli | Canlı açılış |
 
 ### PM
@@ -64,9 +62,9 @@ Açık PM kararı yok.
 
 - [ ] **PILOT-LEGAL** Hukuki metinler `docs/legal-drafts.md`'de yedi taslak bölümdür (§1-§7: aydınlatma, yurt dışı aktarım rızası, kullanım
   şartları, staj arayan görünürlüğü, Yılın Mezunu doğrulaması, Ayın mezunu rızası, Faz 2 ekleri); hepsi `taslak-1` ve "hoca / hukuk onayı
-  bekliyor". Veri sorumlusu, sağlayıcı adı ve hukuk görüşü alanları köşeli parantezle boştur (K-03, K-04, K-05); kod aynı sürümü kullanır
+  bekliyor". Veri sorumlusunun adı ve iletişim adresi yazıldı (proje sahibi ve platform hesabı, K-03); sağlayıcı adı ve hukuk görüşü alanları köşeli parantezle boştur (K-04, K-05); kod aynı sürümü kullanır
   (`src/contracts/privacy.ts`) ve ekranda metin taslak diye işaretlidir. Biter: alanlar dolar, hoca onaylar, üniversite KVKK birimi ya da bir
-  hukukçu okur, onaylı sürüm köke taşınır ve sürüm numarası artar (kullanıcılar yeniden onay verir). Önkoşul K-03.
+  hukukçu okur, onaylı sürüm köke taşınır ve sürüm numarası artar (kullanıcılar yeniden onay verir). Hukuk okumasına sorulacaklar: veri sorumlusu gerçek kişi olduğu için sicil/bildirim yükümlülüğü ve üniversiteyle ilişkinin metinde nasıl anlatılacağı.
 - [ ] **PILOT-TEST** Test planı iki belgededir: `docs/engineering.md` "Faz 2 deneme rehberi" ve telefon listesi (84 kutu, Git dışı); `docs/faz1-plan.md`'ya
   ayrı bölüm yazılmadı. Ön provalar ve gerçek cihazda bekleyen adımlar için bkz. "Yakın hedef". Biter: kullanıcı turu bir kez koşar, bulgular kapanır
   ya da borç yazılır. Canlıda ayrıca P1-18 kabul adımları koşulur (PILOT-DEPLOY).
@@ -77,7 +75,7 @@ Açık PM kararı yok.
   kodda yok). Canlı kabul: `/api/health` `env: "prod"` ve `sha` dağıtılan commit, yedek geri yüklenip doğrulanır, davet edilen gerçek kullanıcı
   (kullanıcının kendisi) uçtan uca kayıt olur, seed verisi girmemiş. Bu adımdan sonra veri değiştiren migration ve dağıtım PR başına kullanıcı onayı ister.
 - [ ] **PILOT-ROZET** Kod hazır: `FOUNDING_MEMBER_UNTIL` boşken kurucu üye etiketi sürer (`.env.example`, `src/lib/env.ts`, `src/server/services/points.ts`; K-10).
-  Biter: pilot bitince canlı ortamda tarih doldurulur (pilot tarihi K-12 ile belli olur).
+  Biter: pilot bitince canlı ortamda tarih doldurulur (pilot finaller sonrası ~1 aylık tatilde, K-12; kesin tarih gelince).
 
 ## Teknik borç
 
