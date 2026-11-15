@@ -368,6 +368,32 @@ describe('CV akışı', () => {
     }
   });
 
+  it('uzun yerel model işinde işleniyor durumu ve sorgulama sürer', async () => {
+    vi.useFakeTimers();
+    try {
+      const getStatus = vi.fn().mockResolvedValue({
+        ok: true,
+        data: { cvUploadId: 'cv1', status: 'PARSING', errorCode: null, createdAt: '' },
+      });
+      const view = renderUi(
+        <CvFlow
+          availability={available}
+          latest={{ cvUploadId: 'cv1', status: 'PARSING', errorCode: null, createdAt: '' }}
+          actions={actions({ getStatus })}
+          pollMs={3000}
+        />,
+      );
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(93_000);
+      });
+      expect(screen.getByRole('heading', { name: "CV'n okunuyor" })).toBeInTheDocument();
+      expect(getStatus).toHaveBeenCalledTimes(31);
+      view.unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('CV hatasında elle düzenlemeye yönlendirir ve ham kodu göstermez', () => {
     renderUi(
       <CvFlow

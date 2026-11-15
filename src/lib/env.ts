@@ -196,9 +196,10 @@ const llmEnvSchema = z
     /**
      * Sağlayıcı seçimi. BOŞSA CV ayrıştırma KAPALIDIR (ekranda sebebi gösterilir, elle giriş açık).
      * `fake`: deterministik sahte adaptör; yalnız `local`/`test` (canlıda env doğrulamasını düşürür).
-     * Gerçek sağlayıcı K-04 cevaplanınca ayrı kartla eklenir; `LLM_API_KEY`/`LLM_MODEL` o zaman okunur.
+     * `openai-compatible`: yerel Ollama veya K-04 kapsamında seçilecek uzak sağlayıcı.
      */
-    LLM_PROVIDER: z.preprocess(blankToUndefined, z.enum(['fake']).optional()),
+    LLM_PROVIDER: z.preprocess(blankToUndefined, z.enum(['fake', 'openai-compatible']).optional()),
+    LLM_BASE_URL: optionalText,
     LLM_API_KEY: optionalText,
     LLM_MODEL: optionalText,
     /** Kullanıcı başına günlük ayrıştırma sınırı (docs/security.md "Kötüye kullanım sınırları"). */
@@ -210,6 +211,31 @@ const llmEnvSchema = z
   .superRefine((env, ctx) => {
     if (env.APP_ENV === 'prod' && env.LLM_PROVIDER === 'fake') {
       ctx.addIssue({ code: 'custom', path: ['LLM_PROVIDER'], message: 'LLM_PROVIDER' });
+    }
+    if (env.LLM_PROVIDER === 'openai-compatible') {
+      if (!env.LLM_MODEL?.trim())
+        ctx.addIssue({ code: 'custom', path: ['LLM_MODEL'], message: 'LLM_MODEL' });
+      if (!env.LLM_BASE_URL) {
+        ctx.addIssue({ code: 'custom', path: ['LLM_BASE_URL'], message: 'LLM_BASE_URL' });
+      } else {
+        try {
+          const url = new URL(env.LLM_BASE_URL);
+          if (
+            !['http:', 'https:'].includes(url.protocol) ||
+            url.username ||
+            url.password ||
+            url.search ||
+            url.hash ||
+            (env.APP_ENV === 'prod' &&
+              url.protocol !== 'https:' &&
+              !['localhost', '127.0.0.1'].includes(url.hostname))
+          ) {
+            ctx.addIssue({ code: 'custom', path: ['LLM_BASE_URL'], message: 'LLM_BASE_URL' });
+          }
+        } catch {
+          ctx.addIssue({ code: 'custom', path: ['LLM_BASE_URL'], message: 'LLM_BASE_URL' });
+        }
+      }
     }
   });
 

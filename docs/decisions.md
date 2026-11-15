@@ -1041,6 +1041,7 @@ zorunlu onay beklerken de görünür: görünüm tercihi onaya bağlı değildir
 sabitleri güncellendi. Koyu token'lar `globals.css`'te iki blokta birden (elle ve sistem koyusu) değiştirilir; `contrast.test.ts` sapmayı yakalar (383, R1
 incelemesinde 8 mutantla doğrulandı).
 
+**CV modeli — sağlayıcıdan bağımsız bağlantı (kart 382).** Kullanıcı: “CV ile otomatik doldurma özelliği olmazsa bu uygulamanın pek bir anlamı kalmıyor”. Ücretsiz yerel Ollama ile başlamak ve canlı sağlayıcıyı ortam ayarıyla değiştirebilmek için tek OpenAI uyumlu adaptör kullanılır; gerçek sağlayıcıya yalnız yerelde maskelenmiş metin gider. Canlı sağlayıcı seçimi K-04 kapsamında açıktır.
 ## 2026-11-14 · Kullanıcı kararları: program dili (K-06), veri sorumlusu (K-03), pilot zamanı (K-12)
 
 **K-06, kurum değerleri.** Kullanıcı: “personel e-posta alanı doğru. ybs iktisat fakültesinde. program ingilizce.” Seed'teki değerler

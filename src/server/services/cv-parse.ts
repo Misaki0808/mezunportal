@@ -34,7 +34,7 @@ import {
  */
 
 export type CvParseDeps = Pick<CvDeps, 'db' | 'storage' | 'llm' | 'now' | 'holds'> & {
-  /** Tek LLM çağrısının zaman aşımı (ms); varsayılan 60 sn. */
+  /** Tek LLM çağrısının zaman aşımı (ms); sağlayıcının sınırı veya varsayılan 60 sn. */
   timeoutMs?: number;
   /** LinkedIn PDF için metin portu; yoksa dosya sağlayıcıya iletilmez. */
   pdfTextExtractor?: PdfTextExtractor | null;
@@ -58,10 +58,13 @@ async function callWithTimeout(
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timedOut = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(() => {
-      controller.abort();
-      reject(new LlmError('TIMEOUT'));
-    }, deps.timeoutMs ?? CV_PARSE_TIMEOUT_MS);
+    timer = setTimeout(
+      () => {
+        controller.abort();
+        reject(new LlmError('TIMEOUT'));
+      },
+      deps.timeoutMs ?? llm.timeoutMs ?? CV_PARSE_TIMEOUT_MS,
+    );
   });
   try {
     return await Promise.race([
