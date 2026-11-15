@@ -3,6 +3,7 @@ import { createTestPrisma } from '@/test/db';
 import { cvKit, cvUser, pdfForm, rawForm } from '@/test/cv';
 import { buildFlateBombPdf, buildRealTestPdf } from '@/test/real-pdf';
 import { DEMO_CV_OUTPUT } from '../external/llm/fake';
+import { createOpenAiCompatibleLlm } from '../external/llm/openai-compatible';
 import type { RedactedCvRequest } from '../external/llm/types';
 import { getPdfTextExtractor, withCvTextRedaction } from '../external/pdf-text';
 import { getCvAvailability, uploadCv } from './cv';
@@ -13,6 +14,41 @@ afterAll(() => db.$disconnect());
 const fresh = { retryCount: 0, retryLimit: 0 };
 
 describe('gerçek sağlayıcı sınırı', () => {
+  it.each(['CV', 'LINKEDIN_PDF'] as const)(
+    '%s: gerçek adaptör HTTP gövdesine yalnız maskeli PDF metni girer',
+    async (source) => {
+      const { actor, userId } = await cvUser(db);
+      await db.user.update({ where: { id: userId }, data: { name: 'Suna Karaca' } });
+      const fetchImpl = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(
+          Response.json({ choices: [{ message: { content: JSON.stringify(DEMO_CV_OUTPUT) } }] }),
+        );
+      const kit = cvKit(db, {
+        llm: createOpenAiCompatibleLlm({
+          baseUrl: 'http://127.0.0.1:11434/v1',
+          model: 'test',
+          fetchImpl,
+        }),
+        pdfTextExtractor: withCvTextRedaction(getPdfTextExtractor()),
+      });
+      const availability = await getCvAvailability(kit.deps, actor);
+      expect(availability.available).toBe(true);
+      expect(availability.linkedinPdf).toBe(true);
+      const pdf = buildRealTestPdf(['Suna Karaca suna@example.com SQL']);
+      const upload = await uploadCv(kit.deps, actor, { ...rawForm(pdf), source });
+      expect(await processCvParse(kit.deps, upload.cvUploadId, fresh)).toBe('PARSED');
+      expect(fetchImpl).toHaveBeenCalledOnce();
+      const body = JSON.parse(String(fetchImpl.mock.calls[0]![1]?.body));
+      const outbound = JSON.stringify(body);
+      expect(outbound).not.toContain('Suna');
+      expect(outbound).not.toContain('Karaca');
+      expect(outbound).not.toContain('suna@example.com');
+      expect(outbound).not.toContain('%PDF');
+      expect(body.messages[1].content).toContain('SQL');
+    },
+  );
+
   it.each(['CV', 'LINKEDIN_PDF'] as const)(
     '%s: adı sunucudan alır, yalnız maskeli metni gönderir',
     async (source) => {

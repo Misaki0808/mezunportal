@@ -319,6 +319,7 @@ kuralları değişmez. Aydınlatma metni değiştiğinde sürüm artırılır ve
   referans adı. Kişisel alan adında en az üç harfli ad
   parçası aranır; bu parça şirket alan adıyla çakışırsa alan adı da gizlenebilir. Yapay zekâ yalnız öneri
   üretir; kullanıcı okul adını onay ekranında düzeltebilir.
+- Yerel loopback Ollama kullanıldığında model girdisi bu makineden çıkmaz; uzak sağlayıcıya yalnız yerelde maskelenmiş metin gider. Uzak/canlı sağlayıcı seçimi ve aktarım kararı K-04 kapsamında açık kalır.
 - LLM girdisi ve çıktısı loglanmaz.
 
 ## Kötüye kullanım sınırları

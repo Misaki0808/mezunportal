@@ -213,6 +213,39 @@ describe('CV ayrıştırma / LLM ortamı (parseLlmEnv)', () => {
     expect(parseLlmEnv({ APP_ENV: 'prod' }).LLM_PROVIDER).toBeUndefined();
   });
 
+  it('OpenAI uyumlu sağlayıcı model ve geçerli URL ister; prod yalnız HTTPS veya loopback HTTP', () => {
+    const chosen = {
+      LLM_PROVIDER: 'openai-compatible',
+      LLM_MODEL: 'model',
+      LLM_BASE_URL: 'http://127.0.0.1:11434/v1',
+    };
+    expect(parseLlmEnv({ APP_ENV: 'local', ...chosen }).LLM_API_KEY).toBeUndefined();
+    expect(parseLlmEnv({ APP_ENV: 'prod', ...chosen }).LLM_BASE_URL).toBe(chosen.LLM_BASE_URL);
+    expect(
+      parseLlmEnv({ APP_ENV: 'prod', ...chosen, LLM_BASE_URL: 'http://localhost:11434/v1' }),
+    ).toBeDefined();
+    expect(
+      parseLlmEnv({ APP_ENV: 'prod', ...chosen, LLM_BASE_URL: 'https://provider.example/v1' }),
+    ).toBeDefined();
+    for (const bad of [
+      'http://example.org/v1',
+      'http://localhost.evil.org/v1',
+      'ftp://localhost/v1',
+      'https://name:secret@example.org/v1',
+      'https://provider.example/v1?token=secret',
+    ]) {
+      expect(() => parseLlmEnv({ APP_ENV: 'prod', ...chosen, LLM_BASE_URL: bad })).toThrow(
+        EnvValidationError,
+      );
+    }
+    expect(() => parseLlmEnv({ APP_ENV: 'local', ...chosen, LLM_MODEL: '' })).toThrow(
+      EnvValidationError,
+    );
+    expect(() => parseLlmEnv({ APP_ENV: 'local', ...chosen, LLM_BASE_URL: '' })).toThrow(
+      EnvValidationError,
+    );
+  });
+
   it('bilinmeyen sağlayıcı ve geçersiz günlük sınır reddedilir; hata yalnız değişken adını taşır', () => {
     expect(() => parseLlmEnv({ ...base, LLM_PROVIDER: 'baska' })).toThrow(EnvValidationError);
     for (const bad of ['0', '51', '-1', 'abc', '2.5']) {
