@@ -5,8 +5,9 @@
  * ikinci kez yönetmez). Marka paleti "İris + Mercan" (kullanıcı kararı; İÜ renkleri kullanılmaz):
  * ana renk İris (`primary`), vurgu Mercan-pembe (`accent`; Claude turuncusundan uzak, pembeye yakın),
  * destek Nane (`success`); nötrler sıcak (açık tema krem, koyu tema lacivert).
- * Uyarı/hata renkleri yalnız anlam taşır. Koyu tema aynı adlı token'ları `prefers-color-scheme`
- * ile yeniden tanımlar (bileşenler yalnız token kullanır). Metin/zemin çiftlerinin kontrastı
+ * Uyarı/hata renkleri yalnız anlam taşır. Koyu tema aynı adlı token'ları elle seçimde
+ * (`data-theme='dark'`) ya da sistem koyusunda (`prefers-color-scheme`) yeniden tanımlar
+ * (bileşenler yalnız token kullanır). Metin/zemin çiftlerinin kontrastı
  * `src/lib/contrast.test.ts` ile HER İKİ temada korunur (WCAG AA: normal metin 4.5:1, arayüz
  * sınırı ve büyük metin 3:1). Yeni renk eklenirse o testteki çift listesine de eklenir.
  */
@@ -75,9 +76,65 @@
   --shadow-overlay: 0 10px 30px rgb(29 27 51 / 0.2);
 }
 
-/* Koyu tema: aynı token adları. Ana renk koyu zeminde açılır, üstündeki metin koyudur. */
+/*
+ * Tema: üç durum (docs/design.md). `<html data-theme>` sunucuda `theme` çerezinden yazılır:
+ *  - `system` (varsayılan; çerez yok ya da bozuk): cihazın `prefers-color-scheme` ayarı (aşağıdaki `@media` bloğu),
+ *  - `light`: koyu bloklar uygulanmaz, açık token'lar (`@theme`) kalır,
+ *  - `dark`: elle koyu (aşağıdaki öznitelik seçicili blok).
+ * İki koyu blok BİREBİR aynı değerleri taşır (CSS bir bildirim bloğunu hem medya koşuluna hem öznitelik seçiciye bağlayamaz;
+ * `light-dark()` Safari < 17.5'te bütün token'ları geçersiz kılar). Sapmayı `src/lib/contrast.test.ts` yakalar: değeri
+ * ikisinde de değiştir.
+ */
+/* Koyu tema (elle seçim): aynı token adları. Ana renk koyu zeminde açılır, üstündeki metin koyudur. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  /* Zemin lacivert (#0e1a38; kullanıcı onaylı, 10 Kasım). */
+  --color-bg: #0e1a38;
+  --color-surface: #15254a;
+  --color-surface-strong: #1d315d;
+  --color-overlay: rgb(8 12 30 / 0.65);
+  --color-fg: #f2f4fc;
+  --color-fg-muted: #bcc4e2;
+  --color-fg-subtle: #9ea8cf;
+  --color-border: #30446b;
+  --color-border-control: #8190c4;
+  --color-primary: #a3a3ff;
+  --color-primary-hover: #b8b8ff;
+  --color-on-primary: #0e1a38;
+  --color-primary-soft: #2b3a7a;
+  --color-on-primary-soft: #d4d4ff;
+  --color-accent: #ff8798;
+  --color-accent-hover: #ff9eac;
+  --color-on-accent: #2a0d18;
+  --color-accent-soft: #4a2745;
+  --color-on-accent-soft: #ffc0ca;
+  --color-accent-strong: #ff8798;
+  --color-success: #3dd6c3;
+  --color-success-soft: #10353a;
+  --color-on-success-soft: #8ff0e3;
+  --color-warning: #f5b355;
+  --color-warning-soft: #3a2f1a;
+  --color-on-warning-soft: #fde0a8;
+  --color-danger: #ff7a8a;
+  --color-danger-hover: #ff9aa6;
+  --color-on-danger: #1f0a10;
+  --color-danger-soft: #42203a;
+  --color-on-danger-soft: #ffc2cc;
+  --brand-ink: #f4f2ff;
+  --brand-iris: #a3a3ff;
+  --brand-cap: #a3a3ff;
+  --brand-tassel: #ff8798;
+  --brand-dot: #ff8798;
+  --shadow-card: 0 1px 2px rgb(4 8 24 / 0.4), 0 2px 8px rgb(4 8 24 / 0.35);
+  --shadow-overlay: 0 10px 30px rgb(4 8 24 / 0.6);
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* Koyu tema (sistem): `data-theme` açık değilse cihaz koyuysa aynı değerler. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     color-scheme: dark;
     /* Zemin lacivert (#0e1a38; kullanıcı onaylı, 10 Kasım). */
     --color-bg: #0e1a38;
@@ -121,6 +178,18 @@
   }
 }
 
+/* `dark:` yardımcı sınıfı da aynı kurala bağlıdır: elle koyu YA DA (açık seçilmediyse) sistem koyusu. */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
+  }
+}
+
 @layer base {
   :root {
     color-scheme: light dark;
@@ -157,6 +226,22 @@
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+  }
+
+  /* Tema düğmesine basınca renkler kısa bir geçişle değişir (`setTheme` sınıfı yalnız ~250 ms tutar; ilk boyamada yok).
+     Hareketi azaltan kullanıcıda geçiş hiç yoktur. */
+  @media (prefers-reduced-motion: no-preference) {
+    html.theme-transition,
+    html.theme-transition *,
+    html.theme-transition *::before,
+    html.theme-transition *::after {
+      transition:
+        background-color 180ms ease,
+        color 180ms ease,
+        border-color 180ms ease,
+        fill 180ms ease,
+        stroke 180ms ease;
+    }
   }
 
   /* Hareket bilgi taşımıyorsa azaltılır (docs/design.md) */
