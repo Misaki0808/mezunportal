@@ -42,18 +42,23 @@ beforeEach(() => {
  * (`disabled(pending, …)`); devre dışı düğmeye tıklamak sessizce hiçbir şey yapmaz. Makine yüklüyken test, geçiş bitmeden
  * tıklayabiliyordu: pencere hiç açılmıyor, `<dialog>` çocuksuz kalıyordu (PM kapısı, kart 313). Bu yüzden önce düğmenin
  * etkinleşmesi beklenir.
+ *
+ * Düğme her yoklamada YENİDEN sorgulanır (kart 379): `Button` sebep yazan devre dışı hâlde düğmeyi `<span>` içine sarar,
+ * etkinleşince sarmalayıcıyı bırakır; React düğmeyi yeni bir düğümle değiştirir. Devre dışıyken yakalanan düğüm DOM'dan çıkar ve
+ * sonsuza dek devre dışı kalır; `expect(düğüm).toBeEnabled()` o düğüme bakarsa 1 sn sonra düşer (yük altında sorgu geçişin
+ * ortasına denk gelince; ölçüm: 40 koşuda 2 kırmızı).
  */
 async function clickWhenEnabled(
   user: { click: (element: Element) => Promise<void> },
-  button: HTMLElement,
+  find: () => HTMLElement,
 ) {
-  await waitFor(() => expect(button).toBeEnabled());
-  await user.click(button);
+  await waitFor(() => expect(find()).toBeEnabled(), { timeout: 3000 });
+  await user.click(find());
 }
 async function open() {
   const { user } = renderUi(<StoryAdmin departments={[{ id: 'd1', name: 'YBS' }]} />);
   await user.click(screen.getByRole('button', { name: 'Hikâyeleri göster' }));
-  await clickWhenEnabled(user, await screen.findByRole('button', { name: 'Düzenleme iste' }));
+  await clickWhenEnabled(user, () => screen.getByRole('button', { name: 'Düzenleme iste' }));
   return { user, dialog: within(await screen.findByRole('dialog')) };
 }
 it('boş ret gerekçesinde alan altındaki açıklama ve odak birlikte gelir', async () => {
@@ -95,9 +100,7 @@ it('sonraki hikâyede yayın kapalıysa gerekçeli ret eylemine devam eder', asy
   await user.click(screen.getByRole('button', { name: 'Hikâyeleri göster' }));
   await clickWhenEnabled(
     user,
-    await screen
-      .findAllByRole('button', { name: 'Hikâyeyi onayla' })
-      .then((buttons) => buttons[0]!),
+    () => screen.getAllByRole('button', { name: 'Hikâyeyi onayla' })[0]!,
   );
   await user.click(
     within(await screen.findByRole('dialog')).getByRole('button', { name: 'Kararı onayla' }),
@@ -105,4 +108,20 @@ it('sonraki hikâyede yayın kapalıysa gerekçeli ret eylemine devam eder', asy
   const row = within(screen.getByText('Diğer mezun').closest('li')!);
   await waitFor(() => expect(row.getByRole('button', { name: 'Düzenleme iste' })).toHaveFocus());
   expect(row.getByRole('button', { name: 'Hikâyeyi onayla' })).toBeDisabled();
+});
+
+it('düğme etkinleşirken DOM düğümü yenilense de bekleme taze düğüme tıklar (bayat düğüm yarışı, kart 379)', async () => {
+  let release!: () => void;
+  mocks.list.mockImplementationOnce(
+    () => new Promise((resolve) => (release = () => resolve({ ok: true, data: [] }))),
+  );
+  const { user } = renderUi(<StoryAdmin departments={[{ id: 'd1', name: 'YBS' }]} />);
+  const load = () => screen.getByRole('button', { name: 'Hikâyeleri göster' });
+  await user.click(load());
+  // Yükleme sürerken düğme sebep yazan devre dışı hâldedir; etkinleşince düğüm yenilenir.
+  await waitFor(() => expect(load()).toBeDisabled());
+  const clicking = clickWhenEnabled(user, load);
+  release();
+  await clicking;
+  expect(mocks.list).toHaveBeenCalledTimes(2);
 });
