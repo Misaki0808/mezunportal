@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import { screen, within } from '@testing-library/react';
-import Link from 'next/link';
 import { describe, expect, it } from 'vitest';
-
-import type { HomeSummary } from '@/contracts/home';
 import { renderUi } from '@/test/render';
-
+import type { AppointmentView } from '@/contracts/appointment';
+import type { HomeDashboardProps } from './dashboard';
 import { HomeDashboard } from './dashboard';
+import { HomeStoryBand, type HomePanels } from './widgets';
 
-const base: HomeSummary = {
+const now = new Date('2026-11-16T18:00:00Z');
+const base: HomeDashboardProps['summary'] = {
   firstName: 'Mert',
   role: 'STUDENT',
   pending: {
@@ -20,159 +20,297 @@ const base: HomeSummary = {
   },
   adminPending: null,
 };
-const hrefs = () =>
-  within(screen.getByRole('region', { name: 'Kısayollar' }))
-    .getAllByRole('link')
-    .map((link) => link.getAttribute('href'));
+const panels = (): HomePanels => ({
+  completion: { percent: 60, missing: ['GOALS', 'VISIBILITY'] },
+  appointments: { ok: true, data: { items: [], nextCursor: null } },
+  mentors: { ok: true, data: { items: [] } },
+  jobs: { ok: true, data: [] },
+  settings: { ok: true, data: { eligible: false, settings: null, rules: [] } },
+});
+const show = (props: Partial<HomeDashboardProps> = {}) =>
+  renderUi(<HomeDashboard summary={base} panels={panels()} now={now} {...props} />);
+const actions = () => within(screen.getByRole('navigation', { name: 'Ana sayfa eylemleri' }));
+const appointment = (over: Partial<AppointmentView> = {}): AppointmentView => ({
+  id: 'appt1',
+  status: 'CONFIRMED',
+  role: 'MENTEE',
+  counterpart: { userId: 'mentor1', displayName: 'Bir Mentor' },
+  startsAt: new Date('2026-11-17T07:00:00Z'),
+  endsAt: new Date('2026-11-17T07:20:00Z'),
+  mode: 'ONLINE',
+  note: null,
+  location: null,
+  meetUrl: null,
+  linkNeeded: true,
+  expiresAt: null,
+  decidedAt: now,
+  cancelledBy: null,
+  cancelReason: null,
+  createdAt: now,
+  actions: {
+    canConfirm: false,
+    confirmBlockedReason: null,
+    canDecline: false,
+    canCancel: true,
+    canSetLink: false,
+    canDownloadIcs: true,
+  },
+  ...over,
+});
 
-describe('ana sayfa panosu', () => {
-  it('karşılar; bekleyen iş yoksa bunu söyler ve bekleyen satırı çizmez', () => {
-    renderUi(<HomeDashboard summary={base} />);
-    expect(screen.getByRole('heading', { level: 1, name: 'Merhaba, Mert' })).toBeVisible();
-    expect(screen.getByText('Şu an bekleyen bir işin yok.')).toBeVisible();
-    // Boşken yer kaplamaz: bağlantı yok, eylemler hemen altındaki kısayollardır.
-    const region = screen.getByRole('region', { name: 'Bekleyen işlerin' });
-    expect(within(region).queryByRole('link')).toBeNull();
-  });
-
-  it('karşılamanın altında rolüne göre sıcak tek cümle; bekleyen iş varsa sayıyı söyler', () => {
-    const { unmount } = renderUi(<HomeDashboard summary={base} />);
-    expect(screen.getByText('Staj yolculuğunda bugün ne yapmak istersin?')).toBeVisible();
-    unmount();
-    const { unmount: second } = renderUi(<HomeDashboard summary={{ ...base, role: 'MENTOR' }} />);
-    expect(screen.getByText('Öğrencilere bugün nasıl destek olmak istersin?')).toBeVisible();
-    second();
-    renderUi(
-      <HomeDashboard
-        summary={{ ...base, pending: { ...base.pending, contactRequests: 2, feedbackForms: 1 } }}
-      />,
+describe('A görünümü kişisel pano', () => {
+  it('İstanbul saatinde karşılar, gerçek yüzdeyi ve eksik adımları gösterir; başvuru sayısı uydurmaz', () => {
+    show();
+    expect(screen.getByRole('heading', { level: 1, name: 'İyi akşamlar, Mert' })).toBeVisible();
+    expect(screen.getByRole('progressbar', { name: 'Profil hazırlığı' })).toHaveAttribute(
+      'aria-valuenow',
+      '60',
     );
+    expect(screen.getByRole('region', { name: 'Profilin' })).toHaveTextContent('Hedeflerin');
+    expect(screen.getByRole('region', { name: 'Profilin' })).toHaveTextContent(
+      'Gizlilik tercihlerin',
+    );
+    expect(actions().getByRole('link', { name: 'CV’den profilini doldur' })).toHaveAttribute(
+      'href',
+      '/profil/cv',
+    );
+    expect(screen.queryByText(/Başvurular/)).toBeNull();
+  });
+  it('profil tamamlanınca CV eylemi kalkar; baş eylem mentor dizinine gider', () => {
+    show({ panels: { ...panels(), completion: { percent: 100, missing: [] } } });
+    expect(actions().queryByRole('link', { name: 'CV’den profilini doldur' })).toBeNull();
+    expect(actions().getByRole('link', { name: 'Mentor bul' })).toHaveAttribute(
+      'href',
+      '/mentorlar',
+    );
+    expect(screen.getByText('Başlangıç tercihlerin tamam.')).toBeVisible();
+  });
+  it('boş pilotta görüşme/ilan/mentor önerisi durumları ve rol kısayolları korunur', () => {
+    show();
+    expect(screen.getByText('Henüz planlanmış görüşmen yok.')).toBeVisible();
+    expect(screen.getByText('İlan önerilerini burada göreceksin')).toBeVisible();
+    expect(screen.getByText('Henüz mentor önerin yok')).toBeVisible();
+    expect(screen.getByRole('region', { name: 'Bekleyen işlerin' })).toHaveTextContent(
+      'Şu an bekleyen bir işin yok.',
+    );
+    const shortcuts = within(screen.getByRole('region', { name: 'Kısayollar' }));
+    expect(shortcuts.getByRole('link', { name: /CV incelemesi/ })).toHaveAttribute(
+      'href',
+      '/hesap/cv-inceleme',
+    );
+    expect(screen.queryByRole('region', { name: 'Bir mezunun hikâyesi' })).toBeNull();
+  });
+  it('hata alınan kutu veri yokmuş gibi gösterilmez', () => {
+    show({
+      panels: {
+        ...panels(),
+        completion: null,
+        appointments: { ok: false, errorCode: 'SERVER_UNEXPECTED' },
+        jobs: { ok: false, errorCode: 'SERVER_UNEXPECTED' },
+        mentors: { ok: false, errorCode: 'SERVER_UNEXPECTED' },
+      },
+    });
+    expect(screen.queryByText('Henüz planlanmış görüşmen yok.')).toBeNull();
+    expect(screen.queryByText('Henüz mentor önerin yok')).toBeNull();
+    expect(screen.getAllByRole('alert')).toHaveLength(4);
+    expect(actions().queryByRole('link', { name: 'CV’den profilini doldur' })).toBeNull();
+  });
+  it('sıfır olmayan bekleyen işler sayılarıyla kendi sayfalarına bağlanır', () => {
+    show({
+      summary: { ...base, pending: { ...base.pending, contactRequests: 2, feedbackForms: 1 } },
+    });
     expect(screen.getByText('Seni bekleyen 3 iş var.')).toBeVisible();
-    expect(screen.queryByText('Staj yolculuğunda bugün ne yapmak istersin?')).toBeNull();
-  });
-
-  it('sıradaki adım kutusu karşılamanın ÖNÜNE geçmez (önce selam, sonra kutu)', () => {
-    renderUi(
-      <HomeDashboard summary={base} notice={<Link href="/baslangic">Başlangıca devam et</Link>} />,
+    const pending = within(screen.getByRole('region', { name: 'Bekleyen işlerin' }));
+    expect(pending.getByRole('link', { name: /2 iletişim talebi/ })).toHaveAttribute(
+      'href',
+      '/hesap/iletisim',
     );
-    const heading = screen.getByRole('heading', { level: 1, name: 'Merhaba, Mert' });
-    const notice = screen.getByRole('link', { name: 'Başlangıca devam et' });
-    expect(heading.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
-  it('kod sırası telefon sırasıyla aynı (selam, kutu, hikâye, bekleyenler, kısayollar, yönetim, ilanlar); masaüstünde iki sütuna bölünür', () => {
-    const { container } = renderUi(
-      <HomeDashboard
-        summary={{ ...base, adminPending: 2, pending: { ...base.pending, contactRequests: 1 } }}
-        notice={<Link href="/baslangic">Başlangıca devam et</Link>}
-        feature={<Link href="/hikayeler">Hikâye arşivi</Link>}
-        aside={<p>Sana uyan ilanlar burada</p>}
-      />,
+    expect(pending.getByRole('link', { name: /1 görüşme formu/ })).toHaveAttribute(
+      'href',
+      '/hesap/gorusmeler',
     );
-    const order = [
+    expect(pending.getAllByRole('link')).toHaveLength(2);
+  });
+  it('geçmiş görüşmeyi atlar, ilk gelecekteki onaylı görüşmeyi ve izinli takvim indirmesini gösterir', () => {
+    const next = appointment();
+    show({
+      panels: {
+        ...panels(),
+        appointments: {
+          ok: true,
+          data: {
+            items: [
+              appointment({
+                id: 'past',
+                counterpart: { userId: 'past-user', displayName: 'Geçmiş Kişi' },
+                startsAt: new Date('2026-10-01T07:00Z'),
+              }),
+              next,
+            ],
+            nextCursor: null,
+          },
+        },
+      },
+    });
+    const region = within(screen.getByRole('region', { name: 'Yaklaşan görüşme' }));
+    expect(region.getByRole('heading', { name: 'Bir Mentor ile görüşme' })).toBeVisible();
+    expect(region.getByRole('link', { name: 'Görüşmeyi aç' })).toHaveAttribute(
+      'href',
+      '/randevular/appt1',
+    );
+    expect(region.getByRole('link', { name: 'Takvime ekle' })).toHaveAttribute(
+      'href',
+      '/api/randevu/appt1/ics',
+    );
+    expect(screen.queryByText(/Geçmiş Kişi/)).toBeNull();
+  });
+  it('onaylı görüşmede takvim izni yoksa indirme bağlantısı oluşmaz', () => {
+    const a = appointment();
+    show({
+      panels: {
+        ...panels(),
+        appointments: {
+          ok: true,
+          data: {
+            items: [{ ...a, actions: { ...a.actions, canDownloadIcs: false } }],
+            nextCursor: null,
+          },
+        },
+      },
+    });
+    expect(screen.queryByRole('link', { name: 'Takvime ekle' })).toBeNull();
+  });
+  it('mentor gerçek kapasitesini ve gelen talepleri görür; öğrenciye özel ilan/mentor önerileri yoktur', () => {
+    show({
+      summary: {
+        ...base,
+        role: 'MENTOR',
+        pending: { ...base.pending, appointmentRequests: 3, cvReviewsToAnswer: 1 },
+      },
+      panels: {
+        ...panels(),
+        settings: {
+          ok: true,
+          data: {
+            eligible: true,
+            settings: {
+              monthlyCapacity: 7,
+              sessionMinutes: 20,
+              meetingModes: ['ONLINE'],
+              inPersonNote: null,
+              isActive: true,
+              pausedUntil: null,
+            },
+            rules: [],
+          },
+        },
+      },
+    });
+    expect(actions().getByRole('link', { name: 'Gelen talepleri gör' })).toHaveAttribute(
+      'href',
+      '/randevular',
+    );
+    expect(screen.getByRole('region', { name: 'Bu ayki kapasiten' })).toHaveTextContent('7');
+    expect(screen.queryByRole('region', { name: 'Sana uygun ilanlar' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Mentorlar' })).toBeNull();
+    expect(
+      within(screen.getByRole('region', { name: 'Kısayollar' })).getByRole('link', {
+        name: /CV incelemeleri/,
+      }),
+    ).toHaveAttribute('href', '/hesap/cv-inceleme');
+  });
+  it('mentor olmayan yönetici yanlış mentor ayarına gönderilmez; yönetim sayısı korunur', () => {
+    show({ summary: { ...base, role: 'MENTOR', adminPending: 4 } });
+    expect(actions().getByRole('link', { name: 'İncelemelere git' })).toHaveAttribute(
+      'href',
+      '/yonetim',
+    );
+    expect(screen.getByText('4 iş inceleme bekliyor')).toBeVisible();
+    expect(screen.queryByRole('region', { name: 'Bu ayki kapasiten' })).toBeNull();
+  });
+  it('ilan ve mentor satırları yalnız sunucudaki önerileri, gerçek rotaları ve kamusal adları kullanır', () => {
+    show({
+      panels: {
+        ...panels(),
+        jobs: {
+          ok: true,
+          data: [{ id: 'job1', title: 'Bir Staj', organizationName: 'Örnek Kurum' }],
+        },
+        mentors: {
+          ok: true,
+          data: {
+            items: [
+              {
+                reasons: [],
+                mentor: {
+                  userId: 'm1',
+                  displayName: 'Önerilen Mentor',
+                  headline: null,
+                  mentorType: 'ALUMNI',
+                  departmentName: 'YBS',
+                  graduationYear: null,
+                  position: null,
+                  sectorName: null,
+                  topics: [],
+                  skills: [],
+                  availability: { available: true, reason: null, pausedUntil: null },
+                  capacity: { monthly: 3, used: 1, remaining: 2 },
+                  sessionMinutes: 20,
+                  meetingModes: ['ONLINE'],
+                  cvReviewEnabled: false,
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+    expect(screen.getByRole('link', { name: /Bir Staj/ })).toHaveAttribute('href', '/ilanlar/job1');
+    expect(screen.getByRole('link', { name: /Önerilen Mentor/ })).toHaveAttribute(
+      'href',
+      '/uye/m1',
+    );
+  });
+  it('bildirim ve hikâye başlıktan sonra gelir; telefonun okuma sırası ızgaradan bağımsızdır', () => {
+    show({
+      notice: <a href="/baslangic">Başlangıca devam et</a>,
+      feature: <a href="/hikayeler">Hikâye arşivi</a>,
+    });
+    const elements = [
       screen.getByRole('heading', { level: 1 }),
       screen.getByRole('link', { name: 'Başlangıca devam et' }),
+      screen.getByRole('region', { name: 'Yaklaşan görüşme' }),
+      screen.getByRole('region', { name: 'Profilin' }),
+      screen.getByRole('region', { name: 'Sana uygun ilanlar' }),
+      screen.getByRole('region', { name: 'Mentorlar' }),
       screen.getByRole('link', { name: 'Hikâye arşivi' }),
-      screen.getByRole('region', { name: 'Bekleyen işlerin' }),
-      screen.getByRole('region', { name: 'Kısayollar' }),
-      screen.getByRole('link', { name: /Yönetim/ }),
-      screen.getByText('Sana uyan ilanlar burada'),
     ];
-    for (let i = 1; i < order.length; i += 1) {
+    for (let i = 1; i < elements.length; i++)
       expect(
-        order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING,
+        elements[i - 1]!.compareDocumentPosition(elements[i]!) & Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
-    }
-    // Sol sütun: selam → bekleyenler; sağ sütun: kısayollar → yönetim → ilanlar (≥1024 px'te yan yana).
-    const [left, right] = Array.from(container.firstElementChild!.children);
-    expect(left).toContainElement(order[3]!);
-    expect(left).not.toContainElement(order[4]!);
-    expect(right).toContainElement(order[4]!);
-    expect(right).toContainElement(order[6]!);
-    expect(container.firstElementChild).toHaveClass('lg:grid-cols-2');
   });
-
-  it('mentorda da sağ sütun doludur (kısayollar sağda); ilan paneli yoksa yalnız aside boş kalır', () => {
-    const { container } = renderUi(<HomeDashboard summary={{ ...base, role: 'MENTOR' }} />);
-    const right = container.firstElementChild!.children[1]!;
-    expect(right).toContainElement(screen.getByRole('region', { name: 'Kısayollar' }));
+  it('ad boşsa selamda virgül/boş ad bırakmaz', () => {
+    show({ summary: { ...base, firstName: '' } });
+    expect(screen.getByRole('heading', { level: 1, name: 'İyi akşamlar' })).toBeVisible();
   });
-
-  it('ad boşsa yalnız "Merhaba" der', () => {
-    renderUi(<HomeDashboard summary={{ ...base, firstName: '' }} />);
-    expect(screen.getByRole('heading', { level: 1, name: 'Merhaba' })).toBeVisible();
-  });
-
-  it('yalnız sıfırdan büyük bekleyen işler listelenir ve doğru sayfaya gider', () => {
+  it('hikâye bandı görünür rızalı veriyi metin olarak çizer, ayrıntı kimliğini kaçırır', () => {
     renderUi(
-      <HomeDashboard
-        summary={{
-          ...base,
-          role: 'MENTOR',
-          pending: {
-            contactRequests: 1,
-            cvReviewsToAnswer: 3,
-            cvReviewsToRate: 0,
-            feedbackForms: 2,
-            appointmentRequests: 0,
-          },
+      <HomeStoryBand
+        story={{
+          id: 'x/y',
+          name: 'Mezun',
+          department: 'YBS',
+          month: '2026-11',
+          body: '<img src=x onerror=alert(1)> Bir hikâye.',
         }}
       />,
     );
-    const region = screen.getByRole('region', { name: 'Bekleyen işlerin' });
-    const links = within(region).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual([
-      '1 iletişim talebi yanıtını bekliyor→',
-      '3 CV inceleme talebi yanıtını bekliyor→',
-      '2 görüşme formu seni bekliyor→',
-    ]);
-    expect(links.map((link) => link.getAttribute('href'))).toEqual([
-      '/hesap/iletisim',
-      '/hesap/cv-inceleme',
-      '/hesap/gorusmeler',
-    ]);
-    expect(screen.queryByText('Şu an bekleyen bir işin yok.')).not.toBeInTheDocument();
-  });
-
-  it('değerlendirme bekleyen CV incelemesi öğrenciye gösterilir', () => {
-    renderUi(
-      <HomeDashboard summary={{ ...base, pending: { ...base.pending, cvReviewsToRate: 1 } }} />,
+    expect(screen.getByRole('link', { name: 'Hikâyeyi oku' })).toHaveAttribute(
+      'href',
+      '/hikayeler/x%2Fy',
     );
-    expect(screen.getByText('1 CV incelemesi değerlendirmeni bekliyor')).toBeVisible();
+    expect(screen.getByText('<img src=x onerror=alert(1)> Bir hikâye.')).toBeVisible();
+    expect(document.querySelector('img')).toBeNull();
   });
-
-  it('kısayollar rol bazlıdır (öğrenci: mentor bul + CV incelemesi; mentor: gelen CV talepleri + profil)', () => {
-    const { unmount } = renderUi(<HomeDashboard summary={base} />);
-    expect(hrefs()).toEqual(['/deneyimler', '/mentorlar', '/hesap/cv-inceleme', '/deneyim/yeni']);
-    expect(screen.getByRole('link', { name: /Mentor bul/ })).toBeVisible();
-    unmount();
-    renderUi(<HomeDashboard summary={{ ...base, role: 'MENTOR' }} />);
-    expect(hrefs()).toEqual(['/deneyimler', '/hesap/cv-inceleme', '/deneyim/yeni', '/profil']);
-    expect(screen.queryByRole('link', { name: /Mentor bul/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /CV incelemeleri/ })).toBeVisible();
-  });
-
-  it("SSS ve randevu kısayolu henüz yok (main'de ekranı yok)", () => {
-    renderUi(<HomeDashboard summary={base} />);
-    expect(document.body.textContent).not.toMatch(/SSS|Randevu/);
-  });
-
-  it('Yönetim satırı yalnız yöneticide; sayı yoksa "Bekleyen iş yok" der', () => {
-    const { unmount } = renderUi(<HomeDashboard summary={base} />);
-    expect(screen.queryByRole('link', { name: /Yönetim/ })).not.toBeInTheDocument();
-    unmount();
-    renderUi(<HomeDashboard summary={{ ...base, adminPending: 0 }} />);
-    expect(screen.getByRole('link', { name: /Yönetim/ })).toHaveAttribute('href', '/yonetim');
-    expect(screen.getByText('Bekleyen iş yok')).toBeVisible();
-  });
-});
-
-it('bekleyen iş yoksa mentor için eylem yine kısayollardadır (deneyim paylaş, profil)', () => {
-  renderUi(<HomeDashboard summary={{ ...base, role: 'MENTOR' }} />);
-  const shortcuts = within(screen.getByRole('region', { name: 'Kısayollar' }));
-  expect(shortcuts.getByRole('link', { name: /Deneyim yaz/ })).toHaveAttribute(
-    'href',
-    '/deneyim/yeni',
-  );
-  expect(shortcuts.getByRole('link', { name: /Profil/ })).toHaveAttribute('href', '/profil');
 });
