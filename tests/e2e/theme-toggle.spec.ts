@@ -153,7 +153,9 @@ test.describe('geniş ekran (1440 px)', () => {
     const toggles = page.getByRole('button', { name: 'Koyu temaya geç' });
     await expect(toggles).toHaveCount(1);
     // Lacivert yan menüde düğme yok: bilgisayar üst çubuğunda.
-    await expect(page.locator('aside').getByRole('button')).toHaveCount(0);
+    await expect(
+      page.getByRole('navigation', { name: 'Yan menü' }).getByRole('button'),
+    ).toHaveCount(0);
     await toggles.click();
     await expect.poll(() => attr(page)).toBe('dark');
     await expectBg(page, DARK);
