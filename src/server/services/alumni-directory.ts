@@ -8,6 +8,7 @@ import { errorForDenyReason } from '../permissions/guards';
 import { evaluateAccess } from '../rules/authorization';
 import { normalizeName } from '../rules/dictionary';
 import { notSuspended } from './mentor-directory';
+import { skillTagIdentity } from './profile-skills';
 import { viewerUniversityIds } from './search';
 
 const PAGE_SIZE = 24;
@@ -34,7 +35,7 @@ export async function searchAlumni(
             skillName,
             ...(dictionarySkill ? [dictionarySkill.name, ...dictionarySkill.aliases] : []),
           ]
-            .map((name) => normalizeName(name, 'SKILL'))
+          .map((name) => skillTagIdentity(name).slug)
             .filter(Boolean),
         ),
       ]
