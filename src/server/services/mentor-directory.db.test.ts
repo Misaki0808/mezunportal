@@ -212,6 +212,28 @@ async function moderatorId() {
 
 // =============================================================================================
 describe('görünürlük', () => {
+  it('genel arama adı, şirketi veya unvanı eşleştirir; kapsamı ve diğer filtreleri genişletmez, LIKE karakterleri düz metindir', async () => {
+    const scope = await createInstitution(db);
+    const viewer = await member(scope.deptA1);
+    const needle = tag();
+    const byName = await mentor({ departmentId: scope.deptA1, name: `${needle} İsim` });
+    const byCompany = await mentor({ departmentId: scope.deptA1 });
+    const byTitle = await mentor({ departmentId: scope.deptA1, role: 'ACADEMIC' });
+    const foreign = await mentor({ departmentId: other.deptA1, name: `${needle} Yabancı` });
+    const banned = await mentor({ departmentId: scope.deptA1, name: `${needle} Askılı` });
+    const literal = await mentor({ departmentId: scope.deptA1, name: `${needle} %_\\ özel` });
+    await db.user.update({ where: { id: banned }, data: { banned: true } });
+    await position(byCompany, { companyRaw: `${needle} Şirket` });
+    await position(byTitle, { titleRaw: `${needle} Unvan` });
+    expect(ids(await search(viewer, { q: needle }))).toEqual(
+      expect.arrayContaining([byName, byCompany, byTitle]),
+    );
+    expect(ids(await search(viewer, { q: needle }))).not.toEqual(expect.arrayContaining([foreign]));
+    expect(ids(await search(viewer, { q: needle }))).not.toContain(banned);
+    expect(ids(await search(viewer, { q: needle, mentorTypes: ['ACADEMIC'] }))).toEqual([byTitle]);
+    expect(ids(await search(viewer, { q: '%_' }))).toEqual([literal]);
+    expect(ids(await search(viewer, { q: '_\\' }))).toEqual([literal]);
+  });
   it('yalnız görünür mentor listelenir: etkin profil, geçerli hesap, doğrulanmış etkin üyelik, aynı üniversite; kendisi hariç', async () => {
     const viewer = await member();
     const visible = await mentor();

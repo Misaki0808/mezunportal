@@ -375,6 +375,27 @@ describe('mentor dizini', () => {
     expect(router.push).toHaveBeenCalledWith('/mentorlar?mentorTypes=ALUMNI&onlyAvailable=1');
   });
 
+  it('genel aramayı URL’ye taşır ve yazılmış sorguyu hızlı filtreyle korur', async () => {
+    const { user } = renderUi(
+      <MentorDirectory
+        filter={{ page: 3 }}
+        results={page([mentor()])}
+        sectors={sectors}
+        similar={null}
+      />,
+    );
+    await user.type(screen.getByRole('searchbox', { name: 'Mentor ara' }), 'Ayşe');
+    await user.click(
+      within(screen.getByRole('group', { name: 'Filtreler' })).getByRole('button', {
+        name: 'Mezun',
+      }),
+    );
+    expect(router.push).toHaveBeenCalledWith('/mentorlar?q=Ay%C5%9Fe&mentorTypes=ALUMNI');
+    router.push.mockClear();
+    await user.click(screen.getByRole('button', { name: 'Ara' }));
+    expect(router.push).toHaveBeenCalledWith('/mentorlar?q=Ay%C5%9Fe');
+  });
+
   it('mobil alt sayfada seçilen filtreler Uygula ile kanonik URL’ye yazılır; Vazgeç taslağı geri alır', async () => {
     const { user } = renderUi(
       <MentorDirectory filter={{}} results={page([mentor()])} sectors={sectors} similar={null} />,

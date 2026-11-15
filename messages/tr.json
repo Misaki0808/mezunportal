@@ -429,6 +429,9 @@
     "title": "Mentor bul",
     "description": "Mezun, akademisyen ve üst sınıf mentorlar burada. Müsait olanları süzüp randevu ya da iletişim isteyebilirsin.",
     "resultsHeading": "Mentorlar",
+    "search": "Mentor ara",
+    "searchPlaceholder": "Ad, şirket veya unvan ara",
+    "searchButton": "Ara",
     "filters": {
       "mentorTypes": "Mentor türü",
       "sector": "Sektör",

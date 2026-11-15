@@ -31,6 +31,7 @@ import {
 } from '@/components/ui';
 import type { ActiveFilter } from '@/components/directory/filter-shell';
 import { FilterChip } from '@/components/directory/filter-chip';
+import { SearchBar } from '@/components/directory/search-bar';
 
 import { MentorCard } from './mentor-card';
 import { SimilarMentors as SimilarSection } from './similar-mentors';
@@ -65,6 +66,7 @@ export function MentorDirectory({
   const [invalid, setInvalid] = useState(false);
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState(filter.q ?? '');
 
   const href = (next: Filter) => {
     const params = mentorFilterToParams(next).toString();
@@ -103,6 +105,18 @@ export function MentorDirectory({
         : experienceTypes(value as 'INTERNSHIP');
 
   const active: ActiveFilter[] = [
+    ...(filter.q
+      ? [
+          {
+            key: 'q',
+            label: filter.q,
+            onRemove: () => {
+              setQuery('');
+              go({ ...filter, q: undefined, page: 1 });
+            },
+          },
+        ]
+      : []),
     ...(['mentorTypes', 'experienceTypes', 'meetingModes'] as const).flatMap((key) =>
       ((filter[key] ?? []) as string[]).map((value) => ({
         key: `${key}-${value}`,
@@ -268,6 +282,7 @@ export function MentorDirectory({
               : [...current, value as (typeof MENTOR_TYPES)[number]],
             page: 1,
           };
+    next.q = query.trim() || undefined;
     if (next.mentorTypes?.length === 0) next.mentorTypes = undefined;
     setDraft(next);
     go(next);
@@ -279,18 +294,39 @@ export function MentorDirectory({
     setOpen(false);
   };
   const apply = () => {
-    if (go({ ...draft, page: 1 })) setOpen(false);
+    if (go({ ...draft, q: query.trim() || undefined, page: 1 })) setOpen(false);
   };
   const clear = () => {
+    setQuery('');
     setDraft({});
     go({});
   };
   return (
     <div className="w-full max-w-[1280px] px-4 pb-12 pt-6 sm:px-6 lg:pt-8">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
-      <div className="mt-6 flex min-w-0 items-start gap-2">
+      <div className="mt-6 flex min-w-0 flex-wrap items-start gap-2">
+        <SearchBar
+          className="min-w-0 flex-[1_1_18rem] !rounded-none !border-0 !bg-transparent !p-0 !shadow-none"
+          label={t('search')}
+          hint={t('searchPlaceholder')}
+          submitLabel={t('searchButton')}
+          error={invalid && query.trim().length === 1 ? t('filters.invalid') : undefined}
+          pendingReason={pending ? directory('loading') : undefined}
+          onSubmit={(event) => {
+            event.preventDefault();
+            go({ ...filter, q: query.trim() || undefined, page: 1 });
+          }}
+          input={{
+            value: query,
+            maxLength: 100,
+            onChange: (event) => {
+              setQuery(event.target.value);
+              setInvalid(false);
+            },
+          }}
+        />
         <div
-          className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-2"
+          className="flex min-w-0 flex-[2_1_34rem] items-center gap-2 overflow-x-auto pb-2"
           role="group"
           aria-label={directory('filters')}
         >
@@ -323,7 +359,12 @@ export function MentorDirectory({
                 value={filter.sectorId ?? ''}
                 disabled={pending}
                 onChange={(event) => {
-                  const next = { ...filter, sectorId: event.target.value || undefined, page: 1 };
+                  const next = {
+                    ...filter,
+                    q: query.trim() || undefined,
+                    sectorId: event.target.value || undefined,
+                    page: 1,
+                  };
                   setDraft(next);
                   go(next);
                 }}
