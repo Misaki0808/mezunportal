@@ -285,6 +285,7 @@ describe('A görünümü kişisel pano', () => {
       screen.getByRole('region', { name: 'Sana uygun ilanlar' }),
       screen.getByRole('region', { name: 'Mentorlar' }),
       screen.getByRole('link', { name: 'Hikâye arşivi' }),
+      screen.getByRole('region', { name: 'Kısayollar' }),
     ];
     for (let i = 1; i < elements.length; i++)
       expect(

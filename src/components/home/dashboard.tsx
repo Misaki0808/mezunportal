@@ -232,6 +232,7 @@ export function HomeDashboard({
             </div>
           </>
         ) : null}
+        {student && feature && <div className="min-w-0 lg:col-span-12">{feature}</div>}
         <Card
           as="section"
           aria-labelledby="home-pending"
@@ -292,7 +293,7 @@ export function HomeDashboard({
             ))}
           </ul>
         </Card>
-        {feature && <div className="min-w-0 lg:col-span-12">{feature}</div>}
+        {!student && feature && <div className="min-w-0 lg:col-span-12">{feature}</div>}
       </div>
     </div>
   );
