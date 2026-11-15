@@ -33,11 +33,11 @@ for (const [viewportName, viewport] of VIEWPORTS) {
               await scan(page, route, 'light'),
               `açık tema karşıtlık hataları: ${persona} ${route}`,
             ).toEqual([]);
-            // Elle açık seçim, koyu sistemde de gerçekten açık çizer (zemin açık krem, koyu lacivert değil).
+            // Elle açık seçim, koyu sistemde de gerçekten açık çizer (zemin açık kâğıt, koyu lacivert değil).
             expect(
               await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
               `zemin açık olmalı: ${route}`,
-            ).toBe('rgb(255, 250, 244)');
+            ).toBe('rgb(244, 245, 250)');
           }
         });
       }
