@@ -18,6 +18,7 @@ import {
   Input,
   PageHeader,
   Sheet,
+  Skeleton,
   buttonClasses,
 } from '@/components/ui';
 
@@ -216,7 +217,14 @@ export function AlumniDirectory({
               ))}
           </div>
         )}
-        {results.items.length === 0 && results.total > 0 && filter.page > 1 ? (
+        {pending ? (
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3" role="status">
+            <span className="sr-only">{t('loading')}</span>
+            <Skeleton className="h-48" />
+            <Skeleton className="h-48" />
+            <Skeleton className="h-48" />
+          </div>
+        ) : results.items.length === 0 && results.total > 0 && filter.page > 1 ? (
           <EmptyState
             title={t('pageEmpty')}
             description={t('pageEmptyDescription')}
