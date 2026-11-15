@@ -77,6 +77,7 @@ export function HomeDashboard({
   const total = pending.reduce((sum, item) => sum + item.count, 0);
   const student = summary.role === 'STUDENT';
   const canMentor = panels.settings?.ok && panels.settings.data.eligible;
+  const showCapacity = !student && (canMentor || !panels.settings?.ok);
   const incomplete = panels.completion !== null && panels.completion.percent < 100;
   const next = panels.appointments?.ok
     ? panels.appointments.data.items.find(
@@ -236,7 +237,7 @@ export function HomeDashboard({
         <Card
           as="section"
           aria-labelledby="home-pending"
-          className="min-w-0 bg-surface lg:col-span-7"
+          className={`min-w-0 bg-surface ${student || showCapacity ? 'lg:col-span-7' : 'lg:col-span-12'}`}
         >
           <h2 id="home-pending" className="font-heading text-lg font-bold">
             {t('pendingTitle')}
@@ -264,7 +265,7 @@ export function HomeDashboard({
             </p>
           )}
         </Card>
-        {!student && (canMentor || !panels.settings?.ok) && (
+        {showCapacity && (
           <div className="min-w-0 lg:col-span-5">
             <MentorCapacityPanel result={panels.settings} />
           </div>
