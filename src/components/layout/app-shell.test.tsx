@@ -188,3 +188,45 @@ it.each(['/giris', '/giris/epostani-kontrol-et', '/giris/test'])(
     }
   },
 );
+
+describe('AppShell: tema düğmesi (kart 383)', () => {
+  const buttons = () => screen.queryAllByRole('button', { name: /temaya geç/ });
+
+  it('oturumlu kabukta hem mobil üst çubukta hem yan menüde, oturumsuzda da vardır', () => {
+    renderUi(<AppShell signedIn>x</AppShell>);
+    // Biri `lg:hidden` üst çubukta, biri yalnız geniş ekranda görünen yan menüde (jsdom CSS uygulamaz: ikisi de DOM'da).
+    expect(buttons()).toHaveLength(2);
+    expect(buttons()[0]!.closest('header')).not.toBeNull();
+    expect(buttons()[1]!.closest('aside')).not.toBeNull();
+  });
+
+  it('giriş yapmamış (tanıtım dışı) sayfada da vardır', () => {
+    navigation.pathname = '/hukuki/aydinlatma';
+    try {
+      renderUi(<AppShell>x</AppShell>);
+      expect(buttons()).toHaveLength(2);
+    } finally {
+      navigation.pathname = '/';
+    }
+  });
+
+  it('giriş ekranının sade üst çubuğunda da vardır', () => {
+    navigation.pathname = '/giris';
+    try {
+      renderUi(<AppShell>x</AppShell>);
+      expect(buttons()).toHaveLength(1);
+      expect(buttons()[0]!.closest('header')).not.toBeNull();
+    } finally {
+      navigation.pathname = '/';
+    }
+  });
+
+  it('girişsiz tanıtım sayfası kendi düzenini sunar (düğmeyi tanıtımın kendisi taşır)', () => {
+    renderUi(
+      <AppShell>
+        <main>Karşılama</main>
+      </AppShell>,
+    );
+    expect(buttons()).toHaveLength(0);
+  });
+});

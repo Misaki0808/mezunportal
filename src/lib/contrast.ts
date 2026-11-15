@@ -47,10 +47,32 @@ export function readColorTokens(css: string): Record<string, string> {
   return tokensIn(blockAfter(css, '@theme'));
 }
 
-/** Koyu tema: açık temanın üstüne `prefers-color-scheme: dark` bloğundaki geçersiz kılmalar. */
+/** Koyu tema (elle seçim, `:root[data-theme='dark']`): açık temanın üstüne geçersiz kılmalar. */
 export function readDarkColorTokens(css: string): Record<string, string> {
   return {
     ...readColorTokens(css),
-    ...tokensIn(blockAfter(css, '@media (prefers-color-scheme: dark)')),
+    ...tokensIn(blockAfter(css, ":root[data-theme='dark']")),
   };
+}
+
+/** Bir bloktaki bütün özel özellikler (`--x`) ve `color-scheme`; boşluk ve yorumlar atılır. */
+export function declarationsIn(block: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const clean = block.replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const match of clean.matchAll(/(--[a-z0-9-]+|color-scheme)\s*:\s*([^;]+);/g)) {
+    const [, name, value] = match;
+    if (name && value) out[name] = value.replace(/\s+/g, ' ').trim();
+  }
+  return out;
+}
+
+/** Elle koyu bloğun bildirimleri. */
+export function readManualDarkDeclarations(css: string): Record<string, string> {
+  return declarationsIn(blockAfter(css, ":root[data-theme='dark']"));
+}
+
+/** Sistem koyusu (`@media (prefers-color-scheme: dark)` içindeki `:root:not([data-theme='light'])`) bildirimleri. */
+export function readSystemDarkDeclarations(css: string): Record<string, string> {
+  const media = blockAfter(css, '@media (prefers-color-scheme: dark)');
+  return declarationsIn(blockAfter(media, ':root'));
 }
