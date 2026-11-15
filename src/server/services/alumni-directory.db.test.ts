@@ -1,0 +1,76 @@
+import { randomUUID } from 'node:crypto';
+import { afterAll, expect, it } from 'vitest';
+import { alumniSearchSchema } from '@/contracts/alumni-directory';
+import { createTestPrisma } from '@/test/db';
+import { addMembership, createInstitution, createUser } from '@/test/fixtures';
+import { loadActor } from '../permissions/actor';
+import { searchAlumni } from './alumni-directory';
+
+const db = createTestPrisma();
+afterAll(() => db.$disconnect());
+it('yalnız aynı üniversitedeki katılmış ve doğrulanmış mezunu döndürür; süzgeçler daraltır ve iletişim alanları yanıta girmez', async () => {
+  const one = await createInstitution(db);
+  const other = await createInstitution(db);
+  const viewer = await createUser(db);
+  await addMembership(db, {
+    userId: viewer,
+    departmentId: one.deptA1,
+    role: 'STUDENT',
+    entryYear: 2020,
+  });
+  const mk = async (departmentId: string, visible: boolean, name: string) => {
+    const userId = await createUser(db, { name });
+    await addMembership(db, { userId, departmentId, role: 'ALUMNI', graduationYear: 2021 });
+    await db.profile.create({
+      data: { userId, alumniDirectoryVisible: visible, city: 'İstanbul' },
+    });
+    return userId;
+  };
+  const key = randomUUID().slice(0, 8);
+  const visible = await mk(one.deptA1, true, `Havacı ${key}`);
+  const hidden = await mk(one.deptA1, false, `Havacı ${key}`);
+  const foreign = await mk(other.deptA1, true, `Havacı ${key}`);
+  const defense = await mk(one.deptA1, true, `Havacı ${key}`);
+  const aviation = await db.sector.create({
+    data: { name: `Havacılık ${key}`, normalizedName: `havacilik ${key}` },
+  });
+  const military = await db.sector.create({
+    data: { name: `Savunma ${key}`, normalizedName: `savunma ${key}` },
+  });
+  for (const [id, sectorId] of [
+    [visible, aviation.id],
+    [hidden, aviation.id],
+    [foreign, aviation.id],
+    [defense, military.id],
+  ]) {
+    await db.position.create({
+      data: {
+        userId: id!,
+        sectorId,
+        companyRaw: `Hava ${key}`,
+        titleRaw: 'Analist',
+        source: 'MANUAL',
+      },
+    });
+  }
+  const actor = (await loadActor(db, viewer, new Date()))!;
+  const get = (filter: object) => searchAlumni(db, actor, alumniSearchSchema.parse(filter));
+  const result = await get({
+    q: key,
+    sectorId: aviation.id,
+    company: 'Hava',
+    title: 'Analist',
+    city: 'İstanbul',
+    graduationFrom: 2020,
+    graduationTo: 2022,
+  });
+  expect(result.items.map((item) => item.userId)).toEqual([visible]);
+  expect(JSON.stringify(result)).not.toMatch(/email|phone|linkedin|socialLinks/i);
+  expect((await get({ q: key, sectorId: military.id })).items.map((item) => item.userId)).toEqual([
+    defense,
+  ]);
+  expect((await get({ q: key, graduationTo: 2020 })).total).toBe(0);
+  expect((await get({ q: '%%' })).total).toBe(0);
+  await db.profile.update({ where: { userId: visible }, data: { alumniDirectoryVisible: false } });
+  expect((await get({ q: key, sectorId: aviation.id })).total).toBe(0);
+});

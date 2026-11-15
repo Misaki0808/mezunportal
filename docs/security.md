@@ -199,6 +199,11 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
 
 ## KVKK
 
+Mezun rehberi tercihi varsayılan kapalıdır; açma ve kapama yalnız hesap sahibinin işlemidir. Yalnız aynı
+üniversiteden doğrulanmış etkin üyeler, tercihi açık ve etkin mezunların adını ve mesleki kart bilgilerini görür.
+E-posta, telefon ve sosyal bağlantılar rehber yanıtında bulunmaz; mevcut alan görünürlüğü ve iletişim talebi
+kuralları değişmez. Aydınlatma metni değiştiğinde sürüm artırılır ve güncel onay yeniden alınır.
+
 - **Veri sorumlusu** K-03 ile netleşir; aydınlatma metni buna göre yazılır, son halini
   hoca/üniversite onaylar.
 - **Rızalar sürümlüdür ve yalnız eklenir.** Kayıtta aydınlatma metni ve kullanım şartları

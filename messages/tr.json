@@ -424,6 +424,40 @@
     "firstPage": "İlk sayfaya dön",
     "loading": "Sonuçlar yükleniyor"
   },
+  "alumniDirectory": {
+    "eyebrow": "MEZUNLAR",
+    "titlePage": "Mezunları keşfet",
+    "description": "Rehberde görünmeyi seçen mezunları sektör ve deneyimlerine göre keşfet.",
+    "search": "Mezun ara",
+    "searchHint": "Ad, şirket veya unvan ara",
+    "searchButton": "Ara",
+    "invalid": "Arama alanlarına en az 2 karakter ve geçerli yıl aralığı gir.",
+    "loading": "Sonuçlar yükleniyor.",
+    "sector": "Sektör",
+    "all": "Tümü",
+    "filters": "Diğer filtreler",
+    "apply": "Filtreleri uygula",
+    "company": "Şirket",
+    "title": "Unvan",
+    "skill": "Beceri",
+    "city": "Şehir",
+    "graduationFrom": "Mezuniyet yılı (en erken)",
+    "graduationTo": "Mezuniyet yılı (en geç)",
+    "count": "{count} mezun",
+    "empty": "Bu filtrelerle mezun bulunamadı",
+    "emptyDescription": "Filtreleri değiştirerek yeniden deneyebilirsin.",
+    "clear": "Filtreleri temizle",
+    "graduated": "{year} mezunu",
+    "contact": "İletişim iste: {name}",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "visibilityTitle": "Mezun rehberi",
+    "visibilityDescription": "Açarsan adın ve profilindeki iş bilgilerin yalnız aynı üniversitedeki doğrulanmış üyelere rehberde görünür. İletişim bilgilerinin paylaşımı mevcut gizlilik tercihlerin ve talep onayına bağlıdır. İstediğin zaman kapatabilirsin.",
+    "visibilityLabel": "Mezun rehberinde görün",
+    "unchanged": "Değişiklik yapıldığında kaydedebilirsin.",
+    "save": "Kaydet",
+    "saved": "Tercihin kaydedildi."
+  },
   "mentors": {
     "eyebrow": "MENTORLAR",
     "title": "Mentor bul",
@@ -1594,7 +1628,7 @@
           },
           "section3": {
             "title": "3. İşleme amaçları",
-            "body": "Üyeliğin doğrulanması; profil oluşturma; öğrencilerin mentor ve deneyimlere erişimi; randevu düzenlenmesi; moderasyon ve platform güvenliği; bölümün mezun takibi için toplu ve kimliksiz raporlar; bildirim gönderimi."
+            "body": "Üyeliğin doğrulanması; profil oluşturma; öğrencilerin mentor ve deneyimlere erişimi; randevu düzenlenmesi; moderasyon ve platform güvenliği; bölümün mezun takibi için toplu ve kimliksiz raporlar; bildirim gönderimi. Mezun rehberini açmayı seçenlerin adı ve mesleki profil bilgileri aynı üniversitenin doğrulanmış üyelerinin erişimine sunulur; bu tercih istenildiğinde kapatılabilir."
           },
           "section4": {
             "title": "4. Hukuki sebepler",

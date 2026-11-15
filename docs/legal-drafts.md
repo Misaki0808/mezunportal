@@ -23,7 +23,7 @@ Kurallar:
 
 ## §1 Aydınlatma metni
 
-Sürüm: taslak-1 · Durum: **HOCA / HUKUK ONAYI BEKLİYOR**
+Sürüm: taslak-2 · Durum: **HOCA / HUKUK ONAYI BEKLİYOR**
 
 ### 1. Veri sorumlusu
 [K-03: veri sorumlusunun unvanı ve iletişim bilgisi]
@@ -40,7 +40,8 @@ Sürüm: taslak-1 · Durum: **HOCA / HUKUK ONAYI BEKLİYOR**
 ### 3. İşleme amaçları
 Üyeliğin doğrulanması; profil oluşturma; öğrencilerin mentor ve deneyimlere erişimi; randevu
 düzenlenmesi; moderasyon ve platform güvenliği; bölümün mezun takibi için **toplu ve kimliksiz**
-raporlar; bildirim gönderimi.
+raporlar; bildirim gönderimi. Mezun rehberini açmayı seçenlerin adı ve mesleki profil bilgileri aynı
+üniversitenin doğrulanmış üyelerinin erişimine sunulur; bu tercih istenildiğinde kapatılabilir.
 
 ### 4. Hukuki sebepler
 [Her amaç için KVKK m. 5/2 ve m. 6 kapsamındaki sebepler — hukuk görüşüyle doldurulacak.]
