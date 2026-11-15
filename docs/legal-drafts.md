@@ -7,7 +7,7 @@ sürüm numarası `Consent` kayıtlarına bağlanır.
 
 | Bölüm | Ne | Bekleyen |
 |---|---|---|
-| §1 Aydınlatma metni | KVKK aydınlatma metni (m. 10) | K-03 veri sorumlusu |
+| §1 Aydınlatma metni | KVKK aydınlatma metni (m. 10) | Hoca / hukuk onayı (veri sorumlusunun adı ve iletişim adresi yazıldı) |
 | §2 Yurt dışı açık rıza | Yurt dışına aktarım açık rızası (CV ayrıştırma, takvim daveti) | K-04 LLM sağlayıcısı |
 | §3 Kullanım şartları | Kullanım şartları (topluluk kuralları, puan, moderasyon) | Hoca görüşü |
 | §4 Staj arayan görünürlüğü | "Staj arıyorum" görünürlük açık rızası (P2-06) | Hoca / hukuk onayı |
@@ -26,7 +26,8 @@ Kurallar:
 Sürüm: taslak-1 · Durum: **HOCA / HUKUK ONAYI BEKLİYOR**
 
 ### 1. Veri sorumlusu
-[K-03: veri sorumlusunun unvanı ve iletişim bilgisi]
+Efe Baydemir (gerçek kişi; MezunPortal projesinin sahibi).
+İletişim: mezunportal.iu@gmail.com (MezunPortal platform hesabı)
 
 ### 2. İşlenen kişisel veriler
 - **Kimlik ve iletişim:** ad, soyad, e-posta, (isteğe bağlı) telefon, profil fotoğrafı.
@@ -61,7 +62,7 @@ Yalnız oturumunuzun çalışması için zorunlu çerez kullanılır; analitik v
 
 ### 8. Haklarınız (KVKK m. 11)
 [Haklar listesi.] Verilerinizin bir kopyasını uygulamadan indirebilir, hesabınızı silebilirsiniz.
-Başvuru: [K-03 başvuru adresi].
+Başvuru: mezunportal.iu@gmail.com.
 
 ## §2 Yurt dışına aktarım açık rızası
 
@@ -88,7 +89,7 @@ Sürüm: taslak-1 · Durum: **HOCA / HUKUK ONAYI BEKLİYOR**
 
 ### 1. Platformun amacı
 İÜ öğrencileri, mezunları ve akademisyenleri arasında staj ve kariyer deneyimi paylaşımı ve
-mentorluk. [Platformu işleten: K-03]
+mentorluk. Platformu işleten: Efe Baydemir (gerçek kişi).
 
 ### 2. Üyelik ve doğrulama
 Tek kişi tek hesap. Doğrulama bilgileri gerçek olmalıdır; yanlış beyan hesabın askıya alınmasına
@@ -141,7 +142,7 @@ kaç kez gösterildiğini görürsünüz; **kimin baktığı tutulmaz.**
 - **Amaç:** doğrulanmış mezunların staj arayan öğrencileri bulması. **Hukuki sebep:** açık rıza (KVKK m. 5/1).
 - **Alıcılar:** yalnız aynı üniversitedeki, doğrulanmış ve işe alım beyanı vermiş mezunlar; paylaşım beyaz listedir (bölüm, sınıf, ilgi alanı, dönem, başlık satırı).
 - **Saklama:** görünürlük kapanınca kart kimliği silinir; rıza kaydı hukuki kanıt olarak kalır (append-only).
-- **Kapsam dışı:** [K-03: veri sorumlusu bilgisi ve başvuru adresi eklenecek.]
+- **Kapsam dışı:** Veri sorumlusu ve iletişim adresi §1'de yazılıdır.
 
 
 ## §5 Yılın Mezunu ödülünün kamuya açık doğrulaması (P2-01) — TASLAK, onay bekliyor ⏸
@@ -161,7 +162,7 @@ Hikâyemin incelendikten ve ayın mezunu seçildikten sonra adım ve bölümüml
 
 ## §7 Faz 2 aydınlatma ekleri (P2-14) — TASLAK, onay bekliyor ⏸
 
-> `§1` aydınlatma metnine eklenecek yeni işleme amaçları. Sürüm `taslak-1`; hoca/hukuk onayı ve veri sorumlusu bilgisi (K-03) tamamlanınca metin sabitlenir.
+> `§1` aydınlatma metnine eklenecek yeni işleme amaçları. Sürüm `taslak-1`; hoca/hukuk onayı ve kalan köşeli alanlar (K-04, K-05) tamamlanınca metin sabitlenir.
 
 - **Mezun ilanları:** ilanı yazan doğrulanmış mezun/akademisyenin adı okuyuculara gösterilmez; başvuru ilandaki bağlantıdan ya da (seçilirse) iletişim talebiyle yapılır, ad yalnız talep onaylanınca
   paylaşılır. Amaç: staj/iş fırsatlarını doğrulanmış topluluğa duyurmak. Hukuki sebep: sözleşmenin kurulması/ifası ve meşru menfaat.
