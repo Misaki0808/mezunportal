@@ -129,7 +129,8 @@ LLM çıktısı güvenilmeyen girdidir; yalnız profil alanlarına öneri olur, 
 
 - Mezun rehberi, yalnız kendi tercihiyle katılan ve aynı üniversitede doğrulanmış etkin mezunları sunucuda süzer.
   Rehber kişi ve iş bilgilerini gösterir; iletişim alanlarını dönmez, mevcut onaylı talep yoluna yönlendirir.
-  Sektör sözlüğünde havacılık ve savunma ayrıdır; eski birleşik sektör ve bağlı kayıtlar korunur.
+  Sektör, şirket ve unvan filtreleri aynı güncel pozisyonda aranır. Sektör sözlüğünde havacılık ve savunma
+  ayrıdır; eski birleşik sektör ve bağlı kayıtlar korunur.
 - Deneyim ve SSS için üretilmiş `tsvector` sütunu (`to_tsvector('turkish', …)`) ve GIN indeksi;
   ağırlıklar: şirket/kurum A, tür ve sektör B, metin C.
 - Şirket, unvan ve kişi adlarında `pg_trgm` benzerliği.

@@ -79,6 +79,7 @@ export function OnboardingFlow({
   const [error, setError] = useState<ErrorCode>();
   const [emptySelection, setEmptySelection] = useState(false);
   const [pending, setPending] = useState(false);
+  const [alumniSaving, setAlumniSaving] = useState(false);
   const [finished, setFinished] = useState(false);
   const [visibility, setVisibility] = useState(initialVisibility);
   const locked = useRef(false);
@@ -331,6 +332,7 @@ export function OnboardingFlow({
             <AlumniVisibilitySetting
               initial={alumniVisibility.initial}
               save={alumniVisibility.save}
+              onBusyChange={setAlumniSaving}
             />
           )}
           {visibility.fields.map(({ field, level }) => (
@@ -385,7 +387,7 @@ export function OnboardingFlow({
           {previous && (
             <Button
               variant="secondary"
-              loading={pending}
+              loading={pending || alumniSaving}
               onClick={() => {
                 editing.current = true;
                 setFinished(false);
@@ -419,7 +421,7 @@ export function OnboardingFlow({
               <Button
                 size="lg"
                 fullWidth
-                loading={pending}
+                loading={pending || alumniSaving}
                 onClick={() => void submit({ step: 'VISIBILITY', confirmed: true })}
               >
                 {pending ? t('saving') : t('visibilityConfirm')}
@@ -450,7 +452,7 @@ export function OnboardingFlow({
             <Button
               variant="ghost"
               fullWidth
-              loading={pending}
+              loading={pending || alumniSaving}
               onClick={() => void skipStep({ step })}
             >
               {t('skip')}

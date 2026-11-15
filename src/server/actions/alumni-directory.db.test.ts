@@ -6,6 +6,7 @@ import {
   createUser,
   grantRequiredConsents,
 } from '@/test/fixtures';
+import { buildDataExport } from '../services/dataExport';
 const session = vi.hoisted(() => ({ userId: '' }));
 vi.mock('../db', () => ({ getDb: () => db }));
 vi.mock('../permissions/session', () => ({ getSessionUserId: async () => session.userId }));
@@ -42,6 +43,7 @@ it('mezun tercihini yalnız kendisi açıp kapatır, öğrenci doğrudan açamaz
   expect(
     (await db.profile.findUniqueOrThrow({ where: { userId: alumni } })).alumniDirectoryVisible,
   ).toBe(true);
+  expect((await buildDataExport(db, alumni)).profile?.alumniDirectoryVisible).toBe(true);
   expect(await actions.setAlumniVisibility({ visible: false })).toMatchObject({
     ok: true,
     data: { visible: false },

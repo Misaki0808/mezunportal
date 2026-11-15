@@ -57,31 +57,21 @@ export async function searchAlumni(
     contains: escapeLike(value),
     mode: 'insensitive' as const,
   });
-  const positions: Prisma.UserWhereInput[] = [];
+  const positions: Prisma.PositionWhereInput[] = [];
   if (filter.sectorId)
     positions.push({
-      positions: {
-        some: { OR: [{ sectorId: filter.sectorId }, { company: { sectorId: filter.sectorId } }] },
-      },
+      OR: [{ sectorId: filter.sectorId }, { company: { sectorId: filter.sectorId } }],
     });
   if (filter.company)
     positions.push({
-      positions: {
-        some: {
-          OR: [
-            { companyRaw: contains(filter.company) },
-            { company: { name: contains(filter.company) } },
-          ],
-        },
-      },
+      OR: [
+        { companyRaw: contains(filter.company) },
+        { company: { name: contains(filter.company) } },
+      ],
     });
   if (filter.title)
     positions.push({
-      positions: {
-        some: {
-          OR: [{ titleRaw: contains(filter.title) }, { title: { name: contains(filter.title) } }],
-        },
-      },
+      OR: [{ titleRaw: contains(filter.title) }, { title: { name: contains(filter.title) } }],
     });
   const where: Prisma.UserWhereInput = {
     id: { not: actor.userId },
@@ -95,7 +85,7 @@ export async function searchAlumni(
         ? { tags: { some: { tag: { kind: 'SKILL', slug: { in: skillNames } } } } }
         : {}),
     },
-    AND: positions,
+    ...(positions.length ? { positions: { some: { isCurrent: true, AND: positions } } } : {}),
     ...(filter.q
       ? {
           OR: [
@@ -103,6 +93,7 @@ export async function searchAlumni(
             {
               positions: {
                 some: {
+                  isCurrent: true,
                   OR: [
                     { companyRaw: contains(filter.q) },
                     { titleRaw: contains(filter.q) },
@@ -133,6 +124,7 @@ export async function searchAlumni(
           take: 1,
         },
         positions: {
+          ...(positions.length ? { where: { isCurrent: true, AND: positions } } : {}),
           orderBy: [{ isCurrent: 'desc' }, { startYear: 'desc' }, { id: 'asc' }],
           take: 1,
           select: {

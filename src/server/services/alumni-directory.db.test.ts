@@ -4,6 +4,7 @@ import { alumniSearchSchema } from '@/contracts/alumni-directory';
 import { createTestPrisma } from '@/test/db';
 import { addMembership, createInstitution, createUser } from '@/test/fixtures';
 import { loadActor } from '../permissions/actor';
+import { normalizeName } from '../rules/dictionary';
 import { searchAlumni } from './alumni-directory';
 
 const db = createTestPrisma();
@@ -50,9 +51,35 @@ it('yalnız aynı üniversitedeki katılmış ve doğrulanmış mezunu döndür�
         companyRaw: `Hava ${key}`,
         titleRaw: 'Analist',
         source: 'MANUAL',
+        isCurrent: true,
       },
     });
   }
+  // Geçmişte havacılıkta çalışmış savunma çalışanı, bugünkü havacılık sonucuna girmez.
+  await db.position.create({
+    data: {
+      userId: defense,
+      sectorId: aviation.id,
+      companyRaw: `Eski ${key}`,
+      titleRaw: 'Analist',
+      source: 'MANUAL',
+      isCurrent: false,
+    },
+  });
+  const skillName = `Beceri ${key}`;
+  const skillAlias = `Takma ${key}`;
+  await db.skill.create({
+    data: {
+      name: skillName,
+      normalizedName: normalizeName(skillName, 'SKILL'),
+      aliases: [normalizeName(skillAlias, 'SKILL')],
+    },
+  });
+  const skillTag = await db.tag.create({
+    data: { kind: 'SKILL', slug: normalizeName(skillName, 'SKILL'), label: skillName },
+  });
+  const visibleProfile = await db.profile.findUniqueOrThrow({ where: { userId: visible } });
+  await db.profileTag.create({ data: { profileId: visibleProfile.id, tagId: skillTag.id } });
   const actor = (await loadActor(db, viewer, new Date()))!;
   const get = (filter: object) => searchAlumni(db, actor, alumniSearchSchema.parse(filter));
   const result = await get({
@@ -65,6 +92,9 @@ it('yalnız aynı üniversitedeki katılmış ve doğrulanmış mezunu döndür�
     graduationTo: 2022,
   });
   expect(result.items.map((item) => item.userId)).toEqual([visible]);
+  expect((await get({ q: key, skill: skillAlias })).items.map((item) => item.userId)).toEqual([
+    visible,
+  ]);
   expect(JSON.stringify(result)).not.toMatch(/email|phone|linkedin|socialLinks/i);
   expect((await get({ q: key, sectorId: military.id })).items.map((item) => item.userId)).toEqual([
     defense,

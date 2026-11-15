@@ -10,6 +10,7 @@ import {
   type AlumniSearch,
 } from '@/contracts/alumni-directory';
 import { SearchBar } from '@/components/directory/search-bar';
+import { FilterChip } from '@/components/directory/filter-chip';
 import {
   Button,
   EmptyState,
@@ -51,6 +52,7 @@ export function AlumniDirectory({
   sectors: { id: string; name: string }[];
 }) {
   const t = useTranslations('alumniDirectory');
+  const directory = useTranslations('directory');
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -123,6 +125,7 @@ export function AlumniDirectory({
       <PageHeader eyebrow={t('eyebrow')} title={t('titlePage')} description={t('description')} />
       <div className="mt-6 flex min-w-0 flex-wrap items-start gap-2">
         <SearchBar
+          action="/mezunlar"
           className="min-w-0 flex-[1_1_100%] !rounded-none !border-0 !bg-transparent !p-0 !shadow-none lg:flex-[1_1_18rem]"
           label={t('search')}
           hint={t('searchHint')}
@@ -134,11 +137,18 @@ export function AlumniDirectory({
             navigate(draft);
           }}
           input={{
+            name: 'q',
             value: draft.q,
             maxLength: 100,
             onChange: (event) => set('q', event.target.value),
           }}
-        />
+        >
+          {keys
+            .filter((key) => key !== 'q' && draft[key].trim())
+            .map((key) => (
+              <input key={key} type="hidden" name={key} value={draft[key]} />
+            ))}
+        </SearchBar>
         <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-border-control bg-surface px-3 text-sm font-semibold">
           <span>{t('sector')}</span>
           <select
@@ -185,6 +195,28 @@ export function AlumniDirectory({
         <p className="font-semibold" aria-live="polite">
           {t('count', { count: results.total })}
         </p>
+        {keys.some((key) => filter[key] !== undefined) && (
+          <div aria-label={directory('active')} className="mt-4 flex flex-wrap gap-2">
+            {keys
+              .filter((key) => filter[key] !== undefined)
+              .map((key) => (
+                <FilterChip
+                  key={key}
+                  label={
+                    key === 'sectorId'
+                      ? (sectors.find((sector) => sector.id === filter.sectorId)?.name ??
+                        String(filter[key]))
+                      : String(filter[key])
+                  }
+                  onRemove={() => {
+                    const next = { ...draft, [key]: '' };
+                    setDraft(next);
+                    navigate(next);
+                  }}
+                />
+              ))}
+          </div>
+        )}
         {results.items.length === 0 ? (
           <EmptyState
             title={t('empty')}
@@ -242,10 +274,11 @@ export function AlumniDirectory({
                 )}
                 <div className="mt-auto pt-5">
                   <Link
-                    className={buttonClasses({ variant: 'secondary' })}
+                    className={buttonClasses({ fullWidth: true })}
+                    aria-label={t('contactLabel', { name: item.name })}
                     href={`/iletisim-iste/${item.userId}?donus=%2Fmezunlar`}
                   >
-                    {t('contact', { name: item.name })}
+                    {t('contact')}
                   </Link>
                 </div>
               </article>
