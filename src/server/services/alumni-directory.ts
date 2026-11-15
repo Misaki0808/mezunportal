@@ -35,7 +35,7 @@ export async function searchAlumni(
             skillName,
             ...(dictionarySkill ? [dictionarySkill.name, ...dictionarySkill.aliases] : []),
           ]
-          .map((name) => skillTagIdentity(name).slug)
+            .map((name) => skillTagIdentity(name).slug)
             .filter(Boolean),
         ),
       ]
