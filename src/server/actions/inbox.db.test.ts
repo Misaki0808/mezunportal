@@ -110,7 +110,7 @@ describe('rozet sayısı rotası', () => {
     expect(response.headers.get('cache-control')).toMatch(/private.*no-store/);
 
     session.userId = alice;
-    await markAllInboxRead();
+    expect(await markAllInboxRead()).toEqual({ ok: true, data: { marked: 2 } });
     expect(await (await unreadCount()).json()).toEqual({ unread: 0 });
   });
 
