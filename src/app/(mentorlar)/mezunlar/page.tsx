@@ -31,13 +31,19 @@ export default async function AlumniPage({
         <ErrorState errorCode={results.errorCode} />
       </PrivacyGuard>
     );
+  if (!sectors.ok)
+    return (
+      <PrivacyGuard>
+        <ErrorState errorCode={sectors.errorCode} />
+      </PrivacyGuard>
+    );
   return (
     <PrivacyGuard>
       <AlumniDirectory
         key={JSON.stringify(parsed.data)}
         filter={parsed.data}
         results={results.data}
-        sectors={sectors.ok ? sectors.data.sectors : []}
+        sectors={sectors.data.sectors}
       />
     </PrivacyGuard>
   );
