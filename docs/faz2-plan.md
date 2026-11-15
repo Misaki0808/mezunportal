@@ -41,7 +41,8 @@ veren mezunlar tanınır ve topluluk etkinlikleriyle ağ canlı kalır (P2-01, P
 
 Faz 2'nin başarı ölçütleri (K-12 pilot ölçütleriyle birlikte hocayla belirlenir): yayınlanan ilan sayısı ve ilana tıklayan
 öğrenci oranı, eşleştirme bildiriminden ilana geçiş, ters aramada rızalı öğrenci sayısı, şirket sayfası ve soru bankası
-görüntülenmesi, etkinlik katılımı. Küçük ama gerçek kullanım büyük hedeften değerlidir.
+görüntülenmesi, etkinlik katılımı. Küçük ama gerçek kullanım büyük hedeften değerlidir. Pilot zamanı (K-12, kullanıcı kararı
+14 Kas 2026): finaller bittikten sonraki yaklaşık bir aylık tatil; pilotun kimlerle yapılacağı ve başarı ölçütleri hâlâ açıktır.
 
 ## 2. Verilmiş kararlar (tekrar sorma)
 

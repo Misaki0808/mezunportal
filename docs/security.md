@@ -199,8 +199,9 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
 
 ## KVKK
 
-- **Veri sorumlusu** K-03 ile netleşir; aydınlatma metni buna göre yazılır, son halini
-  hoca/üniversite onaylar.
+- **Veri sorumlusu** şimdilik proje sahibidir (gerçek kişi; K-03 kararı, `docs/decisions.md`); aydınlatma metni buna göre
+  yazılır; iletişim ve başvuru adresi platform hesabıdır (kişisel adres metinde geçmez), son hâli hoca/üniversite onayıyla tamamlanır. Taslak sürümü (`taslak-1`) ad dolunca artmaz: sürüm,
+  onaylı metin köke taşınırken artar (BACKLOG `PILOT-LEGAL`).
 - **Rızalar sürümlüdür ve yalnız eklenir.** Kayıtta aydınlatma metni ve kullanım şartları
   onaylanır. **Yurt dışına aktarım açık rızası** ayrı ve isteğe bağlıdır: CV'nin LLM sağlayıcısına
   gönderilmesi ve Google Takvim davetinde e-posta işlenmesi buna bağlıdır. Rıza yoksa CV
