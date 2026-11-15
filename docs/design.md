@@ -22,8 +22,11 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
   ("AI izi", kullanıcı kararı). Tek renk geçişi logodaki n–p harfleridir. Çerçeve ve doluluk çubuğu düz İris'tir.
 - **Mercan kuralı:** mercan zeminde metin koyudur (`on-accent`); beyaz metin AA değildir. Mercanı metin/ikon olarak
   beyaz üstünde kullanma — `accent-strong` (AA) kullan.
-- **Koyu tema** `prefers-color-scheme` ile gelir; aynı token adları yeniden tanımlanır (`globals.css`), bileşende
-  sabit renk yazılmaz (`text-white`, `#hex` yok; yalnız token). Koyu temada ana renk açılır, üstündeki metin koyudur.
+- **Tema üç durumludur:** Sistem (varsayılan; cihazın `prefers-color-scheme` ayarı), Açık, Koyu. Seçim `theme` çerezinde (1 yıl) kalır,
+  sunucu `<html data-theme>`'yi çerezden yazar (ilk boyamada yanıp sönme yok); düğme üst çubukta, üçlü seçim `/hesap` altındadır.
+  Aynı token adları koyu temada yeniden tanımlanır (`globals.css`; elle koyu ve sistem koyusu blokları birebir aynıdır,
+  `contrast.test.ts` sapmayı yakalar), bileşende sabit renk yazılmaz (`text-white`, `#hex` yok; yalnız token). Koyu temada ana renk
+  açılır, üstündeki metin koyudur.
 - **Yazı tipi:** başlıklar (h1–h3) Plus Jakarta Sans, metin Inter; `next/font/google` ile derlemede indirilip kendinden
   barındırılır, `latin-ext` alt kümesi Türkçe harfler içindir (CSP `font-src 'self'` ile uyumlu).
 - Panel ve formlar yoğun olabilir; giriş/tanıtım sayfası biraz daha anlatısal olabilir, ama aynı

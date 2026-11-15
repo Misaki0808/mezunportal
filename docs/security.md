@@ -268,7 +268,8 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
   - Moderatör/yönetici yazısı ve karar veren kimliği (şikâyet çözüm notu, belge `reviewedById`, yetkiyi
     veren kişi): yönetici yazısı ya da üçüncü kişi referansı; kullanıcının kendi verisi değil.
   - Eski UserSkill: uygulama bu tabloya yazmaz; güncel beceriler profil/CV bölümündedir.
-- **Çerezler:** yalnız zorunlu oturum çerezi; üçüncü taraf analitik ve reklam çerezi yok
+- **Çerezler:** zorunlu oturum çerezi ve görünüm tercihi çerezi `theme` (`system|light|dark`, 1 yıl, httpOnly değil,
+  kişisel veri taşımaz, veritabanına yazılmaz); üçüncü taraf analitik ve reklam çerezi yok
   (metrikler kendi tablomuzda). Çerez bandı yerine aydınlatma metninde çerez bölümü yeterli
   görünür; son değerlendirme hukuki metin onayıyla (PILOT-LEGAL).
 - **Saklama:** `docs/data.md` “Veri güvenliği ve saklama”.
