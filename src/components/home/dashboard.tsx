@@ -142,7 +142,7 @@ export function HomeDashboard({
             <>
               {incomplete && (
                 <Link
-                  className={buttonClasses({ variant: 'secondary' }) + ' hidden sm:inline-flex'}
+                  className={buttonClasses({ variant: 'secondary' }) + ' hidden! sm:inline-flex!'}
                   href="/mentorlar"
                 >
                   {a('actions.mentors')}

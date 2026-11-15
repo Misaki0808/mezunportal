@@ -40,6 +40,9 @@ test('ana sayfa rol bazlı pano: öğrenci ve mentor farklı kısayollar görür
       name: /(?:Günaydın|İyi günler|İyi akşamlar|İyi geceler), Deniz/,
     }),
   ).toBeVisible();
+  await expect(
+    page.getByRole('navigation', { name: 'Ana sayfa eylemleri' }).locator('a:visible'),
+  ).toHaveCount(1);
   const shortcuts = page.getByRole('region', { name: 'Kısayollar' });
   await expect(shortcuts.getByRole('link', { name: /Mentor bul/ })).toBeVisible();
   await expect(shortcuts.getByRole('link', { name: /CV incelemesi/ })).toBeVisible();
