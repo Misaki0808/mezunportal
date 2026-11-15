@@ -1667,6 +1667,10 @@
           "section3": {
             "title": "3. Geri alma",
             "body": "Rızanızı veya görünürlüğünüzü geri aldığınızda kartınız hemen aramalardan kalkar ve bekleyen talepler kapanır. Kaç kez görüntülendiğinizi görürsünüz; kimin baktığı tutulmaz."
+          },
+          "section4": {
+            "title": "4. Veri sorumlusu ve iletişim",
+            "body": "Veri sorumlusu ve iletişim adresi aydınlatma metninde yazılıdır."
           }
         }
       },

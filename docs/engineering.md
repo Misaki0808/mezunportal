@@ -310,7 +310,7 @@ bu adresin ana makinesini de `127.0.0.1` olarak ayarla; portu koru.
   e-posta olmadan oturum açar. Giriş akışı Mailpit'ten (`http://localhost:8025`) denenir.
 - `.env.example`, CV ve takvim için `fake` sağlayıcıyı seçer; bu yerel kurulumda gerçek dış servis
   anahtarı gerekmez. Sağlayıcıyı boş bırakmak o hattı kapatır; aşağıdaki env grupları davranışı açıklar.
-  Google Takvim ve LinkedIn'i gerçek hesapla bağlamak için ilgili anahtarları ayrıca yapılandır.
+  Google Takvim'i gerçek hesapla bağlamak için ilgili anahtarları ayrıca yapılandır; LinkedIn girişi kapalı kalır (anahtar verilmez).
 
 ### Env grupları
 
@@ -386,7 +386,7 @@ Her faz bitince kullanıcı telefondan test eder; faz içinde telefon testi yokt
    güvenlik duvarı sorarsa yalnız bu yerel deneme için erişime izin ver. LAN modunda bağlantı
    kökü süreçte ilk ağ adresine ayarlanır; `.env.local` değiştirilmez.
 3. P0-04'te hesap gerekmeden ana sayfa açılır (390/1440); test girişi P1-02'de gelir.
-   O aşamadan sonra telefonda test girişiyle rol hesaplarına girilir (giriş bağlantısı ve LinkedIn yerel adrese
+   O aşamadan sonra telefonda test girişiyle rol hesaplarına girilir (giriş bağlantısı yerel adrese
    bağlı olduğu için telefonda test girişi kullanılır).
 4. “Ana ekrana ekle” ile uygulama gibi açılabilir.
 5. Gerçek cihazda ayrıca doğrulanır (tarayıcı turunda ekran klavyesi denenemez): form ekranlarında (deneyim yaz,

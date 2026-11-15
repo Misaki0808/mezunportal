@@ -18,7 +18,7 @@ flowchart LR
   K --> G[Google Calendar API]
   K --> M[E-posta / Mailpit]
   W --> A[Better Auth]
-  A --> LI[LinkedIn OIDC]
+  A -.-> LI["LinkedIn OIDC (kapalı)"]
 ```
 
 Tek Next.js uygulaması ve aynı koddan çalışan bir worker süreci vardır. Uygulama ve denetim
@@ -40,8 +40,9 @@ kayıtlarının gerçeği PostgreSQL'dir; kuyruk da PostgreSQL'dedir (Redis yok)
 
 ### Kimlik ve doğrulama
 
-**Giriş yöntemleri:** e-posta bağlantısı (parolasız) ve LinkedIn ile giriş (ad, e-posta,
-fotoğraf). Aynı doğrulanmış e-postaya sahip LinkedIn hesabı mevcut kullanıcıya bağlanır. Giriş
+**Giriş yöntemi:** e-posta bağlantısı (parolasız). LinkedIn ile giriş kodda durur ama kapalıdır
+(anahtar verilmez; kullanıcı kararı, `docs/decisions.md` 15 Kasım); açılırsa aynı doğrulanmış e-postaya sahip
+LinkedIn hesabı mevcut kullanıcıya bağlanır. Giriş
 ekranı bir e-postanın kayıtlı olup olmadığını sızdırmaz: her durumda “bağlantı gönderildi” der.
 
 **Doğrulama (üyelik = kullanıcı × bölüm × rol):**
@@ -328,10 +329,11 @@ Dış servislerin nasıl bağlanacağı ve projedeki servislerin sözleşmesi.
 - Dosyalar yalnız yetki kontrollü rotadan akıtılır.
 - **Env:** `STORAGE_DRIVER`, `STORAGE_LOCAL_PATH`.
 
-### 6. LinkedIn ile giriş
+### 6. LinkedIn ile giriş (kapalı)
 
-Better Auth'un LinkedIn sağlayıcısı (OIDC). Yalnız ad, e-posta ve fotoğraf alınır; iş geçmişi
+**Şu an kapalı:** anahtar verilmediği için düğme gizli, sağlayıcı kapalıdır; kod silinmedi (`docs/decisions.md`, 15 Kasım).
+Better Auth'un LinkedIn sağlayıcısı (OIDC). Açılırsa yalnız ad, e-posta ve fotoğraf alınır; iş geçmişi
 alınmaz ve kazınmaz. LinkedIn uygulaması doğrulanmış bir LinkedIn şirket sayfasına bağlı olmalıdır
-(kullanıcının E maddesi). Yönlendirme adresi yerel geliştirme için `localhost` olarak tanımlanır;
+(kullanıcının E maddesi, ertelendi). Yönlendirme adresi yerel geliştirme için `localhost` olarak tanımlanır;
 sağlayıcının kabul ettiği biçim kurulumda doğrulanır.
 **Env:** `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`.

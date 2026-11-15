@@ -18,7 +18,8 @@ kural sunucuda zorlanır.
 
 ## Kimlik ve oturum
 
-- Better Auth: e-posta bağlantısıyla giriş (parolasız) ve LinkedIn ile giriş. Veritabanı oturumu;
+- Better Auth: e-posta bağlantısıyla giriş (parolasız). LinkedIn ile giriş kodda durur ama kapalıdır (anahtar verilmez; kullanıcı kararı,
+  `docs/decisions.md` 15 Kasım). Veritabanı oturumu;
   çerez `httpOnly`, `secure`, `sameSite=lax`.
 - Oturum çerezi yoksa çözümleme/veritabanı sorgusu yapılmaz; çerez varsa yalnız Better Auth kimlik doğrular. Oturum çözümündeki altyapı hatası oturumsuzluk sayılmaz: ortak sınır geçici sorun gösterir, eylem kararlı hata döner; yetki ve veri erişimi kapalı kalır. Günlük tek satırdır, çerez veya hata iletisi içermez. Dosya, takvim ve rapor rotaları oturum altyapısı arızasında veri açmadan 503 ve Retry-After döner; aynı istek içindeki oturum çözümü paylaşılır.
 - Giriş ekranı e-postanın kayıtlı olup olmadığını sızdırmaz; her durumda “bağlantı gönderildi”.
@@ -39,7 +40,7 @@ kural sunucuda zorlanır.
   katmanı zaten reddeder. **“Başka kullanıcı gibi giriş yapma” (impersonation) kapalıdır:** eklentinin rol
   sistemi devre dışıdır (hiçbir rol yönetici sayılmaz, tek tanımlı rolün izni yoktur); `User.role` bir yetki
   kaynağı değildir ve `role = 'admin'` olsa bile `impersonate-user`, `set-role`, `remove-user` reddedilir.
-- **LinkedIn** (anahtar yoksa kapalı): yalnız ad, e-posta ve fotoğraf; erişim/yenileme/kimlik jetonları
+- **LinkedIn** (anahtar yoksa kapalı; şu an anahtar yok, kod durur): yalnız ad, e-posta ve fotoğraf; erişim/yenileme/kimlik jetonları
   SAKLANMAZ (sağlayıcıya girişten sonra bir daha gidilmez). Hesap bağlama yalnız sağlayıcı e-postayı
   doğrulanmış bildirirse ve e-posta eşleşirse olur; güvenilir-sağlayıcı listesi boştur (hesap devralma yok).
 - **E-posta değiştirme** iki adımlıdır: eski adrese onay bağlantısı, onaydan sonra yeni adrese doğrulama
