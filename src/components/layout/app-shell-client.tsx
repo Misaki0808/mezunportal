@@ -18,6 +18,7 @@ import {
 } from '@/components/ui';
 
 import { NotificationBell } from '@/components/inbox/notification-bell';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 
 import { forgetSignInAddress } from '@/lib/sign-in-address';
 
@@ -82,6 +83,8 @@ export function AppShellClient({
   unreadNotifications?: number;
 }) {
   const t = useTranslations('nav');
+  const themeText = useTranslations('theme');
+  const themeLabels = { toLight: themeText('switchToLight'), toDark: themeText('switchToDark') };
   const pathname = usePathname();
 
   // Giriş tamamlandı (oturumlu bir ekran çizildi): "E-postanı kontrol et" ekranı için tutulan adres bu sekmede kalmasın.
@@ -97,10 +100,11 @@ export function AppShellClient({
     return (
       <div className="min-h-dvh">
         <SkipLink>{t('skipToContent')}</SkipLink>
-        <header className="flex h-14 items-center border-b border-border px-5">
+        <header className="flex h-14 items-center justify-between border-b border-border px-5">
           <Link href="/" className="press-control inline-flex min-h-11 items-center">
             <BrandLogo className="h-7 w-auto" label={t('brand')} />
           </Link>
+          <ThemeToggle labels={themeLabels} />
         </header>
         <main id="main-content" tabIndex={-1} className="outline-none">
           {children}
@@ -162,27 +166,33 @@ export function AppShellClient({
         <Link href="/" className="press-control inline-flex min-h-11 items-center">
           <BrandLogo className="h-7 w-auto" label={t('brand')} />
         </Link>
-        {!signedIn && (
-          <Link
-            href="/giris"
-            className="inline-flex min-h-11 items-center font-semibold text-primary"
-          >
-            {t('signIn')}
-          </Link>
-        )}
-        {signedIn && (
-          <NotificationBell
-            initial={unreadNotifications}
-            layout="header"
-            refreshEnabled={canRefreshNotifications}
-          />
-        )}
+        <div className="flex items-center gap-1">
+          <ThemeToggle labels={themeLabels} />
+          {!signedIn && (
+            <Link
+              href="/giris"
+              className="inline-flex min-h-11 items-center px-2 font-semibold text-primary"
+            >
+              {t('signIn')}
+            </Link>
+          )}
+          {signedIn && (
+            <NotificationBell
+              initial={unreadNotifications}
+              layout="header"
+              refreshEnabled={canRefreshNotifications}
+            />
+          )}
+        </div>
       </header>
 
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col gap-6 border-r border-border bg-surface p-4 lg:flex">
-        <Link href="/" className="press-control inline-flex min-h-11 items-center px-3 pt-2">
-          <BrandLogo className="h-8 w-auto" label={t('brand')} />
-        </Link>
+        <div className="flex items-center justify-between pr-1">
+          <Link href="/" className="press-control inline-flex min-h-11 items-center px-3 pt-2">
+            <BrandLogo className="h-8 w-auto" label={t('brand')} />
+          </Link>
+          <ThemeToggle labels={themeLabels} />
+        </div>
         {!signedIn && (
           <Link
             href="/giris"

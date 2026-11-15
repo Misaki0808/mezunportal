@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies } from 'next/headers';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -7,6 +8,7 @@ import type { ReactNode } from 'react';
 
 import { AppShell } from '@/components/layout/app-shell';
 import { getEnv } from '@/lib/env';
+import { THEME_BROWSER_COLORS, THEME_COOKIE, parseTheme } from '@/lib/theme';
 import { ToastProvider } from '@/components/ui';
 import { SessionUnavailable } from '@/components/layout/session-unavailable';
 import { getSessionUserId } from '@/server/permissions/session';
@@ -35,19 +37,31 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  // Çentikli telefonlarda alt gezinme güvenli alana saygı duyar (env(safe-area-inset-*))
-  viewportFit: 'cover',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#5b5bf6' },
-    { media: '(prefers-color-scheme: dark)', color: '#0e1a38' },
-  ],
-};
+/**
+ * Tarayıcı çubuğu rengi görünüm tercihini izler (kart 383): elle seçimde seçilen temanın rengi, `system` iken cihazın
+ * ayarına göre iki etiket. Çerez geçersizse `system`.
+ */
+export async function generateViewport(): Promise<Viewport> {
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    // Çentikli telefonlarda alt gezinme güvenli alana saygı duyar (env(safe-area-inset-*))
+    viewportFit: 'cover',
+    themeColor:
+      theme === 'system'
+        ? [
+            { media: '(prefers-color-scheme: light)', color: THEME_BROWSER_COLORS.light },
+            { media: '(prefers-color-scheme: dark)', color: THEME_BROWSER_COLORS.dark },
+          ]
+        : THEME_BROWSER_COLORS[theme],
+  };
+}
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   const locale = await getLocale();
+  // Görünüm tercihi çerezden; ilk boyamada doğru tema (yanıp sönme yok, betik gerekmez). Bozuk/boş çerez `system`.
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   let sessionUnavailable = false;
   try {
     await getSessionUserId();
@@ -58,7 +72,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   }
 
   return (
-    <html lang={locale} className={`${bodyFont.variable} ${headingFont.variable}`}>
+    <html
+      lang={locale}
+      data-theme={theme}
+      className={`${bodyFont.variable} ${headingFont.variable}`}
+    >
       <body>
         <NextIntlClientProvider>
           <ToastProvider>

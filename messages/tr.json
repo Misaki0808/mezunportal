@@ -320,6 +320,17 @@
       "PROFILE_TEXT_PERSONAL_DATA": "Bu alana telefon, e-posta veya kimlik numarası yazma. İletişim bilgilerini Gizlilik ayarlarından yönet."
     }
   },
+  "theme": {
+    "switchToDark": "Koyu temaya geç",
+    "switchToLight": "Açık temaya geç",
+    "choiceLabel": "GÖRÜNÜM",
+    "choiceHint": "Sistem, cihazının ayarını izler. Seçimin bu tarayıcıda hatırlanır.",
+    "options": {
+      "system": "Sistem",
+      "light": "Açık",
+      "dark": "Koyu"
+    }
+  },
   "nav": {
     "brand": "MezunPortal",
     "labelBottom": "Ana gezinme",
@@ -1613,7 +1624,7 @@
           },
           "section7": {
             "title": "7. Çerezler",
-            "body": "Yalnız oturumunuzun çalışması için zorunlu çerez kullanılır; analitik veya reklam çerezi yoktur."
+            "body": "Oturumunuzun çalışması için zorunlu çerez ve görünüm tercihinizi (sistem, açık ya da koyu) hatırlayan işlevsel çerez kullanılır; analitik veya reklam çerezi yoktur."
           },
           "section8": {
             "title": "8. Haklarınız (KVKK m. 11)",

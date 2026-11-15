@@ -58,7 +58,7 @@ E-posta gönderim kayıtları: 6 ay. Kullanım metrikleri: 24 ay sonra kimliksiz
 silindiğinde kişisel alanlar derhal silinir.
 
 ### 7. Çerezler
-Yalnız oturumunuzun çalışması için zorunlu çerez kullanılır; analitik veya reklam çerezi yoktur.
+Oturumunuzun çalışması için zorunlu çerez ve görünüm tercihinizi (sistem, açık ya da koyu) hatırlayan işlevsel çerez kullanılır; analitik veya reklam çerezi yoktur.
 
 ### 8. Haklarınız (KVKK m. 11)
 [Haklar listesi.] Verilerinizin bir kopyasını uygulamadan indirebilir, hesabınızı silebilirsiniz.

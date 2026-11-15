@@ -1,0 +1,181 @@
+import { expect, type Page } from '@playwright/test';
+
+// Kart 280 (koyu) ve kart 383 (açık): HESAPLANMIŞ stilden WCAG AA karşıtlık taraması. Metin (normal ≥ 4,5, büyük ≥ 3), yer tutucu
+// (≥ 4,5) ve kit kontrol sınırı/dolgusu (≥ 3). Devre dışı, görünmez (opacity 0 / sr-only) öğeler ve tarayıcının kendi çizdiği onay
+// kutusu/radyo düğmeleri dışarıda kalır. Token çiftleri `src/lib/contrast.test.ts`'tedir; bu tarama token'ların EKRANDA doğru
+// birleşip birleşmediğine bakar.
+export const SCREENS = {
+  student: [
+    '/',
+    '/ilanlar',
+    '/deneyimler',
+    '/deneyim/yeni',
+    '/mentorlar',
+    '/randevular',
+    '/profil',
+    '/hesap',
+    '/hesap/bildirimler',
+    '/hesap/gizlilik',
+    '/sirketler',
+  ],
+  systemAdmin: ['/yonetim', '/yonetim/davetler', '/yonetim/kullanicilar', '/yonetim/puan'],
+} as const;
+
+export type Issue = { kind: string; el: string; text?: string; ratio: number; need: number };
+
+export const SCAN = (probe?: string[]): { issues: Issue[]; colors: number[][] } => {
+  type RGBA = { r: number; g: number; b: number; a: number };
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+  const colorCache = new Map<string, RGBA>();
+  // Hesaplanmış rengi (rgb, oklab, color-mix, saydam…) tarayıcının KENDİ renk motoruyla çözer: siyah ve beyaz zemine çizip alfa ve
+  // renk geri çıkarılır (Tailwind `/NN` saydamlığı `oklab`/`color-mix` döndürebilir; `rgb()` regex'i onu şeffaf sayıyordu).
+  // Çözülemeyen değer sessizce "şeffaf" sayılmaz: hata verir, böylece tarama boşuna yeşil olmaz.
+  const parse = (value: string): RGBA => {
+    const cached = colorCache.get(value);
+    if (cached) return cached;
+    ctx.fillStyle = '#010203';
+    ctx.fillStyle = value;
+    if (value.trim().toLowerCase() !== '#010203' && ctx.fillStyle === '#010203')
+      throw new Error(`çözümlenemeyen renk: ${value}`);
+    const paint = (base: string) => {
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, 1, 1);
+      ctx.fillStyle = value;
+      ctx.fillRect(0, 0, 1, 1);
+      return ctx.getImageData(0, 0, 1, 1).data;
+    };
+    const black = paint('#000000');
+    const white = paint('#ffffff');
+    const a =
+      1 - (white[0]! - black[0]! + (white[1]! - black[1]!) + (white[2]! - black[2]!)) / (3 * 255);
+    const out: RGBA =
+      a <= 0.004
+        ? { r: 0, g: 0, b: 0, a: 0 }
+        : { r: black[0]! / a, g: black[1]! / a, b: black[2]! / a, a };
+    colorCache.set(value, out);
+    return out;
+  };
+  if (probe)
+    return {
+      issues: [],
+      colors: probe.map((value) => {
+        const c = parse(value);
+        return [Math.round(c.r), Math.round(c.g), Math.round(c.b), Math.round(c.a * 100) / 100];
+      }),
+    };
+  const over = (top: RGBA, bottom: RGBA): RGBA => {
+    const a = top.a + bottom.a * (1 - top.a);
+    if (a === 0) return { r: 0, g: 0, b: 0, a: 0 };
+    return {
+      r: (top.r * top.a + bottom.r * bottom.a * (1 - top.a)) / a,
+      g: (top.g * top.a + bottom.g * bottom.a * (1 - top.a)) / a,
+      b: (top.b * top.a + bottom.b * bottom.a * (1 - top.a)) / a,
+      a,
+    };
+  };
+  const lum = (c: RGBA) => {
+    const f = (v: number) =>
+      v / 255 <= 0.03928 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4;
+    return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+  };
+  const ratio = (a: RGBA, b: RGBA) => {
+    const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x) as [number, number];
+    return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100;
+  };
+  const page = parse(getComputedStyle(document.documentElement).backgroundColor);
+  const base: RGBA = page.a > 0 ? page : { r: 255, g: 255, b: 255, a: 1 };
+  const behind = (el: Element, includeSelf: boolean): RGBA => {
+    const layers: RGBA[] = [];
+    for (let e: Element | null = includeSelf ? el : el.parentElement; e; e = e.parentElement) {
+      const bg = parse(getComputedStyle(e).backgroundColor);
+      if (bg.a > 0) layers.push(bg);
+      if (bg.a >= 1) break;
+    }
+    let c = base;
+    for (const layer of layers.reverse()) c = over(layer, c);
+    return c;
+  };
+  const opacityOf = (el: Element) => {
+    let o = 1;
+    for (let e: Element | null = el; e; e = e.parentElement)
+      o *= Number(getComputedStyle(e).opacity);
+    return o;
+  };
+  const visible = (el: Element) => {
+    const r = el.getBoundingClientRect();
+    const s = getComputedStyle(el);
+    return r.width >= 2 && r.height >= 2 && s.visibility !== 'hidden' && s.display !== 'none';
+  };
+  const disabled = (el: Element) =>
+    !!el.closest('[disabled], [aria-disabled="true"], :disabled, [inert]') ||
+    !!el.closest('label')?.querySelector(':disabled');
+  const sel = (el: Element) =>
+    el.tagName.toLowerCase() +
+    '.' +
+    String(el.getAttribute('class') ?? '')
+      .replace(/\s+/g, '.')
+      .slice(0, 60);
+  const issues: Issue[] = [];
+
+  for (const el of document.querySelectorAll('body *')) {
+    if (['SCRIPT', 'STYLE', 'OPTION', 'NOSCRIPT'].includes(el.tagName.toUpperCase())) continue;
+    if (!visible(el) || disabled(el)) continue;
+    if (![...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? '').trim())) continue;
+    const s = getComputedStyle(el);
+    const bg = behind(el, true);
+    const fg0 = parse(s.color);
+    const fg = over({ ...fg0, a: fg0.a * opacityOf(el) }, bg);
+    const size = parseFloat(s.fontSize);
+    const large = size >= 24 || (size >= 18.66 && parseInt(s.fontWeight, 10) >= 700);
+    const need = large ? 3 : 4.5;
+    const r = ratio(fg, bg);
+    if (r < need)
+      issues.push({
+        kind: 'metin',
+        el: sel(el),
+        text: (el.textContent ?? '').trim().slice(0, 30),
+        ratio: r,
+        need,
+      });
+  }
+  for (const el of document.querySelectorAll('input[placeholder], textarea[placeholder]')) {
+    if (!visible(el) || disabled(el)) continue;
+    const bg = behind(el, true);
+    const ph = parse(getComputedStyle(el, '::placeholder').color);
+    const r = ratio(over({ ...ph, a: ph.a * opacityOf(el) }, bg), bg);
+    if (r < 4.5) issues.push({ kind: 'yer-tutucu', el: sel(el), ratio: r, need: 4.5 });
+  }
+  for (const el of document.querySelectorAll('input:not([type=hidden]), select, textarea')) {
+    if (!visible(el) || disabled(el)) continue;
+    const s = getComputedStyle(el);
+    if (Number(s.opacity) === 0) continue; // örtü girdileri (ör. dosya seçici): sınırı sarmalayıcıda
+    const type = (el as HTMLInputElement).type;
+    if ((type === 'checkbox' || type === 'radio') && s.appearance !== 'none') continue; // tarayıcı çizimi
+    const out = behind(el, false);
+    const border = parse(s.borderTopColor);
+    const hasBorder = parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== 'none';
+    const fill = parse(s.backgroundColor);
+    const r = Math.max(
+      hasBorder ? ratio(over(border, out), out) : 0,
+      fill.a > 0 ? ratio(over(fill, out), out) : 0,
+    );
+    if (r < 3) issues.push({ kind: 'kontrol-siniri', el: sel(el), ratio: r, need: 3 });
+  }
+  return { issues, colors: [] };
+};
+
+export async function scan(page: Page, route: string, scheme: 'light' | 'dark' = 'dark') {
+  const response = await page.goto(route);
+  // Var olmayan ya da başka yere yönlenen bir rota taranmış sayılmaz (404 sayfası da koyu temada "temiz" çıkardı).
+  expect(response?.status(), `yanıt durumu: ${route}`).toBe(200);
+  await page.waitForLoadState('networkidle');
+  expect(new URL(page.url()).pathname, `son adres: ${route}`).toBe(route);
+  expect(
+    await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme),
+  ).toContain(scheme);
+  return (await page.evaluate(SCAN)).issues;
+}
