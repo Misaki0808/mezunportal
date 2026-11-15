@@ -40,6 +40,13 @@ const TEXT_PAIRS: readonly [string, string][] = [
   ['on-danger', 'danger-hover'],
   ['danger', 'bg'],
   ['danger', 'danger-soft'],
+  // Yan menü (iki temada da lacivert): metin, soluk metin, etkin öğe ve alt kart zemininde.
+  ['side-fg', 'side-bg'],
+  ['side-muted', 'side-bg'],
+  ['side-fg', 'side-active'],
+  ['side-muted', 'side-active'],
+  ['side-fg', 'side-foot'],
+  ['side-muted', 'side-foot'],
 ];
 
 const BOUNDARY_PAIRS: readonly [string, string][] = [
@@ -51,6 +58,9 @@ const BOUNDARY_PAIRS: readonly [string, string][] = [
   ['success', 'bg'],
   ['success', 'success-soft'],
   ['warning', 'warning-soft'],
+  // Yan menüde etkin öğenin solundaki 3 px mercan çizgi.
+  ['accent', 'side-bg'],
+  ['accent', 'side-active'],
 ];
 
 describe.each(Object.entries(SCHEMES))('token kontrastı, %s tema (WCAG AA)', (_scheme, tokens) => {
@@ -80,10 +90,17 @@ describe('token tanımı', () => {
   it('marka paleti İris + Mercan + Nane (kullanıcı kararı; İÜ renkleri değil)', () => {
     expect(SCHEMES.açık.primary).toBe('#5b5bf6');
     expect(SCHEMES.açık.accent).toBe('#ff6b7f');
-    expect(SCHEMES.açık.bg).toBe('#fffaf4');
+    expect(SCHEMES.açık.bg).toBe('#f4f5fa'); // görünüm A: soğuk kâğıt (kullanıcı kararı, 15 Kasım; ölçüdeki #f3f4f9 AA'nın altında kaldı)
     expect(SCHEMES.açık.success).toBe('#0f9f8f');
     expect(SCHEMES.koyu.primary).toBe('#a3a3ff');
     expect(SCHEMES.koyu.bg).toBe('#0e1a38');
+  });
+
+  it('yan menü iki temada da laciverttir (görünüm A); kart zemini açık temada beyazdır', () => {
+    expect(SCHEMES.açık['side-bg']).toBe('#0e1a38');
+    expect(SCHEMES.koyu['side-bg']).toBe('#0a1430');
+    expect(SCHEMES.açık.surface).toBe('#ffffff');
+    expect(SCHEMES.koyu.surface).toBe('#15254a');
   });
 
   it('koyu logo yeni lacivert zeminde okunur', () => {

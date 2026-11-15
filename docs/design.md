@@ -1,11 +1,11 @@
 # Tasarım sistemi
 
-Son güncelleme: **2026-11-07** (kod öncesi). Kanonik token kaynağı `src/app/globals.css`'tir; bu
+Son güncelleme: **2026-11-15** (görünüm A). Kanonik token kaynağı `src/app/globals.css`'tir; bu
 belge görsel niyeti ve kullanım kurallarını açıklar, CSS değerini ikinci kez yönetmez.
 
 ## Yön
 
-Sıcak, samimi, insancıl; akademik ve resmî olmayan bir ürün. Açık temada **krem** zemin, koyu temada **lacivert** zemin (kullanıcı onaylı, 10 Kasım: #0E1A38),
+Sıcak, samimi, insancıl; akademik ve resmî olmayan bir ürün. Açık temada soğuk **kâğıt** zemin üstünde beyaz kartlar, koyu temada **lacivert** zemin (kullanıcı onaylı, 10 Kasım: #0E1A38; yerleşim: görünüm A, aşağıda),
 koyu metin, **İris** ana renk, **Mercan-pembe** vurgu, **Nane** destek; uyarı/hata renkleri yalnız anlam taşır. Köşeler yumuşak
 (`--radius-*`), metin “sen” diliyle kısa ve içtendir. Kullanıcı çoğunlukla telefondan,
 kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
@@ -44,10 +44,37 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
 - Tema belirteci olmayan sınıf (`text-muted`, `bg-background`, `bg-surface-subtle`…) yazılmaz: stilsiz kalır. Köşe yalnız
   `rounded-control` / `rounded-card` / `rounded-sheet` ölçeğindendir.
 
+## Görünüm A · Gece ve Kâğıt (kullanıcı kararı, 15 Kasım)
+
+Ekranı içerik doldurur, yanlarda boşluk kalmaz; ürün premium ve güven veren durur; açık ve koyu tema birlikte vardır. Marka değişmez (logo, İris,
+Mercan, Nane, yazı tipleri). Ölçü ilkeleri (değerler `globals.css`'te):
+
+- **Zemin ve yüzey:** sayfa zemini `bg` (açık temada kâğıt), kart ve paneller `surface` (açık temada beyaz, koyu temada bir ton açık lacivert). Kart
+  `Card`; köşe kart 16 px, düğme ve girdi 12 px (`rounded-card`, `rounded-control`); gölge ince ve iki katmanlı (`shadow-card`). Her şey çerçeveli kutu
+  olmaz: liste içeriği kartın içinde ince çizgiyle ayrılmış satırlardır, aynı tip kutulardan duvar örülmez.
+- **Yan menü iki temada da lacivert** (`side-*` token'ları; kullanıcının sevdiği renk açık temada burada yaşar). Bilgisayarda (≥ 1024 px) 252 px, sabit,
+  tam boy: logo, ana grup (yalnız gerçek rotası olan öğeler; yer tutucu ya da "yakında" öğesi yok), "Hesap" grubu (Bildirimler + okunmamış rozeti,
+  Profilim), yöneticide "Yönetici" grubu, altta kullanıcı kartı. Etkin öğe: etkin zemin + solda 3 px Mercan çizgi. Kart yalnız gerçek veriyi yazar
+  (ad, bölüm kodu · sınıf ya da rol); veri yoksa satır çıkar, uydurulmaz. Koyu temada yan menü içerikten bir ton koyudur ve sağ kenarı çizgilidir.
+- **Üst çubuk** (bilgisayar, 72 px, alt çizgili): arama, tema düğmesi, bildirim zili (okunmamışta nokta), avatar. Arama şimdilik **deneyim aramasıdır**
+  (`/deneyimler?q=`, en az iki karakter); genel arama ekranı yok, olunca yönü değişir. Telefon üst çubuğu yapışkandır: logo, tema, zil, avatar.
+- **Telefon:** yan menü yok; altta beş sekme (Ana sayfa, İlanlar, Mentorlar, Randevular, Profil). Deneyimler, Etkinlikler ve Ders rehberi sekmede yoktur:
+  ana sayfadaki kısayollardan ve Profil ekranından açılır.
+- **İçerik genişliği:** `AppShellClient` içeriği en çok 1280 px, sola yaslı, telefonda 16 px, bilgisayarda 28/32 px dolguyla verir; sayfa kendi
+  ortalanmış dar sütununu (`mx-auto max-w-* px-* py-*`) kurmaz. Eski sayfaların kapsayıcıları kabuğun `.app-content` kuralıyla (`globals.css`) ortalanmaz ve
+  dolgu eklemez, kendi okuma ölçüsünü (`max-w-*`) korur; sayfa yeni düzene geçince kapsayıcısını siler. Form ve metin sayfaları dar kalabilir, ama
+  sola yaslıdır.
+- **Sayfa başlığı** (`PageHeader`): üst etiket (12 px, büyük harf, ana renk), `h1` (telefonda 26, bilgisayarda 34 px, Plus Jakarta 800), kısa açıklama;
+  eylemler bilgisayarda aynı satırda sağda (`actions`), telefonda başlığın altında. Tek birincil eylem.
+- **Oturumsuz sayfalar** (giriş, kayıt öncesi, hukuki metinler, doğrulama sayfası): yan menü yok, yalnız logo (ve "Giriş yap"); aynı token'lar. Bilgisayarda
+  giriş formu ortada bir kart, gönder düğmesi formun altındadır; telefonda başparmak hizası için ekranın dibindedir.
+- **Kontrast:** her iki temada metin 4,5:1, arayüz sınırı 3:1 (`contrast.test.ts`, yan menü çiftleri dahil). Açık tema kâğıt zemini ölçüdeki `#f3f4f9` yerine
+  `#f4f5fa`'dır: İris metin ve Nane sınır `#f3f4f9` üstünde AA'nın hemen altında kalıyordu.
+
 ## Mobil öncelik
 
 - Tasarım 360 px'ten başlar; asgari kontrol genişlikleri 360/390, 768 ve 1440.
-- Mobilde üst başlık + **alt gezinme** (4–5 sekme); ≥ 1024 px'te yan menü.
+- Mobilde üst başlık + **alt gezinme** (5 sekme); ≥ 1024 px'te yan menü.
 - Filtre ve ikincil işlemler mobilde **alt sayfa (sheet)**, masaüstünde yan panel/modal.
 - Tablolar mobilde kayıpsız **kart listesine** döner; eylem veya sütun sessizce kaybolmaz. `ResponsiveRows` kartında ilk hücre
   başlık, son hücre eylem gibi tam genişliktir; ortadaki değerler iki sütuna iner (kart kısa kalır).
@@ -58,7 +85,7 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
 
 ### Ortak başlık ve renk dağılımı
 
-- **Sayfa başlığı:** her sayfa `PageHeader` kullanır (üst etiket İris, `h1` Plus Jakarta Sans, açıklama ikincil metin; `h1` sınıfı sayfada yazılmaz).
+- **Sayfa başlığı:** her sayfa `PageHeader` kullanır (üst etiket İris, `h1` Plus Jakarta Sans, açıklama ikincil metin, sağda eylemler; `h1` sınıfı sayfada yazılmaz).
 - **Renk dağılımı:** İris ana eylem ve bağlantı; **Mercan** yalnız küçük vurgularda (`IconChip tone="accent"`, `Badge tone="accent"`); **Nane** başarı/veri/rapor
   çipleri. Kısayol ve yönetim kartlarında simge çipleri (`IconChip`) sırayla İris, Mercan, Nane kullanır; çip dekoratiftir, anlamı metin taşır.
 - **Tanıtım sayfası** (`landing.css`) sabit `#hex` metin rengi kullanmaz; belirteç kullanır (kontrast testi).
