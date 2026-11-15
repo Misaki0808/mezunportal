@@ -1,9 +1,9 @@
 // Sahte/örnek veri sabitleri. Kurum değerleri TEK YERDE burada durur.
 //
-// K-06 KISMEN TEYİTLİ: öğrenci e-posta alanı (ogr.iu.edu.tr) kullanıcının kendi hesabıyla doğrulandı.
-// Personel e-posta alanı, YBS'nin fakültesi ve program dili kaynaktan zayıf ölçüldü, kullanıcı teyidi
-// bekleniyor (BACKLOG.md K-06). Teyitte yalnız bu dosya değişir. İÜ-Cerrahpaşa (iuc.edu.tr) ayrı
-// üniversitedir ve seed'e girmez.
+// K-06 TEYİTLİ (kullanıcı, 14 Kas 2026; `docs/decisions.md`): öğrenci e-posta alanı (ogr.iu.edu.tr) kullanıcının kendi
+// hesabıyla doğrulandı; personel alanı (istanbul.edu.tr) ve YBS'nin İktisat Fakültesi'nde olması kullanıcı kararıyla
+// doğru; YBS programının dili İngilizcedir. Program dili şemada ve arayüzde bir alan değildir, bu yüzden burada yalnız
+// kayıt olarak durur. Değerleri `seed-data.test.ts` sabitler. İÜ-Cerrahpaşa (iuc.edu.tr) ayrı üniversitedir ve seed'e girmez.
 
 export const INSTITUTION_SEED = {
   university: {

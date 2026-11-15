@@ -199,8 +199,9 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
 
 ## KVKK
 
-- **Veri sorumlusu** K-03 ile netleşir; aydınlatma metni buna göre yazılır, son halini
-  hoca/üniversite onaylar.
+- **Veri sorumlusu** şimdilik proje sahibidir (gerçek kişi; K-03 kararı, `docs/decisions.md`); aydınlatma metni buna göre
+  yazılır; iletişim ve başvuru adresi platform hesabıdır (kişisel adres metinde geçmez), son hâli hoca/üniversite onayıyla tamamlanır. Taslak sürümü (`taslak-1`) ad dolunca artmaz: sürüm,
+  onaylı metin köke taşınırken artar (BACKLOG `PILOT-LEGAL`).
 - **Rızalar sürümlüdür ve yalnız eklenir.** Kayıtta aydınlatma metni ve kullanım şartları
   onaylanır. **Yurt dışına aktarım açık rızası** ayrı ve isteğe bağlıdır: CV'nin LLM sağlayıcısına
   gönderilmesi ve Google Takvim davetinde e-posta işlenmesi buna bağlıdır. Rıza yoksa CV
@@ -267,7 +268,8 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
   - Moderatör/yönetici yazısı ve karar veren kimliği (şikâyet çözüm notu, belge `reviewedById`, yetkiyi
     veren kişi): yönetici yazısı ya da üçüncü kişi referansı; kullanıcının kendi verisi değil.
   - Eski UserSkill: uygulama bu tabloya yazmaz; güncel beceriler profil/CV bölümündedir.
-- **Çerezler:** yalnız zorunlu oturum çerezi; üçüncü taraf analitik ve reklam çerezi yok
+- **Çerezler:** zorunlu oturum çerezi ve görünüm tercihi çerezi `theme` (`system|light|dark`, 1 yıl, httpOnly değil,
+  kişisel veri taşımaz, veritabanına yazılmaz); üçüncü taraf analitik ve reklam çerezi yok
   (metrikler kendi tablomuzda). Çerez bandı yerine aydınlatma metninde çerez bölümü yeterli
   görünür; son değerlendirme hukuki metin onayıyla (PILOT-LEGAL).
 - **Saklama:** `docs/data.md` “Veri güvenliği ve saklama”.
@@ -312,6 +314,7 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
   referans adı. Kişisel alan adında en az üç harfli ad
   parçası aranır; bu parça şirket alan adıyla çakışırsa alan adı da gizlenebilir. Yapay zekâ yalnız öneri
   üretir; kullanıcı okul adını onay ekranında düzeltebilir.
+- Yerel loopback Ollama kullanıldığında model girdisi bu makineden çıkmaz; uzak sağlayıcıya yalnız yerelde maskelenmiş metin gider. Uzak/canlı sağlayıcı seçimi ve aktarım kararı K-04 kapsamında açık kalır.
 - LLM girdisi ve çıktısı loglanmaz.
 
 ## Kötüye kullanım sınırları

@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { BrandLogo } from '@/components/brand/logo';
+import { readThemeFromCookieHeader } from '@/lib/theme';
 import messages from '../../messages/tr.json';
 import './globals.css';
 
@@ -12,6 +14,10 @@ export default function GlobalError({
   reset: () => void;
 }) {
   const t = messages.errorBoundary;
+  // Bu ekran kök düzenin yerine geçer (sunucu `data-theme` yazmaz): görünüm tercihi çerezden burada uygulanır.
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', readThemeFromCookieHeader(document.cookie));
+  }, []);
   return (
     <html lang="tr">
       <body>

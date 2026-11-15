@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import { BrandLogo } from '@/components/brand/logo';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import {
   BriefcaseIcon,
   BuildingIcon,
@@ -59,6 +60,7 @@ const STAT_ITEMS = [
 
 export async function Landing({ stats }: { stats: LandingStats }) {
   const t = await getTranslations('landing');
+  const theme = await getTranslations('theme');
   const numbers = STAT_ITEMS.flatMap((item) => {
     const value = stats[item.key];
     return value === null ? [] : [{ ...item, value }];
@@ -80,6 +82,7 @@ export async function Landing({ stats }: { stats: LandingStats }) {
           <a href="#nasil-calisir">{t('navHow')}</a>
           <a href="#bolumumuz">{t('navDepartment')}</a>
         </nav>
+        <ThemeToggle labels={{ toLight: theme('switchToLight'), toDark: theme('switchToDark') }} />
         <Link href="/giris" className="landing-header-login">
           {t('navLogin')} <ChevronRightIcon />
         </Link>
