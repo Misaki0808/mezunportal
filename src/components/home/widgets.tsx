@@ -17,10 +17,14 @@ import {
   CheckIcon,
   EmptyState,
   ErrorState,
+  IconChip,
   UsersIcon,
   buttonClasses,
 } from '@/components/ui';
 import { homeDate } from './presentation';
+
+const COMPACT_EMPTY =
+  'grid! grid-cols-[auto_1fr] items-start! gap-x-3 p-0! text-left! [&>span]:row-span-3 [&>span]:size-11';
 
 export type JobsResult = Awaited<ReturnType<typeof getSuggestedJobs>>;
 export type HomePanels = {
@@ -89,7 +93,7 @@ export function UpcomingPanel({
         <ErrorState errorCode={result && !result.ok ? result.errorCode : 'SERVER_UNEXPECTED'} />
       ) : !next ? (
         <EmptyState
-          className="px-0 py-3"
+          className={COMPACT_EMPTY}
           icon={<CalendarIcon />}
           title={t('appointments.empty')}
           description={t(student ? 'appointments.emptyStudent' : 'appointments.emptyMentor')}
@@ -233,12 +237,9 @@ export function JobsPanel({ result }: { result: HomePanels['jobs'] }) {
                 href={`/ilanlar/${job.id}`}
                 className="press-row flex min-h-20 items-center gap-3 py-3"
               >
-                <span
-                  aria-hidden="true"
-                  className="flex size-11 shrink-0 items-center justify-center rounded-control bg-accent-soft text-on-accent-soft"
-                >
+                <IconChip tone="accent">
                   <BriefcaseIcon />
-                </span>
+                </IconChip>
                 <span className="min-w-0">
                   <span className="block break-words font-semibold">{job.title}</span>
                   <span className="block break-words text-fg-muted">{job.organizationName}</span>
@@ -249,7 +250,7 @@ export function JobsPanel({ result }: { result: HomePanels['jobs'] }) {
         </ul>
       ) : (
         <EmptyState
-          className="px-0 py-3"
+          className={COMPACT_EMPTY}
           icon={<BriefcaseIcon />}
           title={t('jobs.emptyTitle')}
           description={old('empty')}
@@ -294,7 +295,7 @@ export function MentorsPanel({ result }: { result: HomePanels['mentors'] }) {
         </ul>
       ) : (
         <EmptyState
-          className="px-0 py-3"
+          className={COMPACT_EMPTY}
           icon={<UsersIcon />}
           title={t('mentors.empty')}
           description={t('mentors.emptyDescription')}
@@ -334,7 +335,7 @@ export function MentorCapacityPanel({ result }: { result: HomePanels['settings']
         </>
       ) : (
         <EmptyState
-          className="px-0 py-3"
+          className={COMPACT_EMPTY}
           title={t('capacity.empty')}
           description={t('capacity.emptyDescription')}
           action={
@@ -354,7 +355,7 @@ export function HomeStoryBand({ story }: { story: PublishedStory }) {
     <Card
       as="section"
       aria-label={t('story.title')}
-      className="flex flex-col gap-4 bg-surface sm:flex-row sm:items-center sm:gap-6"
+      className="grid grid-cols-[auto_1fr] items-start gap-4 bg-surface sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6"
     >
       <Avatar
         name={story.name}
@@ -373,7 +374,7 @@ export function HomeStoryBand({ story }: { story: PublishedStory }) {
       </div>
       <Link
         href={`/hikayeler/${encodeURIComponent(story.id)}`}
-        className={buttonClasses({ variant: 'secondary' })}
+        className={buttonClasses({ variant: 'secondary' }) + ' col-span-2 sm:col-span-1'}
       >
         {t('story.read')}
       </Link>

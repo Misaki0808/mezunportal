@@ -104,7 +104,7 @@ export default async function HomePage() {
     </Link>
   ) : null;
   return (
-    <div className="flex w-full max-w-[1280px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
+    <div className="flex w-full max-w-[1280px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-7 [.app-content_&]:px-0 [.app-content_&]:py-0">
       {needsVerification && <h1 className="text-3xl font-semibold">{t('welcome')}</h1>}
       {needsVerification && (
         <Link

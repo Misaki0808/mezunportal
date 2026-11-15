@@ -1,3 +1,4 @@
+import Link from 'next/link';
 // @vitest-environment jsdom
 import { screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
@@ -273,8 +274,8 @@ describe('A görünümü kişisel pano', () => {
   });
   it('bildirim ve hikâye başlıktan sonra gelir; telefonun okuma sırası ızgaradan bağımsızdır', () => {
     show({
-      notice: <a href="/baslangic">Başlangıca devam et</a>,
-      feature: <a href="/hikayeler">Hikâye arşivi</a>,
+      notice: <Link href="/baslangic">Başlangıca devam et</Link>,
+      feature: <Link href="/hikayeler">Hikâye arşivi</Link>,
     });
     const elements = [
       screen.getByRole('heading', { level: 1 }),
