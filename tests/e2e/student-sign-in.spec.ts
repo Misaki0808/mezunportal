@@ -9,7 +9,8 @@ import { waitForHydratedControl, waitForHydratedForm } from './hydration';
 /** Bekleyen yönlendirme hesap bağlantısını keserse, idempotent gezinmeyi hedef URL ile doğrula. */
 async function openProfile(page: import('@playwright/test').Page) {
   await page.goto('/hesap', { waitUntil: 'networkidle' });
-  const link = page.getByRole('link', { name: /^Profilim/ });
+  // Alt gezinmedeki "Profilim" sekmesi de aynı adı taşır; sayfanın kendi satırı ana içeriktedir.
+  const link = page.getByRole('main').getByRole('link', { name: /^Profilim/ });
   await expect(link).toHaveAttribute('href', '/profil');
   await expect(async () => {
     if (new URL(page.url()).pathname === '/hesap') await link.click();

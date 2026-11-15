@@ -7,7 +7,7 @@ import { renderUi } from '@/test/render';
 const navigation = vi.hoisted(() => ({ pathname: '/ilanlar' }));
 vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }));
 
-import { INBOX_CHANGED_EVENT, NotificationBell } from './notification-bell';
+import { INBOX_CHANGED_EVENT, NotificationBell, UnreadProvider } from './notification-bell';
 
 const fetchMock = vi.fn();
 beforeEach(() => {
@@ -56,6 +56,70 @@ describe('NotificationBell: ad ve rozet', () => {
       'aria-current',
       'page',
     );
+  });
+});
+
+describe('NotificationBell: bilgisayar üst çubuğu düzeni', () => {
+  it('okunmamış varken sayı yerine nokta çizer; nokta ekran okuyucudan gizlidir, ad sayıyı söyler', () => {
+    renderUi(<NotificationBell initial={4} layout="icon" refreshEnabled />);
+    expect(screen.getByRole('link', { name: 'Bildirimler, 4 okunmamış' })).toBeVisible();
+    expect(screen.getByTestId('bell-dot')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.queryByTestId('bell-badge')).toBeNull();
+  });
+
+  it('okunmamış yokken nokta yok; dokunma hedefi 44 px', () => {
+    renderUi(<NotificationBell initial={0} layout="icon" refreshEnabled />);
+    expect(screen.queryByTestId('bell-dot')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Bildirimler' }).className).toContain('size-11');
+  });
+
+  it('yan menü düzeni lacivert token kullanır; bildirim sayfasında etkin zemin ve mercan çizgi alır', () => {
+    navigation.pathname = '/bildirimler';
+    renderUi(<NotificationBell initial={0} layout="side" refreshEnabled />);
+    const link = screen.getByRole('link', { name: 'Bildirimler' });
+    expect(link.className).toContain('bg-side-active');
+    expect(link.className).toContain('inset_3px_0_0_var(--color-accent)');
+  });
+});
+
+describe('UnreadProvider: sayı tek yerde tazelenir', () => {
+  it('üç zil örneği aynı sayıyı gösterir ve yenilemede tek GET atılır', async () => {
+    reply(6);
+    renderUi(
+      <UnreadProvider initial={2} refreshEnabled>
+        <NotificationBell initial={2} layout="header" refreshEnabled />
+        <NotificationBell initial={2} layout="icon" refreshEnabled />
+        <NotificationBell initial={2} layout="side" refreshEnabled />
+      </UnreadProvider>,
+    );
+    expect(screen.getAllByRole('link', { name: 'Bildirimler, 2 okunmamış' })).toHaveLength(3);
+    expect(fetchMock).not.toHaveBeenCalled();
+    act(() => void window.dispatchEvent(new Event(INBOX_CHANGED_EVENT)));
+    await waitFor(() =>
+      expect(screen.getAllByRole('link', { name: 'Bildirimler, 6 okunmamış' })).toHaveLength(3),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('sağlayıcı yokken zil sayıyı kendisi tazeler (tek başına kullanım değişmedi)', async () => {
+    reply(5);
+    renderUi(<NotificationBell initial={1} layout="icon" refreshEnabled />);
+    act(() => void window.dispatchEvent(new Event('focus')));
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'Bildirimler, 5 okunmamış' })).toBeVisible(),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshEnabled kapalıyken (rıza kapısı) sağlayıcı sayı göstermez ve istek atmaz', () => {
+    renderUi(
+      <UnreadProvider initial={7} refreshEnabled={false}>
+        <NotificationBell initial={7} layout="side" refreshEnabled={false} />
+      </UnreadProvider>,
+    );
+    expect(screen.queryByTestId('bell-badge')).toBeNull();
+    act(() => void window.dispatchEvent(new Event('focus')));
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

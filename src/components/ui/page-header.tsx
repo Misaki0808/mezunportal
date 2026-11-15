@@ -8,29 +8,53 @@ export type PageHeaderProps = {
   /** Sayfanın tek `h1`'i. */
   title: ReactNode;
   description?: ReactNode;
-  /** Açıklamanın altındaki eylem(ler) ya da ek bilgi (ör. ikincil düğme, rozet satırı). */
+  /** Başlığın SAĞINDAKİ eylem(ler) (bilgisayarda aynı satırda, telefonda başlığın altında); birincil eylem tek ve belirgin olur. */
+  actions?: ReactNode;
+  /** Açıklamanın altındaki ek bilgi (ör. rozet satırı). */
   children?: ReactNode;
   className?: string;
 };
 
 /**
- * Sayfa başlığı: tek biçim (docs/design.md “Sayfa başlığı”). Üst etiket İris, başlık Plus Jakarta Sans (h1 kuralı),
- * açıklama ikincil metin. Her sayfa kendi `h1/eyebrow` sınıflarını yazmaz; boyut ve boşluk burada değişir.
+ * Sayfa başlığı: tek biçim (docs/design.md “Sayfa başlığı”, görünüm A). Üst etiket 12 px büyük harf ve ana renk, başlık
+ * Plus Jakarta Sans 800 (telefonda 26, bilgisayarda 34 px), açıklama ikincil metin; eylemler bilgisayarda sağda. Her sayfa
+ * kendi `h1/eyebrow` sınıflarını yazmaz; boyut ve boşluk burada değişir.
  */
-export function PageHeader({ eyebrow, title, description, children, className }: PageHeaderProps) {
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  actions,
+  children,
+  className,
+}: PageHeaderProps) {
   return (
-    <header className={cn('max-w-2xl', className)}>
-      {eyebrow && <p className="text-sm font-semibold tracking-wider text-primary">{eyebrow}</p>}
-      <h1
-        className={cn(
-          'break-words text-3xl font-semibold tracking-tight text-fg sm:text-4xl',
-          eyebrow ? 'mt-2' : null,
+    <header
+      className={cn(
+        'flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-8',
+        className,
+      )}
+    >
+      <div className="min-w-0 max-w-2xl">
+        {eyebrow && (
+          <p className="text-xs font-semibold tracking-[0.08em] text-primary uppercase">
+            {eyebrow}
+          </p>
         )}
-      >
-        {title}
-      </h1>
-      {description && <p className="mt-3 text-base leading-relaxed text-fg-muted">{description}</p>}
-      {children}
+        <h1
+          className={cn(
+            'break-words text-[1.625rem] leading-[1.15] font-extrabold tracking-tight text-fg sm:text-[2.125rem]',
+            eyebrow ? 'mt-1.5' : null,
+          )}
+        >
+          {title}
+        </h1>
+        {description && (
+          <p className="mt-1.5 text-base leading-relaxed text-fg-muted">{description}</p>
+        )}
+        {children}
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-2.5 lg:shrink-0">{actions}</div>}
     </header>
   );
 }

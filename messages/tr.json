@@ -427,22 +427,38 @@
     "comingSoon": "yakında",
     "items": {
       "home": "Ana sayfa",
-      "experiences": "Deneyimler",
+      "jobs": "İlanlar",
       "mentors": "Mentorlar",
       "appointments": "Randevular",
-      "profile": "Hesabım",
+      "experiences": "Deneyimler",
+      "events": "Etkinlikler",
+      "courses": "Ders rehberi",
+      "notifications": "Bildirimler",
+      "profile": "Profilim"
+    },
+    "shortItems": {
+      "home": "Ana sayfa",
       "jobs": "İlanlar",
-      "notifications": "Bildirimler"
+      "mentors": "Mentorlar",
+      "appointments": "Randevular",
+      "profile": "Profil"
+    },
+    "groups": {
+      "account": "Hesap",
+      "admin": "Yönetici"
     },
     "admin": "Yönetim",
     "signIn": "Giriş yap",
-    "shortItems": {
-      "home": "Ana",
-      "experiences": "Deneyim",
-      "jobs": "İlanlar",
-      "mentors": "Mentor",
-      "appointments": "Randevu",
-      "profile": "Hesabım"
+    "accountLink": "Hesabım",
+    "search": {
+      "label": "Deneyimlerde ara",
+      "placeholder": "Deneyimlerde ara"
+    },
+    "userCard": {
+      "grade": "{grade}. sınıf",
+      "preparatory": "Hazırlık",
+      "alumni": "Mezun",
+      "academic": "Akademisyen"
     }
   },
   "ui": {

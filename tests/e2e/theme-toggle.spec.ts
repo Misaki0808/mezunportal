@@ -3,7 +3,7 @@ import { expect, test, type Page } from './fixture';
 
 // Kart 383: tema düğmesi. Üç durum (Sistem / Açık / Koyu), çerezde kalıcı, ilk açılışta yanıp sönme yok.
 const DARK = 'rgb(14, 26, 56)';
-const LIGHT = 'rgb(255, 250, 244)';
+const LIGHT = 'rgb(244, 245, 250)';
 
 const attr = (page: Page) =>
   page.evaluate(() => document.documentElement.getAttribute('data-theme'));
@@ -145,13 +145,17 @@ test.describe('düğme ve hesap seçimi (390 px, giriş yapmış öğrenci)', ()
 test.describe('geniş ekran (1440 px)', () => {
   test.use({ colorScheme: 'light', viewport: { width: 1440, height: 900 } });
 
-  test('yan menüdeki düğme çalışır; üst çubuktaki gizli kopya erişilebilirlik ağacında yok', async ({
+  test('bilgisayar üst çubuğundaki düğme çalışır; telefon üst çubuğundaki gizli kopya erişilebilirlik ağacında yok', async ({
     page,
   }) => {
     await loginAs(page, 'student');
     await page.goto('/mentorlar', { waitUntil: 'networkidle' });
     const toggles = page.getByRole('button', { name: 'Koyu temaya geç' });
     await expect(toggles).toHaveCount(1);
+    // Lacivert yan menüde düğme yok: bilgisayar üst çubuğunda.
+    await expect(
+      page.getByRole('navigation', { name: 'Yan menü' }).getByRole('button'),
+    ).toHaveCount(0);
     await toggles.click();
     await expect.poll(() => attr(page)).toBe('dark');
     await expectBg(page, DARK);

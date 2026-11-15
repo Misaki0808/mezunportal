@@ -137,14 +137,14 @@ test('Bölümümüz bağlantıları bölümün sayfalarına yeni sekmede, güven
   ).toBeVisible();
 });
 
-test('koyu tema (lacivert #0E1A38) ve açık tema (krem) okunabilir kalır', async ({ page }) => {
+test('koyu tema (lacivert #0E1A38) ve açık tema (kâğıt) okunabilir kalır', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
   await expect(page.locator('.landing')).toHaveCSS('background-color', 'rgb(14, 26, 56)');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveCSS('color', 'rgb(242, 244, 252)');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCSS('color', 'rgb(238, 241, 251)');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.emulateMedia({ colorScheme: 'light' });
-  await expect(page.locator('.landing')).toHaveCSS('background-color', 'rgb(255, 250, 244)');
+  await expect(page.locator('.landing')).toHaveCSS('background-color', 'rgb(244, 245, 250)');
 });
 
 test("çok geniş ekranda (2560, 3440) içerik ekranın ~%83'ünü kaplar; yanlar boş kalmaz", async ({
