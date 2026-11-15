@@ -1035,4 +1035,41 @@ ve Etkinlikler, Ders rehberi gibi Profil ekranından açılır). (4) Yan menü e
 (5) Sayfalar dar ve ortalanmış sütunlarını kendi kapsayıcılarında kuruyordu (60'tan fazla dosya); hepsine dokunmak yerine kabuk içeriği **tek CSS kuralıyla** sola yaslar ve dolguyu kendisi verir
 (`.app-content`); sayfalar yeni düzene geçtikçe kapsayıcıları silinir ve kural kalkar. (6) Yan menü iki temada da lacivert olduğu için logo ona özel sabit renkli bir değişken aldı (`BrandLogo variant="on-dark"`);
 `Card` zemini `bg`'den `surface`'e geçti (açık temada beyaz kart). (7) Okunmamış bildirim sayısı kabukta **tek yerde** (`UnreadProvider`) tazelenir: zil üç yerde çizilir (telefon üst çubuğu, bilgisayar üst
-çubuğu, yan menü) ve her biri ayrı istek atmaz. (8) Yan menü alt kartı oturumdaki kişinin yalnız adını ve doğrulanmış üyeliğini (bölüm kodu, sınıf ya da rol) okur; görsel adresi, e-posta ve telefon taşınmaz.
+çubuğu, yan menü) ve her biri ayrı istek atmaz. (8) Yan menü alt kartı oturumdaki kişinin yalnız adını ve doğrulanmış üyeliğini (bölüm kodu, sınıf ya da rol) okur; görsel adresi, e-posta ve telefon taşınmaz. (9) Tema düğmesi (kart 383) bilgisayarda üst çubukta zilin soluna, telefonda üst çubukta zil ile
+avatarın soluna oturdu; yan menü iki temada da lacivert olduğu için düğme orada değil (383'te yan menüdeydi, lacivert zeminde ayrı bir düğme biçimi gerekirdi). Düğme
+zorunlu onay beklerken de görünür: görünüm tercihi onaya bağlı değildir. Yeni kâğıt zemine (`#f4f5fa`) ve koyu `fg` değerine (`#eef1fb`) bağlı e2e ve manifest
+sabitleri güncellendi. Koyu token'lar `globals.css`'te iki blokta birden (elle ve sistem koyusu) değiştirilir; `contrast.test.ts` sapmayı yakalar (383, R1
+incelemesinde 8 mutantla doğrulandı).
+
+## 2026-11-14 · Kullanıcı kararları: program dili (K-06), veri sorumlusu (K-03), pilot zamanı (K-12)
+
+**K-06, kurum değerleri.** Kullanıcı: “personel e-posta alanı doğru. ybs iktisat fakültesinde. program ingilizce.” Seed'teki değerler
+(personel alanı `istanbul.edu.tr`, İktisat Fakültesi, YBS) doğru çıktı; öğrenci alanı (`ogr.iu.edu.tr`) daha önce kullanıcının kendi hesabıyla
+doğrulanmıştı. YBS programının dili İngilizcedir. Program dili şemada ve arayüzde bir alan olmadığı için kod değişmedi ve alan eklenmedi
+(tüketicisi yok, migration gerekmez); karar `prisma/seed-data.ts` açıklamasında durur, "geçici" işaretleri kalktı. Değerleri `prisma/seed-data.test.ts`
+sabitler. Seed'deki ders listesi zaten İngilizce programla uyumludur (hazırlık yarıyılı, İngilizce ders adları). Bölüm adına (`Department.name`) "(İngilizce)" gibi
+bir ek yazılmadı: karar programın dilini söylüyor, adı değiştirmiyor.
+
+**K-03, veri sorumlusu.** Kullanıcı: “veri sorumlusu şu an benim çünkü siteyi ben yaptım bunu üniversiteye yıkamayız. bölüme belki yıkabiliriz ama o da
+şu an değil … belki ileride … pilot uygulama ayakları yere bastığı zaman olabilir”. Veri sorumlusu şimdilik proje sahibidir (Efe Baydemir, gerçek kişi);
+üniversiteye devredilmez, bölüme devri pilot oturunca yeniden değerlendirilebilir. Hukuki metin taslaklarında (`docs/legal-drafts.md` §1, §3, §7 ve
+`messages/tr.json` karşılıkları) **ad** yazıldı. İletişim ve başvuru adresi için kullanıcı 15 Kasım'da platform hesabını açtı
+(`mezunportal.iu@gmail.com`); aydınlatma metninin iletişim satırına (§1), hak başvurusuna (§8) ve §7 notuna bu adres yazıldı, kişisel adres hiçbir metinde geçmez.
+Ekrandaki taslak uyarısından "iletişim adresi henüz kesinleşmedi" cümlesi kalktı (artık doğru değil); kalan köşeli alanlar sağlayıcı adı ve hukuk görüşüdür (K-04, K-05),
+bu yüzden "köşeli alanlar doldurulmadan metin yayına girmez" kuralı onlar için işlemeye devam eder. **Sürüm artmadı:**
+`taslak-1` taslağın sürümüdür, pilot başlamadı ve gerçek kullanıcı bu metni onaylamadı ve önceki taslak eklemeleri (P2-14 ekleri) da sürümü artırmadı; sürüm, hoca ve
+hukuk onaylı metin köke taşınırken artar (`BACKLOG.md` PILOT-LEGAL). Kalan: hoca onayı, hukuk okuması (gerçek kişi veri sorumlusunun
+sicil/bildirim yükümlülüğü ve üniversiteyle ilişkinin metinde nasıl anlatılacağı hukukçuya sorulur).
+
+**K-12, pilot zamanı.** Kullanıcı: “finaller bitsin 1 aylık tatilde pilotu çıkarır uygulamayı kullandırmaya başlarım”. Pilot, finaller bittikten sonraki
+yaklaşık bir aylık tatilde başlar; kesin tarih yok. Pilotun kimlerle yapılacağı ve başarı ölçütleri hâlâ açıktır (`docs/faz2-plan.md` §1). Bu karar canlıya alım
+işlerinin (sunucu K-02, SMTP K-05, güvenilir proxy TD-021) tatilden önce bitmesi gerektiği anlamına gelir; işler ayrı kartlarla açılır.
+
+## 2026-11-15 · LinkedIn ile giriş kapalı kalır
+
+Kullanıcı: “iş geçmişi, okul ve yetenekleri alamayacaksam linkedin ile girişin ne anlamı var” ve LinkedIn ile girişin bırakılmasını istedi. LinkedIn'in açık
+katmanı ("Sign In with LinkedIn using OpenID Connect") yalnız ad, e-posta ve fotoğraf verir; iş geçmişi, okul ve yetenekler ortaklık onayı ister (D1 ve "LinkedIn'den yalnız giriş; iş geçmişi PDF ile"
+kararındaki kısıt değişmedi). Giriş yalnız e-posta bağlantısıyladır. Kod **silinmedi**: anahtarlar (`LINKEDIN_CLIENT_ID/SECRET`) verilmediği sürece düğme zaten gizlidir ve
+sağlayıcı kapalıdır, ileride istenirse yeniden açmak anahtar vermekten ibarettir. LinkedIn kurum sayfası, uygulaması ve anahtarları artık bekleyen iş değil (`BACKLOG.md` E3 ertelendi);
+LinkedIn profil PDF'iyle otomatik doldurma ayrı bir karardır (K-04, Gemini) ve bu kayıttan etkilenmez.
+**Tema düğmesi: Sistem / Açık / Koyu, çerezde (kart 383, kullanıcı kararı 15 Kas: "hem karanlık hem açık mod olacak").** Tema yalnız `prefers-color-scheme` ile değişiyordu, düğme yoktu: koyu Mac kullanan kullanıcı açık modu hiç görmüyordu. (1) **Üç durum**, varsayılan Sistem (bugünkü davranış); seçim `theme` çerezinde (`system|light|dark`, httpOnly değil, 1 yıl, `SameSite=Lax`, https'te `Secure`), veritabanına yazılmaz. (2) **Yanıp sönme yok:** sunucu `<html data-theme>`'yi çerezden yazar (kök düzen çerezi okur; düzen zaten oturum için dinamikti), geçersiz/boş çerez `system`. Betik gerekmez: JavaScript kapalıyken de ilk boyama doğrudur; Sistem'de cihaz ayarı CSS medya sorgusundan gelir. (3) **Token kaynağı:** koyu değerler `globals.css`'te iki blokta (elle `:root[data-theme='dark']` ve sistem koyusu `@media … :root:not([data-theme='light'])`) birebir tekrar eder; CSS bir bildirim bloğunu hem medya koşuluna hem öznitelik seçiciye bağlayamaz. `light-dark()` ile tek kaynak denendi ve bırakıldı: Safari < 17.5 ve Chrome < 123'te bütün token'lar geçersiz olur, sayfa renksiz kalır. Sapmayı `contrast.test.ts` yakalar (iki bloğun bildirimleri eşit, `color-scheme` üç durumda doğru). `dark:` yardımcı sınıfı aynı kurala bağlı `@custom-variant`tır. (4) **Tarayıcı çubuğu rengi** (`theme-color`) seçimi izler (`generateViewport` çerezi okur; düğme anında günceller). (5) **Çerez bildirimi:** aydınlatma metninin "Çerezler" bölümü "yalnız zorunlu çerez" diyordu; görünüm tercihi işlevsel çerezi eklendiği için üç yerde (`messages/tr.json`, `docs/legal-drafts.md`, `docs/security.md`) düzeltildi. Metin sürümü `taslak-1` kalır; taslağın geri kalanı gibi hocanın/hukukun onayını bekler. (6) Hata ekranı (`global-error`) kök düzenin yerine geçtiği için çerezi istemcide okuyup uygular.

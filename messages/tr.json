@@ -320,6 +320,17 @@
       "PROFILE_TEXT_PERSONAL_DATA": "Bu alana telefon, e-posta veya kimlik numarası yazma. İletişim bilgilerini Gizlilik ayarlarından yönet."
     }
   },
+  "theme": {
+    "switchToDark": "Koyu temaya geç",
+    "switchToLight": "Açık temaya geç",
+    "choiceLabel": "GÖRÜNÜM",
+    "choiceHint": "Sistem, cihazının ayarını izler. Seçimin bu tarayıcıda hatırlanır.",
+    "options": {
+      "system": "Sistem",
+      "light": "Açık",
+      "dark": "Koyu"
+    }
+  },
   "nav": {
     "brand": "MezunPortal",
     "labelBottom": "Ana gezinme",
@@ -1464,7 +1475,7 @@
       "required": "Zorunlu",
       "optional": "İsteğe bağlı",
       "version": "Sürüm: {version}",
-      "draft": "Bu metinler taslaktır. Hoca / hukuk onayı bekliyor; veri sorumlusu bilgisi henüz kesinleşmedi.",
+      "draft": "Bu metinler taslaktır. Hoca / hukuk onayı bekliyor.",
       "requiredHint": "Devam etmek için iki zorunlu metni onayla.",
       "accept": "Okudum ve onaylıyorum.",
       "optionalAccept": "Yurt dışına aktarım için açık rıza veriyorum.",
@@ -1597,7 +1608,7 @@
         "sections": {
           "section1": {
             "title": "1. Veri sorumlusu",
-            "body": "[K-03: veri sorumlusunun unvanı ve iletişim bilgisi]"
+            "body": "Efe Baydemir (gerçek kişi; MezunPortal projesinin sahibi). İletişim: mezunportal.iu@gmail.com (MezunPortal platform hesabı)"
           },
           "section2": {
             "title": "2. İşlenen kişisel veriler",
@@ -1629,11 +1640,11 @@
           },
           "section7": {
             "title": "7. Çerezler",
-            "body": "Yalnız oturumunuzun çalışması için zorunlu çerez kullanılır; analitik veya reklam çerezi yoktur."
+            "body": "Oturumunuzun çalışması için zorunlu çerez ve görünüm tercihinizi (sistem, açık ya da koyu) hatırlayan işlevsel çerez kullanılır; analitik veya reklam çerezi yoktur."
           },
           "section8": {
             "title": "8. Haklarınız (KVKK m. 11)",
-            "body": "[Haklar listesi.] Verilerinizin bir kopyasını uygulamadan indirebilir, hesabınızı silebilirsiniz. Başvuru: [K-03 başvuru adresi]."
+            "body": "[Haklar listesi.] Verilerinizin bir kopyasını uygulamadan indirebilir, hesabınızı silebilirsiniz. Başvuru: mezunportal.iu@gmail.com."
           }
         }
       },
@@ -1680,7 +1691,7 @@
         "sections": {
           "section1": {
             "title": "1. Platformun amacı",
-            "body": "İÜ öğrencileri, mezunları ve akademisyenleri arasında staj ve kariyer deneyimi paylaşımı ve mentorluk. [Platformu işleten: K-03]"
+            "body": "İÜ öğrencileri, mezunları ve akademisyenleri arasında staj ve kariyer deneyimi paylaşımı ve mentorluk. Platformu işleten: Efe Baydemir (gerçek kişi)."
           },
           "section2": {
             "title": "2. Üyelik ve doğrulama",

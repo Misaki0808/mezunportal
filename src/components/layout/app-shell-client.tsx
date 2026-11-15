@@ -22,6 +22,7 @@ import {
 } from '@/components/ui';
 
 import { NotificationBell, UnreadProvider } from '@/components/inbox/notification-bell';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 
 import type { ShellUser } from '@/contracts/shell-user';
 import { SEARCH_QUERY_MAX, SEARCH_QUERY_MIN } from '@/contracts/search';
@@ -113,6 +114,8 @@ export function AppShellClient({
   shellUser?: ShellUser | null;
 }) {
   const t = useTranslations('nav');
+  const themeText = useTranslations('theme');
+  const themeLabels = { toLight: themeText('switchToLight'), toDark: themeText('switchToDark') };
   const pathname = usePathname();
 
   // Giriş tamamlandı (oturumlu bir ekran çizildi): "E-postanı kontrol et" ekranı için tutulan adres bu sekmede kalmasın.
@@ -133,14 +136,17 @@ export function AppShellClient({
           <Link href="/" className="press-control inline-flex min-h-11 items-center">
             <BrandLogo className="h-7 w-auto" label={t('brand')} />
           </Link>
-          {!signedIn && !authScreen && (
-            <Link
-              href="/giris"
-              className="press-control inline-flex min-h-11 items-center font-semibold text-primary"
-            >
-              {t('signIn')}
-            </Link>
-          )}
+          <div className="flex items-center gap-1">
+            <ThemeToggle labels={themeLabels} />
+            {!signedIn && !authScreen && (
+              <Link
+                href="/giris"
+                className="press-control inline-flex min-h-11 items-center px-2 font-semibold text-primary"
+              >
+                {t('signIn')}
+              </Link>
+            )}
+          </div>
         </header>
         <main id="main-content" tabIndex={-1} className="outline-none">
           {children}
@@ -296,51 +302,57 @@ export function AppShellClient({
             <Link href="/" className="press-control inline-flex min-h-11 items-center">
               <BrandLogo className="h-7 w-auto" label={t('brand')} />
             </Link>
-            {tools && (
-              <div className="flex items-center gap-1">
-                {/* Tema düğmesi (kart 383) buraya, zilin soluna gelir. */}
-                <NotificationBell
-                  initial={unreadNotifications}
-                  layout="header"
-                  refreshEnabled={canRefreshNotifications}
-                />
-                {accountAvatar}
-              </div>
-            )}
+            <div className="flex items-center gap-1">
+              {/* Tema düğmesi onay beklerken de görünür (görünüm tercihi onaya bağlı değildir). */}
+              <ThemeToggle labels={themeLabels} />
+              {tools && (
+                <>
+                  <NotificationBell
+                    initial={unreadNotifications}
+                    layout="header"
+                    refreshEnabled={canRefreshNotifications}
+                  />
+                  {accountAvatar}
+                </>
+              )}
+            </div>
           </header>
 
           <header className="sticky top-0 z-30 hidden h-[4.5rem] items-center gap-3.5 border-b border-border bg-bg px-8 lg:flex">
             {tools && (
-              <>
-                <form
-                  role="search"
-                  action="/deneyimler"
-                  method="get"
-                  className="relative w-full max-w-[28.75rem]"
-                >
-                  <SearchIcon className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-fg-subtle" />
-                  <input
-                    type="search"
-                    name="q"
-                    aria-label={t('search.label')}
-                    placeholder={t('search.placeholder')}
-                    minLength={SEARCH_QUERY_MIN}
-                    maxLength={SEARCH_QUERY_MAX}
-                    autoComplete="off"
-                    className="block min-h-11 w-full rounded-control border border-border-control bg-surface py-2 pr-3 pl-10 text-[0.9375rem] text-fg placeholder:text-fg-subtle"
-                  />
-                </form>
-                <div className="ml-auto flex items-center gap-3">
-                  {/* Tema düğmesi (kart 383) buraya, zilin soluna gelir. */}
+              <form
+                role="search"
+                action="/deneyimler"
+                method="get"
+                className="relative w-full max-w-[28.75rem]"
+              >
+                <SearchIcon className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-fg-subtle" />
+                <input
+                  type="search"
+                  name="q"
+                  aria-label={t('search.label')}
+                  placeholder={t('search.placeholder')}
+                  minLength={SEARCH_QUERY_MIN}
+                  maxLength={SEARCH_QUERY_MAX}
+                  autoComplete="off"
+                  className="block min-h-11 w-full rounded-control border border-border-control bg-surface py-2 pr-3 pl-10 text-[0.9375rem] text-fg placeholder:text-fg-subtle"
+                />
+              </form>
+            )}
+            <div className="ml-auto flex items-center gap-3">
+              {/* Tema düğmesi onay beklerken de görünür (görünüm tercihi onaya bağlı değildir). */}
+              <ThemeToggle labels={themeLabels} className="border border-border bg-surface" />
+              {tools && (
+                <>
                   <NotificationBell
                     initial={unreadNotifications}
                     layout="icon"
                     refreshEnabled={canRefreshNotifications}
                   />
                   {accountAvatar}
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </header>
 
           <KeyboardState />

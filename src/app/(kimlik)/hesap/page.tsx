@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { unstable_rethrow } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
@@ -16,10 +17,12 @@ import {
   UserIcon,
 } from '@/components/ui';
 import { AccountLink } from '@/components/account/account-link';
+import { ThemeChoice } from '@/components/theme/theme-choice';
 import { PrivacyAccountLinks } from '@/components/privacy/account-links';
 import { getVerificationState } from '@/server/actions/auth';
 import { getMyAccountName } from '@/server/actions/account';
 import { getMyMentorSettings } from '@/server/actions/appointment';
+import { THEME_COOKIE, parseTheme } from '@/lib/theme';
 import { requireUser } from '@/server/permissions';
 import { evaluateAccess } from '@/server/rules/authorization';
 
@@ -76,6 +79,8 @@ export default async function AccountPage() {
     getTranslations('accountName'),
     getMyAccountName().catch(() => null),
   ]);
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  const themeText = await getTranslations('theme');
   if (!state) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
   const canAskFaq = actor.facts.memberships.some(
@@ -437,6 +442,12 @@ export default async function AccountPage() {
           </section>
         );
       })}
+      <section aria-labelledby="account-appearance" className="mt-8">
+        <h2 id="account-appearance" className={headingClasses}>
+          {themeText('choiceLabel')}
+        </h2>
+        <ThemeChoice initial={theme} labelledBy="account-appearance" />
+      </section>
       <section aria-labelledby="account-session" className="mt-8">
         <h2 id="account-session" className={headingClasses}>
           {t('groups.session')}

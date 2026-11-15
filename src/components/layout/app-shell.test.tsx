@@ -386,3 +386,55 @@ it.each(['/giris', '/giris/epostani-kontrol-et', '/giris/test'])(
     }
   },
 );
+
+describe('AppShell: tema düğmesi (kart 383)', () => {
+  const buttons = () => screen.queryAllByRole('button', { name: /temaya geç/ });
+
+  it('oturumlu kabukta hem telefon hem bilgisayar üst çubuğunda vardır; lacivert yan menüde yoktur', () => {
+    renderUi(<AppShell signedIn>x</AppShell>);
+    // Biri `lg:hidden` telefon üst çubuğunda, biri yalnız geniş ekranda görünen bilgisayar üst çubuğunda (jsdom CSS uygulamaz: ikisi de DOM'da).
+    expect(buttons()).toHaveLength(2);
+    for (const button of buttons()) expect(button.closest('header')).not.toBeNull();
+    expect(within(screen.getByRole('complementary')).queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('zorunlu onay beklerken de görünür (görünüm tercihi onaya bağlı değildir)', () => {
+    renderUi(
+      <AppShell signedIn consentPending>
+        x
+      </AppShell>,
+    );
+    expect(buttons()).toHaveLength(2);
+  });
+
+  it('giriş yapmamış (tanıtım dışı) sayfada da vardır', () => {
+    navigation.pathname = '/hukuki/aydinlatma';
+    try {
+      renderUi(<AppShell>x</AppShell>);
+      expect(buttons()).toHaveLength(1);
+      expect(buttons()[0]!.closest('header')).not.toBeNull();
+    } finally {
+      navigation.pathname = '/';
+    }
+  });
+
+  it('giriş ekranının sade üst çubuğunda da vardır', () => {
+    navigation.pathname = '/giris';
+    try {
+      renderUi(<AppShell>x</AppShell>);
+      expect(buttons()).toHaveLength(1);
+      expect(buttons()[0]!.closest('header')).not.toBeNull();
+    } finally {
+      navigation.pathname = '/';
+    }
+  });
+
+  it('girişsiz tanıtım sayfası kendi düzenini sunar (düğmeyi tanıtımın kendisi taşır)', () => {
+    renderUi(
+      <AppShell>
+        <main>Karşılama</main>
+      </AppShell>,
+    );
+    expect(buttons()).toHaveLength(0);
+  });
+});
