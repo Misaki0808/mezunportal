@@ -4,33 +4,47 @@
  * Tasarım token'larının KANONİK kaynağı bu dosyadır (docs/design.md görsel niyeti anlatır, değeri
  * ikinci kez yönetmez). Marka paleti "İris + Mercan" (kullanıcı kararı; İÜ renkleri kullanılmaz):
  * ana renk İris (`primary`), vurgu Mercan-pembe (`accent`; Claude turuncusundan uzak, pembeye yakın),
- * destek Nane (`success`); nötrler sıcak (açık tema krem, koyu tema lacivert).
- * Uyarı/hata renkleri yalnız anlam taşır. Koyu tema aynı adlı token'ları `prefers-color-scheme`
- * ile yeniden tanımlar (bileşenler yalnız token kullanır). Metin/zemin çiftlerinin kontrastı
+ * destek Nane (`success`). Görünüm A "Gece ve Kâğıt" (kullanıcı kararı, 15 Kasım): açık tema soğuk kâğıt
+ * zemin + beyaz kartlar, koyu tema lacivert; yan menü (`side-*`) İKİ temada da lacivert.
+ * Uyarı/hata renkleri yalnız anlam taşır. Koyu tema aynı adlı token'ları elle seçimde
+ * (`data-theme='dark'`) ya da sistem koyusunda (`prefers-color-scheme`) yeniden tanımlar
+ * (bileşenler yalnız token kullanır). Metin/zemin çiftlerinin kontrastı
  * `src/lib/contrast.test.ts` ile HER İKİ temada korunur (WCAG AA: normal metin 4.5:1, arayüz
  * sınırı ve büyük metin 3:1). Yeni renk eklenirse o testteki çift listesine de eklenir.
  */
 @theme {
-  /* Zemin ve yüzeyler (sıcak nötr) */
-  --color-bg: #fffaf4;
-  --color-surface: #fcf6ee;
-  --color-surface-strong: #f5ecdf;
-  --color-overlay: rgb(29 27 51 / 0.5);
+  /* Zemin ve yüzeyler: `bg` sayfa (kâğıt), `surface` kart/panel (beyaz), `surface-strong` vurgulu zemin (hover, çip) */
+  /* Kâğıt: ölçü #f3f4f9'du; İris metin (4,475:1) ve nane sınır (2,999:1) AA'nın hemen altında kaldığı için bir adım açıldı (#f4f5fa: 4,52 ve 3,03). */
+  --color-bg: #f4f5fa;
+  --color-surface: #ffffff;
+  --color-surface-strong: #f1f2f8;
+  --color-overlay: rgb(20 26 51 / 0.5);
 
   /* Metin */
-  --color-fg: #1d1b33;
-  --color-fg-muted: #5a5870;
-  --color-fg-subtle: #65637f;
+  --color-fg: #141a33;
+  --color-fg-muted: #5d6380;
+  --color-fg-subtle: #666c88;
 
-  /* Çizgiler: `border` dekoratif ayırıcı, `border-control` etkileşimli kontrol sınırı (3:1) */
-  --color-border: #eadfd0;
-  --color-border-control: #7a7893;
+  /* Çizgiler: `border` dekoratif ayırıcı, `border-strong` vurgulu ayırıcı (dekoratif),
+     `border-control` etkileşimli kontrol sınırı (3:1) */
+  --color-border: #e3e6f0;
+  --color-border-strong: #c9cde0;
+  --color-border-control: #767c99;
+
+  /* Yan menü: İKİ temada da lacivert (kullanıcının sevdiği renk açık temada burada yaşar). Etkin ve alt kart zeminleri
+     `side-bg` üstüne beyaz %10 ve %5'in düz karşılığıdır (kontrast testi hex ister). */
+  --color-side-bg: #0e1a38;
+  --color-side-fg: #ffffff;
+  --color-side-muted: #a9b3d6;
+  --color-side-active: #26314c;
+  --color-side-foot: #1a2642;
+  --color-side-line: #0e1a38;
 
   /* Marka: İris (ana). Düğme, bağlantı, odak, seçili durum. */
   --color-primary: #5b5bf6;
   --color-primary-hover: #4848d8;
   --color-on-primary: #ffffff;
-  --color-primary-soft: #eef0ff;
+  --color-primary-soft: #ececff;
   --color-on-primary-soft: #2e2a8f;
 
   /* Vurgu: Mercan. Az kullanılır (rozet, öne çıkan sayı, ikincil müjde); mercan zeminde metin KOYUDUR
@@ -65,30 +79,100 @@
     var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
     Roboto, Arial, sans-serif;
 
-  /* Radius ölçeği: kontrol < kart < örtü */
-  --radius-control: 0.875rem;
-  --radius-card: 1.25rem;
+  /* Radius ölçeği: kontrol (düğme, girdi) 12 px < kart 16 px < örtü */
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
   --radius-sheet: 1.5rem;
 
   /* Gölge işlevseldir, hiyerarşinin yerine geçmez */
-  --shadow-card: 0 1px 2px rgb(60 40 20 / 0.06), 0 2px 8px rgb(60 40 20 / 0.06);
-  --shadow-overlay: 0 10px 30px rgb(29 27 51 / 0.2);
+  --shadow-card: 0 1px 2px rgb(16 24 64 / 0.05), 0 10px 24px -14px rgb(16 24 64 / 0.16);
+  --shadow-overlay: 0 10px 30px rgb(20 26 51 / 0.2);
 }
 
-/* Koyu tema: aynı token adları. Ana renk koyu zeminde açılır, üstündeki metin koyudur. */
+/*
+ * Tema: üç durum (docs/design.md). `<html data-theme>` sunucuda `theme` çerezinden yazılır:
+ *  - `system` (varsayılan; çerez yok ya da bozuk): cihazın `prefers-color-scheme` ayarı (aşağıdaki `@media` bloğu),
+ *  - `light`: koyu bloklar uygulanmaz, açık token'lar (`@theme`) kalır,
+ *  - `dark`: elle koyu (aşağıdaki öznitelik seçicili blok).
+ * İki koyu blok BİREBİR aynı değerleri taşır (CSS bir bildirim bloğunu hem medya koşuluna hem öznitelik seçiciye bağlayamaz;
+ * `light-dark()` Safari < 17.5'te bütün token'ları geçersiz kılar). Sapmayı `src/lib/contrast.test.ts` yakalar: değeri
+ * ikisinde de değiştir.
+ */
+/* Koyu tema (elle seçim): aynı token adları. Ana renk koyu zeminde açılır, üstündeki metin koyudur. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  /* Zemin lacivert (#0e1a38; kullanıcı onaylı, 10 Kasım). */
+  --color-bg: #0e1a38;
+  --color-surface: #15254a;
+  --color-surface-strong: #1b2d58;
+  --color-overlay: rgb(8 12 30 / 0.65);
+  --color-fg: #eef1fb;
+  --color-fg-muted: #a9b3d6;
+  --color-fg-subtle: #9aa5cc;
+  --color-border: #253961;
+  --color-border-strong: #3a4f7c;
+  --color-border-control: #8190c4;
+  --color-side-bg: #0a1430;
+  --color-side-fg: #ffffff;
+  --color-side-muted: #8f9ac2;
+  --color-side-active: #1f284d;
+  --color-side-foot: #141d38;
+  --color-side-line: #1c2b52;
+  --color-primary: #a3a3ff;
+  --color-primary-hover: #b8b8ff;
+  --color-on-primary: #0e1a38;
+  --color-primary-soft: #2b3a7a;
+  --color-on-primary-soft: #d4d4ff;
+  --color-accent: #ff8798;
+  --color-accent-hover: #ff9eac;
+  --color-on-accent: #2a0d18;
+  --color-accent-soft: #4a2745;
+  --color-on-accent-soft: #ffc0ca;
+  --color-accent-strong: #ff8798;
+  --color-success: #3dd6c3;
+  --color-success-soft: #10353a;
+  --color-on-success-soft: #8ff0e3;
+  --color-warning: #f5b355;
+  --color-warning-soft: #3a2f1a;
+  --color-on-warning-soft: #fde0a8;
+  --color-danger: #ff7a8a;
+  --color-danger-hover: #ff9aa6;
+  --color-on-danger: #1f0a10;
+  --color-danger-soft: #42203a;
+  --color-on-danger-soft: #ffc2cc;
+  --brand-ink: #f4f2ff;
+  --brand-iris: #a3a3ff;
+  --brand-cap: #a3a3ff;
+  --brand-tassel: #ff8798;
+  --brand-dot: #ff8798;
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.03), 0 16px 30px -18px rgb(0 0 0 / 0.5);
+  --shadow-overlay: 0 10px 30px rgb(4 8 24 / 0.6);
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* Koyu tema (sistem): `data-theme` açık değilse cihaz koyuysa aynı değerler. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     color-scheme: dark;
     /* Zemin lacivert (#0e1a38; kullanıcı onaylı, 10 Kasım). */
     --color-bg: #0e1a38;
     --color-surface: #15254a;
-    --color-surface-strong: #1d315d;
+    --color-surface-strong: #1b2d58;
     --color-overlay: rgb(8 12 30 / 0.65);
-    --color-fg: #f2f4fc;
-    --color-fg-muted: #bcc4e2;
-    --color-fg-subtle: #9ea8cf;
-    --color-border: #30446b;
+    --color-fg: #eef1fb;
+    --color-fg-muted: #a9b3d6;
+    --color-fg-subtle: #9aa5cc;
+    --color-border: #253961;
+    --color-border-strong: #3a4f7c;
     --color-border-control: #8190c4;
+    --color-side-bg: #0a1430;
+    --color-side-fg: #ffffff;
+    --color-side-muted: #8f9ac2;
+    --color-side-active: #1f284d;
+    --color-side-foot: #141d38;
+    --color-side-line: #1c2b52;
     --color-primary: #a3a3ff;
     --color-primary-hover: #b8b8ff;
     --color-on-primary: #0e1a38;
@@ -116,8 +200,20 @@
     --brand-cap: #a3a3ff;
     --brand-tassel: #ff8798;
     --brand-dot: #ff8798;
-    --shadow-card: 0 1px 2px rgb(4 8 24 / 0.4), 0 2px 8px rgb(4 8 24 / 0.35);
+    --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.03), 0 16px 30px -18px rgb(0 0 0 / 0.5);
     --shadow-overlay: 0 10px 30px rgb(4 8 24 / 0.6);
+  }
+}
+
+/* `dark:` yardımcı sınıfı da aynı kurala bağlıdır: elle koyu YA DA (açık seçilmediyse) sistem koyusu. */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
   }
 }
 
@@ -157,6 +253,22 @@
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+  }
+
+  /* Tema düğmesine basınca renkler kısa bir geçişle değişir (`setTheme` sınıfı yalnız ~250 ms tutar; ilk boyamada yok).
+     Hareketi azaltan kullanıcıda geçiş hiç yoktur. */
+  @media (prefers-reduced-motion: no-preference) {
+    html.theme-transition,
+    html.theme-transition *,
+    html.theme-transition *::before,
+    html.theme-transition *::after {
+      transition:
+        background-color 180ms ease,
+        color 180ms ease,
+        border-color 180ms ease,
+        fill 180ms ease,
+        stroke 180ms ease;
+    }
   }
 
   /* Hareket bilgi taşımıyorsa azaltılır (docs/design.md) */
@@ -249,4 +361,16 @@
 /* Utility katmanından sonra: kilitte sabit çubuklar gövdeyle hizalı kalır; dialog ve kaplama çubuk etkilenmez. */
 :root[data-scroll-lock-gutter] .fixed.inset-x-0:not(dialog) {
   right: var(--scroll-lock-gutter);
+}
+
+/*
+ * Uygulama kabuğu içeriği (kart 384, görünüm A): kabuk dış boşluğu ve hizayı sahiplenir (en çok 1280 px, sola yaslı,
+ * telefonda 16, bilgisayarda 28/32 px dolgu). Eski sayfa kapsayıcıları (`mx-auto max-w-* px-5 py-10`) ortalanmaz ve
+ * kendi dolgusunu eklemez; kendi okuma ölçülerini (`max-w-*`) korur, böylece formlar ve metin sayfaları bozulmadan sola
+ * yaslanır. Sayfalar yeni başlık/ızgara düzenine geçtikçe (kart 385, 386) kapsayıcıları kalkar ve bu kural silinir.
+ * Katmansız yazıldı: katmanlı Tailwind yardımcı sınıflarını özgüllüğe bakmadan geçer.
+ */
+.app-content > :where(div, section, article, form, header) {
+  margin-inline: 0;
+  padding: 0;
 }

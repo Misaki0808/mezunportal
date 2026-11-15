@@ -47,8 +47,8 @@ export async function createCvQueue(
       retryDelay: options.retryDelay ?? 5,
       retryBackoff: options.retryDelay !== 0,
       ...(options.retryDelay === 0 ? {} : { retryDelayMax: 60 }),
-      // Tek LLM çağrısı 60 sn + dosya okuma/yazma payı; süre dolarsa iş yeniden teslim edilir.
-      expireInSeconds: options.expireInSeconds ?? 180,
+      // İki 90 sn model çağrısı ve dosya işleme için pay; süre dolarsa iş yeniden teslim edilir.
+      expireInSeconds: options.expireInSeconds ?? 240,
       retentionSeconds: 3600,
       deleteAfterSeconds: 60,
     };

@@ -1,5 +1,5 @@
 /*
- * Tanıtım sayfası (İÜ İktisat Fakültesi YBS). Renkler yalnız globals.css token'larıdır (açık tema krem, koyu tema lacivert);
+ * Tanıtım sayfası (İÜ İktisat Fakültesi YBS). Renkler yalnız globals.css token'larıdır (açık tema soğuk kâğıt, koyu tema lacivert);
  * burada sabit #hex yoktur. `.landing` bloğu yalnız renk dışı ölçü değişkenlerini tanımlar.
  */
 .landing {
@@ -56,7 +56,8 @@
   padding-inline: var(--lp-gutter);
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  /* Dar ekranda marka + tema düğmesi + giriş yan yana sığmalı (360 px); geniş ekranda (≥ 48rem) boşluk açılır. */
+  gap: 0.5rem;
 }
 .landing-brand {
   display: inline-flex;
@@ -617,6 +618,9 @@
 @media (min-width: 48rem) {
   .landing {
     --lp-gutter: 2rem;
+  }
+  .landing-header {
+    gap: 1.5rem;
   }
   .landing-header-links {
     display: flex;

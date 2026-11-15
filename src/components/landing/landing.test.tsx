@@ -14,13 +14,16 @@ const lookup = (path: string): string =>
     ) as string;
 
 // Alt ad alanları (`landing.preview`) için: her getTranslations çağrısı `landing` köküne göre çözülür.
+const themeText = (path: string): string => (messages.theme as Record<string, string>)[path]!;
 vi.mock('next-intl/server', () => ({
   getTranslations: async (namespace?: string) => (path: string) =>
-    lookup(
-      namespace && namespace !== 'landing'
-        ? `${namespace.replace(/^landing\./, '')}.${path}`
-        : path,
-    ),
+    namespace === 'theme'
+      ? themeText(path)
+      : lookup(
+          namespace && namespace !== 'landing'
+            ? `${namespace.replace(/^landing\./, '')}.${path}`
+            : path,
+        ),
 }));
 vi.mock('next/link', () => ({
   default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
@@ -44,6 +47,13 @@ const empty = {
 };
 
 describe('tanıtım sayfası (İÜ YBS)', () => {
+  it('üst çubukta tema düğmesi giriş bağlantısından önce gelir (kart 383)', async () => {
+    const html = await render(empty);
+    const header = html.slice(html.indexOf('<header'), html.indexOf('</header>'));
+    expect(header).toContain('aria-label="Koyu temaya geç"');
+    expect(header.indexOf('Koyu temaya geç')).toBeLessThan(header.indexOf('landing-header-login'));
+  });
+
   it('sabit ana başlık ve fakülte · bölüm başlığı vardır', async () => {
     const html = await render(empty);
     expect(html).toContain('Staj ararken');

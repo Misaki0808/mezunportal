@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   actor: vi.fn(),
   consented: vi.fn(),
   count: vi.fn(),
+  shellUser: vi.fn(),
 }));
 vi.mock('./admin-access', () => ({ hasAdminAccess: mocks.admin }));
 vi.mock('@/server/permissions', () => ({
@@ -15,11 +16,15 @@ vi.mock('@/server/permissions', () => ({
 }));
 vi.mock('@/server/db', () => ({ getDb: () => 'db' }));
 vi.mock('@/server/services/inbox', () => ({ countMyUnread: mocks.count }));
+vi.mock('@/server/services/shell-user', () => ({ getShellUser: mocks.shellUser }));
 
 import { AppShell } from './app-shell';
 import { AppShellClient } from './app-shell-client';
 
-type ShellElement = { type: unknown; props: { signedIn: boolean; unreadNotifications: number } };
+type ShellElement = {
+  type: unknown;
+  props: { signedIn: boolean; unreadNotifications: number; shellUser: unknown };
+};
 async function render() {
   return (await AppShell({ children: 'x' })) as unknown as ShellElement;
 }
@@ -28,6 +33,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.admin.mockResolvedValue(false);
   mocks.consented.mockResolvedValue({ userId: 'u1' });
+  mocks.shellUser.mockResolvedValue(null);
 });
 
 describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
@@ -78,6 +84,39 @@ describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
       canRefreshNotifications: true,
       unreadNotifications: 0,
     });
+  });
+});
+
+describe('AppShell (sunucu): yan menü alt kartı', () => {
+  const user = {
+    name: 'Deniz Aksoy',
+    membership: { departmentCode: 'YBS', standing: 'GRADE', grade: 3 },
+  };
+
+  it('oturumdaki kullanıcının KENDİ kartı, oturumdaki kimlikle sorulup kabuğa verilir', async () => {
+    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.count.mockResolvedValue(0);
+    mocks.shellUser.mockResolvedValue(user);
+    const shell = await render();
+    expect(shell.props.shellUser).toEqual(user);
+    expect(mocks.shellUser).toHaveBeenCalledWith({ db: 'db' }, 'u1');
+  });
+
+  it('kart süstür: okunamazsa sayfa yine açılır, kart yok', async () => {
+    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.count.mockResolvedValue(2);
+    mocks.shellUser.mockRejectedValue(new Error('veritabanı'));
+    const shell = await render();
+    expect(shell.props).toMatchObject({ signedIn: true, unreadNotifications: 2, shellUser: null });
+  });
+
+  it('girişsizde ve rızası eksikte kart sorgusu yapılmaz', async () => {
+    mocks.actor.mockRejectedValue(new Error('oturum yok'));
+    expect((await render()).props.shellUser).toBeNull();
+    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.consented.mockRejectedValue(codedForbidden('CONSENT_REQUIRED'));
+    expect((await render()).props.shellUser).toBeNull();
+    expect(mocks.shellUser).not.toHaveBeenCalled();
   });
 });
 

@@ -82,7 +82,8 @@ export function BrandLogo({
 }: {
   className?: string;
   label?: string;
-  variant?: 'color' | 'mono-light';
+  /** `on-dark`: koyu zemin için sabit renkler (yan menü iki temada da lacivert; koyu tema paletinin aynısı). */
+  variant?: 'color' | 'mono-light' | 'on-dark';
 }) {
   const mono = variant === 'mono-light';
   const colorStyle = mono
@@ -93,7 +94,15 @@ export function BrandLogo({
         '--brand-tassel': '#fff',
         '--brand-dot': '#fff',
       } as CSSProperties)
-    : undefined;
+    : variant === 'on-dark'
+      ? ({
+          '--brand-ink': '#f4f2ff',
+          '--brand-iris': '#a3a3ff',
+          '--brand-cap': '#a3a3ff',
+          '--brand-tassel': '#ff8798',
+          '--brand-dot': '#ff8798',
+        } as CSSProperties)
+      : undefined;
   const gradientId = `brand-np-${useId().replace(/:/g, '')}`;
   const { gradient, dot, cap } = WORDMARK;
   return (

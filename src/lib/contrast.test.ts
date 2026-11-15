@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import { contrastRatio, readColorTokens, readDarkColorTokens } from '@/lib/contrast';
+import {
+  contrastRatio,
+  readColorTokens,
+  readDarkColorTokens,
+  readManualDarkDeclarations,
+  readSystemDarkDeclarations,
+} from '@/lib/contrast';
 
 const css = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf8');
 const SCHEMES = {
@@ -40,6 +46,13 @@ const TEXT_PAIRS: readonly [string, string][] = [
   ['on-danger', 'danger-hover'],
   ['danger', 'bg'],
   ['danger', 'danger-soft'],
+  // Yan menü (iki temada da lacivert): metin, soluk metin, etkin öğe ve alt kart zemininde.
+  ['side-fg', 'side-bg'],
+  ['side-muted', 'side-bg'],
+  ['side-fg', 'side-active'],
+  ['side-muted', 'side-active'],
+  ['side-fg', 'side-foot'],
+  ['side-muted', 'side-foot'],
 ];
 
 const BOUNDARY_PAIRS: readonly [string, string][] = [
@@ -51,6 +64,9 @@ const BOUNDARY_PAIRS: readonly [string, string][] = [
   ['success', 'bg'],
   ['success', 'success-soft'],
   ['warning', 'warning-soft'],
+  // Yan menüde etkin öğenin solundaki 3 px mercan çizgi.
+  ['accent', 'side-bg'],
+  ['accent', 'side-active'],
 ];
 
 describe.each(Object.entries(SCHEMES))('token kontrastı, %s tema (WCAG AA)', (_scheme, tokens) => {
@@ -72,18 +88,28 @@ describe.each(Object.entries(SCHEMES))('token kontrastı, %s tema (WCAG AA)', (_
 
 describe('token tanımı', () => {
   it('koyu tema açık temadaki HER renk token’ını yeniden tanımlar (yarım tema yok)', () => {
-    const dark = css.slice(css.indexOf('@media (prefers-color-scheme: dark)'));
-    for (const name of Object.keys(SCHEMES.açık))
-      expect(dark, `--color-${name} koyu temada yok`).toContain(`--color-${name}:`);
+    const dark = readManualDarkDeclarations(css);
+    const system = readSystemDarkDeclarations(css);
+    for (const name of Object.keys(SCHEMES.açık)) {
+      expect(dark, `--color-${name} elle koyu temada yok`).toHaveProperty(`--color-${name}`);
+      expect(system, `--color-${name} sistem koyusunda yok`).toHaveProperty(`--color-${name}`);
+    }
   });
 
   it('marka paleti İris + Mercan + Nane (kullanıcı kararı; İÜ renkleri değil)', () => {
     expect(SCHEMES.açık.primary).toBe('#5b5bf6');
     expect(SCHEMES.açık.accent).toBe('#ff6b7f');
-    expect(SCHEMES.açık.bg).toBe('#fffaf4');
+    expect(SCHEMES.açık.bg).toBe('#f4f5fa'); // görünüm A: soğuk kâğıt (kullanıcı kararı, 15 Kasım; ölçüdeki #f3f4f9 AA'nın altında kaldı)
     expect(SCHEMES.açık.success).toBe('#0f9f8f');
     expect(SCHEMES.koyu.primary).toBe('#a3a3ff');
     expect(SCHEMES.koyu.bg).toBe('#0e1a38');
+  });
+
+  it('yan menü iki temada da laciverttir (görünüm A); kart zemini açık temada beyazdır', () => {
+    expect(SCHEMES.açık['side-bg']).toBe('#0e1a38');
+    expect(SCHEMES.koyu['side-bg']).toBe('#0a1430');
+    expect(SCHEMES.açık.surface).toBe('#ffffff');
+    expect(SCHEMES.koyu.surface).toBe('#15254a');
   });
 
   it('koyu logo yeni lacivert zeminde okunur', () => {
@@ -98,6 +124,35 @@ describe('token tanımı', () => {
   it('açık temada mercan zeminde beyaz metin AA değildir (on-accent koyu) ve mercan beyaz üstünde sınır/metin olamaz (accent-strong)', () => {
     expect(contrastRatio('#ffffff', SCHEMES.açık.accent!)).toBeLessThan(4.5);
     expect(contrastRatio(SCHEMES.açık.accent!, SCHEMES.açık.bg!)).toBeLessThan(3);
+  });
+});
+
+describe('tema blokları (kart 383: Sistem / Açık / Koyu)', () => {
+  it('sistem koyusu elle koyuyla BİREBİR aynı değerleri taşır (iki blok sapamaz)', () => {
+    const manual = readManualDarkDeclarations(css);
+    const system = readSystemDarkDeclarations(css);
+    expect(Object.keys(manual).length).toBeGreaterThan(30);
+    expect(system).toEqual(manual);
+  });
+
+  it('color-scheme üç durumda doğru: sistem açık+koyu, elle açık, elle koyu', () => {
+    expect(readManualDarkDeclarations(css)['color-scheme']).toBe('dark');
+    expect(readSystemDarkDeclarations(css)['color-scheme']).toBe('dark');
+    expect(css).toMatch(/:root\[data-theme='light'\]\s*\{\s*color-scheme:\s*light;\s*\}/);
+    expect(css).toMatch(/:root\s*\{\s*color-scheme:\s*light dark;/);
+  });
+
+  it('sistem koyusu yalnız açık SEÇİLMEDİYSE uygulanır (elle açık sistem koyusunu ezer)', () => {
+    expect(css).toMatch(
+      /@media \(prefers-color-scheme: dark\)\s*\{\s*:root:not\(\[data-theme='light'\]\)\s*\{/,
+    );
+  });
+
+  it('`dark:` varyantı elle koyuya ve (açık seçilmediyse) sistem koyusuna bağlıdır', () => {
+    const variant = css.slice(css.indexOf('@custom-variant dark'));
+    expect(variant).toContain("[data-theme='dark']");
+    expect(variant).toContain('@media (prefers-color-scheme: dark)');
+    expect(variant).toContain(":root:not([data-theme='light'])");
   });
 });
 
