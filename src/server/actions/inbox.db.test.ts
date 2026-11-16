@@ -32,8 +32,12 @@ beforeAll(async () => {
     });
 });
 afterAll(() => db.$disconnect());
-beforeEach(() => {
+beforeEach(async () => {
   session.userId = alice;
+  await db.inAppNotification.updateMany({
+    where: { userId: { in: [alice, bob] } },
+    data: { readAt: null },
+  });
 });
 
 describe('bildirim kutusu eylemleri: kimlik ve yetki', () => {
@@ -106,6 +110,7 @@ describe('rozet sayısı rotası', () => {
     expect(response.headers.get('cache-control')).toMatch(/private.*no-store/);
 
     session.userId = alice;
+    expect(await markAllInboxRead()).toEqual({ ok: true, data: { marked: 2 } });
     expect(await (await unreadCount()).json()).toEqual({ unread: 0 });
   });
 
