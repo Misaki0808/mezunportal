@@ -39,7 +39,7 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
     }
   }
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-xl flex-col px-5 py-8">
+    <div className="flex min-h-[calc(100dvh-10rem)] w-full max-w-xl flex-col">
       <Link href="/hesap/gorusmeler" className="inline-flex min-h-11 items-center text-primary">
         ← {t('backToSessions')}
       </Link>

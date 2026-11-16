@@ -85,7 +85,7 @@ export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
     });
   }
   return (
-    <div className="mx-auto max-w-2xl space-y-7 px-5 py-10 pb-36">
+    <div className="w-full max-w-2xl space-y-7 pb-36">
       <Link
         className="press-control inline-flex min-h-11 items-center font-semibold text-primary"
         href="/hesap"

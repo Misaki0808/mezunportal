@@ -91,7 +91,8 @@ for (const width of [390, 1440])
       }
       await page.goto('/profil');
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('h1 img')).toBeVisible();
+      // Profil başlık kartında fotoğraf yeri (kart 387: `data-slot="profile-photo"`); eskiden `h1` içindeydi.
+      await expect(page.locator('[data-slot="profile-photo"] img')).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
         false,
       );

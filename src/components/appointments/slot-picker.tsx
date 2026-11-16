@@ -108,7 +108,7 @@ export function SlotPicker({ list, request }: Props) {
 
   if (done) {
     return (
-      <div className="mx-auto flex w-full max-w-lg flex-col gap-3 px-5 py-14 text-center">
+      <div className="flex w-full max-w-lg flex-col gap-3 py-10 text-center">
         <h1
           ref={doneRef}
           tabIndex={-1}
@@ -129,7 +129,7 @@ export function SlotPicker({ list, request }: Props) {
   // Boş durum: sebep sıcak bir dille yazılır; tek eylem "Mentor bul" (başka mentora geçmek).
   if (list.unavailableReason || groups.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16">
+      <div className="w-full max-w-2xl">
         {header}
         {error && (
           <p role="alert" className="mt-4 text-base text-danger">
@@ -159,7 +159,7 @@ export function SlotPicker({ list, request }: Props) {
         event.preventDefault();
         void submit();
       }}
-      className="[&_.text-sm]:text-base mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16"
+      className="[&_.text-sm]:text-base flex min-h-[calc(100dvh-10rem)] w-full max-w-2xl flex-col"
     >
       {header}
       <p className="mt-3 text-base text-fg-muted">{t('description')}</p>

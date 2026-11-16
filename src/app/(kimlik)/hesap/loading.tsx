@@ -5,7 +5,7 @@ import { Skeleton, SkeletonText } from '@/components/ui';
 export default async function AccountLoading() {
   const t = await getTranslations('authScreens.verification');
   return (
-    <div aria-busy="true" className="mx-auto max-w-2xl px-5 py-10">
+    <div aria-busy="true" className="w-full max-w-2xl">
       <span className="sr-only">{t('loading')}</span>
       <Skeleton className="mb-8 h-9 w-2/3" />
       <div className="rounded-card border border-border p-5">

@@ -61,8 +61,10 @@ Mercan, Nane, yazı tipleri). Ölçü ilkeleri (değerler `globals.css`'te):
   (ad, bölüm kodu · sınıf ya da rol); veri yoksa satır çıkar, uydurulmaz. Koyu temada yan menü içerikten bir ton koyudur ve sağ kenarı çizgilidir.
 - **Üst çubuk** (bilgisayar, 72 px, alt çizgili): arama, tema düğmesi, bildirim zili (okunmamışta nokta), avatar (hesap ayarları `/hesap`). Arama şimdilik **deneyim aramasıdır**
   (`/deneyimler?q=`, en az iki karakter); genel arama ekranı yok, olunca yönü değişir. Telefon üst çubuğu yapışkandır: logo, tema, zil, avatar.
-- **Telefon:** yan menü yok; altta beş sekme (Ana sayfa, İlanlar, Mentorlar, Randevular, Profil `/profil`). Deneyimler, Etkinlikler ve Ders rehberi sekmede yoktur:
-  ana sayfadaki kısayollardan ve Profil ekranından açılır.
+- **Telefon:** yan menü yok; altta beş öğe: dört sekme (Ana sayfa, İlanlar, Mentorlar, Randevular) ve **Menü** (sayfa değil, alt sayfa açar). Menü alt sayfası:
+  Keşfet (Deneyimler, Mezunlar, Etkinlikler, Ders rehberi), Hesap (Bildirimler + okunmamış rozeti, Profilim `/profil`, Hesap ayarları `/hesap`), yöneticide Yönetici
+  (Yönetim). Menüdeki bir ekran açıkken Menü düğmesi ve o satır etkin görünür; alt sayfa klavye ve ekran okuyucuyla kullanılır (odak hapsi, Esc, kapatınca odak
+  Menü düğmesine döner). Hesap ayarlarına üst çubuktaki avatar da götürür.
 - **İçerik genişliği:** `AppShellClient` içeriği en çok 1280 px, sola yaslı, telefonda 16 px, bilgisayarda 28/32 px dolguyla verir; sayfa kendi
   ortalanmış dar sütununu (`mx-auto max-w-* px-* py-*`) kurmaz. Eski sayfaların kapsayıcıları kabuğun `.app-content` kuralıyla (`globals.css`) ortalanmaz ve
   dolgu eklemez, kendi okuma ölçüsünü (`max-w-*`) korur; sayfa yeni düzene geçince kapsayıcısını siler. Form ve metin sayfaları dar kalabilir, ama

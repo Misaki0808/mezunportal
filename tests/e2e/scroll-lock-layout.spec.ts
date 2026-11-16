@@ -33,7 +33,7 @@ for (const classic of [true, false]) {
             return {
               width: document.documentElement.clientWidth,
               header: get('header.sticky'),
-              nav: get('[data-bottom-nav] li:last-child a'),
+              nav: get('[data-bottom-nav] li:last-child > *'),
               action: get('.sticky-actions'),
               toast: get('[role=region] [role=status]'),
               main: get('main h1'),

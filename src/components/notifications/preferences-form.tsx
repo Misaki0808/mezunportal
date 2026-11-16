@@ -1,6 +1,5 @@
 'use client';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useState } from 'react';
 import {
   setNotificationPreferencesSchema,
@@ -8,7 +7,8 @@ import {
   type SetNotificationPreferencesInput,
 } from '@/contracts/notifications';
 import type { ActionResult } from '@/contracts/result';
-import { Button, PageHeader, Switch, useAction } from '@/components/ui';
+import { AccountFrameView } from '@/components/account/account-frame';
+import { Button, Switch, useAction } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 type Props = {
@@ -17,6 +17,7 @@ type Props = {
 };
 export function NotificationPreferencesForm({ initial, save }: Props) {
   const t = useTranslations('notifications');
+  const frame = useTranslations('accountFrame');
   const errors = useTranslations('errors.codes');
   const [items, setItems] = useState(initial.items);
   const [saved, setSaved] = useState(initial.items);
@@ -43,22 +44,21 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
     });
   }
   return (
-    <div className="mx-auto flex max-w-2xl flex-col px-5 pb-8 pt-10 sm:pt-16">
-      <Link
-        href="/hesap"
-        className="press-row mb-5 inline-flex min-h-11 items-center font-medium text-primary"
-      >
-        ← {t('back')}
-      </Link>
-      <PageHeader title={t('title')} description={t('description')} />
+    <AccountFrameView
+      eyebrow={frame('eyebrow')}
+      backLabel={t('back')}
+      title={t('title')}
+      description={t('description')}
+      width="max-w-2xl"
+    >
       <form
-        className="mt-7 flex flex-1 flex-col"
+        className="flex flex-1 flex-col"
         onSubmit={(e) => {
           e.preventDefault();
           void submit();
         }}
       >
-        <ul className="divide-y divide-border rounded-card border border-border px-5">
+        <ul className="divide-y divide-border rounded-card border border-border bg-surface px-5 shadow-card">
           {items.map((item) => (
             <li key={item.type} className="py-2">
               <Switch
@@ -90,6 +90,6 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
           </Button>
         </div>
       </form>
-    </div>
+    </AccountFrameView>
   );
 }
