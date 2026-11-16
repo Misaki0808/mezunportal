@@ -58,6 +58,36 @@ test('ana sayfa rol bazlı pano: öğrenci ve mentor farklı kısayollar görür
   expect(await noHorizontalScroll(page)).toBe(true);
 });
 
+test('ana sayfa 1440: aynı satırdaki kartlar eşit boy; bekleyen iş yokken kısayollar tam genişlikte iki sütun', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await login(page, 'student');
+  await page.goto('/');
+  const box = async (name: string) =>
+    (await page.getByRole('region', { name, exact: true }).boundingBox())!;
+  const [upcoming, profile, jobs, mentors, shortcuts] = await Promise.all([
+    box('Yaklaşan görüşme'),
+    box('Profilin'),
+    box('Sana uygun ilanlar'),
+    box('Mentorlar'),
+    box('Kısayollar'),
+  ]);
+  // Aynı satırdaki kartlar eşit boy: kısa kartın altında boşluk kalmaz.
+  expect(Math.abs(upcoming.height - profile.height)).toBeLessThan(1.5);
+  expect(Math.abs(jobs.height - mentors.height)).toBeLessThan(1.5);
+  // Bekleyen iş yoksa "Bekleyen işlerin" kartı çizilmez; kısayollar tam genişlikte, iki sütunlu.
+  await expect(page.getByRole('region', { name: 'Bekleyen işlerin' })).toHaveCount(0);
+  expect(shortcuts.width).toBeGreaterThan(profile.x + profile.width - upcoming.x - 5);
+  const items = page.getByRole('region', { name: 'Kısayollar', exact: true }).getByRole('listitem');
+  const [first, second, third] = await Promise.all(
+    [0, 1, 2].map((i) => items.nth(i).boundingBox()),
+  );
+  expect(Math.abs(first!.y - second!.y)).toBeLessThan(2);
+  expect(third!.y).toBeGreaterThan(first!.y + 20);
+});
+
 test('bölüm yöneticisi panosunda Yönetim satırı görünür; rol dışı sayfa durum ekranıyla panele döndürür', async ({
   page,
 }) => {
