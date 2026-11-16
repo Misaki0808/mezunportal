@@ -294,7 +294,9 @@ Yükleme, rıza geri alma ve hesap silme aynı kullanıcı satırı kilidiyle s�
 rıza/fotoğraf değiştiyse eski yükleme yeniden görünürlük açamaz. Geri alım önce kalıcı olarak görünürlüğü kapatır; depolama arızası rızayı geri sarmaz.
 Dosya temizliği hata verirse özel hata kodu ve tekrar silme düğmesi gösterilir; eski anahtar
 koşulu bu arada yeni rızayla yüklenen fotoğrafı korur. Başarıda iki türev silinir;
-hesap silme de aynı dosyaları temizler, kişinin KVKK dökümü iki türevi içerir. Kapsamlı yönetici
+günlük bakım işi, rızası geri alınmış veya güncel olmayan ve sahibi silinmiş fotoğrafların
+temizliğini kullanıcı kilidi altında yeniden dener; yalnız işlem sayıları kaydedilir.
+Hesap silme de aynı dosyaları temizler, kişinin KVKK dökümü iki türevi içerir. Kapsamlı yönetici
 uygunsuz fotoğrafı gerekçeyle kaldırabilir; dosya ve gerekçe kişisel veri taşımayan işlem kaydından ayrıdır.
 
 - **Yükleme:** yalnız PDF; boyut ve sayfa sınırı; uzantıya değil sihirli bayta bakılır. Dosyalar

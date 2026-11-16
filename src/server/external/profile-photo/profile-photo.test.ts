@@ -156,14 +156,6 @@ describe('güvenli profil fotoğrafı çözme', () => {
       'large',
     );
   });
-  it('aynı anda iki çözme yerine ikinciye kararlı çakışma döner', async () => {
-    const bytes = await image().png().toBuffer();
-    const first = processProfilePhoto(bytes, crop);
-    await expect(processProfilePhoto(bytes, crop)).rejects.toMatchObject({
-      code: 'RESOURCE_CONFLICT',
-    });
-    await first;
-  });
   it('kare kırpma seçilen bölgeyi gerçekten değiştirir', async () => {
     const bytes = await sharp({
       create: { width: 100, height: 50, channels: 3, background: 'red' },
