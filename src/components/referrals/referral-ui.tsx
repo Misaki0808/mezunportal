@@ -26,6 +26,7 @@ import {
   useToast,
 } from '@/components/ui';
 import * as actions from '@/server/actions/referrals';
+import { AccountFrameView } from '@/components/account/account-frame';
 import { useHydrated } from '@/hooks/use-hydrated';
 
 export function ReferralCreate({
@@ -176,6 +177,7 @@ export function ReferralList({
   const reviewReasonInput = useRef<HTMLTextAreaElement>(null);
   const t = useTranslations('referrals');
   const errors = useTranslations('errors.codes');
+  const frame = useTranslations('accountFrame');
   const router = useRouter();
   const toast = useToast();
   const hydrated = useHydrated();
@@ -290,16 +292,16 @@ export function ReferralList({
       }));
     });
   }
-  return (
+  // Hesap görünümü ortak çerçevede (kart 407); yönetim moderasyonu kendi başlığını ve genişliğini korur.
+  const body = (
     <div
       ref={queueRef}
       data-hydrated={hydrated ? 'true' : undefined}
-      className="w-full max-w-3xl pb-32"
+      className={moderation ? 'w-full max-w-3xl pb-32' : 'w-full [&>:first-child]:mt-0'}
     >
-      <PageHeader
-        title={t(moderation ? 'moderationTitle' : 'title')}
-        description={t(moderation ? 'moderationDescription' : 'description')}
-      />
+      {moderation && (
+        <PageHeader title={t('moderationTitle')} description={t('moderationDescription')} />
+      )}
       {canCreate && page.items.length > 0 && (
         <Link href="/referans/yeni" className={CREATE_LINK}>
           {t('create')}
@@ -531,5 +533,17 @@ export function ReferralList({
         </div>
       )}
     </div>
+  );
+  if (moderation) return body;
+  return (
+    <AccountFrameView
+      eyebrow={frame('eyebrow')}
+      backLabel={frame('back')}
+      title={t('title')}
+      description={t('description')}
+      width="max-w-3xl"
+    >
+      {body}
+    </AccountFrameView>
   );
 }

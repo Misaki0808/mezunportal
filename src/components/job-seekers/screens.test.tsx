@@ -184,3 +184,11 @@ it('hata ve kayıt mesajı Kaydet düğmesiyle aynı yapışkan çubukta durur (
   expect(saved.parentElement).toContainElement(save);
   expect(screen.queryByRole('alert')).toBeNull();
 });
+
+it('ayar ekranı ortak hesap çerçevesinde: HESAP üst etiketi, tek h1, hesap ayarlarına dönüş (kart 407)', () => {
+  renderUi(<SeekerSettingsScreen initial={initial} />);
+  expect(screen.getByRole('heading', { level: 1, name: 'İş arayanlara görün' })).toBeVisible();
+  expect(screen.getByText('HESAP')).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Hesap ayarları' })).toHaveAttribute('href', '/hesap');
+  expect(screen.queryByText('İLANLAR')).not.toBeInTheDocument();
+});

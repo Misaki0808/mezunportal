@@ -12,6 +12,7 @@ import type {
   SuggestSimilarFaqsInput,
 } from '@/contracts/faq';
 import type { ActionResult } from '@/contracts/result';
+import { AccountFrameView } from '@/components/account/account-frame';
 
 import { MyRequests } from './my-requests';
 import { RequestForm } from './request-form';
@@ -26,6 +27,7 @@ type Props = {
 /** “SSS talebi gönder” + taleplerim (öğrenci). Gönderimden sonra liste baştan yüklenir. */
 export function StudentFaq({ initial, suggest, submit, list }: Props) {
   const t = useTranslations('faq');
+  const frame = useTranslations('accountFrame');
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
 
@@ -42,12 +44,13 @@ export function StudentFaq({ initial, suggest, submit, list }: Props) {
   }
 
   return (
-    <div className="flex w-full max-w-3xl min-w-0 flex-col gap-8">
-      <div>
-        <p className="font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{t('request.title')}</h1>
-        <p className="mt-3 text-base text-fg-muted">{t('request.description')}</p>
-      </div>
+    <AccountFrameView
+      eyebrow={frame('eyebrow')}
+      backLabel={frame('back')}
+      title={t('request.title')}
+      description={t('request.description')}
+      width="max-w-3xl"
+    >
       <RequestForm suggest={suggest} submit={submit} onSubmitted={() => void refresh()} />
       <section aria-labelledby="mine-title" className="flex flex-col gap-3">
         <h2 id="mine-title" className="text-2xl font-semibold text-fg">
@@ -63,6 +66,6 @@ export function StudentFaq({ initial, suggest, submit, list }: Props) {
           }}
         />
       </section>
-    </div>
+    </AccountFrameView>
   );
 }
