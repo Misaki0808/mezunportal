@@ -55,6 +55,7 @@ beforeAll(async () => {
     return id;
   };
   owner = await make(departmentId, WORDS);
+  await addMembership(db, { userId: owner, departmentId, role: 'ACADEMIC' });
   await db.position.create({
     data: { userId: owner, companyRaw: WORDS, titleRaw: WORDS, isCurrent: true, source: 'MANUAL' },
   });
@@ -225,6 +226,15 @@ it('şirketin dört hukuki ek yazımı ve noktalı unvan aynı sözlük kişisin
       id,
     ]);
   }
+  for (const filter of [
+    { company: `${marker} ornek yazilim as`, title: `${marker} yazilim muh.` },
+    { company: 'Ham kurum', title: `${marker} yazilim muh.` },
+    { company: `${marker} ornek yazilim as`, title: 'Ham unvan' },
+    { company: 'Ham kurum', title: 'Ham unvan' },
+  ]) {
+    expect((await mentors(filter)).items.map((item) => item.userId)).toEqual([id]);
+    expect((await alumni(filter)).items.map((item) => item.userId)).toEqual([id]);
+  }
   for (const query of ['...', '%%', '__', 'ornek%yazilim', 'ornek_yazilim']) {
     expect((await mentors({ company: query })).items).toEqual([]);
     expect((await alumni({ company: query })).items).toEqual([]);
@@ -241,7 +251,17 @@ it('eşleşme deposu yabancı üniversite kimliklerini uygulamaya taşımaz; bo�
     where: { userId: foreign },
     select: { id: true },
   });
-  expect(result.users).toContain(owner);
+  expect(result.users?.filter((id) => id === owner)).toHaveLength(1);
+  const ownerPosition = await db.position.findFirstOrThrow({
+    where: { userId: owner, companyRaw: WORDS },
+    select: { id: true },
+  });
+  const ownerProfile = await db.profile.findUniqueOrThrow({
+    where: { userId: owner },
+    select: { id: true },
+  });
+  expect(result.positions?.filter((id) => id === ownerPosition.id)).toHaveLength(1);
+  expect(result.profiles?.filter((id) => id === ownerProfile.id)).toHaveLength(1);
   expect(result.users).not.toContain(foreign);
   expect(result.positions).not.toContain(foreignPosition.id);
   expect(result.profiles).not.toContain(foreignProfile.id);

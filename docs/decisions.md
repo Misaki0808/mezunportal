@@ -1122,7 +1122,7 @@ saklar, sorgu değerini saklamaz. Yeni işlev/eklenti/bağımlılık yoktur.
 Şirket/unvan aramasında katlanmış görünen ad ile mevcut sözlük normalizasyonu birlikte kullanılır;
 şirketin hukuki eki ve unvan noktalaması eşleşmeyi bozmaz. LIKE işaretleri içeren sorgu literal kalır,
 boş normalizasyon bütün sözlüğü eşleştirmez. Ham pozisyon ve sözlük eşleşmeleri ayrı UNION dallarında,
-birlikte verilen şirket/unvan ise aynı pozisyon üzerinde INTERSECT ile değerlendirilir: mevcut GIN
+birlikte verilen şirket/unvan ise her dalda aynı pozisyona uygulanan AND ile değerlendirilir: mevcut GIN
 indeksleri tablolar arası OR engeline takılmaz. Etkin doğrulanmış üyeliğin üniversite kapsamı kimlikler
 uygulamaya alınmadan SQL içinde uygulanır; diğer görünürlük, sıralama ve sayfalama kuralları mevcut
 serviste kalır. Böylece bütün DB'yi kapsayan kimlik listesi önlenirken yetki mantığı ikinci kez yazılmaz.

@@ -18,18 +18,15 @@ const dictionaryIds = (kind: 'COMPANY' | 'TITLE', query: string) => {
       ${normalized ? Prisma.sql`OR d."normalizedName" LIKE ${`%${escapeLike(normalized)}%`}` : Prisma.empty}`;
 };
 
-/** Ayrı UNION dalları ham ad ve sözlük trigramlarını bağımsız kullanabilir. */
-const matchingPositions = (kind: 'COMPANY' | 'TITLE', query: string) => {
+/** Ham alan ve sözlük alt sorgusu farklı dallarda aynı pozisyona uygulanır. */
+const positionConditions = (kind: 'COMPANY' | 'TITLE', query: string): [Prisma.Sql, Prisma.Sql] => {
   const raw = kind === 'COMPANY' ? Prisma.sql`p."companyRaw"` : Prisma.sql`p."titleRaw"`;
   const foreignKey = kind === 'COMPANY' ? Prisma.sql`p."companyId"` : Prisma.sql`p."titleId"`;
-  return Prisma.sql`SELECT p."id", p."userId" FROM "Position" p
-    JOIN scoped_users s ON s."id"=p."userId"
-    WHERE p."isCurrent" AND ${contains(raw, query)}
-    UNION
-    SELECT p."id", p."userId" FROM "Position" p
-    JOIN scoped_users s ON s."id"=p."userId"
-    WHERE p."isCurrent" AND ${foreignKey} IN (${dictionaryIds(kind, query)})`;
+  return [contains(raw, query), Prisma.sql`${foreignKey} IN (${dictionaryIds(kind, query)})`];
 };
+const positionSelect = (conditions: Prisma.Sql[], column = Prisma.sql`p."id"`) => Prisma.sql`
+  SELECT ${column} AS "id" FROM "Position" p JOIN scoped_users s ON s."id"=p."userId"
+  WHERE p."isCurrent" AND ${Prisma.join(conditions, ' AND ')}`;
 
 /** K-07 kapsamı kimlikler uygulamaya taşınmadan uygulanır. Diğer görünürlük ve sayfalama servisindir. */
 export async function matchingDirectoryText(
@@ -46,26 +43,38 @@ export async function matchingDirectoryText(
   )`;
   const result: { users?: string[]; positions?: string[]; profiles?: string[] } = {};
   if (filter.q) {
-    const q = filter.q;
+    const [rawCompany, company] = positionConditions('COMPANY', filter.q);
+    const [rawTitle, title] = positionConditions('TITLE', filter.q);
     result.users = idsOf(
       await db.$queryRaw<{ id: string }[]>(Prisma.sql`${scope}
       SELECT u."id" FROM "User" u JOIN scoped_users s ON s."id"=u."id"
-      WHERE ${contains(Prisma.sql`u."name"`, q)}
-      UNION
-      SELECT matches."userId" AS "id" FROM (${matchingPositions('COMPANY', q)}) matches
-      UNION
-      SELECT matches."userId" AS "id" FROM (${matchingPositions('TITLE', q)}) matches`),
+      WHERE ${contains(Prisma.sql`u."name"`, filter.q)}
+      UNION ${positionSelect([Prisma.sql`(${rawCompany} OR ${rawTitle})`], Prisma.sql`p."userId"`)}
+      UNION ${positionSelect([company], Prisma.sql`p."userId"`)}
+      UNION ${positionSelect([title], Prisma.sql`p."userId"`)}`),
     );
   }
-  const conditions: Prisma.Sql[] = [];
-  if (filter.company)
-    conditions.push(Prisma.sql`(${matchingPositions('COMPANY', filter.company)})`);
-  if (filter.title) conditions.push(Prisma.sql`(${matchingPositions('TITLE', filter.title)})`);
-  if (conditions.length)
+  const groups: Prisma.Sql[][] = [];
+  if (filter.company) groups.push(positionConditions('COMPANY', filter.company));
+  if (filter.title) groups.push(positionConditions('TITLE', filter.title));
+  if (groups.length) {
+    // En çok iki alan / dört dal. Ayrı kimlik kümelerini sıralayıp kesiştirmek yerine
+    // her dalda şirket VE unvan aynı satıra uygulanır; ham dal kendi GIN'ini kullanabilir.
+    const branches = groups.reduce<Prisma.Sql[][]>(
+      (current, alternatives) =>
+        current.flatMap((conditions) =>
+          alternatives.map((condition) => [...conditions, condition]),
+        ),
+      [[]],
+    );
     result.positions = idsOf(
       await db.$queryRaw<{ id: string }[]>(Prisma.sql`${scope}
-      SELECT matches."id" FROM (${Prisma.join(conditions, ' INTERSECT ')}) matches`),
+      ${Prisma.join(
+        branches.map((conditions) => positionSelect(conditions)),
+        ' UNION ',
+      )}`),
     );
+  }
   if (filter.city)
     result.profiles = idsOf(
       await db.$queryRaw<{ id: string }[]>(Prisma.sql`${scope}
