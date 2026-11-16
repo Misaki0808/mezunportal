@@ -17,7 +17,7 @@ import { canViewProfilePhoto } from '../rules/visibility';
 import { eraseProfilePhoto } from './profile-photo-erasure';
 import { requireConsent } from './privacy';
 import { viewerUniversityIds } from './search';
-import { covers, loadAnyAdmin } from './admin-access';
+import { covers, isSystem, loadAnyAdmin } from './admin-access';
 import { recordAdminAction } from './audit';
 import { consumeRateLimit } from './rateLimit';
 
@@ -158,7 +158,7 @@ export async function moderateProfilePhoto(
       select: { departmentId: true },
     });
     const scope = await Promise.all(memberships.map((m) => covers(tx, admin, m.departmentId)));
-    if (!scope.some(Boolean)) throw codedNotFound('RESOURCE_NOT_FOUND');
+    if (!isSystem(admin) && !scope.some(Boolean)) throw codedNotFound('RESOURCE_NOT_FOUND');
     if (!(await tx.profilePhoto.findUnique({ where: { userId: input.userId } })))
       return { removed: true as const };
     await recordAdminAction(tx, {

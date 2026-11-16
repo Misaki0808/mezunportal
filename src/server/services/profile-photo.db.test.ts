@@ -399,3 +399,15 @@ it('JPEG adı ve MIME sahteciliği ile 5 MB üstü dosya gerçek DB hattında r�
   ).toBe(0);
   expect([...storage.files.keys()].filter((key) => key.includes(owner))).toEqual([]);
 });
+it('sistem yöneticisi henüz üyeliği olmayan hesabın fotoğrafını da gerekçeyle kaldırır', async () => {
+  const owner = await createUser(db);
+  await grantRequiredConsents(db, owner);
+  await upload(owner);
+  const admin = await person();
+  await addGrant(db, { userId: admin, scope: 'SYSTEM' });
+  await moderateProfilePhoto(deps, admin, { userId: owner, reason: 'Uygun olmayan görsel' });
+  expect(await db.profilePhoto.findUnique({ where: { userId: owner } })).toBeNull();
+  expect(
+    await db.adminAuditLog.count({ where: { targetId: owner, action: 'PROFILE_PHOTO_REMOVE' } }),
+  ).toBe(1);
+});
