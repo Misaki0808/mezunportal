@@ -163,7 +163,7 @@ it('katalogdaki eşik altı gizlilik metinleri sabit dizedir: rakam ve yer tutuc
 it('ortak başlık (kart 424): tek h1; süzgeç formu GET ile aynı adrese gider ve eski ortalanmış kapsayıcı yok', () => {
   const { container } = renderUi(
     <QuestionBank
-      filters={{ page: 1 }}
+      filters={{ companyId: '', sectorId: '', q: '', page: 1 }}
       data={{
         companies: [{ id: 'c1', name: 'Örnek Yazılım A.Ş.' }],
         sectors: [{ id: 's1', name: 'Bilişim ve Yazılım' }],
