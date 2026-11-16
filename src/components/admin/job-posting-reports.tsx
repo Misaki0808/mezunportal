@@ -1,4 +1,5 @@
 'use client';
+import { AdminList, AdminListItem } from './list';
 
 import { useRef, useState } from 'react';
 import { useQueueFocus } from './use-queue-focus';
@@ -105,12 +106,12 @@ export function JobPostingReports({
       {items.length === 0 ? (
         !hideEmpty && <EmptyState title={t('reportQueueEmpty')} />
       ) : (
-        <ul className="space-y-4">
+        <AdminList>
           {items.map((item) => (
-            <li
+            <AdminListItem
               key={item.id}
               data-queue-row={item.id}
-              className="rounded-card border border-border bg-surface p-4"
+              className="lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-5"
             >
               <h3 className="break-words font-semibold">{item.postingTitle}</h3>
               <p className="mt-2 whitespace-pre-wrap break-words">{item.reason}</p>
@@ -150,9 +151,9 @@ export function JobPostingReports({
                   {t('reportTakeDown')}
                 </Button>
               </div>
-            </li>
+            </AdminListItem>
           ))}
-        </ul>
+        </AdminList>
       )}
       {cursor && (
         <Button variant="secondary" loading={pending} onClick={() => void more()}>

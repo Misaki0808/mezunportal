@@ -99,3 +99,15 @@ describe('FeedbackForm', () => {
     expect(yes).toBeChecked();
   });
 });
+
+describe('FeedbackForm: hesap çerçevesi (kart 407)', () => {
+  it('HESAP üst etiketi, tek h1; geri bağlantısı görüşmelerime gider', () => {
+    renderUi(<FeedbackForm view={view} />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Görüşmen nasıldı?' })).toBeVisible();
+    expect(screen.getByText('HESAP')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Görüşmelerime dön' })).toHaveAttribute(
+      'href',
+      '/hesap/gorusmeler',
+    );
+  });
+});

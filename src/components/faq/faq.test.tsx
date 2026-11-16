@@ -462,3 +462,13 @@ describe('moderatör kuyruğu', () => {
     expect(screen.queryByText(QUESTION)).not.toBeInTheDocument();
   });
 });
+
+describe('SSS talebi sayfası: hesap çerçevesi (kart 407)', () => {
+  it('HESAP üst etiketi, tek h1 ve hesap ayarlarına dönüş; eski "SSS" etiketi yok', () => {
+    student();
+    expect(screen.getByRole('heading', { level: 1, name: 'SSS talebi gönder' })).toBeVisible();
+    expect(screen.getByText('HESAP')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Hesap ayarları' })).toHaveAttribute('href', '/hesap');
+    expect(screen.queryByText('SSS', { selector: 'p' })).not.toBeInTheDocument();
+  });
+});

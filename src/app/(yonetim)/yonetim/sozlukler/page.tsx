@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { adminAccess } from '@/components/admin/access';
 import { Dictionaries } from '@/components/admin/dictionaries';
-import { ErrorState } from '@/components/ui';
+import { ErrorState, buttonClasses } from '@/components/ui';
 import {
   createDictionaryEntry,
   deleteDictionaryEntry,
@@ -23,31 +23,26 @@ export default async function DictionariesPage() {
   const t = await getTranslations('companies');
   const course = await getTranslations('courseGuide');
   return (
-    <>
-      <div className="mx-auto max-w-5xl px-4 pt-6">
-        <Link
-          href="/yonetim/sozlukler/birlestir"
-          className="inline-flex min-h-11 items-center font-semibold text-primary"
-        >
-          {t('mergeTitle')} →
-        </Link>
-      </div>
-      <div className="mx-auto max-w-5xl px-4">
-        <Link
-          href="/yonetim/dersler"
-          className="inline-flex min-h-11 items-center font-semibold text-primary"
-        >
-          {course('adminLink')} →
-        </Link>
-      </div>
-      <Dictionaries
-        initial={result.data}
-        sectors={sectors.data.items}
-        list={listDictionaryEntries}
-        create={createDictionaryEntry}
-        update={updateDictionaryEntry}
-        remove={deleteDictionaryEntry}
-      />
-    </>
+    <Dictionaries
+      headerActions={
+        <>
+          <Link
+            href="/yonetim/sozlukler/birlestir"
+            className={buttonClasses({ variant: 'secondary' })}
+          >
+            {t('mergeTitle')}
+          </Link>
+          <Link href="/yonetim/dersler" className={buttonClasses({ variant: 'secondary' })}>
+            {course('adminLink')}
+          </Link>
+        </>
+      }
+      initial={result.data}
+      sectors={sectors.data.items}
+      list={listDictionaryEntries}
+      create={createDictionaryEntry}
+      update={updateDictionaryEntry}
+      remove={deleteDictionaryEntry}
+    />
   );
 }

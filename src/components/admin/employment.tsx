@@ -62,7 +62,7 @@ export function EmploymentPanel({ initial, departments, load }: Props) {
   return (
     <AdminFrame title={t('employment.title')} description={t('employment.description')}>
       <form
-        className="grid gap-4 rounded-card border border-border p-5 sm:grid-cols-3"
+        className="grid gap-4 rounded-card border border-border bg-surface p-5 sm:grid-cols-3"
         onSubmit={(e) => {
           e.preventDefault();
           void apply();

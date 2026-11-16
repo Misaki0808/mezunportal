@@ -2,7 +2,8 @@
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button, Checkbox, PageHeader, Select, Switch } from '@/components/ui';
+import { AccountFrameView } from '@/components/account/account-frame';
+import { Button, Checkbox, Select, Switch } from '@/components/ui';
 import { recordConsents } from '@/server/actions/privacy';
 import { setSeekerSettings } from '@/server/actions/job-seekers';
 import type { SeekerSettings, SeekerTermSeason } from '@/contracts/job-seekers';
@@ -11,6 +12,7 @@ import { SeekerCardView } from './card';
 export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
   const t = useTranslations('seekers');
   const errors = useTranslations('errors.codes');
+  const frame = useTranslations('accountFrame');
   const [data, setData] = useState(initial);
   const [visible, setVisible] = useState(initial.seekingInternship);
   const [agree, setAgree] = useState(initial.consent.granted);
@@ -85,18 +87,13 @@ export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
     });
   }
   return (
-    <div className="w-full max-w-2xl space-y-7 pb-36">
-      <Link
-        className="press-control inline-flex min-h-11 items-center font-semibold text-primary"
-        href="/hesap"
-      >
-        ← {t('backAccount')}
-      </Link>
-      <PageHeader
-        eyebrow={t('eyebrow')}
-        title={t('settingsTitle')}
-        description={t('settingsDescription')}
-      />
+    <AccountFrameView
+      eyebrow={frame('eyebrow')}
+      backLabel={frame('back')}
+      title={t('settingsTitle')}
+      description={t('settingsDescription')}
+      width="max-w-2xl"
+    >
       <div className="rounded-card border border-border p-5">
         <Switch
           label={t('visibility')}
@@ -190,6 +187,6 @@ export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
           {t('save')}
         </Button>
       </div>
-    </div>
+    </AccountFrameView>
   );
 }
