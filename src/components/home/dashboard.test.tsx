@@ -91,9 +91,9 @@ describe('A görünümü kişisel pano', () => {
     expect(screen.getByText('Henüz planlanmış görüşmen yok.')).toBeVisible();
     expect(screen.getByText('İlan önerilerini burada göreceksin')).toBeVisible();
     expect(screen.getByText('Henüz mentor önerin yok')).toBeVisible();
-    expect(screen.getByRole('region', { name: 'Bekleyen işlerin' })).toHaveTextContent(
-      'Şu an bekleyen bir işin yok.',
-    );
+    // Özet kutusu "0" ve "Şu an bekleyen bir işin yok." der; aynı cümleyi söyleyen boş kart çizilmez.
+    expect(screen.getByLabelText('Günün özeti')).toHaveTextContent('Şu an bekleyen bir işin yok.');
+    expect(screen.queryByRole('region', { name: 'Bekleyen işlerin' })).toBeNull();
     const shortcuts = within(screen.getByRole('region', { name: 'Kısayollar' }));
     expect(shortcuts.getByRole('link', { name: /CV incelemesi/ })).toHaveAttribute(
       'href',
@@ -272,14 +272,12 @@ describe('A görünümü kişisel pano', () => {
       '/uye/m1',
     );
   });
-  it('bildirim ve hikâye başlıktan sonra gelir; telefonun okuma sırası ızgaradan bağımsızdır', () => {
+  it('hikâye başlıktan sonra gelir; telefonun okuma sırası ızgaradan bağımsızdır', () => {
     show({
-      notice: <Link href="/baslangic">Başlangıca devam et</Link>,
       feature: <Link href="/hikayeler">Hikâye arşivi</Link>,
     });
     const elements = [
       screen.getByRole('heading', { level: 1 }),
-      screen.getByRole('link', { name: 'Başlangıca devam et' }),
       screen.getByRole('region', { name: 'Yaklaşan görüşme' }),
       screen.getByRole('region', { name: 'Profilin' }),
       screen.getByRole('region', { name: 'Sana uygun ilanlar' }),
@@ -291,6 +289,58 @@ describe('A görünümü kişisel pano', () => {
       expect(
         elements[i - 1]!.compareDocumentPosition(elements[i]!) & Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
+  });
+  it('profil bilgisi kutu + kart + tek eylemdir: ayrı bant yok, kart bağlantısı başlangıç durumuna göre', () => {
+    show({ panels: { ...panels(), continueOnboarding: true } });
+    const profile = within(screen.getByRole('region', { name: 'Profilin' }));
+    expect(profile.getByRole('link', { name: 'Başlangıca devam et' })).toHaveAttribute(
+      'href',
+      '/baslangic',
+    );
+    expect(screen.getAllByRole('link', { name: 'Başlangıca devam et' })).toHaveLength(1);
+    expect(profile.queryByRole('link', { name: 'Profilini düzenle' })).toBeNull();
+  });
+  it("başlangıç bitince profil kartı Profilini düzenle der ve /profil'e gider", () => {
+    show({ panels: { ...panels(), completion: { percent: 100, missing: [] } } });
+    const profile = within(screen.getByRole('region', { name: 'Profilin' }));
+    expect(profile.getByRole('link', { name: 'Profilini düzenle' })).toHaveAttribute(
+      'href',
+      '/profil',
+    );
+    expect(screen.queryByRole('link', { name: 'Başlangıca devam et' })).toBeNull();
+  });
+  it('sıradaki görüşmeyi yalnız özet kutusu söyler; başlık altında yinelenmez', () => {
+    show({
+      panels: {
+        ...panels(),
+        appointments: { ok: true, data: { items: [appointment()], nextCursor: null } },
+      },
+    });
+    expect(screen.getByLabelText('Günün özeti')).toHaveTextContent('17 Kas');
+    expect(screen.queryByText(/Sıradaki görüşmen/)).toBeNull();
+  });
+  it('alt sıra kalan karta göre dizilir: bekleyen iş yokken kısayollar tam genişlik, iş varken yanında', () => {
+    const { unmount } = show();
+    const cell = () => screen.getByRole('region', { name: 'Kısayollar' }).parentElement!;
+    expect(cell().className).toContain('lg:col-span-12');
+    unmount();
+    show({ summary: { ...base, pending: { ...base.pending, contactRequests: 1 } } });
+    expect(cell().className).toContain('lg:col-span-5');
+    expect(
+      screen.getByRole('region', { name: 'Bekleyen işlerin' }).parentElement!.className,
+    ).toContain('lg:col-span-7');
+  });
+  it('mentorda kapasite kutusu varken kısayollar 7, kapasite 5 sütun; kapasite öğrenciye çizilmez', () => {
+    show({
+      summary: { ...base, role: 'MENTOR' },
+      panels: { ...panels(), settings: { ok: false, errorCode: 'SERVER_UNEXPECTED' } },
+    });
+    expect(screen.getByRole('region', { name: 'Kısayollar' }).parentElement!.className).toContain(
+      'lg:col-span-7',
+    );
+    expect(
+      screen.getByRole('region', { name: 'Bu ayki kapasiten' }).parentElement!.className,
+    ).toContain('lg:col-span-5');
   });
   it('ad boşsa selamda virgül/boş ad bırakmaz', () => {
     show({ summary: { ...base, firstName: '' } });

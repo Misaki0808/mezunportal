@@ -137,13 +137,13 @@ export default async function HomePage() {
         <HomeDashboard
           summary={summary.data}
           feature={feature}
-          notice={onboardingBanner}
           panels={{
             completion: onboarding?.ok ? onboarding.data.completion : null,
             appointments,
             jobs: suggestedJobs,
             mentors,
             settings,
+            continueOnboarding: Boolean(showOnboarding),
           }}
         />
       ) : (
