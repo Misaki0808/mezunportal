@@ -67,6 +67,7 @@ export function parseJobFilters(
   const candidate = {
     ...(params.get('q') ? { q: params.get('q') } : {}),
     ...(params.get('departmentId') ? { departmentId: params.get('departmentId') } : {}),
+    ...(params.get('sectorId') ? { sectorId: params.get('sectorId') } : {}),
     ...(selected
       ? selected.companyId
         ? { companyId: selected.companyId }

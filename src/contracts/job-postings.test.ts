@@ -208,6 +208,8 @@ describe('arama, moderasyon ve şikâyet girdileri', () => {
       searchJobPostingsSchema.safeParse({ withinDays: JOB_POSTING_MAX_DAYS + 1 }).success,
     ).toBe(false);
     expect(searchJobPostingsSchema.safeParse({ withinDays: 0, remote: true }).success).toBe(true);
+    expect(searchJobPostingsSchema.safeParse({ sectorId: 'sektor-1' }).success).toBe(true);
+    expect(searchJobPostingsSchema.safeParse({ sectorId: '' }).success).toBe(false);
     expect(searchJobPostingsSchema.safeParse({ pageSize: 51 }).success).toBe(false);
     expect(searchJobPostingsSchema.safeParse({ kind: 'JOB', extra: 1 }).success).toBe(false);
     expect(getJobPostingSchema.safeParse({ id: '' }).success).toBe(false);

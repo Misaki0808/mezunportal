@@ -93,6 +93,7 @@ export async function buildDataExport(
           completedSteps: true,
           skippedSteps: true,
           mentorInterested: true,
+          alumniDirectoryVisible: true,
           seekingInternship: true,
           seekingTermYear: true,
           seekingTermSeason: true,

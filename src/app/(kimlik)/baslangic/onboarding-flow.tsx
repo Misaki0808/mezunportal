@@ -25,6 +25,8 @@ import {
 import { Button, Checkbox, EmptyState, Field, Select, buttonClasses } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 import type messages from '../../../../messages/tr.json';
+import { AlumniVisibilitySetting } from '@/components/alumni/visibility-setting';
+import type { AlumniVisibilityInput } from '@/contracts/alumni-directory';
 
 type Tag = ProfileTagsOutput['tags'][number];
 type Save = (input: SaveOnboardingStepInput) => Promise<ActionResult<OnboardingState>>;
@@ -39,6 +41,7 @@ export function OnboardingFlow({
   saveVisibility,
   editInitially = false,
   nameCard,
+  alumniVisibility,
 }: {
   initialState: OnboardingState;
   interests: Tag[];
@@ -52,6 +55,12 @@ export function OnboardingFlow({
   editInitially?: boolean;
   /** Ad soyad kartı (kart 353): türetilmiş adı onaylama/düzeltme; son "hazırsın" ekranında gösterilmez. */
   nameCard?: ReactNode;
+  alumniVisibility?: {
+    initial: { visible: boolean; eligible: boolean };
+    save: (
+      input: AlumniVisibilityInput,
+    ) => Promise<ActionResult<{ visible: boolean; eligible: boolean }>>;
+  };
 }) {
   const hydrated = useHydrated();
   const t = useTranslations('onboarding');
@@ -70,6 +79,7 @@ export function OnboardingFlow({
   const [error, setError] = useState<ErrorCode>();
   const [emptySelection, setEmptySelection] = useState(false);
   const [pending, setPending] = useState(false);
+  const [alumniSaving, setAlumniSaving] = useState(false);
   const [finished, setFinished] = useState(false);
   const [visibility, setVisibility] = useState(initialVisibility);
   const locked = useRef(false);
@@ -318,6 +328,13 @@ export function OnboardingFlow({
       )}
       {step === 'VISIBILITY' && (
         <div className="mt-6 grid gap-4">
+          {alumniVisibility && (
+            <AlumniVisibilitySetting
+              initial={alumniVisibility.initial}
+              save={alumniVisibility.save}
+              onBusyChange={setAlumniSaving}
+            />
+          )}
           {visibility.fields.map(({ field, level }) => (
             <Field key={field} label={t(`fields.${field}`)}>
               {(control) => (
@@ -370,7 +387,7 @@ export function OnboardingFlow({
           {previous && (
             <Button
               variant="secondary"
-              loading={pending}
+              loading={pending || alumniSaving}
               onClick={() => {
                 editing.current = true;
                 setFinished(false);
@@ -404,7 +421,7 @@ export function OnboardingFlow({
               <Button
                 size="lg"
                 fullWidth
-                loading={pending}
+                loading={pending || alumniSaving}
                 onClick={() => void submit({ step: 'VISIBILITY', confirmed: true })}
               >
                 {pending ? t('saving') : t('visibilityConfirm')}
@@ -435,7 +452,7 @@ export function OnboardingFlow({
             <Button
               variant="ghost"
               fullWidth
-              loading={pending}
+              loading={pending || alumniSaving}
               onClick={() => void skipStep({ step })}
             >
               {t('skip')}

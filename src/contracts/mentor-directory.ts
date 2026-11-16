@@ -48,6 +48,8 @@ const enumList = <T extends readonly [string, ...string[]]>(values: T) =>
 
 export const searchMentorsSchema = z
   .object({
+    /** Mentor adı, şirketi veya unvanında kısmi arama. */
+    q: text(MENTOR_QUERY_MIN, MENTOR_QUERY_MAX).optional(),
     /** Mentorun üyelik türü: mezun, akademisyen, öğrenci (K-08 eşiğini geçmiş). */
     mentorTypes: enumList(MENTOR_TYPES).optional(),
     /** Sektör kimliği (`listSearchSectors`): mentorun herhangi bir pozisyonunun (ya da şirketinin) sektörü. */
@@ -85,7 +87,7 @@ export type SearchMentorsFilter = z.output<typeof searchMentorsSchema>;
 // ---------------------------------------------------------------------------------------------
 
 const LIST_KEYS = ['mentorTypes', 'experienceTypes', 'meetingModes'] as const;
-const STRING_KEYS = ['sectorId', 'company', 'title', 'skill'] as const;
+const STRING_KEYS = ['q', 'sectorId', 'company', 'title', 'skill'] as const;
 const NUMBER_KEYS = ['page', 'pageSize'] as const;
 
 /** Filtreyi kanonik (alan sırası sabit, varsayılanlar atılmış) sorgu dizgisine çevirir. */

@@ -550,6 +550,8 @@ model Profile {
   seekerRef             String?          @unique
   /// Kartın mezun aramalarında gösterilme sayısı (kim baktığı tutulmaz).
   seekerViewCount       Int              @default(0)
+  /// Mezun rehberine yalnız sahibinin açık tercihiyle katılır.
+  alumniDirectoryVisible Boolean         @default(false)
   /// Mezun: "işe alım yapıyorum" beyanı (D28). Boşsa beyan yok; her an kapatılabilir.
   hiringDeclaredAt      DateTime?
   createdAt             DateTime         @default(now())
@@ -1060,6 +1062,7 @@ model Sector {
   id             String          @id @default(uuid(7))
   name           String
   normalizedName String          @unique
+  aliases        String[]        @default([])
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   companies      Company[]

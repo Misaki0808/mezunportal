@@ -42,7 +42,8 @@ Efe Baydemir (gerçek kişi; MezunPortal projesinin sahibi).
 ### 3. İşleme amaçları
 Üyeliğin doğrulanması; profil oluşturma; öğrencilerin mentor ve deneyimlere erişimi; randevu
 düzenlenmesi; moderasyon ve platform güvenliği; bölümün mezun takibi için **toplu ve kimliksiz**
-raporlar; bildirim gönderimi.
+raporlar; bildirim gönderimi. Mezun rehberini açmayı seçenlerin adı ve mesleki profil bilgileri aynı
+üniversitenin doğrulanmış üyelerinin erişimine sunulur; bu tercih istenildiğinde kapatılabilir.
 
 ### 4. Hukuki sebepler
 [Her amaç için KVKK m. 5/2 ve m. 6 kapsamındaki sebepler — hukuk görüşüyle doldurulacak.]
