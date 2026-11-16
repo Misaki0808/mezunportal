@@ -1,6 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
-import Link from 'next/link';
+import { AdminFrame } from '@/components/admin/frame';
 import { useTranslations } from 'next-intl';
 import { Badge, Button, EmptyState, Field, Input, Select } from '@/components/ui';
 import {
@@ -102,14 +102,9 @@ export function MetricsPanel({ initial, initialFilter, departments }: Props) {
   const isEmpty = report.totalsByType.every((item) => item.events === 0);
   const hiddenTypes = report.totalsByType.filter((item) => item.events === null);
   return (
-    <div className="mx-auto max-w-5xl px-5 py-10 pb-28">
-      <Link href="/yonetim" className="inline-flex min-h-11 items-center text-primary">
-        ← {t('back')}
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold">{t('title')}</h1>
-      <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
+    <AdminFrame title={t('title')} description={t('description')}>
       <form
-        className="mt-7 grid gap-4 rounded-card border border-border p-5 sm:grid-cols-2"
+        className="mt-7 grid gap-4 rounded-card border border-border bg-surface p-4 shadow-card sm:grid-cols-2"
         onSubmit={(event) => {
           event.preventDefault();
           void apply();
@@ -334,6 +329,6 @@ export function MetricsPanel({ initial, initialFilter, departments }: Props) {
           </section>
         </>
       )}
-    </div>
+    </AdminFrame>
   );
 }

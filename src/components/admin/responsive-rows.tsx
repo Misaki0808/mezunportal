@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react';
+import { AdminList, AdminListItem } from './list';
 
 export type DisplayRow = { id: string; cells: ReactNode[] };
 /** Küçük ekranda etiketli kartlar, geniş ekranda aynı veriden tablo. */
 export function ResponsiveRows({ headers, rows }: { headers: string[]; rows: DisplayRow[] }) {
   return (
     <>
-      <ul className="flex min-w-0 flex-col gap-3 lg:hidden">
+      <AdminList className="lg:hidden">
         {rows.map((row) => (
-          <li key={row.id} className="min-w-0 rounded-card border border-border p-5 shadow-card">
+          <AdminListItem key={row.id}>
             <dl className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-3">
               {row.cells.map((cell, index) => (
                 // İlk hücre kart başlığı, son hücre eylem alanı gibi tam genişlik; ortadakiler iki sütuna iner (kart kısalır).
@@ -22,31 +23,36 @@ export function ResponsiveRows({ headers, rows }: { headers: string[]; rows: Dis
                 </div>
               ))}
             </dl>
-          </li>
+          </AdminListItem>
         ))}
-      </ul>
-      <table className="hidden w-full table-fixed border-collapse text-left [overflow-wrap:anywhere] lg:table">
-        <thead>
-          <tr className="border-b border-border">
-            {headers.map((header) => (
-              <th className="p-3" key={header}>
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr className="border-b border-border" key={row.id}>
-              {row.cells.map((cell, index) => (
-                <td className="break-words p-3 align-top" key={`${row.id}-${index}`}>
-                  {cell}
-                </td>
+      </AdminList>
+      <div className="hidden overflow-hidden rounded-card border border-border bg-surface shadow-card lg:block">
+        <table className="w-full table-fixed border-collapse text-left [overflow-wrap:anywhere]">
+          <thead>
+            <tr className="border-b border-border bg-surface-strong text-sm text-fg-muted">
+              {headers.map((header) => (
+                <th scope="col" className="px-4 py-3 font-medium last:text-right" key={header}>
+                  {header}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr className="border-b border-border last:border-0" key={row.id}>
+                {row.cells.map((cell, index) => (
+                  <td
+                    className="break-words px-4 py-4 align-top last:text-right last:[&>div]:justify-end"
+                    key={`${row.id}-${index}`}
+                  >
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

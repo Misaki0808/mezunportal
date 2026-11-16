@@ -1,4 +1,5 @@
 'use client';
+import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 import { useTranslations } from 'next-intl';
@@ -13,7 +14,7 @@ import {
   type ReviewGraduationDocumentOutput,
 } from '@/contracts/graduation-document';
 import type { ActionResult } from '@/contracts/result';
-import { Button, EmptyState, Field, Modal, PageHeader, Textarea } from '@/components/ui';
+import { Badge, Button, EmptyState, Field, Modal, PageHeader, Textarea } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 type Props = {
@@ -110,7 +111,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
   }
 
   return (
-    <div ref={queueRef} className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
+    <div ref={queueRef} className="min-w-0 space-y-6 pb-8">
       <PageHeader
         className="mb-8"
         eyebrow={t('eyebrow')}
@@ -141,15 +142,18 @@ export function ReviewQueue({ initial, list, review }: Props) {
           }
         />
       ) : (
-        <ul className="flex flex-col gap-4">
+        <AdminList>
           {items.map((item) => (
-            <li
+            <AdminListItem
               data-queue-row={item.id}
               key={item.id}
-              className="rounded-card border border-border bg-bg p-5 shadow-card"
+              className="lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-x-6"
             >
               <div className="flex flex-col gap-1">
                 <h2 className="break-words text-lg font-semibold text-fg">{item.applicantName}</h2>
+                <Badge tone="warning" className="self-start">
+                  {t('pending')}
+                </Badge>
                 <p className="break-all text-base text-fg-muted">{item.maskedEmail}</p>
                 <p className="text-base text-fg">{item.departmentName}</p>
                 <p className="text-base text-fg-muted">
@@ -165,7 +169,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
                   }).format(new Date(item.submittedAt))}
                 </time>
               </div>
-              <div className="mt-5 flex flex-col gap-3">
+              <div className="mt-5 flex flex-col gap-3 lg:mt-0 lg:items-end">
                 <a
                   href={graduationDocumentFileHref(item.id)}
                   target="_blank"
@@ -174,7 +178,7 @@ export function ReviewQueue({ initial, list, review }: Props) {
                 >
                   {t('view')}
                 </a>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Button
                     data-queue-action
                     onClick={() => {
@@ -195,9 +199,9 @@ export function ReviewQueue({ initial, list, review }: Props) {
                   </Button>
                 </div>
               </div>
-            </li>
+            </AdminListItem>
           ))}
-        </ul>
+        </AdminList>
       )}
       {cursor && (
         <div className="mt-6">

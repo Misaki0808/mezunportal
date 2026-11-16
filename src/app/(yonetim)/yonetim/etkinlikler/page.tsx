@@ -1,6 +1,7 @@
+import { AdminFrame } from '@/components/admin/frame';
 import { guardPage } from '@/server/permissions/page-guard';
 import { getTranslations } from 'next-intl/server';
-import { ErrorState, PageHeader } from '@/components/ui';
+import { ErrorState } from '@/components/ui';
 import { AdminEvents } from '@/components/campus-events/admin-events';
 import { listCampusEventModeration } from '@/server/actions/campus-events';
 import { getDb } from '@/server/db';
@@ -22,9 +23,8 @@ export default async function AdminCampusEventsPage() {
     orderBy: { name: 'asc' },
   });
   return (
-    <div className="mx-auto max-w-3xl px-5 py-10">
-      <PageHeader title={t('adminTitle')} description={t('adminDescription')} />
+    <AdminFrame title={t('adminTitle')} description={t('adminDescription')}>
       <AdminEvents departments={departments} events={result.data} />
-    </div>
+    </AdminFrame>
   );
 }

@@ -1,4 +1,5 @@
 'use client';
+import { AdminList, AdminListItem } from '@/components/admin/list';
 import Link from 'next/link';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
@@ -287,17 +288,20 @@ export function PostingModeration({
     <div
       ref={rootRef}
       data-hydrated={hydrated ? 'true' : undefined}
-      className="mx-auto max-w-5xl px-4 py-8 sm:px-6"
+      className="min-w-0 space-y-6 pb-8"
     >
       <PageHeader title={t('moderationTitle')} className="mb-7" />
       {items.length ? (
-        <ul className="grid gap-4">
+        <AdminList>
           {items.map((item) => (
-            <li
+            <AdminListItem
               key={item.id}
               data-queue-row={item.id}
-              className="min-w-0 rounded-card border border-border bg-surface p-5"
+              className="lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-6"
             >
+              <Badge tone="warning" className="w-fit">
+                {t('status.PENDING')}
+              </Badge>
               <p className="break-words text-sm text-fg-muted">
                 {item.organizationName} · {t('reviewedBy', { name: item.author.displayName })}
               </p>
@@ -306,7 +310,7 @@ export function PostingModeration({
               <p className="mt-3 text-sm text-fg-muted">
                 {item.targetDepartments.map((d) => d.name).join(', ')} · {item.deadlineOn}
               </p>
-              <div className="mt-5 flex flex-wrap gap-3">
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row lg:col-start-2 lg:row-start-1 lg:row-span-5 lg:mt-0">
                 <Button
                   data-queue-action
                   onClick={() => {
@@ -328,9 +332,9 @@ export function PostingModeration({
                   {t('reject')}
                 </Button>
               </div>
-            </li>
+            </AdminListItem>
           ))}
-        </ul>
+        </AdminList>
       ) : (
         <EmptyState title={t('moderationEmpty')} />
       )}

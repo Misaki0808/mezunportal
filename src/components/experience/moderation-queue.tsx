@@ -1,4 +1,5 @@
 'use client';
+import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 import { useTranslations } from 'next-intl';
@@ -25,6 +26,7 @@ import {
   EmptyState,
   Field,
   Modal,
+  PageHeader,
   Tabs,
   Textarea,
 } from '@/components/ui';
@@ -291,57 +293,60 @@ export function ModerationQueue({
         }
       />
     ) : (
-      <ul className="flex flex-col gap-4">
-        {items.map((item) => (
-          <li
-            data-queue-row={item.id}
-            key={item.id}
-            className="rounded-card border border-border bg-bg p-5 shadow-card"
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="category">{t(`types.${item.content.type}`)}</Badge>
-              {item.isAnonymous && <Badge>{t('mine.anonymousNote')}</Badge>}
-            </div>
-            <h2 className="mt-3 break-words text-lg font-semibold text-fg">
-              {(item.content as { organizationName?: string }).organizationName ??
-                t('mine.untitled')}
-            </h2>
-            <p className="mt-1 text-sm text-fg-muted">
-              {t('queue.submitted', { date: dateOf(item.updatedAt) })}
-            </p>
-            {item.isAnonymous && (
-              <p className="mt-1 text-sm text-fg-muted">{t('queue.authorHidden')}</p>
-            )}
-            <details className="mt-4 rounded-control border border-border p-3">
-              <summary className="min-h-11 cursor-pointer text-base font-medium text-primary">
-                {t('queue.view')}
-              </summary>
-              <div className="mt-3">
-                <ExperienceContent content={item.content} />
+      <>
+        <AdminList>
+          {items.map((item) => (
+            <AdminListItem
+              data-queue-row={item.id}
+              key={item.id}
+              className="lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-x-6"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="category">{t(`types.${item.content.type}`)}</Badge>
+                <Badge tone="warning">{t('status.PENDING')}</Badge>
+                {item.isAnonymous && <Badge>{t('mine.anonymousNote')}</Badge>}
               </div>
-            </details>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button
-                data-queue-action
-                onClick={() => experienceDecision.setChoice({ id: item.id, kind: 'PUBLISH' })}
-              >
-                {t('queue.publish')}
-              </Button>
-              <Button
-                variant="danger"
-                onClick={() => experienceDecision.setChoice({ id: item.id, kind: 'REJECT' })}
-              >
-                {t('queue.reject')}
-              </Button>
-            </div>
-          </li>
-        ))}
+              <h2 className="mt-3 break-words text-lg font-semibold text-fg">
+                {(item.content as { organizationName?: string }).organizationName ??
+                  t('mine.untitled')}
+              </h2>
+              <p className="mt-1 text-sm text-fg-muted">
+                {t('queue.submitted', { date: dateOf(item.updatedAt) })}
+              </p>
+              {item.isAnonymous && (
+                <p className="mt-1 text-sm text-fg-muted">{t('queue.authorHidden')}</p>
+              )}
+              <details className="mt-4 rounded-control border border-border p-3 lg:col-span-2">
+                <summary className="min-h-11 cursor-pointer text-base font-medium text-primary">
+                  {t('queue.view')}
+                </summary>
+                <div className="mt-3">
+                  <ExperienceContent content={item.content} />
+                </div>
+              </details>
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:col-start-2 lg:row-start-1 lg:row-span-4 lg:mt-0">
+                <Button
+                  data-queue-action
+                  onClick={() => experienceDecision.setChoice({ id: item.id, kind: 'PUBLISH' })}
+                >
+                  {t('queue.publish')}
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => experienceDecision.setChoice({ id: item.id, kind: 'REJECT' })}
+                >
+                  {t('queue.reject')}
+                </Button>
+              </div>
+            </AdminListItem>
+          ))}
+        </AdminList>
         {cursor && (
           <Button variant="secondary" loading={loading} onClick={() => void more('experiences')}>
             {t('queue.more')}
           </Button>
         )}
-      </ul>
+      </>
     );
 
   const reportsPanel =
@@ -351,55 +356,58 @@ export function ModerationQueue({
         description={t('queue.emptyReportsDescription')}
       />
     ) : (
-      <ul className="flex flex-col gap-4">
-        {reports.map((report) => (
-          <li
-            data-queue-row={report.id}
-            key={report.id}
-            className="rounded-card border border-border bg-bg p-5 shadow-card"
-          >
-            <p className="text-sm text-fg-muted">
-              {t('queue.reportDate', { date: dateOf(report.createdAt) })}
-            </p>
-            <p className="mt-2 text-sm font-semibold text-fg">{t('queue.reportReason')}</p>
-            <p className="whitespace-pre-line break-words text-base text-fg">{report.reason}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link
-                className={buttonClasses({ variant: 'secondary' })}
-                href={`/deneyim/${report.targetId}`}
-              >
-                {t('queue.reportedOn')}
-              </Link>
-              <Button
-                data-queue-action
-                onClick={() => reportDecision.setChoice({ id: report.id, kind: 'RESOLVED' })}
-              >
-                {t('queue.resolve')}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => reportDecision.setChoice({ id: report.id, kind: 'DISMISSED' })}
-              >
-                {t('queue.dismiss')}
-              </Button>
-            </div>
-          </li>
-        ))}
+      <>
+        <AdminList>
+          {reports.map((report) => (
+            <AdminListItem
+              data-queue-row={report.id}
+              key={report.id}
+              className="lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-x-6"
+            >
+              <p className="text-sm text-fg-muted">
+                {t('queue.reportDate', { date: dateOf(report.createdAt) })}
+              </p>
+              <p className="mt-2 text-sm font-semibold text-fg">{t('queue.reportReason')}</p>
+              <p className="whitespace-pre-line break-words text-base text-fg">{report.reason}</p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row lg:col-start-2 lg:row-start-1 lg:row-span-3 lg:mt-0">
+                <Link
+                  className={buttonClasses({ variant: 'secondary' })}
+                  href={`/deneyim/${report.targetId}`}
+                >
+                  {t('queue.reportedOn')}
+                </Link>
+                <Button
+                  data-queue-action
+                  onClick={() => reportDecision.setChoice({ id: report.id, kind: 'RESOLVED' })}
+                >
+                  {t('queue.resolve')}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => reportDecision.setChoice({ id: report.id, kind: 'DISMISSED' })}
+                >
+                  {t('queue.dismiss')}
+                </Button>
+              </div>
+            </AdminListItem>
+          ))}
+        </AdminList>
         {reportCursor && (
           <Button variant="secondary" loading={loading} onClick={() => void more('reports')}>
             {t('queue.more')}
           </Button>
         )}
-      </ul>
+      </>
     );
 
   return (
-    <div ref={queueRef} className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
-      <header className="mb-6">
-        <p className="mb-2 text-base font-semibold text-primary">{t('queue.eyebrow')}</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-fg">{t('queue.title')}</h1>
-        <p className="mt-3 text-base text-fg-muted">{t('queue.description')}</p>
-      </header>
+    <div ref={queueRef} className="min-w-0 space-y-6 pb-8">
+      <PageHeader
+        eyebrow={t('queue.eyebrow')}
+        title={t('queue.title')}
+        description={t('queue.description')}
+      />
+
       {notice && (
         <p
           role="status"

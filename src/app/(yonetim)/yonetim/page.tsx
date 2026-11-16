@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { hasAdminAccess } from '@/components/layout/admin-access';
 import {
   Badge,
+  EmptyState,
+  ChevronRightIcon,
   BadgeCheckIcon,
   CalendarIcon,
   ClipboardCheckIcon,
@@ -13,6 +15,7 @@ import {
   ShieldCheckIcon,
   UsersIcon,
 } from '@/components/ui';
+import { AdminList, AdminListItem } from '@/components/admin/list';
 import { getAdminOverview } from '@/server/actions/admin';
 
 export const dynamic = 'force-dynamic';
@@ -103,54 +106,119 @@ export default async function AdminOverviewPage() {
     points: <BadgeCheckIcon width={22} height={22} />,
     googleCalendar: <CalendarIcon width={22} height={22} />,
   } as const;
+  const queueLinks = links.filter((link) => link.visible && link.key in queueCounts);
+  const tools = links.filter((link) => link.visible && !(link.key in queueCounts));
+  const allClear =
+    queueLinks.every((link) => queueCounts[link.key] === 0) && counts.pendingCampusEvents === 0;
   return (
-    <div className="mx-auto max-w-4xl px-5 pb-12 pt-10 sm:pt-14">
+    <div className="min-w-0 space-y-7 pb-8">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
-      <Link
-        href="/yonetim/aylik-ozet"
-        className="press-row mt-6 flex min-h-14 items-center rounded-card border border-border p-4 font-semibold"
-      >
-        {digest('adminPreview')} →
-      </Link>
-      <Link
-        href="/yonetim/etkinlikler"
-        className="press-row mt-3 flex min-h-14 items-center rounded-card border border-border p-4 font-semibold"
-      >
-        <span>{campusEvents('adminTitle')} →</span>
-        <Badge tone={counts.pendingCampusEvents > 0 ? 'warning' : 'neutral'} className="ml-3">
-          {t('pendingCount', { count: counts.pendingCampusEvents })}
-        </Badge>
-      </Link>
-      <ul className="mt-7 grid gap-3 sm:grid-cols-2">
-        {links
-          .filter((link) => link.visible)
-          .map((link) => (
-            <li key={link.key}>
+      <section aria-labelledby="admin-pending-heading" className="space-y-4">
+        <h2 id="admin-pending-heading" className="text-lg font-bold">
+          {t('overview.pendingTitle')}
+        </h2>
+        {allClear && (
+          <EmptyState
+            title={t('overview.clearTitle')}
+            description={t('overview.clearDescription')}
+            className="rounded-card border border-border bg-surface"
+          />
+        )}
+        <AdminList>
+          {queueLinks.map((link) => (
+            <AdminListItem key={link.key} flush>
               <Link
                 href={link.href}
-                className="press-row flex min-h-24 items-center gap-4 rounded-card border border-border px-4 py-4 shadow-card"
+                className="press-row flex min-h-20 items-center gap-4 px-4 py-4 lg:px-5"
               >
                 <IconChip tone={TONE[link.key]}>{ICON[link.key]}</IconChip>
-                <span className="min-w-0">
-                  <span className="block text-lg font-semibold text-fg">
-                    {t(`sections.${link.key}`)} →
-                    {queueCounts[link.key] !== undefined && queueCounts[link.key] !== null && (
-                      <Badge
-                        tone={queueCounts[link.key]! > 0 ? 'warning' : 'neutral'}
-                        className="ml-2"
-                      >
-                        {t('pendingCount', { count: queueCounts[link.key]! })}
-                      </Badge>
-                    )}
-                  </span>
-                  <span className="mt-1 block text-base text-fg-muted">
-                    {t(`intro.${link.key}`)}
-                  </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold text-fg">{t(`sections.${link.key}`)}</span>
+                  <span className="mt-1 block text-sm text-fg-muted">{t(`intro.${link.key}`)}</span>
                 </span>
+                {queueCounts[link.key] !== null && queueCounts[link.key] !== undefined && (
+                  <Badge
+                    tone={queueCounts[link.key]! > 0 ? 'warning' : 'neutral'}
+                    className="shrink-0"
+                  >
+                    {t('pendingCount', { count: queueCounts[link.key]! })}
+                  </Badge>
+                )}
+                <ChevronRightIcon
+                  aria-hidden="true"
+                  className="hidden shrink-0 text-fg-muted sm:block"
+                  width={18}
+                  height={18}
+                />
+              </Link>
+            </AdminListItem>
+          ))}
+          <AdminListItem flush>
+            <Link
+              href="/yonetim/etkinlikler"
+              className="press-row flex min-h-20 items-center gap-4 px-4 py-4 lg:px-5"
+            >
+              <IconChip tone="primary">
+                <CalendarIcon width={22} height={22} />
+              </IconChip>
+              <span className="min-w-0 flex-1 font-semibold">{campusEvents('adminTitle')}</span>
+              <Badge
+                tone={counts.pendingCampusEvents > 0 ? 'warning' : 'neutral'}
+                className="shrink-0"
+              >
+                {t('pendingCount', { count: counts.pendingCampusEvents })}
+              </Badge>
+              <ChevronRightIcon
+                aria-hidden="true"
+                className="hidden shrink-0 text-fg-muted sm:block"
+                width={18}
+                height={18}
+              />
+            </Link>
+          </AdminListItem>
+        </AdminList>
+      </section>
+      <section aria-labelledby="admin-tools-heading" className="space-y-4">
+        <h2 id="admin-tools-heading" className="text-lg font-bold">
+          {t('overview.toolsTitle')}
+        </h2>
+        <ul className="grid gap-x-7 divide-y divide-border lg:grid-cols-2 lg:divide-y-0">
+          {tools.map((link) => (
+            <li key={link.key} className="min-w-0 lg:border-b lg:border-border">
+              <Link href={link.href} className="press-row flex min-h-20 items-center gap-3 py-4">
+                <IconChip tone={TONE[link.key]}>{ICON[link.key]}</IconChip>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{t(`sections.${link.key}`)}</span>
+                  <span className="mt-1 block text-sm text-fg-muted">{t(`intro.${link.key}`)}</span>
+                </span>
+                <ChevronRightIcon
+                  aria-hidden="true"
+                  width={18}
+                  height={18}
+                  className="shrink-0 text-fg-muted"
+                />
               </Link>
             </li>
           ))}
-      </ul>
+          <li className="min-w-0 lg:border-b lg:border-border">
+            <Link
+              href="/yonetim/aylik-ozet"
+              className="press-row flex min-h-20 items-center gap-3 py-4"
+            >
+              <IconChip tone="success">
+                <FileTextIcon width={22} height={22} />
+              </IconChip>
+              <span className="min-w-0 flex-1 font-semibold">{digest('adminPreview')}</span>
+              <ChevronRightIcon
+                aria-hidden="true"
+                width={18}
+                height={18}
+                className="shrink-0 text-fg-muted"
+              />
+            </Link>
+          </li>
+        </ul>
+      </section>
     </div>
   );
 }

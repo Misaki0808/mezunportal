@@ -1,4 +1,5 @@
 'use client';
+import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { safeClientAction } from '@/lib/safe-client-action';
 
@@ -293,11 +294,13 @@ export function ReferralList({
       }));
     });
   }
+  const Rows = moderation ? AdminList : 'ul';
+  const Row = moderation ? AdminListItem : 'li';
   return (
     <div
       ref={queueRef}
       data-hydrated={hydrated ? 'true' : undefined}
-      className="mx-auto max-w-3xl px-4 py-8 pb-32"
+      className={moderation ? 'min-w-0 space-y-6 pb-8' : 'mx-auto max-w-3xl px-4 py-8 pb-32'}
     >
       <PageHeader
         title={t(moderation ? 'moderationTitle' : 'title')}
@@ -345,7 +348,7 @@ export function ReferralList({
           />
         </div>
       ) : (
-        <ul className="mt-7 grid gap-4">
+        <Rows className={moderation ? undefined : 'mt-7 grid gap-4'}>
           {page.items.map((row) => {
             const student = row.student.id === userId;
             const alumni = row.alumnus.id === userId;
@@ -354,10 +357,14 @@ export function ReferralList({
               (student && row.status === 'PROPOSED') ||
               (alumni && row.status === 'ACCEPTED_PROPOSED');
             return (
-              <li
+              <Row
                 data-queue-row={row.id}
                 key={row.id}
-                className="min-w-0 rounded-card border border-border bg-surface p-5 shadow-card"
+                className={
+                  moderation
+                    ? undefined
+                    : 'min-w-0 rounded-card border border-border bg-surface p-5 shadow-card'
+                }
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -445,10 +452,10 @@ export function ReferralList({
                       </Button>
                     </div>
                   )}
-              </li>
+              </Row>
             );
           })}
-        </ul>
+        </Rows>
       )}
       <Modal
         open={!!reviewChoice}

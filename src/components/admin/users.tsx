@@ -8,6 +8,7 @@ import type { ActionResult } from '@/contracts/result';
 import { Badge, Button, EmptyState, Field, Input, buttonClasses } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 import { AdminFrame } from './frame';
+import { ResponsiveRows } from './responsive-rows';
 
 type Props = {
   initial: AdminUserPage;
@@ -61,14 +62,14 @@ export function AdminUsers({ initial, search }: Props) {
   return (
     <AdminFrame title={t('users.title')}>
       <form
-        className="flex flex-col gap-3 sm:flex-row sm:items-start"
+        className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-card sm:flex-row sm:items-start"
         onSubmit={(event) => {
           event.preventDefault();
           void load(query);
         }}
       >
         <Field
-          className="flex-1"
+          className="min-w-0 flex-1"
           label={t('users.searchLabel')}
           hint={t('users.searchHint')}
           error={invalid ? t('users.searchInvalid') : undefined}
@@ -109,66 +110,38 @@ export function AdminUsers({ initial, search }: Props) {
           />
         ) : (
           <>
-            <ul className="flex flex-col gap-3 lg:hidden">
-              {items.map((item) => (
-                <li key={item.id} className="rounded-card border border-border p-5 shadow-card">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="min-w-0 max-w-full text-lg font-semibold [overflow-wrap:anywhere]">
-                      {item.displayName}
-                    </h2>
-                    <Badge tone={item.status === 'SUSPENDED' ? 'danger' : 'success'}>
-                      {item.status === 'SUSPENDED' ? t('inactive') : t('active')}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 break-all text-base text-fg-muted">{item.maskedEmail}</p>
-                  {item.maskedPhone && (
-                    <p className="mt-1 text-base text-fg-muted">{item.maskedPhone}</p>
-                  )}
-                  <p className="mt-2 text-base">{role(item)}</p>
+            <ResponsiveRows
+              headers={[
+                t('name'),
+                t('maskedEmail'),
+                t('maskedPhone'),
+                t('role'),
+                t('status'),
+                t('actions'),
+              ]}
+              rows={items.map((item) => ({
+                id: item.id,
+                cells: [
+                  <span key="name" className="font-semibold">
+                    {item.displayName}
+                  </span>,
+                  item.maskedEmail,
+                  item.maskedPhone ?? t('none'),
+                  role(item),
+                  <Badge key="status" tone={item.status === 'SUSPENDED' ? 'danger' : 'success'}>
+                    {item.status === 'SUSPENDED' ? t('inactive') : t('active')}
+                  </Badge>,
                   <Link
+                    key="details"
                     href={`/yonetim/kullanicilar/${item.id}`}
-                    className={`${buttonClasses({ variant: 'secondary' })} mt-4`}
+                    className={buttonClasses({ variant: 'secondary' })}
                     aria-label={t('detailsFor', { name: item.displayName })}
                   >
                     {t('details')}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <table className="hidden w-full table-fixed border-collapse text-left [overflow-wrap:anywhere] lg:table">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="p-3">{t('name')}</th>
-                  <th className="p-3">{t('maskedEmail')}</th>
-                  <th className="p-3">{t('maskedPhone')}</th>
-                  <th className="p-3">{t('role')}</th>
-                  <th className="p-3">{t('status')}</th>
-                  <th className="p-3">{t('actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="border-b border-border">
-                    <td className="p-3">{item.displayName}</td>
-                    <td className="p-3">{item.maskedEmail}</td>
-                    <td className="p-3">{item.maskedPhone ?? t('none')}</td>
-                    <td className="p-3">{role(item)}</td>
-                    <td className="p-3">
-                      {item.status === 'SUSPENDED' ? t('inactive') : t('active')}
-                    </td>
-                    <td className="p-3">
-                      <Link
-                        href={`/yonetim/kullanicilar/${item.id}`}
-                        className={`${buttonClasses({ variant: 'secondary' })} whitespace-nowrap`}
-                        aria-label={t('detailsFor', { name: item.displayName })}
-                      >
-                        {t('details')}
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </Link>,
+                ],
+              }))}
+            />
           </>
         )}
         {cursor && (
