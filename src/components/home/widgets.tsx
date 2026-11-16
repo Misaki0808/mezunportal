@@ -33,6 +33,8 @@ export type HomePanels = {
   mentors?: ActionResult<SimilarMentors> | null;
   jobs?: JobsResult | null;
   settings?: ActionResult<MentorSettingsView> | null;
+  /** Başlangıç adımları bitmediyse profil kartının bağlantısı "Başlangıca devam et" olur. */
+  continueOnboarding?: boolean;
 };
 
 function Panel({
@@ -49,7 +51,7 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <Card as="section" aria-labelledby={id} className="min-w-0 bg-surface">
+    <Card as="section" aria-labelledby={id} className="h-full min-w-0 bg-surface">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <h2 id={id} className="font-heading text-lg font-bold">
           {title}
@@ -167,10 +169,21 @@ export function UpcomingPanel({
   );
 }
 
-export function ProfilePanel({ completion }: { completion: ProfileCompletion | null }) {
+export function ProfilePanel({
+  completion,
+  continueOnboarding = false,
+}: {
+  completion: ProfileCompletion | null;
+  continueOnboarding?: boolean;
+}) {
   const t = useTranslations('home.dashboard');
   return (
-    <Panel id="home-profile" title={t('profile.title')} href="/profil" action={t('profile.edit')}>
+    <Panel
+      id="home-profile"
+      title={t('profile.title')}
+      href={continueOnboarding ? '/baslangic' : '/profil'}
+      action={continueOnboarding ? t('profile.continue') : t('profile.edit')}
+    >
       {!completion ? (
         <ErrorState errorCode="SERVER_UNEXPECTED" />
       ) : (

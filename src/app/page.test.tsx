@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -242,6 +242,35 @@ describe('HomePage: kişisel pano', () => {
       '/hesap/gorusmeler',
     );
     expect(document.body.textContent).not.toMatch(/Çok yakında/);
+  });
+  it('başlangıç bitmediyse devam bağlantısı Profil kartının eylemidir; panoda ayrı bant çizilmez', async () => {
+    mocks.getHomeSummary.mockResolvedValue(summary());
+    mocks.getOnboardingState.mockResolvedValue({
+      ok: true,
+      data: {
+        ...completedOnboarding,
+        step: 'INTERESTS',
+        completion: { percent: 40, missing: ['INTERESTS', 'GOALS', 'VISIBILITY'] },
+      },
+    });
+    renderUi(await HomePage());
+    const profile = within(screen.getByRole('region', { name: 'Profilin' }));
+    expect(profile.getByRole('link', { name: 'Başlangıca devam et' })).toHaveAttribute(
+      'href',
+      '/baslangic',
+    );
+    expect(screen.getAllByRole('link', { name: 'Başlangıca devam et' })).toHaveLength(1);
+    expect(screen.queryByRole('link', { name: /onboardingTitle/ })).toBeNull();
+  });
+  it('başlangıç tamamsa Profil kartı Profilini düzenle der', async () => {
+    mocks.getHomeSummary.mockResolvedValue(summary());
+    renderUi(await HomePage());
+    const profile = within(screen.getByRole('region', { name: 'Profilin' }));
+    expect(profile.getByRole('link', { name: 'Profilini düzenle' })).toHaveAttribute(
+      'href',
+      '/profil',
+    );
+    expect(screen.queryByRole('link', { name: 'Başlangıca devam et' })).toBeNull();
   });
   it('oturum yokken ve doğrulanmamışken pano sayıları istenmez; giriş yap ya da doğrulama gösterilir', async () => {
     mocks.requireUser.mockRejectedValue(new Error('unauthenticated'));

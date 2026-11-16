@@ -188,7 +188,6 @@
       "none": "Bekleyen iş yok"
     },
     "jobMatches": {
-      "title": "Sana uyan ilanlar",
       "empty": "Henüz sana uyan ilan yok. İlgi alanlarını eklersen uygun ilanlar burada görünür.",
       "profile": "Profilini düzenle"
     },
@@ -200,9 +199,6 @@
         "day": "İyi günler",
         "evening": "İyi akşamlar",
         "night": "İyi geceler"
-      },
-      "overview": {
-        "next": "Sıradaki görüşmen {date}."
       },
       "actions": {
         "mentors": "Mentor bul",
@@ -243,6 +239,7 @@
       "profile": {
         "title": "Profilin",
         "edit": "Profilini düzenle",
+        "continue": "Başlangıca devam et",
         "complete": "tamam",
         "progress": "Profil hazırlığı",
         "hint": "Başlangıç tercihlerinle profilini tamamla.",
