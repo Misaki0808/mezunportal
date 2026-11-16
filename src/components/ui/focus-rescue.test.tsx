@@ -4,7 +4,19 @@ import '@testing-library/jest-dom/vitest';
 import { waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { captureFocus, focusFirstInvalid, rescueFocus, resultTarget } from './focus-rescue';
+import {
+  captureFocus,
+  focusFirstInvalid,
+  rescueFocus as startRescueFocus,
+  resultTarget,
+} from './focus-rescue';
+
+const pendingRescues: (() => void)[] = [];
+function rescueFocus(...args: Parameters<typeof startRescueFocus>) {
+  const cancel = startRescueFocus(...args);
+  if (cancel) pendingRescues.push(cancel);
+  return cancel;
+}
 
 function page() {
   document.body.innerHTML = `
@@ -23,6 +35,7 @@ function page() {
 }
 
 afterEach(() => {
+  pendingRescues.splice(0).forEach((cancel) => cancel());
   document.body.innerHTML = '';
 });
 
