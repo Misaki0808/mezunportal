@@ -4,6 +4,7 @@ import Link from 'next/link';
 import messages from '../../../messages/tr.json';
 import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import type {
   JobPostingCard,
   JobPostingPage,
@@ -137,7 +138,9 @@ export function PostingList({
   const t = useTranslations('jobs');
   const directory = useTranslations('directory');
   const filterFormId = useId();
+  const router = useRouter();
   const [query, setQuery] = useState(filters.q ?? '');
+  const [queryError, setQueryError] = useState(false);
   const [open, setOpen] = useState(false);
   const [filterEpoch, setFilterEpoch] = useState(0);
   const [navigating, setNavigating] = useState(false);
@@ -236,9 +239,34 @@ export function PostingList({
     if (target > 1) params.set('page', String(target));
     return `/ilanlar${params.size ? `?${params}` : ''}`;
   }
+  function quickFilter(patch: Partial<SearchJobPostingsInput>) {
+    if (navigating) return;
+    const trimmed = query.trim();
+    if (trimmed.length === 1) {
+      setQueryError(true);
+      return;
+    }
+    setQueryError(false);
+    const next = { ...filters, q: trimmed || undefined, ...patch };
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(next)) {
+      if (
+        key !== 'page' &&
+        key !== 'pageSize' &&
+        value !== undefined &&
+        value !== false &&
+        value !== ''
+      )
+        params.set(key, String(value));
+    }
+    setNavigating(true);
+    router.push(`/ilanlar${params.size ? `?${params}` : ''}`);
+  }
+  const quickClass = (selected: boolean) =>
+    `press-control inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary ${selected ? 'border-primary bg-primary text-on-primary' : 'border-border-control bg-surface text-fg'}`;
   return (
-    <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-8 lg:py-12">
-      <header className="mb-4 flex items-start justify-between gap-3 sm:mb-8 sm:gap-4">
+    <div className="w-full max-w-[1280px] px-4 py-4 sm:px-6 sm:py-8 lg:py-8">
+      <header className="mb-3 flex items-start justify-between gap-3 sm:mb-8 sm:gap-4">
         <div className="min-w-0 max-w-2xl">
           <p className="sr-only font-semibold text-accent-strong sm:not-sr-only">{t('eyebrow')}</p>
           <h1 className="text-2xl font-bold tracking-tight text-fg sm:mt-2 sm:text-4xl">
@@ -263,41 +291,100 @@ export function PostingList({
           </div>
         )}
       </header>
-      <SearchBar
-        action="/ilanlar"
-        className="mb-4 sm:mb-8"
-        label={t('search')}
-        hint={t('searchPlaceholder')}
-        submitLabel={t('searchButton')}
-        pendingReason={navigating ? t('loading') : undefined}
-        onSubmit={() => setNavigating(true)}
-        trailing={
-          <Button
-            variant="secondary"
-            className="shrink-0 whitespace-nowrap lg:hidden"
-            onClick={() => {
-              setFilterEpoch((value) => value + 1);
-              setOpen(true);
-            }}
+      <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 sm:mb-6">
+        <SearchBar
+          action="/ilanlar"
+          className="min-w-0 flex-[1_1_20rem] !rounded-none !border-0 !bg-transparent !p-0 !shadow-none"
+          label={t('search')}
+          hint={t('searchPlaceholder')}
+          error={queryError ? t('searchInvalid') : undefined}
+          submitLabel={t('searchButton')}
+          pendingReason={navigating ? t('loading') : undefined}
+          onSubmit={() => setNavigating(true)}
+          trailing={
+            <Button
+              variant="secondary"
+              className="shrink-0 whitespace-nowrap lg:hidden"
+              onClick={() => {
+                setFilterEpoch((value) => value + 1);
+                setOpen(true);
+              }}
+            >
+              {t('filters')}
+            </Button>
+          }
+          input={{
+            name: 'q',
+            value: query,
+            onChange: (event) => {
+              setQuery(event.target.value);
+              setQueryError(false);
+            },
+            minLength: 2,
+            maxLength: 100,
+          }}
+        >
+          <details
+            className="mt-4 hidden lg:block"
+            open={Boolean(
+              filters.departmentId ||
+              filters.companyId ||
+              filters.organizationName ||
+              filters.withinDays !== undefined,
+            )}
           >
-            {t('filters')}
-          </Button>
-        }
-        input={{
-          name: 'q',
-          value: query,
-          onChange: (event) => setQuery(event.target.value),
-          minLength: 2,
-          maxLength: 100,
-        }}
-      >
-        <details className="mt-4 hidden lg:block" open={filtered}>
-          <summary className="press-control flex min-h-11 cursor-pointer items-center font-semibold text-primary">
-            {t('filters')}
-          </summary>
-          {filterFields}
-        </details>
-      </SearchBar>
+            <summary className="press-control flex min-h-11 cursor-pointer items-center font-semibold text-primary">
+              {t('filters')}
+            </summary>
+            {filterFields}
+          </details>
+        </SearchBar>
+        <div
+          className="flex min-w-0 max-w-full items-center gap-2 overflow-x-auto pb-2"
+          role="group"
+          aria-label={t('filters')}
+        >
+          {(['INTERNSHIP', 'JOB'] as const).map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              aria-pressed={filters.kind === kind}
+              disabled={navigating}
+              className={quickClass(filters.kind === kind)}
+              onClick={() => quickFilter({ kind: filters.kind === kind ? undefined : kind })}
+            >
+              {t(kind)}
+            </button>
+          ))}
+          <button
+            type="button"
+            aria-pressed={filters.remote === true}
+            disabled={navigating}
+            className={quickClass(filters.remote === true)}
+            onClick={() => quickFilter({ remote: !filters.remote })}
+          >
+            {t('remoteLabel')}
+          </button>
+          {options.locations.length > 0 && (
+            <label className="flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold">
+              <span>{t('location')}</span>
+              <select
+                className="min-h-11 max-w-40 rounded-full border border-border-control bg-surface px-3 text-fg"
+                value={filters.location ?? ''}
+                disabled={navigating}
+                onChange={(event) => quickFilter({ location: event.target.value || undefined })}
+              >
+                <option value="">{t('all')}</option>
+                {options.locations.map((location) => (
+                  <option key={location.name} value={location.name}>
+                    {location.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+      </div>
       <Sheet
         open={open}
         onClose={() => setOpen(false)}
@@ -324,7 +411,7 @@ export function PostingList({
           {filterFields}
         </form>
       </Sheet>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
         {(page.total > 0 || filtered) && (
           <p className="font-semibold text-fg">{t('results', { count: page.total })}</p>
         )}
@@ -351,7 +438,7 @@ export function PostingList({
           />
         </div>
       ) : page.items.length ? (
-        <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
           {page.items.map((posting) => (
             <PostingCard key={posting.id} posting={posting} />
           ))}

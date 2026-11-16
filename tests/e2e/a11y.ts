@@ -43,6 +43,18 @@ export async function measurePage(page: Page): Promise<A11yReport> {
       const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
       return (hi + 0.05) / (lo + 0.05);
     };
+    // Kapalı <details> içeriği ekranda ve erişilebilirlik ağacında yoktur (yalnız <summary> görünür), ama tarayıcı kutu ölçüsü verir.
+    const inClosedDetails = (element: Element): boolean => {
+      for (
+        let closed = element.closest('details:not([open])');
+        closed;
+        closed = closed.parentElement?.closest('details:not([open])') ?? null
+      ) {
+        const summary = closed.querySelector(':scope > summary');
+        if (!summary || !summary.contains(element)) return true;
+      }
+      return false;
+    };
     const visible = (element: Element) => {
       const style = getComputedStyle(element);
       const box = element.getBoundingClientRect();
@@ -52,7 +64,8 @@ export async function measurePage(page: Page): Promise<A11yReport> {
         Number(style.opacity) > 0 &&
         box.width > 0 &&
         box.height > 0 &&
-        !element.closest('[hidden], [inert]')
+        !element.closest('[hidden], [inert]') &&
+        !inClosedDetails(element)
       );
     };
     const labelledBy = (element: Element) =>

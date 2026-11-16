@@ -31,26 +31,26 @@ export function MentorCard({
   const topics = mentor.topics.filter((slug) => tags.has(slug as TopicKey));
 
   return (
-    <article className="min-w-0 rounded-card border border-border bg-bg p-5 shadow-card [overflow-wrap:anywhere]">
+    <article className="flex h-full min-w-0 flex-col rounded-card border border-border bg-surface p-[18px] shadow-card [overflow-wrap:anywhere]">
       {/* Önce KİM: baş harf avatarı + ad + güncel konum; müsaitlik ve tür rozetleri hemen altında. */}
       <div className="flex items-start gap-3">
-        <Avatar name={mentor.displayName} size={compact ? 'md' : 'lg'} decorative />
+        <Avatar
+          name={mentor.displayName}
+          size="md"
+          className={compact ? undefined : '!size-12'}
+          decorative
+        />
         <div className="min-w-0 flex-1">
-          <h3 className="break-words text-xl font-semibold text-fg">{mentor.displayName}</h3>
+          <h3 className="break-words text-base font-bold text-fg">{mentor.displayName}</h3>
           {mentor.position && (
-            <p className="mt-0.5 break-words text-base text-fg">
+            <p className="mt-0.5 break-words text-sm text-fg">
               {mentor.position.title} · {mentor.position.company}
             </p>
           )}
           {mentor.headline && (
-            <p className="mt-0.5 break-words text-base text-fg-muted">{mentor.headline}</p>
+            <p className="mt-0.5 break-words text-sm text-fg-muted">{mentor.headline}</p>
           )}
-          <p className="mt-0.5 text-sm text-fg-muted">
-            {mentor.departmentName}
-            {mentor.graduationYear
-              ? ` · ${t('card.graduated', { year: mentor.graduationYear })}`
-              : ''}
-          </p>
+          <p className="mt-0.5 text-sm text-fg-muted">{mentor.departmentName}</p>
           {mentor.sectorName && (
             <p className="text-sm text-fg-muted">{t('card.sector', { name: mentor.sectorName })}</p>
           )}
@@ -58,7 +58,10 @@ export function MentorCard({
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <MentorAvailabilityBadge availability={availability} />
-        <Badge tone="category">{t(`types.${mentor.mentorType}`)}</Badge>
+        <Badge tone="category">
+          {t(`types.${mentor.mentorType}`)}
+          {mentor.graduationYear ? ` · ${mentor.graduationYear}` : ''}
+        </Badge>
       </div>
 
       {!compact && (
@@ -110,8 +113,7 @@ export function MentorCard({
         </>
       )}
 
-      {/* Eylem önceliği: uygunluk açıksa birincil "Randevu iste" tam genişlikte, "Profili gör" ve "İletişim iste" altında iki eşit
-          sütunda ikincil; uygun değilse (ya da kompakt kartta) "Profili gör" birincildir. 360–390 px'te üç düğme düzgün iki satır. */}
+      {/* Müsait mentorda randevu birincil, profil ve iletişim ikincildir; dolu mentorda randevu gösterilmez. */}
       {(() => {
         const profileHref = `/uye/${mentor.userId}`;
         const contactHref = withReturnPath(`/iletisim-iste/${mentor.userId}`, returnTo);
@@ -129,47 +131,45 @@ export function MentorCard({
           );
         if (availability.available)
           return (
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
               <Link
-                className={cn(buttonClasses({}), 'w-full sm:w-auto')}
+                className={cn(buttonClasses({}), 'col-span-2 w-full sm:col-span-1')}
                 href={`/randevu-al/${mentor.userId}`}
                 aria-label={named('card.appointment')}
               >
                 {t('card.appointment')}
               </Link>
-              <div className="grid grid-cols-2 gap-2 sm:contents">
-                <Link
-                  className={cn(buttonClasses({ variant: 'secondary' }), 'w-full sm:w-auto')}
-                  href={profileHref}
-                  aria-label={named('card.profile')}
-                >
-                  {t('card.profile')}
-                </Link>
-                <Link
-                  className={cn(buttonClasses({ variant: 'secondary' }), 'w-full sm:w-auto')}
-                  href={contactHref}
-                  aria-label={named('card.contact')}
-                >
-                  {t('card.contact')}
-                </Link>
-              </div>
+              <Link
+                className={cn(buttonClasses({ variant: 'secondary' }), 'w-full')}
+                href={profileHref}
+                aria-label={named('card.profile')}
+              >
+                {t('card.profile')}
+              </Link>
+              <Link
+                className="press-control inline-flex min-h-11 items-center justify-center rounded-control px-3 text-sm font-semibold text-primary underline underline-offset-4 sm:col-span-2"
+                href={contactHref}
+                aria-label={named('card.contact')}
+              >
+                {t('card.contact')}
+              </Link>
             </div>
           );
         return (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              className={buttonClasses({})}
-              href={profileHref}
-              aria-label={named('card.profile')}
-            >
-              {t('card.profile')}
-            </Link>
+          <div className="mt-auto flex flex-wrap gap-2 pt-4">
             <Link
               className={buttonClasses({ variant: 'secondary' })}
               href={contactHref}
               aria-label={named('card.contact')}
             >
               {t('card.contact')}
+            </Link>
+            <Link
+              className={buttonClasses({ variant: 'secondary' })}
+              href={profileHref}
+              aria-label={named('card.profile')}
+            >
+              {t('card.profile')}
             </Link>
           </div>
         );

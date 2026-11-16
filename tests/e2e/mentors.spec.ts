@@ -1,5 +1,6 @@
 import { loginAs } from './login';
 import { expect, test } from './fixture';
+import { SCAN } from './contrast-scan';
 import { TEST_PERSONA_EMAILS } from '../../src/server/auth/test-personas';
 
 const login = loginAs;
@@ -146,6 +147,8 @@ test('inceleyici: uzun beceri/gerekçe taşmaz ve bekleyen filtre isteği tekrar
     }
     await page.goto('/mentorlar?mentorTypes=ALUMNI');
     await page.waitForLoadState('networkidle');
+    // Masaüstünde ek filtreler "Diğer filtreler" açılır panelindedir (yan panel kalktı).
+    await page.getByText('Diğer filtreler', { exact: true }).click();
     await page.getByLabel('Şirket', { exact: true }).filter({ visible: true }).fill('R2Pending');
     let count = 0,
       release!: () => void,
@@ -165,7 +168,7 @@ test('inceleyici: uzun beceri/gerekçe taşmaz ve bekleyen filtre isteği tekrar
       await route.continue();
     });
     try {
-      const apply = page.locator('aside button').filter({ hasText: 'Uygula' });
+      const apply = page.locator('main details').getByRole('button', { name: 'Uygula' });
       await apply.click();
       await observed;
       await expect
@@ -194,3 +197,27 @@ test('inceleyici: uzun beceri/gerekçe taşmaz ve bekleyen filtre isteği tekrar
     await db.$disconnect();
   }
 });
+
+// Seçili hızlı süzgeç yongaları (dolu zemin) iki temada ve iki genişlikte AA karşıtlığında: sabit beyaz yazı koyu temada 2,27:1 verdi.
+for (const scheme of ['light', 'dark'] as const) {
+  test(`mentor ve ilan listesi: seçili hızlı süzgeçler ve sınırlı seçiciler AA karşıtlığında (${scheme})`, async ({
+    page,
+  }) => {
+    test.setTimeout(120000);
+    await page.emulateMedia({ colorScheme: scheme });
+    await login(page, 'student');
+    for (const route of [
+      '/mentorlar?onlyAvailable=1&mentorTypes=ALUMNI',
+      '/ilanlar?kind=INTERNSHIP&remote=true',
+    ]) {
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(route);
+        await page.waitForLoadState('networkidle');
+        await expect(page.locator('button[aria-pressed="true"]').first()).toBeVisible();
+        const { issues } = await page.evaluate(SCAN);
+        expect(issues, `${route} (${scheme}, ${width}px)`).toEqual([]);
+      }
+    }
+  });
+}
