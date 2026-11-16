@@ -122,9 +122,9 @@ export function AdminUsers({ initial, search }: Props) {
               rows={items.map((item) => ({
                 id: item.id,
                 cells: [
-                  <span key="name" className="font-semibold">
+                  <h2 key="name" className="text-base font-semibold">
                     {item.displayName}
-                  </span>,
+                  </h2>,
                   item.maskedEmail,
                   item.maskedPhone ?? t('none'),
                   role(item),
@@ -134,7 +134,7 @@ export function AdminUsers({ initial, search }: Props) {
                   <Link
                     key="details"
                     href={`/yonetim/kullanicilar/${item.id}`}
-                    className={buttonClasses({ variant: 'secondary' })}
+                    className={`${buttonClasses({ variant: 'secondary' })} w-full lg:w-auto`}
                     aria-label={t('detailsFor', { name: item.displayName })}
                   >
                     {t('details')}
