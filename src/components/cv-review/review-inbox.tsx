@@ -3,6 +3,7 @@ import { safeClientAction } from '@/lib/safe-client-action';
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { AccountFrameView } from '@/components/account/account-frame';
 import { Button, EmptyState, Field, Input, Switch, Textarea, buttonClasses } from '@/components/ui';
 import {
   answerCvReviewRequestSchema,
@@ -26,7 +27,8 @@ type Props = {
 };
 export function ReviewInbox({ sent, received, initialSettings }: Props) {
   const t = useTranslations('cvReview'),
-    errors = useTranslations('errors.codes');
+    errors = useTranslations('errors.codes'),
+    frame = useTranslations('accountFrame');
   const [student, setStudent] = useState(sent),
     [mentor, setMentor] = useState(received),
     [settings, setSettings] = useState(initialSettings),
@@ -104,7 +106,7 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
   function section(page: CvReviewRequestPage | null, role: 'STUDENT' | 'MENTOR') {
     if (!page) return null;
     return (
-      <section className="mt-8">
+      <section>
         <h2 className="text-xl font-semibold">
           {t(role === 'STUDENT' ? 'studentHeading' : 'mentorHeading')}
         </h2>
@@ -148,13 +150,14 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
     );
   }
   return (
-    <div className="w-full max-w-2xl pb-28">
-      <Link className="inline-flex min-h-11 items-center text-primary" href="/hesap">
-        ← {t('back')}
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold">{t('title')}</h1>
+    <AccountFrameView
+      eyebrow={frame('eyebrow')}
+      backLabel={frame('back')}
+      title={t('title')}
+      width="max-w-2xl"
+    >
       {!student && !mentor && !settings && (
-        <div className="mt-8">
+        <div>
           <EmptyState
             title={t('setupTitle')}
             description={t('setupDescription')}
@@ -167,19 +170,19 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
         </div>
       )}
       {error && (
-        <p role="alert" className="mt-4 text-danger">
+        <p role="alert" className="text-danger">
           {error}
         </p>
       )}
       {message && (
-        <p role="status" className="mt-4 text-primary">
+        <p role="status" className="text-primary">
           {message}
         </p>
       )}
       {section(student, 'STUDENT')}
       {section(mentor, 'MENTOR')}
       {settings && (
-        <section className="mt-8 rounded-card border border-border p-5">
+        <section className="rounded-card border border-border p-5">
           <h2 className="text-xl font-semibold">{t('settings')}</h2>
           <Switch
             label={t('enabled')}
@@ -209,7 +212,7 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
           </Button>
         </section>
       )}
-    </div>
+    </AccountFrameView>
   );
 }
 function ReviewCard({
