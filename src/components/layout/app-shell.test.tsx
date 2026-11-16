@@ -124,6 +124,7 @@ describe('AppShell', () => {
       '/',
       '/ilanlar',
       '/mentorlar',
+      '/mezunlar',
       '/randevular',
       '/deneyimler',
       '/etkinlikler',

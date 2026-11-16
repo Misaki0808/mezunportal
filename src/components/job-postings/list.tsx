@@ -129,11 +129,13 @@ export function PostingList({
   filters,
   options,
   canPost,
+  sectors = [],
 }: {
   page: JobPostingPage;
   filters: SearchJobPostingsInput;
   options: JobPostingFilterOptions;
   canPost: boolean;
+  sectors?: readonly { id: string; name: string }[];
 }) {
   const t = useTranslations('jobs');
   const directory = useTranslations('directory');
@@ -153,6 +155,18 @@ export function PostingList({
             {options.departments.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.name}
+              </option>
+            ))}
+          </Select>
+        )}
+      </Field>
+      <Field label={t('sector')}>
+        {(props) => (
+          <Select {...props} name="sectorId" defaultValue={filters.sectorId ?? ''}>
+            <option value="">{t('all')}</option>
+            {sectors.map((sector) => (
+              <option key={sector.id} value={sector.id}>
+                {sector.name}
               </option>
             ))}
           </Select>
@@ -223,6 +237,7 @@ export function PostingList({
   const filtered = Boolean(
     filters.q ||
     filters.departmentId ||
+    filters.sectorId ||
     filters.companyId ||
     filters.organizationName ||
     filters.location ||
@@ -328,6 +343,7 @@ export function PostingList({
             className="mt-4 hidden lg:block"
             open={Boolean(
               filters.departmentId ||
+              filters.sectorId ||
               filters.companyId ||
               filters.organizationName ||
               filters.withinDays !== undefined,

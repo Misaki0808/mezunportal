@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 
 import {
   Avatar,
+  BadgeCheckIcon,
   BookOpenIcon,
   BriefcaseIcon,
   CalendarIcon,
@@ -51,6 +52,7 @@ type NavId =
   | 'home'
   | 'jobs'
   | 'mentors'
+  | 'alumni'
   | 'appointments'
   | 'experiences'
   | 'events'
@@ -63,6 +65,7 @@ const MAIN_ITEMS: readonly { id: NavId; href: string; icon: ReactNode }[] = [
   { id: 'home', href: '/', icon: <HomeIcon /> },
   { id: 'jobs', href: '/ilanlar', icon: <BriefcaseIcon /> },
   { id: 'mentors', href: '/mentorlar', icon: <UsersIcon /> },
+  { id: 'alumni', href: '/mezunlar', icon: <BadgeCheckIcon /> },
   { id: 'appointments', href: '/randevular', icon: <CalendarIcon /> },
   { id: 'experiences', href: '/deneyimler', icon: <FileTextIcon /> },
   { id: 'events', href: '/etkinlikler', icon: <MapPinIcon /> },

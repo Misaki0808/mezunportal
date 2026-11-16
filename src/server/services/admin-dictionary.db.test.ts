@@ -196,15 +196,16 @@ describe('sözlük kaydı: oluştur / güncelle / sil', () => {
     );
   });
 
-  it('doğrulama: sektöre takma ad ya da şirket dışı türe sektör bağı; var olmayan sektör', async () => {
+  it('sektör takma adı kaydedilir; şirket dışı türe sektör bağı ve var olmayan sektör reddedilir', async () => {
     const t = tag();
-    await expect(
-      createDictionaryEntry(deps, system, {
-        kind: 'SECTOR',
-        name: `Sektör ${t}`,
-        aliases: ['x takma'],
-      }),
-    ).rejects.toMatchObject({ code: 'VALIDATION_INVALID' });
+    const sector = await createDictionaryEntry(deps, system, {
+      kind: 'SECTOR',
+      name: `Sektör ${t}`,
+      aliases: [`x takma ${t}`],
+    });
+    expect((await db.sector.findUniqueOrThrow({ where: { id: sector.id } })).aliases).toContain(
+      normalizeName(`x takma ${t}`, 'SECTOR'),
+    );
     await expect(
       createDictionaryEntry(deps, system, {
         kind: 'TITLE',
@@ -616,7 +617,7 @@ describe('eşleşmeyen değerler', () => {
     expect(again.resolvedToId).toBe(title.id);
   });
 
-  it('LINK beceri: ProfileTag bağı kurulur; sektöre LINK geçersiz; var olmayan kayıt RESOURCE_NOT_FOUND', async () => {
+  it('LINK beceri ProfileTag bağı kurar, sektör takma adını kaydeder; olmayan kayıt RESOURCE_NOT_FOUND', async () => {
     const t = tag();
     const skill = await createDictionaryEntry(deps, system, { kind: 'SKILL', name: `Python ${t}` });
     const unmatched = await seed('SKILL', `Pyton ${t}`);
@@ -646,12 +647,12 @@ describe('eşleşmeyen değerler', () => {
       kind: 'SECTOR',
       name: `Gerçek Sektör ${t}`,
     });
-    await expectCode(
-      resolveUnmatchedValue(deps, system, {
-        id: sectorValue.id,
-        resolution: { type: 'LINK', entryId: sector.id },
-      }),
-      'VALIDATION_INVALID',
+    await resolveUnmatchedValue(deps, system, {
+      id: sectorValue.id,
+      resolution: { type: 'LINK', entryId: sector.id },
+    });
+    expect((await db.sector.findUniqueOrThrow({ where: { id: sector.id } })).aliases).toContain(
+      normalizeName(`Sektör ${t}`, 'SECTOR'),
     );
     const company = await seed('COMPANY', `Şirket ${t}`);
     await expectCode(

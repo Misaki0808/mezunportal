@@ -329,6 +329,8 @@ export const searchJobPostingsSchema = z
     q: text(JOB_POSTING_SEARCH_MIN, JOB_POSTING_SEARCH_MAX).optional(),
     departmentId: deptId.optional(),
     kind: z.enum(JOB_POSTING_KINDS, { error: INVALID }).optional(),
+    /** Sözlük şirketinin sektörü; sözlüğe bağlı olmayan kurumları kapsamaz. */
+    sectorId: adminId.optional(),
     /** Sözlük şirketi. `organizationName` ile BİRLİKTE gönderilemez (ya biri ya öteki; `VALIDATION_INVALID`). */
     companyId: adminId.optional(),
     /**
