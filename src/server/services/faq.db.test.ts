@@ -868,12 +868,53 @@ describe('puan geri doldurma, hesap silme ve veri dökümü', () => {
     const w = await world();
     const r = await requestWithAnswers(w);
     await publishFaq(deps, w.moderator, publishInput(r));
+    const other = await world();
+    const unrelated = await requestWithAnswers(other);
+    await publishFaq(deps, other.moderator, publishInput(unrelated));
     await db.pointEntry.deleteMany({
-      where: { userId: { in: [w.student, w.mentorA, w.mentorB] } },
+      where: {
+        userId: {
+          in: [w.student, w.mentorA, w.mentorB, other.student, other.mentorA, other.mentorB],
+        },
+      },
     });
-    const since = new Date(Date.now() - 3600_000);
-    const first = await runPointBackfill({ db, foundingUntil: null }, { since });
-    expect(first.faqs).toBeGreaterThanOrEqual(1);
+    // Geri doldurmanın genel taramasını bu senaryodaki SSS ile sınırla; diğer testlerin kaynaklarını işleme.
+    const scoped = db.$extends({
+      query: {
+        $allModels: {
+          async findMany({ model, args, query }) {
+            const sourceModels = [
+              'Experience',
+              'Appointment',
+              'CvReviewRequest',
+              'FaqRequest',
+              'JobPosting',
+              'ReferralClaim',
+              'EventAttendance',
+            ];
+            if (sourceModels.includes(model)) {
+              const input = args as { where?: unknown };
+              input.where = {
+                AND: [
+                  input.where ?? {},
+                  model === 'EventAttendance'
+                    ? { userId: { in: [] } }
+                    : { id: { in: model === 'FaqRequest' ? [r.requestId] : [] } },
+                ],
+              };
+            }
+            return query(args);
+          },
+        },
+      },
+    }) as unknown as typeof db;
+    const first = await runPointBackfill({ db: scoped, foundingUntil: null });
+    expect(first.faqs).toBe(1);
+    expect(
+      await db.pointEntry.count({
+        where: { userId: { in: [other.student, other.mentorA, other.mentorB] } },
+      }),
+    ).toBe(0);
     const snapshot = async () =>
       [w.student, w.mentorA, w.mentorB].map(async (id) =>
         (await pointsOf(id)).map((p) => [p.action, p.points]),
@@ -884,7 +925,7 @@ describe('puan geri doldurma, hesap silme ve veri dökümü', () => {
       [['FAQ_ANSWER_SELECTED', 5]],
       [['FAQ_ANSWER_PARTICIPATION', 1]],
     ]);
-    const second = await runPointBackfill({ db, foundingUntil: null }, { since });
+    const second = await runPointBackfill({ db: scoped, foundingUntil: null });
     expect(second.created).toBe(0);
     expect(await Promise.all(await snapshot())).toEqual(before);
   });

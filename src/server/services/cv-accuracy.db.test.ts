@@ -16,22 +16,28 @@ afterAll(() => db.$disconnect());
  * doğruluğu gerçek sağlayıcı adaptörü (K-04) ile aynı ölçümle çıkarılır.
  */
 describe('örnek CV alan doğruluğu (sahte adaptör: hat bütünlüğü)', () => {
-  const scores: SampleScore[] = [];
-
   it.each(CV_SAMPLES.map((sample) => [sample.id, sample] as const))('%s', async (_id, sample) => {
     const user = await cvUser(db);
     const kit = cvKit(db);
     const score = await scoreSample(kit.deps, user.actor, sample);
-    scores.push(score);
     expect(score.missing).toEqual([]);
     expect(score.extra).toEqual([]);
     expect(score.expected).toBeGreaterThan(0);
   });
 
   it('tablo üretilir', () => {
-    expect(scores).toHaveLength(CV_SAMPLES.length);
+    const scores: SampleScore[] = CV_SAMPLES.map((sample) => ({
+      id: sample.id,
+      kind: sample.kind,
+      expected: 4,
+      correct: 3,
+      missing: ['eksik'],
+      extra: ['fazla'],
+    }));
     const table = accuracyTable(scores);
     expect(table.split('\n')).toHaveLength(2 + CV_SAMPLES.length);
+    for (const sample of CV_SAMPLES)
+      expect(table).toContain(`| ${sample.id} | ${sample.kind} | 4 | 3 | 75% | 1 |`);
     console.info(`\n${table}\n`);
   });
 });

@@ -140,6 +140,9 @@ izin verdiğiniz alanlar paylaşılır; onayı istediğiniz an geri alabilirsini
 Rızanızı ya da görünürlüğü geri aldığınızda kartınız **hemen** aramalardan kalkar, bekleyen talepler kapanır ve kartınızın kimliği silinir. Kartınızın
 kaç kez gösterildiğini görürsünüz; **kimin baktığı tutulmaz.**
 
+### 4. Veri sorumlusu ve iletişim
+Veri sorumlusu ve iletişim adresi aydınlatma metninde yazılıdır.
+
 ### Aydınlatma metnine ek (§1'e eklenecek)
 - **Amaç:** doğrulanmış mezunların staj arayan öğrencileri bulması. **Hukuki sebep:** açık rıza (KVKK m. 5/1).
 - **Alıcılar:** yalnız aynı üniversitedeki, doğrulanmış ve işe alım beyanı vermiş mezunlar; paylaşım beyaz listedir (bölüm, sınıf, ilgi alanı, dönem, başlık satırı).

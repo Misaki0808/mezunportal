@@ -28,7 +28,7 @@ platform.
 
 | # | Karar | Değer |
 |---|---|---|
-| D1 | Giriş | E-posta bağlantısı (parolasız) + LinkedIn ile giriş (ad, e-posta, fotoğraf); iş geçmişi LinkedIn'den alınmaz |
+| D1 | Giriş | E-posta bağlantısı (parolasız). LinkedIn ile giriş (ad, e-posta, fotoğraf) planlandı, kullanıcı kararıyla (15 Kasım) kapalı kaldı: kod duruyor, anahtar yok (`docs/decisions.md`); iş geçmişi LinkedIn'den alınmaz |
 | D2 | Doğrulama | Öğrenci/akademisyen alan adıyla; mezun e-Devlet belgesiyle, bölüm yöneticisi elle; belge karar anında silinir |
 | D3 | Roller | `STUDENT`, `ALUMNI`, `ACADEMIC`; mentorluk = etkin `MentorProfile`; yönetici kapsamlı (`SYSTEM`/`FACULTY`/`DEPARTMENT`); çoklu rol; rol geçişinde geçmiş korunur |
 | D4 | Sınıf | Saklanmaz; giriş yılı + düzeltme değerinden hesaplanır |
@@ -74,7 +74,7 @@ gerekçeyle reddet).
 yok (test + mutasyon); doğrulanmamış kullanıcının dizine erişimi sunucuda reddedilir; kayıtsız
 e-postada yanıt kayıtlıyla aynı; onay/ret sonrası belge depoda yok; Playwright: öğrenci girişi.
 **Kabul:** yukarıdakiler + LinkedIn girişi çalışır (E: LinkedIn uygulaması + doğrulanmış şirket
-sayfası).
+sayfası). *(15 Kasım: LinkedIn girişi kapalı kaldı, bkz. D1.)*
 **Bağımlılık:** P1-01; K-06.
 
 ### P1-03 · KVKK ve kontrollü iletişim · Sözleşme → Servis (W1) ∥ Ekran (W2) · H3
