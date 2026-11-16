@@ -38,6 +38,9 @@ describe('searchMentorsSchema', () => {
   });
 
   it('metin süzgeçleri 2–100 karakter, kırpılır', () => {
+    expect(ok({ q: 'a' })).toBe(false);
+    expect(ok({ q: 'x'.repeat(101) })).toBe(false);
+    expect(searchMentorsSchema.parse({ q: '  Ayşe  ' }).q).toBe('Ayşe');
     expect(ok({ company: 'a' })).toBe(false);
     expect(ok({ title: ' a ' })).toBe(false);
     expect(ok({ company: 'x'.repeat(101) })).toBe(false);
@@ -79,6 +82,7 @@ describe('URL taşıma', () => {
 
   it('gidiş-dönüş filtreyi korur; geçersiz sayı şemaya bırakılır; bilinmeyen anahtar atılır', () => {
     const filter = {
+      q: 'Ali & Ayşe',
       mentorTypes: ['ACADEMIC', 'ALUMNI'] as const,
       sectorId: 'sek-1',
       title: 'Analist',
