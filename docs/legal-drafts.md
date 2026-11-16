@@ -23,7 +23,7 @@ Kurallar:
 
 ## §1 Aydınlatma metni
 
-Sürüm: taslak-2 · Durum: **HOCA / HUKUK ONAYI BEKLİYOR**
+Sürüm: taslak-1 · Durum: **HOCA / HUKUK ONAYI BEKLİYOR**
 
 ### 1. Veri sorumlusu
 Efe Baydemir (gerçek kişi; MezunPortal projesinin sahibi).

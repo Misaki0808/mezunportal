@@ -4,6 +4,7 @@ import { ErrorState } from '@/components/ui';
 import { requireVerifiedMember } from '@/server/permissions';
 import { isCodedError } from '@/lib/errors';
 import { getJobPostingFilterOptions, searchJobPostings } from '@/server/actions/job-postings';
+import { listSearchSectors } from '@/server/actions/search';
 export const dynamic = 'force-dynamic';
 export default async function PostingsPage({
   searchParams,
@@ -14,7 +15,7 @@ export default async function PostingsPage({
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw))
     if (typeof value === 'string') params.set(key, value);
-  const [actor, options] = await Promise.all([
+  const [actor, options, sectors] = await Promise.all([
     requireVerifiedMember().then(
       (value) => ({ ok: true as const, value }),
       (error: unknown) => ({
@@ -23,8 +24,11 @@ export default async function PostingsPage({
       }),
     ),
     getJobPostingFilterOptions().catch(() => null),
+    listSearchSectors().catch(() => null),
   ]);
   if (!actor.ok) return <ErrorState errorCode={actor.errorCode} />;
+  if (!sectors) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
+  if (!sectors.ok) return <ErrorState errorCode={sectors.errorCode} />;
   if (!options) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!options.ok) return <ErrorState errorCode={options.errorCode} />;
   const filters = parseJobFilters(params, options.data.organizations);
@@ -37,6 +41,7 @@ export default async function PostingsPage({
       page={result.data}
       filters={filters}
       options={options.data}
+      sectors={sectors.data.sectors}
       canPost={mayPost(actor.value.facts.memberships)}
     />
   );

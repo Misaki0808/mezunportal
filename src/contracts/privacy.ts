@@ -48,7 +48,7 @@ export const REQUIRED_CONSENT_DOCUMENTS = [
  * kapalı (elle giriş açık), online randevuda mentor kendi linkini girer.
  */
 export const CURRENT_CONSENT_VERSIONS = {
-  PRIVACY_NOTICE: 'taslak-2',
+  PRIVACY_NOTICE: 'taslak-1',
   TERMS_OF_USE: 'taslak-1',
   CROSS_BORDER_TRANSFER: 'taslak-1',
   JOB_SEEKER_VISIBILITY: 'taslak-1',

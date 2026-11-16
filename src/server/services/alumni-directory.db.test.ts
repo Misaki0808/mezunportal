@@ -128,3 +128,42 @@ it('yalnız aynı üniversitedeki katılmış ve doğrulanmış mezunu döndür�
   await db.profile.update({ where: { userId: visible }, data: { alumniDirectoryVisible: false } });
   expect((await get({ q: key, sectorId: aviation.id })).total).toBe(0);
 });
+
+it('kendini, silinenleri, bitmiş üyeliği ve öğrenci rolünü rehberde göstermez; q eski işveren veya unvanı aramaz', async () => {
+  const institution = await createInstitution(db);
+  const key = randomUUID().slice(0, 8);
+  const viewer = await createUser(db, { name: `Kendi ${key}` });
+  await addMembership(db, { userId: viewer, departmentId: institution.deptA1, role: 'ALUMNI' });
+  await db.profile.create({ data: { userId: viewer, alumniDirectoryVisible: true } });
+
+  const makePerson = async (role: 'ALUMNI' | 'STUDENT', name: string, endedAt?: Date) => {
+    const userId = await createUser(db, { name });
+    await addMembership(db, { userId, departmentId: institution.deptA1, role, endedAt });
+    await db.profile.create({ data: { userId, alumniDirectoryVisible: true } });
+    return userId;
+  };
+  const deleted = await makePerson('ALUMNI', `Silinmiş ${key}`);
+  await db.user.update({ where: { id: deleted }, data: { deletedAt: new Date() } });
+  const ended = await makePerson('ALUMNI', `Bitmiş ${key}`, new Date());
+  const student = await makePerson('STUDENT', `Öğrenci ${key}`);
+  const valid = await makePerson('ALUMNI', `Geçerli ${key}`);
+  await db.position.create({
+    data: {
+      userId: valid,
+      companyRaw: `Eskiişveren${key}`,
+      titleRaw: `Eskiunvan${key}`,
+      isCurrent: false,
+      source: 'MANUAL',
+    },
+  });
+  const actor = (await loadActor(db, viewer, new Date()))!;
+  const get = (q: string) => searchAlumni(db, actor, alumniSearchSchema.parse({ q }));
+  const result = await get(key);
+  expect(result.items.map((item) => item.userId)).toEqual([valid]);
+  expect(result.items.map((item) => item.userId)).not.toContain(viewer);
+  expect(result.items.map((item) => item.userId)).not.toContain(deleted);
+  expect(result.items.map((item) => item.userId)).not.toContain(ended);
+  expect(result.items.map((item) => item.userId)).not.toContain(student);
+  expect((await get(`Eskiişveren${key}`)).total).toBe(0);
+  expect((await get(`Eskiunvan${key}`)).total).toBe(0);
+});
