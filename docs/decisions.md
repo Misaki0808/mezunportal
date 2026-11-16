@@ -1094,3 +1094,13 @@ yeniden kuruldu: ekranın içinde ve çakışmadan durur; metin %125 büyütül�
 "Profilim `/hesap`" yanlış eşleşmeydi): yan menü Hesap grubunda "Profilim" `/profil`, ayrı "Hesap ayarları" `/hesap`; telefon alt çubuğundaki "Profil" sekmesi `/profil`; hesap ayarlarına kullanıcı kartı
 (yan menü, "Hesap ayarları: <ad>") ve üst çubuktaki avatar ("Hesabım") götürür. (4) **SSS "kimliksiz görünür" testi gevşetilmedi, kapsamı doğru yere taşındı:** soran öğrencinin kendi görünümünde artık
 adı kabuğun kullanıcı kartı taşır (sızıntı değil); iddia SSS içeriği (`main`) için ve ayrıca BAŞKA bir kullanıcının (cevaplayan mentor) tam sayfa HTML'i için ölçülür.
+
+## 2026-11-16 · Türkçe arama ve güncel mentor pozisyonu (kart 399)
+
+Prisma ILIKE yerel ayarına bağlı I/ı farkı yerine mevcut `tr_ascii` iki tarafa uygulanır;
+LIKE işaretleri düz metin kalır. Eşleşme deposu yalnız kimlik verir; yetki/görünürlük/sayfalama
+koşullarını ham SQL içinde yeniden yazmak yerine mevcut servis sorgusu korur. İfade GIN indeksleri
+katlamayı destekler; noktalama temizleyen `User.nameSearch`, literal `%/_` aramasının yerine geçirilmez.
+Mentor şirket/unvan araması mezun rehberiyle aynı biçimde güncel pozisyonla sınırlanır: geçmiş
+iş eşleşmesinin kartta bugünkü işmiş gibi görünmesi önlenir. Kullanım olayı yalnız `q` anahtarını
+saklar, sorgu değerini saklamaz. Yeni işlev/eklenti/bağımlılık yoktur.

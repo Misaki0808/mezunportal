@@ -19,7 +19,7 @@ import {
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { MENTOR_FILTER_KEYS, resultBucketOf } from '@/contracts/metrics';
 import { codedValidation } from '@/lib/errors';
-import { escapeLike } from '@/lib/sql-like';
+import { matchingDirectoryText } from '../repositories/turkish-filters';
 
 import type { Actor } from '../permissions/actor';
 import { errorForDenyReason } from '../permissions/guards';
@@ -70,12 +70,10 @@ export const notSuspended = (now: Date): Prisma.UserWhereInput => ({
 export function visibleMentorWhere(
   universityIds: string[],
   viewerId: string,
-  filter: Partial<SearchMentorsFilter>,
+  filter: Partial<Omit<SearchMentorsFilter, 'q' | 'company' | 'title'>>,
   now: Date,
   skillAliases: readonly string[] = [],
 ): Prisma.MentorProfileWhereInput {
-  const company = filter.company ? normalizeName(filter.company, 'COMPANY') : null;
-  const title = filter.title ? normalizeName(filter.title, 'TITLE') : null;
   const skill = filter.skill ? normalizeName(filter.skill, 'SKILL') : null;
   const skillNames = [
     ...new Set(
@@ -91,22 +89,6 @@ export function visibleMentorWhere(
       OR: [{ sectorId: filter.sectorId }, { company: { sectorId: filter.sectorId } }],
     });
   }
-  if (filter.company) {
-    positionClauses.push({
-      OR: [
-        { companyRaw: { contains: escapeLike(filter.company), mode: 'insensitive' } },
-        ...(company ? [{ company: { normalizedName: { contains: company } } }] : []),
-      ],
-    });
-  }
-  if (filter.title) {
-    positionClauses.push({
-      OR: [
-        { titleRaw: { contains: escapeLike(filter.title), mode: 'insensitive' } },
-        ...(title ? [{ title: { normalizedName: { contains: title } } }] : []),
-      ],
-    });
-  }
   return {
     isActive: true,
     userId: filter.skill && !skill ? { in: [] } : { not: viewerId },
@@ -114,27 +96,6 @@ export function visibleMentorWhere(
     user: {
       deletedAt: null,
       ...notSuspended(now),
-      ...(filter.q
-        ? {
-            OR: [
-              { name: { contains: escapeLike(filter.q), mode: 'insensitive' } },
-              {
-                positions: {
-                  some: {
-                    OR: [
-                      { companyRaw: { contains: escapeLike(filter.q), mode: 'insensitive' } },
-                      { titleRaw: { contains: escapeLike(filter.q), mode: 'insensitive' } },
-                      {
-                        company: { name: { contains: escapeLike(filter.q), mode: 'insensitive' } },
-                      },
-                      { title: { name: { contains: escapeLike(filter.q), mode: 'insensitive' } } },
-                    ],
-                  },
-                },
-              },
-            ],
-          }
-        : {}),
       ...(skill
         ? {
             profile: { tags: { some: { tag: { kind: 'SKILL', slug: { in: skillNames } } } } },
@@ -148,7 +109,7 @@ export function visibleMentorWhere(
           department: { faculty: { universityId: { in: universityIds } } },
         },
       },
-      // Her pozisyon süzgeci AYNI pozisyonda sağlanmak zorunda değildir (mentorun yolu bütünüyle aranır).
+      // Şirket/unvan metni searchMentors içinde yalnız güncel pozisyonda aranır.
       ...(positionClauses.length > 0
         ? { AND: positionClauses.map((clause) => ({ positions: { some: clause } })) }
         : {}),
@@ -337,14 +298,29 @@ export async function searchMentors(
   const effectiveFilter = requested
     ? { ...filter, skill: dictionarySkill?.name ?? filter.skill }
     : filter;
+  const text = await matchingDirectoryText(deps.db, filter);
   const candidates = await deps.db.mentorProfile.findMany({
-    where: visibleMentorWhere(
-      universityIds,
-      actor.userId,
-      effectiveFilter,
-      now,
-      dictionarySkill ? [...dictionarySkill.aliases, dictionarySkill.name.slice(0, 80)] : undefined,
-    ),
+    where: {
+      AND: [
+        visibleMentorWhere(
+          universityIds,
+          actor.userId,
+          effectiveFilter,
+          now,
+          dictionarySkill
+            ? [...dictionarySkill.aliases, dictionarySkill.name.slice(0, 80)]
+            : undefined,
+        ),
+        {
+          user: {
+            ...(text.users ? { id: { in: text.users } } : {}),
+            ...(text.positions
+              ? { positions: { some: { isCurrent: true, id: { in: text.positions } } } }
+              : {}),
+          },
+        },
+      ],
+    },
     select: { userId: true, monthlyCapacity: true, pausedUntil: true },
     orderBy: [{ createdAt: 'desc' }, { userId: 'asc' }],
     take: SCAN_MAX,
