@@ -23,7 +23,7 @@ export function DigestUnsubscribe() {
       .catch(() => setFailed(true));
   }, []);
   return (
-    <div className="mx-auto max-w-xl px-5 py-16">
+    <div className="mx-auto max-w-xl px-5 py-16 [.app-content_&]:mx-0 [.app-content_&]:p-0">
       <PageHeader title={t('unsubscribeTitle')} />
       <p className="mt-4" role="status">
         {failed ? t('unsubscribeError') : done ? t('unsubscribeDone') : t('unsubscribeLoading')}

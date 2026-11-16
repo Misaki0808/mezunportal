@@ -253,7 +253,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
     </div>
   );
   return (
-    <div className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:pt-14">
+    <div className="w-full max-w-6xl">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')}>
         {/* Tek kapsayıcı: dar ekranda (320 px) ikinci düğme alt satıra sarınca soldan hizalı kalır (`ml-2` onu 8 px içeri iterdi). */}
         <div className="mt-4 flex flex-wrap gap-2">

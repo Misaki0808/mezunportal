@@ -21,7 +21,7 @@ export default async function LegalPage({ params }: { params: Promise<{ document
     { title: string; body?: string; items?: Record<string, string> }
   >;
   return (
-    <article className="mx-auto max-w-3xl space-y-6 px-5 py-8 sm:py-12">
+    <article className="mx-auto max-w-3xl space-y-6 px-5 py-8 sm:py-12 [.app-content_&]:mx-0 [.app-content_&]:p-0">
       <Link
         href="/onay"
         className="press-row inline-flex min-h-11 items-center font-medium text-primary"

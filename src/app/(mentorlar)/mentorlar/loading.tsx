@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui';
 export default async function Loading() {
   const t = await getTranslations('directory');
   return (
-    <div className="mx-auto max-w-5xl px-5 py-10" aria-busy="true">
+    <div className="w-full max-w-[1280px]" aria-busy="true">
       <span className="sr-only">{t('loading')}</span>
       <Skeleton className="mb-6 h-10 w-48" />
       <Skeleton className="mb-5 h-12 w-full" />

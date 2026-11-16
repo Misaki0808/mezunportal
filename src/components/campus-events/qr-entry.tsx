@@ -30,7 +30,7 @@ export function QrEntry() {
     return () => clearTimeout(timer);
   }, [router]);
   return (
-    <div className="mx-auto max-w-xl px-5 py-16">
+    <div className="mx-auto max-w-xl px-5 py-16 [.app-content_&]:mx-0 [.app-content_&]:p-0">
       <p role="status">{invalid ? t('qrInvalid') : t('qrLoading')}</p>
     </div>
   );

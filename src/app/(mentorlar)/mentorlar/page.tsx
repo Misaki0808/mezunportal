@@ -19,7 +19,7 @@ async function Results({ params }: { params: Params }) {
   const parsed = searchMentorsSchema.safeParse(mentorFilterFromParams(params));
   if (!parsed.success) {
     return (
-      <div className="mx-auto max-w-xl px-5 py-10">
+      <div className="w-full max-w-xl">
         <ErrorState errorCode="VALIDATION_INVALID" />
         <ResetLink href="/mentorlar" />
       </div>
