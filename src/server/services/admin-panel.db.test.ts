@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { isCodedError } from '@/lib/errors';
 import { createTestPrisma } from '@/test/db';
+import { letterMarker } from '@/test/markers';
 import {
   addGrant,
   addMembership,
@@ -224,12 +225,13 @@ describe('getAdminOverview', () => {
 // =============================================================================================
 describe('searchUsers', () => {
   it('yönetici yalnız kendi kapsamındaki kullanıcıları görür; kapsam dışı ve üyeliksiz kullanıcı hiç çıkmaz', async () => {
-    const mine = await person({ departmentId: inst.deptA1 });
-    const sibling = await person({ departmentId: inst.deptA2 });
-    const outsider = await person({ departmentId: inst.deptB1 });
-    const foreign = await person({ departmentId: other.deptA1 });
-    const orphan = await person();
-    const closedOnly = await createUser(db);
+    const marker = letterMarker('scope');
+    const mine = await person({ departmentId: inst.deptA1, name: `Kişi ${marker} mine` });
+    const sibling = await person({ departmentId: inst.deptA2, name: `Kişi ${marker} sibling` });
+    const outsider = await person({ departmentId: inst.deptB1, name: `Kişi ${marker} outsider` });
+    const foreign = await person({ departmentId: other.deptA1, name: `Kişi ${marker} foreign` });
+    const orphan = await person({ name: `Kişi ${marker} orphan` });
+    const closedOnly = await createUser(db, { name: `Kişi ${marker} closed` });
     await addMembership(db, {
       userId: closedOnly,
       departmentId: inst.deptA1,
@@ -238,17 +240,17 @@ describe('searchUsers', () => {
       endedAt: new Date('2023-01-01'),
     });
 
-    const dept = ids(await searchUsers(deps, admins.deptA1, { limit: 50 }));
+    const dept = ids(await searchUsers(deps, admins.deptA1, { limit: 50, query: marker }));
     expect(dept).toContain(mine);
     for (const hidden of [sibling, outsider, foreign, orphan, closedOnly]) {
       expect(dept).not.toContain(hidden);
     }
 
-    const faculty = ids(await searchUsers(deps, admins.facultyA, { limit: 50 }));
+    const faculty = ids(await searchUsers(deps, admins.facultyA, { limit: 50, query: marker }));
     expect(faculty).toEqual(expect.arrayContaining([mine, sibling]));
     expect(faculty).not.toContain(outsider);
 
-    const system = ids(await searchUsers(deps, admins.system, { limit: 50, query: 'Kişi' }));
+    const system = ids(await searchUsers(deps, admins.system, { limit: 50, query: marker }));
     expect(system).toEqual(expect.arrayContaining([mine, sibling, outsider, foreign, orphan]));
   });
 

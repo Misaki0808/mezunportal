@@ -571,7 +571,7 @@ describe('süzgeçler', () => {
       companyRaw: `Kombine ${t}`,
       titleRaw: 'Analist',
     });
-    // Şirket bir pozisyonda, sektör başka pozisyonda olsa da mentorun yolu bütünüyle aranır.
+    // Kart 399: geçmiş şirket/unvan, karttaki güncel pozisyonun sonucuymuş gibi gösterilmez.
     const split = await mentor({ role: 'ALUMNI', meetingModes: ['IN_PERSON'] });
     await position(split, {
       companyRaw: `Kombine ${t}`,
@@ -592,7 +592,8 @@ describe('süzgeçler', () => {
         meetingModes: ['IN_PERSON'],
       }),
     );
-    expect(result.sort()).toEqual([match, split].sort());
+    expect(result).toEqual([match]);
+    expect(result).not.toContain(split);
   });
 });
 
