@@ -422,10 +422,15 @@
       "dark": "Koyu"
     }
   },
+  "accountFrame": {
+    "eyebrow": "HESAP",
+    "back": "Hesap ayarları"
+  },
   "nav": {
     "brand": "MezunPortal",
     "labelBottom": "Ana gezinme",
     "labelSide": "Yan menü",
+    "menu": { "title": "Menü" },
     "skipToContent": "İçeriğe geç",
     "comingSoon": "yakında",
     "items": {
@@ -439,16 +444,18 @@
       "courses": "Ders rehberi",
       "notifications": "Bildirimler",
       "profile": "Profilim",
-      "account": "Hesap ayarları"
+      "account": "Hesap ayarları",
+      "menu": "Menü"
     },
     "shortItems": {
       "home": "Ana sayfa",
       "jobs": "İlanlar",
       "mentors": "Mentorlar",
       "appointments": "Randevular",
-      "profile": "Profil"
+      "menu": "Menü"
     },
     "groups": {
+      "explore": "Keşfet",
       "account": "Hesap",
       "admin": "Yönetici"
     },
@@ -2810,7 +2817,9 @@
       "open": "Aç",
       "more": "Daha fazla göster",
       "settings": "Mentor ayarlarım",
-      "expires": "Yanıt son tarihi: {date}"
+      "expires": "Yanıt son tarihi: {date}",
+      "upcoming": "Yaklaşan",
+      "past": "Geçmiş"
     },
     "detail": {
       "eyebrow": "RANDEVU",

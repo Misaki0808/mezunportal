@@ -3,7 +3,7 @@ import { Skeleton, SkeletonText } from '@/components/ui';
 export default async function PrivacyLoading() {
   const t = await getTranslations('privacyScreens.common');
   return (
-    <div aria-busy="true" className="mx-auto max-w-2xl space-y-6 px-5 py-10">
+    <div aria-busy="true" className="w-full max-w-2xl space-y-6">
       <span role="status" className="sr-only">
         {t('loading')}
       </span>

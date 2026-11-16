@@ -132,29 +132,33 @@ export function InboxList({ initial, today }: { initial: InboxPage; today: strin
   const labels = { today: t('today'), yesterday: t('yesterday') };
   const days = [...new Set(groups.map((group) => group.day))];
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-5 py-8 sm:py-10">
-      <PageHeader title={t('title')} description={t('description')}>
-        {groups.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
-            <Button
-              variant="secondary"
-              loading={action.busy}
-              onClick={markAll}
-              {...(unread === 0
-                ? ({ disabled: true, disabledReason: t('markAllNone') } as const)
-                : { disabled: false as const })}
-            >
-              {t('markAll')}
-            </Button>
-            <Link
-              href="/hesap/bildirimler"
-              className="press-control inline-flex min-h-11 items-center font-semibold text-primary underline-offset-4 hover:underline"
-            >
-              {t('preferencesLink')}
-            </Link>
-          </div>
-        )}
-      </PageHeader>
+    <div className="w-full max-w-3xl space-y-6">
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        actions={
+          groups.length > 0 && (
+            <>
+              <Button
+                variant="secondary"
+                loading={action.busy}
+                onClick={markAll}
+                {...(unread === 0
+                  ? ({ disabled: true, disabledReason: t('markAllNone') } as const)
+                  : { disabled: false as const })}
+              >
+                {t('markAll')}
+              </Button>
+              <Link
+                href="/hesap/bildirimler"
+                className="press-control inline-flex min-h-11 items-center font-semibold text-primary underline-offset-4 hover:underline"
+              >
+                {t('preferencesLink')}
+              </Link>
+            </>
+          )
+        }
+      />
 
       {action.error && (
         <p role="alert" className="text-danger">
@@ -178,8 +182,10 @@ export function InboxList({ initial, today }: { initial: InboxPage; today: strin
           const label = dayLabel(day, today, labels);
           return (
             <section key={day} aria-label={label} className="space-y-2">
-              <h2 className="text-sm font-semibold tracking-wide text-fg-muted">{label}</h2>
-              <ul className="space-y-2">
+              <h2 className="px-1 text-xs font-semibold tracking-[0.08em] text-fg-muted uppercase">
+                {label}
+              </h2>
+              <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface shadow-card">
                 {groups
                   .filter((group) => group.day === day)
                   .map((group) => {
@@ -190,7 +196,10 @@ export function InboxList({ initial, today }: { initial: InboxPage; today: strin
                         <Link
                           href={group.href}
                           onClick={() => open(group)}
-                          className="press-row flex min-h-16 items-center gap-3 rounded-card border border-border bg-bg p-3 sm:p-4"
+                          className={cn(
+                            'press-row flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-surface-strong',
+                            unreadGroup && 'bg-primary-soft/40',
+                          )}
                         >
                           <IconChip tone={tone}>{icon}</IconChip>
                           <span

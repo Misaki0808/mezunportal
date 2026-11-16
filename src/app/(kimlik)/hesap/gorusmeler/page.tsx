@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { AccountFrame } from '@/components/account/account-frame';
 import { ErrorState } from '@/components/ui';
 import { ReliabilityBadge } from '@/components/feedback/reliability-badge';
 import { getFeedbackOverview } from '@/server/actions/feedback';
@@ -8,17 +9,13 @@ export default async function FeedbackOverviewPage() {
   const [result, t] = await Promise.all([getFeedbackOverview(), getTranslations('feedback')]);
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
-      <Link className="inline-flex min-h-11 items-center text-primary" href="/hesap">
-        ← {t('back')}
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold">{t('pendingTitle')}</h1>
+    <AccountFrame title={t('pendingTitle')} backLabel={t('back')} width="max-w-2xl">
       {result.data.length === 0 ? (
-        <p className="mt-6 text-base text-fg-muted">{t('pendingEmpty')}</p>
+        <p className="text-base text-fg-muted">{t('pendingEmpty')}</p>
       ) : (
-        <ul className="mt-6 space-y-3">
+        <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface shadow-card">
           {result.data.map((item) => (
-            <li key={item.id} className="rounded-card border border-border p-5">
+            <li key={item.id} className="p-4 sm:p-5">
               <p className="font-semibold">{item.name}</p>
               {item.kind === 'REQUEST' && (
                 <p className="mt-2 text-base text-fg-muted">{t('requestBadge')}</p>
@@ -52,6 +49,6 @@ export default async function FeedbackOverviewPage() {
           ))}
         </ul>
       )}
-    </div>
+    </AccountFrame>
   );
 }

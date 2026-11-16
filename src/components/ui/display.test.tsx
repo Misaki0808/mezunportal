@@ -208,3 +208,20 @@ describe('Tag', () => {
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('Avatar: profil fotoğrafı dosya boyutu (kart 388 / 387)', () => {
+  const src = '/api/profil-fotografi/u1?size=96&v=5';
+  it.each([
+    ['sm', 'size=96'],
+    ['md', 'size=96'],
+    ['lg', 'size=512'],
+    ['xl', 'size=512'],
+  ] as const)('%s boyutunda %s dosyası istenir', (size, expected) => {
+    const { container } = renderUi(<Avatar name="Örnek Kişi" src={src} size={size} decorative />);
+    expect(container.querySelector('img')?.getAttribute('src')).toContain(expected);
+  });
+  it('yetkili fotoğraf rotası dışındaki adres olduğu gibi kalır', () => {
+    const { container } = renderUi(<Avatar name="Örnek Kişi" src="/baska.png?size=96" size="xl" />);
+    expect(container.querySelector('img')?.getAttribute('src')).toBe('/baska.png?size=96');
+  });
+});

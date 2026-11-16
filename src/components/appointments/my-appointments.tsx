@@ -1,5 +1,4 @@
 'use client';
-import { Avatar } from '@/components/ui';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -7,11 +6,19 @@ import { useRef, useState } from 'react';
 
 import type { AppointmentPage, ListMyAppointmentsInput } from '@/contracts/appointment';
 import type { ActionResult } from '@/contracts/result';
-import { Button, CalendarIcon, EmptyState, PageHeader, Tabs, buttonClasses } from '@/components/ui';
+import {
+  Avatar,
+  Button,
+  CalendarIcon,
+  EmptyState,
+  PageHeader,
+  Tabs,
+  buttonClasses,
+} from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { AppointmentStatusBadge } from './status-badge';
-import { fullLabel, rangeLabel } from './time';
+import { dateBlock, fullLabel, rangeLabel } from './time';
 
 type Role = 'MENTOR' | 'MENTEE';
 type Props = {
@@ -41,6 +48,8 @@ export function MyAppointments({
   const [error, setError] = useState<ErrorCode>();
   const [pending, setPending] = useState(false);
   const locked = useRef(false);
+  // Yaklaşan/geçmiş ayrımı için bir kez alınan an (her çizimde değişmez, sunucu ve istemci arasında oynamaz).
+  const [now] = useState(() => Date.now());
 
   async function load(next: Role, after?: string) {
     if (locked.current) return;
@@ -63,6 +72,12 @@ export function MyAppointments({
       setPending(false);
     }
   }
+
+  const isUpcoming = (item: AppointmentPage['items'][number]) =>
+    (item.status === 'REQUESTED' || item.status === 'CONFIRMED') &&
+    new Date(item.endsAt).getTime() >= now;
+  const upcoming = items.filter(isUpcoming);
+  const past = items.filter((item) => !isUpcoming(item));
 
   const body = (
     <div className="flex flex-col gap-4" aria-busy={pending}>
@@ -100,41 +115,87 @@ export function MyAppointments({
           }
         />
       ) : (
-        <ul className="flex flex-col gap-4 xl:grid xl:grid-cols-2 xl:items-start">
-          {items.map((item) => (
-            <li key={item.id} className="rounded-card border border-border bg-bg p-5 shadow-card">
-              <div className="flex flex-wrap items-center gap-2">
-                <AppointmentStatusBadge status={item.status} />
-                <span className="text-base text-fg-muted">{modes(item.mode)}</span>
-              </div>
-              <h2 className="mt-3 break-words text-lg font-semibold text-fg">
-                <Avatar
-                  src={item.counterpart.photoSrc}
-                  name={item.counterpart.displayName}
-                  decorative
-                  className="mr-2 align-middle"
-                />
-                {item.counterpart.displayName}
-              </h2>
-              <p className="mt-1 text-base text-fg">{fullLabel(item.startsAt)}</p>
-              <p className="text-base text-fg-muted">{rangeLabel(item.startsAt, item.endsAt)}</p>
-              {item.status === 'REQUESTED' && item.expiresAt && (
-                <p className="mt-1 text-base text-fg-muted">
-                  {t('expires', { date: fullLabel(item.expiresAt) })}
-                </p>
-              )}
-              <Link
-                className={
-                  buttonClasses({ variant: item.actions.canConfirm ? 'primary' : 'secondary' }) +
-                  ' mt-4'
-                }
-                href={`/randevular/${item.id}`}
-              >
-                {t('open')}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-6">
+          {(
+            [
+              ['upcoming', upcoming],
+              ['past', past],
+            ] as const
+          ).map(
+            ([key, list]) =>
+              list.length > 0 && (
+                <section key={key} aria-labelledby={`appointments-${key}`}>
+                  <h2
+                    id={`appointments-${key}`}
+                    className="px-1 pb-2 text-xs font-semibold tracking-[0.08em] text-fg-muted uppercase"
+                  >
+                    {t(key)}
+                  </h2>
+                  <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface shadow-card">
+                    {list.map((item) => {
+                      const block = dateBlock(item.startsAt);
+                      return (
+                        <li
+                          key={item.id}
+                          className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5"
+                        >
+                          <div className="flex min-w-0 flex-1 items-start gap-4">
+                            <div
+                              aria-hidden="true"
+                              className="flex w-14 shrink-0 flex-col items-center rounded-control bg-primary-soft py-2 text-on-primary-soft"
+                            >
+                              <span className="text-xs font-semibold tracking-wide">
+                                {block.month}
+                              </span>
+                              <span className="text-2xl leading-none font-extrabold">
+                                {block.day}
+                              </span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <Avatar
+                                  src={item.counterpart.photoSrc}
+                                  name={item.counterpart.displayName}
+                                  size="sm"
+                                  decorative
+                                />
+                                <h3 className="min-w-0 break-words text-lg font-semibold text-fg">
+                                  {item.counterpart.displayName}
+                                </h3>
+                              </div>
+                              <p className="mt-0.5 text-base text-fg">{fullLabel(item.startsAt)}</p>
+                              <p className="text-base text-fg-muted">
+                                <span>{rangeLabel(item.startsAt, item.endsAt)}</span> ·{' '}
+                                <span>{modes(item.mode)}</span>
+                              </p>
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <AppointmentStatusBadge status={item.status} />
+                              </div>
+                              {item.status === 'REQUESTED' && item.expiresAt && (
+                                <p className="mt-1 text-base text-fg-muted">
+                                  {t('expires', { date: fullLabel(item.expiresAt) })}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <Link
+                            className={
+                              buttonClasses({
+                                variant: item.actions.canConfirm ? 'primary' : 'secondary',
+                              }) + ' w-full sm:w-auto sm:shrink-0'
+                            }
+                            href={`/randevular/${item.id}`}
+                          >
+                            {t('open')}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ),
+          )}
+        </div>
       )}
       {cursor && (
         <Button variant="secondary" loading={pending} onClick={() => void load(role, cursor)}>
@@ -145,17 +206,19 @@ export function MyAppointments({
   );
 
   return (
-    <div className="[&_.text-sm]:text-base mx-auto w-full max-w-lg px-5 pb-10 pt-10 sm:pt-16 xl:max-w-5xl">
-      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')}>
-        {showSettings && (
-          <Link
-            className={buttonClasses({ variant: 'secondary' }) + ' mt-4'}
-            href="/mentor/ayarlar"
-          >
-            {t('settings')}
-          </Link>
-        )}
-      </PageHeader>
+    <div className="[&_.text-sm]:text-base w-full max-w-4xl">
+      <PageHeader
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
+        actions={
+          showSettings && (
+            <Link className={buttonClasses({ variant: 'secondary' })} href="/mentor/ayarlar">
+              {t('settings')}
+            </Link>
+          )
+        }
+      />
       <Tabs
         className="mt-6"
         label={t('tabs.label')}

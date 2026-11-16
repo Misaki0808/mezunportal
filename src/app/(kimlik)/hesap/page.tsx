@@ -409,61 +409,70 @@ export default async function AccountPage() {
   const groupOf = (href: string) =>
     GROUPS.find((group) => (group.hrefs as readonly string[]).includes(href))?.key ??
     FALLBACK_GROUP;
-  // Telefonda grup tek çerçeveli, bölücülü liste (15 ayrı kart yerine 8 sakin blok); geniş ekranda iki sütun ayrı kart.
+  // Her grup tek kart: satırlar ince çizgiyle ayrılır (kutu duvarı yok). Geniş ekranda gruplar iki sütuna dizilir.
   const listClasses =
-    'mt-3 divide-y divide-border overflow-hidden rounded-card border border-border md:grid md:grid-cols-2 md:gap-3 md:divide-y-0 md:overflow-visible md:rounded-none md:border-0';
-  const headingClasses = 'text-sm font-semibold tracking-wider text-fg-muted';
+    'divide-y divide-border overflow-hidden rounded-card border border-border bg-surface shadow-card';
+  const headingClasses =
+    'px-1 pb-2 text-xs font-semibold tracking-[0.08em] text-fg-muted uppercase';
   return (
-    <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-16">
+    <div className="w-full">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
-      {GROUPS.map((group) => {
-        const items = links.filter((link) => groupOf(link.href) === group.key);
-        const showPrivacy = group.key === 'privacy';
-        if (items.length === 0 && !showPrivacy) return null;
-        return (
-          <section key={group.key} aria-labelledby={`account-${group.key}`} className="mt-8">
-            <h2 id={`account-${group.key}`} className={headingClasses}>
-              {t(`groups.${group.key}`)}
-            </h2>
-            <ul className={listClasses}>
-              {items.map((link) => (
-                <li key={link.href}>
-                  <AccountLink
-                    href={link.href}
-                    title={link.title}
-                    description={link.description}
-                    icon={link.icon}
-                    tone={group.tone}
-                  />
-                </li>
-              ))}
-              {showPrivacy && <PrivacyAccountLinks />}
-            </ul>
-          </section>
-        );
-      })}
-      <section aria-labelledby="account-appearance" className="mt-8">
-        <h2 id="account-appearance" className={headingClasses}>
-          {themeText('choiceLabel')}
-        </h2>
-        <ThemeChoice initial={theme} labelledBy="account-appearance" />
-      </section>
-      <section aria-labelledby="account-session" className="mt-8">
-        <h2 id="account-session" className={headingClasses}>
-          {t('groups.session')}
-        </h2>
-        <ul className={listClasses}>
-          <li>
-            <AccountLink
-              href="/cikis"
-              title={t('signOut')}
-              description={t('signOutDescription')}
-              icon={LogOutIcon}
-              tone="accent"
-            />
-          </li>
-        </ul>
-      </section>
+      <div className="mt-7 lg:columns-2 lg:gap-6">
+        {GROUPS.map((group) => {
+          const items = links.filter((link) => groupOf(link.href) === group.key);
+          const showPrivacy = group.key === 'privacy';
+          if (items.length === 0 && !showPrivacy) return null;
+          return (
+            <section
+              key={group.key}
+              aria-labelledby={`account-${group.key}`}
+              className="mb-6 break-inside-avoid"
+            >
+              <h2 id={`account-${group.key}`} className={headingClasses}>
+                {t(`groups.${group.key}`)}
+              </h2>
+              <ul className={listClasses}>
+                {items.map((link) => (
+                  <li key={link.href}>
+                    <AccountLink
+                      href={link.href}
+                      title={link.title}
+                      description={link.description}
+                      icon={link.icon}
+                      tone={group.tone}
+                    />
+                  </li>
+                ))}
+                {showPrivacy && <PrivacyAccountLinks />}
+              </ul>
+            </section>
+          );
+        })}
+        <section aria-labelledby="account-appearance" className="mb-6 break-inside-avoid">
+          <h2 id="account-appearance" className={headingClasses}>
+            {themeText('choiceLabel')}
+          </h2>
+          <div className="rounded-card border border-border bg-surface p-4 pt-1 shadow-card">
+            <ThemeChoice initial={theme} labelledBy="account-appearance" />
+          </div>
+        </section>
+        <section aria-labelledby="account-session" className="mb-6 break-inside-avoid">
+          <h2 id="account-session" className={headingClasses}>
+            {t('groups.session')}
+          </h2>
+          <ul className={listClasses}>
+            <li>
+              <AccountLink
+                href="/cikis"
+                title={t('signOut')}
+                description={t('signOutDescription')}
+                icon={LogOutIcon}
+                tone="accent"
+              />
+            </li>
+          </ul>
+        </section>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { AccountFrame } from '@/components/account/account-frame';
 import { ErrorState } from '@/components/ui';
 import { ReliabilityBadge } from '@/components/feedback/reliability-badge';
 import { getMyReliability } from '@/server/actions/feedback';
@@ -9,13 +9,13 @@ export default async function ReliabilityPage() {
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   const value = result.data;
   return (
-    <div className="mx-auto max-w-xl px-5 py-10">
-      <Link className="inline-flex min-h-11 items-center text-primary" href="/hesap">
-        ← {t('back')}
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold">{t('reliability')}</h1>
-      <p className="mt-3 text-base text-fg-muted">{t('reliabilityDescription')}</p>
-      <section className="mt-6 rounded-card border border-border p-5">
+    <AccountFrame
+      title={t('reliability')}
+      description={t('reliabilityDescription')}
+      backLabel={t('back')}
+      width="max-w-2xl"
+    >
+      <section className="rounded-card border border-border bg-surface p-5 shadow-card">
         <ReliabilityBadge label={value.label} text={t(value.label)} />
         <p className="mt-3 text-base">
           {value.label === 'NEW'
@@ -23,6 +23,6 @@ export default async function ReliabilityPage() {
             : t('reason', { total: value.total, noShow: value.noShow })}
         </p>
       </section>
-    </div>
+    </AccountFrame>
   );
 }

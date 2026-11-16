@@ -42,7 +42,7 @@ export function StudentFaq({ initial, suggest, submit, list }: Props) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl min-w-0 flex-col gap-8 px-5 pb-12 pt-10 sm:pt-14">
+    <div className="flex w-full max-w-3xl min-w-0 flex-col gap-8">
       <div>
         <p className="font-semibold text-primary">{t('eyebrow')}</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{t('request.title')}</h1>
