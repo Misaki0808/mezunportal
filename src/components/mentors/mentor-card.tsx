@@ -43,12 +43,12 @@ export function MentorCard({
         <div className="min-w-0 flex-1">
           <h3 className="break-words text-base font-bold text-fg">{mentor.displayName}</h3>
           {mentor.position && (
-            <p className="mt-0.5 break-words text-base text-fg">
+            <p className="mt-0.5 break-words text-sm text-fg">
               {mentor.position.title} · {mentor.position.company}
             </p>
           )}
           {mentor.headline && (
-            <p className="mt-0.5 break-words text-base text-fg-muted">{mentor.headline}</p>
+            <p className="mt-0.5 break-words text-sm text-fg-muted">{mentor.headline}</p>
           )}
           <p className="mt-0.5 text-sm text-fg-muted">{mentor.departmentName}</p>
           {mentor.sectorName && (
