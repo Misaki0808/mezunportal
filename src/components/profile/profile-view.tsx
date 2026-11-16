@@ -73,6 +73,9 @@ export function ProfileView({
       </ul>,
     );
 
+  const hasSide =
+    profile.skills.length + profile.languages.length + profile.certifications.length > 0 ||
+    Boolean(profile.socialLinks?.length || profile.linkedinUrl || profile.email || profile.phone);
   const hasMain =
     !hasBody ||
     Boolean(profile.summary || profile.goals) ||
@@ -117,10 +120,12 @@ export function ProfileView({
           </ul>
         )}
         {date && <p className="text-sm text-fg-muted">{t('updated', { date })}</p>}
-        {actions}
+        {actions && <div className="max-w-xl">{actions}</div>}
       </Card>
 
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div
+        className={`mt-6 grid items-start gap-6 ${hasMain && hasSide ? 'lg:grid-cols-[minmax(0,1fr)_20rem]' : ''}`}
+      >
         {hasMain && (
           <div className="flex min-w-0 flex-col gap-6">
             {!hasBody && (
@@ -147,7 +152,7 @@ export function ProfileView({
             {list(sections('EDUCATION'), 'EDUCATION', profile.education)}
           </div>
         )}
-        <div className="flex min-w-0 flex-col gap-6">
+        <div className={`flex min-w-0 flex-col gap-6 ${hasSide ? '' : 'hidden'}`}>
           {profile.skills.length > 0 &&
             section(
               t('skills'),
