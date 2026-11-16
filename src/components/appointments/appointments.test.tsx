@@ -883,3 +883,28 @@ describe('randevu detayı: başlık ve eylem sonrası odak', () => {
     expect(screen.queryByText('İşlem kaydedildi.')).toBeNull();
   });
 });
+
+describe('randevu listesi: karşı tarafın fotoğrafı (kart 388 + 387)', () => {
+  it('fotoğraf adresi varsa satırda küçük avatar olarak çıkar; yoksa baş harfler', () => {
+    const withPhoto = view({ id: 'p1', ...inDays(2) });
+    withPhoto.counterpart = {
+      ...withPhoto.counterpart,
+      photoSrc: '/api/profil-fotografi/u2?size=96&v=1',
+    };
+    const without = view({ id: 'p2', ...inDays(3) });
+    renderUi(
+      <MyAppointments
+        initial={page([withPhoto, without])}
+        initialRole="MENTOR"
+        showSettings={false}
+        list={vi.fn()}
+      />,
+    );
+    const rows = screen.getAllByRole('listitem');
+    expect(rows[0]!.querySelector('img')?.getAttribute('src')).toContain(
+      '/api/profil-fotografi/u2',
+    );
+    expect(rows[1]!.querySelector('img')).toBeNull();
+    expect(rows[1]).toHaveTextContent('DA');
+  });
+});

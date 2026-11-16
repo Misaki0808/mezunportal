@@ -133,7 +133,6 @@ Kariyer yolu haritası · diğer fakültelere ve üniversitelere açılma. Doğa
 - Soru bankasında pozisyon süzgeci ve "kaydet/çalış" listesi (P2-10'dan ertelendi): deneyimde pozisyon alanı gerekir; anonim deneyimde yarı tanımlayıcı olma riski
   (`docs/decisions.md`) ve P1 form kapsamı yüzünden Faz 2'de yapılmadı.
 
-- Yerel profil fotoğrafı yükleme ve güvenli sunma altyapısı; gösterim için ayrı açık rıza.
 
 ## Sürekli kapılar
 

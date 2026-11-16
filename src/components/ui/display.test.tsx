@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -170,6 +170,15 @@ describe('ErrorState', () => {
 });
 
 describe('Avatar', () => {
+  it('geri alınmış/kaldırılmış görsel yüklenmeyince baş harfe döner; yeni sürüm tekrar denenir', () => {
+    const { rerender } = renderUi(<Avatar name="Örnek Kişi" src="/photo?v=1" />);
+    fireEvent.error(screen.getByRole('img', { name: 'Örnek Kişi' }));
+    expect(screen.getByRole('img', { name: 'Örnek Kişi' }).tagName).toBe('SPAN');
+    expect(screen.getByText('ÖK')).toBeInTheDocument();
+    rerender(<Avatar name="Örnek Kişi" src="/photo?v=2" />);
+    expect(screen.getByRole('img', { name: 'Örnek Kişi' }).tagName).toBe('IMG');
+  });
+
   it('baş harfleri tr-TR kuralıyla büyütür (i → İ, ı → I)', () => {
     expect(initialsOf('istanbul üni')).toBe('İÜ');
     expect(initialsOf('ışıl çelik')).toBe('IÇ');
@@ -197,5 +206,22 @@ describe('Tag', () => {
 
     await user.click(screen.getByRole('button', { name: 'Veri analizi etiketini kaldır' }));
     expect(onRemove).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Avatar: profil fotoğrafı dosya boyutu (kart 388 / 387)', () => {
+  const src = '/api/profil-fotografi/u1?size=96&v=5';
+  it.each([
+    ['sm', 'size=96'],
+    ['md', 'size=96'],
+    ['lg', 'size=512'],
+    ['xl', 'size=512'],
+  ] as const)('%s boyutunda %s dosyası istenir', (size, expected) => {
+    const { container } = renderUi(<Avatar name="Örnek Kişi" src={src} size={size} decorative />);
+    expect(container.querySelector('img')?.getAttribute('src')).toContain(expected);
+  });
+  it('yetkili fotoğraf rotası dışındaki adres olduğu gibi kalır', () => {
+    const { container } = renderUi(<Avatar name="Örnek Kişi" src="/baska.png?size=96" size="xl" />);
+    expect(container.querySelector('img')?.getAttribute('src')).toBe('/baska.png?size=96');
   });
 });

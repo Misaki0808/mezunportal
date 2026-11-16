@@ -376,6 +376,7 @@ export const myProfileSchema = z
   .object({
     userId: z.string(),
     displayName: z.string(),
+    photoSrc: z.string().optional(),
     headline: z.string().nullable(),
     summary: z.string().nullable(),
     city: z.string().nullable(),
@@ -403,6 +404,7 @@ export const profileViewSchema = z
   .object({
     userId: z.string(),
     displayName: z.string(),
+    photoSrc: z.string().optional(),
     /** Doğrulanmış etkin üyelikler (bölüm adı + rol). */
     memberships: z.array(
       z

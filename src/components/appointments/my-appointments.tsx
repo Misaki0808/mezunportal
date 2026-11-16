@@ -6,7 +6,15 @@ import { useRef, useState } from 'react';
 
 import type { AppointmentPage, ListMyAppointmentsInput } from '@/contracts/appointment';
 import type { ActionResult } from '@/contracts/result';
-import { Button, CalendarIcon, EmptyState, PageHeader, Tabs, buttonClasses } from '@/components/ui';
+import {
+  Avatar,
+  Button,
+  CalendarIcon,
+  EmptyState,
+  PageHeader,
+  Tabs,
+  buttonClasses,
+} from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { AppointmentStatusBadge } from './status-badge';
@@ -144,9 +152,17 @@ export function MyAppointments({
                               </span>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h3 className="break-words text-lg font-semibold text-fg">
-                                {item.counterpart.displayName}
-                              </h3>
+                              <div className="flex items-center gap-2">
+                                <Avatar
+                                  src={item.counterpart.photoSrc}
+                                  name={item.counterpart.displayName}
+                                  size="sm"
+                                  decorative
+                                />
+                                <h3 className="min-w-0 break-words text-lg font-semibold text-fg">
+                                  {item.counterpart.displayName}
+                                </h3>
+                              </div>
                               <p className="mt-0.5 text-base text-fg">{fullLabel(item.startsAt)}</p>
                               <p className="text-base text-fg-muted">
                                 <span>{rangeLabel(item.startsAt, item.endsAt)}</span> ·{' '}

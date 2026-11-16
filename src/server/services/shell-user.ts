@@ -1,4 +1,5 @@
 import 'server-only';
+import { photoSources } from './photo-presentation';
 
 import type { ShellStanding, ShellUser } from '@/contracts/shell-user';
 import type { PrismaClient } from '@/generated/prisma/client';
@@ -43,6 +44,7 @@ export async function getShellUser(
     select: {
       name: true,
       deletedAt: true,
+      profilePhoto: { select: { updatedAt: true } },
       memberships: {
         where: { endedAt: null, verificationStatus: 'VERIFIED' },
         orderBy: { createdAt: 'desc' },
@@ -58,8 +60,17 @@ export async function getShellUser(
   });
   if (!user || user.deletedAt) return null;
   const row = user.memberships[0];
+  const photos = user.profilePhoto
+    ? await photoSources(
+        deps.db,
+        [userId],
+        { viewerId: userId },
+        (deps.now ?? (() => new Date()))(),
+      )
+    : new Map<string, string>();
   return {
     name: user.name,
+    ...(photos.has(userId) ? { photoSrc: photos.get(userId)! } : {}),
     membership: row ? shellMembershipOf(row, (deps.now ?? (() => new Date()))()) : null,
   };
 }

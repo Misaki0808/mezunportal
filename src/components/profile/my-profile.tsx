@@ -95,6 +95,7 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
   const router = useRouter();
   const action = useAction();
   const t = useTranslations('profile.my');
+  const photo = useTranslations('profilePhoto');
   const sections = useTranslations('profile.sections');
   const errors = useTranslations('errors.codes');
   const [profile, setProfile] = useState(initial);
@@ -208,9 +209,9 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
         className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:p-6"
       >
         <div className="flex min-w-0 flex-1 items-start gap-4 sm:gap-5">
-          {/* Profil fotoğrafı yeri (kart 388): fotoğraf gelince `Avatar`'ın `src`'i dolar; yer aynı kalır. */}
+          {/* Profil fotoğrafı yeri (kart 388): rıza ve K-07 geçerse fotoğraf, değilse baş harfler; yer aynı kalır. */}
           <div data-slot="profile-photo" className="shrink-0">
-            <Avatar name={profile.displayName} size="xl" decorative />
+            <Avatar src={profile.photoSrc} name={profile.displayName} size="xl" decorative />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold tracking-[0.08em] text-primary">
@@ -230,13 +231,17 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
             </p>
           </div>
         </div>
-        <Button
-          variant="secondary"
-          className="sm:shrink-0"
-          onClick={() => setEditing({ kind: 'basics' })}
-        >
-          {t('editShortcut')}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3 sm:shrink-0">
+          <Button variant="secondary" onClick={() => setEditing({ kind: 'basics' })}>
+            {t('editShortcut')}
+          </Button>
+          <Link
+            href="/profil/fotograf"
+            className="inline-flex min-h-11 items-center font-medium text-primary underline"
+          >
+            {photo('title')}
+          </Link>
+        </div>
       </Card>
 
       {/* Çekmece açıkken hata çekmecenin İÇİNDE (serverError) gösterilir; arkadaki sayfada yinelenmez. */}

@@ -101,3 +101,19 @@ export function effectiveLevel(
       : (chosen as Partial<Record<ContactField, VisibilityLevel>>)[field];
   return value ?? DEFAULT_FIELD_VISIBILITY[field];
 }
+
+/** Fotoğraf isteğe bağlıdır; yönetici rolü K-07 ve rızayı atlatmaz. */
+export function canViewProfilePhoto(input: {
+  consent: boolean;
+  ownerActive: boolean;
+  viewerActive: boolean;
+  isOwner: boolean;
+  sameUniversity: boolean;
+}): boolean {
+  return (
+    input.consent &&
+    input.ownerActive &&
+    input.viewerActive &&
+    (input.isOwner || input.sameUniversity)
+  );
+}

@@ -85,9 +85,9 @@ export function ProfileView({
     <article className="w-full max-w-5xl [overflow-wrap:anywhere]">
       <Card as="header" className="flex flex-col gap-4 sm:p-6">
         <div className="flex items-start gap-4 sm:gap-5">
-          {/* Profil fotoğrafı yeri (kart 388): fotoğraf gelince `Avatar`'ın `src`'i dolar; yer aynı kalır. */}
+          {/* Profil fotoğrafı yeri (kart 388): rıza ve K-07 geçerse fotoğraf, değilse baş harfler; yer aynı kalır. */}
           <div data-slot="profile-photo" className="shrink-0">
-            <Avatar name={profile.displayName} size="xl" decorative />
+            <Avatar src={profile.photoSrc} name={profile.displayName} size="xl" decorative />
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="break-words text-[1.625rem] leading-[1.15] font-extrabold tracking-tight text-fg sm:text-[2.125rem]">
