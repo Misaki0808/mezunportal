@@ -1,4 +1,5 @@
 import 'server-only';
+import { photoSources } from './photo-presentation';
 
 import {
   CONTACT_TARGET_NOT_REQUESTABLE,
@@ -343,6 +344,14 @@ export async function listContactRequests(
 
   const hasMore = items.length > input.limit;
   const page = hasMore ? items.slice(0, input.limit) : items;
+  const photos = await photoSources(
+    db,
+    page.flatMap((item) => (item.counterpart ? [item.counterpart.userId] : [])),
+    { viewerId: userId },
+  );
+  for (const item of page)
+    if (item.counterpart && photos.has(item.counterpart.userId))
+      item.counterpart.photoSrc = photos.get(item.counterpart.userId);
   return { items: page, nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null };
 }
 

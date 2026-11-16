@@ -105,7 +105,14 @@ export async function deleteAccount(
       where: { userId, storageKey: { not: null } },
       select: { storageKey: true },
     });
-    const fileKeys = [...pendingFiles, ...cvFiles]
+    const photo = await tx.profilePhoto.findUnique({
+      where: { userId },
+      select: { largeKey: true, smallKey: true },
+    });
+    const photoFiles = photo
+      ? [{ storageKey: photo.largeKey }, { storageKey: photo.smallKey }]
+      : [];
+    const fileKeys = [...pendingFiles, ...cvFiles, ...photoFiles]
       .map((row) => row.storageKey)
       .filter((key): key is string => key !== null);
     if (fileKeys.length > 0 && !deps.removeStoredFiles) {
@@ -163,6 +170,7 @@ export async function deleteAccount(
       await tx.cvUpload.update({ where: { id: row.cvUploadId }, data: { storageKey: null } });
     }
     await tx.cvUpload.deleteMany({ where: { userId } });
+    await tx.profilePhoto.deleteMany({ where: { userId } });
 
     // Açık iletişim talepleri kapanır; kapalı satırlar geçmiş olarak kalır (karşı tarafın kutusunda).
     await tx.contactRequest.updateMany({

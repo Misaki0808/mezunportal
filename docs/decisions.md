@@ -1076,6 +1076,14 @@ sağlayıcı kapalıdır, ileride istenirse yeniden açmak anahtar vermekten iba
 LinkedIn profil PDF'iyle otomatik doldurma ayrı bir karardır (K-04, Gemini) ve bu kayıttan etkilenmez.
 **Tema düğmesi: Sistem / Açık / Koyu, çerezde (kart 383, kullanıcı kararı 15 Kas: "hem karanlık hem açık mod olacak").** Tema yalnız `prefers-color-scheme` ile değişiyordu, düğme yoktu: koyu Mac kullanan kullanıcı açık modu hiç görmüyordu. (1) **Üç durum**, varsayılan Sistem (bugünkü davranış); seçim `theme` çerezinde (`system|light|dark`, httpOnly değil, 1 yıl, `SameSite=Lax`, https'te `Secure`), veritabanına yazılmaz. (2) **Yanıp sönme yok:** sunucu `<html data-theme>`'yi çerezden yazar (kök düzen çerezi okur; düzen zaten oturum için dinamikti), geçersiz/boş çerez `system`. Betik gerekmez: JavaScript kapalıyken de ilk boyama doğrudur; Sistem'de cihaz ayarı CSS medya sorgusundan gelir. (3) **Token kaynağı:** koyu değerler `globals.css`'te iki blokta (elle `:root[data-theme='dark']` ve sistem koyusu `@media … :root:not([data-theme='light'])`) birebir tekrar eder; CSS bir bildirim bloğunu hem medya koşuluna hem öznitelik seçiciye bağlayamaz. `light-dark()` ile tek kaynak denendi ve bırakıldı: Safari < 17.5 ve Chrome < 123'te bütün token'lar geçersiz olur, sayfa renksiz kalır. Sapmayı `contrast.test.ts` yakalar (iki bloğun bildirimleri eşit, `color-scheme` üç durumda doğru). `dark:` yardımcı sınıfı aynı kurala bağlı `@custom-variant`tır. (4) **Tarayıcı çubuğu rengi** (`theme-color`) seçimi izler (`generateViewport` çerezi okur; düğme anında günceller). (5) **Çerez bildirimi:** aydınlatma metninin "Çerezler" bölümü "yalnız zorunlu çerez" diyordu; görünüm tercihi işlevsel çerezi eklendiği için üç yerde (`messages/tr.json`, `docs/legal-drafts.md`, `docs/security.md`) düzeltildi. Metin sürümü `taslak-1` kalır; taslağın geri kalanı gibi hocanın/hukukun onayını bekler. (6) Hata ekranı (`global-error`) kök düzenin yerine geçtiği için çerezi istemcide okuyup uygular.
 
+### Yerel profil fotoğrafı (16 Kasım 2026, kart 388)
+
+Kullanıcı isteğiyle Faz 3 fikri pilot öncesi Faz 2 ekine alındı. Gösterim ayrı, geri alınabilir
+rıza ve K-07 ile sınırlı; orijinal yerine metadata içermeyen iki kare WebP saklanır.
+PM onayıyla ücretsiz `sharp` **0.35.5** doğrudan sabitlendi (Next'in getirdiği sürüm): görüntü
+çözme uygulamanın güvenlik sınırıdır, Next'in özel iç API'sine/geçişli bağımlılığına bağlanmaz.
+24 MP ve 5 MB sınırı, katı çözme hatası, animasyon/çok sayfa reddi ve tek işlem bütçesi
+küçük sunucu kaynaklarını korur. Depolama/sunum herkese açık URL kullanmaz.
 ## 2026-11-16 · Kabuk e2e gerilemeleri: Profilim `/profil`, hesap ayarları `/hesap` (kart 400)
 
 #185'ten sonra main'de 4 e2e kırmızıya düştü (158/162). Kökleri tek tek ölçüldü: (1) **Randevu saat şeridi 360 ve 390 px'te 4 px taşıyordu**: şerit (`slot-picker`) eski sayfa kapsayıcısının

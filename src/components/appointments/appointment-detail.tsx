@@ -1,4 +1,5 @@
 'use client';
+import { Avatar } from '@/components/ui';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -134,6 +135,7 @@ export function AppointmentDetail({
         >
           ← {t('back')}
         </Link>
+        <Avatar src={a.counterpart.photoSrc} name={a.counterpart.displayName} decorative />
         <PageHeader eyebrow={t('eyebrow')} title={t('with', { name: a.counterpart.displayName })}>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <AppointmentStatusBadge status={a.status} />
