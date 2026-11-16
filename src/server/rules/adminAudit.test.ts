@@ -144,6 +144,11 @@ describe('kimlik değerlerinde kişisel veri yanlış pozitif regresyonu', () =>
   it('istisna yalnız tam biçimde ve izinli alan adında işler', () => {
     expect(findMetadataProblems({ userEmailId: identifiers[0] })).not.toEqual([]);
     expect(findMetadataProblems({ userId: 'önek ' + identifiers[0] })).not.toEqual([]);
+    expect(findMetadataProblems({ userId: identifiers[0] + ' 05321234567' })).not.toEqual([]);
+    expect(findMetadataProblems({ userId: identifiers[0] + ' ayse@example.invalid' })).not.toEqual(
+      [],
+    );
+    expect(findMetadataProblems({ userId: identifiers[1]!.toUpperCase() })).toEqual([]);
   });
   it('20.000 deterministik seed kimliğinde yanlış pozitif yoktur', () => {
     for (let i = 0; i < 20000; i++) {
