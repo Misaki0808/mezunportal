@@ -1054,9 +1054,9 @@ bir ek yazılmadı: karar programın dilini söylüyor, adı değiştirmiyor.
 
 **K-03, veri sorumlusu.** Kullanıcı: “veri sorumlusu şu an benim çünkü siteyi ben yaptım bunu üniversiteye yıkamayız. bölüme belki yıkabiliriz ama o da
 şu an değil … belki ileride … pilot uygulama ayakları yere bastığı zaman olabilir”. Veri sorumlusu şimdilik proje sahibidir (Efe Baydemir, gerçek kişi);
-üniversiteye devredilmez, bölüme devri pilot oturunca yeniden değerlendirilebilir. Hukuki metin taslaklarında (`docs/legal-drafts.md` §1, §3, §7 ve
+üniversiteye devredilmez, bölüme devri pilot oturunca yeniden değerlendirilebilir. Hukuki metin taslaklarında (`docs/legal-drafts.md` §1 ve §3 ile
 `messages/tr.json` karşılıkları) **ad** yazıldı. İletişim ve başvuru adresi için kullanıcı 15 Kasım'da platform hesabını açtı
-(`mezunportal.iu@gmail.com`); aydınlatma metninin iletişim satırına (§1), hak başvurusuna (§8) ve §7 notuna bu adres yazıldı, kişisel adres hiçbir metinde geçmez.
+(`mezunportal.iu@gmail.com`); aydınlatma metninin iletişim satırına (§1) ve hak başvurusuna (§8) bu adres yazıldı; staj arayan görünürlüğü metninin (§4) “Kapsam dışı” satırı adresi tekrarlamaz, “§1'de yazılıdır” diye yönlendirir. Kişisel adres hiçbir metinde geçmez.
 Ekrandaki taslak uyarısından "iletişim adresi henüz kesinleşmedi" cümlesi kalktı (artık doğru değil); kalan köşeli alanlar sağlayıcı adı ve hukuk görüşüdür (K-04, K-05),
 bu yüzden "köşeli alanlar doldurulmadan metin yayına girmez" kuralı onlar için işlemeye devam eder. **Sürüm artmadı:**
 `taslak-1` taslağın sürümüdür, pilot başlamadı ve gerçek kullanıcı bu metni onaylamadı ve önceki taslak eklemeleri (P2-14 ekleri) da sürümü artırmadı; sürüm, hoca ve
@@ -1064,7 +1064,7 @@ hukuk onaylı metin köke taşınırken artar (`BACKLOG.md` PILOT-LEGAL). Kalan:
 sicil/bildirim yükümlülüğü ve üniversiteyle ilişkinin metinde nasıl anlatılacağı hukukçuya sorulur).
 
 **K-12, pilot zamanı.** Kullanıcı: “finaller bitsin 1 aylık tatilde pilotu çıkarır uygulamayı kullandırmaya başlarım”. Pilot, finaller bittikten sonraki
-yaklaşık bir aylık tatilde başlar; kesin tarih yok. Pilotun kimlerle yapılacağı ve başarı ölçütleri hâlâ açıktır (`docs/faz2-plan.md` §1). Bu karar canlıya alım
+yaklaşık bir aylık tatilde başlar; kesin tarih yok. Pilotun kimlerle yapılacağı ve başarı ölçütleri hâlâ açıktır (`docs/faz2-plan.md` §1). **Çıkarım (PM, kullanıcının cümlesi değil):** bu karar canlıya alım
 işlerinin (sunucu K-02, SMTP K-05, güvenilir proxy TD-021) tatilden önce bitmesi gerektiği anlamına gelir; işler ayrı kartlarla açılır.
 
 ## 2026-11-15 · LinkedIn ile giriş kapalı kalır
