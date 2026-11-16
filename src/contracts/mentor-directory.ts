@@ -162,6 +162,7 @@ export const mentorCardSchema = z
   .object({
     userId: z.string(),
     displayName: z.string(),
+    photoSrc: z.string().optional(),
     headline: z.string().nullable(),
     mentorType: z.enum(MENTOR_TYPES),
     departmentName: z.string(),

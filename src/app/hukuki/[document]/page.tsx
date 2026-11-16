@@ -5,6 +5,7 @@ import { CURRENT_CONSENT_VERSIONS } from '@/contracts/privacy';
 import { Badge, Card } from '@/components/ui';
 const documents = {
   aydinlatma: 'PRIVACY_NOTICE',
+  'profil-fotografi': 'PROFILE_PHOTO_VISIBILITY',
   'kullanim-sartlari': 'TERMS_OF_USE',
   'yurt-disi-aktarim': 'CROSS_BORDER_TRANSFER',
   'staj-arayan-gorunurlugu': 'JOB_SEEKER_VISIBILITY',

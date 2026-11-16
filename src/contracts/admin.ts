@@ -388,6 +388,7 @@ export type ResolveUnmatchedValueOutput = z.infer<typeof resolveUnmatchedValueOu
  * sözleşme sunucu koduna bağlanmaz).
  */
 export const AUDIT_ACTION_NAMES = [
+  'PROFILE_PHOTO_REMOVE',
   'DOCUMENT_APPROVE',
   'DOCUMENT_REJECT',
   'ROLE_CORRECT',

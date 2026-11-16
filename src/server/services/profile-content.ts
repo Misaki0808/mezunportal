@@ -1,4 +1,5 @@
 import 'server-only';
+import { photoSources } from './photo-presentation';
 import { hasPersonalDataPattern } from '@/lib/personal-data';
 
 import {
@@ -133,7 +134,9 @@ async function buildMyProfile(tx: Tx, userId: string, now: Date): Promise<MyProf
     tagId: row.tagId,
     label: row.tag.label ?? '',
   }));
+  const photos = await photoSources(tx, [userId], { viewerId: userId }, now);
   return {
+    ...(photos.has(userId) ? { photoSrc: photos.get(userId)! } : {}),
     userId,
     displayName: user.name,
     headline: profile?.headline ?? null,
@@ -690,5 +693,9 @@ export async function getProfile(
       ...(profile?.tags ?? []).map((row) => row.updatedAt),
     ),
   };
-  return view as ProfileView;
+  const photos = await photoSources(db, [target.id], { viewerId }, now);
+  return {
+    ...view,
+    ...(photos.has(target.id) ? { photoSrc: photos.get(target.id)! } : {}),
+  } as ProfileView;
 }

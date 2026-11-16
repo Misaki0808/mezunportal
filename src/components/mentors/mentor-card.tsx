@@ -35,6 +35,7 @@ export function MentorCard({
       {/* Önce KİM: baş harf avatarı + ad + güncel konum; müsaitlik ve tür rozetleri hemen altında. */}
       <div className="flex items-start gap-3">
         <Avatar
+          src={mentor.photoSrc}
           name={mentor.displayName}
           size="md"
           className={compact ? undefined : '!size-12'}

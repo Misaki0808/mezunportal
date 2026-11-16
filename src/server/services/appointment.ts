@@ -1,4 +1,5 @@
 import 'server-only';
+import { photoSources } from './photo-presentation';
 import { emitEvent } from './event';
 
 import {
@@ -167,6 +168,7 @@ function toView(
   viewerId: string,
   now: Date,
   fullMonths: ReadonlySet<string>,
+  photos = new Map<string, string>(),
 ): AppointmentView {
   const role = row.mentorId === viewerId ? ('MENTOR' as const) : ('MENTEE' as const);
   const counterpart = nameOf(row, viewerId);
@@ -194,7 +196,11 @@ function toView(
     id: row.id,
     status: row.status,
     role,
-    counterpart: { userId: counterpart.id, displayName: counterpart.name },
+    counterpart: {
+      userId: counterpart.id,
+      displayName: counterpart.name,
+      ...(photos.has(counterpart.id) ? { photoSrc: photos.get(counterpart.id)! } : {}),
+    },
     startsAt: row.startsAt,
     endsAt: row.endsAt,
     mode: row.mode,
@@ -565,7 +571,16 @@ export async function requestAppointment(
   }, TX);
   emitEvent(deps.db, userId, { type: 'APPOINTMENT_REQUESTED', props: { mode: view.mode } });
   await dispatchNotices(deps, notices);
-  return view;
+  const photos = await photoSources(deps.db, [view.counterpart.userId], { viewerId: userId }, now);
+  return {
+    ...view,
+    counterpart: {
+      ...view.counterpart,
+      ...(photos.has(view.counterpart.userId)
+        ? { photoSrc: photos.get(view.counterpart.userId)! }
+        : {}),
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -660,7 +675,16 @@ export async function respondAppointment(
   if (view.status === 'CONFIRMED')
     emitEvent(deps.db, userId, { type: 'APPOINTMENT_CONFIRMED', props: { mode: view.mode } });
   await dispatchNotices(deps, notices);
-  return view;
+  const photos = await photoSources(deps.db, [view.counterpart.userId], { viewerId: userId }, now);
+  return {
+    ...view,
+    counterpart: {
+      ...view.counterpart,
+      ...(photos.has(view.counterpart.userId)
+        ? { photoSrc: photos.get(view.counterpart.userId)! }
+        : {}),
+    },
+  };
 }
 
 export async function cancelAppointment(
@@ -711,7 +735,16 @@ export async function cancelAppointment(
   await dispatchNotices(deps, notices);
   // Etkinlik silme `appointment-jobs` süpürmesindedir (iptal edilmiş + etkinlik kimliği dolu satır); burada hızlı deneme.
   await tryDeleteEvent(deps, parsed.appointmentId);
-  return view;
+  const photos = await photoSources(deps.db, [view.counterpart.userId], { viewerId: userId }, now);
+  return {
+    ...view,
+    counterpart: {
+      ...view.counterpart,
+      ...(photos.has(view.counterpart.userId)
+        ? { photoSrc: photos.get(view.counterpart.userId)! }
+        : {}),
+    },
+  };
 }
 
 /** İptal edilmiş randevunun takvim etkinliğini siler; hata sessizdir (süpürme yeniden dener). */
@@ -771,7 +804,16 @@ export async function setMeetLink(
     return toView(next, userId, now, new Set());
   }, TX);
   await dispatchNotices(deps, notices);
-  return view;
+  const photos = await photoSources(deps.db, [view.counterpart.userId], { viewerId: userId }, now);
+  return {
+    ...view,
+    counterpart: {
+      ...view.counterpart,
+      ...(photos.has(view.counterpart.userId)
+        ? { photoSrc: photos.get(view.counterpart.userId)! }
+        : {}),
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -866,8 +908,14 @@ export async function listMyAppointments(
     }
     const items = rows.slice(0, parsed.limit);
     const full = (await fullMonthsForRows(tx, items, userId)).get(userId) ?? new Set<string>();
+    const photos = await photoSources(
+      tx,
+      items.map((row) => nameOf(row, userId).id),
+      { viewerId: userId },
+      now,
+    );
     return appointmentPageSchema.parse({
-      items: items.map((row) => toView(row, userId, now, full)),
+      items: items.map((row) => toView(row, userId, now, full, photos)),
       nextCursor: rows.length > parsed.limit ? (items.at(-1)?.id ?? null) : null,
     });
   }, TX);
@@ -894,7 +942,8 @@ export async function getAppointment(
     await requireMember(tx, userId, now);
     const row = await loadParticipantRow(tx, userId, parsed.appointmentId);
     const full = (await fullMonthsForRows(tx, [row], userId)).get(userId) ?? new Set<string>();
-    return toView(row, userId, now, full);
+    const photos = await photoSources(tx, [nameOf(row, userId).id], { viewerId: userId }, now);
+    return toView(row, userId, now, full, photos);
   }, TX);
 }
 

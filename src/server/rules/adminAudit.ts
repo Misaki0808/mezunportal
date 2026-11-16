@@ -11,6 +11,7 @@ export { looksLikePersonalData } from '@/lib/personal-data';
  */
 
 export const ADMIN_ACTIONS = {
+  PROFILE_PHOTO_REMOVE: { reasonRequired: true },
   /** Mezun belgesi onayı. */
   DOCUMENT_APPROVE: { reasonRequired: false },
   /** Mezun belgesi reddi. */

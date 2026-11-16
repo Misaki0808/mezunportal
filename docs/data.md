@@ -193,3 +193,12 @@ kullanıcı verisini siler; PR'da onay ister. `p2_04_*`, `p2_06_*`, `contact_req
 - `EmailLog` 6 ay; `Event` 24 ay sonra kullanıcıdan koparılır (userId `null`).
 - Hesap silmede kişisel alanlar anında temizlenir, dosyalar silinir; yayınlanmış içerik kullanıcının
   seçimine göre silinir (varsayılan) ya da yazar bağı koparılarak kalır (K-09, `docs/decisions.md`).
+
+### Profil fotoğrafı (Faz 2 eki)
+
+`ProfilePhoto` kullanıcı başına yalnız iki özel WebP türevinin anahtarını ve değişme zamanını
+saklar; orijinal dosya yoktur. Ayrı `PROFILE_PHOTO_VISIBILITY` rızası mevcut yalnız eklenen
+`Consent` günlüğündedir; zorunlu kayıt onaylarına dahil değildir. Son güncel rıza gösterimi
+belirler. Rıza geri alma ve hesap silme satırla birlikte dosyaları kaldırır; işlem kaydı fotoğraf
+ve depolama anahtarı içermez. Kanonik alanlar Prisma şemasında, boyut/biçim sözleşmesi
+`src/contracts/profile-photo.ts` içindedir.

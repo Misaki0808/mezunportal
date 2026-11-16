@@ -71,7 +71,7 @@ export function ProfileView({
     <article className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-10 pt-10 [overflow-wrap:anywhere] sm:pt-16">
       <header className="flex flex-col gap-4">
         <div className="flex items-start gap-4">
-          <Avatar name={profile.displayName} size="lg" decorative />
+          <Avatar src={profile.photoSrc} name={profile.displayName} size="lg" decorative />
           <div className="min-w-0 flex-1">
             <h1 className="break-words text-3xl font-semibold tracking-tight text-fg">
               {profile.displayName}

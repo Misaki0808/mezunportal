@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -170,6 +170,15 @@ describe('ErrorState', () => {
 });
 
 describe('Avatar', () => {
+  it('geri alınmış/kaldırılmış görsel yüklenmeyince baş harfe döner; yeni sürüm tekrar denenir', () => {
+    const { rerender } = renderUi(<Avatar name="Örnek Kişi" src="/photo?v=1" />);
+    fireEvent.error(screen.getByRole('img', { name: 'Örnek Kişi' }));
+    expect(screen.getByRole('img', { name: 'Örnek Kişi' }).tagName).toBe('SPAN');
+    expect(screen.getByText('ÖK')).toBeInTheDocument();
+    rerender(<Avatar name="Örnek Kişi" src="/photo?v=2" />);
+    expect(screen.getByRole('img', { name: 'Örnek Kişi' }).tagName).toBe('IMG');
+  });
+
   it('baş harfleri tr-TR kuralıyla büyütür (i → İ, ı → I)', () => {
     expect(initialsOf('istanbul üni')).toBe('İÜ');
     expect(initialsOf('ışıl çelik')).toBe('IÇ');
