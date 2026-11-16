@@ -57,11 +57,11 @@ Mercan, Nane, yazı tipleri). Ölçü ilkeleri (değerler `globals.css`'te):
   olmaz: liste içeriği kartın içinde ince çizgiyle ayrılmış satırlardır, aynı tip kutulardan duvar örülmez.
 - **Yan menü iki temada da lacivert** (`side-*` token'ları; kullanıcının sevdiği renk açık temada burada yaşar). Bilgisayarda (≥ 1024 px) 252 px, sabit,
   tam boy: logo, ana grup (yalnız gerçek rotası olan öğeler; yer tutucu ya da "yakında" öğesi yok), "Hesap" grubu (Bildirimler + okunmamış rozeti,
-  Profilim), yöneticide "Yönetici" grubu, altta kullanıcı kartı. Etkin öğe: etkin zemin + solda 3 px Mercan çizgi. Kart yalnız gerçek veriyi yazar
+  Profilim `/profil`, Hesap ayarları `/hesap`), yöneticide "Yönetici" grubu, altta kullanıcı kartı (hesap ayarlarına bağlanır). Etkin öğe: etkin zemin + solda 3 px Mercan çizgi. Kart yalnız gerçek veriyi yazar
   (ad, bölüm kodu · sınıf ya da rol); veri yoksa satır çıkar, uydurulmaz. Koyu temada yan menü içerikten bir ton koyudur ve sağ kenarı çizgilidir.
-- **Üst çubuk** (bilgisayar, 72 px, alt çizgili): arama, tema düğmesi, bildirim zili (okunmamışta nokta), avatar. Arama şimdilik **deneyim aramasıdır**
+- **Üst çubuk** (bilgisayar, 72 px, alt çizgili): arama, tema düğmesi, bildirim zili (okunmamışta nokta), avatar (hesap ayarları `/hesap`). Arama şimdilik **deneyim aramasıdır**
   (`/deneyimler?q=`, en az iki karakter); genel arama ekranı yok, olunca yönü değişir. Telefon üst çubuğu yapışkandır: logo, tema, zil, avatar.
-- **Telefon:** yan menü yok; altta beş sekme (Ana sayfa, İlanlar, Mentorlar, Randevular, Profil). Deneyimler, Etkinlikler ve Ders rehberi sekmede yoktur:
+- **Telefon:** yan menü yok; altta beş sekme (Ana sayfa, İlanlar, Mentorlar, Randevular, Profil `/profil`). Deneyimler, Etkinlikler ve Ders rehberi sekmede yoktur:
   ana sayfadaki kısayollardan ve Profil ekranından açılır.
 - **İçerik genişliği:** `AppShellClient` içeriği en çok 1280 px, sola yaslı, telefonda 16 px, bilgisayarda 28/32 px dolguyla verir; sayfa kendi
   ortalanmış dar sütununu (`mx-auto max-w-* px-* py-*`) kurmaz. Eski sayfaların kapsayıcıları kabuğun `.app-content` kuralıyla (`globals.css`) ortalanmaz ve
