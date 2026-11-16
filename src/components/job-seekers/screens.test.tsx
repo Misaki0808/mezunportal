@@ -199,3 +199,10 @@ it('aday arama ve iletişim ekranları ortak geri bağlantısını kullanır (ka
   );
   expect(screen.getByRole('link', { name: 'Adaylara dön' })).toHaveAttribute('href', '/adaylar');
 });
+it('ayar ekranı ortak hesap çerçevesinde: HESAP üst etiketi, tek h1, hesap ayarlarına dönüş (kart 407)', () => {
+  renderUi(<SeekerSettingsScreen initial={initial} />);
+  expect(screen.getByRole('heading', { level: 1, name: 'İş arayanlara görün' })).toBeVisible();
+  expect(screen.getByText('HESAP')).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Hesap ayarları' })).toHaveAttribute('href', '/hesap');
+  expect(screen.queryByText('İLANLAR')).not.toBeInTheDocument();
+});

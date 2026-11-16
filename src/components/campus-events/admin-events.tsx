@@ -1,4 +1,5 @@
 'use client';
+import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -198,15 +199,14 @@ export function AdminEvents({
   const otherEvents = events.filter((event) => event.status !== 'PENDING');
   function eventCards(items: Item[]) {
     return (
-      <ul className="space-y-3">
+      <AdminList>
         {items.map((event) => (
-          <Card
-            as="li"
+          <AdminListItem
             data-queue-row={event.status === 'PENDING' ? event.id : undefined}
             data-event-row={event.id}
             data-event-status={event.status}
             key={event.id}
-            className="list-none"
+            className="list-none lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-6"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <h3 className="min-w-0 break-words font-semibold">{event.title}</h3>
@@ -221,7 +221,7 @@ export function AdminEvents({
               }).format(new Date(event.startsAt))}
             </p>
             {event.status === 'PENDING' && (
-              <div className="mt-4 flex flex-wrap gap-3">
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0">
                 <Button
                   data-queue-action
                   loading={action.busy}
@@ -239,7 +239,7 @@ export function AdminEvents({
               </div>
             )}
             {event.status === 'PUBLISHED' && (
-              <div className="mt-4 flex flex-wrap gap-3">
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0">
                 <Link
                   className={buttonClasses({ variant: 'secondary' })}
                   href={`/yonetim/etkinlikler/${event.id}`}
@@ -252,9 +252,9 @@ export function AdminEvents({
                 </Button>
               </div>
             )}
-          </Card>
+          </AdminListItem>
         ))}
-      </ul>
+      </AdminList>
     );
   }
   return (

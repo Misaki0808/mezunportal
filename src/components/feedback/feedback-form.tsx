@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { AccountFrameView } from '@/components/account/account-frame';
 import { Button, Field, Radio, Textarea } from '@/components/ui';
 import type { FeedbackView } from '@/contracts/feedback';
 import type { ErrorCode } from '@/lib/errors';
@@ -10,6 +10,7 @@ import { submitSessionFeedback } from '@/server/actions/feedback';
 export function FeedbackForm({ view }: { view: FeedbackView }) {
   const t = useTranslations('feedback');
   const errors = useTranslations('errors.codes');
+  const frame = useTranslations('accountFrame');
   const [happened, setHappened] = useState<boolean | null>(null);
   const [helpful, setHelpful] = useState<boolean | null>(null);
   const [note, setNote] = useState('');
@@ -39,13 +40,15 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
     }
   }
   return (
-    <div className="flex min-h-[calc(100dvh-10rem)] w-full max-w-xl flex-col">
-      <Link href="/hesap/gorusmeler" className="inline-flex min-h-11 items-center text-primary">
-        ← {t('backToSessions')}
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold">{t('title')}</h1>
-      <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
-      <p className="mt-4 font-medium">
+    <AccountFrameView
+      eyebrow={frame('eyebrow')}
+      backLabel={t('backToSessions')}
+      back={{ href: '/hesap/gorusmeler' }}
+      title={t('title')}
+      description={t('description')}
+      width="max-w-2xl"
+    >
+      <p className="font-medium">
         {view.counterpartName} ·{' '}
         {new Intl.DateTimeFormat('tr-TR', {
           dateStyle: 'long',
@@ -54,12 +57,12 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
         }).format(new Date(view.startsAt))}
       </p>
       {done ? (
-        <p role="status" className="mt-8 rounded-card bg-success-soft p-4">
+        <p role="status" className="rounded-card bg-success-soft p-4">
           {view.submitted ? t('already') : t('success')}
         </p>
       ) : (
         <form
-          className="mt-7 flex flex-1 flex-col gap-6"
+          className="flex flex-1 flex-col gap-6"
           onSubmit={(event) => {
             event.preventDefault();
             void submit();
@@ -129,6 +132,6 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
           </div>
         </form>
       )}
-    </div>
+    </AccountFrameView>
   );
 }

@@ -25,3 +25,11 @@ it('öğrencinin gerçek boş gelen/giden kutusu mentor kurulumuna dönüşmez',
   expect(screen.queryByRole('link', { name: 'Mentor ayarlarını aç' })).toBeNull();
   expect(screen.getByRole('link', { name: /Mentor bul/ })).toHaveAttribute('href', '/mentorlar');
 });
+it('ortak hesap çerçevesinde: HESAP üst etiketi, tek h1 ve hesap ayarlarına dönüş (kart 407)', () => {
+  renderUi(
+    <ReviewInbox sent={{ items: [], nextCursor: null }} received={null} initialSettings={null} />,
+  );
+  expect(screen.getByRole('heading', { level: 1, name: 'CV incelemeleri' })).toBeVisible();
+  expect(screen.getByText('HESAP')).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Hesap ayarları' })).toHaveAttribute('href', '/hesap');
+});

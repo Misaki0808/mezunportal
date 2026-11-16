@@ -121,7 +121,7 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
     );
   return (
     <AdminFrame title={t('users.detail')}>
-      <section className="rounded-card border border-border p-5 shadow-card">
+      <section className="rounded-card border border-border bg-surface p-5 shadow-card">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-xl font-semibold">{initial.displayName}</h2>
           <Badge tone={initial.status === 'SUSPENDED' ? 'danger' : 'success'}>
@@ -163,7 +163,7 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
         <h2 className="text-xl font-semibold">{t('users.memberships')}</h2>
         <ul className="mt-4 grid gap-3">
           {initial.memberships.map((m) => (
-            <li key={m.id} className="rounded-card border border-border p-5">
+            <li key={m.id} className="rounded-card border border-border bg-surface p-5">
               <h3 className="text-lg font-semibold">{m.departmentName}</h3>
               <p className="mt-1">
                 {roleName(m.role)} ·{' '}
