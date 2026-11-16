@@ -7,7 +7,7 @@ export function AdminList({ className, ...props }: ComponentProps<'ul'>) {
     <ul
       {...props}
       className={cn(
-        'grid min-w-0 gap-3 lg:gap-0 lg:divide-y lg:divide-border lg:rounded-card lg:border lg:border-border lg:bg-surface lg:shadow-card',
+        'grid min-w-0 gap-3 lg:gap-0 lg:rounded-card lg:border lg:border-border lg:bg-surface lg:shadow-card',
         className,
       )}
     />
@@ -22,7 +22,7 @@ export function AdminListItem({
     <li
       {...props}
       className={cn(
-        'min-w-0 rounded-card border border-border bg-surface shadow-card lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none',
+        'min-w-0 rounded-card border border-border bg-surface shadow-card lg:rounded-none lg:border-x-0 lg:border-t-0 lg:last:border-b-0 lg:bg-transparent lg:shadow-none',
         !flush && 'p-4 lg:px-5 lg:py-4',
         className,
       )}
