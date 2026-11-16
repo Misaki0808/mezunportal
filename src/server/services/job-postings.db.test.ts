@@ -653,6 +653,44 @@ describe('yazar: kapat', () => {
 });
 
 describe('okuyucu: arama, detay, süzgeçler (K-07)', () => {
+  it('sektör sözlük şirketi üzerinden daraltır; havacılık savunmadan ve yabancı kapsamdan ayrıdır', async () => {
+    const w = await world();
+    const aviation = await db.sector.create({
+      data: { name: 'Havacılık deneme', normalizedName: `aviation-${w.student}` },
+    });
+    const defense = await db.sector.create({
+      data: { name: 'Savunma deneme', normalizedName: `defense-${w.student}` },
+    });
+    const a = await db.company.create({
+      data: {
+        name: 'Havayolu deneme',
+        normalizedName: `airline-${w.student}`,
+        aliases: [],
+        sectorId: aviation.id,
+      },
+    });
+    const d = await db.company.create({
+      data: {
+        name: 'Savunma deneme',
+        normalizedName: `defenseco-${w.student}`,
+        aliases: [],
+        sectorId: defense.id,
+      },
+    });
+    const airId = await published(w, w.alumni, { companyId: a.id });
+    const defenseId = await published(w, w.academic, { companyId: d.id });
+    const freeId = await published(w, w.alumni);
+    const result = await searchJobPostings(deps, w.student, { sectorId: aviation.id });
+    expect(result.items.map((item) => item.id)).toEqual([airId]);
+    expect(result.items.map((item) => item.id)).not.toContain(defenseId);
+    expect(result.items.map((item) => item.id)).not.toContain(freeId);
+    expect((await searchJobPostings(deps, w.foreignStudent, { sectorId: aviation.id })).total).toBe(
+      0,
+    );
+    expect(
+      (await searchJobPostings(deps, w.student, { sectorId: aviation.id, kind: 'JOB' })).total,
+    ).toBe(0);
+  });
   it('yalnız aynı üniversite, yayında ve süresi dolmamış; yazar adı/kimliği çıkmaz', async () => {
     const w = await world();
     const open = await published(w);
