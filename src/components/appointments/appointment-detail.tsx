@@ -1,4 +1,5 @@
 'use client';
+import { Avatar } from '@/components/ui';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -16,6 +17,7 @@ import {
 import type { ActionResult } from '@/contracts/result';
 import {
   Button,
+  ChevronLeftIcon,
   Field,
   Input,
   Modal,
@@ -126,14 +128,16 @@ export function AppointmentDetail({
   const confirmBlocked = !a.actions.canConfirm && a.actions.confirmBlockedReason !== null;
 
   return (
-    <article className="[&_.text-sm]:text-base mx-auto flex w-full max-w-lg flex-col gap-6 px-5 pb-10 pt-10 sm:pt-16">
+    <article className="[&_.text-sm]:text-base flex w-full max-w-2xl flex-col gap-6">
       <div>
         <Link
           href="/randevular"
-          className="press-row mb-4 inline-flex min-h-11 items-center text-base font-medium text-primary"
+          className="press-row -ml-2 mb-3 inline-flex min-h-11 items-center gap-1 rounded-control px-2 text-base font-medium text-primary hover:bg-primary-soft hover:text-on-primary-soft"
         >
-          ← {t('back')}
+          <ChevronLeftIcon aria-hidden="true" />
+          {t('back')}
         </Link>
+        <Avatar src={a.counterpart.photoSrc} name={a.counterpart.displayName} decorative />
         <PageHeader eyebrow={t('eyebrow')} title={t('with', { name: a.counterpart.displayName })}>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <AppointmentStatusBadge status={a.status} />
@@ -216,7 +220,7 @@ export function AppointmentDetail({
         </section>
       )}
 
-      <dl className="flex flex-col divide-y divide-border rounded-card border border-border bg-bg px-4">
+      <dl className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface px-4 shadow-card sm:px-5">
         <div className="py-3">
           <dt className="text-base text-fg-muted">{t('when')}</dt>
           <dd className="text-lg font-semibold text-fg">
@@ -263,10 +267,10 @@ export function AppointmentDetail({
         )}
       </dl>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         {feedbackAvailable && (
           <Link
-            className={buttonClasses({ fullWidth: true })}
+            className={buttonClasses() + ' w-full sm:w-auto'}
             href={`/hesap/gorusme/${encodeURIComponent(a.id)}`}
           >
             {feedback('open')}
@@ -275,7 +279,7 @@ export function AppointmentDetail({
         {confirmBlocked && (
           <Button
             size="lg"
-            fullWidth
+            className="w-full sm:w-auto"
             disabled
             disabledReason={
               a.actions.confirmBlockedReason === 'CAPACITY_FULL' ? t('capacityFull') : t('expired')
@@ -287,7 +291,7 @@ export function AppointmentDetail({
         {a.actions.canConfirm && (
           <Button
             size="lg"
-            fullWidth
+            className="w-full sm:w-auto"
             loading={pending === 'confirm'}
             onClick={() =>
               void run('confirm', () =>
@@ -299,13 +303,17 @@ export function AppointmentDetail({
           </Button>
         )}
         {a.actions.canDecline && (
-          <Button variant="secondary" fullWidth onClick={() => openDialog('decline')}>
+          <Button
+            variant="secondary"
+            className="w-full sm:w-auto"
+            onClick={() => openDialog('decline')}
+          >
             {t('decline')}
           </Button>
         )}
         {a.actions.canDownloadIcs && (
           <a
-            className={buttonClasses({ variant: 'secondary', fullWidth: true })}
+            className={buttonClasses({ variant: 'secondary' }) + ' w-full sm:w-auto'}
             href={appointmentIcsHref(a.id)}
             download
           >
@@ -313,11 +321,13 @@ export function AppointmentDetail({
           </a>
         )}
         {a.actions.canCancel && (
-          <Button variant="ghost" fullWidth onClick={() => openDialog('cancel')}>
+          <Button variant="ghost" className="w-full sm:w-auto" onClick={() => openDialog('cancel')}>
             {t('cancel')}
           </Button>
         )}
-        {a.status === 'CONFIRMED' && <p className="text-base text-fg-muted">{t('emailShared')}</p>}
+        {a.status === 'CONFIRMED' && (
+          <p className="w-full text-base text-fg-muted">{t('emailShared')}</p>
+        )}
       </div>
 
       <Modal

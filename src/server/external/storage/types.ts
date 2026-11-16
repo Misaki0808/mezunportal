@@ -5,7 +5,11 @@
  */
 export interface StorageAdapter {
   /** Dosyayı yazar (aynı anahtar varsa üzerine). Yazma atomiktir: yarım dosya görünmez. */
-  put(key: string, data: Uint8Array, meta: { contentType: 'application/pdf' }): Promise<void>;
+  put(
+    key: string,
+    data: Uint8Array,
+    meta: { contentType: 'application/pdf' | 'image/webp' },
+  ): Promise<void>;
   /** Dosyayı okur; yoksa `null`. */
   get(key: string): Promise<Uint8Array | null>;
   /** Dosyayı siler; yoksa sessizce geçer (idempotent). */

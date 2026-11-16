@@ -351,6 +351,12 @@ describe('mentor ayarları', () => {
   });
 });
 
+/** Şimdiden `days` gün sonrasına 30 dakikalık randevu zamanı (yaklaşan/geçmiş ayrımı saate bağlıdır). */
+const inDays = (days: number) => {
+  const startsAt = new Date(Date.now() + days * 86_400_000);
+  return { startsAt, endsAt: new Date(startsAt.getTime() + 30 * 60_000) };
+};
+
 const view = (
   over: Partial<AppointmentView> = {},
   actionOver: Partial<AppointmentView['actions']> = {},
@@ -658,23 +664,60 @@ describe('randevularım', () => {
     expect(await screen.findByText('Onaylandı')).toBeInTheDocument();
   });
 
-  it('geniş ekranda (xl) kapsayıcı genişler ve kartlar iki sütun; telefon ve tablet sütunu aynı kalır', () => {
+  it('liste "Yaklaşan" ve "Geçmiş" bölümlerine ayrılır; her bölüm tek kartta çizgiyle ayrılmış satırlardır', () => {
     renderUi(
       <MyAppointments
-        initial={page([view(), view({ id: 'a2' })])}
+        initial={page([
+          view({ id: 'a1', status: 'CONFIRMED', ...inDays(3) }),
+          view({ id: 'a2', status: 'REQUESTED', ...inDays(4) }),
+          view({ id: 'a3', status: 'COMPLETED' }),
+          view({ id: 'a4', status: 'DECLINED', ...inDays(5) }),
+        ])}
         initialRole="MENTOR"
         showSettings={false}
         list={vi.fn()}
       />,
     );
+    const upcoming = screen.getByRole('region', { name: 'Yaklaşan' });
+    const past = screen.getByRole('region', { name: 'Geçmiş' });
+    expect(within(upcoming).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(past).getAllByRole('listitem')).toHaveLength(2);
+    // Kutu duvarı yok: bölümün listesi tek kart, satırlar bölücüyle ayrılır.
+    const list = within(upcoming).getByRole('list');
+    expect(list).toHaveClass('divide-y', 'rounded-card', 'shadow-card');
+    // Başlık ve içerik genişliği: kabuk dolgusunu verir, sayfa kendi dolgusunu yazmaz.
+    const container = screen.getByRole('heading', { level: 1 }).closest('.max-w-4xl');
+    expect(container).toHaveClass('w-full', 'max-w-4xl');
+    expect(container!.className).not.toMatch(/\bmx-auto\b|\bpx-\d/);
+  });
 
-    const container = screen.getByRole('heading', { level: 1 }).closest('.max-w-lg');
-    // 1920'de 1664 px ana alanda 512 px'lik sütun kalıyordu (%31); ≥1280 px'te genişler, altı (390/768) değişmez.
-    expect(container).toHaveClass('max-w-lg', 'xl:max-w-5xl');
-    const list = screen.getAllByRole('listitem')[0]!.parentElement;
-    expect(list).toHaveClass('flex', 'flex-col', 'xl:grid', 'xl:grid-cols-2');
-    // Ekran genişliği ayrımı yalnız xl: daha küçük bir kırılma (md/lg) tablet sütununu bozardı.
-    expect(container!.className).not.toMatch(/\b(?:md|lg|sm):max-w-/);
+  it('geçmiş bir tarihteki onaylı randevu "Geçmiş" bölümüne düşer; satırda tarih bloğu, kişi, saat aralığı ve tek eylem vardır', () => {
+    renderUi(
+      <MyAppointments
+        initial={page([
+          view({
+            id: 'old',
+            status: 'CONFIRMED',
+            startsAt: new Date('2020-03-03T09:00:00Z'),
+            endsAt: new Date('2020-03-03T09:30:00Z'),
+          }),
+        ])}
+        initialRole="MENTOR"
+        showSettings={false}
+        list={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('region', { name: 'Yaklaşan' })).not.toBeInTheDocument();
+    const past = screen.getByRole('region', { name: 'Geçmiş' });
+    const row = within(past).getAllByRole('listitem')[0]!;
+    expect(within(row).getByText('MAR')).toBeInTheDocument();
+    expect(within(row).getByText('3')).toBeInTheDocument();
+    expect(within(row).getByRole('heading', { level: 3 })).toBeInTheDocument();
+    expect(within(row).getAllByRole('link')).toHaveLength(1);
+    expect(within(row).getByRole('link', { name: 'Aç' })).toHaveAttribute(
+      'href',
+      '/randevular/old',
+    );
   });
 
   it('boş durumlar yönlendirir', async () => {
@@ -838,5 +881,31 @@ describe('randevu detayı: başlık ve eylem sonrası odak', () => {
     await user.click(screen.getByRole('button', { name: 'Onayla' }));
     expect(await screen.findByRole('alert')).toHaveFocus();
     expect(screen.queryByText('İşlem kaydedildi.')).toBeNull();
+  });
+});
+
+describe('randevu listesi: karşı tarafın fotoğrafı (kart 388 + 387)', () => {
+  it('fotoğraf adresi varsa satırda küçük avatar olarak çıkar; yoksa baş harfler', () => {
+    const withPhoto = view({ id: 'p1', ...inDays(2) });
+    withPhoto.counterpart = {
+      ...withPhoto.counterpart,
+      photoSrc: '/api/profil-fotografi/u2?size=96&v=1',
+    };
+    const without = view({ id: 'p2', ...inDays(3) });
+    const listPage = (items: AppointmentView[]) => ({ items, nextCursor: null });
+    renderUi(
+      <MyAppointments
+        initial={listPage([withPhoto, without])}
+        initialRole="MENTOR"
+        showSettings={false}
+        list={vi.fn()}
+      />,
+    );
+    const rows = screen.getAllByRole('listitem');
+    expect(rows[0]!.querySelector('img')?.getAttribute('src')).toContain(
+      '/api/profil-fotografi/u2',
+    );
+    expect(rows[1]!.querySelector('img')).toBeNull();
+    expect(rows[1]).toHaveTextContent('DA');
   });
 });

@@ -1076,6 +1076,14 @@ sağlayıcı kapalıdır, ileride istenirse yeniden açmak anahtar vermekten iba
 LinkedIn profil PDF'iyle otomatik doldurma ayrı bir karardır (K-04, Gemini) ve bu kayıttan etkilenmez.
 **Tema düğmesi: Sistem / Açık / Koyu, çerezde (kart 383, kullanıcı kararı 15 Kas: "hem karanlık hem açık mod olacak").** Tema yalnız `prefers-color-scheme` ile değişiyordu, düğme yoktu: koyu Mac kullanan kullanıcı açık modu hiç görmüyordu. (1) **Üç durum**, varsayılan Sistem (bugünkü davranış); seçim `theme` çerezinde (`system|light|dark`, httpOnly değil, 1 yıl, `SameSite=Lax`, https'te `Secure`), veritabanına yazılmaz. (2) **Yanıp sönme yok:** sunucu `<html data-theme>`'yi çerezden yazar (kök düzen çerezi okur; düzen zaten oturum için dinamikti), geçersiz/boş çerez `system`. Betik gerekmez: JavaScript kapalıyken de ilk boyama doğrudur; Sistem'de cihaz ayarı CSS medya sorgusundan gelir. (3) **Token kaynağı:** koyu değerler `globals.css`'te iki blokta (elle `:root[data-theme='dark']` ve sistem koyusu `@media … :root:not([data-theme='light'])`) birebir tekrar eder; CSS bir bildirim bloğunu hem medya koşuluna hem öznitelik seçiciye bağlayamaz. `light-dark()` ile tek kaynak denendi ve bırakıldı: Safari < 17.5 ve Chrome < 123'te bütün token'lar geçersiz olur, sayfa renksiz kalır. Sapmayı `contrast.test.ts` yakalar (iki bloğun bildirimleri eşit, `color-scheme` üç durumda doğru). `dark:` yardımcı sınıfı aynı kurala bağlı `@custom-variant`tır. (4) **Tarayıcı çubuğu rengi** (`theme-color`) seçimi izler (`generateViewport` çerezi okur; düğme anında günceller). (5) **Çerez bildirimi:** aydınlatma metninin "Çerezler" bölümü "yalnız zorunlu çerez" diyordu; görünüm tercihi işlevsel çerezi eklendiği için üç yerde (`messages/tr.json`, `docs/legal-drafts.md`, `docs/security.md`) düzeltildi. Metin sürümü `taslak-1` kalır; taslağın geri kalanı gibi hocanın/hukukun onayını bekler. (6) Hata ekranı (`global-error`) kök düzenin yerine geçtiği için çerezi istemcide okuyup uygular.
 
+### Yerel profil fotoğrafı (16 Kasım 2026, kart 388)
+
+Kullanıcı isteğiyle Faz 3 fikri pilot öncesi Faz 2 ekine alındı. Gösterim ayrı, geri alınabilir
+rıza ve K-07 ile sınırlı; orijinal yerine metadata içermeyen iki kare WebP saklanır.
+PM onayıyla ücretsiz `sharp` **0.35.5** doğrudan sabitlendi (Next'in getirdiği sürüm): görüntü
+çözme uygulamanın güvenlik sınırıdır, Next'in özel iç API'sine/geçişli bağımlılığına bağlanmaz.
+24 MP ve 5 MB sınırı, katı çözme hatası, animasyon/çok sayfa reddi ve tek işlem bütçesi
+küçük sunucu kaynaklarını korur. Depolama/sunum herkese açık URL kullanmaz.
 ## 2026-11-16 · Kabuk e2e gerilemeleri: Profilim `/profil`, hesap ayarları `/hesap` (kart 400)
 
 #185'ten sonra main'de 4 e2e kırmızıya düştü (158/162). Kökleri tek tek ölçüldü: (1) **Randevu saat şeridi 360 ve 390 px'te 4 px taşıyordu**: şerit (`slot-picker`) eski sayfa kapsayıcısının
@@ -1086,3 +1094,25 @@ yeniden kuruldu: ekranın içinde ve çakışmadan durur; metin %125 büyütül�
 "Profilim `/hesap`" yanlış eşleşmeydi): yan menü Hesap grubunda "Profilim" `/profil`, ayrı "Hesap ayarları" `/hesap`; telefon alt çubuğundaki "Profil" sekmesi `/profil`; hesap ayarlarına kullanıcı kartı
 (yan menü, "Hesap ayarları: <ad>") ve üst çubuktaki avatar ("Hesabım") götürür. (4) **SSS "kimliksiz görünür" testi gevşetilmedi, kapsamı doğru yere taşındı:** soran öğrencinin kendi görünümünde artık
 adı kabuğun kullanıcı kartı taşır (sızıntı değil); iddia SSS içeriği (`main`) için ve ayrıca BAŞKA bir kullanıcının (cevaplayan mentor) tam sayfa HTML'i için ölçülür.
+
+## 2026-11-16 · Görünüm A: Hesap, Profil, Bildirimler, Randevular ve telefon Menü alt sayfası (kart 387)
+
+Kullanıcı kararı (15 Kas) uygulamanın devamı: “A kanka ya A'yı beğendim tamam. onu uygulatırsın.” Bu kart kabuğun üstüne dört ekran ailesini yeni kart diline taşır. Uygularken verilen kararlar:
+(1) **Telefon alt çubuğu 5. öğe "Menü"** (PM kararı, #189 notuna karşılık): telefonda Deneyimler'e kalıcı yol yoktu ve Mezunlar yeni geldi; alt çubuk Ana sayfa · İlanlar · Mentorlar · Randevular · Menü oldu. Menü yeni bir sayfa
+değil, mevcut `Sheet` bileşeninin alt sayfasıdır (`dialog.tsx`'e dokunulmadı): yerel `<dialog>` odak hapsi, Esc ve kapatınca odak geri dönüşünü kendisi sağlar. Açık/kapalı durumu bulunulan yola bağlıdır, sayfa değişince kendiliğinden kapanır
+(etki ya da yönlendirme gerekmez). Profilim artık alt çubukta değil Menü'dedir; hesap ayarlarına üst çubuk avatarı da götürür. (2) **`/hesap`**: her grup TEK kart, satırlar ince çizgiyle ayrılır (eskiden telefonda tek çerçeve,
+geniş ekranda 15 ayrı kutu); 1440'ta iki sütun (CSS sütunları, grup kartı bölünmez). Hesap ayarları alt sayfaları ortak `AccountFrame`'i kullanır (geri bağlantısı + `PageHeader`, üst etiket "Hesap", okunur genişlik, sola yaslı); form düzenleri
+değişmedi. (3) **`/profil` ve `/uye/[id]`**: başlık kartı (avatar yeri `data-slot="profile-photo"`, ad, unvan · şirket, rozetler); fotoğraf kartı 388 gelince `Avatar`'ın `src`'i dolar, yer aynı kalır. Bölümler kartın içinde satır listesidir; başkasının
+profili geniş ekranda iki sütun (içerik / beceri-dil-bağlantı-iletişim). Alan gizliliği değişmedi: ekran gizli alanın var olduğunu bile çizmez. (4) **`/bildirimler`**: gün başlığı + tek kart, çizgili satırlar; okunmamış satır hafif tonlu, nokta ve
+kalın yazı birlikte (renk tek sinyal değil); "Hepsini okundu yap" `PageHeader` eylemidir. (5) **`/randevular`**: "Yaklaşan" (onay bekleyen ya da onaylı ve bitmemiş) ve "Geçmiş" bölümleri; satırda tarih bloğu (gün + kısa ay, İstanbul saatiyle), kişi, saat aralığı, biçim,
+durum etiketi ve tek eylem (telefonda tam genişlik). Randevu ayrıntısı ve randevu al sayfaları kabuk dolgusunu kullanır; eylem düğmeleri telefonda tam genişlik, geniş ekranda satır içidir. (6) Bu sayfalardaki eski `mx-auto max-w-* px-*` kapsayıcıları
+temizlendi; `.app-content` kuralı kalkmadı (diğer kartlar kaldırır).
+## 2026-11-16 · Türkçe arama ve güncel mentor pozisyonu (kart 399)
+
+Prisma ILIKE yerel ayarına bağlı I/ı farkı yerine mevcut `tr_ascii` iki tarafa uygulanır;
+LIKE işaretleri düz metin kalır. Eşleşme deposu yalnız kimlik verir; yetki/görünürlük/sayfalama
+koşullarını ham SQL içinde yeniden yazmak yerine mevcut servis sorgusu korur. İfade GIN indeksleri
+katlamayı destekler; noktalama temizleyen `User.nameSearch`, literal `%/_` aramasının yerine geçirilmez.
+Mentor şirket/unvan araması mezun rehberiyle aynı biçimde güncel pozisyonla sınırlanır: geçmiş
+iş eşleşmesinin kartta bugünkü işmiş gibi görünmesi önlenir. Kullanım olayı yalnız `q` anahtarını
+saklar, sorgu değerini saklamaz. Yeni işlev/eklenti/bağımlılık yoktur.

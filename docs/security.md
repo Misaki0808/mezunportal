@@ -282,6 +282,21 @@ kuralları değişmez. Aydınlatma metni değiştiğinde sürüm artırılır ve
 
 ## Dosya ve yapay zekâ
 
+Profil fotoğrafı, PDF belgelerinden ayrı bir görüntü hattıdır: en çok 5 MB JPEG/PNG/WebP,
+bayt imzası ve gerçek çözme birlikte doğrulanır. `sharp` 24 MP giriş sınırı, katı hata davranışı,
+hareketsiz/tek sayfa şartı ve tek işleme bütçesi uygular. Kare 512/96 WebP dışında dosya tutulmaz;
+EXIF, konum ve diğer metadata aktarılmaz. Depolama anahtarları kullanıcı + rastgele UUID taşır;
+anahtar istemciye çıkmaz. Sunum yalnız yetkili uygulama rotasından, `private, no-store` ile yapılır.
+K-07 (ortak doğrulanmış etkin üniversite), etkin hesap ve güncel ayrı fotoğraf rızası
+`rules/visibility.ts` üzerinden her istekte kontrol edilir; yönetici rolü gösterim kuralını atlatmaz.
+Anonim kartlara fotoğraf adresi/kimlik eklenmez. Fotoğrafı olmayan kart baş harfe döner.
+Yükleme, rıza geri alma ve hesap silme aynı kullanıcı satırı kilidiyle sıralanır; çözme sırasında
+rıza/fotoğraf değiştiyse eski yükleme yeniden görünürlük açamaz. Geri alım önce kalıcı olarak görünürlüğü kapatır; depolama arızası rızayı geri sarmaz.
+Dosya temizliği hata verirse özel hata kodu ve tekrar silme düğmesi gösterilir; eski anahtar
+koşulu bu arada yeni rızayla yüklenen fotoğrafı korur. Başarıda iki türev silinir;
+hesap silme de aynı dosyaları temizler, kişinin KVKK dökümü iki türevi içerir. Kapsamlı yönetici
+uygunsuz fotoğrafı gerekçeyle kaldırabilir; dosya ve gerekçe kişisel veri taşımayan işlem kaydından ayrıdır.
+
 - **Yükleme:** yalnız PDF; boyut ve sayfa sınırı; uzantıya değil sihirli bayta bakılır. Dosyalar
   `public/` altında değil, yetki kontrollü rota üzerinden akıtılır; yanıtta
   `Content-Disposition` ve `X-Content-Type-Options: nosniff`, PDF görüntülemede kısıtlı içerik

@@ -14,6 +14,7 @@ sürüm numarası `Consent` kayıtlarına bağlanır.
 | §5 Yılın Mezunu | Ödülün kamuya açık doğrulaması (P2-01) | Hoca / hukuk onayı |
 | §6 Ayın mezunu | Hikâye yayın rızası (P2-02) | Hoca / hukuk onayı |
 | §7 Faz 2 ekleri | Faz 2 aydınlatma ekleri (P2-14) | Hoca / hukuk onayı |
+| Profil fotoğrafı eki | Ayrı görünürlük rızası (kart 388) | Hoca / hukuk onayı |
 
 Kurallar:
 
@@ -177,3 +178,17 @@ Hikâyemin incelendikten ve ayın mezunu seçildikten sonra adım ve bölümüml
 - **Takvim ve Meet daveti:** online randevuda Google Takvim davetine e-posta adresleri, etkinlik başlığındaki mentor ve öğrenci adları ile görüşme saati gider; bu `§2` yurt dışına aktarım rızasına bağlıdır; rıza yoksa davet oluşturulmaz, mentor bağlantıyı elle ekler.
 - **Şirket/soru bankası/başvuru takvimi:** yayınlanmış deneyimlerden türetilen toplu özetlerdir; üç farklı yazardan az olan gruplar gösterilmez, kişi bilgisi içermez.
 
+
+## Profil fotoğrafı görünürlüğü açık rızası — taslak-1 (Faz 2 eki)
+
+Fotoğrafım platformdaki doğrulanmış üyelere görünsün. Yalnız benimle aynı üniversitedeki
+etkin ve doğrulanmış üyelere, profil ve kişi kartlarında gösterilmesini kabul ediyorum.
+Bu rıza uygulamayı kullanmak için zorunlu değildir. Fotoğraf kategorisi aydınlatma metninin
+“Kimlik ve iletişim” bölümündedir; yükleme ve görünürlük için bu ayrı rıza istenir.
+
+JPEG/PNG/WebP dosyamdan kare 512 ve 96 piksel WebP türevleri hazırlanır. Orijinal dosya,
+EXIF ve konum bilgileri saklanmaz; dış sağlayıcıya aktarılmaz. Rızamı Profilim → Profil
+fotoğrafı ekranından her an geri alabilirim; fotoğrafım hemen gizlenir ve iki dosya silinir.
+Hesabımı silince fotoğrafım da silinir; veri dökümüm iki türevi içerir. Uygunsuz fotoğraf
+kapsamlı yönetici tarafından gerekçeyle kaldırılabilir. Sürümün kanonik kaynağı
+`CURRENT_CONSENT_VERSIONS.PROFILE_PHOTO_VISIBILITY`; ekrandaki metin katalogdadır.

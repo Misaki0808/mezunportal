@@ -10,6 +10,7 @@ import {
   type DeleteAccountInput,
 } from '@/contracts/privacy';
 import { deleteAccount } from '@/server/actions/privacy';
+import { AccountFrameView } from '@/components/account/account-frame';
 import { Button, Card, Field, Input, Modal, RadioGroup, buttonClasses } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
 
@@ -25,7 +26,7 @@ export function DeleteForm({ currentEmail }: { currentEmail: string }) {
   const emailInput = useRef<HTMLInputElement>(null);
   if (deleted)
     return (
-      <div className="mx-auto w-full max-w-2xl px-5 py-10">
+      <div className="w-full max-w-2xl">
         <Card className="space-y-4">
           <h1 className="text-3xl font-semibold">{t('deleted')}</h1>
           <p role="status">{t('deletedDescription')}</p>
@@ -36,19 +37,16 @@ export function DeleteForm({ currentEmail }: { currentEmail: string }) {
       </div>
     );
   return (
-    <div className="mx-auto w-full max-w-2xl px-5 py-8 sm:py-12">
-      <Link
-        href="/hesap"
-        className="press-row mb-6 inline-flex min-h-11 items-center font-medium text-primary"
-      >
-        ← {common('back')}
-      </Link>
-      <p className="text-sm font-semibold tracking-wider text-primary">{common('eyebrow')}</p>
-      <h1 className="mt-3 text-3xl font-semibold">{t('title')}</h1>
-      <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
+    <AccountFrameView
+      eyebrow={common('eyebrow')}
+      backLabel={common('back')}
+      title={t('title')}
+      description={t('description')}
+      width="max-w-2xl"
+    >
       <Link
         href="/hesap/veriler"
-        className="press-row my-5 inline-flex min-h-11 items-center font-medium text-primary"
+        className="press-row inline-flex min-h-11 items-center font-medium text-primary"
       >
         {t('download')}
       </Link>
@@ -194,6 +192,6 @@ export function DeleteForm({ currentEmail }: { currentEmail: string }) {
           </p>
         )}
       </Modal>
-    </div>
+    </AccountFrameView>
   );
 }

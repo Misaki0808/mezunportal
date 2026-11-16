@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
-import { Avatar } from '@/components/ui';
+import { Avatar, Card } from '@/components/ui';
 import type { ProfileView as ProfileViewData } from '@/contracts/profile-content';
 
 import { EntrySummary } from './entry-summary';
@@ -49,37 +49,56 @@ export function ProfileView({
         .join(' · ')
     : '';
 
+  const section = (title: string, children: ReactNode, className?: string) => (
+    <Card as="section" className={className}>
+      <h2 className="text-lg font-bold text-fg">{title}</h2>
+      <div className="mt-3">{children}</div>
+    </Card>
+  );
+
   const list = (
     title: string,
-    section: 'EDUCATION' | 'POSITION' | 'LANGUAGE' | 'CERTIFICATION',
+    sectionKind: 'EDUCATION' | 'POSITION' | 'LANGUAGE' | 'CERTIFICATION',
     items: Values[],
   ) =>
-    items.length > 0 && (
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold text-fg">{title}</h2>
-        <ul className="flex flex-col gap-3">
-          {items.map((item, index) => (
-            <li key={index} className="rounded-control border border-border p-3">
-              <EntrySummary section={section} value={item} />
-            </li>
-          ))}
-        </ul>
-      </section>
+    items.length > 0 &&
+    section(
+      title,
+      <ul className="divide-y divide-border">
+        {items.map((item, index) => (
+          <li key={index} className="py-3 first:pt-0 last:pb-0">
+            <EntrySummary section={sectionKind} value={item} />
+          </li>
+        ))}
+      </ul>,
     );
 
+  const hasSide =
+    profile.skills.length + profile.languages.length + profile.certifications.length > 0 ||
+    Boolean(profile.socialLinks?.length || profile.linkedinUrl || profile.email || profile.phone);
+  const hasMain =
+    !hasBody ||
+    Boolean(profile.summary || profile.goals) ||
+    profile.positions.length + profile.education.length > 0;
+
   return (
-    <article className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-10 pt-10 [overflow-wrap:anywhere] sm:pt-16">
-      <header className="flex flex-col gap-4">
-        <div className="flex items-start gap-4">
-          <Avatar name={profile.displayName} size="lg" decorative />
+    <article className="w-full max-w-5xl [overflow-wrap:anywhere]">
+      <Card as="header" className="flex flex-col gap-4 sm:p-6">
+        <div className="flex items-start gap-4 sm:gap-5">
+          {/* Profil fotoğrafı yeri (kart 388): rıza ve K-07 geçerse fotoğraf, değilse baş harfler; yer aynı kalır. */}
+          <div data-slot="profile-photo" className="shrink-0">
+            <Avatar src={profile.photoSrc} name={profile.displayName} size="xl" decorative />
+          </div>
           <div className="min-w-0 flex-1">
-            <h1 className="break-words text-3xl font-semibold tracking-tight text-fg">
+            <h1 className="break-words text-[1.625rem] leading-[1.15] font-extrabold tracking-tight text-fg sm:text-[2.125rem]">
               {profile.displayName}
             </h1>
-            {currentLine && <p className="mt-1 break-words text-lg text-fg">{currentLine}</p>}
+            {currentLine && (
+              <p className="mt-1.5 break-words text-lg font-medium text-fg">{currentLine}</p>
+            )}
             {profile.headline && (
               <p
-                className={`break-words text-base ${currentLine ? 'text-fg-muted' : 'mt-1 text-lg text-fg'}`}
+                className={`break-words text-base ${currentLine ? 'text-fg-muted' : 'mt-1.5 text-lg font-medium text-fg'}`}
               >
                 {profile.headline}
               </p>
@@ -101,103 +120,111 @@ export function ProfileView({
           </ul>
         )}
         {date && <p className="text-sm text-fg-muted">{t('updated', { date })}</p>}
-        {actions}
-      </header>
+        {actions && <div className="max-w-xl">{actions}</div>}
+      </Card>
 
-      {!hasBody && (
-        <section className="rounded-card border border-border p-6 text-center">
-          <h2 className="text-lg font-semibold text-fg">{t('emptyTitle')}</h2>
-          <p className="mt-1 text-base text-fg-muted">{t('emptyDescription')}</p>
-        </section>
-      )}
-
-      {profile.summary && (
-        <section>
-          <h2 className="mb-2 text-xl font-semibold text-fg">{t('summary')}</h2>
-          <p className="whitespace-pre-line text-base leading-relaxed text-fg">{profile.summary}</p>
-        </section>
-      )}
-      {profile.goals && (
-        <section>
-          <h2 className="mb-2 text-xl font-semibold text-fg">{t('goals')}</h2>
-          <p className="whitespace-pre-line text-base leading-relaxed text-fg">{profile.goals}</p>
-        </section>
-      )}
-      {list(sections('EDUCATION'), 'EDUCATION', profile.education)}
-      {list(sections('POSITION'), 'POSITION', profile.positions)}
-      {list(sections('LANGUAGE'), 'LANGUAGE', profile.languages)}
-      {list(sections('CERTIFICATION'), 'CERTIFICATION', profile.certifications)}
-      {profile.skills.length > 0 && (
-        <section>
-          <h2 className="mb-2 text-xl font-semibold text-fg">{t('skills')}</h2>
-          <ul className="flex flex-wrap gap-2">
-            {profile.skills.map((skill) => (
-              <li
-                key={skill.label}
-                className="max-w-full rounded-full bg-surface-strong px-3 py-1 text-base text-fg"
-              >
-                {skill.label}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {(profile.linkedinUrl || (profile.socialLinks && profile.socialLinks.length > 0)) && (
-        <section>
-          <h2 className="mb-2 text-xl font-semibold text-fg">{t('links')}</h2>
-          <ul className="flex flex-col gap-2">
-            {profile.linkedinUrl && (
-              <li className="break-all text-base">
-                <span className="font-medium text-fg">{t('linkedin')}: </span>
-                <a
-                  className="text-primary underline"
-                  href={profile.linkedinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                >
-                  {profile.linkedinUrl}
-                </a>
-              </li>
+      <div
+        className={`mt-6 grid items-start gap-6 ${hasMain && hasSide ? 'lg:grid-cols-[minmax(0,1fr)_20rem]' : ''}`}
+      >
+        {hasMain && (
+          <div className="flex min-w-0 flex-col gap-6">
+            {!hasBody && (
+              <Card as="section" className="p-6 text-center">
+                <h2 className="text-lg font-semibold text-fg">{t('emptyTitle')}</h2>
+                <p className="mt-1 text-base text-fg-muted">{t('emptyDescription')}</p>
+              </Card>
             )}
-            {profile.socialLinks?.map((link) => (
-              <li key={link.kind} className="break-all text-base">
-                <span className="font-medium text-fg">{my(`linkKinds.${link.kind}`)}: </span>
-                <a
-                  className="text-primary underline"
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                >
-                  {link.url}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {(profile.email || profile.phone) && (
-        <section>
-          <h2 className="mb-2 text-xl font-semibold text-fg">{t('contact')}</h2>
-          <dl className="flex flex-col gap-1">
-            {profile.email && (
-              <div>
-                <dt className="text-sm text-fg-muted">{t('email')}</dt>
-                <dd className="break-all text-base text-fg">
-                  <a className="text-primary underline" href={`mailto:${profile.email}`}>
-                    {profile.email}
-                  </a>
-                </dd>
-              </div>
+            {profile.summary &&
+              section(
+                t('summary'),
+                <p className="whitespace-pre-line text-base leading-relaxed text-fg">
+                  {profile.summary}
+                </p>,
+              )}
+            {profile.goals &&
+              section(
+                t('goals'),
+                <p className="whitespace-pre-line text-base leading-relaxed text-fg">
+                  {profile.goals}
+                </p>,
+              )}
+            {list(sections('POSITION'), 'POSITION', profile.positions)}
+            {list(sections('EDUCATION'), 'EDUCATION', profile.education)}
+          </div>
+        )}
+        <div className={`flex min-w-0 flex-col gap-6 ${hasSide ? '' : 'hidden'}`}>
+          {profile.skills.length > 0 &&
+            section(
+              t('skills'),
+              <ul className="flex flex-wrap gap-2">
+                {profile.skills.map((skill) => (
+                  <li
+                    key={skill.label}
+                    className="max-w-full rounded-full bg-surface-strong px-3 py-1 text-base text-fg"
+                  >
+                    {skill.label}
+                  </li>
+                ))}
+              </ul>,
             )}
-            {profile.phone && (
-              <div>
-                <dt className="text-sm text-fg-muted">{t('phone')}</dt>
-                <dd className="text-base text-fg">{profile.phone}</dd>
-              </div>
+          {list(sections('LANGUAGE'), 'LANGUAGE', profile.languages)}
+          {list(sections('CERTIFICATION'), 'CERTIFICATION', profile.certifications)}
+          {(profile.linkedinUrl || (profile.socialLinks && profile.socialLinks.length > 0)) &&
+            section(
+              t('links'),
+              <ul className="flex flex-col gap-2">
+                {profile.linkedinUrl && (
+                  <li className="break-all text-base">
+                    <span className="font-medium text-fg">{t('linkedin')}: </span>
+                    <a
+                      className="text-primary underline"
+                      href={profile.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                    >
+                      {profile.linkedinUrl}
+                    </a>
+                  </li>
+                )}
+                {profile.socialLinks?.map((link) => (
+                  <li key={link.kind} className="break-all text-base">
+                    <span className="font-medium text-fg">{my(`linkKinds.${link.kind}`)}: </span>
+                    <a
+                      className="text-primary underline"
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                    >
+                      {link.url}
+                    </a>
+                  </li>
+                ))}
+              </ul>,
             )}
-          </dl>
-        </section>
-      )}
+          {(profile.email || profile.phone) &&
+            section(
+              t('contact'),
+              <dl className="flex flex-col gap-2">
+                {profile.email && (
+                  <div>
+                    <dt className="text-sm text-fg-muted">{t('email')}</dt>
+                    <dd className="break-all text-base text-fg">
+                      <a className="text-primary underline" href={`mailto:${profile.email}`}>
+                        {profile.email}
+                      </a>
+                    </dd>
+                  </div>
+                )}
+                {profile.phone && (
+                  <div>
+                    <dt className="text-sm text-fg-muted">{t('phone')}</dt>
+                    <dd className="text-base text-fg">{profile.phone}</dd>
+                  </div>
+                )}
+              </dl>,
+            )}
+        </div>
+      </div>
     </article>
   );
 }

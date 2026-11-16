@@ -138,8 +138,14 @@ LLM çıktısı güvenilmeyen girdidir; yalnız profil alanlarına öneri olur, 
 - Şirket, unvan ve kişi adlarında `pg_trgm` benzerliği.
 - Türkçe büyük/küçük harf `tr-TR` kurallarıyla (`İ→i`, `I→ı`); testler “İstanbul/ISTANBUL”,
   “staj/stajı/STAJ” içerir.
+- Mentor, mezun rehberi, yönetim kullanıcı adı ve ders adı süzgeçleri `tr_ascii` ile iki tarafı
+  katlar; `yıldız/YILDIZ/yildiz` ve Türkçe harflerin ASCII karşılıkları aynı kümeyi bulur.
+  Ham SQL eşleşme deposu `src/server/repositories/turkish-filters.ts` yalnız kimlik döndürür; yetki,
+  görünürlük ve sayfalama servislerin son sorgusunda uygulanır. Mentor şirket/unvan araması
+  mezun rehberi gibi güncel pozisyonla sınırlıdır. Aranan metin kullanım olayına yazılmaz;
+  mentor olayında yalnız kullanılan `q` anahtar adı bulunur.
 - Filtreler URL'dedir. Sorgu metni metriklere yazılmaz.
-- Ham SQL yalnız `src/server/repositories/search.ts`. `Experience.searchVector` ve `searchKeys` ekleyici
+- Arama SQL'i `src/server/repositories/` altındaki depolardadır. `Experience.searchVector` ve `searchKeys` ekleyici
   migration'la üretilmiş sütundur. Büyük/küçük harf `tr_lower` (İ→i, I→ı) ve `tr_ascii` (ı→i, ç→c …)
   SQL işlevleriyle veritabanı yerelinden bağımsız yapılır: kayıtlar hem Türkçe gövdeli hem ASCII katlanmış
   indekslenir, sorgu iki biçimde aranır (“ISTANBUL”, “stajı”, “Eskişehir” ↔ “Eskisehir” eşleşir).

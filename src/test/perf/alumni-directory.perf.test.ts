@@ -1,13 +1,19 @@
 import { afterAll, expect, it } from 'vitest';
 import { alumniSearchSchema } from '@/contracts/alumni-directory';
 import { searchAlumni } from '@/server/services/alumni-directory';
+import { searchMentors } from '@/server/services/mentor-directory';
+import { searchMentorsSchema } from '@/contracts/mentor-directory';
+import { settleEvents } from '@/server/services/event';
 import { loadActor } from '@/server/permissions/actor';
 import { createTestPrisma } from '@/test/db';
 import { addMembership, createInstitution, createUser } from '@/test/fixtures';
 
 const db = createTestPrisma();
-afterAll(() => db.$disconnect());
-it('5.000 mezun: gerçek dizin sorgusunda p95 300 ms altı', async () => {
+afterAll(async () => {
+  await settleEvents();
+  await db.$disconnect();
+});
+it('5.000 mezun/mentor: Türkçe katlanmış gerçek dizin sorgularında p95 300 ms altı', async () => {
   const institution = await createInstitution(db);
   const viewer = await createUser(db);
   await addMembership(db, {
@@ -53,10 +59,19 @@ it('5.000 mezun: gerçek dizin sorgusunda p95 300 ms altı', async () => {
         isCurrent: true,
       })),
     });
+    await db.mentorProfile.createMany({
+      data: users.map((u) => ({
+        userId: u.id,
+        isActive: true,
+        monthlyCapacity: 4,
+        sessionMinutes: 30,
+      })),
+    });
   }
   await db.$executeRaw`ANALYZE`;
   const actor = (await loadActor(db, viewer, new Date()))!;
   const filter = alumniSearchSchema.parse({
+    q: 'DENEME',
     sectorId: sector.id,
     company: 'Deneme',
     title: 'Analist',
@@ -76,4 +91,23 @@ it('5.000 mezun: gerçek dizin sorgusunda p95 300 ms altı', async () => {
   const p95 = samples[Math.ceil(samples.length * 0.95) - 1]!;
   process.stdout.write(`alumni-directory: 5000 kişi, 30 ölçüm, p95 ${p95.toFixed(1)} ms\n`);
   expect(p95).toBeLessThan(300);
+  const mentorFilter = searchMentorsSchema.parse({
+    q: 'DENEME',
+    company: 'deneme',
+    title: 'analist',
+    pageSize: 24,
+  });
+  const mentorRun = () => searchMentors({ db }, actor, mentorFilter);
+  // Mevcut mentor tarama tavanı 500; yük kümesi yine 5.000 kişidir.
+  expect((await mentorRun()).items).toHaveLength(24);
+  const mentorSamples: number[] = [];
+  for (let n = 0; n < 30; n++) {
+    const start = performance.now();
+    await mentorRun();
+    mentorSamples.push(performance.now() - start);
+  }
+  mentorSamples.sort((a, b) => a - b);
+  const mentorP95 = mentorSamples[Math.ceil(mentorSamples.length * 0.95) - 1]!;
+  process.stdout.write(`mentor-directory: 5000 kişi, 30 ölçüm, p95 ${mentorP95.toFixed(1)} ms\n`);
+  expect(mentorP95).toBeLessThan(300);
 });

@@ -5,7 +5,7 @@ import { requestEmailChange } from '@/server/actions/auth';
 import { parseEmailChangeStep } from '@/contracts/auth';
 
 import { EmailChangeForm } from './email-change-form';
-import { PageHeader } from '@/components/ui';
+import { AccountFrame } from '@/components/account/account-frame';
 
 export default async function EmailChangePage({
   searchParams,
@@ -16,43 +16,38 @@ export default async function EmailChangePage({
   const { adim } = await searchParams;
   const step = parseEmailChangeStep(adim);
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-12 sm:pt-20">
-      {!step && (
-        <Link
-          href="/hesap"
-          className="press-row mb-6 inline-flex min-h-11 items-center font-medium text-primary"
-        >
-          ← {t('back')}
-        </Link>
+    <AccountFrame
+      showBack={!step}
+      width="max-w-2xl"
+      eyebrow={t('eyebrow')}
+      backLabel={t('back')}
+      title={t(
+        step === 'eski-onaylandi'
+          ? 'oldVerifiedTitle'
+          : step === 'tamamlandi'
+            ? 'completeTitle'
+            : 'title',
       )}
-      <PageHeader
-        className="mb-10"
-        eyebrow={t('eyebrow')}
-        title={t(
-          step === 'eski-onaylandi'
-            ? 'oldVerifiedTitle'
-            : step === 'tamamlandi'
-              ? 'completeTitle'
-              : 'title',
-        )}
-        description={t(
-          step === 'eski-onaylandi'
-            ? 'oldVerifiedDescription'
-            : step === 'tamamlandi'
-              ? 'completeDescription'
-              : 'description',
-        )}
-      />
-      {step ? (
-        <Link
-          href="/hesap"
-          className="press-control inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-5 font-semibold text-on-primary"
-        >
-          {t('back')}
-        </Link>
-      ) : (
-        <EmailChangeForm submit={requestEmailChange} />
+      description={t(
+        step === 'eski-onaylandi'
+          ? 'oldVerifiedDescription'
+          : step === 'tamamlandi'
+            ? 'completeDescription'
+            : 'description',
       )}
-    </div>
+    >
+      <div className="max-w-lg">
+        {step ? (
+          <Link
+            href="/hesap"
+            className="press-control inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-5 font-semibold text-on-primary"
+          >
+            {t('back')}
+          </Link>
+        ) : (
+          <EmailChangeForm submit={requestEmailChange} />
+        )}
+      </div>
+    </AccountFrame>
   );
 }

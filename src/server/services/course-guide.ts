@@ -1,4 +1,5 @@
 import 'server-only';
+import { matchingCourseNames } from '../repositories/turkish-filters';
 
 import {
   courseFilterSchema,
@@ -92,7 +93,9 @@ export async function listCourseGuide(db: PrismaClient, userId: string, input: C
         departmentId: { in: departments },
         ...(filter.semester === undefined ? {} : { semester: filter.semester }),
         ...(filter.elective === undefined ? {} : { elective: filter.elective }),
-        ...(filter.query ? { name: { contains: filter.query, mode: 'insensitive' } } : {}),
+        ...(filter.query
+          ? { id: { in: await matchingCourseNames(tx, departments, filter.query) } }
+          : {}),
       },
       select: {
         id: true,

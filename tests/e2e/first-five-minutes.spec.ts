@@ -92,9 +92,15 @@ test('yeni öğrenci e-posta doğrulamasından ilk deneyim listesine ulaşır', 
     await expect(page.getByRole('heading', { name: 'Hazırsın!' })).toBeVisible();
     await page.getByRole('link', { name: 'Ana sayfaya git' }).click();
     await expect(page).toHaveURL(/\/$/);
-    // Alt gezinmedeki "Profilim" sekmesi gerçek profile gider; hesap ayarları üst çubuktaki avatardadır (/hesap).
+    // Profilim telefonda Menü alt sayfasındadır (kart 387) ve gerçek profile gider; hesap ayarları üst çubuktaki avatardadır (/hesap).
+    const openMenu = () =>
+      page
+        .getByRole('navigation', { name: 'Ana gezinme' })
+        .getByRole('button', { name: 'Menü' })
+        .click();
+    await openMenu();
     await page
-      .getByRole('navigation', { name: 'Ana gezinme' })
+      .getByRole('dialog', { name: 'Menü' })
       .getByRole('link', { name: 'Profilim' })
       .click();
     await expect(page).toHaveURL(/\/profil$/);
@@ -105,15 +111,11 @@ test('yeni öğrenci e-posta doğrulamasından ilk deneyim listesine ulaşır', 
     await editor.getByRole('button', { name: 'Kaydet' }).click();
     await expect(editor).toBeHidden();
     await expect(page.getByText('Profilin güncellendi.')).toBeVisible();
-    // Telefon alt çubuğunda Deneyimler sekmesi yok (beş sekme, kart 384); ana sayfadaki "Deneyim ara" kısayolu açar.
+    // Deneyimler telefonda alt çubukta değil, Menü alt sayfasındadır (kart 387).
+    await openMenu();
     await page
-      .getByRole('navigation', { name: 'Ana gezinme' })
-      .getByRole('link', { name: 'Ana sayfa' })
-      .click();
-    await expect(page).toHaveURL(/\/$/);
-    await page
-      .getByRole('main')
-      .getByRole('link', { name: /^Deneyim ara/ })
+      .getByRole('dialog', { name: 'Menü' })
+      .getByRole('link', { name: 'Deneyimler' })
       .click();
     await expect(page).toHaveURL(/\/deneyimler/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

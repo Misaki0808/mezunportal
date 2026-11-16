@@ -64,7 +64,7 @@ export default async function ProfilePage() {
         }}
       />
       {points?.ok && (
-        <div className="mx-auto max-w-2xl px-5 pb-12">
+        <div className="mt-6 w-full max-w-4xl">
           <Contribution initial={points.data} list={getMyContribution} variant="history" />
         </div>
       )}

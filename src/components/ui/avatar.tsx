@@ -1,16 +1,24 @@
+'use client';
+
+import { useState } from 'react';
 import { cn } from './cn';
 
 export type AvatarProps = {
   /** Kişinin adı: görsel yoksa baş harfler gösterilir; görsel varsa `alt` olur. */
   name: string;
   src?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Ad avatarın yanında zaten yazıyorsa true: ekran okuyucu tekrar okumaz. */
   decorative?: boolean;
   className?: string;
 };
 
-const SIZES = { sm: 'size-8 text-xs', md: 'size-11 text-base', lg: 'size-16 text-xl' } as const;
+const SIZES = {
+  sm: 'size-8 text-xs',
+  md: 'size-11 text-base',
+  lg: 'size-16 text-xl',
+  xl: 'size-20 text-2xl',
+} as const;
 
 /** Türkçe harfler için `tr-TR` büyük harf (i → İ). */
 export function initialsOf(name: string): string {
@@ -20,19 +28,32 @@ export function initialsOf(name: string): string {
   return (first + last).toLocaleUpperCase('tr-TR');
 }
 
-export function Avatar({ name, src, size = 'md', decorative = false, className }: AvatarProps) {
+export function Avatar({
+  name,
+  src: providedSrc,
+  size = 'md',
+  decorative = false,
+  className,
+}: AvatarProps) {
+  const source = providedSrc;
+  const src =
+    (size === 'lg' || size === 'xl') && source?.startsWith('/api/profil-fotografi/')
+      ? source.replace('size=96', 'size=512')
+      : source;
+  const [failedSrc, setFailedSrc] = useState<string>();
   const shared = cn(
     'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-soft font-semibold text-on-primary-soft',
     SIZES[size],
     className,
   );
 
-  if (src) {
+  if (src && failedSrc !== src) {
     return (
-      // Küçük, sabit boyutlu kullanıcı görseli; next/image uzak alan yapılandırması gerektirir.
+      // Yetkili rota tarayıcı çerezini alır; görsel genel next/image önbelleğine sokulmaz.
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
+        onError={() => setFailedSrc(src)}
         alt={decorative ? '' : name}
         className={cn(shared, 'object-cover')}
         width={64}

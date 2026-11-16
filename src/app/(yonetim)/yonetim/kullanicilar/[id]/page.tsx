@@ -1,3 +1,5 @@
+import { getPhotoModerationState } from '@/server/actions/profile-photo';
+import { PhotoModeration } from '@/components/profile-photo/photo-moderation';
 import { hasAdminAccess } from '@/components/layout/admin-access';
 import { AdminUserDetail } from '@/components/admin/user-detail';
 import { ErrorState } from '@/components/ui';
@@ -19,13 +21,23 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
   if (!detail || !overview) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!detail.ok) return <ErrorState errorCode={detail.errorCode} />;
   if (!overview.ok) return <ErrorState errorCode={overview.errorCode} />;
+  const photo = await getPhotoModerationState({ userId: id });
   return (
-    <AdminUserDetail
-      initial={detail.data}
-      departments={overview.data.departments}
-      suspend={suspendUser}
-      unsuspend={unsuspendUser}
-      correct={correctMembership}
-    />
+    <>
+      {photo.ok && photo.data.exists && (
+        <PhotoModeration
+          userId={id}
+          photoSrc={photo.data.photoSrc}
+          name={detail.data.displayName}
+        />
+      )}
+      <AdminUserDetail
+        initial={detail.data}
+        departments={overview.data.departments}
+        suspend={suspendUser}
+        unsuspend={unsuspendUser}
+        correct={correctMembership}
+      />
+    </>
   );
 }
