@@ -35,6 +35,11 @@ for (const width of [390, 1440])
         .png()
         .toBuffer();
       const choosing = page.waitForEvent('filechooser');
+      await expect(
+        page
+          .locator('form')
+          .filter({ has: page.getByRole('button', { name: 'Fotoğraf seç', exact: true }) }),
+      ).toHaveAttribute('data-hydrated', 'true');
       await page.getByRole('button', { name: 'Fotoğraf seç', exact: true }).click();
       await (
         await choosing

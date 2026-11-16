@@ -12,6 +12,7 @@ import {
 } from '@/contracts/profile-photo';
 import { ERROR_CODES, type ErrorCode } from '@/lib/errors';
 import { recordConsents } from '@/server/actions/privacy';
+import { useHydrated } from '@/hooks/use-hydrated';
 
 export function PhotoManager({
   userId,
@@ -25,6 +26,7 @@ export function PhotoManager({
   cleanupPending: boolean;
 }) {
   const t = useTranslations('profilePhoto');
+  const hydrated = useHydrated();
   const errors = useTranslations('errors.codes');
   const router = useRouter();
   const [file, setFile] = useState<File>();
@@ -145,6 +147,9 @@ export function PhotoManager({
         />
       )}
       <form
+        data-hydrated={hydrated ? 'true' : undefined}
+        inert={!hydrated}
+        aria-busy={!hydrated || pending}
         className="space-y-5"
         onSubmit={(event) => {
           event.preventDefault();
