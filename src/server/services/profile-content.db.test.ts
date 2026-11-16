@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { myProfileSchema, profileViewSchema } from '@/contracts/profile-content';
 import { isCodedError } from '@/lib/errors';
 import { createTestPrisma } from '@/test/db';
+import { letterMarker } from '@/test/markers';
 import { addMembership, createInstitution, createUser, type Institution } from '@/test/fixtures';
 
 import * as content from './profile-content';
@@ -43,12 +44,8 @@ const student = async (
   });
   return userId;
 };
-// Etiket rastgele kimliktir; rakam dizisi üretip telefon biçimi denetimine tesadüfen takılmasın.
-const tag = () =>
-  `zx${randomUUID()
-    .replace(/-/g, '')
-    .slice(0, 10)
-    .replace(/\d/g, (digit) => String.fromCharCode(103 + Number(digit)))}`;
+// Etiket rastgele kimliktir; rakam dizisi üretip telefon biçimi denetimine tesadüfen takılmasın (ortak rakamsız işaretçi, kart 392).
+const tag = () => letterMarker('zx', 10);
 
 // =============================================================================================
 // Kendi profilim

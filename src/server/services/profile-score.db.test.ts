@@ -1,8 +1,7 @@
-import { randomUUID } from 'node:crypto';
-
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createTestPrisma } from '@/test/db';
+import { letterMarker } from '@/test/markers';
 import { addMembership, createInstitution, createUser, type Institution } from '@/test/fixtures';
 
 import * as content from './profile-content';
@@ -16,7 +15,7 @@ beforeAll(async () => {
 });
 const NOW = new Date('2030-03-03T10:00:00Z');
 const deps = { db, now: () => NOW };
-const tag = () => `zs${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+const tag = () => letterMarker('zs', 10);
 
 async function student() {
   const userId = await createUser(db);
