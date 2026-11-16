@@ -236,7 +236,7 @@ describe('AppShell: bildirim girişi', () => {
 it('Profilim bağlantısını gösterir, yönetimi yalnız sunucudan açıkça izin verilirse ayrı grupta sunar', () => {
   const { rerender } = renderUi(<AppShell signedIn>x</AppShell>);
   const side = screen.getByRole('navigation', { name: 'Yan menü' });
-  expect(within(side).getByRole('link', { name: 'Profilim' })).toHaveAttribute('href', '/hesap');
+  expect(within(side).getByRole('link', { name: 'Profilim' })).toHaveAttribute('href', '/profil');
   expect(within(side).queryByRole('link', { name: 'Yönetim' })).not.toBeInTheDocument();
   expect(within(side).queryByRole('list', { name: 'Yönetici' })).not.toBeInTheDocument();
   rerender(
