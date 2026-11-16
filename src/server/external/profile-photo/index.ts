@@ -24,8 +24,16 @@ function animated(bytes: Buffer, format: string) {
   if (format === 'jpeg') {
     let offset = 2;
     while (offset + 4 <= bytes.length && bytes[offset] === 0xff) {
+      // JPEG dolgu FF baytları ve uzunluksuz TEM/RST işaretleri MPF denetimini atlatamaz.
+      while (offset + 4 <= bytes.length && bytes[offset + 1] === 0xff) offset++;
+      if (offset + 4 > bytes.length) break;
       const marker = bytes[offset + 1];
       if (marker === 0xda || marker === 0xd9) break;
+      if (marker === 0x01 || (marker !== undefined && marker >= 0xd0 && marker <= 0xd7)) {
+        offset += 2;
+        continue;
+      }
+      if (marker === 0xd8) return true;
       const length = bytes.readUInt16BE(offset + 2);
       if (length < 2) break;
       if (marker === 0xe2 && bytes.toString('ascii', offset + 4, offset + 8) === 'MPF\0')

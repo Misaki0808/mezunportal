@@ -120,3 +120,12 @@ describe('güvenli profil fotoğrafı çözme', () => {
     expect(b.channels[2]!.mean).toBeGreaterThan(b.channels[0]!.mean);
   });
 });
+it('JPEG dolgu baytı MPF çoklu fotoğraf reddini atlatamaz', async () => {
+  const jpeg = await image().jpeg().toBuffer();
+  const mpo = Buffer.concat([
+    jpeg.subarray(0, 2),
+    Buffer.from([255, 255, 226, 0, 6, 77, 80, 70, 0]),
+    jpeg.subarray(2),
+  ]);
+  await expect(processProfilePhoto(mpo, crop)).rejects.toMatchObject({ code: 'PHOTO_INVALID' });
+});

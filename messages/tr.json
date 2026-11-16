@@ -319,7 +319,8 @@
       "CV_LINKEDIN_UNAVAILABLE": "LinkedIn PDF içe aktarma henüz açık değil. Normal CV yükleyebilir ya da bilgilerini elle girebilirsin.",
       "PROFILE_TEXT_PERSONAL_DATA": "Bu alana telefon, e-posta veya kimlik numarası yazma. İletişim bilgilerini Gizlilik ayarlarından yönet.",
       "PHOTO_TOO_LARGE": "Fotoğraf en çok 5 MB olabilir.",
-      "PHOTO_INVALID": "Geçerli, hareketsiz bir JPEG, PNG veya WebP fotoğraf seç."
+      "PHOTO_INVALID": "Geçerli, hareketsiz bir JPEG, PNG veya WebP fotoğraf seç.",
+      "PHOTO_CLEANUP_PENDING": "Fotoğrafının görünürlüğü kapandı. Dosyalar silinemedi; silmeyi tekrar dene."
     }
   },
   "theme": {
@@ -2059,7 +2060,8 @@
         "STORY_PUBLISH": "Mezun hikâyesi onayı",
         "STORY_REJECT": "Mezun hikâyesi düzenleme talebi",
         "MONTHLY_ALUMNUS_SELECT": "Ayın mezunu seçimi",
-        "AWARD_REVIEW_REQUIRED": "Ödül için yeniden inceleme uyarısı"
+        "AWARD_REVIEW_REQUIRED": "Ödül için yeniden inceleme uyarısı",
+        "PROFILE_PHOTO_REMOVE": "Profil fotoğrafı kaldırıldı"
       },
       "targets": {
         "USER": "Kullanıcı",
@@ -3851,6 +3853,7 @@
     "consentRequired": "Fotoğraf yüklemek için ayrı görünürlük rızası ver.",
     "privacyLink": "Fotoğrafımı yönet",
     "readConsent": "Fotoğraf rıza metnini oku",
-    "chooseAgain": "Başka fotoğraf seç"
+    "chooseAgain": "Başka fotoğraf seç",
+    "cleanup": "Fotoğraf dosyalarını sil"
   }
 }

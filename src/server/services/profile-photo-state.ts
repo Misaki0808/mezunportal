@@ -11,7 +11,12 @@ export async function myPhotoState(db: PrismaClient, userId: string) {
   const consentGranted =
     consent?.lastDecision?.granted === true &&
     consent.lastDecision.version === consent.currentVersion;
-  return { userId, hasPhoto: !!photo && consentGranted, consentGranted };
+  return {
+    userId,
+    hasPhoto: !!photo && consentGranted,
+    consentGranted,
+    cleanupPending: !!photo && !consentGranted,
+  };
 }
 export async function photoModerationState(db: PrismaClient, adminId: string, userId: string) {
   // Aynı yönetim kaydı kapısı: kapsam dışı kullanıcıya fotoğraf varlığı dahi açılmaz.

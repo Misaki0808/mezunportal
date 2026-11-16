@@ -1,5 +1,7 @@
 import sharp from 'sharp';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
+import { PROFILE_PHOTO_MAX_BYTES } from '@/contracts/profile-photo';
+import { myPhotoState } from './profile-photo-state';
 import { CURRENT_CONSENT_VERSIONS } from '@/contracts/privacy';
 import { createTestPrisma } from '@/test/db';
 import {
@@ -310,4 +312,90 @@ it('eksik fotoğraf türevi dökümde sessizce kaybolmaz: UNREADABLE olur, sağl
   expect(output.profilePhoto?.smallBase64).toBe(
     Buffer.from(storage.files.get(photo.smallKey)!).toString('base64'),
   );
+});
+it('depolama silmesi başarısız olsa da rıza kalıcı kapanır; tekrar deneme dosyaları temizler', async () => {
+  const owner = await person();
+  await upload(owner);
+  storage.failures.delete = true;
+  try {
+    await expect(revoke(owner)).rejects.toMatchObject({ code: 'PHOTO_CLEANUP_PENDING' });
+    expect(await myPhotoState(db, owner)).toMatchObject({
+      hasPhoto: false,
+      consentGranted: false,
+      cleanupPending: true,
+    });
+    const last = await db.consent.findFirstOrThrow({
+      where: { userId: owner, documentType: 'PROFILE_PHOTO_VISIBILITY' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    expect(last.granted).toBe(false);
+    await expect(readProfilePhoto(deps, owner, owner, 96)).rejects.toMatchObject({
+      code: 'RESOURCE_NOT_FOUND',
+    });
+  } finally {
+    storage.failures.delete = false;
+  }
+  await revoke(owner);
+  expect(await db.profilePhoto.findUnique({ where: { userId: owner } })).toBeNull();
+  expect([...storage.files.keys()].filter((key) => key.includes(owner))).toEqual([]);
+});
+it('eski dosya temizliği yeni rızayla yüklenen fotoğrafı silemez', async () => {
+  const owner = await person();
+  await upload(owner);
+  const originalDelete = storage.delete.bind(storage);
+  let started!: () => void, release!: () => void;
+  const began = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  const wait = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let first = true;
+  const spy = vi.spyOn(storage, 'delete').mockImplementation(async (key) => {
+    if (first) {
+      first = false;
+      started();
+      await wait;
+    }
+    await originalDelete(key);
+  });
+  const revoking = revoke(owner);
+  try {
+    await began;
+    await upload(owner);
+    const replacement = await db.profilePhoto.findUniqueOrThrow({ where: { userId: owner } });
+    release();
+    await revoking;
+    expect(await db.profilePhoto.findUnique({ where: { userId: owner } })).toMatchObject({
+      largeKey: replacement.largeKey,
+    });
+    expect(storage.files.has(replacement.largeKey)).toBe(true);
+    expect(await readProfilePhoto(deps, owner, owner, 96)).toBeDefined();
+  } finally {
+    release();
+    await revoking;
+    spy.mockRestore();
+  }
+});
+it('JPEG adı ve MIME sahteciliği ile 5 MB üstü dosya gerçek DB hattında rıza/dosya yazamaz', async () => {
+  const owner = await person();
+  const fake = new File(['%PDF-1.7'], 'profil.jpg', { type: 'image/jpeg' });
+  const input = {
+    crop: { x: 0.5, y: 0.5, zoom: 1 },
+    consentVersion: CURRENT_CONSENT_VERSIONS.PROFILE_PHOTO_VISIBILITY,
+  };
+  await expect(
+    uploadProfilePhoto(deps, owner, { ...input, bytes: new Uint8Array(await fake.arrayBuffer()) }),
+  ).rejects.toMatchObject({ code: 'PHOTO_INVALID' });
+  await expect(
+    uploadProfilePhoto(deps, owner, {
+      ...input,
+      bytes: new Uint8Array(PROFILE_PHOTO_MAX_BYTES + 1),
+    }),
+  ).rejects.toMatchObject({ code: 'PHOTO_TOO_LARGE' });
+  expect(await db.profilePhoto.findUnique({ where: { userId: owner } })).toBeNull();
+  expect(
+    await db.consent.count({ where: { userId: owner, documentType: 'PROFILE_PHOTO_VISIBILITY' } }),
+  ).toBe(0);
+  expect([...storage.files.keys()].filter((key) => key.includes(owner))).toEqual([]);
 });

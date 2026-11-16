@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Avatar, Button, Checkbox, PageHeader } from '@/components/ui';
 import { CURRENT_CONSENT_VERSIONS } from '@/contracts/privacy';
-import { PROFILE_PHOTO_MAX_BYTES, type PhotoCrop } from '@/contracts/profile-photo';
+import {
+  PROFILE_PHOTO_MAX_BYTES,
+  profilePhotoHref,
+  type PhotoCrop,
+} from '@/contracts/profile-photo';
 import { ERROR_CODES, type ErrorCode } from '@/lib/errors';
 import { recordConsents } from '@/server/actions/privacy';
 
@@ -13,10 +17,12 @@ export function PhotoManager({
   userId,
   hasPhoto,
   consentGranted,
+  cleanupPending: initialCleanupPending,
 }: {
   userId: string;
   hasPhoto: boolean;
   consentGranted: boolean;
+  cleanupPending: boolean;
 }) {
   const t = useTranslations('profilePhoto');
   const errors = useTranslations('errors.codes');
@@ -28,6 +34,7 @@ export function PhotoManager({
   const [consent, setConsent] = useState(false);
   const [present, setPresent] = useState(hasPhoto);
   const [granted, setGranted] = useState(consentGranted);
+  const [cleanupPending, setCleanupPending] = useState(initialCleanupPending);
   const [revision, setRevision] = useState(0);
   const [pending, setPending] = useState(false);
   const busy = useRef(false);
@@ -70,6 +77,7 @@ export function PhotoManager({
       if (fileControl.current) fileControl.current.value = '';
       setPresent(true);
       setGranted(true);
+      setCleanupPending(false);
       setFile(undefined);
       setPreview(undefined);
       setConsent(false);
@@ -100,12 +108,19 @@ export function PhotoManager({
         ],
       });
       if (!result.ok) {
+        if (result.errorCode === 'PHOTO_CLEANUP_PENDING') {
+          setPresent(false);
+          setGranted(false);
+          setCleanupPending(true);
+          router.refresh();
+        }
         setError(result.errorCode);
         return;
       }
       if (fileControl.current) fileControl.current.value = '';
       setPresent(false);
       setGranted(false);
+      setCleanupPending(false);
       setFile(undefined);
       setPreview(undefined);
       setConsent(false);
@@ -121,7 +136,14 @@ export function PhotoManager({
   return (
     <div className="mx-auto max-w-xl space-y-6 py-6">
       <PageHeader title={t('title')} description={t('description')} />
-      {present && <Avatar key={revision} name={t('title')} userId={userId} size="lg" />}
+      {present && (
+        <Avatar
+          key={revision}
+          name={t('title')}
+          src={`${profilePhotoHref(userId, 512)}&v=${revision}`}
+          size="lg"
+        />
+      )}
       <form
         className="space-y-5"
         onSubmit={(event) => {
@@ -236,9 +258,9 @@ export function PhotoManager({
           </>
         )}
       </form>
-      {granted && (
+      {(granted || cleanupPending) && (
         <Button variant="secondary" onClick={() => void remove()} loading={pending} fullWidth>
-          {t('remove')}
+          {t(cleanupPending ? 'cleanup' : 'remove')}
         </Button>
       )}
       {error && (

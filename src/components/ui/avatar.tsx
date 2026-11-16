@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { profilePhotoHref } from '@/contracts/profile-photo';
 import { cn } from './cn';
 
 export type AvatarProps = {
   /** Kişinin adı: görsel yoksa baş harfler gösterilir; görsel varsa `alt` olur. */
   name: string;
-  userId?: string;
   src?: string;
   size?: 'sm' | 'md' | 'lg';
   /** Ad avatarın yanında zaten yazıyorsa true: ekran okuyucu tekrar okumaz. */
@@ -28,13 +26,11 @@ export function initialsOf(name: string): string {
 export function Avatar({
   name,
   src: providedSrc,
-  userId,
   size = 'md',
   decorative = false,
   className,
 }: AvatarProps) {
-  const source =
-    providedSrc ?? (userId ? profilePhotoHref(userId, size === 'lg' ? 512 : 96) : undefined);
+  const source = providedSrc;
   const src =
     size === 'lg' && source?.startsWith('/api/profil-fotografi/')
       ? source.replace('size=96', 'size=512')

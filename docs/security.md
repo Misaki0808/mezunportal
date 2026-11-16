@@ -290,7 +290,9 @@ K-07 (ortak doğrulanmış etkin üniversite), etkin hesap ve güncel ayrı foto
 `rules/visibility.ts` üzerinden her istekte kontrol edilir; yönetici rolü gösterim kuralını atlatmaz.
 Anonim kartlara fotoğraf adresi/kimlik eklenmez. Fotoğrafı olmayan kart baş harfe döner.
 Yükleme, rıza geri alma ve hesap silme aynı kullanıcı satırı kilidiyle sıralanır; çözme sırasında
-rıza/fotoğraf değiştiyse eski yükleme yeniden görünürlük açamaz. Geri almada iki türev silinir;
+rıza/fotoğraf değiştiyse eski yükleme yeniden görünürlük açamaz. Geri alım önce kalıcı olarak görünürlüğü kapatır; depolama arızası rızayı geri sarmaz.
+Dosya temizliği hata verirse özel hata kodu ve tekrar silme düğmesi gösterilir; eski anahtar
+koşulu bu arada yeni rızayla yüklenen fotoğrafı korur. Başarıda iki türev silinir;
 hesap silme de aynı dosyaları temizler, kişinin KVKK dökümü iki türevi içerir. Kapsamlı yönetici
 uygunsuz fotoğrafı gerekçeyle kaldırabilir; dosya ve gerekçe kişisel veri taşımayan işlem kaydından ayrıdır.
 
