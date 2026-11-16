@@ -33,6 +33,21 @@ const fullFormat = new Intl.DateTimeFormat('tr-TR', {
   hourCycle: 'h23',
 });
 
+const blockFormat = new Intl.DateTimeFormat('tr-TR', {
+  timeZone: TZ,
+  day: 'numeric',
+  month: 'short',
+});
+
+/** Tarih bloğu (liste satırı): gün numarası ve kısa ay adı, İstanbul saatiyle. */
+export function dateBlock(value: Date): { day: string; month: string } {
+  const parts = blockFormat.formatToParts(new Date(value));
+  return {
+    day: parts.find((part) => part.type === 'day')?.value ?? '',
+    month: (parts.find((part) => part.type === 'month')?.value ?? '').toLocaleUpperCase('tr-TR'),
+  };
+}
+
 export const dayKey = (value: Date) => dayKeyFormat.format(new Date(value));
 export const dayLabel = (value: Date) => dayFormat.format(new Date(value));
 export const shortDayLabel = (value: Date) => shortDayFormat.format(new Date(value));

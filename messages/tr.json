@@ -331,6 +331,10 @@
       "dark": "Koyu"
     }
   },
+  "accountFrame": {
+    "eyebrow": "HESAP",
+    "back": "Hesap ayarları"
+  },
   "nav": {
     "brand": "MezunPortal",
     "labelBottom": "Ana gezinme",
@@ -2703,7 +2707,9 @@
       "open": "Aç",
       "more": "Daha fazla göster",
       "settings": "Mentor ayarlarım",
-      "expires": "Yanıt son tarihi: {date}"
+      "expires": "Yanıt son tarihi: {date}",
+      "upcoming": "Yaklaşan",
+      "past": "Geçmiş"
     },
     "detail": {
       "eyebrow": "RANDEVU",

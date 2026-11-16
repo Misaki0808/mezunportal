@@ -81,10 +81,7 @@ export function ReferralCreate({
     });
   }
   return (
-    <div
-      data-hydrated={hydrated ? 'true' : undefined}
-      className="mx-auto max-w-2xl px-4 py-8 pb-32"
-    >
+    <div data-hydrated={hydrated ? 'true' : undefined} className="w-full max-w-2xl pb-32">
       <PageHeader title={t('createTitle')} description={t('createDescription')} />
       {!candidates.students.length ? (
         <div className="mt-8">
@@ -297,7 +294,7 @@ export function ReferralList({
     <div
       ref={queueRef}
       data-hydrated={hydrated ? 'true' : undefined}
-      className="mx-auto max-w-3xl px-4 py-8 pb-32"
+      className="w-full max-w-3xl pb-32"
     >
       <PageHeader
         title={t(moderation ? 'moderationTitle' : 'title')}

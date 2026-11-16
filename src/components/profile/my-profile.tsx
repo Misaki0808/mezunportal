@@ -29,8 +29,10 @@ import {
 } from '@/contracts/profile-content';
 import type { ActionResult } from '@/contracts/result';
 import {
+  Avatar,
   Badge,
   Button,
+  Card,
   buttonClasses,
   ChevronDownIcon,
   ChevronRightIcon,
@@ -200,27 +202,42 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
   const metaOf = (count: number, filled: string) => (count > 0 ? filled : t('metaEmpty'));
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-5 pb-10 pt-10 [overflow-wrap:anywhere] sm:pt-16">
-      <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-        <div className="min-w-0 flex-1 basis-60">
-          <p className="text-base font-semibold text-primary">
-            {t('title').toLocaleUpperCase('tr-TR')}
-          </p>
-          <h1 className="mt-2 break-words text-3xl font-semibold tracking-tight text-fg">
-            {profile.displayName}
-          </h1>
-          {profile.headline && <p className="mt-1 text-lg text-fg">{profile.headline}</p>}
-          <p className="mt-2 text-base text-fg-muted">{t('description')}</p>
-          <p className="mt-1 text-sm text-fg-muted">
-            {date(profile.lastUpdatedAt)
-              ? t('updated', { date: date(profile.lastUpdatedAt)! })
-              : t('neverUpdated')}
-          </p>
+    <div className="flex w-full max-w-4xl flex-col gap-6 [overflow-wrap:anywhere]">
+      <Card
+        as="header"
+        className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:p-6"
+      >
+        <div className="flex min-w-0 flex-1 items-start gap-4 sm:gap-5">
+          {/* Profil fotoğrafı yeri (kart 388): fotoğraf gelince `Avatar`'ın `src`'i dolar; yer aynı kalır. */}
+          <div data-slot="profile-photo" className="shrink-0">
+            <Avatar name={profile.displayName} size="xl" decorative />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold tracking-[0.08em] text-primary">
+              {t('title').toLocaleUpperCase('tr-TR')}
+            </p>
+            <h1 className="mt-1.5 break-words text-[1.625rem] leading-[1.15] font-extrabold tracking-tight text-fg sm:text-[2.125rem]">
+              {profile.displayName}
+            </h1>
+            {profile.headline && (
+              <p className="mt-1.5 text-lg font-medium text-fg">{profile.headline}</p>
+            )}
+            <p className="mt-2 text-base text-fg-muted">{t('description')}</p>
+            <p className="mt-1 text-sm text-fg-muted">
+              {date(profile.lastUpdatedAt)
+                ? t('updated', { date: date(profile.lastUpdatedAt)! })
+                : t('neverUpdated')}
+            </p>
+          </div>
         </div>
-        <Button variant="secondary" onClick={() => setEditing({ kind: 'basics' })}>
+        <Button
+          variant="secondary"
+          className="sm:shrink-0"
+          onClick={() => setEditing({ kind: 'basics' })}
+        >
           {t('editShortcut')}
         </Button>
-      </header>
+      </Card>
 
       {/* Çekmece açıkken hata çekmecenin İÇİNDE (serverError) gösterilir; arkadaki sayfada yinelenmez. */}
       {error && !editing && (
@@ -231,7 +248,7 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
 
       {beforeCompletion}
 
-      <section aria-labelledby="completion" className="rounded-card border border-border p-4">
+      <Card as="section" aria-labelledby="completion">
         <h2 id="completion" className="text-lg font-semibold text-fg">
           {t('completion', { percent })}
         </h2>
@@ -298,7 +315,7 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
         >
           {t('onboardingLink')}
         </Link>
-      </section>
+      </Card>
 
       <section className="flex flex-col gap-3 rounded-card border border-primary bg-primary-soft p-4 text-on-primary-soft">
         <h2 className="text-lg font-semibold">{t('cvTitle')}</h2>
@@ -308,7 +325,7 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
         </Link>
       </section>
 
-      <div className="flex flex-col gap-3">
+      <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface shadow-card">
         <Block
           id="basics"
           title={t('basics')}
@@ -613,9 +630,9 @@ function Block({
   const panelId = useId();
   const metaId = useId();
   return (
-    <section id={`profile-${id}`} className="scroll-mt-20 rounded-card border border-border">
+    <section id={`profile-${id}`} className="scroll-mt-20">
       <div className="flex items-center gap-2 pr-3">
-        <h2 className="min-w-0 flex-1 text-xl font-semibold text-fg">
+        <h2 className="min-w-0 flex-1 text-lg font-bold text-fg">
           {/* Özet (kayıt sayısı) görünür ama adın parçası değil: başlığın adı yalnız bölüm adıdır, özet açıklama olarak okunur. */}
           <button
             type="button"
@@ -623,7 +640,7 @@ function Block({
             aria-controls={panelId}
             aria-describedby={metaId}
             onClick={onToggle}
-            className="press-row flex min-h-16 w-full items-center gap-3 rounded-card px-4 py-2 text-left"
+            className="press-row flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left hover:bg-surface-strong"
           >
             <span className="min-w-0 flex-1">
               <span className="block">{title}</span>

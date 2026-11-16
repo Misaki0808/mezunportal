@@ -150,7 +150,7 @@ export function StoryEditor({
     });
   }
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-5 py-10">
+    <div className="w-full max-w-2xl space-y-6">
       <PageHeader title={t('editorTitle')} description={t('editorDescription')} />
       <Card className="space-y-5 p-5">
         <Field label={t('department')}>
