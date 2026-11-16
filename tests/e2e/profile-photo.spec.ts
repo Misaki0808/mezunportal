@@ -34,9 +34,11 @@ for (const width of [390, 1440])
         ])
         .png()
         .toBuffer();
-      await page
-        .getByLabel('Fotoğraf seç', { exact: true })
-        .setInputFiles({ name: 'sentetik-portre.png', mimeType: 'image/png', buffer: input });
+      const choosing = page.waitForEvent('filechooser');
+      await page.getByRole('button', { name: 'Fotoğraf seç', exact: true }).click();
+      await (
+        await choosing
+      ).setFiles({ name: 'sentetik-portre.png', mimeType: 'image/png', buffer: input });
       await expect(page.getByRole('img', { name: 'Kare fotoğraf önizlemesi' })).toBeVisible();
       const save = page.getByRole('button', { name: 'Fotoğrafı kaydet', exact: true });
       await expect(save).toBeDisabled();
@@ -48,6 +50,7 @@ for (const width of [390, 1440])
           exact: true,
         })
         .check();
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
       await page.screenshot({
         path: info.outputPath(`crop-${width}-${colorScheme}.png`),
         fullPage: true,
@@ -87,6 +90,7 @@ for (const width of [390, 1440])
       expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
         false,
       );
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
       await page.screenshot({
         path: info.outputPath(`profile-${width}-${colorScheme}.png`),
         fullPage: true,

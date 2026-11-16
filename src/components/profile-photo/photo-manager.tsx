@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Avatar, Button, Checkbox, Input, PageHeader } from '@/components/ui';
+import { Avatar, Button, Checkbox, PageHeader } from '@/components/ui';
 import { CURRENT_CONSENT_VERSIONS } from '@/contracts/privacy';
 import { PROFILE_PHOTO_MAX_BYTES, type PhotoCrop } from '@/contracts/profile-photo';
 import { ERROR_CODES, type ErrorCode } from '@/lib/errors';
@@ -129,9 +129,11 @@ export function PhotoManager({
           void save();
         }}
       >
-        <label className="block space-y-2 font-medium">
-          {t('choose')}
-          <Input
+        <div className="space-y-2">
+          <input
+            aria-label={t('choose')}
+            className="sr-only"
+            tabIndex={-1}
             type="file"
             ref={fileControl}
             accept="image/jpeg,image/png,image/webp"
@@ -154,7 +156,14 @@ export function PhotoManager({
               setCrop({ x: 0.5, y: 0.5, zoom: 1 });
             }}
           />
-        </label>
+          <Button
+            variant="secondary"
+            onClick={() => fileControl.current?.click()}
+            loading={pending}
+          >
+            {t(file ? 'chooseAgain' : 'choose')}
+          </Button>
+        </div>
         {preview && (
           <>
             <div

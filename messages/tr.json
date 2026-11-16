@@ -3850,6 +3850,7 @@
     "moderated": "Fotoğraf kaldırıldı.",
     "consentRequired": "Fotoğraf yüklemek için ayrı görünürlük rızası ver.",
     "privacyLink": "Fotoğrafımı yönet",
-    "readConsent": "Fotoğraf rıza metnini oku"
+    "readConsent": "Fotoğraf rıza metnini oku",
+    "chooseAgain": "Başka fotoğraf seç"
   }
 }
