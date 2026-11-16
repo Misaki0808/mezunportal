@@ -18,11 +18,19 @@ const db = new PrismaClient({
 test.afterAll(() => db.$disconnect());
 
 const DAY = 86_400_000;
-const at = (daysAgo: number, hour = 9) => {
-  const base = new Date(Date.now() - daysAgo * DAY);
-  base.setUTCHours(hour, 0, 0, 0);
-  return base;
+const at = (daysAgo: number, hour = 9, now = new Date()) => {
+  const today = now.toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
+  return new Date(
+    new Date(`${today}T${String(hour).padStart(2, '0')}:00:00+03:00`).getTime() - daysAgo * DAY,
+  );
 };
+
+test('01:30 İstanbul saatinde gün örnekleri doğru takvim gününe düşer', () => {
+  const now = new Date('2026-11-15T22:30:00Z');
+  const day = (date: Date) => date.toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
+  expect(day(at(0, 9, now))).toBe('2026-11-16');
+  expect(day(at(1, 9, now))).toBe('2026-11-15');
+});
 
 async function userId(persona: keyof typeof TEST_PERSONAS) {
   return (
