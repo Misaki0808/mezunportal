@@ -552,3 +552,46 @@ it('profil iletişim biçimini alan altında açıklar ve göndermez; düzeltinc
   await user.click(screen.getByRole('button', { name: 'Kaydet' }));
   expect(updateBasics).toHaveBeenCalledTimes(1);
 });
+
+describe('başkasının profili: görünüm A düzeni (kart 387)', () => {
+  const gridOf = () =>
+    screen.getByRole('heading', { level: 1 }).closest('article')!.lastElementChild as HTMLElement;
+
+  it('başlık kartında profil fotoğrafı yeri vardır (kart 388 doldurur); içerik kartlarda satır listesidir', () => {
+    renderWithToasts(
+      <ProfileView
+        profile={{
+          ...view,
+          positions: [position({ isCurrent: true })],
+          education: [{ institution: 'İstanbul Üniversitesi', fieldOfStudy: 'YBS' }],
+        }}
+      />,
+    );
+    const header = screen.getByRole('heading', { level: 1 }).closest('header')!;
+    expect(header.querySelector('[data-slot="profile-photo"]')).not.toBeNull();
+    const positions = screen
+      .getByRole('heading', { level: 2, name: 'Pozisyon' })
+      .closest('section')!;
+    expect(positions).toHaveClass('rounded-card', 'shadow-card');
+    expect(within(positions).getByRole('list')).toHaveClass('divide-y');
+  });
+
+  it('yan sütun doluysa geniş ekranda iki sütun, boşsa tek sütundur (yan boşluk kalmaz)', () => {
+    const { unmount } = renderWithToasts(
+      <ProfileView
+        profile={{
+          ...view,
+          summary: 'Özet.',
+          skills: [{ label: 'SQL' }],
+          languages: [{ name: 'İngilizce' }],
+        }}
+      />,
+    );
+    expect(gridOf().className).toContain('lg:grid-cols-[minmax(0,1fr)_20rem]');
+    unmount();
+    renderWithToasts(<ProfileView profile={{ ...view, summary: 'Özet.', skills: [] }} />);
+    expect(gridOf().className).not.toContain('lg:grid-cols');
+    // Yan sütun boşken görünmez (düzen sözleşmesi).
+    expect(gridOf().lastElementChild).toHaveClass('hidden');
+  });
+});
