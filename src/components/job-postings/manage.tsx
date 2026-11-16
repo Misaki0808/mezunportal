@@ -1,4 +1,6 @@
 'use client';
+import { AdminFrame } from '@/components/admin/frame';
+import { AdminList, AdminListItem } from '@/components/admin/list';
 import Link from 'next/link';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
@@ -284,107 +286,107 @@ export function PostingModeration({
     });
   }
   return (
-    <div
-      ref={rootRef}
-      data-hydrated={hydrated ? 'true' : undefined}
-      className="mx-auto max-w-5xl px-4 py-8 sm:px-6"
-    >
-      <PageHeader title={t('moderationTitle')} className="mb-7" />
-      {items.length ? (
-        <ul className="grid gap-4">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              data-queue-row={item.id}
-              className="min-w-0 rounded-card border border-border bg-surface p-5"
-            >
-              <p className="break-words text-sm text-fg-muted">
-                {item.organizationName} · {t('reviewedBy', { name: item.author.displayName })}
-              </p>
-              <h2 className="mt-2 break-words text-xl font-bold">{item.title}</h2>
-              <p className="mt-3 whitespace-pre-wrap break-words">{item.description}</p>
-              <p className="mt-3 text-sm text-fg-muted">
-                {item.targetDepartments.map((d) => d.name).join(', ')} · {item.deadlineOn}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Button
-                  data-queue-action
-                  onClick={() => {
-                    setError('');
-                    setChoice({ id: item.id, decision: 'PUBLISH' });
-                  }}
-                >
-                  {t('publish')}
-                </Button>
-                <Button
-                  data-queue-action
-                  variant="danger-outline"
-                  onClick={() => {
-                    setReason('');
-                    setError('');
-                    setChoice({ id: item.id, decision: 'REJECT' });
-                  }}
-                >
-                  {t('reject')}
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <EmptyState title={t('moderationEmpty')} />
-      )}
-      {cursor && (
-        <Button variant="secondary" loading={pending} onClick={loadMore}>
-          {t('loadMore')}
-        </Button>
-      )}
-      {error && !choice && (
-        <p role="alert" className="text-danger">
-          {error}
-        </p>
-      )}
-      <Modal
-        open={!!choice}
-        onClose={() => setChoice(undefined)}
-        title={t(choice?.decision === 'REJECT' ? 'reject' : 'publish')}
-        description={
-          choice ? t(choice.decision === 'REJECT' ? 'rejectText' : 'publishText') : undefined
-        }
-        footer={
-          <>
-            <Button
-              variant={choice?.decision === 'REJECT' ? 'danger' : 'primary'}
-              loading={pending}
-              onClick={confirm}
-            >
-              {t('confirm')}
-            </Button>
-            <Button variant="secondary" onClick={() => setChoice(undefined)}>
-              {t('cancel')}
-            </Button>
-          </>
-        }
-      >
-        {choice?.decision === 'REJECT' && (
-          <Field label={t('reason')} required error={error}>
-            {(p) => (
-              <Textarea
-                {...p}
-                ref={reasonRef}
-                maxLength={1000}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
-            )}
-          </Field>
+    <div ref={rootRef} data-hydrated={hydrated ? 'true' : undefined}>
+      <AdminFrame title={t('moderationTitle')}>
+        {items.length ? (
+          <AdminList>
+            {items.map((item) => (
+              <AdminListItem
+                key={item.id}
+                data-queue-row={item.id}
+                className="lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-6"
+              >
+                <Badge tone="warning" className="w-fit">
+                  {t('status.PENDING')}
+                </Badge>
+                <p className="break-words text-sm text-fg-muted">
+                  {item.organizationName} · {t('reviewedBy', { name: item.author.displayName })}
+                </p>
+                <h2 className="mt-2 break-words text-xl font-bold">{item.title}</h2>
+                <p className="mt-3 whitespace-pre-wrap break-words">{item.description}</p>
+                <p className="mt-3 text-sm text-fg-muted">
+                  {item.targetDepartments.map((d) => d.name).join(', ')} · {item.deadlineOn}
+                </p>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row lg:col-start-2 lg:row-start-1 lg:row-span-5 lg:mt-0">
+                  <Button
+                    data-queue-action
+                    onClick={() => {
+                      setError('');
+                      setChoice({ id: item.id, decision: 'PUBLISH' });
+                    }}
+                  >
+                    {t('publish')}
+                  </Button>
+                  <Button
+                    data-queue-action
+                    variant="danger-outline"
+                    onClick={() => {
+                      setReason('');
+                      setError('');
+                      setChoice({ id: item.id, decision: 'REJECT' });
+                    }}
+                  >
+                    {t('reject')}
+                  </Button>
+                </div>
+              </AdminListItem>
+            ))}
+          </AdminList>
+        ) : (
+          <EmptyState title={t('moderationEmpty')} />
         )}
-        {error && choice?.decision !== 'REJECT' && (
+        {cursor && (
+          <Button variant="secondary" loading={pending} onClick={loadMore}>
+            {t('loadMore')}
+          </Button>
+        )}
+        {error && !choice && (
           <p role="alert" className="text-danger">
             {error}
           </p>
         )}
-      </Modal>
+        <Modal
+          open={!!choice}
+          onClose={() => setChoice(undefined)}
+          title={t(choice?.decision === 'REJECT' ? 'reject' : 'publish')}
+          description={
+            choice ? t(choice.decision === 'REJECT' ? 'rejectText' : 'publishText') : undefined
+          }
+          footer={
+            <>
+              <Button
+                variant={choice?.decision === 'REJECT' ? 'danger' : 'primary'}
+                loading={pending}
+                onClick={confirm}
+              >
+                {t('confirm')}
+              </Button>
+              <Button variant="secondary" onClick={() => setChoice(undefined)}>
+                {t('cancel')}
+              </Button>
+            </>
+          }
+        >
+          {choice?.decision === 'REJECT' && (
+            <Field label={t('reason')} required error={error}>
+              {(p) => (
+                <Textarea
+                  {...p}
+                  ref={reasonRef}
+                  maxLength={1000}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+              )}
+            </Field>
+          )}
+          {error && choice?.decision !== 'REJECT' && (
+            <p role="alert" className="text-danger">
+              {error}
+            </p>
+          )}
+        </Modal>
+      </AdminFrame>
     </div>
   );
 }

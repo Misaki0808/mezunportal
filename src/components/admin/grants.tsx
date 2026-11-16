@@ -156,7 +156,7 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
   }
   return (
     <AdminFrame title={t('grants.title')}>
-      <section className="rounded-card border border-border p-5">
+      <section className="rounded-card border border-border bg-surface p-5">
         <h2 className="text-xl font-semibold">{t('grants.grant')}</h2>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
           <Field className="flex-1" label={t('users.searchLabel')} hint={t('users.searchHint')}>

@@ -1,4 +1,5 @@
 'use client';
+import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { safeClientAction } from '@/lib/safe-client-action';
 
@@ -292,12 +293,14 @@ export function ReferralList({
       }));
     });
   }
-  // Hesap görünümü ortak çerçevede (kart 407); yönetim moderasyonu kendi başlığını ve genişliğini korur.
+  const Rows = moderation ? AdminList : 'ul';
+  const Row = moderation ? AdminListItem : 'li';
+  // Hesap çerçevesi başlığı tek kez çizer; moderasyon kendi başlığını ve yönetim satırlarını korur.
   const body = (
     <div
       ref={queueRef}
       data-hydrated={hydrated ? 'true' : undefined}
-      className={moderation ? 'w-full max-w-3xl pb-32' : 'w-full [&>:first-child]:mt-0'}
+      className={moderation ? 'min-w-0 space-y-6 pb-8' : 'w-full [&>:first-child]:mt-0'}
     >
       {moderation && (
         <PageHeader title={t('moderationTitle')} description={t('moderationDescription')} />
@@ -344,7 +347,7 @@ export function ReferralList({
           />
         </div>
       ) : (
-        <ul className="mt-7 grid gap-4">
+        <Rows className={moderation ? undefined : 'mt-7 grid gap-4'}>
           {page.items.map((row) => {
             const student = row.student.id === userId;
             const alumni = row.alumnus.id === userId;
@@ -353,10 +356,14 @@ export function ReferralList({
               (student && row.status === 'PROPOSED') ||
               (alumni && row.status === 'ACCEPTED_PROPOSED');
             return (
-              <li
+              <Row
                 data-queue-row={row.id}
                 key={row.id}
-                className="min-w-0 rounded-card border border-border bg-surface p-5 shadow-card"
+                className={
+                  moderation
+                    ? undefined
+                    : 'min-w-0 rounded-card border border-border bg-surface p-5 shadow-card'
+                }
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -444,10 +451,10 @@ export function ReferralList({
                       </Button>
                     </div>
                   )}
-              </li>
+              </Row>
             );
           })}
-        </ul>
+        </Rows>
       )}
       <Modal
         open={!!reviewChoice}
