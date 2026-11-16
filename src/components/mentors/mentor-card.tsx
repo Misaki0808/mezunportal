@@ -34,7 +34,12 @@ export function MentorCard({
     <article className="min-w-0 rounded-card border border-border bg-bg p-5 shadow-card [overflow-wrap:anywhere]">
       {/* Önce KİM: baş harf avatarı + ad + güncel konum; müsaitlik ve tür rozetleri hemen altında. */}
       <div className="flex items-start gap-3">
-        <Avatar name={mentor.displayName} size={compact ? 'md' : 'lg'} decorative />
+        <Avatar
+          src={mentor.photoSrc}
+          name={mentor.displayName}
+          size={compact ? 'md' : 'lg'}
+          decorative
+        />
         <div className="min-w-0 flex-1">
           <h3 className="break-words text-xl font-semibold text-fg">{mentor.displayName}</h3>
           {mentor.position && (

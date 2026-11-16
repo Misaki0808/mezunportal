@@ -29,6 +29,7 @@ import {
 } from '@/contracts/profile-content';
 import type { ActionResult } from '@/contracts/result';
 import {
+  Avatar,
   Badge,
   Button,
   buttonClasses,
@@ -93,6 +94,7 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
   const router = useRouter();
   const action = useAction();
   const t = useTranslations('profile.my');
+  const photo = useTranslations('profilePhoto');
   const sections = useTranslations('profile.sections');
   const errors = useTranslations('errors.codes');
   const [profile, setProfile] = useState(initial);
@@ -207,6 +209,13 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
             {t('title').toLocaleUpperCase('tr-TR')}
           </p>
           <h1 className="mt-2 break-words text-3xl font-semibold tracking-tight text-fg">
+            <Avatar
+              src={profile.photoSrc}
+              name={profile.displayName}
+              decorative
+              size="sm"
+              className="mr-2 align-middle"
+            />
             {profile.displayName}
           </h1>
           {profile.headline && <p className="mt-1 text-lg text-fg">{profile.headline}</p>}
@@ -217,9 +226,17 @@ export function MyProfile({ initial, actions, beforeCompletion, afterSections }:
               : t('neverUpdated')}
           </p>
         </div>
-        <Button variant="secondary" onClick={() => setEditing({ kind: 'basics' })}>
-          {t('editShortcut')}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="secondary" onClick={() => setEditing({ kind: 'basics' })}>
+            {t('editShortcut')}
+          </Button>
+          <Link
+            href="/profil/fotograf"
+            className="inline-flex min-h-11 items-center font-medium text-primary underline"
+          >
+            {photo('title')}
+          </Link>
+        </div>
       </header>
 
       {/* Çekmece açıkken hata çekmecenin İÇİNDE (serverError) gösterilir; arkadaki sayfada yinelenmez. */}

@@ -592,3 +592,8 @@ Yerel teslim kanıtı Mailpit `http://localhost:8025` ve `/api/v1/messages` API'
 Mesaj gövdesi/alıcı yalnız kısa ömürlü kuyruk yükündedir; EmailLog gövde/adres taşımaz. Başarılı
 ve başarısız işler 60 saniye sonrası bakımda temizlenir; bekleyen işin saklama sınırı bir saattir.
 Yalnız maskeli alıcı ve sabit olay kodu loglanır. Kalıcı durum EmailLog üzerinde kalır.
+
+Profil fotoğrafı çözme için doğrudan sabitlenen `sharp`, Linux `bookworm-slim` üretim
+bağımlılıklarında da bulunmalıdır. `Dockerfile` içindeki `prod-deps` hedefi yerel native paketle
+karıştırılmadan sınanır; ardından ağsız konteynerde küçük bir WebP üretimi native libvips'in
+yüklendiğini doğrular. Görüntü sınırları ve gizlilik kuralı `docs/security.md` dosya bölümündedir.

@@ -1,6 +1,10 @@
 import 'server-only';
 
-import { DATA_EXPORT_FORMAT_VERSION, type DataExport } from '@/contracts/privacy';
+import {
+  DATA_EXPORT_FORMAT_VERSION,
+  DATA_EXPORT_UNREADABLE,
+  type DataExport,
+} from '@/contracts/privacy';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { codedNotFound } from '@/lib/errors';
 
@@ -8,6 +12,7 @@ import { toYearMonth } from './cv-shared';
 import { loadVisibilityLevels } from './privacy';
 import { experienceFields, experienceSelect } from './experienceProjection';
 import { logFields } from '../unexpected-log';
+import { getStorage, type StorageAdapter } from '../external/storage';
 import { sealDataExport } from './dataExportSeal';
 
 /**
@@ -55,6 +60,7 @@ export async function buildDataExport(
   db: PrismaClient,
   userId: string,
   now: Date = new Date(),
+  photoStorage?: StorageAdapter,
 ): Promise<DataExport> {
   const user = await db.user.findUnique({
     where: { id: userId },
@@ -411,7 +417,26 @@ export async function buildDataExport(
   });
   const levels = (await loadVisibilityLevels(db, [userId])).get(userId) ?? new Map();
 
+  const photo = await db.profilePhoto.findUnique({ where: { userId } });
+  let profilePhoto: DataExport['profilePhoto'] = null;
+  const missingPhotoFields: string[] = [];
+  if (photo) {
+    const storage = photoStorage ?? getStorage();
+    const [large, small] = await Promise.all([
+      storage.get(photo.largeKey).catch(() => null),
+      storage.get(photo.smallKey).catch(() => null),
+    ]);
+    if (!large) missingPhotoFields.push('profilePhoto.largeBase64');
+    if (!small) missingPhotoFields.push('profilePhoto.smallBase64');
+    profilePhoto = {
+      contentType: 'image/webp',
+      largeBase64: large ? Buffer.from(large).toString('base64') : DATA_EXPORT_UNREADABLE,
+      smallBase64: small ? Buffer.from(small).toString('base64') : DATA_EXPORT_UNREADABLE,
+      updatedAt: photo.updatedAt.toISOString(),
+    };
+  }
   const result: DataExport = {
+    profilePhoto,
     formatVersion: DATA_EXPORT_FORMAT_VERSION,
     exportedAt: now.toISOString(),
     alumniStories: alumniStories.map((row) => ({
@@ -614,6 +639,7 @@ export async function buildDataExport(
   };
   // Tek geçişte mühürle: şemaya uymayan alan `UNREADABLE`, sözleşmede olmayan anahtar atılır, çağrı başına tek satır günlük (değersiz).
   const sealed = sealDataExport(result);
+  sealed.unreadable.push(...missingPhotoFields);
   logFields('veriDokumu.alan', { unreadable: sealed.unreadable, removed: sealed.removed });
   return sealed.data;
 }

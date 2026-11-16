@@ -15,9 +15,10 @@ export const LEGAL_PATHS = {
   TERMS_OF_USE: '/hukuki/kullanim-sartlari',
   CROSS_BORDER_TRANSFER: '/hukuki/yurt-disi-aktarim',
   JOB_SEEKER_VISIBILITY: '/hukuki/staj-arayan-gorunurlugu',
+  PROFILE_PHOTO_VISIBILITY: '/hukuki/profil-fotografi',
 } as const;
 /** "Staj arıyorum" rızası bu genel onay ekranında SORULMAZ: kendi ayar ekranında (anlamlı önizlemeyle) istenir (P2-06). */
-const SEPARATE_CONSENTS = ['JOB_SEEKER_VISIBILITY'] as const;
+const SEPARATE_CONSENTS = ['JOB_SEEKER_VISIBILITY', 'PROFILE_PHOTO_VISIBILITY'] as const;
 export function ConsentForm({
   state,
   returnTo = null,

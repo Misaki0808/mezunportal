@@ -9,10 +9,12 @@ import {
   type FieldVisibilitySettings,
   type VisibilityLevel,
 } from '@/contracts/privacy';
-import type { Prisma } from '@/generated/prisma/client';
+import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { codedForbidden, codedValidation } from '@/lib/errors';
 
 import { computeConsentState, consentDecisionError, type ConsentVersions } from '../rules/consent';
+import { getStorage, type StorageAdapter } from '../external/storage';
+import { eraseProfilePhoto } from './profile-photo-erasure';
 import { revokeSeekerVisibility } from './seeker-visibility';
 
 export type PrivacyClient = Pick<
@@ -28,14 +30,14 @@ export async function getConsentState(
   const records = await db.consent.findMany({
     where: { userId },
     select: { documentType: true, version: true, granted: true, createdAt: true },
-    orderBy: { createdAt: 'asc' },
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
   });
   return computeConsentState(records, versions);
 }
 
 /** Kararları doğrular (hepsi geçerliyse) ve her birini YENİ satır olarak ekler; güncel durumu döner. */
 export async function recordConsents(
-  db: PrivacyClient,
+  db: PrismaClient,
   userId: string,
   decisions: readonly {
     documentType: ConsentState['documents'][number]['documentType'];
@@ -43,18 +45,23 @@ export async function recordConsents(
     granted: boolean;
   }[],
   versions: ConsentVersions = CURRENT_CONSENT_VERSIONS,
+  photoStorage?: StorageAdapter,
 ): Promise<ConsentState> {
   for (const decision of decisions) {
     const error = consentDecisionError(decision, versions);
     if (error) throw codedValidation(error);
   }
-  await db.consent.createMany({
-    data: decisions.map((decision) => ({ userId, ...decision })),
+  await db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR UPDATE`;
+    // Rıza geri alımı yükleme ve hesap silmeyle aynı kilitte sıralanır.
+    if (decisions.some((d) => d.documentType === 'PROFILE_PHOTO_VISIBILITY' && !d.granted)) {
+      const photo = await tx.profilePhoto.findUnique({ where: { userId } });
+      if (photo) await eraseProfilePhoto(tx, photoStorage ?? getStorage(), userId);
+    }
+    await tx.consent.createMany({ data: decisions.map((d) => ({ userId, ...d })) });
+    if (decisions.some((d) => d.documentType === 'JOB_SEEKER_VISIBILITY' && !d.granted))
+      await revokeSeekerVisibility(tx, userId, new Date());
   });
-  // P2-06 (D20): "staj arıyorum" rızası geri alınınca görünürlük HEMEN kalkar (görünürlük ayrıca sorgu anında son rıza satırından
-  // okunur; bu temizlik bayrağı/opak kimliği kapatır ve bekleyen aday talepleri kapatır).
-  if (decisions.some((d) => d.documentType === 'JOB_SEEKER_VISIBILITY' && !d.granted))
-    await revokeSeekerVisibility(db, userId, new Date());
   return getConsentState(db, userId, versions);
 }
 
@@ -72,7 +79,7 @@ export async function requireConsent(db: Pick<PrivacyClient, 'consent'>, userId:
   const records = await db.consent.findMany({
     where: { userId },
     select: { documentType: true, version: true, granted: true, createdAt: true },
-    orderBy: { createdAt: 'asc' },
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
   });
   if (computeConsentState(records, CURRENT_CONSENT_VERSIONS).blocking) {
     throw codedForbidden('CONSENT_REQUIRED');

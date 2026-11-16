@@ -1,4 +1,5 @@
 'use client';
+import { Avatar } from '@/components/ui';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -107,6 +108,12 @@ export function MyAppointments({
                 <span className="text-base text-fg-muted">{modes(item.mode)}</span>
               </div>
               <h2 className="mt-3 break-words text-lg font-semibold text-fg">
+                <Avatar
+                  src={item.counterpart.photoSrc}
+                  name={item.counterpart.displayName}
+                  decorative
+                  className="mr-2 align-middle"
+                />
                 {item.counterpart.displayName}
               </h2>
               <p className="mt-1 text-base text-fg">{fullLabel(item.startsAt)}</p>

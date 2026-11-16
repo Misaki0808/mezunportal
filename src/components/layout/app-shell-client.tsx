@@ -217,7 +217,7 @@ export function AppShellClient({
       aria-label={t('accountLink')}
       className="press-control inline-flex size-11 items-center justify-center rounded-full"
     >
-      <Avatar name={shellUser.name} size="sm" decorative />
+      <Avatar src={shellUser.photoSrc} name={shellUser.name} size="sm" decorative />
     </Link>
   ) : null;
 
@@ -286,7 +286,7 @@ export function AppShellClient({
           </nav>
           {shellUser && !consentPending && (
             <div className="flex items-center gap-3 rounded-control bg-side-foot p-3">
-              <Avatar name={shellUser.name} size="sm" decorative />
+              <Avatar src={shellUser.photoSrc} name={shellUser.name} size="sm" decorative />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-side-fg">{shellUser.name}</p>
                 {membershipLine && (

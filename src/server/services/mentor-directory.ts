@@ -1,4 +1,5 @@
 import 'server-only';
+import { photoSources } from './photo-presentation';
 
 import {
   getMentorEntryPointsSchema,
@@ -276,11 +277,19 @@ async function loadCards(
     select: cardSelect(universityIds),
   });
   const used = knownUsed ?? (await countsOf(deps)(deps.db, mentorIds, now));
+  const photos = await photoSources(deps.db, mentorIds, { universities: universityIds }, now);
   const byId = new Map(rows.map((row) => [row.userId, row]));
   // Yarışta görünürlüğü kaybeden (üyeliği kapanan vb.) mentor kartı düşer.
   return mentorIds.flatMap((id) => {
     const row = byId.get(id);
-    return row && row.user.memberships.length > 0 ? [toCard(row, used.get(id) ?? 0, now)] : [];
+    return row && row.user.memberships.length > 0
+      ? [
+          {
+            ...toCard(row, used.get(id) ?? 0, now),
+            ...(photos.has(id) ? { photoSrc: photos.get(id)! } : {}),
+          },
+        ]
+      : [];
   });
 }
 

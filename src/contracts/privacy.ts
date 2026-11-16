@@ -33,6 +33,7 @@ export const CONSENT_DOCUMENTS = [
   'CROSS_BORDER_TRANSFER',
   /** P2-06 (D20): "staj arıyorum" görünürlüğü; İSTEĞE BAĞLI, her an geri alınır (görünürlük hemen kalkar). */
   'JOB_SEEKER_VISIBILITY',
+  'PROFILE_PHOTO_VISIBILITY',
 ] as const;
 export type ConsentDocument = (typeof CONSENT_DOCUMENTS)[number];
 
@@ -52,6 +53,7 @@ export const CURRENT_CONSENT_VERSIONS = {
   TERMS_OF_USE: 'taslak-1',
   CROSS_BORDER_TRANSFER: 'taslak-1',
   JOB_SEEKER_VISIBILITY: 'taslak-1',
+  PROFILE_PHOTO_VISIBILITY: 'taslak-1',
 } as const satisfies Record<ConsentDocument, string>;
 
 /** Veritabanı CHECK'iyle aynı biçim (`Consent_version_check`). */
@@ -318,6 +320,16 @@ export const exportedAppointmentSchema = z
   .strict();
 
 export const dataExportSchema = z.strictObject({
+  profilePhoto: z
+    .object({
+      contentType: z.literal('image/webp'),
+      largeBase64: z.string(),
+      smallBase64: z.string(),
+      updatedAt: z.string(),
+    })
+    .strict()
+    .nullable()
+    .default(null),
   formatVersion: z.literal(DATA_EXPORT_FORMAT_VERSION),
   exportedAt: z.string(),
   alumniStories: z.array(

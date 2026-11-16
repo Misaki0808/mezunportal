@@ -317,7 +317,9 @@
       "STORY_INVALID_STATE": "Bu işlem için hikâyenin durumunu ve yayın iznini kontrol et.",
       "STORY_MONTH_ALREADY_SELECTED": "Bu bölüm için bu ayın mezunu zaten seçildi.",
       "CV_LINKEDIN_UNAVAILABLE": "LinkedIn PDF içe aktarma henüz açık değil. Normal CV yükleyebilir ya da bilgilerini elle girebilirsin.",
-      "PROFILE_TEXT_PERSONAL_DATA": "Bu alana telefon, e-posta veya kimlik numarası yazma. İletişim bilgilerini Gizlilik ayarlarından yönet."
+      "PROFILE_TEXT_PERSONAL_DATA": "Bu alana telefon, e-posta veya kimlik numarası yazma. İletişim bilgilerini Gizlilik ayarlarından yönet.",
+      "PHOTO_TOO_LARGE": "Fotoğraf en çok 5 MB olabilir.",
+      "PHOTO_INVALID": "Geçerli, hareketsiz bir JPEG, PNG veya WebP fotoğraf seç."
     }
   },
   "theme": {
@@ -1487,7 +1489,8 @@
       "TERMS_OF_USE": "Kullanım şartları",
       "CROSS_BORDER_TRANSFER": "Yurt dışına aktarım açık rızası",
       "JOB_SEEKER_VISIBILITY": "Staj arayan olarak görünürlük rızası",
-      "updated": "Güncellendi"
+      "updated": "Güncellendi",
+      "PROFILE_PHOTO_VISIBILITY": "Profil fotoğrafı görünürlüğü açık rızası"
     },
     "visibility": {
       "title": "İletişim bilgilerin, senin kararın",
@@ -1722,6 +1725,23 @@
             "body": "Hesabını istediğin an silebilirsin; sonuçları silme ekranında açıklanır."
           }
         }
+      },
+      "PROFILE_PHOTO_VISIBILITY": {
+        "sections": {
+          "purpose": {
+            "title": "İsteğe bağlı profil fotoğrafı",
+            "body": "Fotoğrafım platformdaki doğrulanmış üyelere görünsün. Fotoğrafım yalnız benimle aynı üniversitedeki doğrulanmış etkin üyelere, profil ve kişi kartlarında gösterilir. Bu rıza uygulamayı kullanmak için zorunlu değildir."
+          },
+          "storage": {
+            "title": "İşleme ve saklama",
+            "body": "JPEG, PNG veya WebP dosyasından kare 512 ve 96 piksel WebP türevleri üretilir. Orijinal dosya, EXIF ve konum bilgileri saklanmaz. Fotoğraf dış sağlayıcıya gönderilmez. Uygunsuz fotoğraf yetkili yönetici tarafından gerekçeyle kaldırılabilir."
+          },
+          "withdrawal": {
+            "title": "Geri alma ve haklar",
+            "body": "Profilim → Profil fotoğrafı ekranından rızamı her an geri alabilirim; fotoğrafım hemen gizlenir ve dosyalar silinir. Hesabımı silince fotoğrafım da silinir. Verilerimi indir seçeneği fotoğrafımın iki türevini içerir."
+          }
+        },
+        "slug": "profil-fotografi"
       }
     },
     "erasedPersonalText": "Hesap silindiği için temizlendi."
@@ -3763,5 +3783,26 @@
         "many": "Takip ettiğin {count} başvuru dönemi başladı."
       }
     }
+  },
+  "profilePhoto": {
+    "title": "Profil fotoğrafı",
+    "description": "JPEG, PNG veya WebP · en çok 5 MB. Orijinal saklanmaz; konum ve diğer ek bilgiler silinir.",
+    "choose": "Fotoğraf seç",
+    "preview": "Kare fotoğraf önizlemesi",
+    "consent": "Fotoğrafım platformdaki doğrulanmış üyelere görünsün",
+    "save": "Fotoğrafı kaydet",
+    "remove": "Rızamı geri al ve fotoğrafımı sil",
+    "saved": "Fotoğrafın kaydedildi.",
+    "removed": "Fotoğrafın silindi; artık gösterilmiyor.",
+    "horizontal": "Yatay konum",
+    "vertical": "Dikey konum",
+    "zoom": "Yakınlaştırma",
+    "moderate": "Fotoğrafı kaldır",
+    "reason": "Kaldırma gerekçesi",
+    "moderationTitle": "Profil fotoğrafını kaldır",
+    "moderated": "Fotoğraf kaldırıldı.",
+    "consentRequired": "Fotoğraf yüklemek için ayrı görünürlük rızası ver.",
+    "privacyLink": "Fotoğrafımı yönet",
+    "readConsent": "Fotoğraf rıza metnini oku"
   }
 }
