@@ -32,7 +32,6 @@ describe('örnek CV alan doğruluğu (sahte adaptör: hat bütünlüğü)', () =
     expect(scores).toHaveLength(CV_SAMPLES.length);
     const table = accuracyTable(scores);
     expect(table.split('\n')).toHaveLength(2 + CV_SAMPLES.length);
-    console.info(`\n${table}\n`);
   });
 });
 
