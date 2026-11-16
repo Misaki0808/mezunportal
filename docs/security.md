@@ -284,7 +284,8 @@ kuralları değişmez. Aydınlatma metni değiştiğinde sürüm artırılır ve
 
 Profil fotoğrafı, PDF belgelerinden ayrı bir görüntü hattıdır: en çok 5 MB JPEG/PNG/WebP,
 bayt imzası ve gerçek çözme birlikte doğrulanır. `sharp` 24 MP giriş sınırı, katı hata davranışı,
-hareketsiz/tek sayfa şartı ve tek işleme bütçesi uygular. Kare 512/96 WebP dışında dosya tutulmaz;
+hareketsiz/tek sayfa şartı ve tek işleme bütçesi uygular; bütçe doluyken ham dosyaları
+kuyrukta tutmak yerine kararlı geçici yoğunluk kodu ve tekrar deneme mesajı döner. Kare 512/96 WebP dışında dosya tutulmaz;
 EXIF, konum ve diğer metadata aktarılmaz. Depolama anahtarları kullanıcı + rastgele UUID taşır;
 anahtar istemciye çıkmaz. Sunum yalnız yetkili uygulama rotasından, `private, no-store` ile yapılır.
 K-07 (ortak doğrulanmış etkin üniversite), etkin hesap ve güncel ayrı fotoğraf rızası
