@@ -192,7 +192,95 @@
       "empty": "Henüz sana uyan ilan yok. İlgi alanlarını eklersen uygun ilanlar burada görünür.",
       "profile": "Profilini düzenle"
     },
-    "welcome": "Hoş geldin!"
+    "welcome": "Hoş geldin!",
+    "dashboard": {
+      "greetingNamed": "{greeting}, {name}",
+      "greetings": {
+        "morning": "Günaydın",
+        "day": "İyi günler",
+        "evening": "İyi akşamlar",
+        "night": "İyi geceler"
+      },
+      "overview": {
+        "next": "Sıradaki görüşmen {date}."
+      },
+      "actions": {
+        "mentors": "Mentor bul",
+        "cv": "CV’den profilini doldur",
+        "mentorSettings": "Mentor ayarlarını aç",
+        "requests": "Gelen talepleri gör",
+        "admin": "İncelemelere git",
+        "profile": "Profilini düzenle",
+        "label": "Ana sayfa eylemleri"
+      },
+      "stats": {
+        "label": "Günün özeti",
+        "profile": "Profil",
+        "pending": "Bekleyen iş",
+        "appointment": "Sıradaki görüşme",
+        "steps": "{count} adım eksik",
+        "pendingHint": "Yanıt ve değerlendirmelerin",
+        "unknown": "—",
+        "unavailable": "Bilgi alınamadı",
+        "none": "Yok",
+        "noAppointment": "Henüz planlanmış görüşme yok"
+      },
+      "appointments": {
+        "title": "Yaklaşan görüşme",
+        "all": "Randevularını gör",
+        "empty": "Henüz planlanmış görüşmen yok.",
+        "emptyStudent": "Bir mentorla görüşme ayarladığında burada görünecek.",
+        "emptyMentor": "Onayladığın görüşmeler burada görünecek.",
+        "with": "{name} ile görüşme",
+        "mode": {
+          "ONLINE": "Çevrimiçi",
+          "IN_PERSON": "Yüz yüze"
+        },
+        "details": "Görüşmeyi aç",
+        "calendar": "Takvime ekle",
+        "then": "Sonra: {date} · {name}"
+      },
+      "profile": {
+        "title": "Profilin",
+        "edit": "Profilini düzenle",
+        "complete": "tamam",
+        "progress": "Profil hazırlığı",
+        "hint": "Başlangıç tercihlerinle profilini tamamla.",
+        "ready": "Başlangıç tercihlerin tamam.",
+        "steps": {
+          "MEMBERSHIP": "Üyelik bilgilerin",
+          "INTERESTS": "İlgi alanların",
+          "GOALS": "Hedeflerin",
+          "MENTOR_PREFERENCE": "Mentorluk tercihin",
+          "VISIBILITY": "Gizlilik tercihlerin"
+        }
+      },
+      "jobs": {
+        "title": "Sana uygun ilanlar",
+        "all": "Tüm ilanları gör",
+        "emptyTitle": "İlan önerilerini burada göreceksin"
+      },
+      "mentors": {
+        "title": "Mentorlar",
+        "all": "Tüm mentorları gör",
+        "available": "Müsait",
+        "empty": "Henüz mentor önerin yok",
+        "emptyDescription": "Mentor dizinindeki kişilere göz atabilirsin."
+      },
+      "capacity": {
+        "title": "Bu ayki kapasiten",
+        "settings": "Mentor ayarlarını aç",
+        "description": "Ayarlarında belirlediğin aylık görüşme kapasitesi.",
+        "active": "Mentorluk ayarın açık",
+        "inactive": "Mentorluk ayarın kapalı",
+        "empty": "Mentor ayarlarını tamamla",
+        "emptyDescription": "Görüşme tercihlerini kaydettiğinde kapasiten burada görünür."
+      },
+      "story": {
+        "title": "Ayın mezunu",
+        "read": "Hikâyeyi oku"
+      }
+    }
   },
   "errors": {
     "codes": {
