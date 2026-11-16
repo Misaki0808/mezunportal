@@ -3,11 +3,11 @@ import { safeClientAction } from '@/lib/safe-client-action';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { saveStorySchema, type MyStory } from '@/contracts/alumni-story';
+import { AccountFrameView } from '@/components/account/account-frame';
 import {
   Button,
   Card,
   Field,
-  PageHeader,
   Select,
   Switch,
   Textarea,
@@ -24,7 +24,8 @@ export function StoryEditor({
   initial: MyStory[];
 }) {
   const t = useTranslations('alumniStory'),
-    errors = useTranslations('errors.codes');
+    errors = useTranslations('errors.codes'),
+    frame = useTranslations('accountFrame');
   const [all, setAll] = useState(initial),
     [departmentId, setDepartment] = useState(departments[0]?.id ?? '');
   const initialStory = initial.find((s) => s.departmentId === departments[0]?.id);
@@ -150,8 +151,13 @@ export function StoryEditor({
     });
   }
   return (
-    <div className="w-full max-w-2xl space-y-6">
-      <PageHeader title={t('editorTitle')} description={t('editorDescription')} />
+    <AccountFrameView
+      eyebrow={frame('eyebrow')}
+      backLabel={frame('back')}
+      title={t('editorTitle')}
+      description={t('editorDescription')}
+      width="max-w-2xl"
+    >
       <Card className="space-y-5 p-5">
         <Field label={t('department')}>
           {(props) => (
@@ -242,6 +248,6 @@ export function StoryEditor({
           </p>
         )}
       </Card>
-    </div>
+    </AccountFrameView>
   );
 }
