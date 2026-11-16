@@ -16,7 +16,7 @@ export default async function NewExperiencePage() {
   if (!loaded.ok) return <ErrorState errorCode={loaded.errorCode} />;
   if (loaded.departments.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-lg px-5 py-10">
+      <div className="w-full max-w-lg">
         <EmptyState
           title={t('noDepartmentTitle')}
           description={t('noDepartmentDescription')}

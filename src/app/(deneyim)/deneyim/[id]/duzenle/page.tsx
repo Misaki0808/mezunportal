@@ -28,7 +28,7 @@ export default async function EditExperiencePage({ params }: { params: Promise<{
   // Yalnız taslak ve reddedilen düzenlenir (sunucu da `EXPERIENCE_NOT_EDITABLE` ile korur).
   if (experience.status !== 'DRAFT' && experience.status !== 'REJECTED') {
     return (
-      <div className="mx-auto w-full max-w-lg px-5 py-10">
+      <div className="w-full max-w-lg">
         <EmptyState
           title={t('form.notEditableTitle')}
           description={t('form.notEditableDescription')}

@@ -28,7 +28,7 @@ export default async function CourseGuidePage({
   const t = await getTranslations('courseGuide');
   const groups = groupGuideCourses(result.data);
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+    <div className="w-full min-w-0 space-y-6">
       <PageHeader title={t('title')} description={t('description')} />
       <CourseFilters query={query.q} semester={semester} kind={query.kind} />
       {result.data.length === 0 && (
@@ -52,7 +52,7 @@ export default async function CourseGuidePage({
                 {t(category === 'department' ? 'departmentCourses' : 'commonCourses')}
               </h2>
               {reviewed.length > 0 && (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {reviewed.map((c) => (
                     <Card as="article" key={c.id} data-course-code={c.code}>
                       <div className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
@@ -78,7 +78,7 @@ export default async function CourseGuidePage({
                   ))}
                 </div>
               )}
-              <div className="grid gap-1 md:grid-cols-2 md:items-start">
+              <div className="grid gap-1 md:grid-cols-2 md:items-start xl:grid-cols-3">
                 {semesters.map(({ semester, courses }) => (
                   <div
                     key={semester}
