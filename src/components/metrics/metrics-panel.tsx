@@ -280,7 +280,7 @@ export function MetricsPanel({ initial, initialFilter, departments }: Props) {
                 </article>
               ))}
             </div>
-            <div className="mt-4 hidden overflow-x-auto lg:block">
+            <div className="mt-4 hidden overflow-x-auto rounded-card border border-border bg-surface shadow-card lg:block">
               <table className="w-full text-left">
                 <thead>
                   <tr>

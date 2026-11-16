@@ -3,7 +3,15 @@ import { AdminList, AdminListItem } from './list';
 
 export type DisplayRow = { id: string; cells: ReactNode[] };
 /** Küçük ekranda etiketli kartlar, geniş ekranda aynı veriden tablo. */
-export function ResponsiveRows({ headers, rows }: { headers: string[]; rows: DisplayRow[] }) {
+export function ResponsiveRows({
+  headers,
+  rows,
+  columnWidths,
+}: {
+  headers: string[];
+  rows: DisplayRow[];
+  columnWidths?: string[];
+}) {
   return (
     <>
       <AdminList className="lg:hidden">
@@ -28,6 +36,13 @@ export function ResponsiveRows({ headers, rows }: { headers: string[]; rows: Dis
       </AdminList>
       <div className="hidden overflow-hidden rounded-card border border-border bg-surface shadow-card lg:block">
         <table className="w-full table-fixed border-collapse text-left [overflow-wrap:anywhere]">
+          {columnWidths && (
+            <colgroup>
+              {headers.map((header, index) => (
+                <col key={header} style={{ width: columnWidths[index] }} />
+              ))}
+            </colgroup>
+          )}
           <thead>
             <tr className="border-b border-border bg-surface-strong text-sm text-fg-muted">
               {headers.map((header) => (

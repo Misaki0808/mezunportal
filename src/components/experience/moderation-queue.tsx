@@ -1,4 +1,5 @@
 'use client';
+import { AdminFrame } from '@/components/admin/frame';
 import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
@@ -26,7 +27,6 @@ import {
   EmptyState,
   Field,
   Modal,
-  PageHeader,
   Tabs,
   Textarea,
 } from '@/components/ui';
@@ -401,55 +401,51 @@ export function ModerationQueue({
     );
 
   return (
-    <div ref={queueRef} className="min-w-0 space-y-6 pb-8">
-      <PageHeader
-        eyebrow={t('queue.eyebrow')}
-        title={t('queue.title')}
-        description={t('queue.description')}
-      />
-
-      {notice && (
-        <p
-          role="status"
-          className="mb-4 rounded-control bg-success-soft p-4 text-base text-on-success-soft"
-        >
-          {notice}
-        </p>
-      )}
-      {listError && (
-        <p role="alert" className="mb-4 text-base text-danger">
-          {errors(listError)}
-        </p>
-      )}
-      <Tabs
-        label={t('queue.tabs.label')}
-        items={[
-          { id: 'experiences', label: t('queue.tabs.experiences'), content: experiencesPanel },
-          { id: 'reports', label: t('queue.tabs.reports'), content: reportsPanel },
-        ]}
-      />
-      <DecisionModal
-        choice={experienceDecision.choice}
-        pending={experienceDecision.pending}
-        error={experienceDecision.error}
-        reasonInput={experienceDecision.reasonInput}
-        reasonInvalid={experienceDecision.reasonInvalid}
-        reason={experienceDecision.reason}
-        setReason={experienceDecision.setReason}
-        onConfirm={() => void experienceDecision.confirm()}
-        onClose={experienceDecision.close}
-      />
-      <DecisionModal
-        choice={reportDecision.choice}
-        pending={reportDecision.pending}
-        error={reportDecision.error}
-        reasonInput={reportDecision.reasonInput}
-        reasonInvalid={reportDecision.reasonInvalid}
-        reason={reportDecision.reason}
-        setReason={reportDecision.setReason}
-        onConfirm={() => void reportDecision.confirm()}
-        onClose={reportDecision.close}
-      />
+    <div ref={queueRef}>
+      <AdminFrame title={t('queue.title')} description={t('queue.description')}>
+        {notice && (
+          <p
+            role="status"
+            className="mb-4 rounded-control bg-success-soft p-4 text-base text-on-success-soft"
+          >
+            {notice}
+          </p>
+        )}
+        {listError && (
+          <p role="alert" className="mb-4 text-base text-danger">
+            {errors(listError)}
+          </p>
+        )}
+        <Tabs
+          label={t('queue.tabs.label')}
+          items={[
+            { id: 'experiences', label: t('queue.tabs.experiences'), content: experiencesPanel },
+            { id: 'reports', label: t('queue.tabs.reports'), content: reportsPanel },
+          ]}
+        />
+        <DecisionModal
+          choice={experienceDecision.choice}
+          pending={experienceDecision.pending}
+          error={experienceDecision.error}
+          reasonInput={experienceDecision.reasonInput}
+          reasonInvalid={experienceDecision.reasonInvalid}
+          reason={experienceDecision.reason}
+          setReason={experienceDecision.setReason}
+          onConfirm={() => void experienceDecision.confirm()}
+          onClose={experienceDecision.close}
+        />
+        <DecisionModal
+          choice={reportDecision.choice}
+          pending={reportDecision.pending}
+          error={reportDecision.error}
+          reasonInput={reportDecision.reasonInput}
+          reasonInvalid={reportDecision.reasonInvalid}
+          reason={reportDecision.reason}
+          setReason={reportDecision.setReason}
+          onConfirm={() => void reportDecision.confirm()}
+          onClose={reportDecision.close}
+        />
+      </AdminFrame>
     </div>
   );
 }

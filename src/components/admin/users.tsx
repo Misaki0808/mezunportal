@@ -111,6 +111,7 @@ export function AdminUsers({ initial, search }: Props) {
         ) : (
           <>
             <ResponsiveRows
+              columnWidths={['18%', '26%', '12%', '18%', '12%', '14%']}
               headers={[
                 t('name'),
                 t('maskedEmail'),
