@@ -154,7 +154,7 @@ export function PhotoManager({
         <div className="space-y-2">
           <input
             aria-label={t('choose')}
-            className="sr-only"
+            hidden
             tabIndex={-1}
             type="file"
             ref={fileControl}
@@ -169,7 +169,7 @@ export function PhotoManager({
               setConsent(false);
               if (!selected) return;
               if (selected.size > PROFILE_PHOTO_MAX_BYTES || selected.size === 0) {
-                setError('PHOTO_TOO_LARGE');
+                setError(selected.size === 0 ? 'PHOTO_INVALID' : 'PHOTO_TOO_LARGE');
                 event.target.value = '';
                 return;
               }

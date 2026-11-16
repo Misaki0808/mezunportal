@@ -43,7 +43,7 @@ describe('güvenli profil fotoğrafı çözme', () => {
       processProfilePhoto(new Uint8Array(PROFILE_PHOTO_MAX_BYTES + 1), crop),
     ).rejects.toMatchObject({ code: 'PHOTO_TOO_LARGE' });
     await expect(processProfilePhoto(new Uint8Array(), crop)).rejects.toMatchObject({
-      code: 'PHOTO_TOO_LARGE',
+      code: 'PHOTO_INVALID',
     });
   });
   it('EXIF, GPS, XMP ve yön verisi türevlerde yoktur; yön düzeltilir', async () => {

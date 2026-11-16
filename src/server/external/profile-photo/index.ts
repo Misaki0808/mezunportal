@@ -58,8 +58,8 @@ function animated(bytes: Buffer, format: string) {
 
 /** Aynı süreçte tek çözme; kuyrukta sınırsız ham dosya tutulmaz. Hiçbir metadata/orijinal saklanmaz. */
 export async function processProfilePhoto(bytes: Uint8Array, crop: PhotoCrop) {
-  if (!bytes.length || bytes.length > PROFILE_PHOTO_MAX_BYTES)
-    throw codedValidation('PHOTO_TOO_LARGE');
+  if (!bytes.length) throw codedValidation('PHOTO_INVALID');
+  if (bytes.length > PROFILE_PHOTO_MAX_BYTES) throw codedValidation('PHOTO_TOO_LARGE');
   const format = sniffPhoto(bytes);
   if (!format || animated(Buffer.from(bytes), format)) throw codedValidation('PHOTO_INVALID');
   if (processing) throw codedConflict('RESOURCE_CONFLICT');
