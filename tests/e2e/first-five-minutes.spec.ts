@@ -105,7 +105,16 @@ test('yeni öğrenci e-posta doğrulamasından ilk deneyim listesine ulaşır', 
     await editor.getByRole('button', { name: 'Kaydet' }).click();
     await expect(editor).toBeHidden();
     await expect(page.getByText('Profilin güncellendi.')).toBeVisible();
-    await page.locator('a[href="/deneyimler"]').last().click();
+    // Telefon alt çubuğunda Deneyimler sekmesi yok (beş sekme, kart 384); ana sayfadaki "Deneyim ara" kısayolu açar.
+    await page
+      .getByRole('navigation', { name: 'Ana gezinme' })
+      .getByRole('link', { name: 'Ana sayfa' })
+      .click();
+    await expect(page).toHaveURL(/\/$/);
+    await page
+      .getByRole('main')
+      .getByRole('link', { name: /^Deneyim ara/ })
+      .click();
     await expect(page).toHaveURL(/\/deneyimler/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
