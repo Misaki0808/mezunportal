@@ -86,16 +86,19 @@ export function UnreadProvider({
 
 /**
  * Düzenler: `header` telefon üst çubuğu (sayılı rozet), `icon` bilgisayar üst çubuğu (çerçeveli düğme, okunmamışta nokta),
- * `side` yan menü satırı (lacivert zeminde; rozet hap).
+ * `side` yan menü satırı (lacivert zeminde; rozet hap), `row` telefon menüsü alt sayfasındaki satır (açık/koyu tema zemininde).
  */
 export function NotificationBell({
   initial,
   layout,
   refreshEnabled,
+  onNavigate,
 }: {
   initial: number;
-  layout: 'header' | 'icon' | 'side';
+  layout: 'header' | 'icon' | 'side' | 'row';
   refreshEnabled: boolean;
+  /** Bağlantıya basılınca (ör. telefon menüsü alt sayfasını kapatmak için). */
+  onNavigate?: () => void;
 }) {
   const t = useTranslations('inbox.bell');
   const nav = useTranslations('nav');
@@ -116,18 +119,22 @@ export function NotificationBell({
       href="/bildirimler"
       aria-label={label}
       aria-current={current ? 'page' : undefined}
+      onClick={onNavigate}
       className={cn(
         'press-control relative inline-flex items-center rounded-control font-medium',
         layout === 'header' && 'min-h-11 min-w-11 justify-center',
         layout === 'icon' && 'size-11 justify-center border border-border bg-surface',
         layout === 'side' && 'min-h-11 w-full gap-3 px-3 text-[0.95rem]',
+        layout === 'row' && 'min-h-12 w-full gap-3 px-3 text-base',
         layout === 'side'
           ? current
             ? 'bg-side-active text-side-fg shadow-[inset_3px_0_0_var(--color-accent)]'
             : 'text-side-muted hover:bg-side-active hover:text-side-fg'
           : current
             ? 'bg-primary-soft text-on-primary-soft'
-            : 'text-fg-muted hover:bg-surface-strong',
+            : layout === 'row'
+              ? 'text-fg hover:bg-surface-strong'
+              : 'text-fg-muted hover:bg-surface-strong',
       )}
     >
       <span className="relative inline-flex">
@@ -149,7 +156,7 @@ export function NotificationBell({
           className="absolute top-2 right-2.5 size-2 rounded-full bg-accent ring-2 ring-surface"
         />
       )}
-      {layout === 'side' && (
+      {(layout === 'side' || layout === 'row') && (
         <>
           <span>{nav('items.notifications')}</span>
           {unread > 0 && (

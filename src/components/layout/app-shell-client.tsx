@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import {
@@ -16,7 +16,9 @@ import {
   HomeIcon,
   InboxIcon,
   MapPinIcon,
+  MenuIcon,
   SearchIcon,
+  Sheet,
   SlidersIcon,
   UserIcon,
   UsersIcon,
@@ -76,16 +78,19 @@ const MAIN_ITEMS: readonly { id: NavId; href: string; icon: ReactNode }[] = [
 const PROFILE_ITEM = { id: 'profile', href: '/profil', icon: <UserIcon /> } as const;
 const ACCOUNT_ITEM = { id: 'account', href: '/hesap', icon: <SlidersIcon /> } as const;
 
-type TabId = 'home' | 'jobs' | 'mentors' | 'appointments' | 'profile';
+type TabId = 'home' | 'jobs' | 'mentors' | 'appointments';
 
-/** Telefon alt çubuğu: beş sekme. Diğer ekranlara ana sayfadan ve profilden gidilir. */
+/** Telefon alt çubuğu: dört sekme + "Menü" (beşinci, alt sayfa açar; kart 387). */
 const TAB_ITEMS: readonly { id: TabId; href: string; icon: ReactNode }[] = [
   { id: 'home', href: '/', icon: <HomeIcon /> },
   { id: 'jobs', href: '/ilanlar', icon: <BriefcaseIcon /> },
   { id: 'mentors', href: '/mentorlar', icon: <UsersIcon /> },
   { id: 'appointments', href: '/randevular', icon: <CalendarIcon /> },
-  PROFILE_ITEM,
 ];
+
+/** "Menü" alt sayfasının keşfet grubu: alt çubukta yeri olmayan ekranlar (kimlik `MAIN_ITEMS` ile aynı). */
+const MENU_EXPLORE_IDS: readonly NavId[] = ['experiences', 'alumni', 'events', 'courses'];
+const MENU_EXPLORE = MENU_EXPLORE_IDS.flatMap((id) => MAIN_ITEMS.filter((item) => item.id === id));
 
 function isCurrent(pathname: string, href: string): boolean {
   if (href === '/ilanlar' && pathname === '/ilanlarim') return true;
@@ -131,6 +136,9 @@ export function AppShellClient({
   const themeText = useTranslations('theme');
   const themeLabels = { toLight: themeText('switchToLight'), toDark: themeText('switchToDark') };
   const pathname = usePathname();
+  // Telefon menüsü: açık/kapalı durumu bulunulan yola bağlıdır, sayfa değişince kendiliğinden kapanır (etki gerekmez).
+  const [menu, setMenu] = useState({ open: false, path: pathname });
+  const menuOpen = menu.open && menu.path === pathname;
 
   // Giriş tamamlandı (oturumlu bir ekran çizildi): "E-postanı kontrol et" ekranı için tutulan adres bu sekmede kalmasın.
   useEffect(() => {
@@ -187,6 +195,50 @@ export function AppShellClient({
       >
         {item.icon}
         <span>{t(`shortItems.${item.id}`)}</span>
+      </Link>
+    );
+  }
+
+  const closeMenu = () => setMenu({ open: false, path: pathname });
+  const menuCurrent =
+    [...MENU_EXPLORE, PROFILE_ITEM, ACCOUNT_ITEM].some((item) => isCurrent(pathname, item.href)) ||
+    isCurrent(pathname, '/bildirimler') ||
+    (showAdmin && isCurrent(pathname, '/yonetim'));
+
+  /** Alt çubuğun beşinci öğesi: bir sayfa değil alt sayfa açar; menüdeki bir ekran açıkken etkin görünür. */
+  const menuTab = (
+    <button
+      type="button"
+      aria-haspopup="dialog"
+      aria-expanded={menuOpen}
+      aria-current={menuCurrent ? 'true' : undefined}
+      onClick={() => setMenu({ open: true, path: pathname })}
+      className={cn(
+        'press-control inline-flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 text-xs font-semibold',
+        menuCurrent
+          ? 'bg-primary-soft text-on-primary-soft'
+          : 'text-fg-muted hover:bg-surface-strong',
+      )}
+    >
+      <MenuIcon />
+      <span>{t('shortItems.menu')}</span>
+    </button>
+  );
+
+  function renderMenuItem(item: { id: NavId; href: string; icon: ReactNode }) {
+    const current = isCurrent(pathname, item.href);
+    return (
+      <Link
+        href={item.href}
+        aria-current={current ? 'page' : undefined}
+        onClick={closeMenu}
+        className={cn(
+          'press-control inline-flex min-h-12 w-full items-center gap-3 rounded-control px-3 text-base font-medium',
+          current ? 'bg-primary-soft text-on-primary-soft' : 'text-fg hover:bg-surface-strong',
+        )}
+      >
+        {item.icon}
+        <span>{t(`items.${item.id}`)}</span>
       </Link>
     );
   }
@@ -402,8 +454,77 @@ export function AppShellClient({
               {TAB_ITEMS.map((item) => (
                 <li key={item.id}>{renderTab(item)}</li>
               ))}
+              <li>{menuTab}</li>
             </ul>
           </nav>
+        )}
+
+        {!consentPending && (
+          <Sheet open={menuOpen} onClose={closeMenu} title={t('menu.title')}>
+            <nav aria-label={t('menu.title')} className="flex flex-col gap-5">
+              <div>
+                <p
+                  id="menu-group-explore"
+                  className="px-3 pb-1.5 text-xs font-semibold tracking-[0.08em] text-fg-muted uppercase"
+                >
+                  {t('groups.explore')}
+                </p>
+                <ul aria-labelledby="menu-group-explore" className="flex flex-col gap-0.5">
+                  {MENU_EXPLORE.map((item) => (
+                    <li key={item.id}>{renderMenuItem(item)}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p
+                  id="menu-group-account"
+                  className="px-3 pb-1.5 text-xs font-semibold tracking-[0.08em] text-fg-muted uppercase"
+                >
+                  {t('groups.account')}
+                </p>
+                <ul aria-labelledby="menu-group-account" className="flex flex-col gap-0.5">
+                  <li>
+                    <NotificationBell
+                      initial={unreadNotifications}
+                      layout="row"
+                      refreshEnabled={canRefreshNotifications}
+                      onNavigate={closeMenu}
+                    />
+                  </li>
+                  <li>{renderMenuItem(PROFILE_ITEM)}</li>
+                  <li>{renderMenuItem(ACCOUNT_ITEM)}</li>
+                </ul>
+              </div>
+              {showAdmin && (
+                <div>
+                  <p
+                    id="menu-group-admin"
+                    className="px-3 pb-1.5 text-xs font-semibold tracking-[0.08em] text-fg-muted uppercase"
+                  >
+                    {t('groups.admin')}
+                  </p>
+                  <ul aria-labelledby="menu-group-admin" className="flex flex-col gap-0.5">
+                    <li>
+                      <Link
+                        href="/yonetim"
+                        aria-current={isCurrent(pathname, '/yonetim') ? 'page' : undefined}
+                        onClick={closeMenu}
+                        className={cn(
+                          'press-control inline-flex min-h-12 w-full items-center gap-3 rounded-control px-3 text-base font-medium',
+                          isCurrent(pathname, '/yonetim')
+                            ? 'bg-primary-soft text-on-primary-soft'
+                            : 'text-fg hover:bg-surface-strong',
+                        )}
+                      >
+                        <InboxIcon />
+                        <span>{t('admin')}</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </nav>
+          </Sheet>
         )}
       </div>
     </UnreadProvider>
