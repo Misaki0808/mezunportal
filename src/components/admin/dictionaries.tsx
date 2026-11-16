@@ -1,6 +1,6 @@
 'use client';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   DICTIONARY_KINDS,
   createDictionaryEntrySchema,
@@ -22,6 +22,7 @@ import { ResponsiveRows } from './responsive-rows';
 
 type Entry = DictionaryEntryPage['items'][number];
 type Props = {
+  headerActions?: ReactNode;
   initial: DictionaryEntryPage;
   sectors: Entry[];
   list: (input: ListDictionaryEntriesInput) => Promise<ActionResult<DictionaryEntryPage>>;
@@ -29,7 +30,15 @@ type Props = {
   update: (input: UpdateDictionaryEntryInput) => Promise<ActionResult<DictionaryEntryIdOutput>>;
   remove: (input: DeleteDictionaryEntryInput) => Promise<ActionResult<DictionaryEntryIdOutput>>;
 };
-export function Dictionaries({ initial, sectors, list, create, update, remove }: Props) {
+export function Dictionaries({
+  initial,
+  sectors,
+  list,
+  create,
+  update,
+  remove,
+  headerActions,
+}: Props) {
   const t = useTranslations('admin');
   const errors = useTranslations('errors.codes');
   const [kind, setKind] = useState<DictionaryKind>('COMPANY');
@@ -143,7 +152,7 @@ export function Dictionaries({ initial, sectors, list, create, update, remove }:
     }
   }
   return (
-    <AdminFrame title={t('dictionary.title')}>
+    <AdminFrame title={t('dictionary.title')} actions={headerActions}>
       <div className="flex flex-wrap items-end gap-4">
         <Field className="min-w-48" label={t('dictionary.kind')}>
           {(props) => (

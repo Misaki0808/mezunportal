@@ -175,3 +175,10 @@ it('yeni işlem sürerken önceki başarı iletisi hemen temizlenir', async () =
   }
   expect(await screen.findByText('Hikâyen incelemeye gönderildi.')).toBeVisible();
 });
+
+it('ortak hesap çerçevesinde: HESAP üst etiketi, tek h1 ve hesap ayarlarına dönüş (kart 407)', () => {
+  show();
+  expect(screen.getByRole('heading', { level: 1, name: 'Kariyer hikâyem' })).toBeVisible();
+  expect(screen.getByText('HESAP')).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Hesap ayarları' })).toHaveAttribute('href', '/hesap');
+});

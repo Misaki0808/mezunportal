@@ -1,4 +1,5 @@
 'use client';
+import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 import { useTranslations } from 'next-intl';
@@ -121,7 +122,7 @@ function ModerationCard({
 
   const noAnswers = item.answers.length === 0;
   return (
-    <li data-queue-row={item.id} className="min-w-0 rounded-card border border-border p-4 sm:p-5">
+    <AdminListItem data-queue-row={item.id}>
       <p className="text-sm text-fg-muted">{formatDate(item.createdAt)}</p>
       <div className="mt-3 flex flex-col gap-4">
         <Field
@@ -264,7 +265,7 @@ function ModerationCard({
           )}
         </div>
       </Modal>
-    </li>
+    </AdminListItem>
   );
 }
 
@@ -319,7 +320,7 @@ export function FaqModerationQueue({
       {items.length === 0 ? (
         <EmptyState title={t('empty')} description={t('emptyDescription')} />
       ) : (
-        <ul className="flex flex-col gap-4">
+        <AdminList>
           {items.map((item) => (
             <ModerationCard
               key={item.id}
@@ -332,7 +333,7 @@ export function FaqModerationQueue({
               }}
             />
           ))}
-        </ul>
+        </AdminList>
       )}
       {cursor && (
         <Button variant="secondary" loading={pending} onClick={() => void more()}>

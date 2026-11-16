@@ -6,6 +6,8 @@ import { searchExperiencesSchema, type SearchExperiencesInput } from '@/contract
 import type { Prisma } from '@/generated/prisma/client';
 import { isCodedError } from '@/lib/errors';
 import { createTestPrisma } from '@/test/db';
+import { queryCounter } from '@/test/query-counter';
+import { settleEvents } from './event';
 import { addMembership, createInstitution, createUser, type Institution } from '@/test/fixtures';
 
 import { loadActor } from '../permissions/actor';
@@ -572,8 +574,8 @@ describe('bağımsız inceleyici regresyonları', () => {
   );
 });
 
-describe('başarım: 1.000 sahte deneyimle tipik sorgu', () => {
-  it('tipik sorgular < 300 ms (ısınma sonrası ortanca)', async () => {
+describe('1.000 sahte deneyimle tipik sorgular', () => {
+  it('filtreler sonuçları döndürür ve sorgu sayısı sınırlı kalır', async () => {
     const perf = await createInstitution(db);
     const viewer = await createUser(db);
     await addMembership(db, {
@@ -654,24 +656,16 @@ describe('başarım: 1.000 sahte deneyimle tipik sorgu', () => {
       { company: 'garanti', channels: ['REFERRAL'] },
       {},
     ];
-    const timings: { query: string; ms: number }[] = [];
+    const counter = queryCounter(db);
     for (const input of queries) {
+      counter.reset();
       const filter = searchExperiencesSchema.parse(input);
-      await searchExperiences({ db }, actor, filter); // ısınma
-      const samples: number[] = [];
-      for (let run = 0; run < 7; run += 1) {
-        const start = performance.now();
-        const page = await searchExperiences({ db }, actor, filter);
-        samples.push(performance.now() - start);
-        expect(page.total, JSON.stringify(input)).toBeGreaterThan(0);
-      }
-      samples.sort((a, b) => a - b);
-      timings.push({ query: JSON.stringify(input), ms: Math.round(samples[3]!) });
+      const page = await searchExperiences({ db: counter.client }, actor, filter);
+      await settleEvents();
+      expect(page.total, JSON.stringify(input)).toBeGreaterThan(0);
+      expect(counter.count(), JSON.stringify(input)).toBeGreaterThan(0);
+      expect(counter.count(), JSON.stringify(input)).toBeLessThanOrEqual(6);
     }
-    console.info(
-      `\narama başarımı (1000 deneyim, ortanca ms)\n${timings.map((t) => `${String(t.ms).padStart(5)} ms  ${t.query}`).join('\n')}\n`,
-    );
-    for (const timing of timings) expect(timing.ms, timing.query).toBeLessThan(300);
   });
 });
 

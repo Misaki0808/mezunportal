@@ -60,7 +60,7 @@ export function AuditLog({ initial, list }: Props) {
   return (
     <AdminFrame title={t('audit.title')}>
       <form
-        className="grid gap-4 rounded-card border border-border p-5 md:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-cols-2 gap-3 rounded-card border border-border bg-surface p-4 shadow-card lg:flex lg:flex-wrap lg:items-end"
         onSubmit={(e) => {
           e.preventDefault();
           void load({
@@ -73,7 +73,7 @@ export function AuditLog({ initial, list }: Props) {
           });
         }}
       >
-        <Field label={t('audit.action')}>
+        <Field className="min-w-0 lg:flex-[1_1_8rem]" label={t('audit.action')}>
           {(props) => (
             <Select {...props} value={action} onChange={(e) => setAction(e.target.value)}>
               <option value="">{t('all')}</option>
@@ -85,7 +85,7 @@ export function AuditLog({ initial, list }: Props) {
             </Select>
           )}
         </Field>
-        <Field label={t('audit.target')}>
+        <Field className="min-w-0 lg:flex-[1_1_8rem]" label={t('audit.target')}>
           {(props) => (
             <Select {...props} value={target} onChange={(e) => setTarget(e.target.value)}>
               <option value="">{t('all')}</option>
@@ -97,7 +97,7 @@ export function AuditLog({ initial, list }: Props) {
             </Select>
           )}
         </Field>
-        <Field label={t('audit.targetId')}>
+        <Field className="min-w-0 lg:flex-[1_1_8rem]" label={t('audit.targetId')}>
           {(props) => (
             <Input
               {...props}
@@ -107,7 +107,7 @@ export function AuditLog({ initial, list }: Props) {
             />
           )}
         </Field>
-        <Field label={t('audit.actorId')}>
+        <Field className="min-w-0 lg:flex-[1_1_8rem]" label={t('audit.actorId')}>
           {(props) => (
             <Input
               {...props}
@@ -117,12 +117,12 @@ export function AuditLog({ initial, list }: Props) {
             />
           )}
         </Field>
-        <Field label={t('audit.from')}>
+        <Field className="min-w-0 lg:flex-[1_1_8rem]" label={t('audit.from')}>
           {(props) => (
             <Input {...props} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           )}
         </Field>
-        <Field label={t('audit.to')}>
+        <Field className="min-w-0 lg:flex-[1_1_8rem]" label={t('audit.to')}>
           {(props) => (
             <Input {...props} type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           )}
@@ -132,7 +132,7 @@ export function AuditLog({ initial, list }: Props) {
             {t('invalid')}
           </p>
         )}
-        <div className="md:col-span-2 lg:col-span-3">
+        <div className="col-span-2 lg:shrink-0">
           <Button type="submit" loading={pending}>
             {t('search')}
           </Button>

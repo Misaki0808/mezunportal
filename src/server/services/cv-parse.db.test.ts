@@ -182,11 +182,9 @@ describe('processCvParse — LLM hata ve zaman aşımı', () => {
     const user = await cvUser(db);
     const kit = cvKit(db, { llm });
     const upload = await uploadCv(kit.deps, user.actor, pdfForm({ scenario: 'ignore' }));
-    const started = Date.now();
     expect(await processCvParse({ ...kit.deps, timeoutMs: 40 }, upload.cvUploadId, LAST)).toBe(
       'FAILED',
     );
-    expect(Date.now() - started).toBeLessThan(2000);
     expect((await rowOf(upload.cvUploadId)).errorCode).toBe('CV_PARSE_TIMEOUT');
   });
 

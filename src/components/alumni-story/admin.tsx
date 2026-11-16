@@ -105,7 +105,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
     setIntent({ mode, storyId });
   }
   return (
-    <div ref={queueRef} className="mx-auto max-w-4xl space-y-6 px-5 py-10">
+    <div ref={queueRef} className="min-w-0 space-y-6 pb-8">
       <PageHeader title={t('adminTitle')} description={t('adminIntro')} />
       <Card className="space-y-4 p-5">
         <Field label={t('selectDepartment')}>
