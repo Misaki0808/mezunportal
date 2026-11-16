@@ -458,6 +458,9 @@
     "title": "Mentor bul",
     "description": "Mezun, akademisyen ve üst sınıf mentorlar burada. Müsait olanları süzüp randevu ya da iletişim isteyebilirsin.",
     "resultsHeading": "Mentorlar",
+    "search": "Mentor ara",
+    "searchPlaceholder": "Ad, şirket veya unvan ara",
+    "searchButton": "Ara",
     "filters": {
       "mentorTypes": "Mentor türü",
       "sector": "Sektör",
@@ -470,7 +473,8 @@
       "all": "Tümü",
       "noSectors": "Henüz seçilebilir sektör yok.",
       "invalid": "En az 2 karakter yaz.",
-      "skill": "Beceri"
+      "skill": "Beceri",
+      "more": "Diğer filtreler"
     },
     "types": {
       "ALUMNI": "Mezun",
@@ -3216,7 +3220,8 @@
     "reportDismiss": "Şikâyeti yoksay",
     "reportDecisionReason": "Karar gerekçesi",
     "reportDecisionHint": "En az 3 karakter yaz.",
-    "reportDecisionDone": "Karar kaydedildi."
+    "reportDecisionDone": "Karar kaydedildi.",
+    "searchInvalid": "En az 2 karakter gir veya alanı boş bırak."
   },
   "companies": {
     "title": "Şirketlere bak",
