@@ -103,7 +103,7 @@ function AwardCard({ initial }: { initial: MyAward }) {
 export function MyAwards({ awards }: { awards: MyAward[] }) {
   const t = useTranslations('yearAlumni');
   return (
-    <div className="mx-auto max-w-2xl space-y-7 px-5 py-10">
+    <div className="w-full min-w-0 max-w-2xl space-y-7">
       <PageHeader
         eyebrow={t('awardName')}
         title={t(awards.length ? 'title' : 'emptyTitle')}

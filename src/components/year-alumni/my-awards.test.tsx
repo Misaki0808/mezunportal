@@ -127,3 +127,12 @@ describe('MyAwards: kopyalama düğmeleri', () => {
     expect(writeText.mock.calls).toEqual([[publicAward.verificationUrl], [SHARE_TEXT]]);
   });
 });
+
+describe('ödüllerim: ortak sayfa kapsayıcısı (kart 424)', () => {
+  it('ödül yokken: tek h1, boş durum ve eski ortalanmış kapsayıcı yok', () => {
+    const { container } = renderWithToasts(<MyAwards awards={[]} />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Ödüllerin' })).toBeVisible();
+    expect(screen.getByText('Henüz bir ödülün yok.')).toBeVisible();
+    expect(container.querySelector('.mx-auto')).toBeNull();
+  });
+});

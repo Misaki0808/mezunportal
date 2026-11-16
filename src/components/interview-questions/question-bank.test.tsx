@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import { renderUi } from '@/test/render';
 import messages from '../../../messages/tr.json';
@@ -158,4 +158,27 @@ it('katalogdaki eşik altı gizlilik metinleri sabit dizedir: rakam ve yer tutuc
     expect(text, key).not.toMatch(/\d/);
     expect(text, key).not.toMatch(/[{}]/);
   }
+});
+
+it('ortak başlık (kart 424): tek h1; süzgeç formu GET ile aynı adrese gider ve eski ortalanmış kapsayıcı yok', () => {
+  const { container } = renderUi(
+    <QuestionBank
+      filters={{ page: 1 }}
+      data={{
+        companies: [{ id: 'c1', name: 'Örnek Yazılım A.Ş.' }],
+        sectors: [{ id: 's1', name: 'Bilişim ve Yazılım' }],
+        groups: [],
+        insufficient: true,
+        total: 0,
+        page: 1,
+        pageSize: 10,
+      }}
+    />,
+  );
+  expect(screen.getByRole('heading', { level: 1, name: 'Mülakat soru bankası' })).toBeVisible();
+  const form = container.querySelector('form[action="/mulakat-sorulari"]') as HTMLElement;
+  expect(form).not.toBeNull();
+  expect(within(form).getByLabelText('Şirket')).toHaveAttribute('name', 'companyId');
+  expect(within(form).getByRole('button', { name: 'Soruları göster' })).toBeVisible();
+  expect(container.querySelector('.mx-auto')).toBeNull();
 });
