@@ -99,7 +99,7 @@ describe('A görünümü kişisel pano', () => {
       'href',
       '/hesap/cv-inceleme',
     );
-    expect(screen.queryByRole('region', { name: 'Bir mezunun hikâyesi' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Ayın mezunu' })).toBeNull();
   });
   it('hata alınan kutu veri yokmuş gibi gösterilmez', () => {
     show({
@@ -314,5 +314,51 @@ describe('A görünümü kişisel pano', () => {
     );
     expect(screen.getByText('<img src=x onerror=alert(1)> Bir hikâye.')).toBeVisible();
     expect(document.querySelector('img')).toBeNull();
+  });
+  it('hikâye bandı "Ayın mezunu" bölgesi ve başlığıdır (e2e ve yönetim ekranıyla aynı ad)', () => {
+    renderUi(
+      <HomeStoryBand
+        story={{ id: 's1', name: 'Mezun', department: 'YBS', month: '2026-11', body: 'Hikâye.' }}
+      />,
+    );
+    const region = screen.getByRole('region', { name: 'Ayın mezunu' });
+    expect(within(region).getByRole('heading', { level: 2, name: 'Ayın mezunu' })).toBeVisible();
+  });
+  it('sıradaki görüşme geçmişi atlar, ilk yaklaşan olandır; yüzde işareti ve kapasite kutusu rolüne göre', () => {
+    const past = appointment({
+      id: 'past',
+      counterpart: { userId: 'm0', displayName: 'Geçmiş Mentor' },
+      startsAt: new Date('2026-11-15T07:00:00Z'),
+      endsAt: new Date('2026-11-15T07:20:00Z'),
+    });
+    const first = appointment({
+      id: 'first',
+      counterpart: { userId: 'm1', displayName: 'Birinci Mentor' },
+    });
+    const second = appointment({
+      id: 'second',
+      counterpart: { userId: 'm2', displayName: 'İkinci Mentor' },
+      startsAt: new Date('2026-11-18T07:00:00Z'),
+      endsAt: new Date('2026-11-18T07:20:00Z'),
+    });
+    show({
+      panels: {
+        ...panels(),
+        appointments: { ok: true, data: { items: [past, first, second], nextCursor: null } },
+      },
+    });
+    const stats = within(screen.getByLabelText('Günün özeti'));
+    expect(stats.getByText('17 Kas')).toBeVisible();
+    expect(stats.queryByText('15 Kas')).toBeNull();
+    expect(stats.queryByText('18 Kas')).toBeNull();
+    const upcoming = within(screen.getByRole('region', { name: 'Yaklaşan görüşme' }));
+    expect(
+      upcoming.getByRole('heading', { level: 3, name: 'Birinci Mentor ile görüşme' }),
+    ).toBeVisible();
+    expect(upcoming.queryByText(/Geçmiş Mentor/)).toBeNull();
+    expect(upcoming.getByText(/Sonra:.*İkinci Mentor/)).toBeVisible();
+    expect(stats.getByText('%60')).toBeVisible();
+    // Öğrenci kapasite kutusu görmez.
+    expect(screen.queryByRole('region', { name: 'Bu ayki kapasiten' })).toBeNull();
   });
 });
