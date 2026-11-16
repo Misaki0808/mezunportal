@@ -38,7 +38,6 @@ describe('örnek CV alan doğruluğu (sahte adaptör: hat bütünlüğü)', () =
     expect(table.split('\n')).toHaveLength(2 + CV_SAMPLES.length);
     for (const sample of CV_SAMPLES)
       expect(table).toContain(`| ${sample.id} | ${sample.kind} | 4 | 3 | 75% | 1 |`);
-    console.info(`\n${table}\n`);
   });
 });
 
