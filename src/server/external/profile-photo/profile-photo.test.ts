@@ -7,6 +7,18 @@ const image = () =>
   sharp({ create: { width: 100, height: 200, channels: 3, background: '#a32b68' } });
 
 describe('güvenli profil fotoğrafı çözme', () => {
+  it('başka yükleme işlenirken kararlı, yeniden denemeye yönlendiren kod döner', async () => {
+    const bytes = await image().png().toBuffer();
+    const first = processProfilePhoto(bytes, crop);
+    try {
+      await expect(processProfilePhoto(bytes, crop)).rejects.toMatchObject({
+        code: 'PHOTO_PROCESSING_BUSY',
+      });
+    } finally {
+      await first;
+    }
+    await expect(processProfilePhoto(bytes, crop)).resolves.toHaveProperty('large');
+  });
   it.each(['jpeg', 'png', 'webp'] as const)(
     '%s baytını tanır ve yalnız 512/96 WebP üretir',
     async (format) => {

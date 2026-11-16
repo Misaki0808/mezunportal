@@ -405,6 +405,7 @@
       "PROFILE_TEXT_PERSONAL_DATA": "Bu alana telefon, e-posta veya kimlik numarası yazma. İletişim bilgilerini Gizlilik ayarlarından yönet.",
       "PHOTO_TOO_LARGE": "Fotoğraf en çok 5 MB olabilir.",
       "PHOTO_INVALID": "Geçerli, hareketsiz bir JPEG, PNG veya WebP fotoğraf seç.",
+      "PHOTO_PROCESSING_BUSY": "Fotoğraf işlemi şu anda yoğun. Birazdan tekrar dene.",
       "PHOTO_CLEANUP_PENDING": "Fotoğrafının görünürlüğü kapandı. Dosyalar silinemedi; silmeyi tekrar dene."
     }
   },

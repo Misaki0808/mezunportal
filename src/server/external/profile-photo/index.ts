@@ -62,7 +62,7 @@ export async function processProfilePhoto(bytes: Uint8Array, crop: PhotoCrop) {
   if (bytes.length > PROFILE_PHOTO_MAX_BYTES) throw codedValidation('PHOTO_TOO_LARGE');
   const format = sniffPhoto(bytes);
   if (!format || animated(Buffer.from(bytes), format)) throw codedValidation('PHOTO_INVALID');
-  if (processing) throw codedConflict('RESOURCE_CONFLICT');
+  if (processing) throw codedConflict('PHOTO_PROCESSING_BUSY');
   processing = true;
   try {
     const options = { limitInputPixels: PROFILE_PHOTO_MAX_PIXELS, failOn: 'warning' as const };
