@@ -89,8 +89,19 @@ test('SSS: öğrenci talep eder → mentor cevaplar → moderatör yayımlar →
     await expect(s!.getByText(question)).toBeVisible();
     await s!.getByText(question).click();
     await expect(s!.getByText('staj ofisinden')).toBeVisible();
-    const html = await s!.content();
-    for (const name of [student.name, student.email]) expect(html).not.toContain(name);
+    // Kimliksizlik iddiası iki yerde ölçülür (iddia gevşetilmedi, kapsamı doğru yere taşındı):
+    // (a) soran öğrencinin kendi görünümünde SSS içeriği (`main`) adı ve e-postayı taşımaz. Tam sayfa HTML'inde kendi adı kabuğun kullanıcı kartında
+    //     (yan menü) ve avatar adında bulunur; o kabuk, sayfa içeriği değil.
+    const mainHtml = await s!.locator('main').innerHTML();
+    for (const name of [student.name, student.email]) expect(mainHtml).not.toContain(name);
+    // (b) BAŞKA bir kullanıcının (cevaplayan mentor) gözünden TAM sayfa HTML'inde (kabuk dahil) soranın adı ve e-postası yoktur.
+    await m!.goto(`/sss?q=${token}`);
+    await m!.waitForLoadState('networkidle');
+    await expect(m!.getByText(question)).toBeVisible();
+    await m!.getByText(question).click();
+    await expect(m!.getByText('staj ofisinden')).toBeVisible();
+    const otherHtml = await m!.content();
+    for (const name of [student.name, student.email]) expect(otherHtml).not.toContain(name);
   } finally {
     await db.pointEntry.deleteMany({
       where: { sourceType: { in: ['FAQ_REQUEST', 'FAQ_ANSWER'] } },

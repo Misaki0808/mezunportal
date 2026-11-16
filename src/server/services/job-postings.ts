@@ -488,6 +488,7 @@ export async function searchJobPostings(
     q: parsed.q,
     departmentId: parsed.departmentId,
     kind: parsed.kind,
+    sectorId: parsed.sectorId,
     companyId: parsed.companyId,
     organizationName: parsed.organizationName,
     location: parsed.location,

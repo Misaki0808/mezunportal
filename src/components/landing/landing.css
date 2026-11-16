@@ -1,5 +1,5 @@
 /*
- * Tanıtım sayfası (İÜ İktisat Fakültesi YBS). Renkler yalnız globals.css token'larıdır (açık tema krem, koyu tema lacivert);
+ * Tanıtım sayfası (İÜ İktisat Fakültesi YBS). Renkler yalnız globals.css token'larıdır (açık tema soğuk kâğıt, koyu tema lacivert);
  * burada sabit #hex yoktur. `.landing` bloğu yalnız renk dışı ölçü değişkenlerini tanımlar.
  */
 .landing {

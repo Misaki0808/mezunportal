@@ -34,7 +34,15 @@ test('ana sayfa rol bazlı pano: öğrenci ve mentor farklı kısayollar görür
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page, 'student');
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1, name: /Merhaba, Deniz/ })).toBeVisible();
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: /(?:Günaydın|İyi günler|İyi akşamlar|İyi geceler), Deniz/,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('navigation', { name: 'Ana sayfa eylemleri' }).locator('a:visible'),
+  ).toHaveCount(1);
   const shortcuts = page.getByRole('region', { name: 'Kısayollar' });
   await expect(shortcuts.getByRole('link', { name: /Mentor bul/ })).toBeVisible();
   await expect(shortcuts.getByRole('link', { name: /CV incelemesi/ })).toBeVisible();

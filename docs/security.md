@@ -200,6 +200,11 @@ Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnı
 
 ## KVKK
 
+Mezun rehberi tercihi varsayılan kapalıdır; açma ve kapama yalnız hesap sahibinin işlemidir. Yalnız aynı
+üniversiteden doğrulanmış etkin üyeler, tercihi açık ve etkin mezunların adını ve mesleki kart bilgilerini görür.
+E-posta, telefon ve sosyal bağlantılar rehber yanıtında bulunmaz; mevcut alan görünürlüğü ve iletişim talebi
+kuralları değişmez. Aydınlatma metni değiştiğinde sürüm artırılır ve güncel onay yeniden alınır.
+
 - **Veri sorumlusu** şimdilik proje sahibidir (gerçek kişi; K-03 kararı, `docs/decisions.md`); aydınlatma metni buna göre
   yazılır; iletişim ve başvuru adresi platform hesabıdır (kişisel adres metinde geçmez), son hâli hoca/üniversite onayıyla tamamlanır. Taslak sürümü (`taslak-1`) ad dolunca artmaz: sürüm,
   onaylı metin köke taşınırken artar (BACKLOG `PILOT-LEGAL`).

@@ -271,13 +271,11 @@ export function Dictionaries({ initial, sectors, list, create, update, remove }:
                 />
               )}
             </Field>
-            {kind !== 'SECTOR' && (
-              <Field label={t('dictionary.aliases')} hint={t('dictionary.aliasesHint')}>
-                {(props) => (
-                  <Input {...props} value={aliases} onChange={(e) => setAliases(e.target.value)} />
-                )}
-              </Field>
-            )}
+            <Field label={t('dictionary.aliases')} hint={t('dictionary.aliasesHint')}>
+              {(props) => (
+                <Input {...props} value={aliases} onChange={(e) => setAliases(e.target.value)} />
+              )}
+            </Field>
             {kind === 'COMPANY' && (
               <Field label={t('dictionary.sector')}>
                 {(props) => (

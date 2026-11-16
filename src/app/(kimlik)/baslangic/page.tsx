@@ -8,6 +8,7 @@ import {
 import { getFieldVisibility, setFieldVisibility } from '@/server/actions/privacy';
 import { getMyAccountName, updateMyName } from '@/server/actions/account';
 import { NameForm } from '@/components/account/name-form';
+import { getAlumniVisibility, setAlumniVisibility } from '@/server/actions/alumni-directory';
 
 import { OnboardingFlow } from './onboarding-flow';
 
@@ -25,14 +26,16 @@ export default async function OnboardingPage({
     listProfileTags({ kind: 'GOAL' }),
     getFieldVisibility(),
     getMyAccountName(),
+    getAlumniVisibility(),
   ]).catch(() => null);
   if (!results) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
-  const [state, interests, goals, visibility, accountName] = results;
+  const [state, interests, goals, visibility, accountName, alumniVisibility] = results;
   if (!state.ok) return <ErrorState errorCode={state.errorCode} />;
   if (!interests.ok) return <ErrorState errorCode={interests.errorCode} />;
   if (!goals.ok) return <ErrorState errorCode={goals.errorCode} />;
   if (!visibility.ok) return <ErrorState errorCode={visibility.errorCode} />;
   if (!accountName.ok) return <ErrorState errorCode={accountName.errorCode} />;
+  if (!alumniVisibility.ok) return <ErrorState errorCode={alumniVisibility.errorCode} />;
   return (
     <OnboardingFlow
       initialState={state.data}
@@ -40,6 +43,7 @@ export default async function OnboardingPage({
       interests={interests.data.tags}
       goals={goals.data.tags}
       initialVisibility={visibility.data}
+      alumniVisibility={{ initial: alumniVisibility.data, save: setAlumniVisibility }}
       saveVisibility={setFieldVisibility}
       nameCard={
         <NameForm initialName={accountName.data.name} update={updateMyName} variant="onboarding" />

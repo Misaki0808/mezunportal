@@ -5,10 +5,13 @@ import { getConsentState } from '@/server/actions/privacy';
 import { getOnboardingState } from '@/server/actions/profile';
 import { getHomeSummary, getSuggestedJobs } from '@/server/actions/home';
 import { HomeDashboard } from '@/components/home/dashboard';
+import { HomeStoryBand } from '@/components/home/widgets';
+import { getMyMentorSettings, listMyAppointments } from '@/server/actions/appointment';
+import { getSimilarMentors } from '@/server/actions/mentor-directory';
 import { Landing } from '@/components/landing/landing';
 import { getLandingStats } from '@/server/services/landing';
 import { getCurrentStory } from '@/server/actions/alumni-story';
-import { StoryInvite, StoryShowcase } from '@/components/alumni-story/showcase';
+import { StoryInvite } from '@/components/alumni-story/showcase';
 import type { Metadata } from 'next';
 import { ErrorState } from '@/components/ui';
 
@@ -46,14 +49,16 @@ export default async function HomePage() {
   }
   const state = actor ? await getVerificationState().catch(() => null) : null;
   const needsVerification = state?.ok && state.data.status !== 'VERIFIED';
-  const onboarding =
-    actor && state?.ok && state.data.status === 'VERIFIED'
-      ? await getOnboardingState().catch(() => null)
-      : null;
-  const showOnboarding = onboarding?.ok && onboarding.data.step !== 'COMPLETE';
   const verified = actor && state?.ok && state.data.status === 'VERIFIED';
-  const summary = verified ? await getHomeSummary().catch(() => null) : null;
-  const story = verified ? await getCurrentStory().catch(() => null) : null;
+  const [onboarding, summary, story, settings] = verified
+    ? await Promise.all([
+        getOnboardingState().catch(() => null),
+        getHomeSummary().catch(() => null),
+        getCurrentStory().catch(() => null),
+        getMyMentorSettings().catch(() => null),
+      ])
+    : [null, null, null, null];
+  const showOnboarding = onboarding?.ok && onboarding.data.step !== 'COMPLETE';
   const storyTexts = await getTranslations('alumniStory');
   const isAlumnus = actor.facts.memberships.some(
     (m) => m.role === 'ALUMNI' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
@@ -61,7 +66,7 @@ export default async function HomePage() {
   const feature =
     story?.ok && story.data ? (
       <>
-        <StoryShowcase story={story.data} />
+        <HomeStoryBand story={story.data} />
         <Link
           href="/hikayeler"
           className="inline-flex min-h-11 items-center font-semibold text-primary underline"
@@ -74,55 +79,32 @@ export default async function HomePage() {
     ) : story && !story.ok ? (
       <ErrorState errorCode={story.errorCode} />
     ) : null;
-  const suggestedJobs =
-    summary?.ok && summary.data.role === 'STUDENT'
-      ? await getSuggestedJobs().catch(() => null)
-      : null;
+  // Sabit sayıda toplu çağrı: her ilan/mentor için ayrı istek yapılmaz. Randevu görünümü mevcut
+  // randevular sayfasıyla aynı sunucu uygunluk kararını kullanır. Başvuru sayısı üretilmez.
+  const [suggestedJobs, mentors, appointments] = summary?.ok
+    ? await Promise.all([
+        summary.data.role === 'STUDENT' ? getSuggestedJobs().catch(() => null) : null,
+        summary.data.role === 'STUDENT' ? getSimilarMentors().catch(() => null) : null,
+        listMyAppointments({
+          role: settings?.ok && settings.data.eligible ? 'MENTOR' : 'MENTEE',
+          statuses: ['CONFIRMED'],
+          limit: 2,
+        }).catch(() => null),
+      ])
+    : [null, null, null];
   const onboardingBanner = showOnboarding ? (
     <Link
       href="/baslangic"
-      className="press-row flex min-h-20 flex-col gap-2 rounded-card border border-primary bg-primary-soft p-5 text-on-primary-soft"
+      className="press-row flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-card border border-primary bg-primary-soft px-4 py-3 text-on-primary-soft"
     >
       <span className="text-lg font-semibold">{auth('onboardingTitle')}</span>
-      <span className="text-base">{auth('onboardingDescription')}</span>
       <span className="text-base font-semibold underline underline-offset-4">
         {auth('onboardingAction')}
       </span>
     </Link>
   ) : null;
-  const jobMatches = suggestedJobs?.ok ? (
-    <section aria-labelledby="home-job-matches" className="flex flex-col gap-3">
-      <h2 id="home-job-matches" className="text-xl font-semibold">
-        {t('jobMatches.title')}
-      </h2>
-      {suggestedJobs.data.length ? (
-        <ul className="flex flex-col gap-2">
-          {suggestedJobs.data.map((job) => (
-            <li key={job.id}>
-              <Link
-                href={`/ilanlar/${job.id}`}
-                className="press-row flex min-h-14 flex-col rounded-card border border-border p-4"
-              >
-                <span className="font-semibold">{job.title}</span>
-                <span className="text-fg-muted">{job.organizationName}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-fg-muted">
-          {t('jobMatches.empty')}{' '}
-          <Link className="font-semibold text-primary underline" href="/profil">
-            {t('jobMatches.profile')}
-          </Link>
-        </p>
-      )}
-    </section>
-  ) : null;
   return (
-    <div
-      className={`mx-auto flex max-w-2xl flex-col gap-6 px-5 py-10 sm:py-12 ${summary?.ok ? 'lg:max-w-5xl' : ''} ${!actor ? 'min-h-[calc(100dvh-8rem)]' : ''}`}
-    >
+    <div className="flex w-full max-w-[1280px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-7 [.app-content_&]:px-0 [.app-content_&]:py-0">
       {needsVerification && <h1 className="text-3xl font-semibold">{t('welcome')}</h1>}
       {needsVerification && (
         <Link
@@ -156,7 +138,13 @@ export default async function HomePage() {
           summary={summary.data}
           feature={feature}
           notice={onboardingBanner}
-          aside={jobMatches}
+          panels={{
+            completion: onboarding?.ok ? onboarding.data.completion : null,
+            appointments,
+            jobs: suggestedJobs,
+            mentors,
+            settings,
+          }}
         />
       ) : (
         <>

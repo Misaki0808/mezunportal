@@ -192,7 +192,95 @@
       "empty": "Henüz sana uyan ilan yok. İlgi alanlarını eklersen uygun ilanlar burada görünür.",
       "profile": "Profilini düzenle"
     },
-    "welcome": "Hoş geldin!"
+    "welcome": "Hoş geldin!",
+    "dashboard": {
+      "greetingNamed": "{greeting}, {name}",
+      "greetings": {
+        "morning": "Günaydın",
+        "day": "İyi günler",
+        "evening": "İyi akşamlar",
+        "night": "İyi geceler"
+      },
+      "overview": {
+        "next": "Sıradaki görüşmen {date}."
+      },
+      "actions": {
+        "mentors": "Mentor bul",
+        "cv": "CV’den profilini doldur",
+        "mentorSettings": "Mentor ayarlarını aç",
+        "requests": "Gelen talepleri gör",
+        "admin": "İncelemelere git",
+        "profile": "Profilini düzenle",
+        "label": "Ana sayfa eylemleri"
+      },
+      "stats": {
+        "label": "Günün özeti",
+        "profile": "Profil",
+        "pending": "Bekleyen iş",
+        "appointment": "Sıradaki görüşme",
+        "steps": "{count} adım eksik",
+        "pendingHint": "Yanıt ve değerlendirmelerin",
+        "unknown": "—",
+        "unavailable": "Bilgi alınamadı",
+        "none": "Yok",
+        "noAppointment": "Henüz planlanmış görüşme yok"
+      },
+      "appointments": {
+        "title": "Yaklaşan görüşme",
+        "all": "Randevularını gör",
+        "empty": "Henüz planlanmış görüşmen yok.",
+        "emptyStudent": "Bir mentorla görüşme ayarladığında burada görünecek.",
+        "emptyMentor": "Onayladığın görüşmeler burada görünecek.",
+        "with": "{name} ile görüşme",
+        "mode": {
+          "ONLINE": "Çevrimiçi",
+          "IN_PERSON": "Yüz yüze"
+        },
+        "details": "Görüşmeyi aç",
+        "calendar": "Takvime ekle",
+        "then": "Sonra: {date} · {name}"
+      },
+      "profile": {
+        "title": "Profilin",
+        "edit": "Profilini düzenle",
+        "complete": "tamam",
+        "progress": "Profil hazırlığı",
+        "hint": "Başlangıç tercihlerinle profilini tamamla.",
+        "ready": "Başlangıç tercihlerin tamam.",
+        "steps": {
+          "MEMBERSHIP": "Üyelik bilgilerin",
+          "INTERESTS": "İlgi alanların",
+          "GOALS": "Hedeflerin",
+          "MENTOR_PREFERENCE": "Mentorluk tercihin",
+          "VISIBILITY": "Gizlilik tercihlerin"
+        }
+      },
+      "jobs": {
+        "title": "Sana uygun ilanlar",
+        "all": "Tüm ilanları gör",
+        "emptyTitle": "İlan önerilerini burada göreceksin"
+      },
+      "mentors": {
+        "title": "Mentorlar",
+        "all": "Tüm mentorları gör",
+        "available": "Müsait",
+        "empty": "Henüz mentor önerin yok",
+        "emptyDescription": "Mentor dizinindeki kişilere göz atabilirsin."
+      },
+      "capacity": {
+        "title": "Bu ayki kapasiten",
+        "settings": "Mentor ayarlarını aç",
+        "description": "Ayarlarında belirlediğin aylık görüşme kapasitesi.",
+        "active": "Mentorluk ayarın açık",
+        "inactive": "Mentorluk ayarın kapalı",
+        "empty": "Mentor ayarlarını tamamla",
+        "emptyDescription": "Görüşme tercihlerini kaydettiğinde kapasiten burada görünür."
+      },
+      "story": {
+        "title": "Ayın mezunu",
+        "read": "Hikâyeyi oku"
+      }
+    }
   },
   "errors": {
     "codes": {
@@ -339,22 +427,41 @@
     "comingSoon": "yakında",
     "items": {
       "home": "Ana sayfa",
+      "jobs": "İlanlar",
+      "mentors": "Mentorlar",
+      "alumni": "Mezunlar",
+      "appointments": "Randevular",
       "experiences": "Deneyimler",
+      "events": "Etkinlikler",
+      "courses": "Ders rehberi",
+      "notifications": "Bildirimler",
+      "profile": "Profilim",
+      "account": "Hesap ayarları"
+    },
+    "shortItems": {
+      "home": "Ana sayfa",
+      "jobs": "İlanlar",
       "mentors": "Mentorlar",
       "appointments": "Randevular",
-      "profile": "Hesabım",
-      "jobs": "İlanlar",
-      "notifications": "Bildirimler"
+      "profile": "Profil"
+    },
+    "groups": {
+      "account": "Hesap",
+      "admin": "Yönetici"
     },
     "admin": "Yönetim",
     "signIn": "Giriş yap",
-    "shortItems": {
-      "home": "Ana",
-      "experiences": "Deneyim",
-      "jobs": "İlanlar",
-      "mentors": "Mentor",
-      "appointments": "Randevu",
-      "profile": "Hesabım"
+    "accountLink": "Hesabım",
+    "search": {
+      "label": "Deneyimlerde ara",
+      "placeholder": "Deneyimlerde ara"
+    },
+    "userCard": {
+      "grade": "{grade}. sınıf",
+      "preparatory": "Hazırlık",
+      "link": "Hesap ayarları: {name}",
+      "alumni": "Mezun",
+      "academic": "Akademisyen"
     }
   },
   "ui": {
@@ -435,11 +542,54 @@
     "firstPage": "İlk sayfaya dön",
     "loading": "Sonuçlar yükleniyor"
   },
+  "alumniDirectory": {
+    "eyebrow": "MEZUNLAR",
+    "titlePage": "Mezunları keşfet",
+    "description": "Rehberde görünmeyi seçen mezunları sektör ve deneyimlerine göre keşfet.",
+    "search": "Mezun ara",
+    "searchHint": "Ad, şirket veya unvan ara",
+    "searchButton": "Ara",
+    "invalid": "Arama alanlarına en az 2 karakter ve geçerli yıl aralığı gir.",
+    "loading": "Sonuçlar yükleniyor.",
+    "sector": "Sektör",
+    "all": "Tümü",
+    "filters": "Diğer filtreler",
+    "apply": "Filtreleri uygula",
+    "company": "Şirket",
+    "title": "Unvan",
+    "skill": "Beceri",
+    "city": "Şehir",
+    "graduationFrom": "Mezuniyet yılı (en erken)",
+    "graduationTo": "Mezuniyet yılı (en geç)",
+    "count": "{count} mezun",
+    "empty": "Bu filtrelerle mezun bulunamadı",
+    "emptyDescription": "Filtreleri değiştirerek yeniden deneyebilirsin.",
+    "pageEmpty": "Bu sayfada mezun yok",
+    "pageEmptyDescription": "Sonuçları ilk sayfadan görüntüleyebilirsin.",
+    "firstPage": "İlk sayfaya dön",
+    "clear": "Filtreleri temizle",
+    "graduated": "{year} mezunu",
+    "contact": "İletişim iste",
+    "contactLabel": "İletişim iste: {name}",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "visibilityTitle": "Mezun rehberi",
+    "visibilityDescription": "Açarsan, mezunluğun doğrulandığında adın ve profilindeki iş bilgilerin aynı üniversitedeki doğrulanmış üyelere rehberde görünür; şehrin ve becerilerin de filtrelerde kullanılır. İletişim bilgilerinin paylaşımı mevcut gizlilik tercihlerin ve talep onayına bağlıdır. İstediğin zaman kapatabilirsin.",
+    "visibilityLabel": "Mezun rehberinde görün",
+    "autoSave": "Tercihin değiştiğinde otomatik kaydedilir.",
+    "saving": "Tercihin kaydediliyor.",
+    "unchanged": "Değişiklik yapıldığında kaydedebilirsin.",
+    "save": "Kaydet",
+    "saved": "Tercihin kaydedildi."
+  },
   "mentors": {
     "eyebrow": "MENTORLAR",
     "title": "Mentor bul",
     "description": "Mezun, akademisyen ve üst sınıf mentorlar burada. Müsait olanları süzüp randevu ya da iletişim isteyebilirsin.",
     "resultsHeading": "Mentorlar",
+    "search": "Mentor ara",
+    "searchPlaceholder": "Ad, şirket veya unvan ara",
+    "searchButton": "Ara",
     "filters": {
       "mentorTypes": "Mentor türü",
       "sector": "Sektör",
@@ -452,7 +602,8 @@
       "all": "Tümü",
       "noSectors": "Henüz seçilebilir sektör yok.",
       "invalid": "En az 2 karakter yaz.",
-      "skill": "Beceri"
+      "skill": "Beceri",
+      "more": "Diğer filtreler"
     },
     "types": {
       "ALUMNI": "Mezun",
@@ -1605,7 +1756,7 @@
           },
           "section3": {
             "title": "3. İşleme amaçları",
-            "body": "Üyeliğin doğrulanması; profil oluşturma; öğrencilerin mentor ve deneyimlere erişimi; randevu düzenlenmesi; moderasyon ve platform güvenliği; bölümün mezun takibi için toplu ve kimliksiz raporlar; bildirim gönderimi."
+            "body": "Üyeliğin doğrulanması; profil oluşturma; öğrencilerin mentor ve deneyimlere erişimi; randevu düzenlenmesi; moderasyon ve platform güvenliği; bölümün mezun takibi için toplu ve kimliksiz raporlar; bildirim gönderimi. Mezun rehberini açmayı seçenlerin adı ve mesleki profil bilgileri aynı üniversitenin doğrulanmış üyelerinin erişimine sunulur; bu tercih istenildiğinde kapatılabilir."
           },
           "section4": {
             "title": "4. Hukuki sebepler",
@@ -3073,6 +3224,7 @@
     "filters": "Filtreler",
     "clear": "Filtreleri temizle",
     "department": "Hedef bölüm",
+    "sector": "Sektör",
     "company": "Kurum",
     "location": "Konum",
     "all": "Tümü",
@@ -3202,7 +3354,8 @@
     "reportDismiss": "Şikâyeti yoksay",
     "reportDecisionReason": "Karar gerekçesi",
     "reportDecisionHint": "En az 3 karakter yaz.",
-    "reportDecisionDone": "Karar kaydedildi."
+    "reportDecisionDone": "Karar kaydedildi.",
+    "searchInvalid": "En az 2 karakter gir veya alanı boş bırak."
   },
   "companies": {
     "title": "Şirketlere bak",

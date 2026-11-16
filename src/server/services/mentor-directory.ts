@@ -113,6 +113,27 @@ export function visibleMentorWhere(
     user: {
       deletedAt: null,
       ...notSuspended(now),
+      ...(filter.q
+        ? {
+            OR: [
+              { name: { contains: escapeLike(filter.q), mode: 'insensitive' } },
+              {
+                positions: {
+                  some: {
+                    OR: [
+                      { companyRaw: { contains: escapeLike(filter.q), mode: 'insensitive' } },
+                      { titleRaw: { contains: escapeLike(filter.q), mode: 'insensitive' } },
+                      {
+                        company: { name: { contains: escapeLike(filter.q), mode: 'insensitive' } },
+                      },
+                      { title: { name: { contains: escapeLike(filter.q), mode: 'insensitive' } } },
+                    ],
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
       ...(skill
         ? {
             profile: { tags: { some: { tag: { kind: 'SKILL', slug: { in: skillNames } } } } },

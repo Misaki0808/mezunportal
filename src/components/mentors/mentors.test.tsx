@@ -110,11 +110,12 @@ describe('mentor kartı', () => {
   it('eylem önceliği: uygunsa "Randevu iste" birincil (dolgulu, tam genişlik), "Profili gör" ve "İletişim iste" ikincil', () => {
     renderUi(<MentorCard mentor={mentor()} />);
     const appointment = screen.getByRole('link', { name: /^Randevu iste/ });
-    expect(appointment).toHaveClass('bg-primary', 'w-full', 'sm:w-auto');
+    expect(appointment).toHaveClass('bg-primary', 'w-full', 'sm:col-span-1');
     for (const name of [/^Profili gör/, /^İletişim iste/]) {
       const link = screen.getByRole('link', { name });
       expect(link).not.toHaveClass('bg-primary');
-      expect(link).toHaveClass('border');
+      if (name.test('Profili gör')) expect(link).toHaveClass('border');
+      else expect(link).toHaveClass('underline');
     }
   });
 
@@ -133,7 +134,7 @@ describe('mentor kartı', () => {
     }
   });
 
-  it('uygun değilse "Profili gör" birincil kalır ve randevu bağlantısı yoktur; kompakt kartta yalnız profil', () => {
+  it('uygun değilse iletişim ve profil ikincil, randevu yoktur; kompakt kartta yalnız profil', () => {
     const { unmount } = renderUi(
       <MentorCard
         mentor={mentor({
@@ -141,7 +142,13 @@ describe('mentor kartı', () => {
         })}
       />,
     );
-    expect(screen.getByRole('link', { name: /^Profili gör/ })).toHaveClass('bg-primary');
+    const contact = screen.getByRole('link', { name: /^İletişim iste/ });
+    const profile = screen.getByRole('link', { name: /^Profili gör/ });
+    expect(contact).not.toHaveClass('bg-primary');
+    expect(profile).not.toHaveClass('bg-primary');
+    expect(
+      contact.compareDocumentPosition(profile) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(screen.queryByRole('link', { name: /^Randevu iste/ })).not.toBeInTheDocument();
     unmount();
     renderUi(<MentorCard mentor={mentor()} compact />);
@@ -334,6 +341,98 @@ describe('mentor dizini', () => {
     expect(within(chips).getByText('Yazılım')).toBeInTheDocument();
     await user.click(within(chips).getByRole('button', { name: /Yalnız müsait olanlar/ }));
     expect(router.push).toHaveBeenCalledWith('/mentorlar?sectorId=s1&mentorTypes=ALUMNI');
+  });
+
+  it('hızlı tür ve müsaitlik yongaları filtreleri koruyup ilk sayfaya döner', async () => {
+    const { user, unmount } = renderUi(
+      <MentorDirectory
+        filter={{ sectorId: 's1', page: 3 }}
+        results={page([mentor()])}
+        sectors={sectors}
+        similar={null}
+      />,
+    );
+    const quick = screen.getByRole('group', { name: 'Filtreler' });
+    const alumni = within(quick).getByRole('button', { name: 'Mezun' });
+    expect(alumni).toHaveAttribute('aria-pressed', 'false');
+    await user.click(alumni);
+    expect(router.push).toHaveBeenCalledWith('/mentorlar?sectorId=s1&mentorTypes=ALUMNI');
+    unmount();
+    router.push.mockReset();
+    renderUi(
+      <MentorDirectory
+        filter={{ mentorTypes: ['ALUMNI'] }}
+        results={page([mentor()])}
+        sectors={sectors}
+        similar={null}
+      />,
+    );
+    // Seçili yonga yazısı koyu temada da okunur: sabit beyaz değil, temaya duyarlı "birincil üstü" renk.
+    const selected = within(screen.getByRole('group', { name: 'Filtreler' })).getByRole('button', {
+      name: 'Mezun',
+    });
+    expect(selected).toHaveAttribute('aria-pressed', 'true');
+    expect(selected.className).toContain('text-on-primary');
+    expect(selected.className).not.toContain('text-white');
+    await user.click(
+      within(screen.getByRole('group', { name: 'Filtreler' })).getByRole('button', {
+        name: 'Yalnız müsait olanlar',
+      }),
+    );
+    expect(router.push).toHaveBeenCalledWith('/mentorlar?mentorTypes=ALUMNI&onlyAvailable=1');
+  });
+
+  it('genel aramayı URL’ye taşır ve yazılmış sorguyu hızlı filtreyle korur', async () => {
+    const { user } = renderUi(
+      <MentorDirectory
+        filter={{ page: 3 }}
+        results={page([mentor()])}
+        sectors={sectors}
+        similar={null}
+      />,
+    );
+    await user.type(screen.getByRole('searchbox', { name: 'Mentor ara' }), 'Ayşe');
+    await user.click(
+      within(screen.getByRole('group', { name: 'Filtreler' })).getByRole('button', {
+        name: 'Mezun',
+      }),
+    );
+    expect(router.push).toHaveBeenCalledWith('/mentorlar?q=Ay%C5%9Fe&mentorTypes=ALUMNI');
+    router.push.mockClear();
+    await user.click(screen.getByRole('button', { name: 'Ara' }));
+    expect(router.push).toHaveBeenCalledWith('/mentorlar?q=Ay%C5%9Fe');
+  });
+
+  it('arama etkin süzgeç çipidir: çip kaldırılınca ve Temizle ile kutu boşalır', async () => {
+    const { user } = renderUi(
+      <MentorDirectory
+        filter={{ q: 'Ayşe', mentorTypes: ['ALUMNI'] }}
+        results={page([mentor()])}
+        sectors={sectors}
+        similar={null}
+      />,
+    );
+    const search = screen.getByRole('searchbox', { name: 'Mentor ara' });
+    expect(search).toHaveValue('Ayşe');
+    expect(within(screen.getByLabelText('Etkin filtreler')).getByText('Ayşe')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ayşe etiketini kaldır' }));
+    expect(search).toHaveValue('');
+    expect(router.push).toHaveBeenCalledWith('/mentorlar?mentorTypes=ALUMNI');
+    router.push.mockClear();
+    await user.type(search, 'Veli');
+    await user.click(screen.getAllByRole('button', { name: 'Filtreleri temizle' })[0]!);
+    expect(search).toHaveValue('');
+    expect(router.push).toHaveBeenCalledWith('/mentorlar');
+  });
+
+  it('Diğer filtreler panelinde Uygula yazılmış aramayı korur', async () => {
+    const { user } = renderUi(
+      <MentorDirectory filter={{}} results={page([mentor()])} sectors={sectors} similar={null} />,
+    );
+    await user.type(screen.getByRole('searchbox', { name: 'Mentor ara' }), 'Ayşe');
+    await user.type(screen.getByLabelText('Şirket'), 'Örnek');
+    await user.click(screen.getByRole('button', { name: 'Uygula' }));
+    expect(router.push).toHaveBeenCalledWith('/mentorlar?q=Ay%C5%9Fe&company=%C3%96rnek');
   });
 
   it('mobil alt sayfada seçilen filtreler Uygula ile kanonik URL’ye yazılır; Vazgeç taslağı geri alır', async () => {

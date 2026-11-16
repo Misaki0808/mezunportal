@@ -15,6 +15,8 @@ import {
 import { getMyContribution } from '@/server/actions/points';
 import { getSkillGap, listSkillGapTitles } from '@/server/actions/skill-gap';
 import { SkillGapPanel } from '@/components/skill-gap/skill-gap-panel';
+import { AlumniVisibilitySetting } from '@/components/alumni/visibility-setting';
+import { getAlumniVisibility, setAlumniVisibility } from '@/server/actions/alumni-directory';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +27,7 @@ export default async function ProfilePage() {
   const points = await getMyContribution({}).catch(() => null);
   const gap = await getSkillGap().catch(() => null);
   const titles = gap?.ok ? await listSkillGapTitles().catch(() => null) : null;
+  const alumniVisibility = await getAlumniVisibility();
   return (
     <>
       <MyProfile
@@ -32,6 +35,11 @@ export default async function ProfilePage() {
         beforeCompletion={points?.ok && <ContributionSummary summary={points.data.summary} />}
         afterSections={
           <>
+            {alumniVisibility.ok ? (
+              <AlumniVisibilitySetting initial={alumniVisibility.data} save={setAlumniVisibility} />
+            ) : (
+              <ErrorState errorCode={alumniVisibility.errorCode} />
+            )}
             {gap?.ok && titles?.ok && <SkillGapPanel data={gap.data} titles={titles.data} />}
             {gap?.ok && !titles?.ok && (
               <ErrorState
