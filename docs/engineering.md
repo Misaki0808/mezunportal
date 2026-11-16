@@ -30,6 +30,9 @@ Ajanların eğitim verisinde eski sürümlerin örnekleri çoktur; kurulumda saa
   `searchKeys` istemcide global `omit` ile varsayılan dönmez (`src/lib/prisma-options.ts`). Yine de
   bir migration bu sütun/indekslere `ALTER`/`DROP` içeriyorsa SQL'den o satırları sil (`--create-only`);
   yedek bekçi: `prisma/migration-guard.test.ts`. Gerekçe: `docs/decisions.md`.
+- **Türkçe içerir süzgeçleri:** `tr_ascii` ifade indeksleri Prisma'nın ifade edemediği
+  indekslerdir; kanonik tanımları `turkish_text_filters` migration'ındadır. Kullanıcı metni
+  `escapeLike` sonrası bağlı parametre olur; sıradan `ILIKE` Türkçe I/ı için eşdeğer değildir.
 - **Kimlik:** Better Auth kullanılır; **Auth.js/NextAuth kullanılmaz** (bakım modunda).
 - **Beta, canary, RC sürüm yok.** Bütün bağımlılıklar kararlı sürümde ve lockfile ile sabittir.
 - Yeni bir kütüphanenin kurulum biçiminden emin değilsen, kurulu sürümün belgesine bak;
