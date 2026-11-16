@@ -71,4 +71,22 @@ describe('ExperienceContent (okuma)', () => {
     for (const name of ['Mülakat soruları', 'Süreç', 'Tavsiyem', 'Öğrendiklerim'])
       expect(screen.queryByRole('heading', { name })).toBeNull();
   });
+
+  it('split düzeni: künye (şirket yok, dönem) ayrı bir yan kutuda ve etiketli; metin bölümleri solda 70 karakter ölçüsünde', () => {
+    const { container } = renderUi(<ExperienceContent content={rich} layout="split" />);
+    const facts = screen.getByRole('complementary', { name: 'Künye' });
+    expect(within(facts).getByText('Yaz 2025')).toBeInTheDocument();
+    expect(facts.className).toContain('lg:sticky');
+    // Yan kutu telefonda önce, geniş ekranda sağ sütunda.
+    expect(facts.className).toContain('max-lg:order-first');
+    const prose = screen.getByRole('heading', { level: 2, name: 'Süreç' }).closest('section')!;
+    expect(prose.parentElement!.className).toContain('max-w-[70ch]');
+    expect(container.querySelectorAll('aside')).toHaveLength(1);
+  });
+
+  it('stacked düzeni (moderasyon kuyruğu) yan kutu çizmez; künye üstte', () => {
+    renderUi(<ExperienceContent content={rich} />);
+    expect(screen.queryByRole('complementary')).toBeNull();
+    expect(screen.getByText('Yaz 2025')).toBeInTheDocument();
+  });
 });

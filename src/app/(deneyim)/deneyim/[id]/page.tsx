@@ -40,7 +40,7 @@ export default async function ExperienceDetailPage({
   const date = (value: Date) =>
     new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(value));
   return (
-    <article className="mx-auto w-full max-w-2xl px-5 pb-8 pt-10 sm:pt-16">
+    <article className="w-full min-w-0 pb-8">
       {/* Okuyucu listeye (aradığı yere), yazar kendi deneyimlerine döner. */}
       <Link
         href={isOwner === true ? '/deneyimlerim' : '/deneyimler'}
@@ -65,15 +65,15 @@ export default async function ExperienceDetailPage({
         </p>
       )}
       {experience.status === 'REJECTED' && experience.moderationNote && (
-        <section className="mt-6 rounded-card border border-danger bg-danger-soft p-4 text-on-danger-soft">
+        <section className="mt-6 max-w-[70ch] rounded-card border border-danger bg-danger-soft p-4 text-on-danger-soft">
           <h2 className="text-base font-semibold">{t('rejection.title')}</h2>
           <p className="mt-1 whitespace-pre-line text-base">{experience.moderationNote}</p>
         </section>
       )}
       <div className="mt-8">
-        <ExperienceContent content={experience.content} showOrganization={false} />
+        <ExperienceContent content={experience.content} showOrganization={false} layout="split" />
       </div>
-      <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6">
+      <div className="mt-10 flex max-w-[70ch] flex-col gap-3 border-t border-border pt-6">
         {editable && (
           <Link
             className={buttonClasses({ size: 'lg', fullWidth: true })}

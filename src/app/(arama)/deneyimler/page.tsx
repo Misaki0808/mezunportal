@@ -18,7 +18,7 @@ async function Results({ params }: { params: Params }) {
   if (!parsed.success) {
     const t = await getTranslations('search');
     return (
-      <div role="alert" className="mx-auto max-w-xl px-5 py-10">
+      <div role="alert" className="max-w-xl">
         <h1 className="text-2xl font-semibold">{t('invalidFiltersTitle')}</h1>
         <p className="mt-3 mb-6 text-fg-muted">{t('invalidFiltersDescription')}</p>
         <ResetLink />

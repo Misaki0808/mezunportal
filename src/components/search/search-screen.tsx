@@ -17,6 +17,7 @@ import {
   type SearchPage,
 } from '@/contracts/search';
 import { FilterShell, type ActiveFilter } from '@/components/directory/filter-shell';
+import { QuickChip } from '@/components/directory/quick-chip';
 import { SearchBar } from '@/components/directory/search-bar';
 import {
   Badge,
@@ -286,6 +287,27 @@ export function SearchScreen({ filter, results, sectors }: Props) {
             }}
           />
         )}
+        quick={EXPERIENCE_TYPES.map((value) => {
+          const selected = filter.types?.includes(value) ?? false;
+          return (
+            <QuickChip
+              key={value}
+              selected={selected}
+              disabled={pending}
+              onClick={() => {
+                const rest = (filter.types ?? []).filter((type) => type !== value);
+                go({
+                  ...filter,
+                  q: draft.q?.trim() || undefined,
+                  types: selected ? (rest.length ? rest : undefined) : [...rest, value],
+                  page: 1,
+                });
+              }}
+            >
+              {t(`types.${value}`)}
+            </QuickChip>
+          );
+        })}
         active={active}
         total={results.total}
         hideCount={(!searched && results.total === 0) || outOfRange}
@@ -333,9 +355,12 @@ export function SearchScreen({ filter, results, sectors }: Props) {
               }
             />
           ) : (
-            <ul className="mt-5 flex flex-col gap-4">
+            <ul className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {results.items.map((item) => (
-                <li key={item.id} className="rounded-card border border-border p-5 shadow-card">
+                <li
+                  key={item.id}
+                  className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-5 shadow-card"
+                >
                   <div className="flex flex-wrap gap-2">
                     <Badge tone="category">{t(`types.${item.type}`)}</Badge>
                     {item.termYear && <Badge>{String(item.termYear)}</Badge>}
@@ -362,19 +387,21 @@ export function SearchScreen({ filter, results, sectors }: Props) {
                   {item.snippet && (
                     <p
                       id={`result-snippet-${item.id}`}
-                      className="mt-4 whitespace-pre-line break-words"
+                      className="mt-4 line-clamp-5 whitespace-pre-line break-words"
                     >
                       {item.snippet}
                     </p>
                   )}
-                  <Link
-                    className={`${buttonClasses({ variant: 'secondary' })} mt-4`}
-                    href={`/deneyim/${item.id}`}
-                    id={`result-open-${item.id}`}
-                    aria-labelledby={`result-open-${item.id} result-title-${item.id}${item.snippet ? ` result-snippet-${item.id}` : ''}`}
-                  >
-                    {t('open')}
-                  </Link>
+                  <div className="mt-auto pt-4">
+                    <Link
+                      className={buttonClasses({ variant: 'secondary' })}
+                      href={`/deneyim/${item.id}`}
+                      id={`result-open-${item.id}`}
+                      aria-labelledby={`result-open-${item.id} result-title-${item.id}${item.snippet ? ` result-snippet-${item.id}` : ''}`}
+                    >
+                      {t('open')}
+                    </Link>
+                  </div>
                 </li>
               ))}
             </ul>
