@@ -107,7 +107,11 @@ export default async function AdminOverviewPage() {
     googleCalendar: <CalendarIcon width={22} height={22} />,
   } as const;
   const queueLinks = links.filter((link) => link.visible && link.key in queueCounts);
-  const tools = links.filter((link) => link.visible && !(link.key in queueCounts));
+  const waiting = queueLinks.filter((link) => (queueCounts[link.key] ?? 0) > 0);
+  const tools = [
+    ...links.filter((link) => link.visible && !(link.key in queueCounts)),
+    ...queueLinks.filter((link) => (queueCounts[link.key] ?? 0) === 0),
+  ];
   const allClear =
     queueLinks.every((link) => queueCounts[link.key] === 0) && counts.pendingCampusEvents === 0;
   return (
@@ -124,59 +128,65 @@ export default async function AdminOverviewPage() {
             className="rounded-card border border-border bg-surface"
           />
         )}
-        <AdminList>
-          {queueLinks.map((link) => (
-            <AdminListItem key={link.key} flush>
-              <Link
-                href={link.href}
-                className="press-row flex min-h-20 items-center gap-4 px-4 py-4 lg:px-5"
-              >
-                <IconChip tone={TONE[link.key]}>{ICON[link.key]}</IconChip>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-semibold text-fg">{t(`sections.${link.key}`)}</span>
-                  <span className="mt-1 block text-sm text-fg-muted">{t(`intro.${link.key}`)}</span>
-                </span>
-                {queueCounts[link.key] !== null && queueCounts[link.key] !== undefined && (
+        {(waiting.length > 0 || counts.pendingCampusEvents > 0) && (
+          <AdminList>
+            {waiting.map((link) => (
+              <AdminListItem key={link.key} flush>
+                <Link
+                  href={link.href}
+                  className="press-row flex min-h-20 items-center gap-4 px-4 py-4 lg:px-5"
+                >
+                  <IconChip tone={TONE[link.key]}>{ICON[link.key]}</IconChip>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold text-fg">{t(`sections.${link.key}`)}</span>
+                    <span className="mt-1 block text-sm text-fg-muted">
+                      {t(`intro.${link.key}`)}
+                    </span>
+                  </span>
+                  {queueCounts[link.key] !== null && queueCounts[link.key] !== undefined && (
+                    <Badge
+                      tone={queueCounts[link.key]! > 0 ? 'warning' : 'neutral'}
+                      className="shrink-0"
+                    >
+                      {t('pendingCount', { count: queueCounts[link.key]! })}
+                    </Badge>
+                  )}
+                  <ChevronRightIcon
+                    aria-hidden="true"
+                    className="hidden shrink-0 text-fg-muted sm:block"
+                    width={18}
+                    height={18}
+                  />
+                </Link>
+              </AdminListItem>
+            ))}
+            {counts.pendingCampusEvents > 0 && (
+              <AdminListItem flush>
+                <Link
+                  href="/yonetim/etkinlikler"
+                  className="press-row flex min-h-20 items-center gap-4 px-4 py-4 lg:px-5"
+                >
+                  <IconChip tone="primary">
+                    <CalendarIcon width={22} height={22} />
+                  </IconChip>
+                  <span className="min-w-0 flex-1 font-semibold">{campusEvents('adminTitle')}</span>
                   <Badge
-                    tone={queueCounts[link.key]! > 0 ? 'warning' : 'neutral'}
+                    tone={counts.pendingCampusEvents > 0 ? 'warning' : 'neutral'}
                     className="shrink-0"
                   >
-                    {t('pendingCount', { count: queueCounts[link.key]! })}
+                    {t('pendingCount', { count: counts.pendingCampusEvents })}
                   </Badge>
-                )}
-                <ChevronRightIcon
-                  aria-hidden="true"
-                  className="hidden shrink-0 text-fg-muted sm:block"
-                  width={18}
-                  height={18}
-                />
-              </Link>
-            </AdminListItem>
-          ))}
-          <AdminListItem flush>
-            <Link
-              href="/yonetim/etkinlikler"
-              className="press-row flex min-h-20 items-center gap-4 px-4 py-4 lg:px-5"
-            >
-              <IconChip tone="primary">
-                <CalendarIcon width={22} height={22} />
-              </IconChip>
-              <span className="min-w-0 flex-1 font-semibold">{campusEvents('adminTitle')}</span>
-              <Badge
-                tone={counts.pendingCampusEvents > 0 ? 'warning' : 'neutral'}
-                className="shrink-0"
-              >
-                {t('pendingCount', { count: counts.pendingCampusEvents })}
-              </Badge>
-              <ChevronRightIcon
-                aria-hidden="true"
-                className="hidden shrink-0 text-fg-muted sm:block"
-                width={18}
-                height={18}
-              />
-            </Link>
-          </AdminListItem>
-        </AdminList>
+                  <ChevronRightIcon
+                    aria-hidden="true"
+                    className="hidden shrink-0 text-fg-muted sm:block"
+                    width={18}
+                    height={18}
+                  />
+                </Link>
+              </AdminListItem>
+            )}
+          </AdminList>
+        )}
       </section>
       <section aria-labelledby="admin-tools-heading" className="space-y-4">
         <h2 id="admin-tools-heading" className="text-lg font-bold">
@@ -191,6 +201,11 @@ export default async function AdminOverviewPage() {
                   <span className="block font-semibold">{t(`sections.${link.key}`)}</span>
                   <span className="mt-1 block text-sm text-fg-muted">{t(`intro.${link.key}`)}</span>
                 </span>
+                {queueCounts[link.key] !== null && queueCounts[link.key] !== undefined && (
+                  <Badge tone="neutral">
+                    {t('pendingCount', { count: queueCounts[link.key]! })}
+                  </Badge>
+                )}
                 <ChevronRightIcon
                   aria-hidden="true"
                   width={18}
@@ -200,6 +215,26 @@ export default async function AdminOverviewPage() {
               </Link>
             </li>
           ))}
+          {counts.pendingCampusEvents === 0 && (
+            <li className="min-w-0 lg:border-b lg:border-border">
+              <Link
+                href="/yonetim/etkinlikler"
+                className="press-row flex min-h-20 items-center gap-3 py-4"
+              >
+                <IconChip tone="primary">
+                  <CalendarIcon width={22} height={22} />
+                </IconChip>
+                <span className="min-w-0 flex-1 font-semibold">{campusEvents('adminTitle')}</span>
+                <Badge tone="neutral">{t('pendingCount', { count: 0 })}</Badge>
+                <ChevronRightIcon
+                  aria-hidden="true"
+                  width={18}
+                  height={18}
+                  className="shrink-0 text-fg-muted"
+                />
+              </Link>
+            </li>
+          )}
           <li className="min-w-0 lg:border-b lg:border-border">
             <Link
               href="/yonetim/aylik-ozet"

@@ -69,6 +69,9 @@ Mercan, Nane, yazı tipleri). Ölçü ilkeleri (değerler `globals.css`'te):
   sola yaslıdır.
 - **Sayfa başlığı** (`PageHeader`): üst etiket (12 px, büyük harf, ana renk), `h1` (telefonda 26, bilgisayarda 34 px, Plus Jakarta 800), kısa açıklama;
   eylemler bilgisayarda aynı satırda sağda (`actions`), telefonda başlığın altında. Tek birincil eylem.
+- **Yönetim:** pano gerçek sayısı sıfırdan büyük kuyrukları üstte gösterir; sıfır kuyruklar araç bağlantılarında kalır, bütün görünür kuyruklar
+  boşsa sakin boş durum çıkar. `AdminFrame` başlığı ve `AdminList`/`AdminListItem` satırları kabuğun genişliğine uyar: bilgisayarda bölünmüş tek yüzey,
+  telefonda ayrı kartlar; eylemler geniş ekranda sağda, telefonda tek birincil eylemle alt sıradadır. Bu sunum yetenek/kapsam denetimini değiştirmez.
 - **Oturumsuz sayfalar** (giriş, kayıt öncesi, hukuki metinler, doğrulama sayfası): yan menü yok, yalnız logo (ve "Giriş yap"); aynı token'lar. Bilgisayarda
   giriş formu ortada bir kart, gönder düğmesi formun altındadır; telefonda başparmak hizası için ekranın dibindedir.
 - **Kontrast:** her iki temada metin 4,5:1, arayüz sınırı 3:1 (`contrast.test.ts`, yan menü çiftleri dahil). Açık tema kâğıt zemini ölçüdeki `#f3f4f9` yerine

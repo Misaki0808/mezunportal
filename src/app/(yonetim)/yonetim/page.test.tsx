@@ -48,6 +48,11 @@ it('kuyruk kartlarında sunucu sayısını gösterir; sıfır görünür, kapsam
   expect(
     within(screen.getByRole('link', { name: /adminTitle/ })).getByText('pendingCount: 6'),
   ).toBeVisible();
+  const pending = screen
+    .getByRole('heading', { name: 'overview.pendingTitle' })
+    .closest('section')!;
+  expect(within(pending).getByRole('link', { name: /sections.documents/ })).toBeVisible();
+  expect(within(pending).queryByRole('link', { name: /sections.experiences/ })).toBeNull();
   expect(screen.queryByRole('link', { name: /sections.unmatchedValues/ })).toBeNull();
   expect(screen.getByRole('link', { name: /sections.courses/ })).toHaveAttribute(
     'href',
