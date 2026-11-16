@@ -61,7 +61,7 @@ vermek için bir karşılığı (tanınma, kapasiteyi kendi belirlemesi) olur.
 
 ### Faz 1 (bitirme kapsamı) — `docs/faz1-plan.md`
 
-**Çekirdek:** kurum/üyelik/yetki · kimlik doğrulama (e-posta bağlantısı, LinkedIn ile giriş,
+**Çekirdek:** kurum/üyelik/yetki · kimlik doğrulama (e-posta bağlantısı,
 mezun belgesi) · KVKK ve kontrollü iletişim · ilk giriş akışı ve profil tamamlama · yapay zekâ
 ile CV ayrıştırma · profil ekranları · deneyimler ve moderasyon · arama · mentor dizini ve benzer
 yol önerisi · randevu ve Google Meet · yönetim paneli · bildirimler ve hatırlatmalar · kullanım
