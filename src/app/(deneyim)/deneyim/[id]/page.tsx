@@ -83,7 +83,11 @@ export default async function ExperienceDetailPage({
           </Link>
         )}
         {experience.status === 'PUBLISHED' && isOwner === false && (
-          <ReportExperience experienceId={experience.id} report={reportExperience} />
+          // Sessiz, içeriği kadar geniş: şikâyet birincil eylem değil (390 ve 1440'ta tam genişlik olmaz).
+          // `-ml-4` düğmenin iç boşluğunu geri alır; yazı metin sütununun kenarıyla hizalı kalır.
+          <div className="-ml-4 self-start">
+            <ReportExperience experienceId={experience.id} report={reportExperience} />
+          </div>
         )}
       </div>
     </article>

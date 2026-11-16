@@ -169,6 +169,13 @@ describe('moderasyon kuyruğu', () => {
 });
 
 describe('şikâyet alt sayfası', () => {
+  it('tetikleyici sessiz ve içeriği kadar geniştir (tam genişlikli ikincil düğme değil), dokunma hedefi ≥ 44 px', () => {
+    renderWithToasts(<ReportExperience experienceId="e1" report={vi.fn()} />);
+    const trigger = screen.getByRole('button', { name: 'Bu deneyimi şikâyet et' });
+    expect(trigger).toHaveClass('min-h-11', 'bg-transparent', 'text-primary');
+    expect(trigger).not.toHaveClass('w-full');
+    expect(trigger).not.toHaveClass('border');
+  });
   it('çift gönderim tek istektir; ağ hatasında gerekçe korunur', async () => {
     const gate = Promise.withResolvers<never>();
     const report = vi.fn(() => gate.promise);
