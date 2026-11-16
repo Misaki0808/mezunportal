@@ -156,10 +156,33 @@ test('320 pikselde arama girdisi okunur kalır, süzgeç düğmesi alt satıra i
   );
   const mine = await boxOf(page.getByRole('link', { name: 'Deneyimlerim', exact: true }));
   const companies = await boxOf(page.getByRole('link', { name: 'Şirketlere bak', exact: true }));
-  // Alt alta sarınca ikinci düğme 8 px içeriden başlıyordu (`ml-2`): aynı soldan hizalı.
-  expect(companies.y, 'başlık düğmeleri sarar (320 px)').toBeGreaterThan(mine.y);
-  expect(companies.x, 'başlık düğmeleri soldan hizalı (320 px)').toBeCloseTo(mine.x, 0);
+  // Kabuk dolgusu 16 px: 288 px'e iki düğme (139 + 8 + 139 px) yan yana sığar (1,6 px pay), sığmazsa `PageHeader` eylemleri sarar.
+  // İki durumda da düğmeler taşmaz, çakışmaz ve soldan hizalı başlar; sarmanın kendisi aşağıda büyük yazıyla kesinleştirilir.
+  const sameRow = Math.abs(companies.y - mine.y) < 2;
+  if (sameRow) {
+    expect(companies.x, 'yan yana: aralık (320 px)').toBeGreaterThanOrEqual(
+      mine.x + mine.width + 7.5,
+    );
+  } else {
+    expect(companies.y, 'başlık düğmeleri sarar (320 px)').toBeGreaterThan(mine.y);
+    expect(companies.x, 'başlık düğmeleri soldan hizalı (320 px)').toBeCloseTo(mine.x, 0);
+  }
+  expect(companies.x + companies.width, 'sağ kenar ekranın içinde (320 px)').toBeLessThanOrEqual(
+    320,
+  );
   expect(await horizontalOverflow()).toBe(0);
+
+  // Metin %125 büyütülünce (gerçek kullanıcı ayarı) satıra sığmaz: ikinci düğme alt satıra iner (`ml-2` hatası: 8 px içeriden başlıyordu)
+  // ve aynı soldan hizalı, ekranın içinde başlar.
+  await page.addStyleTag({ content: 'html { font-size: 125% !important; }' });
+  const bigMine = await boxOf(page.getByRole('link', { name: 'Deneyimlerim', exact: true }));
+  const bigCompanies = await boxOf(page.getByRole('link', { name: 'Şirketlere bak', exact: true }));
+  expect(bigCompanies.y, 'büyük yazıda başlık düğmeleri sarar').toBeGreaterThan(bigMine.y);
+  expect(bigCompanies.x, 'büyük yazıda soldan hizalı').toBeCloseTo(bigMine.x, 0);
+  expect(bigCompanies.x + bigCompanies.width, 'büyük yazıda ekranın içinde').toBeLessThanOrEqual(
+    320,
+  );
+  await page.addStyleTag({ content: 'html { font-size: 100% !important; }' });
 
   // 360 px'te satır TEK kalır (alt sınır 160 px olsaydı ilk ekrandaki sonuçlar aşağı kayardı) ve başlık düğmeleri yan yana durur.
   await page.setViewportSize({ width: 360, height: 740 });

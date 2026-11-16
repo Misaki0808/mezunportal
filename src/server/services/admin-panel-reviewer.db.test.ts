@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
+import { letterMarker } from '@/test/markers';
 import {
   addGrant,
   addMembership,
@@ -21,7 +22,8 @@ import { addProfileSkill, suggestSkills } from './profile-content';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
-const marker = () => `zr${randomUUID().replaceAll('-', '').slice(0, 12)}`;
+// Metin süzgecinden (telefon/kimlik) geçen alanlara gider: rakamsız işaretçi (kart 392).
+const marker = () => letterMarker('zr', 12);
 async function admin(scope: 'SYSTEM' | 'DEPARTMENT' = 'SYSTEM', consented = true) {
   const inst = await createInstitution(db),
     id = await createUser(db);

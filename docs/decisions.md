@@ -1084,3 +1084,13 @@ PM onayıyla ücretsiz `sharp` **0.35.5** doğrudan sabitlendi (Next'in getirdi�
 çözme uygulamanın güvenlik sınırıdır, Next'in özel iç API'sine/geçişli bağımlılığına bağlanmaz.
 24 MP ve 5 MB sınırı, katı çözme hatası, animasyon/çok sayfa reddi ve tek işlem bütçesi
 küçük sunucu kaynaklarını korur. Depolama/sunum herkese açık URL kullanmaz.
+## 2026-11-16 · Kabuk e2e gerilemeleri: Profilim `/profil`, hesap ayarları `/hesap` (kart 400)
+
+#185'ten sonra main'de 4 e2e kırmızıya düştü (158/162). Kökleri tek tek ölçüldü: (1) **Randevu saat şeridi 360 ve 390 px'te 4 px taşıyordu**: şerit (`slot-picker`) eski sayfa kapsayıcısının
+20 px dolgusuna güvenip `-mx-5 px-5` ile kenara kadar uzanıyordu; kabuk dolgusu 16 px olunca (`.app-content` kuralı sayfa kapsayıcısının dolgusunu sıfırlar) şerit ekrandan 4 px dışarı çıktı.
+Uzun yer notu ya da `min-w-0` ile ilgisi yok; şerit `-mx-4 px-4` oldu (kabuk dolgusuyla aynı). Başka `-mx-5` kullanımı yok. (2) **320 px başlık düğmeleri: ürün hatası yok.** 16 px dolguyla 288 px'e
+"Deneyimlerim" + "Şirketlere bak" (139 + 8 + 139 px) 1,6 px payla yan yana sığıyor, taşma yok; eski test 20 px dolgunun yarattığı sarmayı sabit varsayıyordu. Test, gerçek sözleşmeyi ölçecek biçimde
+yeniden kuruldu: ekranın içinde ve çakışmadan durur; metin %125 büyütülünce (gerçek kullanıcı ayarı) sarar ve aynı soldan hizalı başlar. (3) **"Profilim" `/profil`'e gider** (PM kararı; A ölçüsündeki
+"Profilim `/hesap`" yanlış eşleşmeydi): yan menü Hesap grubunda "Profilim" `/profil`, ayrı "Hesap ayarları" `/hesap`; telefon alt çubuğundaki "Profil" sekmesi `/profil`; hesap ayarlarına kullanıcı kartı
+(yan menü, "Hesap ayarları: <ad>") ve üst çubuktaki avatar ("Hesabım") götürür. (4) **SSS "kimliksiz görünür" testi gevşetilmedi, kapsamı doğru yere taşındı:** soran öğrencinin kendi görünümünde artık
+adı kabuğun kullanıcı kartı taşır (sızıntı değil); iddia SSS içeriği (`main`) için ve ayrıca BAŞKA bir kullanıcının (cevaplayan mentor) tam sayfa HTML'i için ölçülür.

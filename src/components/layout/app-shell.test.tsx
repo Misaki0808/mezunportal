@@ -110,7 +110,7 @@ describe('AppShell', () => {
     expect(new Set(icons).size).toBe(icons.length);
   });
 
-  it('yan menü ana grubu yalnız gerçek rotaları, sırayla listeler; hesap grubu bildirim ve profili içerir', () => {
+  it('yan menü ana grubu yalnız gerçek rotaları, sırayla listeler; hesap grubu bildirim, profil ve hesap ayarlarını içerir', () => {
     renderUi(
       <AppShell signedIn canRefreshNotifications unreadNotifications={2}>
         x
@@ -130,11 +130,17 @@ describe('AppShell', () => {
       '/etkinlikler',
       '/ders-rehberi',
       '/bildirimler',
+      '/profil',
       '/hesap',
     ]);
     const account = within(side).getByRole('list', { name: 'Hesap' });
     expect(within(account).getByRole('link', { name: /Bildirimler/ })).toBeVisible();
+    // Profilim gerçek profildir; hesap ayarları ayrı kalemdir.
     expect(within(account).getByRole('link', { name: 'Profilim' })).toHaveAttribute(
+      'href',
+      '/profil',
+    );
+    expect(within(account).getByRole('link', { name: 'Hesap ayarları' })).toHaveAttribute(
       'href',
       '/hesap',
     );
@@ -151,7 +157,7 @@ describe('AppShell', () => {
       '/ilanlar',
       '/mentorlar',
       '/randevular',
-      '/hesap',
+      '/profil',
     ]);
     expect(links.map((link) => link.textContent)).toEqual([
       'Ana sayfa',
@@ -231,7 +237,7 @@ describe('AppShell: bildirim girişi', () => {
 it('Profilim bağlantısını gösterir, yönetimi yalnız sunucudan açıkça izin verilirse ayrı grupta sunar', () => {
   const { rerender } = renderUi(<AppShell signedIn>x</AppShell>);
   const side = screen.getByRole('navigation', { name: 'Yan menü' });
-  expect(within(side).getByRole('link', { name: 'Profilim' })).toHaveAttribute('href', '/hesap');
+  expect(within(side).getByRole('link', { name: 'Profilim' })).toHaveAttribute('href', '/profil');
   expect(within(side).queryByRole('link', { name: 'Yönetim' })).not.toBeInTheDocument();
   expect(within(side).queryByRole('list', { name: 'Yönetici' })).not.toBeInTheDocument();
   rerender(
@@ -289,6 +295,22 @@ describe('AppShell: görünüm A iskeleti', () => {
     expect(within(aside).queryByText(/·/)).toBeNull();
     rerender(<AppShell signedIn>x</AppShell>);
     expect(within(aside).queryByText('Deniz Aksoy')).toBeNull();
+  });
+
+  it('alt kart hesap ayarlarına bağlanır (kullanıcı kartı ve avatar /hesap, Profilim /profil)', () => {
+    renderUi(
+      <AppShell signedIn shellUser={{ name: 'Deniz Aksoy', membership: null }}>
+        x
+      </AppShell>,
+    );
+    const aside = screen.getByRole('complementary');
+    expect(
+      within(aside).getByRole('link', { name: 'Hesap ayarları: Deniz Aksoy' }),
+    ).toHaveAttribute('href', '/hesap');
+    // Üst çubuktaki avatar da hesap ayarlarına gider (telefon ve bilgisayar).
+    const avatars = screen.getAllByRole('link', { name: 'Hesabım' });
+    expect(avatars.length).toBeGreaterThan(0);
+    for (const avatar of avatars) expect(avatar).toHaveAttribute('href', '/hesap');
   });
 
   it.each([
