@@ -50,8 +50,9 @@ async function put(
 const reset = (owner: string) => db.inAppNotification.deleteMany({ where: { userId: owner } });
 const noOverflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+// Zil kabukta üç yerde çizilir (telefon üst çubuğu, bilgisayar üst çubuğu, yan menü); ekranda görünen üst çubuktaki kullanılır.
 const bell = (page: Page, name: string | RegExp) =>
-  page.getByRole('link', { name, exact: typeof name === 'string' });
+  page.locator('header').getByRole('link', { name, exact: typeof name === 'string' });
 
 test.describe('bildirim kutusu', () => {
   test('rozet → liste → satır: gruplama, gün başlıkları, tek dokunuşla okundu, hepsini okundu yap (390)', async ({

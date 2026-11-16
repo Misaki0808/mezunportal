@@ -23,22 +23,25 @@ export default async function SignInPage({
   if (!options) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!options.ok) return <ErrorState errorCode={options.errorCode} />;
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] w-full max-w-lg flex-col px-5 pb-8 pt-12 sm:pt-20">
-      <PageHeader
-        className="mb-10"
-        eyebrow={t('eyebrow')}
-        title={t(returnTo ? 'continueTitle' : 'title')}
-        description={t.rich('description', {
-          email: (chunks) => <span className="whitespace-nowrap">{chunks}</span>,
-        })}
-      />
-      <SignInForm
-        options={options.data}
-        callbackError={callbackError}
-        returnTo={returnTo ?? undefined}
-        requestLink={requestSignInLink}
-        startLinkedIn={startLinkedInSignIn}
-      />
+    // Telefonda eylem ekranın dibinde kalır (başparmak hizası); bilgisayarda form kartı ortada durur ve düğme formun altındadır.
+    <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] w-full max-w-lg flex-col px-5 pb-8 pt-12 sm:pt-20 lg:justify-center lg:py-12">
+      <div className="flex flex-1 flex-col lg:flex-none lg:rounded-card lg:border lg:border-border lg:bg-surface lg:p-8 lg:shadow-card">
+        <PageHeader
+          className="mb-10"
+          eyebrow={t('eyebrow')}
+          title={t(returnTo ? 'continueTitle' : 'title')}
+          description={t.rich('description', {
+            email: (chunks) => <span className="whitespace-nowrap">{chunks}</span>,
+          })}
+        />
+        <SignInForm
+          options={options.data}
+          callbackError={callbackError}
+          returnTo={returnTo ?? undefined}
+          requestLink={requestSignInLink}
+          startLinkedIn={startLinkedInSignIn}
+        />
+      </div>
     </div>
   );
 }

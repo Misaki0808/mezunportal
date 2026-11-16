@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 
 import { BellIcon, cn } from '@/components/ui';
 import { INBOX_UNREAD_CAP } from '@/contracts/inbox';
@@ -15,17 +16,12 @@ import { INBOX_UNREAD_CAP } from '@/contracts/inbox';
 /** Bildirim kutusunda okundu işaretlenince yayılır; rozet sayısını yeniden okur. */
 export const INBOX_CHANGED_EVENT = 'mezunportal:inbox-changed';
 
-export function NotificationBell({
-  initial,
-  layout,
-  refreshEnabled,
-}: {
-  initial: number;
-  layout: 'header' | 'side';
-  refreshEnabled: boolean;
-}) {
-  const t = useTranslations('inbox.bell');
-  const nav = useTranslations('nav');
+/**
+ * Okunmamış sayısı: sunucunun verdiği ilk sayı + gezinmede, odağa dönüşte ve kutuda okundu işaretlenince yapılan küçük GET.
+ * Sayıyı tek yerde tutmak için `UnreadProvider` kabukta bir kez kurulur; zil ve yan menü satırı (üç örnek) aynı sayıyı okur,
+ * her biri ayrı istek atmaz. Sağlayıcı yoksa (tek başına kullanımda) zil sayıyı kendisi tazeler.
+ */
+function useUnreadCount(initial: number, refreshEnabled: boolean, active: boolean): number {
   const pathname = usePathname();
   // Sunucunun verdiği sayı değişince (yeni düzen çizimi) istemcinin getirdiği değer atılır; aksi halde getirilen değer geçerlidir.
   const [seen, setSeen] = useState(initial);
@@ -34,11 +30,10 @@ export function NotificationBell({
     setSeen(initial);
     setFetched(null);
   }
-  const unread = refreshEnabled ? (fetched ?? initial) : 0;
   const first = useRef(true);
 
   useEffect(() => {
-    if (!refreshEnabled) return;
+    if (!refreshEnabled || !active) return;
     let alive = true;
     async function refresh() {
       try {
@@ -68,7 +63,46 @@ export function NotificationBell({
       window.removeEventListener(INBOX_CHANGED_EVENT, onVisible);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [pathname, refreshEnabled]);
+  }, [pathname, refreshEnabled, active]);
+
+  return refreshEnabled ? (fetched ?? initial) : 0;
+}
+
+const UnreadContext = createContext<number | null>(null);
+
+/** Kabukta bir kez kurulur; altındaki tüm `NotificationBell` örnekleri bu sayıyı paylaşır. */
+export function UnreadProvider({
+  initial,
+  refreshEnabled,
+  children,
+}: {
+  initial: number;
+  refreshEnabled: boolean;
+  children: ReactNode;
+}) {
+  const unread = useUnreadCount(initial, refreshEnabled, true);
+  return <UnreadContext.Provider value={unread}>{children}</UnreadContext.Provider>;
+}
+
+/**
+ * Düzenler: `header` telefon üst çubuğu (sayılı rozet), `icon` bilgisayar üst çubuğu (çerçeveli düğme, okunmamışta nokta),
+ * `side` yan menü satırı (lacivert zeminde; rozet hap).
+ */
+export function NotificationBell({
+  initial,
+  layout,
+  refreshEnabled,
+}: {
+  initial: number;
+  layout: 'header' | 'icon' | 'side';
+  refreshEnabled: boolean;
+}) {
+  const t = useTranslations('inbox.bell');
+  const nav = useTranslations('nav');
+  const pathname = usePathname();
+  const shared = useContext(UnreadContext);
+  const own = useUnreadCount(initial, refreshEnabled, shared === null);
+  const unread = shared ?? own;
 
   const overflow = unread >= INBOX_UNREAD_CAP;
   const label = overflow
@@ -84,10 +118,16 @@ export function NotificationBell({
       aria-current={current ? 'page' : undefined}
       className={cn(
         'press-control relative inline-flex items-center rounded-control font-medium',
-        layout === 'header'
-          ? 'min-h-11 min-w-11 justify-center'
-          : 'min-h-11 w-full gap-1 px-3 text-base',
-        current ? 'bg-primary-soft text-on-primary-soft' : 'text-fg-muted hover:bg-surface-strong',
+        layout === 'header' && 'min-h-11 min-w-11 justify-center',
+        layout === 'icon' && 'size-11 justify-center border border-border bg-surface',
+        layout === 'side' && 'min-h-11 w-full gap-3 px-3 text-[0.95rem]',
+        layout === 'side'
+          ? current
+            ? 'bg-side-active text-side-fg shadow-[inset_3px_0_0_var(--color-accent)]'
+            : 'text-side-muted hover:bg-side-active hover:text-side-fg'
+          : current
+            ? 'bg-primary-soft text-on-primary-soft'
+            : 'text-fg-muted hover:bg-surface-strong',
       )}
     >
       <span className="relative inline-flex">
@@ -102,6 +142,13 @@ export function NotificationBell({
           </span>
         )}
       </span>
+      {layout === 'icon' && unread > 0 && (
+        <span
+          data-testid="bell-dot"
+          aria-hidden="true"
+          className="absolute top-2 right-2.5 size-2 rounded-full bg-accent ring-2 ring-surface"
+        />
+      )}
       {layout === 'side' && (
         <>
           <span>{nav('items.notifications')}</span>
