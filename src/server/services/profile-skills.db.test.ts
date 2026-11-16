@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createTestPrisma } from '@/test/db';
+import { letterMarker } from '@/test/markers';
 import { createUser } from '@/test/fixtures';
 
 import { deleteAccount } from './accountDeletion';
@@ -13,12 +13,8 @@ import { listProfileTags } from './profile';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
-// Rastgele test etiketi telefon biçimine tesadüfen benzemesin; benzersizlik korunur.
-const tag = () =>
-  `zx${randomUUID()
-    .replace(/-/g, '')
-    .slice(0, 10)
-    .replace(/\d/g, (digit) => String.fromCharCode(103 + Number(digit)))}`;
+// Rastgele test etiketi telefon biçimine tesadüfen benzemesin (ortak rakamsız işaretçi, kart 392).
+const tag = () => letterMarker('zx', 10);
 
 describe('beceri taşıma migration’ı (UserSkill → Tag + ProfileTag)', () => {
   const sql = readFileSync(

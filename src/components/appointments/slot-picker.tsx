@@ -168,7 +168,7 @@ export function SlotPicker({ list, request }: Props) {
       <fieldset className="mt-6 min-w-0">
         <legend className="mb-2 font-medium text-fg">{t('pickDay')}</legend>
         <div
-          className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-2"
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2"
           role="radiogroup"
           aria-label={t('pickDay')}
         >
