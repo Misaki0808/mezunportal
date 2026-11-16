@@ -892,9 +892,10 @@ describe('randevu listesi: karşı tarafın fotoğrafı (kart 388 + 387)', () =>
       photoSrc: '/api/profil-fotografi/u2?size=96&v=1',
     };
     const without = view({ id: 'p2', ...inDays(3) });
+    const listPage = (items: AppointmentView[]) => ({ items, nextCursor: null });
     renderUi(
       <MyAppointments
-        initial={page([withPhoto, without])}
+        initial={listPage([withPhoto, without])}
         initialRole="MENTOR"
         showSettings={false}
         list={vi.fn()}
