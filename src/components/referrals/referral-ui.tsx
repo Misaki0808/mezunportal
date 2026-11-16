@@ -27,6 +27,7 @@ import {
   useToast,
 } from '@/components/ui';
 import * as actions from '@/server/actions/referrals';
+import { AccountFrameView } from '@/components/account/account-frame';
 import { useHydrated } from '@/hooks/use-hydrated';
 
 export function ReferralCreate({
@@ -177,6 +178,7 @@ export function ReferralList({
   const reviewReasonInput = useRef<HTMLTextAreaElement>(null);
   const t = useTranslations('referrals');
   const errors = useTranslations('errors.codes');
+  const frame = useTranslations('accountFrame');
   const router = useRouter();
   const toast = useToast();
   const hydrated = useHydrated();
@@ -293,16 +295,16 @@ export function ReferralList({
   }
   const Rows = moderation ? AdminList : 'ul';
   const Row = moderation ? AdminListItem : 'li';
-  return (
+  // Hesap çerçevesi başlığı tek kez çizer; moderasyon kendi başlığını ve yönetim satırlarını korur.
+  const body = (
     <div
       ref={queueRef}
       data-hydrated={hydrated ? 'true' : undefined}
-      className={moderation ? 'min-w-0 space-y-6 pb-8' : 'w-full max-w-3xl pb-32'}
+      className={moderation ? 'min-w-0 space-y-6 pb-8' : 'w-full [&>:first-child]:mt-0'}
     >
-      <PageHeader
-        title={t(moderation ? 'moderationTitle' : 'title')}
-        description={t(moderation ? 'moderationDescription' : 'description')}
-      />
+      {moderation && (
+        <PageHeader title={t('moderationTitle')} description={t('moderationDescription')} />
+      )}
       {canCreate && page.items.length > 0 && (
         <Link href="/referans/yeni" className={CREATE_LINK}>
           {t('create')}
@@ -538,5 +540,17 @@ export function ReferralList({
         </div>
       )}
     </div>
+  );
+  if (moderation) return body;
+  return (
+    <AccountFrameView
+      eyebrow={frame('eyebrow')}
+      backLabel={frame('back')}
+      title={t('title')}
+      description={t('description')}
+      width="max-w-3xl"
+    >
+      {body}
+    </AccountFrameView>
   );
 }
