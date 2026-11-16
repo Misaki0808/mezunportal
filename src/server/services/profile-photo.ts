@@ -14,6 +14,7 @@ import { processProfilePhoto } from '../external/profile-photo';
 import { newProfilePhotoKeys } from '../external/storage/keys';
 import type { StorageAdapter } from '../external/storage';
 import { canViewProfilePhoto } from '../rules/visibility';
+import { nextPhotoConsentTime } from './profile-photo-consent';
 import { eraseProfilePhoto } from './profile-photo-erasure';
 import { requireConsent } from './privacy';
 import { viewerUniversityIds } from './search';
@@ -89,6 +90,7 @@ export async function uploadProfilePhoto(
         data: {
           userId,
           documentType: 'PROFILE_PHOTO_VISIBILITY',
+          createdAt: await nextPhotoConsentTime(tx, userId),
           version: PHOTO_VERSION,
           granted: true,
         },

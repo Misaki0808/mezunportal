@@ -411,3 +411,33 @@ it('sistem yöneticisi henüz üyeliği olmayan hesabın fotoğrafını da gerek
     await db.adminAuditLog.count({ where: { targetId: owner, action: 'PROFILE_PHOTO_REMOVE' } }),
   ).toBe(1);
 });
+it('eski işlem zamanı yeni geri almayı geçersiz kılamaz; silme arızasında da son kilitli karar kazanır', async () => {
+  const owner = await person();
+  await upload(owner);
+  // Önce başlamış bir geri alma işlemi, daha yeni onaydan sonra kullanıcı kilidini alabilir.
+  const later = new Date(Date.now() + 60_000);
+  await db.consent.create({
+    data: {
+      userId: owner,
+      documentType: 'PROFILE_PHOTO_VISIBILITY',
+      version: CURRENT_CONSENT_VERSIONS.PROFILE_PHOTO_VISIBILITY,
+      granted: true,
+      createdAt: later,
+    },
+  });
+  storage.failures.delete = true;
+  try {
+    await expect(revoke(owner)).rejects.toMatchObject({ code: 'PHOTO_CLEANUP_PENDING' });
+    const last = await db.consent.findFirstOrThrow({
+      where: { userId: owner, documentType: 'PROFILE_PHOTO_VISIBILITY' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    expect(last.granted).toBe(false);
+    await expect(readProfilePhoto(deps, owner, owner, 96)).rejects.toMatchObject({
+      code: 'RESOURCE_NOT_FOUND',
+    });
+  } finally {
+    storage.failures.delete = false;
+  }
+  await revoke(owner);
+});

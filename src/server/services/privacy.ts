@@ -14,6 +14,7 @@ import { codedForbidden, codedValidation } from '@/lib/errors';
 
 import { computeConsentState, consentDecisionError, type ConsentVersions } from '../rules/consent';
 import { getStorage, type StorageAdapter } from '../external/storage';
+import { nextPhotoConsentTime } from './profile-photo-consent';
 import { revokeSeekerVisibility } from './seeker-visibility';
 
 export type PrivacyClient = Pick<
@@ -61,7 +62,16 @@ export async function recordConsents(
       });
       if (photo) revokedPhotos.push(photo);
     }
-    await tx.consent.createMany({ data: decisions.map((d) => ({ userId, ...d })) });
+    const photoTime = decisions.some((d) => d.documentType === 'PROFILE_PHOTO_VISIBILITY')
+      ? await nextPhotoConsentTime(tx, userId)
+      : undefined;
+    await tx.consent.createMany({
+      data: decisions.map((d) => ({
+        userId,
+        ...d,
+        ...(d.documentType === 'PROFILE_PHOTO_VISIBILITY' ? { createdAt: photoTime } : {}),
+      })),
+    });
     if (decisions.some((d) => d.documentType === 'JOB_SEEKER_VISIBILITY' && !d.granted))
       await revokeSeekerVisibility(tx, userId, new Date());
   });
