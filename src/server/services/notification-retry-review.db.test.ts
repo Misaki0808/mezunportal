@@ -1,8 +1,8 @@
-import { randomUUID } from 'node:crypto';
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
 
 import { Prisma } from '@/generated/prisma/client';
 import { createTestPrisma } from '@/test/db';
+import { letterMarker } from '@/test/markers';
 import { createUser } from '@/test/fixtures';
 
 import { notificationIntentPayload, relayNotificationIntents } from './notification-intent';
@@ -53,7 +53,7 @@ describe('TD-017 bağımsız inceleme senaryoları', () => {
     const poisoned = await ownUser();
     const healthy = await ownUser();
     const scoped = dbForUsers([poisoned, healthy]);
-    const tag = `rv-${randomUUID()}`;
+    const tag = letterMarker('rv', 12);
     // uuid v7 sıralı: bozuk niyet en küçük kimlikle (ilk sayfada) oluşturulur
     const bad = await db.notificationIntent.create({
       data: { key: `${tag}-bad`, userId: poisoned, kind: 'generic', payload: { garbage: true } },
@@ -102,12 +102,12 @@ describe('TD-017 bağımsız inceleme senaryoları', () => {
   it('başka bir işlemin kilitlediği niyet atlanır (SKIP LOCKED), diğerleri gider ve kilitli niyetin sayacı değişmez', async () => {
     const owner = await ownUser();
     const other = await ownUser();
-    const tag = `rv-lock-${randomUUID()}`;
-    const unrelatedTag = `rv-unrelated-${randomUUID()}`;
+    const tag = letterMarker('rvlock', 12);
+    const unrelatedTag = letterMarker('rvunrelated', 12);
     const unrelated = await ownUser();
     const scoped = dbForUsers([owner, other, unrelated]);
     const outside = await ownUser();
-    const outsideTag = `rv-outside-${randomUUID()}`;
+    const outsideTag = letterMarker('rvoutside', 12);
     const locked = await db.notificationIntent.create({
       data: { key: `${tag}-a`, userId: owner, kind: 'generic', payload: good(`${tag}-a`) },
     });
@@ -153,7 +153,7 @@ describe('TD-017 bağımsız inceleme senaryoları', () => {
   it('başarılı gönderim denemeyi saymaz: bir kez hata, sonra başarı niyeti siler', async () => {
     const userId = await ownUser();
     const scoped = dbForUsers([userId]);
-    const tag = `rv-flaky-${randomUUID()}`;
+    const tag = letterMarker('rvflaky', 12);
     const row = await db.notificationIntent.create({
       data: { key: tag, userId, kind: 'generic', payload: good(tag) },
     });
