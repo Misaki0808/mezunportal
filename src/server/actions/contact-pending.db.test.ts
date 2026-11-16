@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import {
   addMembership,
@@ -45,6 +45,12 @@ beforeAll(async () => {
   });
 });
 afterAll(() => db.$disconnect());
+beforeEach(async () => {
+  await db.contactRequest.updateMany({
+    where: { requesterId: viewer, targetId: target, source: 'PROFILE' },
+    data: { status: 'PENDING', decidedAt: null },
+  });
+});
 it('uygun hedefte yalnız aynı PROFILE bağlamının bekleyen isteği gösterilir; kimlik/yük taşınmaz', async () => {
   const preview = await previewContactTarget({ targetUserId: target });
   expect(preview).toMatchObject({ ok: true, data: { canRequest: true, pendingRequest: true } });
