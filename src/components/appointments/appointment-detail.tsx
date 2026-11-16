@@ -131,7 +131,7 @@ export function AppointmentDetail({
       <div>
         <Link
           href="/randevular"
-          className="press-row -ml-2 mb-3 inline-flex min-h-11 items-center gap-1 rounded-control px-2 text-base font-medium text-primary hover:bg-primary-soft"
+          className="press-row -ml-2 mb-3 inline-flex min-h-11 items-center gap-1 rounded-control px-2 text-base font-medium text-primary hover:bg-primary-soft hover:text-on-primary-soft"
         >
           <ChevronLeftIcon aria-hidden="true" />
           {t('back')}

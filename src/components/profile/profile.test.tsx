@@ -563,7 +563,16 @@ describe('başkasının profili: görünüm A düzeni (kart 387)', () => {
         profile={{
           ...view,
           positions: [position({ isCurrent: true })],
-          education: [{ institution: 'İstanbul Üniversitesi', fieldOfStudy: 'YBS' }],
+          education: [
+            {
+              institution: 'İstanbul Üniversitesi',
+              level: 'BACHELOR',
+              fieldOfStudy: 'YBS',
+              startDate: null,
+              endDate: null,
+              isCurrent: true,
+            },
+          ],
         }}
       />,
     );
@@ -583,7 +592,7 @@ describe('başkasının profili: görünüm A düzeni (kart 387)', () => {
           ...view,
           summary: 'Özet.',
           skills: [{ label: 'SQL' }],
-          languages: [{ name: 'İngilizce' }],
+          languages: [{ name: 'İngilizce', level: 'B2' }],
         }}
       />,
     );
