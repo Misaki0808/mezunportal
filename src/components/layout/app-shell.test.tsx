@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
 
@@ -10,6 +11,15 @@ import { AppShellClient as AppShell } from './app-shell-client';
 
 const navigation = vi.hoisted(() => ({ pathname: '/' }));
 vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }));
+
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function showModal() {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function close() {
+    this.removeAttribute('open');
+  };
+});
 
 describe('AppShell', () => {
   it('girişsiz ana sayfada karşılama kendi düzenini sunar', () => {
@@ -148,7 +158,7 @@ describe('AppShell', () => {
     expect(within(side).queryByText(/yakında/)).toBeNull();
   });
 
-  it('telefon alt çubuğu beş sekmedir: Ana sayfa, İlanlar, Mentorlar, Randevular, Profil', () => {
+  it('telefon alt çubuğu beş öğedir: dört sekme (Ana sayfa, İlanlar, Mentorlar, Randevular) ve Menü düğmesi', () => {
     renderUi(<AppShell signedIn>x</AppShell>);
     const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });
     const links = within(bottom).getAllByRole('link');
@@ -157,18 +167,18 @@ describe('AppShell', () => {
       '/ilanlar',
       '/mentorlar',
       '/randevular',
-      '/profil',
     ]);
     expect(links.map((link) => link.textContent)).toEqual([
       'Ana sayfa',
       'İlanlar',
       'Mentorlar',
       'Randevular',
-      'Profil',
     ]);
-    // Görünen ad erişilebilir adın içindedir (WCAG 2.5.3): "Profil" ⊂ "Profilim".
-    expect(within(bottom).getByRole('link', { name: 'Profilim' })).toBeVisible();
+    const menu = within(bottom).getByRole('button', { name: 'Menü' });
+    expect(menu).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(menu).toHaveAttribute('aria-expanded', 'false');
     expect(bottom.querySelector('ul')?.className).toContain('grid-cols-5');
+    expect(bottom.querySelectorAll('li')).toHaveLength(5);
   });
 
   it('etkin yan menü öğesi etkin zemin ve solda mercan çizgi taşır; etkin olmayanda yok', () => {
@@ -459,5 +469,136 @@ describe('AppShell: tema düğmesi (kart 383)', () => {
       </AppShell>,
     );
     expect(buttons()).toHaveLength(0);
+  });
+});
+
+describe('AppShell: telefon Menü alt sayfası (kart 387)', () => {
+  const open = async (ui = <AppShell signedIn>x</AppShell>) => {
+    const user = userEvent.setup();
+    renderUi(ui);
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Ana gezinme' })).getByRole('button', {
+        name: 'Menü',
+      }),
+    );
+    return { user, sheet: screen.getByRole('dialog', { name: 'Menü' }) };
+  };
+
+  it('Menü düğmesi alt sayfayı açar; alt çubukta yeri olmayan her ekran buradan bağlanır', async () => {
+    const { sheet } = await open();
+    const nav = within(sheet).getByRole('navigation', { name: 'Menü' });
+    const hrefs = within(nav)
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
+    expect(hrefs).toEqual([
+      '/deneyimler',
+      '/mezunlar',
+      '/etkinlikler',
+      '/ders-rehberi',
+      '/bildirimler',
+      '/profil',
+      '/hesap',
+    ]);
+    expect(within(nav).getByRole('list', { name: 'Keşfet' })).toBeInTheDocument();
+    expect(within(nav).getByRole('list', { name: 'Hesap' })).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'Profilim' })).toHaveAttribute('href', '/profil');
+    expect(within(nav).getByRole('link', { name: 'Hesap ayarları' })).toHaveAttribute(
+      'href',
+      '/hesap',
+    );
+    // Yönetici yoksa Yönetim grubu çizilmez.
+    expect(within(nav).queryByRole('link', { name: 'Yönetim' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Menü' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('yönetici izni varsa Yönetici grubu ve Yönetim bağlantısı çıkar', async () => {
+    const { sheet } = await open(
+      <AppShell signedIn showAdmin>
+        x
+      </AppShell>,
+    );
+    const admin = within(sheet).getByRole('list', { name: 'Yönetici' });
+    expect(within(admin).getByRole('link', { name: 'Yönetim' })).toHaveAttribute(
+      'href',
+      '/yonetim',
+    );
+  });
+
+  it('okunmamış bildirim sayısı Bildirimler satırında görünür ve erişilebilir adda geçer', async () => {
+    const { sheet } = await open(
+      <AppShell signedIn canRefreshNotifications unreadNotifications={4}>
+        x
+      </AppShell>,
+    );
+    const row = within(sheet).getByRole('link', { name: /Bildirimler/ });
+    expect(row).toHaveAttribute('aria-label', expect.stringContaining('4'));
+    expect(within(row).getByTestId('bell-badge')).toHaveTextContent('4');
+  });
+
+  it('bir bağlantıya basınca alt sayfa kapanır', async () => {
+    const { user, sheet } = await open();
+    await user.click(within(sheet).getByRole('link', { name: 'Deneyimler' }));
+    expect(screen.queryByRole('dialog', { name: 'Menü' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Menü' })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('Esc ya da Kapat düğmesi alt sayfayı kapatır', async () => {
+    const { user } = await open();
+    await user.click(screen.getByRole('button', { name: 'Kapat' }));
+    expect(screen.queryByRole('dialog', { name: 'Menü' })).not.toBeInTheDocument();
+  });
+
+  it('menüdeki bir ekran açıkken Menü düğmesi ve o satır etkin görünür; alt çubuk sekmeleri etkin olmaz', async () => {
+    navigation.pathname = '/mezunlar';
+    try {
+      const { sheet } = await open();
+      expect(within(sheet).getByRole('link', { name: 'Mezunlar' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+      expect(within(sheet).getByRole('link', { name: 'Deneyimler' })).not.toHaveAttribute(
+        'aria-current',
+      );
+      const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });
+      expect(within(bottom).getByRole('button', { name: 'Menü' })).toHaveAttribute(
+        'aria-current',
+        'true',
+      );
+      for (const link of within(bottom).getAllByRole('link'))
+        expect(link).not.toHaveAttribute('aria-current');
+    } finally {
+      navigation.pathname = '/';
+    }
+  });
+
+  it('hesap ayarları alt sayfaları da Menü düğmesini etkin gösterir', () => {
+    navigation.pathname = '/hesap/sss';
+    try {
+      renderUi(<AppShell signedIn>x</AppShell>);
+      const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });
+      expect(within(bottom).getByRole('button', { name: 'Menü' })).toHaveAttribute(
+        'aria-current',
+        'true',
+      );
+    } finally {
+      navigation.pathname = '/';
+    }
+  });
+
+  it('ana sayfada Menü düğmesi etkin değildir', () => {
+    renderUi(<AppShell signedIn>x</AppShell>);
+    const bottom = screen.getByRole('navigation', { name: 'Ana gezinme' });
+    expect(within(bottom).getByRole('button', { name: 'Menü' })).not.toHaveAttribute(
+      'aria-current',
+    );
+  });
+
+  it('zorunlu onay beklerken alt çubuk ve Menü çizilmez', () => {
+    renderUi(
+      <AppShell signedIn consentPending>
+        x
+      </AppShell>,
+    );
+    expect(screen.queryByRole('button', { name: 'Menü' })).not.toBeInTheDocument();
   });
 });

@@ -1095,6 +1095,18 @@ yeniden kuruldu: ekranın içinde ve çakışmadan durur; metin %125 büyütül�
 (yan menü, "Hesap ayarları: <ad>") ve üst çubuktaki avatar ("Hesabım") götürür. (4) **SSS "kimliksiz görünür" testi gevşetilmedi, kapsamı doğru yere taşındı:** soran öğrencinin kendi görünümünde artık
 adı kabuğun kullanıcı kartı taşır (sızıntı değil); iddia SSS içeriği (`main`) için ve ayrıca BAŞKA bir kullanıcının (cevaplayan mentor) tam sayfa HTML'i için ölçülür.
 
+## 2026-11-16 · Görünüm A: Hesap, Profil, Bildirimler, Randevular ve telefon Menü alt sayfası (kart 387)
+
+Kullanıcı kararı (15 Kas) uygulamanın devamı: “A kanka ya A'yı beğendim tamam. onu uygulatırsın.” Bu kart kabuğun üstüne dört ekran ailesini yeni kart diline taşır. Uygularken verilen kararlar:
+(1) **Telefon alt çubuğu 5. öğe "Menü"** (PM kararı, #189 notuna karşılık): telefonda Deneyimler'e kalıcı yol yoktu ve Mezunlar yeni geldi; alt çubuk Ana sayfa · İlanlar · Mentorlar · Randevular · Menü oldu. Menü yeni bir sayfa
+değil, mevcut `Sheet` bileşeninin alt sayfasıdır (`dialog.tsx`'e dokunulmadı): yerel `<dialog>` odak hapsi, Esc ve kapatınca odak geri dönüşünü kendisi sağlar. Açık/kapalı durumu bulunulan yola bağlıdır, sayfa değişince kendiliğinden kapanır
+(etki ya da yönlendirme gerekmez). Profilim artık alt çubukta değil Menü'dedir; hesap ayarlarına üst çubuk avatarı da götürür. (2) **`/hesap`**: her grup TEK kart, satırlar ince çizgiyle ayrılır (eskiden telefonda tek çerçeve,
+geniş ekranda 15 ayrı kutu); 1440'ta iki sütun (CSS sütunları, grup kartı bölünmez). Hesap ayarları alt sayfaları ortak `AccountFrame`'i kullanır (geri bağlantısı + `PageHeader`, üst etiket "Hesap", okunur genişlik, sola yaslı); form düzenleri
+değişmedi. (3) **`/profil` ve `/uye/[id]`**: başlık kartı (avatar yeri `data-slot="profile-photo"`, ad, unvan · şirket, rozetler); fotoğraf kartı 388 gelince `Avatar`'ın `src`'i dolar, yer aynı kalır. Bölümler kartın içinde satır listesidir; başkasının
+profili geniş ekranda iki sütun (içerik / beceri-dil-bağlantı-iletişim). Alan gizliliği değişmedi: ekran gizli alanın var olduğunu bile çizmez. (4) **`/bildirimler`**: gün başlığı + tek kart, çizgili satırlar; okunmamış satır hafif tonlu, nokta ve
+kalın yazı birlikte (renk tek sinyal değil); "Hepsini okundu yap" `PageHeader` eylemidir. (5) **`/randevular`**: "Yaklaşan" (onay bekleyen ya da onaylı ve bitmemiş) ve "Geçmiş" bölümleri; satırda tarih bloğu (gün + kısa ay, İstanbul saatiyle), kişi, saat aralığı, biçim,
+durum etiketi ve tek eylem (telefonda tam genişlik). Randevu ayrıntısı ve randevu al sayfaları kabuk dolgusunu kullanır; eylem düğmeleri telefonda tam genişlik, geniş ekranda satır içidir. (6) Bu sayfalardaki eski `mx-auto max-w-* px-*` kapsayıcıları
+temizlendi; `.app-content` kuralı kalkmadı (diğer kartlar kaldırır).
 ## 2026-11-16 · Türkçe arama ve güncel mentor pozisyonu (kart 399)
 
 Prisma ILIKE yerel ayarına bağlı I/ı farkı yerine mevcut `tr_ascii` iki tarafa uygulanır;

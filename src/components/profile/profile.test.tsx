@@ -552,3 +552,95 @@ it('profil iletişim biçimini alan altında açıklar ve göndermez; düzeltinc
   await user.click(screen.getByRole('button', { name: 'Kaydet' }));
   expect(updateBasics).toHaveBeenCalledTimes(1);
 });
+
+describe('başkasının profili: görünüm A düzeni (kart 387)', () => {
+  const gridOf = () =>
+    screen.getByRole('heading', { level: 1 }).closest('article')!.lastElementChild as HTMLElement;
+
+  it('başlık kartında profil fotoğrafı yeri vardır (kart 388 doldurur); içerik kartlarda satır listesidir', () => {
+    renderWithToasts(
+      <ProfileView
+        profile={{
+          ...view,
+          positions: [position({ isCurrent: true })],
+          education: [
+            {
+              institution: 'İstanbul Üniversitesi',
+              level: 'BACHELOR',
+              fieldOfStudy: 'YBS',
+              startDate: null,
+              endDate: null,
+              isCurrent: true,
+            },
+          ],
+        }}
+      />,
+    );
+    const header = screen.getByRole('heading', { level: 1 }).closest('header')!;
+    expect(header.querySelector('[data-slot="profile-photo"]')).not.toBeNull();
+    const positions = screen
+      .getByRole('heading', { level: 2, name: 'Pozisyon' })
+      .closest('section')!;
+    expect(positions).toHaveClass('rounded-card', 'shadow-card');
+    expect(within(positions).getByRole('list')).toHaveClass('divide-y');
+  });
+
+  it('yan sütun doluysa geniş ekranda iki sütun, boşsa tek sütundur (yan boşluk kalmaz)', () => {
+    const { unmount } = renderWithToasts(
+      <ProfileView
+        profile={{
+          ...view,
+          summary: 'Özet.',
+          skills: [{ label: 'SQL' }],
+          languages: [{ name: 'İngilizce', level: 'B2' }],
+        }}
+      />,
+    );
+    expect(gridOf().className).toContain('lg:grid-cols-[minmax(0,1fr)_20rem]');
+    unmount();
+    renderWithToasts(<ProfileView profile={{ ...view, summary: 'Özet.', skills: [] }} />);
+    expect(gridOf().className).not.toContain('lg:grid-cols');
+    // Yan sütun boşken görünmez (düzen sözleşmesi).
+    expect(gridOf().lastElementChild).toHaveClass('hidden');
+  });
+});
+
+describe('profil başlık kartı: fotoğraf yeri (kart 388 + 387)', () => {
+  const photoSrc = '/api/profil-fotografi/u2?size=96&v=7';
+  it('başkasının profilinde fotoğraf yerinde (data-slot) görünür ve 512 dosyası istenir', () => {
+    renderWithToasts(<ProfileView profile={{ ...view, photoSrc }} />);
+    const slot = screen
+      .getByRole('heading', { level: 1 })
+      .closest('header')!
+      .querySelector('[data-slot="profile-photo"]')!;
+    expect(slot.querySelector('img')?.getAttribute('src')).toContain(
+      '/api/profil-fotografi/u2?size=512',
+    );
+  });
+  it('fotoğraf yoksa aynı yerde baş harfler çıkar', () => {
+    renderWithToasts(<ProfileView profile={view} />);
+    const slot = screen
+      .getByRole('heading', { level: 1 })
+      .closest('header')!
+      .querySelector('[data-slot="profile-photo"]')!;
+    expect(slot.querySelector('img')).toBeNull();
+    expect(slot).toHaveTextContent('MY');
+  });
+  it('kendi profilinde fotoğraf başlık kartının yerinde, "Profil fotoğrafı" bağlantısı düzenle eyleminin yanındadır', () => {
+    renderWithToasts(
+      <MyProfile
+        initial={{ ...base, photoSrc: '/api/profil-fotografi/u1?size=96&v=3' }}
+        actions={actions()}
+      />,
+    );
+    const header = screen.getByRole('heading', { level: 1 }).closest('header')!;
+    expect(header.querySelector('[data-slot="profile-photo"] img')?.getAttribute('src')).toContain(
+      'size=512',
+    );
+    expect(within(header).getByRole('link', { name: 'Profil fotoğrafı' })).toHaveAttribute(
+      'href',
+      '/profil/fotograf',
+    );
+    expect(within(header).getByRole('button', { name: 'Profilimi düzenle' })).toBeVisible();
+  });
+});

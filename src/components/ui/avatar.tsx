@@ -7,13 +7,18 @@ export type AvatarProps = {
   /** Kişinin adı: görsel yoksa baş harfler gösterilir; görsel varsa `alt` olur. */
   name: string;
   src?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Ad avatarın yanında zaten yazıyorsa true: ekran okuyucu tekrar okumaz. */
   decorative?: boolean;
   className?: string;
 };
 
-const SIZES = { sm: 'size-8 text-xs', md: 'size-11 text-base', lg: 'size-16 text-xl' } as const;
+const SIZES = {
+  sm: 'size-8 text-xs',
+  md: 'size-11 text-base',
+  lg: 'size-16 text-xl',
+  xl: 'size-20 text-2xl',
+} as const;
 
 /** Türkçe harfler için `tr-TR` büyük harf (i → İ). */
 export function initialsOf(name: string): string {
@@ -32,7 +37,7 @@ export function Avatar({
 }: AvatarProps) {
   const source = providedSrc;
   const src =
-    size === 'lg' && source?.startsWith('/api/profil-fotografi/')
+    (size === 'lg' || size === 'xl') && source?.startsWith('/api/profil-fotografi/')
       ? source.replace('size=96', 'size=512')
       : source;
   const [failedSrc, setFailedSrc] = useState<string>();

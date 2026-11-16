@@ -47,11 +47,7 @@ export function RequestForm({
     }
   }
   return (
-    <div
-      className={
-        embedded ? 'pb-[env(safe-area-inset-bottom)]' : 'mx-auto max-w-2xl px-5 py-10 pb-28'
-      }
-    >
+    <div className={embedded ? 'pb-[env(safe-area-inset-bottom)]' : 'w-full max-w-2xl pb-28'}>
       {!embedded && (
         <Link
           className="inline-flex min-h-11 items-center text-primary"

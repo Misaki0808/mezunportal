@@ -288,6 +288,16 @@ export function ExternalLinkIcon(props: IconProps) {
   );
 }
 
+export function MenuIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </Svg>
+  );
+}
+
 export function SlidersIcon(props: IconProps) {
   return (
     <Svg {...props}>

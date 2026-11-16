@@ -1,8 +1,9 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
-import { PageHeader } from '@/components/ui';
 
+import { AccountFrame } from '@/components/account/account-frame';
+
+/** Gizlilik ve veriler alt sayfaları: ortak hesap çerçevesi, kendi üst etiketi ve geri metniyle. */
 export async function PrivacyFrame({
   title,
   description,
@@ -19,17 +20,16 @@ export async function PrivacyFrame({
 }) {
   const t = await getTranslations('privacyScreens.common');
   return (
-    <div className="mx-auto w-full max-w-2xl px-5 py-8 sm:py-12">
-      {showBack && (
-        <Link
-          href={back?.href ?? '/hesap'}
-          className="press-row mb-6 inline-flex min-h-11 items-center text-base font-medium text-primary"
-        >
-          ← {back ? t('backReturn') : t('back')}
-        </Link>
-      )}
-      <PageHeader eyebrow={t('eyebrow')} title={title} description={description} />
-      <div className="mt-7 space-y-5">{children}</div>
-    </div>
+    <AccountFrame
+      title={title}
+      description={description}
+      eyebrow={t('eyebrow')}
+      back={back}
+      backLabel={back ? t('backReturn') : t('back')}
+      showBack={showBack}
+      width="max-w-2xl"
+    >
+      {children}
+    </AccountFrame>
   );
 }

@@ -119,7 +119,7 @@ export function MentorSettings({
 
   if (!initial.eligible) {
     return (
-      <div className="mx-auto w-full max-w-lg px-5 py-10">
+      <div className="w-full max-w-2xl">
         <EmptyState title={t('notEligibleTitle')} description={t('notEligibleDescription')} />
       </div>
     );
@@ -213,7 +213,7 @@ export function MentorSettings({
   );
 
   return (
-    <div className="[&_.text-sm]:text-base mx-auto flex w-full max-w-lg flex-col gap-8 px-5 pb-10 pt-10 sm:pt-16">
+    <div className="[&_.text-sm]:text-base flex w-full max-w-2xl flex-col gap-8">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
 
       {(notice || error) && (
