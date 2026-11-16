@@ -539,6 +539,7 @@
   },
   "directory": {
     "filters": "Filtreler",
+    "more": "Diğer filtreler",
     "apply": "Uygula",
     "cancel": "Vazgeç",
     "clear": "Filtreleri temizle",
@@ -1488,6 +1489,7 @@
       "weeks": "1 ile 520 arasında bir sayı gir."
     },
     "detail": {
+      "facts": "Künye",
       "eyebrow": "DENEYİM",
       "backList": "Deneyimlere dön",
       "backMine": "Deneyimlerim",

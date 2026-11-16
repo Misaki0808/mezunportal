@@ -59,7 +59,7 @@ export function MyExperiences({ initial, list }: Props) {
   const date = (value: Date) =>
     new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium' }).format(new Date(value));
 
-  // Boşken tek eylem: boş durumun kendi düğmesi kalır, alttaki yapışkan "Deneyim yaz" çubuğu gizlenir.
+  // Boşken tek eylem: boş durumun kendi düğmesi kalır, başlık sağındaki "Deneyim yaz" gizlenir.
   const empty = items.length === 0 && !pending;
   const body = (
     <div className="flex flex-col gap-4" aria-busy={pending}>
@@ -81,14 +81,17 @@ export function MyExperiences({ initial, list }: Props) {
           }
         />
       ) : (
-        <ul className="flex flex-col gap-4">
+        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => {
             const content = item.content as Record<string, unknown>;
             const title =
               typeof content.organizationName === 'string' ? content.organizationName : '';
             const editable = item.status === 'DRAFT' || item.status === 'REJECTED';
             return (
-              <li key={item.id} className="rounded-card border border-border bg-bg p-5 shadow-card">
+              <li
+                key={item.id}
+                className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-5 shadow-card"
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={item.status} />
                   <Badge tone="category">{t(`types.${item.content.type}`)}</Badge>
@@ -107,7 +110,7 @@ export function MyExperiences({ initial, list }: Props) {
                     <p className="whitespace-pre-line text-base">{item.moderationNote}</p>
                   </div>
                 )}
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-auto flex flex-wrap gap-2 pt-4">
                   {editable && (
                     <Link
                       className={buttonClasses({
@@ -142,11 +145,18 @@ export function MyExperiences({ initial, list }: Props) {
 
   const filters: Filter[] = ['ALL', ...EXPERIENCE_STATUSES];
   return (
-    <div className="mx-auto w-full max-w-lg px-5 pb-8 pt-10 sm:pt-16">
+    <div className="w-full min-w-0">
       <PageHeader
         eyebrow={t('eyebrow')}
         title={t('mine.title')}
         description={t('mine.description')}
+        actions={
+          !empty ? (
+            <Link className={buttonClasses({ size: 'lg' })} href="/deneyim/yeni">
+              {t('mine.write')}
+            </Link>
+          ) : undefined
+        }
       />
       <Tabs
         className="mt-6 [&_[role=tablist]]:flex-wrap [&_[role=tablist]]:overflow-visible"
@@ -158,13 +168,6 @@ export function MyExperiences({ initial, list }: Props) {
         }}
         items={filters.map((id) => ({ id, label: t(`mine.tabs.${id}`), content: body }))}
       />
-      {!empty && (
-        <div className="sticky-actions z-20 mt-6 bg-bg pt-4 pb-2">
-          <Link className={buttonClasses({ size: 'lg', fullWidth: true })} href="/deneyim/yeni">
-            {t('mine.write')}
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -85,6 +85,18 @@ describe('FilterShell', () => {
     await user.click(await screen.findByRole('button', { name: 'Vazgeç' }));
 
     expect(onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it('hızlı yongalar kendi grubunda; masaüstünde kenar paneli yok, süzgeçler "Diğer filtreler" açılır panelinde', () => {
+    renderUi(shell({ quick: <button type="button">Staj</button> }));
+
+    const group = screen.getByRole('group', { name: 'Filtreler' });
+    expect(within(group).getByRole('button', { name: 'Staj' })).toBeInTheDocument();
+    expect(document.querySelector('aside')).toBeNull();
+    const panel = screen.getByText('Diğer filtreler').closest('details')!;
+    expect(panel).toHaveClass('hidden', 'lg:block');
+    expect(within(panel).getByText('Filtre alanları')).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Uygula' })).toBeInTheDocument();
   });
 
   it('arama satırı verilmezse (mentor dizini) düğme kendi satırında kalır ve yalnız telefonda görünür', () => {
