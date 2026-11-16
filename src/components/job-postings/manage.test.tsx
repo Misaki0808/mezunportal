@@ -179,3 +179,15 @@ describe('ilanlarım: kapatma hatası sonraki başarıdan sonra kalmaz', () => {
     expect(screen.queryByText(messages.errors.codes.SERVER_UNEXPECTED)).toBeNull();
   });
 });
+
+describe('ilanlarım: ortak başlık (kart 424)', () => {
+  it('geri bağlantısı ilanlara gider; doluyken "İlan ver" başlığın eylem alanındadır', () => {
+    render([mine]);
+    expect(screen.getByRole('link', { name: 'İlanlara dön' })).toHaveAttribute('href', '/ilanlar');
+    const header = screen.getByRole('heading', { level: 1, name: 'İlanlarım' }).closest('header')!;
+    expect(within(header).getByRole('link', { name: 'İlan ver' })).toHaveAttribute(
+      'href',
+      '/ilanlar/yeni',
+    );
+  });
+});

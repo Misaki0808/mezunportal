@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { PostingContactForm } from '@/components/job-postings/contact';
-import { EmptyState, ErrorState, PageHeader } from '@/components/ui';
+import { BackLink, EmptyState, ErrorState, PageHeader } from '@/components/ui';
 import { previewJobPostingContact, requestJobPostingContact } from '@/server/actions/job-postings';
 export const dynamic = 'force-dynamic';
 export default async function PostingContactPage({ params }: { params: Promise<{ id: string }> }) {
@@ -11,7 +11,7 @@ export default async function PostingContactPage({ params }: { params: Promise<{
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   if (!result.data.canRequest)
     return (
-      <div className="mx-auto max-w-xl px-4 py-10">
+      <div className="w-full max-w-xl">
         {/* Her durumda sayfanın tek h1'i vardır; "ulaşılamaz" durumunda EmptyState başlığı h2 olarak kalır. */}
         <PageHeader className="mb-6" title={t('contactTitle')} />
         <EmptyState
@@ -28,13 +28,8 @@ export default async function PostingContactPage({ params }: { params: Promise<{
       </div>
     );
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <Link
-        href={`/ilanlar/${encodeURIComponent(id)}`}
-        className="press-control inline-flex min-h-11 items-center font-semibold text-primary"
-      >
-        ← {t('back')}
-      </Link>
+    <div className="w-full max-w-2xl">
+      <BackLink href={`/ilanlar/${encodeURIComponent(id)}`}>{t('back')}</BackLink>
       <PageHeader
         className="mb-6"
         eyebrow={result.data.organizationName}

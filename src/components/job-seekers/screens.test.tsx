@@ -184,3 +184,18 @@ it('hata ve kayıt mesajı Kaydet düğmesiyle aynı yapışkan çubukta durur (
   expect(saved.parentElement).toContainElement(save);
   expect(screen.queryByRole('alert')).toBeNull();
 });
+
+it('aday arama ve iletişim ekranları ortak geri bağlantısını kullanır (kart 424)', () => {
+  const { unmount } = renderUi(
+    <SeekerSearch initial={{ hiring: false, declaredAt: null }} departments={[]} tags={[]} />,
+  );
+  expect(screen.getByRole('link', { name: 'Hesabıma dön' })).toHaveAttribute('href', '/hesap');
+  unmount();
+  renderWithToasts(
+    <SeekerContact
+      candidateRef="opaque"
+      preview={{ canRequest: true, card: initial.preview!, requestableFields: ['EMAIL'] }}
+    />,
+  );
+  expect(screen.getByRole('link', { name: 'Adaylara dön' })).toHaveAttribute('href', '/adaylar');
+});
