@@ -477,9 +477,9 @@ describe('süzgeçler', () => {
     expect(either).toEqual(expect.arrayContaining([online, inPerson, both]));
   });
 
-  it('sektör: pozisyonun kendi sektörü ya da şirketinin sektörü; başka sektör çıkmaz', async () => {
+  it('havacılık: pozisyonun ya da şirketinin sektörü eşleşir; savunma çıkmaz', async () => {
     const viewer = await member();
-    const [fin, health] = [await sector(), await sector()];
+    const [fin, health] = [await sector('Havacılık'), await sector('Savunma Sanayi')];
     const bank = await db.company.create({
       data: { name: 'Banka', normalizedName: `banka-${tag()}`, sectorId: fin.id, aliases: [] },
     });

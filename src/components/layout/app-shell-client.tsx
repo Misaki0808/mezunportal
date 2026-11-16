@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 
 import {
   Avatar,
+  BadgeCheckIcon,
   BookOpenIcon,
   BriefcaseIcon,
   CalendarIcon,
@@ -47,13 +48,22 @@ function SkipLink({ children, className }: { children: ReactNode; className?: st
 }
 
 type NavId =
-  'home' | 'jobs' | 'mentors' | 'appointments' | 'experiences' | 'events' | 'courses' | 'profile';
+  | 'home'
+  | 'jobs'
+  | 'mentors'
+  | 'alumni'
+  | 'appointments'
+  | 'experiences'
+  | 'events'
+  | 'courses'
+  | 'profile';
 
 /** Yalnız gerçek rotası olan öğeler (kart 384): yer tutucu ya da "yakında" öğesi yoktur. */
 const MAIN_ITEMS: readonly { id: NavId; href: string; icon: ReactNode }[] = [
   { id: 'home', href: '/', icon: <HomeIcon /> },
   { id: 'jobs', href: '/ilanlar', icon: <BriefcaseIcon /> },
   { id: 'mentors', href: '/mentorlar', icon: <UsersIcon /> },
+  { id: 'alumni', href: '/mezunlar', icon: <BadgeCheckIcon /> },
   { id: 'appointments', href: '/randevular', icon: <CalendarIcon /> },
   { id: 'experiences', href: '/deneyimler', icon: <FileTextIcon /> },
   { id: 'events', href: '/etkinlikler', icon: <MapPinIcon /> },

@@ -258,6 +258,7 @@ export const exportedProfileSchema = z
     completedSteps: z.array(z.enum(ONBOARDING_STEPS)),
     skippedSteps: z.array(z.enum(ONBOARDING_STEPS)),
     mentorInterested: z.boolean().nullable(),
+    alumniDirectoryVisible: z.boolean(),
     seekingInternship: z.boolean(),
     seekingTermYear: z.number().int().nullable(),
     seekingTermSeason: z.enum(['SPRING', 'SUMMER', 'AUTUMN', 'WINTER']).nullable(),

@@ -32,7 +32,7 @@ describe('pilot sözlük seed’i (TD-011)', () => {
         await db.sector.count({ where: { normalizedName: normalizeName(name, 'SECTOR') } }),
       ).toBe(1);
     }
-    expect(DICTIONARY_SEED.SECTOR).toHaveLength(10);
+    expect(DICTIONARY_SEED.SECTOR.length).toBeGreaterThanOrEqual(25);
     expect(DICTIONARY_SEED.SKILL).toHaveLength(14);
     expect(DICTIONARY_SEED.TITLE).toHaveLength(15);
     for (const [name] of DICTIONARY_SEED.SKILL) {
@@ -52,6 +52,11 @@ describe('pilot sözlük seed’i (TD-011)', () => {
     expect((await matchDictionaryName(db, 'TITLE', 'DATA ANALYST'))?.id).toBe(analyst.id);
     expect((await matchDictionaryName(db, 'TITLE', 'veri analisti'))?.id).toBe(analyst.id);
     const sql = await db.skill.findUniqueOrThrow({ where: { normalizedName: 'sql' } });
+    const aviation = await db.sector.findUniqueOrThrow({
+      where: { normalizedName: normalizeName('Havacılık', 'SECTOR') },
+    });
+    expect(aviation.aliases).toContain(normalizeName('aviation', 'SECTOR'));
+    expect(aviation.aliases).toContain(normalizeName('havayolu', 'SECTOR'));
     expect((await matchDictionaryName(db, 'SKILL', 'SQL'))?.id).toBe(sql.id);
     const scrum = await db.skill.findUniqueOrThrow({
       where: { normalizedName: normalizeName('Agile/Scrum', 'SKILL') },

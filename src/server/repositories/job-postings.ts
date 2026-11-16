@@ -105,6 +105,7 @@ export type JobSearchQuery = {
   q?: string;
   departmentId?: string;
   kind?: 'INTERNSHIP' | 'JOB';
+  sectorId?: string;
   companyId?: string;
   /** Sözlüğe bağlı olmayan kurum adı (tam eşleşme; ASCII katlama). `companyId` ile birlikte kullanılmaz. */
   organizationName?: string;
@@ -132,6 +133,10 @@ export async function searchJobPostingRows(
       Prisma.sql`EXISTS (SELECT 1 FROM "JobPostingDepartment" t WHERE t."postingId" = i."id" AND t."departmentId" = ${query.departmentId})`,
     );
   if (query.kind) conditions.push(Prisma.sql`i."kind" = ${query.kind}::"JobPostingKind"`);
+  if (query.sectorId)
+    conditions.push(
+      Prisma.sql`EXISTS (SELECT 1 FROM "Company" c WHERE c."id" = i."companyId" AND c."sectorId" = ${query.sectorId})`,
+    );
   if (query.companyId) conditions.push(Prisma.sql`i."companyId" = ${query.companyId}`);
   if (query.organizationName)
     conditions.push(

@@ -33,6 +33,33 @@ const goals = [{ id: 'g', kind: 'GOAL' as const, slug: 'internship' }];
 const saveVisibility = vi.fn();
 
 describe('ilk giriş akışı', () => {
+  it('mezun rehberi tercihini görünürlük adımında sorar, kayıt sürerken ilerlemez', async () => {
+    let finish!: (value: { ok: true; data: { visible: boolean; eligible: boolean } }) => void;
+    const saveAlumni = vi.fn(
+      () =>
+        new Promise<{ ok: true; data: { visible: boolean; eligible: boolean } }>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const save = vi.fn();
+    const { user } = renderUi(
+      <OnboardingFlow
+        initialState={{ ...initial, step: 'VISIBILITY' }}
+        interests={interests}
+        goals={goals}
+        initialVisibility={{ fields: [...visibility.fields] }}
+        save={save}
+        skip={vi.fn()}
+        saveVisibility={saveVisibility}
+        alumniVisibility={{ initial: { visible: false, eligible: true }, save: saveAlumni }}
+      />,
+    );
+    await user.click(screen.getByRole('checkbox', { name: /Mezun rehberinde görün/ }));
+    await user.click(screen.getByRole('button', { name: /Tercihlerimi gözden geçirdim/ }));
+    expect(save).not.toHaveBeenCalled();
+    finish({ ok: true, data: { visible: true, eligible: true } });
+    expect(await screen.findByText('Tercihin kaydedildi.')).toBeVisible();
+  });
   it('ad soyad kartı ilk adımlarda görünür, son "hazırsın" ekranında görünmez', () => {
     const card = <p>Ad kartı</p>;
     const props = {

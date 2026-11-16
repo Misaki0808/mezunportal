@@ -913,3 +913,27 @@ it('sunucu alan hatasında odak, animasyon karesi React commitinden önce çalı
     frame.mockRestore();
   }
 });
+
+it('sektör seçimi paylaşılabilir filtreye ve sayfa bağlantısına taşınır', () => {
+  const sectorId = '018f0000-0000-7000-8000-000000000001';
+  renderWithToasts(
+    <PostingList
+      canPost={false}
+      filters={{ sectorId }}
+      options={options}
+      sectors={[{ id: sectorId, name: 'Havacılık' }]}
+      page={{ items: [posting], total: 25, page: 1, pageSize: 20 }}
+    />,
+  );
+  const sector = screen.getByLabelText('Sektör');
+  expect(sector).toHaveValue(sectorId);
+  expect(sector).toHaveAttribute('name', 'sectorId');
+  expect(screen.getByRole('link', { name: /Sonraki/ })).toHaveAttribute(
+    'href',
+    `/ilanlar?sectorId=${sectorId}&page=2`,
+  );
+  expect(screen.getByRole('link', { name: 'Filtreleri temizle' })).toHaveAttribute(
+    'href',
+    '/ilanlar',
+  );
+});

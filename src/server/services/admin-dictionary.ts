@@ -58,7 +58,8 @@ type Row = {
   sectorName: string | null;
 };
 
-const HAS_ALIASES = (kind: DictionaryKind) => kind !== 'SECTOR';
+const HAS_ALIASES = (kind: DictionaryKind) =>
+  ['COMPANY', 'TITLE', 'SKILL', 'SECTOR'].includes(kind);
 
 // ---------------------------------------------------------------------------------------------
 // Tür başına sorgu bağdaştırıcısı
@@ -105,8 +106,8 @@ async function findRows(
         (row) => ({ ...row, sectorId: null, sectorName: null }),
       );
     case 'SECTOR':
-      return (await tx.sector.findMany({ where: { ...base, ...textWhere(false) }, ...args })).map(
-        (row) => ({ ...row, aliases: [], sectorId: null, sectorName: null }),
+      return (await tx.sector.findMany({ where: { ...base, ...textWhere(true) }, ...args })).map(
+        (row) => ({ ...row, sectorId: null, sectorName: null }),
       );
   }
 }
@@ -219,7 +220,7 @@ async function assertNoCollision(
         ? await tx.title.count({ where })
         : kind === 'SKILL'
           ? await tx.skill.count({ where })
-          : await tx.sector.count({ where: { ...exclude, normalizedName: { in: names } } });
+          : await tx.sector.count({ where });
   if (found > 0) throw codedConflict('DICTIONARY_ENTRY_EXISTS');
 }
 
@@ -337,7 +338,7 @@ async function insertEntry(
     case 'SECTOR':
       return (
         await tx.sector.create({
-          data: { name: data.name, normalizedName: data.normalizedName },
+          data: { name: data.name, normalizedName: data.normalizedName, aliases: data.aliases },
           select,
         })
       ).id;
@@ -417,7 +418,7 @@ async function writeEntry(
       return;
     }
     case 'SECTOR':
-      await tx.sector.update({ where: { id }, data: names });
+      await tx.sector.update({ where: { id }, data: { ...names, aliases } });
       return;
   }
 }
@@ -677,7 +678,7 @@ export async function resolveUnmatchedValue(
     if (resolution.type === 'DISMISS') {
       await tx.unmatchedValue.update({ where: { id: row.id }, data: { dismissedAt: now } });
     } else if (resolution.type === 'LINK') {
-      // Değer, mevcut kaydın takma adı olur; sektörde takma ad yoktur.
+      // Değer, mevcut kaydın takma adı olur.
       if (!HAS_ALIASES(row.kind)) throw codedValidation('VALIDATION_INVALID');
       const [entry] = await findRows(tx, row.kind, { ids: [resolution.entryId], take: 1 });
       if (!entry) throw codedNotFound('RESOURCE_NOT_FOUND');
