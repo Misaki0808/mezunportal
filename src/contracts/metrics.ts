@@ -64,6 +64,7 @@ export const SEARCH_FILTER_KEYS = [
   'pay',
 ] as const;
 export const MENTOR_FILTER_KEYS = [
+  'q',
   'mentorTypes',
   'sectorId',
   'company',

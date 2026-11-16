@@ -1107,3 +1107,12 @@ profili geniş ekranda iki sütun (içerik / beceri-dil-bağlantı-iletişim). A
 kalın yazı birlikte (renk tek sinyal değil); "Hepsini okundu yap" `PageHeader` eylemidir. (5) **`/randevular`**: "Yaklaşan" (onay bekleyen ya da onaylı ve bitmemiş) ve "Geçmiş" bölümleri; satırda tarih bloğu (gün + kısa ay, İstanbul saatiyle), kişi, saat aralığı, biçim,
 durum etiketi ve tek eylem (telefonda tam genişlik). Randevu ayrıntısı ve randevu al sayfaları kabuk dolgusunu kullanır; eylem düğmeleri telefonda tam genişlik, geniş ekranda satır içidir. (6) Bu sayfalardaki eski `mx-auto max-w-* px-*` kapsayıcıları
 temizlendi; `.app-content` kuralı kalkmadı (diğer kartlar kaldırır).
+## 2026-11-16 · Türkçe arama ve güncel mentor pozisyonu (kart 399)
+
+Prisma ILIKE yerel ayarına bağlı I/ı farkı yerine mevcut `tr_ascii` iki tarafa uygulanır;
+LIKE işaretleri düz metin kalır. Eşleşme deposu yalnız kimlik verir; yetki/görünürlük/sayfalama
+koşullarını ham SQL içinde yeniden yazmak yerine mevcut servis sorgusu korur. İfade GIN indeksleri
+katlamayı destekler; noktalama temizleyen `User.nameSearch`, literal `%/_` aramasının yerine geçirilmez.
+Mentor şirket/unvan araması mezun rehberiyle aynı biçimde güncel pozisyonla sınırlanır: geçmiş
+iş eşleşmesinin kartta bugünkü işmiş gibi görünmesi önlenir. Kullanım olayı yalnız `q` anahtarını
+saklar, sorgu değerini saklamaz. Yeni işlev/eklenti/bağımlılık yoktur.

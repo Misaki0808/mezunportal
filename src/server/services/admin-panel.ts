@@ -1,4 +1,5 @@
 import 'server-only';
+import { matchingUserNames } from '../repositories/turkish-filters';
 
 import {
   adminOverviewSchema,
@@ -312,7 +313,7 @@ export async function searchUsers(
     if (parsed.query) {
       and.push({
         OR: [
-          { name: { contains: escapeLike(parsed.query), mode: 'insensitive' } },
+          { id: { in: await matchingUserNames(tx, parsed.query) } },
           { email: { contains: escapeLike(parsed.query), mode: 'insensitive' } },
         ],
       });
