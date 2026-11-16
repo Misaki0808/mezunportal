@@ -253,13 +253,13 @@ describe('filtreler', () => {
     expect(await ids({ company: '__' })).toEqual([]);
   });
 
-  it('sektör süzgeci şirket sözlüğü üzerinden çalışır; sözlüğe bağlı olmayan şirket çıkmaz', async () => {
+  it('havacılık sektöründe savunma veya sözlüğe bağlı olmayan şirket çıkmaz', async () => {
     const marker = tag();
     const sector = await db.sector.create({
-      data: { name: `Sektör ${marker}`, normalizedName: `sektor ${marker}` },
+      data: { name: `Havacılık ${marker}`, normalizedName: `havacilik ${marker}` },
     });
     const otherSector = await db.sector.create({
-      data: { name: `Diğer ${marker}`, normalizedName: `diger ${marker}` },
+      data: { name: `Savunma ${marker}`, normalizedName: `savunma ${marker}` },
     });
     const company = await db.company.create({
       data: {

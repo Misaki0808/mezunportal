@@ -90,3 +90,14 @@ it('sözleşmedeki görünür alanların her biri tam bir adımda listelidir', a
   expect(postingStepErrors({}, '', 0, '2026-11-13')).toContain('departmentId');
   expect(postingStepErrors({}, 'dep', 0, '2026-11-13')).not.toContain('departmentId');
 });
+
+it('sektör URL filtresi geçerli kimlikle korunur, geçersiz değer diğer alanı bozmaz', () => {
+  const sectorId = '018f0000-0000-7000-8000-000000000001';
+  expect(parseJobFilters(new URLSearchParams(`q=staj&sectorId=${sectorId}`))).toMatchObject({
+    q: 'staj',
+    sectorId,
+  });
+  expect(parseJobFilters(new URLSearchParams(`q=staj&sectorId=${'x'.repeat(65)}`))).toEqual({
+    q: 'staj',
+  });
+});

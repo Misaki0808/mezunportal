@@ -19,6 +19,25 @@ export const DICTIONARY_SEED = {
     'Kamu',
     'Lojistik ve Taşımacılık',
     'Savunma ve Havacılık',
+    'Havacılık',
+    'Savunma Sanayi',
+    'Bankacılık',
+    'Sigorta',
+    'Yatırım ve Fintek',
+    'E-ticaret',
+    'Perakende',
+    'Denetim ve Muhasebe',
+    'Enerji',
+    'Otomotiv',
+    'Hızlı Tüketim',
+    'İlaç ve Sağlık',
+    'Lojistik',
+    'Turizm',
+    'Medya ve Reklam',
+    'Eğitim',
+    'Gayrimenkul',
+    'Hukuk',
+    'STK',
   ],
   TITLE: [
     ['Stajyer', 'Intern', 'Internship', 'Staj'],
@@ -70,13 +89,35 @@ const entries = (list: readonly (string | readonly string[])[]): Entry[] =>
   );
 
 export async function seedDictionary(db: PrismaClient) {
-  for (const sector of DICTIONARY_SEED.SECTOR) {
-    const normalizedName = normalizeName(sector, 'SECTOR');
+  const sectorAliases: Record<string, string[]> = {
+    Havacılık: ['aviation', 'havayolu'],
+    'Savunma Sanayi': ['defence industry'],
+    'Yatırım ve Fintek': ['fintech'],
+    'E-ticaret': ['ecommerce'],
+    'Hızlı Tüketim': ['fmcg'],
+    STK: ['sivil toplum'],
+  };
+  const sectorEntries = DICTIONARY_SEED.SECTOR.map((name) => ({
+    name,
+    aliases: sectorAliases[name] ?? [],
+  }));
+  const sectorTaken = new Set(sectorEntries.map((entry) => normalizeName(entry.name, 'SECTOR')));
+  for (const row of await db.sector.findMany({ select: { normalizedName: true, aliases: true } })) {
+    sectorTaken.add(row.normalizedName);
+    for (const alias of row.aliases) sectorTaken.add(alias);
+  }
+  for (const sector of sectorEntries) {
+    const normalizedName = normalizeName(sector.name, 'SECTOR');
+    if (await db.sector.findUnique({ where: { normalizedName }, select: { id: true } })) continue;
+    const aliases = [
+      ...new Set(sector.aliases.map((alias) => normalizeName(alias, 'SECTOR'))),
+    ].filter((alias) => alias !== '' && !sectorTaken.has(alias));
     await db.sector.upsert({
       where: { normalizedName },
-      create: { name: sector, normalizedName },
+      create: { name: sector.name, normalizedName, aliases },
       update: {},
     });
+    for (const alias of aliases) sectorTaken.add(alias);
   }
   const adapters = {
     TITLE: {

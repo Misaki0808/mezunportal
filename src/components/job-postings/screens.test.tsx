@@ -7,7 +7,8 @@ import type { JobPostingCard, JobPostingFormContext } from '@/contracts/job-post
 import { PostingList } from './list';
 import { PostingDetail } from './detail';
 import { PostingEditor } from './editor';
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
+const listNavigation = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => listNavigation }));
 const posting: JobPostingCard = {
   id: 'job-1',
   kind: 'INTERNSHIP',
@@ -131,6 +132,62 @@ it('öğrenciye ilan verme sunulmaz; süzgeçler ve sonraki sayfa URL taşır', 
   expect(screen.getByRole('link', { name: /Sonraki/ }).getAttribute('href')).toContain(
     'organizationName=',
   );
+});
+it('ilan hızlı yongası önceki arama ve kurumu korur, sayfayı sıfırlar', () => {
+  listNavigation.push.mockReset();
+  renderWithToasts(
+    <PostingList
+      canPost={false}
+      filters={{ q: 'staj', organizationName: 'Örnek Kurum', page: 3 }}
+      options={options}
+      page={{ items: [posting], total: 25, page: 3, pageSize: 20 }}
+    />,
+  );
+  const quick = screen.getByRole('group', { name: 'Filtreler' });
+  const remote = within(quick).getByRole('button', { name: 'Uzaktan' });
+  expect(remote).toHaveAttribute('aria-pressed', 'false');
+  fireEvent.click(remote);
+  expect(listNavigation.push).toHaveBeenCalledWith(
+    '/ilanlar?q=staj&organizationName=%C3%96rnek+Kurum&remote=true',
+  );
+});
+it('seçili ilan yongası temaya duyarlı yazı rengi kullanır (koyu temada okunur)', () => {
+  renderWithToasts(
+    <PostingList
+      canPost={false}
+      filters={{ remote: true }}
+      options={options}
+      page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
+    />,
+  );
+  const remote = within(screen.getByRole('group', { name: 'Filtreler' })).getByRole('button', {
+    name: 'Uzaktan',
+  });
+  expect(remote).toHaveAttribute('aria-pressed', 'true');
+  expect(remote.className).toContain('text-on-primary');
+  expect(remote.className).not.toContain('text-white');
+});
+it('arama taslağı hızlı filtreyle URL’ye taşınır; tek karakter alan hatası verir', () => {
+  listNavigation.push.mockReset();
+  renderWithToasts(
+    <PostingList
+      canPost={false}
+      filters={{}}
+      options={options}
+      page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
+    />,
+  );
+  const search = screen.getByRole('searchbox', { name: 'Pozisyon veya kurum ara' });
+  const remote = within(screen.getByRole('group', { name: 'Filtreler' })).getByRole('button', {
+    name: 'Uzaktan',
+  });
+  fireEvent.change(search, { target: { value: 'v' } });
+  fireEvent.click(remote);
+  expect(listNavigation.push).not.toHaveBeenCalled();
+  expect(search).toHaveAccessibleDescription(/En az 2 karakter/);
+  fireEvent.change(search, { target: { value: 'veri' } });
+  fireEvent.click(remote);
+  expect(listNavigation.push).toHaveBeenCalledWith('/ilanlar?q=veri&remote=true');
 });
 it('detayda yalnız güvenli dış bağlantı ve yazarın kimliği yoktur', () => {
   renderWithToasts(
@@ -855,4 +912,28 @@ it('sunucu alan hatasında odak, animasyon karesi React commitinden önce çalı
   } finally {
     frame.mockRestore();
   }
+});
+
+it('sektör seçimi paylaşılabilir filtreye ve sayfa bağlantısına taşınır', () => {
+  const sectorId = '018f0000-0000-7000-8000-000000000001';
+  renderWithToasts(
+    <PostingList
+      canPost={false}
+      filters={{ sectorId }}
+      options={options}
+      sectors={[{ id: sectorId, name: 'Havacılık' }]}
+      page={{ items: [posting], total: 25, page: 1, pageSize: 20 }}
+    />,
+  );
+  const sector = screen.getByLabelText('Sektör');
+  expect(sector).toHaveValue(sectorId);
+  expect(sector).toHaveAttribute('name', 'sectorId');
+  expect(screen.getByRole('link', { name: /Sonraki/ })).toHaveAttribute(
+    'href',
+    `/ilanlar?sectorId=${sectorId}&page=2`,
+  );
+  expect(screen.getByRole('link', { name: 'Filtreleri temizle' })).toHaveAttribute(
+    'href',
+    '/ilanlar',
+  );
 });
