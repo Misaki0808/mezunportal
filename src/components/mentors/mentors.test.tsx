@@ -367,6 +367,13 @@ describe('mentor dizini', () => {
         similar={null}
       />,
     );
+    // Seçili yonga yazısı koyu temada da okunur: sabit beyaz değil, temaya duyarlı "birincil üstü" renk.
+    const selected = within(screen.getByRole('group', { name: 'Filtreler' })).getByRole('button', {
+      name: 'Mezun',
+    });
+    expect(selected).toHaveAttribute('aria-pressed', 'true');
+    expect(selected.className).toContain('text-on-primary');
+    expect(selected.className).not.toContain('text-white');
     await user.click(
       within(screen.getByRole('group', { name: 'Filtreler' })).getByRole('button', {
         name: 'Yalnız müsait olanlar',
@@ -394,6 +401,38 @@ describe('mentor dizini', () => {
     router.push.mockClear();
     await user.click(screen.getByRole('button', { name: 'Ara' }));
     expect(router.push).toHaveBeenCalledWith('/mentorlar?q=Ay%C5%9Fe');
+  });
+
+  it('arama etkin süzgeç çipidir: çip kaldırılınca ve Temizle ile kutu boşalır', async () => {
+    const { user } = renderUi(
+      <MentorDirectory
+        filter={{ q: 'Ayşe', mentorTypes: ['ALUMNI'] }}
+        results={page([mentor()])}
+        sectors={sectors}
+        similar={null}
+      />,
+    );
+    const search = screen.getByRole('searchbox', { name: 'Mentor ara' });
+    expect(search).toHaveValue('Ayşe');
+    expect(within(screen.getByLabelText('Etkin filtreler')).getByText('Ayşe')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ayşe etiketini kaldır' }));
+    expect(search).toHaveValue('');
+    expect(router.push).toHaveBeenCalledWith('/mentorlar?mentorTypes=ALUMNI');
+    router.push.mockClear();
+    await user.type(search, 'Veli');
+    await user.click(screen.getAllByRole('button', { name: 'Filtreleri temizle' })[0]!);
+    expect(search).toHaveValue('');
+    expect(router.push).toHaveBeenCalledWith('/mentorlar');
+  });
+
+  it('Diğer filtreler panelinde Uygula yazılmış aramayı korur', async () => {
+    const { user } = renderUi(
+      <MentorDirectory filter={{}} results={page([mentor()])} sectors={sectors} similar={null} />,
+    );
+    await user.type(screen.getByRole('searchbox', { name: 'Mentor ara' }), 'Ayşe');
+    await user.type(screen.getByLabelText('Şirket'), 'Örnek');
+    await user.click(screen.getByRole('button', { name: 'Uygula' }));
+    expect(router.push).toHaveBeenCalledWith('/mentorlar?q=Ay%C5%9Fe&company=%C3%96rnek');
   });
 
   it('mobil alt sayfada seçilen filtreler Uygula ile kanonik URL’ye yazılır; Vazgeç taslağı geri alır', async () => {
