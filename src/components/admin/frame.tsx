@@ -1,7 +1,7 @@
 'use client';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { BackLink } from '@/components/back-link';
 import { PageHeader } from '@/components/ui';
 
 export function AdminFrame({
@@ -19,12 +19,7 @@ export function AdminFrame({
   return (
     <div className="min-w-0 space-y-6 pb-8 [overflow-wrap:anywhere]">
       <div className="space-y-2">
-        <Link
-          href="/yonetim"
-          className="press-row inline-flex min-h-11 items-center font-medium text-primary"
-        >
-          ← {t('back')}
-        </Link>
+        <BackLink href="/yonetim">{t('back')}</BackLink>
         <PageHeader
           eyebrow={t('eyebrow')}
           title={title}
