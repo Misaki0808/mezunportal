@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
+import { queryCounter } from '@/test/query-counter';
 import {
   addMembership,
   createInstitution,
@@ -147,7 +148,7 @@ it('başka bir kaynak yazarın adını üç kişi tekrarlasa bile soru yayımlan
   const result = await getInterviewQuestions(db, w.viewer, filters(w.company.id));
   expect(JSON.stringify(result)).not.toContain('Néhir');
 });
-it('1000 deneyimde sorgu yanıtı ölçülür', async () => {
+it('1000 deneyimde sorgu sayısı kayıt başına artmaz', async () => {
   const w = await fixture();
   await db.experience.createMany({
     data: Array.from({ length: 1000 }, (_, index) => ({
@@ -170,12 +171,11 @@ it('1000 deneyimde sorgu yanıtı ölçülür', async () => {
       interviewQuestions: [`SQL nedir ${index}?`],
     })),
   });
-  const start = performance.now();
-  const result = await getInterviewQuestions(db, w.viewer, filters(w.company.id));
-  const duration = Math.round(performance.now() - start);
-  console.info(`soru bankası 1000 deneyim: ${duration} ms`);
+  const queries = queryCounter(db);
+  const result = await getInterviewQuestions(queries.client, w.viewer, filters(w.company.id));
   expect(result.groups.length).toBeGreaterThan(0);
-  expect(duration).toBeLessThan(5000);
+  expect(queries.count()).toBeGreaterThan(0);
+  expect(queries.count()).toBeLessThanOrEqual(8);
 }, 15000);
 
 it('yalnız güvenli şirketleri sayar, sayfalar ve filtreleri bütün sonuçlarda uygular', async () => {

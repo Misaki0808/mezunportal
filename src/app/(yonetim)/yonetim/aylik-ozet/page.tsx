@@ -1,8 +1,9 @@
+import { AdminFrame } from '@/components/admin/frame';
 import { guardPage } from '@/server/permissions/page-guard';
 import { getTranslations } from 'next-intl/server';
 import { hasAdminAccessStrict } from '@/components/layout/admin-access';
 import { DigestView } from '@/components/notifications/digest-view';
-import { ErrorState, PageHeader } from '@/components/ui';
+import { ErrorState } from '@/components/ui';
 import { getDb } from '@/server/db';
 import { requirePageVerifiedMember as requireVerifiedMember } from '@/server/permissions';
 import { buildMonthlyDigest } from '@/server/services/monthly-digest';
@@ -18,9 +19,8 @@ export default async function MonthlyDigestPreview() {
   const t = await getTranslations('monthlyDigest');
   const digest = await buildMonthlyDigest(getDb(), actor.userId);
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
-      <PageHeader title={t('adminPreview')} description={t('adminDescription')} />
+    <AdminFrame title={t('adminPreview')} description={t('adminDescription')}>
       <DigestView digest={digest} />
-    </div>
+    </AdminFrame>
   );
 }

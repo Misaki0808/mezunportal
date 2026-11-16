@@ -1230,7 +1230,8 @@
       "saving": "Kaydediliyor…",
       "next": "Sonraki başvurular",
       "success": "Kararın kaydedildi.",
-      "applicant": "{name} için gönderilen başvuruyu onaylamak üzeresin."
+      "applicant": "{name} için gönderilen başvuruyu onaylamak üzeresin.",
+      "pending": "Doğrulama bekliyor"
     },
     "signIn": {
       "eyebrow": "MEZUNPORTAL'A HOŞ GELDİN",
@@ -2267,7 +2268,13 @@
         "JOB_SEEKER_SEARCH": "Aday araması"
       }
     },
-    "pendingCount": "{count} bekliyor"
+    "pendingCount": "{count} bekliyor",
+    "overview": {
+      "pendingTitle": "Bekleyen işler",
+      "clearTitle": "Bekleyen iş yok.",
+      "clearDescription": "Yeni bir kayıt geldiğinde ilgili kuyrukta görünür.",
+      "toolsTitle": "Yönetim araçları"
+    }
   },
   "search": {
     "eyebrow": "DENEYİMLER",
