@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { cn } from './cn';
 
 export type AvatarProps = {
@@ -20,19 +23,32 @@ export function initialsOf(name: string): string {
   return (first + last).toLocaleUpperCase('tr-TR');
 }
 
-export function Avatar({ name, src, size = 'md', decorative = false, className }: AvatarProps) {
+export function Avatar({
+  name,
+  src: providedSrc,
+  size = 'md',
+  decorative = false,
+  className,
+}: AvatarProps) {
+  const source = providedSrc;
+  const src =
+    size === 'lg' && source?.startsWith('/api/profil-fotografi/')
+      ? source.replace('size=96', 'size=512')
+      : source;
+  const [failedSrc, setFailedSrc] = useState<string>();
   const shared = cn(
     'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-soft font-semibold text-on-primary-soft',
     SIZES[size],
     className,
   );
 
-  if (src) {
+  if (src && failedSrc !== src) {
     return (
-      // Küçük, sabit boyutlu kullanıcı görseli; next/image uzak alan yapılandırması gerektirir.
+      // Yetkili rota tarayıcı çerezini alır; görsel genel next/image önbelleğine sokulmaz.
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
+        onError={() => setFailedSrc(src)}
         alt={decorative ? '' : name}
         className={cn(shared, 'object-cover')}
         width={64}

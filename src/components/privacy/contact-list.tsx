@@ -1,4 +1,5 @@
 'use client';
+import { Avatar } from '@/components/ui';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useState } from 'react';
@@ -135,6 +136,14 @@ export function ContactList({
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
+                {item.counterpart &&
+                  !(box === 'OUTGOING' && item.origin && item.status !== 'APPROVED') && (
+                    <Avatar
+                      src={item.counterpart.photoSrc}
+                      name={item.counterpart.name}
+                      decorative
+                    />
+                  )}
                 <h2 className="break-words text-lg font-semibold">
                   {item.counterpart &&
                   !(box === 'OUTGOING' && item.origin && item.status !== 'APPROVED')

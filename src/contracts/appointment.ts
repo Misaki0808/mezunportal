@@ -277,7 +277,9 @@ export const appointmentViewSchema = z
     status: z.enum(APPOINTMENT_STATUSES),
     /** Bu randevuda kullanıcının rolü. */
     role: z.enum(['MENTOR', 'MENTEE']),
-    counterpart: z.object({ userId: z.string(), displayName: z.string() }).strict(),
+    counterpart: z
+      .object({ userId: z.string(), displayName: z.string(), photoSrc: z.string().optional() })
+      .strict(),
     startsAt: z.date(),
     endsAt: z.date(),
     mode: z.enum(MEETING_MODES),

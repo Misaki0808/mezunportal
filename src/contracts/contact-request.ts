@@ -140,7 +140,10 @@ export const contactRequestItemSchema = z
      * Karşı taraf: gelen kutusunda talep eden, giden kutusunda hedef. Yalnız kimlik + ad. `null`: İLAN kaynaklı giden talepte hedef
      * `APPROVED` olana dek (ve onay geri alındıktan/ret/geri çekmeden sonra) kimlik ve ad AÇILMAZ (D7); o durumda `origin` doludur.
      */
-    counterpart: z.object({ userId: z.string(), name: z.string() }).strict().nullable(),
+    counterpart: z
+      .object({ userId: z.string(), name: z.string(), photoSrc: z.string().optional() })
+      .strict()
+      .nullable(),
     /**
      * İlan kaynaklı talep (P2-04): talep anındaki ilan başlığı ve kurum (ilan silinse/kapansa da kalır). Gelen kutusunda ilan sahibi de
      * hangi ilan için istendiğini görür. Doğrudan profil talebinde `null`.
