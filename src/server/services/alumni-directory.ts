@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { AlumniPage, AlumniSearch } from '@/contracts/alumni-directory';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
-import { escapeLike } from '@/lib/sql-like';
+import { matchingDirectoryText } from '../repositories/turkish-filters';
 import type { Actor } from '../permissions/actor';
 import { errorForDenyReason } from '../permissions/guards';
 import { evaluateAccess } from '../rules/authorization';
@@ -54,10 +54,7 @@ export async function searchAlumni(
         }
       : {}),
   };
-  const contains = (value: string) => ({
-    contains: escapeLike(value),
-    mode: 'insensitive' as const,
-  });
+  const text = await matchingDirectoryText(db, filter);
   const positions: Prisma.PositionWhereInput[] = [];
   if (filter.sectorId)
     positions.push({
@@ -66,50 +63,20 @@ export async function searchAlumni(
         { sectorId: null, company: { sectorId: filter.sectorId } },
       ],
     });
-  if (filter.company)
-    positions.push({
-      OR: [
-        { companyRaw: contains(filter.company) },
-        { company: { name: contains(filter.company) } },
-      ],
-    });
-  if (filter.title)
-    positions.push({
-      OR: [{ titleRaw: contains(filter.title) }, { title: { name: contains(filter.title) } }],
-    });
+  if (text.positions) positions.push({ id: { in: text.positions } });
   const where: Prisma.UserWhereInput = {
-    id: { not: actor.userId },
+    id: { not: actor.userId, ...(text.users ? { in: text.users } : {}) },
     deletedAt: null,
     ...notSuspended(now),
     memberships: { some: membership },
     profile: {
       alumniDirectoryVisible: true,
-      ...(filter.city ? { city: contains(filter.city) } : {}),
+      ...(text.profiles ? { id: { in: text.profiles } } : {}),
       ...(filter.skill
         ? { tags: { some: { tag: { kind: 'SKILL', slug: { in: skillNames } } } } }
         : {}),
     },
     ...(positions.length ? { positions: { some: { isCurrent: true, AND: positions } } } : {}),
-    ...(filter.q
-      ? {
-          OR: [
-            { name: contains(filter.q) },
-            {
-              positions: {
-                some: {
-                  isCurrent: true,
-                  OR: [
-                    { companyRaw: contains(filter.q) },
-                    { titleRaw: contains(filter.q) },
-                    { company: { name: contains(filter.q) } },
-                    { title: { name: contains(filter.q) } },
-                  ],
-                },
-              },
-            },
-          ],
-        }
-      : {}),
   };
   const [total, rows] = await Promise.all([
     db.user.count({ where }),
