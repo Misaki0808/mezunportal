@@ -102,7 +102,7 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     await login(student!, 'student');
     await db.jobPosting.update({ where: { id: postingId }, data: { location: 'K'.repeat(90) } });
     await student!.goto('/');
-    await expect(student!.getByRole('heading', { name: 'Sana uyan ilanlar' })).toBeVisible();
+    await expect(student!.getByRole('heading', { name: 'Sana uygun ilanlar' })).toBeVisible();
     await expect(student!.getByRole('link', { name: new RegExp(title) })).toBeVisible();
     // Bildirim kutusu (P2-05): yayınla eşleşen öğrencide rozet → liste → ilana git; ilanı yazan kendi "yayında" bildirimini görür.
     const bell = student!.getByRole('link', { name: 'Bildirimler, 1 okunmamış' });

@@ -364,7 +364,7 @@ export function HomeStoryBand({ story }: { story: PublishedStory }) {
         className="bg-accent-soft text-on-accent-soft"
       />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-primary">{t('story.title')}</p>
+        <h2 className="text-sm font-semibold text-primary">{t('story.title')}</h2>
         <blockquote className="mt-2 break-words font-heading text-lg font-semibold">
           {story.body.length > 190 ? `${story.body.slice(0, 190).trimEnd()}…` : story.body}
         </blockquote>
