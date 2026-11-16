@@ -30,7 +30,7 @@ import type { Prisma } from '@/generated/prisma/client';
 import { codedForbidden, codedNotFound } from '@/lib/errors';
 import { jobPostingReportScopeWhere } from './job-posting-report-scope';
 
-import { looksLikePersonalData } from '../rules/adminAudit';
+import { isAuditIdentifierField, looksLikePersonalData } from '../rules/adminAudit';
 import { accountStatusOf } from '../rules/authorization';
 import { maskEmail } from '../rules/maskEmail';
 import { maskPhone } from '../rules/maskPhone';
@@ -501,15 +501,17 @@ const REDACTED = '[gizlendi]';
 export function redactAuditText(value: string): string {
   return looksLikePersonalData(value) ? REDACTED : value;
 }
-function redactMetadataValue(value: unknown): unknown {
-  if (typeof value === 'string') return redactAuditText(value);
+function redactMetadataValue(value: unknown, key = ''): unknown {
+  if (typeof value === 'string') {
+    return isAuditIdentifierField(key, value) ? value : redactAuditText(value);
+  }
   if (typeof value === 'number' && looksLikePersonalData(String(value))) return REDACTED;
-  if (Array.isArray(value)) return value.map(redactMetadataValue);
+  if (Array.isArray(value)) return value.map((entry) => redactMetadataValue(entry, key));
   if (value !== null && typeof value === 'object')
     return Object.fromEntries(
       Object.entries(value).map(([key, entry]) => [
         redactAuditText(key),
-        redactMetadataValue(entry),
+        redactMetadataValue(entry, key),
       ]),
     );
   return value;

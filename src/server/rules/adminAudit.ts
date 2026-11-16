@@ -146,6 +146,10 @@ function isIdentifierKey(key: string): boolean {
   return key === 'id' || key === 'ids' || /(?:Id|Ids|_id|_ids)$/.test(key);
 }
 
+export function isAuditIdentifierField(key: string, value: string): boolean {
+  return isIdentifierKey(key) && isAuditIdentifier(value);
+}
+
 function keyWords(key: string): string[] {
   return key
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -172,7 +176,7 @@ export function findMetadataProblems(metadata: unknown): MetadataProblem[] {
     problems.push({ path: '(kök)', problem: `en fazla ${METADATA_MAX_KEYS} alan` });
   }
 
-  const checkPrimitive = (path: string, value: unknown, identifierField: boolean) => {
+  const checkPrimitive = (path: string, value: unknown, key: string) => {
     if (value === null || typeof value === 'boolean') return;
     if (typeof value === 'number') {
       if (!Number.isFinite(value)) problems.push({ path, problem: 'sayı sonlu olmalı' });
@@ -181,7 +185,7 @@ export function findMetadataProblems(metadata: unknown): MetadataProblem[] {
     if (typeof value === 'string') {
       if (value.length > METADATA_MAX_STRING) {
         problems.push({ path, problem: `metin en fazla ${METADATA_MAX_STRING} karakter` });
-      } else if (!(identifierField && isAuditIdentifier(value)) && looksLikePersonalData(value)) {
+      } else if (!isAuditIdentifierField(key, value) && looksLikePersonalData(value)) {
         problems.push({ path, problem: 'kişisel veri gibi görünen değer' });
       }
       return;
@@ -199,11 +203,9 @@ export function findMetadataProblems(metadata: unknown): MetadataProblem[] {
         problems.push({ path: key, problem: `en fazla ${METADATA_MAX_ARRAY} öğe` });
         continue;
       }
-      value.forEach((item, index) =>
-        checkPrimitive(`${key}[${index}]`, item, isIdentifierKey(key)),
-      );
+      value.forEach((item, index) => checkPrimitive(`${key}[${index}]`, item, key));
     } else {
-      checkPrimitive(key, value, isIdentifierKey(key));
+      checkPrimitive(key, value, key);
     }
   }
   return problems;

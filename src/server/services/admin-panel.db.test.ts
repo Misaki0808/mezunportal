@@ -763,6 +763,42 @@ describe('listAuditLog', () => {
     expect(entry.reason).toBe('[gizlendi]');
   });
 
+  it('kimlik alanındaki UUID korunur, serbest metindeki kişisel veri yine gizlenir', async () => {
+    const targetId = randomUUID();
+    const sourceId = '00000000-0000-7000-8000-05321234567a';
+    await db.$transaction((tx) =>
+      recordAdminAction(tx, {
+        actor: { userId: admins.system },
+        action: 'DICTIONARY_CHANGE',
+        targetType: 'DICTIONARY_ENTRY',
+        targetId,
+        metadata: { sourceId, sourceIds: [sourceId] },
+      }),
+    );
+    expect((await listAuditLog(deps, admins.system, { targetId })).items[0]!.metadata).toEqual({
+      sourceId,
+      sourceIds: [sourceId],
+    });
+    // Yalnız eklenebilen kayda, eski hatalı bir satırı temsil eden doğrudan ekleme.
+    const legacyTargetId = randomUUID();
+    await db.adminAuditLog.create({
+      data: {
+        actorId: admins.system,
+        action: 'DICTIONARY_CHANGE',
+        targetType: 'DICTIONARY_ENTRY',
+        targetId: legacyTargetId,
+        metadata: { sourceId, sourceIds: [sourceId], note: 'tel 0532 123 45 67', detail: sourceId },
+      },
+    });
+    const entry = (await listAuditLog(deps, admins.system, { targetId: legacyTargetId })).items[0]!;
+    expect(entry.metadata).toEqual({
+      sourceId,
+      sourceIds: [sourceId],
+      note: '[gizlendi]',
+      detail: '[gizlendi]',
+    });
+  });
+
   it('sayfalama imleçle çalışır; tarih aralığı ters ise doğrulama hatası', async () => {
     const actor = await adminOf('SYSTEM', inst.deptA1);
     const targetId = randomUUID();
