@@ -151,6 +151,22 @@ it('ilan hızlı yongası önceki arama ve kurumu korur, sayfayı sıfırlar', (
     '/ilanlar?q=staj&organizationName=%C3%96rnek+Kurum&remote=true',
   );
 });
+it('seçili ilan yongası temaya duyarlı yazı rengi kullanır (koyu temada okunur)', () => {
+  renderWithToasts(
+    <PostingList
+      canPost={false}
+      filters={{ remote: true }}
+      options={options}
+      page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
+    />,
+  );
+  const remote = within(screen.getByRole('group', { name: 'Filtreler' })).getByRole('button', {
+    name: 'Uzaktan',
+  });
+  expect(remote).toHaveAttribute('aria-pressed', 'true');
+  expect(remote.className).toContain('text-on-primary');
+  expect(remote.className).not.toContain('text-white');
+});
 it('arama taslağı hızlı filtreyle URL’ye taşınır; tek karakter alan hatası verir', () => {
   listNavigation.push.mockReset();
   renderWithToasts(

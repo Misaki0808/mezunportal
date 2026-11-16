@@ -263,10 +263,10 @@ export function PostingList({
     router.push(`/ilanlar${params.size ? `?${params}` : ''}`);
   }
   const quickClass = (selected: boolean) =>
-    `press-control inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary ${selected ? 'border-primary bg-primary text-white' : 'border-border-control bg-surface text-fg'}`;
+    `press-control inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary ${selected ? 'border-primary bg-primary text-on-primary' : 'border-border-control bg-surface text-fg'}`;
   return (
     <div className="w-full max-w-[1280px] px-4 py-4 sm:px-6 sm:py-8 lg:py-8">
-      <header className="mb-4 flex items-start justify-between gap-3 sm:mb-8 sm:gap-4">
+      <header className="mb-3 flex items-start justify-between gap-3 sm:mb-8 sm:gap-4">
         <div className="min-w-0 max-w-2xl">
           <p className="sr-only font-semibold text-accent-strong sm:not-sr-only">{t('eyebrow')}</p>
           <h1 className="text-2xl font-bold tracking-tight text-fg sm:mt-2 sm:text-4xl">
@@ -291,7 +291,7 @@ export function PostingList({
           </div>
         )}
       </header>
-      <div className="mb-4 flex min-w-0 flex-wrap items-start gap-2 sm:mb-6">
+      <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 sm:mb-6">
         <SearchBar
           action="/ilanlar"
           className="min-w-0 flex-[1_1_20rem] !rounded-none !border-0 !bg-transparent !p-0 !shadow-none"
@@ -366,10 +366,10 @@ export function PostingList({
             {t('remoteLabel')}
           </button>
           {options.locations.length > 0 && (
-            <label className="flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-border-control bg-surface px-3 text-sm font-semibold">
+            <label className="flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold">
               <span>{t('location')}</span>
               <select
-                className="min-h-11 max-w-40 bg-transparent text-fg"
+                className="min-h-11 max-w-40 rounded-full border border-border-control bg-surface px-3 text-fg"
                 value={filters.location ?? ''}
                 disabled={navigating}
                 onChange={(event) => quickFilter({ location: event.target.value || undefined })}
@@ -411,7 +411,7 @@ export function PostingList({
           {filterFields}
         </form>
       </Sheet>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
         {(page.total > 0 || filtered) && (
           <p className="font-semibold text-fg">{t('results', { count: page.total })}</p>
         )}

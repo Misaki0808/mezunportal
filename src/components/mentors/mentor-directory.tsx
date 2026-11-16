@@ -288,7 +288,7 @@ export function MentorDirectory({
     go(next);
   };
   const chipClass = (selected: boolean) =>
-    `press-control inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary ${selected ? 'border-primary bg-primary text-white' : 'border-border-control bg-surface text-fg'}`;
+    `press-control inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary ${selected ? 'border-primary bg-primary text-on-primary' : 'border-border-control bg-surface text-fg'}`;
   const close = () => {
     setDraft(filter);
     setOpen(false);
@@ -352,10 +352,10 @@ export function MentorDirectory({
             </button>
           ))}
           {sectors.length > 0 && (
-            <label className="flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-border-control bg-surface px-3 text-sm font-semibold">
+            <label className="flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold">
               <span>{t('filters.sector')}</span>
               <select
-                className="min-h-11 max-w-40 bg-transparent text-fg"
+                className="min-h-11 max-w-40 rounded-full border border-border-control bg-surface px-3 text-fg"
                 value={filter.sectorId ?? ''}
                 disabled={pending}
                 onChange={(event) => {
