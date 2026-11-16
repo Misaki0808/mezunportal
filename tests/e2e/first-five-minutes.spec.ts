@@ -92,8 +92,11 @@ test('yeni öğrenci e-posta doğrulamasından ilk deneyim listesine ulaşır', 
     await expect(page.getByRole('heading', { name: 'Hazırsın!' })).toBeVisible();
     await page.getByRole('link', { name: 'Ana sayfaya git' }).click();
     await expect(page).toHaveURL(/\/$/);
-    await page.locator('a[href="/hesap"]').last().click();
-    await page.getByRole('link', { name: /^Profilim/ }).click();
+    // Alt gezinmedeki "Profilim" sekmesi gerçek profile gider; hesap ayarları üst çubuktaki avatardadır (/hesap).
+    await page
+      .getByRole('navigation', { name: 'Ana gezinme' })
+      .getByRole('link', { name: 'Profilim' })
+      .click();
     await expect(page).toHaveURL(/\/profil$/);
     await page.getByRole('button', { name: 'Profilimi düzenle' }).click();
     const editor = page.getByRole('dialog');

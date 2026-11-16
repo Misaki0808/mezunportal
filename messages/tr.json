@@ -346,7 +346,8 @@
       "events": "Etkinlikler",
       "courses": "Ders rehberi",
       "notifications": "Bildirimler",
-      "profile": "Profilim"
+      "profile": "Profilim",
+      "account": "Hesap ayarları"
     },
     "shortItems": {
       "home": "Ana sayfa",
@@ -369,6 +370,7 @@
     "userCard": {
       "grade": "{grade}. sınıf",
       "preparatory": "Hazırlık",
+      "link": "Hesap ayarları: {name}",
       "alumni": "Mezun",
       "academic": "Akademisyen"
     }

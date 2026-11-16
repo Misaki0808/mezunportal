@@ -16,6 +16,7 @@ import {
   InboxIcon,
   MapPinIcon,
   SearchIcon,
+  SlidersIcon,
   UserIcon,
   UsersIcon,
   cn,
@@ -47,7 +48,15 @@ function SkipLink({ children, className }: { children: ReactNode; className?: st
 }
 
 type NavId =
-  'home' | 'jobs' | 'mentors' | 'appointments' | 'experiences' | 'events' | 'courses' | 'profile';
+  | 'home'
+  | 'jobs'
+  | 'mentors'
+  | 'appointments'
+  | 'experiences'
+  | 'events'
+  | 'courses'
+  | 'profile'
+  | 'account';
 
 /** Yalnız gerçek rotası olan öğeler (kart 384): yer tutucu ya da "yakında" öğesi yoktur. */
 const MAIN_ITEMS: readonly { id: NavId; href: string; icon: ReactNode }[] = [
@@ -60,7 +69,9 @@ const MAIN_ITEMS: readonly { id: NavId; href: string; icon: ReactNode }[] = [
   { id: 'courses', href: '/ders-rehberi', icon: <BookOpenIcon /> },
 ];
 
-const PROFILE_ITEM = { id: 'profile', href: '/hesap', icon: <UserIcon /> } as const;
+/** Profilim gerçek profildir (`/profil`); hesap ayarları (`/hesap`) ayrı kalem, kullanıcı kartı ve avatardan açılır. */
+const PROFILE_ITEM = { id: 'profile', href: '/profil', icon: <UserIcon /> } as const;
+const ACCOUNT_ITEM = { id: 'account', href: '/hesap', icon: <SlidersIcon /> } as const;
 
 type TabId = 'home' | 'jobs' | 'mentors' | 'appointments' | 'profile';
 
@@ -260,6 +271,7 @@ export function AppShellClient({
                 />
               </li>
               <li>{renderSideItem(PROFILE_ITEM)}</li>
+              <li>{renderSideItem(ACCOUNT_ITEM)}</li>
             </ul>
             {showAdmin && (
               <>
@@ -285,7 +297,12 @@ export function AppShellClient({
             )}
           </nav>
           {shellUser && !consentPending && (
-            <div className="flex items-center gap-3 rounded-control bg-side-foot p-3">
+            <Link
+              href="/hesap"
+              aria-label={t('userCard.link', { name: shellUser.name })}
+              aria-current={isCurrent(pathname, '/hesap') ? 'page' : undefined}
+              className="press-control flex items-center gap-3 rounded-control bg-side-foot p-3 outline-side-fg hover:bg-side-active"
+            >
               <Avatar name={shellUser.name} size="sm" decorative />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-side-fg">{shellUser.name}</p>
@@ -293,7 +310,7 @@ export function AppShellClient({
                   <p className="truncate text-xs text-side-muted">{membershipLine}</p>
                 )}
               </div>
-            </div>
+            </Link>
           )}
         </aside>
 
