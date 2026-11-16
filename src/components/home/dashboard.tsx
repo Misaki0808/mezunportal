@@ -56,18 +56,11 @@ export type HomeDashboardProps = {
   summary: HomeSummary;
   panels: HomePanels;
   feature?: ReactNode;
-  notice?: ReactNode;
   now?: Date;
 };
 
 /** Sunucudaki sayıları ve hazır görünürlük kararlarını sunar; kişi başına ek istek yapmaz. */
-export function HomeDashboard({
-  summary,
-  panels,
-  feature,
-  notice,
-  now = new Date(),
-}: HomeDashboardProps) {
+export function HomeDashboard({ summary, panels, feature, now = new Date() }: HomeDashboardProps) {
   const t = useTranslations('home');
   const a = useTranslations('home.dashboard');
   const pending = PENDING_LINKS.map((item) => ({
@@ -84,13 +77,9 @@ export function HomeDashboard({
         (item) => item.status === 'CONFIRMED' && item.startsAt >= now,
       )
     : undefined;
-  const description = next
-    ? a('overview.next', {
-        date: homeDate(next.startsAt, { weekday: 'long', hour: '2-digit', minute: '2-digit' }),
-      })
-    : total > 0
-      ? t('pendingCount', { count: total })
-      : t(`subtitle.${summary.role}`);
+  // Sıradaki görüşmeyi özet kutusu söyler; başlık altında yinelenmez.
+  const description =
+    total > 0 ? t('pendingCount', { count: total }) : t(`subtitle.${summary.role}`);
   const greeting = a(`greetings.${homeGreeting(now)}`);
   const stats = [
     {
@@ -119,6 +108,81 @@ export function HomeDashboard({
           : a('stats.unavailable'),
     },
   ];
+  const pendingCard = pending.length ? (
+    <Card as="section" aria-labelledby="home-pending" className="h-full min-w-0 bg-surface">
+      <h2 id="home-pending" className="font-heading text-lg font-bold">
+        {t('pendingTitle')}
+      </h2>
+      <ul className="mt-3 divide-y divide-border">
+        {pending.map((item) => (
+          <li key={item.key}>
+            <Link
+              href={item.href}
+              className="press-row flex min-h-14 items-center justify-between gap-3 py-3 font-medium"
+            >
+              <span>{t(`pending.${item.key}`, { count: item.count })}</span>
+              <span aria-hidden="true" className="text-primary">
+                →
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  ) : null;
+  const capacityCard = showCapacity ? <MentorCapacityPanel result={panels.settings} /> : null;
+  // Kısayol kartı tek başına ya da iki kartla birlikte tam genişlikte olunca iki sütuna açılır.
+  const shortcutsWide = Number(Boolean(pendingCard)) + Number(Boolean(capacityCard)) !== 1;
+  const shortcutsCard = (
+    <Card as="section" aria-labelledby="home-shortcuts" className="h-full min-w-0 bg-surface">
+      <h2 id="home-shortcuts" className="font-heading text-lg font-bold">
+        {t('shortcutsTitle')}
+      </h2>
+      <ul
+        className={
+          shortcutsWide
+            ? 'mt-3 grid gap-x-8 lg:grid-cols-2 lg:[&>li:nth-last-child(-n+2)]:border-b-0'
+            : 'mt-3'
+        }
+      >
+        {SHORTCUTS[summary.role].map((item, index) => (
+          <li key={item.key} className="border-b border-border last:border-b-0">
+            <Link href={item.href} className="press-row flex min-h-16 items-center gap-3 py-3">
+              <IconChip tone={CHIP_TONES[index]}>{item.icon}</IconChip>
+              <span className="min-w-0">
+                <span className="block font-semibold">{t(`shortcuts.${item.key}.title`)}</span>
+                <span className="block text-fg-muted">
+                  {t(`shortcuts.${item.key}.description`)}
+                </span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+  // Kalan kartlar (bekleyen iş yalnız iş varken): tek kart tam genişlik, iki kart 7/5, üç kart 7/5 + tam genişlik kısayol.
+  const rest: { key: string; node: ReactNode }[] = [];
+  if (pendingCard) rest.push({ key: 'pending', node: pendingCard });
+  if (capacityCard) rest.push({ key: 'capacity', node: capacityCard });
+  const lowerRow: { key: string; span: string; node: ReactNode }[] =
+    rest.length === 0
+      ? [{ key: 'shortcuts', span: 'lg:col-span-12', node: shortcutsCard }]
+      : rest.length === 1
+        ? student
+          ? [
+              { ...rest[0]!, span: 'lg:col-span-7' },
+              { key: 'shortcuts', span: 'lg:col-span-5', node: shortcutsCard },
+            ]
+          : [
+              { key: 'shortcuts', span: 'lg:col-span-7', node: shortcutsCard },
+              { ...rest[0]!, span: 'lg:col-span-5' },
+            ]
+        : [
+            { ...rest[0]!, span: 'lg:col-span-7' },
+            { ...rest[1]!, span: 'lg:col-span-5' },
+            { key: 'shortcuts', span: 'lg:col-span-12', node: shortcutsCard },
+          ];
   return (
     <div className="flex w-full min-w-0 flex-col gap-5 sm:gap-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between xl:gap-6">
@@ -142,7 +206,7 @@ export function HomeDashboard({
             <>
               {incomplete && (
                 <Link
-                  className={buttonClasses({ variant: 'secondary' }) + ' hidden! sm:inline-flex!'}
+                  className={buttonClasses({ variant: 'secondary' }) + ' max-sm:hidden'}
                   href="/mentorlar"
                 >
                   {a('actions.mentors')}
@@ -196,7 +260,6 @@ export function HomeDashboard({
           </Card>
         ))}
       </dl>
-      {notice}
       {summary.adminPending !== null && (
         <Link
           href="/yonetim"
@@ -216,12 +279,15 @@ export function HomeDashboard({
           <span aria-hidden="true">→</span>
         </Link>
       )}
-      <div className="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-12 lg:gap-5">
+      <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-12 lg:gap-5">
         <div className="min-w-0 lg:col-span-7">
           <UpcomingPanel result={panels.appointments} now={now} student={!canMentor} />
         </div>
         <div className="min-w-0 lg:col-span-5">
-          <ProfilePanel completion={panels.completion} />
+          <ProfilePanel
+            completion={panels.completion}
+            continueOnboarding={panels.continueOnboarding}
+          />
         </div>
         {student ? (
           <>
@@ -234,66 +300,11 @@ export function HomeDashboard({
           </>
         ) : null}
         {student && feature && <div className="min-w-0 lg:col-span-12">{feature}</div>}
-        <Card
-          as="section"
-          aria-labelledby="home-pending"
-          className={`min-w-0 bg-surface ${student || showCapacity ? 'lg:col-span-7' : 'lg:col-span-12'}`}
-        >
-          <h2 id="home-pending" className="font-heading text-lg font-bold">
-            {t('pendingTitle')}
-          </h2>
-          {pending.length ? (
-            <ul className="mt-3 divide-y divide-border">
-              {pending.map((item) => (
-                <li key={item.key}>
-                  <Link
-                    href={item.href}
-                    className="press-row flex min-h-14 items-center justify-between gap-3 py-3 font-medium"
-                  >
-                    <span>{t(`pending.${item.key}`, { count: item.count })}</span>
-                    <span aria-hidden="true" className="text-primary">
-                      →
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-4 flex items-start gap-2 text-fg-muted">
-              <CheckIcon className="shrink-0 text-success" />
-              {t('pendingNone')}
-            </p>
-          )}
-        </Card>
-        {showCapacity && (
-          <div className="min-w-0 lg:col-span-5">
-            <MentorCapacityPanel result={panels.settings} />
+        {lowerRow.map((cell) => (
+          <div key={cell.key} className={`min-w-0 ${cell.span}`}>
+            {cell.node}
           </div>
-        )}
-        <Card
-          as="section"
-          aria-labelledby="home-shortcuts"
-          className={`min-w-0 bg-surface ${student ? 'lg:col-span-5' : 'lg:col-span-12'}`}
-        >
-          <h2 id="home-shortcuts" className="font-heading text-lg font-bold">
-            {t('shortcutsTitle')}
-          </h2>
-          <ul className="mt-3 divide-y divide-border">
-            {SHORTCUTS[summary.role].map((item, index) => (
-              <li key={item.key}>
-                <Link href={item.href} className="press-row flex min-h-16 items-center gap-3 py-3">
-                  <IconChip tone={CHIP_TONES[index]}>{item.icon}</IconChip>
-                  <span className="min-w-0">
-                    <span className="block font-semibold">{t(`shortcuts.${item.key}.title`)}</span>
-                    <span className="block text-fg-muted">
-                      {t(`shortcuts.${item.key}.description`)}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        ))}
         {!student && feature && <div className="min-w-0 lg:col-span-12">{feature}</div>}
       </div>
     </div>
