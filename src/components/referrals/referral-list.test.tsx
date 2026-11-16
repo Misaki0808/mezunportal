@@ -47,14 +47,16 @@ describe('referanslarım: boş durum role göre', () => {
     renderUi(<ReferralList initial={empty} userId="u-student" canReceive />);
     expect(screen.getByText('Henüz referansın yok')).toBeVisible();
     expect(screen.getByText(/Referansı yalnız mezun başlatır/)).toBeVisible();
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    // Eylem yok: çerçevenin geri bağlantısından başka bağlantı bulunmaz.
+    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Hesap ayarları']);
   });
 
   it('başka rol: eylem yok, referansın mezun ile öğrenci arasında olduğu yazılı', () => {
     renderUi(<ReferralList initial={empty} userId="u-academic" />);
     expect(screen.getByText('Henüz referans yok')).toBeVisible();
     expect(screen.getByText(/mezunlarla öğrenciler arasındadır/)).toBeVisible();
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    // Eylem yok: çerçevenin geri bağlantısından başka bağlantı bulunmaz.
+    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Hesap ayarları']);
   });
 
   it('inceleme (yönetici): kendi cümlesi, eylem yok', () => {
@@ -145,5 +147,21 @@ describe('referans inceleme kuyruğu: karar sonrası geri bildirim', () => {
     );
     expect(screen.queryByText('Beyan onaylandı.')).toBeNull();
     expect(mocks.review).not.toHaveBeenCalled();
+  });
+});
+
+describe('referanslarım: hesap çerçevesi (kart 407)', () => {
+  it('hesap görünümü ortak çerçevede: HESAP üst etiketi, geri bağlantısı, tek h1', () => {
+    renderUi(<ReferralList initial={empty} userId="u-student" canReceive />);
+    expect(screen.getByText('HESAP')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Hesap ayarları' })).toHaveAttribute('href', '/hesap');
+    expect(screen.getByRole('heading', { level: 1, name: 'Referanslarım' })).toBeVisible();
+  });
+
+  it('inceleme görünümünde çerçeve yok: kendi başlığı, hesap etiketi ve geri bağlantısı yok', () => {
+    renderUi(<ReferralList initial={empty} userId="u-admin" moderation />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Referans inceleme' })).toBeVisible();
+    expect(screen.queryByText('HESAP')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Hesap ayarları' })).not.toBeInTheDocument();
   });
 });

@@ -20,7 +20,7 @@ export function Invitations() {
   return (
     <AdminFrame title={t('title')} description={t('description')}>
       <form
-        className="max-w-2xl space-y-4"
+        className="max-w-2xl space-y-4 rounded-card border border-border bg-surface p-4 shadow-card sm:p-5"
         onSubmit={(event) => {
           event.preventDefault();
           if (locked.current) return;

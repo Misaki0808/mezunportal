@@ -194,7 +194,7 @@ export function AwardAdmin({ departments }: { departments: { id: string; name: s
   const choiceBlocked = !!cycle && (!cycle.frozenAt || !!selectedUserId);
   const pageError = selected ? '' : formError || action.error || '';
   return (
-    <div className="mx-auto max-w-4xl space-y-7 px-5 py-10">
+    <div className="min-w-0 space-y-6 pb-8">
       <PageHeader title={t('adminTitle')} description={t('adminIntro')} />
       <Card className="space-y-4 p-5">
         <Field label={t('selectDepartment')}>
