@@ -61,7 +61,6 @@ it.each(['auth.sign-in-link', 'contact.requested'])(
       ),
     );
     const { service: email, queued } = service();
-    const started = Date.now();
     const results = await Promise.allSettled(
       users.map((user, index) =>
         email.enqueueEmail({
@@ -82,8 +81,8 @@ it.each(['auth.sign-in-link', 'contact.requested'])(
         where: { idempotencyKey: { startsWith: `havuz:${run}:${template}:` } },
       }),
     ).toBe(count);
-    // Kilitlenme 2 sn bağlantı zaman aşımına çarpardı; sağlıklı yol çok altında biter.
-    expect(Date.now() - started).toBeLessThan(2_000);
+    // Kilitlenme olsaydı havuzun 2 sn bağlantı zaman aşımı istekleri reddederdi; yukarıdaki `failed` boşluğu bunu zaten yakalar.
+    // Duvar saati üst sınırı konmaz (kart 427): yük altında sağlıklı yol da 2 sn'yi aşabilir.
   },
 );
 

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppointmentView, MentorSettingsView, SlotList } from '@/contracts/appointment';
@@ -860,7 +860,8 @@ describe('randevu detayı: başlık ve eylem sonrası odak', () => {
   it('onaydan sonra odak kalkan düğmeden sonuç metnine taşınır', async () => {
     const { user } = renderUi(<AppointmentDetail appointment={view()} actions={detailActions()} />);
     await user.click(screen.getByRole('button', { name: 'Onayla' }));
-    expect(await screen.findByText('İşlem kaydedildi.')).toHaveFocus();
+    const saved = await screen.findByText('İşlem kaydedildi.');
+    await waitFor(() => expect(saved).toHaveFocus());
   });
   it('talep edenin iptalinden sonra da odak sonuç metnine taşınır', async () => {
     const mentee = view(
@@ -872,14 +873,16 @@ describe('randevu detayı: başlık ve eylem sonrası odak', () => {
     await user.click(
       within(await screen.findByRole('dialog')).getByRole('button', { name: 'Evet, iptal et' }),
     );
-    expect(await screen.findByText('İşlem kaydedildi.')).toHaveFocus();
+    const saved = await screen.findByText('İşlem kaydedildi.');
+    await waitFor(() => expect(saved).toHaveFocus());
   });
   it('eylem başarısızsa odak hata metnine taşınır ve başarı metni görünmez', async () => {
     const actions = detailActions();
     actions.respond.mockResolvedValueOnce({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
     const { user } = renderUi(<AppointmentDetail appointment={view()} actions={actions} />);
     await user.click(screen.getByRole('button', { name: 'Onayla' }));
-    expect(await screen.findByRole('alert')).toHaveFocus();
+    const failed = await screen.findByRole('alert');
+    await waitFor(() => expect(failed).toHaveFocus());
     expect(screen.queryByText('İşlem kaydedildi.')).toBeNull();
   });
 });

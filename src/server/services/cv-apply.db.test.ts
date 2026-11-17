@@ -38,7 +38,7 @@ async function expectCode(promise: Promise<unknown>, code: string) {
   expect(isCodedError(error) && error.code).toBe(code);
 }
 
-const suffix = () => randomUUID().slice(0, 8);
+const suffix = () => letterMarker('', 8);
 const cv = (overrides: Partial<ParsedCv> = {}): ParsedCv => ({
   profile: { headline: null, summary: null, city: null },
   education: [],

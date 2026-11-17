@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { afterAll, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import {
@@ -10,6 +9,7 @@ import {
 } from '@/test/fixtures';
 import { normalizeName } from '../rules/dictionary';
 import { searchMentorsSchema } from '@/contracts/mentor-directory';
+import { letterMarker } from '@/test/markers';
 import { loadActor } from '../permissions/actor';
 import { searchMentors } from './mentor-directory';
 import { buildDataExport } from './dataExport';
@@ -31,7 +31,7 @@ async function fixture() {
     entryYear: 2023,
   });
   await grantRequiredConsents(db, student);
-  const key = randomUUID().slice(0, 8);
+  const key = letterMarker('', 8);
   const title = await db.title.create({
     data: { name: `Analist ${key}`, normalizedName: `analist ${key}`, aliases: [`analyst ${key}`] },
     select: { id: true, name: true },
