@@ -94,7 +94,10 @@ it('son ilan kararı sonrası tek boş duruma geçer ve odak sayfa başlığına
   fireEvent.click(within(dialog).getByRole('button', { name: 'Onayla' }));
   await waitFor(() => expect(screen.getAllByText('Açık şikâyet yok.')).toHaveLength(1));
   expect(screen.queryByText('Açık ilan şikâyeti yok.')).toBeNull();
-  expect(screen.getByRole('heading', { level: 1, name: 'Şikâyet kuyruğu' })).toHaveFocus();
+  // Odak, boş durumu çizen işleme bağlı bir efektle gelir; `waitFor` yalnız boş metni bekler. Odağı da bekle (kart 427).
+  await waitFor(() =>
+    expect(screen.getByRole('heading', { level: 1, name: 'Şikâyet kuyruğu' })).toHaveFocus(),
+  );
 });
 
 it('iki kuyruk doluyken boş mesaj göstermez', () => {
@@ -167,14 +170,16 @@ for (const desktop of [false, true]) {
       await user.click(dialog.getByRole('button', { name: 'Onayla' }));
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
       if (last) {
-        const heading = screen.getByRole('heading', { level: 1, name: 'Şikâyet kuyruğu' });
-        expect(heading).toHaveFocus();
+        const heading = await screen.findByRole('heading', { level: 1, name: 'Şikâyet kuyruğu' });
+        await waitFor(() => expect(heading).toHaveFocus());
         expect(heading).toHaveAttribute('tabindex', '-1');
         heading.blur();
         expect(heading).not.toHaveAttribute('tabindex');
       } else {
         // Sıradaki kaydın ilk karar eylemi, gizli mobil kopya değil.
-        expect(screen.getByRole('button', { name: 'Çözüldü olarak işaretle' })).toHaveFocus();
+        await waitFor(() =>
+          expect(screen.getByRole('button', { name: 'Çözüldü olarak işaretle' })).toHaveFocus(),
+        );
       }
     });
   }

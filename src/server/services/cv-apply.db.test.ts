@@ -8,6 +8,7 @@ import { isCodedError } from '@/lib/errors';
 import { cvKit, cvUser, pdfForm, type CvTestKit, skillCount, skillLabels } from '@/test/cv';
 import { createTestPrisma } from '@/test/db';
 import { createFakeLlm } from '@/server/external/llm/fake';
+import { letterMarker } from '@/test/markers';
 import { normalizeName } from '../rules/dictionary';
 import { loadProfileCompletion } from './profile';
 
@@ -37,7 +38,7 @@ async function expectCode(promise: Promise<unknown>, code: string) {
   expect(isCodedError(error) && error.code).toBe(code);
 }
 
-const suffix = () => randomUUID().slice(0, 8);
+const suffix = () => letterMarker('', 8);
 const cv = (overrides: Partial<ParsedCv> = {}): ParsedCv => ({
   profile: { headline: null, summary: null, city: null },
   education: [],
