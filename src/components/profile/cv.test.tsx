@@ -648,6 +648,26 @@ describe('CV onay ekranı: kararlar yenilemede korunur', () => {
     );
   });
 
+  it('aynı bileşende CV iş kimliği değişirse önceki işin kararları taşınmaz', async () => {
+    const first = setupReview();
+    await first.user.click(row('İstanbul Üniversitesi').getByRole('button', { name: 'Kabul et' }));
+    expect(screen.getByRole('button', { name: /Seçilenleri uygula \(1\)/ })).toBeInTheDocument();
+    first.rerender(
+      <CvReview
+        review={{ ...review, cvUploadId: 'cv2' }}
+        apply={first.apply as never}
+        discard={first.discard as never}
+        onApplied={first.onApplied}
+        onDiscarded={first.onDiscarded}
+      />,
+    );
+    expect(
+      await screen.findByRole('button', { name: /Seçilenleri uygula \(0\)/ }),
+    ).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(STORE)).toBeNull();
+    expect(window.sessionStorage.getItem('mezun.cv.decisions.cv2')).toBeNull();
+  });
+
   it('çakışan kalem için üzerine yazmasız "kabul" kaydı geri getirilmez', () => {
     window.sessionStorage.setItem(STORE, JSON.stringify({ 'k-lang': 'accept', 'k-yok': 'accept' }));
     setupReview();

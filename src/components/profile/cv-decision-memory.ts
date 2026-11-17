@@ -64,6 +64,19 @@ export function recallCvDecisions(
   }
 }
 
+/** Çıkışta bu sekmedeki bütün CV karar kayıtlarını siler (ortak bilgisayarda sonraki kişi öncekinin kararlarını görmesin). */
+export function forgetAllCvDecisions(): void {
+  try {
+    const storage = window.sessionStorage;
+    for (let index = storage.length - 1; index >= 0; index--) {
+      const name = storage.key(index);
+      if (name?.startsWith(PREFIX)) storage.removeItem(name);
+    }
+  } catch {
+    /* Bellek kapalıysa silinecek bir şey de yoktur. */
+  }
+}
+
 export function forgetCvDecisions(cvUploadId: string): void {
   try {
     window.sessionStorage.removeItem(keyOf(cvUploadId));

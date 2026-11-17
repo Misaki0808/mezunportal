@@ -58,25 +58,24 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
   // Okuma yalnız tarayıcıda, hidrasyondan sonra bir kez yapılır (sunucu çıktısıyla uyuşmazlık olmasın); okuma bitmeden yazılmaz.
   const hydrated = useHydrated();
   const [restoredFor, setRestoredFor] = useState<string>();
-  const cleared = useRef(false);
+  const [clearedFor, setClearedFor] = useState<string>();
+  // CV iş kimliği değişirse (aynı bileşende yeni CV) önceki işin kararları taşınmaz: durum, yeni işin kayıtlarıyla yeniden kurulur.
   if (hydrated && restoredFor !== review.cvUploadId) {
     setRestoredFor(review.cvUploadId);
     const remembered = recallCvDecisions(review.cvUploadId, review.items);
-    if (Object.keys(remembered).length) {
-      setDecisions(remembered);
-      setOverwrite(
-        Object.fromEntries(
-          Object.entries(remembered)
-            .filter(([, decision]) => decision.overwrite)
-            .map(([key]) => [key, true]),
-        ),
-      );
-    }
+    setDecisions(remembered);
+    setOverwrite(
+      Object.fromEntries(
+        Object.entries(remembered)
+          .filter(([, decision]) => decision.overwrite)
+          .map(([key]) => [key, true]),
+      ),
+    );
   }
   useEffect(() => {
-    if (restoredFor === review.cvUploadId && !cleared.current)
+    if (restoredFor === review.cvUploadId && clearedFor !== review.cvUploadId)
       rememberCvDecisions(review.cvUploadId, decisions);
-  }, [decisions, restoredFor, review.cvUploadId]);
+  }, [decisions, restoredFor, clearedFor, review.cvUploadId]);
   const editFormId = useId();
   // Karar verilince kalemin düğmeleri yer değiştirir (Kabul/Düzelt/Reddet → Kararı geri al). "Kabul et" ile "Kararı geri al"
   // aynı yerdeki ilk düğme olduğundan React onu yeniden kullanır ve odak kalır; "Düzelt" ve "Reddet" ise kalkar. Odak, o kalemin
@@ -146,7 +145,7 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
       });
       const result = await apply({ cvUploadId: review.cvUploadId, decisions: list });
       if (result.ok) {
-        cleared.current = true;
+        setClearedFor(review.cvUploadId);
         forgetCvDecisions(review.cvUploadId);
         onApplied(result.data);
       } else setError(result.errorCode);
@@ -166,7 +165,7 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
     try {
       const result = await discard({ cvUploadId: review.cvUploadId });
       if (result.ok) {
-        cleared.current = true;
+        setClearedFor(review.cvUploadId);
         forgetCvDecisions(review.cvUploadId);
         onDiscarded();
       } else {

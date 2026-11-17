@@ -150,6 +150,8 @@ it('bitiş başlangıçtan önceyse genel hata değil açık mesaj verir ve sunu
   await user.click(screen.getByRole('checkbox', { name: /Yönetim Bilişim Sistemleri/ }));
   await user.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
   expect(await screen.findByText('Bitiş zamanı başlangıçtan sonra olmalı.')).toBeVisible();
+  // Odak hatalı alana gider.
+  expect(screen.getByLabelText(/Bitiş \(İstanbul saati\)/)).toHaveFocus();
   expect(mocks.create).not.toHaveBeenCalled();
 });
 it('yalnız bekleyenleri oluşturma formundan önce gösterir; diğer durumlar ayrı bölümdedir', () => {
