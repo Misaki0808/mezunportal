@@ -1,8 +1,8 @@
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
-import { BackLink } from '@/components/back-link';
-import { PageHeader } from '@/components/ui';
+import { ChevronLeftIcon, PageHeader } from '@/components/ui';
 
 type FrameWidth = 'max-w-2xl' | 'max-w-3xl' | 'max-w-4xl';
 
@@ -34,9 +34,13 @@ export function AccountFrameView({
   return (
     <div className={`w-full ${width}`}>
       {showBack && (
-        <BackLink href={back?.href ?? '/hesap'} className="mb-3">
+        <Link
+          href={back?.href ?? '/hesap'}
+          className="press-row -ml-2 mb-3 inline-flex min-h-11 items-center gap-1 rounded-control px-2 text-base font-medium text-primary hover:bg-primary-soft hover:text-on-primary-soft"
+        >
+          <ChevronLeftIcon aria-hidden="true" />
           {backLabel}
-        </BackLink>
+        </Link>
       )}
       <PageHeader eyebrow={eyebrow} title={title} description={description} />
       <div className="mt-6 space-y-5">{children}</div>
