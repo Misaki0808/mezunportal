@@ -61,31 +61,29 @@ async function candidateRows(tx: Tx, departmentId: string, year: number, now: Da
   const excludedForSuspicion = members.filter((m) => m.user.suspicionFlags.length).length;
   const eligible = members.filter((m) => !m.user.suspicionFlags.length);
   const ids = eligible.map((m) => m.userId);
-  const [entries, flags, experiences, meetings] = await Promise.all([
-    tx.pointEntry.findMany({
-      where: { userId: { in: ids }, status: 'FINAL', eventAt: { gte: start, lt: end } },
-      select: { id: true, userId: true, action: true, points: true },
-    }),
-    tx.suspicionFlag.findMany({
-      where: { userId: { in: ids }, status: { in: ['OPEN', 'CONFIRMED'] } },
-      select: { entryIds: true },
-    }),
-    tx.experience.groupBy({
-      by: ['authorId'],
-      where: {
-        authorId: { in: ids },
-        departmentIdAtWrite: departmentId,
-        status: 'PUBLISHED',
-        publishedAt: { gte: start, lt: end },
-      },
-      _count: true,
-    }),
-    tx.appointment.groupBy({
-      by: ['mentorId'],
-      where: { mentorId: { in: ids }, status: 'COMPLETED', startsAt: { gte: start, lt: end } },
-      _count: true,
-    }),
-  ]);
+  const entries = await tx.pointEntry.findMany({
+    where: { userId: { in: ids }, status: 'FINAL', eventAt: { gte: start, lt: end } },
+    select: { id: true, userId: true, action: true, points: true },
+  });
+  const flags = await tx.suspicionFlag.findMany({
+    where: { userId: { in: ids }, status: { in: ['OPEN', 'CONFIRMED'] } },
+    select: { entryIds: true },
+  });
+  const experiences = await tx.experience.groupBy({
+    by: ['authorId'],
+    where: {
+      authorId: { in: ids },
+      departmentIdAtWrite: departmentId,
+      status: 'PUBLISHED',
+      publishedAt: { gte: start, lt: end },
+    },
+    _count: true,
+  });
+  const meetings = await tx.appointment.groupBy({
+    by: ['mentorId'],
+    where: { mentorId: { in: ids }, status: 'COMPLETED', startsAt: { gte: start, lt: end } },
+    _count: true,
+  });
   const excludedEntries = new Set(flags.flatMap((flag) => flag.entryIds));
   const rows = eligible.map(({ userId, user }) => {
     const breakdown = new Map<string, number>();
@@ -372,7 +370,9 @@ export async function listMyAwards(deps: Deps, userId: string): Promise<MyAward[
       select: { id: true },
       orderBy: { createdAt: 'desc' },
     });
-    return Promise.all(awards.map((a) => awardView(tx, a.id, userId)));
+    const result: MyAward[] = [];
+    for (const award of awards) result.push(await awardView(tx, award.id, userId));
+    return result;
   }, TX_OPTIONS);
 }
 export async function setAwardPublication(deps: Deps, userId: string, input: unknown) {

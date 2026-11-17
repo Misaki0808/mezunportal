@@ -281,15 +281,15 @@ export async function loadProfileCompletion(
   now: Date,
   snapshot?: OnboardingSnapshot,
 ) {
-  const [profile, educationCount, skillCount, onboarding] = await Promise.all([
-    tx.profile.findUnique({
-      where: { userId },
-      select: { headline: true, city: true, cvUpdatedAt: true },
-    }),
-    tx.education.count({ where: { userId } }),
-    tx.profileTag.count({ where: { profile: { userId }, tag: { kind: 'SKILL' } } }),
-    snapshot ?? onboardingSnapshot(tx, userId, now),
-  ]);
+  const profile = await tx.profile.findUnique({
+    where: { userId },
+    select: { headline: true, city: true, cvUpdatedAt: true },
+  });
+  const educationCount = await tx.education.count({ where: { userId } });
+  const skillCount = await tx.profileTag.count({
+    where: { profile: { userId }, tag: { kind: 'SKILL' } },
+  });
+  const onboarding = await (snapshot ?? onboardingSnapshot(tx, userId, now));
   return computeProfileContentCompletion({
     onboarding: onboarding.statuses,
     mentorStepAvailable: onboarding.mentorStepAvailable,
