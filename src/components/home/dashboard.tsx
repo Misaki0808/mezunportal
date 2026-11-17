@@ -245,7 +245,10 @@ export function HomeDashboard({ summary, panels, feature, now = new Date() }: Ho
           )}
         </nav>
       </div>
-      <dl aria-label={a('stats.label')} className="grid grid-cols-3 gap-2 sm:gap-4">
+      <dl
+        aria-label={a('stats.label')}
+        className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,5rem),1fr))] gap-2 sm:gap-4"
+      >
         {stats.map((stat) => (
           <Card
             key={stat.label}

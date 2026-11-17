@@ -20,6 +20,37 @@ test('büyük yazıda mobil üst çubuk sarılır, eylemler ekranda kalır', asy
     expect(box!.x + box!.width).toBeLessThanOrEqual(390);
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  const labels = await page.locator('[data-bottom-nav] li').evaluateAll((items) =>
+    items.map((item) => {
+      const control = item.querySelector('a,button')!;
+      const label = control.querySelector('span')!;
+      const bounds = control.getBoundingClientRect();
+      const text = label.getBoundingClientRect();
+      return {
+        left: text.left - bounds.left,
+        right: bounds.right - text.right,
+        width: label.clientWidth,
+        scroll: label.scrollWidth,
+      };
+    }),
+  );
+  expect(labels).toHaveLength(5);
+  for (const label of labels) {
+    expect.soft(label.left).toBeGreaterThanOrEqual(-1);
+    expect.soft(label.right).toBeGreaterThanOrEqual(-1);
+    expect.soft(label.scroll).toBeLessThanOrEqual(label.width + 1);
+  }
+  const bottom = await page.evaluate(() => ({
+    navigation: document.querySelector('[data-bottom-nav]')!.getBoundingClientRect().height,
+    padding: parseFloat(getComputedStyle(document.querySelector('main')!).paddingBottom),
+  }));
+  expect(bottom.navigation).toBeLessThanOrEqual(bottom.padding);
+  const cards = page.locator('dl[aria-label="Günün özeti"] > div');
+  await expect(cards).toHaveCount(3);
+  for (const card of await cards.all()) {
+    const bounds = await card.boundingBox();
+    expect(bounds!.width).toBeGreaterThanOrEqual(160);
+  }
 });
 
 test('büyük yazıda deneyim formu bölüm metinleri sayfayı taşırmaz', async ({ page }) => {

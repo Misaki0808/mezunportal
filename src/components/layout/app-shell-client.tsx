@@ -194,7 +194,9 @@ export function AppShellClient({
         )}
       >
         {item.icon}
-        <span>{t(`shortItems.${item.id}`)}</span>
+        <span className="max-w-full break-words text-center leading-[1.125]">
+          {t(`shortItems.${item.id}`)}
+        </span>
       </Link>
     );
   }
@@ -221,7 +223,9 @@ export function AppShellClient({
       )}
     >
       <MenuIcon />
-      <span>{t('shortItems.menu')}</span>
+      <span className="max-w-full break-words text-center leading-[1.125]">
+        {t('shortItems.menu')}
+      </span>
     </button>
   );
 
