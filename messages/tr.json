@@ -286,6 +286,7 @@
       "AUTH_ACCOUNT_SUSPENDED": "Hesabın askıya alındı. Bilgi almak için bölüm yöneticinle iletişime geç.",
       "AUTH_NOT_VERIFIED": "Bu işlem için üyeliğinin doğrulanması gerekiyor.",
       "AUTH_FORBIDDEN": "Bu işlem için yetkin yok.",
+      "REQUEST_ORIGIN_MISMATCH": "Güvenlik denetimi bu isteği kabul etmedi. Sayfayı yenileyip tekrar dene.",
       "RESOURCE_NOT_FOUND": "Aradığın kayıt bulunamadı.",
       "RESOURCE_CONFLICT": "Aynı anda başka bir işlem yapılmış. Sayfayı yenileyip tekrar dene.",
       "RATE_LIMITED": "Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.",
@@ -1443,6 +1444,7 @@
       "stepTitle": "Adım başlığı",
       "stepDescription": "Adım açıklaması",
       "stepNumber": "{n}. adım",
+      "stepEmptyHint": "Boş bıraktığın adım kaydedilmez. Birini doldurursan ikisi de gerekli.",
       "addQuestion": "Soru ekle",
       "removeQuestion": "Soruyu sil",
       "questionLabel": "{n}. soru",
@@ -3337,6 +3339,7 @@
     "reject": "Reddet",
     "reason": "Ret gerekçesi",
     "confirm": "Onayla",
+    "rejectConfirm": "İlanı reddet",
     "publishText": "İlan yayımlanır ve paylaşan kişiye bildirim gider.",
     "rejectText": "Yazdığın gerekçe ilanı paylaşan kişiye gösterilir.",
     "status": {

@@ -43,7 +43,10 @@ it('oturum/rıza önce: yükleme hiç çağrılmaz', async () => {
   expect(auth.upload).not.toHaveBeenCalled();
 });
 it('çapraz köken ve açık rıza olmadan multipart yazılmaz; istemci dosya adı güvenilir değildir', async () => {
-  expect((await POST(request('https://evil.test'))).status).toBe(403);
+  const crossOrigin = await POST(request('https://evil.test'));
+  expect(crossOrigin.status).toBe(403);
+  // "Yetkin yok" demez: adres eşleşmesi sorunu ayrı koddur, kullanıcıya "sayfayı yenile" denir.
+  expect(await crossOrigin.json()).toEqual({ errorCode: 'REQUEST_ORIGIN_MISMATCH' });
   expect((await POST(request(undefined, 'false'))).status).toBe(422);
   expect(auth.upload).not.toHaveBeenCalled();
   expect((await POST(request())).status).toBe(200);

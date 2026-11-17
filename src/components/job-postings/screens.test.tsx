@@ -479,7 +479,7 @@ it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () =>
   );
   fireEvent.click(screen.getByRole('button', { name: 'Reddet' }));
   fireEvent.change(screen.getByLabelText(/Ret gerekçesi/), { target: { value: 'abc' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Onayla' }));
+  fireEvent.click(screen.getByRole('button', { name: 'İlanı reddet' }));
   await waitFor(() =>
     expect(review).toHaveBeenCalledWith({ postingId: 'job-1', decision: 'REJECT', reason: 'abc' }),
   );
@@ -672,7 +672,11 @@ it.each(['PUBLISH', 'REJECT'] as const)(
     await user.click(screen.getAllByRole('button', { name: action })[0]!);
     if (decision === 'REJECT')
       await user.type(screen.getByLabelText(/Ret gerekçesi/), 'Geçerli ret gerekçesi');
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: decision === 'PUBLISH' ? 'Onayla' : 'İlanı reddet',
+      }),
+    );
     await waitFor(() => expect(screen.getByRole('button', { name: 'Yayımla' })).toHaveFocus());
     await user.click(screen.getByRole('button', { name: 'Yayımla' }));
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
@@ -699,7 +703,9 @@ it('B3: boş ret ilk hatalı alana odaklanır ve alan altı açıklama taşır',
     />,
   );
   await user.click(screen.getByRole('button', { name: 'Reddet' }));
-  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', { name: 'İlanı reddet' }),
+  );
   const reason = screen.getByLabelText(/Ret gerekçesi/);
   expect(reason).toHaveFocus();
   expect(reason).toHaveAttribute('aria-invalid', 'true');

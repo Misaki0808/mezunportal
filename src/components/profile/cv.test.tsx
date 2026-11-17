@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { CvReview as CvReviewData } from '@/contracts/cv';
 import { renderUi } from '@/test/render';
@@ -16,6 +16,9 @@ beforeAll(() => {
     this.removeAttribute('open');
   };
 });
+
+// Kararlar oturum belleğinde tutulur (cv-decision-memory); testler birbirinin kararını görmesin.
+afterEach(() => window.sessionStorage.clear());
 
 const available = {
   available: true,
@@ -545,5 +548,111 @@ describe('CV onay ekranı: karar sonrası odak', () => {
     await user.click(accept);
     expect(accept).toHaveFocus();
     expect(within(conflicts).queryByRole('button', { name: 'Kararı geri al' })).toBeNull();
+  });
+});
+
+describe('CV onay ekranı: kararlar yenilemede korunur', () => {
+  const STORE = 'mezun.cv.decisions.cv1';
+  const row = (text: string) => within(screen.getByText(text).closest('li')!);
+
+  it('kabul ve ret kararları yeniden açılışta geri gelir; kararsız kalem kararsız kalır', async () => {
+    const first = setupReview();
+    await first.user.click(row('İstanbul Üniversitesi').getByRole('button', { name: 'Kabul et' }));
+    await first.user.click(row('Yazılım Stajyeri').getByRole('button', { name: 'Reddet' }));
+    first.unmount();
+    setupReview();
+    expect(
+      await screen.findByRole('button', { name: /Seçilenleri uygula \(1\)/ }),
+    ).toBeInTheDocument();
+    expect(row('İstanbul Üniversitesi').getByText('Kabul edildi')).toBeInTheDocument();
+    expect(row('Yazılım Stajyeri').getByText('Reddedildi')).toBeInTheDocument();
+    const conflicts = screen.getByRole('heading', { name: /Çakışmalar/ }).closest('section')!;
+    expect(within(conflicts).getByText('Karar bekliyor')).toBeInTheDocument();
+  });
+
+  it('yalnız kalem anahtarı ve karar saklanır; kullanıcı metni ve düzeltilmiş değer saklanmaz', async () => {
+    const { user } = setupReview();
+    await user.click(row('İstanbul Üniversitesi').getByRole('button', { name: 'Kabul et' }));
+    await user.click(row('Yazılım Stajyeri').getByRole('button', { name: 'Reddet' }));
+    expect(window.sessionStorage.getItem(STORE)).toBe(
+      JSON.stringify({ 'k-edu': 'accept', 'k-pos': 'reject' }),
+    );
+    // Düzeltilmiş kabul kullanıcının yazdığı veriyi taşır: saklanmaz.
+    await user.click(row('Yazılım Stajyeri').getByRole('button', { name: 'Kararı geri al' }));
+    await user.click(row('Yazılım Stajyeri').getByRole('button', { name: 'Düzelt' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Kabul et' }),
+    );
+    await waitFor(() =>
+      expect(window.sessionStorage.getItem(STORE)).toBe(JSON.stringify({ 'k-edu': 'accept' })),
+    );
+    expect(window.sessionStorage.getItem(STORE)).not.toMatch(/Stajyeri|Örnek|İstanbul/);
+  });
+
+  it('çakışan kalemin "üzerine yaz" ile kabulü kutusuyla birlikte geri gelir', async () => {
+    const first = setupReview();
+    const lang = screen.getByRole('heading', { name: /Çakışmalar/ }).closest('section')!;
+    await first.user.click(
+      within(lang).getByRole('checkbox', { name: /Elle yazdığım değerin üzerine yaz/ }),
+    );
+    await first.user.click(within(lang).getByRole('button', { name: 'Kabul et' }));
+    first.unmount();
+    const second = setupReview();
+    const again = screen.getByRole('heading', { name: /Çakışmalar/ }).closest('section')!;
+    expect(
+      await within(again).findByRole('button', { name: 'Kararı geri al' }),
+    ).toBeInTheDocument();
+    expect(
+      within(again).getByRole('checkbox', { name: /Elle yazdığım değerin üzerine yaz/ }),
+    ).toBeChecked();
+    await second.user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
+    expect(second.apply.mock.calls[0]![0].decisions).toEqual([
+      { key: 'k-lang', section: 'LANGUAGE', overwriteMine: true },
+    ]);
+  });
+
+  it('uygulayınca ve CV iptal edilince kayıt silinir', async () => {
+    const applied = setupReview();
+    await applied.user.click(
+      row('İstanbul Üniversitesi').getByRole('button', { name: 'Kabul et' }),
+    );
+    expect(window.sessionStorage.getItem(STORE)).not.toBeNull();
+    await applied.user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
+    await waitFor(() => expect(applied.onApplied).toHaveBeenCalled());
+    expect(window.sessionStorage.getItem(STORE)).toBeNull();
+    applied.unmount();
+
+    const discarded = setupReview();
+    await discarded.user.click(
+      row('İstanbul Üniversitesi').getByRole('button', { name: 'Kabul et' }),
+    );
+    expect(window.sessionStorage.getItem(STORE)).not.toBeNull();
+    await discarded.user.click(screen.getByRole('button', { name: /Hiçbirini uygulama/ }));
+    await discarded.user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: /Hiçbirini uygulama|Evet|Onayla/,
+      }),
+    );
+    await waitFor(() => expect(discarded.onDiscarded).toHaveBeenCalled());
+    expect(window.sessionStorage.getItem(STORE)).toBeNull();
+  });
+
+  it('başka CV ya da bozuk kayıt yok sayılır; eski CV kaydı temizlenir', async () => {
+    window.sessionStorage.setItem('mezun.cv.decisions.eski', JSON.stringify({ 'k-edu': 'accept' }));
+    window.sessionStorage.setItem(STORE, '{bozuk');
+    setupReview();
+    expect(screen.queryByRole('button', { name: 'Kararı geri al' })).toBeNull();
+    expect(screen.getByRole('button', { name: /Seçilenleri uygula \(0\)/ })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(window.sessionStorage.getItem('mezun.cv.decisions.eski')).toBeNull(),
+    );
+  });
+
+  it('çakışan kalem için üzerine yazmasız "kabul" kaydı geri getirilmez', () => {
+    window.sessionStorage.setItem(STORE, JSON.stringify({ 'k-lang': 'accept', 'k-yok': 'accept' }));
+    setupReview();
+    const conflicts = screen.getByRole('heading', { name: /Çakışmalar/ }).closest('section')!;
+    expect(within(conflicts).getByText('Karar bekliyor')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Seçilenleri uygula \(0\)/ })).toBeInTheDocument();
   });
 });

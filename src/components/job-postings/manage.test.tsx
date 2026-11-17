@@ -102,12 +102,12 @@ describe('ilan inceleme kuyruğu: karar sonrası geri bildirim', () => {
     const { user } = renderQueue();
     await user.click(row('Veri analizi stajyeri').getByRole('button', { name: 'Reddet' }));
     const dialog = within(await screen.findByRole('dialog'));
-    await user.click(dialog.getByRole('button', { name: 'Onayla' }));
+    await user.click(dialog.getByRole('button', { name: 'İlanı reddet' }));
     expect(dialog.getByText(REASON_INVALID)).toBeVisible();
     expect(review).not.toHaveBeenCalled();
 
     await user.type(dialog.getByLabelText(/Ret gerekçesi/), 'Başvuru bağlantısı eksik');
-    await user.click(dialog.getByRole('button', { name: 'Onayla' }));
+    await user.click(dialog.getByRole('button', { name: 'İlanı reddet' }));
     await waitFor(() => expect(screen.queryByText('Veri analizi stajyeri')).toBeNull());
     expect(review).toHaveBeenCalledWith({
       postingId: 'q1',
@@ -121,12 +121,24 @@ describe('ilan inceleme kuyruğu: karar sonrası geri bildirim', () => {
     const { user } = renderQueue();
     await user.click(row('Veri analizi stajyeri').getByRole('button', { name: 'Reddet' }));
     let dialog = within(await screen.findByRole('dialog'));
-    await user.click(dialog.getByRole('button', { name: 'Onayla' }));
+    await user.click(dialog.getByRole('button', { name: 'İlanı reddet' }));
     expect(dialog.getByText(REASON_INVALID)).toBeVisible();
     await user.click(dialog.getByRole('button', { name: 'Vazgeç' }));
     await user.click(row('Yazılım stajyeri').getByRole('button', { name: 'Reddet' }));
     dialog = within(await screen.findByRole('dialog'));
     expect(dialog.queryByText(REASON_INVALID)).toBeNull();
+  });
+
+  it('ret penceresinin onay düğmesi işi açıkça söyler: "İlanı reddet", "Onayla" değil', async () => {
+    const { user } = renderQueue();
+    await user.click(row('Veri analizi stajyeri').getByRole('button', { name: 'Reddet' }));
+    const reject = within(await screen.findByRole('dialog'));
+    expect(reject.getByRole('button', { name: 'İlanı reddet' })).toBeVisible();
+    expect(reject.queryByRole('button', { name: 'Onayla' })).toBeNull();
+    await user.click(reject.getByRole('button', { name: 'Vazgeç' }));
+    await user.click(row('Veri analizi stajyeri').getByRole('button', { name: 'Yayımla' }));
+    const publish = within(await screen.findByRole('dialog'));
+    expect(publish.getByRole('button', { name: 'Onayla' })).toBeVisible();
   });
 
   it('yayımlama başarılı olunca görünür bildirim verir', async () => {
@@ -143,7 +155,7 @@ describe('ilan inceleme kuyruğu: karar sonrası geri bildirim', () => {
     await user.click(row('Yazılım stajyeri').getByRole('button', { name: 'Reddet' }));
     const dialog = within(await screen.findByRole('dialog'));
     await user.type(dialog.getByLabelText(/Ret gerekçesi/), 'Kurum bilgisi doğrulanamadı');
-    await user.click(dialog.getByRole('button', { name: 'Onayla' }));
+    await user.click(dialog.getByRole('button', { name: 'İlanı reddet' }));
     expect(await screen.findByText('İlan reddedildi.')).toBeVisible();
   });
 

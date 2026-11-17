@@ -360,7 +360,7 @@ export function PostingModeration({
                 loading={pending}
                 onClick={confirm}
               >
-                {t('confirm')}
+                {t(choice?.decision === 'REJECT' ? 'rejectConfirm' : 'confirm')}
               </Button>
               <Button variant="secondary" onClick={() => setChoice(undefined)}>
                 {t('cancel')}
