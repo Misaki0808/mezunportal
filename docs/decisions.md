@@ -1116,3 +1116,10 @@ katlamayı destekler; noktalama temizleyen `User.nameSearch`, literal `%/_` aram
 Mentor şirket/unvan araması mezun rehberiyle aynı biçimde güncel pozisyonla sınırlanır: geçmiş
 iş eşleşmesinin kartta bugünkü işmiş gibi görünmesi önlenir. Kullanım olayı yalnız `q` anahtarını
 saklar, sorgu değerini saklamaz. Yeni işlev/eklenti/bağımlılık yoktur.
+
+
+## 2026-11-17 · Fotoğraf rızası sürüm değişimi
+
+Günlük süpürme son rızası verilmiş ama eski sürümdeki fotoğrafı silmez; güncel rıza olmadan
+görünmez kalır. Böylece metin sürümü yükselince geri alınmamış fotoğraflar topluca kaybolmaz.
+Yeniden onay ve kalan dosyaların temizliği PILOT-LEGAL kapsamında ayrıca kararlaştırılır.

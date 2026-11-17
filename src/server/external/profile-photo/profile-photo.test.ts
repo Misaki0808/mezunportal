@@ -7,6 +7,18 @@ const image = () =>
   sharp({ create: { width: 100, height: 200, channels: 3, background: '#a32b68' } });
 
 describe('güvenli profil fotoğrafı çözme', () => {
+  it('başka yükleme işlenirken kararlı, yeniden denemeye yönlendiren kod döner', async () => {
+    const bytes = await image().png().toBuffer();
+    const first = processProfilePhoto(bytes, crop);
+    try {
+      await expect(processProfilePhoto(bytes, crop)).rejects.toMatchObject({
+        code: 'PHOTO_PROCESSING_BUSY',
+      });
+    } finally {
+      await first;
+    }
+    await expect(processProfilePhoto(bytes, crop)).resolves.toHaveProperty('large');
+  });
   it.each(['jpeg', 'png', 'webp'] as const)(
     '%s baytını tanır ve yalnız 512/96 WebP üretir',
     async (format) => {
@@ -143,14 +155,6 @@ describe('güvenli profil fotoğrafı çözme', () => {
     await expect(processProfilePhoto(await image().png().toBuffer(), crop)).resolves.toHaveProperty(
       'large',
     );
-  });
-  it('aynı anda iki çözme yerine ikinciye kararlı çakışma döner', async () => {
-    const bytes = await image().png().toBuffer();
-    const first = processProfilePhoto(bytes, crop);
-    await expect(processProfilePhoto(bytes, crop)).rejects.toMatchObject({
-      code: 'RESOURCE_CONFLICT',
-    });
-    await first;
   });
   it('kare kırpma seçilen bölgeyi gerçekten değiştirir', async () => {
     const bytes = await sharp({
