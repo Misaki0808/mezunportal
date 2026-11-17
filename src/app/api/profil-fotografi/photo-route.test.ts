@@ -14,7 +14,7 @@ vi.mock('@/server/services/profile-photo', () => ({
 vi.mock('@/server/db', () => ({ getDb: () => ({}) }));
 vi.mock('@/server/external/storage', () => ({ getStorage: () => ({}) }));
 vi.mock('@/lib/env', () => ({ getEnv: () => ({ APP_URL: 'http://127.0.0.1:3415' }) }));
-import { codedNotFound, codedForbidden } from '@/lib/errors';
+import { codedNotFound, codedForbidden, codedValidation, codedConflict } from '@/lib/errors';
 import { POST } from './route';
 import { boundedPhotoForm } from '@/server/services/photo-upload-body';
 import { GET } from './[userId]/route';
@@ -53,6 +53,12 @@ it('çapraz köken ve açık rıza olmadan multipart yazılmaz; istemci dosya ad
     expect.objectContaining({ bytes: new Uint8Array(Buffer.from('fake')) }),
   );
 });
+it('eşzamanlı görüntü işleme geçici yoğunluğu kararlı kodla döner', async () => {
+  auth.upload.mockRejectedValueOnce(codedConflict('PHOTO_PROCESSING_BUSY'));
+  const response = await POST(request());
+  expect(response.status).toBe(409);
+  expect(await response.json()).toEqual({ errorCode: 'PHOTO_PROCESSING_BUSY' });
+});
 it('Content-Length olmadan da taşan akış 5 MB bütçesinde kesilir', async () => {
   const request = new Request('http://localhost', {
     method: 'POST',
@@ -76,4 +82,23 @@ it('yetkisiz/olmayan/rızasız fotoğraf aynı boş 404; özel önbellek ve MIME
   expect(response.headers.get('cache-control')).toBe('private, no-store');
   expect(response.headers.get('content-type')).toBe('image/webp');
   expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+});
+it('GET altyapı hatası boş 503, yokluk ve yetki reddi aynı boş 404 kalır', async () => {
+  const context = { params: Promise.resolve({ userId: 'owner' }) };
+  for (const error of [codedNotFound('RESOURCE_NOT_FOUND'), codedForbidden('CONSENT_REQUIRED')]) {
+    auth.read.mockRejectedValueOnce(error);
+    const response = await GET(new Request('http://localhost/photo'), context);
+    expect(response.status).toBe(404);
+    expect(await response.text()).toBe('');
+  }
+  for (const error of [
+    new Error('synthetic infrastructure failure'),
+    codedValidation('DB_UNAVAILABLE'),
+  ]) {
+    auth.read.mockRejectedValueOnce(error);
+    const response = await GET(new Request('http://localhost/photo'), context);
+    expect(response.status).toBe(503);
+    expect(await response.text()).toBe('');
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
+  }
 });

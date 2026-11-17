@@ -1130,3 +1130,8 @@ bütün `Promise.all` kullanımlarının kendi başına uyarı ürettiği iddia 
 süreç başına bir kez gösterildiğinden sayı bağımsız kip süreçleri içindir, tüm olayların sayısı
 değildir. pg-boss kuyrukları kendi bağlantı havuzlarını kurar; Prisma havuzunu paylaşmaz. Kalan
 Prisma içi çoklu ilişki sorunu çözülene kadar TD-027 ve e2e uyarı istisnası açık kalır.
+## 2026-11-17 · Fotoğraf rızası sürüm değişimi
+
+Günlük süpürme son rızası verilmiş ama eski sürümdeki fotoğrafı silmez; güncel rıza olmadan
+görünmez kalır. Böylece metin sürümü yükselince geri alınmamış fotoğraflar topluca kaybolmaz.
+Yeniden onay ve kalan dosyaların temizliği PILOT-LEGAL kapsamında ayrıca kararlaştırılır.

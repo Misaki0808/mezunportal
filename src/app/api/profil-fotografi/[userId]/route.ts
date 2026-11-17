@@ -3,6 +3,7 @@ import { getStorage } from '@/server/external/storage';
 import { readRouteSession } from '@/server/permissions/route-session';
 import { readProfilePhoto } from '@/server/services/profile-photo';
 import { logUnexpected } from '@/server/unexpected-log';
+import { isCodedError } from '@/lib/errors';
 export const dynamic = 'force-dynamic';
 export async function GET(request: Request, context: { params: Promise<{ userId: string }> }) {
   const session = await readRouteSession('profilFotografi');
@@ -35,6 +36,11 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
     });
   } catch (error) {
     logUnexpected('route', 'profilFotografi', error);
-    return new Response(null, { status: 404, headers });
+    const hidden =
+      isCodedError(error) &&
+      (error.code === 'RESOURCE_NOT_FOUND' ||
+        error.code === 'CONSENT_REQUIRED' ||
+        error.code.startsWith('AUTH_'));
+    return new Response(null, { status: hidden ? 404 : 503, headers });
   }
 }

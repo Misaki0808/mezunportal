@@ -22,6 +22,7 @@ import { freezeDueAwardCycles } from '../services/year-alumni';
 import { rotateMonthlyAlumni } from '../services/alumni-story';
 import { purgeCampusEventNetworks } from '../services/campus-event';
 import { loggedJob } from '../unexpected-log';
+import { purgeProfilePhotos } from '../services/profile-photo-purge';
 
 /** Görev adları dışında kişi, bağlantı ve sağlayıcı hata bilgisi günlüğe yazılmaz. */
 export async function createNotificationRuntime() {
@@ -46,6 +47,10 @@ export async function createNotificationRuntime() {
     'notification.relay': () => relayPendingNotifications(),
     'notification.purgeFailed': () => purgeFailedNotificationIntents(getDb()),
     'files.purge': () => purgeFiles(getDb(), getStorage()),
+    'profilePhoto.purge': async () => {
+      const { scanned, removed, failed } = await purgeProfilePhotos(getDb(), getStorage());
+      process.stdout.write(`profilePhoto.purge: ${scanned} ${removed} ${failed}\n`);
+    },
     'linkedin.purge': () =>
       purgeExpiredLinkedinFiles({ db: getDb(), storage: getStorage(), llm: null }),
     'auth.purge': () => purgeExpiredAuth(getDb()),
