@@ -8,6 +8,7 @@ import {
   createInstitution,
   createUser,
   grantRequiredConsents,
+  unique,
 } from '@/test/fixtures';
 import { loadActor } from '../permissions/actor';
 import { searchMentors } from './mentor-directory';
@@ -15,6 +16,8 @@ import { searchAlumni } from './alumni-directory';
 import { searchUsers } from './admin-panel';
 import { listCourseGuide } from './course-guide';
 import { settleEvents } from './event';
+import { matchingDirectoryText } from '../repositories/turkish-filters';
+import { normalizeName } from '../rules/dictionary';
 
 const db = createTestPrisma();
 const WORDS = 'YILDIZ İSTANBUL ÇIĞ ÖZGÜR IŞIK';
@@ -30,10 +33,11 @@ const variants = [
   'isik',
 ];
 let viewer: string, owner: string, admin: string, course: string, canonical: string, banned: string;
-let departmentId: string;
+let departmentId: string, universityId: string, foreign: string;
 beforeAll(async () => {
   const inst = await createInstitution(db);
   departmentId = inst.deptA1;
+  universityId = inst.universityId;
   viewer = await createUser(db);
   await addMembership(db, { userId: viewer, departmentId, role: 'STUDENT', entryYear: 2024 });
   await grantRequiredConsents(db, viewer);
@@ -51,10 +55,11 @@ beforeAll(async () => {
     return id;
   };
   owner = await make(departmentId, WORDS);
+  await addMembership(db, { userId: owner, departmentId, role: 'ACADEMIC' });
   await db.position.create({
     data: { userId: owner, companyRaw: WORDS, titleRaw: WORDS, isCurrent: true, source: 'MANUAL' },
   });
-  const foreign = await make((await createInstitution(db)).deptA1, WORDS);
+  foreign = await make((await createInstitution(db)).deptA1, WORDS);
   await db.position.create({
     data: {
       userId: foreign,
@@ -165,4 +170,127 @@ it('mentor q olayında yalnız anahtar adı saklanır; ham metin props içinde y
   });
   expect(events).toEqual([{ props: { filters: ['q'], results: 'FEW' } }]);
   expect(JSON.stringify(events)).not.toContain('yıldız');
+});
+
+it('şirketin dört hukuki ek yazımı ve noktalı unvan aynı sözlük kişisini bulur', async () => {
+  const marker = unique('turkish413').replace(/[^a-z0-9]/gi, '');
+  const id = await createUser(db, { name: 'Sözlük Deneyi' });
+  await addMembership(db, { userId: id, departmentId, role: 'ALUMNI', graduationYear: 2022 });
+  await db.profile.create({ data: { userId: id, alumniDirectoryVisible: true } });
+  await db.mentorProfile.create({
+    data: { userId: id, isActive: true, monthlyCapacity: 4, sessionMinutes: 30 },
+  });
+  const company = await db.company.create({
+    data: {
+      name: `${marker} Örnek Yazılım A.Ş.`,
+      normalizedName: normalizeName(`${marker} Örnek Yazılım A.Ş.`, 'COMPANY'),
+    },
+  });
+  const title = await db.title.create({
+    data: {
+      name: `${marker} Yazılım Mühendisi`,
+      normalizedName: normalizeName(`${marker} Yazılım Mühendisi`, 'TITLE'),
+    },
+  });
+  await db.position.create({
+    data: {
+      userId: id,
+      companyId: company.id,
+      titleId: title.id,
+      companyRaw: 'Ham kurum',
+      titleRaw: 'Ham unvan',
+      isCurrent: true,
+      source: 'MANUAL',
+    },
+  });
+  for (const company of [
+    'Örnek Yazılım A.Ş.',
+    'ornek yazilim as',
+    'Örnek Yazılım AŞ',
+    'Ornek Yazilim A S',
+  ]) {
+    for (const key of ['company', 'q']) {
+      expect((await mentors({ [key]: `${marker} ${company}` })).items.map((x) => x.userId)).toEqual(
+        [id],
+      );
+      expect((await alumni({ [key]: `${marker} ${company}` })).items.map((x) => x.userId)).toEqual([
+        id,
+      ]);
+    }
+  }
+  for (const key of ['title', 'q']) {
+    expect((await mentors({ [key]: `${marker} yazilim muh.` })).items.map((x) => x.userId)).toEqual(
+      [id],
+    );
+    expect((await alumni({ [key]: `${marker} yazilim muh.` })).items.map((x) => x.userId)).toEqual([
+      id,
+    ]);
+  }
+  for (const filter of [
+    { company: `${marker} ornek yazilim as`, title: `${marker} yazilim muh.` },
+    { company: 'Ham kurum', title: `${marker} yazilim muh.` },
+    { company: `${marker} ornek yazilim as`, title: 'Ham unvan' },
+    { company: 'Ham kurum', title: 'Ham unvan' },
+  ]) {
+    expect((await mentors(filter)).items.map((item) => item.userId)).toEqual([id]);
+    expect((await alumni(filter)).items.map((item) => item.userId)).toEqual([id]);
+  }
+  for (const query of ['...', '%%', '__', 'ornek%yazilim', 'ornek_yazilim']) {
+    expect((await mentors({ company: query })).items).toEqual([]);
+    expect((await alumni({ company: query })).items).toEqual([]);
+  }
+});
+it('eşleşme deposu yabancı üniversite kimliklerini uygulamaya taşımaz; boş kapsam kapalıdır', async () => {
+  const filter = { q: WORDS, company: WORDS, title: WORDS, city: WORDS };
+  const result = await matchingDirectoryText(db, filter, [universityId]);
+  const foreignPosition = await db.position.findFirstOrThrow({
+    where: { userId: foreign },
+    select: { id: true },
+  });
+  const foreignProfile = await db.profile.findUniqueOrThrow({
+    where: { userId: foreign },
+    select: { id: true },
+  });
+  expect(result.users?.filter((id) => id === owner)).toHaveLength(1);
+  const ownerPosition = await db.position.findFirstOrThrow({
+    where: { userId: owner, companyRaw: WORDS },
+    select: { id: true },
+  });
+  const ownerProfile = await db.profile.findUniqueOrThrow({
+    where: { userId: owner },
+    select: { id: true },
+  });
+  expect(result.positions?.filter((id) => id === ownerPosition.id)).toHaveLength(1);
+  expect(result.profiles?.filter((id) => id === ownerProfile.id)).toHaveLength(1);
+  expect(result.users).not.toContain(foreign);
+  expect(result.positions).not.toContain(foreignPosition.id);
+  expect(result.profiles).not.toContain(foreignProfile.id);
+  expect(await matchingDirectoryText(db, filter, [])).toEqual({
+    users: [],
+    positions: [],
+    profiles: [],
+  });
+});
+it('şirket ve unvan iki ayrı güncel pozisyondan birleştirilmez', async () => {
+  await db.position.createMany({
+    data: [
+      {
+        userId: owner,
+        companyRaw: 'Kesişim Kurumu',
+        titleRaw: 'Başka Görev',
+        isCurrent: true,
+        source: 'MANUAL',
+      },
+      {
+        userId: owner,
+        companyRaw: 'Başka Kurum',
+        titleRaw: 'Kesişim Görevi',
+        isCurrent: true,
+        source: 'MANUAL',
+      },
+    ],
+  });
+  const filter = { company: 'Kesişim Kurumu', title: 'Kesişim Görevi' };
+  expect((await mentors(filter)).items).toEqual([]);
+  expect((await alumni(filter)).items).toEqual([]);
 });

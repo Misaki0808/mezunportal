@@ -140,8 +140,12 @@ LLM çıktısı güvenilmeyen girdidir; yalnız profil alanlarına öneri olur, 
   “staj/stajı/STAJ” içerir.
 - Mentor, mezun rehberi, yönetim kullanıcı adı ve ders adı süzgeçleri `tr_ascii` ile iki tarafı
   katlar; `yıldız/YILDIZ/yildiz` ve Türkçe harflerin ASCII karşılıkları aynı kümeyi bulur.
-  Ham SQL eşleşme deposu `src/server/repositories/turkish-filters.ts` yalnız kimlik döndürür; yetki,
-  görünürlük ve sayfalama servislerin son sorgusunda uygulanır. Mentor şirket/unvan araması
+  Ham SQL eşleşme deposu `src/server/repositories/turkish-filters.ts`, dizinlerde arayanın doğrulanmış
+  etkin üyeliklerinin üniversitelerindeki kimlikleri döndürür; diğer yetki, görünürlük ve sayfalama
+  koşulları servislerin son sorgusunda uygulanır. Şirket/unvan sözlüğünde görünen adın katlanması
+  yanında mevcut `normalizeName` eşleşmesi de korunur (şirket hukuki eki, unvan noktalaması).
+  Ham ad ve sözlük eşleşmeleri ayrı SQL dallarıdır; birlikte verilen şirket/unvan aynı güncel
+  pozisyonda eşleşir. LIKE işaretleri normalizasyonla joker haline gelmez. Mentor şirket/unvan araması
   mezun rehberi gibi güncel pozisyonla sınırlıdır. Aranan metin kullanım olayına yazılmaz;
   mentor olayında yalnız kullanılan `q` anahtar adı bulunur.
 - Filtreler URL'dedir. Sorgu metni metriklere yazılmaz.
