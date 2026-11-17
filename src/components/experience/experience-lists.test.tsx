@@ -78,11 +78,20 @@ describe('deneyimlerim', () => {
     expect(write[0]!.closest('.sticky-actions')).toBeNull();
   });
 
-  it('doluyken "Deneyim yaz" alttaki yapışkan çubukta kalır (bugünkü düzen)', () => {
+  it('doluyken "Deneyim yaz" başlığın sağındaki tek eylemdir (alttaki yapışkan çubuk kalktı)', () => {
     renderUi(<MyExperiences initial={page(items)} list={vi.fn()} />);
     const write = screen.getAllByRole('link', { name: 'Deneyim yaz' });
     expect(write).toHaveLength(1);
-    expect(write[0]!.closest('.sticky-actions')).not.toBeNull();
+    expect(write[0]!.closest('header')).not.toBeNull();
+    expect(write[0]!.closest('.sticky-actions')).toBeNull();
+  });
+  it('kartlar ızgarada, eylemler kartın altında; boşken başlıkta eylem yok', () => {
+    const { unmount } = renderUi(<MyExperiences initial={page(items)} list={vi.fn()} />);
+    expect(screen.getAllByRole('listitem')[0]!.parentElement).toHaveClass('grid', 'xl:grid-cols-3');
+    unmount();
+    renderUi(<MyExperiences initial={page([])} list={vi.fn()} />);
+    expect(screen.getAllByRole('link', { name: 'Deneyim yaz' })).toHaveLength(1);
+    expect(screen.getByRole('link', { name: 'Deneyim yaz' }).closest('header')).toBeNull();
   });
 
   it('durum sekmesi sunucudan o duruma göre yeniden listeler', async () => {
@@ -160,6 +169,13 @@ describe('moderasyon kuyruğu', () => {
 });
 
 describe('şikâyet alt sayfası', () => {
+  it('tetikleyici sessiz ve içeriği kadar geniştir (tam genişlikli ikincil düğme değil), dokunma hedefi ≥ 44 px', () => {
+    renderWithToasts(<ReportExperience experienceId="e1" report={vi.fn()} />);
+    const trigger = screen.getByRole('button', { name: 'Bu deneyimi şikâyet et' });
+    expect(trigger).toHaveClass('min-h-11', 'bg-transparent', 'text-primary');
+    expect(trigger).not.toHaveClass('w-full');
+    expect(trigger).not.toHaveClass('border');
+  });
   it('çift gönderim tek istektir; ağ hatasında gerekçe korunur', async () => {
     const gate = Promise.withResolvers<never>();
     const report = vi.fn(() => gate.promise);

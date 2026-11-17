@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react';
 import type { CompaniesPage, CompanyDetail, CompanySummary } from '@/contracts/companies';
 import { mergeCompaniesSchema } from '@/contracts/companies';
 import {
+  BackLink,
   Badge,
   Button,
   EmptyState,
@@ -50,16 +51,21 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
     ? data.companies
     : data.companies.filter((company) => !popularIds.has(company.id));
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 pb-28">
-      <PageHeader title={t('title')} description={t('description')} />
-      <div className="mt-5 flex flex-wrap gap-3">
-        <Link href="/mulakat-sorulari" className={buttonClasses({ variant: 'secondary' })}>
-          {t('interviewLink')}
-        </Link>
-        <Link href="/basvuru-takvimi" className={buttonClasses({ variant: 'secondary' })}>
-          {t('calendarLink')}
-        </Link>
-      </div>
+    <div className="w-full min-w-0">
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        actions={
+          <>
+            <Link href="/mulakat-sorulari" className={buttonClasses({ variant: 'secondary' })}>
+              {t('interviewLink')}
+            </Link>
+            <Link href="/basvuru-takvimi" className={buttonClasses({ variant: 'secondary' })}>
+              {t('calendarLink')}
+            </Link>
+          </>
+        }
+      />
       <SearchBar
         className="mt-6"
         action="/sirketler"
@@ -214,14 +220,9 @@ export function CompanyScreen({
       : []),
   ];
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 pb-28">
-      <Link
-        href="/sirketler"
-        className="press-control inline-flex min-h-11 items-center font-semibold text-primary"
-      >
-        ← {t('back')}
-      </Link>
-      <header className="mt-4 flex min-w-0 items-start gap-4">
+    <div className="w-full min-w-0">
+      <BackLink href="/sirketler">{t('back')}</BackLink>
+      <header className="flex min-w-0 items-start gap-4">
         <IconChip tone="accent" className="size-16 text-2xl font-semibold">
           {company.name.slice(0, 1).toLocaleUpperCase('tr-TR')}
         </IconChip>
