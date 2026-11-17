@@ -54,7 +54,7 @@ export async function searchAlumni(
         }
       : {}),
   };
-  const text = await matchingDirectoryText(db, filter);
+  const text = await matchingDirectoryText(db, filter, universityIds);
   const positions: Prisma.PositionWhereInput[] = [];
   if (filter.sectorId)
     positions.push({

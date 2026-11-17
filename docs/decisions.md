@@ -1125,6 +1125,16 @@ oturumsuz açılan sayfalar (hukuki metinler, ödül doğrulama, bildirim bağla
 kendi ortalanmış kapsayıcısını korur ve kabukta `[.app-content_&]` değişkeniyle sıfırlar; giriş ekranları ve `global-error` kabuk
 dışı olduğundan değişmedi. Sayfanın tek çocuğu olan `EmptyState`/`ErrorState` artık kendi `px-4 py-10` dolgusunu taşır (kural bunu
 sıfırlıyordu). Şirket sekme şeridi telefonda `Tabs bleed` ile ekran kenarına uzanır. Yeni token/bağımlılık yoktur.
+## 2026-11-17 · Dizin aramasında sözlük eşleşmesi ve kapsam (kart 413)
+
+Şirket/unvan aramasında katlanmış görünen ad ile mevcut sözlük normalizasyonu birlikte kullanılır;
+şirketin hukuki eki ve unvan noktalaması eşleşmeyi bozmaz. LIKE işaretleri içeren sorgu literal kalır,
+boş normalizasyon bütün sözlüğü eşleştirmez. Ham pozisyon ve sözlük eşleşmeleri ayrı UNION dallarında,
+birlikte verilen şirket/unvan ise her dalda aynı pozisyona uygulanan AND ile değerlendirilir: mevcut GIN
+indeksleri tablolar arası OR engeline takılmaz. Etkin doğrulanmış üyeliğin üniversite kapsamı kimlikler
+uygulamaya alınmadan SQL içinde uygulanır; diğer görünürlük, sıralama ve sayfalama kuralları mevcut
+serviste kalır. Böylece bütün DB'yi kapsayan kimlik listesi önlenirken yetki mantığı ikinci kez yazılmaz.
+Yeni bağımlılık, indeks veya migration yoktur.
 
 ## 2026-11-17 · Fotoğraf rızası sürüm değişimi
 
