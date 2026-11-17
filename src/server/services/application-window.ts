@@ -102,16 +102,14 @@ export async function getApplicationCalendar(
             ? await tx.company.count({ where: { id: parsed.id } })
             : await tx.sector.count({ where: { id: parsed.id } });
         if (!exists) throw codedNotFound('RESOURCE_NOT_FOUND');
-        const [months, follow] = await Promise.all([
-          aggregateApplicationMonths(tx, universities, parsed, now),
-          tx.companyFollow.findFirst({
-            where: {
-              userId,
-              ...(parsed.kind === 'COMPANY' ? { companyId: parsed.id } : { sectorId: parsed.id }),
-            },
-            select: { id: true },
-          }),
-        ]);
+        const months = await aggregateApplicationMonths(tx, universities, parsed, now);
+        const follow = await tx.companyFollow.findFirst({
+          where: {
+            userId,
+            ...(parsed.kind === 'COMPANY' ? { companyId: parsed.id } : { sectorId: parsed.id }),
+          },
+          select: { id: true },
+        });
         return applicationCalendarSchema.parse({
           months,
           isFollowing: !!follow,

@@ -44,16 +44,14 @@ async function asMember<T>(
 
 export async function listAlumniCourses(db: PrismaClient, userId: string) {
   return asMember(db, userId, 'ALUMNI', async (tx, departments) => {
-    const [courses, marks] = await Promise.all([
-      tx.course.findMany({
-        where: { departmentId: { in: departments } },
-        orderBy: [{ elective: 'desc' }, { semester: 'asc' }, { name: 'asc' }],
-      }),
-      tx.alumniCourseMark.findMany({
-        where: { userId, course: { departmentId: { in: departments } } },
-        select: { courseId: true },
-      }),
-    ]);
+    const courses = await tx.course.findMany({
+      where: { departmentId: { in: departments } },
+      orderBy: [{ elective: 'desc' }, { semester: 'asc' }, { name: 'asc' }],
+    });
+    const marks = await tx.alumniCourseMark.findMany({
+      where: { userId, course: { departmentId: { in: departments } } },
+      select: { courseId: true },
+    });
     return { courses, selected: marks.map((m) => m.courseId) };
   });
 }
@@ -166,17 +164,15 @@ export async function listCourseGuide(db: PrismaClient, userId: string, input: C
 export async function listManagedCourses(db: PrismaClient, userId: string) {
   const { readAsAdmin } = await import('./admin-access');
   return readAsAdmin({ db }, userId, 'ANY_ADMIN', async ({ tx, departmentIds }) => {
-    const [departments, courses] = await Promise.all([
-      tx.department.findMany({
-        where: { id: { in: departmentIds } },
-        select: { id: true, name: true },
-        orderBy: { name: 'asc' },
-      }),
-      tx.course.findMany({
-        where: { departmentId: { in: departmentIds } },
-        orderBy: [{ semester: 'asc' }, { name: 'asc' }],
-      }),
-    ]);
+    const departments = await tx.department.findMany({
+      where: { id: { in: departmentIds } },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    const courses = await tx.course.findMany({
+      where: { departmentId: { in: departmentIds } },
+      orderBy: [{ semester: 'asc' }, { name: 'asc' }],
+    });
     return { departments, courses };
   });
 }

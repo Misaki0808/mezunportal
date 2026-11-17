@@ -42,43 +42,44 @@ export async function getInterviewQuestions(
         select: { id: true, name: true, sectorId: true, sector: { select: { name: true } } },
         orderBy: [{ name: 'asc' }, { id: 'asc' }],
       });
-      const [companyOptions, sectors, experiences, identityContext] = await Promise.all([
-        tx.company.findMany({
-          select: { id: true, name: true },
-          orderBy: { name: 'asc' },
-        }),
-        tx.sector.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
-        tx.experience.findMany({
-          where: {
-            companyId: { in: companies.map((c) => c.id) },
-            status: 'PUBLISHED',
-            department: { faculty: { universityId: { in: universities } } },
-            author: { is: { deletedAt: null, ...notSuspended(now) } },
-          },
-          select: {
-            id: true,
-            companyId: true,
-            interviewQuestions: true,
-            processSteps: true,
-            author: { select: { id: true, name: true, email: true } },
-          },
-          orderBy: { id: 'asc' },
-        }),
-        // Bir kaynağın geri çekilmesi veya yazarın askıya alınması, diğer metinlerdeki adını açmaz.
-        // Kimlik bağlamı yalnız engelleme içindir; sorular ve sayımlar yukarıdaki görünür kaynaklardan gelir.
-        tx.experience.findMany({
-          where: {
-            companyId: { in: companies.map((c) => c.id) },
-            department: { faculty: { universityId: { in: universities } } },
-          },
-          select: {
-            id: true,
-            companyId: true,
-            status: true,
-            author: { select: { id: true, name: true, email: true } },
-          },
-        }),
-      ]);
+      const companyOptions = await tx.company.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' },
+      });
+      const sectors = await tx.sector.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' },
+      });
+      const experiences = await tx.experience.findMany({
+        where: {
+          companyId: { in: companies.map((c) => c.id) },
+          status: 'PUBLISHED',
+          department: { faculty: { universityId: { in: universities } } },
+          author: { is: { deletedAt: null, ...notSuspended(now) } },
+        },
+        select: {
+          id: true,
+          companyId: true,
+          interviewQuestions: true,
+          processSteps: true,
+          author: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { id: 'asc' },
+      });
+      // Bir kaynağın geri çekilmesi veya yazarın askıya alınması, diğer metinlerdeki adını açmaz.
+      // Kimlik bağlamı yalnız engelleme içindir; sorular ve sayımlar yukarıdaki görünür kaynaklardan gelir.
+      const identityContext = await tx.experience.findMany({
+        where: {
+          companyId: { in: companies.map((c) => c.id) },
+          department: { faculty: { universityId: { in: universities } } },
+        },
+        select: {
+          id: true,
+          companyId: true,
+          status: true,
+          author: { select: { id: true, name: true, email: true } },
+        },
+      });
       // Yayımlanmamış özel bir taslak diğer yazarların sorularını bastıramaz.
       // Geçmiş yayın kanıtı zaten tutulan, yalnız eklenebilen moderasyon kaydından gelir.
       const inactiveIds = identityContext
