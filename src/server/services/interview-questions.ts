@@ -66,6 +66,8 @@ export async function getInterviewQuestions(
         },
         orderBy: { id: 'asc' },
       });
+      // Bir kaynağın geri çekilmesi veya yazarın askıya alınması, diğer metinlerdeki adını açmaz.
+      // Kimlik bağlamı yalnız engelleme içindir; sorular ve sayımlar yukarıdaki görünür kaynaklardan gelir.
       const identityContext = await tx.experience.findMany({
         where: {
           companyId: { in: companies.map((c) => c.id) },
