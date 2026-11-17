@@ -5,14 +5,14 @@ import Link from 'next/link';
 
 import type { FaqItemView, FaqSearchPage } from '@/contracts/faq';
 import { FAQ_MY_REQUESTS_HREF, FAQ_PAGE_HREF } from '@/contracts/faq';
-import { Button, buttonClasses, EmptyState, Input, Pagination } from '@/components/ui';
+import { Button, buttonClasses, EmptyState, Input, PageHeader, Pagination } from '@/components/ui';
 
 import { formatDate } from './format';
 
 /** Yayınlanan SSS kaydı: kimlik yok (sözleşme yalnız soru, cevap, tarih verir). Yanıt `<details>` ile açılır. */
 export function FaqItemCard({ item, open }: { item: FaqItemView; open?: boolean }) {
   return (
-    <article className="rounded-card border border-border p-4">
+    <article className="rounded-card border border-border bg-surface p-4 shadow-card">
       <details open={open} className="group">
         <summary className="flex min-h-11 cursor-pointer list-none items-start justify-between gap-3 text-lg font-semibold text-fg [&::-webkit-details-marker]:hidden">
           <span className="min-w-0 [overflow-wrap:anywhere]">{item.question}</span>
@@ -55,17 +55,24 @@ export function FaqList({
   const outOfRange = result.items.length === 0 && result.page > 1;
   const pageCount = Math.max(1, Math.ceil(result.total / result.pageSize));
   return (
-    <div className="mx-auto flex w-full max-w-3xl min-w-0 flex-col gap-5 px-5 pb-12 pt-10 sm:pt-14">
-      <div>
-        <p className="font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
-        <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
-      </div>
+    <div className="flex w-full min-w-0 max-w-3xl flex-col gap-5">
+      <PageHeader
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
+        actions={
+          canAsk ? (
+            <Link className={buttonClasses({ variant: 'secondary' })} href={FAQ_MY_REQUESTS_HREF}>
+              {t('askLink')}
+            </Link>
+          ) : undefined
+        }
+      />
       <form
         role="search"
         action={FAQ_PAGE_HREF}
         method="get"
-        className="flex flex-col gap-3 sm:flex-row"
+        className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-card sm:flex-row"
       >
         <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-medium text-fg-muted">
           {t('searchLabel')}
@@ -75,11 +82,6 @@ export function FaqList({
           {t('search')}
         </Button>
       </form>
-      {canAsk && (
-        <Link className={buttonClasses({ variant: 'secondary' })} href={FAQ_MY_REQUESTS_HREF}>
-          {t('askLink')}
-        </Link>
-      )}
       {!outOfRange && (result.total > 0 || q) && (
         <p role="status" className="text-sm text-fg-muted">
           {q

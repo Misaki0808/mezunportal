@@ -937,3 +937,69 @@ it('sektör seçimi paylaşılabilir filtreye ve sayfa bağlantısına taşını
     '/ilanlar',
   );
 });
+
+it('ilan ayrıntısı (kart 424): tek birincil eylem başlıkta, künye kutusu bilgileri taşır, şikâyet okuma sütununda', () => {
+  renderWithToasts(
+    <PostingDetail
+      posting={{
+        ...posting,
+        companyId: 'c1',
+        description: 'Açıklama metni',
+        applyUrl: 'https://example.org/staj',
+      }}
+    />,
+  );
+  expect(screen.getByRole('link', { name: 'İlanlara dön' })).toHaveAttribute('href', '/ilanlar');
+  const header = screen
+    .getByRole('heading', { level: 1, name: 'Yazılım stajyeri' })
+    .closest('header')!;
+  expect(within(header).getByRole('link', { name: /Başvur/ })).toHaveAttribute(
+    'href',
+    'https://example.org/staj',
+  );
+  const facts = screen.getByRole('complementary', { name: 'İlan bilgileri' });
+  expect(within(facts).getByRole('link', { name: 'Örnek Kurum' })).toHaveAttribute(
+    'href',
+    '/sirketler/c1',
+  );
+  expect(within(facts).getByText('Staj')).toBeVisible();
+  expect(within(facts).getByText('İstanbul')).toBeVisible();
+  expect(within(facts).getByText('YBS')).toBeVisible();
+  // Açıklama ve ikincil eylem (şikâyet) künye kutusunda değil, okuma sütunundadır.
+  expect(within(facts).queryByText('Açıklama metni')).not.toBeInTheDocument();
+  expect(
+    within(facts).queryByRole('button', { name: 'Bu ilanı şikâyet et' }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Bu ilanı şikâyet et' })).toBeVisible();
+});
+it('ilan ayrıntısı: iletişim isteği yöntemi başlıkta "İletişim iste", yapılamıyorsa açıklama yazılır', () => {
+  const { unmount } = renderWithToasts(
+    <PostingDetail
+      canRequestContact
+      posting={{
+        ...posting,
+        applyMethod: 'CONTACT_REQUEST',
+        description: 'Açıklama',
+        applyUrl: null,
+      }}
+    />,
+  );
+  const header = screen.getByRole('heading', { level: 1 }).closest('header')!;
+  expect(within(header).getByRole('link', { name: 'İletişim iste' })).toHaveAttribute(
+    'href',
+    '/ilanlar/job-1/iletisim',
+  );
+  unmount();
+  renderWithToasts(
+    <PostingDetail
+      posting={{
+        ...posting,
+        applyMethod: 'CONTACT_REQUEST',
+        description: 'Açıklama',
+        applyUrl: null,
+      }}
+    />,
+  );
+  expect(screen.queryByRole('link', { name: 'İletişim iste' })).not.toBeInTheDocument();
+  expect(screen.getByText(/iletişim talebi oluşturulamıyor/)).toBeVisible();
+});

@@ -9,7 +9,7 @@ export default async function ArchivePage() {
   const result = await listPublishedStories();
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-5 py-10">
+    <div className="w-full min-w-0 max-w-2xl space-y-6">
       <PageHeader title={t('archiveTitle')} description={t('intro')} />
       {result.data.length ? (
         result.data.map((story) => (

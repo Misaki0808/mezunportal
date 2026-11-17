@@ -1,7 +1,6 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { Avatar, Card, ErrorState, PageHeader } from '@/components/ui';
+import { Avatar, BackLink, Card, ErrorState, PageHeader } from '@/components/ui';
 import { requestStoryDetail } from '@/app/detail-route';
 export const dynamic = 'force-dynamic';
 export default async function StoryPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,7 +13,10 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
   }
   const story = result.data;
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-5 py-10">
+    <div className="w-full min-w-0 max-w-2xl space-y-6">
+      <BackLink href="/hikayeler" flush>
+        {t('back')}
+      </BackLink>
       <PageHeader eyebrow={t('title')} title={story.name} description={story.department} />
       <Card className="space-y-5 p-6">
         <span className="inline-block rounded-full bg-primary p-1">
@@ -22,12 +24,6 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
         </span>
         <p className="whitespace-pre-wrap break-words text-lg leading-relaxed">{story.body}</p>
       </Card>
-      <Link
-        className="inline-flex min-h-11 items-center font-semibold text-primary underline"
-        href="/hikayeler"
-      >
-        {t('back')}
-      </Link>
     </div>
   );
 }
