@@ -46,11 +46,11 @@ describe('gerçek PDF metin çıkarıcı', () => {
   it('sıkıştırma bombası bellek sınırında sonlandırılır (yığın sınırı dış belleği saymaz)', async () => {
     const bomb = buildFlateBombPdf(160);
     expect(bomb.byteLength).toBeLessThan(CV_MAX_BYTES);
-    const started = Date.now();
+    // Duvar saati sınırı yok (kart 427): yük altında süre değişir. Bellek koruması `CV_PDF_UNREADABLE`, 5 sn'lik süre aşımı ise
+    // `CV_PARSE_TIMEOUT` verir; yani bu kod eşitliği bombanın bellek sınırında kesildiğini zaten ayırır.
     await expect(
       getPdfTextExtractor({ maxRssGrowthBytes: 48 * 1024 * 1024 }).extract(bomb),
     ).rejects.toMatchObject({ code: 'CV_PDF_UNREADABLE' });
-    expect(Date.now() - started).toBeLessThan(4000);
   });
   it('gerçek iş parçacığı süre aşımında sonlandırılır ve kararlı kod döner', async () => {
     await expect(

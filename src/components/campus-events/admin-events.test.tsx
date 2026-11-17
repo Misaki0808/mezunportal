@@ -65,7 +65,7 @@ describe('AdminEvents karar penceresi', () => {
     expect(within(d).getByRole('alert')).toHaveTextContent(
       'Bu işlem için kısa bir gerekçe yazmalısın.',
     );
-    expect(within(d).getByLabelText(/İşlem gerekçesi/)).toHaveFocus();
+    await waitFor(() => expect(within(d).getByLabelText(/İşlem gerekçesi/)).toHaveFocus());
   });
   it('onay gerekçesi sonraki kaydın retine taşınmaz', async () => {
     const { user } = renderWithToasts(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);

@@ -12,6 +12,7 @@ import {
 import { isCodedError } from '@/lib/errors';
 import { createTestPrisma } from '@/test/db';
 import { addMembership, createInstitution, createUser, type Institution } from '@/test/fixtures';
+import { letterMarker } from '@/test/markers';
 
 import { loadActor } from '../permissions/actor';
 import {
@@ -32,7 +33,7 @@ beforeAll(async () => {
 });
 
 const NOW = new Date('2030-06-15T12:00:00Z');
-const tag = () => `zm${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+const tag = () => letterMarker('zm');
 const DAY = 86_400_000;
 
 async function expectCode(promise: Promise<unknown>, code: string) {

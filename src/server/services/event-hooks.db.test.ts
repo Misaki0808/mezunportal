@@ -16,6 +16,7 @@ import {
   grantRequiredConsents,
   type Institution,
 } from '@/test/fixtures';
+import { letterMarker } from '@/test/markers';
 
 import { loadActor } from '../permissions/actor';
 import { sendContactRequest } from './contactRequest';
@@ -80,7 +81,7 @@ describe('olay kancaları', () => {
 
   it('deneyim araması: yalnız süzgeç TÜRLERİ ve sonuç kovası yazılır; sorgu metni ve değerleri asla', async () => {
     const userId = await member();
-    const query = `gizliSorgu${randomUUID().slice(0, 8)}`;
+    const query = letterMarker('gizliSorgu', 8);
     await searchExperiences(
       { db },
       await actorOf(userId),

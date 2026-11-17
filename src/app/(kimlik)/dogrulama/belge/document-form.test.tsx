@@ -65,7 +65,8 @@ describe('DocumentForm', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Belgeyi gönder' }));
     // Form kalkar; odak BODY'ye düşmez, sonuç metnine gider (klavye/ekran okuyucu yerini kaybetmez).
-    expect(await screen.findByText('Belgen incelemeye gönderildi.')).toHaveFocus();
+    const sent = await screen.findByText('Belgen incelemeye gönderildi.');
+    await waitFor(() => expect(sent).toHaveFocus());
     expect(submit).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('link', { name: 'Doğrulama durumunu gör' })).toHaveAttribute(
       'href',
