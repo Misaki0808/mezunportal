@@ -63,7 +63,9 @@ describe('ReviewQueue', () => {
       reason: 'Belge okunmuyor',
     });
     expect(screen.queryByText('Örnek Kişi')).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Mezun belgesi başvuruları' })).toHaveFocus();
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Mezun belgesi başvuruları' })).toHaveFocus(),
+    );
   });
 });
 

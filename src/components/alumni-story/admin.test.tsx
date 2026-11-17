@@ -65,7 +65,7 @@ it('boş ret gerekçesinde alan altındaki açıklama ve odak birlikte gelir', a
   const { user, dialog } = await open();
   await user.click(dialog.getByRole('button', { name: 'Kararı onayla' }));
   expect(await dialog.findByRole('alert')).toHaveTextContent('kısa bir gerekçe');
-  expect(dialog.getByLabelText(/Gerekçe/)).toHaveFocus();
+  await waitFor(() => expect(dialog.getByLabelText(/Gerekçe/)).toHaveFocus());
   expect(mocks.review).not.toHaveBeenCalled();
 });
 it('retin sunucu hatası açık pencerenin içinde görünür, gerekçe korunur', async () => {

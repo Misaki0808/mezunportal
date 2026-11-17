@@ -42,7 +42,7 @@ describe('ad soyad formu', () => {
     await user.click(save());
     expect(update).not.toHaveBeenCalled();
     expect(await screen.findByText(INVALID)).toBeVisible();
-    expect(field()).toHaveFocus();
+    await waitFor(() => expect(field()).toHaveFocus());
     expect(field()).toBeInvalid();
   });
 

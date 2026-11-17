@@ -1,8 +1,8 @@
-import { randomUUID } from 'node:crypto';
 import { afterAll, expect, it } from 'vitest';
 import { alumniSearchSchema } from '@/contracts/alumni-directory';
 import { createTestPrisma } from '@/test/db';
 import { addMembership, createInstitution, createUser } from '@/test/fixtures';
+import { letterMarker } from '@/test/markers';
 import { loadActor } from '../permissions/actor';
 import { normalizeName } from '../rules/dictionary';
 import { searchAlumni } from './alumni-directory';
@@ -27,7 +27,7 @@ it('yalnız aynı üniversitedeki katılmış ve doğrulanmış mezunu döndür�
     });
     return userId;
   };
-  const key = randomUUID().slice(0, 8);
+  const key = letterMarker('', 8);
   const visible = await mk(one.deptA1, true, `Havacı ${key}`);
   const hidden = await mk(one.deptA1, false, `Havacı ${key}`);
   const foreign = await mk(other.deptA1, true, `Havacı ${key}`);
@@ -131,7 +131,7 @@ it('yalnız aynı üniversitedeki katılmış ve doğrulanmış mezunu döndür�
 
 it('kendini, silinenleri, bitmiş üyeliği ve öğrenci rolünü rehberde göstermez; q eski işveren veya unvanı aramaz', async () => {
   const institution = await createInstitution(db);
-  const key = randomUUID().slice(0, 8);
+  const key = letterMarker('', 8);
   const viewer = await createUser(db, { name: `Kendi ${key}` });
   await addMembership(db, { userId: viewer, departmentId: institution.deptA1, role: 'ALUMNI' });
   await db.profile.create({ data: { userId: viewer, alumniDirectoryVisible: true } });
