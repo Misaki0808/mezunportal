@@ -9,7 +9,11 @@ import { Skeleton, SkeletonText } from './skeleton';
 export function PageSkeleton({ cards = 3 }: { cards?: number }) {
   const t = useTranslations('ui.page');
   return (
-    <div role="status" aria-busy="true" className="mx-auto max-w-2xl px-5 py-10 sm:py-14">
+    <div
+      role="status"
+      aria-busy="true"
+      className="mx-auto max-w-2xl px-5 py-10 sm:py-14 [.app-content_&]:mx-0 [.app-content_&]:p-0"
+    >
       <span className="sr-only">{t('loading')}</span>
       <Skeleton className="h-4 w-24" />
       <Skeleton className="mt-3 h-9 w-2/3" />

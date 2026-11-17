@@ -362,15 +362,3 @@
 :root[data-scroll-lock-gutter] .fixed.inset-x-0:not(dialog) {
   right: var(--scroll-lock-gutter);
 }
-
-/*
- * Uygulama kabuğu içeriği (kart 384, görünüm A): kabuk dış boşluğu ve hizayı sahiplenir (en çok 1280 px, sola yaslı,
- * telefonda 16, bilgisayarda 28/32 px dolgu). Eski sayfa kapsayıcıları (`mx-auto max-w-* px-5 py-10`) ortalanmaz ve
- * kendi dolgusunu eklemez; kendi okuma ölçülerini (`max-w-*`) korur, böylece formlar ve metin sayfaları bozulmadan sola
- * yaslanır. Sayfalar yeni başlık/ızgara düzenine geçtikçe (kart 385, 386) kapsayıcıları kalkar ve bu kural silinir.
- * Katmansız yazıldı: katmanlı Tailwind yardımcı sınıflarını özgüllüğe bakmadan geçer.
- */
-.app-content > :where(div, section, article, form, header) {
-  margin-inline: 0;
-  padding: 0;
-}

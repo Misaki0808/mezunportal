@@ -22,7 +22,7 @@ export default async function MembershipPage() {
     redirect('/dogrulama');
   const role = state.data.emailKind === 'STUDENT_DOMAIN' ? 'STUDENT' : 'ACADEMIC';
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-12 sm:pt-20">
+    <div className="flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col">
       <MembershipForm
         role={role}
         departments={departments.data.departments}

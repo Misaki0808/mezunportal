@@ -1117,6 +1117,14 @@ Mentor şirket/unvan araması mezun rehberiyle aynı biçimde güncel pozisyonla
 iş eşleşmesinin kartta bugünkü işmiş gibi görünmesi önlenir. Kullanım olayı yalnız `q` anahtarını
 saklar, sorgu değerini saklamaz. Yeni işlev/eklenti/bağımlılık yoktur.
 
+## 2026-11-17 · Kabuk içeriğinin geçici `.app-content` kuralı kaldırıldı (kart 430)
+
+Kabuk içeriği dolguyu ve hizayı verir; eski `mx-auto max-w-* px-* py-*` kapsayıcıları ya da kuralın saklayıp bıraktığı sayfa
+düzeyi dolgular (liste/dizin, yönetim, ayrıntı sayfalarındaki `pb-8`, form `pb-32`) kalktı, CSS kuralı silindi. Hem kabukta hem
+oturumsuz açılan sayfalar (hukuki metinler, ödül doğrulama, bildirim bağlantıları, hata sınırı, yükleme iskeleti, dizin galerisi)
+kendi ortalanmış kapsayıcısını korur ve kabukta `[.app-content_&]` değişkeniyle sıfırlar; giriş ekranları ve `global-error` kabuk
+dışı olduğundan değişmedi. Sayfanın tek çocuğu olan `EmptyState`/`ErrorState` artık kendi `px-4 py-10` dolgusunu taşır (kural bunu
+sıfırlıyordu). Şirket sekme şeridi telefonda `Tabs bleed` ile ekran kenarına uzanır. Yeni token/bağımlılık yoktur.
 
 ## 2026-11-17 · Fotoğraf rızası sürüm değişimi
 
