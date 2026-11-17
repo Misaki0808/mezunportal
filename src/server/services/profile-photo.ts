@@ -159,7 +159,9 @@ export async function moderateProfilePhoto(
       where: { userId: input.userId, endedAt: null },
       select: { departmentId: true },
     });
-    const scope = await Promise.all(memberships.map((m) => covers(tx, admin, m.departmentId)));
+    const scope: boolean[] = [];
+    for (const membership of memberships)
+      scope.push(await covers(tx, admin, membership.departmentId));
     if (!isSystem(admin) && !scope.some(Boolean)) throw codedNotFound('RESOURCE_NOT_FOUND');
     if (!(await tx.profilePhoto.findUnique({ where: { userId: input.userId } })))
       return { removed: true as const };

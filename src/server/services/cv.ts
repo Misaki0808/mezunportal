@@ -266,26 +266,24 @@ function splitYearMonth(prefix: 'start' | 'end' | 'issued', value: string | null
 }
 
 async function loadSnapshot(tx: Tx, userId: string): Promise<CvSnapshot> {
-  const [education, positions, languages, certifications, profile] = await Promise.all([
-    tx.education.findMany({ where: { userId } }),
-    tx.position.findMany({ where: { userId } }),
-    tx.language.findMany({ where: { userId } }),
-    tx.certification.findMany({ where: { userId } }),
-    tx.profile.findUnique({
-      where: { userId },
-      select: {
-        id: true,
-        headline: true,
-        summary: true,
-        city: true,
-        manualFields: true,
-        tags: {
-          where: { tag: { kind: 'SKILL' } },
-          select: { tagId: true, tag: { select: { label: true } } },
-        },
+  const education = await tx.education.findMany({ where: { userId } });
+  const positions = await tx.position.findMany({ where: { userId } });
+  const languages = await tx.language.findMany({ where: { userId } });
+  const certifications = await tx.certification.findMany({ where: { userId } });
+  const profile = await tx.profile.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      headline: true,
+      summary: true,
+      city: true,
+      manualFields: true,
+      tags: {
+        where: { tag: { kind: 'SKILL' } },
+        select: { tagId: true, tag: { select: { label: true } } },
       },
-    }),
-  ]);
+    },
+  });
   const protectedRow = (row: { manuallyEdited: boolean; source: 'CV' | 'MANUAL' }) =>
     row.manuallyEdited || row.source === 'MANUAL';
   return {

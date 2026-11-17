@@ -1116,3 +1116,17 @@ katlamayı destekler; noktalama temizleyen `User.nameSearch`, literal `%/_` aram
 Mentor şirket/unvan araması mezun rehberiyle aynı biçimde güncel pozisyonla sınırlanır: geçmiş
 iş eşleşmesinin kartta bugünkü işmiş gibi görünmesi önlenir. Kullanım olayı yalnız `q` anahtarını
 saklar, sorgu değerini saklamaz. Yeni işlev/eklenti/bağımlılık yoktur.
+
+
+## 2026-11-17 · TD-027 işlem sorguları ve kalan Prisma sınırı (kart 434)
+
+İşlemde aktörün çoklu ilişkisi ve yönetim kullanıcı/atama listelerindeki çoklu ilişkiler
+toplu, sıralı okumalara ayrıldı; yetki ve maskeli sonuçlar korunur. Uygulamada aynı işlem
+istemcisindeki açık `Promise.all` okumaları da sıralandı. Yerel `scripts/td027-probe.ts`
+`NODE_OPTIONS="--conditions=react-server --trace-deprecation" pnpm exec tsx scripts/td027-probe.ts <kip>`
+ile ölçülür: `actor` ve `admin` sıfır; `relations` eski çok ilişkili sorguyu ve bir uyarıyı
+yeniden üretir (çıkış 1). Basit üç sayaç denemesinde `parallel` ve `serial` ikisi de sıfırdır;
+bütün `Promise.all` kullanımlarının kendi başına uyarı ürettiği iddia edilmez. pg uyarısı
+süreç başına bir kez gösterildiğinden sayı bağımsız kip süreçleri içindir, tüm olayların sayısı
+değildir. pg-boss kuyrukları kendi bağlantı havuzlarını kurar; Prisma havuzunu paylaşmaz. Kalan
+Prisma içi çoklu ilişki sorunu çözülene kadar TD-027 ve e2e uyarı istisnası açık kalır.

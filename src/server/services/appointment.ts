@@ -285,13 +285,11 @@ async function settingsView(
   userId: string,
   eligible: boolean,
 ): Promise<MentorSettingsView> {
-  const [profile, rules] = await Promise.all([
-    tx.mentorProfile.findUnique({ where: { userId } }),
-    tx.availabilityRule.findMany({
-      where: { mentorId: userId },
-      orderBy: [{ weekday: 'asc' }, { startMinute: 'asc' }],
-    }),
-  ]);
+  const profile = await tx.mentorProfile.findUnique({ where: { userId } });
+  const rules = await tx.availabilityRule.findMany({
+    where: { mentorId: userId },
+    orderBy: [{ weekday: 'asc' }, { startMinute: 'asc' }],
+  });
   return mentorSettingsViewSchema.parse({
     eligible,
     settings: profile
@@ -425,20 +423,18 @@ async function slotsOf(
   now: Date,
   excludeBusy = true,
 ) {
-  const [rules, busy, fullMonths] = await Promise.all([
-    tx.availabilityRule.findMany({ where: { mentorId: mentor.userId } }),
-    excludeBusy
-      ? tx.appointment.findMany({
-          where: {
-            mentorId: mentor.userId,
-            status: { in: ['REQUESTED', 'CONFIRMED'] },
-            endsAt: { gt: now },
-          },
-          select: { startsAt: true, endsAt: true },
-        })
-      : Promise.resolve([]),
-    fullMonthsOf(tx, mentor.userId, mentor.monthlyCapacity, now),
-  ]);
+  const rules = await tx.availabilityRule.findMany({ where: { mentorId: mentor.userId } });
+  const busy = await (excludeBusy
+    ? tx.appointment.findMany({
+        where: {
+          mentorId: mentor.userId,
+          status: { in: ['REQUESTED', 'CONFIRMED'] },
+          endsAt: { gt: now },
+        },
+        select: { startsAt: true, endsAt: true },
+      })
+    : Promise.resolve([]));
+  const fullMonths = await fullMonthsOf(tx, mentor.userId, mentor.monthlyCapacity, now);
   return {
     rules,
     fullMonths,
