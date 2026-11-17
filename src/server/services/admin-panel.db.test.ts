@@ -69,7 +69,7 @@ async function expectCode(promise: Promise<unknown>, code: string) {
   expect(isCodedError(error) && error.code).toBe(code);
 }
 
-const tag = () => `zx${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+const tag = () => letterMarker('zx');
 type NewUser = {
   departmentId?: string;
   role?: 'STUDENT' | 'ALUMNI' | 'ACADEMIC';

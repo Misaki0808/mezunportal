@@ -12,6 +12,7 @@ import {
   grantRequiredConsents,
   type Institution,
 } from '@/test/fixtures';
+import { letterMarker } from '@/test/markers';
 
 import {
   createDictionaryEntry,
@@ -54,7 +55,7 @@ async function expectCode(promise: Promise<unknown>, code: string) {
   );
   expect(isCodedError(error) && error.code).toBe(code);
 }
-const tag = () => `zq${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+const tag = () => letterMarker('zq');
 const auditOf = (targetId: string) =>
   db.adminAuditLog.findMany({ where: { targetId }, orderBy: { createdAt: 'asc' } });
 const REASON = 'Yinelenen kayıt temizliği';

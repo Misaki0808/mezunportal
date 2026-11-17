@@ -20,6 +20,7 @@ import {
   grantRequiredConsents,
   type Institution,
 } from '@/test/fixtures';
+import { letterMarker } from '@/test/markers';
 
 import { exportEmploymentReport, getEmploymentReport } from './admin-employment';
 
@@ -27,7 +28,7 @@ const db = createTestPrisma();
 const deps = { db };
 afterAll(() => db.$disconnect());
 
-const tag = () => `zk${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+const tag = () => letterMarker('zk');
 async function expectCode(promise: Promise<unknown>, code: string) {
   const error = await promise.then(
     () => null,

@@ -9,6 +9,7 @@ import { createTestPrisma } from '@/test/db';
 import { queryCounter } from '@/test/query-counter';
 import { settleEvents } from './event';
 import { addMembership, createInstitution, createUser, type Institution } from '@/test/fixtures';
+import { letterMarker } from '@/test/markers';
 
 import { loadActor } from '../permissions/actor';
 import { listSearchSectors, searchExperiences } from './search';
@@ -85,7 +86,7 @@ async function experience(seed: ExperienceSeed = {}, institution: Institution = 
   return row.id;
 }
 /** Her testin kendi benzersiz belirteci: paylaşılan veritabanında başka testlerin satırlarıyla karışmaz. */
-const tag = () => `zx${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+const tag = () => letterMarker('zx');
 
 describe('Türkçe tam metin: büyük/küçük harf ve ek farkları eşleşir', () => {
   it.each(['staj', 'stajı', 'STAJ', 'Staj', 'STAJI', 'stajda'])(
