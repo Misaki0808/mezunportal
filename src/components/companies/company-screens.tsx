@@ -293,7 +293,7 @@ export function CompanyMerge() {
     });
   }
   return (
-    <div className="min-w-0 space-y-6 pb-8">
+    <div className="min-w-0 space-y-6">
       <PageHeader title={t('mergeTitle')} description={t('mergeDescription')} />
       <div className="mt-7 grid gap-6">
         {(['source', 'target'] as const).map((which) => (

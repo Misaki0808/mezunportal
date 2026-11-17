@@ -108,7 +108,7 @@ export function SlotPicker({ list, request }: Props) {
 
   if (done) {
     return (
-      <div className="flex w-full max-w-lg flex-col gap-3 py-10 text-center">
+      <div className="flex w-full max-w-lg flex-col gap-3 text-center">
         <h1
           ref={doneRef}
           tabIndex={-1}
