@@ -17,6 +17,7 @@ import {
 } from '@/contracts/mentor-directory';
 import {
   Button,
+  ChevronDownIcon,
   buttonClasses,
   Checkbox,
   EmptyState,
@@ -354,28 +355,34 @@ export function MentorDirectory({
           {sectors.length > 0 && (
             <label className="flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold">
               <span>{t('filters.sector')}</span>
-              <select
-                className="min-h-11 max-w-40 rounded-full border border-border-control bg-surface px-3 text-fg"
-                value={filter.sectorId ?? ''}
-                disabled={pending}
-                onChange={(event) => {
-                  const next = {
-                    ...filter,
-                    q: query.trim() || undefined,
-                    sectorId: event.target.value || undefined,
-                    page: 1,
-                  };
-                  setDraft(next);
-                  go(next);
-                }}
-              >
-                <option value="">{t('filters.all')}</option>
-                {sectors.map((sector) => (
-                  <option key={sector.id} value={sector.id}>
-                    {sector.name}
-                  </option>
-                ))}
-              </select>
+              <span className="relative inline-flex">
+                <select
+                  className="min-h-11 max-w-40 appearance-none rounded-full border border-border-control bg-surface py-2 pr-8 pl-3 text-base text-fg"
+                  value={filter.sectorId ?? ''}
+                  disabled={pending}
+                  onChange={(event) => {
+                    const next = {
+                      ...filter,
+                      q: query.trim() || undefined,
+                      sectorId: event.target.value || undefined,
+                      page: 1,
+                    };
+                    setDraft(next);
+                    go(next);
+                  }}
+                >
+                  <option value="">{t('filters.all')}</option>
+                  {sectors.map((sector) => (
+                    <option key={sector.id} value={sector.id}>
+                      {sector.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-fg-muted"
+                />
+              </span>
             </label>
           )}
         </div>
