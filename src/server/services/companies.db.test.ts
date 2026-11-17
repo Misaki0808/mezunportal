@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { afterAll, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import {
@@ -11,6 +10,7 @@ import {
 } from '@/test/fixtures';
 import { companySlug, getCompany, mergeCompanies, searchCompanies } from './companies';
 import { companyDetailSchema } from '@/contracts/companies';
+import { letterMarker } from '@/test/markers';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -25,7 +25,7 @@ async function setup() {
     entryYear: 2023,
   });
   await grantRequiredConsents(db, viewer);
-  const key = randomUUID().slice(0, 8);
+  const key = letterMarker('', 8);
   const company = await db.company.create({
     data: { name: `Örnek ${key}`, normalizedName: `ornek ${key}`, aliases: [`takma ${key}`] },
     select: { id: true, name: true },
