@@ -79,7 +79,7 @@ try {
     await listAdminGrants({ db }, admin.id, { limit: 20 });
   } else throw new Error('Bilinmeyen TD-027 ölçümü');
   await new Promise<void>((resolve) => setImmediate(resolve));
-  process.stdout.write(`TD-027 ${mode}: ${warnings} pg uyarısı\n`);
+  process.stdout.write(`TD-027${mode === 'actor' ? '' : ` ${mode}`}: ${warnings} pg uyarısı\n`);
   if (warnings > 0) process.exitCode = 1;
 } finally {
   process.off('warning', onWarning);
