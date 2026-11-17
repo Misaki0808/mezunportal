@@ -271,6 +271,45 @@ it('eşleşme deposu yabancı üniversite kimliklerini uygulamaya taşımaz; bo�
     profiles: [],
   });
 });
+it('eşleşme deposu onay bekleyen ve biten üyeliği kapsama almaz', async () => {
+  // Aynı üniversite, aynı metin; yalnız üyelik durumu farklı. Servis ikinci katmanda süzdüğü için çıktı
+  // değişmez, bu yüzden sözleşmeyi doğrudan depoda sabitliyoruz. Metin bu teste özgü: ortak WORDS verisine
+  // (yönetim araması bekleyen üyeleri de listeler) sızıp başka testleri karışık sırada bozmasın.
+  const text = unique('kapsam442').replace(/[^a-z0-9]/gi, '');
+  const make = async (membership: { status?: 'PENDING'; endedAt?: Date }) => {
+    const id = await createUser(db, { name: text });
+    await addMembership(db, {
+      userId: id,
+      departmentId,
+      role: 'ALUMNI',
+      graduationYear: 2022,
+      ...membership,
+    });
+    const profile = await db.profile.create({
+      data: { userId: id, alumniDirectoryVisible: true, city: text },
+      select: { id: true },
+    });
+    const position = await db.position.create({
+      data: { userId: id, companyRaw: text, titleRaw: text, isCurrent: true, source: 'MANUAL' },
+      select: { id: true },
+    });
+    return { id, profileId: profile.id, positionId: position.id };
+  };
+  const active = await make({});
+  const pending = await make({ status: 'PENDING' });
+  const ended = await make({ endedAt: new Date('2025-01-01T00:00:00Z') });
+  const filter = { q: text, company: text, title: text, city: text };
+  const result = await matchingDirectoryText(db, filter, [universityId]);
+  // Karşı deneme: doğrulanmış ve süren üyelik aynı metinle kapsamda.
+  expect(result.users).toEqual([active.id]);
+  expect(result.positions).toEqual([active.positionId]);
+  expect(result.profiles).toEqual([active.profileId]);
+  for (const excluded of [pending, ended]) {
+    expect(result.users).not.toContain(excluded.id);
+    expect(result.positions).not.toContain(excluded.positionId);
+    expect(result.profiles).not.toContain(excluded.profileId);
+  }
+});
 it('şirket ve unvan iki ayrı güncel pozisyondan birleştirilmez', async () => {
   await db.position.createMany({
     data: [

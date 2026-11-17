@@ -173,6 +173,7 @@ tıklamayı da taze düğüme yap. Anlık `expect(...)` yalnız aynı React işl
 (120 deneyim, 60 ilan, 30 şirket; hedef p95 < 300 ms) ve **stres** (3.000 deneyim, 1.500 ilan, 100 şirket, 600 kullanıcı, 200 aday; gerileme sınırı p95 < 1 sn).
 Ölçüm, üretimde autovacuum'un yaptığı gibi veri yüklendikten sonra `ANALYZE` çalıştırır; `PERF_OUT=<dosya>` ayrıntılı JSON ve `EXPLAIN` çıktısı yazar.
 Plan testi indeks **kullanılabilirliğini** (`enable_seqscan = off`) denetler; küçük tabloda sıralı tarama geçerli bir plan seçimidir.
+Mutlak süre eşiği makine yüklüyken anlamsızdır (`alumni-directory.perf` p95 < 300 ms eşiği yüklüyken 8 koşunun 5'inde kırmızıydı); o test bunun yerine sorgu sayısını (N+1) ve aynı döngüde ölçülen başvuru sorgusuna medyan oranını denetler, mutlak p95'i yalnız bilgi olarak yazar. Aynı sebeple tek `it` içine yüzlerce veritabanı turu sığdırma: `monthly-digest.db.test.ts` tek testte 222 tur yapıyordu ve yüklü kapıda 15 sn payını aştı, şimdi bağımsız testler (özet bölümün bütün deneyimlerini saydığı için her test kendi kurumunu kurar).
 
 Son ölçüm (yerel, p50/p95 ms): 10× hacimde en yavaş yüzey 52 ms (ilan arama), hepsi bütçe içinde. Stres hacminde: ilan listesi 123/178, ilan arama (metin) 306/361,
 deneyim arama (metin) 212/281, soru bankası (tüm şirketler) 431/494, aday arama 36/48, diğerleri < 80. **Bu turda düzeltilenler:** ilan görünürlük koşulu ilişkili
