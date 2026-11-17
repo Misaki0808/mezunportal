@@ -8,6 +8,7 @@ import { isCodedError } from '@/lib/errors';
 import { cvKit, cvUser, pdfForm, type CvTestKit, skillCount, skillLabels } from '@/test/cv';
 import { createTestPrisma } from '@/test/db';
 import { createFakeLlm } from '@/server/external/llm/fake';
+import { letterMarker } from '@/test/markers';
 import { normalizeName } from '../rules/dictionary';
 import { loadProfileCompletion } from './profile';
 
@@ -1000,4 +1001,95 @@ it('CV onayı profil iletişim biçimi kuralını atlayamaz; çok kalemli karar 
   );
   expect(await counts(userId)).toEqual(before);
   expect((await db.cvUpload.findUniqueOrThrow({ where: { id } })).status).toBe('PARSED');
+});
+
+// Kart 435: sunucunun eklediği sözlük kimlikleri (`companyId`, `titleId`, `skillId`) kullanıcı metni sanılıp reddedilmez.
+describe('applyCv — sözlük kimliği kişisel veri sanılmaz (kart 435)', () => {
+  // UUIDv7 biçimli ve son grubu rakam ağırlıklı kimlikler: tek başına telefon desenine benzer (yanlış pozitif).
+  const COMPANY_ID = '019aa000-0000-7000-8000-005551234567';
+  const TITLE_ID = '019aa000-0000-7000-8000-005551234568';
+  const SKILL_ID = '019aa000-0000-7000-8000-005551234569';
+  const COMPANY = 'Kimlik Sözlük A.Ş.';
+  const TITLE = 'Kimlik Unvanı';
+  const SKILL = 'Kimlik Becerisi';
+
+  async function seedDictionary() {
+    const sectorName = letterMarker('Sektör ');
+    const sector =
+      (await db.sector.findFirst({ where: { name: { startsWith: 'Sektör ' } } })) ??
+      (await db.sector.create({
+        data: { name: sectorName, normalizedName: normalizeName(sectorName) },
+      }));
+    await db.company.upsert({
+      where: { id: COMPANY_ID },
+      create: {
+        id: COMPANY_ID,
+        name: COMPANY,
+        normalizedName: normalizeName(COMPANY, 'COMPANY'),
+        aliases: [],
+        sectorId: sector.id,
+      },
+      update: {},
+    });
+    await db.title.upsert({
+      where: { id: TITLE_ID },
+      create: {
+        id: TITLE_ID,
+        name: TITLE,
+        normalizedName: normalizeName(TITLE, 'TITLE'),
+        aliases: [],
+      },
+      update: {},
+    });
+    await db.skill.upsert({
+      where: { id: SKILL_ID },
+      create: {
+        id: SKILL_ID,
+        name: SKILL,
+        normalizedName: normalizeName(SKILL, 'SKILL'),
+        aliases: [],
+      },
+      update: {},
+    });
+  }
+
+  it('sözlük şirketi, unvanı ve becerisinin kimliği telefon desenine benzese de CV onayı başarılı olur', async () => {
+    await seedDictionary();
+    const { userId, actor, kit, id } = await parsedUpload(
+      cv({ positions: [position(COMPANY, { title: TITLE })], skills: [SKILL] }),
+    );
+    const review = await getCvReview(kit.deps, actor, id);
+    const result = await applyCv(
+      kit.deps,
+      actor,
+      parseApply(id, accept(review.items.map((item) => item.key))),
+    );
+    expect(result.created).toBeGreaterThanOrEqual(2);
+    expect(await db.position.findFirstOrThrow({ where: { userId } })).toMatchObject({
+      companyId: COMPANY_ID,
+      titleId: TITLE_ID,
+    });
+    expect(await skillLabels(db, userId)).toContain(SKILL);
+  });
+
+  it.each([
+    ['açıklamadaki telefon', { description: 'Beni ara: 0532 123 45 67' }],
+    ['açıklamadaki e-posta', { description: 'Yazın: ayse@example.invalid' }],
+    ['unvandaki 11 haneli numara', { title: `${TITLE} 12345678901` }],
+  ])(
+    'aynı onayda %s hâlâ PROFILE_TEXT_PERSONAL_DATA ile reddedilir ve hiçbir şey yazılmaz',
+    async (_name, extra) => {
+      await seedDictionary();
+      const { userId, actor, kit, id } = await parsedUpload(
+        cv({ positions: [position(COMPANY, { title: TITLE, ...extra })], skills: [SKILL] }),
+      );
+      const review = await getCvReview(kit.deps, actor, id);
+      const before = await counts(userId);
+      await expectCode(
+        applyCv(kit.deps, actor, parseApply(id, accept(review.items.map((item) => item.key)))),
+        'PROFILE_TEXT_PERSONAL_DATA',
+      );
+      expect(await counts(userId)).toEqual(before);
+    },
+  );
 });

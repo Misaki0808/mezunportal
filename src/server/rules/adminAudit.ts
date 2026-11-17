@@ -1,4 +1,4 @@
-import { looksLikePersonalData } from '@/lib/personal-data';
+import { isIdentifierField, looksLikePersonalData } from '@/lib/personal-data';
 export { looksLikePersonalData } from '@/lib/personal-data';
 
 /**
@@ -135,22 +135,6 @@ const FORBIDDEN_KEY_WORDS = new Set([
   'url',
 ]);
 
-// Yalnız tam UUID (RFC varyantı) veya seedId'nin 24 hex biçimi. Serbest metin/gerekçe
-// bu istisnaya girmez; kimlik anahtarı tek başına telefon/e-postayı aklamaz.
-function isAuditIdentifier(value: string): boolean {
-  return /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|[0-9a-f]{24})$/i.test(
-    value,
-  );
-}
-
-function isIdentifierKey(key: string): boolean {
-  return key === 'id' || key === 'ids' || /(?:Id|Ids|_id|_ids)$/.test(key);
-}
-
-export function isAuditIdentifierField(key: string, value: string): boolean {
-  return isIdentifierKey(key) && isAuditIdentifier(value);
-}
-
 function keyWords(key: string): string[] {
   return key
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -186,7 +170,7 @@ export function findMetadataProblems(metadata: unknown): MetadataProblem[] {
     if (typeof value === 'string') {
       if (value.length > METADATA_MAX_STRING) {
         problems.push({ path, problem: `metin en fazla ${METADATA_MAX_STRING} karakter` });
-      } else if (!isAuditIdentifierField(key, value) && looksLikePersonalData(value)) {
+      } else if (!isIdentifierField(key, value) && looksLikePersonalData(value)) {
         problems.push({ path, problem: 'kişisel veri gibi görünen değer' });
       }
       return;
