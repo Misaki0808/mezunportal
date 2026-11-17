@@ -142,6 +142,14 @@ async function tour(
       expect.soft(m.head.length, `${key}: içerik boş`).toBeGreaterThan(20);
       expect.soft(m.overflowX, `${key}: yatay taşma (scrollWidth ${m.scrollWidth})`).toBe(false);
       expect.soft(m.smallFont, `${key}: 16 px altı giriş alanı (odakta yakınlaştırır)`).toEqual([]);
+      if (screen.slug === 'mentorlar' || screen.slug === 'ilanlar') {
+        expect
+          .soft(
+            m.tap.filter((item) => item.startsWith('select:')),
+            `${key}: seçici dokunma alanı`,
+          )
+          .toEqual([]);
+      }
       expect.soft(m.overlap, `${key}: alt gezinme ile çakışan çubuk`).toEqual([]);
       expect.soft(m.viewportMeta, `${key}: viewport-fit=cover`).toContain('viewport-fit=cover');
       if (OUT) {

@@ -13,6 +13,7 @@ import type {
 } from '@/contracts/job-postings';
 import {
   Button,
+  ChevronDownIcon,
   Checkbox,
   Card,
   Badge,
@@ -384,19 +385,25 @@ export function PostingList({
           {options.locations.length > 0 && (
             <label className="flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold">
               <span>{t('location')}</span>
-              <select
-                className="min-h-11 max-w-40 rounded-full border border-border-control bg-surface px-3 text-fg"
-                value={filters.location ?? ''}
-                disabled={navigating}
-                onChange={(event) => quickFilter({ location: event.target.value || undefined })}
-              >
-                <option value="">{t('all')}</option>
-                {options.locations.map((location) => (
-                  <option key={location.name} value={location.name}>
-                    {location.name}
-                  </option>
-                ))}
-              </select>
+              <span className="relative inline-flex">
+                <select
+                  className="min-h-11 max-w-40 appearance-none rounded-full border border-border-control bg-surface py-2 pr-8 pl-3 text-base text-fg"
+                  value={filters.location ?? ''}
+                  disabled={navigating}
+                  onChange={(event) => quickFilter({ location: event.target.value || undefined })}
+                >
+                  <option value="">{t('all')}</option>
+                  {options.locations.map((location) => (
+                    <option key={location.name} value={location.name}>
+                      {location.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-fg-muted"
+                />
+              </span>
             </label>
           )}
         </div>
