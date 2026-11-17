@@ -370,7 +370,7 @@ export function AppShellClient({
         </aside>
 
         <div className="flex min-h-dvh min-w-0 flex-col">
-          <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border bg-bg px-4 lg:hidden">
+          <header className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-border bg-bg px-4 py-1 lg:hidden">
             <Link href="/" className="press-control inline-flex min-h-11 items-center">
               <BrandLogo className="h-7 w-auto" label={t('brand')} />
             </Link>
