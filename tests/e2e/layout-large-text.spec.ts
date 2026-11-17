@@ -21,3 +21,12 @@ test('büyük yazıda mobil üst çubuk sarılır, eylemler ekranda kalır', asy
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test('büyük yazıda deneyim formu bölüm metinleri sayfayı taşırmaz', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await loginAs(page, 'student');
+  await page.goto('/deneyim/yeni');
+  await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+  await expect(page.getByRole('heading', { name: 'Deneyim yaz' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
