@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import messages from '../../../messages/tr.json';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
@@ -15,10 +14,12 @@ import {
 } from '@/contracts/job-postings';
 import type { ActionResult } from '@/contracts/result';
 import {
+  BackLink,
   Button,
   Checkbox,
   Field,
   Input,
+  PageHeader,
   Select,
   Textarea,
   useAction,
@@ -255,21 +256,14 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
     applyUrl: t('applyUrl'),
   };
   return (
-    <div
-      data-hydrated={hydrated ? 'true' : undefined}
-      className="mx-auto max-w-3xl px-4 py-8 sm:px-6"
-    >
-      <Link
-        href="/ilanlar"
-        className="press-control inline-flex min-h-11 items-center font-semibold text-primary"
-      >
-        ← {t('back')}
-      </Link>
-      <header className="mb-7">
-        <p className="font-semibold text-accent-strong">{t('eyebrow')}</p>
-        <h1 className="mt-2 text-3xl font-bold text-fg">{t('newTitle')}</h1>
-        <p className="mt-2 text-fg-muted">{t('newSubtitle')}</p>
-      </header>
+    <div data-hydrated={hydrated ? 'true' : undefined} className="w-full min-w-0 max-w-3xl">
+      <BackLink href="/ilanlar">{t('back')}</BackLink>
+      <PageHeader
+        className="mb-7"
+        eyebrow={t('eyebrow')}
+        title={t('newTitle')}
+        description={t('newSubtitle')}
+      />
       <div className="mb-5">
         <p aria-hidden="true" className="text-sm font-semibold text-fg-muted">
           {stepLabel}

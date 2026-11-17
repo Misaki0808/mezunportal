@@ -67,7 +67,9 @@ export function CalendarView({
         </div>
       )}
       {data.months.length === 0 ? (
-        <p className="rounded-card border border-border p-5 text-fg-muted">{t('empty')}</p>
+        <p className="rounded-card border border-border bg-surface p-5 text-fg-muted shadow-card">
+          {t('empty')}
+        </p>
       ) : (
         <>
           <p className="text-fg-muted">{t('note')}</p>
@@ -122,9 +124,12 @@ export function CalendarPage({
   const [companyId, setCompanyId] = useState(scope?.kind === 'COMPANY' ? scope.id : '');
   const [sectorId, setSectorId] = useState(scope?.kind === 'SECTOR' ? scope.id : '');
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 pb-28">
+    <div className="w-full min-w-0">
       <PageHeader title={t('title')} description={t('description')} />
-      <form action="/basvuru-takvimi" className="mt-7 grid gap-3 sm:grid-cols-2">
+      <form
+        action="/basvuru-takvimi"
+        className="mt-7 grid gap-3 rounded-card border border-border bg-surface p-4 shadow-card sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end"
+      >
         <Field label={t('company')}>
           {(control) => (
             <Select

@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button, EmptyState, PageHeader, Select, Switch } from '@/components/ui';
+import { BackLink, Button, EmptyState, PageHeader, Select, Switch } from '@/components/ui';
 import type { HiringDeclaration, SeekerPage, SeekerTermSeason } from '@/contracts/job-seekers';
 import { searchSeekers, setHiringDeclaration } from '@/server/actions/job-seekers';
 import type messages from '../../../messages/tr.json';
@@ -68,19 +68,16 @@ export function SeekerSearch({
     });
   }
   return (
-    <div className="mx-auto max-w-4xl space-y-7 px-5 py-10 pb-28">
-      <Link
-        href="/hesap"
-        className="press-control inline-flex min-h-11 items-center font-semibold text-primary"
-      >
-        ← {t('backAccount')}
-      </Link>
+    <div className="w-full min-w-0 max-w-4xl space-y-7">
+      <BackLink href="/hesap" flush>
+        {t('backAccount')}
+      </BackLink>
       <PageHeader
         eyebrow={t('eyebrow')}
         title={t('searchTitle')}
         description={t('searchDescription')}
       />
-      <div className="rounded-card border border-border p-5">
+      <div className="rounded-card border border-border bg-surface p-5 shadow-card">
         <Switch
           label={t('hiring')}
           description={t('hiringHint')}
@@ -93,7 +90,7 @@ export function SeekerSearch({
         <p className="rounded-card bg-primary-soft p-5 text-on-primary-soft">{t('hiringPrompt')}</p>
       ) : (
         <>
-          <section className="space-y-4 rounded-card border border-border p-5">
+          <section className="space-y-4 rounded-card border border-border bg-surface p-5 shadow-card">
             <h2 className="text-lg font-semibold">{t('filters')}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-1">

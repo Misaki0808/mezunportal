@@ -36,11 +36,13 @@ type Props = {
    * girer: `[ara] [Ara] [Filtreler]`, ayrı satır kaplamaz). Verilmezse düğme kendi satırında kalır (mentor dizini).
    */
   search?: (filtersButton: ReactNode) => ReactNode;
+  /** Hızlı süzgeç yongaları (tür vb.): arama satırının altında tek satır; telefonda kendi içinde kayar. */
+  quick?: ReactNode;
 };
 
 /**
- * Dizin/arama ekranlarının ortak filtre düzeni (P1-08 arama ve P1-09 mentor dizini aynı desen): mobilde “Filtreler”
- * düğmesi + alt sayfa, ≥ lg'de sol kenar paneli; etkin filtre çipleri, sonuç sayısı (canlı bölge), temizle ve
+ * Dizin/arama ekranlarının ortak filtre düzeni (Görünüm A liste kalıbı): arama satırı, hızlı süzgeç yongaları; mobilde
+ * “Filtreler” düğmesi + alt sayfa, ≥ lg'de “Diğer filtreler” açılır paneli (kenar paneli yok, sonuçlar tam genişlik); etkin filtre çipleri, sonuç sayısı (canlı bölge), temizle ve
  * iskelet durumu. Filtre durumu çağıranın URL'indedir; kabuk yalnız yerleşim ve etkileşimi taşır.
  */
 export function FilterShell({
@@ -56,6 +58,7 @@ export function FilterShell({
   lead,
   pagination,
   search,
+  quick,
 }: Props) {
   const t = useTranslations('directory');
   const [open, setOpen] = useState(false);
@@ -112,16 +115,29 @@ export function FilterShell({
       >
         {children}
       </Sheet>
-      <div className="mt-6 grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <aside className="hidden h-fit rounded-card border border-border p-5 lg:block">
-          <h2 className="mb-5 text-lg font-semibold">{t('filters')}</h2>
+      {quick && (
+        <div
+          role="group"
+          aria-label={t('filters')}
+          className="mt-3 flex min-w-0 items-center gap-2 overflow-x-auto pb-2"
+        >
+          {quick}
+        </div>
+      )}
+      <details className="mt-2 hidden lg:block">
+        <summary className="press-control inline-flex min-h-11 cursor-pointer items-center font-semibold text-primary">
+          {t('more')}
+        </summary>
+        <div className="mt-3 rounded-card border border-border bg-surface p-5">
           {children}
-          <div className="mt-6">
-            <Button fullWidth loading={pending} {...pendingState} onClick={onApply}>
+          <div className="mt-5">
+            <Button loading={pending} {...pendingState} onClick={onApply}>
               {t('apply')}
             </Button>
           </div>
-        </aside>
+        </div>
+      </details>
+      <div className="mt-4">
         <section aria-busy={pending} className="min-w-0">
           {lead}
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -146,8 +162,9 @@ export function FilterShell({
             </div>
           )}
           {pending ? (
-            <div className="mt-5 space-y-4" role="status">
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3" role="status">
               <span className="sr-only">{t('loading')}</span>
+              <Skeleton className="h-40" />
               <Skeleton className="h-40" />
               <Skeleton className="h-40" />
             </div>

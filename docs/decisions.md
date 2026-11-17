@@ -1127,3 +1127,9 @@ indeksleri tablolar arası OR engeline takılmaz. Etkin doğrulanmış üyeliği
 uygulamaya alınmadan SQL içinde uygulanır; diğer görünürlük, sıralama ve sayfalama kuralları mevcut
 serviste kalır. Böylece bütün DB'yi kapsayan kimlik listesi önlenirken yetki mantığı ikinci kez yazılmaz.
 Yeni bağımlılık, indeks veya migration yoktur.
+
+## 2026-11-17 · Fotoğraf rızası sürüm değişimi
+
+Günlük süpürme son rızası verilmiş ama eski sürümdeki fotoğrafı silmez; güncel rıza olmadan
+görünmez kalır. Böylece metin sürümü yükselince geri alınmamış fotoğraflar topluca kaybolmaz.
+Yeniden onay ve kalan dosyaların temizliği PILOT-LEGAL kapsamında ayrıca kararlaştırılır.

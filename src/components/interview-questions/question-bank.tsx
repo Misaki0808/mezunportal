@@ -123,11 +123,11 @@ export function QuestionBank({
     return `/mulakat-sorulari?${params.toString()}`;
   };
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 pb-28">
+    <div className="w-full min-w-0">
       <PageHeader title={t('title')} description={t('description')} />
       <form
         action="/mulakat-sorulari"
-        className="mt-7 grid gap-4 rounded-card border border-border p-4 sm:grid-cols-2"
+        className="mt-7 grid gap-4 rounded-card border border-border bg-surface p-4 shadow-card sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.2fr_auto] lg:items-end"
       >
         <Field label={t('company')}>
           {(props) => (
@@ -156,7 +156,7 @@ export function QuestionBank({
         <Field label={t('search')}>
           {(props) => <Input {...props} name="q" defaultValue={filters.q} maxLength={100} />}
         </Field>
-        <div className="flex items-end">
+        <div className="flex items-end sm:col-span-2 lg:col-span-1">
           <Button type="submit" fullWidth>
             {t('apply')}
           </Button>

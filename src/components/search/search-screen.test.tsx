@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
 import type { SearchPage } from '@/contracts/search';
 import { SearchScreen } from './search-screen';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+const router = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: router.push }) }));
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function showModal() {
     this.setAttribute('open', '');
@@ -74,5 +75,37 @@ describe('deneyim araması: boş durum', () => {
       '/deneyimler',
     );
     expect(screen.queryByText('Henüz yayınlanmış deneyim yok')).not.toBeInTheDocument();
+  });
+});
+
+describe('hızlı tür yongaları', () => {
+  it('tür seçenekleri aç/kapa düğmesidir; seçili olan filtreyle uyumlu, tıklama sayfayı ve aramayı korur', async () => {
+    router.push.mockClear();
+    const { user } = render({ types: ['INTERNSHIP'], q: 'veri', page: 3 });
+    const group = screen.getByRole('group', { name: 'Filtreler' });
+    const internship = within(group).getByRole('button', { name: 'Staj' });
+    const erasmus = within(group).getByRole('button', { name: 'Erasmus' });
+    expect(internship).toHaveAttribute('aria-pressed', 'true');
+    expect(erasmus).toHaveAttribute('aria-pressed', 'false');
+    // Seçili yonga yazısı tema belirteciyle (koyu temada okunur), sabit beyazla değil.
+    expect(internship.className).toContain('text-on-primary');
+    expect(internship.className).not.toContain('text-white');
+    await user.click(erasmus);
+    expect(router.push).toHaveBeenCalledWith('/deneyimler?q=veri&types=ERASMUS&types=INTERNSHIP');
+    router.push.mockClear();
+    await user.click(internship);
+    expect(router.push).toHaveBeenCalledWith('/deneyimler?q=veri');
+  });
+
+  it('yazılmış ama gönderilmemiş arama, yonga tıklanınca birlikte uygulanır', async () => {
+    router.push.mockClear();
+    const { user } = render({});
+    await user.type(screen.getByRole('searchbox', { name: 'Deneyim ara' }), 'veri analizi');
+    await user.click(
+      within(screen.getByRole('group', { name: 'Filtreler' })).getByRole('button', {
+        name: 'Staj',
+      }),
+    );
+    expect(router.push).toHaveBeenCalledWith('/deneyimler?q=veri+analizi&types=INTERNSHIP');
   });
 });
