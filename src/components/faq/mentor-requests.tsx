@@ -14,7 +14,7 @@ import {
   type MentorFaqRequestView,
 } from '@/contracts/faq';
 import type { ActionResult } from '@/contracts/result';
-import { Badge, Button, EmptyState, Field, Switch, Textarea } from '@/components/ui';
+import { Badge, Button, EmptyState, Field, PageHeader, Switch, Textarea } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { formatDate } from './format';
@@ -71,7 +71,7 @@ function AnswerCard({
   }
 
   return (
-    <li className="min-w-0 rounded-card border border-border p-4">
+    <li className="min-w-0 rounded-card border border-border bg-surface p-4 shadow-card">
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone={item.myAnswer ? 'success' : 'warning'}>
           {item.myAnswer ? t('answered') : t('unanswered')}
@@ -152,11 +152,7 @@ export function MentorRequests({ initial, list, answer }: Props) {
 
   return (
     <div className="flex w-full max-w-3xl min-w-0 flex-col gap-5">
-      <div>
-        <p className="font-semibold text-primary">{t('eyebrow')}</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{t('title')}</h1>
-        <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
-      </div>
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       <Switch
         label={t('onlyUnanswered')}
         checked={onlyUnanswered}

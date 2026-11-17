@@ -1,8 +1,7 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import { FaqItemCard } from '@/components/faq/faq-list';
-import { ErrorState } from '@/components/ui';
+import { BackLink, ErrorState } from '@/components/ui';
 import { FAQ_PAGE_HREF } from '@/contracts/faq';
 import { getFaqItem } from '@/server/actions/faq';
 
@@ -16,13 +15,8 @@ export default async function FaqItemPage({ params }: { params: Promise<{ id: st
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   const t = await getTranslations('faq');
   return (
-    <div className="mx-auto w-full max-w-3xl min-w-0 px-5 pb-12 pt-10 sm:pt-14">
-      <Link
-        href={FAQ_PAGE_HREF}
-        className="press-row mb-5 inline-flex min-h-11 items-center font-medium text-primary"
-      >
-        ← {t('backToList')}
-      </Link>
+    <div className="w-full min-w-0 max-w-3xl">
+      <BackLink href={FAQ_PAGE_HREF}>{t('backToList')}</BackLink>
       <FaqItemCard item={result.data} open />
     </div>
   );

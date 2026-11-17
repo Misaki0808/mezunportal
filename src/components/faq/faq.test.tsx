@@ -463,6 +463,21 @@ describe('moderatör kuyruğu', () => {
   });
 });
 
+describe('SSS sayfası: ortak başlık (kart 424)', () => {
+  it('"SSS talebi gönder" bağlantısı başlığın eylem alanında; soru sorabilen rolde var, olmayanda yok', () => {
+    const { unmount } = renderUi(<FaqList canAsk={true} result={page()} />);
+    const header = screen.getByRole('heading', { level: 1 }).closest('header')!;
+    expect(
+      within(header).getByRole('link', { name: 'Sorum yok mu? SSS talebi gönder' }),
+    ).toHaveAttribute('href', '/hesap/sss');
+    unmount();
+    renderUi(<FaqList canAsk={false} result={page()} />);
+    expect(
+      screen.queryByRole('link', { name: 'Sorum yok mu? SSS talebi gönder' }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe('SSS talebi sayfası: hesap çerçevesi (kart 407)', () => {
   it('HESAP üst etiketi, tek h1 ve hesap ayarlarına dönüş; eski "SSS" etiketi yok', () => {
     student();

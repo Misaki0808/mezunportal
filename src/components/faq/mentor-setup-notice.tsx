@@ -11,7 +11,7 @@ import { EmptyState, buttonClasses } from '@/components/ui';
 export function MentorSetupNotice() {
   const t = useTranslations('faq.mentorSetup');
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
+    <div className="w-full max-w-2xl">
       <EmptyState
         title={t('title')}
         description={t('description')}
