@@ -1136,6 +1136,20 @@ uygulamaya alınmadan SQL içinde uygulanır; diğer görünürlük, sıralama v
 serviste kalır. Böylece bütün DB'yi kapsayan kimlik listesi önlenirken yetki mantığı ikinci kez yazılmaz.
 Yeni bağımlılık, indeks veya migration yoktur.
 
+## 2026-11-17 · TD-027 işlem sorguları ve kalan Prisma sınırı (kart 434)
+
+İşlemde aktörün çoklu ilişkisi ve yönetim kullanıcı/atama listelerindeki çoklu ilişkiler
+toplu, sıralı okumalara ayrıldı; yetki ve maskeli sonuçlar korunur. Uygulamada aynı işlem
+istemcisindeki açık `Promise.all` okumaları da sıralandı. Yerel `scripts/td027-probe.ts`
+`NODE_OPTIONS="--conditions=react-server --trace-deprecation" pnpm exec tsx scripts/td027-probe.ts <kip>`
+ile ölçülür: `actor` ve `admin` sıfır (`admin` kipi güncel zorunlu rızalı sistem yöneticisi ister); `relations` eski çok ilişkili sorguyu ve bir uyarıyı
+yeniden üretir (çıkış 1). Basit üç sayaç denemesinde `parallel` ve `serial` ikisi de sıfırdır;
+bütün `Promise.all` kullanımlarının kendi başına uyarı ürettiği iddia edilmez. pg uyarısı
+süreç başına bir kez gösterildiğinden sayı bağımsız kip süreçleri içindir, tüm olayların sayısı
+değildir. pg-boss kuyrukları kendi bağlantı havuzlarını kurar; Prisma havuzunu paylaşmaz. Kalan
+Prisma içi çoklu ilişki sorunu çözülene kadar TD-027 ve e2e uyarı istisnası açık kalır.
+Bastırmasız Next test sunucusunda yönetim ana sayfası, kullanıcı listesi ve yetki listesi
+açılırken sıfır pg uyarısı ölçüldü; tam testte başka yollar için yedi uyarı kaldı.
 ## 2026-11-17 · Fotoğraf rızası sürüm değişimi
 
 Günlük süpürme son rızası verilmiş ama eski sürümdeki fotoğrafı silmez; güncel rıza olmadan

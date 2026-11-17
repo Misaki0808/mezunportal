@@ -13,6 +13,7 @@ import { SearchBar } from '@/components/directory/search-bar';
 import { FilterChip } from '@/components/directory/filter-chip';
 import {
   Button,
+  ChevronDownIcon,
   EmptyState,
   Field,
   Input,
@@ -151,22 +152,28 @@ export function AlumniDirectory({
         </SearchBar>
         <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-border-control bg-surface px-3 text-sm font-semibold">
           <span>{t('sector')}</span>
-          <select
-            className="min-h-11 min-w-0 flex-1 bg-transparent"
-            value={draft.sectorId}
-            onChange={(event) => {
-              const values = { ...draft, sectorId: event.target.value };
-              setDraft(values);
-              navigate(values);
-            }}
-          >
-            <option value="">{t('all')}</option>
-            {sectors.map((sector) => (
-              <option key={sector.id} value={sector.id}>
-                {sector.name}
-              </option>
-            ))}
-          </select>
+          <span className="relative inline-flex min-w-0 flex-1">
+            <select
+              className="min-h-11 min-w-0 w-full appearance-none bg-transparent pr-8 text-base text-fg"
+              value={draft.sectorId}
+              onChange={(event) => {
+                const values = { ...draft, sectorId: event.target.value };
+                setDraft(values);
+                navigate(values);
+              }}
+            >
+              <option value="">{t('all')}</option>
+              {sectors.map((sector) => (
+                <option key={sector.id} value={sector.id}>
+                  {sector.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDownIcon
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-fg-muted"
+            />
+          </span>
         </label>
         <Button variant="secondary" className="lg:hidden" onClick={() => setOpen(true)}>
           {t('filters')}

@@ -111,9 +111,9 @@ Açık PM kararı yok.
   kotalarda sahte başlık, eşzamanlı sınır ve pencere yenilenmesi testleri geçer.
 
 - [ ] **TD-027** · P2 · pg "Calling client.query() when the client is already executing a query" uyarısı (pg@9'da hataya döner)
-  Ne: Prisma 7.10.1 + `@prisma/adapter-pg` 7.10.1 + pg 8.23.1 ile `src/server/permissions/actor.ts:17` içindeki çok ilişkili actor okuması ve bazı eşzamanlı sorgular tek istemciye üst üste sorgu gönderiyor. `scripts/td027-probe.ts` kayıtlı yeniden üretimdir; komut ve seçenekler `docs/decisions.md`'de.
-  Neden borç: uyarı pg@9'da hataya dönüşebilir; ilişkileri sırayla okumak bir yolu düzeltir ama uygulamadaki tüm kaynakları kapatmaz. Yukarı akış kaydı: https://github.com/prisma/orm/issues/29407.
-  Kapanış ölçütü: gerçek düzeltmeyle kayıtlı yeniden üretim ve uygulamanın dev/e2e sunucuları uyarısız çalışır; e2e `--no-deprecation` istisnası kaldırılır, ilgili sonuç eşitliği ve kapılar geçer.
+  Ne: Prisma 7.10.1 + `@prisma/adapter-pg` 7.10.1 + pg 8.23.1 ile işlemde tek Prisma sorgusunun birden fazla ilişkisi hâlâ tek pg istemcisine eşzamanlı sorgu gönderebilir. Aktör ve yönetim kullanıcı/atama yolları ayrıldı; işlem istemcisindeki açık paralel okumalar sıralandı. `scripts/td027-probe.ts relations` kalan yukarı akış davranışının kayıtlı yeniden üretimidir; komut ve ölçüm `docs/decisions.md`'de.
+  Neden borç: uyarı pg@9'da hataya dönüşebilir; bütün ilişkili sorguların veya Prisma adaptörünün kesin çözümü henüz doğrulanmadı. Yukarı akış kaydı: https://github.com/prisma/orm/issues/29407.
+  Kapanış ölçütü: kayıtlı ilişkili sorgu yeniden üretimi ve uygulamanın dev/e2e sunucuları uyarısız çalışır; e2e `--no-deprecation` istisnası kaldırılır, ilgili sonuç eşitliği ve kapılar geçer.
 
 ### Bilinçli kabul edilen sınırlar
 

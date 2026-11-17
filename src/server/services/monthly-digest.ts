@@ -27,48 +27,46 @@ export async function buildMonthlyDigest(db: PrismaClient, userId: string, now =
     const departments = actor.facts.memberships
       .filter((m) => m.endedAt === null && m.verificationStatus === 'VERIFIED')
       .map((m) => m.departmentId);
-    const [experiences, points, follows, universities, preferences, events] = await Promise.all([
-      tx.experience.findMany({
-        where: {
-          departmentIdAtWrite: { in: departments },
-          status: 'PUBLISHED',
-          publishedAt: { gte: from, lt: to },
-        },
-        select: { id: true, type: true },
-        orderBy: [{ publishedAt: 'desc' }, { id: 'asc' }],
-        take: 5,
-      }),
-      tx.pointEntry.groupBy({
-        by: ['status'],
-        where: { userId, status: { in: ['PENDING', 'FINAL'] } },
-        _sum: { points: true },
-      }),
-      tx.companyFollow.findMany({
-        where: { userId },
-        select: {
-          companyId: true,
-          sectorId: true,
-          company: { select: { name: true } },
-          sector: { select: { name: true } },
-        },
-        orderBy: { id: 'asc' },
-      }),
-      viewerUniversityIds(tx, actor),
-      tx.notificationPreference.findMany({
-        where: { userId, type: { in: ['JOB_MATCH', 'APPLICATION_WINDOW'] } },
-        select: { type: true, enabled: true },
-      }),
-      tx.campusEvent.findMany({
-        where: {
-          status: 'PUBLISHED',
-          startsAt: { gt: now },
-          departments: { some: { departmentId: { in: departments } } },
-        },
-        select: { id: true, title: true },
-        orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
-        take: 5,
-      }),
-    ]);
+    const experiences = await tx.experience.findMany({
+      where: {
+        departmentIdAtWrite: { in: departments },
+        status: 'PUBLISHED',
+        publishedAt: { gte: from, lt: to },
+      },
+      select: { id: true, type: true },
+      orderBy: [{ publishedAt: 'desc' }, { id: 'asc' }],
+      take: 5,
+    });
+    const points = await tx.pointEntry.groupBy({
+      by: ['status'],
+      where: { userId, status: { in: ['PENDING', 'FINAL'] } },
+      _sum: { points: true },
+    });
+    const follows = await tx.companyFollow.findMany({
+      where: { userId },
+      select: {
+        companyId: true,
+        sectorId: true,
+        company: { select: { name: true } },
+        sector: { select: { name: true } },
+      },
+      orderBy: { id: 'asc' },
+    });
+    const universities = await viewerUniversityIds(tx, actor);
+    const preferences = await tx.notificationPreference.findMany({
+      where: { userId, type: { in: ['JOB_MATCH', 'APPLICATION_WINDOW'] } },
+      select: { type: true, enabled: true },
+    });
+    const events = await tx.campusEvent.findMany({
+      where: {
+        status: 'PUBLISHED',
+        startsAt: { gt: now },
+        departments: { some: { departmentId: { in: departments } } },
+      },
+      select: { id: true, title: true },
+      orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+      take: 5,
+    });
     const applicationWindows: { label: string }[] = [];
     for (const follow of preferences.some(
       (item) => item.type === 'APPLICATION_WINDOW' && !item.enabled,
