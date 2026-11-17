@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button, Checkbox, PageHeader, Textarea, useAction } from '@/components/ui';
+import { BackLink, Button, Checkbox, PageHeader, Textarea, useAction } from '@/components/ui';
 import { CONTACT_FIELDS, type ContactField } from '@/contracts/privacy';
 import type { SeekerContactPreview } from '@/contracts/job-seekers';
 import { requestSeekerContact } from '@/server/actions/job-seekers';
@@ -37,16 +37,13 @@ export function SeekerContact({
     });
   }
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-5 py-10 pb-32">
-      <Link
-        href="/adaylar"
-        className="press-control inline-flex min-h-11 items-center font-semibold text-primary"
-      >
-        ← {t('backSearch')}
-      </Link>
+    <div className="w-full min-w-0 max-w-2xl space-y-6">
+      <BackLink href="/adaylar" flush>
+        {t('backSearch')}
+      </BackLink>
       <PageHeader title={t('contactTitle')} description={t('contactDescription')} />
       {sent ? (
-        <div className="space-y-4 rounded-card border border-border p-5">
+        <div className="space-y-4 rounded-card border border-border bg-surface p-5 shadow-card">
           <p>{t('contactSent')}</p>
           <Link
             href="/hesap/iletisim?box=OUTGOING"
@@ -56,13 +53,13 @@ export function SeekerContact({
           </Link>
         </div>
       ) : !preview.canRequest ? (
-        <p className="rounded-card border border-border p-5 text-fg-muted">
+        <p className="rounded-card border border-border bg-surface p-5 text-fg-muted shadow-card">
           {t('contactUnavailable')}
         </p>
       ) : (
         <>
           <SeekerCardView card={preview.card} />
-          <fieldset className="rounded-card border border-border p-5">
+          <fieldset className="rounded-card border border-border bg-surface p-5 shadow-card">
             <legend className="font-semibold">{t('fields')}</legend>
             <p className="mb-3 text-fg-muted">{t('fieldsHint')}</p>
             {CONTACT_FIELDS.map((field) => (
