@@ -93,6 +93,7 @@ const MEASURE = ({ minFont, minTap }: { minFont: number; minTap: number }) => {
     overflowX: document.documentElement.scrollWidth > innerWidth + 1,
     scrollWidth: document.documentElement.scrollWidth,
     smallFont,
+    selectCount: [...document.querySelectorAll('select')].filter(visible).length,
     tap,
     overlap,
     viewportMeta: document.querySelector('meta[name=viewport]')?.getAttribute('content') ?? '',
@@ -142,7 +143,8 @@ async function tour(
       expect.soft(m.head.length, `${key}: içerik boş`).toBeGreaterThan(20);
       expect.soft(m.overflowX, `${key}: yatay taşma (scrollWidth ${m.scrollWidth})`).toBe(false);
       expect.soft(m.smallFont, `${key}: 16 px altı giriş alanı (odakta yakınlaştırır)`).toEqual([]);
-      if (screen.slug === 'mentorlar' || screen.slug === 'ilanlar') {
+      if (screen.slug === 'mentorlar' || screen.slug === 'ilanlar' || screen.slug === 'mezunlar') {
+        expect.soft(m.selectCount, `${key}: görünür seçici bulunamadı`).toBeGreaterThan(0);
         expect
           .soft(
             m.tap.filter((item) => item.startsWith('select:')),
@@ -205,6 +207,7 @@ test.describe('WebKit iPhone: çekirdek ekranlar (açık + koyu, 390)', () => {
       { slug: 'deneyimler', path: '/deneyimler' },
       { slug: 'deneyim-detay', path: '/deneyimler', first: 'a[href^="/deneyim/"]' },
       { slug: 'mentorlar', path: '/mentorlar' },
+      { slug: 'mezunlar', path: '/mezunlar' },
       { slug: 'randevu-al', path: '/mentorlar', first: 'a[href^="/randevu-al/"]' },
       { slug: 'randevular', path: '/randevular' },
     ]);
