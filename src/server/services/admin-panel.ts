@@ -97,49 +97,34 @@ export async function getAdminOverview(
       const userScope: Prisma.UserWhereInput = system
         ? {}
         : { memberships: { some: { endedAt: null, departmentId: { in: departmentIds } } } };
-      const [
-        pendingGraduationDocuments,
-        pendingExperiences,
-        pendingFaqRequests,
-        pendingJobPostings,
-        pendingReferrals,
-        pendingCampusEvents,
-        pendingAlumniStoriesRows,
-        openExperienceReports,
-        openJobReports,
-        suspendedUsers,
-        unmatched,
-      ] = await Promise.all([
-        tx.graduationDocument.count({
-          where: { status: 'PENDING', departmentId: { in: departmentIds } },
-        }),
-        tx.experience.count({
-          where: { status: 'PENDING', departmentIdAtWrite: { in: departmentIds } },
-        }),
-        tx.faqRequest.count({
-          where: { status: 'OPEN', departmentIdAtWrite: { in: departmentIds } },
-        }),
-        tx.jobPosting.count({
-          where: { status: 'PENDING', departmentIdAtWrite: { in: departmentIds } },
-        }),
-        tx.referralClaim.count({
-          where: {
-            status: { in: ['STUDENT_CONFIRMED', 'ACCEPTED_ALUMNI_CONFIRMED'] },
-            departmentIdAtWrite: { in: departmentIds },
+      const pendingGraduationDocuments = await tx.graduationDocument.count({
+        where: { status: 'PENDING', departmentId: { in: departmentIds } },
+      });
+      const pendingExperiences = await tx.experience.count({
+        where: { status: 'PENDING', departmentIdAtWrite: { in: departmentIds } },
+      });
+      const pendingFaqRequests = await tx.faqRequest.count({
+        where: { status: 'OPEN', departmentIdAtWrite: { in: departmentIds } },
+      });
+      const pendingJobPostings = await tx.jobPosting.count({
+        where: { status: 'PENDING', departmentIdAtWrite: { in: departmentIds } },
+      });
+      const pendingReferrals = await tx.referralClaim.count({
+        where: {
+          status: { in: ['STUDENT_CONFIRMED', 'ACCEPTED_ALUMNI_CONFIRMED'] },
+          departmentIdAtWrite: { in: departmentIds },
+        },
+      });
+      const pendingCampusEvents = await tx.campusEvent.count({
+        where: {
+          status: 'PENDING',
+          departments: {
+            some: { departmentId: { in: departmentIds } },
+            every: { departmentId: { in: departmentIds } },
           },
-        }),
-        tx.campusEvent.count({
-          where: {
-            status: 'PENDING',
-            departments: {
-              some: { departmentId: { in: departmentIds } },
-              every: { departmentId: { in: departmentIds } },
-            },
-          },
-        }),
-        // Bölüm başına OR, Prisma'da bölüm başına User JOIN'i üretir; sistem kapsamında plan şişer.
-        // Üyelik aynı hikâye bölümüne bağlı EXISTS ile doğrulanır: JOIN sayısı kapsamdan bağımsızdır.
-        tx.$queryRaw<{ count: bigint }[]>`
+        },
+      });
+      const pendingAlumniStoriesRows = await tx.$queryRaw<{ count: bigint }[]>`
           SELECT COUNT(*) AS "count"
           FROM "AlumniStory" AS s
           JOIN "User" AS u ON u."id" = s."userId"
@@ -153,16 +138,19 @@ export async function getAdminOverview(
                 AND m."role" = 'ALUMNI' AND m."verificationStatus" = 'VERIFIED'
                 AND m."endedAt" IS NULL
             )
-        `,
-        tx.report.count({
-          where: { status: 'OPEN', target: { departmentIdAtWrite: { in: departmentIds } } },
-        }),
-        tx.jobPostingReport.count({
-          where: jobPostingReportScopeWhere(departmentIds, 'OPEN'),
-        }),
-        tx.user.count({ where: { deletedAt: null, ...suspendedWhere(now), ...userScope } }),
-        system ? tx.unmatchedValue.count({ where: openUnmatchedWhere }) : Promise.resolve(null),
-      ]);
+        `;
+      const openExperienceReports = await tx.report.count({
+        where: { status: 'OPEN', target: { departmentIdAtWrite: { in: departmentIds } } },
+      });
+      const openJobReports = await tx.jobPostingReport.count({
+        where: jobPostingReportScopeWhere(departmentIds, 'OPEN'),
+      });
+      const suspendedUsers = await tx.user.count({
+        where: { deletedAt: null, ...suspendedWhere(now), ...userScope },
+      });
+      const unmatched = await (system
+        ? tx.unmatchedValue.count({ where: openUnmatchedWhere })
+        : Promise.resolve(null));
 
       return adminOverviewSchema.parse({
         level,
@@ -230,10 +218,40 @@ const userSelect = {
     },
     orderBy: { createdAt: 'desc' },
   },
-  adminGrants: { where: { revokedAt: null }, select: { id: true } },
-  mentorProfile: { select: { isActive: true } },
 } satisfies Prisma.UserSelect;
-type UserRow = Prisma.UserGetPayload<{ select: typeof userSelect }>;
+type UserBase = Prisma.UserGetPayload<{ select: typeof userSelect }>;
+type UserRow = UserBase & {
+  adminGrants: { id: string }[];
+  mentorProfile: { isActive: boolean } | null;
+};
+
+/** Prisma'nın aynı işlemde çoklu ilişkiyi eşzamanlı çalıştırmasını önler; N+1 yerine iki toplu okuma. */
+async function loadUserRelations(tx: Tx, rows: UserBase[]): Promise<UserRow[]> {
+  const ids = rows.map((row) => row.id);
+  if (!ids.length) return [];
+  const grants = await tx.adminGrant.findMany({
+    where: { userId: { in: ids }, revokedAt: null },
+    select: { id: true, userId: true },
+  });
+  const mentors = await tx.mentorProfile.findMany({
+    where: { userId: { in: ids } },
+    select: { userId: true, isActive: true },
+  });
+  const grantsByUser = new Map<string, { id: string }[]>();
+  for (const grant of grants) {
+    const current = grantsByUser.get(grant.userId) ?? [];
+    current.push({ id: grant.id });
+    grantsByUser.set(grant.userId, current);
+  }
+  const mentorsByUser = new Map(
+    mentors.map((mentor) => [mentor.userId, { isActive: mentor.isActive }]),
+  );
+  return rows.map((row) => ({
+    ...row,
+    adminGrants: grantsByUser.get(row.id) ?? [],
+    mentorProfile: mentorsByUser.get(row.id) ?? null,
+  }));
+}
 
 /** Kullanıcı bu kapsamda görünür mü? Sistem yöneticisi herkesi, diğerleri kapsamda ETKİN üyeliği olanı görür. */
 const isVisible = (row: UserRow, scope: Scope) =>
@@ -325,7 +343,7 @@ export async function searchUsers(
       orderBy: { id: 'desc' },
       take: parsed.limit + 1,
     });
-    const result = toPage(rows, parsed.limit);
+    const result = toPage(await loadUserRelations(tx, rows), parsed.limit);
     return adminUserPageSchema.parse({
       items: result.items.map((row) => projectUser(row, scope, adminUserId, now)),
       nextCursor: result.nextCursor,
@@ -341,10 +359,11 @@ export async function getUserDetail(
   const parsed = getUserDetailSchema.parse(input);
   return readAsAdmin(deps, adminUserId, 'ANY_ADMIN', async ({ tx, now, departmentIds, system }) => {
     const scope: Scope = { departmentIds, system };
-    const row = await tx.user.findFirst({
+    const base = await tx.user.findFirst({
       where: { id: parsed.userId, deletedAt: null },
       select: userSelect,
     });
+    const row = base ? (await loadUserRelations(tx, [base]))[0] : null;
     // Sistem dışı yöneticide var olmayan ile kapsam dışı ayırt edilmez (varlık sızmaz).
     if (!row || !isVisible(row, scope)) {
       throw system ? codedNotFound('RESOURCE_NOT_FOUND') : codedForbidden('AUTH_FORBIDDEN');
@@ -460,30 +479,56 @@ export async function listAdminGrants(
         departmentId: true,
         createdAt: true,
         revokedAt: true,
-        user: { select: { name: true, email: true } },
-        faculty: { select: { name: true } },
-        department: { select: { name: true } },
-        grantedBy: { select: { name: true } },
+        grantedById: true,
       },
       orderBy: { id: 'desc' },
       take: parsed.limit + 1,
     });
     const result = toPage(rows, parsed.limit);
+    const userIds = [...new Set(result.items.flatMap((row) => [row.userId, row.grantedById]))];
+    const facultyIds = [
+      ...new Set(result.items.flatMap((row) => (row.facultyId ? [row.facultyId] : []))),
+    ];
+    const departmentIds = [
+      ...new Set(result.items.flatMap((row) => (row.departmentId ? [row.departmentId] : []))),
+    ];
+    const users = await tx.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, email: true },
+    });
+    const faculties = await tx.faculty.findMany({
+      where: { id: { in: facultyIds } },
+      select: { id: true, name: true },
+    });
+    const departments = await tx.department.findMany({
+      where: { id: { in: departmentIds } },
+      select: { id: true, name: true },
+    });
+    const usersById = new Map(users.map((user) => [user.id, user]));
+    const facultiesById = new Map(faculties.map((faculty) => [faculty.id, faculty.name]));
+    const departmentsById = new Map(
+      departments.map((department) => [department.id, department.name]),
+    );
     return adminGrantPageSchema.parse({
-      items: result.items.map((row) => ({
-        id: row.id,
-        userId: row.userId,
-        userDisplayName: row.user.name,
-        maskedEmail: maskEmail(row.user.email),
-        scope: row.scope,
-        facultyId: row.facultyId,
-        facultyName: row.faculty?.name ?? null,
-        departmentId: row.departmentId,
-        departmentName: row.department?.name ?? null,
-        grantedAt: row.createdAt,
-        grantedByName: row.grantedBy.name,
-        revokedAt: row.revokedAt,
-      })),
+      items: result.items.map((row) => {
+        const user = usersById.get(row.userId);
+        const granter = usersById.get(row.grantedById);
+        if (!user || !granter) throw new Error('Yönetici atamasının kullanıcısı bulunamadı');
+        return {
+          id: row.id,
+          userId: row.userId,
+          userDisplayName: user.name,
+          maskedEmail: maskEmail(user.email),
+          scope: row.scope,
+          facultyId: row.facultyId,
+          facultyName: row.facultyId ? (facultiesById.get(row.facultyId) ?? null) : null,
+          departmentId: row.departmentId,
+          departmentName: row.departmentId ? (departmentsById.get(row.departmentId) ?? null) : null,
+          grantedAt: row.createdAt,
+          grantedByName: granter.name,
+          revokedAt: row.revokedAt,
+        };
+      }),
       nextCursor: result.nextCursor,
     });
   });

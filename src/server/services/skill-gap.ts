@@ -72,46 +72,46 @@ export async function getSkillGap(db: PrismaClient, userId: string) {
     });
     const title = profile?.targetTitle;
     if (!title) return skillGapResultSchema.parse({ title: null, analysis: null });
-    const [dictionary, positions, studentUser, titleDictionary] = await Promise.all([
-      tx.skill.findMany({
-        select: { id: true, name: true, normalizedName: true, aliases: true },
-        orderBy: { name: 'asc' },
-      }),
-      tx.position.findMany({
-        where: {
-          ...countableAlumniPositionsWhere(undefined, universities, now),
-          // Çift rol: kendi becerisini değiştirerek kaynak eşiğini geçiremesin.
-          userId: { not: userId },
-          isCurrent: true,
-        },
-        select: {
-          id: true,
-          userId: true,
-          titleId: true,
-          titleRaw: true,
-        },
-        orderBy: [
-          { userId: 'asc' },
-          { startYear: { sort: 'desc', nulls: 'last' } },
-          { startMonth: { sort: 'desc', nulls: 'last' } },
-          { id: 'asc' },
-        ],
-      }),
-      tx.user.findUniqueOrThrow({
-        where: { id: userId },
-        select: {
-          profile: {
-            select: {
-              tags: {
-                where: { tag: { kind: 'SKILL' } },
-                select: { tag: { select: { slug: true, label: true } } },
-              },
+    const dictionary = await tx.skill.findMany({
+      select: { id: true, name: true, normalizedName: true, aliases: true },
+      orderBy: { name: 'asc' },
+    });
+    const positions = await tx.position.findMany({
+      where: {
+        ...countableAlumniPositionsWhere(undefined, universities, now),
+        // Çift rol: kendi becerisini değiştirerek kaynak eşiğini geçiremesin.
+        userId: { not: userId },
+        isCurrent: true,
+      },
+      select: {
+        id: true,
+        userId: true,
+        titleId: true,
+        titleRaw: true,
+      },
+      orderBy: [
+        { userId: 'asc' },
+        { startYear: { sort: 'desc', nulls: 'last' } },
+        { startMonth: { sort: 'desc', nulls: 'last' } },
+        { id: 'asc' },
+      ],
+    });
+    const studentUser = await tx.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: {
+        profile: {
+          select: {
+            tags: {
+              where: { tag: { kind: 'SKILL' } },
+              select: { tag: { select: { slug: true, label: true } } },
             },
           },
         },
-      }),
-      tx.title.findMany({ select: { id: true, name: true, normalizedName: true, aliases: true } }),
-    ]);
+      },
+    });
+    const titleDictionary = await tx.title.findMany({
+      select: { id: true, name: true, normalizedName: true, aliases: true },
+    });
     // Aynı takma adın birden fazla sözlük girdisine ait olması eşleştirme için belirsizdir; hiç eşleştirilmez.
     const byName = new Map<string, string | null>();
     for (const skill of dictionary)
