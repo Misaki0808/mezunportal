@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { CURRENT_CONSENT_VERSIONS } from '@/contracts/privacy';
 import type { PrismaClient } from '@/generated/prisma/client';
 import type { StorageAdapter } from '../external/storage';
 import { eraseProfilePhoto } from './profile-photo-erasure';
@@ -34,14 +33,9 @@ export async function purgeProfilePhotos(db: PrismaClient, storage: StorageAdapt
           const consent = await tx.consent.findFirst({
             where: { userId: row.userId, documentType: 'PROFILE_PHOTO_VISIBILITY' },
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-            select: { granted: true, version: true },
+            select: { granted: true },
           });
-          if (
-            !owner.deletedAt &&
-            consent?.granted &&
-            consent.version === CURRENT_CONSENT_VERSIONS.PROFILE_PHOTO_VISIBILITY
-          )
-            return false;
+          if (!owner.deletedAt && consent?.granted) return false;
           await eraseProfilePhoto(tx, storage, row.userId);
           return true;
         });

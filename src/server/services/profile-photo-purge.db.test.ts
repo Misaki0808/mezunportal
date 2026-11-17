@@ -82,13 +82,14 @@ it('rıza kapandıktan sonra depolama arızası sürerse sonraki işte idempoten
   expect(await purgeProfilePhotos(scoped, storage)).toEqual({ scanned: 0, removed: 0, failed: 0 });
 });
 
-it('son güncel rızayı korur; eski rıza, rıza yokluğu ve silinmiş hesapları temizler', async () => {
+it('son verilmiş rızayı sürümden bağımsız korur; geri alımı, yokluğu ve silinmiş hesapları temizler', async () => {
   const storage = createMemoryStorage();
-  const [active, stale, missing, deleted] = await Promise.all(
-    Array.from({ length: 4 }, () => createUser(db)),
+  const [active, stale, missing, deleted, revoked] = await Promise.all(
+    Array.from({ length: 5 }, () => createUser(db)),
   );
-  const ids = [active!, stale!, missing!, deleted!];
-  for (const id of ids) await seedPhoto(id, storage);
+  const ids = [active!, stale!, missing!, deleted!, revoked!];
+  const keys = new Map<string, Awaited<ReturnType<typeof seedPhoto>>>();
+  for (const id of ids) keys.set(id, await seedPhoto(id, storage));
   const at = (day: number) => new Date(Date.UTC(2025, 0, day));
   await db.consent.createMany({
     data: [
@@ -114,6 +115,20 @@ it('son güncel rızayı korur; eski rıza, rıza yokluğu ve silinmiş hesaplar
         createdAt: at(1),
       },
       {
+        userId: revoked!,
+        documentType: 'PROFILE_PHOTO_VISIBILITY',
+        version,
+        granted: true,
+        createdAt: at(1),
+      },
+      {
+        userId: revoked!,
+        documentType: 'PROFILE_PHOTO_VISIBILITY',
+        version: 'eski',
+        granted: false,
+        createdAt: at(2),
+      },
+      {
         userId: deleted!,
         documentType: 'PROFILE_PHOTO_VISIBILITY',
         version,
@@ -124,12 +139,15 @@ it('son güncel rızayı korur; eski rıza, rıza yokluğu ve silinmiş hesaplar
   });
   await db.user.update({ where: { id: deleted! }, data: { deletedAt: new Date() } });
   expect(await purgeProfilePhotos(scopedDb(ids), storage)).toEqual({
-    scanned: 4,
+    scanned: 5,
     removed: 3,
     failed: 0,
   });
   expect(await db.profilePhoto.findUnique({ where: { userId: active! } })).not.toBeNull();
-  for (const id of [stale!, missing!, deleted!])
+  expect(await db.profilePhoto.findUnique({ where: { userId: stale! } })).not.toBeNull();
+  expect(storage.files.has(keys.get(stale!)!.largeKey)).toBe(true);
+  expect(storage.files.has(keys.get(stale!)!.smallKey)).toBe(true);
+  for (const id of [missing!, deleted!, revoked!])
     expect(await db.profilePhoto.findUnique({ where: { userId: id } })).toBeNull();
 });
 
@@ -200,4 +218,26 @@ it('süpürme kullanıcı kilidiyle yeni rıza ve fotoğrafı silmeden sıralan�
     removed: 0,
     failed: 0,
   });
+});
+
+it('yüzden fazla fotoğrafı sayfalar ve son sayfadakileri de temizler', async () => {
+  const storage = createMemoryStorage();
+  const ids: string[] = [];
+  try {
+    for (let i = 0; i < 101; i++) {
+      const id = await createUser(db);
+      ids.push(id);
+      await seedPhoto(id, storage);
+    }
+    expect(await purgeProfilePhotos(scopedDb(ids), storage)).toEqual({
+      scanned: 101,
+      removed: 101,
+      failed: 0,
+    });
+    expect(await db.profilePhoto.count({ where: { userId: { in: ids } } })).toBe(0);
+    expect(storage.files.size).toBe(0);
+  } finally {
+    await db.profilePhoto.deleteMany({ where: { userId: { in: ids } } });
+    await db.user.deleteMany({ where: { id: { in: ids } } });
+  }
 });
