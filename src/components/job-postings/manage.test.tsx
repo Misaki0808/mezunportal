@@ -92,6 +92,12 @@ describe('ilan inceleme kuyruğu: karar sonrası geri bildirim', () => {
     review.mockResolvedValue({ ok: true, data: {} });
   });
 
+  it('inceleme kuyruğu son başvuru gününü ham ISO değil okunur tarihle gösterir', () => {
+    renderQueue();
+    expect(screen.getAllByText(/5 Şubat 2027/)).toHaveLength(2);
+    expect(screen.queryByText(/2027-02-05/)).toBeNull();
+  });
+
   it('boş gerekçe hatası, gerekçe yazılıp ret başarılı olunca sayfada kalmaz', async () => {
     const { user } = renderQueue();
     await user.click(row('Veri analizi stajyeri').getByRole('button', { name: 'Reddet' }));
@@ -177,6 +183,39 @@ describe('ilanlarım: kapatma hatası sonraki başarıdan sonra kalmaz', () => {
     await waitFor(() => expect(close).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(screen.queryByText(messages.errors.codes.SERVER_UNEXPECTED)).toBeNull();
+  });
+});
+
+describe('ilanlarım: ilan kapatılınca odak', () => {
+  beforeAll(() => {
+    HTMLDialogElement.prototype.showModal = function showModal() {
+      this.setAttribute('open', '');
+    };
+    HTMLDialogElement.prototype.close = function close() {
+      this.removeAttribute('open');
+    };
+  });
+  const second = { ...mine, id: 'p2', title: 'Yazılım stajyeri' } as unknown as MyJobPostingView;
+  const closeFirst = async (items: MyJobPostingView[]) => {
+    const close = vi.fn().mockResolvedValue({ ok: true, data: {} });
+    const { user } = renderUi(<MyPostings initial={page(items)} list={vi.fn()} close={close} />);
+    await user.click(screen.getAllByRole('button', { name: 'İlanı kapat' })[0]!);
+    const dialog = within(await screen.findByRole('dialog'));
+    await user.click(dialog.getByRole('button', { name: 'İlanı kapat' }));
+    await waitFor(() => expect(close).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  };
+
+  it('kapatılan ilanın düğmesi kalkınca odak gövdeye düşmez, sıradaki ilanın kapat düğmesine gider', async () => {
+    await closeFirst([mine, second]);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'İlanı kapat' })).toHaveFocus());
+  });
+
+  it('son açık ilan kapatılınca odak sayfa başlığına gider', async () => {
+    await closeFirst([mine]);
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 1, name: 'İlanlarım' })).toHaveFocus(),
+    );
   });
 });
 

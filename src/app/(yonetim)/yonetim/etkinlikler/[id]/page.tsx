@@ -8,9 +8,18 @@ export const dynamic = 'force-dynamic';
 export default async function CampusEventCodePage({ params }: { params: Promise<{ id: string }> }) {
   const guarded = await guardPage('page.adminEventCode', () => requireAnyAdmin());
   if (!guarded.ok) return <ErrorState errorCode={guarded.errorCode} />;
-  const [{ id }, t] = await Promise.all([params, getTranslations('campusEvents')]);
+  const [{ id }, t, admin] = await Promise.all([
+    params,
+    getTranslations('campusEvents'),
+    getTranslations('admin'),
+  ]);
   return (
-    <AdminFrame title={t('present')} description={t('presentDescription')}>
+    <AdminFrame
+      title={t('present')}
+      description={t('presentDescription')}
+      backHref="/yonetim/etkinlikler"
+      backLabel={admin('backToEvents')}
+    >
       <EventCode eventId={id} />
     </AdminFrame>
   );

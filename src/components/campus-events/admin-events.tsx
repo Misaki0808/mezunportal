@@ -104,6 +104,10 @@ export function AdminEvents({
       setFieldErrors({ startsAt: t('timeInvalid') });
       return;
     }
+    if (endDate.getTime() <= startDate.getTime()) {
+      setFieldErrors({ endsAt: t('endBeforeStart') });
+      return;
+    }
     const parsed = createCampusEventSchema.safeParse({
       title: form.get('title'),
       description: form.get('description'),
