@@ -23,6 +23,28 @@ const db = createTestPrisma();
 const MAX_ALUMNI_QUERIES = 8;
 const MAX_MENTOR_QUERIES = 9;
 const MAX_MEDIAN_RATIO = 80;
+// Seçici şirket/unvan sorgularında indeks bekçisi (yük ve veri hızından bağımsız): sıralı tarama kapatılınca (`SET LOCAL
+// enable_seqscan = off`) planda beklenen GIN indeksleri bulunmalı. İfadeyi indeksten kaçıran değişiklik (örn.
+// `tr_ascii(sütun || '')`) planlayıcının elinde bu indeksi bırakmaz; sonuç aynı kalır, test kırmızı olur. Her sorgunun üç
+// dalı var: ham ad (pozisyon), sözlük adı ve sözlük `normalizedName` (kart 442, R2 incelemesi B1).
+const COMPANY_INDEXES = [
+  'Position_company_tr_ascii_trgm',
+  'Company_name_tr_ascii_trgm',
+  'Company_normalizedName_trgm',
+];
+const TITLE_INDEXES = [
+  'Position_title_tr_ascii_trgm',
+  'Title_name_tr_ascii_trgm',
+  'Title_normalizedName_trgm',
+];
+/** `EXPLAIN (FORMAT JSON)` çıktısındaki bütün `Index Name` değerleri (iç içe düğümler dahil). */
+function indexNames(node: unknown): string[] {
+  if (Array.isArray(node)) return node.flatMap(indexNames);
+  if (node === null || typeof node !== 'object') return [];
+  return Object.entries(node).flatMap(([key, value]) =>
+    key === 'Index Name' && typeof value === 'string' ? [value] : indexNames(value),
+  );
+}
 const median = (values: number[]) =>
   [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)]!;
 const p95Of = (values: number[]) =>
@@ -237,13 +259,13 @@ it('5.000 mezun/mentor: Türkçe katlanmış dizin sorguları sabit sorgu sayıs
   });
   await db.$executeRaw`ANALYZE`;
   await db.$executeRaw`VACUUM ANALYZE`;
-  for (const filter of [
-    { company: 'nadirhamkurum' },
-    { company: 'nadirşirket' },
-    { company: 'nadirsirket as' },
-    { title: 'nadirhamgorev' },
-    { title: 'nadirunvan' },
-    { title: 'nadirunv.' },
+  for (const { filter, indexes } of [
+    { filter: { company: 'nadirhamkurum' }, indexes: COMPANY_INDEXES },
+    { filter: { company: 'nadirşirket' }, indexes: COMPANY_INDEXES },
+    { filter: { company: 'nadirsirket as' }, indexes: COMPANY_INDEXES },
+    { filter: { title: 'nadirhamgorev' }, indexes: TITLE_INDEXES },
+    { filter: { title: 'nadirunvan' }, indexes: TITLE_INDEXES },
+    { filter: { title: 'nadirunv.' }, indexes: TITLE_INDEXES },
   ]) {
     const queries: Prisma.Sql[] = [];
     const reader = {
@@ -254,6 +276,18 @@ it('5.000 mezun/mentor: Türkçe katlanmış dizin sorguları sabit sorgu sayıs
     };
     const matches = await matchingDirectoryText(reader, filter, [institution.universityId]);
     expect.soft(matches.positions).toHaveLength(1);
+    const forced = await db.$transaction(async (tx) => {
+      await tx.$executeRaw`SET LOCAL enable_seqscan = off`;
+      return tx.$queryRaw(Prisma.sql`EXPLAIN (FORMAT JSON) ${queries[0]!}`);
+    });
+    const used = [...new Set(indexNames(forced))].sort();
+    process.stdout.write(`directory-index ${JSON.stringify(filter)}: ${used.join(', ')}\n`);
+    expect
+      .soft(
+        indexes.filter((name) => !used.includes(name)),
+        `${JSON.stringify(filter)}: planda olmayan indeks`,
+      )
+      .toEqual([]);
     const plan = await db.$queryRaw(
       Prisma.sql`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${queries[0]!}`,
     );
