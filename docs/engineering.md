@@ -33,6 +33,9 @@ Ajanların eğitim verisinde eski sürümlerin örnekleri çoktur; kurulumda saa
 - **Türkçe içerir süzgeçleri:** `tr_ascii` ifade indeksleri Prisma'nın ifade edemediği
   indekslerdir; kanonik tanımları `turkish_text_filters` migration'ındadır. Kullanıcı metni
   `escapeLike` sonrası bağlı parametre olur; sıradan `ILIKE` Türkçe I/ı için eşdeğer değildir.
+  Pozisyonun ham alanı ve şirket/unvan sözlüğü ayrı sorgu dallarında aranır; tablolar arası
+  `LEFT JOIN ... OR` yerine her dal kendi trigram indeksini kullanabilir. Dizin eşleşmelerinin
+  üniversite kapsamı SQL içinde daraltılır; kimlik listesi bütün veritabanından toplanmaz.
 - **Kimlik:** Better Auth kullanılır; **Auth.js/NextAuth kullanılmaz** (bakım modunda).
 - **Beta, canary, RC sürüm yok.** Bütün bağımlılıklar kararlı sürümde ve lockfile ile sabittir.
 - Yeni bir kütüphanenin kurulum biçiminden emin değilsen, kurulu sürümün belgesine bak;

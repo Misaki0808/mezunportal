@@ -298,7 +298,7 @@ export async function searchMentors(
   const effectiveFilter = requested
     ? { ...filter, skill: dictionarySkill?.name ?? filter.skill }
     : filter;
-  const text = await matchingDirectoryText(deps.db, filter);
+  const text = await matchingDirectoryText(deps.db, filter, universityIds);
   const candidates = await deps.db.mentorProfile.findMany({
     where: {
       AND: [
