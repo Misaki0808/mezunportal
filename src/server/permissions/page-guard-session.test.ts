@@ -105,7 +105,22 @@ const member = {
 };
 const signedIn = (user: unknown = member) => {
   state.session.mockResolvedValue({ user: { id: 'u1' } });
-  state.db.mockReturnValue({ user: { findUnique: async () => user } });
+  // Aktör okuması kullanıcıyı ve ilişkileri ayrı modellerden sırayla alır; sahte veritabanı da öyle.
+  const row = user as typeof member | null;
+  state.db.mockReturnValue({
+    user: {
+      findUnique: async () =>
+        row && {
+          id: row.id,
+          banned: row.banned,
+          banExpires: row.banExpires,
+          deletedAt: row.deletedAt,
+        },
+    },
+    membership: { findMany: async () => row?.memberships ?? [] },
+    adminGrant: { findMany: async () => row?.adminGrants ?? [] },
+    mentorProfile: { findUnique: async () => row?.mentorProfile ?? null },
+  });
 };
 it.each([
   ['requirePageVerifiedMember', () => requirePageVerifiedMember()],

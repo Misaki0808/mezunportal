@@ -141,22 +141,23 @@ const withoutRef = ({ ref: _ref, ...card }: SeekerCard) => {
 // ---------------------------------------------------------------------------------------------
 
 async function loadSettings(tx: Tx, userId: string, now: Date): Promise<SeekerSettings> {
-  const [profile, user, state] = await Promise.all([
-    tx.profile.findUnique({
-      where: { userId },
-      select: {
-        id: true,
-        headline: true,
-        seekingInternship: true,
-        seekingTermYear: true,
-        seekingTermSeason: true,
-        seekerRef: true,
-        seekerViewCount: true,
-      },
-    }),
-    tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true, email: true } }),
-    getConsentState(tx, userId),
-  ]);
+  const profile = await tx.profile.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      headline: true,
+      seekingInternship: true,
+      seekingTermYear: true,
+      seekingTermSeason: true,
+      seekerRef: true,
+      seekerViewCount: true,
+    },
+  });
+  const user = await tx.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { name: true, email: true },
+  });
+  const state = await getConsentState(tx, userId);
   const doc = state.documents.find((d) => d.documentType === DOC);
   const granted =
     doc?.lastDecision?.granted === true && doc.lastDecision.version === doc.currentVersion;

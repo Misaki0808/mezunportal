@@ -421,6 +421,26 @@ describe('searchUsers', () => {
     expect(asSystem.get(system)?.manageable).toBe(false);
   });
 
+  it('yetkisi geri alınmış kullanıcı yönetici sayılmaz: isAdmin false, bölüm yöneticisi onu yönetebilir', async () => {
+    const scope = await createInstitution(db);
+    const admin = await adminOf('DEPARTMENT', scope.deptA1, { departmentId: scope.deptA1 });
+    const former = await person({ departmentId: scope.deptA1 });
+    await addGrant(db, {
+      userId: former,
+      scope: 'DEPARTMENT',
+      departmentId: scope.deptA1,
+      revoked: true,
+    });
+    const listed = (await searchUsers(deps, admin, { limit: 50 })).items.find(
+      (item) => item.id === former,
+    );
+    expect(listed).toMatchObject({ isAdmin: false, manageable: true });
+    expect(await getUserDetail(deps, admin, { userId: former })).toMatchObject({
+      isAdmin: false,
+      manageable: true,
+    });
+  });
+
   it('kapsam dışı KAPANMIŞ üyelik geçmişi yöneticiye görünmez; mentor bilgisi yansır', async () => {
     const scope = await createInstitution(db);
     const admin = await adminOf('DEPARTMENT', scope.deptA1, { departmentId: scope.deptA1 });
@@ -652,6 +672,24 @@ describe('listAdminGrants', () => {
     expect(ids(inactive)).toContain(revokedGrant);
     const holderEmail = (await db.user.findUniqueOrThrow({ where: { id: holder } })).email;
     expect(JSON.stringify(active)).not.toContain(holderEmail);
+  });
+
+  it('yetki sahibinin adı ile yetkiyi verenin adı karışmaz', async () => {
+    const scope = await createInstitution(db);
+    const owner = await createUser(db, { name: 'Sahip Kişi' });
+    const granter = await createUser(db, { name: 'Veren Kişi' });
+    await addMembership(db, { userId: owner, departmentId: scope.deptA1, role: 'ACADEMIC' });
+    const grantId = await addGrant(db, {
+      userId: owner,
+      scope: 'DEPARTMENT',
+      departmentId: scope.deptA1,
+      grantedById: granter,
+    });
+    const page = await listAdminGrants(deps, admins.system, { limit: 50 });
+    expect(page.items.find((item) => item.id === grantId)).toMatchObject({
+      userDisplayName: 'Sahip Kişi',
+      grantedByName: 'Veren Kişi',
+    });
   });
 });
 

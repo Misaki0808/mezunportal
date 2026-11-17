@@ -150,6 +150,10 @@ it('başka bir kaynak yazarın adını üç kişi tekrarlasa bile soru yayımlan
 });
 it('1000 deneyimde sorgu sayısı kayıt başına artmaz', async () => {
   const w = await fixture();
+  for (const author of w.authors)
+    await addExperience(w, author, w.institution.deptA1, ['SQL nedir?']);
+  const baseline = queryCounter(db);
+  await getInterviewQuestions(baseline.client, w.viewer, filters(w.company.id));
   await db.experience.createMany({
     data: Array.from({ length: 1000 }, (_, index) => ({
       authorId: w.authors[index % 3]!,
@@ -175,7 +179,9 @@ it('1000 deneyimde sorgu sayısı kayıt başına artmaz', async () => {
   const result = await getInterviewQuestions(queries.client, w.viewer, filters(w.company.id));
   expect(result.groups.length).toBeGreaterThan(0);
   expect(queries.count()).toBeGreaterThan(0);
-  expect(queries.count()).toBeLessThanOrEqual(8);
+  // Aktör tek ilişkili Prisma çağrısı yerine dört sıralı model çağrısı kullanır (+3 sabit sorgu).
+  expect(queries.count()).toBeLessThanOrEqual(11);
+  expect(queries.count()).toBe(baseline.count());
 }, 15000);
 
 it('yalnız güvenli şirketleri sayar, sayfalar ve filtreleri bütün sonuçlarda uygular', async () => {

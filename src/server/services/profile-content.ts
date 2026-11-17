@@ -113,23 +113,30 @@ const newest = (...dates: (Date | null | undefined)[]): Date | null =>
 // ---------------------------------------------------------------------------------------------
 
 async function buildMyProfile(tx: Tx, userId: string, now: Date): Promise<MyProfile> {
-  const [user, profile, education, positions, languages, certifications] = await Promise.all([
-    tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } }),
-    tx.profile.findUnique({
-      where: { userId },
-      include: {
-        tags: {
-          where: { tag: { kind: 'SKILL' } },
-          select: { tagId: true, updatedAt: true, tag: { select: { label: true } } },
-          orderBy: [{ createdAt: 'asc' }, { tagId: 'asc' }],
-        },
+  const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } });
+  const profile = await tx.profile.findUnique({
+    where: { userId },
+    include: {
+      tags: {
+        where: { tag: { kind: 'SKILL' } },
+        select: { tagId: true, updatedAt: true, tag: { select: { label: true } } },
+        orderBy: [{ createdAt: 'asc' }, { tagId: 'asc' }],
       },
-    }),
-    tx.education.findMany({ where: { userId }, orderBy: [{ startYear: 'desc' }, { id: 'asc' }] }),
-    tx.position.findMany({ where: { userId }, orderBy: [{ startYear: 'desc' }, { id: 'asc' }] }),
-    tx.language.findMany({ where: { userId }, orderBy: { id: 'asc' } }),
-    tx.certification.findMany({ where: { userId }, orderBy: { id: 'asc' } }),
-  ]);
+    },
+  });
+  const education = await tx.education.findMany({
+    where: { userId },
+    orderBy: [{ startYear: 'desc' }, { id: 'asc' }],
+  });
+  const positions = await tx.position.findMany({
+    where: { userId },
+    orderBy: [{ startYear: 'desc' }, { id: 'asc' }],
+  });
+  const languages = await tx.language.findMany({ where: { userId }, orderBy: { id: 'asc' } });
+  const certifications = await tx.certification.findMany({
+    where: { userId },
+    orderBy: { id: 'asc' },
+  });
   const skills = (profile?.tags ?? []).map((row) => ({
     tagId: row.tagId,
     label: row.tag.label ?? '',
