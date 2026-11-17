@@ -60,7 +60,7 @@ export function ReportExperience({ experienceId, report }: Props) {
       {sent ? (
         <p className="text-base text-on-success-soft">{t('sent')}</p>
       ) : (
-        <Button variant="secondary" onClick={() => setOpen(true)}>
+        <Button variant="ghost" onClick={() => setOpen(true)}>
           {t('title')}
         </Button>
       )}

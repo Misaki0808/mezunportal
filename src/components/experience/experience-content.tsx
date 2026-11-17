@@ -21,10 +21,16 @@ function NumberChip({ children }: { children: number }) {
 export function ExperienceContent({
   content,
   showOrganization = true,
+  layout = 'stacked',
 }: {
   content: Content;
   /** Sayfa başlığı kurumu zaten söylüyorsa (detay) `false`: aynı bilgi iki kez yazılmaz. */
   showOrganization?: boolean;
+  /**
+   * `split` (detay sayfası): ≥ lg'de okunur metin genişliği (~70 karakter) solda, künye kutusu (şirket, dönem, yer, süre…) sağda
+   * yapışkan; telefonda künye üstte. `stacked` (moderasyon kuyruğu): eski tek sütun.
+   */
+  layout?: 'stacked' | 'split';
 }) {
   const t = useTranslations('experiences');
   const read = content as Record<string, unknown>;
@@ -65,18 +71,23 @@ export function ExperienceContent({
     ? (read.interviewQuestions as string[])
     : [];
 
-  return (
-    <div className="flex flex-col gap-6">
-      {rows.length > 0 && (
-        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-          {rows.map((row) => (
-            <div key={row.label}>
-              <dt className="text-sm text-fg-muted">{row.label}</dt>
-              <dd className="break-words text-base text-fg">{row.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
+  const facts =
+    rows.length > 0 ? (
+      <dl
+        className={
+          layout === 'split' ? 'grid gap-4' : 'grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2'
+        }
+      >
+        {rows.map((row) => (
+          <div key={row.label}>
+            <dt className="text-sm text-fg-muted">{row.label}</dt>
+            <dd className="break-words text-base text-fg">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    ) : null;
+  const sections = (
+    <>
       {steps.length > 0 && (
         <section>
           <h2 className="mb-3 text-lg font-semibold text-fg">{t('detail.process')}</h2>
@@ -123,6 +134,28 @@ export function ExperienceContent({
           <p className="whitespace-pre-line text-base leading-relaxed text-fg">{text('advice')}</p>
         </section>
       )}
+    </>
+  );
+  if (layout === 'split')
+    return (
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-10">
+        <div className="flex min-w-0 max-w-[70ch] flex-col gap-6 lg:col-start-1 lg:row-start-1">
+          {sections}
+        </div>
+        {facts && (
+          <aside
+            aria-label={t('detail.facts')}
+            className="rounded-card border border-border bg-surface p-5 max-lg:order-first lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
+          >
+            {facts}
+          </aside>
+        )}
+      </div>
+    );
+  return (
+    <div className="flex flex-col gap-6">
+      {facts}
+      {sections}
     </div>
   );
 }

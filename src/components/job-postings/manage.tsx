@@ -20,6 +20,7 @@ import type {
 } from '@/contracts/job-postings';
 import type { ActionResult } from '@/contracts/result';
 import {
+  BackLink,
   Badge,
   Button,
   EmptyState,
@@ -83,32 +84,25 @@ export function MyPostings({
     });
   }
   return (
-    <div
-      data-hydrated={hydrated ? 'true' : undefined}
-      className="mx-auto max-w-5xl px-4 py-8 sm:px-6"
-    >
-      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <Link
-            href="/ilanlar"
-            className="press-control inline-flex min-h-11 items-center font-semibold text-primary"
-          >
-            ← {t('back')}
-          </Link>
-          <PageHeader title={t('listTitle')} />
-        </div>
-        {items.length > 0 && (
-          <Link href="/ilanlar/yeni" className={buttonClasses()}>
-            {t('post')}
-          </Link>
-        )}
-      </div>
+    <div data-hydrated={hydrated ? 'true' : undefined} className="w-full min-w-0">
+      <BackLink href="/ilanlar">{t('back')}</BackLink>
+      <PageHeader
+        className="mb-7"
+        title={t('listTitle')}
+        actions={
+          items.length > 0 ? (
+            <Link href="/ilanlar/yeni" className={buttonClasses()}>
+              {t('post')}
+            </Link>
+          ) : undefined
+        }
+      />
       {items.length ? (
         <ul className="grid gap-4 lg:grid-cols-2">
           {items.map((item) => (
             <li
               key={item.id}
-              className="flex min-w-0 flex-col gap-4 rounded-card border border-border bg-surface p-5"
+              className="flex min-w-0 flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-card"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">

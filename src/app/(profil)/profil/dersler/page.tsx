@@ -7,7 +7,7 @@ export default async function AlumniCoursesPage() {
   const [result, t] = await Promise.all([getAlumniCourses(), getTranslations('courseGuide')]);
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   return (
-    <div className="mx-auto max-w-3xl space-y-5 px-4 py-8">
+    <div className="w-full max-w-3xl space-y-5">
       <PageHeader title={t('alumniTitle')} description={t('alumniDescription')} />
       <CourseSelector courses={result.data.courses} initial={result.data.selected} />
     </div>

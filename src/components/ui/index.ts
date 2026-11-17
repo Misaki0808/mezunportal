@@ -1,6 +1,7 @@
 // Tek giriş noktası: ekranlar yalnız `@/components/ui`'dan içe aktarır (docs/design.md).
 export { Avatar, initialsOf } from './avatar';
 export type { AvatarProps } from './avatar';
+export { BackLink } from './back-link';
 export { Badge } from './badge';
 export type { BadgeTone } from './badge';
 export { Button } from './button';
