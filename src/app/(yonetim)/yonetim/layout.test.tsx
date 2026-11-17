@@ -27,6 +27,7 @@ it.each([
   ['yetkiler', 'adminGrants'],
   ['islem-kaydi', 'auditLog'],
   ['puan', 'adminGrants'],
+  ['google', 'adminGrants'],
   ['davetler', 'dictionaries'],
 ] as const)('inceleyici: %s izni loading başlamadan reddedilir', async (path, capability) => {
   mocks.headers.mockResolvedValue(new Headers({ [REQUEST_PATH_HEADER]: '/yonetim/' + path }));

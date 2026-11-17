@@ -1,5 +1,5 @@
 import 'server-only';
-import { hasPersonalDataPattern } from '@/lib/personal-data';
+import { hasPersonalDataInValues } from '@/lib/personal-data';
 
 import {
   CV_PARSE_WINDOW_MS,
@@ -587,12 +587,9 @@ export async function applyCv(
           throw codedConflict('CV_CONFLICT_UNRESOLVED');
         }
         const values = decision.values ?? item.proposed;
-        if (
-          Object.values(values).some(
-            (value) => typeof value === 'string' && hasPersonalDataPattern(value),
-          )
-        )
-          throw codedValidation('PROFILE_TEXT_PERSONAL_DATA');
+        // Serbest metin taranır; sunucunun eklediği sözlük kimlikleri (`companyId`, `titleId`, `skillId`) taranmaz: UUID'nin
+        // rakam ağırlıklı kuyruğu telefon desenine benzeyebilir ve o kayda bağlı HERKESİN CV onayını reddettirirdi (kart 435).
+        if (hasPersonalDataInValues(values)) throw codedValidation('PROFILE_TEXT_PERSONAL_DATA');
         return { decision, item, edited: isEdited(decision, item) };
       });
 

@@ -31,7 +31,7 @@ import type { Prisma } from '@/generated/prisma/client';
 import { codedForbidden, codedNotFound } from '@/lib/errors';
 import { jobPostingReportScopeWhere } from './job-posting-report-scope';
 
-import { isAuditIdentifierField, looksLikePersonalData } from '../rules/adminAudit';
+import { isIdentifierField, looksLikePersonalData } from '@/lib/personal-data';
 import { accountStatusOf } from '../rules/authorization';
 import { maskEmail } from '../rules/maskEmail';
 import { maskPhone } from '../rules/maskPhone';
@@ -549,7 +549,7 @@ export function redactAuditText(value: string): string {
 }
 function redactMetadataValue(value: unknown, key = ''): unknown {
   if (typeof value === 'string') {
-    return isAuditIdentifierField(key, value) ? value : redactAuditText(value);
+    return isIdentifierField(key, value) ? value : redactAuditText(value);
   }
   if (typeof value === 'number' && looksLikePersonalData(String(value))) return REDACTED;
   if (Array.isArray(value)) return value.map((entry) => redactMetadataValue(entry, key));

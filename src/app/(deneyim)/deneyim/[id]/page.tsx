@@ -40,7 +40,7 @@ export default async function ExperienceDetailPage({
   const date = (value: Date) =>
     new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(value));
   return (
-    <article className="w-full min-w-0 pb-8">
+    <article className="w-full min-w-0">
       {/* Okuyucu listeye (aradığı yere), yazar kendi deneyimlerine döner. */}
       <Link
         href={isOwner === true ? '/deneyimlerim' : '/deneyimler'}

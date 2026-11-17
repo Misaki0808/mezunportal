@@ -262,7 +262,7 @@ function ExperienceFormBody({ departments, initial, save, submit }: Props) {
 
   if (submitted) {
     return (
-      <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-3 px-5 py-14 text-center">
+      <div className="flex w-full max-w-lg flex-col items-center gap-3 text-center">
         <h1
           ref={doneRef}
           tabIndex={-1}
@@ -584,7 +584,7 @@ function ExperienceFormBody({ departments, initial, save, submit }: Props) {
         event.preventDefault();
         openConfirm();
       }}
-      className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16"
+      className="flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col"
     >
       <PageHeader
         eyebrow={t('eyebrow')}

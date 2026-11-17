@@ -26,7 +26,7 @@ export async function VerificationPanel({ state }: { state: VerificationState })
     state.status === 'REJECTED' || (state.status === 'NOT_STARTED' && state.emailKind === 'OTHER');
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-12 sm:pt-20">
+    <div className="flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} />
       <section aria-live="polite" className="mt-8 rounded-card border border-border bg-surface p-5">
         <h2 className="text-xl font-semibold text-fg">{title}</h2>

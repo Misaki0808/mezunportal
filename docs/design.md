@@ -66,9 +66,11 @@ Mercan, Nane, yazı tipleri). Ölçü ilkeleri (değerler `globals.css`'te):
   (Yönetim). Menüdeki bir ekran açıkken Menü düğmesi ve o satır etkin görünür; alt sayfa klavye ve ekran okuyucuyla kullanılır (odak hapsi, Esc, kapatınca odak
   Menü düğmesine döner). Hesap ayarlarına üst çubuktaki avatar da götürür.
 - **İçerik genişliği:** `AppShellClient` içeriği en çok 1280 px, sola yaslı, telefonda 16 px, bilgisayarda 28/32 px dolguyla verir; sayfa kendi
-  ortalanmış dar sütununu (`mx-auto max-w-* px-* py-*`) kurmaz. Eski sayfaların kapsayıcıları kabuğun `.app-content` kuralıyla (`globals.css`) ortalanmaz ve
-  dolgu eklemez, kendi okuma ölçüsünü (`max-w-*`) korur; sayfa yeni düzene geçince kapsayıcısını siler. Form ve metin sayfaları dar kalabilir, ama
-  sola yaslıdır.
+  ortalanmış dar sütununu (`mx-auto max-w-* px-* py-*`) kurmaz; yalnız okuma ölçüsünü (`max-w-*`) tutar. Form ve metin sayfaları dar kalabilir, ama
+  sola yaslıdır. İstisna: hem kabukta hem oturumsuz (kabuksuz) açılabilen sayfalar (hukuki metinler, ödül doğrulama, bildirim bağlantı ekranları,
+  hata sınırı, yükleme iskeleti) ortalanmış kendi kapsayıcısını taşır ve kabukta `[.app-content_&]:mx-0 [.app-content_&]:p-0` ile sıfırlar (kabuk içeriğinin
+  `app-content` sınıfı bu yüzden durur); giriş ekranları ve `global-error` kabuk dışıdır. Sekme şeridi sayfa dolgusunda kullanılırken `Tabs bleed` telefonda
+  şeridi ekran kenarına kadar uzatır (taşan son sekme kesik değil kayan görünür).
 - **Sayfa başlığı** (`PageHeader`): üst etiket (12 px, büyük harf, ana renk), `h1` (telefonda 26, bilgisayarda 34 px, Plus Jakarta 800), kısa açıklama;
   eylemler bilgisayarda aynı satırda sağda (`actions`), telefonda başlığın altında. Tek birincil eylem.
 - **Yönetim:** pano gerçek sayısı sıfırdan büyük kuyrukları üstte gösterir; sıfır kuyruklar araç bağlantılarında kalır, bütün görünür kuyruklar
