@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   purgeAuth: vi.fn(),
   purgeFailed: vi.fn(),
   purgeLinkedin: vi.fn(),
+  purgePhotos: vi.fn(),
   detach: vi.fn(),
   freezeAwards: vi.fn(),
   rotateMonthly: vi.fn(),
@@ -38,6 +39,7 @@ vi.mock('../services/alumni-story', () => ({ rotateMonthlyAlumni: mocks.rotateMo
 vi.mock('./notification-intent-worker', () => ({ relayPendingNotifications: vi.fn() }));
 vi.mock('../services/files-purge', () => ({ purgeFiles: vi.fn() }));
 vi.mock('../services/cv-parse', () => ({ purgeExpiredLinkedinFiles: mocks.purgeLinkedin }));
+vi.mock('../services/profile-photo-purge', () => ({ purgeProfilePhotos: mocks.purgePhotos }));
 vi.mock('./feedback-task', () => ({ scheduleFeedbackPrompts: vi.fn() }));
 vi.mock('./notification-tasks', () => ({
   alumniStillThere: vi.fn(),
@@ -47,7 +49,10 @@ vi.mock('./notification-tasks', () => ({
 import { createNotificationRuntime } from './notification-worker';
 
 describe('günlük bakım işlerinin kaydı', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.purgePhotos.mockResolvedValue({ scanned: 0, removed: 0, failed: 0 });
+  });
   it('bakım işlerini İstanbul saatinde günlük zamanlar ve gerçek bakım işlerine bağlar', async () => {
     await createNotificationRuntime();
     for (const name of ['auth.purge', 'events.detach', 'notification.purgeFailed']) {
@@ -90,6 +95,18 @@ describe('günlük bakım işlerinin kaydı', () => {
     const worker = mocks.work.mock.calls.find(([queue]) => queue === 'linkedin.purge')?.[2];
     await worker();
     expect(mocks.purgeLinkedin).toHaveBeenCalledOnce();
+  });
+  it('fotoğraf temizliğini her gün İstanbul saatinde çalıştırır', async () => {
+    await createNotificationRuntime();
+    expect(mocks.schedule).toHaveBeenCalledWith(
+      'profilePhoto.purge',
+      '0 3 * * *',
+      {},
+      { tz: 'Europe/Istanbul', missed: 'once' },
+    );
+    const worker = mocks.work.mock.calls.find(([queue]) => queue === 'profilePhoto.purge')?.[2];
+    await worker();
+    expect(mocks.purgePhotos).toHaveBeenCalledWith(mocks.db, expect.any(Object));
   });
   it('ayın mezununu İstanbul ay başında döndürür', async () => {
     await createNotificationRuntime();

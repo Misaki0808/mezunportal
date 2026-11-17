@@ -1125,3 +1125,9 @@ oturumsuz açılan sayfalar (hukuki metinler, ödül doğrulama, bildirim bağla
 kendi ortalanmış kapsayıcısını korur ve kabukta `[.app-content_&]` değişkeniyle sıfırlar; giriş ekranları ve `global-error` kabuk
 dışı olduğundan değişmedi. Sayfanın tek çocuğu olan `EmptyState`/`ErrorState` artık kendi `px-4 py-10` dolgusunu taşır (kural bunu
 sıfırlıyordu). Şirket sekme şeridi telefonda `Tabs bleed` ile ekran kenarına uzanır. Yeni token/bağımlılık yoktur.
+
+## 2026-11-17 · Fotoğraf rızası sürüm değişimi
+
+Günlük süpürme son rızası verilmiş ama eski sürümdeki fotoğrafı silmez; güncel rıza olmadan
+görünmez kalır. Böylece metin sürümü yükselince geri alınmamış fotoğraflar topluca kaybolmaz.
+Yeniden onay ve kalan dosyaların temizliği PILOT-LEGAL kapsamında ayrıca kararlaştırılır.

@@ -284,7 +284,8 @@ kuralları değişmez. Aydınlatma metni değiştiğinde sürüm artırılır ve
 
 Profil fotoğrafı, PDF belgelerinden ayrı bir görüntü hattıdır: en çok 5 MB JPEG/PNG/WebP,
 bayt imzası ve gerçek çözme birlikte doğrulanır. `sharp` 24 MP giriş sınırı, katı hata davranışı,
-hareketsiz/tek sayfa şartı ve tek işleme bütçesi uygular. Kare 512/96 WebP dışında dosya tutulmaz;
+hareketsiz/tek sayfa şartı ve tek işleme bütçesi uygular; bütçe doluyken ham dosyaları
+kuyrukta tutmak yerine kararlı geçici yoğunluk kodu ve tekrar deneme mesajı döner. Kare 512/96 WebP dışında dosya tutulmaz;
 EXIF, konum ve diğer metadata aktarılmaz. Depolama anahtarları kullanıcı + rastgele UUID taşır;
 anahtar istemciye çıkmaz. Sunum yalnız yetkili uygulama rotasından, `private, no-store` ile yapılır.
 K-07 (ortak doğrulanmış etkin üniversite), etkin hesap ve güncel ayrı fotoğraf rızası
@@ -294,7 +295,10 @@ Yükleme, rıza geri alma ve hesap silme aynı kullanıcı satırı kilidiyle s�
 rıza/fotoğraf değiştiyse eski yükleme yeniden görünürlük açamaz. Geri alım önce kalıcı olarak görünürlüğü kapatır; depolama arızası rızayı geri sarmaz.
 Dosya temizliği hata verirse özel hata kodu ve tekrar silme düğmesi gösterilir; eski anahtar
 koşulu bu arada yeni rızayla yüklenen fotoğrafı korur. Başarıda iki türev silinir;
-hesap silme de aynı dosyaları temizler, kişinin KVKK dökümü iki türevi içerir. Kapsamlı yönetici
+günlük bakım işi, rızası geri alınmış veya hiç verilmemiş ya da sahibi silinmiş fotoğrafların
+temizliğini kullanıcı kilidi altında yeniden dener; yalnız işlem sayıları kaydedilir. Eski sürümdeki
+verilmiş rızanın fotoğrafı görünmez kalır ama silinmez; yeniden onay ve kalan dosyalar PILOT-LEGAL kararına bağlıdır.
+Hesap silme de aynı dosyaları temizler, kişinin KVKK dökümü iki türevi içerir. Kapsamlı yönetici
 uygunsuz fotoğrafı gerekçeyle kaldırabilir; dosya ve gerekçe kişisel veri taşımayan işlem kaydından ayrıdır.
 
 - **Yükleme:** yalnız PDF; boyut ve sayfa sınırı; uzantıya değil sihirli bayta bakılır. Dosyalar
