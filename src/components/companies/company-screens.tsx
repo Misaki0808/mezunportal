@@ -244,7 +244,7 @@ export function CompanyScreen({
           )}
         </div>
       )}
-      <Tabs className="mt-8" label={t('tabs')} items={tabs} />
+      <Tabs className="mt-8" label={t('tabs')} items={tabs} bleed />
     </div>
   );
 }

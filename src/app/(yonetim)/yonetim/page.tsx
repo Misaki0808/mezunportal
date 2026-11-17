@@ -115,7 +115,7 @@ export default async function AdminOverviewPage() {
   const allClear =
     queueLinks.every((link) => queueCounts[link.key] === 0) && counts.pendingCampusEvents === 0;
   return (
-    <div className="min-w-0 space-y-7 pb-8">
+    <div className="min-w-0 space-y-7">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       <section aria-labelledby="admin-pending-heading" className="space-y-4">
         <h2 id="admin-pending-heading" className="text-lg font-bold">

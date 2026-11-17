@@ -15,13 +15,27 @@ export type TabsProps = {
   value?: string;
   onValueChange?: (id: string) => void;
   className?: string;
+  /**
+   * Telefonda sekme şeridi kabuk dolgusunu aşıp ekran kenarına kadar uzanır (kenar solması ekran kenarında biter, son
+   * sekme "kesilmiş" değil "kayıyor" görünür). Şerit sayfa dolgusunda (kabuk `px-4`, `lg`'de kalkar) kullanılırken açılır;
+   * bir kartın içinde açılmaz.
+   */
+  bleed?: boolean;
 };
 
 /**
  * WAI-ARIA sekmeler: ok tuşları (←/→, Home/End) sekmeler arasında gezinir ve seçer; yalnız seçili
  * sekme sekme sırasındadır (roving tabindex), içerik paneli sekmeyle etiketlidir.
  */
-export function Tabs({ items, label, defaultId, value, onValueChange, className }: TabsProps) {
+export function Tabs({
+  items,
+  label,
+  defaultId,
+  value,
+  onValueChange,
+  className,
+  bleed,
+}: TabsProps) {
   const baseId = useId();
   const [internal, setInternal] = useState(defaultId ?? items[0]?.id);
   const selectedId = value ?? internal;
@@ -80,14 +94,17 @@ export function Tabs({ items, label, defaultId, value, onValueChange, className 
 
   return (
     <div className={className}>
-      <div className="relative">
+      <div className={cn('relative', bleed && '-mx-4 lg:mx-0')}>
         <div
           ref={listRef}
           role="tablist"
           aria-label={label}
           onKeyDown={onKeyDown}
           onScroll={measure}
-          className="flex gap-1 overflow-x-auto border-b border-border"
+          className={cn(
+            'flex gap-1 overflow-x-auto border-b border-border',
+            bleed && 'px-4 lg:px-0',
+          )}
         >
           {items.map((item) => {
             const selected = item.id === selectedId;
