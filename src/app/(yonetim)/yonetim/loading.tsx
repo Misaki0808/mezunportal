@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui';
 export default async function AdminLoading() {
   const t = await getTranslations('admin');
   return (
-    <div aria-busy="true" className="min-w-0 space-y-5 pb-8">
+    <div aria-busy="true" className="min-w-0 space-y-5">
       <span className="sr-only">{t('loading')}</span>
       <Skeleton className="h-10 w-48" />
       <Skeleton className="mt-6 h-14 w-full" />

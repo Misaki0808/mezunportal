@@ -241,7 +241,7 @@ export function OnboardingFlow({
   return (
     <div
       data-hydrated={hydrated ? 'true' : undefined}
-      className="mx-auto flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16"
+      className="flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col"
     >
       <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
       <div

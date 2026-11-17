@@ -22,6 +22,18 @@ describe('Tabs', () => {
     expect(screen.getByRole('tabpanel', { name: 'Hakkında' })).toHaveTextContent('A içeriği');
   });
 
+  it("bleed: telefonda şerit kabuk dolgusunu aşar ve başlangıç dolgusunu geri verir, lg'de kapanır; varsayılan değişmez", () => {
+    const { unmount } = renderUi(<Tabs label="Şirket" items={items} bleed />);
+    const strip = screen.getByRole('tablist', { name: 'Şirket' });
+    expect(strip).toHaveClass('px-4', 'lg:px-0');
+    expect(strip.parentElement).toHaveClass('-mx-4', 'lg:mx-0');
+    unmount();
+    renderUi(<Tabs label="Şirket" items={items} />);
+    const plain = screen.getByRole('tablist', { name: 'Şirket' });
+    expect(plain).not.toHaveClass('px-4');
+    expect(plain.parentElement).not.toHaveClass('-mx-4');
+  });
+
   it('yalnız seçili sekme sekme sırasındadır (roving tabindex)', () => {
     renderUi(<Tabs label="Profil" items={items} />);
 

@@ -166,7 +166,7 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
           : t('title');
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col px-5 pb-8 pt-10 sm:pt-16">
+    <div className="flex w-full max-w-lg flex-col">
       <p className="text-base font-semibold text-primary">{t('eyebrowLabel')}</p>
       <h1
         ref={headingRef}

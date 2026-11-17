@@ -33,7 +33,7 @@ export function PostingDetail({
   ) : undefined;
   const place = posting.location ?? (posting.isRemote ? t('remoteLabel') : t('unknownLocation'));
   return (
-    <article className="w-full min-w-0 pb-8">
+    <article className="w-full min-w-0">
       <BackLink href="/ilanlar">{t('back')}</BackLink>
       <PageHeader eyebrow={t('eyebrow')} title={posting.title} actions={action}>
         <div className="mt-3 flex flex-wrap gap-2 text-sm">

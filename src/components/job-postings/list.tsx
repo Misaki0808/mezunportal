@@ -281,7 +281,7 @@ export function PostingList({
   const quickClass = (selected: boolean) =>
     `press-control inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary ${selected ? 'border-primary bg-primary text-on-primary' : 'border-border-control bg-surface text-fg'}`;
   return (
-    <div className="w-full max-w-[1280px] px-4 py-4 sm:px-6 sm:py-8 lg:py-8">
+    <div className="w-full">
       <header className="mb-3 flex items-start justify-between gap-3 sm:mb-8 sm:gap-4">
         <div className="min-w-0 max-w-2xl">
           <p className="sr-only font-semibold text-accent-strong sm:not-sr-only">{t('eyebrow')}</p>

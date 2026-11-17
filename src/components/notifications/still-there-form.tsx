@@ -60,7 +60,7 @@ export function StillThereForm() {
     }
   }
   return (
-    <div className="mx-auto max-w-xl px-5 py-12">
+    <div className="mx-auto max-w-xl px-5 py-12 [.app-content_&]:mx-0 [.app-content_&]:p-0">
       <h1 className="text-3xl font-semibold">{t('title')}</h1>
       {state === 'loading' && <p className="mt-5">{t('loading')}</p>}
       {state === 'ready' && (

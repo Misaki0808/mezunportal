@@ -121,7 +121,7 @@ export function AlumniDirectory({
     </div>
   );
   return (
-    <div className="w-full max-w-[1280px] px-4 pb-12 pt-6 sm:px-6 lg:pt-8">
+    <div className="w-full">
       <PageHeader eyebrow={t('eyebrow')} title={t('titlePage')} description={t('description')} />
       <div className="mt-6 flex min-w-0 flex-wrap items-start gap-2">
         <SearchBar

@@ -17,7 +17,7 @@ export function AdminFrame({
 }) {
   const t = useTranslations('admin');
   return (
-    <div className="min-w-0 space-y-6 pb-8 [overflow-wrap:anywhere]">
+    <div className="min-w-0 space-y-6 [overflow-wrap:anywhere]">
       <div className="space-y-2">
         <Link
           href="/yonetim"
