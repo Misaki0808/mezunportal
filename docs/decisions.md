@@ -1159,3 +1159,10 @@ Yeniden onay ve kalan dosyaların temizliği PILOT-LEGAL kapsamında ayrıca kar
 ## 2026-11-18 · E-posta teslim ve kuyruk saklama sınırı
 
 E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında işçi kaybı çift teslim üretebilir. Her denemede aynı Message-ID kullanılır; bu, sağlayıcıların tek teslimini garanti etmez. Tamamlanmış yükler 60 saniye sonra beş saniyelik bakım döngüsünde temizlenir; kapalı veya yoğun sistemde temizlik gecikebilir.
+
+## 2026-11-18 · Yönetici atamasında gerekçe
+
+Yetki vermek hassas ve işlem kaydına geçen bir işlemdir; gerekçe hem ekranda hem sunucuda
+zorunludur (kırpılmış 3–1000 karakter). İstemci ve sunucu ortak sözleşmeyi kullanır; işlem
+kaydı kişisel veri içeren gerekçeyi reddeder. Böylece doğrudan eylem çağrısı ekran kuralını
+atlayamaz.
