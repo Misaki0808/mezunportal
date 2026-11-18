@@ -6,6 +6,7 @@ import { renderUi } from '@/test/render';
 import { AdminUserDetail } from './user-detail';
 import { AdminUsers } from './users';
 import { Dictionaries } from './dictionaries';
+import { AdminGrants } from './grants';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 beforeAll(() => {
@@ -42,6 +43,43 @@ const detail: Detail = {
   ],
 };
 const departments = [{ id: 'd1', name: 'YBS', facultyId: 'f1', facultyName: 'Fakülte' }];
+it('yetki atamada arama ve seçim hataları kendi alanlarına odaklanır', async () => {
+  const search = vi
+    .fn()
+    .mockResolvedValue({ ok: true, data: { items: [detail], nextCursor: null } });
+  const grant = vi.fn();
+  const { user } = renderUi(
+    <AdminGrants
+      initial={{ items: [], nextCursor: null }}
+      departments={departments}
+      list={vi.fn()}
+      search={search}
+      grant={grant}
+      revoke={vi.fn()}
+    />,
+  );
+  const query = screen.getByLabelText(/Ad veya e-posta ile ara/);
+  await user.click(screen.getByRole('button', { name: 'Ara' }));
+  expect(query).toHaveFocus();
+  expect(query).toBeInvalid();
+  expect(query).toHaveAccessibleDescription();
+  await user.type(query, 'Örnek');
+  await user.click(screen.getByRole('button', { name: 'Ara' }));
+  const selectedUser = await screen.findByLabelText(/^Kullanıcı/);
+  await user.click(screen.getByRole('button', { name: 'Yönetici ata' }));
+  expect(selectedUser).toHaveFocus();
+  expect(selectedUser).toBeInvalid();
+  expect(screen.queryByRole('dialog')).toBeNull();
+  await user.selectOptions(selectedUser, 'u1');
+  await user.selectOptions(screen.getByLabelText(/^Bölüm/), 'd1');
+  await user.click(screen.getByRole('button', { name: 'Yönetici ata' }));
+  const dialog = await screen.findByRole('dialog');
+  await user.click(within(dialog).getByRole('button', { name: 'Onayla' }));
+  const reason = within(dialog).getByLabelText(/İşlem gerekçesi/);
+  expect(reason).toHaveFocus();
+  expect(reason).toBeInvalid();
+  expect(grant).not.toHaveBeenCalled();
+});
 it('sözlükte eksik ad ilgili alanda gösterilir ve odağa alınır', async () => {
   const create = vi.fn();
   const { user } = renderUi(
