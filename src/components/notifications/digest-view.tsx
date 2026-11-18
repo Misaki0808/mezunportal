@@ -78,17 +78,30 @@ export async function DigestView({
             {section.title}
           </h2>
           <ul className="mt-3 space-y-1">
-            {section.rows.map((row) => (
-              <li key={row.id}>
-                <Link
-                  className="press-row flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-control px-3 py-2 text-fg hover:bg-primary-soft [overflow-wrap:anywhere]"
-                  href={row.href}
-                >
-                  <span className="min-w-0">{row.label}</span>
-                  <ChevronRightIcon className="shrink-0 text-primary" />
-                </Link>
-              </li>
-            ))}
+            {section.rows.map((row) => {
+              // Aynı görünür metni taşıyan satırlar (ör. dört "Staj") ekran okuyucuda ayırt edilebilsin.
+              const same = section.rows.filter((other) => other.label === row.label);
+              const label =
+                same.length > 1
+                  ? t('rowOrdinal', {
+                      label: row.label,
+                      index: same.indexOf(row) + 1,
+                      count: same.length,
+                    })
+                  : undefined;
+              return (
+                <li key={row.id}>
+                  <Link
+                    aria-label={label}
+                    className="press-row flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-control px-3 py-2 text-fg hover:bg-primary-soft [overflow-wrap:anywhere]"
+                    href={row.href}
+                  >
+                    <span className="min-w-0">{row.label}</span>
+                    <ChevronRightIcon className="shrink-0 text-primary" />
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </Card>
       ))}

@@ -82,7 +82,7 @@ export function MyExperiences({ initial, list }: Props) {
         />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {items.map((item) => {
+          {items.map((item, index) => {
             const content = item.content as Record<string, unknown>;
             const title =
               typeof content.organizationName === 'string' ? content.organizationName : '';
@@ -117,6 +117,15 @@ export function MyExperiences({ initial, list }: Props) {
                         variant: item.status === 'REJECTED' ? 'primary' : 'secondary',
                       })}
                       href={`/deneyim/${item.id}/duzenle`}
+                      aria-label={
+                        item.status !== 'REJECTED' && items.length > 1
+                          ? t('mine.editNamed', {
+                              title: title || t('mine.untitled'),
+                              index: index + 1,
+                              count: items.length,
+                            })
+                          : undefined
+                      }
                     >
                       {item.status === 'REJECTED' ? t('rejection.action') : t('mine.edit')}
                     </Link>
@@ -125,6 +134,15 @@ export function MyExperiences({ initial, list }: Props) {
                     <Link
                       className={buttonClasses({ variant: 'secondary' })}
                       href={`/deneyim/${item.id}`}
+                      aria-label={
+                        items.length > 1
+                          ? t('mine.openNamed', {
+                              title: title || t('mine.untitled'),
+                              index: index + 1,
+                              count: items.length,
+                            })
+                          : undefined
+                      }
                     >
                       {t('mine.open')}
                     </Link>
