@@ -81,6 +81,7 @@ it('CV aylık sınırı boş veya 101 iken sıfıra dönüştürülüp kaydedilm
   expect(saveCvReviewSettings).not.toHaveBeenCalled();
   expect(limit).toHaveFocus();
   expect(limit).toBeInvalid();
+  expect(limit).toHaveAccessibleDescription('0 ile 100 arasında tam sayı gir.');
   expect(limit).toHaveValue(null);
   await user.type(limit, '101');
   await user.click(screen.getByRole('button', { name: 'Tercihleri kaydet' }));

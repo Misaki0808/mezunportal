@@ -2686,6 +2686,7 @@
     "settings": "CV inceleme tercihlerin",
     "enabled": "CV inceleme talebi al",
     "limit": "Aylık talep sınırı",
+    "limitInvalid": "0 ile 100 arasında tam sayı gir.",
     "save": "Tercihleri kaydet",
     "saving": "Kaydediliyor…",
     "saved": "Tercihlerin kaydedildi.",

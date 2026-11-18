@@ -205,7 +205,7 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
             checked={settings.enabled}
             onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
           />
-          <Field label={t('limit')} error={limitInvalid ? t('required') : undefined}>
+          <Field label={t('limit')} error={limitInvalid ? t('limitInvalid') : undefined}>
             {(control) => (
               <Input
                 {...control}
