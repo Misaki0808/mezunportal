@@ -124,6 +124,8 @@ function RulesPanel({
     points: points.trim() === '' ? NaN : Number(points),
     delayDays: delay.trim() === '' ? NaN : Number(delay),
   };
+  const pointsValid = updatePointRuleSchema.shape.points.safeParse(numbers.points).success;
+  const delayValid = updatePointRuleSchema.shape.delayDays.safeParse(numbers.delayDays).success;
   const fieldsValid = updatePointRuleSchema.safeParse({
     action: editing?.action,
     ...numbers,
@@ -186,7 +188,12 @@ function RulesPanel({
       >
         <Field
           label={t('admin.rulePoints')}
-          hint={t('admin.rangeHint', { max: POINT_RULE_POINTS_MAX })}
+          hint={pointsValid ? t('admin.rangeHint', { max: POINT_RULE_POINTS_MAX }) : undefined}
+          error={
+            editing && !pointsValid
+              ? t('admin.rangeHint', { max: POINT_RULE_POINTS_MAX })
+              : undefined
+          }
           required
         >
           {(f) => (
@@ -200,7 +207,12 @@ function RulesPanel({
         </Field>
         <Field
           label={t('admin.ruleDelay')}
-          hint={t('admin.rangeHint', { max: POINT_RULE_DELAY_MAX_DAYS })}
+          hint={delayValid ? t('admin.rangeHint', { max: POINT_RULE_DELAY_MAX_DAYS }) : undefined}
+          error={
+            editing && !delayValid
+              ? t('admin.rangeHint', { max: POINT_RULE_DELAY_MAX_DAYS })
+              : undefined
+          }
           required
         >
           {(f) => (
