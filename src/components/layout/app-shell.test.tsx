@@ -318,7 +318,7 @@ describe('AppShell: görünüm A iskeleti', () => {
       within(aside).getByRole('link', { name: 'Hesap ayarları: Deniz Aksoy' }),
     ).toHaveAttribute('href', '/hesap');
     // Üst çubuktaki avatar da hesap ayarlarına gider (telefon ve bilgisayar).
-    const avatars = screen.getAllByRole('link', { name: 'Hesabım' });
+    const avatars = screen.getAllByRole('link', { name: 'Hesap ayarları' });
     expect(avatars.length).toBeGreaterThan(0);
     for (const avatar of avatars) expect(avatar).toHaveAttribute('href', '/hesap');
   });
@@ -353,13 +353,17 @@ describe('AppShell: görünüm A iskeleti', () => {
 
   it('hesap avatarı yalnız kullanıcı adı varken ve profile bağlanır (iki üst çubukta)', () => {
     const { rerender } = renderUi(<AppShell signedIn>x</AppShell>);
-    expect(screen.queryByRole('link', { name: 'Hesabım' })).toBeNull();
+    const headerAccounts = () =>
+      screen
+        .getAllByRole('banner')
+        .flatMap((header) => within(header).queryAllByRole('link', { name: 'Hesap ayarları' }));
+    expect(headerAccounts()).toHaveLength(0);
     rerender(
       <AppShell signedIn shellUser={{ name: 'Ada Yılmaz', membership: null }}>
         x
       </AppShell>,
     );
-    const links = screen.getAllByRole('link', { name: 'Hesabım' });
+    const links = headerAccounts();
     expect(links).toHaveLength(2);
     for (const link of links) expect(link).toHaveAttribute('href', '/hesap');
   });
@@ -372,7 +376,7 @@ describe('AppShell: görünüm A iskeleti', () => {
     );
     expect(screen.queryByRole('search')).toBeNull();
     expect(screen.queryByRole('link', { name: /Bildirimler/ })).toBeNull();
-    expect(screen.queryByRole('link', { name: 'Hesabım' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Hesap ayarları' })).toBeNull();
     expect(screen.queryByText('Ada')).toBeNull();
   });
 
@@ -569,7 +573,7 @@ describe('AppShell: telefon Menü alt sayfası (kart 387)', () => {
       '/profil',
       '/hesap',
     ]);
-    expect(within(nav).getByRole('list', { name: 'Keşfet' })).toBeInTheDocument();
+    expect(within(nav).getByRole('list', { name: 'Diğer sayfalar' })).toBeInTheDocument();
     expect(within(nav).getByRole('list', { name: 'Hesap' })).toBeInTheDocument();
     expect(within(nav).getByRole('link', { name: 'Profilim' })).toHaveAttribute('href', '/profil');
     expect(within(nav).getByRole('link', { name: 'Hesap ayarları' })).toHaveAttribute(

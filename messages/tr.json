@@ -49,8 +49,8 @@
         "description": "Mezunların hangi şirkette staj yaptığını, nasıl başvurduğunu ve mülakatta neler sorulduğunu oku."
       },
       "connect": {
-        "title": "Sor, görüşme iste",
-        "description": "Bir mezuna kısa bir görüşme için yaz ya da CV'ni bir mezunun görmesini iste."
+        "title": "Sor, randevu iste",
+        "description": "Bir mezundan kısa bir randevu iste ya da CV'ni incelemesini iste."
       }
     },
     "departmentKicker": "Bölümümüz",
@@ -97,7 +97,7 @@
       },
       "mentor": {
         "question": "Bir mezundan nasıl destek alırım?",
-        "answer": "Doğrulanınca mezunlara bakabilir, uygun bir zaman için görüşme isteği gönderebilirsin."
+        "answer": "Doğrulanınca mezunlara bakabilir, uygun bir zaman için randevu isteği gönderebilirsin."
       }
     },
     "closingTitle": "Yalnız yürümek zorunda değilsin.",
@@ -140,7 +140,6 @@
     "title": "MezunPortal",
     "tagline": "İstanbul Üniversitesi öğrencileri, mezunları ve akademisyenleri için staj odaklı kariyer platformu. Mezunların deneyimlerini oku, bir mentorla görüş.",
     "greeting": "Merhaba, {name}",
-    "greetingPlain": "Merhaba",
     "subtitle": {
       "STUDENT": "Staj yolculuğunda bugün ne yapmak istersin?",
       "MENTOR": "Öğrencilere bugün nasıl destek olmak istersin?"
@@ -163,7 +162,7 @@
       },
       "mentors": {
         "title": "Mentor bul",
-        "description": "Bir mezunla görüşme ayarla."
+        "description": "Bir mezunla randevu ayarla."
       },
       "cvReview": {
         "title": "CV incelemesi",
@@ -213,26 +212,26 @@
         "label": "Günün özeti",
         "profile": "Profil",
         "pending": "Bekleyen iş",
-        "appointment": "Sıradaki görüşme",
+        "appointment": "Sıradaki randevu",
         "steps": "{count} adım eksik",
         "pendingHint": "Yanıt ve değerlendirmelerin",
         "unknown": "—",
         "unavailable": "Bilgi alınamadı",
         "none": "Yok",
-        "noAppointment": "Henüz planlanmış görüşme yok"
+        "noAppointment": "Henüz planlanmış randevu yok"
       },
       "appointments": {
-        "title": "Yaklaşan görüşme",
+        "title": "Yaklaşan randevu",
         "all": "Randevularını gör",
-        "empty": "Henüz planlanmış görüşmen yok.",
-        "emptyStudent": "Bir mentorla görüşme ayarladığında burada görünecek.",
-        "emptyMentor": "Onayladığın görüşmeler burada görünecek.",
-        "with": "{name} ile görüşme",
+        "empty": "Henüz planlanmış randevun yok.",
+        "emptyStudent": "Bir mentorla randevu ayarladığında burada görünecek.",
+        "emptyMentor": "Onayladığın randevular burada görünecek.",
+        "with": "{name} ile randevu",
         "mode": {
           "ONLINE": "Çevrimiçi",
           "IN_PERSON": "Yüz yüze"
         },
-        "details": "Görüşmeyi aç",
+        "details": "Randevuyu aç",
         "calendar": "Takvime ekle",
         "then": "Sonra: {date} · {name}"
       },
@@ -454,13 +453,13 @@
       "menu": "Menü"
     },
     "groups": {
-      "explore": "Keşfet",
+      "explore": "Diğer sayfalar",
       "account": "Hesap",
       "admin": "Yönetici"
     },
     "admin": "Yönetim",
     "signIn": "Giriş yap",
-    "accountLink": "Hesabım",
+    "accountLink": "Hesap ayarları",
     "search": {
       "label": "Deneyimlerde ara",
       "placeholder": "Deneyimlerde ara"
@@ -554,8 +553,8 @@
   },
   "alumniDirectory": {
     "eyebrow": "MEZUNLAR",
-    "titlePage": "Mezunları keşfet",
-    "description": "Rehberde görünmeyi seçen mezunları sektör ve deneyimlerine göre keşfet.",
+    "titlePage": "Mezun rehberi",
+    "description": "Rehberde görünmeyi seçen mezunları sektör ve deneyimlerine göre incele.",
     "search": "Mezun ara",
     "searchHint": "Ad, şirket veya unvan ara",
     "searchButton": "Ara",
@@ -666,8 +665,6 @@
       "title": "Mentorla görüş",
       "contact": "İletişim iste",
       "contactBlocked": "Bu kişiye şu anda iletişim talebi gönderemezsin.",
-      "appointmentBlocked": "Randevu şu an alınamıyor.",
-      "cvBlocked": "CV incelemesi şu an istenemiyor.",
       "reasons": {
         "NOT_MENTOR": "Bu kişi mentor olarak listelenmiyor.",
         "SELF": "Bu senin kendi profilin.",
@@ -1078,11 +1075,11 @@
     "appointment": {
       "requested": {
         "subject": "Yeni randevu talebi",
-        "text": "Merhaba,\n\n{name} seninle {when} için {mode} görüşme talep etti. Talep {deadline} tarihine kadar yanıt bekliyor; süre dolarsa kendiliğinden kapanır.\n\nMezunPortal'da Randevularım bölümünden onaylayabilir ya da reddedebilirsin."
+        "text": "Merhaba,\n\n{name} seninle {when} için {mode} randevu talep etti. Talep {deadline} tarihine kadar yanıt bekliyor; süre dolarsa kendiliğinden kapanır.\n\nMezunPortal'da Randevularım bölümünden onaylayabilir ya da reddedebilirsin."
       },
       "confirmed": {
         "subject": "Randevun onaylandı",
-        "text": "Merhaba,\n\n{name} ile {when} için {mode} görüşmen onaylandı.{details}{reminder}"
+        "text": "Merhaba,\n\n{name} ile {when} için {mode} randevun onaylandı.{details}{reminder}"
       },
       "declined": {
         "subject": "Randevu talebin kabul edilmedi",
@@ -1090,15 +1087,15 @@
       },
       "cancelled": {
         "subject": "Randevu iptal edildi",
-        "text": "Merhaba,\n\n{name} ile {when} için görüşme iptal edildi.{reason}"
+        "text": "Merhaba,\n\n{name} ile {when} için randevu iptal edildi.{reason}"
       },
       "expired": {
         "subject": "Randevu talebi yanıtsız kapandı",
         "text": "Merhaba,\n\n{name} ile {when} için randevu talebi süresi içinde yanıtlanmadığından kapandı. Başka bir saat seçerek yeniden talep edebilirsin."
       },
       "reminder": {
-        "subject": "Yarınki görüşmeni unutma",
-        "text": "Merhaba,\n\n{name} ile {when} için {mode} görüşmen yaklaşıyor.{details}"
+        "subject": "Yarınki randevunu unutma",
+        "text": "Merhaba,\n\n{name} ile {when} için {mode} randevun yaklaşıyor.{details}"
       },
       "linkNeeded": {
         "subject": "Görüşme bağlantısını ekle",
@@ -1113,14 +1110,14 @@
       "detailsLink": "\n\nBağlantı: {url}",
       "detailsPlace": "\n\nYer: {place}",
       "reasonLine": "\nNot: {reason}",
-      "reminderLine": "\n\nGörüşme 24 saatten kısa süre içinde başlıyor; ayrıca hatırlatma gönderilmeyecek."
+      "reminderLine": "\n\nRandevun 24 saatten kısa süre içinde başlıyor; ayrıca hatırlatma gönderilmeyecek."
     }
   },
   "accountName": {
-    "eyebrow": "HESABIM",
+    "eyebrow": "HESAP AYARLARI",
     "title": "Ad soyad",
     "description": "Mentor kartlarında, randevularda ve e-postalarda görünen adın. Gerçek adını yaz.",
-    "back": "Hesabıma dön",
+    "back": "Hesap ayarları",
     "label": "Ad soyad",
     "hint": "Harf, boşluk, kesme işareti ve tire kullan; 2–80 karakter.",
     "derivedHint": "E-postandan türetildi ve eksik görünüyor; gerçek ad ve soyadını yaz.",
@@ -1153,7 +1150,7 @@
       "sending": "Gönderiliyor…",
       "successTitle": "E-postanı kontrol et",
       "success": "Önce şu anki adresine gelen bağlantıyla değişikliği onayla. Ardından yeni adresine gelen bağlantıyı doğrula.",
-      "back": "Hesabıma dön",
+      "back": "Hesap ayarları",
       "oldVerifiedTitle": "Mevcut adresin doğrulandı",
       "oldVerifiedDescription": "Şimdi yeni adresine gelen bağlantıyı açarak değişikliği tamamla.",
       "completeTitle": "E-posta adresin güncellendi",
@@ -1278,8 +1275,8 @@
         "admin": "YÖNETİM",
         "session": "OTURUM"
       },
-      "eyebrow": "HESABIM",
-      "title": "Hesabın",
+      "eyebrow": "HESAP AYARLARI",
+      "title": "Hesap ayarları",
       "description": "Doğrulama ve hesap ayarlarını buradan yönet.",
       "verification": "Doğrulama durumu",
       "verificationDescription": "Üyeliğinin durumunu görüntüle.",
@@ -1302,7 +1299,6 @@
       "reviewDescription": "Başvurunu incelemeye aldık. Sonucu buradan takip edebilirsin.",
       "reviewAction": "Durumu gör",
       "onboardingTitle": "Profilini tamamla",
-      "onboardingDescription": "İlgilerini ve hedeflerini seçerek başlayabilirsin.",
       "onboardingAction": "Başlangıca devam et"
     },
     "testSignIn": {
@@ -1589,7 +1585,7 @@
   },
   "privacyScreens": {
     "common": {
-      "back": "Hesabıma dön",
+      "back": "Hesap ayarları",
       "backReturn": "Geri dön",
       "eyebrow": "HESABIN SENİN KONTROLÜNDE",
       "save": "Kaydet",
@@ -1919,7 +1915,7 @@
     "visibilityAction": "Gizlilik ayarlarına git",
     "visibilityConfirm": "Tercihlerimi gözden geçirdim",
     "completeTitle": "Hazırsın!",
-    "completeDescription": "Profilini istediğin zaman Hesabım bölümünden güncelleyebilirsin.",
+    "completeDescription": "Profilini istediğin zaman Profilim bölümünden güncelleyebilirsin.",
     "home": "Ana sayfaya git",
     "next": "Devam et",
     "skip": "Şimdilik atla",
@@ -2442,7 +2438,7 @@
   "notifications": {
     "title": "Bildirim tercihlerin",
     "description": "Hangi e-postaları almak istediğini seç. Hesap güvenliği iletileri her zaman gönderilir.",
-    "back": "Hesabıma dön",
+    "back": "Hesap ayarları",
     "accountTitle": "Bildirim tercihleri",
     "accountDescription": "Almak istediğin e-postaları seç.",
     "mandatory": "Hesap güvenliği için bu bildirim kapatılamaz.",
@@ -2486,7 +2482,7 @@
       },
       "APPOINTMENT": {
         "label": "Randevular",
-        "description": "Randevu talepleri, onaylar, değişiklikler ve yaklaşan görüşme hatırlatmaları."
+        "description": "Randevu talepleri, onaylar, değişiklikler ve yaklaşan randevu hatırlatmaları."
       },
       "FAQ": {
         "label": "Sık sorulan sorular",
@@ -2621,7 +2617,7 @@
     "sending": "Gönderiliyor…",
     "success": "Yanıtın kaydedildi. Teşekkür ederiz.",
     "already": "Bu görüşme için yanıtını gönderdin.",
-    "back": "Hesabıma dön",
+    "back": "Hesap ayarları",
     "reliability": "Güvenilirlik göstergen",
     "reliabilityDescription": "Son 12 aydaki görüşme katılımına göre hesaplanır.",
     "NEW": "Yeni",
@@ -2810,7 +2806,7 @@
       "submitting": "Gönderiliyor…",
       "chooseSlot": "Önce bir saat seç.",
       "sent": "Talebin gönderildi",
-      "sentDescription": "Mentor 72 saat içinde yanıt vermezse ya da görüşmeye 12 saatten az kalırsa talep süresi dolar.",
+      "sentDescription": "Mentor 72 saat içinde yanıt vermezse ya da randevunun başlangıcına 12 saatten az kalırsa talep süresi dolar.",
       "sentAction": "Randevularıma git",
       "unavailable": {
         "PAUSED": "Bu mentor şimdilik ara vermiş; yeni talep almıyor. Bu arada başka bir mentora göz atabilirsin.",
@@ -3194,7 +3190,7 @@
   },
   "seekers": {
     "eyebrow": "İLANLAR",
-    "backAccount": "Hesabıma dön",
+    "backAccount": "Hesap ayarları",
     "settingsTitle": "İş arayanlara görün",
     "settingsDescription": "Staj aradığında, işe alım yapan doğrulanmış mezunlar kimliğini görmeden sana ulaşma isteği gönderebilir.",
     "visibility": "İş arayanlara görün",
@@ -3252,7 +3248,7 @@
     "contactDescription": "İsteğin öğrenciye iletilir; öğrenci onaylayana kadar kimliği paylaşılmaz.",
     "contactSent": "İletişim isteğin gönderildi.",
     "requests": "Taleplerime git",
-    "contactUnavailable": "Bu aday için şu anda iletişim isteği gönderilemiyor.",
+    "contactUnavailable": "Bu aday için şu anda iletişim talebi gönderilemiyor.",
     "fields": "İstediğin bilgiler",
     "fieldsHint": "Yalnız öğrencinin talep edilebilmesine izin verdiği alanları seçebilirsin.",
     "message": "Kısa not (isteğe bağlı)",
@@ -3516,7 +3512,7 @@
     "emptyStudentDescription": "Bir mezun seni referans gösterdiğinde, onayını isteyen talep burada görünür. Referansı yalnız mezun başlatır.",
     "emptyOther": "Henüz referans yok",
     "emptyOtherDescription": "Referans beyanları mezunlarla öğrenciler arasındadır; seni ilgilendiren bir beyan olursa burada görünür.",
-    "emptyCandidates": "Şu anda seçebileceğin öğrenci yok. Önce bir iletişim isteği veya görüşme tamamla.",
+    "emptyCandidates": "Şu anda seçebileceğin öğrenci yok. Önce bir iletişim talebi veya görüşme tamamla.",
     "moderationTitle": "Referans inceleme",
     "moderationDescription": "Öğrenci ve mezunun beyanlarını incele.",
     "moderationApproved": "Beyan onaylandı.",
