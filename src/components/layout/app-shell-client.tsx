@@ -219,7 +219,7 @@ export function AppShellClient({
         )}
       >
         {item.icon}
-        <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[11px]">
+        <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[12px] @max-[13rem]:tracking-[-0.05em]">
           {t(`shortItems.${item.id}`)}
         </span>
       </Link>
@@ -248,7 +248,7 @@ export function AppShellClient({
       )}
     >
       <MenuIcon />
-      <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[11px]">
+      <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[12px] @max-[13rem]:tracking-[-0.05em]">
         {t('shortItems.menu')}
       </span>
     </button>

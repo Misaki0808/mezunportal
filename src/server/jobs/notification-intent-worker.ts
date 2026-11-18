@@ -156,7 +156,7 @@ export async function sendNotificationIntent(
         where: { userId: row.userId, day: { gte: addDays(today, -6), lte: today } },
       });
       if (recent >= 3) return;
-      const url = new URL('/hesap/bildirimler', getAuthEnv().APP_URL).href;
+      const url = new URL('/ilanlar', getAuthEnv().APP_URL).href;
       const result = await enqueueEmail({
         to: user.email,
         recipientUserId: row.userId,

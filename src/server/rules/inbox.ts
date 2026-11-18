@@ -40,7 +40,7 @@ export const INBOX_KINDS = {
   faqPublished: { category: 'faq', list: '/hesap/sss' },
   faqRejected: { category: 'faq', list: '/hesap/sss' },
   faqRedirected: { category: 'faq', list: '/hesap/sss' },
-  faqAnswerPublished: { category: 'faq', list: '/hesap/sss' },
+  faqAnswerPublished: { category: 'faq', list: '/sss' },
   referralUpdated: { category: 'referral', list: '/hesap/referanslar' },
   appointmentRequested: appointment(),
   appointmentConfirmed: appointment(),
