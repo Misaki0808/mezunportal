@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { expect, it, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderUi } from '@/test/render';
 import { ReviewInbox } from './review-inbox';
 import { RequestForm } from './request-form';
@@ -23,6 +23,13 @@ it('CV inceleme talebinde boş notun hatası alana bağlanır ve odaklanır', as
   expect(note).toHaveFocus();
   expect(note).toBeInvalid();
   expect(note).toHaveAccessibleDescription();
+  const long = 'İ'.repeat(501);
+  expect(note).not.toHaveAttribute('maxlength');
+  fireEvent.change(note, { target: { value: long } });
+  await user.click(screen.getByRole('button', { name: /gönder/i }));
+  expect(note).toHaveValue(long);
+  expect(note).toHaveFocus();
+  expect(note).toHaveAccessibleDescription(/1 ile 500/);
 });
 it('CV inceleme yanıtında boş yorum ilgili alanda gösterilir ve odaklanır', async () => {
   const row = {
@@ -47,6 +54,7 @@ it('CV inceleme yanıtında boş yorum ilgili alanda gösterilir ve odaklanır',
   expect(comment).toHaveFocus();
   expect(comment).toBeInvalid();
   expect(comment).toHaveAccessibleDescription();
+  expect(comment).not.toHaveAttribute('maxlength');
   vi.mocked(answerCvReviewRequest).mockResolvedValueOnce({
     ok: false,
     errorCode: 'VALIDATION_INVALID',

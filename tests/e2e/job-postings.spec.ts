@@ -330,6 +330,13 @@ test('ilan adımları klavyeyle doğrulanır, başlık duyurulur ve geri dönün
   const organization = page.getByLabel('Kurum adı', { exact: false });
   await tabTo(organization);
   await page.keyboard.type('Örnek Kurum');
+  await title.fill('İ'.repeat(121));
+  await next.click();
+  await expect(title).toHaveValue('İ'.repeat(121));
+  await expect(title).toBeFocused();
+  await expect(title).toHaveAttribute('aria-invalid', 'true');
+  await expect(title).toHaveAccessibleDescription('En fazla 120 karakter gir.');
+  await title.fill('Yazılım stajyeri');
   await tabTo(next);
   await page.keyboard.press('Enter');
   const heading = page.getByRole('heading', { name: /Ayrıntılar ve başvuru$/ });

@@ -65,3 +65,18 @@ it('boş yarıyıl sıfıra dönüşmez; alan hatası ve odakla veri korunur, ge
     expect(saveCourse).toHaveBeenCalledWith(expect.objectContaining({ semester: 0 })),
   );
 });
+
+it('uzun ders kodu kesilip kaydedilmez; alan hatası değeri korur', async () => {
+  vi.mocked(saveCourse).mockClear();
+  const user = userEvent.setup();
+  renderUi(<CourseAdmin departments={[{ id: 'd1', name: 'YBS' }]} courses={[]} />);
+  const code = screen.getByLabelText(/Ders kodu/);
+  expect(code).not.toHaveAttribute('maxlength');
+  await user.type(code, 'A'.repeat(33));
+  await user.type(screen.getByLabelText(/Ders adı/), 'Veri Analitiği');
+  await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+  expect(code).toHaveValue('A'.repeat(33));
+  expect(code).toHaveFocus();
+  expect(code).toBeInvalid();
+  expect(saveCourse).not.toHaveBeenCalled();
+});

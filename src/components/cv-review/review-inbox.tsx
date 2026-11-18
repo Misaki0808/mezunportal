@@ -284,7 +284,7 @@ function ReviewCard({
             });
           }}
         >
-          <Field label={t('comment')} error={invalid ? t('required') : undefined}>
+          <Field label={t('comment')} error={invalid ? t('commentInvalid') : undefined}>
             {(control) => (
               <Textarea
                 {...control}
@@ -294,7 +294,6 @@ function ReviewCard({
                   setComment(e.target.value);
                   setInvalid(false);
                 }}
-                maxLength={3000}
                 rows={4}
               />
             )}

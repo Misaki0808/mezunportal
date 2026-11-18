@@ -132,15 +132,11 @@ export function CourseAdmin({
           )}
         </Field>
         <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
-          <Field label={t('code')} required error={fieldErrors.code}>
-            {(control) => (
-              <Input {...control} maxLength={32} name="code" defaultValue={selected?.code} />
-            )}
+          <Field label={t('code')} required error={fieldErrors.code === errors('VALIDATION_INVALID') ? t('codeInvalid') : fieldErrors.code}>
+            {(control) => <Input {...control} name="code" defaultValue={selected?.code} />}
           </Field>
-          <Field label={t('name')} required error={fieldErrors.name}>
-            {(control) => (
-              <Input {...control} maxLength={200} name="name" defaultValue={selected?.name} />
-            )}
+          <Field label={t('name')} required error={fieldErrors.name === errors('VALIDATION_INVALID') ? t('nameInvalid') : fieldErrors.name}>
+            {(control) => <Input {...control} name="name" defaultValue={selected?.name} />}
           </Field>
         </div>
         <Field

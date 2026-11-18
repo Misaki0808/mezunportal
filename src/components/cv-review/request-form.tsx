@@ -85,7 +85,7 @@ export function RequestForm({
             className="[&_p]:text-base"
             label={t('note')}
             hint={t('noteHint')}
-            error={invalid ? t('required') : undefined}
+            error={invalid ? t('noteInvalid') : undefined}
           >
             {(control) => (
               <Textarea
@@ -96,7 +96,6 @@ export function RequestForm({
                   setNote(e.target.value);
                   setInvalid(false);
                 }}
-                maxLength={500}
                 rows={5}
               />
             )}
