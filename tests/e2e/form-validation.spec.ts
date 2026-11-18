@@ -1,0 +1,111 @@
+import { expect, test } from './fixture';
+import { loginAs } from './login';
+
+test('ad soyad: NFD üst sınır, uzunluk ve geçersiz karakter hataları veri kaybetmez', async ({
+  page,
+}) => {
+  await loginAs(page, 'student');
+  await page.goto('/hesap/ad-soyad');
+  const name = page.getByLabel('Ad soyad');
+  const save = page.getByRole('button', { name: 'Kaydet' });
+  await name.fill('  ');
+  await save.click();
+  await expect(name).toBeFocused();
+  await expect(name).toHaveAttribute('aria-invalid', 'true');
+  await expect(name).toHaveAccessibleDescription(/2–80 karakter/);
+
+  await name.fill('I\u0307'.repeat(80));
+  await save.click();
+  await expect(page.getByText('Adın güncellendi.')).toBeVisible();
+  await expect(name).toHaveValue('İ'.repeat(80));
+  await page.reload();
+  await expect(name).toHaveValue('İ'.repeat(80));
+
+  for (const invalid of ['A'.repeat(81), 'Ayşe 😀']) {
+    await name.fill(invalid);
+    await save.click();
+    await expect(name).toBeFocused();
+    await expect(name).toHaveValue(invalid);
+    await expect(name).toHaveAttribute('aria-invalid', 'true');
+    await expect(name).toHaveAccessibleDescription(/2–80 karakter/);
+  }
+});
+
+test('profil bağlantısı: tehlikeli URL alan hatası verir ve veri korunur', async ({ page }) => {
+  await loginAs(page, 'student');
+  await page.goto('/profil');
+  const section = page
+    .getByRole('heading', { name: 'Bağlantılar' })
+    .locator('xpath=ancestor::section[1]');
+  await section.getByRole('button', { name: 'Düzenle' }).click();
+  const sheet = page.getByRole('dialog');
+  const url = sheet.getByLabel(/LinkedIn adresi/);
+  await url.fill('javascript:alert(1)');
+  await sheet.getByRole('button', { name: 'Kaydet' }).click();
+  await expect(url).toHaveValue('javascript:alert(1)');
+  await expect(url).toBeFocused();
+  await expect(url).toHaveAttribute('aria-invalid', 'true');
+  await expect(url).toHaveAccessibleDescription(/geçerli/i);
+});
+
+test('mentor kapasitesinde sınır dışı ve harf içeren değer kesilmeden reddedilir', async ({
+  page,
+}) => {
+  await loginAs(page, 'alumniMentor');
+  await page.goto('/mentor/ayarlar');
+  const capacity = page.getByLabel(/Aylık görüşme kapasitesi/);
+  const save = page.getByRole('button', { name: 'Genel ayarları kaydet' });
+  for (const value of ['41', '100', '4a']) {
+    await capacity.fill(value);
+    await save.click();
+    await expect(capacity).toHaveValue(value);
+    await expect(capacity).toBeFocused();
+    await expect(capacity).toHaveAttribute('aria-invalid', 'true');
+    await expect(capacity).toHaveAccessibleDescription(/1 ile 40/);
+  }
+  await capacity.fill('40');
+  await save.click();
+  await expect(page.getByText('Kaydedildi.')).toBeVisible();
+});
+
+test('CV inceleme sınırında boş değer ve 101 kaydedilmez, 0 geçerlidir', async ({ page }) => {
+  await loginAs(page, 'alumniMentor');
+  await page.goto('/hesap/cv-inceleme');
+  const limit = page.getByRole('spinbutton', { name: 'Aylık talep sınırı' });
+  const old = await limit.inputValue();
+  const save = page.getByRole('button', { name: 'Tercihleri kaydet' });
+  for (const value of ['', '101']) {
+    await limit.fill(value);
+    await save.click();
+    await expect(limit).toHaveValue(value);
+    await expect(limit).toBeFocused();
+    await expect(limit).toHaveAttribute('aria-invalid', 'true');
+    await expect(limit).toHaveAccessibleDescription('0 ile 100 arasında tam sayı gir.');
+  }
+  await limit.fill('0');
+  await save.click();
+  await expect(page.getByText('Tercihlerin kaydedildi.')).toBeVisible();
+  await limit.fill(old);
+  await save.click();
+  await expect(page.getByText('Tercihlerin kaydedildi.')).toBeVisible();
+});
+
+test('ders yönetiminde boş veya sınır dışı yarıyıl kaydedilmez ve veri korunur', async ({
+  page,
+}) => {
+  await loginAs(page, 'systemAdmin');
+  await page.goto('/yonetim/dersler');
+  await page.getByLabel(/Ders kodu/).fill('TEST101');
+  const name = page.getByLabel(/Ders adı/);
+  await name.fill('Deneme dersi');
+  const semester = page.getByLabel(/Yarıyıl/);
+  for (const value of ['', '9']) {
+    await semester.fill(value);
+    await page.getByRole('button', { name: 'Kaydet' }).click();
+    await expect(semester).toHaveValue(value);
+    await expect(semester).toBeFocused();
+    await expect(semester).toHaveAttribute('aria-invalid', 'true');
+    await expect(semester).toHaveAccessibleDescription('0 ile 8 arasında bir yarıyıl gir.');
+    await expect(name).toHaveValue('Deneme dersi');
+  }
+});

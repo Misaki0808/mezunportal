@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -24,6 +24,43 @@ beforeEach(() => {
 });
 
 describe('FeedbackForm', () => {
+  it('yanıt seçilmediğinde ilk seçeneğe odaklanır ve alan hatasını bağlar', async () => {
+    renderUi(<FeedbackForm view={view} />);
+    const first = screen.getByRole('radio', { name: 'Evet, gerçekleşti' });
+    fireEvent.submit(screen.getByRole('button', { name: 'Yanıtı gönder' }).closest('form')!);
+    expect(submit).not.toHaveBeenCalled();
+    expect(first).toHaveFocus();
+    expect(first).toBeInvalid();
+    expect(first).toHaveAccessibleDescription(/seç/i);
+  });
+  it('sunucu not alanı hatasını notun altında gösterir ve girdiyi korur', async () => {
+    submit.mockResolvedValue({
+      ok: false,
+      errorCode: 'VALIDATION_INVALID',
+      fieldErrors: { note: 'VALIDATION_INVALID' },
+    });
+    const { user } = renderUi(<FeedbackForm view={view} />);
+    await user.click(screen.getByRole('radio', { name: 'Evet, gerçekleşti' }));
+    const note = screen.getByLabelText(/Eklemek istediğin/);
+    await user.type(note, 'Türkçe not');
+    await user.click(screen.getByRole('button', { name: 'Yanıtı gönder' }));
+    await waitFor(() => expect(note).toHaveFocus());
+    expect(note).toHaveValue('Türkçe not');
+    expect(note).toBeInvalid();
+    expect(note).toHaveAttribute('aria-describedby');
+  });
+  it('1001 karakterlik notu kesmeden reddeder ve alana odaklanır', async () => {
+    const { user } = renderUi(<FeedbackForm view={view} />);
+    await user.click(screen.getByRole('radio', { name: 'Evet, gerçekleşti' }));
+    const note = screen.getByLabelText(/Eklemek istediğin/);
+    expect(note).not.toHaveAttribute('maxlength');
+    fireEvent.change(note, { target: { value: 'İ'.repeat(1001) } });
+    await user.click(screen.getByRole('button', { name: 'Yanıtı gönder' }));
+    expect(note).toHaveValue('İ'.repeat(1001));
+    expect(note).toHaveFocus();
+    expect(note).toHaveAccessibleDescription(/en fazla 1000/);
+    expect(submit).not.toHaveBeenCalled();
+  });
   it('iki grup da kit radyosudur (24 px, tarayıcı çizimi değil); ad korunur, başta seçili yok', () => {
     renderUi(<FeedbackForm view={view} />);
 

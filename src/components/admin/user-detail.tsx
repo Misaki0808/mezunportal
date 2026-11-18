@@ -1,7 +1,7 @@
 'use client';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   correctMembershipSchema,
   suspendUserSchema,
@@ -40,6 +40,8 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
   const [entryYear, setEntryYear] = useState('');
   const [graduationYear, setGraduationYear] = useState('');
   const [invalid, setInvalid] = useState(false);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
+  const fields = useRef<Record<string, HTMLElement | null>>({});
   const [error, setError] = useState<ErrorCode>();
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState('');
@@ -48,6 +50,7 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
     setChoice(undefined);
     setReason('');
     setInvalid(false);
+    setInvalidFields([]);
     setError(undefined);
   }
   function beginCorrection(membership: Membership) {
@@ -60,6 +63,7 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
   async function submit() {
     if (!choice || pending) return;
     let operation: (() => Promise<ActionResult<unknown>>) | undefined;
+    let invalidPaths: string[] = [];
     if (choice.kind === 'correct') {
       const m = choice.membership;
       const changes = {
@@ -79,23 +83,40 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
         confirmed: true,
       });
       if (result.success) operation = () => correct(result.data);
+      else invalidPaths = result.error.issues.map((issue) => String(issue.path.at(-1) ?? ''));
     } else if (choice.kind === 'suspend') {
       const result = suspendUserSchema.safeParse({ userId: initial.id, reason, confirmed: true });
       if (result.success) operation = () => suspend(result.data);
+      else invalidPaths = result.error.issues.map((issue) => String(issue.path.at(-1) ?? ''));
     } else {
       const result = unsuspendUserSchema.safeParse({ userId: initial.id, reason, confirmed: true });
       if (result.success) operation = () => unsuspend(result.data);
+      else invalidPaths = result.error.issues.map((issue) => String(issue.path.at(-1) ?? ''));
     }
     if (!operation) {
       setInvalid(true);
+      setInvalidFields(invalidPaths);
+      const first = ['departmentId', 'role', 'entryYear', 'graduationYear', 'reason'].find(
+        (field) => invalidPaths.includes(field),
+      );
+      if (first) fields.current[first]?.focus();
       return;
     }
     setPending(true);
     setInvalid(false);
+    setInvalidFields([]);
     setError(undefined);
     try {
       const result = await operation();
       if (!result.ok) {
+        const rejected = Object.keys(result.fieldErrors ?? {}).map(
+          (field) => field.split('.').at(-1) ?? field,
+        );
+        setInvalidFields(rejected);
+        const first = ['departmentId', 'role', 'entryYear', 'graduationYear', 'reason'].find(
+          (field) => rejected.includes(field),
+        );
+        if (first) fields.current[first]?.focus();
         setError(result.errorCode);
         return;
       }
@@ -223,10 +244,16 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
       >
         {choice?.kind === 'correct' && (
           <div className="mb-5 flex flex-col gap-4">
-            <Field label={t('department')}>
+            <Field
+              label={t('department')}
+              error={invalidFields.includes('departmentId') ? t('invalid') : undefined}
+            >
               {(props) => (
                 <Select
                   {...props}
+                  ref={(el) => {
+                    fields.current.departmentId = el;
+                  }}
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                 >
@@ -238,10 +265,16 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
                 </Select>
               )}
             </Field>
-            <Field label={t('role')}>
+            <Field
+              label={t('role')}
+              error={invalidFields.includes('role') ? t('invalid') : undefined}
+            >
               {(props) => (
                 <Select
                   {...props}
+                  ref={(el) => {
+                    fields.current.role = el;
+                  }}
                   value={role}
                   onChange={(e) => setRole(e.target.value as Membership['role'])}
                 >
@@ -253,10 +286,16 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
                 </Select>
               )}
             </Field>
-            <Field label={t('users.entryYear')}>
+            <Field
+              label={t('users.entryYear')}
+              error={invalidFields.includes('entryYear') ? t('invalid') : undefined}
+            >
               {(props) => (
                 <Input
                   {...props}
+                  ref={(el) => {
+                    fields.current.entryYear = el;
+                  }}
                   type="number"
                   inputMode="numeric"
                   min={1950}
@@ -266,10 +305,16 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
                 />
               )}
             </Field>
-            <Field label={t('users.graduationYear')}>
+            <Field
+              label={t('users.graduationYear')}
+              error={invalidFields.includes('graduationYear') ? t('invalid') : undefined}
+            >
               {(props) => (
                 <Input
                   {...props}
+                  ref={(el) => {
+                    fields.current.graduationYear = el;
+                  }}
                   type="number"
                   inputMode="numeric"
                   min={1950}
@@ -285,11 +330,14 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
           label={t('reason')}
           hint={t('reasonHint')}
           required
-          error={invalid && reason.trim().length < 3 ? t('reasonInvalid') : undefined}
+          error={invalidFields.includes('reason') ? t('reasonInvalid') : undefined}
         >
           {(props) => (
             <Textarea
               {...props}
+              ref={(el) => {
+                fields.current.reason = el;
+              }}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={4}
@@ -297,11 +345,14 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
             />
           )}
         </Field>
-        {invalid && reason.trim().length >= 3 && (
-          <p role="alert" className="mt-3 text-danger">
-            {t('invalid')}
-          </p>
-        )}
+        {invalid &&
+          !invalidFields.some((field) =>
+            ['departmentId', 'role', 'entryYear', 'graduationYear', 'reason'].includes(field),
+          ) && (
+            <p role="alert" className="mt-3 text-danger">
+              {t('invalid')}
+            </p>
+          )}
         {error && (
           <p role="alert" className="mt-3 text-danger">
             {errors(error)}

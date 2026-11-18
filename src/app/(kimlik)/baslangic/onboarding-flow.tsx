@@ -3,7 +3,7 @@ import { useHydrated } from '@/hooks/use-hydrated';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import {
   saveOnboardingStepSchema,
@@ -86,7 +86,13 @@ export function OnboardingFlow({
   const editing = useRef(editInitially);
   const [error, setError] = useState<ErrorCode>();
   const [emptySelection, setEmptySelection] = useState(false);
+  const selectionId = useId();
+  const actionErrorId = useId();
+  const firstChoice = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
+  useEffect(() => {
+    if (!pending && error === 'VALIDATION_INVALID') firstChoice.current?.focus();
+  }, [error, pending]);
   const [alumniSaving, setAlumniSaving] = useState(false);
   const [finished, setFinished] = useState(false);
   const [visibility, setVisibility] = useState(initialVisibility);
@@ -122,11 +128,13 @@ export function OnboardingFlow({
     if (locked.current) return;
     if ((input.step === 'INTERESTS' || input.step === 'GOALS') && input.tagIds.length === 0) {
       setEmptySelection(true);
+      firstChoice.current?.focus();
       return;
     }
     const parsed = saveOnboardingStepSchema.safeParse(input);
     if (!parsed.success) {
       setError('VALIDATION_INVALID');
+      firstChoice.current?.focus();
       return;
     }
     locked.current = true;
@@ -281,19 +289,47 @@ export function OnboardingFlow({
       {!done && step !== 'COMPLETE' && nameCard}
       {showTags &&
         (availableChoices.length ? (
-          <fieldset className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <fieldset
+            className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2"
+            aria-invalid={emptySelection || error === 'VALIDATION_INVALID' || undefined}
+            aria-describedby={
+              emptySelection
+                ? selectionId
+                : error === 'VALIDATION_INVALID'
+                  ? actionErrorId
+                  : undefined
+            }
+          >
             <legend className="mb-3 text-base text-fg-muted">{t('selectionHint')}</legend>
             {availableChoices.map((tag) => (
               <Checkbox
                 key={tag.id}
+                ref={tag.id === availableChoices[0]?.id ? firstChoice : undefined}
+                aria-invalid={
+                  tag.id === availableChoices[0]?.id &&
+                  (emptySelection || error === 'VALIDATION_INVALID')
+                    ? true
+                    : undefined
+                }
+                aria-describedby={
+                  tag.id === availableChoices[0]?.id
+                    ? emptySelection
+                      ? selectionId
+                      : error === 'VALIDATION_INVALID'
+                        ? actionErrorId
+                        : undefined
+                    : undefined
+                }
                 label={tags(tag.slug as keyof typeof messages.profileTags)}
                 checked={selected.includes(tag.id)}
                 disabled={pending}
-                onChange={(event) =>
+                onChange={(event) => {
+                  setEmptySelection(false);
+                  setError(undefined);
                   setSelected((old) =>
                     event.target.checked ? [...old, tag.id] : old.filter((id) => id !== tag.id),
-                  )
-                }
+                  );
+                }}
                 className="rounded-control border border-border px-3"
               />
             ))}
@@ -382,12 +418,12 @@ export function OnboardingFlow({
       <ActionBar className="space-y-2 bg-bg pt-4 pb-2 lg:mt-auto lg:pt-8">
         {/* Hata, eylem düğmesinin hemen üstünde: 390'da uzun listenin altında görünmeden kalmaz. */}
         {error && (
-          <p role="alert" className="text-base text-danger">
+          <p id={actionErrorId} role="alert" className="text-base text-danger">
             {errors(error)}
           </p>
         )}
         {emptySelection && (
-          <p role="alert" className="text-base text-danger">
+          <p id={selectionId} role="alert" className="text-base text-danger">
             {t('chooseOrSkip')}
           </p>
         )}

@@ -39,12 +39,13 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
   const [error, setError] = useState<ErrorCode>();
   const [sent, setSent] = useState(false);
   const ticket = useRef(0);
+  const questionRef = useRef<HTMLTextAreaElement>(null);
   const trimmed = question.trim();
 
   // Gecikmeli benzer SSS önerisi; eski yanıt yenisini ezmez.
   useEffect(() => {
     const mine = ++ticket.current;
-    if (trimmed.length < FAQ_QUESTION_MIN) return;
+    if (trimmed.length < FAQ_QUESTION_MIN || trimmed.length > FAQ_QUESTION_MAX) return;
     const timer = setTimeout(() => {
       suggest({ text: trimmed })
         .then((result) => {
@@ -64,6 +65,7 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
     });
     if (!parsed.success) {
       setInvalid(true);
+      questionRef.current?.focus();
       return;
     }
     setInvalid(false);
@@ -73,7 +75,10 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
     try {
       const result = await submit(parsed.data);
       if (!result.ok) {
-        setError(result.errorCode);
+        if (result.fieldErrors?.question) {
+          setInvalid(true);
+          questionRef.current?.focus();
+        } else setError(result.errorCode);
         return;
       }
       setQuestion('');
@@ -89,7 +94,8 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
   }
 
   // Soru kısalınca eski öneriler gösterilmez (effect içinde eşzamanlı setState yok).
-  const visible = trimmed.length >= FAQ_QUESTION_MIN ? suggestions : [];
+  const visible =
+    trimmed.length >= FAQ_QUESTION_MIN && trimmed.length <= FAQ_QUESTION_MAX ? suggestions : [];
   const similarBlocked = error === 'FAQ_SIMILAR_EXISTS';
   return (
     <form onSubmit={(e) => void onSubmit(e)} noValidate className="flex flex-col gap-4">
@@ -102,11 +108,12 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
         {(field) => (
           <Textarea
             {...field}
+            ref={questionRef}
             rows={4}
-            maxLength={FAQ_QUESTION_MAX}
             value={question}
             onChange={(e) => {
               setQuestion(e.target.value);
+              setInvalid(false);
               setAcknowledged(false);
               setSent(false);
               if (error === 'FAQ_SIMILAR_EXISTS') setError(undefined);

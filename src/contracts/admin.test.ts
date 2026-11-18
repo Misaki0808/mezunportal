@@ -480,16 +480,49 @@ describe('üyelik düzeltme ve yönetici atama girdisi', () => {
   });
 
   it('atama: kapsam kimliği yalnız ilgili kapsamda; yanlış kapsam alanı reddedilir', () => {
-    expect(ok(grantAdminSchema, { confirmed: true, scope: 'SYSTEM', userId: 'u' })).toBe(true);
+    expect(ok(grantAdminSchema, { confirmed: true, scope: 'SYSTEM', userId: 'u' })).toBe(false);
     expect(
-      ok(grantAdminSchema, { confirmed: true, scope: 'SYSTEM', userId: 'u', facultyId: 'f' }),
+      ok(grantAdminSchema, {
+        confirmed: true,
+        scope: 'SYSTEM',
+        userId: 'u',
+        reason: 'Görevlendirme',
+      }),
+    ).toBe(true);
+    expect(
+      ok(grantAdminSchema, {
+        confirmed: true,
+        scope: 'SYSTEM',
+        userId: 'u',
+        facultyId: 'f',
+        reason: 'Görevlendirme',
+      }),
     ).toBe(false);
     expect(
-      ok(grantAdminSchema, { confirmed: true, scope: 'FACULTY', userId: 'u', facultyId: 'f' }),
+      ok(grantAdminSchema, {
+        confirmed: true,
+        scope: 'FACULTY',
+        userId: 'u',
+        facultyId: 'f',
+        reason: 'Görevlendirme',
+      }),
     ).toBe(true);
-    expect(ok(grantAdminSchema, { confirmed: true, scope: 'FACULTY', userId: 'u' })).toBe(false);
     expect(
-      ok(grantAdminSchema, { confirmed: true, scope: 'FACULTY', userId: 'u', departmentId: 'd' }),
+      ok(grantAdminSchema, {
+        confirmed: true,
+        scope: 'FACULTY',
+        userId: 'u',
+        reason: 'Görevlendirme',
+      }),
+    ).toBe(false);
+    expect(
+      ok(grantAdminSchema, {
+        confirmed: true,
+        scope: 'FACULTY',
+        userId: 'u',
+        departmentId: 'd',
+        reason: 'Görevlendirme',
+      }),
     ).toBe(false);
     expect(
       ok(grantAdminSchema, {
@@ -497,13 +530,41 @@ describe('üyelik düzeltme ve yönetici atama girdisi', () => {
         scope: 'DEPARTMENT',
         userId: 'u',
         departmentId: 'd',
+        reason: 'Görevlendirme',
       }),
     ).toBe(true);
     expect(
-      ok(grantAdminSchema, { confirmed: true, scope: 'DEPARTMENT', userId: 'u', facultyId: 'f' }),
+      ok(grantAdminSchema, {
+        confirmed: true,
+        scope: 'DEPARTMENT',
+        userId: 'u',
+        facultyId: 'f',
+        reason: 'Görevlendirme',
+      }),
     ).toBe(false);
-    expect(ok(grantAdminSchema, { confirmed: true, scope: 'ROOT', userId: 'u' })).toBe(false);
-    expect(ok(grantAdminSchema, { confirmed: true, userId: 'u' })).toBe(false);
+    expect(
+      ok(grantAdminSchema, {
+        confirmed: true,
+        scope: 'ROOT',
+        userId: 'u',
+        reason: 'Görevlendirme',
+      }),
+    ).toBe(false);
+    expect(ok(grantAdminSchema, { confirmed: true, userId: 'u', reason: 'Görevlendirme' })).toBe(
+      false,
+    );
+  });
+
+  it.each([
+    ['SYSTEM', {}],
+    ['FACULTY', { facultyId: 'f' }],
+    ['DEPARTMENT', { departmentId: 'd' }],
+  ])('%s atamasında gerekçe kırpılmış 3–1000 karakter olmalı', (scope, extra) => {
+    const input = { confirmed: true, scope, userId: 'u', ...extra };
+    for (const reason of [undefined, '', '  ', 'ab', 'x'.repeat(1001)])
+      expect(grantAdminSchema.safeParse({ ...input, reason }).success).toBe(false);
+    for (const reason of ['abc', 'x'.repeat(1000)])
+      expect(grantAdminSchema.safeParse({ ...input, reason }).success).toBe(true);
   });
 
   it('kaldırmada gerekçe zorunlu', () => {

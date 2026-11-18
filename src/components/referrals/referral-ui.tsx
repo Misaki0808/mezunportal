@@ -49,6 +49,11 @@ export function ReferralCreate({
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [pending, start] = useTransition();
+  const fields = useRef<Record<string, HTMLElement | null>>({});
+  function focusFirst(errors: Record<string, unknown>) {
+    const first = ['studentId', 'organizationName', 'note'].find((key) => errors[key]);
+    if (first) fields.current[first]?.focus();
+  }
   function submit(event: FormEvent) {
     event.preventDefault();
     const input = {
@@ -58,11 +63,11 @@ export function ReferralCreate({
     };
     const parsed = proposeReferralSchema.safeParse(input);
     if (!parsed.success) {
-      setFieldErrors(
-        Object.fromEntries(
-          parsed.error.issues.map((issue) => [String(issue.path[0]), errors('VALIDATION_INVALID')]),
-        ),
+      const found = Object.fromEntries(
+        parsed.error.issues.map((issue) => [String(issue.path[0]), errors('VALIDATION_INVALID')]),
       );
+      setFieldErrors(found);
+      focusFirst(found);
       return;
     }
     setFieldErrors({});
@@ -71,12 +76,14 @@ export function ReferralCreate({
       const result = await safeClientAction(() => actions.proposeReferral(input));
       if (!result.ok) {
         setError(errors(result.errorCode));
-        if (result.fieldErrors)
+        if (result.fieldErrors) {
           setFieldErrors(
             Object.fromEntries(
               Object.entries(result.fieldErrors).map(([key, code]) => [key, errors(code)]),
             ),
           );
+          focusFirst(result.fieldErrors);
+        }
         return;
       }
       router.push('/hesap/referanslar');
@@ -91,10 +98,17 @@ export function ReferralCreate({
           <EmptyState title={t('emptyCandidates')} />
         </div>
       ) : (
-        <form onSubmit={submit} className="mt-8 grid gap-5">
+        <form noValidate onSubmit={submit} className="mt-8 grid gap-5">
           <Field label={t('student')} error={fieldErrors.studentId} required>
             {(p) => (
-              <Select {...p} value={studentId} onChange={(e) => setStudent(e.target.value)}>
+              <Select
+                {...p}
+                ref={(el) => {
+                  fields.current.studentId = el;
+                }}
+                value={studentId}
+                onChange={(e) => setStudent(e.target.value)}
+              >
                 <option value="">{t('choose')}</option>
                 {candidates.students.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -119,23 +133,41 @@ export function ReferralCreate({
             </Field>
           )}
           {!postingId && (
-            <Field label={t('organization')} error={fieldErrors.organizationName} required>
+            <Field
+              label={t('organization')}
+              error={
+                fieldErrors.organizationName && organizationName.trim().length > 120
+                  ? t('organizationTooLong')
+                  : fieldErrors.organizationName
+              }
+              required
+            >
               {(p) => (
                 <Input
                   {...p}
+                  ref={(el) => {
+                    fields.current.organizationName = el;
+                  }}
                   autoComplete="organization"
-                  maxLength={120}
                   value={organizationName}
                   onChange={(e) => setOrganization(e.target.value)}
                 />
               )}
             </Field>
           )}
-          <Field label={t('note')} hint={t('noteHint')} error={fieldErrors.note}>
+          <Field
+            label={t('note')}
+            hint={t('noteHint')}
+            error={
+              fieldErrors.note && note.trim().length > 500 ? t('noteTooLong') : fieldErrors.note
+            }
+          >
             {(p) => (
               <Textarea
                 {...p}
-                maxLength={500}
+                ref={(el) => {
+                  fields.current.note = el;
+                }}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />

@@ -78,6 +78,7 @@ describe('findMetadataProblems', () => {
 
 describe('findReasonProblem', () => {
   it('gerekçe isteyen eylemde boş gerekçe REQUIRED', () => {
+    expect(findReasonProblem('ADMIN_GRANT', undefined)).toBe('REQUIRED');
     expect(findReasonProblem('DOCUMENT_REJECT', undefined)).toBe('REQUIRED');
     expect(findReasonProblem('USER_SUSPEND', '   ')).toBe('REQUIRED');
     expect(findReasonProblem('MODERATION_REJECT', null)).toBe('REQUIRED');

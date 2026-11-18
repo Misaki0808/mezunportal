@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MyStory } from '@/contracts/alumni-story';
@@ -121,6 +121,20 @@ describe('hikâye editörü: odak ve duyurular', () => {
     expect(body).toHaveAccessibleDescription(/Alanları kontrol edip yeniden dene\./);
     expect(texts()).toHaveLength(1);
     expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('fazla uzun hikâyeyi kesip kaydetmez, metni koruyarak alan hatası verir', async () => {
+    const { user } = show();
+    const body = screen.getByLabelText('Hikâyen');
+    expect(body).not.toHaveAttribute('maxlength');
+    const long = 'İ'.repeat(3001);
+    fireEvent.change(body, { target: { value: long } });
+    await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+    await waitFor(() => expect(body).toHaveFocus());
+    expect(body).toHaveValue(long);
+    expect(body).toBeInvalid();
+    expect(body).toHaveAccessibleDescription();
+    expect(mocks.save).not.toHaveBeenCalled();
   });
 
   it('sunucu hatası tek `alert` olur; sonra gelen başarıda bayat hata ve bayat başarı kalmaz', async () => {

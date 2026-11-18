@@ -11,7 +11,7 @@ import {
   parsedCertificationSchema,
   parsedEducationSchema,
   parsedLanguageSchema,
-  parsedPositionSchema,
+  manualPositionSchema,
   parsedSkillSchema,
   type ParsedCertification,
   type ParsedEducation,
@@ -256,7 +256,7 @@ export const PROFILE_SKILL_LIMIT = CV_LIMITS.skills;
 
 /**
  * Kalem ekle/güncelle: `id` yoksa yeni kalem (kaynak `MANUAL`), varsa kendi kalemin güncellenir ve "elle
- * düzeltilmiş" olur. Değerler CV ayrıştırmasıyla AYNI şemalardır (tarihler `YYYY` / `YYYY-MM`).
+ * düzeltilmiş” olur. Tarihler CV biçimindedir; elle iş açıklaması uzunluğu reddedilir, kesilmez.
  */
 export const saveProfileEntrySchema = z
   .discriminatedUnion(
@@ -270,7 +270,7 @@ export const saveProfileEntrySchema = z
         })
         .strict(),
       z
-        .object({ section: z.literal('POSITION'), id: id.optional(), values: parsedPositionSchema })
+        .object({ section: z.literal('POSITION'), id: id.optional(), values: manualPositionSchema })
         .strict(),
       z
         .object({ section: z.literal('LANGUAGE'), id: id.optional(), values: parsedLanguageSchema })

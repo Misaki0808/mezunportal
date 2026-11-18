@@ -241,7 +241,7 @@ export const adminGrantPageSchema = z
   .strict();
 export type AdminGrantPage = z.infer<typeof adminGrantPageSchema>;
 
-/** Kapsam kimliği yalnız ilgili kapsamda verilir; hedef fakülte/bölüm var olmalıdır. Gerekçe isteğe bağlıdır. */
+/** Kapsam kimliği yalnız ilgili kapsamda verilir; hedef fakülte/bölüm ve gerekçe zorunludur. */
 export const grantAdminSchema = z.discriminatedUnion(
   'scope',
   [
@@ -249,7 +249,7 @@ export const grantAdminSchema = z.discriminatedUnion(
       .object({
         scope: z.literal('SYSTEM'),
         userId: adminId,
-        reason: adminReason.optional(),
+        reason: adminReason,
         confirmed: adminConfirmation,
       })
       .strict(),
@@ -259,7 +259,7 @@ export const grantAdminSchema = z.discriminatedUnion(
         confirmed: adminConfirmation,
         userId: adminId,
         facultyId: adminId,
-        reason: adminReason.optional(),
+        reason: adminReason,
       })
       .strict(),
     z
@@ -268,7 +268,7 @@ export const grantAdminSchema = z.discriminatedUnion(
         confirmed: adminConfirmation,
         userId: adminId,
         departmentId: adminId,
-        reason: adminReason.optional(),
+        reason: adminReason,
       })
       .strict(),
   ],

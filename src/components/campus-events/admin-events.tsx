@@ -2,7 +2,7 @@
 import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -69,6 +69,7 @@ export function AdminEvents({
     ),
     [reasonError, setReasonError] = useState('');
   const reasonRef = useRef<HTMLTextAreaElement>(null);
+  const departmentsErrorId = useId();
   // İptalde kart kuyruktan değil yalnız durumundan çıkar; iptal düğmesi kalkınca odak kartın kendisine gelir.
   const cancelledId = useRef<string | null>(null);
   useEffect(() => {
@@ -90,7 +91,21 @@ export function AdminEvents({
   };
   // Kullanıcı hatayı görsün: odak, hatalı alana gider (ekran okuyucu alan altı açıklamayı okur).
   const focusField = (formElement: HTMLFormElement, name: string) =>
-    (formElement.elements.namedItem(name) as HTMLElement | null)?.focus();
+    formElement
+      .querySelector<HTMLElement>(`[name="${name === 'departmentIds' ? 'departments' : name}"]`)
+      ?.focus();
+  const focusFirst = (formElement: HTMLFormElement, found: Record<string, unknown>) => {
+    const first = [
+      'title',
+      'description',
+      'location',
+      'startsAt',
+      'endsAt',
+      'capacity',
+      'departmentIds',
+    ].find((key) => found[key]);
+    if (first) focusField(formElement, first);
+  };
   function create(formElement: HTMLFormElement) {
     const form = new FormData(formElement);
     const startAt = String(form.get('startsAt') ?? ''),
@@ -98,36 +113,27 @@ export function AdminEvents({
     const asIstanbul = (value: string) => `${value}${value.length === 16 ? ':00' : ''}+03:00`;
     const startDate = new Date(asIstanbul(startAt)),
       endDate = new Date(asIstanbul(endAt));
-    if (
-      !startAt ||
-      !endAt ||
-      Number.isNaN(startDate.getTime()) ||
-      Number.isNaN(endDate.getTime())
-    ) {
-      setFieldErrors({ startsAt: t('timeInvalid') });
-      focusField(formElement, 'startsAt');
-      return;
-    }
-    if (endDate.getTime() <= startDate.getTime()) {
-      setFieldErrors({ endsAt: t('endBeforeStart') });
-      focusField(formElement, 'endsAt');
-      return;
-    }
+    const startValid = !!startAt && !Number.isNaN(startDate.getTime());
+    const endValid = !!endAt && !Number.isNaN(endDate.getTime());
     const parsed = createCampusEventSchema.safeParse({
       title: form.get('title'),
       description: form.get('description'),
       location: form.get('location'),
-      startsAt: startDate.toISOString(),
-      endsAt: endDate.toISOString(),
+      startsAt: startValid ? startDate.toISOString() : '',
+      endsAt: endValid ? endDate.toISOString() : '',
       capacity: Number(form.get('capacity')),
       departmentIds: form.getAll('departments'),
     });
     if (!parsed.success) {
-      setFieldErrors(
-        Object.fromEntries(
-          parsed.error.issues.map((issue) => [String(issue.path[0]), errors('VALIDATION_INVALID')]),
-        ),
+      const found = Object.fromEntries(
+        parsed.error.issues.map((issue) => [String(issue.path[0]), errors('VALIDATION_INVALID')]),
       );
+      if (!startValid) found.startsAt = t('timeInvalid');
+      if (!endValid) found.endsAt = t('timeInvalid');
+      if (startValid && endValid && endDate.getTime() <= startDate.getTime())
+        found.endsAt = t('endBeforeStart');
+      setFieldErrors(found);
+      focusFirst(formElement, found);
       return;
     }
     // Başarıda form temizlenir ve toast gösterilir; hatada girilen HİÇBİR değer silinmez.
@@ -138,12 +144,14 @@ export function AdminEvents({
         formElement.reset();
         router.refresh();
       },
-      onFailure: (failure) =>
+      onFailure: (failure) => {
         setFieldErrors(
           Object.fromEntries(
             Object.entries(failure.fieldErrors ?? {}).map(([field, code]) => [field, errors(code)]),
           ),
-        ),
+        );
+        focusFirst(formElement, failure.fieldErrors ?? {});
+      },
     });
   }
   function closeDecision() {
@@ -288,6 +296,7 @@ export function AdminEvents({
         )}
       </section>
       <form
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
           create(event.currentTarget);
@@ -318,13 +327,16 @@ export function AdminEvents({
               }
             </Field>
           ))}
-          <fieldset>
+          <fieldset
+            aria-invalid={fieldErrors.departmentIds ? true : undefined}
+            aria-describedby={fieldErrors.departmentIds ? departmentsErrorId : undefined}
+          >
             <legend className="font-medium text-fg">{t('departments')}</legend>
             {departments.map((d) => (
               <Checkbox key={d.id} name="departments" value={d.id} label={d.name} />
             ))}
             {fieldErrors.departmentIds && (
-              <p role="alert" className="text-sm text-danger">
+              <p id={departmentsErrorId} role="alert" className="text-sm text-danger">
                 {fieldErrors.departmentIds}
               </p>
             )}

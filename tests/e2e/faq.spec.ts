@@ -35,6 +35,12 @@ test('SSS: öğrenci talep eder → mentor cevaplar → moderatör yayımlar →
     await expect(s!.locator('a[href="/mentor/sss"]')).toHaveCount(0);
     await s!.goto('/hesap/sss');
     await s!.waitForLoadState('networkidle');
+    const questionInput = s!.getByLabel(/Sorduğun soru/);
+    await questionInput.fill('İ'.repeat(501));
+    await s!.getByRole('button', { name: 'Talebi gönder' }).click();
+    await expect(questionInput).toHaveValue('İ'.repeat(501));
+    await expect(questionInput).toBeFocused();
+    await expect(questionInput).toHaveAttribute('aria-invalid', 'true');
     await s!.getByLabel(/Sorduğun soru/).fill(question);
     await s!.getByRole('button', { name: 'Talebi gönder' }).click();
     await expect(s!.getByRole('status').filter({ hasText: 'Talebin alındı' })).toBeVisible();
@@ -51,6 +57,12 @@ test('SSS: öğrenci talep eder → mentor cevaplar → moderatör yayımlar →
     await m!.waitForLoadState('networkidle');
     const card = m!.locator('li').filter({ hasText: question });
     await expect(card).toBeVisible();
+    const answerInput = card.getByLabel(/Cevabın/);
+    await answerInput.fill('İ'.repeat(2001));
+    await card.getByRole('button', { name: 'Cevabı gönder' }).click();
+    await expect(answerInput).toHaveValue('İ'.repeat(2001));
+    await expect(answerInput).toBeFocused();
+    await expect(answerInput).toHaveAttribute('aria-invalid', 'true');
     await card
       .getByLabel(/Cevabın/)
       .fill('Okulun staj ofisinden formu al, kurum yetkilisine imzalat ve platforma yükle.');

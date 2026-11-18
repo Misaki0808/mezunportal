@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Badge, Button, CheckIcon, Field, Input, useAction, ActionBar } from '@/components/ui';
+import { ActionBar, Badge, Button, CheckIcon, Field, Input, useAction } from '@/components/ui';
+import { checkInCampusEventSchema } from '@/contracts/campus-events';
 import { checkInCampusEvent, registerCampusEvent } from '@/server/actions/campus-events';
 
 export function EventActions({
@@ -24,6 +25,7 @@ export function EventActions({
   // Kayıt ve katılım doğrulaması sunucu yenilemesiyle durum değiştirir; basılan düğme kalkınca odak sonuç rozetine gelir.
   const registeredRef = useRef<HTMLDivElement>(null),
     attendedRef = useRef<HTMLDivElement>(null),
+    codeRef = useRef<HTMLInputElement>(null),
     focusNext = useRef<'registered' | 'attended' | null>(null);
   useEffect(() => {
     if (focusNext.current === 'registered' && registered) {
@@ -71,8 +73,9 @@ export function EventActions({
   }
   function checkin() {
     // Düğme kapatılmaz: eksik kod alanın altında sebebiyle söylenir (docs/design.md "devre dışı sebebiyle").
-    if (code.length !== 6) {
+    if (!checkInCampusEventSchema.safeParse({ eventId, code }).success) {
       setCodeError(t('codeNeeded'));
+      codeRef.current?.focus();
       return;
     }
     void action.run(() => checkInCampusEvent({ eventId, code }), {
@@ -82,7 +85,16 @@ export function EventActions({
         if (data.accepted) {
           focusNext.current = 'attended';
           router.refresh();
-        } else setCodeError(t('codeInvalid'));
+        } else {
+          setCodeError(t('codeInvalid'));
+          codeRef.current?.focus();
+        }
+      },
+      onFailure: (failure) => {
+        if (failure.fieldErrors?.code) {
+          setCodeError(t('codeNeeded'));
+          codeRef.current?.focus();
+        }
       },
     });
   }
@@ -113,14 +125,14 @@ export function EventActions({
             {(control) => (
               <Input
                 {...control}
+                ref={codeRef}
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                maxLength={6}
                 value={code}
                 onChange={(e) => {
                   setCodeError('');
-                  setCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                  setCode(e.target.value);
                 }}
               />
             )}
