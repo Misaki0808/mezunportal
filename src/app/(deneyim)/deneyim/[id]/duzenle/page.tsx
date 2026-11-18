@@ -7,14 +7,14 @@ import { stateFromContent } from '@/components/experience/form-state';
 import { loadVerifiedDepartments } from '@/components/experience/verified-departments';
 import { buttonClasses, EmptyState, ErrorState } from '@/components/ui';
 import { saveExperienceDraft, submitExperience } from '@/server/actions/experience';
-import { requestExperienceDetail, requestOwnAppliedMonth } from '@/app/detail-route';
+import { requestEditableExperience, requestOwnAppliedMonth } from '@/app/detail-route';
 
 export const dynamic = 'force-dynamic';
 
 export default async function EditExperiencePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [detail, loaded, t] = await Promise.all([
-    requestExperienceDetail(id).catch(() => null),
+    requestEditableExperience(id).catch(() => null),
     loadVerifiedDepartments(),
     getTranslations('experiences'),
   ]);

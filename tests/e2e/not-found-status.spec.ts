@@ -226,10 +226,26 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
     await loginAs(page, 'student');
     await compare('/deneyim', foreignExperience.id);
     await compare('/deneyim', foreignPublished.id);
+    const publishedHtml = await (await page.goto(
+      `/deneyim/${foreignPublished.id}/duzenle`,
+    ))!.text();
+    expect(publishedHtml).not.toContain(messages.experiences.form.notEditableTitle);
+    expect(publishedHtml).not.toContain(messages.experiences.form.notEditableDescription);
+    const publishedRsc = await page.request.get(
+      `/deneyim/${foreignPublished.id}/duzenle?_rsc=review`,
+      {
+        headers: { RSC: '1' },
+      },
+    );
+    expect(publishedRsc.headers()['content-type']).toContain('text/x-component');
+    const payload = await publishedRsc.text();
+    expect(payload).not.toContain(messages.experiences.form.notEditableTitle);
+    expect(payload).not.toContain(messages.experiences.form.notEditableDescription);
     expect((await page.goto(`/deneyim/${ownExperience.id}/duzenle`))?.status()).toBe(200);
     await expect(page.locator('main form')).toBeVisible();
     expect((await page.goto(`/deneyim/${ownPublished.id}/duzenle`))?.status()).toBe(200);
     await expect(page.locator('main form')).toHaveCount(0);
+    await expect(page.getByText(messages.experiences.form.notEditableTitle)).toBeVisible();
     expect((await page.goto(`/ilanlar/${foreignJob.id}/duzenle`))?.status()).toBe(200);
     await expect(
       page.getByRole('heading', { name: messages.ui.errorState.expected.AUTH_FORBIDDEN }),
