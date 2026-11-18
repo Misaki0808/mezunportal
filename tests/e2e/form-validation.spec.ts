@@ -89,3 +89,23 @@ test('CV inceleme sınırında boş değer ve 101 kaydedilmez, 0 geçerlidir', a
   await save.click();
   await expect(page.getByText('Tercihlerin kaydedildi.')).toBeVisible();
 });
+
+test('ders yönetiminde boş veya sınır dışı yarıyıl kaydedilmez ve veri korunur', async ({
+  page,
+}) => {
+  await loginAs(page, 'systemAdmin');
+  await page.goto('/yonetim/dersler');
+  await page.getByLabel(/Ders kodu/).fill('TEST101');
+  const name = page.getByLabel(/Ders adı/);
+  await name.fill('Deneme dersi');
+  const semester = page.getByLabel(/Yarıyıl/);
+  for (const value of ['', '9']) {
+    await semester.fill(value);
+    await page.getByRole('button', { name: 'Kaydet' }).click();
+    await expect(semester).toHaveValue(value);
+    await expect(semester).toBeFocused();
+    await expect(semester).toHaveAttribute('aria-invalid', 'true');
+    await expect(semester).toHaveAccessibleDescription();
+    await expect(name).toHaveValue('Deneme dersi');
+  }
+});

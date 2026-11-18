@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
 import { CourseAdmin } from './course-admin';
+import { saveCourse } from '@/server/actions/course-guide';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock('@/server/actions/course-guide', () => ({
@@ -41,4 +42,25 @@ it('bölüm tanımlı değilken Kaydet kapalıdır ve sebebi yazar', () => {
 it('bölüm varken Kaydet açıktır', () => {
   renderUi(<CourseAdmin departments={[{ id: 'd1', name: 'YBS' }]} courses={[]} />);
   expect(screen.getByRole('button', { name: 'Kaydet' })).toBeEnabled();
+});
+
+it('boş yarıyıl sıfıra dönüşmez; alan hatası ve odakla veri korunur, gerçek sıfır geçer', async () => {
+  vi.mocked(saveCourse).mockClear();
+  const user = userEvent.setup();
+  renderUi(<CourseAdmin departments={[{ id: 'd1', name: 'YBS' }]} courses={[]} />);
+  await user.type(screen.getByLabelText(/Ders kodu/), 'YBS101');
+  await user.type(screen.getByLabelText(/Ders adı/), 'Veri Analitiği');
+  const semester = screen.getByLabelText(/Yarıyıl/);
+  await user.clear(semester);
+  await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+  expect(saveCourse).not.toHaveBeenCalled();
+  expect(semester).toHaveFocus();
+  expect(semester).toBeInvalid();
+  expect(semester).toHaveAccessibleDescription();
+  expect(screen.getByLabelText(/Ders adı/)).toHaveValue('Veri Analitiği');
+  await user.type(semester, '0');
+  await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+  await waitFor(() =>
+    expect(saveCourse).toHaveBeenCalledWith(expect.objectContaining({ semester: 0 })),
+  );
 });

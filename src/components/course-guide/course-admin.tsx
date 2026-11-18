@@ -28,6 +28,7 @@ export function CourseAdmin({
   const [selected, setSelected] = useState<Course | null>(null);
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [query, setQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(10);
   const needle = query.trim().toLocaleLowerCase('tr-TR');
@@ -51,25 +52,62 @@ export function CourseAdmin({
       </Field>
       <form
         key={selected?.id ?? 'new'}
+        noValidate
+        onInput={(event) => {
+          const target = event.target;
+          if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) {
+            setFieldErrors((current) => {
+              const next = { ...current };
+              delete next[target.name];
+              return next;
+            });
+          }
+        }}
         className="grid gap-4 rounded-card border border-border bg-bg p-4 shadow-card sm:p-5"
         onSubmit={(event) => {
           event.preventDefault();
-          const data = new FormData(event.currentTarget);
+          const form = event.currentTarget;
+          const data = new FormData(form);
+          const semester = String(data.get('semester') ?? '');
+          const parsed = saveCourseSchema.safeParse({
+            id: selected?.id,
+            departmentId: String(data.get('departmentId') ?? ''),
+            code: String(data.get('code') ?? ''),
+            name: String(data.get('name') ?? ''),
+            semester: semester.trim() ? Number(semester) : undefined,
+            elective: data.get('elective') === 'yes',
+          });
+          setStatus('');
+          if (!parsed.success) {
+            const found = Object.fromEntries(
+              parsed.error.issues.map((issue) => [
+                String(issue.path[0]),
+                errors('VALIDATION_INVALID'),
+              ]),
+            );
+            setFieldErrors(found);
+            const first = ['departmentId', 'code', 'name', 'semester'].find(
+              (field) => found[field],
+            );
+            const control = first ? form.elements.namedItem(first) : null;
+            if (control instanceof HTMLElement) control.focus();
+            return;
+          }
+          setFieldErrors({});
           startTransition(async () => {
-            const parsed = saveCourseSchema.safeParse({
-              id: selected?.id,
-              departmentId: String(data.get('departmentId')),
-              code: String(data.get('code')),
-              name: String(data.get('name')),
-              semester: Number(data.get('semester')),
-              elective: data.get('elective') === 'yes',
-            });
-            if (!parsed.success) {
-              setStatus(errors('VALIDATION_INVALID'));
-              return;
-            }
             const result = await safeClientAction(() => saveCourse(parsed.data));
             setStatus(result.ok ? t('saved') : errors(result.errorCode));
+            if (!result.ok && result.fieldErrors) {
+              const found = Object.fromEntries(
+                Object.entries(result.fieldErrors).map(([field, code]) => [field, errors(code)]),
+              );
+              setFieldErrors(found);
+              const first = ['departmentId', 'code', 'name', 'semester'].find(
+                (field) => found[field],
+              );
+              const control = first ? form.elements.namedItem(first) : null;
+              if (control instanceof HTMLElement) control.focus();
+            }
             if (result.ok) {
               setSelected(null);
               router.refresh();
@@ -78,7 +116,7 @@ export function CourseAdmin({
         }}
       >
         <h2 className="text-xl font-semibold">{t(selected ? 'editCourse' : 'addCourse')}</h2>
-        <Field label={t('department')} required>
+        <Field label={t('department')} required error={fieldErrors.departmentId}>
           {(control) => (
             <Select
               {...control}
@@ -94,18 +132,18 @@ export function CourseAdmin({
           )}
         </Field>
         <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
-          <Field label={t('code')} required>
+          <Field label={t('code')} required error={fieldErrors.code}>
             {(control) => (
               <Input {...control} maxLength={32} name="code" defaultValue={selected?.code} />
             )}
           </Field>
-          <Field label={t('name')} required>
+          <Field label={t('name')} required error={fieldErrors.name}>
             {(control) => (
               <Input {...control} maxLength={200} name="name" defaultValue={selected?.name} />
             )}
           </Field>
         </div>
-        <Field label={t('semester')} required>
+        <Field label={t('semester')} required error={fieldErrors.semester}>
           {(control) => (
             <Input
               {...control}
@@ -135,7 +173,14 @@ export function CourseAdmin({
             {t(pending ? 'saving' : 'save')}
           </Button>
           {selected && (
-            <Button variant="ghost" onClick={() => setSelected(null)}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSelected(null);
+                setFieldErrors({});
+                setStatus('');
+              }}
+            >
               {t('cancel')}
             </Button>
           )}
@@ -155,6 +200,7 @@ export function CourseAdmin({
             aria-pressed={selected?.id === course.id}
             onClick={() => {
               setSelected(course);
+              setFieldErrors({});
               setStatus('');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
