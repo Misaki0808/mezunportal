@@ -10,7 +10,7 @@ test('öğrenci oturumuyla ilk giriş ekranları 390 px’te tamamlanır (sahte 
   await page.goto('/baslangic/test');
   await waitForHydratedControl(page, 'Devam et');
   await page.getByRole('button', { name: 'Devam et' }).click();
-  const firstChoice = page.getByRole('checkbox', { name: 'Yazılım geliştirme' });
+  const firstChoice = page.locator('fieldset[aria-invalid="true"] input[type="checkbox"]').first();
   await expect(firstChoice).toBeFocused();
   await expect(firstChoice).toHaveAttribute('aria-invalid', 'true');
   await expect(firstChoice).toHaveAccessibleDescription(/En az bir seçenek/);
