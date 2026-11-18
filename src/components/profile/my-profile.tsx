@@ -663,7 +663,10 @@ function Block({
             />
           </button>
         </h2>
-        {action}
+        {/* Sabit genişlik: eylemi olmayan ya da kısa adlı satırlarda da ok simgeleri aynı hizada kalır. */}
+        <div data-block-action className="flex w-[6.5rem] shrink-0 justify-end">
+          {action}
+        </div>
       </div>
       <div id={panelId} hidden={!open} className="flex flex-col gap-3 border-t border-border p-4">
         {children}

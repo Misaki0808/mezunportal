@@ -120,7 +120,11 @@ export function AdminUserDetail({ initial, departments, suspend, unsuspend, corr
       `users.${value === 'STUDENT' ? 'roleStudent' : value === 'ALUMNI' ? 'roleAlumni' : 'roleAcademic'}`,
     );
   return (
-    <AdminFrame title={t('users.detail')}>
+    <AdminFrame
+      title={t('users.detail')}
+      backHref="/yonetim/kullanicilar"
+      backLabel={t('users.back')}
+    >
       <section className="rounded-card border border-border bg-surface p-5 shadow-card">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-xl font-semibold">{initial.displayName}</h2>

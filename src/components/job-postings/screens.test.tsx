@@ -329,6 +329,29 @@ it('ilan iletişiminde çift gönderim tek istektir ve hata notu korur', async (
   expect(note).toHaveValue('Notum');
   expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
 });
+it('önizleme son başvuru gününü okunur Türkçe tarihle gösterir, ham ISO yazmaz', async () => {
+  const { addDays, formatDeadline, istanbulDay } = await import('./model');
+  renderWithToasts(<PostingEditor context={context} save={vi.fn()} submit={vi.fn()} />);
+  fireEvent.change(screen.getByLabelText(/Pozisyon adı/), {
+    target: { value: 'Yazılım stajyeri' },
+  });
+  fireEvent.change(screen.getByLabelText(/Kurum adı/), { target: { value: 'Örnek Kurum' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  fireEvent.change(screen.getByLabelText(/^Açıklama/), {
+    target: { value: 'Öğrenciler için gerçek projelerde öğrenme fırsatı sunan örnek bir staj.' },
+  });
+  fireEvent.change(screen.getByLabelText(/^Konum/), { target: { value: 'İstanbul' } });
+  const deadline = addDays(istanbulDay(), 14);
+  fireEvent.change(screen.getByLabelText(/Son başvuru tarihi/), { target: { value: deadline } });
+  fireEvent.click(screen.getByRole('checkbox', { name: /YBS/ }));
+  fireEvent.change(screen.getByLabelText(/HTTPS başvuru bağlantısı/), {
+    target: { value: 'https://example.org/staj' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  expect(screen.getByText(`İstanbul · ${formatDeadline(deadline)}`)).toBeVisible();
+  expect(screen.queryByText(deadline, { exact: false })).toBeNull();
+});
+
 it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderilir', async () => {
   const { addDays, istanbulDay } = await import('./model');
   const gate = Promise.withResolvers<never>();
@@ -456,7 +479,7 @@ it('moderatör sözleşmedeki geçerli gerekçeyle ilanı reddeder', async () =>
   );
   fireEvent.click(screen.getByRole('button', { name: 'Reddet' }));
   fireEvent.change(screen.getByLabelText(/Ret gerekçesi/), { target: { value: 'abc' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Onayla' }));
+  fireEvent.click(screen.getByRole('button', { name: 'İlanı reddet' }));
   await waitFor(() =>
     expect(review).toHaveBeenCalledWith({ postingId: 'job-1', decision: 'REJECT', reason: 'abc' }),
   );
@@ -649,7 +672,11 @@ it.each(['PUBLISH', 'REJECT'] as const)(
     await user.click(screen.getAllByRole('button', { name: action })[0]!);
     if (decision === 'REJECT')
       await user.type(screen.getByLabelText(/Ret gerekçesi/), 'Geçerli ret gerekçesi');
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: decision === 'PUBLISH' ? 'Onayla' : 'İlanı reddet',
+      }),
+    );
     await waitFor(() => expect(screen.getByRole('button', { name: 'Yayımla' })).toHaveFocus());
     await user.click(screen.getByRole('button', { name: 'Yayımla' }));
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
@@ -676,7 +703,9 @@ it('B3: boş ret ilk hatalı alana odaklanır ve alan altı açıklama taşır',
     />,
   );
   await user.click(screen.getByRole('button', { name: 'Reddet' }));
-  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Onayla' }));
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', { name: 'İlanı reddet' }),
+  );
   const reason = screen.getByLabelText(/Ret gerekçesi/);
   expect(reason).toHaveFocus();
   expect(reason).toHaveAttribute('aria-invalid', 'true');
