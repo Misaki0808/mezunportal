@@ -238,12 +238,18 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
     const count = (text: string, phrase: string) => text.split(phrase).length - 1;
     for (const phrase of phrases)
       expect(count(publishedHtml, phrase)).toBe(count(missingHtml, phrase));
-    // Next akışındaki kayıtların sırası ve istek başına üretilen çerçeve anahtarı değişebilir.
+    // Geliştirme modunda React tanılama kayıtları, referans numaraları ve akış sırası değişebilir.
     const rscRecords = (text: string) =>
       text
         .replaceAll(foreignPublished.id, UNKNOWN)
         .replace(/(\["\$","\$L[0-9a-f]+",")[A-Za-z0-9_-]{21}([vm])(")/g, '$1REQUEST$2$3')
         .split('\n')
+        .filter((record) => !/^[0-9a-f]+:D/.test(record))
+        .map((record) =>
+          record
+            .replace(/^[0-9a-f]+:/, 'ID:')
+            .replace(/"\$(L?)[0-9a-f]+"/g, (_, kind: string) => `"$${kind}REF"`),
+        )
         .sort();
     const htmlBody = (html: string) => {
       const chunks: string[] = [];
@@ -258,7 +264,9 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
         },
       );
       return {
-        shell: shell.replaceAll(foreignPublished.id, UNKNOWN),
+        shell: shell
+          .replaceAll(foreignPublished.id, UNKNOWN)
+          .replace(/self\.__next_r="[A-Za-z0-9_-]+"/g, 'self.__next_r="REQUEST"'),
         other: other.sort(),
         records: rscRecords(chunks.join('')),
       };
