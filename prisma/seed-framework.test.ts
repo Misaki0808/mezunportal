@@ -23,6 +23,7 @@ describe('sahte veri çerçevesi', () => {
       'feedback',
       'pointRules',
       'phase2',
+      'awards',
     ]);
   });
   it('seedUuid geçerli UUID üretir (arayüze çıkan kimlikler z.uuid() doğrulamasından geçer), deterministik ve ad alanına duyarlıdır', () => {
