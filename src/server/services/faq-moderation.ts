@@ -190,7 +190,7 @@ export async function publishFaq(
           type: 'generic',
           event: 'faqAnswerPublished',
           eventId: answer.id,
-          path: '/hesap/sss',
+          path: '/sss',
         });
     // Puanlar yayınla AYNI işlemde (docs/data.md); idempotent anahtar çift yazımı önler, uzlaştırma güvenlik ağıdır.
     await awardFaqInTx(tx, request.id, now);

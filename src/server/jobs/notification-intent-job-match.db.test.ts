@@ -81,7 +81,7 @@ describe('ilan özeti gerçek PostgreSQL', () => {
     expect(await db.jobMatchDigest.count({ where: { userId: f.userId } })).toBe(1);
     expect(await db.emailLog.count({ where: { recipientUserId: f.userId } })).toBe(1);
     const input = mocks.enqueue.mock.calls[0]![0];
-    expect(input.text).toContain('/hesap/bildirimler');
+    expect(input.text).toContain('https://example.org/ilanlar');
     expect(input.text).not.toContain(f.userId);
     expect(input.text).not.toContain(f.postingId);
   });

@@ -38,6 +38,7 @@ for (const width of [320, 390]) {
           scroll: label.scrollWidth,
           height: text.height,
           lineHeight: parseFloat(getComputedStyle(label).lineHeight),
+          fontSize: parseFloat(getComputedStyle(label).fontSize),
         };
       }),
     );
@@ -47,6 +48,7 @@ for (const width of [320, 390]) {
       expect.soft(label.right).toBeGreaterThanOrEqual(-1);
       expect.soft(label.scroll).toBeLessThanOrEqual(label.width + 1);
       expect.soft(label.height).toBeLessThanOrEqual(label.lineHeight + 1);
+      expect.soft(label.fontSize).toBeGreaterThanOrEqual(12);
     }
     const bottom = await page.evaluate(() => ({
       navigation: document.querySelector('[data-bottom-nav]')!.getBoundingClientRect().height,

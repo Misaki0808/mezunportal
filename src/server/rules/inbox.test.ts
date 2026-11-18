@@ -64,6 +64,8 @@ describe('inboxHref', () => {
     ['moderationApproved', 'exp-1', 4, '/deneyimlerim'],
     ['contact', 'c-1', 1, '/hesap/iletisim'],
     ['faqPublished', 'f-1', 1, '/hesap/sss'],
+    ['faqAnswerPublished', 'f-1', 1, '/sss'],
+    ['faqAnswerPublished', 'f-1', 3, '/sss'],
     ['jobPostingPublished', 'j-1', 1, '/ilanlarim'],
     ['referralUpdated', 'r-1', 1, '/hesap/referanslar'],
     ['cvReviewAnswered', 'cv-1', 1, '/hesap/cv-inceleme'],
