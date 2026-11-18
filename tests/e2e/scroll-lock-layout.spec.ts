@@ -39,8 +39,10 @@ for (const classic of [true, false]) {
             return {
               width: document.documentElement.clientWidth,
               viewport: innerWidth,
+              scrollX,
               overflow: document.documentElement.style.overflow,
               bodyOverflow: document.body.style.overflow,
+              bodyPaddingRight: document.body.style.paddingRight,
               lockGutter:
                 parseFloat(
                   document.documentElement.style.getPropertyValue('--scroll-lock-gutter'),
@@ -68,13 +70,35 @@ for (const classic of [true, false]) {
           .first()
           .click();
         await expect(page.locator('dialog[open]')).toBeVisible();
+        await expect.poll(async () => (await measure()).overflow).toBe('hidden');
         const open = await measure();
         expect(open.overflow).toBe('hidden');
         expect(open.bodyOverflow).toBe('hidden');
         expect(open.lockGutter).toBe(gutter);
         await page.keyboard.press('Escape');
         await expect(page.locator('dialog[open]')).toHaveCount(0);
+        // dialog.close ve lockScroll temizliği ayrı React etkileridir; kapalı DOM tek başına kilidin bittiğini kanıtlamaz.
+        await expect
+          .poll(async () => {
+            const state = await measure();
+            return {
+              overflow: state.overflow,
+              bodyOverflow: state.bodyOverflow,
+              lockGutter: state.lockGutter,
+            };
+          })
+          .toEqual({
+            overflow: before.overflow,
+            bodyOverflow: before.bodyOverflow,
+            lockGutter: before.lockGutter,
+          });
         const closed = await measure();
+        test
+          .info()
+          .annotations.push({
+            type: 'geometri',
+            description: JSON.stringify({ before, open, closed }),
+          });
         for (const key of ['header', 'nav', 'action', 'toast', 'main'] as const) {
           const initial = before[key];
           if (!initial) continue;
