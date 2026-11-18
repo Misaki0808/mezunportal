@@ -315,7 +315,7 @@ it('öğrenci panosu tek toplu randevu ve mentor çağrısıyla gerçek boş dur
   });
   expect(mocks.getSimilarMentors).toHaveBeenCalledOnce();
   expect(mocks.getSuggestedJobs).toHaveBeenCalledOnce();
-  expect(screen.getByText('Henüz planlanmış görüşmen yok.')).toBeVisible();
+  expect(screen.getByText('Henüz planlanmış randevun yok.')).toBeVisible();
 });
 
 it('mentor panosu ilan/mentor önerisi istemez, randevu rolü sunucu uygunluğundan gelir', async () => {

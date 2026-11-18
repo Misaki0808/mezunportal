@@ -68,7 +68,7 @@ test('ana sayfa 1440: aynı satırdaki kartlar eşit boy; bekleyen iş yokken k�
   const box = async (name: string) =>
     (await page.getByRole('region', { name, exact: true }).boundingBox())!;
   const [upcoming, profile, jobs, mentors, shortcuts] = await Promise.all([
-    box('Yaklaşan görüşme'),
+    box('Yaklaşan randevu'),
     box('Profilin'),
     box('Sana uygun ilanlar'),
     box('Mentorlar'),

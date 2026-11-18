@@ -7,14 +7,14 @@ for (const width of [320, 390]) {
     await loginAs(page, 'student');
     await page.goto('/');
     await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
-    await expect(page.getByText('Henüz planlanmış görüşmen yok.')).toBeVisible();
+    await expect(page.getByText('Henüz planlanmış randevun yok.')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Kısayollar' })).toBeVisible();
     const header = page.getByRole('banner');
     for (const control of [
       header.getByRole('link', { name: 'MezunPortal' }),
       header.getByRole('button', { name: /temaya geç/ }),
       header.getByRole('link', { name: /Bildirim/ }),
-      header.getByRole('link', { name: 'Hesabım' }),
+      header.getByRole('link', { name: 'Hesap ayarları' }),
     ]) {
       await expect(control).toBeVisible();
       const box = await control.boundingBox();
