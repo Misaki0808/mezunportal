@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import type { ConsentState } from '@/contracts/privacy';
 import { recordConsentsSchema } from '@/contracts/privacy';
 import { recordConsents } from '@/server/actions/privacy';
-import { Badge, Button, Card, Checkbox } from '@/components/ui';
+import { ActionBar, Badge, Button, Card, Checkbox } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
 
 export const LEGAL_PATHS = {
@@ -128,11 +128,11 @@ export function ConsentForm({
           {common('retry')}
         </Button>
       )}
-      <div className="sticky-actions rounded-control border border-border bg-bg p-3 shadow-card">
+      <ActionBar className="bg-bg py-3 lg:rounded-control lg:border lg:border-border lg:p-3 lg:shadow-card">
         <Button type="submit" fullWidth loading={form.busy}>
           {form.busy ? common('saving') : t('submit')}
         </Button>
-      </div>
+      </ActionBar>
     </form>
   );
 }

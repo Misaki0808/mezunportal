@@ -822,10 +822,10 @@ doldurulacak görüşme formu, yöneticiye moderasyon sayısı; yalnız sıfırd
 "Yönetim". Sayılar sunucuda oturumdaki kullanıcının KENDİ kayıtlarından hesaplanır (`getHomeSummary`); yönetici sayısı panel
 servisinin kapsam kesişiminden gelir. Randevu talebi sayısı `/randevular`a gider; SSS kısayolu/sayısı ekranı main'e girince eklenir (kanca yorumlarda).
 
-**Ekran klavyesi.** Yapışkan eylem çubukları (`.sticky-actions`, 8 form) ve alt gezinme, ekran klavyesi açıkken (görsel görünüm
+**Ekran klavyesi.** Alttaki eylem çubukları (`ActionBar`, bütün formlar) ve alt gezinme, ekran klavyesi açıkken (görsel görünüm
 alanı ≥ 140 px küçülür ve bir metin girişi odaktadır) gizlenir/akışa döner (`KeyboardState`). Seçenekler: (a) eylemleri her zaman
 form sonuna almak — mobilde eylem çubuğunun hızlı erişimini kaybettirir; (b) çubuğu klavyenin üstünde tutmak — iOS'ta layout
-görünümü küçülmediği için çubuk klavyenin ARKASINDA kalır; (c) seçilen: klavye açıkken akışa dön, kapalıyken yapışkan kal. Gerçek
+görünümü küçülmediği için çubuk klavyenin ARKASINDA kalır; (c) seçilen: klavye açıkken akışa dön, kapalıyken ekrana sabit kal (kart 453, 477). Gerçek
 cihaz doğrulaması telefon testine yazıldı (`docs/engineering.md`).
 
 **Açık şüpheye yeni kanıt ve oturumsuz eylemde dönüş (kart 116).** Karar bekleyen işaret varken aynı kural için bulunan yeni

@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import type { FieldVisibilitySettings } from '@/contracts/privacy';
 import { VISIBILITY_LEVELS, setFieldVisibilitySchema } from '@/contracts/privacy';
 import { setFieldVisibility } from '@/server/actions/privacy';
-import { Badge, Button, Card, Field, Select } from '@/components/ui';
+import { ActionBar, Badge, Button, Card, Field, Select } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
 
 export function VisibilityForm({ initial }: { initial: FieldVisibilitySettings }) {
@@ -122,11 +122,11 @@ export function VisibilityForm({ initial }: { initial: FieldVisibilitySettings }
           {t('unsaved')}
         </p>
       )}
-      <div className="sticky-actions rounded-control border border-border bg-bg p-3 shadow-card">
+      <ActionBar className="bg-bg py-3 lg:rounded-control lg:border lg:border-border lg:p-3 lg:shadow-card">
         <Button type="submit" fullWidth loading={form.busy}>
           {form.busy ? common('saving') : common('save')}
         </Button>
-      </div>
+      </ActionBar>
     </form>
   );
 }

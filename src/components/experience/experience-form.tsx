@@ -17,6 +17,7 @@ import {
 } from '@/contracts/experience';
 import type { ActionResult } from '@/contracts/result';
 import {
+  ActionBar,
   Button,
   Field,
   FieldAnnounceContext,
@@ -738,7 +739,7 @@ function ExperienceFormBody({ departments, initial, save, submit }: Props) {
         </FormSection>
       </div>
 
-      <div className="sticky-actions z-20 mt-8 space-y-2 bg-bg pt-4 pb-2 lg:pt-8">
+      <ActionBar className="space-y-2 bg-bg pt-4 pb-2 lg:mt-8 lg:pt-8">
         {error && (
           <p role="alert" className="text-base text-danger">
             {errorsT(error)}
@@ -767,7 +768,7 @@ function ExperienceFormBody({ departments, initial, save, submit }: Props) {
         >
           {pending === 'save' ? t('form.saving') : t('form.saveDraft')}
         </Button>
-      </div>
+      </ActionBar>
 
       <Modal
         open={confirm}

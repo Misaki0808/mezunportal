@@ -16,7 +16,15 @@ import {
   type DiscardCvOutput,
 } from '@/contracts/cv';
 import type { ActionResult } from '@/contracts/result';
-import { Button, buttonClasses, cn, Field, FilePicker, RadioGroup, Sheet } from '@/components/ui';
+import {
+  ActionBar,
+  Button,
+  buttonClasses,
+  Field,
+  FilePicker,
+  RadioGroup,
+  Sheet,
+} from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 import { CvReview } from './cv-review';
@@ -257,11 +265,11 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
               )}
               {/* Dosya seçilmeden "CV'yi oku" bir işe yaramaz: yapışkan olursa kısa ekranda (664 px) seçicinin yarısını örter
                   (%44 / %38 / %60 örtüyordu). Dosya seçilince yapışır; seçici de `scroll-above-bars` payıyla çubuğun üstüne alınır. */}
-              <div className={cn(hasFile && 'sticky-actions', 'z-20 bg-bg pt-2 pb-2')}>
+              <ActionBar enabled={hasFile} className="bg-bg pt-2 pb-2">
                 <Button type="submit" size="lg" fullWidth loading={pending}>
                   {pending ? t('uploading') : t('submit')}
                 </Button>
-              </div>
+              </ActionBar>
             </form>
           )}
           <Button variant="ghost" onClick={() => setGuide(true)}>
