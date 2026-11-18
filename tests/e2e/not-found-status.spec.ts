@@ -254,9 +254,13 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
       expect(count(payload, phrase)).toBe(count(missingPayload, phrase));
     expect((await page.goto(`/deneyim/${ownExperience.id}/duzenle`))?.status()).toBe(200);
     await expect(page.locator('main form')).toBeVisible();
-    expect((await page.goto(`/deneyim/${ownPublished.id}/duzenle`))?.status()).toBe(200);
+    const ownPublishedResponse = await page.goto(`/deneyim/${ownPublished.id}/duzenle`);
+    expect(ownPublishedResponse?.status()).toBe(200);
     await expect(page.locator('main form')).toHaveCount(0);
     await expect(page.getByText(messages.experiences.form.notEditableTitle)).toBeVisible();
+    const ownPublishedHtml = await ownPublishedResponse!.text();
+    for (const phrase of phrases)
+      expect(count(ownPublishedHtml, phrase)).toBeGreaterThan(count(missingHtml, phrase));
     expect((await page.goto(`/ilanlar/${foreignJob.id}/duzenle`))?.status()).toBe(200);
     await expect(
       page.getByRole('heading', { name: messages.ui.errorState.expected.AUTH_FORBIDDEN }),
