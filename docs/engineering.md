@@ -592,7 +592,7 @@ Ctrl+C; paylaşılan konteynerleri durdurma. Test kuyruğu yalnız kendi `_test`
 
 Yerel teslim kanıtı Mailpit `http://localhost:8025` ve `/api/v1/messages` API'sinden alınır.
 Mesaj gövdesi/alıcı yalnız kısa ömürlü kuyruk yükündedir; EmailLog gövde/adres taşımaz. Başarılı
-ve başarısız işler 60 saniye sonrası bakımda temizlenir; bekleyen işin saklama sınırı bir saattir.
+ve başarısız işler 60 saniye sonrası bakımda temizlenir; bekleyen işin saklama sınırı 7 gündür (giriş ve e-posta değişikliği bağlantıları bir saat), tamamlanınca 60 saniye kuralı geçerlidir.
 Yalnız maskeli alıcı ve sabit olay kodu loglanır. Kalıcı durum EmailLog üzerinde kalır.
 
 Profil fotoğrafı çözme için doğrudan sabitlenen `sharp`, Linux `bookworm-slim` üretim

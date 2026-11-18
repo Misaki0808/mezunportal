@@ -331,7 +331,7 @@ Dış servislerin nasıl bağlanacağı ve projedeki servislerin sözleşmesi.
 - **Canlı (K-05):** üniversite SMTP'si ya da ücretsiz katmanlı bir servis; P1-18'de.
 - Gövde loglanmaz; `EmailLog` yalnız şablon, alıcı kimliği ve durum tutar. Taşınacak hazır metin ve
   adres pg-boss iş yükünde kısa süreli tutulur; bitmiş işler 60 saniye sonra temizlenmeye uygun olur; çalışan bakım döngüsü beş saniyede bir
-  yoklar (zamanlama ve veritabanı yükü ek gecikme yaratabilir). Bekleme saklama sınırı bir saattir. EmailLog ve iş aynı veritabanı işleminde eklenir. Hatalar sınırlı
+  yoklar (zamanlama ve veritabanı yükü ek gecikme yaratabilir). Bekleyen iş, işçi uzun kapalı kalsa da kaybolmasın diye 7 gün saklanır (giriş ve e-posta değişikliği bağlantıları bir saat); bitmiş işin 60 saniyelik yük silmesi bundan ayrıdır. EmailLog ve iş aynı veritabanı işleminde eklenir. Hatalar sınırlı
   yeniden denenir; worker duruşuyla tükenen işler de başarısızlık kuyruğundan EmailLog'a işlenir.
 - Şablonlar düz metin + sade HTML; metinler `messages/tr.json`'da; her bildirimde tercih bağlantısı.
 - **Env:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM`.
