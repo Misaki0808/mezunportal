@@ -2,7 +2,15 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { BackLink, Button, Checkbox, PageHeader, Textarea, useAction } from '@/components/ui';
+import {
+  BackLink,
+  Button,
+  Checkbox,
+  PageHeader,
+  Textarea,
+  useAction,
+  ActionBar,
+} from '@/components/ui';
 import { CONTACT_FIELDS, type ContactField } from '@/contracts/privacy';
 import type { SeekerContactPreview } from '@/contracts/job-seekers';
 import { requestSeekerContact } from '@/server/actions/job-seekers';
@@ -90,11 +98,11 @@ export function SeekerContact({
               {error}
             </p>
           )}
-          <div data-action-bar className="sticky bottom-20 bg-bg py-3 lg:static">
+          <ActionBar className="sticky bottom-20 bg-bg py-3 lg:static">
             <Button className="w-full" loading={pending} onClick={send}>
               {t('send')}
             </Button>
-          </div>
+          </ActionBar>
         </>
       )}
     </div>

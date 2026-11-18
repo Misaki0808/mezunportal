@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Badge, Button, CheckIcon, Field, Input, useAction } from '@/components/ui';
+import { Badge, Button, CheckIcon, Field, Input, useAction, ActionBar } from '@/components/ui';
 import { checkInCampusEvent, registerCampusEvent } from '@/server/actions/campus-events';
 
 export function EventActions({
@@ -87,8 +87,8 @@ export function EventActions({
     });
   }
   return (
-    <div
-      data-action-bar={attended ? undefined : ''}
+    <ActionBar
+      enabled={!attended}
       className={
         attended
           ? 'mt-6 space-y-4'
@@ -147,6 +147,6 @@ export function EventActions({
           {action.error}
         </p>
       )}
-    </div>
+    </ActionBar>
   );
 }

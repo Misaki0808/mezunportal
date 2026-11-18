@@ -25,6 +25,7 @@ import {
   Select,
   Textarea,
   useToast,
+  ActionBar,
 } from '@/components/ui';
 import * as actions from '@/server/actions/referrals';
 import { AccountFrameView } from '@/components/account/account-frame';
@@ -145,14 +146,11 @@ export function ReferralCreate({
               {error}
             </p>
           )}
-          <div
-            data-action-bar
-            className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] bg-bg pb-4 pt-3 lg:bottom-0"
-          >
+          <ActionBar className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] bg-bg pb-4 pt-3 lg:bottom-0">
             <Button type="submit" fullWidth loading={pending}>
               {t('send')}
             </Button>
-          </div>
+          </ActionBar>
         </form>
       )}
     </div>
