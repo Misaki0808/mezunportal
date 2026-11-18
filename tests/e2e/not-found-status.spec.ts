@@ -238,6 +238,7 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
     const count = (text: string, phrase: string) => text.split(phrase).length - 1;
     for (const phrase of phrases)
       expect(count(publishedHtml, phrase)).toBe(count(missingHtml, phrase));
+    expect(publishedHtml.replaceAll(foreignPublished.id, UNKNOWN)).toBe(missingHtml);
     const publishedRsc = await page.request.get(
       `/deneyim/${foreignPublished.id}/duzenle?_rsc=review`,
       {
@@ -252,6 +253,7 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
     const [payload, missingPayload] = await Promise.all([publishedRsc.text(), missingRsc.text()]);
     for (const phrase of phrases)
       expect(count(payload, phrase)).toBe(count(missingPayload, phrase));
+    expect(payload.replaceAll(foreignPublished.id, UNKNOWN)).toBe(missingPayload);
     expect((await page.goto(`/deneyim/${ownExperience.id}/duzenle`))?.status()).toBe(200);
     await expect(page.locator('main form')).toBeVisible();
     const ownPublishedResponse = await page.goto(`/deneyim/${ownPublished.id}/duzenle`);
