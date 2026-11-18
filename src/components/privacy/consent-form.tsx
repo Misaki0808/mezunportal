@@ -94,6 +94,7 @@ export function ConsentForm({
             </span>
             <Link
               href={LEGAL_PATHS[d.documentType]}
+              aria-label={common('readNamed', { document: t(d.documentType) })}
               className="press-row inline-flex min-h-11 items-center font-medium text-primary"
             >
               {common('read')}

@@ -61,6 +61,13 @@ export function MyExperiences({ initial, list }: Props) {
 
   // Boşken tek eylem: boş durumun kendi düğmesi kalır, başlık sağındaki "Deneyim yaz" gizlenir.
   const empty = items.length === 0 && !pending;
+  // Aynı görünür adı taşıyan bağlantılar (iki taslağın "Düzenle"si, iki reddedilenin "Düzelt ve yeniden gönder"i, her "Aç")
+  // farklı deneyimlere gider; yalnız böyle çoğalan adlar sıra numarasıyla ayrılır, tek olan düz kalır.
+  const sameName = {
+    draft: items.filter((entry) => entry.status === 'DRAFT').length,
+    rejected: items.filter((entry) => entry.status === 'REJECTED').length,
+    open: items.filter((entry) => entry.status !== 'DRAFT').length,
+  };
   const body = (
     <div className="flex flex-col gap-4" aria-busy={pending}>
       {error && (
@@ -82,7 +89,7 @@ export function MyExperiences({ initial, list }: Props) {
         />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {items.map((item) => {
+          {items.map((item, index) => {
             const content = item.content as Record<string, unknown>;
             const title =
               typeof content.organizationName === 'string' ? content.organizationName : '';
@@ -117,6 +124,20 @@ export function MyExperiences({ initial, list }: Props) {
                         variant: item.status === 'REJECTED' ? 'primary' : 'secondary',
                       })}
                       href={`/deneyim/${item.id}/duzenle`}
+                      aria-label={
+                        sameName[item.status === 'REJECTED' ? 'rejected' : 'draft'] > 1
+                          ? t(
+                              item.status === 'REJECTED'
+                                ? 'rejection.actionNamed'
+                                : 'mine.editNamed',
+                              {
+                                title: title || t('mine.untitled'),
+                                index: index + 1,
+                                count: items.length,
+                              },
+                            )
+                          : undefined
+                      }
                     >
                       {item.status === 'REJECTED' ? t('rejection.action') : t('mine.edit')}
                     </Link>
@@ -125,6 +146,15 @@ export function MyExperiences({ initial, list }: Props) {
                     <Link
                       className={buttonClasses({ variant: 'secondary' })}
                       href={`/deneyim/${item.id}`}
+                      aria-label={
+                        sameName.open > 1
+                          ? t('mine.openNamed', {
+                              title: title || t('mine.untitled'),
+                              index: index + 1,
+                              count: items.length,
+                            })
+                          : undefined
+                      }
                     >
                       {t('mine.open')}
                     </Link>

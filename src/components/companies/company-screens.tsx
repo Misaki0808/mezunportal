@@ -131,7 +131,7 @@ export function CompanyScreen({
       label: t('experiences'),
       content: company.experiences.length ? (
         <ul className="grid gap-3">
-          {company.experiences.map((item) => (
+          {company.experiences.map((item, index) => (
             <li
               key={item.id}
               className="rounded-card border border-border bg-surface p-5 shadow-card"
@@ -145,6 +145,15 @@ export function CompanyScreen({
               <p className="mt-3 break-words">{item.snippet}</p>
               <Link
                 href={`/deneyim/${item.id}`}
+                aria-label={
+                  company.experiences.length > 1
+                    ? t('viewExperienceNamed', {
+                        type: experience(`types.${item.type as 'INTERNSHIP'}`),
+                        index: index + 1,
+                        count: company.experiences.length,
+                      })
+                    : undefined
+                }
                 className={`${buttonClasses({ variant: 'secondary' })} mt-4`}
               >
                 {t('viewExperience')}
