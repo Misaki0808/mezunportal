@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adminReason } from '@/contracts/admin';
+import { adminReason, adminSearchText, createDictionaryEntrySchema } from '@/contracts/admin';
 import { alumniSearchSchema } from '@/contracts/alumni-directory';
 import { searchMentorsSchema } from '@/contracts/mentor-directory';
 import { searchExperiencesSchema } from '@/contracts/search';
@@ -10,6 +10,8 @@ import { cleanCvText } from '@/contracts/cv';
 import { requestAppointmentSchema } from '@/contracts/appointment';
 import { sendContactRequestSchema } from '@/contracts/contact-request';
 import { proposeReferralAcceptanceSchema } from '@/contracts/referrals';
+import { jobPostingDraftContentSchema } from '@/contracts/job-postings';
+import { suggestSkillsSchema } from '@/contracts/profile-content';
 import { normalizeUserText, userTextLength, userTextSchema } from './user-text';
 
 describe('kullanıcı metni NFC sınırı', () => {
@@ -42,6 +44,28 @@ describe('kullanıcı metni NFC sınırı', () => {
     expect(alumniSearchSchema.parse({ q }).q).toBe(normalized);
     expect(searchMentorsSchema.parse({ q }).q).toBe(normalized);
     expect(searchExperiencesSchema.parse({ q }).q).toBe(normalized);
+  });
+
+  it('taslak, yönetim araması, sözlük ve beceri önerisi NFC sınırını aynı uygular', () => {
+    const nfd = 'İ'.normalize('NFD');
+    expect(jobPostingDraftContentSchema.parse({ title: nfd.repeat(100) }).title).toBe(
+      'İ'.repeat(100),
+    );
+    expect(jobPostingDraftContentSchema.safeParse({ title: nfd.repeat(121) }).success).toBe(false);
+    expect(adminSearchText.parse(nfd.repeat(100))).toBe('İ'.repeat(100));
+    expect(adminSearchText.safeParse(nfd.repeat(101)).success).toBe(false);
+    const dictionary = createDictionaryEntrySchema.parse({
+      kind: 'SKILL',
+      name: nfd.repeat(200),
+      aliases: [nfd.repeat(100)],
+    });
+    expect(dictionary.name).toBe('İ'.repeat(200));
+    expect(dictionary.aliases).toEqual(['İ'.repeat(100)]);
+    expect(
+      createDictionaryEntrySchema.safeParse({ kind: 'SKILL', name: nfd.repeat(201) }).success,
+    ).toBe(false);
+    expect(suggestSkillsSchema.parse({ query: nfd.repeat(80) }).query).toBe('İ'.repeat(80));
+    expect(suggestSkillsSchema.safeParse({ query: nfd.repeat(81) }).success).toBe(false);
   });
 
   it('251 NFD harfli iletişim notu ve randevu notu kabul edilir, NFC sonuç döner', () => {

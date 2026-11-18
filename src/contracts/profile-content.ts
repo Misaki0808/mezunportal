@@ -441,11 +441,7 @@ export type GetProfileInput = z.input<typeof getProfileSchema>;
  */
 export const suggestSkillsSchema = z
   .object({
-    query: z
-      .string({ error: INVALID })
-      .trim()
-      .min(2, { error: INVALID })
-      .max(80, { error: INVALID }),
+    query: userTextSchema(2, 80, INVALID),
   })
   .strict();
 export type SuggestSkillsInput = z.input<typeof suggestSkillsSchema>;

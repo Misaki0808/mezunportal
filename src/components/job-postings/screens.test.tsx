@@ -418,6 +418,36 @@ it('önizleme son başvuru gününü okunur Türkçe tarihle gösterir, ham ISO 
   expect(screen.queryByText(deadline, { exact: false })).toBeNull();
 });
 
+it('taslakta 100 NFD harf NFC başlık olarak kaydedilir', async () => {
+  const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'draft-nfc' } });
+  renderWithToasts(<PostingEditor context={context} save={save} submit={vi.fn()} />);
+  fireEvent.change(screen.getByLabelText(/Pozisyon adı/), {
+    target: { value: 'İ'.normalize('NFD').repeat(100) },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+  await waitFor(() =>
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.objectContaining({ title: 'İ'.repeat(100) }) }),
+    ),
+  );
+});
+
+it('taslak başlığı NFC sınırını aşarsa metni korur, alan hatasını ve odağı gösterir', async () => {
+  const save = vi.fn();
+  renderWithToasts(<PostingEditor context={context} save={save} submit={vi.fn()} />);
+  const title = screen.getByLabelText(/Pozisyon adı/);
+  const value = 'İ'.normalize('NFD').repeat(121);
+  fireEvent.change(title, { target: { value } });
+  fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+  expect(save).not.toHaveBeenCalled();
+  expect(title).toHaveValue(value);
+  expect(title).toHaveAttribute('aria-invalid', 'true');
+  expect(document.getElementById(title.getAttribute('aria-describedby')!)).toHaveTextContent(
+    'En fazla 120 karakter gir.',
+  );
+  await waitFor(() => expect(title).toHaveFocus());
+});
+
 it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderilir', async () => {
   const { addDays, istanbulDay } = await import('./model');
   const gate = Promise.withResolvers<never>();

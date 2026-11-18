@@ -55,11 +55,7 @@ export const adminPageInput = {
 
 export const ADMIN_SEARCH_MIN = 2;
 export const ADMIN_SEARCH_MAX = 100;
-export const adminSearchText = z
-  .string({ error: INVALID })
-  .trim()
-  .min(ADMIN_SEARCH_MIN, { error: INVALID })
-  .max(ADMIN_SEARCH_MAX, { error: INVALID });
+export const adminSearchText = userTextSchema(ADMIN_SEARCH_MIN, ADMIN_SEARCH_MAX, INVALID);
 
 // ---------------------------------------------------------------------------------------------
 // Erişim tablosu: hangi eylem kime açık (tablo-güdümlü testin ve ekranın tek kaynağı)
@@ -212,11 +208,7 @@ export type DictionaryKind = (typeof DICTIONARY_KINDS)[number];
 
 export const DICTIONARY_NAME_MAX = 200;
 export const DICTIONARY_ALIASES_MAX = 20;
-const dictionaryName = z
-  .string({ error: INVALID })
-  .trim()
-  .min(2, { error: INVALID })
-  .max(DICTIONARY_NAME_MAX, { error: INVALID });
+const dictionaryName = userTextSchema(2, DICTIONARY_NAME_MAX, INVALID);
 /** Takma adlar servis tarafında `normalizeName` ile saklanır; yinelenenler birleşir. */
 const dictionaryAliases = z
   .array(dictionaryName, { error: INVALID })

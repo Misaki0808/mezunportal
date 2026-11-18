@@ -205,10 +205,7 @@ export type JobPostingContent = z.infer<typeof jobPostingContentSchema>;
  * aranır). Bağlantı varsa https olmalıdır.
  */
 const draftText = (max: number) =>
-  z
-    .string({ error: INVALID })
-    .trim()
-    .max(max, { error: INVALID })
+  userTextSchema(0, max, INVALID)
     .transform((value) => (value === '' ? null : value))
     .nullable()
     .optional();

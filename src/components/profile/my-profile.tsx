@@ -47,6 +47,7 @@ import {
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 import { hasPersonalDataPattern } from '@/lib/personal-data';
+import { normalizeUserText, userTextLength } from '@/lib/user-text';
 
 import { EntryEditor } from './entry-editor';
 import { EntrySummary } from './entry-summary';
@@ -998,8 +999,8 @@ function SkillsBlock({
 
   // Öneri: en az 2 karakter; yarış olmasın diye yalnız son istek uygulanır.
   useEffect(() => {
-    const query = name.trim();
-    if (query.length < 2) return;
+    const query = normalizeUserText(name);
+    if (userTextLength(query) < 2) return;
     let stale = false;
     const timer = setTimeout(async () => {
       const result = await actions.suggestSkills({ query }).catch(() => null);
@@ -1063,7 +1064,7 @@ function SkillsBlock({
           noValidate
           onSubmit={(event) => {
             event.preventDefault();
-            if (name.trim().length >= 1) void add(name);
+            if (userTextLength(name) >= 1) void add(name);
           }}
           className="flex flex-col gap-3"
         >
@@ -1083,7 +1084,7 @@ function SkillsBlock({
               />
             )}
           </Field>
-          {name.trim().length >= 2 && suggestions.length > 0 && (
+          {userTextLength(name) >= 2 && suggestions.length > 0 && (
             <div>
               <p className="mb-1 text-sm font-medium text-fg-muted">{t('skillSuggestions')}</p>
               <ul className="flex flex-wrap gap-2">
