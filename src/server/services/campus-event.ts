@@ -239,6 +239,23 @@ export async function listCampusEventModeration(deps: Deps, userId: string) {
   }, TX_OPTIONS);
 }
 
+/** Yönetim ayrıntısında yalnız varlık/kapsam kontrolü; etkinliğin zamanı ve durumu ekranı kapatmaz. */
+export async function requireCampusEventAdminScope(deps: Deps, userId: string, input: unknown) {
+  const parsed = campusEventIdSchema.safeParse(input);
+  if (!parsed.success) throw codedNotFound('RESOURCE_NOT_FOUND');
+  const now = nowOf(deps);
+  return deps.db.$transaction(async (tx) => {
+    const actor = await loadAnyAdmin(tx, userId, now);
+    const event = await tx.campusEvent.findUnique({
+      where: { id: parsed.data.eventId },
+      select: { departments: { select: { departmentId: true } } },
+    });
+    if (!event || event.departments.length === 0) throw codedNotFound('RESOURCE_NOT_FOUND');
+    for (const { departmentId } of event.departments)
+      if (!(await covers(tx, actor, departmentId))) throw codedNotFound('RESOURCE_NOT_FOUND');
+  }, TX_OPTIONS);
+}
+
 export async function registerCampusEvent(deps: Deps, userId: string, input: unknown) {
   const { eventId } = campusEventIdSchema.parse(input),
     now = nowOf(deps);
