@@ -379,9 +379,7 @@ test.describe("WebKit iPhone: Safari'ye özgü davranışlar", () => {
       // Gerçek son içerik: çubuğun içinde olmayan, yaprak ve görünür öğelerin en alt kenarı (kap dolgusu sayılmaz).
       let contentBottom = 0;
       for (const e of document.querySelectorAll('#main-content *')) {
-        // Boşluk (ActionBar yer tutucusu) içerik değildir; çubuğun yerini akışta ayırır.
-        if (bar?.contains(e) || e.children.length > 0 || e.hasAttribute('data-action-bar-spacer'))
-          continue;
+        if (bar?.contains(e) || e.children.length > 0) continue;
         const r = e.getBoundingClientRect();
         if (r.width > 0 && r.height > 0) contentBottom = Math.max(contentBottom, r.bottom);
       }
@@ -413,12 +411,10 @@ test.describe("WebKit iPhone: Safari'ye özgü davranışlar", () => {
         const bar = document.querySelector('[data-action-bar]')!.getBoundingClientRect();
         const nav = document.querySelector('[data-bottom-nav]')!.getBoundingClientRect();
         const frame = document.querySelector('[data-action-bar-frame]')!;
-        const spacer = document.querySelector('[data-action-bar-spacer]')!;
         return {
           barBottom: bar.bottom,
           navTop: nav.top,
           frame: getComputedStyle(frame).position,
-          spacer: getComputedStyle(spacer).display,
           scrollable: document.documentElement.scrollHeight - innerHeight,
         };
       });
@@ -437,7 +433,7 @@ test.describe("WebKit iPhone: Safari'ye özgü davranışlar", () => {
     }
     // Ekran klavyesi (KeyboardState'in yazdığı işaret): çubuk akışa döner, boşluk kalkar; iOS'ta sabit çubuk zıplamaz.
     await page.evaluate(() => (document.documentElement.dataset.keyboard = 'open'));
-    expect(await read()).toMatchObject({ frame: 'static', spacer: 'none' });
+    expect(await read()).toMatchObject({ frame: 'static' });
     await page.evaluate(() => delete document.documentElement.dataset.keyboard);
     expect(await read()).toMatchObject({ frame: 'fixed' });
   });

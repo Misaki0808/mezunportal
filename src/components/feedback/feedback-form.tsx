@@ -2,7 +2,7 @@
 import { useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AccountFrameView } from '@/components/account/account-frame';
-import { Button, Field, Radio, Textarea } from '@/components/ui';
+import { ActionBar, Button, Field, Radio, Textarea } from '@/components/ui';
 import { feedbackInputSchema, type FeedbackView } from '@/contracts/feedback';
 import type { ErrorCode } from '@/lib/errors';
 import { submitSessionFeedback } from '@/server/actions/feedback';
@@ -176,11 +176,11 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
               {errors(error)}
             </p>
           )}
-          <div className="sticky-actions mt-auto bg-bg pb-2 pt-4">
+          <ActionBar className="bg-bg pb-2 pt-4 lg:mt-auto">
             <Button type="submit" fullWidth size="lg" loading={pending}>
               {pending ? t('sending') : t('submit')}
             </Button>
-          </div>
+          </ActionBar>
         </form>
       )}
     </AccountFrameView>

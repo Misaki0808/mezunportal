@@ -105,7 +105,7 @@ describe('deneyimlerim', () => {
     const write = screen.getAllByRole('link', { name: 'Deneyim yaz' });
     expect(write).toHaveLength(1);
     expect(write[0]).toHaveAttribute('href', '/deneyim/yeni');
-    expect(write[0]!.closest('.sticky-actions')).toBeNull();
+    expect(write[0]!.closest('[data-action-bar]')).toBeNull();
   });
 
   it('doluyken "Deneyim yaz" başlığın sağındaki tek eylemdir (alttaki yapışkan çubuk kalktı)', () => {
@@ -113,7 +113,7 @@ describe('deneyimlerim', () => {
     const write = screen.getAllByRole('link', { name: 'Deneyim yaz' });
     expect(write).toHaveLength(1);
     expect(write[0]!.closest('header')).not.toBeNull();
-    expect(write[0]!.closest('.sticky-actions')).toBeNull();
+    expect(write[0]!.closest('[data-action-bar]')).toBeNull();
   });
   it('kartlar ızgarada, eylemler kartın altında; boşken başlıkta eylem yok', () => {
     const { unmount } = renderUi(<MyExperiences initial={page(items)} list={vi.fn()} />);
