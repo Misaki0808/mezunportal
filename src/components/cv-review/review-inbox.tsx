@@ -95,6 +95,8 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
     });
   }
   async function save() {
+    setError('');
+    setMessage('');
     const p = cvReviewSettingsSchema.safeParse({
       ...settings,
       monthlyLimit: limitText.trim() ? Number(limitText) : undefined,
