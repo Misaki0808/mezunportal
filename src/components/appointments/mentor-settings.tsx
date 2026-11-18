@@ -352,11 +352,12 @@ export function MentorSettings({
         <ul className="flex flex-col gap-3">
           {WEEKDAYS.map((weekday) => {
             const day = days[weekday]!;
+            const dayName = weekdays(String(weekday) as '1');
             return (
               <li key={weekday} className="rounded-card border border-border p-3">
                 <Switch
-                  label={weekdays(String(weekday) as '1')}
-                  aria-label={t('dayOn', { day: weekdays(String(weekday) as '1') })}
+                  label={dayName}
+                  aria-label={t('dayOn', { day: dayName })}
                   checked={day.on}
                   onChange={(event) =>
                     updateDay(weekday, {
@@ -373,6 +374,8 @@ export function MentorSettings({
                     {day.ranges.map((range, index) => (
                       <div
                         key={index}
+                        role="group"
+                        aria-label={t('rangeGroup', { day: dayName, number: index + 1 })}
                         className="flex flex-col gap-2 rounded-control bg-surface p-3"
                       >
                         <div className="grid grid-cols-2 gap-2">
@@ -433,6 +436,11 @@ export function MentorSettings({
                         )}
                         <Button
                           variant="ghost"
+                          aria-label={t('removeRangeFor', {
+                            day: dayName,
+                            start: range.start,
+                            end: range.end,
+                          })}
                           onClick={() =>
                             updateDay(weekday, {
                               ranges: day.ranges.filter((_, at) => at !== index),
@@ -451,6 +459,7 @@ export function MentorSettings({
                     {ruleCount < AVAILABILITY_RULES_MAX && (
                       <Button
                         variant="secondary"
+                        aria-label={t('addRangeFor', { day: dayName })}
                         onClick={() =>
                           updateDay(weekday, {
                             ranges: [...day.ranges, { start: '13:00', end: '17:00', mode: '' }],

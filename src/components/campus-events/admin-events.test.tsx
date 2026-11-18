@@ -135,6 +135,25 @@ describe('AdminEvents karar penceresi', () => {
   });
 });
 
+it('bitiş başlangıçtan önceyse genel hata değil açık mesaj verir ve sunucuya gitmez', async () => {
+  const { user } = renderWithToasts(<AdminEvents departments={DEPARTMENTS} events={[]} />);
+  await user.type(screen.getByLabelText(/Etkinlik adı/), 'Keşif Buluşması');
+  await user.type(screen.getByLabelText(/^Açıklama/), 'Mezunlarla kısa sohbet etkinliği.');
+  await user.type(screen.getByLabelText(/^Yer/), 'Örnek Salon');
+  fireEvent.change(screen.getByLabelText(/Başlangıç \(İstanbul saati\)/), {
+    target: { value: '2026-12-01T15:00' },
+  });
+  fireEvent.change(screen.getByLabelText(/Bitiş \(İstanbul saati\)/), {
+    target: { value: '2026-12-01T14:00' },
+  });
+  fireEvent.change(screen.getByLabelText(/Kontenjan/), { target: { value: '30' } });
+  await user.click(screen.getByRole('checkbox', { name: /Yönetim Bilişim Sistemleri/ }));
+  await user.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  expect(await screen.findByText('Bitiş zamanı başlangıçtan sonra olmalı.')).toBeVisible();
+  // Odak hatalı alana gider.
+  expect(screen.getByLabelText(/Bitiş \(İstanbul saati\)/)).toHaveFocus();
+  expect(mocks.create).not.toHaveBeenCalled();
+});
 it('yalnız bekleyenleri oluşturma formundan önce gösterir; diğer durumlar ayrı bölümdedir', () => {
   renderWithToasts(<AdminEvents departments={DEPARTMENTS} events={EVENTS} />);
   const pending = screen.getByRole('region', { name: 'Onay bekleyenler' }),

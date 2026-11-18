@@ -88,6 +88,9 @@ export function AdminEvents({
     REJECTED: t('rejected'),
     CANCELLED: t('cancelled'),
   };
+  // Kullanıcı hatayı görsün: odak, hatalı alana gider (ekran okuyucu alan altı açıklamayı okur).
+  const focusField = (formElement: HTMLFormElement, name: string) =>
+    (formElement.elements.namedItem(name) as HTMLElement | null)?.focus();
   function create(formElement: HTMLFormElement) {
     const form = new FormData(formElement);
     const startAt = String(form.get('startsAt') ?? ''),
@@ -102,6 +105,12 @@ export function AdminEvents({
       Number.isNaN(endDate.getTime())
     ) {
       setFieldErrors({ startsAt: t('timeInvalid') });
+      focusField(formElement, 'startsAt');
+      return;
+    }
+    if (endDate.getTime() <= startDate.getTime()) {
+      setFieldErrors({ endsAt: t('endBeforeStart') });
+      focusField(formElement, 'endsAt');
       return;
     }
     const parsed = createCampusEventSchema.safeParse({
