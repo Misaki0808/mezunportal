@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { createTestPrisma } from '@/test/db';
 import { addMembership, createInstitution, createUser } from '@/test/fixtures';
 const send = vi.hoisted(() =>
-  vi.fn(async (item: { idempotencyKey: string; recipientUserId?: string }) => {
+  vi.fn(async (item: { idempotencyKey: string; recipientUserId?: string; text: string }) => {
     void item;
     return { emailLogId: 'queued' };
   }),
@@ -52,6 +52,10 @@ describe('form bildirim işi', () => {
       .filter((value) => value.idempotencyKey.includes(row.id));
     expect(calls).toHaveLength(4);
     expect(new Set(calls.map((value) => value.idempotencyKey)).size).toBe(2);
+    for (const call of calls) {
+      expect(call.text).toContain('https://feedback.example.invalid/hesap/gorusmeler');
+      expect(call.text).not.toContain(row.id);
+    }
     await db.notificationPreference.create({
       data: { userId: student, type: 'APPOINTMENT', enabled: false },
     });

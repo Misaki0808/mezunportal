@@ -42,7 +42,7 @@ describe('ilan özeti', () => {
     await sendNotificationIntent(db as never, { id: 'intent', userId: 'student', payload });
     expect(mocks.enqueue).toHaveBeenCalledTimes(1);
     expect(mocks.enqueue).toHaveBeenCalledWith(
-      expect.objectContaining({ text: expect.stringContaining('/hesap/bildirimler') }),
+      expect.objectContaining({ text: expect.stringContaining('https://example.org/ilanlar') }),
     );
     expect(tx.jobMatchDigest.create).toHaveBeenCalledTimes(1);
   });

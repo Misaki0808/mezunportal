@@ -30,6 +30,7 @@ const generic = z
       '/deneyimlerim',
       '/hesap/iletisim',
       '/hesap/sss',
+      '/sss',
       '/ilanlarim',
       '/hesap/referanslar',
     ]),
