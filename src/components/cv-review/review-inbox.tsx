@@ -35,6 +35,9 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
     [pending, setPending] = useState(''),
     [error, setError] = useState(''),
     [message, setMessage] = useState('');
+  const [limitText, setLimitText] = useState(initialSettings?.monthlyLimit.toString() ?? '');
+  const [limitInvalid, setLimitInvalid] = useState(false);
+  const limitRef = useRef<HTMLInputElement>(null);
   const lock = useRef(false);
   async function run(key: string, action: () => Promise<void>) {
     if (lock.current) return;
@@ -92,16 +95,25 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
     });
   }
   async function save() {
-    const p = cvReviewSettingsSchema.safeParse(settings);
+    const p = cvReviewSettingsSchema.safeParse({
+      ...settings,
+      monthlyLimit: limitText.trim() ? Number(limitText) : undefined,
+    });
     if (!p.success) {
-      setError(t('required'));
+      setLimitInvalid(true);
+      limitRef.current?.focus();
       return;
     }
+    setLimitInvalid(false);
     await run('settings', async () => {
       const r = await safeClientAction(() => saveCvReviewSettings(p.data));
       if (r.ok) {
         setSettings(r.data);
+        setLimitText(String(r.data.monthlyLimit));
         setMessage(t('saved'));
+      } else if (r.fieldErrors?.monthlyLimit) {
+        setLimitInvalid(true);
+        limitRef.current?.focus();
       } else setError(errors(r.errorCode));
     });
   }
@@ -191,16 +203,20 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
             checked={settings.enabled}
             onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
           />
-          <Field label={t('limit')}>
+          <Field label={t('limit')} error={limitInvalid ? t('required') : undefined}>
             {(control) => (
               <Input
                 {...control}
+                ref={limitRef}
                 type="number"
                 inputMode="numeric"
                 min={0}
                 max={100}
-                value={settings.monthlyLimit}
-                onChange={(e) => setSettings({ ...settings, monthlyLimit: Number(e.target.value) })}
+                value={limitText}
+                onChange={(e) => {
+                  setLimitText(e.target.value);
+                  setLimitInvalid(false);
+                }}
               />
             )}
           </Field>

@@ -6,6 +6,7 @@ import { ReviewInbox } from './review-inbox';
 import { RequestForm } from './request-form';
 import type { CvReviewRequestView } from '@/contracts/cv-review-request';
 import { answerCvReviewRequest } from '@/server/actions/cv-review-request';
+import { saveCvReviewSettings } from '@/server/actions/cv-review-request';
 vi.mock('@/server/actions/cv-review-request', () => ({
   createCvReviewRequest: vi.fn(),
   answerCvReviewRequest: vi.fn(),
@@ -65,6 +66,37 @@ it('mentor ayarı olmayan üyeye boş sayfa yerine açıklama ve tek ayar bağla
     '/mentor/ayarlar',
   );
   expect(screen.queryByRole('button', { name: 'Kaydet' })).toBeNull();
+});
+it('CV aylık sınırı boş veya 101 iken sıfıra dönüştürülüp kaydedilmez', async () => {
+  const { user } = renderUi(
+    <ReviewInbox
+      sent={null}
+      received={null}
+      initialSettings={{ enabled: true, monthlyLimit: 3 }}
+    />,
+  );
+  const limit = screen.getByRole('spinbutton');
+  await user.clear(limit);
+  await user.click(screen.getByRole('button', { name: 'Tercihleri kaydet' }));
+  expect(saveCvReviewSettings).not.toHaveBeenCalled();
+  expect(limit).toHaveFocus();
+  expect(limit).toBeInvalid();
+  expect(limit).toHaveValue(null);
+  await user.type(limit, '101');
+  await user.click(screen.getByRole('button', { name: 'Tercihleri kaydet' }));
+  expect(saveCvReviewSettings).not.toHaveBeenCalled();
+  expect(limit).toHaveValue(101);
+  expect(limit).toHaveFocus();
+  vi.mocked(saveCvReviewSettings).mockResolvedValueOnce({
+    ok: true,
+    data: { enabled: true, monthlyLimit: 0 },
+  });
+  await user.clear(limit);
+  await user.type(limit, '0');
+  await user.click(screen.getByRole('button', { name: 'Tercihleri kaydet' }));
+  await waitFor(() =>
+    expect(saveCvReviewSettings).toHaveBeenCalledWith({ enabled: true, monthlyLimit: 0 }),
+  );
 });
 it('öğrencinin gerçek boş gelen/giden kutusu mentor kurulumuna dönüşmez', () => {
   renderUi(
