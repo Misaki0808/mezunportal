@@ -261,23 +261,26 @@ it('satır sonlarını Outlook uyumlu HTML kırılımına çevirir, düz metni d
 });
 
 it.each([
-  ['student.email-migration', 'E-postanı güncelle'],
-  ['faq.redirected', 'Talebi gör'],
-  ['faq.answerPublished', "SSS'yi gör"],
-  ['cv.invitation', 'Deneyimini paylaş'],
-])('%s eylemi hedefi doğru anlatır', (template, label) => {
+  ['student.email-migration', 'E-postanı güncelle', '/hesap/e-posta'],
+  ['faq.redirected', 'Talebi gör', '/hesap/sss'],
+  ['faq.answerPublished', "SSS'yi gör", '/sss'],
+  ['cv.invitation', 'Deneyimini paylaş', '/deneyimlerim'],
+])('%s eylemi hedefi doğru anlatır', (template, label, path) => {
   const result = decorateEmail(
     {
       to: 'test@example.invalid',
       subject: 'Örnek',
       template,
       idempotencyKey: '1',
-      text: 'https://portal.invalid/hedef',
+      text: 'Örnek gövde',
     },
     'https://portal.invalid',
   );
   const document = new DOMParser().parseFromString(result.html!, 'text/html');
   expect(document.querySelector('a.email-button')?.textContent).toBe(label);
+  expect(document.querySelector('a.email-button')?.getAttribute('href')).toBe(
+    `https://portal.invalid${path}`,
+  );
 });
 
 const headMail = (subject = 'Randevun onaylandı & <hazır>') => {
