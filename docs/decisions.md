@@ -1176,6 +1176,18 @@ CV inceleme) `ActionBar`'a taşındı, `.sticky-actions` yardımcısı kalktı; 
 
 E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında işçi kaybı çift teslim üretebilir. Her denemede aynı Message-ID kullanılır; bu, sağlayıcıların tek teslimini garanti etmez. Tamamlanmış yükler 60 saniye sonra beş saniyelik bakım döngüsünde temizlenir; kapalı veya yoğun sistemde temizlik gecikebilir.
 
+## 2026-11-18 · Bekleyen e-posta işinin saklama süresi
+
+Ölçüm (kendi veritabanı, saklama süresi 30 saniyeye kısaltılmış): işçi kapalıyken kuyruğa giren 41 e-postadan, işçi açılınca
+tüketici saniyede yaklaşık iki işi alırken beş saniyelik bakım süresi dolan bekleyen işleri yüküyle sildi; 30 e-posta hiç gitmedi,
+`EmailLog` `QUEUED` kaldı, yeniden kuyruğa koyan bir yol yok. Az sayıda iş (2) tüketiciden önce silinmedi. Gerçek değer bir saat olduğundan
+kayıp, işçi bir saatten uzun kapalı kalıp birikmiş işleri bakım yetişemeden silince oluşur. Bu yüzden bekleyen e-posta işi 7 gün saklanır
+(`EMAIL_PENDING_RETENTION_SECONDS`); tamamlanan işin yük silmesi (60 saniye) değişmedi. Hesap güvenliği bağlantısı taşıyan şablonlar
+(giriş, e-posta değişikliği; bildirim kataloğunda `ACCOUNT_SECURITY`) kısa ömürlüdür ve bağlantı yükü bekleme süresince durduğundan iş
+başına bir saat olarak kalır; süresi dolan bağlantı zaten geçersiz olurdu. Bekleyen yükte alıcı adresi ve metin en çok 7 gün durur
+(gönderebilmek için zorunlu); kullanıcı hesabını silerse bekleyen işler aynı işlemde silinmeye devam eder. Ölü mektup kuyruğu (`email.failed`)
+bir saatte kaldı: orada kaybolan, zaten gönderilemeyen e-postanın başarısızlık kaydıdır. Diğer kuyruklarda (`cv`, `appointment`, `points`)
+da kısa bekleme saklaması var; bu kartın kapsamı dışında, ayrıca değerlendirilir.
 ## 2026-11-18 · Yılın Mezunu için örnek veri (seed)
 
 Deneme turunda "Bu mezunu seç", yayın rızası ve doğrulama bağlantısı adımları görülsün diye seed'e
