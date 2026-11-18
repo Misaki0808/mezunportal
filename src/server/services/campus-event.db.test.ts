@@ -20,10 +20,42 @@ import {
   listCampusEvents,
   registerCampusEvent,
   reviewCampusEvent,
+  requireCampusEventAdminScope,
 } from './campus-event';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
+it('etkinlik detay kapsamı zamanı dikkate almadan doğrular; yabancı ve olmayan aynı reddi verir', async () => {
+  const inst = await createInstitution(db);
+  const admin = await createUser(db);
+  const other = await createUser(db);
+  for (const [userId, departmentId] of [
+    [admin, inst.deptA1],
+    [other, inst.deptA2],
+  ] as const) {
+    await addMembership(db, { userId, departmentId, role: 'ACADEMIC' });
+    await addGrant(db, { userId, scope: 'DEPARTMENT', departmentId });
+    await grantRequiredConsents(db, userId);
+  }
+  const event = await db.campusEvent.create({
+    data: {
+      title: 'Gelecek etkinlik',
+      description: 'Örnek etkinlik açıklaması',
+      location: 'Salon',
+      startsAt: new Date('2040-01-01T10:00:00Z'),
+      endsAt: new Date('2040-01-01T11:00:00Z'),
+      capacity: 20,
+      departments: { create: { departmentId: inst.deptA1 } },
+    },
+  });
+  await expect(
+    requireCampusEventAdminScope({ db }, admin, { eventId: event.id }),
+  ).resolves.toBeUndefined();
+  for (const eventId of [event.id, '018f0000-0000-7000-8000-000000000000'])
+    await expect(requireCampusEventAdminScope({ db }, other, { eventId })).rejects.toMatchObject({
+      code: 'RESOURCE_NOT_FOUND',
+    });
+});
 it('kapsam, kontenjan yarışı, kod dönemi ve iptal puanını korur', async () => {
   await seedPointRules(db);
   const inst = await createInstitution(db),

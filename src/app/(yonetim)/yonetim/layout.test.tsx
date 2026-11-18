@@ -5,14 +5,22 @@ const mocks = vi.hoisted(() => ({
   access: vi.fn(),
   detail: vi.fn(),
   metrics: vi.fn(),
+  eventScope: vi.fn(),
+  pageAdmin: vi.fn(),
 }));
 vi.mock('@/components/privacy/server-guard', () => ({ PrivacyGuard: mocks.privacy }));
 vi.mock('@/components/metrics/access', () => ({ metricsAccess: mocks.metrics }));
 vi.mock('next/headers', () => ({ headers: mocks.headers }));
 vi.mock('@/components/admin/access', () => ({ adminAccess: mocks.access }));
 vi.mock('@/server/actions/admin-users', () => ({ getUserDetail: mocks.detail }));
+vi.mock('@/server/services/campus-event', () => ({
+  requireCampusEventAdminScope: mocks.eventScope,
+}));
+vi.mock('@/server/permissions', () => ({ requirePageAnyAdmin: mocks.pageAdmin }));
+vi.mock('@/server/db', () => ({ getDb: () => ({}) }));
 import AdminLayout from './layout';
 import { REQUEST_PATH_HEADER } from '@/lib/return-path';
+import { codedNotFound } from '@/lib/errors';
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.privacy.mockImplementation(async ({ children }) => children);
@@ -20,6 +28,32 @@ beforeEach(() => {
   mocks.metrics.mockResolvedValue({ ok: true, data: null });
   mocks.access.mockResolvedValue({ ok: true, overview: {} });
   mocks.detail.mockResolvedValue({ ok: true, data: {} });
+  mocks.pageAdmin.mockResolvedValue({ userId: 'admin' });
+  mocks.eventScope.mockResolvedValue(undefined);
+});
+it('etkinlik kapsamında olmayan ve bulunmayan kimlikte loading başlamadan 404', async () => {
+  mocks.headers.mockResolvedValue(
+    new Headers({ [REQUEST_PATH_HEADER]: '/yonetim/etkinlikler/target' }),
+  );
+  mocks.eventScope.mockRejectedValue(codedNotFound('RESOURCE_NOT_FOUND'));
+  await expect(AdminLayout({ children: 'content' })).rejects.toMatchObject({
+    digest: expect.stringContaining('404'),
+  });
+  expect(mocks.eventScope).toHaveBeenCalledWith({ db: {} }, 'admin', { eventId: 'target' });
+});
+it('etkinlik erişiminde altyapı hatası 404 yapılmaz, içerik açılmaz', async () => {
+  mocks.headers.mockResolvedValue(
+    new Headers({ [REQUEST_PATH_HEADER]: '/yonetim/etkinlikler/target' }),
+  );
+  mocks.eventScope.mockRejectedValue(new Error('db'));
+  const result = await AdminLayout({ children: 'content' });
+  expect(result).toMatchObject({ props: { errorCode: 'SERVER_UNEXPECTED' } });
+});
+it('kapsamdaki etkinlikte mevcut içerik döner', async () => {
+  mocks.headers.mockResolvedValue(
+    new Headers({ [REQUEST_PATH_HEADER]: '/yonetim/etkinlikler/target' }),
+  );
+  expect(await AdminLayout({ children: 'content' })).toBe('content');
 });
 it.each([
   ['sozlukler', 'dictionaries'],
