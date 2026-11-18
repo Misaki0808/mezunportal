@@ -379,7 +379,9 @@ test.describe("WebKit iPhone: Safari'ye özgü davranışlar", () => {
       // Gerçek son içerik: çubuğun içinde olmayan, yaprak ve görünür öğelerin en alt kenarı (kap dolgusu sayılmaz).
       let contentBottom = 0;
       for (const e of document.querySelectorAll('#main-content *')) {
-        if (bar?.contains(e) || e.children.length > 0) continue;
+        // Boşluk (ActionBar yer tutucusu) içerik değildir; çubuğun yerini akışta ayırır.
+        if (bar?.contains(e) || e.children.length > 0 || e.hasAttribute('data-action-bar-spacer'))
+          continue;
         const r = e.getBoundingClientRect();
         if (r.width > 0 && r.height > 0) contentBottom = Math.max(contentBottom, r.bottom);
       }
