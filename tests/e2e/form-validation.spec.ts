@@ -67,3 +67,25 @@ test('mentor kapasitesinde sınır dışı ve harf içeren değer kesilmeden red
   await save.click();
   await expect(page.getByText('Kaydedildi.')).toBeVisible();
 });
+
+test('CV inceleme sınırında boş değer ve 101 kaydedilmez, 0 geçerlidir', async ({ page }) => {
+  await loginAs(page, 'alumniMentor');
+  await page.goto('/hesap/cv-inceleme');
+  const limit = page.getByRole('spinbutton', { name: 'Aylık talep sınırı' });
+  const old = await limit.inputValue();
+  const save = page.getByRole('button', { name: 'Tercihleri kaydet' });
+  for (const value of ['', '101']) {
+    await limit.fill(value);
+    await save.click();
+    await expect(limit).toHaveValue(value);
+    await expect(limit).toBeFocused();
+    await expect(limit).toHaveAttribute('aria-invalid', 'true');
+    await expect(limit).toHaveAccessibleDescription('0 ile 100 arasında tam sayı gir.');
+  }
+  await limit.fill('0');
+  await save.click();
+  await expect(page.getByText('Tercihlerin kaydedildi.')).toBeVisible();
+  await limit.fill(old);
+  await save.click();
+  await expect(page.getByText('Tercihlerin kaydedildi.')).toBeVisible();
+});
