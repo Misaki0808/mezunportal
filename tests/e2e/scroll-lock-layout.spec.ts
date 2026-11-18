@@ -22,11 +22,22 @@ for (const classic of [true, false]) {
         await page.goto('/deneyim/yeni');
         // Yalnız klasik kanalda kaydırma alanını zorla; kısa sayfada çubuk çıkmaması ölçümü tesadüfe bağlamasın.
         // Motor/işletim sistemi yine kaplama çizebilir: ayrılan gerçek boşluk aşağıda ölçülür, 15 px varsayılmaz.
-        if (classic)
+        if (classic) {
           await page.addStyleTag({
             content:
               'html { overflow-y: scroll; } ::-webkit-scrollbar { width: 15px; height: 15px; }',
           });
+          // WebKit dinamik scrollbar CSS'ini ilk overflow değişiminde uygular (prob: önce0, modal sonrası15px).
+          // Testin klasik kip kurulumunu BAŞLANGIÇ ölçümünden önce tamamla; ilk modal CSS kurulumunu yapmasın.
+          await page.evaluate(async () => {
+            const root = document.documentElement;
+            const saved = root.style.overflow;
+            root.style.overflow = 'hidden';
+            void root.offsetWidth;
+            root.style.overflow = saved;
+            await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+          });
+        }
         await page.locator('select').first().selectOption({ index: 1 });
         const measure = () =>
           page.evaluate(() => {
@@ -93,12 +104,10 @@ for (const classic of [true, false]) {
             lockGutter: before.lockGutter,
           });
         const closed = await measure();
-        test
-          .info()
-          .annotations.push({
-            type: 'geometri',
-            description: JSON.stringify({ before, open, closed }),
-          });
+        test.info().annotations.push({
+          type: 'geometri',
+          description: JSON.stringify({ before, open, closed }),
+        });
         for (const key of ['header', 'nav', 'action', 'toast', 'main'] as const) {
           const initial = before[key];
           if (!initial) continue;
