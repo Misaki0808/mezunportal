@@ -4,6 +4,7 @@ import { createTestPrisma } from '@/test/db';
 import { addMembership, grantRequiredConsents } from '@/test/fixtures';
 
 import {
+  configureAwardCycle,
   listAwardCandidates,
   listMyAwards,
   publicAward,
@@ -196,6 +197,70 @@ describe('Yılın Mezunu deneme senaryosu (kart 470)', () => {
     } finally {
       await db.suspicionFlag.delete({ where: { id: flag.id } });
     }
+  });
+
+  it('okuma ile yazma arasında aynı dönem başka yoldan kurulursa seed kesilmez: mevcut kayıt korunur, öteki yıl kurulur', async () => {
+    const admin = seedUserId('departmentAdmin');
+    await consentOnce(admin);
+    let injected = false;
+    let saved = '';
+    const read = () =>
+      db.awardCycle.findUnique({ where: { departmentId_year: { departmentId, year: 2023 } } });
+    // Seed 2023'ü okuyup "yok" gördükten hemen sonra gerçek servis aynı dönemi kurar (yarış).
+    const cycle = new Proxy(db.awardCycle, {
+      get(target, key) {
+        if (key === 'findUnique')
+          return async (args: Parameters<typeof db.awardCycle.findUnique>[0]) => {
+            const found = await db.awardCycle.findUnique(args);
+            if (!injected && !found && args.where.departmentId_year?.year === 2023) {
+              injected = true;
+              await configureAwardCycle({ db }, admin, {
+                departmentId,
+                year: 2023,
+                ceremonyDate: '2099-06-30',
+              });
+              saved = JSON.stringify(await read());
+            }
+            return found;
+          };
+        const value = Reflect.get(target, key);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    const racing = new Proxy(db, {
+      get(target, key) {
+        if (key === 'awardCycle') return cycle;
+        const value = Reflect.get(target, key);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    await expect(seedAwardScenario(racing, 'local')).resolves.toBeUndefined();
+    expect(injected).toBe(true);
+    expect(JSON.stringify(await read())).toBe(saved);
+    expect(await db.awardCycle.count({ where: { departmentId, year: 2024 } })).toBe(1);
+    expect(await db.award.count({ where: { departmentId, year: 2024 } })).toBe(1);
+  });
+
+  it('çakışma dışındaki hatayı yutmaz: hata aynen yükselir ve hiçbir döngü kurulmaz', async () => {
+    const failingTransaction = (error: Error) =>
+      new Proxy(db, {
+        get(target, key) {
+          if (key === '$transaction')
+            return async () => {
+              throw error;
+            };
+          const value = Reflect.get(target, key);
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+    const unexpected = new Error('beklenmeyen hata');
+    await expect(seedAwardScenario(failingTransaction(unexpected), 'local')).rejects.toBe(
+      unexpected,
+    );
+    // Benzersiz anahtar kodu taşısa da döngü gerçekte yoksa çakışma değildir: yutulmaz.
+    const unrelated = Object.assign(new Error('başka bir benzersiz anahtar'), { code: 'P2002' });
+    await expect(seedAwardScenario(failingTransaction(unrelated), 'local')).rejects.toBe(unrelated);
+    expect(await cycles()).toHaveLength(0);
   });
 
   it('uygulamanın gerçek servisleriyle uyumlu: aday listesi, seçim, yayın rızası, doğrulama sayfası', async () => {

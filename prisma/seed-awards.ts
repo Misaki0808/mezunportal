@@ -21,7 +21,8 @@ import { seedUuid } from './seed-util';
  * satırlar elle yazılır; tutarlılığı `seed-awards.db.test.ts` gerçek servis fonksiyonlarıyla sınar.
  *
  * İdempotent ve ekleyicidir: aynı bölüm ve yıl için döngü zaten varsa (örneğin yönetici o yıla tören tarihi kaydettiyse ya da seçim yaptıysa)
- * o döngüye hiç dokunulmaz; hiçbir kayıt silinmez ya da güncellenmez. Yıllar sabittir (arayüzün varsayılan yılı olan "geçen yıl"a denk gelmez,
+ * o döngüye hiç dokunulmaz; hiçbir kayıt silinmez ya da güncellenmez. Okuma ile yazma arasında aynı bölüm ve yıl başka yoldan
+ * kurulursa (benzersiz anahtar çakışması) yalnız o yıl atlanır, seed kesilmez ve sonraki yıl kurulur. Yıllar sabittir (arayüzün varsayılan yılı olan "geçen yıl"a denk gelmez,
  * böylece rehberdeki tören tarihi adımı bozulmaz). Aday listesi sabit bir sahte kümedir (Mert + dört örnek mezun); bu yıllarda puan, deneyim ya da
  * görüşme verisi olmadığından değerler 0'dır, yeniden hesaplama da aynısını verir.
  */
@@ -56,6 +57,16 @@ async function candidateIds(prisma: PrismaClient, departmentId: string, now: Dat
   return members.map((member) => member.userId).sort();
 }
 
+const cycleExists = async (prisma: PrismaClient, departmentId: string, year: number) =>
+  (await prisma.awardCycle.findUnique({
+    where: { departmentId_year: { departmentId, year } },
+    select: { id: true },
+  })) !== null;
+
+/** Prisma benzersiz anahtar çakışması (P2002). */
+const isUniqueViolation = (error: unknown) =>
+  typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'P2002';
+
 export async function seedAwardScenario(
   prisma: PrismaClient,
   appEnv: string | undefined = process.env.APP_ENV,
@@ -72,73 +83,76 @@ export async function seedAwardScenario(
   const candidates = await candidateIds(prisma, departmentId, now);
 
   for (const { year, ceremonyDate, winner } of CYCLES) {
-    const existing = await prisma.awardCycle.findUnique({
-      where: { departmentId_year: { departmentId, year } },
-      select: { id: true },
-    });
-    if (existing) continue;
+    if (await cycleExists(prisma, departmentId, year)) continue;
     // Ödül verilecek döngüde kazanan aday değilse (hesap silinmiş, askıda…) ya da aday yoksa döngü hiç kurulmaz.
     if (!candidates.length || (winner && !candidates.includes(winnerId))) continue;
 
     const ceremonyAt = new Date(`${ceremonyDate}T00:00:00+03:00`);
     const frozenAt = new Date(awardFreezeAt(ceremonyDate).getTime() + MINUTE);
     const cycleId = seedUuid(NS, `cycle:${year}`);
-    await prisma.$transaction(async (tx) => {
-      await tx.awardCycle.create({
-        data: { id: cycleId, departmentId, year, ceremonyAt, frozenAt },
-      });
-      await tx.awardCandidate.createMany({
-        data: candidates.map((userId) => ({
-          id: seedUuid(NS, `candidate:${year}:${userId}`),
-          cycleId,
-          userId,
-          points: 0,
-          experienceCount: 0,
-          meetingCount: 0,
-          breakdown: [],
-        })),
-      });
-      await tx.adminAuditLog.createMany({
-        data: [
-          {
-            id: seedUuid(NS, `audit:configure:${year}`),
-            actorId,
-            action: 'AWARD_CYCLE_CONFIGURE',
-            targetType: 'AWARD_CYCLE',
-            targetId: cycleId,
-            createdAt: new Date(frozenAt.getTime() - 20 * DAY),
-          },
-        ],
-        skipDuplicates: true,
-      });
-      if (!winner) return;
-      const awardId = seedUuid(NS, `award:${year}`);
-      const awardedAt = new Date(frozenAt.getTime() + 10 * DAY);
-      await tx.award.create({
-        data: {
-          id: awardId,
-          cycleId,
-          departmentId,
-          year,
-          userId: winnerId,
-          verificationCode: randomBytes(32).toString('base64url'),
-          createdAt: awardedAt,
-        },
-      });
-      await tx.adminAuditLog.createMany({
-        data: [
-          {
-            id: seedUuid(NS, `audit:select:${year}`),
-            actorId,
-            action: 'AWARD_SELECT',
-            targetType: 'AWARD',
-            targetId: awardId,
-            reason: SELECT_REASON,
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.awardCycle.create({
+          data: { id: cycleId, departmentId, year, ceremonyAt, frozenAt },
+        });
+        await tx.awardCandidate.createMany({
+          data: candidates.map((userId) => ({
+            id: seedUuid(NS, `candidate:${year}:${userId}`),
+            cycleId,
+            userId,
+            points: 0,
+            experienceCount: 0,
+            meetingCount: 0,
+            breakdown: [],
+          })),
+        });
+        await tx.adminAuditLog.createMany({
+          data: [
+            {
+              id: seedUuid(NS, `audit:configure:${year}`),
+              actorId,
+              action: 'AWARD_CYCLE_CONFIGURE',
+              targetType: 'AWARD_CYCLE',
+              targetId: cycleId,
+              createdAt: new Date(frozenAt.getTime() - 20 * DAY),
+            },
+          ],
+          skipDuplicates: true,
+        });
+        if (!winner) return;
+        const awardId = seedUuid(NS, `award:${year}`);
+        const awardedAt = new Date(frozenAt.getTime() + 10 * DAY);
+        await tx.award.create({
+          data: {
+            id: awardId,
+            cycleId,
+            departmentId,
+            year,
+            userId: winnerId,
+            verificationCode: randomBytes(32).toString('base64url'),
             createdAt: awardedAt,
           },
-        ],
-        skipDuplicates: true,
+        });
+        await tx.adminAuditLog.createMany({
+          data: [
+            {
+              id: seedUuid(NS, `audit:select:${year}`),
+              actorId,
+              action: 'AWARD_SELECT',
+              targetType: 'AWARD',
+              targetId: awardId,
+              reason: SELECT_REASON,
+              createdAt: awardedAt,
+            },
+          ],
+          skipDuplicates: true,
+        });
       });
-    });
+    } catch (error) {
+      // Okuma ile yazma arasında aynı bölüm ve yıl başka yoldan kurulduysa (örneğin yönetici tören tarihi kaydetti) benzersiz anahtar
+      // çakışır. Seed o döngüye dokunmadan sonraki yıla geçer; çakışma başka bir yerden geliyorsa hata korunur.
+      if (isUniqueViolation(error) && (await cycleExists(prisma, departmentId, year))) continue;
+      throw error;
+    }
   }
 }
