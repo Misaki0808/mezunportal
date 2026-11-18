@@ -334,7 +334,10 @@ export function CompanyMerge() {
           </p>
         )}
         {success && <p role="status">{t('mergeSuccess')}</p>}
-        <div data-action-bar className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] bg-bg pb-4 pt-3 lg:bottom-0">
+        <div
+          data-action-bar
+          className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] bg-bg pb-4 pt-3 lg:bottom-0"
+        >
           <Button
             fullWidth
             onClick={() => {
