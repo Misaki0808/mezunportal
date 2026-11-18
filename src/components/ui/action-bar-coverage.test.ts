@@ -23,6 +23,13 @@ const BOTTOM = /(sticky|fixed)[^"'`]*\bbottom-(20|\[calc\(4\.5rem)/;
 const POSITIONING = /(?<![\w:-])(sticky|fixed|bottom-)/;
 
 describe('yapışkan alt kaplar', () => {
+  it('.sticky-actions kalmadı: alt çubukların hepsi ActionBar ile çizilir (kart 477)', () => {
+    const offenders = [...walk('src'), 'src/app/globals.css'].filter((file) =>
+      /sticky-actions/.test(readFileSync(file, 'utf8')),
+    );
+    expect(offenders).toEqual([]);
+  });
+
   it('ActionBar çağıranları konum sınıfı vermez; konumu kap belirler', () => {
     const offenders: string[] = [];
     for (const file of walk('src')) {

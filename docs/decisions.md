@@ -822,10 +822,10 @@ doldurulacak görüşme formu, yöneticiye moderasyon sayısı; yalnız sıfırd
 "Yönetim". Sayılar sunucuda oturumdaki kullanıcının KENDİ kayıtlarından hesaplanır (`getHomeSummary`); yönetici sayısı panel
 servisinin kapsam kesişiminden gelir. Randevu talebi sayısı `/randevular`a gider; SSS kısayolu/sayısı ekranı main'e girince eklenir (kanca yorumlarda).
 
-**Ekran klavyesi.** Yapışkan eylem çubukları (`.sticky-actions`, 8 form) ve alt gezinme, ekran klavyesi açıkken (görsel görünüm
+**Ekran klavyesi.** Alttaki eylem çubukları (`ActionBar`, bütün formlar) ve alt gezinme, ekran klavyesi açıkken (görsel görünüm
 alanı ≥ 140 px küçülür ve bir metin girişi odaktadır) gizlenir/akışa döner (`KeyboardState`). Seçenekler: (a) eylemleri her zaman
 form sonuna almak — mobilde eylem çubuğunun hızlı erişimini kaybettirir; (b) çubuğu klavyenin üstünde tutmak — iOS'ta layout
-görünümü küçülmediği için çubuk klavyenin ARKASINDA kalır; (c) seçilen: klavye açıkken akışa dön, kapalıyken yapışkan kal. Gerçek
+görünümü küçülmediği için çubuk klavyenin ARKASINDA kalır; (c) seçilen: klavye açıkken akışa dön, kapalıyken ekrana sabit kal (kart 453, 477). Gerçek
 cihaz doğrulaması telefon testine yazıldı (`docs/engineering.md`).
 
 **Açık şüpheye yeni kanıt ve oturumsuz eylemde dönüş (kart 116).** Karar bekleyen işaret varken aynı kural için bulunan yeni
@@ -1165,10 +1165,13 @@ telefonda alt gezinmenin üstünde sabit 5 rem'de dururken dokuz ekran aynı şe
 kendi yüksekliğini `--action-bar-h` değişkenine yazar, toast bölgesi alt konumunu CSS'te `5rem + güvenli alan +
 --action-bar-h` hesaplar (ölçüm kaydırmaya ya da olaya bağlı değil). `sticky` kendi üst kabının sonunu geçemediği için
 sayfa sonunda çubuk ekranın alt şeridinden 96-120 px yukarıda kalıyordu (R2 455 B4); bu yüzden telefonda (< lg) çubuk
-`fixed`: alt gezinmenin hemen üstünde, hep aynı yerde, akışta aynı yükseklikte bir boşluk (son içerik altında kalmaz).
-lg ve üstünde kap `display: contents`, çubuk eski akışında. Ekran klavyesi açıkken çubuk akışa döner (sabit çubuk iOS'ta
+`fixed`: alt gezinmenin hemen üstünde, hep aynı yerde. Son içerik çubuğun altında kalmasın diye ana alanın alt dolgusu
+`--action-bar-h` kadar artar (kart 477: akışta çubuk yerine konan yer tutucu boşluk, çubuğun altına düşen içeriği, örneğin formdan
+sonra gelen bağlantıları, sayfa sonunda örtmeye devam ediyordu). lg ve üstünde kap `display: contents`, çubuk eski akışında. Ekran klavyesi açıkken çubuk akışa döner (sabit çubuk iOS'ta
 klavyenin üstünde zıplamasın). Bekçi: `src/components/ui/action-bar*.test`, `tests/e2e/action-bar-pages.spec.ts` (sekiz gerçek
-çubuklu sayfa, üç kaydırma konumu, dört toast), `tests/e2e/toast-layout.spec.ts`.
+çubuklu sayfa, üç kaydırma konumu, sayfa sonunda altta kalan kontrol, dört toast), `tests/e2e/toast-layout.spec.ts`. Kart 477:
+eskiden `.sticky-actions` kullanan yedi form da (deneyim, rıza, gizlilik, görüşme geri bildirimi, bildirim tercihleri, CV yükleme,
+CV inceleme) `ActionBar`'a taşındı, `.sticky-actions` yardımcısı kalktı; kaynak taraması bu sınıfı bir daha kabul etmez.
 ## 2026-11-18 · E-posta teslim ve kuyruk saklama sınırı
 
 E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında işçi kaybı çift teslim üretebilir. Her denemede aynı Message-ID kullanılır; bu, sağlayıcıların tek teslimini garanti etmez. Tamamlanmış yükler 60 saniye sonra beş saniyelik bakım döngüsünde temizlenir; kapalı veya yoğun sistemde temizlik gecikebilir.

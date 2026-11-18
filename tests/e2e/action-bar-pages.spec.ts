@@ -1,7 +1,9 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { expect, test, type Page } from './fixture';
 import { loginAs } from './login';
+import { PrismaClient } from '../../src/generated/prisma/client';
 
 /**
  * Telefonda eylem çubuğu HER ZAMAN ekranın alt şeridinde, alt gezinmenin hemen üstündedir (kart 453, R2 455 B4: `sticky`
@@ -11,12 +13,101 @@ import { loginAs } from './login';
  * `elementFromPoint` + kutu kesişimi). Ekran klavyesi açıkken çubuk akışa döner (`html[data-keyboard=open]`).
  * Toast kutuları, gerçek toast bölgesine eklenen taklit kutulardır (toast'ı sayfa başına gerçek eylemle çıkarmak mümkün
  * değil, ürün koduna test kancası eklenmedi); bölge, konumu ve yığma düzeni gerçektir.
+ * Kart 477: eskiden `.sticky-actions` kullanan formlar da (deneyim, rıza, gizlilik, görüşme geri bildirimi, bildirim tercihleri,
+ * CV inceleme) bu turdadır. `/onay` rıza öncesi ekrandır (alt gezinme yok): çubuk ekranın dibinde durur.
  */
 type Entry = {
-  persona: 'student' | 'alumniMentor' | 'systemAdmin';
+  persona: 'student' | 'alumniMentor' | 'systemAdmin' | 'consentPending';
   name: string;
   path: string | ((page: Page) => Promise<string>);
+  /** Sayfa açıldıktan sonra çubuğu görünür kılan hazırlık. */
+  setup?: (page: Page) => Promise<void>;
 };
+const db = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
+});
+const seededAppointments: string[] = [];
+const seededUploads: string[] = [];
+test.afterAll(async () => {
+  if (seededAppointments.length)
+    await db.appointment.deleteMany({ where: { id: { in: seededAppointments } } });
+  if (seededUploads.length) await db.cvUpload.deleteMany({ where: { id: { in: seededUploads } } });
+  await db.$disconnect();
+});
+/**
+ * Ayrıştırılmış bir CV (inceleme ekranı, "Seçilenleri uygula" çubuğu). Çalışan iş kuyruğu bu testte yok: sonuç, işin
+ * üreteceği biçimde (`PARSED`) veritabanına konur (profile-cv.spec.ts gibi). CV yükleme formu e2e ortamında kapalıdır
+ * (ayrıştırıcı yok), o çubuk birim testiyle (`cv.test.tsx`) sınanır.
+ */
+const cvReviewPage = async () => {
+  const student = await db.user.findUniqueOrThrow({
+    where: { email: 'student@test.mezunportal.local' },
+  });
+  await db.cvUpload.deleteMany({ where: { userId: student.id } });
+  const upload = await db.cvUpload.create({
+    data: {
+      userId: student.id,
+      storageKey: `cv/${student.id}/e2e-action-bar.pdf`,
+      byteSize: 100,
+      pageCount: 1,
+      status: 'PARSED',
+      parsedJson: {
+        profile: {
+          headline: 'Yönetim Bilişim Sistemleri öğrencisi',
+          summary: null,
+          city: 'İstanbul',
+        },
+        education: [
+          {
+            institution: 'E2E Üniversitesi',
+            level: 'BACHELOR',
+            fieldOfStudy: 'Yönetim Bilişim Sistemleri',
+            startDate: '2022-09',
+            endDate: null,
+            isCurrent: true,
+          },
+        ],
+        positions: [],
+        skills: ['TypeScript'],
+        languages: [{ name: 'İngilizce', level: 'B2' }],
+        certifications: [],
+      },
+    },
+  });
+  seededUploads.push(upload.id);
+  return '/profil/cv';
+};
+/** Öğrencinin yanıtlamadığı geçmiş bir görüşme (geri bildirim formu); kayıt testten sonra silinir. */
+const feedbackPage = async () => {
+  const student = await db.user.findUniqueOrThrow({
+    where: { email: 'student@test.mezunportal.local' },
+  });
+  const mentor = await db.user.findUniqueOrThrow({
+    where: { email: 'alumni-mentor@test.mezunportal.local' },
+  });
+  const now = Date.UTC(2000, 0, 1) + Math.floor(Math.random() * 300) * 86400000;
+  const appointment = await db.appointment.create({
+    data: {
+      mentorId: mentor.id,
+      menteeId: student.id,
+      startsAt: new Date(now - 3 * 3600000),
+      endsAt: new Date(now - 2 * 3600000),
+      expiresAt: new Date(now - 4 * 3600000),
+      decidedAt: new Date(now - 5 * 3600000),
+      mode: 'ONLINE',
+      status: 'CONFIRMED',
+    },
+  });
+  seededAppointments.push(appointment.id);
+  return `/hesap/gorusme/${appointment.id}`;
+};
+/** Rıza vermemiş akademisyen: ilk girişte `/onay` açılır (a11y turundaki gibi). */
+async function signInConsentPending(page: Page) {
+  await page.goto('/giris/test?persona=academic');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
+  await page.waitForURL(/\/onay/);
+}
 const firstLink = (list: string, selector: string) => async (page: Page) => {
   await page.goto(list, { waitUntil: 'networkidle' });
   return (await page.locator(selector).first().getAttribute('href'))!;
@@ -38,6 +129,13 @@ const PAGES: Entry[] = [
   { persona: 'alumniMentor', name: 'ilan editörü', path: '/ilanlar/yeni' },
   { persona: 'alumniMentor', name: 'referans', path: '/referans/yeni' },
   { persona: 'systemAdmin', name: 'sözlük birleştirme', path: '/yonetim/sozlukler/birlestir' },
+  // Kart 477: eskiden `.sticky-actions` kullananlar.
+  { persona: 'student', name: 'deneyim formu', path: '/deneyim/yeni' },
+  { persona: 'student', name: 'gizlilik (görünürlük)', path: '/hesap/gizlilik' },
+  { persona: 'student', name: 'bildirim tercihleri', path: '/hesap/bildirimler' },
+  { persona: 'student', name: 'görüşme geri bildirimi', path: feedbackPage },
+  { persona: 'student', name: 'CV inceleme (seçilenleri uygula)', path: cvReviewPage },
+  { persona: 'consentPending', name: 'rıza ekranı (alt gezinme yok)', path: '/onay' },
 ];
 
 type Box = { x: number; y: number; width: number; height: number };
@@ -47,12 +145,13 @@ const FAKE = 'data-r1-fake-toast';
 function geometry(page: Page) {
   return page.evaluate(() => {
     const bar = document.querySelector('[data-action-bar]')!.getBoundingClientRect();
-    const nav = document.querySelector('[data-bottom-nav]')!.getBoundingClientRect();
+    // Rıza öncesi ekranda alt gezinme yok: çubuk ekranın dibine iner (güvenli alan dışında boşluk yok).
+    const nav = document.querySelector('[data-bottom-nav]');
     return {
       barTop: bar.top,
       barBottom: bar.bottom,
       barHeight: bar.height,
-      navTop: nav.top,
+      navTop: nav ? nav.getBoundingClientRect().top : innerHeight,
       scrollable: document.documentElement.scrollHeight - innerHeight,
     };
   });
@@ -155,11 +254,13 @@ for (const variant of VARIANTS) {
     const report: string[] = [];
     for (const entry of PAGES) {
       if (current !== entry.persona) {
-        await loginAs(page, entry.persona);
+        if (entry.persona === 'consentPending') await signInConsentPending(page);
+        else await loginAs(page, entry.persona);
         current = entry.persona;
       }
       const target = typeof entry.path === 'string' ? entry.path : await entry.path(page);
       await page.goto(target, { waitUntil: 'networkidle' });
+      await entry.setup?.(page);
       if (variant.zoom) await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
       await expect(page.locator('[data-action-bar]'), `${entry.name}: çubuk var`).toHaveCount(1);
       await page.waitForTimeout(400);
@@ -219,7 +320,7 @@ for (const variant of VARIANTS) {
   });
 }
 
-test('ekran klavyesi açıkken çubuk akışa döner, boşluk kalkar; kapanınca yeniden sabitlenir', async ({
+test('ekran klavyesi açıkken çubuk akışa döner; kapanınca yeniden sabitlenir; ana alan dolgusu çubuğu sayar', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -228,24 +329,26 @@ test('ekran klavyesi açıkken çubuk akışa döner, boşluk kalkar; kapanınca
   const state = () =>
     page.evaluate(() => {
       const frame = document.querySelector('[data-action-bar-frame]')!;
-      const spacer = document.querySelector('[data-action-bar-spacer]')!;
+      const bar = document.querySelector('[data-action-bar]')!.getBoundingClientRect();
+      const nav = document.querySelector('[data-bottom-nav]')!.getBoundingClientRect();
       return {
         frame: getComputedStyle(frame).position,
-        spacer: getComputedStyle(spacer).display,
-        spacerHeight: spacer.getBoundingClientRect().height,
+        padding: parseFloat(getComputedStyle(document.querySelector('main')!).paddingBottom),
+        barHeight: bar.height,
+        navHeight: nav.height,
       };
     });
   const closed = await state();
   expect(closed.frame).toBe('fixed');
-  expect(closed.spacer).not.toBe('none');
-  expect(closed.spacerHeight).toBeGreaterThan(30);
+  // Ana alanın alt dolgusu alt gezinme + çubuk kadar: sayfa sonunda hiçbir içerik çubuğun altında kalmaz.
+  expect(closed.padding).toBeGreaterThanOrEqual(closed.barHeight + closed.navHeight - 1);
   await page.evaluate(() => (document.documentElement.dataset.keyboard = 'open'));
-  expect(await state()).toMatchObject({ frame: 'static', spacer: 'none' });
+  expect(await state()).toMatchObject({ frame: 'static' });
   await page.evaluate(() => delete document.documentElement.dataset.keyboard);
   expect(await state()).toMatchObject({ frame: 'fixed' });
 });
 
-test('1440: çubuk masaüstünde kapsız, eskisi gibi akışta; sabit değil, boşluk yok', async ({
+test('1440: çubuk masaüstünde kapsız, eskisi gibi akışta; sabit değil, ana alan dolgusu 0', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -254,12 +357,12 @@ test('1440: çubuk masaüstünde kapsız, eskisi gibi akışta; sabit değil, bo
   const state = await page.evaluate(() => {
     const frame = document.querySelector('[data-action-bar-frame]')!;
     const bar = document.querySelector('[data-action-bar]')!;
-    const spacer = document.querySelector('[data-action-bar-spacer]')!;
     return {
       frame: getComputedStyle(frame).display,
       bar: getComputedStyle(bar).position,
-      spacer: getComputedStyle(spacer).display,
+      // lg'de ana alan alt dolgusu sıfır: çubuk akışta, ek boşluk yok.
+      padding: getComputedStyle(document.querySelector('main')!).paddingBottom,
     };
   });
-  expect(state).toEqual({ frame: 'contents', bar: 'static', spacer: 'none' });
+  expect(state).toEqual({ frame: 'contents', bar: 'static', padding: '0px' });
 });

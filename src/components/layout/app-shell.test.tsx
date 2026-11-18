@@ -65,6 +65,8 @@ describe('AppShell', () => {
     expect(document.querySelector('[data-bottom-nav]')).toBeNull();
     const main = screen.getByRole('main');
     expect(main.className).not.toContain('4.5rem');
+    // Alttaki eylem çubuğu (ActionBar) varsa dolgu yüksekliği kadar artar; rıza ekranında da.
+    expect(main.className).toContain('var(--action-bar-h,0px)');
     // Yapışkan eylem çubuğu ekranın dibine inmek için kabuk işareti taşır (globals.css).
     expect(main.closest('[data-no-nav]')).not.toBeNull();
     // Üst çubuk ve marka kalır: kullanıcı yönünü kaybetmez.
@@ -76,6 +78,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('navigation', { name: 'Ana gezinme' })).toBeInTheDocument();
     expect(document.querySelector('[data-bottom-nav]')).not.toBeNull();
     expect(screen.getByRole('main').className).toContain('4.5rem');
+    expect(screen.getByRole('main').className).toContain('var(--action-bar-h,0px)');
     expect(document.querySelector('[data-no-nav]')).toBeNull();
   });
 
