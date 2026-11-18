@@ -83,6 +83,7 @@ export function MentorSettings({
   const modesField = useRef<HTMLInputElement>(null);
   const noteField = useRef<HTMLTextAreaElement>(null);
   const pauseField = useRef<HTMLInputElement>(null);
+  const weeklyFields = useRef<Record<string, HTMLInputElement | null>>({});
   const modesErrorId = useId();
   const [session, setSession] = useState(String(settings?.sessionMinutes ?? 30));
   const [modes, setModes] = useState<string[]>(settings?.meetingModes ?? ['ONLINE']);
@@ -213,7 +214,12 @@ export function MentorSettings({
     if (Object.keys(found).length === 0 && !saveAvailabilitySchema.safeParse({ rules }).success)
       found.weekly = t('errors.overlap');
     setFieldErrors(found);
-    if (Object.keys(found).length > 0) return;
+    const first = Object.keys(found)[0];
+    if (first) {
+      const field = /^d\d+$/.test(first) ? `${first}r0` : first;
+      weeklyFields.current[field]?.focus();
+      return;
+    }
     void run('weekly', () => actions.saveAvailability({ rules }));
   }
 
@@ -402,10 +408,19 @@ export function MentorSettings({
                         className="flex flex-col gap-2 rounded-control bg-surface p-3"
                       >
                         <div className="grid grid-cols-2 gap-2">
-                          <Field label={t('from')} error={fieldErrors[`d${weekday}r${index}`]}>
+                          <Field
+                            label={t('from')}
+                            error={
+                              fieldErrors[`d${weekday}r${index}`] ??
+                              (index === 0 ? fieldErrors[`d${weekday}`] : undefined)
+                            }
+                          >
                             {(control) => (
                               <Input
                                 {...control}
+                                ref={(element) => {
+                                  weeklyFields.current[`d${weekday}r${index}`] = element;
+                                }}
                                 type="time"
                                 step={300}
                                 value={range.start}
@@ -474,11 +489,6 @@ export function MentorSettings({
                         </Button>
                       </div>
                     ))}
-                    {fieldErrors[`d${weekday}`] && (
-                      <p role="alert" className="text-base text-danger">
-                        {fieldErrors[`d${weekday}`]}
-                      </p>
-                    )}
                     {ruleCount < AVAILABILITY_RULES_MAX && (
                       <Button
                         variant="secondary"

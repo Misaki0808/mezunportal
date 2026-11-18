@@ -260,6 +260,8 @@ describe('kendi profilim', () => {
     );
     expect(saveEntry).not.toHaveBeenCalled();
     expect(screen.getByText('Bu alan zorunlu.')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Kurum/)).toHaveFocus();
+    expect(screen.getByLabelText(/Kurum/)).toBeInvalid();
   });
 
   it('kalem silme onay penceresinden sonra gider; kaynak ve düzeltme rozetleri görünür', async () => {

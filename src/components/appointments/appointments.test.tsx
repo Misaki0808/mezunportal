@@ -332,11 +332,15 @@ describe('mentor ayarları', () => {
     await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
     expect(actions.saveAvailability).not.toHaveBeenCalled();
     expect(within(monday).getByText('Aynı gündeki aralıklar çakışamaz.')).toBeInTheDocument();
+    expect(starts[0]).toHaveFocus();
+    expect(starts[0]).toBeInvalid();
+    expect(starts[0]).toHaveAccessibleDescription(/aralıklar çakışamaz/);
     const ends = within(monday).getAllByLabelText('Bitiş');
     await user.clear(ends[0]!);
     await user.type(ends[0]!, '08:00');
     await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
     expect(within(monday).getByText('Bitiş, başlangıçtan sonra olmalı.')).toBeInTheDocument();
+    expect(starts[0]).toHaveFocus();
   });
 
   it('yüz yüze seçilince yer notu zorunlu; geçersiz kapasite alan hatası verir', async () => {
