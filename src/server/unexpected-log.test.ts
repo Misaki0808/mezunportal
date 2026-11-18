@@ -439,6 +439,7 @@ describe('logUnexpected / loggedJob: stderr', () => {
       event: 'job.unexpected',
       source: 'monthly.digest',
       errorName: 'Error',
+      timestamp: expect.stringMatching(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/),
     });
   });
 

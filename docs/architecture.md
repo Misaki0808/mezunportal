@@ -325,12 +325,13 @@ Dış servislerin nasıl bağlanacağı ve projedeki servislerin sözleşmesi.
 ### 4. E-posta
 
 - **Arayüz:** `send({ to, template, params, idempotencyKey })`. Her e-posta `email.send`
-  kuyruğundan geçer (giden kutusu); aynı anahtarla ikinci gönderim yapılmaz.
+  kuyruğundan geçer (giden kutusu); kaydedilmiş teslim ve olağan tekrarlar aynı anahtarla yinelenmez.
+  SMTP kabulü ile yerel commit arasındaki kesintide çift teslim mümkündür; Message-ID her denemede aynıdır.
 - **Yerel ve CI:** SMTP adaptörü Mailpit'e gönderir; hiçbir e-posta gerçek adrese gitmez.
 - **Canlı (K-05):** üniversite SMTP'si ya da ücretsiz katmanlı bir servis; P1-18'de.
 - Gövde loglanmaz; `EmailLog` yalnız şablon, alıcı kimliği ve durum tutar. Taşınacak hazır metin ve
-  adres pg-boss iş yükünde kısa süreli tutulur; bitmiş işlerin temizleme süresi 60 saniye, bekleme
-  saklama sınırı bir saattir. EmailLog ve iş aynı veritabanı işleminde eklenir. Hatalar sınırlı
+  adres pg-boss iş yükünde kısa süreli tutulur; bitmiş işler 60 saniye sonra temizlenmeye uygun olur; çalışan bakım döngüsü beş saniyede bir
+  yoklar (zamanlama ve veritabanı yükü ek gecikme yaratabilir). Bekleme saklama sınırı bir saattir. EmailLog ve iş aynı veritabanı işleminde eklenir. Hatalar sınırlı
   yeniden denenir; worker duruşuyla tükenen işler de başarısızlık kuyruğundan EmailLog'a işlenir.
 - Şablonlar düz metin + sade HTML; metinler `messages/tr.json`'da; her bildirimde tercih bağlantısı.
 - **Env:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM`.

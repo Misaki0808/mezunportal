@@ -1,3 +1,4 @@
+import { writeWorkerLog } from './worker-log';
 // Node worker da `server-only` sınırını doğru React sunucu koşuluyla yükler.
 // dev betiğini değiştirmeden kendi giriş noktasından çalıştırılır.
 import { spawn } from 'node:child_process';
@@ -15,7 +16,7 @@ const worker = spawn(
 for (const signal of ['SIGINT', 'SIGTERM'] as const)
   process.on(signal, () => worker.kill('SIGTERM'));
 worker.on('error', () => {
-  process.stderr.write('worker: unavailable\n');
+  writeWorkerLog('stderr', 'worker: unavailable');
   process.exitCode = 1;
 });
 worker.on('exit', (code, signal) => {
