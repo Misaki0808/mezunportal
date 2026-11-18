@@ -1165,6 +1165,7 @@ E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında iş
 Düzenleme, SSS ve şirket ayrıntısında yok/kapsam dışı kararı iskelet akışından önce verilir;
 istemci formu için sahiplik ayrıca doğrulanır. Yönetim etkinliğinde yalnız kayıt ve bölüm kapsamı
 kontrol edilir: kodun henüz geçerli olmaması, erişilebilir gelecekteki etkinliği 404 yapmaz.
+
 ## 2026-11-18 · Yılın Mezunu için örnek veri (seed)
 
 Deneme turunda "Bu mezunu seç", yayın rızası ve doğrulama bağlantısı adımları görülsün diye seed'e
