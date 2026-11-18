@@ -3,12 +3,24 @@ import { expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderUi } from '@/test/render';
 import { ReviewInbox } from './review-inbox';
+import { RequestForm } from './request-form';
 vi.mock('@/server/actions/cv-review-request', () => ({
+  createCvReviewRequest: vi.fn(),
   answerCvReviewRequest: vi.fn(),
   listCvReviewRequests: vi.fn(),
   markCvReviewHelpful: vi.fn(),
   saveCvReviewSettings: vi.fn(),
 }));
+it('CV inceleme talebinde boş notun hatası alana bağlanır ve odaklanır', async () => {
+  const { user } = renderUi(
+    <RequestForm mentorId="mentor-1" availability={{ available: true, reason: null }} />,
+  );
+  await user.click(screen.getByRole('button', { name: /gönder/i }));
+  const note = screen.getByRole('textbox');
+  expect(note).toHaveFocus();
+  expect(note).toBeInvalid();
+  expect(note).toHaveAccessibleDescription();
+});
 it('mentor ayarı olmayan üyeye boş sayfa yerine açıklama ve tek ayar bağlantısı verir', () => {
   renderUi(<ReviewInbox sent={null} received={null} initialSettings={null} />);
   expect(screen.getByRole('heading', { name: 'CV incelemelerine hazırlan' })).toBeVisible();
