@@ -1,10 +1,22 @@
 import { expect, it } from 'vitest';
-import { addDays, daysRemaining, istanbulDay, mayPost, parseJobFilters } from './model';
+import {
+  addDays,
+  daysRemaining,
+  formatDeadline,
+  istanbulDay,
+  mayPost,
+  parseJobFilters,
+} from './model';
 it('İstanbul gün sınırı ve 60 günlük son tarih', () => {
   const now = new Date('2026-11-08T22:30:00Z');
   expect(istanbulDay(now)).toBe('2026-11-09');
   expect(daysRemaining('2026-11-10', now)).toBe(1);
   expect(addDays(istanbulDay(now), 60)).toBe('2027-01-08');
+});
+it('son başvuru günü okunur Türkçe tarih olur; geçersiz metin olduğu gibi kalır', () => {
+  expect(formatDeadline('2026-12-07')).toBe('7 Aralık 2026');
+  expect(formatDeadline('2027-01-01')).toBe('1 Ocak 2027');
+  expect(formatDeadline('yarın')).toBe('yarın');
 });
 it('URL süzgeçleri doğrulanır; hatalı alan sağlam alanı bozmaz', () => {
   expect(parseJobFilters(new URLSearchParams('q=staj&remote=true&withinDays=7&page=-1'))).toEqual({

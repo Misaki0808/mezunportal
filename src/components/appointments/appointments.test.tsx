@@ -236,6 +236,33 @@ describe('mentor ayarları', () => {
     expect(screen.getByDisplayValue('10:00')).toBeInTheDocument();
   });
 
+  it('aralık alanları ve düğmeleri ekran okuyucuya hangi güne ve hangi aralığa ait olduğunu söyler', () => {
+    renderUi(
+      <MentorSettings
+        initial={settingsView({
+          rules: [
+            { weekday: 1, startMinute: 540, endMinute: 720, mode: null },
+            { weekday: 1, startMinute: 780, endMinute: 1020, mode: null },
+            { weekday: 2, startMinute: 600, endMinute: 720, mode: null },
+          ],
+        })}
+        actions={settingsActions()}
+      />,
+    );
+    const first = screen.getByRole('group', { name: 'Pazartesi, 1. aralık' });
+    expect(within(first).getByLabelText('Başlangıç')).toHaveValue('09:00');
+    expect(
+      within(first).getByRole('button', { name: 'Aralığı sil, Pazartesi 09:00–12:00' }),
+    ).toBeInTheDocument();
+    const second = screen.getByRole('group', { name: 'Pazartesi, 2. aralık' });
+    expect(within(second).getByLabelText('Bitiş')).toHaveValue('17:00');
+    expect(screen.getByRole('group', { name: 'Salı, 1. aralık' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Saat aralığı ekle, Salı' })).toBeInTheDocument();
+    // Görünen ad etiketin başında kalır (WCAG 2.5.3).
+    for (const button of screen.getAllByRole('button', { name: /^Aralığı sil/ }))
+      expect(button).toHaveTextContent('Aralığı sil');
+  });
+
   it('günü açıp aralık ekleyip kaydeder: dakikalar sözleşme biçiminde gider', async () => {
     const actions = settingsActions();
     const { user } = renderUi(
@@ -298,7 +325,7 @@ describe('mentor ayarları', () => {
       />,
     );
     const monday = screen.getByRole('switch', { name: 'Pazartesi günü müsait' }).closest('li')!;
-    await user.click(within(monday).getByRole('button', { name: 'Saat aralığı ekle' })); // 13:00–17:00
+    await user.click(within(monday).getByRole('button', { name: 'Saat aralığı ekle, Pazartesi' })); // 13:00–17:00
     const starts = within(monday).getAllByLabelText('Başlangıç');
     await user.clear(starts[1]!);
     await user.type(starts[1]!, '11:00');

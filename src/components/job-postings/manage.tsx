@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition } from 'react';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { reviewJobPostingSchema } from '@/contracts/job-postings';
+import { formatDeadline } from './model';
 import type {
   CloseJobPostingOutput,
   JobPostingIdInput,
@@ -50,6 +51,7 @@ export function MyPostings({
   const [choice, setChoice] = useState<string>();
   const [error, setError] = useState('');
   const [pending, start] = useTransition();
+  const { rootRef, complete } = useQueueFocus(pending);
   function loadMore() {
     if (!cursor) return;
     start(async () => {
@@ -76,6 +78,8 @@ export function MyPostings({
         setError(errors(result.errorCode));
         return;
       }
+      // Kapatılan ilanın düğmesi kalkar; odak gövdeye düşmesin, sıradaki ilanın eylemine ya da başlığa gitsin.
+      complete(choice);
       setItems((all) =>
         all.map((item) => (item.id === choice ? { ...item, status: 'CLOSED' } : item)),
       );
@@ -84,7 +88,7 @@ export function MyPostings({
     });
   }
   return (
-    <div data-hydrated={hydrated ? 'true' : undefined} className="w-full min-w-0">
+    <div ref={rootRef} data-hydrated={hydrated ? 'true' : undefined} className="w-full min-w-0">
       <BackLink href="/ilanlar">{t('back')}</BackLink>
       <PageHeader
         className="mb-7"
@@ -102,6 +106,7 @@ export function MyPostings({
           {items.map((item) => (
             <li
               key={item.id}
+              data-queue-row={item.id}
               className="flex min-w-0 flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-card"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -150,6 +155,7 @@ export function MyPostings({
                 )}
                 {(item.status === 'PENDING' || item.status === 'PUBLISHED') && (
                   <Button
+                    data-queue-action
                     variant="danger-outline"
                     onClick={() => {
                       setError('');
@@ -299,7 +305,8 @@ export function PostingModeration({
                 <h2 className="mt-2 break-words text-xl font-bold">{item.title}</h2>
                 <p className="mt-3 whitespace-pre-wrap break-words">{item.description}</p>
                 <p className="mt-3 text-sm text-fg-muted">
-                  {item.targetDepartments.map((d) => d.name).join(', ')} · {item.deadlineOn}
+                  {item.targetDepartments.map((d) => d.name).join(', ')} ·{' '}
+                  {item.deadlineOn ? formatDeadline(item.deadlineOn) : '—'}
                 </p>
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row lg:col-start-2 lg:row-start-1 lg:row-span-5 lg:mt-0">
                   <Button
@@ -353,7 +360,7 @@ export function PostingModeration({
                 loading={pending}
                 onClick={confirm}
               >
-                {t('confirm')}
+                {t(choice?.decision === 'REJECT' ? 'rejectConfirm' : 'confirm')}
               </Button>
               <Button variant="secondary" onClick={() => setChoice(undefined)}>
                 {t('cancel')}

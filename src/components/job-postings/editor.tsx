@@ -28,6 +28,7 @@ import {
 import { AlertIcon } from '@/components/ui/icons';
 import {
   addDays,
+  formatDeadline,
   istanbulDay,
   postingFieldStep,
   postingStepErrors,
@@ -559,7 +560,8 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
               <p className="font-semibold">{organization || '—'}</p>
               <p className="mt-2 text-2xl font-bold">{title || '—'}</p>
               <p className="mt-3">
-                {location || (remote ? t('remoteLabel') : '—')} · {deadline || '—'}
+                {location || (remote ? t('remoteLabel') : '—')} ·{' '}
+                {deadline ? formatDeadline(deadline) : '—'}
               </p>
             </div>
             <p className="whitespace-pre-wrap break-words">{description || '—'}</p>

@@ -434,60 +434,68 @@ function ExperienceFormBody({ departments, initial, save, submit }: Props) {
       return (
         <fieldset key={key} className="flex flex-col gap-3">
           <legend className="mb-1 font-medium text-fg">{label(key)}</legend>
-          {state.processSteps.map((step, index) => (
-            <div key={index} className="flex flex-col gap-3 rounded-card border border-border p-4">
-              <p className="text-base font-semibold text-fg">
-                {t('form.stepNumber', { n: index + 1 })}
-              </p>
-              <Field
-                label={t('form.stepTitle')}
-                error={errorOf(`processSteps.${index}.title`)}
-                required
+          {state.processSteps.map((step, index) => {
+            // Tamamen boş satır kaydedilmez (form-state.toContent); satır kullanılmaya başlanınca ikisi de zorunludur.
+            const used = step.title.trim() !== '' || step.description.trim() !== '';
+            return (
+              <div
+                key={index}
+                className="flex flex-col gap-3 rounded-card border border-border p-4"
               >
-                {(control) => (
-                  <Input
-                    {...control}
-                    value={step.title}
-                    onChange={(event) =>
-                      update({
-                        processSteps: state.processSteps.map((item, at) =>
-                          at === index ? { ...item, title: event.target.value } : item,
-                        ),
-                      })
-                    }
-                  />
-                )}
-              </Field>
-              <Field
-                label={t('form.stepDescription')}
-                error={errorOf(`processSteps.${index}.description`)}
-                required
-              >
-                {(control) => (
-                  <Textarea
-                    {...control}
-                    rows={3}
-                    value={step.description}
-                    onChange={(event) =>
-                      update({
-                        processSteps: state.processSteps.map((item, at) =>
-                          at === index ? { ...item, description: event.target.value } : item,
-                        ),
-                      })
-                    }
-                  />
-                )}
-              </Field>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  update({ processSteps: state.processSteps.filter((_, at) => at !== index) })
-                }
-              >
-                {t('form.removeStep')}
-              </Button>
-            </div>
-          ))}
+                <p className="text-base font-semibold text-fg">
+                  {t('form.stepNumber', { n: index + 1 })}
+                </p>
+                {!used && <p className="text-base text-fg-muted">{t('form.stepEmptyHint')}</p>}
+                <Field
+                  label={t('form.stepTitle')}
+                  error={errorOf(`processSteps.${index}.title`)}
+                  required={used}
+                >
+                  {(control) => (
+                    <Input
+                      {...control}
+                      value={step.title}
+                      onChange={(event) =>
+                        update({
+                          processSteps: state.processSteps.map((item, at) =>
+                            at === index ? { ...item, title: event.target.value } : item,
+                          ),
+                        })
+                      }
+                    />
+                  )}
+                </Field>
+                <Field
+                  label={t('form.stepDescription')}
+                  error={errorOf(`processSteps.${index}.description`)}
+                  required={used}
+                >
+                  {(control) => (
+                    <Textarea
+                      {...control}
+                      rows={3}
+                      value={step.description}
+                      onChange={(event) =>
+                        update({
+                          processSteps: state.processSteps.map((item, at) =>
+                            at === index ? { ...item, description: event.target.value } : item,
+                          ),
+                        })
+                      }
+                    />
+                  )}
+                </Field>
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    update({ processSteps: state.processSteps.filter((_, at) => at !== index) })
+                  }
+                >
+                  {t('form.removeStep')}
+                </Button>
+              </div>
+            );
+          })}
           {state.processSteps.length < MAX_LIST && (
             <Button
               variant="secondary"

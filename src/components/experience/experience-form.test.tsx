@@ -218,6 +218,20 @@ describe('deneyim formu', () => {
     expect(screen.getByRole('radio', { name: /Anonim paylaş/ })).toBeChecked();
   });
 
+  it('boş adım satırı zorunlu işaretlenmez ve kaydedilmeyeceğini söyler; doldurulunca ikisi de zorunlu olur', async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Adım ekle' }));
+    expect(
+      screen.getByText('Boş bıraktığın adım kaydedilmez. Birini doldurursan ikisi de gerekli.'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Adım başlığı$/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Adım açıklaması$/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^Adım başlığı/), 'Mülakat');
+    expect(screen.getByLabelText(/Adım başlığı.*zorunlu/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Adım açıklaması.*zorunlu/)).toBeInTheDocument();
+    expect(screen.queryByText(/Boş bıraktığın adım kaydedilmez/)).not.toBeInTheDocument();
+  });
+
   it('süreç adımı ve soru satırı eklenip silinir', async () => {
     const { user } = setup();
     await user.click(screen.getByRole('button', { name: 'Adım ekle' }));
