@@ -16,6 +16,7 @@ import { loggedJob } from '../unexpected-log';
  * çalışması yeni kayıt eklemez. Günlük işler (`points.finalize`, `points.suspicionScan`) bildirim worker'ındadır.
  */
 export const POINTS_BACKFILL_QUEUE = 'points.backfill';
+export const POINTS_PENDING_RETENTION_SECONDS = 7 * 24 * 60 * 60;
 const BACKFILL_THROTTLE_SECONDS = 600;
 
 export async function createPointsRuntime(
@@ -35,12 +36,14 @@ export async function createPointsRuntime(
   boss.on('error', () => writeWorkerLog('stderr', 'points.queue: unavailable'));
   try {
     await boss.start();
-    await boss.createQueue(POINTS_BACKFILL_QUEUE, {
+    const settings = {
       retryLimit: 1,
       expireInSeconds: 1800,
-      retentionSeconds: 3600,
-      deleteAfterSeconds: 600,
-    });
+      retentionSeconds: POINTS_PENDING_RETENTION_SECONDS,
+      deleteAfterSeconds: 60,
+    };
+    await boss.createQueue(POINTS_BACKFILL_QUEUE, settings);
+    await boss.updateQueue(POINTS_BACKFILL_QUEUE, settings);
     if (consume) {
       await boss.work(POINTS_BACKFILL_QUEUE, { batchSize: 1 }, async () => {
         await loggedJob('points.backfill', () => runPointBackfill({ db: getDb() }));

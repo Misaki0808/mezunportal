@@ -1198,3 +1198,12 @@ tanımsız ya da başka değerde yazmaz. Aynı bölüm ve yıl için döngü var
 da güncellemez; yıllar sabit ve arayüzün varsayılan yılından farklı olduğu için tören tarihi adımı
 etkilenmez. Servis kodu `server-only` olduğundan seed satırları elle yazar; tutarlılığı DB testi
 gerçek servislerle sınar.
+
+## 2026-11-18 · CV ve puan kuyruğunda bekleyen iş saklaması
+
+Kısaltılmış DB deneyinde işçi kapalıyken süresi dolan `appointment.sweep`, `cv.parse`, `cv.parse.failed` ve
+`points.backfill` işleri bakımda silindi; daha uzun ömürlü işler tüketici açılınca birer kez işlendi. Randevu süpürmesi
+dakikalık ve tekrarlanabilir olduğundan 10 dakika kaldı; başlayan randevunun kaçmış hatırlatması geri getirilemez.
+CV işleri yalnız yükleme kimliği taşır ve var olan 24 saatlik yükleme ömrüne uyacak şekilde 24 saat bekler; puan geri
+doldurma tek seferlik ve yükü boş olduğundan 7 gün bekler. Tamamlanan işlerin yükü bakımda 60 saniye sonra silinir.
+Eski kuyrukların ayarları worker açılışında güncellenir; daha önce üretilmiş işlerin mevcut bitiş zamanı değişmez.

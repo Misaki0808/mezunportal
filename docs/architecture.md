@@ -222,7 +222,8 @@ kurallar `src/server/rules/jobPosting.ts`.
 | İş | Ne zaman |
 |---|---|
 | `email.send` | Giden kutusu; her e-posta idempotent anahtarla |
-| `cv.parse` | CV yüklenince |
+| `cv.parse` / `cv.parse.failed` | CV yüklenince / ayrıştırma denemeleri tükenince |
+| `appointment.sweep` | Dakikada bir, bekleyen randevu işlerini yeniden tarar |
 | `appointment.expire` | 72 saat ya da başlangıçtan 12 saat önce, erken olan |
 | `appointment.remind` | Başlangıçtan 24 saat önce |
 | `appointment.feedback` | Bitişten 1 saat sonra |
@@ -239,6 +240,12 @@ kurallar `src/server/rules/jobPosting.ts`.
 e-postaları dışındaki bildirimler kullanıcı tercihinden kapatılabilir; tercih hem kuyruğa alma hem teslim sırasında
 denetlenir. Günlük işler worker çalışırken İstanbul saatine göre zamanlanır; mezun yanıtının imzası ve tek kullanımı
 sunucuda doğrulanır, sayfayı açmak yanıt sayılmaz.
+
+Bekleyen CV ayrıştırma ve hata işleri 24 saat, tek seferlik puan geri doldurma işi 7 gün saklanır; tamamlanan yükler
+60 saniye sonra bakımda silinir. CV iş yükü yalnız yükleme kimliği taşır; `appointment.sweep` ve `points.backfill` yükleri boştur.
+Randevu süpürmesinin bekleyen işi 10 dakikada silinebilse de işçi geri döndüğünde dakikalık zamanlayıcı veritabanını
+tekrar tarar. Hatırlatma yalnız randevu başlamadan gönderilebilir; işçi başlangıç sonrasına kadar kapalıysa o hatırlatma
+kaçırılır. CV için 24 saatlik mevcut bekleme temizliği devam eder; süreyi geçen işler kullanıcıya başarısız olarak dönebilir.
 
 **Uygulama içi bildirim kutusu (`/bildirimler`).** E-posta niyeti (`NotificationIntent`) gönderilince silinir; kutu için ayrı, kalıcı
 `InAppNotification` tablosu vardır ve `stageNotification` ile AYNI işlemde yazılır (aynı olay tek kayıt). Büyük gün grupları kesilmez; okundu işaretleme istek başına kimlik sınırına uygun parçalarda yürütülür. Kutu e-posta tercihinden, kotadan ve
