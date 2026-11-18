@@ -5,10 +5,33 @@ import { PgBoss, type JobWithMetadata } from 'pg-boss';
 import { EmailTransportError } from '../external/email/types';
 import type { QueuedEmail } from './email-core';
 import { logUnexpected } from '../unexpected-log';
+import { notificationTypeForTemplate } from '../rules/notification';
 
 export const EMAIL_QUEUE = 'email.send';
 export const EMAIL_FAILED_QUEUE = 'email.failed';
 export const EMAIL_RETRY_LIMIT = 2;
+/**
+ * Bekleyen (created/retry) e-posta işinin saklama süresi. pg-boss bakımı süresi dolan bekleyen işi yüküyle siler; işçi bu süreden uzun
+ * kapalı kalıp açıldığında kuyruktaki işleri bakım silmeden tüketemezse e-posta hiç gitmez (kart 472 ölçümü). Bu yüzden bekleyen iş uzun
+ * saklanır. Tamamlanan/başarısız işin yük silmesi (`deleteAfterSeconds`, 60 sn) bundan ayrıdır ve değişmez.
+ */
+export const EMAIL_PENDING_RETENTION_SECONDS = 7 * 24 * 3600;
+/** Hesap güvenliği e-postaları (giriş, e-posta değişikliği) bağlantı taşır ve kısa ömürlüdür: bekleyen yükü bir saatte silinir. */
+export const EMAIL_SECURITY_RETENTION_SECONDS = 3600;
+export type EmailRetention = { pending: number; security: number };
+export const EMAIL_RETENTION: EmailRetention = {
+  pending: EMAIL_PENDING_RETENTION_SECONDS,
+  security: EMAIL_SECURITY_RETENTION_SECONDS,
+};
+/** Şablona göre bekleyen işin saklama süresi (sn); sınıflandırma bildirim kataloğundaki tek kaynaktan gelir. */
+export function emailRetentionSeconds(
+  template: string,
+  retention: EmailRetention = EMAIL_RETENTION,
+) {
+  return notificationTypeForTemplate(template) === 'ACCOUNT_SECURITY'
+    ? retention.security
+    : retention.pending;
+}
 export async function createEmailQueue(
   connectionString: string,
   options: { schema?: string; supervise?: boolean; retryDelay?: number } = {},
@@ -40,7 +63,7 @@ export async function createEmailQueue(
       retryBackoff: options.retryDelay !== 0,
       ...(options.retryDelay === 0 ? {} : { retryDelayMax: 30 }),
       expireInSeconds: 30,
-      retentionSeconds: 3600,
+      retentionSeconds: EMAIL_PENDING_RETENTION_SECONDS,
       deleteAfterSeconds: 60,
     };
     await boss.createQueue(EMAIL_QUEUE, settings);
