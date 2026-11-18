@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import {
   Avatar,
@@ -146,6 +146,23 @@ export function AppShellClient({
   // Telefon menüsü: açık/kapalı durumu bulunulan yola bağlıdır, sayfa değişince kendiliğinden kapanır (etki gerekmez).
   const [menu, setMenu] = useState({ open: false, path: pathname });
   const menuOpen = menu.open && menu.path === pathname;
+  const [bottomNav, setBottomNav] = useState<HTMLElement | null>(null);
+  const [bottomNavHeight, setBottomNavHeight] = useState(0);
+
+  // Yazı boyutu veya güvenli alan değişirse son içerik gerçek sekme çubuğu kadar boşluk alır.
+  useEffect(() => {
+    if (!bottomNav) return;
+    const measure = () => setBottomNavHeight(Math.ceil(bottomNav.getBoundingClientRect().height));
+    measure();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+    const observer = new ResizeObserver(measure);
+    // Güvenli alan dolgusu içerik kutusuna dahil değildir; dış kutudaki değişimi izle.
+    observer.observe(bottomNav, { box: 'border-box' });
+    return () => observer.disconnect();
+  }, [bottomNav]);
 
   // Giriş tamamlandı (oturumlu bir ekran çizildi): "E-postanı kontrol et" ekranı için tutulan adres bu sekmede kalmasın.
   useEffect(() => {
@@ -186,6 +203,7 @@ export function AppShellClient({
 
   const tools = !consentPending;
 
+  // Daralan kapsayıcıda etiket ve aralıklar sınırlanır; normal yazıda mevcut sekme görünümü korunur.
   function renderTab(item: (typeof TAB_ITEMS)[number]) {
     const current = isCurrent(pathname, item.href);
     return (
@@ -194,14 +212,16 @@ export function AppShellClient({
         aria-label={t(`items.${item.id}`)}
         aria-current={current ? 'page' : undefined}
         className={cn(
-          'press-control inline-flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 text-xs font-semibold',
+          'press-control inline-flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 text-xs font-semibold @max-[13rem]:px-0',
           current
             ? 'bg-primary-soft text-on-primary-soft'
             : 'text-fg-muted hover:bg-surface-strong',
         )}
       >
         {item.icon}
-        <span>{t(`shortItems.${item.id}`)}</span>
+        <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[11px]">
+          {t(`shortItems.${item.id}`)}
+        </span>
       </Link>
     );
   }
@@ -221,14 +241,16 @@ export function AppShellClient({
       aria-current={menuCurrent ? 'true' : undefined}
       onClick={() => setMenu({ open: true, path: pathname })}
       className={cn(
-        'press-control inline-flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 text-xs font-semibold',
+        'press-control inline-flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 text-xs font-semibold @max-[13rem]:px-0',
         menuCurrent
           ? 'bg-primary-soft text-on-primary-soft'
           : 'text-fg-muted hover:bg-surface-strong',
       )}
     >
       <MenuIcon />
-      <span>{t('shortItems.menu')}</span>
+      <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[11px]">
+        {t('shortItems.menu')}
+      </span>
     </button>
   );
 
@@ -377,7 +399,7 @@ export function AppShellClient({
         </aside>
 
         <div className="flex min-h-dvh min-w-0 flex-col">
-          <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border bg-bg px-4 lg:hidden">
+          <header className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-border bg-bg px-4 py-1 lg:hidden">
             <Link href="/" className="press-control inline-flex min-h-11 items-center">
               <BrandLogo className="h-7 w-auto" label={t('brand')} />
             </Link>
@@ -438,11 +460,12 @@ export function AppShellClient({
           <main
             id="main-content"
             tabIndex={-1}
+            style={{ '--bottom-nav-height': `${bottomNavHeight}px` } as CSSProperties}
             className={cn(
               'outline-none lg:pb-0',
               consentPending
                 ? 'pb-[env(safe-area-inset-bottom)]'
-                : 'pb-[calc(4.5rem+env(safe-area-inset-bottom))]',
+                : 'pb-[max(calc(4.5rem+env(safe-area-inset-bottom)),var(--bottom-nav-height))]',
             )}
           >
             <div className="app-content w-full max-w-[80rem] px-4 pt-4 pb-6 lg:px-8 lg:pt-7 lg:pb-10">
@@ -454,10 +477,11 @@ export function AppShellClient({
         {!consentPending && (
           <nav
             data-bottom-nav
+            ref={setBottomNav}
             aria-label={t('labelBottom')}
-            className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
+            className="@container fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
           >
-            <ul className="grid grid-cols-5 gap-0.5 px-1 pt-1">
+            <ul className="grid grid-cols-5 gap-0.5 px-1 pt-1 @max-[13rem]:gap-[2px] @max-[13rem]:px-[4px]">
               {TAB_ITEMS.map((item) => (
                 <li key={item.id}>{renderTab(item)}</li>
               ))}

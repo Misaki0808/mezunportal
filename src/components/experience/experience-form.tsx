@@ -856,10 +856,10 @@ function FormSection({
           {number}
         </span>
         <div className="min-w-0">
-          <h2 id={headingId} className="text-xl font-semibold text-fg">
+          <h2 id={headingId} className="break-words text-xl font-semibold text-fg">
             {title}
           </h2>
-          <p className="mt-0.5 text-base text-fg-muted">{intro}</p>
+          <p className="mt-0.5 break-words text-base text-fg-muted">{intro}</p>
         </div>
       </div>
       {children}
