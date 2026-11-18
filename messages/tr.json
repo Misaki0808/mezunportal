@@ -1366,7 +1366,8 @@
     },
     "rejection": {
       "title": "Reddedilme nedeni",
-      "action": "Düzelt ve yeniden gönder"
+      "action": "Düzelt ve yeniden gönder",
+      "actionNamed": "{title} deneyimini düzelt ve yeniden gönder ({index}/{count})"
     },
     "types": {
       "INTERNSHIP": "Staj",

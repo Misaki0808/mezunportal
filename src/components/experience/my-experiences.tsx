@@ -61,6 +61,13 @@ export function MyExperiences({ initial, list }: Props) {
 
   // Boşken tek eylem: boş durumun kendi düğmesi kalır, başlık sağındaki "Deneyim yaz" gizlenir.
   const empty = items.length === 0 && !pending;
+  // Aynı görünür adı taşıyan bağlantılar (iki taslağın "Düzenle"si, iki reddedilenin "Düzelt ve yeniden gönder"i, her "Aç")
+  // farklı deneyimlere gider; yalnız böyle çoğalan adlar sıra numarasıyla ayrılır, tek olan düz kalır.
+  const sameName = {
+    draft: items.filter((entry) => entry.status === 'DRAFT').length,
+    rejected: items.filter((entry) => entry.status === 'REJECTED').length,
+    open: items.filter((entry) => entry.status !== 'DRAFT').length,
+  };
   const body = (
     <div className="flex flex-col gap-4" aria-busy={pending}>
       {error && (
@@ -118,12 +125,17 @@ export function MyExperiences({ initial, list }: Props) {
                       })}
                       href={`/deneyim/${item.id}/duzenle`}
                       aria-label={
-                        item.status !== 'REJECTED' && items.length > 1
-                          ? t('mine.editNamed', {
-                              title: title || t('mine.untitled'),
-                              index: index + 1,
-                              count: items.length,
-                            })
+                        sameName[item.status === 'REJECTED' ? 'rejected' : 'draft'] > 1
+                          ? t(
+                              item.status === 'REJECTED'
+                                ? 'rejection.actionNamed'
+                                : 'mine.editNamed',
+                              {
+                                title: title || t('mine.untitled'),
+                                index: index + 1,
+                                count: items.length,
+                              },
+                            )
                           : undefined
                       }
                     >
@@ -135,7 +147,7 @@ export function MyExperiences({ initial, list }: Props) {
                       className={buttonClasses({ variant: 'secondary' })}
                       href={`/deneyim/${item.id}`}
                       aria-label={
-                        items.length > 1
+                        sameName.open > 1
                           ? t('mine.openNamed', {
                               title: title || t('mine.untitled'),
                               index: index + 1,

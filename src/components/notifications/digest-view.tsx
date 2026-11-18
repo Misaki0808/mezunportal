@@ -69,6 +69,9 @@ export async function DigestView({
       rows: digest.events.map((x) => ({ id: x.id, label: x.label, href: '/etkinlikler' })),
     },
   ].filter((section) => section !== undefined);
+  // Sayfa genelinde aynı görünür metni taşıyan satırlar (dört "Staj", ya da adı "Staj" olan etkinlik) bölüm sınırını aşsa da
+  // ekran okuyucuda ayırt edilebilsin; tek olan düz kalır.
+  const allRows = sections.flatMap((section) => section.rows);
   return (
     <div className="mt-6 space-y-4">
       {sections.map((section) => (
@@ -79,8 +82,7 @@ export async function DigestView({
           </h2>
           <ul className="mt-3 space-y-1">
             {section.rows.map((row) => {
-              // Aynı görünür metni taşıyan satırlar (ör. dört "Staj") ekran okuyucuda ayırt edilebilsin.
-              const same = section.rows.filter((other) => other.label === row.label);
+              const same = allRows.filter((other) => other.label === row.label);
               const label =
                 same.length > 1
                   ? t('rowOrdinal', {
