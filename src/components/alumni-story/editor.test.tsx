@@ -82,9 +82,35 @@ describe('hikâye editörü: odak ve duyurular', () => {
     await screen.findByText('İnceleme için yayın izni gerekir.');
     await user.click(screen.getByRole('switch'));
     expect(screen.queryByText('İnceleme için yayın izni gerekir.')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+    // İzin değişince kayıt başlar; sürerken gönder düğmesi "Kaydediliyor…" adıyla pasiftir ve bitince eski adına döner
+    // (kart 456: yükte kayıt henüz bitmemişken eşzamanlı sorgu düğmeyi bulamıyordu). Kaydın bitişini ve düğmenin
+    // etkinleşmesini bekle, düğmeyi her yoklamada yeniden sorgula (düğüm yer değiştirir).
+    expect(await screen.findByText('Yayın tercihin kaydedildi.')).toBeVisible();
+    const send = () => screen.getByRole('button', { name: 'İncelemeye gönder' });
+    await waitFor(() => expect(send()).toBeEnabled());
+    await user.click(send());
     expect(await screen.findByText('Hikâyen incelemeye gönderildi.')).toBeVisible();
     expect(texts()).toHaveLength(0);
+  });
+
+  it('izin kaydı sürerken gönder düğmesi "Kaydediliyor…" adıyla pasiftir; kayıt bitince eski adına ve etkin duruma döner', async () => {
+    let finish!: (value: { ok: true; data: MyStory }) => void;
+    mocks.consent.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const { user } = show();
+    await user.click(screen.getByRole('switch'));
+    const busy = await screen.findByRole('button', { name: 'Kaydediliyor…' });
+    expect(busy).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'İncelemeye gönder' })).toBeNull();
+    await act(async () => finish({ ok: true, data: story({ consent: true }) }));
+    const send = await screen.findByRole('button', { name: 'İncelemeye gönder' });
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'İncelemeye gönder' })).toBeEnabled(),
+    );
+    expect(send).toBeInTheDocument();
   });
 
   it('geçersiz metin: hata metin alanına bağlanır, odak oraya gider, tek duyuru', async () => {
