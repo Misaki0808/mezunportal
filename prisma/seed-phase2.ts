@@ -28,8 +28,7 @@ export const SAMPLE_ALUMNI = [
 ] as const;
 type Author = 'alumniMentor' | 'seniorMentor' | (typeof SAMPLE_ALUMNI)[number];
 /** Örnek mezunun sabit kimliği; ödül senaryosu (`seed-awards.ts`) aynı kullanıcıları aday yapar. */
-export const sampleAlumnusId = (key: (typeof SAMPLE_ALUMNI)[number]) =>
-  seedUuid(NS, `user:${key}`);
+export const sampleAlumnusId = (key: (typeof SAMPLE_ALUMNI)[number]) => seedUuid(NS, `user:${key}`);
 const authorId = (author: Author) =>
   (SAMPLE_ALUMNI as readonly string[]).includes(author)
     ? sampleAlumnusId(author as (typeof SAMPLE_ALUMNI)[number])

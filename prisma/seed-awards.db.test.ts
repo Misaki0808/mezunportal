@@ -51,7 +51,8 @@ async function cleanup() {
 }
 
 async function consentOnce(userId: string) {
-  if ((await db.consent.count({ where: { userId } })) === 0) await grantRequiredConsents(db, userId);
+  if ((await db.consent.count({ where: { userId } })) === 0)
+    await grantRequiredConsents(db, userId);
 }
 
 beforeAll(async () => {
@@ -223,7 +224,10 @@ describe('Yılın Mezunu deneme senaryosu (kart 470)', () => {
       })
     ).verificationCode;
     expect(await publicAward(db, code)).toBeNull();
-    const published = await setAwardPublication(deps, mentor, { awardId: mine[0]!.id, public: true });
+    const published = await setAwardPublication(deps, mentor, {
+      awardId: mine[0]!.id,
+      public: true,
+    });
     expect(published.isPublic).toBe(true);
     expect(published.verificationUrl).toContain(`/dogrula/${code}`);
     expect(await publicAward(db, code)).toMatchObject({ year: 2024, award: 'Yılın Mezunu' });
