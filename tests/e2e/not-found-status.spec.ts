@@ -238,7 +238,32 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
     const count = (text: string, phrase: string) => text.split(phrase).length - 1;
     for (const phrase of phrases)
       expect(count(publishedHtml, phrase)).toBe(count(missingHtml, phrase));
-    expect(publishedHtml.replaceAll(foreignPublished.id, UNKNOWN)).toBe(missingHtml);
+    // Next akışındaki kayıtların sırası ve istek başına üretilen çerçeve anahtarı değişebilir.
+    const rscRecords = (text: string) =>
+      text
+        .replaceAll(foreignPublished.id, UNKNOWN)
+        .replace(/(\["\$","\$L[0-9a-f]+",")[A-Za-z0-9_-]{21}([vm])(")/g, '$1REQUEST$2$3')
+        .split('\n')
+        .sort();
+    const htmlBody = (html: string) => {
+      const chunks: string[] = [];
+      const other: string[] = [];
+      const shell = html.replace(
+        /<script>self\.__next_f\.push\((.*?)\)<\/script>/gs,
+        (_, arg: string) => {
+          const part = JSON.parse(arg) as [number, unknown];
+          if (part[0] === 1 && typeof part[1] === 'string') chunks.push(part[1]);
+          else other.push(JSON.stringify(part));
+          return '';
+        },
+      );
+      return {
+        shell: shell.replaceAll(foreignPublished.id, UNKNOWN),
+        other: other.sort(),
+        records: rscRecords(chunks.join('')),
+      };
+    };
+    expect(htmlBody(publishedHtml)).toEqual(htmlBody(missingHtml));
     const publishedRsc = await page.request.get(
       `/deneyim/${foreignPublished.id}/duzenle?_rsc=review`,
       {
@@ -253,7 +278,7 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
     const [payload, missingPayload] = await Promise.all([publishedRsc.text(), missingRsc.text()]);
     for (const phrase of phrases)
       expect(count(payload, phrase)).toBe(count(missingPayload, phrase));
-    expect(payload.replaceAll(foreignPublished.id, UNKNOWN)).toBe(missingPayload);
+    expect(rscRecords(payload)).toEqual(rscRecords(missingPayload));
     expect((await page.goto(`/deneyim/${ownExperience.id}/duzenle`))?.status()).toBe(200);
     await expect(page.locator('main form')).toBeVisible();
     const ownPublishedResponse = await page.goto(`/deneyim/${ownPublished.id}/duzenle`);
