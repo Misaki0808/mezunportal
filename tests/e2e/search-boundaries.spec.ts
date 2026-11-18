@@ -68,6 +68,7 @@ async function removeChip(page: Page, company: string) {
 test('arama yüklenirken düğme kilitlidir', async ({ page }) => {
   await login(page);
   await page.goto('/deneyimler');
+  await waitForHydratedForm(page, 'Ara');
   let release!: () => void;
   let seen!: () => void;
   const blocked = new Promise<void>((resolve) => {
@@ -77,7 +78,11 @@ test('arama yüklenirken düğme kilitlidir', async ({ page }) => {
     seen = resolve;
   });
   await page.route('**/deneyimler?*', async (route) => {
-    if (route.request().headers()['rsc'] === '1') {
+    // Ön yükleme isteği, gönderilen aramanın bekleyen durumunun kanıtı değildir.
+    if (
+      route.request().headers()['rsc'] === '1' &&
+      new URL(route.request().url()).searchParams.get('q') === 'Teknoloji'
+    ) {
       seen();
       await blocked;
     }

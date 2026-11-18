@@ -4,6 +4,7 @@ import { expect, test, type Page } from './fixture';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { loginAs } from './login';
 import { waitForHydratedForm } from './hydration';
+import { watchPageErrors } from './page-errors';
 import messages from '../../messages/tr.json' with { type: 'json' };
 
 /**
@@ -28,8 +29,7 @@ const login = loginAs;
 
 /** Sunucu eylemi POST'larını sayar, yavaşlatır ya da keser. */
 async function watchActions(page: Page) {
-  const state = { delay: 0, abort: false, posts: 0, uncaught: [] as string[] };
-  page.on('pageerror', (error) => state.uncaught.push(error.message));
+  const state = { delay: 0, abort: false, posts: 0, uncaught: watchPageErrors(page) };
   await page.route('**/*', async (route) => {
     const request = route.request();
     if (request.method() === 'POST' && request.headers()['next-action']) {
@@ -41,6 +41,36 @@ async function watchActions(page: Page) {
   });
   return state;
 }
+
+test('sayfa hata ölçümü yalnız yerel Next geliştirme tanılamasını dışlar, gerçek hatayı korur', async ({
+  page,
+}) => {
+  // Ürün betiği olmayan aynı kökenli sayfa: ölçüm kanalının kendisini gerçek pageerror olaylarıyla sınar.
+  await page.route('**/__test_page_errors', (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<main>Sentetik hata ölçümü</main>' }),
+  );
+  await page.goto('/__test_page_errors');
+  const errors = watchPageErrors(page);
+  const { host } = new URL(page.url());
+  const diagnostic = `/${host}/__nextjs_original-stack-frames due to access control checks.`;
+  const application = 'Uygulama hatası: veri yüklenemedi';
+  await Promise.all([
+    page.waitForEvent('pageerror', { predicate: (error) => error.message === diagnostic }),
+    page.waitForEvent('pageerror', { predicate: (error) => error.message === application }),
+    page.evaluate(
+      ({ diagnostic, application }) => {
+        setTimeout(() => {
+          throw new Error(diagnostic);
+        }, 0);
+        setTimeout(() => {
+          throw new Error(application);
+        }, 10);
+      },
+      { diagnostic, application },
+    ),
+  ]);
+  expect(errors).toEqual([application]);
+});
 
 /**
  * Bekleyen durumun ANINDA göründüğünü doğrular (eylem yavaşken; yoksa düğme "donmuş" hissi verir). Bekleyen düğmenin adı

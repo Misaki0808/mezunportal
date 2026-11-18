@@ -71,6 +71,9 @@ test('390 px: mezun hikâye gönderir, yönetici seçer, bölüm görür ve rız
       TEST_PERSONAS.alumniMentor.name,
     );
     await student!.getByRole('link', { name: /Hikâyeyi oku/ }).click();
+    // Aynı metin ana sayfa önizlemesinde de var; görünmesi detay gezinmesinin bittiğini kanıtlamaz.
+    await student!.waitForURL(`**/hikayeler/${storyId}`);
+    await student!.waitForLoadState('networkidle');
     await expect(student!.getByText(/Öğrenme yolculuğumda/)).toBeVisible();
     expect(await student!.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
