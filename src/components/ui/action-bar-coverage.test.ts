@@ -16,7 +16,29 @@ function walk(dir: string): string[] {
 }
 const BOTTOM = /(sticky|fixed)[^"'`]*\bbottom-(20|\[calc\(4\.5rem)/;
 
+/**
+ * `ActionBar` çağıranı `sticky`/`fixed`/`bottom-*` VERMEZ: telefondaki konumu kap belirler (sabit, alt gezinmenin üstünde).
+ * Yalnız `lg:` önekli olanlara izin var (masaüstünde eski davranış, örn. `lg:sticky lg:bottom-0`).
+ */
+const POSITIONING = /(?<![\w:-])(sticky|fixed|bottom-)/;
+
 describe('yapışkan alt kaplar', () => {
+  it('ActionBar çağıranları konum sınıfı vermez; konumu kap belirler', () => {
+    const offenders: string[] = [];
+    for (const file of walk('src')) {
+      if (file.endsWith('action-bar.tsx')) continue;
+      const text = readFileSync(file, 'utf8');
+      for (const match of text.matchAll(/<ActionBar\b/g)) {
+        // Açılış etiketi: ilk satır sonu `>`'ya kadar (sınıf dizileri `>` ile biter satır sonuna gelmez).
+        const rest = text.slice(match.index);
+        const tag = rest.slice(0, rest.search(/>\s*$/m) + 1);
+        const found = tag.match(POSITIONING);
+        if (found) offenders.push(`${file}: "${found[0]}"`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
   it('alt gezinme üstüne yapışan her kap ActionBar ile çizilir', () => {
     const offenders: string[] = [];
     for (const file of walk('src')) {

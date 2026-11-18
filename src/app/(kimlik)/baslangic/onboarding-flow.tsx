@@ -379,7 +379,7 @@ export function OnboardingFlow({
           <p className="mt-2 text-sm text-fg-muted">{t('missingDescription')}</p>
         </section>
       )}
-      <ActionBar className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto space-y-2 bg-bg pt-4 pb-2 lg:static lg:pt-8">
+      <ActionBar className="space-y-2 bg-bg pt-4 pb-2 lg:mt-auto lg:pt-8">
         {/* Hata, eylem düğmesinin hemen üstünde: 390'da uzun listenin altında görünmeden kalmaz. */}
         {error && (
           <p role="alert" className="text-base text-danger">

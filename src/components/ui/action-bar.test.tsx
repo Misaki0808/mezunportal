@@ -103,6 +103,25 @@ describe('ActionBar', () => {
     expect(read()).toBe('60px');
   });
 
+  it('telefonda sabit kap + akışta aynı yükseklikte boşluk; çubuk kabın içinde (kart 453, R2 B4)', () => {
+    const { container } = renderUi(<ActionBar data-testid="bar">x</ActionBar>);
+    const [spacer, frame] = [...container.children] as HTMLElement[];
+    // Boşluk çubuktan ÖNCE gelir, ekran okuyucudan gizlidir, yüksekliği --action-bar-h; lg'de ve klavye açıkken yoktur.
+    expect(spacer).toHaveAttribute('aria-hidden', 'true');
+    expect(spacer).toHaveAttribute('data-action-bar-spacer');
+    expect(spacer).toHaveClass('h-[var(--action-bar-h,0px)]', 'lg:hidden');
+    expect(spacer.className).toContain('[:root[data-keyboard=open]_&]:hidden');
+    // Kap: sabit, alt gezinmenin üstünde (nav yüksekliği ya da 4,5 rem + güvenli alan), lg'de `contents`, klavyede akışa döner.
+    expect(frame).toHaveAttribute('data-action-bar-frame');
+    expect(frame).toHaveClass('fixed', 'inset-x-0', 'lg:contents');
+    expect(frame.className).toContain('var(--bottom-nav-height,0px)');
+    expect(frame.className).toContain('calc(4.5rem+env(safe-area-inset-bottom))');
+    expect(frame.className).toContain('[[data-no-nav]_&]:bottom-[env(safe-area-inset-bottom)]');
+    expect(frame.className).toContain('[:root[data-keyboard=open]_&]:static');
+    expect(frame).not.toHaveClass('sticky');
+    expect(frame).toContainElement(screen.getByTestId('bar'));
+  });
+
   it('enabled=false kabı çubuk olmadan çizer: işaret ve ölçüm yok', () => {
     renderUi(
       <ActionBar enabled={false} data-testid="bar">
@@ -110,6 +129,8 @@ describe('ActionBar', () => {
       </ActionBar>,
     );
     expect(screen.getByTestId('bar')).not.toHaveAttribute('data-action-bar');
+    // Kap ve boşluk da yok: katılımı doğrulanmış kullanıcının içeriği akışta kalır.
+    expect(document.querySelector('[data-action-bar-frame], [data-action-bar-spacer]')).toBeNull();
     expect(observers).toHaveLength(0);
     expect(read()).toBe('');
   });

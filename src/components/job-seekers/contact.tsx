@@ -98,7 +98,7 @@ export function SeekerContact({
               {error}
             </p>
           )}
-          <ActionBar className="sticky bottom-20 bg-bg py-3 lg:static">
+          <ActionBar className="bg-bg py-3">
             <Button className="w-full" loading={pending} onClick={send}>
               {t('send')}
             </Button>

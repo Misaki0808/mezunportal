@@ -172,7 +172,7 @@ export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
         <p className="text-sm text-fg-muted">{t('viewCount', { count: data.viewCount })}</p>
       </section>
       {/* Mesajlar Kaydet'in yanında durur: sayfa uzun, çubuk ekrana yapışık; altta kalan bir mesaj telefonda görünmezdi. */}
-      <ActionBar className="sticky bottom-20 space-y-3 rounded-control bg-bg py-3 lg:static">
+      <ActionBar className="space-y-3 rounded-control bg-bg py-3">
         {error && (
           <p role="alert" className="text-danger">
             {error}

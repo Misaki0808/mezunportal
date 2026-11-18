@@ -89,11 +89,7 @@ export function EventActions({
   return (
     <ActionBar
       enabled={!attended}
-      className={
-        attended
-          ? 'mt-6 space-y-4'
-          : 'fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 space-y-3 border-t border-border bg-bg px-5 py-3 lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:p-0'
-      }
+      className={attended ? 'mt-6 space-y-4' : 'space-y-3 bg-bg py-3 lg:bg-transparent lg:p-0'}
     >
       {!registered && (
         <Button

@@ -146,7 +146,7 @@ export function ReferralCreate({
               {error}
             </p>
           )}
-          <ActionBar className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] bg-bg pb-4 pt-3 lg:bottom-0">
+          <ActionBar className="bg-bg pb-4 pt-3 lg:sticky lg:bottom-0">
             <Button type="submit" fullWidth loading={pending}>
               {t('send')}
             </Button>

@@ -174,7 +174,7 @@ export function MembershipForm({
           {errors(error)}
         </p>
       )}
-      <ActionBar className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto bg-bg pt-5 pb-2 lg:static">
+      <ActionBar className="bg-bg pt-5 pb-2 lg:mt-auto">
         <Button type="submit" fullWidth size="lg" loading={pending}>
           {pending ? t('saving') : t('submit')}
         </Button>
