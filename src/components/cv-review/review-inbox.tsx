@@ -60,16 +60,18 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
   async function answer(row: CvReviewRequestView, comment: string) {
     const p = answerCvReviewRequestSchema.safeParse({ requestId: row.id, comment });
     if (!p.success) {
-      setError(t('required'));
-      return;
+      return true;
     }
+    let fieldError = false;
     await run(row.id, async () => {
       const r = await safeClientAction(() => answerCvReviewRequest(p.data));
       if (r.ok) {
         update(r.data);
         setMessage(t('answered'));
-      } else setError(errors(r.errorCode));
+      } else if (r.fieldErrors?.comment) fieldError = true;
+      else setError(errors(r.errorCode));
     });
+    return fieldError;
   }
   async function helpful(row: CvReviewRequestView) {
     await run(row.id, async () => {
@@ -223,7 +225,7 @@ function ReviewCard({
 }: {
   row: CvReviewRequestView;
   pending: boolean;
-  onAnswer: (row: CvReviewRequestView, comment: string) => Promise<void>;
+  onAnswer: (row: CvReviewRequestView, comment: string) => Promise<boolean>;
   onHelpful: (row: CvReviewRequestView) => Promise<void>;
 }) {
   const t = useTranslations('cvReview');
@@ -256,7 +258,12 @@ function ReviewCard({
               commentRef.current?.focus();
               return;
             }
-            void onAnswer(row, comment);
+            void onAnswer(row, comment).then((fieldError) => {
+              if (fieldError) {
+                setInvalid(true);
+                commentRef.current?.focus();
+              }
+            });
           }}
         >
           <Field label={t('comment')} error={invalid ? t('required') : undefined}>

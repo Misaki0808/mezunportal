@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { renderUi } from '@/test/render';
 import { ReviewInbox } from './review-inbox';
 import { RequestForm } from './request-form';
 import type { CvReviewRequestView } from '@/contracts/cv-review-request';
+import { answerCvReviewRequest } from '@/server/actions/cv-review-request';
 vi.mock('@/server/actions/cv-review-request', () => ({
   createCvReviewRequest: vi.fn(),
   answerCvReviewRequest: vi.fn(),
@@ -45,6 +46,16 @@ it('CV inceleme yanıtında boş yorum ilgili alanda gösterilir ve odaklanır',
   expect(comment).toHaveFocus();
   expect(comment).toBeInvalid();
   expect(comment).toHaveAccessibleDescription();
+  vi.mocked(answerCvReviewRequest).mockResolvedValueOnce({
+    ok: false,
+    errorCode: 'VALIDATION_INVALID',
+    fieldErrors: { comment: 'VALIDATION_INVALID' },
+  });
+  await user.type(comment, 'Korunacak yorum');
+  await user.click(screen.getByRole('button', { name: /yorumu gönder/i }));
+  await waitFor(() => expect(comment).toBeInvalid());
+  expect(comment).toHaveFocus();
+  expect(comment).toHaveValue('Korunacak yorum');
 });
 it('mentor ayarı olmayan üyeye boş sayfa yerine açıklama ve tek ayar bağlantısı verir', () => {
   renderUi(<ReviewInbox sent={null} received={null} initialSettings={null} />);
