@@ -36,7 +36,7 @@ function actionFor(template: string): { label: string; path: string } {
   if (template === 'profile.freshness') return { label: t('ctaProfile'), path: '/profil' };
   if (template === 'student.email-migration')
     return { label: t('ctaChangeEmail'), path: '/hesap/e-posta' };
-  if (template === 'faq.redirected') return { label: t('ctaMentor'), path: '/hesap/sss' };
+  if (template === 'faq.redirected') return { label: t('ctaFaqRequest'), path: '/hesap/sss' };
   if (template === 'faq.answerPublished') return { label: t('ctaFaqList'), path: '/sss' };
   if (template.startsWith('faq.')) return { label: t('ctaFaq'), path: '/hesap/sss' };
   if (template.startsWith('referral.'))
