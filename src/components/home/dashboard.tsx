@@ -141,17 +141,24 @@ export function HomeDashboard({ summary, panels, feature, now = new Date() }: Ho
       <ul
         className={
           shortcutsWide
-            ? 'mt-3 grid gap-x-8 lg:grid-cols-2 lg:[&>li:nth-last-child(-n+2)]:border-b-0'
+            ? 'mt-3 grid grid-cols-1 gap-x-8 lg:grid-cols-2 lg:[&>li:nth-last-child(-n+2)]:border-b-0'
             : 'mt-3'
         }
       >
         {SHORTCUTS[summary.role].map((item, index) => (
           <li key={item.key} className="border-b border-border last:border-b-0">
-            <Link href={item.href} className="press-row flex min-h-16 items-center gap-3 py-3">
-              <IconChip tone={CHIP_TONES[index]}>{item.icon}</IconChip>
+            <Link
+              href={item.href}
+              className="press-row flex min-h-16 min-w-0 items-center gap-[min(0.75rem,12px)] py-3"
+            >
+              <IconChip tone={CHIP_TONES[index]} className="size-[min(2.75rem,44px)]">
+                {item.icon}
+              </IconChip>
               <span className="min-w-0">
-                <span className="block font-semibold">{t(`shortcuts.${item.key}.title`)}</span>
-                <span className="block text-fg-muted">
+                <span className="block break-words font-semibold">
+                  {t(`shortcuts.${item.key}.title`)}
+                </span>
+                <span className="block break-words text-fg-muted">
                   {t(`shortcuts.${item.key}.description`)}
                 </span>
               </span>
@@ -245,7 +252,10 @@ export function HomeDashboard({ summary, panels, feature, now = new Date() }: Ho
           )}
         </nav>
       </div>
-      <dl aria-label={a('stats.label')} className="grid grid-cols-3 gap-2 sm:gap-4">
+      <dl
+        aria-label={a('stats.label')}
+        className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,5rem),1fr))] gap-2 sm:gap-4"
+      >
         {stats.map((stat) => (
           <Card
             key={stat.label}
