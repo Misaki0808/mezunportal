@@ -90,7 +90,7 @@ export function SeekerContact({
               {error}
             </p>
           )}
-          <div className="sticky bottom-20 bg-bg py-3 lg:static">
+          <div data-action-bar className="sticky bottom-20 bg-bg py-3 lg:static">
             <Button className="w-full" loading={pending} onClick={send}>
               {t('send')}
             </Button>

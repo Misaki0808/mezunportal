@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -25,6 +26,28 @@ type ToastApi = { show: (toast: ToastInput) => void; dismiss: (id: number) => vo
 const ToastContext = createContext<ToastApi | null>(null);
 
 const DISMISS_AFTER_MS = 6000;
+/** Telefonda alta yapışan eylem çubukları `data-action-bar` taşır; toast onların üstüne kalkar (örtmez). */
+const ACTION_BAR = '[data-action-bar]';
+const LIFT = '--toast-lift';
+
+/**
+ * Toast bölgesi alt gezinmenin hemen üstünde durur; yapışkan eylem çubukları (Devam et, Kaydet, …) aynı şeridi tutar ve
+ * birincil düğmeyi örterdi. Bölge, ekranda görünen çubukla çakışıyorsa çubuğun üstüne kaldırılır. Bilgisayarda (`lg`)
+ * çubuklar akışta olduğu için kaldırma yoktur.
+ */
+function liftAboveActionBars(region: HTMLElement) {
+  region.style.setProperty(LIFT, '0px');
+  if (window.matchMedia('(min-width: 1024px)').matches) return;
+  const box = region.getBoundingClientRect();
+  if (box.height === 0) return;
+  let lift = 0;
+  for (const bar of document.querySelectorAll(ACTION_BAR)) {
+    const rect = bar.getBoundingClientRect();
+    if (rect.height > 0 && rect.bottom > box.top && rect.top < box.bottom)
+      lift = Math.max(lift, box.bottom - rect.top + 8);
+  }
+  region.style.setProperty(LIFT, `${Math.ceil(lift)}px`);
+}
 const TONE_STYLES: Record<ToastTone, string> = {
   info: 'border-primary bg-primary-soft text-on-primary-soft',
   success: 'border-success bg-success-soft text-on-success-soft',
@@ -52,6 +75,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const items = useRef<ToastItem[]>([]);
   const nextId = useRef(1);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+  const region = useRef<HTMLDivElement>(null);
 
   const commit = useCallback((next: ToastItem[]) => {
     items.current = next;
@@ -98,6 +122,28 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const api = useMemo(() => ({ show, dismiss }), [show, dismiss]);
 
+  useLayoutEffect(() => {
+    const node = region.current;
+    if (!node) return;
+    if (toasts.length === 0) {
+      node.style.removeProperty(LIFT);
+      return;
+    }
+    let frame = 0;
+    const place = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => liftAboveActionBars(node));
+    };
+    liftAboveActionBars(node);
+    window.addEventListener('scroll', place, { capture: true, passive: true });
+    window.addEventListener('resize', place);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', place, { capture: true });
+      window.removeEventListener('resize', place);
+    };
+  }, [toasts]);
+
   function renderToast(toast: ToastItem) {
     return (
       <div
@@ -123,9 +169,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={api}>
       {children}
       <div
+        ref={region}
         aria-label={t('region')}
         role="region"
-        className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 flex flex-col items-center gap-2 px-4 lg:bottom-6"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom)+var(--toast-lift,0px))] z-50 flex flex-col items-center gap-2 px-4 lg:bottom-6"
       >
         <div role="status" aria-live="polite" className="flex w-full max-w-md flex-col gap-2">
           {toasts.filter((toast) => toast.tone !== 'error').map(renderToast)}

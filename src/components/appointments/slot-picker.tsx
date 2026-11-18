@@ -272,7 +272,7 @@ export function SlotPicker({ list, request }: Props) {
       </Field>
       <p className="mt-3 text-base text-fg-muted">{t('emailShared')}</p>
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto space-y-2 bg-bg pt-4 pb-2 lg:static lg:pt-8">
+      <div data-action-bar className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto space-y-2 bg-bg pt-4 pb-2 lg:static lg:pt-8">
         {needSlot && (
           <p role="alert" className="text-base text-danger">
             {t('chooseSlot')}

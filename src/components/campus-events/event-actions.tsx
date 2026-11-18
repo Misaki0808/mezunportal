@@ -88,6 +88,7 @@ export function EventActions({
   }
   return (
     <div
+      data-action-bar={attended ? undefined : ''}
       className={
         attended
           ? 'mt-6 space-y-4'
