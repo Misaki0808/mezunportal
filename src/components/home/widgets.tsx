@@ -24,7 +24,7 @@ import {
 import { homeDate } from './presentation';
 
 const COMPACT_EMPTY =
-  'grid! grid-cols-[auto_1fr] items-start! gap-x-3 p-0! text-left! [&>span]:row-span-3 [&>span]:size-11';
+  'grid! grid-cols-[auto_minmax(0,1fr)] items-start! gap-x-[min(0.75rem,12px)] p-0! text-left! [&>span]:row-span-3 [&>span]:size-[min(2.75rem,44px)] [&>h2]:min-w-0 [&>h2]:break-words [&>p]:min-w-0 [&>p]:break-words [&>a]:min-w-0 [&>a]:max-w-full [&>a]:break-words [&>a]:px-[min(1rem,16px)] [&>a]:text-center';
 
 export type JobsResult = Awaited<ReturnType<typeof getSuggestedJobs>>;
 export type HomePanels = {
