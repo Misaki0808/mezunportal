@@ -6,6 +6,7 @@ import { useRef, useState } from 'react';
 
 import type { SignOutOutput } from '@/contracts/auth';
 import type { ActionResult } from '@/contracts/result';
+import { forgetAllCvDecisions } from '@/components/profile/cv-decision-memory';
 import { Button } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 import { forgetSignInAddress } from '@/lib/sign-in-address';
@@ -28,6 +29,7 @@ export function SignOutButton({ submit }: { submit: () => Promise<ActionResult<S
       if (result.ok) {
         // Ortak bilgisayarda sonraki kişi bu sekmede öncekinin giriş adresini görmesin.
         forgetSignInAddress();
+        forgetAllCvDecisions();
         router.replace('/giris');
         router.refresh();
       } else setError(result.errorCode);

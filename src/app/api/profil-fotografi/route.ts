@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const actor = await requireUser();
     // Multipart çapraz kökenli gönderilebilir: çerez tek başına CSRF koruması değildir.
     if (request.headers.get('origin') !== new URL(getEnv().APP_URL).origin)
-      throw codedForbidden('AUTH_FORBIDDEN');
+      throw codedForbidden('REQUEST_ORIGIN_MISMATCH');
     const form = await boundedPhotoForm(request);
     const file = form.get('file');
     if (!(file instanceof File) || form.get('consent') !== 'true')

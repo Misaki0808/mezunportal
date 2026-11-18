@@ -57,6 +57,21 @@ describe('yönetimde kullanıcılar', () => {
     expect(screen.queryByRole('button', { name: 'Hesabı askıya al' })).not.toBeInTheDocument();
     expect(screen.getByText('Bu hesap üzerinde işlem yetkin yok.')).toBeVisible();
   });
+  it('kullanıcı ayrıntısından geri bağlantısı kullanıcı listesine döner, panoya değil', () => {
+    renderUi(
+      <AdminUserDetail
+        initial={detail}
+        departments={departments}
+        suspend={vi.fn()}
+        unsuspend={vi.fn()}
+        correct={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Kullanıcılara dön' })).toHaveAttribute(
+      'href',
+      '/yonetim/kullanicilar',
+    );
+  });
   it('askıya alma açık onay ve geçerli gerekçe olmadan sunucuya gitmez', async () => {
     const suspend = vi.fn().mockResolvedValue({
       ok: true,

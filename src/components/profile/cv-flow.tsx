@@ -311,6 +311,7 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
       {view.kind === 'review' && (
         <div className="mt-4">
           <CvReview
+            key={view.review.cvUploadId}
             review={view.review}
             apply={actions.apply}
             discard={actions.discard}

@@ -15,8 +15,10 @@ import type {
 } from '@/contracts/cv';
 import type { ActionResult } from '@/contracts/result';
 import { Badge, Button, Checkbox, EmptyState, Modal, Sheet } from '@/components/ui';
+import { useHydrated } from '@/hooks/use-hydrated';
 import type { ErrorCode } from '@/lib/errors';
 
+import { forgetCvDecisions, recallCvDecisions, rememberCvDecisions } from './cv-decision-memory';
 import { EntryEditor } from './entry-editor';
 import { EntrySummary } from './entry-summary';
 
@@ -52,6 +54,28 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
   const [noneSelected, setNoneSelected] = useState(false);
   const [pending, setPending] = useState<'apply' | 'discard'>();
   const locked = useRef(false);
+  // Kararlar sekme oturumunda CV iş kimliğine bağlı tutulur (cv-decision-memory): yenileme kararları silmesin.
+  // Okuma yalnız tarayıcıda, hidrasyondan sonra bir kez yapılır (sunucu çıktısıyla uyuşmazlık olmasın); okuma bitmeden yazılmaz.
+  const hydrated = useHydrated();
+  const [restoredFor, setRestoredFor] = useState<string>();
+  const [clearedFor, setClearedFor] = useState<string>();
+  // CV iş kimliği değişirse (aynı bileşende yeni CV) önceki işin kararları taşınmaz: durum, yeni işin kayıtlarıyla yeniden kurulur.
+  if (hydrated && restoredFor !== review.cvUploadId) {
+    setRestoredFor(review.cvUploadId);
+    const remembered = recallCvDecisions(review.cvUploadId, review.items);
+    setDecisions(remembered);
+    setOverwrite(
+      Object.fromEntries(
+        Object.entries(remembered)
+          .filter(([, decision]) => decision.overwrite)
+          .map(([key]) => [key, true]),
+      ),
+    );
+  }
+  useEffect(() => {
+    if (restoredFor === review.cvUploadId && clearedFor !== review.cvUploadId)
+      rememberCvDecisions(review.cvUploadId, decisions);
+  }, [decisions, restoredFor, clearedFor, review.cvUploadId]);
   const editFormId = useId();
   // Karar verilince kalemin düğmeleri yer değiştirir (Kabul/Düzelt/Reddet → Kararı geri al). "Kabul et" ile "Kararı geri al"
   // aynı yerdeki ilk düğme olduğundan React onu yeniden kullanır ve odak kalır; "Düzelt" ve "Reddet" ise kalkar. Odak, o kalemin
@@ -120,8 +144,11 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
         } as CvDecisionInput;
       });
       const result = await apply({ cvUploadId: review.cvUploadId, decisions: list });
-      if (result.ok) onApplied(result.data);
-      else setError(result.errorCode);
+      if (result.ok) {
+        setClearedFor(review.cvUploadId);
+        forgetCvDecisions(review.cvUploadId);
+        onApplied(result.data);
+      } else setError(result.errorCode);
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -137,8 +164,11 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
     setError(undefined);
     try {
       const result = await discard({ cvUploadId: review.cvUploadId });
-      if (result.ok) onDiscarded();
-      else {
+      if (result.ok) {
+        setClearedFor(review.cvUploadId);
+        forgetCvDecisions(review.cvUploadId);
+        onDiscarded();
+      } else {
         setError(result.errorCode);
         setDiscardOpen(false);
       }

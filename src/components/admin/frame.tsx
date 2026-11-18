@@ -8,18 +8,23 @@ export function AdminFrame({
   description,
   children,
   actions,
+  backHref = '/yonetim',
+  backLabel,
 }: {
   title: string;
   description?: string;
   children: ReactNode;
   actions?: ReactNode;
+  /** Ayrıntı sayfaları kendi listesine döner; verilmezse yönetim ana sayfası. */
+  backHref?: string;
+  backLabel?: string;
 }) {
   const t = useTranslations('admin');
   return (
     <div className="min-w-0 space-y-6 [overflow-wrap:anywhere]">
       <div className="space-y-2">
-        <BackLink href="/yonetim" flush>
-          {t('back')}
+        <BackLink href={backHref} flush>
+          {backLabel ?? t('back')}
         </BackLink>
         <PageHeader
           eyebrow={t('eyebrow')}

@@ -52,6 +52,13 @@ export function postingStepErrors(
   return postingStepFields[step].filter((field) => fields.has(field));
 }
 
+/** `YYYY-MM-DD` gün metnini okunur Türkçe tarihe çevirir ("2026-12-07" → "7 Aralık 2026"); gün kayması olmasın diye UTC. */
+export function formatDeadline(day: string): string {
+  const date = new Date(`${day}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return day;
+  return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long', timeZone: 'UTC' }).format(date);
+}
+
 /** Varsayılan an ile sunucunun da kullandığı İstanbul takvimi. */
 export function istanbulDay(now = new Date()): string {
   return dayInIstanbul(now);
