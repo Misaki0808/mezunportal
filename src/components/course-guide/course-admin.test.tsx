@@ -57,6 +57,7 @@ it('boş yarıyıl sıfıra dönüşmez; alan hatası ve odakla veri korunur, ge
   expect(semester).toHaveFocus();
   expect(semester).toBeInvalid();
   expect(semester).toHaveAccessibleDescription();
+  expect(semester).toHaveAccessibleDescription('0 ile 8 arasında bir yarıyıl gir.');
   expect(screen.getByLabelText(/Ders adı/)).toHaveValue('Veri Analitiği');
   await user.type(semester, '0');
   await user.click(screen.getByRole('button', { name: 'Kaydet' }));

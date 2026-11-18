@@ -3812,6 +3812,7 @@
     "accountAlumniDescription": "Öğrencilere yol göstermek için ders seç.",
     "adminTitle": "Ders sözlüğü",
     "adminDescription": "Bölümünün derslerini ekle veya güncelle.",
+    "semesterInvalid": "0 ile 8 arasında bir yarıyıl gir.",
     "adminCount": "{count} ders bulundu.",
     "showMore": "Daha fazla göster",
     "addCourse": "Ders ekle",

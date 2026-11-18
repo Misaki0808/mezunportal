@@ -143,7 +143,15 @@ export function CourseAdmin({
             )}
           </Field>
         </div>
-        <Field label={t('semester')} required error={fieldErrors.semester}>
+        <Field
+          label={t('semester')}
+          required
+          error={
+            fieldErrors.semester === errors('VALIDATION_INVALID')
+              ? t('semesterInvalid')
+              : fieldErrors.semester
+          }
+        >
           {(control) => (
             <Input
               {...control}
