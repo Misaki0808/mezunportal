@@ -1,8 +1,35 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectSkillGoal } from '@/server/actions/skill-gap';
 vi.mock('@/server/actions/skill-gap', () => ({ selectSkillGoal: vi.fn() }));
+
+// Hatayı gösteren render ile geçişin bitişi farklı zamanlarda gerçekleşebilir.
+const transition = vi.hoisted(() => ({ delay: false, release: () => {} }));
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    useTransition: () => {
+      if (!transition.delay) return actual.useTransition();
+      const [pending, setPending] = actual.useState(false);
+      return [
+        pending,
+        (action: () => Promise<void>) => {
+          setPending(true);
+          void action()
+            .then(
+              () =>
+                new Promise<void>((resolve) => {
+                  transition.release = resolve;
+                }),
+            )
+            .then(() => setPending(false));
+        },
+      ] as const;
+    },
+  };
+});
 import { expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
 import { searchFaqSchema } from '@/contracts/faq';
@@ -63,6 +90,7 @@ it('uzun sözlük adından üretilen bağlantılar arama sınırlarına uyar', (
 });
 
 it('ağ hatasında seçim korunur ve Türkçe yeniden deneme mesajı gösterilir', async () => {
+  transition.delay = true;
   const user = userEvent.setup();
   vi.mocked(selectSkillGoal).mockRejectedValueOnce(new Error('network error'));
   renderUi(
@@ -75,5 +103,7 @@ it('ağ hatasında seçim korunur ve Türkçe yeniden deneme mesajı gösterilir
   await user.click(screen.getByRole('button', { name: 'Hedefi kaydet' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('tekrar dene');
   expect(screen.getByRole('combobox')).toHaveValue('title');
-  expect(screen.getByRole('button', { name: 'Hedefi kaydet' })).toBeEnabled();
+  setTimeout(() => transition.release(), 50);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Hedefi kaydet' })).toBeEnabled());
+  transition.delay = false;
 });
