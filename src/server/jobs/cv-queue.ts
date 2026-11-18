@@ -12,6 +12,7 @@ import { logUnexpected } from '../unexpected-log';
 export const CV_PARSE_QUEUE = 'cv.parse';
 export const CV_PARSE_FAILED_QUEUE = 'cv.parse.failed';
 export const CV_PARSE_RETRY_LIMIT = 2;
+export const CV_PENDING_RETENTION_SECONDS = 24 * 60 * 60;
 
 export type CvParseJob = { cvUploadId: string };
 
@@ -37,13 +38,15 @@ export async function createCvQueue(
   boss.on('error', () => writeWorkerLog('stderr', 'cv.queue: unavailable'));
   try {
     await boss.start();
-    await boss.createQueue(CV_PARSE_FAILED_QUEUE, {
+    const failureSettings = {
       retryLimit: 5,
       retryDelay: 2,
       expireInSeconds: 30,
-      retentionSeconds: 3600,
+      retentionSeconds: CV_PENDING_RETENTION_SECONDS,
       deleteAfterSeconds: 60,
-    });
+    };
+    await boss.createQueue(CV_PARSE_FAILED_QUEUE, failureSettings);
+    await boss.updateQueue(CV_PARSE_FAILED_QUEUE, failureSettings);
     const settings = {
       deadLetter: CV_PARSE_FAILED_QUEUE,
       retryLimit: CV_PARSE_RETRY_LIMIT,
@@ -52,7 +55,7 @@ export async function createCvQueue(
       ...(options.retryDelay === 0 ? {} : { retryDelayMax: 60 }),
       // İki 90 sn model çağrısı ve dosya işleme için pay; süre dolarsa iş yeniden teslim edilir.
       expireInSeconds: options.expireInSeconds ?? 240,
-      retentionSeconds: 3600,
+      retentionSeconds: CV_PENDING_RETENTION_SECONDS,
       deleteAfterSeconds: 60,
     };
     await boss.createQueue(CV_PARSE_QUEUE, settings);
