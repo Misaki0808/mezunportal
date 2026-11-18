@@ -97,7 +97,7 @@ test('yeni hesap iki adımlı e-posta değiştirir, oturumunu yeniler, çıkar v
       data: { updatedAt: new Date(now - 2 * day), expiresAt: new Date(now + 10 * day) },
     });
     await page.goto('/hesap', { waitUntil: 'networkidle' });
-    await expect(page.getByRole('heading', { name: 'Hesabın', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Hesap ayarları', exact: true })).toBeVisible();
     const refreshed = await db.session.findFirstOrThrow({
       where: { userId: owner.id },
       orderBy: { expiresAt: 'desc' },

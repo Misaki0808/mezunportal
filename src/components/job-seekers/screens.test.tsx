@@ -232,7 +232,7 @@ it('aday arama ve iletişim ekranları ortak geri bağlantısını kullanır (ka
   const { unmount } = renderUi(
     <SeekerSearch initial={{ hiring: false, declaredAt: null }} departments={[]} tags={[]} />,
   );
-  expect(screen.getByRole('link', { name: 'Hesabıma dön' })).toHaveAttribute('href', '/hesap');
+  expect(screen.getByRole('link', { name: 'Hesap ayarları' })).toHaveAttribute('href', '/hesap');
   unmount();
   renderWithToasts(
     <SeekerContact

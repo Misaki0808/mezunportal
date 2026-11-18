@@ -117,7 +117,7 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
     await s.goto('/hesap/bildirimler');
     await expect(s.getByRole('switch', { name: /Randevular/ })).toBeEnabled();
     await expect(
-      s.getByText('Randevu talepleri, onaylar, değişiklikler ve yaklaşan görüşme hatırlatmaları.'),
+      s.getByText('Randevu talepleri, onaylar, değişiklikler ve yaklaşan randevu hatırlatmaları.'),
     ).toBeVisible();
   } finally {
     await db.appointment.deleteMany({
