@@ -1,27 +1,29 @@
 import { getTranslations } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
 import { ExperienceForm } from '@/components/experience/experience-form';
 import { stateFromContent } from '@/components/experience/form-state';
 import { loadVerifiedDepartments } from '@/components/experience/verified-departments';
 import { buttonClasses, EmptyState, ErrorState } from '@/components/ui';
-import {
-  getExperienceDetail,
-  getOwnAppliedMonth,
-  saveExperienceDraft,
-  submitExperience,
-} from '@/server/actions/experience';
+import { saveExperienceDraft, submitExperience } from '@/server/actions/experience';
+import { requestExperienceDetail, requestOwnAppliedMonth } from '@/app/detail-route';
 
 export const dynamic = 'force-dynamic';
 
 export default async function EditExperiencePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [detail, loaded, t] = await Promise.all([
-    getExperienceDetail({ experienceId: id }).catch(() => null),
+    requestExperienceDetail(id).catch(() => null),
     loadVerifiedDepartments(),
     getTranslations('experiences'),
   ]);
   if (!detail) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
+  if (
+    !detail.ok &&
+    (detail.errorCode === 'RESOURCE_NOT_FOUND' || detail.errorCode === 'AUTH_FORBIDDEN')
+  )
+    notFound();
   if (!detail.ok) return <ErrorState errorCode={detail.errorCode} />;
   if (!loaded.ok) return <ErrorState errorCode={loaded.errorCode} />;
   const experience = detail.data;
@@ -41,7 +43,12 @@ export default async function EditExperiencePage({ params }: { params: Promise<{
       </div>
     );
   }
-  const month = await getOwnAppliedMonth({ experienceId: id });
+  const month = await requestOwnAppliedMonth(id);
+  if (
+    !month.ok &&
+    (month.errorCode === 'RESOURCE_NOT_FOUND' || month.errorCode === 'AUTH_FORBIDDEN')
+  )
+    notFound();
   if (!month.ok) return <ErrorState errorCode={month.errorCode} />;
   return (
     <ExperienceForm

@@ -1159,3 +1159,9 @@ Yeniden onay ve kalan dosyaların temizliği PILOT-LEGAL kapsamında ayrıca kar
 ## 2026-11-18 · E-posta teslim ve kuyruk saklama sınırı
 
 E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında işçi kaybı çift teslim üretebilir. Her denemede aynı Message-ID kullanılır; bu, sağlayıcıların tek teslimini garanti etmez. Tamamlanmış yükler 60 saniye sonra beş saniyelik bakım döngüsünde temizlenir; kapalı veya yoğun sistemde temizlik gecikebilir.
+
+## 2026-11-18 · Kimlikli sayfalarda gerçek 404
+
+Düzenleme, SSS ve şirket ayrıntısında yok/kapsam dışı kararı iskelet akışından önce verilir;
+istemci formu için sahiplik ayrıca doğrulanır. Yönetim etkinliğinde yalnız kayıt ve bölüm kapsamı
+kontrol edilir: kodun henüz geçerli olmaması, erişilebilir gelecekteki etkinliği 404 yapmaz.
