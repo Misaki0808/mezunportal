@@ -464,8 +464,8 @@ export function AppShellClient({
             className={cn(
               'outline-none lg:pb-0',
               consentPending
-                ? 'pb-[env(safe-area-inset-bottom)]'
-                : 'pb-[max(calc(4.5rem+env(safe-area-inset-bottom)),var(--bottom-nav-height))]',
+                ? 'pb-[calc(env(safe-area-inset-bottom)+var(--action-bar-h,0px))]'
+                : 'pb-[calc(max(calc(4.5rem+env(safe-area-inset-bottom)),var(--bottom-nav-height))+var(--action-bar-h,0px))]',
             )}
           >
             <div className="app-content w-full max-w-[80rem] px-4 pt-4 pb-6 lg:px-8 lg:pt-7 lg:pb-10">

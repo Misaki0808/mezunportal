@@ -14,24 +14,69 @@ import { PrismaClient } from '../../src/generated/prisma/client';
  * Toast kutuları, gerçek toast bölgesine eklenen taklit kutulardır (toast'ı sayfa başına gerçek eylemle çıkarmak mümkün
  * değil, ürün koduna test kancası eklenmedi); bölge, konumu ve yığma düzeni gerçektir.
  * Kart 477: eskiden `.sticky-actions` kullanan formlar da (deneyim, rıza, gizlilik, görüşme geri bildirimi, bildirim tercihleri,
- * CV yükleme) bu turdadır. `/onay` rıza öncesi ekrandır (alt gezinme yok): çubuk ekranın dibinde durur.
+ * CV inceleme) bu turdadır. `/onay` rıza öncesi ekrandır (alt gezinme yok): çubuk ekranın dibinde durur.
  */
 type Entry = {
   persona: 'student' | 'alumniMentor' | 'systemAdmin' | 'consentPending';
   name: string;
   path: string | ((page: Page) => Promise<string>);
-  /** Sayfa açıldıktan sonra çubuğu görünür kılan hazırlık (örn. dosya seçmek). */
+  /** Sayfa açıldıktan sonra çubuğu görünür kılan hazırlık. */
   setup?: (page: Page) => Promise<void>;
 };
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
 const seededAppointments: string[] = [];
+const seededUploads: string[] = [];
 test.afterAll(async () => {
   if (seededAppointments.length)
     await db.appointment.deleteMany({ where: { id: { in: seededAppointments } } });
+  if (seededUploads.length) await db.cvUpload.deleteMany({ where: { id: { in: seededUploads } } });
   await db.$disconnect();
 });
+/**
+ * Ayrıştırılmış bir CV (inceleme ekranı, "Seçilenleri uygula" çubuğu). Çalışan iş kuyruğu bu testte yok: sonuç, işin
+ * üreteceği biçimde (`PARSED`) veritabanına konur (profile-cv.spec.ts gibi). CV yükleme formu e2e ortamında kapalıdır
+ * (ayrıştırıcı yok), o çubuk birim testiyle (`cv.test.tsx`) sınanır.
+ */
+const cvReviewPage = async () => {
+  const student = await db.user.findUniqueOrThrow({
+    where: { email: 'student@test.mezunportal.local' },
+  });
+  await db.cvUpload.deleteMany({ where: { userId: student.id } });
+  const upload = await db.cvUpload.create({
+    data: {
+      userId: student.id,
+      storageKey: `cv/${student.id}/e2e-action-bar.pdf`,
+      byteSize: 100,
+      pageCount: 1,
+      status: 'PARSED',
+      parsedJson: {
+        profile: {
+          headline: 'Yönetim Bilişim Sistemleri öğrencisi',
+          summary: null,
+          city: 'İstanbul',
+        },
+        education: [
+          {
+            institution: 'E2E Üniversitesi',
+            level: 'BACHELOR',
+            fieldOfStudy: 'Yönetim Bilişim Sistemleri',
+            startDate: '2022-09',
+            endDate: null,
+            isCurrent: true,
+          },
+        ],
+        positions: [],
+        skills: ['TypeScript'],
+        languages: [{ name: 'İngilizce', level: 'B2' }],
+        certifications: [],
+      },
+    },
+  });
+  seededUploads.push(upload.id);
+  return '/profil/cv';
+};
 /** Öğrencinin yanıtlamadığı geçmiş bir görüşme (geri bildirim formu); kayıt testten sonra silinir. */
 const feedbackPage = async () => {
   const student = await db.user.findUniqueOrThrow({
@@ -89,18 +134,7 @@ const PAGES: Entry[] = [
   { persona: 'student', name: 'gizlilik (görünürlük)', path: '/hesap/gizlilik' },
   { persona: 'student', name: 'bildirim tercihleri', path: '/hesap/bildirimler' },
   { persona: 'student', name: 'görüşme geri bildirimi', path: feedbackPage },
-  {
-    persona: 'student',
-    name: 'CV yükleme (dosya seçilince)',
-    path: '/profil/cv',
-    setup: async (page) => {
-      await page.getByLabel(/CV dosyası/).setInputFiles({
-        name: 'cv.pdf',
-        mimeType: 'application/pdf',
-        buffer: Buffer.from('%PDF-1.4'),
-      });
-    },
-  },
+  { persona: 'student', name: 'CV inceleme (seçilenleri uygula)', path: cvReviewPage },
   { persona: 'consentPending', name: 'rıza ekranı (alt gezinme yok)', path: '/onay' },
 ];
 
@@ -286,7 +320,7 @@ for (const variant of VARIANTS) {
   });
 }
 
-test('ekran klavyesi açıkken çubuk akışa döner, boşluk kalkar; kapanınca yeniden sabitlenir', async ({
+test('ekran klavyesi açıkken çubuk akışa döner; kapanınca yeniden sabitlenir; ana alan dolgusu çubuğu sayar', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -295,24 +329,26 @@ test('ekran klavyesi açıkken çubuk akışa döner, boşluk kalkar; kapanınca
   const state = () =>
     page.evaluate(() => {
       const frame = document.querySelector('[data-action-bar-frame]')!;
-      const spacer = document.querySelector('[data-action-bar-spacer]')!;
+      const bar = document.querySelector('[data-action-bar]')!.getBoundingClientRect();
+      const nav = document.querySelector('[data-bottom-nav]')!.getBoundingClientRect();
       return {
         frame: getComputedStyle(frame).position,
-        spacer: getComputedStyle(spacer).display,
-        spacerHeight: spacer.getBoundingClientRect().height,
+        padding: parseFloat(getComputedStyle(document.querySelector('main')!).paddingBottom),
+        barHeight: bar.height,
+        navHeight: nav.height,
       };
     });
   const closed = await state();
   expect(closed.frame).toBe('fixed');
-  expect(closed.spacer).not.toBe('none');
-  expect(closed.spacerHeight).toBeGreaterThan(30);
+  // Ana alanın alt dolgusu alt gezinme + çubuk kadar: sayfa sonunda hiçbir içerik çubuğun altında kalmaz.
+  expect(closed.padding).toBeGreaterThanOrEqual(closed.barHeight + closed.navHeight - 1);
   await page.evaluate(() => (document.documentElement.dataset.keyboard = 'open'));
-  expect(await state()).toMatchObject({ frame: 'static', spacer: 'none' });
+  expect(await state()).toMatchObject({ frame: 'static' });
   await page.evaluate(() => delete document.documentElement.dataset.keyboard);
   expect(await state()).toMatchObject({ frame: 'fixed' });
 });
 
-test('1440: çubuk masaüstünde kapsız, eskisi gibi akışta; sabit değil, boşluk yok', async ({
+test('1440: çubuk masaüstünde kapsız, eskisi gibi akışta; sabit değil, ana alan dolgusu 0', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -321,12 +357,12 @@ test('1440: çubuk masaüstünde kapsız, eskisi gibi akışta; sabit değil, bo
   const state = await page.evaluate(() => {
     const frame = document.querySelector('[data-action-bar-frame]')!;
     const bar = document.querySelector('[data-action-bar]')!;
-    const spacer = document.querySelector('[data-action-bar-spacer]')!;
     return {
       frame: getComputedStyle(frame).display,
       bar: getComputedStyle(bar).position,
-      spacer: getComputedStyle(spacer).display,
+      // lg'de ana alan alt dolgusu sıfır: çubuk akışta, ek boşluk yok.
+      padding: getComputedStyle(document.querySelector('main')!).paddingBottom,
     };
   });
-  expect(state).toEqual({ frame: 'contents', bar: 'static', spacer: 'none' });
+  expect(state).toEqual({ frame: 'contents', bar: 'static', padding: '0px' });
 });

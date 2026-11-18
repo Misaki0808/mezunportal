@@ -103,15 +103,13 @@ describe('ActionBar', () => {
     expect(read()).toBe('60px');
   });
 
-  it('telefonda sabit kap + akışta aynı yükseklikte boşluk; çubuk kabın içinde (kart 453, R2 B4)', () => {
+  it('telefonda sabit kap; boşluk akışta değil ana alanın alt dolgusunda (kart 453 B4, kart 477)', () => {
     const { container } = renderUi(<ActionBar data-testid="bar">x</ActionBar>);
-    const spacer = container.children[0] as HTMLElement;
-    const frame = container.children[1] as HTMLElement;
-    // Boşluk çubuktan ÖNCE gelir, ekran okuyucudan gizlidir, yüksekliği --action-bar-h; lg'de ve klavye açıkken yoktur.
-    expect(spacer).toHaveAttribute('aria-hidden', 'true');
-    expect(spacer).toHaveAttribute('data-action-bar-spacer');
-    expect(spacer).toHaveClass('h-[var(--action-bar-h,0px)]', 'lg:hidden');
-    expect(spacer.className).toContain('[:root[data-keyboard=open]_&]:hidden');
+    // Tek kap, içinde çubuk: akışa ayrı bir boşluk elemanı konmaz (çubuğun altına düşen içerik de çubuğun üstünde kalsın diye
+    // ana alanın alt dolgusu `--action-bar-h` kadar artar; `AppShellClient`).
+    expect(container.children).toHaveLength(1);
+    expect(container.querySelector('[data-action-bar-spacer]')).toBeNull();
+    const frame = container.children[0] as HTMLElement;
     // Kap: sabit, alt gezinmenin üstünde (nav yüksekliği ya da 4,5 rem + güvenli alan), lg'de `contents`, klavyede akışa döner.
     expect(frame).toHaveAttribute('data-action-bar-frame');
     expect(frame).toHaveClass('fixed', 'inset-x-0', 'lg:contents');
@@ -130,8 +128,8 @@ describe('ActionBar', () => {
       </ActionBar>,
     );
     expect(screen.getByTestId('bar')).not.toHaveAttribute('data-action-bar');
-    // Kap ve boşluk da yok: katılımı doğrulanmış kullanıcının içeriği akışta kalır.
-    expect(document.querySelector('[data-action-bar-frame], [data-action-bar-spacer]')).toBeNull();
+    // Kap da yok: katılımı doğrulanmış kullanıcının içeriği akışta kalır.
+    expect(document.querySelector('[data-action-bar-frame]')).toBeNull();
     expect(observers).toHaveLength(0);
     expect(read()).toBe('');
   });
