@@ -1,50 +1,59 @@
 import { expect, test } from './fixture';
 import { loginAs } from './login';
-import { waitForHydratedControl } from './hydration';
+import { waitForHydratedForm } from './hydration';
+import messages from '../../messages/tr.json' with { type: 'json' };
 
 /**
- * Toast, alt gezinmenin üstündeki yapışkan eylem çubuğunun birincil düğmesini örtmez (kart 453; kuru koşu bulgusu: telefonda
+ * Toast, alt gezinmenin üstündeki yapışkan eylem çubuğunun hiçbir düğmesini örtmez (kart 453; kuru koşu bulgusu: telefonda
  * "Onayların kaydedildi." toast'ı "Doğrulamayı tamamla" düğmesinin üst yarısını örtüyordu). Ortak toast bölgesi çubuğun
- * (`data-action-bar`) üstüne kalkar. Ölçü: toast görünürken düğmenin tıklanabilir alanının her noktasında üstteki öğe düğmenin
- * kendisidir (`elementFromPoint`) ve iki kutu kesişmez. Sahne: mentor ayarları, çubukta tek düğme ("Haftalık saatleri
- * kaydet") tam toast şeridinde durur; eski yerleşimde toast onu örter (başlangıç ekranının "Devam et"i çubuğun üst
- * düğmesi olduğu için bu hatayı göstermez).
+ * (`data-action-bar`) üstüne kalkar. Ölçü: toast görünürken çubuktaki HER düğme ve bağlantının dokunma alanında üstteki öğe
+ * kendisidir (`elementFromPoint`) ve toast kutusuyla kesişmez. Sahne: başlangıç ekranında adı kaydedince toast çıkar; çubukta
+ * "Devam et" ve altında "Şimdilik atla" var, eski yerleşimde toast "Şimdilik atla"yı örter.
  */
 test.use({ viewport: { width: 390, height: 844 } });
 
-test('390: toast görünürken yapışkan çubuğun birincil düğmesi örtülmez', async ({ page }) => {
-  await loginAs(page, 'alumniMentor');
-  await page.goto('/mentor/ayarlar', { waitUntil: 'networkidle' });
-  const save = page.getByRole('button', { name: 'Haftalık saatleri kaydet', exact: true });
-  await expect(save).toBeVisible();
-  await waitForHydratedControl(page, 'Haftalık saatleri kaydet');
+test('390: toast görünürken yapışkan çubuğun hiçbir düğmesi örtülmez', async ({ page }) => {
+  await loginAs(page, 'student');
+  await page.goto('/baslangic', { waitUntil: 'networkidle' });
+  await waitForHydratedForm(page, messages.accountName.save);
+  await expect(page.getByRole('button', { name: 'Devam et', exact: true })).toBeVisible();
   await expect(page.locator('[data-action-bar]')).toHaveCount(1);
 
-  await save.click();
-  const toast = page.getByRole('status').locator('p').first();
+  await page.getByRole('textbox', { name: messages.accountName.label }).fill('Deniz Yılmaz');
+  await page.getByRole('button', { name: messages.accountName.save, exact: true }).click();
+  const toast = page.getByRole('status').getByText(messages.accountName.saved);
   await expect(toast).toBeVisible();
 
   const t = (await toast.boundingBox())!;
-  const b = (await save.boundingBox())!;
   expect(t.y, 'toast ekranın içinde').toBeGreaterThanOrEqual(0);
-  const overlap =
-    t.x < b.x + b.width && t.x + t.width > b.x && t.y < b.y + b.height && t.y + t.height > b.y;
-  expect(
-    overlap,
-    `toast (${Math.round(t.y)}-${Math.round(t.y + t.height)}) düğmeyle (${Math.round(b.y)}-${Math.round(b.y + b.height)}) kesişmemeli`,
-  ).toBe(false);
-  // Düğmenin köşelerine yakın ve orta noktalarında üstteki öğe düğmenin kendisi (ya da içi).
-  const points = [0.1, 0.5, 0.9].flatMap((fx) =>
-    [0.1, 0.5, 0.9].map((fy) => [b.x + b.width * fx, b.y + b.height * fy] as const),
-  );
-  for (const [x, y] of points) {
-    const top = await page.evaluate(
-      ([px, py]) =>
-        document.elementFromPoint(px!, py!)?.closest('button')?.textContent?.trim() ?? null,
-      [x, y],
-    );
-    expect(top, `(${Math.round(x)}, ${Math.round(y)}) noktasında düğme üstte olmalı`).toBe(
-      'Haftalık saatleri kaydet',
-    );
+  const controls = await page.evaluate(() => {
+    const bar = document.querySelector('[data-action-bar]')!;
+    return [...bar.querySelectorAll('button, a')].map((el) => {
+      const r = el.getBoundingClientRect();
+      const points = [0.1, 0.5, 0.9].flatMap((fx) =>
+        [0.1, 0.5, 0.9].map((fy) => [r.x + r.width * fx, r.y + r.height * fy] as const),
+      );
+      const covered = points.filter(
+        ([x, y]) => document.elementFromPoint(x, y)?.closest('button, a') !== el,
+      ).length;
+      return {
+        name: (el.textContent ?? '').trim(),
+        x: r.x,
+        y: r.y,
+        width: r.width,
+        height: r.height,
+        covered,
+      };
+    });
+  });
+  expect(controls.length, 'çubukta düğme var').toBeGreaterThan(1);
+  for (const c of controls) {
+    const overlap =
+      t.x < c.x + c.width && t.x + t.width > c.x && t.y < c.y + c.height && t.y + t.height > c.y;
+    expect(
+      overlap,
+      `toast (${Math.round(t.y)}-${Math.round(t.y + t.height)}) "${c.name}" düğmesiyle (${Math.round(c.y)}-${Math.round(c.y + c.height)}) kesişmemeli`,
+    ).toBe(false);
+    expect(c.covered, `"${c.name}" düğmesinin ${c.covered}/9 noktası örtülü`).toBe(0);
   }
 });
