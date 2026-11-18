@@ -370,7 +370,7 @@ yığın izi kullanıcıya gösterilmez. Ayrıntı `docs/architecture.md` “Dı
 - Loglanmaz: jeton, parola, giriş bağlantısı, CV/belge içeriği, LLM girdi/çıktısı. E-posta ve
   telefon maskeli (`src/lib/mask.ts`: `maskEmail`, `maskPhone`, serbest metin için `maskPersonalData`).
 - **Beklenmedik hata günlüğü (`src/server/unexpected-log.ts`):** kodlu olmayan hata (sunucu eylemi, rota, işçi görevi) TEK satır
-  yapılandırılmış olay olarak stderr'e yazılır: `{"event":"action|route|job.unexpected","source":"<sabit ad>","errorName":"<sınıf>",
+  yapılandırılmış olay olarak stderr'e yazılır (işçi olaylarında ayrıca ISO 8601 `timestamp` bulunur): `{"event":"action|route|job.unexpected","source":"<sabit ad>","errorName":"<sınıf>",
   "errorCode":"<P2034|40001|ECONNRESET>","driverCode":"<57014|57P01|55P03>","errorKind":"<pool_timeout|connection_lost>"}` (`driverCode` yalnız Prisma sürücü hatasında, `meta.driverAdapterError.cause.originalCode|code`'dan ve yalnız sabit listeden; `errorKind` pg'nin kodsuz iki yük hatası için, havuz dolu ve bağlantı koptu). İleti okunur ama yazılmaz, yalnız sabit etiket: ileti yalnız kütüphanenin sabit ifadeleriyle TAM eşleşme ile karşılaştırılır (regex, startsWith, includes yok), kişisel veri taşıyan ileti etiket de almaz. İleti (`err.message`), yığın izi, girdi, e-posta, kullanıcı kimliği
   ve değerler YAZILMAZ; hata sınıfı ve kodu sabit izin listesinden seçilir (yük altı Prisma/pg kodları, uygulamanın kendi hata sınıfları ve sabit kodları; yeni `class X extends Error` bekçi testiyle listeye eklenmeden geçemez). İstemci kontrolündeki istek/eylem kimlikleri yazılmaz. Kodlu hatalar (kullanıcıya dönen `errorCode`), doğrulama
   hataları ve Next.js akış denetimi (yönlendirme, bulunamadı) sessiz kalır; kendi yeniden deneme/kalıcı hata yönetimi olan yol (bildirim niyeti aktarımı) yönetilen hatayı yazmaz, aktarımın kendi işlem hatası tur başına tek satırdır. Sunucu eylemleri `failAction(error, '<eylem adı>')` ile adlandırılır
@@ -394,4 +394,4 @@ kontrolü korunur; dosya yükleme gibi rota uçlarında köken ve oturum ayrıca
 
 - Etkinlik katılımı: kod etkinlik penceresinde iki dakikalık dönemlere bağlıdır; kullanıcı başına dakikada beş deneme ve genel olumsuz yanıt uygulanır. Ağ işareti ham IP yerine etkinliğe bağlı HMAC özetiyle 30 gün tutulur; aktarılmış IP başlığı taklit edilebilir, aynı ağ kullanımı tek başına ihlal kanıtı değildir ve coğrafi doğrulama yapılmaz.
 
-Tamamlanan e-posta kuyruk yükleri 60 saniyeden sonra pg-boss bakımında silinir; bakım beş saniyede bir yoklanır. İşçi veya veritabanı kapalıysa temizlik yeniden çalışana kadar gecikebilir.
+Tamamlanan veya kalıcı başarısız olan e-posta işleri ve ölü mektup kuyruğunda tamamlanan ya da kalıcı başarısız olan işler, son durumlarından 60 saniye sonra pg-boss bakımında yükleriyle silinir; bakım beş saniyede bir yoklanır. Bekleyen ve yeniden denenen işler bu süre dolmadan silinmez. İşçi veya veritabanı kapalıysa temizlik yeniden çalışana kadar gecikebilir.
