@@ -1597,6 +1597,7 @@
       "cancel": "Vazgeç",
       "continue": "Devam et",
       "read": "Metni oku",
+      "readNamed": "Metni oku: {document}",
       "default": "Varsayılan",
       "loading": "Yükleniyor…",
       "retry": "Yeniden dene"
