@@ -1166,3 +1166,8 @@ Yetki vermek hassas ve işlem kaydına geçen bir işlemdir; gerekçe hem ekrand
 zorunludur (kırpılmış 3–1000 karakter). İstemci ve sunucu ortak sözleşmeyi kullanır; işlem
 kaydı kişisel veri içeren gerekçeyi reddeder. Böylece doğrudan eylem çağrısı ekran kuralını
 atlayamaz.
+
+## 2026-11-18 · Elle iş deneyimi açıklaması
+
+Elle düzenlenen açıklama 1000 karakteri aşarsa veri kaybını önlemek için reddedilir ve alan
+hatası gösterilir. CV ayrıştırmasında uzun açıklamanın kesilmesi mevcut davranış olarak korunur.

@@ -12,7 +12,7 @@ import {
   parsedCertificationSchema,
   parsedEducationSchema,
   parsedLanguageSchema,
-  parsedPositionSchema,
+  manualPositionSchema,
   parsedProfileSchema,
   parsedSkillSchema,
   type CvSection,
@@ -38,7 +38,7 @@ type FieldKey =
   | 'issuer'
   | 'issuedDate';
 
-/** Bölüm → forma giren alanlar (sırayla). Doğrulama CV hattıyla AYNI şemalardır (sözleşme). */
+/** Bölüm → forma giren alanlar (sırayla). İş açıklamasında elle kayıt sınırı uygulanır. */
 const SECTION_FIELDS: Record<CvSection, readonly FieldKey[]> = {
   PROFILE: ['headline', 'city', 'summary'],
   EDUCATION: ['institution', 'level', 'fieldOfStudy', 'startDate', 'endDate', 'isCurrent'],
@@ -135,7 +135,7 @@ function candidate(section: CvSection, state: State): unknown {
 const SCHEMAS = {
   PROFILE: parsedProfileSchema,
   EDUCATION: parsedEducationSchema,
-  POSITION: parsedPositionSchema,
+  POSITION: manualPositionSchema,
   LANGUAGE: parsedLanguageSchema,
   CERTIFICATION: parsedCertificationSchema,
 } as const;
