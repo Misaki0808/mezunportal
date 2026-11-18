@@ -1,4 +1,3 @@
-import { chromium } from '@playwright/test';
 import { expect, test } from './fixture';
 import { workerBaseUrl } from './isolation';
 import { loginAs } from './login';
@@ -6,9 +5,12 @@ import { loginAs } from './login';
 /** Deneyim formundaki gerçek Modal: klasik çubukta sabit çubuklar ve içerik aynı yerde kalır. */
 for (const classic of [true, false]) {
   for (const width of [390, 1440]) {
-    test(`${classic ? 'klasik' : 'kaplama'} çubuk ${width}px: pencere aç/kapa yatay konumu korur`, async ({}, info) => {
-      const browser = await chromium.launch(
-        classic ? { ignoreDefaultArgs: ['--hide-scrollbars'] } : {},
+    test(`${classic ? 'klasik isteği' : 'kaplama'} çubuk ${width}px: pencere aç/kapa yatay konumu korur`, async ({
+      playwright,
+      browserName,
+    }, info) => {
+      const browser = await playwright[browserName].launch(
+        classic && browserName === 'chromium' ? { ignoreDefaultArgs: ['--hide-scrollbars'] } : {},
       );
       try {
         const context = await browser.newContext({
@@ -18,9 +20,13 @@ for (const classic of [true, false]) {
         const page = await context.newPage();
         await loginAs(page, 'student');
         await page.goto('/deneyim/yeni');
-        // macOS'ta sistemin kaplama çubuğunu klasik yer kaplayan çubuğa zorlar; 15 px gerçekten ayrılmalı.
+        // Yalnız klasik kanalda kaydırma alanını zorla; kısa sayfada çubuk çıkmaması ölçümü tesadüfe bağlamasın.
+        // Motor/işletim sistemi yine kaplama çizebilir: ayrılan gerçek boşluk aşağıda ölçülür, 15 px varsayılmaz.
         if (classic)
-          await page.addStyleTag({ content: '::-webkit-scrollbar { width: 15px; height: 15px; }' });
+          await page.addStyleTag({
+            content:
+              'html { overflow-y: scroll; } ::-webkit-scrollbar { width: 15px; height: 15px; }',
+          });
         await page.locator('select').first().selectOption({ index: 1 });
         const measure = () =>
           page.evaluate(() => {
@@ -32,15 +38,30 @@ for (const classic of [true, false]) {
             };
             return {
               width: document.documentElement.clientWidth,
+              viewport: innerWidth,
+              overflow: document.documentElement.style.overflow,
+              bodyOverflow: document.body.style.overflow,
+              lockGutter:
+                parseFloat(
+                  document.documentElement.style.getPropertyValue('--scroll-lock-gutter'),
+                ) || 0,
               header: get('header.sticky'),
               nav: get('[data-bottom-nav] li:last-child > *'),
-              action: get('.sticky-actions'),
+              action: get('[data-action-bar], .sticky-actions'),
               toast: get('[role=region] [role=status]'),
               main: get('main h1'),
             };
           });
         const before = await measure();
-        expect(before.width).toBe(width - (classic ? 15 : 0));
+        const gutter = before.viewport - before.width;
+        expect(before.viewport).toBe(width);
+        expect(gutter).toBeGreaterThanOrEqual(0);
+        expect(before.action, 'gerçek formun eylem çubuğu ölçülmeli').not.toBeNull();
+        if (classic && browserName === 'chromium') expect(gutter).toBeGreaterThan(0);
+        test.info().annotations.push({
+          type: 'ölçüm',
+          description: `${browserName}: ${classic ? 'klasik isteği' : 'kaplama'}, gerçek boşluk ${gutter}px`,
+        });
         await page
           .locator('header a[href="/"], aside a[href="/"]')
           .filter({ visible: true })
@@ -48,6 +69,9 @@ for (const classic of [true, false]) {
           .click();
         await expect(page.locator('dialog[open]')).toBeVisible();
         const open = await measure();
+        expect(open.overflow).toBe('hidden');
+        expect(open.bodyOverflow).toBe('hidden');
+        expect(open.lockGutter).toBe(gutter);
         await page.keyboard.press('Escape');
         await expect(page.locator('dialog[open]')).toHaveCount(0);
         const closed = await measure();
@@ -62,6 +86,9 @@ for (const classic of [true, false]) {
           }
         }
         expect(closed.width).toBe(before.width);
+        expect(closed.overflow).toBe(before.overflow);
+        expect(closed.bodyOverflow).toBe(before.bodyOverflow);
+        expect(closed.lockGutter).toBe(before.lockGutter);
         await context.close();
       } finally {
         await browser.close();

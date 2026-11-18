@@ -1,4 +1,5 @@
 import { loginAs } from './login';
+import { tabForward } from './keyboard';
 import { randomUUID } from 'node:crypto';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
 import { expect, test } from './fixture';
@@ -308,7 +309,7 @@ test('ilan adımları klavyeyle doğrulanır, başlık duyurulur ve geri dönün
   const tabTo = async (target: import('@playwright/test').Locator) => {
     for (let i = 0; i < 45; i++) {
       if (await target.evaluate((element) => element === document.activeElement)) return;
-      await page.keyboard.press('Tab');
+      await tabForward(page);
     }
     throw new Error('Klavye hedefe ulaşamadı');
   };

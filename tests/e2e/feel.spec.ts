@@ -51,25 +51,47 @@ test('sayfa hata ölçümü yalnız yerel Next geliştirme tanılamasını dış
   );
   await page.goto('/__test_page_errors');
   const errors = watchPageErrors(page);
-  const { host } = new URL(page.url());
-  const diagnostic = `/${host}/__nextjs_original-stack-frames due to access control checks.`;
-  const application = 'Uygulama hatası: veri yüklenemedi';
-  await Promise.all([
-    page.waitForEvent('pageerror', { predicate: (error) => error.message === diagnostic }),
-    page.waitForEvent('pageerror', { predicate: (error) => error.message === application }),
-    page.evaluate(
-      ({ diagnostic, application }) => {
+  const { host, origin } = new URL(page.url());
+  const other = new URL(origin);
+  other.port = String(Number(other.port) + 1);
+  const cases = [
+    {
+      message: `Fetch API cannot load ${origin}/__nextjs_original-stack-frames due to access control checks.`,
+      ignored: true,
+    },
+    {
+      message: `/${host}/__nextjs_original-stack-frames due to access control checks.`,
+      ignored: true,
+    },
+    { message: 'Gerçek uygulama hatası korunmalı', ignored: false },
+    {
+      message: `Fetch API cannot load ${origin}/api/profile due to access control checks.`,
+      ignored: false,
+    },
+    {
+      message: `Fetch API cannot load ${other.origin}/__nextjs_original-stack-frames due to access control checks.`,
+      ignored: false,
+    },
+    { message: 'Failed to fetch', ignored: false, typeError: true },
+  ];
+  const genuine: string[] = [];
+  for (const entry of cases) {
+    const emitted = page.waitForEvent('pageerror');
+    await page.evaluate(
+      ({ message, typeError }) => {
         setTimeout(() => {
-          throw new Error(diagnostic);
+          if (typeError) throw new TypeError(message);
+          throw new Error(message);
         }, 0);
-        setTimeout(() => {
-          throw new Error(application);
-        }, 10);
       },
-      { diagnostic, application },
-    ),
-  ]);
-  expect(errors).toEqual([application]);
+      { message: entry.message, typeError: entry.typeError ?? false },
+    );
+    const error = await emitted;
+    // Karşılaştırma tarayıcının gerçekten ilettiği ham olayladır: WebKit URL içeren iletiyi kesebiliyor.
+    if (!entry.ignored) genuine.push(error.message);
+    expect(errors, entry.message).toEqual(genuine);
+  }
+  expect(genuine).toHaveLength(4);
 });
 
 /**
