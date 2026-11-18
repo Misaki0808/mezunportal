@@ -23,11 +23,9 @@ describe('yapışkan alt kaplar', () => {
       const lines = readFileSync(file, 'utf8').split('\n');
       lines.forEach((line, index) => {
         if (!BOTTOM.test(line)) return;
-        // Açılış etiketi: bu satır ya da önceki en çok üç satırdaki son '<' ile başlayan etiket.
-        const context = lines.slice(Math.max(0, index - 3), index + 1).join('\n');
-        const tag = context
-          .slice(context.lastIndexOf('<', context.indexOf(line.trim())))
-          .match(/^<(\w+)/)?.[1];
+        // Açılış etiketi: bu satırdan geriye (en çok 8 satır) bakılan son `<Etiket`.
+        const context = lines.slice(Math.max(0, index - 8), index + 1).join('\n');
+        const tag = [...context.matchAll(/<([A-Za-z][\w.]*)(?=[\s>])/g)].at(-1)?.[1];
         if (tag !== 'ActionBar') offenders.push(`${file}:${index + 1} (<${tag ?? '?'}>)`);
       });
     }

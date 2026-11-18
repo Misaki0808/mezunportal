@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
-import { act, render, screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useState } from 'react';
+
+import { renderUi } from '@/test/render';
 
 import { ActionBar } from './action-bar';
 
@@ -42,7 +44,7 @@ afterEach(() => {
 describe('ActionBar', () => {
   it('bağlanınca yüksekliğini yazar, boyu değişince günceller, kalkınca siler', () => {
     heights.set(document.createElement('div'), 0);
-    const { unmount } = render(<ActionBar data-testid="bar">x</ActionBar>);
+    const { unmount } = renderUi(<ActionBar data-testid="bar">x</ActionBar>);
     const bar = screen.getByTestId('bar');
     expect(bar).toHaveAttribute('data-action-bar');
     heights.set(bar, 0);
@@ -71,7 +73,7 @@ describe('ActionBar', () => {
         </>
       );
     }
-    render(<Page />);
+    renderUi(<Page />);
     heights.set(screen.getByTestId('bar'), 124);
     act(() => observers[0]!.callback());
     expect(read()).toBe('124px');
@@ -92,7 +94,7 @@ describe('ActionBar', () => {
         </>
       );
     }
-    const { rerender } = render(<Page second />);
+    const { rerender } = renderUi(<Page second />);
     heights.set(screen.getByTestId('a'), 60);
     heights.set(screen.getByTestId('b'), 100);
     act(() => observers.forEach((o) => o.callback()));
@@ -102,7 +104,7 @@ describe('ActionBar', () => {
   });
 
   it('enabled=false kabı çubuk olmadan çizer: işaret ve ölçüm yok', () => {
-    render(
+    renderUi(
       <ActionBar enabled={false} data-testid="bar">
         x
       </ActionBar>,
@@ -114,7 +116,7 @@ describe('ActionBar', () => {
 
   it('ResizeObserver yoksa pencere yeniden boyutlanınca ölçer', () => {
     vi.stubGlobal('ResizeObserver', undefined);
-    const { unmount } = render(<ActionBar data-testid="bar">x</ActionBar>);
+    const { unmount } = renderUi(<ActionBar data-testid="bar">x</ActionBar>);
     heights.set(screen.getByTestId('bar'), 50);
     act(() => window.dispatchEvent(new Event('resize')));
     expect(read()).toBe('50px');

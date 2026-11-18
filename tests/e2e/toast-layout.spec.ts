@@ -97,6 +97,23 @@ test('390: başlangıç çubuğu, toast görünürken, kaydırınca ve rota değ
   if (await toast.isVisible()) {
     const box = (await toast.boundingBox())!;
     expect(box.y + box.height, 'toast alt gezinme üstündeki ana konumda').toBeGreaterThan(740);
+    // B2 (çubuksuz → çubuklu): toast hâlâ açıkken çubuklu sayfaya dönünce yeni çubuk da korunur.
+    await page.goBack();
+    await expect(page).toHaveURL(/\/baslangic/);
+    await expect(page.locator('[data-action-bar]')).toHaveCount(1);
+    if (await toast.isVisible()) await expectClear(page, toast, 'çubuklu sayfaya dönünce');
+    else
+      test.info().annotations.push({
+        type: 'not',
+        description:
+          'Dönüş yavaştı: toast 6 sn dolup kalktı, gelen yön ölçülemedi (birim testi bu yönü kapsar).',
+      });
+  } else {
+    test.info().annotations.push({
+      type: 'not',
+      description:
+        'Rota değişimi yavaştı: toast kalktı, çubuksuz/çubuklu geçişleri ölçülemedi (birim testi kapsar).',
+    });
   }
 });
 
