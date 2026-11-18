@@ -105,7 +105,7 @@ test('ders yönetiminde boş veya sınır dışı yarıyıl kaydedilmez ve veri 
     await expect(semester).toHaveValue(value);
     await expect(semester).toBeFocused();
     await expect(semester).toHaveAttribute('aria-invalid', 'true');
-    await expect(semester).toHaveAccessibleDescription();
+    await expect(semester).toHaveAccessibleDescription('0 ile 8 arasında bir yarıyıl gir.');
     await expect(name).toHaveValue('Deneme dersi');
   }
 });
