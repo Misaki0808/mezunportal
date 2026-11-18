@@ -589,8 +589,16 @@ describe('moderasyon: yayın', () => {
       eventId: r.requestId,
       path: '/hesap/sss',
     });
-    expect(byUser[w.mentorA]).toMatchObject({ event: 'faqAnswerPublished', eventId: r.answerA });
-    expect(byUser[w.mentorB]).toMatchObject({ event: 'faqAnswerPublished', eventId: r.answerB });
+    expect(byUser[w.mentorA]).toMatchObject({
+      event: 'faqAnswerPublished',
+      eventId: r.answerA,
+      path: '/sss',
+    });
+    expect(byUser[w.mentorB]).toMatchObject({
+      event: 'faqAnswerPublished',
+      eventId: r.answerB,
+      path: '/sss',
+    });
     const text = JSON.stringify(intents);
     expect(text).not.toContain('@');
     expect(text).not.toContain(QUESTION);

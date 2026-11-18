@@ -2,7 +2,29 @@
 import { describe, expect, it } from 'vitest';
 import { decorateEmail, preheaderOf } from './email-presentation';
 import messages from '../../../messages/tr.json';
+import { notificationCopy } from './notification-copy';
 describe('e-posta sunumu', () => {
+  it('ilan eşleşmesinin ana eylemi ilanlara, tercih bağlantısı bildirim ayarlarına gider', () => {
+    const result = decorateEmail(
+      {
+        to: 'test@example.invalid',
+        subject: notificationCopy('jobMatchSubject'),
+        template: 'jobMatch.digest',
+        idempotencyKey: 'match-1',
+        text: notificationCopy('jobMatchText', { url: 'https://portal.invalid/ilanlar' }),
+      },
+      'https://portal.invalid',
+    );
+    const document = new DOMParser().parseFromString(result.html!, 'text/html');
+    expect(document.querySelector('a.email-button')?.getAttribute('href')).toBe(
+      'https://portal.invalid/ilanlar',
+    );
+    expect(document.querySelector('.email-footer a')?.getAttribute('href')).toBe(
+      'https://portal.invalid/hesap/bildirimler',
+    );
+    expect(result.text).toContain('https://portal.invalid/ilanlar');
+    expect(result.text).toContain('https://portal.invalid/hesap/bildirimler');
+  });
   it('gövdeyi HTML olarak kaçışlar, yalnız uygulama bağlantılarını tıklanabilir yapar', () => {
     const result = decorateEmail(
       {
@@ -240,7 +262,8 @@ it('satır sonlarını Outlook uyumlu HTML kırılımına çevirir, düz metni d
 
 it.each([
   ['student.email-migration', 'E-postanı güncelle'],
-  ['faq.redirected', 'Mentorları gör'],
+  ['faq.redirected', 'Talebi gör'],
+  ['faq.answerPublished', "SSS'yi gör"],
   ['cv.invitation', 'Deneyimini paylaş'],
 ])('%s eylemi hedefi doğru anlatır', (template, label) => {
   const result = decorateEmail(
@@ -253,7 +276,8 @@ it.each([
     },
     'https://portal.invalid',
   );
-  expect(result.html).toContain(`>${label}</a>`);
+  const document = new DOMParser().parseFromString(result.html!, 'text/html');
+  expect(document.querySelector('a.email-button')?.textContent).toBe(label);
 });
 
 const headMail = (subject = 'Randevun onaylandı & <hazır>') => {
