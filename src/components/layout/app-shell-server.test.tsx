@@ -44,13 +44,13 @@ describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
   });
   it('rıza sorgusundaki Next kontrol sinyalini yutmaz', async () => {
     const signal = Object.assign(new Error('dynamic'), { digest: 'DYNAMIC_SERVER_USAGE' });
-    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.actor.mockResolvedValue({ userId: 'u1', facts: { memberships: [] } });
     mocks.consented.mockRejectedValue(signal);
     await expect(render()).rejects.toBe(signal);
   });
 
   it('giriş yapmış kullanıcının kendi sayısı istemci kabuğuna verilir; sayı oturumdaki kimlikle sorulur', async () => {
-    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.actor.mockResolvedValue({ userId: 'u1', facts: { memberships: [] } });
     mocks.count.mockResolvedValue(4);
     const shell = await render();
     expect(shell.type).toBe(AppShellClient);
@@ -76,7 +76,7 @@ describe('AppShell (sunucu): okunmamış bildirim sayısı', () => {
   });
 
   it('sayım başarısız olursa sayfa yine açılır (rozet süs bilgidir), sayı 0', async () => {
-    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.actor.mockResolvedValue({ userId: 'u1', facts: { memberships: [] } });
     mocks.count.mockRejectedValue(new Error('veritabanı'));
     const shell = await render();
     expect(shell.props).toMatchObject({
@@ -94,7 +94,7 @@ describe('AppShell (sunucu): yan menü alt kartı', () => {
   };
 
   it('oturumdaki kullanıcının KENDİ kartı, oturumdaki kimlikle sorulup kabuğa verilir', async () => {
-    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.actor.mockResolvedValue({ userId: 'u1', facts: { memberships: [] } });
     mocks.count.mockResolvedValue(0);
     mocks.shellUser.mockResolvedValue(user);
     const shell = await render();
@@ -103,7 +103,7 @@ describe('AppShell (sunucu): yan menü alt kartı', () => {
   });
 
   it('kart süstür: okunamazsa sayfa yine açılır, kart yok', async () => {
-    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.actor.mockResolvedValue({ userId: 'u1', facts: { memberships: [] } });
     mocks.count.mockResolvedValue(2);
     mocks.shellUser.mockRejectedValue(new Error('veritabanı'));
     const shell = await render();
@@ -113,7 +113,7 @@ describe('AppShell (sunucu): yan menü alt kartı', () => {
   it('girişsizde ve rızası eksikte kart sorgusu yapılmaz', async () => {
     mocks.actor.mockRejectedValue(new Error('oturum yok'));
     expect((await render()).props.shellUser).toBeNull();
-    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.actor.mockResolvedValue({ userId: 'u1', facts: { memberships: [] } });
     mocks.consented.mockRejectedValue(codedForbidden('CONSENT_REQUIRED'));
     expect((await render()).props.shellUser).toBeNull();
     expect(mocks.shellUser).not.toHaveBeenCalled();
@@ -121,7 +121,7 @@ describe('AppShell (sunucu): yan menü alt kartı', () => {
 });
 
 it('rızası eksik kullanıcı giriş yapmış görünür ama rozet iş verisi okunmaz', async () => {
-  mocks.actor.mockResolvedValue({ userId: 'u1' });
+  mocks.actor.mockResolvedValue({ userId: 'u1', facts: { memberships: [] } });
   mocks.consented.mockRejectedValue(codedForbidden('CONSENT_REQUIRED'));
   const shell = await render();
   expect(shell.props).toMatchObject({
@@ -140,7 +140,7 @@ it.each([
 ])(
   'rıza dışındaki bir hata (%s) gezinmeyi gizlemez: yalnız CONSENT_REQUIRED gizler',
   async (_ad, makeError) => {
-    mocks.actor.mockResolvedValue({ userId: 'u1' });
+    mocks.actor.mockResolvedValue({ userId: 'u1', facts: { memberships: [] } });
     mocks.consented.mockRejectedValue(makeError());
     const shell = await render();
     expect(shell.props).toMatchObject({
@@ -152,3 +152,28 @@ it.each([
     expect(mocks.count).not.toHaveBeenCalled();
   },
 );
+
+describe('AppShell (sunucu): "Ders rehberi" bayrağı (kart 457)', () => {
+  const member = (role: string, extra: Record<string, unknown> = {}) => ({
+    role,
+    verificationStatus: 'VERIFIED',
+    endedAt: null,
+    ...extra,
+  });
+  const flagFor = async (memberships: unknown[] | null) => {
+    mocks.actor.mockResolvedValue(memberships ? { userId: 'u1', facts: { memberships } } : null);
+    mocks.count.mockResolvedValue(0);
+    const shell = await render();
+    return (shell.props as unknown as { showCourseGuide: boolean }).showCourseGuide;
+  };
+
+  it('yalnız doğrulanmış, süren öğrenci üyeliği bayrağı açar; diğer her durumda kapalıdır', async () => {
+    expect(await flagFor([member('STUDENT')])).toBe(true);
+    expect(await flagFor([member('ALUMNI')])).toBe(false);
+    expect(await flagFor([member('ACADEMIC')])).toBe(false);
+    expect(await flagFor([member('STUDENT', { verificationStatus: 'PENDING' })])).toBe(false);
+    expect(await flagFor([member('STUDENT', { endedAt: new Date() })])).toBe(false);
+    expect(await flagFor([])).toBe(false);
+    expect(await flagFor(null)).toBe(false);
+  });
+});

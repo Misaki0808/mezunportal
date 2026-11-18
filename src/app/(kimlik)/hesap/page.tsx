@@ -24,6 +24,7 @@ import { getMyAccountName } from '@/server/actions/account';
 import { getMyMentorSettings } from '@/server/actions/appointment';
 import { THEME_COOKIE, parseTheme } from '@/lib/theme';
 import { requireUser } from '@/server/permissions';
+import { canUseCourseGuide } from '@/server/permissions/course-guide-access';
 import { evaluateAccess } from '@/server/rules/authorization';
 
 export const dynamic = 'force-dynamic';
@@ -97,9 +98,7 @@ export default async function AccountPage() {
     REJECTED: verification('rejected'),
   }[state.data.status];
   const links = [
-    ...(actor.facts.memberships.some(
-      (m) => m.role === 'STUDENT' && m.verificationStatus === 'VERIFIED' && m.endedAt === null,
-    )
+    ...(canUseCourseGuide(actor.facts)
       ? [
           {
             href: '/ders-rehberi',
