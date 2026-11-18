@@ -8,6 +8,8 @@ import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition } from 'react';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { reviewJobPostingSchema } from '@/contracts/job-postings';
+import { ADMIN_REASON_MAX, ADMIN_REASON_MIN } from '@/contracts/admin';
+import { userTextLength } from '@/lib/user-text';
 import { formatDeadline } from './model';
 import type {
   CloseJobPostingOutput,
@@ -229,6 +231,7 @@ export function PostingModeration({
   const t = useTranslations('jobs');
   const errors = useTranslations('errors.codes');
   const admin = useTranslations('admin');
+  const formText = useTranslations('formText');
   const router = useRouter();
   const toast = useToast();
   const [items, setItems] = useState(initial.items);
@@ -263,7 +266,11 @@ export function PostingModeration({
         : { postingId: choice.id, decision: 'REJECT', reason },
     );
     if (!parsed.success) {
-      setError(reason.trim().length < 3 ? admin('reasonInvalid') : t('requiredError'));
+      setError(
+        userTextLength(reason) < ADMIN_REASON_MIN
+          ? admin('reasonInvalid')
+          : formText('tooLong', { max: ADMIN_REASON_MAX }),
+      );
       reasonRef.current?.focus();
       return;
     }
@@ -369,14 +376,21 @@ export function PostingModeration({
           }
         >
           {choice?.decision === 'REJECT' && (
-            <Field label={t('reason')} required error={error}>
+            <Field
+              label={t('reason')}
+              required
+              error={error}
+              hint={formText('counter', { count: userTextLength(reason), max: ADMIN_REASON_MAX })}
+            >
               {(p) => (
                 <Textarea
                   {...p}
                   ref={reasonRef}
-                  maxLength={1000}
                   value={reason}
-                  onChange={(e) => setReason(e.target.value)}
+                  onChange={(e) => {
+                    setReason(e.target.value);
+                    setError('');
+                  }}
                 />
               )}
             </Field>

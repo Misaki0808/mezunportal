@@ -2,7 +2,13 @@
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { saveStorySchema, type MyStory } from '@/contracts/alumni-story';
+import {
+  saveStorySchema,
+  STORY_MIN_LENGTH,
+  STORY_MAX_LENGTH,
+  type MyStory,
+} from '@/contracts/alumni-story';
+import { userTextLength } from '@/lib/user-text';
 import { AccountFrameView } from '@/components/account/account-frame';
 import {
   Button,
@@ -23,6 +29,7 @@ export function StoryEditor({
   departments: { id: string; name: string }[];
   initial: MyStory[];
 }) {
+  const formText = useTranslations('formText');
   const t = useTranslations('alumniStory'),
     errors = useTranslations('errors.codes'),
     frame = useTranslations('accountFrame');
@@ -100,13 +107,22 @@ export function StoryEditor({
   async function persist(send: boolean): Promise<'body' | 'consent' | undefined> {
     const parsed = saveStorySchema.safeParse({ departmentId, body, consent });
     if (!parsed.success) {
-      return fail(t('invalid'), 'body');
+      if (parsed.error.issues.some((issue) => issue.path[0] === 'body'))
+        return fail(formText('range', { min: STORY_MIN_LENGTH, max: STORY_MAX_LENGTH }), 'body');
+      return fail(errors('VALIDATION_INVALID'), 'form');
     }
     if (send && !consent) {
       return fail(t('missingConsent'), 'consent');
     }
     const saved = await safeClientAction(() => saveStory(parsed.data));
     if (!saved.ok) {
+      if (saved.fieldErrors?.body) {
+        const message =
+          saved.fieldErrors.body === 'VALIDATION_INVALID'
+            ? formText('range', { min: STORY_MIN_LENGTH, max: STORY_MAX_LENGTH })
+            : errors(saved.fieldErrors.body);
+        return fail(message, 'body');
+      }
       return fail(errors(saved.errorCode), 'form');
     }
     remember(saved.data);
@@ -182,7 +198,7 @@ export function StoryEditor({
         {story?.moderationReason && <p>{story.moderationReason}</p>}
         <Field
           label={t('body')}
-          hint={t('bodyHint')}
+          hint={`${t('bodyHint')} ${formText('counter', { count: userTextLength(body), max: STORY_MAX_LENGTH })}`}
           error={problem?.field === 'body' ? problem.text : undefined}
         >
           {(props) => (

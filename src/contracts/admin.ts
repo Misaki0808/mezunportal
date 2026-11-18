@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -30,11 +31,7 @@ export const adminId = z
 /** Gerekçe: 3–1000 karakter; kişisel veri içermesi sunucuda (`rules/adminAudit`) ayrıca reddedilir. */
 export const ADMIN_REASON_MIN = 3;
 export const ADMIN_REASON_MAX = 1000;
-export const adminReason = z
-  .string({ error: INVALID })
-  .trim()
-  .min(ADMIN_REASON_MIN, { error: INVALID })
-  .max(ADMIN_REASON_MAX, { error: INVALID });
+export const adminReason = userTextSchema(ADMIN_REASON_MIN, ADMIN_REASON_MAX, INVALID);
 
 /** Açık kullanıcı onayı; eksik/false değer sessizce kabul edilmez. */
 export const adminConfirmation = z.literal(true, { error: INVALID });

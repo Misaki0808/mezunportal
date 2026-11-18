@@ -1,4 +1,5 @@
 'use client';
+import { userTextLength } from '@/lib/user-text';
 import messages from '../../../messages/tr.json';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
@@ -251,7 +252,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
       applyUrl: [url, JOB_POSTING_URL_MAX],
     };
     const limit = lengths[field];
-    if (limit && limit[0].trim().length > limit[1]) return t('tooLong', { max: limit[1] });
+    if (limit && userTextLength(limit[0]) > limit[1]) return t('tooLong', { max: limit[1] });
     return invalid.size === 1 && error !== t('formSummary') ? error : t('requiredError');
   };
   const fieldNames: Record<string, string> = {

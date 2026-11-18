@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
 /**
@@ -18,8 +19,7 @@ export const CV_REVIEW_COMMENT_MAX = 3000;
 export const CV_REVIEW_MONTHLY_LIMIT_MAX = 100;
 
 const id = z.string({ error: 'VALIDATION_INVALID' }).trim().min(1).max(64);
-const text = (min: number, max: number) =>
-  z.string({ error: 'VALIDATION_INVALID' }).trim().min(min).max(max);
+const text = (min: number, max: number) => userTextSchema(min, max);
 
 export const cvReviewSettingsSchema = z
   .object({

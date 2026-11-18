@@ -8,6 +8,7 @@ import { CONTACT_MESSAGE_MAX, sendContactRequestSchema } from '@/contracts/conta
 import { sendContactRequest } from '@/server/actions/contact-request';
 import { Button, Card, Checkbox, Field, Textarea, buttonClasses } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
+import { userTextLength } from '@/lib/user-text';
 
 export function ContactSendForm({
   targetUserId,
@@ -20,6 +21,7 @@ export function ContactSendForm({
 }) {
   const hydrated = useHydrated();
   const t = useTranslations('privacyScreens.contacts');
+  const formText = useTranslations('formText');
   const common = useTranslations('privacyScreens.common');
   const labels = useTranslations('privacyScreens.fields');
   const form = usePrivacyForm();
@@ -137,8 +139,12 @@ export function ContactSendForm({
         <Field
           className="[&_p]:text-base"
           label={t('message')}
-          hint={t('messageHelp', { max: CONTACT_MESSAGE_MAX })}
-          error={form.fieldError('message')}
+          hint={`${t('messageHelp', { max: CONTACT_MESSAGE_MAX })} ${formText('counter', { count: userTextLength(message), max: CONTACT_MESSAGE_MAX })}`}
+          error={
+            form.fieldError('message') && userTextLength(message) > CONTACT_MESSAGE_MAX
+              ? formText('tooLong', { max: CONTACT_MESSAGE_MAX })
+              : form.fieldError('message')
+          }
         >
           {(control) => (
             <Textarea
@@ -153,7 +159,7 @@ export function ContactSendForm({
           )}
         </Field>
       </Card>
-      {form.error && (
+      {form.error && !form.fieldError('fields') && !form.fieldError('message') && (
         <p role="alert" className="text-base text-danger">
           {form.error}
         </p>

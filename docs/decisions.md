@@ -1209,3 +1209,9 @@ tanımsız ya da başka değerde yazmaz. Aynı bölüm ve yıl için döngü var
 da güncellemez; yıllar sabit ve arayüzün varsayılan yılından farklı olduğu için tören tarihi adımı
 etkilenmez. Servis kodu `server-only` olduğundan seed satırları elle yazar; tutarlılığı DB testi
 gerçek servislerle sınar.
+
+## 2026-11-18 · Kullanıcı metninde NFC ile uzunluk
+
+Kullanıcının sınırlı serbest metni doğrulama ve kayıttan önce kırpılıp NFC'ye dönüştürülür; uzunluk
+Unicode kod noktalarıyla sayılır. Böylece ayrışık Türkçe harfler istemcide ve sunucuda aynı sınırı
+kullanır. Var olan kayıtlar dönüştürülmez; kimlikler ve bağlantılar bu kuralla değiştirilmez.

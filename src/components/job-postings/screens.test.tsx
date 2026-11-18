@@ -337,6 +337,22 @@ it('ilan iletişiminde 501 karakterlik not kesilmeden reddedilir', async () => {
   expect(note).toHaveValue('İ'.repeat(501));
   expect(note).toHaveFocus();
   expect(note).toBeInvalid();
+  expect(note).toHaveAccessibleDescription(/En fazla 500 karakter yaz/);
+});
+it('ilan iletişimi 251 ayrışık harfi tek tek sayar ve NFC gönderir', async () => {
+  const { PostingContactForm } = await import('./contact');
+  const send = vi.fn().mockResolvedValue({ ok: true, data: { requestId: 'r', status: 'PENDING' } });
+  renderWithToasts(
+    <PostingContactForm postingId="ilan-123" requestableFields={['EMAIL']} send={send} />,
+  );
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  const note = screen.getByLabelText(/Kısa not/);
+  fireEvent.change(note, { target: { value: 'İ'.normalize('NFD').repeat(251) } });
+  expect(note).toHaveAccessibleDescription(/251 \/ 500 karakter/);
+  fireEvent.submit(screen.getByRole('button', { name: 'Talep gönder' }).closest('form')!);
+  await waitFor(() =>
+    expect(send).toHaveBeenCalledWith(expect.objectContaining({ message: 'İ'.repeat(251) })),
+  );
 });
 it('ilan iletişiminde sunucu not alanını reddederse not ve seçim korunur', async () => {
   const { PostingContactForm } = await import('./contact');

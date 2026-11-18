@@ -1,3 +1,4 @@
+import { normalizeUserText } from '@/lib/user-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -61,7 +62,7 @@ const INVISIBLE = new RegExp(
 
 /** Görünmez karakterleri atar, boşlukları teke indirir, kenar boşluklarını keser. */
 export function cleanCvText(value: string): string {
-  return value.replace(INVISIBLE, '').replace(/\s+/g, ' ').trim();
+  return normalizeUserText(value.replace(INVISIBLE, '').replace(/\s+/g, ' '));
 }
 
 const text = (max: number) =>

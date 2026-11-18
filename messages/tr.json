@@ -3994,5 +3994,12 @@
     "readConsent": "Fotoğraf rıza metnini oku",
     "chooseAgain": "Başka fotoğraf seç",
     "cleanup": "Fotoğraf dosyalarını sil"
+  },
+  "formText": {
+    "counter": "{count} / {max} karakter",
+    "tooLong": "En fazla {max} karakter yaz.",
+    "range": "En az {min}, en fazla {max} karakter yaz.",
+    "selectStudent": "Bir öğrenci seç.",
+    "organization": "Kurum adı en az 2, en fazla 120 karakter olmalı."
   }
 }

@@ -1,4 +1,5 @@
 'use client';
+import { userTextLength } from '@/lib/user-text';
 import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import Link from 'next/link';
@@ -175,7 +176,7 @@ export function AdminEvents({
     ).safeParse(input);
     if (!parsed.success) {
       setReasonError(
-        reason.trim().length < 3 ? errors('AUDIT_REASON_REQUIRED') : errors('VALIDATION_INVALID'),
+        userTextLength(reason) < 3 ? errors('AUDIT_REASON_REQUIRED') : errors('VALIDATION_INVALID'),
       );
       reasonRef.current?.focus();
       return;

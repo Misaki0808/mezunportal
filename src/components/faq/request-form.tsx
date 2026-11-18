@@ -1,4 +1,5 @@
 'use client';
+import { userTextLength } from '@/lib/user-text';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -45,7 +46,8 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
   // Gecikmeli benzer SSS önerisi; eski yanıt yenisini ezmez.
   useEffect(() => {
     const mine = ++ticket.current;
-    if (trimmed.length < FAQ_QUESTION_MIN || trimmed.length > FAQ_QUESTION_MAX) return;
+    if (userTextLength(trimmed) < FAQ_QUESTION_MIN || userTextLength(trimmed) > FAQ_QUESTION_MAX)
+      return;
     const timer = setTimeout(() => {
       suggest({ text: trimmed })
         .then((result) => {
@@ -95,7 +97,9 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
 
   // Soru kısalınca eski öneriler gösterilmez (effect içinde eşzamanlı setState yok).
   const visible =
-    trimmed.length >= FAQ_QUESTION_MIN && trimmed.length <= FAQ_QUESTION_MAX ? suggestions : [];
+    userTextLength(trimmed) >= FAQ_QUESTION_MIN && userTextLength(trimmed) <= FAQ_QUESTION_MAX
+      ? suggestions
+      : [];
   const similarBlocked = error === 'FAQ_SIMILAR_EXISTS';
   return (
     <form onSubmit={(e) => void onSubmit(e)} noValidate className="flex flex-col gap-4">
@@ -122,7 +126,7 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
         )}
       </Field>
       <p className="text-sm text-fg-muted">
-        {t('counter', { count: question.length, max: FAQ_QUESTION_MAX })}
+        {t('counter', { count: userTextLength(question), max: FAQ_QUESTION_MAX })}
       </p>
       {visible.length > 0 && (
         <section

@@ -1,5 +1,6 @@
 'use client';
 
+import { userTextLength } from '@/lib/user-text';
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -88,7 +89,7 @@ export function AlumniDirectory({
         <Field
           key={key}
           label={t(key)}
-          error={invalid && draft[key].trim().length === 1 ? t('invalid') : undefined}
+          error={invalid && userTextLength(draft[key]) === 1 ? t('invalid') : undefined}
         >
           {(control) => (
             <Input
@@ -131,7 +132,7 @@ export function AlumniDirectory({
           label={t('search')}
           hint={t('searchHint')}
           submitLabel={t('searchButton')}
-          error={invalid && draft.q.trim().length === 1 ? t('invalid') : undefined}
+          error={invalid && userTextLength(draft.q) === 1 ? t('invalid') : undefined}
           pendingReason={pending ? t('loading') : undefined}
           onSubmit={(event) => {
             event.preventDefault();

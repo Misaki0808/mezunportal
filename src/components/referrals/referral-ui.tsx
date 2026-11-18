@@ -2,6 +2,8 @@
 import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { safeClientAction } from '@/lib/safe-client-action';
+import { userTextLength } from '@/lib/user-text';
+import { ADMIN_REASON_MAX, ADMIN_REASON_MIN } from '@/contracts/admin';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,6 +11,9 @@ import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition, type FormEvent } from 'react';
 import {
   proposeReferralSchema,
+  proposeReferralAcceptanceSchema,
+  REFERRAL_NOTE_MAX,
+  REFERRAL_ORGANIZATION_MAX,
   reviewReferralSchema,
   type ReferralCandidates,
   type ReferralPage,
@@ -39,6 +44,7 @@ export function ReferralCreate({
   postings: { id: string; title: string; organization: string }[];
 }) {
   const t = useTranslations('referrals');
+  const formText = useTranslations('formText');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
   const hydrated = useHydrated();
@@ -64,7 +70,18 @@ export function ReferralCreate({
     const parsed = proposeReferralSchema.safeParse(input);
     if (!parsed.success) {
       const found = Object.fromEntries(
-        parsed.error.issues.map((issue) => [String(issue.path[0]), errors('VALIDATION_INVALID')]),
+        parsed.error.issues.map((issue) => {
+          const key = String(issue.path[0]);
+          const message =
+            key === 'studentId'
+              ? formText('selectStudent')
+              : key === 'organizationName'
+                ? formText('organization')
+                : key === 'note'
+                  ? formText('tooLong', { max: REFERRAL_NOTE_MAX })
+                  : errors('VALIDATION_INVALID');
+          return [key, message];
+        }),
       );
       setFieldErrors(found);
       focusFirst(found);
@@ -73,17 +90,25 @@ export function ReferralCreate({
     setFieldErrors({});
     setError('');
     start(async () => {
-      const result = await safeClientAction(() => actions.proposeReferral(input));
+      const result = await safeClientAction(() => actions.proposeReferral(parsed.data));
       if (!result.ok) {
-        setError(errors(result.errorCode));
         if (result.fieldErrors) {
           setFieldErrors(
             Object.fromEntries(
-              Object.entries(result.fieldErrors).map(([key, code]) => [key, errors(code)]),
+              Object.entries(result.fieldErrors).map(([key, code]) => [
+                key,
+                key === 'studentId'
+                  ? formText('selectStudent')
+                  : key === 'organizationName'
+                    ? formText('organization')
+                    : key === 'note'
+                      ? formText('tooLong', { max: REFERRAL_NOTE_MAX })
+                      : errors(code),
+              ]),
             ),
           );
           focusFirst(result.fieldErrors);
-        }
+        } else setError(errors(result.errorCode));
         return;
       }
       router.push('/hesap/referanslar');
@@ -136,7 +161,8 @@ export function ReferralCreate({
             <Field
               label={t('organization')}
               error={
-                fieldErrors.organizationName && organizationName.trim().length > 120
+                fieldErrors.organizationName &&
+                userTextLength(organizationName) > REFERRAL_ORGANIZATION_MAX
                   ? t('organizationTooLong')
                   : fieldErrors.organizationName
               }
@@ -157,10 +183,8 @@ export function ReferralCreate({
           )}
           <Field
             label={t('note')}
-            hint={t('noteHint')}
-            error={
-              fieldErrors.note && note.trim().length > 500 ? t('noteTooLong') : fieldErrors.note
-            }
+            hint={`${t('noteHint')} ${formText('counter', { count: userTextLength(note), max: REFERRAL_NOTE_MAX })}`}
+            error={fieldErrors.note}
           >
             {(p) => (
               <Textarea
@@ -210,6 +234,7 @@ export function ReferralList({
   const { rootRef: queueRef, complete: completeDecision } = useQueueFocus();
   const reviewReasonInput = useRef<HTMLTextAreaElement>(null);
   const t = useTranslations('referrals');
+  const formText = useTranslations('formText');
   const errors = useTranslations('errors.codes');
   const frame = useTranslations('accountFrame');
   const router = useRouter();
@@ -224,9 +249,26 @@ export function ReferralList({
   const [reason, setReason] = useState<Record<string, string>>({});
   const [reasonErrors, setReasonErrors] = useState<Record<string, string>>({});
   const [note, setNote] = useState<Record<string, string>>({});
+  const [noteErrors, setNoteErrors] = useState<Record<string, string>>({});
+  const noteInputs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [error, setError] = useState('');
   const [pending, start] = useTransition();
   function perform(row: ReferralView, operation: 'CONFIRM' | 'REJECT' | 'ACCEPTANCE' | 'CANCEL') {
+    if (operation === 'ACCEPTANCE') {
+      const parsed = proposeReferralAcceptanceSchema.safeParse({
+        referralId: row.id,
+        note: note[row.id] ?? '',
+      });
+      if (!parsed.success) {
+        setNoteErrors((previous) => ({
+          ...previous,
+          [row.id]: formText('tooLong', { max: REFERRAL_NOTE_MAX }),
+        }));
+        noteInputs.current[row.id]?.focus();
+        return;
+      }
+      setNoteErrors((previous) => ({ ...previous, [row.id]: '' }));
+    }
     if (moderation && operation === 'REJECT') {
       const parsed = reviewReferralSchema.safeParse({
         referralId: row.id,
@@ -238,7 +280,7 @@ export function ReferralList({
         setReasonErrors((previous) => ({
           ...previous,
           [row.id]: errors(
-            (reason[row.id] ?? '').trim().length < 3
+            userTextLength(reason[row.id] ?? '') < ADMIN_REASON_MIN
               ? 'AUDIT_REASON_REQUIRED'
               : 'AUDIT_REASON_INVALID',
           ),
@@ -279,7 +321,13 @@ export function ReferralList({
                   }),
                 );
       if (!result.ok) {
-        if (moderation && result.fieldErrors?.reason) {
+        if (operation === 'ACCEPTANCE' && result.fieldErrors?.note) {
+          setNoteErrors((previous) => ({
+            ...previous,
+            [row.id]: formText('tooLong', { max: REFERRAL_NOTE_MAX }),
+          }));
+          noteInputs.current[row.id]?.focus();
+        } else if (moderation && result.fieldErrors?.reason) {
           setReasonErrors((previous) => ({
             ...previous,
             [row.id]: errors(result.fieldErrors!.reason!),
@@ -421,13 +469,22 @@ export function ReferralList({
                 )}
                 {student && row.status === 'APPROVED' && (
                   <div className="mt-4">
-                    <Field label={t('acceptanceNote')} hint={t('noteHint')}>
+                    <Field
+                      label={t('acceptanceNote')}
+                      hint={`${t('noteHint')} ${formText('counter', { count: userTextLength(note[row.id] ?? ''), max: REFERRAL_NOTE_MAX })}`}
+                      error={noteErrors[row.id] || undefined}
+                    >
                       {(p) => (
                         <Textarea
                           {...p}
                           value={note[row.id] ?? ''}
-                          maxLength={500}
-                          onChange={(e) => setNote({ ...note, [row.id]: e.target.value })}
+                          ref={(element) => {
+                            noteInputs.current[row.id] = element;
+                          }}
+                          onChange={(e) => {
+                            setNote({ ...note, [row.id]: e.target.value });
+                            setNoteErrors((previous) => ({ ...previous, [row.id]: '' }));
+                          }}
                         />
                       )}
                     </Field>
@@ -516,7 +573,7 @@ export function ReferralList({
         {reviewChoice?.operation === 'REJECT' && (
           <Field
             label={t('reason')}
-            hint={t('reasonHint')}
+            hint={`${t('reasonHint')} ${formText('counter', { count: userTextLength(reason[reviewChoice.row.id] ?? ''), max: ADMIN_REASON_MAX })}`}
             error={reasonErrors[reviewChoice.row.id]}
             required
           >
@@ -525,8 +582,10 @@ export function ReferralList({
                 {...p}
                 ref={reviewReasonInput}
                 value={reason[reviewChoice.row.id] ?? ''}
-                maxLength={1000}
-                onChange={(e) => setReason({ ...reason, [reviewChoice.row.id]: e.target.value })}
+                onChange={(e) => {
+                  setReason({ ...reason, [reviewChoice.row.id]: e.target.value });
+                  setReasonErrors((previous) => ({ ...previous, [reviewChoice.row.id]: '' }));
+                }}
               />
             )}
           </Field>

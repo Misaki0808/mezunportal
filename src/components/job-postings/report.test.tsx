@@ -75,3 +75,19 @@ it('şikâyet gönderilince odak kalkan düğmeden sonuç metnine taşınır', a
     expect(sent).toHaveFocus();
   });
 });
+
+it('uzun şikâyet açıklaması kesilmez; sayaç ve alana bağlı hata gösterilir', async () => {
+  renderWithToasts(<ReportPosting postingId="ilan-uzun" />);
+  fireEvent.click(screen.getByRole('button', { name: 'Bu ilanı şikâyet et' }));
+  const dialog = screen.getByRole('dialog');
+  const details = within(dialog).getByLabelText('Açıklama (isteğe bağlı)');
+  expect(details).not.toHaveAttribute('maxlength');
+  const value = 'İ'.repeat(901);
+  fireEvent.change(details, { target: { value } });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Şikâyeti gönder' }));
+  expect(details).toHaveValue(value);
+  expect(details).toHaveFocus();
+  expect(details).toHaveAccessibleDescription(/901 \/ 900 karakter/);
+  expect(details).toHaveAccessibleDescription(/En fazla 900 karakter yaz/);
+  expect(mocks.report).not.toHaveBeenCalled();
+});
