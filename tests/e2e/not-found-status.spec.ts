@@ -226,11 +226,18 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
     await loginAs(page, 'student');
     await compare('/deneyim', foreignExperience.id);
     await compare('/deneyim', foreignPublished.id);
+    const missingHtml = await (await page.goto(`/deneyim/${UNKNOWN}/duzenle`))!.text();
     const publishedHtml = await (await page.goto(
       `/deneyim/${foreignPublished.id}/duzenle`,
     ))!.text();
-    expect(publishedHtml).not.toContain(messages.experiences.form.notEditableTitle);
-    expect(publishedHtml).not.toContain(messages.experiences.form.notEditableDescription);
+    // Ortak mesaj kataloğu her iki yanıtta bulunur; kayda özgü ek metin ise sızmamalı.
+    const phrases = [
+      messages.experiences.form.notEditableTitle,
+      messages.experiences.form.notEditableDescription,
+    ];
+    const count = (text: string, phrase: string) => text.split(phrase).length - 1;
+    for (const phrase of phrases)
+      expect(count(publishedHtml, phrase)).toBe(count(missingHtml, phrase));
     const publishedRsc = await page.request.get(
       `/deneyim/${foreignPublished.id}/duzenle?_rsc=review`,
       {
@@ -238,9 +245,13 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
       },
     );
     expect(publishedRsc.headers()['content-type']).toContain('text/x-component');
-    const payload = await publishedRsc.text();
-    expect(payload).not.toContain(messages.experiences.form.notEditableTitle);
-    expect(payload).not.toContain(messages.experiences.form.notEditableDescription);
+    const missingRsc = await page.request.get(`/deneyim/${UNKNOWN}/duzenle?_rsc=review`, {
+      headers: { RSC: '1' },
+    });
+    expect(missingRsc.headers()['content-type']).toContain('text/x-component');
+    const [payload, missingPayload] = await Promise.all([publishedRsc.text(), missingRsc.text()]);
+    for (const phrase of phrases)
+      expect(count(payload, phrase)).toBe(count(missingPayload, phrase));
     expect((await page.goto(`/deneyim/${ownExperience.id}/duzenle`))?.status()).toBe(200);
     await expect(page.locator('main form')).toBeVisible();
     expect((await page.goto(`/deneyim/${ownPublished.id}/duzenle`))?.status()).toBe(200);
