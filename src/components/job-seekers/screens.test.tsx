@@ -118,7 +118,32 @@ it('iletişim için en az bir alan istenir, sunucu kapalı alanı seçtirmez', a
   expect(screen.getByRole('checkbox', { name: 'Telefon' })).toBeDisabled();
   fireEvent.click(screen.getByRole('button', { name: 'İstek gönder' }));
   expect(await screen.findByText(/En az bir/)).toBeInTheDocument();
+  const email = screen.getByRole('checkbox', { name: 'E-posta' });
+  expect(email).toHaveFocus();
+  expect(email).toBeInvalid();
+  expect(email).toHaveAccessibleDescription();
+  expect(email.closest('fieldset')).toHaveAttribute('aria-invalid', 'true');
+  expect(email.closest('fieldset')).toHaveAccessibleDescription();
   expect(mocks.request).not.toHaveBeenCalled();
+});
+it('sunucunun iletişim alanı reddinde bekleme bitince ilk kutuya odaklanır', async () => {
+  mocks.request.mockResolvedValueOnce({
+    ok: false,
+    errorCode: 'VALIDATION_INVALID',
+    fieldErrors: { fields: 'VALIDATION_INVALID' },
+  });
+  renderWithToasts(
+    <SeekerContact
+      candidateRef="opaque"
+      preview={{ canRequest: true, card: initial.preview!, requestableFields: ['EMAIL'] }}
+    />,
+  );
+  const email = screen.getByRole('checkbox', { name: 'E-posta' });
+  fireEvent.click(email);
+  fireEvent.click(screen.getByRole('button', { name: 'İstek gönder' }));
+  await waitFor(() => expect(email).toHaveFocus());
+  expect(email).toBeInvalid();
+  expect(email).toBeChecked();
 });
 it('iletişim isteği beklerken onay kutuları kilitlidir, sonuçtan sonra açılır', async () => {
   const { act } = await import('@testing-library/react');
