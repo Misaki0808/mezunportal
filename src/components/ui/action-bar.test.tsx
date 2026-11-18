@@ -105,7 +105,8 @@ describe('ActionBar', () => {
 
   it('telefonda sabit kap + akışta aynı yükseklikte boşluk; çubuk kabın içinde (kart 453, R2 B4)', () => {
     const { container } = renderUi(<ActionBar data-testid="bar">x</ActionBar>);
-    const [spacer, frame] = [...container.children] as HTMLElement[];
+    const spacer = container.children[0] as HTMLElement;
+    const frame = container.children[1] as HTMLElement;
     // Boşluk çubuktan ÖNCE gelir, ekran okuyucudan gizlidir, yüksekliği --action-bar-h; lg'de ve klavye açıkken yoktur.
     expect(spacer).toHaveAttribute('aria-hidden', 'true');
     expect(spacer).toHaveAttribute('data-action-bar-spacer');

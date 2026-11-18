@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import { expect, test, type Page } from './fixture';
 import { loginAs } from './login';
 
@@ -156,8 +158,8 @@ for (const variant of VARIANTS) {
         await loginAs(page, entry.persona);
         current = entry.persona;
       }
-      const path = typeof entry.path === 'string' ? entry.path : await entry.path(page);
-      await page.goto(path, { waitUntil: 'networkidle' });
+      const target = typeof entry.path === 'string' ? entry.path : await entry.path(page);
+      await page.goto(target, { waitUntil: 'networkidle' });
       if (variant.zoom) await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
       await expect(page.locator('[data-action-bar]'), `${entry.name}: çubuk var`).toHaveCount(1);
       await page.waitForTimeout(400);
@@ -207,6 +209,13 @@ for (const variant of VARIANTS) {
       );
     }
     test.info().annotations.push({ type: 'ölçüm', description: report.join(' | ') });
+    // `ACTION_BAR_OUT=<klasör>`: sayfa başına ölçüm satırları (kanıt için; verilmezse yazılmaz).
+    const out = process.env.ACTION_BAR_OUT;
+    if (out) {
+      mkdirSync(out, { recursive: true });
+      const file = `${process.env.ACTION_BAR_TAG ?? 'kosu'}-${variant.name.replace(/[^\w]+/g, '_')}.txt`;
+      writeFileSync(path.join(out, file), report.join('\n') + '\n');
+    }
   });
 }
 
