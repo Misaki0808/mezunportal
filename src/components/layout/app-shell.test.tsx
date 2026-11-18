@@ -122,7 +122,7 @@ describe('AppShell', () => {
 
   it('yan menü ana grubu yalnız gerçek rotaları, sırayla listeler; hesap grubu bildirim, profil ve hesap ayarlarını içerir', () => {
     renderUi(
-      <AppShell signedIn canRefreshNotifications unreadNotifications={2}>
+      <AppShell signedIn showCourseGuide canRefreshNotifications unreadNotifications={2}>
         x
       </AppShell>,
     );
@@ -472,8 +472,78 @@ describe('AppShell: tema düğmesi (kart 383)', () => {
   });
 });
 
+describe('AppShell: "Ders rehberi" erişim bayrağı (kart 457)', () => {
+  it('bayrak kapalıyken (akademisyen, mezun, yönetici) yan menüde ve telefon Menü\'sünde "Ders rehberi" yoktur; diğer öğeler durur', async () => {
+    const user = userEvent.setup();
+    renderUi(<AppShell signedIn>x</AppShell>);
+    const side = screen.getByRole('navigation', { name: 'Yan menü' });
+    expect(within(side).queryByRole('link', { name: 'Ders rehberi' })).toBeNull();
+    expect(
+      within(side)
+        .getAllByRole('link')
+        .map((link) => link.getAttribute('href')),
+    ).toEqual([
+      '/',
+      '/ilanlar',
+      '/mentorlar',
+      '/mezunlar',
+      '/randevular',
+      '/deneyimler',
+      '/etkinlikler',
+      '/bildirimler',
+      '/profil',
+      '/hesap',
+    ]);
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Ana gezinme' })).getByRole('button', {
+        name: 'Menü',
+      }),
+    );
+    const menu = within(screen.getByRole('dialog', { name: 'Menü' }));
+    expect(menu.queryByRole('link', { name: 'Ders rehberi' })).toBeNull();
+    expect(menu.getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual([
+      '/deneyimler',
+      '/mezunlar',
+      '/etkinlikler',
+      '/bildirimler',
+      '/profil',
+      '/hesap',
+    ]);
+  });
+
+  it('bayrak açıkken (doğrulanmış öğrenci) iki yerde de "Ders rehberi" vardır ve /ders-rehberi\'ne gider', async () => {
+    const user = userEvent.setup();
+    renderUi(
+      <AppShell signedIn showCourseGuide>
+        x
+      </AppShell>,
+    );
+    expect(
+      within(screen.getByRole('navigation', { name: 'Yan menü' })).getByRole('link', {
+        name: 'Ders rehberi',
+      }),
+    ).toHaveAttribute('href', '/ders-rehberi');
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Ana gezinme' })).getByRole('button', {
+        name: 'Menü',
+      }),
+    );
+    expect(
+      within(screen.getByRole('dialog', { name: 'Menü' })).getByRole('link', {
+        name: 'Ders rehberi',
+      }),
+    ).toHaveAttribute('href', '/ders-rehberi');
+  });
+});
+
 describe('AppShell: telefon Menü alt sayfası (kart 387)', () => {
-  const open = async (ui = <AppShell signedIn>x</AppShell>) => {
+  const open = async (
+    ui = (
+      <AppShell signedIn showCourseGuide>
+        x
+      </AppShell>
+    ),
+  ) => {
     const user = userEvent.setup();
     renderUi(ui);
     await user.click(
