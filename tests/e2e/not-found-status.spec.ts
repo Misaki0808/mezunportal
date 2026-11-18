@@ -230,6 +230,10 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
     await expect(page.locator('main form')).toBeVisible();
     expect((await page.goto(`/deneyim/${ownPublished.id}/duzenle`))?.status()).toBe(200);
     await expect(page.locator('main form')).toHaveCount(0);
+    expect((await page.goto(`/ilanlar/${foreignJob.id}/duzenle`))?.status()).toBe(200);
+    await expect(
+      page.getByRole('heading', { name: messages.ui.errorState.expected.AUTH_FORBIDDEN }),
+    ).toBeVisible();
     await loginAs(page, 'alumniMentor');
     await compare('/ilanlar', foreignJob.id);
     expect((await page.goto(`/ilanlar/${ownJob.id}/duzenle`))?.status()).toBe(200);

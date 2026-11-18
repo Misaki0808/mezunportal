@@ -13,11 +13,7 @@ export default async function EditPostingPage({ params }: { params: Promise<{ id
   const context = await getJobPostingFormContext();
   if (!context.ok) return <ErrorState errorCode={context.errorCode} />;
   const result = await requestEditablePosting(id);
-  if (
-    !result.ok &&
-    (result.errorCode === 'RESOURCE_NOT_FOUND' || result.errorCode === 'AUTH_FORBIDDEN')
-  )
-    notFound();
+  if (!result.ok && result.errorCode === 'RESOURCE_NOT_FOUND') notFound();
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   return (
     <PostingEditor

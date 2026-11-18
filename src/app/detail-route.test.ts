@@ -88,6 +88,15 @@ describe('ayrıntı 404 ön denetimi', () => {
     await rejectMissingDetail('experience');
     expect(mocks.notFound).not.toHaveBeenCalled();
   });
+  it('düzenleme rotalarında rol reddi kendi uyarısına bırakılır', async () => {
+    mocks.path = '/ilanlar/abc/duzenle';
+    mocks.listPostings.mockResolvedValue({ ok: false, errorCode: 'AUTH_FORBIDDEN' });
+    await rejectMissingDetail('posting');
+    mocks.path = '/deneyim/abc/duzenle';
+    mocks.ownMonth.mockResolvedValue({ ok: false, errorCode: 'AUTH_FORBIDDEN' });
+    await rejectMissingDetail('experience');
+    expect(mocks.notFound).not.toHaveBeenCalled();
+  });
   it('yayınlı deneyim herkese okunabilir olsa da yabancı düzenlemesi 404, sahibin durumu korunur', async () => {
     mocks.path = '/deneyim/abc/duzenle';
     mocks.load.mockResolvedValue({ ok: true, data: { status: 'PUBLISHED' } });

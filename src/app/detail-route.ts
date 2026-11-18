@@ -62,12 +62,20 @@ const routes = {
     { pattern: /^\/uye\/([^/]+)\/?$/, load: requestMemberProfile },
   ],
   posting: [
-    { pattern: /^\/ilanlar\/([^/]+)\/duzenle\/?$/, load: requestEditablePosting },
+    {
+      pattern: /^\/ilanlar\/([^/]+)\/duzenle\/?$/,
+      load: requestEditablePosting,
+      preserveForbidden: true,
+    },
     { pattern: /^\/ilanlar\/(?!yeni\/?$)([^/]+)\/?$/, load: requestPostingDetail },
     { pattern: /^\/sirketler\/([^/]+)\/?$/, load: requestCompanyDetail, preserveForbidden: true },
   ],
   experience: [
-    { pattern: /^\/deneyim\/([^/]+)\/duzenle\/?$/, load: requestEditableExperience },
+    {
+      pattern: /^\/deneyim\/([^/]+)\/duzenle\/?$/,
+      load: requestEditableExperience,
+      preserveForbidden: true,
+    },
     { pattern: /^\/deneyim\/(?!yeni\/?$)([^/]+)\/?$/, load: requestExperienceDetail },
   ],
   faq: [{ pattern: /^\/sss\/([^/]+)\/?$/, load: requestFaqDetail, preserveForbidden: true }],

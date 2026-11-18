@@ -19,11 +19,7 @@ export default async function EditExperiencePage({ params }: { params: Promise<{
     getTranslations('experiences'),
   ]);
   if (!detail) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
-  if (
-    !detail.ok &&
-    (detail.errorCode === 'RESOURCE_NOT_FOUND' || detail.errorCode === 'AUTH_FORBIDDEN')
-  )
-    notFound();
+  if (!detail.ok && detail.errorCode === 'RESOURCE_NOT_FOUND') notFound();
   if (!detail.ok) return <ErrorState errorCode={detail.errorCode} />;
   if (!loaded.ok) return <ErrorState errorCode={loaded.errorCode} />;
   const experience = detail.data;
@@ -44,11 +40,7 @@ export default async function EditExperiencePage({ params }: { params: Promise<{
     );
   }
   const month = await requestOwnAppliedMonth(id);
-  if (
-    !month.ok &&
-    (month.errorCode === 'RESOURCE_NOT_FOUND' || month.errorCode === 'AUTH_FORBIDDEN')
-  )
-    notFound();
+  if (!month.ok && month.errorCode === 'RESOURCE_NOT_FOUND') notFound();
   if (!month.ok) return <ErrorState errorCode={month.errorCode} />;
   return (
     <ExperienceForm
