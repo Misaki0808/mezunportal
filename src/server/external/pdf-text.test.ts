@@ -1,3 +1,5 @@
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import { CV_MAX_BYTES, CV_MAX_PAGES } from '@/contracts/cv';
 import { buildFlateBombPdf, buildRealTestPdf } from '@/test/real-pdf';
@@ -44,17 +46,22 @@ describe('gerçek PDF metin çıkarıcı', () => {
     });
   });
   it('sıkıştırma bombası bellek sınırında sonlandırılır (yığın sınırı dış belleği saymaz)', async () => {
-    const bomb = buildFlateBombPdf(160);
-    expect(bomb.byteLength).toBeLessThan(CV_MAX_BYTES);
-    // Duvar saati sınırı yok (kart 427): yük altında süre değişir. Bellek koruması `CV_PDF_UNREADABLE`, 5 sn'lik süre aşımı ise
-    // `CV_PARSE_TIMEOUT` verir; yani bu kod eşitliği bombanın bellek sınırında kesildiğini zaten ayırır.
-    await expect(
-      getPdfTextExtractor({ maxRssGrowthBytes: 48 * 1024 * 1024 }).extract(bomb),
-    ).rejects.toMatchObject({ code: 'CV_PDF_UNREADABLE' });
+    // Her denemede ayrı süreç: önceki işçinin boşalttığı RSS tekrar kullanılırsa gerçek büyüme gizlenir.
+    const { stdout } = await promisify(execFile)(process.execPath, [
+      '--conditions=react-server',
+      '--import',
+      'tsx',
+      'src/test/pdf-rss-probe.ts',
+    ]);
+    expect(JSON.parse(stdout)).toEqual({
+      code: 'CV_PDF_UNREADABLE',
+      compressedWithinLimit: true,
+      rssExceeded: true,
+    });
   });
   it('gerçek iş parçacığı süre aşımında sonlandırılır ve kararlı kod döner', async () => {
     await expect(
-      getPdfTextExtractor({ timeoutMs: 20 }).extract(buildFlateBombPdf(160)),
+      getPdfTextExtractor({ timeoutMs: 20 }).extract(buildFlateBombPdf(64)),
     ).rejects.toMatchObject({ code: 'CV_PARSE_TIMEOUT' });
   });
 });
