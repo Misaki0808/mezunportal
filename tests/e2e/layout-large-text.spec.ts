@@ -65,10 +65,10 @@ for (const width of [320, 390]) {
           const padding = parseFloat(
             getComputedStyle(document.querySelector('main')!).paddingBottom,
           );
-          return padding >= navigation;
+          return Math.ceil(navigation) - padding;
         }),
       )
-      .toBe(true);
+      .toBeLessThanOrEqual(0);
     const cards = page.locator('dl[aria-label="Günün özeti"] > div');
     await expect(cards).toHaveCount(3);
     for (const card of await cards.all()) {

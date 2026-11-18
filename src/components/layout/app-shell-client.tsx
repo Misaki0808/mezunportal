@@ -152,7 +152,8 @@ export function AppShellClient({
       return () => window.removeEventListener('resize', measure);
     }
     const observer = new ResizeObserver(measure);
-    observer.observe(bottomNav);
+    // Güvenli alan dolgusu içerik kutusuna dahil değildir; dış kutudaki değişimi izle.
+    observer.observe(bottomNav, { box: 'border-box' });
     return () => observer.disconnect();
   }, [bottomNav]);
 
