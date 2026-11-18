@@ -1,13 +1,13 @@
 import { loginAs } from './login';
 import { expect, test, type Page } from './fixture';
 import { waitForHydratedForm } from './hydration';
+import { watchPageErrors } from './page-errors';
 
 const login = (page: Page) => loginAs(page, 'academic');
 
 test('beş geçersiz filtre bağlantısı çökmeden temizleme sunar', async ({ page }) => {
   await login(page);
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
+  const errors = watchPageErrors(page);
   for (const query of [
     '?page=NaN',
     '?page=-1',
