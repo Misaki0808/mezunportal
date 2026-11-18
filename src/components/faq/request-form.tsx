@@ -39,6 +39,7 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
   const [error, setError] = useState<ErrorCode>();
   const [sent, setSent] = useState(false);
   const ticket = useRef(0);
+  const questionRef = useRef<HTMLTextAreaElement>(null);
   const trimmed = question.trim();
 
   // Gecikmeli benzer SSS önerisi; eski yanıt yenisini ezmez.
@@ -64,6 +65,7 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
     });
     if (!parsed.success) {
       setInvalid(true);
+      questionRef.current?.focus();
       return;
     }
     setInvalid(false);
@@ -73,7 +75,10 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
     try {
       const result = await submit(parsed.data);
       if (!result.ok) {
-        setError(result.errorCode);
+        if (result.fieldErrors?.question) {
+          setInvalid(true);
+          questionRef.current?.focus();
+        } else setError(result.errorCode);
         return;
       }
       setQuestion('');
@@ -102,11 +107,13 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
         {(field) => (
           <Textarea
             {...field}
+            ref={questionRef}
             rows={4}
             maxLength={FAQ_QUESTION_MAX}
             value={question}
             onChange={(e) => {
               setQuestion(e.target.value);
+              setInvalid(false);
               setAcknowledged(false);
               setSent(false);
               if (error === 'FAQ_SIMILAR_EXISTS') setError(undefined);

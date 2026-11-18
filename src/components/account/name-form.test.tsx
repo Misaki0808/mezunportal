@@ -20,6 +20,25 @@ const save = () => screen.getByRole('button', { name: 'Kaydet' });
 const INVALID = 'Adını yalnız harf, boşluk, kesme işareti ve tire kullanarak 2–80 karakter yaz.';
 
 describe('ad soyad formu', () => {
+  it('NFD adı 80 karaktere normalize ederek eksiltmeden gönderir', async () => {
+    const { user } = renderWithToasts(<NameForm initialName="" update={update} />);
+    await user.click(field());
+    await user.paste('I\u0307'.repeat(80));
+    await user.click(save());
+    expect(update).toHaveBeenCalledWith({ name: 'İ'.repeat(80) });
+  });
+
+  it('80 karakteri aşan adı koruyup alan hatasına odaklanır', async () => {
+    const { user } = renderWithToasts(<NameForm initialName="" update={update} />);
+    await user.click(field());
+    await user.paste('A'.repeat(81));
+    await user.click(save());
+    expect(update).not.toHaveBeenCalled();
+    expect(field()).toHaveValue('A'.repeat(81));
+    expect(field()).toBeInvalid();
+    expect(field()).toHaveFocus();
+    expect(field()).toHaveAccessibleDescription(/2–80 karakter/);
+  });
   it('geçerli adı kırpılmış olarak sunucuya iletir ve başarıyı toast ile söyler', async () => {
     const { user } = renderWithToasts(<NameForm initialName="ayse yilmaz" update={update} />);
     await user.clear(field());

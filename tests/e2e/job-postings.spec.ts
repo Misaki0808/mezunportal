@@ -172,6 +172,11 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     await expect(student!.getByText(title)).toBeVisible();
     expect(await student!.content()).not.toContain(writer.id);
     await waitForHydratedForm(student!, 'Talep gönder');
+    await student!.getByRole('button', { name: 'Talep gönder' }).click();
+    const contactField = student!.getByRole('checkbox', { name: 'E-posta' });
+    await expect(contactField).toBeFocused();
+    await expect(contactField).toHaveAttribute('aria-invalid', 'true');
+    await expect(contactField).toHaveAccessibleDescription(/en az bir/i);
     await student!.getByRole('checkbox', { name: 'E-posta' }).check();
     await student!.getByRole('button', { name: 'Talep gönder' }).click();
     await expect(

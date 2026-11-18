@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 
 import {
   answerFaqRequestSchema,
@@ -42,6 +42,7 @@ function AnswerCard({
   const [error, setError] = useState<ErrorCode>();
   const [saved, setSaved] = useState(false);
   const titleId = useId();
+  const answerRef = useRef<HTMLTextAreaElement>(null);
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -49,6 +50,7 @@ function AnswerCard({
     const parsed = answerFaqRequestSchema.safeParse({ requestId: item.id, body });
     if (!parsed.success) {
       setInvalid(true);
+      answerRef.current?.focus();
       return;
     }
     setInvalid(false);
@@ -58,7 +60,10 @@ function AnswerCard({
     try {
       const result = await answer(parsed.data);
       if (!result.ok) {
-        setError(result.errorCode);
+        if (result.fieldErrors?.body) {
+          setInvalid(true);
+          answerRef.current?.focus();
+        } else setError(result.errorCode);
         return;
       }
       setSaved(true);
@@ -92,12 +97,14 @@ function AnswerCard({
           {(field) => (
             <Textarea
               {...field}
+              ref={answerRef}
               rows={5}
               maxLength={FAQ_ANSWER_MAX}
               aria-describedby={`${field['aria-describedby'] ?? ''} ${titleId}`.trim()}
               value={body}
               onChange={(e) => {
                 setBody(e.target.value);
+                setInvalid(false);
                 setSaved(false);
               }}
             />

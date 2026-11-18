@@ -1,11 +1,26 @@
 // @vitest-environment jsdom
 import { expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { renderUi } from '@/test/render';
 import { ToastProvider } from '@/components/ui';
 import { ContactSendForm } from './contact-send-form';
 
 vi.mock('@/server/actions/contact-request', () => ({ sendContactRequest: vi.fn() }));
+it('alan seçilmezse hatayı ilk seçilebilir alana bağlar ve odaklar', async () => {
+  const { sendContactRequest } = await import('@/server/actions/contact-request');
+  vi.mocked(sendContactRequest).mockClear();
+  renderUi(
+    <ToastProvider>
+      <ContactSendForm targetUserId="target" requestableFields={['EMAIL']} />
+    </ToastProvider>,
+  );
+  const email = screen.getByRole('checkbox', { name: 'E-posta' });
+  fireEvent.submit(screen.getByRole('button', { name: 'Talep gönder' }).closest('form')!);
+  expect(sendContactRequest).not.toHaveBeenCalled();
+  expect(email).toHaveFocus();
+  expect(email).toBeInvalid();
+  expect(email).toHaveAccessibleDescription(/en az bir/i);
+});
 it('yalnız sunucunun talep edilebilir dediği alanlar seçilebilir ve diğerlerinin nedeni açıklanır', () => {
   renderUi(
     <ToastProvider>

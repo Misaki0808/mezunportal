@@ -2603,6 +2603,7 @@
     "title": "Görüşmen nasıldı?",
     "description": "Kısa yanıtın görüşmelerin daha iyi olmasına yardımcı olur.",
     "happened": "Görüşme gerçekleşti mi?",
+    "happenedRequired": "Görüşmenin gerçekleşip gerçekleşmediğini seç.",
     "yes": "Evet, gerçekleşti",
     "no": "Hayır, gerçekleşmedi",
     "noMentor": "Öğrenci katılmadı",

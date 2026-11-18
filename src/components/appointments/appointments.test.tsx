@@ -346,11 +346,14 @@ describe('mentor ayarları', () => {
     await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
     expect(actions.saveSettings).not.toHaveBeenCalled();
     expect(screen.getByText('Yüz yüze için yer notu yaz.')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Yüz yüze görüşme yeri/)).toHaveFocus();
+    expect(screen.getByLabelText(/Yüz yüze görüşme yeri/)).toBeInvalid();
     await user.type(screen.getByLabelText(/Yüz yüze görüşme yeri/), 'Kampüs kafe');
     await user.clear(screen.getByLabelText(/Aylık görüşme kapasitesi/));
     await user.type(screen.getByLabelText(/Aylık görüşme kapasitesi/), '99');
     await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
     expect(screen.getByText('1 ile 40 arasında bir sayı gir.')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Aylık görüşme kapasitesi/)).toHaveFocus();
     await user.clear(screen.getByLabelText(/Aylık görüşme kapasitesi/));
     await user.type(screen.getByLabelText(/Aylık görüşme kapasitesi/), '5');
     await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
@@ -361,6 +364,38 @@ describe('mentor ayarları', () => {
       inPersonNote: 'Kampüs kafe',
       isActive: true,
     });
+  });
+
+  it('kapasitede fazla basamak veya harf sessizce değiştirilip kaydedilmez', async () => {
+    const actions = settingsActions();
+    const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
+    const capacity = screen.getByLabelText(/Aylık görüşme kapasitesi/);
+    const save = screen.getByRole('button', { name: 'Genel ayarları kaydet' });
+    for (const value of ['100', '4a']) {
+      await user.clear(capacity);
+      await user.type(capacity, value);
+      await user.click(save);
+      expect(actions.saveSettings).not.toHaveBeenCalled();
+      expect(capacity).toHaveValue(value);
+      expect(capacity).toBeInvalid();
+      expect(capacity).toHaveFocus();
+    }
+  });
+
+  it('sunucu kapasite alanını reddederse değer ve alan odağı korunur', async () => {
+    const actions = settingsActions();
+    vi.mocked(actions.saveSettings).mockResolvedValue({
+      ok: false,
+      errorCode: 'VALIDATION_INVALID',
+      fieldErrors: { monthlyCapacity: 'VALIDATION_INVALID' },
+    });
+    const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
+    const capacity = screen.getByLabelText(/Aylık görüşme kapasitesi/);
+    await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
+    await waitFor(() => expect(capacity).toHaveFocus());
+    expect(capacity).toHaveValue('6');
+    expect(capacity).toBeInvalid();
+    expect(capacity).toHaveAccessibleDescription(/1 ile 40/);
   });
 
   it('müsait değilim: tarih seçilmeden kaydedilmez; açıkken tarih, kapatınca null gider', async () => {

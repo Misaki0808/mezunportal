@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 
 import {
   SESSION_MINUTES,
@@ -79,6 +79,11 @@ export function MentorSettings({
   const errors = useTranslations('errors.codes');
   const settings = initial.settings;
   const [capacity, setCapacity] = useState(String(settings?.monthlyCapacity ?? 4));
+  const capacityField = useRef<HTMLInputElement>(null);
+  const modesField = useRef<HTMLInputElement>(null);
+  const noteField = useRef<HTMLTextAreaElement>(null);
+  const pauseField = useRef<HTMLInputElement>(null);
+  const modesErrorId = useId();
   const [session, setSession] = useState(String(settings?.sessionMinutes ?? 30));
   const [modes, setModes] = useState<string[]>(settings?.meetingModes ?? ['ONLINE']);
   const [inPersonNote, setInPersonNote] = useState(settings?.inPersonNote ?? '');
@@ -108,7 +113,16 @@ export function MentorSettings({
     try {
       const result = await action();
       if (result.ok) setNotice(t('saved'));
-      else setError(result.errorCode);
+      else if (section === 'general' && result.fieldErrors?.monthlyCapacity) {
+        setFieldErrors({ capacity: t('errors.capacity') });
+        capacityField.current?.focus();
+      } else if (section === 'general' && result.fieldErrors?.meetingModes) {
+        setFieldErrors({ modes: t('errors.modes') });
+        modesField.current?.focus();
+      } else if (section === 'general' && result.fieldErrors?.inPersonNote) {
+        setFieldErrors({ note: t('errors.note') });
+        noteField.current?.focus();
+      } else setError(result.errorCode);
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -128,7 +142,7 @@ export function MentorSettings({
   function saveGeneral() {
     clearResult();
     const input = {
-      monthlyCapacity: Number(capacity),
+      monthlyCapacity: /^\d+$/.test(capacity.trim()) ? Number(capacity) : Number.NaN,
       sessionMinutes: Number(session),
       meetingModes: modes,
       inPersonNote: modes.includes('IN_PERSON') && inPersonNote.trim() ? inPersonNote.trim() : null,
@@ -144,6 +158,9 @@ export function MentorSettings({
         else if (key === 'inPersonNote') found.note = t('errors.note');
       }
       setFieldErrors(found);
+      if (found.capacity) capacityField.current?.focus();
+      else if (found.modes) modesField.current?.focus();
+      else if (found.note) noteField.current?.focus();
       return;
     }
     setFieldErrors({});
@@ -154,6 +171,7 @@ export function MentorSettings({
     clearResult();
     if (paused && (!pausedUntil || Number.isNaN(pauseDate(pausedUntil).getTime()))) {
       setFieldErrors({ pause: t('errors.pauseDate') });
+      pauseField.current?.focus();
       return;
     }
     setFieldErrors({});
@@ -237,10 +255,10 @@ export function MentorSettings({
           {(control) => (
             <Input
               {...control}
+              ref={capacityField}
               inputMode="numeric"
               value={capacity}
-              maxLength={2}
-              onChange={(event) => setCapacity(event.target.value.replace(/\D/g, ''))}
+              onChange={(event) => setCapacity(event.target.value)}
             />
           )}
         </Field>
@@ -259,7 +277,10 @@ export function MentorSettings({
           {MEETING_MODES.map((mode) => (
             <Checkbox
               key={mode}
+              ref={mode === MEETING_MODES[0] ? modesField : undefined}
               label={modesT(mode)}
+              aria-invalid={fieldErrors.modes ? true : undefined}
+              aria-describedby={fieldErrors.modes ? modesErrorId : undefined}
               checked={modes.includes(mode)}
               onChange={(event) =>
                 setModes((current) =>
@@ -271,7 +292,7 @@ export function MentorSettings({
             />
           ))}
           {fieldErrors.modes && (
-            <p role="alert" className="text-base text-danger">
+            <p id={modesErrorId} role="alert" className="text-base text-danger">
               {fieldErrors.modes}
             </p>
           )}
@@ -286,6 +307,7 @@ export function MentorSettings({
             {(control) => (
               <Textarea
                 {...control}
+                ref={noteField}
                 rows={3}
                 maxLength={300}
                 value={inPersonNote}
@@ -326,6 +348,7 @@ export function MentorSettings({
             {(control) => (
               <Input
                 {...control}
+                ref={pauseField}
                 type="date"
                 value={pausedUntil}
                 onChange={(event) => setPausedUntil(event.target.value)}

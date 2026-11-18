@@ -1,9 +1,9 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AccountFrameView } from '@/components/account/account-frame';
 import { Button, Field, Radio, Textarea } from '@/components/ui';
-import type { FeedbackView } from '@/contracts/feedback';
+import { feedbackInputSchema, type FeedbackView } from '@/contracts/feedback';
 import type { ErrorCode } from '@/lib/errors';
 import { submitSessionFeedback } from '@/server/actions/feedback';
 
@@ -16,22 +16,47 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
   const [note, setNote] = useState('');
   const [done, setDone] = useState(view.submitted);
   const [error, setError] = useState<ErrorCode>();
+  const [happenedInvalid, setHappenedInvalid] = useState(false);
+  const [noteError, setNoteError] = useState<ErrorCode>();
+  const happenedErrorId = useId();
+  const firstHappened = useRef<HTMLInputElement>(null);
+  const noteField = useRef<HTMLTextAreaElement>(null);
   const [pending, setPending] = useState(false);
   const lock = useRef(false);
   async function submit() {
-    if (happened === null || lock.current) return;
+    if (lock.current) return;
+    setError(undefined);
+    const parsed = feedbackInputSchema.safeParse({
+      appointmentId: view.appointmentId,
+      happened,
+      helpful: happened ? helpful : null,
+      note: note.trim() || null,
+    });
+    setHappenedInvalid(false);
+    setNoteError(undefined);
+    if (!parsed.success) {
+      if (parsed.error.issues.some((issue) => issue.path[0] === 'happened')) {
+        setHappenedInvalid(true);
+        firstHappened.current?.focus();
+      } else if (parsed.error.issues.some((issue) => issue.path[0] === 'note')) {
+        setNoteError('VALIDATION_INVALID');
+        noteField.current?.focus();
+      } else setError('VALIDATION_INVALID');
+      return;
+    }
     lock.current = true;
     setPending(true);
-    setError(undefined);
     try {
-      const result = await submitSessionFeedback({
-        appointmentId: view.appointmentId,
-        happened,
-        helpful: happened ? helpful : null,
-        note: note.trim() || null,
-      });
-      if (!result.ok) setError(result.errorCode);
-      else setDone(true);
+      const result = await submitSessionFeedback(parsed.data);
+      if (!result.ok) {
+        if (result.fieldErrors?.happened) {
+          setHappenedInvalid(true);
+          firstHappened.current?.focus();
+        } else if (result.fieldErrors?.note) {
+          setNoteError(result.fieldErrors.note);
+          noteField.current?.focus();
+        } else setError(result.errorCode);
+      } else setDone(true);
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -62,6 +87,7 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
         </p>
       ) : (
         <form
+          noValidate
           className="flex flex-1 flex-col gap-6"
           onSubmit={(event) => {
             event.preventDefault();
@@ -79,13 +105,24 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
                   <Radio
                     name="happened"
                     required
+                    ref={value ? firstHappened : undefined}
+                    aria-invalid={happenedInvalid || undefined}
+                    aria-describedby={happenedInvalid ? happenedErrorId : undefined}
                     checked={happened === value}
-                    onChange={() => setHappened(value)}
+                    onChange={() => {
+                      setHappened(value);
+                      setHappenedInvalid(false);
+                    }}
                   />
                   {t(value ? 'yes' : view.role === 'MENTOR' ? 'noMentor' : 'no')}
                 </label>
               ))}
             </div>
+            {happenedInvalid && (
+              <p id={happenedErrorId} role="alert" className="mt-2 text-danger">
+                {t('happenedRequired')}
+              </p>
+            )}
           </fieldset>
           {happened && (
             <fieldset>
@@ -109,14 +146,23 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
               </div>
             </fieldset>
           )}
-          <Field className="[&_.text-sm]:text-base" label={t('note')} hint={t('optional')}>
+          <Field
+            className="[&_.text-sm]:text-base"
+            label={t('note')}
+            hint={t('optional')}
+            error={noteError ? errors(noteError) : undefined}
+          >
             {(control) => (
               <Textarea
                 {...control}
+                ref={noteField}
                 value={note}
                 maxLength={1000}
                 rows={4}
-                onChange={(event) => setNote(event.target.value)}
+                onChange={(event) => {
+                  setNote(event.target.value);
+                  setNoteError(undefined);
+                }}
               />
             )}
           </Field>
