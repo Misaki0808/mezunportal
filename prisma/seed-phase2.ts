@@ -13,8 +13,8 @@ import { seedId, seedUuid } from './seed-util';
  * hesaplar) ve ortak sorular/başvuru ayları eklenir; anonim deneyim eklenmez (anonim deneyim kapsamdaki kesitleri bastırır: deneme turunda
  * kullanıcı kendisi anonim bir deneyim yazarak bu kuralı canlı görebilir).
  * Kapsam: örnek mezunlar, şirket, yayınlanmış deneyim (arama, şirket sayfası, soru bankası, başvuru takvimi, beceri analizi buradan beslenir),
- * ilan (yayında/incelemede/taslak), etkinlik. Ders rehberi (P2-08) ve ödül/ay mezunu yayınları ana akışlarında (rıza + seçim)
- * yönetici ekranından denenir; seed rıza ya da seçim uydurmaz.
+ * ilan (yayında/incelemede/taslak), etkinlik. Ders rehberi (P2-08) ve ay mezunu yayınları ana akışlarında (rıza + seçim)
+ * yönetici ekranından denenir; seed rıza uydurmaz. Yılın Mezunu için donmuş dönem ve verilmiş ödül ayrı modüldedir (`seed-awards.ts`).
  */
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
@@ -27,9 +27,12 @@ export const SAMPLE_ALUMNI = [
   'ornek-mezun-4',
 ] as const;
 type Author = 'alumniMentor' | 'seniorMentor' | (typeof SAMPLE_ALUMNI)[number];
+/** Örnek mezunun sabit kimliği; ödül senaryosu (`seed-awards.ts`) aynı kullanıcıları aday yapar. */
+export const sampleAlumnusId = (key: (typeof SAMPLE_ALUMNI)[number]) =>
+  seedUuid(NS, `user:${key}`);
 const authorId = (author: Author) =>
   (SAMPLE_ALUMNI as readonly string[]).includes(author)
-    ? seedUuid(NS, `user:${author}`)
+    ? sampleAlumnusId(author as (typeof SAMPLE_ALUMNI)[number])
     : seedUserId(author as 'alumniMentor' | 'seniorMentor');
 
 const COMPANIES = [
