@@ -8,6 +8,10 @@ import { adminAccess } from '@/components/admin/access';
 import { adminCapabilityFor } from '@/components/admin/path-capability';
 import { REQUEST_PATH_HEADER } from '@/lib/return-path';
 import { getUserDetail } from '@/server/actions/admin-users';
+import { guardPage } from '@/server/permissions/page-guard';
+import { requirePageAnyAdmin } from '@/server/permissions';
+import { getDb } from '@/server/db';
+import { requireCampusEventAdminScope } from '@/server/services/campus-event';
 
 /** İzin reddi loading sınırının üstünde ölçülür; yanıt başlamadan gerçek 404 döner. Sayfa/eylem kontrolleri de korunur. */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -51,6 +55,23 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       ['AUTH_FORBIDDEN', 'RESOURCE_NOT_FOUND', 'VALIDATION_INVALID'].includes(target.errorCode)
     )
       notFound();
+  }
+  if (path[1] === 'etkinlikler' && path[2] && path.length === 3) {
+    let eventId: string;
+    try {
+      eventId = decodeURIComponent(path[2]);
+    } catch {
+      notFound();
+    }
+    const event = await guardPage('admin.eventDetail', async () => {
+      const actor = await requirePageAnyAdmin();
+      await requireCampusEventAdminScope({ db: getDb() }, actor.userId, { eventId });
+    });
+    if (!event.ok) {
+      if (event.errorCode === 'RESOURCE_NOT_FOUND' || event.errorCode === 'AUTH_FORBIDDEN')
+        notFound();
+      return <ErrorState errorCode={event.errorCode} />;
+    }
   }
   return guarded;
 }

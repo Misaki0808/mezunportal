@@ -1199,6 +1199,12 @@ başına bir saat olarak kalır; süresi dolan bağlantı zaten geçersiz olurdu
 (gönderebilmek için zorunlu); kullanıcı hesabını silerse bekleyen işler aynı işlemde silinmeye devam eder. Ölü mektup kuyruğu (`email.failed`)
 bir saatte kaldı: orada kaybolan, zaten gönderilemeyen e-postanın başarısızlık kaydıdır. Diğer kuyruklarda (`cv`, `appointment`, `points`)
 da kısa bekleme saklaması var; bu kartın kapsamı dışında, ayrıca değerlendirilir.
+## 2026-11-18 · Kimlikli sayfalarda gerçek 404
+
+Düzenleme, SSS ve şirket ayrıntısında yok/kapsam dışı kararı iskelet akışından önce verilir;
+istemci formu için sahiplik ayrıca doğrulanır. Yönetim etkinliğinde yalnız kayıt ve bölüm kapsamı
+kontrol edilir: kodun henüz geçerli olmaması, erişilebilir gelecekteki etkinliği 404 yapmaz.
+
 ## 2026-11-18 · Yılın Mezunu için örnek veri (seed)
 
 Deneme turunda "Bu mezunu seç", yayın rızası ve doğrulama bağlantısı adımları görülsün diye seed'e
