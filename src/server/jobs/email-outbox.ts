@@ -1,11 +1,20 @@
 import 'server-only';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { fromPrisma, type PgBoss } from 'pg-boss';
-import { EMAIL_QUEUE } from './email-queue';
+import {
+  EMAIL_QUEUE,
+  EMAIL_RETENTION,
+  emailRetentionSeconds,
+  type EmailRetention,
+} from './email-queue';
 import type { EmailOutbox } from './email-core';
 
 /** EmailLog ve pg-boss işi aynı PostgreSQL transaction'ında commit olur. */
-export function createEmailOutbox(db: PrismaClient, boss: Pick<PgBoss, 'send'>): EmailOutbox {
+export function createEmailOutbox(
+  db: PrismaClient,
+  boss: Pick<PgBoss, 'send'>,
+  retention: EmailRetention = EMAIL_RETENTION,
+): EmailOutbox {
   return {
     withKey(key, run, recipient) {
       return db.$transaction(
@@ -57,7 +66,11 @@ export function createEmailOutbox(db: PrismaClient, boss: Pick<PgBoss, 'send'>):
               });
             },
             async publish(id, input) {
-              const jobId = await boss.send(EMAIL_QUEUE, input, { id, db: fromPrisma(tx) });
+              const jobId = await boss.send(EMAIL_QUEUE, input, {
+                id,
+                db: fromPrisma(tx),
+                retentionSeconds: emailRetentionSeconds(input.template, retention),
+              });
               if (!jobId) throw new Error('EMAIL_JOB_NOT_CREATED');
             },
             async mark(id, state) {

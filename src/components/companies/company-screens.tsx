@@ -18,6 +18,7 @@ import {
   Select,
   Tabs,
   buttonClasses,
+  ActionBar,
 } from '@/components/ui';
 import { SearchBar } from '@/components/directory/search-bar';
 import { MentorCard } from '@/components/mentors/mentor-card';
@@ -343,7 +344,7 @@ export function CompanyMerge() {
           </p>
         )}
         {success && <p role="status">{t('mergeSuccess')}</p>}
-        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] bg-bg pb-4 pt-3 lg:bottom-0">
+        <ActionBar className="bg-bg pb-4 pt-3 lg:sticky lg:bottom-0">
           <Button
             fullWidth
             onClick={() => {
@@ -353,7 +354,7 @@ export function CompanyMerge() {
           >
             {t('merge')}
           </Button>
-        </div>
+        </ActionBar>
       </div>
       <Modal
         open={open}

@@ -22,7 +22,15 @@ import {
   type FieldVisibilitySettings,
   type SetFieldVisibilityInput,
 } from '@/contracts/privacy';
-import { Button, Checkbox, EmptyState, Field, Select, buttonClasses } from '@/components/ui';
+import {
+  Button,
+  Checkbox,
+  EmptyState,
+  Field,
+  Select,
+  buttonClasses,
+  ActionBar,
+} from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 import type messages from '../../../../messages/tr.json';
 import { AlumniVisibilitySetting } from '@/components/alumni/visibility-setting';
@@ -407,7 +415,7 @@ export function OnboardingFlow({
           <p className="mt-2 text-sm text-fg-muted">{t('missingDescription')}</p>
         </section>
       )}
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto space-y-2 bg-bg pt-4 pb-2 lg:static lg:pt-8">
+      <ActionBar className="space-y-2 bg-bg pt-4 pb-2 lg:mt-auto lg:pt-8">
         {/* Hata, eylem düğmesinin hemen üstünde: 390'da uzun listenin altında görünmeden kalmaz. */}
         {error && (
           <p id={actionErrorId} role="alert" className="text-base text-danger">
@@ -494,7 +502,7 @@ export function OnboardingFlow({
               {t('skip')}
             </Button>
           )}
-      </div>
+      </ActionBar>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 // Tek giriş noktası: ekranlar yalnız `@/components/ui`'dan içe aktarır (docs/design.md).
+export { ActionBar } from './action-bar';
 export { Avatar, initialsOf } from './avatar';
 export type { AvatarProps } from './avatar';
 export { BackLink } from './back-link';

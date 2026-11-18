@@ -1156,6 +1156,19 @@ Günlük süpürme son rızası verilmiş ama eski sürümdeki fotoğrafı silme
 görünmez kalır. Böylece metin sürümü yükselince geri alınmamış fotoğraflar topluca kaybolmaz.
 Yeniden onay ve kalan dosyaların temizliği PILOT-LEGAL kapsamında ayrıca kararlaştırılır.
 
+## 2026-11-18 · Telefonda eylem çubuğu sabit, toast çubuğun üstünde (kart 453)
+
+Kuru koşuda "Onayların kaydedildi." toast'ı "Doğrulamayı tamamla" düğmesinin üst yarısını örtüyordu: ortak toast bölgesi
+telefonda alt gezinmenin üstünde sabit 5 rem'de dururken dokuz ekran aynı şeridi bir eylem çubuğuyla tutuyordu. Toast'ı
+üste almak liste ekranlarının ana eylemlerini ("İlan ver", arama) örterdi; çubuk yüksekliğini sayıyla tahmin etmek her yeni
+çubukta bozulurdu. Karar: bütün alt eylem çubukları tek bileşen `ActionBar` (`src/components/ui/action-bar.tsx`); çubuk
+kendi yüksekliğini `--action-bar-h` değişkenine yazar, toast bölgesi alt konumunu CSS'te `5rem + güvenli alan +
+--action-bar-h` hesaplar (ölçüm kaydırmaya ya da olaya bağlı değil). `sticky` kendi üst kabının sonunu geçemediği için
+sayfa sonunda çubuk ekranın alt şeridinden 96-120 px yukarıda kalıyordu (R2 455 B4); bu yüzden telefonda (< lg) çubuk
+`fixed`: alt gezinmenin hemen üstünde, hep aynı yerde, akışta aynı yükseklikte bir boşluk (son içerik altında kalmaz).
+lg ve üstünde kap `display: contents`, çubuk eski akışında. Ekran klavyesi açıkken çubuk akışa döner (sabit çubuk iOS'ta
+klavyenin üstünde zıplamasın). Bekçi: `src/components/ui/action-bar*.test`, `tests/e2e/action-bar-pages.spec.ts` (sekiz gerçek
+çubuklu sayfa, üç kaydırma konumu, dört toast), `tests/e2e/toast-layout.spec.ts`.
 ## 2026-11-18 · E-posta teslim ve kuyruk saklama sınırı
 
 E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında işçi kaybı çift teslim üretebilir. Her denemede aynı Message-ID kullanılır; bu, sağlayıcıların tek teslimini garanti etmez. Tamamlanmış yükler 60 saniye sonra beş saniyelik bakım döngüsünde temizlenir; kapalı veya yoğun sistemde temizlik gecikebilir.
@@ -1171,3 +1184,28 @@ atlayamaz.
 
 Elle düzenlenen açıklama 1000 karakteri aşarsa veri kaybını önlemek için reddedilir ve alan
 hatası gösterilir. CV ayrıştırmasında uzun açıklamanın kesilmesi mevcut davranış olarak korunur.
+## 2026-11-18 · Bekleyen e-posta işinin saklama süresi
+
+Ölçüm (kendi veritabanı, saklama süresi 30 saniyeye kısaltılmış): işçi kapalıyken kuyruğa giren 41 e-postadan, işçi açılınca
+tüketici saniyede yaklaşık iki işi alırken beş saniyelik bakım süresi dolan bekleyen işleri yüküyle sildi; 30 e-posta hiç gitmedi,
+`EmailLog` `QUEUED` kaldı, yeniden kuyruğa koyan bir yol yok. Az sayıda iş (2) tüketiciden önce silinmedi. Gerçek değer bir saat olduğundan
+kayıp, işçi bir saatten uzun kapalı kalıp birikmiş işleri bakım yetişemeden silince oluşur. Bu yüzden bekleyen e-posta işi 7 gün saklanır
+(`EMAIL_PENDING_RETENTION_SECONDS`); tamamlanan işin yük silmesi (60 saniye) değişmedi. Hesap güvenliği bağlantısı taşıyan şablonlar
+(giriş, e-posta değişikliği; bildirim kataloğunda `ACCOUNT_SECURITY`) kısa ömürlüdür ve bağlantı yükü bekleme süresince durduğundan iş
+başına bir saat olarak kalır; süresi dolan bağlantı zaten geçersiz olurdu. Bekleyen yükte alıcı adresi ve metin en çok 7 gün durur
+(gönderebilmek için zorunlu); kullanıcı hesabını silerse bekleyen işler aynı işlemde silinmeye devam eder. Ölü mektup kuyruğu (`email.failed`)
+bir saatte kaldı: orada kaybolan, zaten gönderilemeyen e-postanın başarısızlık kaydıdır. Diğer kuyruklarda (`cv`, `appointment`, `points`)
+da kısa bekleme saklaması var; bu kartın kapsamı dışında, ayrıca değerlendirilir.
+## 2026-11-18 · Yılın Mezunu için örnek veri (seed)
+
+Deneme turunda "Bu mezunu seç", yayın rızası ve doğrulama bağlantısı adımları görülsün diye seed'e
+`prisma/seed-awards.ts` eklendi: 2023 akademik yılı için ödülsüz, 2024 için `alumniMentor`'a verilmiş
+ödüllü iki donmuş dönem. Bu, "seed seçim uydurmaz" kuralından bilinçli sapmadır; çünkü tarihi geçmişe
+alan SQL ya da dondurma komutu iş kurallarını atlatırdı. Dönem, kuralın izin verdiği hâlde
+(tören − 30 gün + 1 dakika) kurulur, adaylar uygun doğrulanmış mezunlardır, ödül donmuş listedeki bir
+adaya verilir, ayar ve seçim işlem kaydına yazılır. Yayın rızası seed'de yoktur: rıza kişinin kendi
+kararıdır, mezun `/odullerim` ekranından verir. Yalnız `APP_ENV` `local` ya da `test` iken çalışır;
+tanımsız ya da başka değerde yazmaz. Aynı bölüm ve yıl için döngü varsa dokunmaz, hiçbir şey silmez ya
+da güncellemez; yıllar sabit ve arayüzün varsayılan yılından farklı olduğu için tören tarihi adımı
+etkilenmez. Servis kodu `server-only` olduğundan seed satırları elle yazar; tutarlılığı DB testi
+gerçek servislerle sınar.
