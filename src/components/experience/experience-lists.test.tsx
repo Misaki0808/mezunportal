@@ -3,6 +3,7 @@ import { act, screen, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { ExperienceDetail } from '@/contracts/experience';
+import { ambiguousLinkNames } from '@/test/link-names';
 import { renderUi, renderWithToasts } from '@/test/render';
 
 import { ModerationQueue } from './moderation-queue';
@@ -56,6 +57,7 @@ describe('deneyimlerim', () => {
     renderUi(<MyExperiences initial={page(items)} list={vi.fn()} />);
     expect(screen.getAllByText('Taslak').length).toBeGreaterThan(0);
     expect(screen.getByText('Süreç eksik.')).toBeInTheDocument();
+    // Her eylemden tek tane var (taslak 1, reddedilen 1): ad düz kalır. "Aç" iki kartta olduğu için sıra numarası alır.
     expect(screen.getByRole('link', { name: 'Düzelt ve yeniden gönder' })).toHaveAttribute(
       'href',
       '/deneyim/b/duzenle',
@@ -65,7 +67,35 @@ describe('deneyimlerim', () => {
       '/deneyim/a/duzenle',
     );
     // Yayındaki deneyim düzenlenmez, yalnız açılır.
-    expect(screen.getAllByRole('link', { name: 'Aç' })).toHaveLength(2);
+    expect(screen.getByRole('link', { name: 'Örnek A.Ş. deneyimini aç (2/3)' })).toHaveAttribute(
+      'href',
+      '/deneyim/b',
+    );
+    expect(screen.getByRole('link', { name: 'Örnek A.Ş. deneyimini aç (3/3)' })).toHaveAttribute(
+      'href',
+      '/deneyim/c',
+    );
+    expect(ambiguousLinkNames()).toEqual([]);
+  });
+
+  it('birden çok taslak ve birden çok reddedilen kartın eylemleri farklı hedefler için ayırt edilir', () => {
+    const many = [
+      anonymous('d1', 'DRAFT'),
+      anonymous('d2', 'DRAFT'),
+      anonymous('r1', 'REJECTED', { moderationNote: 'Eksik.' }),
+      anonymous('r2', 'REJECTED', { moderationNote: 'Eksik.' }),
+    ];
+    renderUi(<MyExperiences initial={page(many)} list={vi.fn()} />);
+    for (const [name, href] of [
+      ['Örnek A.Ş. deneyimini düzenle (1/4)', '/deneyim/d1/duzenle'],
+      ['Örnek A.Ş. deneyimini düzenle (2/4)', '/deneyim/d2/duzenle'],
+      ['Örnek A.Ş. deneyimini düzelt ve yeniden gönder (3/4)', '/deneyim/r1/duzenle'],
+      ['Örnek A.Ş. deneyimini düzelt ve yeniden gönder (4/4)', '/deneyim/r2/duzenle'],
+    ] as const)
+      expect(screen.getByRole('link', { name })).toHaveAttribute('href', href);
+    // Görünür metin ad içinde kalır (sesle denetim): "Düzenle" / "Düzelt ve yeniden gönder".
+    expect(screen.queryByRole('link', { name: 'Düzenle' })).toBeNull();
+    expect(ambiguousLinkNames()).toEqual([]);
   });
 
   it('boş durumda yönlendirir', () => {

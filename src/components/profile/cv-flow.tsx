@@ -113,7 +113,12 @@ export function CvFlow({ availability, latest, initialReview, actions, pollMs = 
     };
   }, [processingId, actions, pollMs]);
 
+  // Adım değişince (yükleme → okuma → inceleme → bitti) odak başlığa taşınır. İlk çizimde taşınmaz: sayfa açılırken odak
+  // başlıkta olursa ilk Tab "İçeriğe geç"i atlar (kart 465); `useEffect` iki kez çalışsa (Strict Mode) da önceki adım korunur.
+  const focusedKind = useRef(kind);
   useEffect(() => {
+    if (focusedKind.current === kind) return;
+    focusedKind.current = kind;
     headingRef.current?.focus();
   }, [kind]);
 

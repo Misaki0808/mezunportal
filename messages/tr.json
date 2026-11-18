@@ -1346,7 +1346,9 @@
       "untitled": "Başlıksız taslak",
       "updated": "Son güncelleme: {date}",
       "edit": "Düzenle",
+      "editNamed": "{title} deneyimini düzenle ({index}/{count})",
       "open": "Aç",
+      "openNamed": "{title} deneyimini aç ({index}/{count})",
       "more": "Daha fazla göster",
       "anonymousNote": "Anonim"
     },
@@ -1364,7 +1366,8 @@
     },
     "rejection": {
       "title": "Reddedilme nedeni",
-      "action": "Düzelt ve yeniden gönder"
+      "action": "Düzelt ve yeniden gönder",
+      "actionNamed": "{title} deneyimini düzelt ve yeniden gönder ({index}/{count})"
     },
     "types": {
       "INTERNSHIP": "Staj",
@@ -1595,6 +1598,7 @@
       "cancel": "Vazgeç",
       "continue": "Devam et",
       "read": "Metni oku",
+      "readNamed": "Metni oku: {document}",
       "default": "Varsayılan",
       "loading": "Yükleniyor…",
       "retry": "Yeniden dene"
@@ -2417,6 +2421,7 @@
     "pageDescription": "Bölümünden yeni deneyimler, sana uyan ilanlar ve etkinlikler.",
     "empty": "Bu ay için henüz gösterilecek bir özet yok. Yeni paylaşımlar olduğunda burada bulacaksın.",
     "emptyAction": "Deneyimlere bak",
+    "rowOrdinal": "{label}, {index}/{count}",
     "adminPreview": "Aylık özet önizlemesi",
     "adminDescription": "E-posta gönderilmez; önizlemede kendi hesabının verileri kullanılır.",
     "intro": "Bu ay bölümünde olanlar:",
@@ -3435,6 +3440,7 @@
     "emptyMentors": "Şu anda gösterilecek mentor yok.",
     "anonymous": "Anonim",
     "viewExperience": "Deneyimi oku",
+    "viewExperienceNamed": "Deneyimi oku: {type}, {index}/{count}",
     "currentAlumni": "Çalışan mezun",
     "formerAlumni": "Geçmişte çalışan mezun",
     "season": {
