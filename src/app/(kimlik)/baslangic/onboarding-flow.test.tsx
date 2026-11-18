@@ -173,6 +173,10 @@ describe('ilk giriş akışı', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'En az bir seçenek seç veya bu adımı şimdilik atla.',
     );
+    const first = screen.getByRole('checkbox', { name: 'Yazılım geliştirme' });
+    expect(first).toHaveFocus();
+    expect(first).toBeInvalid();
+    expect(first).toHaveAccessibleDescription(/En az bir seçenek/);
     expect(save).not.toHaveBeenCalled();
   });
   it('ilgi seçimini kaydeder ve hedef atlamasını ayrı eyleme yollar', async () => {
