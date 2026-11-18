@@ -241,8 +241,8 @@ e-postaları dışındaki bildirimler kullanıcı tercihinden kapatılabilir; te
 denetlenir. Günlük işler worker çalışırken İstanbul saatine göre zamanlanır; mezun yanıtının imzası ve tek kullanımı
 sunucuda doğrulanır, sayfayı açmak yanıt sayılmaz.
 
-Bekleyen CV ayrıştırma ve hata işleri 24 saat, tek seferlik puan geri doldurma işi 7 gün saklanır; tamamlanan yükler
-60 saniye sonra bakımda silinir. CV iş yükü yalnız yükleme kimliği taşır; `appointment.sweep` ve `points.backfill` yükleri boştur.
+Bekleyen CV ayrıştırma ve hata işleri 24 saat, tek seferlik puan geri doldurma işi 7 gün saklanır; tamamlanan CV
+işleri 60 saniye, boş yük taşıyan puan geri doldurma işi 10 dakikalık tekillik penceresini korumak için 600 saniye sonra bakımda silinir. CV iş yükü yalnız yükleme kimliği taşır; `appointment.sweep` ve `points.backfill` yükleri boştur.
 Randevu süpürmesinin bekleyen işi 10 dakikada silinebilse de işçi geri döndüğünde dakikalık zamanlayıcı veritabanını
 tekrar tarar. Hatırlatma yalnız randevu başlamadan gönderilebilir; işçi başlangıç sonrasına kadar kapalıysa o hatırlatma
 kaçırılır. CV için 24 saatlik mevcut bekleme temizliği devam eder; süreyi geçen işler kullanıcıya başarısız olarak dönebilir.

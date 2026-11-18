@@ -40,7 +40,8 @@ export async function createPointsRuntime(
       retryLimit: 1,
       expireInSeconds: 1800,
       retentionSeconds: POINTS_PENDING_RETENTION_SECONDS,
-      deleteAfterSeconds: 60,
+      // Tamamlanan satır, 10 dakikalık tekillik penceresi boyunca korunmalıdır.
+      deleteAfterSeconds: BACKFILL_THROTTLE_SECONDS,
     };
     await boss.createQueue(POINTS_BACKFILL_QUEUE, settings);
     await boss.updateQueue(POINTS_BACKFILL_QUEUE, settings);

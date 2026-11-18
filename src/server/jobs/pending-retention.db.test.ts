@@ -80,7 +80,7 @@ describe('bekleyen kuyruk işlerinin bakım süresi', () => {
       for (const [name, seconds] of expected) {
         const queue = await appointment.boss.getQueue(name);
         expect(queue?.retentionSeconds).toBe(seconds);
-        expect(queue?.deleteAfterSeconds).toBe(60);
+        expect(queue?.deleteAfterSeconds).toBe(name === POINTS_BACKFILL_QUEUE ? 600 : 60);
         const id = await appointment.boss.send(name, { marker: 'default' });
         expect(id).toBeTruthy();
         const job = await appointment.boss.getJobById(name, id!);

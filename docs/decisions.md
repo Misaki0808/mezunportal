@@ -1205,5 +1205,6 @@ Kısaltılmış DB deneyinde işçi kapalıyken süresi dolan `appointment.sweep
 `points.backfill` işleri bakımda silindi; daha uzun ömürlü işler tüketici açılınca birer kez işlendi. Randevu süpürmesi
 dakikalık ve tekrarlanabilir olduğundan 10 dakika kaldı; başlayan randevunun kaçmış hatırlatması geri getirilemez.
 CV işleri yalnız yükleme kimliği taşır ve var olan 24 saatlik yükleme ömrüne uyacak şekilde 24 saat bekler; puan geri
-doldurma tek seferlik ve yükü boş olduğundan 7 gün bekler. Tamamlanan işlerin yükü bakımda 60 saniye sonra silinir.
+doldurma tek seferlik ve yükü boş olduğundan 7 gün bekler. Tamamlanan CV işleri 60 saniye sonra; boş yük taşıyan puan
+işi, 10 dakikalık tekillik penceresi korunacak şekilde 600 saniye sonra bakımda silinir.
 Eski kuyrukların ayarları worker açılışında güncellenir; daha önce üretilmiş işlerin mevcut bitiş zamanı değişmez.
