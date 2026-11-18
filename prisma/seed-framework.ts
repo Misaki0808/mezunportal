@@ -1,5 +1,6 @@
 import type { PrismaClient } from '../src/generated/prisma/client';
 import { seedAccounts } from './seed-accounts';
+import { seedAwardScenario } from './seed-awards';
 import { seedCourses } from './seed-courses';
 import { seedDictionary } from './seed-dictionary';
 import { seedFeedback } from './seed-feedback';
@@ -31,6 +32,8 @@ export const SEED_MODULES = [
   { name: 'feedback', run: seedFeedback },
   { name: 'pointRules', run: seedPointRules },
   { name: 'phase2', run: (prisma: PrismaClient) => seedPhase2(prisma) },
+  // Yılın Mezunu deneme senaryosu: yalnız APP_ENV local/test'te yazar (seed-awards.ts); örnek mezunlardan sonra.
+  { name: 'awards', run: (prisma: PrismaClient) => seedAwardScenario(prisma) },
 ] as const;
 
 export async function runSeedModules(prisma: PrismaClient) {

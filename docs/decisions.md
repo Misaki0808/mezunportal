@@ -1165,3 +1165,16 @@ E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında iş
 Düzenleme, SSS ve şirket ayrıntısında yok/kapsam dışı kararı iskelet akışından önce verilir;
 istemci formu için sahiplik ayrıca doğrulanır. Yönetim etkinliğinde yalnız kayıt ve bölüm kapsamı
 kontrol edilir: kodun henüz geçerli olmaması, erişilebilir gelecekteki etkinliği 404 yapmaz.
+## 2026-11-18 · Yılın Mezunu için örnek veri (seed)
+
+Deneme turunda "Bu mezunu seç", yayın rızası ve doğrulama bağlantısı adımları görülsün diye seed'e
+`prisma/seed-awards.ts` eklendi: 2023 akademik yılı için ödülsüz, 2024 için `alumniMentor`'a verilmiş
+ödüllü iki donmuş dönem. Bu, "seed seçim uydurmaz" kuralından bilinçli sapmadır; çünkü tarihi geçmişe
+alan SQL ya da dondurma komutu iş kurallarını atlatırdı. Dönem, kuralın izin verdiği hâlde
+(tören − 30 gün + 1 dakika) kurulur, adaylar uygun doğrulanmış mezunlardır, ödül donmuş listedeki bir
+adaya verilir, ayar ve seçim işlem kaydına yazılır. Yayın rızası seed'de yoktur: rıza kişinin kendi
+kararıdır, mezun `/odullerim` ekranından verir. Yalnız `APP_ENV` `local` ya da `test` iken çalışır;
+tanımsız ya da başka değerde yazmaz. Aynı bölüm ve yıl için döngü varsa dokunmaz, hiçbir şey silmez ya
+da güncellemez; yıllar sabit ve arayüzün varsayılan yılından farklı olduğu için tören tarihi adımı
+etkilenmez. Servis kodu `server-only` olduğundan seed satırları elle yazar; tutarlılığı DB testi
+gerçek servislerle sınar.
