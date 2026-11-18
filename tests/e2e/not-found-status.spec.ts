@@ -226,10 +226,76 @@ test('düzenlemede yabancı ve olmayan kayıt gerçek 404, kendi taslağı formd
     await loginAs(page, 'student');
     await compare('/deneyim', foreignExperience.id);
     await compare('/deneyim', foreignPublished.id);
+    const missingHtml = await (await page.goto(`/deneyim/${UNKNOWN}/duzenle`))!.text();
+    const publishedHtml = await (await page.goto(
+      `/deneyim/${foreignPublished.id}/duzenle`,
+    ))!.text();
+    // Ortak mesaj kataloğu her iki yanıtta bulunur; kayda özgü ek metin ise sızmamalı.
+    const phrases = [
+      messages.experiences.form.notEditableTitle,
+      messages.experiences.form.notEditableDescription,
+    ];
+    const count = (text: string, phrase: string) => text.split(phrase).length - 1;
+    for (const phrase of phrases)
+      expect(count(publishedHtml, phrase)).toBe(count(missingHtml, phrase));
+    // Geliştirme modunda React tanılama kayıtları, referans numaraları ve akış sırası değişebilir.
+    const rscRecords = (text: string) =>
+      text
+        .replaceAll(foreignPublished.id, UNKNOWN)
+        .replace(/(\["\$","\$L[0-9a-f]+",")[A-Za-z0-9_-]{21}([vm])(")/g, '$1REQUEST$2$3')
+        .split('\n')
+        .filter((record) => !/^[0-9a-f]+:D/.test(record))
+        .map((record) =>
+          record
+            .replace(/^[0-9a-f]+:/, 'ID:')
+            .replace(/"\$(L?)[0-9a-f]+"/g, (_, kind: string) => `"$${kind}REF"`),
+        )
+        .sort();
+    const htmlBody = (html: string) => {
+      const chunks: string[] = [];
+      const other: string[] = [];
+      const shell = html.replace(
+        /<script>self\.__next_f\.push\((.*?)\)<\/script>/gs,
+        (_, arg: string) => {
+          const part = JSON.parse(arg) as [number, unknown];
+          if (part[0] === 1 && typeof part[1] === 'string') chunks.push(part[1]);
+          else other.push(JSON.stringify(part));
+          return '';
+        },
+      );
+      return {
+        shell: shell
+          .replaceAll(foreignPublished.id, UNKNOWN)
+          .replace(/self\.__next_r="[A-Za-z0-9_-]+"/g, 'self.__next_r="REQUEST"'),
+        other: other.sort(),
+        records: rscRecords(chunks.join('')),
+      };
+    };
+    expect(htmlBody(publishedHtml)).toEqual(htmlBody(missingHtml));
+    const publishedRsc = await page.request.get(
+      `/deneyim/${foreignPublished.id}/duzenle?_rsc=review`,
+      {
+        headers: { RSC: '1' },
+      },
+    );
+    expect(publishedRsc.headers()['content-type']).toContain('text/x-component');
+    const missingRsc = await page.request.get(`/deneyim/${UNKNOWN}/duzenle?_rsc=review`, {
+      headers: { RSC: '1' },
+    });
+    expect(missingRsc.headers()['content-type']).toContain('text/x-component');
+    const [payload, missingPayload] = await Promise.all([publishedRsc.text(), missingRsc.text()]);
+    for (const phrase of phrases)
+      expect(count(payload, phrase)).toBe(count(missingPayload, phrase));
+    expect(rscRecords(payload)).toEqual(rscRecords(missingPayload));
     expect((await page.goto(`/deneyim/${ownExperience.id}/duzenle`))?.status()).toBe(200);
     await expect(page.locator('main form')).toBeVisible();
-    expect((await page.goto(`/deneyim/${ownPublished.id}/duzenle`))?.status()).toBe(200);
+    const ownPublishedResponse = await page.goto(`/deneyim/${ownPublished.id}/duzenle`);
+    expect(ownPublishedResponse?.status()).toBe(200);
     await expect(page.locator('main form')).toHaveCount(0);
+    await expect(page.getByText(messages.experiences.form.notEditableTitle)).toBeVisible();
+    const ownPublishedHtml = await ownPublishedResponse!.text();
+    for (const phrase of phrases)
+      expect(count(ownPublishedHtml, phrase)).toBeGreaterThan(count(missingHtml, phrase));
     expect((await page.goto(`/ilanlar/${foreignJob.id}/duzenle`))?.status()).toBe(200);
     await expect(
       page.getByRole('heading', { name: messages.ui.errorState.expected.AUTH_FORBIDDEN }),
