@@ -150,14 +150,19 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
             className="[&_.text-sm]:text-base"
             label={t('note')}
             hint={t('optional')}
-            error={noteError ? errors(noteError) : undefined}
+            error={
+              noteError
+                ? noteError === 'VALIDATION_INVALID' && note.trim().length > 1000
+                  ? t('noteTooLong')
+                  : errors(noteError)
+                : undefined
+            }
           >
             {(control) => (
               <Textarea
                 {...control}
                 ref={noteField}
                 value={note}
-                maxLength={1000}
                 rows={4}
                 onChange={(event) => {
                   setNote(event.target.value);

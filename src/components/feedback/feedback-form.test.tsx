@@ -49,6 +49,18 @@ describe('FeedbackForm', () => {
     expect(note).toBeInvalid();
     expect(note).toHaveAttribute('aria-describedby');
   });
+  it('1001 karakterlik notu kesmeden reddeder ve alana odaklanır', async () => {
+    const { user } = renderUi(<FeedbackForm view={view} />);
+    await user.click(screen.getByRole('radio', { name: 'Evet, gerçekleşti' }));
+    const note = screen.getByLabelText(/Eklemek istediğin/);
+    expect(note).not.toHaveAttribute('maxlength');
+    fireEvent.change(note, { target: { value: 'İ'.repeat(1001) } });
+    await user.click(screen.getByRole('button', { name: 'Yanıtı gönder' }));
+    expect(note).toHaveValue('İ'.repeat(1001));
+    expect(note).toHaveFocus();
+    expect(note).toHaveAccessibleDescription(/en fazla 1000/);
+    expect(submit).not.toHaveBeenCalled();
+  });
   it('iki grup da kit radyosudur (24 px, tarayıcı çizimi değil); ad korunur, başta seçili yok', () => {
     renderUi(<FeedbackForm view={view} />);
 

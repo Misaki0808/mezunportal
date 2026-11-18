@@ -371,6 +371,14 @@ describe('mentor ayarları', () => {
     expect(screen.getByText('Yüz yüze için yer notu yaz.')).toBeInTheDocument();
     expect(screen.getByLabelText(/Yüz yüze görüşme yeri/)).toHaveFocus();
     expect(screen.getByLabelText(/Yüz yüze görüşme yeri/)).toBeInvalid();
+    const locationNote = screen.getByLabelText(/Yüz yüze görüşme yeri/);
+    expect(locationNote).not.toHaveAttribute('maxlength');
+    fireEvent.change(locationNote, { target: { value: 'İ'.repeat(301) } });
+    await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
+    expect(locationNote).toHaveValue('İ'.repeat(301));
+    expect(locationNote).toHaveFocus();
+    expect(locationNote).toHaveAccessibleDescription(/en fazla 300/);
+    await user.clear(locationNote);
     await user.type(screen.getByLabelText(/Yüz yüze görüşme yeri/), 'Kampüs kafe');
     await user.clear(screen.getByLabelText(/Aylık görüşme kapasitesi/));
     await user.type(screen.getByLabelText(/Aylık görüşme kapasitesi/), '99');

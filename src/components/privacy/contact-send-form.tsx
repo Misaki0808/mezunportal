@@ -145,7 +145,6 @@ export function ContactSendForm({
               {...control}
               ref={messageField}
               rows={4}
-              maxLength={CONTACT_MESSAGE_MAX}
               value={message}
               disabled={form.busy}
               placeholder={t('notePlaceholder')}

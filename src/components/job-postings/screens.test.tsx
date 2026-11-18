@@ -322,6 +322,22 @@ it('ilan iletişiminde alan seçimi yoksa hata seçeneğe bağlanır ve odak kor
   expect(checkbox).toBeInvalid();
   expect(checkbox).toHaveAccessibleDescription(/en az bir/i);
 });
+it('ilan iletişiminde 501 karakterlik not kesilmeden reddedilir', async () => {
+  const { PostingContactForm } = await import('./contact');
+  const send = vi.fn();
+  renderWithToasts(
+    <PostingContactForm postingId="ilan-123" requestableFields={['EMAIL']} send={send} />,
+  );
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  const note = screen.getByLabelText(/Kısa not/);
+  expect(note).not.toHaveAttribute('maxlength');
+  fireEvent.change(note, { target: { value: 'İ'.repeat(501) } });
+  fireEvent.submit(screen.getByRole('button', { name: 'Talep gönder' }).closest('form')!);
+  expect(send).not.toHaveBeenCalled();
+  expect(note).toHaveValue('İ'.repeat(501));
+  expect(note).toHaveFocus();
+  expect(note).toBeInvalid();
+});
 it('ilan iletişiminde sunucu not alanını reddederse not ve seçim korunur', async () => {
   const { PostingContactForm } = await import('./contact');
   const send = vi.fn().mockResolvedValue({

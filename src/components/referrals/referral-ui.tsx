@@ -132,7 +132,15 @@ export function ReferralCreate({
             </Field>
           )}
           {!postingId && (
-            <Field label={t('organization')} error={fieldErrors.organizationName} required>
+            <Field
+              label={t('organization')}
+              error={
+                fieldErrors.organizationName && organizationName.trim().length > 120
+                  ? t('organizationTooLong')
+                  : fieldErrors.organizationName
+              }
+              required
+            >
               {(p) => (
                 <Input
                   {...p}
@@ -140,21 +148,25 @@ export function ReferralCreate({
                     fields.current.organizationName = el;
                   }}
                   autoComplete="organization"
-                  maxLength={120}
                   value={organizationName}
                   onChange={(e) => setOrganization(e.target.value)}
                 />
               )}
             </Field>
           )}
-          <Field label={t('note')} hint={t('noteHint')} error={fieldErrors.note}>
+          <Field
+            label={t('note')}
+            hint={t('noteHint')}
+            error={
+              fieldErrors.note && note.trim().length > 500 ? t('noteTooLong') : fieldErrors.note
+            }
+          >
             {(p) => (
               <Textarea
                 {...p}
                 ref={(el) => {
                   fields.current.note = el;
                 }}
-                maxLength={500}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />

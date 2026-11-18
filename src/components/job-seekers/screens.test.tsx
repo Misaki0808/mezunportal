@@ -126,6 +126,23 @@ it('iletişim için en az bir alan istenir, sunucu kapalı alanı seçtirmez', a
   expect(email.closest('fieldset')).toHaveAccessibleDescription();
   expect(mocks.request).not.toHaveBeenCalled();
 });
+it('aday iletişiminde fazla uzun not kesilmeden reddedilir', async () => {
+  renderWithToasts(
+    <SeekerContact
+      candidateRef="opaque"
+      preview={{ canRequest: true, card: initial.preview!, requestableFields: ['EMAIL'] }}
+    />,
+  );
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  const note = screen.getByLabelText(/Kısa not/);
+  expect(note).not.toHaveAttribute('maxlength');
+  fireEvent.change(note, { target: { value: 'İ'.repeat(501) } });
+  fireEvent.click(screen.getByRole('button', { name: 'İstek gönder' }));
+  expect(note).toHaveValue('İ'.repeat(501));
+  expect(note).toHaveFocus();
+  expect(note).toHaveAccessibleDescription(/en fazla 500/);
+  expect(mocks.request).not.toHaveBeenCalled();
+});
 it('sunucunun iletişim alanı reddinde bekleme bitince ilk kutuya odaklanır', async () => {
   mocks.request.mockResolvedValueOnce({
     ok: false,

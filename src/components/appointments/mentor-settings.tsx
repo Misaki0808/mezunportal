@@ -156,7 +156,9 @@ export function MentorSettings({
         const key = issue.path[0];
         if (key === 'monthlyCapacity') found.capacity = t('errors.capacity');
         else if (key === 'meetingModes') found.modes = t('errors.modes');
-        else if (key === 'inPersonNote') found.note = t('errors.note');
+        else if (key === 'inPersonNote')
+          found.note =
+            inPersonNote.trim().length > 300 ? t('errors.noteTooLong') : t('errors.note');
       }
       setFieldErrors(found);
       if (found.capacity) capacityField.current?.focus();
@@ -315,7 +317,6 @@ export function MentorSettings({
                 {...control}
                 ref={noteField}
                 rows={3}
-                maxLength={300}
                 value={inPersonNote}
                 onChange={(event) => setInPersonNote(event.target.value)}
               />

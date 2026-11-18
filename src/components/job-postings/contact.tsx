@@ -136,7 +136,6 @@ export function PostingContactForm({
               {...props}
               ref={messageField}
               rows={4}
-              maxLength={CONTACT_MESSAGE_MAX}
               value={message}
               onChange={(event) => {
                 setMessage(event.target.value);

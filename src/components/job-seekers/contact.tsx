@@ -132,7 +132,6 @@ export function SeekerContact({
               ref={messageField}
               aria-invalid={messageError || undefined}
               aria-describedby={messageError ? messageErrorId : undefined}
-              maxLength={500}
               rows={4}
               value={message}
               onChange={(e) => {
@@ -142,7 +141,7 @@ export function SeekerContact({
             />
             {messageError && (
               <span id={messageErrorId} role="alert" className="text-danger">
-                {errors('VALIDATION_INVALID')}
+                {message.trim().length > 500 ? t('messageTooLong') : errors('VALIDATION_INVALID')}
               </span>
             )}
           </label>

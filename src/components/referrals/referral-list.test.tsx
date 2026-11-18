@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithToasts as renderUi } from '@/test/render';
 import type { ReferralPage, ReferralView } from '@/contracts/referrals';
@@ -51,6 +51,13 @@ it('referans beyanında ilk geçersiz alana hata ve odak gider, not korunur', as
   expect(organization).toBeInvalid();
   expect(organization).toHaveAccessibleDescription();
   expect(note).toHaveValue('Korunacak not');
+  await user.type(organization, 'Örnek Kurum');
+  expect(note).not.toHaveAttribute('maxlength');
+  fireEvent.change(note, { target: { value: 'İ'.repeat(501) } });
+  await user.click(screen.getByRole('button', { name: /gönder/i }));
+  expect(note).toHaveValue('İ'.repeat(501));
+  expect(note).toHaveFocus();
+  expect(note).toHaveAccessibleDescription(/en fazla 500/);
 });
 
 describe('referanslarım: boş durum role göre', () => {
