@@ -33,6 +33,11 @@ test('öğrenci görüşme formunu 390 pikselde doldurur ve ikinci kez gönderem
     await loginAs(page, 'student');
     await page.goto(`/hesap/gorusme/${appointment.id}`);
     await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: 'Yanıtı gönder' }).click();
+    const happened = page.getByRole('radio', { name: 'Evet, gerçekleşti' });
+    await expect(happened).toBeFocused();
+    await expect(happened).toHaveAttribute('aria-invalid', 'true');
+    await expect(happened).toHaveAccessibleDescription(/gerçekleşip gerçekleşmediğini seç/);
     await page.getByRole('radio', { name: 'Evet, gerçekleşti' }).check();
     await page.getByRole('radio', { name: 'Evet, faydalıydı' }).check();
     await page.getByLabel('Eklemek istediğin bir şey var mı?').fill('Görüşme faydalıydı.');

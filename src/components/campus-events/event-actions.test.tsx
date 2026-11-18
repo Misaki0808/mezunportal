@@ -25,6 +25,19 @@ beforeEach(() => {
 });
 
 describe('EventActions', () => {
+  it.each(['1234567', '12345a'])('geçersiz kod %s kesilmez veya gönderilmez', async (code) => {
+    const { user } = renderWithToasts(
+      <EventActions eventId={ID} registered attended={false} full={false} />,
+    );
+    const field = screen.getByLabelText('Altı haneli katılım kodu');
+    await user.type(field, code);
+    await user.click(screen.getByRole('button', { name: 'Katılımı doğrula' }));
+    expect(mocks.checkIn).not.toHaveBeenCalled();
+    expect(field).toHaveValue(code);
+    expect(field).toHaveFocus();
+    expect(field).toBeInvalid();
+    expect(field).toHaveAccessibleDescription();
+  });
   it('kontenjan doluyken kayıt düğmesi kapalıdır ve sebebi yazar', () => {
     renderWithToasts(<EventActions eventId={ID} registered={false} attended={false} full />);
     expect(screen.getByRole('button', { name: 'Katılıyorum' })).toBeDisabled();
@@ -82,7 +95,7 @@ describe('EventActions', () => {
     );
     const field = screen.getByLabelText('Altı haneli katılım kodu');
     await user.type(field, '12ab3');
-    expect(field).toHaveValue('123');
+    expect(field).toHaveValue('12ab3');
     await user.click(screen.getByRole('button', { name: 'Katılımı doğrula' }));
     expect(mocks.checkIn).not.toHaveBeenCalled();
     expect(screen.getByText('Altı haneli kodu eksiksiz yaz.')).toBeInTheDocument();

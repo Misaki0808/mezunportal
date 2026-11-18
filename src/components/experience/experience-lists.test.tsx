@@ -237,6 +237,8 @@ describe('şikâyet alt sayfası', () => {
     expect(
       within(dialog).getByText('Şikâyet gerekçesi en az 3 karakter olmalı.'),
     ).toBeInTheDocument();
+    expect(within(dialog).getByLabelText(/Neden şikâyet/)).toHaveFocus();
+    expect(within(dialog).getByLabelText(/Neden şikâyet/)).toHaveAccessibleDescription();
     await user.type(within(dialog).getByLabelText(/Neden şikâyet/), 'Yanıltıcı bilgi');
     await user.click(within(dialog).getByRole('button', { name: 'Şikâyeti gönder' }));
     expect(report).toHaveBeenCalledWith({ experienceId: 'e1', reason: 'Yanıltıcı bilgi' });

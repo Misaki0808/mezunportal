@@ -35,7 +35,7 @@ export const ADMIN_ACTIONS = {
   /** Geriye dönük puan hesaplamasını başlatma (sistem yöneticisi). */
   POINTS_BACKFILL: { reasonRequired: false },
   SUSPICION_DECIDE: { reasonRequired: true },
-  ADMIN_GRANT: { reasonRequired: false },
+  ADMIN_GRANT: { reasonRequired: true },
   ADMIN_REVOKE: { reasonRequired: true },
   DATA_EXPORT: { reasonRequired: false },
   BULK_INVITATION: { reasonRequired: false },

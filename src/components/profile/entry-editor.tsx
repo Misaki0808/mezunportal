@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ZodIssue } from 'zod';
 import { hasPersonalDataPattern } from '@/lib/personal-data';
 
@@ -12,7 +12,7 @@ import {
   parsedCertificationSchema,
   parsedEducationSchema,
   parsedLanguageSchema,
-  parsedPositionSchema,
+  manualPositionSchema,
   parsedProfileSchema,
   parsedSkillSchema,
   type CvSection,
@@ -38,7 +38,7 @@ type FieldKey =
   | 'issuer'
   | 'issuedDate';
 
-/** Bölüm → forma giren alanlar (sırayla). Doğrulama CV hattıyla AYNI şemalardır (sözleşme). */
+/** Bölüm → forma giren alanlar (sırayla). İş açıklamasında elle kayıt sınırı uygulanır. */
 const SECTION_FIELDS: Record<CvSection, readonly FieldKey[]> = {
   PROFILE: ['headline', 'city', 'summary'],
   EDUCATION: ['institution', 'level', 'fieldOfStudy', 'startDate', 'endDate', 'isCurrent'],
@@ -135,7 +135,7 @@ function candidate(section: CvSection, state: State): unknown {
 const SCHEMAS = {
   PROFILE: parsedProfileSchema,
   EDUCATION: parsedEducationSchema,
-  POSITION: parsedPositionSchema,
+  POSITION: manualPositionSchema,
   LANGUAGE: parsedLanguageSchema,
   CERTIFICATION: parsedCertificationSchema,
 } as const;
@@ -223,6 +223,7 @@ export function EntryEditor({
   const codes = useTranslations('errors.codes');
   const [state, setState] = useState<State>(() => initialState(initial));
   const [errors, setErrors] = useState<Partial<Record<FieldKey, ErrorKind>>>({});
+  const controls = useRef<Partial<Record<FieldKey, HTMLElement | null>>>({});
   const fields = SECTION_FIELDS[section];
 
   function set(key: FieldKey, value: string | boolean) {
@@ -239,6 +240,8 @@ export function EntryEditor({
     const result = validateEntry(section, state);
     if (!result.ok) {
       setErrors(result.errors);
+      const first = fields.find((key) => result.errors[key]);
+      if (first) controls.current[first]?.focus();
       return;
     }
     onSubmit(result.values);
@@ -274,6 +277,9 @@ export function EntryEditor({
           return (
             <Checkbox
               key={key}
+              ref={(element) => {
+                controls.current[key] = element;
+              }}
               label={t('fields.isCurrent')}
               checked={state.isCurrent}
               onChange={(event) => set('isCurrent', event.target.checked)}
@@ -287,6 +293,9 @@ export function EntryEditor({
               {(control) => (
                 <Select
                   {...control}
+                  ref={(element) => {
+                    controls.current[key] = element;
+                  }}
                   value={state.level}
                   onChange={(event) => set('level', event.target.value)}
                 >
@@ -309,6 +318,9 @@ export function EntryEditor({
               {(control) => (
                 <Select
                   {...control}
+                  ref={(element) => {
+                    controls.current[key] = element;
+                  }}
                   value={state.employmentType}
                   onChange={(event) => set('employmentType', event.target.value)}
                 >
@@ -329,6 +341,9 @@ export function EntryEditor({
               {(control) => (
                 <Textarea
                   {...control}
+                  ref={(element) => {
+                    controls.current[key] = element;
+                  }}
                   rows={4}
                   value={state[key]}
                   onChange={(event) => set(key, event.target.value)}
@@ -350,6 +365,9 @@ export function EntryEditor({
             {(control) => (
               <Input
                 {...control}
+                ref={(element) => {
+                  controls.current[key] = element;
+                }}
                 value={state[key as TextKey]}
                 inputMode={DATE_FIELDS.includes(key) ? 'numeric' : undefined}
                 onChange={(event) => set(key, event.target.value)}

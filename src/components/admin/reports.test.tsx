@@ -75,6 +75,16 @@ it('iki kuyruk da boşken tek sakin boş durum vardır', () => {
   expect(screen.queryByText('Açık ilan şikâyeti yok.')).toBeNull();
   expect(screen.queryByRole('heading', { name: 'İlan şikâyetleri' })).toBeNull();
 });
+it('deneyim şikâyeti kararında boş gerekçe alanda gösterilir ve odaklanır', async () => {
+  const { user } = renderReports(true, false);
+  await user.click(screen.getAllByRole('button', { name: 'Şikâyeti reddet' })[0]!);
+  const dialog = within(screen.getByRole('dialog'));
+  await user.click(dialog.getByRole('button', { name: 'Onayla' }));
+  const reason = dialog.getByRole('textbox');
+  expect(reason).toHaveFocus();
+  expect(reason).toBeInvalid();
+  expect(reason).toHaveAccessibleDescription();
+});
 it('deneyim şikâyeti varken ilan bölümünün kendi boş durumu görünür', () => {
   renderReports(true, false);
   expect(screen.getByText('Açık ilan şikâyeti yok.')).toBeVisible();

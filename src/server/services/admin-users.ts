@@ -338,9 +338,9 @@ export async function grantAdmin(
   deps: AdminUserDeps,
   adminUserId: string,
   input:
-    | { scope: 'SYSTEM'; userId: string; reason?: string }
-    | { scope: 'FACULTY'; userId: string; facultyId: string; reason?: string }
-    | { scope: 'DEPARTMENT'; userId: string; departmentId: string; reason?: string },
+    | { scope: 'SYSTEM'; userId: string; reason: string }
+    | { scope: 'FACULTY'; userId: string; facultyId: string; reason: string }
+    | { scope: 'DEPARTMENT'; userId: string; departmentId: string; reason: string },
 ): Promise<GrantAdminOutput> {
   const now = nowOf(deps);
   assertReason('ADMIN_GRANT', input.reason);

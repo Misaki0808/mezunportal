@@ -62,7 +62,17 @@ const anyAdminCalls: [string, () => Promise<unknown>, keyof typeof mocks.service
   ],
 ];
 const systemCalls: [string, () => Promise<unknown>, keyof typeof mocks.service][] = [
-  ['grantAdmin', () => grantAdmin({ confirmed: true, scope: 'SYSTEM', userId: 'u' }), 'grantAdmin'],
+  [
+    'grantAdmin',
+    () =>
+      grantAdmin({
+        confirmed: true,
+        scope: 'SYSTEM',
+        userId: 'u',
+        reason: 'Yetki görevlendirmesi',
+      }),
+    'grantAdmin',
+  ],
   [
     'revokeAdmin',
     () => revokeAdmin({ confirmed: true, grantId: 'g', reason: 'Görev bitti' }),
@@ -103,6 +113,16 @@ describe('koruma her şeyden önce gelir', () => {
 });
 
 describe('girdi doğrulanır; yönetici kimliği yalnız oturumdan gelir', () => {
+  it('yönetici atama eylemi gerekçesiz isteği servise iletmez', async () => {
+    expect(
+      await grantAdmin({ confirmed: true, scope: 'SYSTEM', userId: 'u' } as never),
+    ).toMatchObject({
+      ok: false,
+      errorCode: 'VALIDATION_INVALID',
+      fieldErrors: { reason: 'VALIDATION_INVALID' },
+    });
+    expect(mocks.service.grantAdmin).not.toHaveBeenCalled();
+  });
   it('geçersiz girdi servise ulaşmaz', async () => {
     expect(await suspendUser({ confirmed: true, userId: 'u', reason: '' })).toMatchObject({
       ok: false,

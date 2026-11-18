@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl';
 import { useRef, useState, type FormEvent } from 'react';
 
 import {
-  ACCOUNT_NAME_LIMITS,
   isValidAccountName,
   normalizeAccountName,
   updateMyNameSchema,
@@ -90,7 +89,6 @@ export function NameForm({
             ref={input}
             value={name}
             autoComplete="name"
-            maxLength={ACCOUNT_NAME_LIMITS.max}
             onChange={(event) => {
               setName(event.target.value);
               setFieldError(undefined);

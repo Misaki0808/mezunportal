@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { AdminUserDetail as Detail } from '@/contracts/admin-users';
 import { renderUi } from '@/test/render';
 import { AdminUserDetail } from './user-detail';
 import { AdminUsers } from './users';
+import { Dictionaries } from './dictionaries';
+import { AdminGrants } from './grants';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 beforeAll(() => {
@@ -41,6 +43,73 @@ const detail: Detail = {
   ],
 };
 const departments = [{ id: 'd1', name: 'YBS', facultyId: 'f1', facultyName: 'Fakülte' }];
+it('yetki atamada arama ve seçim hataları kendi alanlarına odaklanır', async () => {
+  const search = vi
+    .fn()
+    .mockResolvedValue({ ok: true, data: { items: [detail], nextCursor: null } });
+  const grant = vi.fn();
+  const { user } = renderUi(
+    <AdminGrants
+      initial={{ items: [], nextCursor: null }}
+      departments={departments}
+      list={vi.fn()}
+      search={search}
+      grant={grant}
+      revoke={vi.fn()}
+    />,
+  );
+  const query = screen.getByLabelText(/Ad veya e-posta ile ara/);
+  await user.click(screen.getByRole('button', { name: 'Ara' }));
+  expect(query).toHaveFocus();
+  expect(query).toBeInvalid();
+  expect(query).toHaveAccessibleDescription();
+  await user.type(query, 'Örnek');
+  await user.click(screen.getByRole('button', { name: 'Ara' }));
+  const selectedUser = await screen.findByLabelText(/^Kullanıcı/);
+  await user.click(screen.getByRole('button', { name: 'Yönetici ata' }));
+  expect(selectedUser).toHaveFocus();
+  expect(selectedUser).toBeInvalid();
+  expect(screen.queryByRole('dialog')).toBeNull();
+  await user.selectOptions(selectedUser, 'u1');
+  await user.selectOptions(screen.getByLabelText(/^Bölüm/), 'd1');
+  await user.click(screen.getByRole('button', { name: 'Yönetici ata' }));
+  const dialog = await screen.findByRole('dialog');
+  await user.click(within(dialog).getByRole('button', { name: 'Onayla' }));
+  const reason = within(dialog).getByLabelText(/İşlem gerekçesi/);
+  expect(reason).toHaveFocus();
+  expect(reason).toBeInvalid();
+  expect(grant).not.toHaveBeenCalled();
+});
+it('sözlükte eksik ad ilgili alanda gösterilir ve odağa alınır', async () => {
+  const create = vi.fn();
+  const { user } = renderUi(
+    <Dictionaries
+      initial={{ items: [], nextCursor: null }}
+      sectors={[]}
+      list={vi.fn()}
+      create={create}
+      update={vi.fn()}
+      remove={vi.fn()}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: 'Ekle' }));
+  const dialog = screen.getByRole('dialog');
+  await user.click(within(dialog).getByRole('button', { name: 'Kaydet' }));
+  const name = within(dialog).getByLabelText(/^Ad/);
+  expect(name).toHaveFocus();
+  expect(name).toBeInvalid();
+  expect(name).toHaveAccessibleDescription();
+  expect(create).not.toHaveBeenCalled();
+  await user.type(name, 'Örnek kurum');
+  const aliases = within(dialog).getByLabelText(/Diğer adlar/);
+  await user.type(aliases, 'A');
+  await user.click(within(dialog).getByRole('button', { name: 'Kaydet' }));
+  expect(aliases).toHaveFocus();
+  expect(aliases).toBeInvalid();
+  expect(aliases).toHaveAccessibleDescription();
+  expect(name).toHaveValue('Örnek kurum');
+  expect(create).not.toHaveBeenCalled();
+});
 describe('yönetimde kullanıcılar', () => {
   it('yalnız maskeli iletişim alanlarını gösterir ve kapsam dışı yönetim eylemi sunmaz', () => {
     renderUi(
@@ -91,6 +160,8 @@ describe('yönetimde kullanıcılar', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Onayla' }));
     expect(suspend).not.toHaveBeenCalled();
     expect(within(dialog).getByText('En az 3 karakterlik bir gerekçe yaz.')).toBeVisible();
+    expect(within(dialog).getByLabelText(/İşlem gerekçesi/)).toHaveFocus();
+    expect(within(dialog).getByLabelText(/İşlem gerekçesi/)).toHaveAccessibleDescription();
     await user.type(within(dialog).getByLabelText(/İşlem gerekçesi/), 'Güvenlik incelemesi');
     await user.click(within(dialog).getByRole('button', { name: 'Onayla' }));
     expect(suspend).toHaveBeenCalledWith({
@@ -98,6 +169,56 @@ describe('yönetimde kullanıcılar', () => {
       reason: 'Güvenlik incelemesi',
       confirmed: true,
     });
+  });
+  it('üyelik düzeltmesinde geçersiz yıl kendi alanında görünür ve odaklanır', async () => {
+    const correct = vi.fn();
+    const { user } = renderUi(
+      <AdminUserDetail
+        initial={detail}
+        departments={departments}
+        suspend={vi.fn()}
+        unsuspend={vi.fn()}
+        correct={correct}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /Üyeliği düzelt/ }));
+    const dialog = screen.getByRole('dialog');
+    const year = within(dialog).getByLabelText(/Giriş yılı/);
+    await user.clear(year);
+    await user.type(year, '1900');
+    await user.type(within(dialog).getByLabelText(/İşlem gerekçesi/), 'Hatalı yıl');
+    await user.click(within(dialog).getByRole('button', { name: 'Onayla' }));
+    expect(year).toHaveFocus();
+    expect(year).toBeInvalid();
+    expect(year).toHaveAccessibleDescription();
+    expect(year).toHaveValue(1900);
+    expect(correct).not.toHaveBeenCalled();
+  });
+  it('sunucunun yıl alanı reddi form değerlerini korur ve ilgili alana odaklanır', async () => {
+    const correct = vi.fn().mockResolvedValue({
+      ok: false,
+      errorCode: 'VALIDATION_INVALID',
+      fieldErrors: { 'changes.entryYear': 'VALIDATION_INVALID' },
+    });
+    const { user } = renderUi(
+      <AdminUserDetail
+        initial={detail}
+        departments={departments}
+        suspend={vi.fn()}
+        unsuspend={vi.fn()}
+        correct={correct}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /Üyeliği düzelt/ }));
+    const dialog = screen.getByRole('dialog');
+    const year = within(dialog).getByLabelText(/Giriş yılı/);
+    await user.clear(year);
+    await user.type(year, '2022');
+    await user.type(within(dialog).getByLabelText(/İşlem gerekçesi/), 'Kayıt düzeltme');
+    await user.click(within(dialog).getByRole('button', { name: 'Onayla' }));
+    await waitFor(() => expect(year).toHaveFocus());
+    expect(year).toBeInvalid();
+    expect(year).toHaveValue(2022);
   });
   it('"Ayrıntıyı aç" bağlantıları hedef kullanıcıyı adıyla ayırt eder (kart ve tablo görünümü)', () => {
     const second = { ...detail, id: 'u2', displayName: 'Başka Üye' };

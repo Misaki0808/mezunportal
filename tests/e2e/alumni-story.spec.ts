@@ -30,6 +30,14 @@ test('390 px: mezun hikâye gönderir, yönetici seçer, bölüm görür ve rız
   try {
     await login(alumni!, 'alumniMentor');
     await alumni!.goto('/hesap/hikayem');
+    const storyField = alumni!.getByLabel('Hikâyen', { exact: true });
+    const tooLong = 'İ'.repeat(3001);
+    await storyField.fill(tooLong);
+    await alumni!.getByRole('button', { name: 'Kaydet' }).click();
+    await expect(storyField).toHaveValue(tooLong);
+    await expect(storyField).toBeFocused();
+    await expect(storyField).toHaveAttribute('aria-invalid', 'true');
+    await expect(storyField).toHaveAccessibleDescription(/en çok 3000/i);
     await alumni!
       .getByLabel('Hikâyen', { exact: true })
       .fill(

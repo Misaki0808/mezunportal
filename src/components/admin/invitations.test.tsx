@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -13,6 +13,26 @@ const csv = (bytes: number, name = 'liste.csv') =>
   new File([new Uint8Array(bytes).fill(97)], name, { type: 'text/csv' });
 
 describe('Toplu davet', () => {
+  it.each([
+    ['yalnız boşluk', '   '],
+    ['geçersiz e-posta', 'geçersiz@'],
+    [
+      '101 adres',
+      Array.from({ length: 101 }, (_, index) => `a${index}@example.invalid`).join('\n'),
+    ],
+    ['30001 karakter', 'a'.repeat(30001)],
+  ])('%s alan altında reddedilir, odak ve girdi korunur', async (_case, value) => {
+    send.mockReset();
+    renderUi(<Invitations />);
+    const field = screen.getByLabelText(/E-posta adresleri/);
+    fireEvent.change(field, { target: { value } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Davetleri gönder' }).closest('form')!);
+    expect(send).not.toHaveBeenCalled();
+    expect(field).toHaveValue(value);
+    expect(field).toBeInvalid();
+    expect(field).toHaveFocus();
+    expect(field).toHaveAccessibleDescription();
+  });
   it('gönder düğmesi çift gönderim yapmaz: iki hızlı tıklama tek istek, bekleme boyunca kilitli', async () => {
     const gate = Promise.withResolvers<{ ok: true; data: { queued: number; skipped: number } }>();
     send.mockReset();

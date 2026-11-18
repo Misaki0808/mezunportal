@@ -868,9 +868,27 @@ describe('correctMembership', () => {
 // Yönetici atama / kaldırma
 // =============================================================================================
 describe('grantAdmin / revokeAdmin', () => {
+  it('gerekçesiz veya kişisel veri içeren atama reddedilir; geçerli gerekçe işlem kaydına yazılır', async () => {
+    const candidate = await student(inst.deptA1);
+    const target = { scope: 'SYSTEM' as const, userId: candidate.userId };
+    await expectCode(grantAdmin(deps, admins.system, target as never), 'AUDIT_REASON_REQUIRED');
+    await expectCode(
+      grantAdmin(deps, admins.system, { ...target, reason: '   ' }),
+      'AUDIT_REASON_REQUIRED',
+    );
+    await expectCode(
+      grantAdmin(deps, admins.system, { ...target, reason: 'ayse@example.com' }),
+      'AUDIT_REASON_INVALID',
+    );
+    expect(await db.adminGrant.count({ where: { userId: candidate.userId } })).toBe(0);
+    const reason = 'Yetki görevlendirmesi';
+    const granted = await grantAdmin(deps, admins.system, { ...target, reason });
+    expect((await auditRows(granted.grantId))[0]).toMatchObject({ action: 'ADMIN_GRANT', reason });
+  });
   it('sistem yöneticisi bölüm, fakülte ve sistem yetkisi verir; işlem kaydı yazılır; yetki hemen geçerlidir', async () => {
     const candidate = await student(inst.deptA1);
     const dept = await grantAdmin(deps, admins.system, {
+      reason: 'Yetki görevlendirmesi',
       scope: 'DEPARTMENT',
       userId: candidate.userId,
       departmentId: inst.deptA1,
@@ -888,6 +906,7 @@ describe('grantAdmin / revokeAdmin', () => {
       actorId: admins.system,
       action: 'ADMIN_GRANT',
       targetType: 'ADMIN_GRANT',
+      reason: 'Yetki görevlendirmesi',
       metadata: {
         userId: candidate.userId,
         scope: 'DEPARTMENT',
@@ -910,19 +929,29 @@ describe('grantAdmin / revokeAdmin', () => {
 
     await expect(
       grantAdmin(deps, admins.system, {
+        reason: 'Yetki görevlendirmesi',
         scope: 'FACULTY',
         userId: candidate.userId,
         facultyId: inst.facultyA,
       }),
     ).resolves.toBeDefined();
     await expect(
-      grantAdmin(deps, admins.system, { scope: 'SYSTEM', userId: candidate.userId }),
+      grantAdmin(deps, admins.system, {
+        reason: 'Yetki görevlendirmesi',
+        scope: 'SYSTEM',
+        userId: candidate.userId,
+      }),
     ).resolves.toBeDefined();
   });
 
   it('aynı kapsamda ikinci etkin yetki ADMIN_GRANT_EXISTS; kaldırıldıktan sonra yeniden verilebilir', async () => {
     const candidate = await student(inst.deptA1);
-    const input = { scope: 'FACULTY' as const, userId: candidate.userId, facultyId: inst.facultyB };
+    const input = {
+      scope: 'FACULTY' as const,
+      userId: candidate.userId,
+      facultyId: inst.facultyB,
+      reason: 'Yetki görevlendirmesi',
+    };
     const first = await grantAdmin(deps, admins.system, input);
     await expectCode(grantAdmin(deps, admins.system, input), 'ADMIN_GRANT_EXISTS');
     await revokeAdmin(deps, admins.system, { grantId: first.grantId, reason: 'Görev değişti' });
@@ -935,6 +964,7 @@ describe('grantAdmin / revokeAdmin', () => {
       scope: 'DEPARTMENT' as const,
       userId: candidate.userId,
       departmentId: inst.deptB1,
+      reason: 'Yetki görevlendirmesi',
     };
     const outcomes = await Promise.allSettled([
       grantAdmin(deps, admins.system, input),
@@ -957,7 +987,11 @@ describe('grantAdmin / revokeAdmin', () => {
     });
     for (const actor of [admins.deptA1, admins.facultyA, (await student(inst.deptA1)).userId]) {
       await expectCode(
-        grantAdmin(deps, actor, { scope: 'SYSTEM', userId: candidate.userId }),
+        grantAdmin(deps, actor, {
+          reason: 'Yetki görevlendirmesi',
+          scope: 'SYSTEM',
+          userId: candidate.userId,
+        }),
         'AUTH_FORBIDDEN',
       );
       await expectCode(
@@ -972,15 +1006,24 @@ describe('grantAdmin / revokeAdmin', () => {
     const deleted = await createUser(db, { deletedAt: new Date() });
     const real = await student(inst.deptA1);
     await expectCode(
-      grantAdmin(deps, admins.system, { scope: 'SYSTEM', userId: deleted }),
-      'RESOURCE_NOT_FOUND',
-    );
-    await expectCode(
-      grantAdmin(deps, admins.system, { scope: 'SYSTEM', userId: randomUUID() }),
+      grantAdmin(deps, admins.system, {
+        reason: 'Yetki görevlendirmesi',
+        scope: 'SYSTEM',
+        userId: deleted,
+      }),
       'RESOURCE_NOT_FOUND',
     );
     await expectCode(
       grantAdmin(deps, admins.system, {
+        reason: 'Yetki görevlendirmesi',
+        scope: 'SYSTEM',
+        userId: randomUUID(),
+      }),
+      'RESOURCE_NOT_FOUND',
+    );
+    await expectCode(
+      grantAdmin(deps, admins.system, {
+        reason: 'Yetki görevlendirmesi',
         scope: 'FACULTY',
         userId: real.userId,
         facultyId: randomUUID(),
@@ -989,6 +1032,7 @@ describe('grantAdmin / revokeAdmin', () => {
     );
     await expectCode(
       grantAdmin(deps, admins.system, {
+        reason: 'Yetki görevlendirmesi',
         scope: 'DEPARTMENT',
         userId: real.userId,
         departmentId: randomUUID(),
@@ -996,7 +1040,11 @@ describe('grantAdmin / revokeAdmin', () => {
       'RESOURCE_NOT_FOUND',
     );
     await expectCode(
-      grantAdmin(deps, admins.system, { scope: 'SYSTEM', userId: admins.system }),
+      grantAdmin(deps, admins.system, {
+        reason: 'Yetki görevlendirmesi',
+        scope: 'SYSTEM',
+        userId: admins.system,
+      }),
       'ADMIN_SELF_ACTION',
     );
   });
@@ -1004,6 +1052,7 @@ describe('grantAdmin / revokeAdmin', () => {
   it('kaldırma: gerekçe zorunlu; yetki kapanır ve kullanıcı artık yönetemez; işlem kaydı yazılır', async () => {
     const candidate = await student(inst.deptA1);
     const grant = await grantAdmin(deps, admins.system, {
+      reason: 'Yetki görevlendirmesi',
       scope: 'DEPARTMENT',
       userId: candidate.userId,
       departmentId: inst.deptA1,
@@ -1110,7 +1159,11 @@ describe('grantAdmin / revokeAdmin', () => {
         )) as never,
     } as unknown as PrismaClient;
     await expect(
-      grantAdmin({ db: failing }, admins.system, { scope: 'SYSTEM', userId: candidate.userId }),
+      grantAdmin({ db: failing }, admins.system, {
+        reason: 'Yetki görevlendirmesi',
+        scope: 'SYSTEM',
+        userId: candidate.userId,
+      }),
     ).rejects.toThrow('işlem kaydı kapalı');
     expect(await db.adminGrant.count({ where: { userId: candidate.userId } })).toBe(0);
   });
