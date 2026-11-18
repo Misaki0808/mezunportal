@@ -13,6 +13,9 @@ for (const classic of [true, false]) {
         classic && browserName === 'chromium' ? { ignoreDefaultArgs: ['--hide-scrollbars'] } : {},
       );
       try {
+        expect(browser.browserType().name(), 'ölçüm projenin gerçek motorunda koşmalı').toBe(
+          browserName,
+        );
         const context = await browser.newContext({
           baseURL: workerBaseUrl(info.parallelIndex),
           viewport: { width, height: 844 },
