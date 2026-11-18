@@ -42,6 +42,12 @@ export function MembershipForm({
   const [pending, setPending] = useState(false);
   const [complete, setComplete] = useState(false);
   const locked = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  function focusField(fieldErrors: FieldErrors) {
+    const first = ['departmentId', 'entryYear'].find((name) => fieldErrors[name]);
+    const control = first ? formRef.current?.elements.namedItem(first) : null;
+    if (control instanceof HTMLElement) control.focus();
+  }
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (locked.current) return;
@@ -60,9 +66,7 @@ export function MembershipForm({
         if (field && !next[field]) next[field] = 'VALIDATION_INVALID';
       }
       setFields(next);
-      const first = Object.keys(next)[0];
-      const control = first ? event.currentTarget.elements.namedItem(first) : null;
-      if (control instanceof HTMLElement) control.focus();
+      focusField(next);
       return;
     }
     locked.current = true;
@@ -72,6 +76,7 @@ export function MembershipForm({
       if (result.ok) setComplete(true);
       else {
         setFields(result.fieldErrors ?? {});
+        if (result.fieldErrors) focusField(result.fieldErrors);
         if (!result.fieldErrors || !Object.keys(result.fieldErrors).length)
           setError(result.errorCode);
       }
@@ -100,6 +105,7 @@ export function MembershipForm({
     return <EmptyState title={t('emptyTitle')} description={t('emptyDescription')} />;
   return (
     <form
+      ref={formRef}
       data-hydrated={hydrated ? 'true' : undefined}
       noValidate
       onSubmit={handleSubmit}
