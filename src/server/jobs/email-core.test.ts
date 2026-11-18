@@ -171,6 +171,27 @@ describe('e-posta giden kutusu', () => {
     });
     expect(transport.sent).toHaveLength(1);
   });
+  it('SMTP kabulü sonrası belirsiz kesintide tekrar denemenin Message-ID değeri değişmez', async () => {
+    const { outbox, logger } = fixture();
+    const ids: Array<string | undefined> = [];
+    const service = createEmailService(
+      outbox,
+      {
+        async send(input) {
+          ids.push(input.messageId);
+          if (ids.length === 1) throw new EmailTransportError();
+        },
+        close() {},
+      },
+      logger,
+    );
+    await service.enqueueEmail(message);
+    await expect(service.deliver(message, 0, 2)).rejects.toBeInstanceOf(EmailTransportError);
+    await service.deliver(message, 1, 2);
+    expect(ids).toHaveLength(2);
+    expect(ids[0]).toMatch(/^<[a-f0-9]{64}@mezunportal\.local>$/);
+    expect(ids[1]).toBe(ids[0]);
+  });
   it('kalıcı SMTP reddi yeniden gönderilmez', async () => {
     const { service, rows, transport } = fixture(['permanent']);
     await service.enqueueEmail(message);

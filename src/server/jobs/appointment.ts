@@ -1,3 +1,5 @@
+import { QUEUE_MAINTENANCE } from './queue-maintenance';
+import { writeWorkerLog } from './worker-log';
 import 'server-only';
 
 import { PgBoss } from 'pg-boss';
@@ -31,9 +33,10 @@ export async function createAppointmentRuntime(
     schedule: consume,
     supervise: consume,
     persistWarnings: false,
+    ...QUEUE_MAINTENANCE,
   });
   // Sürücü hata nesnesi bağlantı adresi taşıyabilir; yalnız sabit metin yazılır.
-  boss.on('error', () => process.stderr.write('appointment.queue: unavailable\n'));
+  boss.on('error', () => writeWorkerLog('stderr', 'appointment.queue: unavailable'));
   try {
     await boss.start();
     await boss.createQueue(APPOINTMENT_SWEEP_QUEUE, {

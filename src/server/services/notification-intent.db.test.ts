@@ -177,6 +177,7 @@ describe('niyet aktarımı: günlük (job.unexpected)', () => {
         source: 'notification.relay',
         errorName: 'Error',
         errorCode: 'P2034',
+        timestamp: expect.stringMatching(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/),
       });
       expect(lines.join('')).not.toMatch(/ayse|postgres|gizli|işlem çöktü/);
     } finally {

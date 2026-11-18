@@ -1155,3 +1155,7 @@ açılırken sıfır pg uyarısı ölçüldü; tam testte başka yollar için ye
 Günlük süpürme son rızası verilmiş ama eski sürümdeki fotoğrafı silmez; güncel rıza olmadan
 görünmez kalır. Böylece metin sürümü yükselince geri alınmamış fotoğraflar topluca kaybolmaz.
 Yeniden onay ve kalan dosyaların temizliği PILOT-LEGAL kapsamında ayrıca kararlaştırılır.
+
+## 2026-11-18 · E-posta teslim ve kuyruk saklama sınırı
+
+E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında işçi kaybı çift teslim üretebilir. Her denemede aynı Message-ID kullanılır; bu, sağlayıcıların tek teslimini garanti etmez. Tamamlanmış yükler 60 saniye sonra beş saniyelik bakım döngüsünde temizlenir; kapalı veya yoğun sistemde temizlik gecikebilir.

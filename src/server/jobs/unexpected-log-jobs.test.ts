@@ -29,7 +29,11 @@ const leaky = () =>
 afterEach(() => vi.restoreAllMocks());
 const stderr = () => vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 const lines = (write: ReturnType<typeof stderr>) =>
-  write.mock.calls.map(([line]) => JSON.parse(String(line).trim()));
+  write.mock.calls.map(([line]) => {
+    const { timestamp, ...event } = JSON.parse(String(line).trim());
+    expect(timestamp).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
+    return event;
+  });
 
 describe('işçi görevleri: beklenmedik hata tek satır günlüğe düşer', () => {
   it('e-posta teslimi: kodsuz hata (veritabanı) `job.unexpected` yazar ve iş yine kararlı koda çevrilir', async () => {
