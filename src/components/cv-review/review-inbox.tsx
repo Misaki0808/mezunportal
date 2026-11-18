@@ -228,6 +228,8 @@ function ReviewCard({
 }) {
   const t = useTranslations('cvReview');
   const [comment, setComment] = useState('');
+  const [invalid, setInvalid] = useState(false);
+  const commentRef = useRef<HTMLTextAreaElement>(null);
   return (
     <article className="rounded-card border border-border p-5">
       <h3 className="text-lg font-semibold">{row.counterpart.displayName}</h3>
@@ -249,15 +251,24 @@ function ReviewCard({
           className="mt-4"
           onSubmit={(e) => {
             e.preventDefault();
+            if (!answerCvReviewRequestSchema.safeParse({ requestId: row.id, comment }).success) {
+              setInvalid(true);
+              commentRef.current?.focus();
+              return;
+            }
             void onAnswer(row, comment);
           }}
         >
-          <Field label={t('comment')}>
+          <Field label={t('comment')} error={invalid ? t('required') : undefined}>
             {(control) => (
               <Textarea
                 {...control}
+                ref={commentRef}
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={(e) => {
+                  setComment(e.target.value);
+                  setInvalid(false);
+                }}
                 maxLength={3000}
                 rows={4}
               />

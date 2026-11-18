@@ -4,6 +4,7 @@ import { screen } from '@testing-library/react';
 import { renderUi } from '@/test/render';
 import { ReviewInbox } from './review-inbox';
 import { RequestForm } from './request-form';
+import type { CvReviewRequestView } from '@/contracts/cv-review-request';
 vi.mock('@/server/actions/cv-review-request', () => ({
   createCvReviewRequest: vi.fn(),
   answerCvReviewRequest: vi.fn(),
@@ -20,6 +21,30 @@ it('CV inceleme talebinde boş notun hatası alana bağlanır ve odaklanır', as
   expect(note).toHaveFocus();
   expect(note).toBeInvalid();
   expect(note).toHaveAccessibleDescription();
+});
+it('CV inceleme yanıtında boş yorum ilgili alanda gösterilir ve odaklanır', async () => {
+  const row = {
+    id: 'request-1',
+    role: 'MENTOR',
+    status: 'OPEN',
+    counterpart: { userId: 'student-1', displayName: 'Deniz' },
+    note: 'CV gözden geçirme',
+    comment: null,
+    helpfulAt: null,
+    actions: { canAnswer: true, canMarkHelpful: false, canViewCv: false },
+  } as unknown as CvReviewRequestView;
+  const { user } = renderUi(
+    <ReviewInbox
+      sent={null}
+      received={{ items: [row], nextCursor: null }}
+      initialSettings={null}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: /yorumu gönder/i }));
+  const comment = screen.getByRole('textbox');
+  expect(comment).toHaveFocus();
+  expect(comment).toBeInvalid();
+  expect(comment).toHaveAccessibleDescription();
 });
 it('mentor ayarı olmayan üyeye boş sayfa yerine açıklama ve tek ayar bağlantısı verir', () => {
   renderUi(<ReviewInbox sent={null} received={null} initialSettings={null} />);
