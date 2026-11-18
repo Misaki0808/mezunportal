@@ -72,6 +72,9 @@ export async function DigestView({
   // Sayfa genelinde aynı görünür metni taşıyan satırlar (dört "Staj", ya da adı "Staj" olan etkinlik) bölüm sınırını aşsa da
   // ekran okuyucuda ayırt edilebilsin; tek olan düz kalır.
   const allRows = sections.flatMap((section) => section.rows);
+  // Erişilebilir ad ardışık boşlukları teke indirir ve uçlarını keser ("Yurt dışı" ile "Yurt  dışı" aynı addır); karşılaştırma
+  // da aynı biçimde yapılır. Büyük/küçük harf tarayıcıdaki gibi ayrımlıdır.
+  const nameOf = (label: string) => label.replace(/\s+/g, ' ').trim();
   return (
     <div className="mt-6 space-y-4">
       {sections.map((section) => (
@@ -82,11 +85,11 @@ export async function DigestView({
           </h2>
           <ul className="mt-3 space-y-1">
             {section.rows.map((row) => {
-              const same = allRows.filter((other) => other.label === row.label);
+              const same = allRows.filter((other) => nameOf(other.label) === nameOf(row.label));
               const label =
                 same.length > 1
                   ? t('rowOrdinal', {
-                      label: row.label,
+                      label: nameOf(row.label),
                       index: same.indexOf(row) + 1,
                       count: same.length,
                     })

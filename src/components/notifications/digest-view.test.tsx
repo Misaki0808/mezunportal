@@ -56,6 +56,36 @@ describe('aylık özet: bağlantı adları', () => {
     expect(ambiguousLinkNames()).toEqual([]);
   });
 
+  it('ardışık boşluk ve uç boşluk erişilebilir adı değiştirmez: "Yurt dışı eğitim" ile "Yurt  dışı eğitim" ayrılır', async () => {
+    await show(
+      digest({
+        experiences: [{ id: 'abroad', label: 'Yurt dışı eğitim' }],
+        events: [
+          { id: 'ev1', label: 'Yurt  dışı eğitim' },
+          { id: 'ev2', label: ' Yurt dışı eğitim ' },
+        ],
+      }),
+    );
+    for (const [name, href] of [
+      ['Yurt dışı eğitim, 1/3', '/deneyim/abroad'],
+      ['Yurt dışı eğitim, 2/3', '/etkinlikler'],
+      ['Yurt dışı eğitim, 3/3', '/etkinlikler'],
+    ] as const)
+      expect(screen.getByRole('link', { name })).toHaveAttribute('href', href);
+    expect(ambiguousLinkNames()).toEqual([]);
+  });
+
+  it('büyük/küçük harf ayrımı tarayıcıdaki gibi kalır: farklı harf farklı addır', async () => {
+    await show(
+      digest({
+        experiences: [{ id: 'exp', label: 'Staj' }],
+        events: [{ id: 'ev', label: 'staj' }],
+      }),
+    );
+    expect(screen.getByRole('link', { name: 'Staj' })).toHaveAttribute('href', '/deneyim/exp');
+    expect(screen.getByRole('link', { name: 'staj' })).toHaveAttribute('href', '/etkinlikler');
+  });
+
   it('sayfa genelinde tek olan ad ek numara almaz', async () => {
     await show(
       digest({
