@@ -1,3 +1,5 @@
+import { QUEUE_MAINTENANCE } from './queue-maintenance';
+import { writeWorkerLog } from './worker-log';
 import 'server-only';
 
 import { PgBoss } from 'pg-boss';
@@ -27,9 +29,10 @@ export async function createPointsRuntime(
     schedule: false,
     supervise: consume,
     persistWarnings: false,
+    ...QUEUE_MAINTENANCE,
   });
   // Sürücü hata nesnesi bağlantı adresi taşıyabilir; yalnız sabit metin yazılır.
-  boss.on('error', () => process.stderr.write('points.queue: unavailable\n'));
+  boss.on('error', () => writeWorkerLog('stderr', 'points.queue: unavailable'));
   try {
     await boss.start();
     await boss.createQueue(POINTS_BACKFILL_QUEUE, {

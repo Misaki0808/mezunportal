@@ -1,3 +1,4 @@
+import { writeWorkerLog } from './worker-log';
 import { createEmailRuntime } from './email';
 import { createAppointmentRuntime } from './appointment';
 import { createCvRuntime } from './cv';
@@ -34,7 +35,7 @@ async function main() {
     await runtime.stop().catch(() => undefined);
     throw new Error('NOTIFICATION_WORKER_UNAVAILABLE');
   });
-  const heartbeat = () => process.stdout.write('worker: ok\n');
+  const heartbeat = () => writeWorkerLog('stdout', 'worker: ok');
   heartbeat();
   const timer = setInterval(heartbeat, 30_000);
   const onSignal = createWorkerShutdown({
@@ -52,14 +53,14 @@ async function main() {
       );
     },
     exit: (code) => process.exit(code),
-    write: (line) => process.stderr.write(line),
+    write: (line) => writeWorkerLog('stderr', line),
   });
   for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, onSignal);
 }
 // Modül bağımlılıkları yan etkisiz yüklenebilir; gerçek worker yalnız giriş noktası olarak çalışır.
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
   main().catch(() => {
-    process.stderr.write('worker: unavailable\n');
+    writeWorkerLog('stderr', 'worker: unavailable');
     process.exitCode = 1;
   });
 }

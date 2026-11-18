@@ -1,3 +1,5 @@
+import { QUEUE_MAINTENANCE } from './queue-maintenance';
+import { writeWorkerLog } from './worker-log';
 import 'server-only';
 import { PgBoss, fromPrisma, type JobWithMetadata } from 'pg-boss';
 import type { Tx } from '../services/cv-shared';
@@ -29,9 +31,10 @@ export async function createCvQueue(
     schedule: false,
     supervise: options.supervise ?? false,
     persistWarnings: false,
+    ...QUEUE_MAINTENANCE,
   });
   // Sürücü hata nesnesi bağlantı adresi taşıyabilir; yalnız sabit metin yazılır.
-  boss.on('error', () => process.stderr.write('cv.queue: unavailable\n'));
+  boss.on('error', () => writeWorkerLog('stderr', 'cv.queue: unavailable'));
   try {
     await boss.start();
     await boss.createQueue(CV_PARSE_FAILED_QUEUE, {

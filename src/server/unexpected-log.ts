@@ -1,3 +1,4 @@
+import { writeWorkerLog } from './jobs/worker-log';
 import 'server-only';
 
 import { z } from 'zod';
@@ -181,7 +182,8 @@ export function logUnexpected(kind: UnexpectedKind, source: string, error: unkno
   try {
     const line = unexpectedLogLine(kind, source, error);
     if (line) {
-      process.stderr.write(`${line}\n`);
+      if (kind === 'job') writeWorkerLog('stderr', line);
+      else process.stderr.write(`${line}\n`);
       return true;
     }
   } catch {

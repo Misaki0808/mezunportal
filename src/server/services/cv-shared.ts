@@ -1,3 +1,4 @@
+import { writeWorkerLog } from '../jobs/worker-log';
 import 'server-only';
 
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
@@ -97,7 +98,7 @@ export async function removeUploadFiles(
 
 export function logCv(event: string, code?: string): void {
   // Yalnız olay ve kararlı kod: CV içeriği, LLM girdisi/çıktısı, kimlik ve dosya anahtarı asla yazılmaz.
-  process.stderr.write(`[cv] ${event}${code ? ` ${code}` : ''}\n`);
+  writeWorkerLog('stderr', `[cv] ${event}${code ? ` ${code}` : ''}`);
 }
 
 export const DbNull = Prisma.DbNull;
