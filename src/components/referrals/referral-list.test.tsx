@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithToasts as renderUi } from '@/test/render';
 import type { ReferralPage, ReferralView } from '@/contracts/referrals';
-import { ReferralList } from './referral-ui';
+import { ReferralCreate, ReferralList } from './referral-ui';
 
 const mocks = vi.hoisted(() => ({ review: vi.fn(), respond: vi.fn() }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
@@ -28,6 +28,30 @@ const one = {
   student: { id: 'u-student', name: 'Deniz A.' },
   alumnus: { id: 'u-alumni', name: 'Mert Y.' },
 } as unknown as ReferralView;
+
+it('referans beyanında ilk geçersiz alana hata ve odak gider, not korunur', async () => {
+  const { user } = renderUi(
+    <ReferralCreate
+      candidates={{ students: [{ id: 'student-1', name: 'Deniz', departmentName: 'YBS' }] }}
+      postings={[]}
+    />,
+  );
+  const note = screen.getByLabelText(/not/i);
+  await user.type(note, 'Korunacak not');
+  await user.click(screen.getByRole('button', { name: /gönder/i }));
+  const student = screen.getByLabelText(/Öğrenci/);
+  expect(student).toHaveFocus();
+  expect(student).toBeInvalid();
+  expect(student).toHaveAccessibleDescription();
+  expect(note).toHaveValue('Korunacak not');
+  await user.selectOptions(student, 'student-1');
+  await user.click(screen.getByRole('button', { name: /gönder/i }));
+  const organization = screen.getByLabelText(/Kurum/);
+  expect(organization).toHaveFocus();
+  expect(organization).toBeInvalid();
+  expect(organization).toHaveAccessibleDescription();
+  expect(note).toHaveValue('Korunacak not');
+});
 
 describe('referanslarım: boş durum role göre', () => {
   it('mezun: başlatabilen rol; tek eylem "Referans verdim", başlıktaki gizlenir', () => {

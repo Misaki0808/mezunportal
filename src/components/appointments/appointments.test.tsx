@@ -121,9 +121,28 @@ describe('slot seçici', () => {
     await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
     expect(request).not.toHaveBeenCalled();
     expect(screen.getByText('Önce bir saat seç.')).toBeInTheDocument();
+    const timeGroup = screen.getByRole('radiogroup', { name: 'Saat seç' });
+    expect(timeGroup).toHaveAttribute('aria-invalid', 'true');
+    expect(timeGroup).toHaveAccessibleDescription('Önce bir saat seç.');
+    expect(screen.getByRole('radio', { name: '10:00 saatini seç' })).toHaveFocus();
     await user.click(screen.getByRole('radio', { name: '11:00 saatini seç' }));
     await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
     expect(request.mock.calls[0]![0]).toMatchObject({ mode: 'ONLINE' });
+  });
+
+  it('iki biçimli saatte seçim eksikse alan hatası ve odak gösterilir, not korunur', async () => {
+    const request = vi.fn();
+    const { user } = renderWithToasts(<SlotPicker list={slotList()} request={request} />);
+    await user.click(screen.getByRole('radio', { name: '10:00 saatini seç' }));
+    const note = screen.getByLabelText(/Mentora not/);
+    await user.type(note, 'Korunan not');
+    await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
+    expect(request).not.toHaveBeenCalled();
+    expect(screen.getByRole('radio', { name: 'Çevrimiçi' })).toHaveFocus();
+    const group = screen.getByRole('group', { name: /Görüşme biçimi/ });
+    expect(group).toHaveAttribute('aria-invalid', 'true');
+    expect(group).toHaveAccessibleDescription();
+    expect(note).toHaveValue('Korunan not');
   });
 
   it('gün değişince saatler değişir ve seçim sıfırlanır', async () => {

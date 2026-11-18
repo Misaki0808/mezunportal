@@ -93,6 +93,25 @@ describe('kendi profilim', () => {
     expect(url).toHaveFocus();
   });
 
+  it('bağlantı sitesi eksikse hata ve odak site alanındadır, adres korunur', async () => {
+    const setSocialLinks = ok(base);
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ setSocialLinks })} />,
+    );
+    const block = screen.getByRole('heading', { name: 'Bağlantılar' }).closest('section')!;
+    await user.click(within(block).getByRole('button', { name: 'Düzenle' }));
+    const sheet = await screen.findByRole('dialog');
+    await user.click(within(sheet).getByRole('button', { name: 'Bağlantı ekle' }));
+    await user.type(within(sheet).getByLabelText('Adres'), 'https://github.com/deniz');
+    await user.click(within(sheet).getByRole('button', { name: 'Kaydet' }));
+    const site = within(sheet).getByLabelText('Site');
+    expect(site).toHaveFocus();
+    expect(site).toBeInvalid();
+    expect(site).toHaveAccessibleDescription();
+    expect(within(sheet).getByLabelText('Adres')).toHaveValue('https://github.com/deniz');
+    expect(setSocialLinks).not.toHaveBeenCalled();
+  });
+
   it('beceri kaydı hatası bölüm kapatılsa da görünür; alan içeriği tekrar açılınca korunur', async () => {
     const addSkill = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
     const { user } = renderWithToasts(<MyProfile initial={base} actions={actions({ addSkill })} />);

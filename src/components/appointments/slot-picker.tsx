@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import type { RequestAppointmentInput, SlotList } from '@/contracts/appointment';
 import { APPOINTMENT_NOTE_MAX, requestAppointmentSchema } from '@/contracts/appointment';
@@ -49,6 +49,10 @@ export function SlotPicker({ list, request }: Props) {
   const [note, setNote] = useState('');
   const [error, setError] = useState<ErrorCode>();
   const [needSlot, setNeedSlot] = useState(false);
+  const [needMode, setNeedMode] = useState(false);
+  const slotErrorId = useId();
+  const slotGroup = useRef<HTMLDivElement>(null);
+  const modeGroup = useRef<HTMLDivElement>(null);
   const action = useAction();
   const pending = action.busy;
   const [done, setDone] = useState(false);
@@ -66,6 +70,12 @@ export function SlotPicker({ list, request }: Props) {
   async function submit() {
     if (!slot) {
       setNeedSlot(true);
+      slotGroup.current?.querySelector<HTMLElement>('[role="radio"]')?.focus();
+      return;
+    }
+    if (!effectiveMode) {
+      setNeedMode(true);
+      modeGroup.current?.querySelector<HTMLElement>('input')?.focus();
       return;
     }
     const input = {
@@ -184,6 +194,7 @@ export function SlotPicker({ list, request }: Props) {
                   setDayKey(group.key);
                   setStartsAt(undefined);
                   setMode(undefined);
+                  setNeedMode(false);
                 }}
                 className={
                   'press-control min-h-14 shrink-0 rounded-control border px-4 text-base font-medium ' +
@@ -205,7 +216,14 @@ export function SlotPicker({ list, request }: Props) {
             {t('pickTime')} ·{' '}
             <span className="font-normal text-fg-muted">{dayLabel(day.date)}</span>
           </legend>
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('pickTime')}>
+          <div
+            ref={slotGroup}
+            className="grid grid-cols-3 gap-2"
+            role="radiogroup"
+            aria-label={t('pickTime')}
+            aria-invalid={needSlot || undefined}
+            aria-describedby={needSlot ? slotErrorId : undefined}
+          >
             {day.slots.map((item) => {
               const iso = new Date(item.startsAt).toISOString();
               const selected = iso === startsAt;
@@ -220,6 +238,7 @@ export function SlotPicker({ list, request }: Props) {
                     setStartsAt(iso);
                     setNeedSlot(false);
                     setMode(undefined);
+                    setNeedMode(false);
                   }}
                   className={
                     'press-control min-h-12 rounded-control border text-base font-medium ' +
@@ -237,12 +256,16 @@ export function SlotPicker({ list, request }: Props) {
       )}
 
       {slot && modes.length > 1 && (
-        <div className="mt-5">
+        <div ref={modeGroup} className="mt-5">
           <RadioGroup
             legend={t('mode')}
             name="mode"
             value={effectiveMode ?? ''}
-            onValueChange={setMode}
+            onValueChange={(value) => {
+              setMode(value);
+              setNeedMode(false);
+            }}
+            error={needMode ? errors('VALIDATION_INVALID') : undefined}
             options={modes.map((value) => ({ value, label: modesT(value) }))}
           />
         </div>
@@ -274,7 +297,7 @@ export function SlotPicker({ list, request }: Props) {
 
       <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mt-auto space-y-2 bg-bg pt-4 pb-2 lg:static lg:pt-8">
         {needSlot && (
-          <p role="alert" className="text-base text-danger">
+          <p id={slotErrorId} role="alert" className="text-base text-danger">
             {t('chooseSlot')}
           </p>
         )}

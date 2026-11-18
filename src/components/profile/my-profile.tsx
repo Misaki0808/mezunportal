@@ -817,11 +817,11 @@ function LinksForm({
     rows.forEach((row, index) => {
       if (row.kind === '' && row.url.trim() === '') return;
       if (row.kind === '') {
-        found[`row${index}`] = t('linkProblems.PROFILE_LINK_HOST_NOT_ALLOWED');
+        found[`site${index}`] = t('linkProblems.PROFILE_LINK_HOST_NOT_ALLOWED');
         return;
       }
       if (used.has(row.kind)) {
-        found[`row${index}`] = t('linkDuplicate');
+        found[`site${index}`] = t('linkDuplicate');
         return;
       }
       used.add(row.kind);
@@ -872,20 +872,28 @@ function LinksForm({
         <p className="text-sm text-fg-muted">{t('allowedSites', { sites })}</p>
         {rows.map((row, index) => (
           <div key={index} className="flex flex-col gap-3 rounded-card border border-border p-3">
-            <Field label={t('siteLabel')}>
+            <Field label={t('siteLabel')} error={problems[`site${index}`]}>
               {(control) => (
                 <Select
                   {...control}
+                  ref={(element) => {
+                    fields.current[`site${index}`] = element;
+                  }}
                   value={row.kind}
-                  onChange={(event) =>
+                  onChange={(event) => {
                     setRows((current) =>
                       current.map((item, at) =>
                         at === index
                           ? { ...item, kind: event.target.value as SocialLinkKind }
                           : item,
                       ),
-                    )
-                  }
+                    );
+                    setProblems((current) => {
+                      const { [`site${index}`]: _gone, ...rest } = current;
+                      void _gone;
+                      return rest;
+                    });
+                  }}
                 >
                   <option value="">—</option>
                   {SOCIAL_LINK_KINDS.map((kind) => (
