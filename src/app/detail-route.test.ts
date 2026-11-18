@@ -82,6 +82,7 @@ describe('ayrıntı 404 ön denetimi', () => {
     mocks.load.mockResolvedValue({ ok: true, data: { status: 'DRAFT' } });
     mocks.ownMonth.mockResolvedValueOnce({ ok: false, errorCode: 'RESOURCE_NOT_FOUND' });
     await expect(rejectMissingDetail('experience')).rejects.toThrow('NEXT_NOT_FOUND');
+    expect(mocks.load).not.toHaveBeenCalled();
     mocks.notFound.mockClear();
     mocks.ownMonth.mockResolvedValueOnce({ ok: true, data: { appliedMonth: null } });
     await rejectMissingDetail('experience');
