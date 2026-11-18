@@ -379,7 +379,9 @@ test.describe("WebKit iPhone: Safari'ye özgü davranışlar", () => {
       // Gerçek son içerik: çubuğun içinde olmayan, yaprak ve görünür öğelerin en alt kenarı (kap dolgusu sayılmaz).
       let contentBottom = 0;
       for (const e of document.querySelectorAll('#main-content *')) {
-        if (bar?.contains(e) || e.children.length > 0) continue;
+        // Boşluk (ActionBar yer tutucusu) içerik değildir; çubuğun yerini akışta ayırır.
+        if (bar?.contains(e) || e.children.length > 0 || e.hasAttribute('data-action-bar-spacer'))
+          continue;
         const r = e.getBoundingClientRect();
         if (r.width > 0 && r.height > 0) contentBottom = Math.max(contentBottom, r.bottom);
       }
@@ -397,6 +399,47 @@ test.describe("WebKit iPhone: Safari'ye özgü davranışlar", () => {
     expect(geometry.contentBottom, 'son içerik çubuğun altında kalmaz').toBeLessThanOrEqual(
       geometry.barTop! + 1,
     );
+  });
+
+  test('sabit eylem çubuğu: her kaydırma konumunda aynı yerde, alt gezinmeyi örtmez; klavye açıkken akışa döner', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await login(page, 'alumniMentor');
+    await page.goto('/mentor/ayarlar', { waitUntil: 'networkidle' });
+    await expect(page.locator('[data-action-bar]')).toHaveCount(1);
+    const read = () =>
+      page.evaluate(() => {
+        const bar = document.querySelector('[data-action-bar]')!.getBoundingClientRect();
+        const nav = document.querySelector('[data-bottom-nav]')!.getBoundingClientRect();
+        const frame = document.querySelector('[data-action-bar-frame]')!;
+        const spacer = document.querySelector('[data-action-bar-spacer]')!;
+        return {
+          barBottom: bar.bottom,
+          navTop: nav.top,
+          frame: getComputedStyle(frame).position,
+          spacer: getComputedStyle(spacer).display,
+          scrollable: document.documentElement.scrollHeight - innerHeight,
+        };
+      });
+    const start = await read();
+    expect(start.frame, 'çubuk kabı telefonda sabit').toBe('fixed');
+    expect(start.scrollable, 'sayfa kaydırılabilir').toBeGreaterThan(100);
+    for (const y of [Math.round(start.scrollable / 2), start.scrollable]) {
+      await page.evaluate((to) => window.scrollTo(0, to), y);
+      await page.waitForTimeout(300);
+      const at = await read();
+      expect(
+        Math.abs(at.barBottom - start.barBottom),
+        `çubuk ${y} px kaydırınca oynar`,
+      ).toBeLessThan(1);
+      expect(at.barBottom, 'çubuk alt gezinmeyi örter').toBeLessThanOrEqual(at.navTop + 1);
+    }
+    // Ekran klavyesi (KeyboardState'in yazdığı işaret): çubuk akışa döner, boşluk kalkar; iOS'ta sabit çubuk zıplamaz.
+    await page.evaluate(() => (document.documentElement.dataset.keyboard = 'open'));
+    expect(await read()).toMatchObject({ frame: 'static', spacer: 'none' });
+    await page.evaluate(() => delete document.documentElement.dataset.keyboard);
+    expect(await read()).toMatchObject({ frame: 'fixed' });
   });
 
   test("logo ve kep SVG'si çizilir (boyut, dolgu, renk geçişi tanımı)", async ({ page }) => {

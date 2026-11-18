@@ -1156,6 +1156,19 @@ Günlük süpürme son rızası verilmiş ama eski sürümdeki fotoğrafı silme
 görünmez kalır. Böylece metin sürümü yükselince geri alınmamış fotoğraflar topluca kaybolmaz.
 Yeniden onay ve kalan dosyaların temizliği PILOT-LEGAL kapsamında ayrıca kararlaştırılır.
 
+## 2026-11-18 · Telefonda eylem çubuğu sabit, toast çubuğun üstünde (kart 453)
+
+Kuru koşuda "Onayların kaydedildi." toast'ı "Doğrulamayı tamamla" düğmesinin üst yarısını örtüyordu: ortak toast bölgesi
+telefonda alt gezinmenin üstünde sabit 5 rem'de dururken dokuz ekran aynı şeridi bir eylem çubuğuyla tutuyordu. Toast'ı
+üste almak liste ekranlarının ana eylemlerini ("İlan ver", arama) örterdi; çubuk yüksekliğini sayıyla tahmin etmek her yeni
+çubukta bozulurdu. Karar: bütün alt eylem çubukları tek bileşen `ActionBar` (`src/components/ui/action-bar.tsx`); çubuk
+kendi yüksekliğini `--action-bar-h` değişkenine yazar, toast bölgesi alt konumunu CSS'te `5rem + güvenli alan +
+--action-bar-h` hesaplar (ölçüm kaydırmaya ya da olaya bağlı değil). `sticky` kendi üst kabının sonunu geçemediği için
+sayfa sonunda çubuk ekranın alt şeridinden 96-120 px yukarıda kalıyordu (R2 455 B4); bu yüzden telefonda (< lg) çubuk
+`fixed`: alt gezinmenin hemen üstünde, hep aynı yerde, akışta aynı yükseklikte bir boşluk (son içerik altında kalmaz).
+lg ve üstünde kap `display: contents`, çubuk eski akışında. Ekran klavyesi açıkken çubuk akışa döner (sabit çubuk iOS'ta
+klavyenin üstünde zıplamasın). Bekçi: `src/components/ui/action-bar*.test`, `tests/e2e/action-bar-pages.spec.ts` (sekiz gerçek
+çubuklu sayfa, üç kaydırma konumu, dört toast), `tests/e2e/toast-layout.spec.ts`.
 ## 2026-11-18 · E-posta teslim ve kuyruk saklama sınırı
 
 E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında işçi kaybı çift teslim üretebilir. Her denemede aynı Message-ID kullanılır; bu, sağlayıcıların tek teslimini garanti etmez. Tamamlanmış yükler 60 saniye sonra beş saniyelik bakım döngüsünde temizlenir; kapalı veya yoğun sistemde temizlik gecikebilir.

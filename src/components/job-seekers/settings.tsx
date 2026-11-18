@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { AccountFrameView } from '@/components/account/account-frame';
-import { Button, Checkbox, Select, Switch } from '@/components/ui';
+import { Button, Checkbox, Select, Switch, ActionBar } from '@/components/ui';
 import { recordConsents } from '@/server/actions/privacy';
 import { setSeekerSettings } from '@/server/actions/job-seekers';
 import type { SeekerSettings, SeekerTermSeason } from '@/contracts/job-seekers';
@@ -172,7 +172,7 @@ export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
         <p className="text-sm text-fg-muted">{t('viewCount', { count: data.viewCount })}</p>
       </section>
       {/* Mesajlar Kaydet'in yanında durur: sayfa uzun, çubuk ekrana yapışık; altta kalan bir mesaj telefonda görünmezdi. */}
-      <div className="sticky bottom-20 space-y-3 rounded-control bg-bg py-3 lg:static">
+      <ActionBar className="space-y-3 rounded-control bg-bg py-3">
         {error && (
           <p role="alert" className="text-danger">
             {error}
@@ -186,7 +186,7 @@ export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
         <Button className="w-full" loading={pending} onClick={save}>
           {t('save')}
         </Button>
-      </div>
+      </ActionBar>
     </AccountFrameView>
   );
 }

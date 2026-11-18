@@ -22,6 +22,7 @@ import {
   PageHeader,
   Select,
   buttonClasses,
+  ActionBar,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
@@ -173,11 +174,11 @@ export function MembershipForm({
           {errors(error)}
         </p>
       )}
-      <div className="mt-auto pt-5 pb-[env(safe-area-inset-bottom)]">
+      <ActionBar className="bg-bg pt-5 pb-2 lg:mt-auto">
         <Button type="submit" fullWidth size="lg" loading={pending}>
           {pending ? t('saving') : t('submit')}
         </Button>
-      </div>
+      </ActionBar>
     </form>
   );
 }

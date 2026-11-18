@@ -122,10 +122,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
+      {/* Telefondaki alt konum CSS'te: alt gezinme + güvenli alan + `--action-bar-h`. Alta yapışan `ActionBar` kendi yüksekliğini
+          bu değişkene yazar; toast çubuğun üstünde durur, düğmelerini örtmez. Ölçüm çubuktadır (kaydırma, rota değişimi ve
+          dört toast'lık yığın konumu bozmaz; kart 453). */}
       <div
         aria-label={t('region')}
         role="region"
-        className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 flex flex-col items-center gap-2 px-4 lg:bottom-6"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom)+var(--action-bar-h,0px))] z-50 flex flex-col items-center gap-2 px-4 lg:bottom-6"
       >
         <div role="status" aria-live="polite" className="flex w-full max-w-md flex-col gap-2">
           {toasts.filter((toast) => toast.tone !== 'error').map(renderToast)}
