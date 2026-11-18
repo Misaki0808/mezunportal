@@ -1,3 +1,5 @@
+import { QUEUE_MAINTENANCE } from './queue-maintenance';
+import { writeWorkerLog } from './worker-log';
 import 'server-only';
 import { PgBoss } from 'pg-boss';
 import { getEnv } from '@/lib/env';
@@ -32,8 +34,9 @@ export async function createNotificationRuntime() {
     schedule: true,
     supervise: true,
     persistWarnings: false,
+    ...QUEUE_MAINTENANCE,
   });
-  boss.on('error', () => process.stderr.write('notifications.queue: unavailable\n'));
+  boss.on('error', () => writeWorkerLog('stderr', 'notifications.queue: unavailable'));
   const tasks = {
     'profile.freshness': () => profileFreshness(getDb()),
     'alumni.stillThere': () => alumniStillThere(getDb()),
@@ -49,7 +52,7 @@ export async function createNotificationRuntime() {
     'files.purge': () => purgeFiles(getDb(), getStorage()),
     'profilePhoto.purge': async () => {
       const { scanned, removed, failed } = await purgeProfilePhotos(getDb(), getStorage());
-      process.stdout.write(`profilePhoto.purge: ${scanned} ${removed} ${failed}\n`);
+      writeWorkerLog('stdout', `profilePhoto.purge: ${scanned} ${removed} ${failed}`);
     },
     'linkedin.purge': () =>
       purgeExpiredLinkedinFiles({ db: getDb(), storage: getStorage(), llm: null }),

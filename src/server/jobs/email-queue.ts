@@ -1,3 +1,5 @@
+import { QUEUE_MAINTENANCE } from './queue-maintenance';
+import { writeWorkerLog } from './worker-log';
 import 'server-only';
 import { PgBoss, type JobWithMetadata } from 'pg-boss';
 import { EmailTransportError } from '../external/email/types';
@@ -18,9 +20,10 @@ export async function createEmailQueue(
     schedule: false,
     supervise: options.supervise ?? false,
     persistWarnings: false,
+    ...QUEUE_MAINTENANCE,
   });
   // Sürücü/SMTP hata nesnesi kişisel veri veya bağlantı adresi taşıyabilir.
-  boss.on('error', () => process.stderr.write('email.queue: unavailable\n'));
+  boss.on('error', () => writeWorkerLog('stderr', 'email.queue: unavailable'));
   try {
     await boss.start();
     await boss.createQueue(EMAIL_FAILED_QUEUE, {

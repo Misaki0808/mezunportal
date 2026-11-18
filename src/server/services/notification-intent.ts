@@ -6,6 +6,7 @@ import { notificationRetry } from '../rules/notification-retry';
 import type { InboxKind } from '../rules/inbox';
 import type { AppointmentNotice } from './appointment-notifier';
 import { logUnexpected } from '../unexpected-log';
+import { writeWorkerLog } from '../jobs/worker-log';
 
 const generic = z
   .object({
@@ -314,7 +315,8 @@ export async function relayNotificationIntents(
         else if (changed === 'PENDING' || changed === 'FAILED') {
           failed++;
           // Operatör uyarısı: kimlik, sağlayıcı hatası, adres veya şifreli yük taşınmaz.
-          if (changed === 'FAILED') process.stderr.write('notification.intent: RETRY_EXHAUSTED\n');
+          if (changed === 'FAILED')
+            writeWorkerLog('stderr', 'notification.intent: RETRY_EXHAUSTED');
         }
       } catch (error) {
         // Tur başına TEK satır: havuz/bağlantı ortada çökerse sayfa başına 100 kayıt aynı hatayı üretir (kart 330 d).
