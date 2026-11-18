@@ -25,6 +25,7 @@ import {
   RadioGroup,
   Switch,
   Textarea,
+  ActionBar,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
@@ -481,11 +482,11 @@ export function MentorSettings({
           </p>
         )}
         <p className="text-base text-fg-muted">{t('summary', { count: ruleCount })}</p>
-        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 bg-bg pt-2 pb-2 lg:static">
+        <ActionBar className="bg-bg pt-2 pb-2">
           <Button size="lg" fullWidth loading={pending === 'weekly'} onClick={saveWeekly}>
             {t('saveWeekly')}
           </Button>
-        </div>
+        </ActionBar>
       </section>
     </div>
   );

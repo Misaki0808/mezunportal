@@ -10,7 +10,7 @@ const db = new PrismaClient({
 test.afterAll(() => db.$disconnect());
 test.describe.configure({ mode: 'serial' });
 
-test('mezun: iletişim kararı sonrası odak, bağlama uygun ret, açık mentor kayıtları ve nötr boş ödül', async ({
+test('mezun: iletişim kararı sonrası odak, bağlama uygun ret, açık mentor kayıtları ve ödül ekranı', async ({
   page,
 }) => {
   test.setTimeout(90_000);
@@ -70,9 +70,18 @@ test('mezun: iletişim kararı sonrası odak, bağlama uygun ret, açık mentor 
       await expect(page.getByText('Kaydedildi.', { exact: true })).toBeVisible();
     }
     await page.goto('/odullerim');
-    await expect(page.getByRole('heading', { name: 'Ödüllerin', exact: true })).toBeVisible();
-    await expect(page.getByText('Henüz bir ödülün yok.', { exact: true })).toBeVisible();
-    await expect(page.getByText('Katkınla ilham verdin', { exact: true })).toHaveCount(0);
+    // Örnek veri (seed-awards.ts) mentora verilmiş bir ödül getirir. Ödül yoksa nötr boş durum, varsa ödül başlığı görünür.
+    const awardCount = await db.award.count({ where: { userId: mentor.id } });
+    if (awardCount === 0) {
+      await expect(page.getByRole('heading', { name: 'Ödüllerin', exact: true })).toBeVisible();
+      await expect(page.getByText('Henüz bir ödülün yok.', { exact: true })).toBeVisible();
+      await expect(page.getByText('Katkınla ilham verdin', { exact: true })).toHaveCount(0);
+    } else {
+      await expect(
+        page.getByRole('heading', { name: 'Katkınla ilham verdin', exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText('Henüz bir ödülün yok.', { exact: true })).toHaveCount(0);
+    }
   } finally {
     await db.contactRequest.deleteMany({ where: { id: { in: ids } } });
   }

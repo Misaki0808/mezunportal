@@ -24,7 +24,7 @@ export default async function CampusEventPage({ params }: { params: Promise<{ id
   const event = result.data.find((x) => x.id === id);
   if (!event) notFound();
   return (
-    <div className="w-full min-w-0 pb-56 lg:pb-0">
+    <div className="w-full min-w-0">
       <Link href="/etkinlikler" className={buttonClasses({ variant: 'ghost' }) + ' -ml-4'}>
         <ChevronLeftIcon width={18} height={18} />
         {t('back')}

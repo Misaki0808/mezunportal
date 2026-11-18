@@ -37,7 +37,7 @@ kısa aralıklarla girer: hızlı tarama, az metin, net tek eylem.
   **toast** — kısa, bağlama uygun, sıcak ("Profilin güncellendi.", "İlanın incelemeye gönderildi."), yönlendirmede de görünür; sayfayı aşağı iten satır içi başarı
   kutusu yok (düzen zıplar); (3) hatada hata satır içi `role="alert"` ve kararlı `errorCode` metniyle gösterilir, **girilen veri korunur** (başarıda form temizlenir);
   (4) sayfa geçişinde `loading.tsx` iskeleti. Ortak parçalar: `useAction` (kilit + bekleyen durum + toast + hata), `useToast`, `PageSkeleton`. Hareket ölçülü: toast
-  girişi 160 ms, dönen simge ve giriş animasyonu `prefers-reduced-motion`'da kapalı; gradyan/parlama/konfeti yok.
+  girişi 160 ms, dönen simge ve giriş animasyonu `prefers-reduced-motion`'da kapalı; gradyan/parlama/konfeti yok. Telefonda eylem çubuğu (`ActionBar`) ekranın alt şeridine SABİTTİR: alt gezinmenin hemen üstünde, her kaydırma konumunda aynı yerde; akışta aynı yükseklikte bir boşluk son içeriği çubuğun altında bırakmaz. Toast çubuğun üstünde durur, birincil düğmeyi örtmez. Ekran klavyesi açıkken çubuk akışa döner. Yeni alt çubuk `ActionBar` ile çizilir, çağıran `sticky`/`fixed`/`bottom-*` vermez.
 - **Boş durum** `EmptyState` ile verilir (simge + kısa başlık + tek eylem); çıplak bir "veri yok" paragrafı değildir.
   Tabloda tek tek soluk görünen sayaç/"yeterli veri yok" satırları kısa metin ve rozetle (`Badge`) gösterilir.
 - **Listede satır eylemleri** ortak bir koşula (ör. gerekçe yazma) bağlıysa düğmeler sessizce kapalı kalmaz: tıklanınca sebep
