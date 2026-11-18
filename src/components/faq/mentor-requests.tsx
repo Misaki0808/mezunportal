@@ -99,7 +99,6 @@ function AnswerCard({
               {...field}
               ref={answerRef}
               rows={5}
-              maxLength={FAQ_ANSWER_MAX}
               aria-describedby={`${field['aria-describedby'] ?? ''} ${titleId}`.trim()}
               value={body}
               onChange={(e) => {

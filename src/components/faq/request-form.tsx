@@ -45,7 +45,7 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
   // Gecikmeli benzer SSS önerisi; eski yanıt yenisini ezmez.
   useEffect(() => {
     const mine = ++ticket.current;
-    if (trimmed.length < FAQ_QUESTION_MIN) return;
+    if (trimmed.length < FAQ_QUESTION_MIN || trimmed.length > FAQ_QUESTION_MAX) return;
     const timer = setTimeout(() => {
       suggest({ text: trimmed })
         .then((result) => {
@@ -94,7 +94,8 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
   }
 
   // Soru kısalınca eski öneriler gösterilmez (effect içinde eşzamanlı setState yok).
-  const visible = trimmed.length >= FAQ_QUESTION_MIN ? suggestions : [];
+  const visible =
+    trimmed.length >= FAQ_QUESTION_MIN && trimmed.length <= FAQ_QUESTION_MAX ? suggestions : [];
   const similarBlocked = error === 'FAQ_SIMILAR_EXISTS';
   return (
     <form onSubmit={(e) => void onSubmit(e)} noValidate className="flex flex-col gap-4">
@@ -109,7 +110,6 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
             {...field}
             ref={questionRef}
             rows={4}
-            maxLength={FAQ_QUESTION_MAX}
             value={question}
             onChange={(e) => {
               setQuestion(e.target.value);
