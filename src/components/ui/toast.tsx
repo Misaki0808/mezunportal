@@ -37,7 +37,7 @@ const LIFT = '--toast-lift';
  */
 function liftAboveActionBars(region: HTMLElement) {
   region.style.setProperty(LIFT, '0px');
-  if (window.matchMedia('(min-width: 1024px)').matches) return;
+  if (window.matchMedia?.('(min-width: 1024px)').matches) return;
   const box = region.getBoundingClientRect();
   if (box.height === 0) return;
   let lift = 0;

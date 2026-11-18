@@ -1155,3 +1155,12 @@ açılırken sıfır pg uyarısı ölçüldü; tam testte başka yollar için ye
 Günlük süpürme son rızası verilmiş ama eski sürümdeki fotoğrafı silmez; güncel rıza olmadan
 görünmez kalır. Böylece metin sürümü yükselince geri alınmamış fotoğraflar topluca kaybolmaz.
 Yeniden onay ve kalan dosyaların temizliği PILOT-LEGAL kapsamında ayrıca kararlaştırılır.
+
+## 2026-11-18 · Toast yapışkan eylem çubuğunun üstüne kalkar (kart 453)
+
+Telefonda ortak toast bölgesi alt gezinmenin hemen üstünde (5 rem) durur; dokuz ekranda aynı şeridi yapışkan bir eylem
+çubuğu tutar. Kuru koşuda "Onayların kaydedildi." toast'ı "Doğrulamayı tamamla" düğmesinin üst yarısını örtüyordu.
+Üstte göstermek liste ekranlarının üstteki ana eylemlerini ("İlan ver", arama) örterdi ve çubuk yüksekliklerini sabit
+bir sayıyla tahmin etmek her yeni çubukta bozulurdu; bu yüzden bölge, ekranda görünen çubukla çakışıyorsa onun üstüne
+kalkar (`data-action-bar`, `src/components/ui/toast.tsx`). Yeni yapışkan eylem çubuğu bu özniteliği taşımalı. Canlı bölgeler,
+metin ve süre aynı. Bekçi: birim testi ve `tests/e2e/toast-layout.spec.ts` (`elementFromPoint`).
