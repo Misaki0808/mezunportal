@@ -25,10 +25,12 @@ export function RequestForm({
     [success, setSuccess] = useState(false),
     [invalid, setInvalid] = useState(false);
   const lock = useRef(false);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
   async function submit() {
     const p = createCvReviewRequestSchema.safeParse({ mentorId, note });
     if (!p.success) {
       setInvalid(true);
+      noteRef.current?.focus();
       return;
     }
     if (lock.current) return;
@@ -38,7 +40,10 @@ export function RequestForm({
     try {
       const result = await createCvReviewRequest(p.data);
       if (result.ok) setSuccess(true);
-      else setError(errors(result.errorCode));
+      else if (result.fieldErrors?.note) {
+        setInvalid(true);
+        noteRef.current?.focus();
+      } else setError(errors(result.errorCode));
     } catch {
       setError(errors('SERVER_UNEXPECTED'));
     } finally {
@@ -80,17 +85,17 @@ export function RequestForm({
             className="[&_p]:text-base"
             label={t('note')}
             hint={t('noteHint')}
-            error={invalid ? t('required') : undefined}
+            error={invalid ? t('noteInvalid') : undefined}
           >
             {(control) => (
               <Textarea
                 {...control}
+                ref={noteRef}
                 value={note}
                 onChange={(e) => {
                   setNote(e.target.value);
                   setInvalid(false);
                 }}
-                maxLength={500}
                 rows={5}
               />
             )}

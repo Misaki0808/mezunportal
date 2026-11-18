@@ -1,6 +1,6 @@
 'use client';
 import { useHydrated } from '@/hooks/use-hydrated';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -43,6 +43,7 @@ export function ConsentForm({
     ),
   );
   const [missing, setMissing] = useState<string[]>([]);
+  const fields = useRef<Record<string, HTMLInputElement | null>>({});
   return (
     <form
       data-hydrated={hydrated ? 'true' : undefined}
@@ -54,7 +55,10 @@ export function ConsentForm({
           .filter((d) => d.required && !choices[d.documentType])
           .map((d) => d.documentType);
         setMissing(absent);
-        if (absent.length) return;
+        if (absent.length) {
+          fields.current[absent[0] ?? '']?.focus();
+          return;
+        }
         const input = form.parse(recordConsentsSchema, {
           decisions: documents.map((d) => ({
             documentType: d.documentType,
@@ -101,10 +105,17 @@ export function ConsentForm({
             </Link>
           </div>
           <Checkbox
+            ref={(element) => {
+              fields.current[d.documentType] = element;
+            }}
             label={t(d.required ? 'accept' : 'optionalAccept')}
             checked={!!choices[d.documentType]}
             disabled={form.busy}
-            onChange={(e) => setChoices({ ...choices, [d.documentType]: e.target.checked })}
+            onChange={(e) => {
+              setChoices({ ...choices, [d.documentType]: e.target.checked });
+              if (e.target.checked)
+                setMissing((current) => current.filter((item) => item !== d.documentType));
+            }}
             aria-invalid={missing.includes(d.documentType) || undefined}
             aria-describedby={
               missing.includes(d.documentType) ? `${d.documentType}-error` : undefined

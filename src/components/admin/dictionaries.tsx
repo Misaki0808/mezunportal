@@ -1,6 +1,6 @@
 'use client';
 import { useTranslations } from 'next-intl';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import {
   DICTIONARY_KINDS,
   createDictionaryEntrySchema,
@@ -54,6 +54,14 @@ export function Dictionaries({
   const [reason, setReason] = useState('');
   const [pending, setPending] = useState(false);
   const [invalid, setInvalid] = useState(false);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
+  const fields = useRef<Record<string, HTMLElement | null>>({});
+  function showInvalid(paths: string[]) {
+    setInvalid(true);
+    setInvalidFields(paths);
+    const first = ['name', 'aliases', 'sectorId', 'reason'].find((field) => paths.includes(field));
+    if (first) fields.current[first]?.focus();
+  }
   const [error, setError] = useState<ErrorCode>();
   const [notice, setNotice] = useState(false);
   async function fetchKind(next: DictionaryKind, after?: string) {
@@ -81,6 +89,7 @@ export function Dictionaries({
     setSector(entry?.sectorId ?? '');
     setReason('');
     setInvalid(false);
+    setInvalidFields([]);
     setError(undefined);
     setChoice(entry ? { kind: deleting ? 'delete' : 'edit', entry } : { kind: 'create' });
   }
@@ -88,6 +97,7 @@ export function Dictionaries({
     if (pending) return;
     setChoice(undefined);
     setInvalid(false);
+    setInvalidFields([]);
     setError(undefined);
   }
   async function submit() {
@@ -97,6 +107,7 @@ export function Dictionaries({
       .map((v) => v.trim())
       .filter(Boolean);
     let operation: (() => Promise<ActionResult<DictionaryEntryIdOutput>>) | undefined;
+    let invalidPaths: string[] = [];
     if (choice.kind === 'create') {
       const parsed = createDictionaryEntrySchema.safeParse({
         kind,
@@ -105,6 +116,7 @@ export function Dictionaries({
         ...(kind === 'COMPANY' && sector ? { sectorId: sector } : {}),
       });
       if (parsed.success) operation = () => create(parsed.data);
+      else invalidPaths = parsed.error.issues.map((issue) => String(issue.path[0] ?? ''));
     } else if (choice.kind === 'edit') {
       const parsed = updateDictionaryEntrySchema.safeParse({
         kind,
@@ -114,6 +126,7 @@ export function Dictionaries({
         ...(kind === 'COMPANY' ? { sectorId: sector || null } : {}),
       });
       if (parsed.success) operation = () => update(parsed.data);
+      else invalidPaths = parsed.error.issues.map((issue) => String(issue.path[0] ?? ''));
     } else {
       const parsed = deleteDictionaryEntrySchema.safeParse({
         kind,
@@ -122,16 +135,20 @@ export function Dictionaries({
         confirmed: true,
       });
       if (parsed.success) operation = () => remove(parsed.data);
+      else invalidPaths = parsed.error.issues.map((issue) => String(issue.path[0] ?? ''));
     }
     if (!operation) {
-      setInvalid(true);
+      showInvalid(invalidPaths);
       return;
     }
+    setInvalid(false);
+    setInvalidFields([]);
     setPending(true);
     setError(undefined);
     try {
       const result = await operation();
       if (!result.ok) {
+        if (result.fieldErrors) showInvalid(Object.keys(result.fieldErrors));
         setError(result.errorCode);
         return;
       }
@@ -257,11 +274,14 @@ export function Dictionaries({
             label={t('reason')}
             required
             hint={t('reasonHint')}
-            error={invalid ? t('reasonInvalid') : undefined}
+            error={invalidFields.includes('reason') ? t('reasonInvalid') : undefined}
           >
             {(props) => (
               <Textarea
                 {...props}
+                ref={(el) => {
+                  fields.current.reason = el;
+                }}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={4}
@@ -270,25 +290,53 @@ export function Dictionaries({
           </Field>
         ) : (
           <div className="flex flex-col gap-4">
-            <Field label={t('name')} required>
+            <Field
+              label={t('name')}
+              required
+              error={invalidFields.includes('name') ? t('invalid') : undefined}
+            >
               {(props) => (
                 <Input
                   {...props}
+                  ref={(el) => {
+                    fields.current.name = el;
+                  }}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={200}
                 />
               )}
             </Field>
-            <Field label={t('dictionary.aliases')} hint={t('dictionary.aliasesHint')}>
+            <Field
+              label={t('dictionary.aliases')}
+              hint={t('dictionary.aliasesHint')}
+              error={invalidFields.includes('aliases') ? t('invalid') : undefined}
+            >
               {(props) => (
-                <Input {...props} value={aliases} onChange={(e) => setAliases(e.target.value)} />
+                <Input
+                  {...props}
+                  ref={(el) => {
+                    fields.current.aliases = el;
+                  }}
+                  value={aliases}
+                  onChange={(e) => setAliases(e.target.value)}
+                />
               )}
             </Field>
             {kind === 'COMPANY' && (
-              <Field label={t('dictionary.sector')}>
+              <Field
+                label={t('dictionary.sector')}
+                error={invalidFields.includes('sectorId') ? t('invalid') : undefined}
+              >
                 {(props) => (
-                  <Select {...props} value={sector} onChange={(e) => setSector(e.target.value)}>
+                  <Select
+                    {...props}
+                    ref={(el) => {
+                      fields.current.sectorId = el;
+                    }}
+                    value={sector}
+                    onChange={(e) => setSector(e.target.value)}
+                  >
                     <option value="">{t('none')}</option>
                     {sectorItems.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -299,11 +347,12 @@ export function Dictionaries({
                 )}
               </Field>
             )}
-            {invalid && (
-              <p role="alert" className="text-danger">
-                {t('invalid')}
-              </p>
-            )}
+            {invalid &&
+              !invalidFields.some((field) => ['name', 'aliases', 'sectorId'].includes(field)) && (
+                <p role="alert" className="text-danger">
+                  {t('invalid')}
+                </p>
+              )}
           </div>
         )}
         {error && (

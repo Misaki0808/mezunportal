@@ -24,6 +24,31 @@ it('hatalı alanlara özgü yardım gösterir ve ilk alana odaklanır', async ()
     screen.getByRole('option', { name: /Yönetim Bilişim Sistemleri · İktisat/ }),
   ).toBeInTheDocument();
 });
+it('sunucunun alan reddinde odak ilgili alana gider, diğer veri korunur', async () => {
+  const { user } = renderUi(
+    <MembershipForm
+      role="STUDENT"
+      departments={departments}
+      submit={vi.fn().mockResolvedValue({
+        ok: false,
+        errorCode: 'VALIDATION_INVALID',
+        fieldErrors: { entryYear: 'VALIDATION_INVALID' },
+      })}
+    />,
+  );
+  const department = screen.getByLabelText(/Bölüm/);
+  const year = screen.getByLabelText(/Üniversiteye giriş yılı/);
+  await user.selectOptions(department, 'dept');
+  await user.type(year, '2024');
+  await user.click(screen.getByRole('button', { name: 'Doğrulamayı tamamla' }));
+  expect(await screen.findByText(/Giriş yılını 1990 ile/)).toBeVisible();
+  expect(year).toHaveFocus();
+  expect(year).toBeInvalid();
+  expect(year).toHaveAccessibleDescription();
+  expect(department).toHaveValue('dept');
+  expect(year).toHaveValue(2024);
+});
+
 it('başarılı işlemden sonra başlık güncellenir', async () => {
   const { user } = renderUi(
     <MembershipForm

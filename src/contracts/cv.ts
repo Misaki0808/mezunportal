@@ -155,19 +155,24 @@ export const parsedEducationSchema = z
   .transform(normalizeDates);
 export type ParsedEducation = z.output<typeof parsedEducationSchema>;
 
-export const parsedPositionSchema = z
-  .object({
-    company: text(CV_LIMITS.name),
-    title: text(CV_LIMITS.name),
-    employmentType: z
-      .enum(EMPLOYMENT_TYPES, { error: INVALID })
-      .nullish()
-      .transform((v) => v ?? null),
-    startDate: yearMonth,
-    endDate: yearMonth,
-    isCurrent: z.boolean({ error: INVALID }).default(false),
-    description,
-  })
+const positionFields = z.object({
+  company: text(CV_LIMITS.name),
+  title: text(CV_LIMITS.name),
+  employmentType: z
+    .enum(EMPLOYMENT_TYPES, { error: INVALID })
+    .nullish()
+    .transform((v) => v ?? null),
+  startDate: yearMonth,
+  endDate: yearMonth,
+  isCurrent: z.boolean({ error: INVALID }).default(false),
+});
+
+// CV çıktısındaki uzun açıklama kesilebilir; elle girilen açıklamada veri kaybı yerine hata gösterilir.
+export const parsedPositionSchema = positionFields
+  .extend({ description })
+  .transform(normalizeDates);
+export const manualPositionSchema = positionFields
+  .extend({ description: optionalText(CV_LIMITS.description) })
   .transform(normalizeDates);
 export type ParsedPosition = z.output<typeof parsedPositionSchema>;
 

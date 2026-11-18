@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { adminReason } from '@/contracts/admin';
 import { Button, Field, Modal, Textarea } from '@/components/ui';
@@ -33,6 +33,11 @@ export function ReasonModal(props: Props) {
   const [pending, setPending] = useState(false);
   const [invalid, setInvalid] = useState(false);
   const [error, setError] = useState<ErrorCode>();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [focusTick, setFocusTick] = useState(0);
+  useEffect(() => {
+    if (focusTick) contentRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [focusTick]);
 
   function close() {
     if (pending) return;
@@ -46,6 +51,7 @@ export function ReasonModal(props: Props) {
     if (pending) return;
     if (props.blocked || (!props.noReason && !adminReason.safeParse(reason).success)) {
       setInvalid(true);
+      setFocusTick((tick) => tick + 1);
       return;
     }
     setPending(true);
@@ -88,7 +94,7 @@ export function ReasonModal(props: Props) {
         </>
       }
     >
-      <div className="flex flex-col gap-4">
+      <div ref={contentRef} className="flex flex-col gap-4">
         {props.children}
         {!props.noReason && (
           <Field

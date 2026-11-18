@@ -692,6 +692,7 @@ function BasicsForm({
   const [city, setCity] = useState(profile.city ?? '');
   const [summary, setSummary] = useState(profile.summary ?? '');
   const [goals, setGoals] = useState(profile.goals ?? '');
+  const fields = useRef<Record<string, HTMLElement | null>>({});
   const e = useTranslations('profile.entryErrors');
   const codes = useTranslations('errors.codes');
   const parsed = updateProfileBasicsSchema.safeParse({ headline, city, summary, goals });
@@ -710,7 +711,13 @@ function BasicsForm({
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        if (!parsed.success) return;
+        if (!parsed.success) {
+          const first = ['headline', 'city', 'summary', 'goals'].find(
+            (field) => bad[field as keyof typeof bad],
+          );
+          if (first) fields.current[first]?.focus();
+          return;
+        }
         onSave(parsed.data);
       }}
       className="flex flex-col gap-4"
@@ -724,6 +731,9 @@ function BasicsForm({
         {(control) => (
           <Input
             {...control}
+            ref={(element) => {
+              fields.current.headline = element;
+            }}
             value={headline}
             maxLength={PROFILE_TEXT_LIMITS.headline + 50}
             onChange={(event) => setHeadline(event.target.value)}
@@ -732,13 +742,23 @@ function BasicsForm({
       </Field>
       <Field label={f('city')} error={bad.city}>
         {(control) => (
-          <Input {...control} value={city} onChange={(event) => setCity(event.target.value)} />
+          <Input
+            {...control}
+            ref={(element) => {
+              fields.current.city = element;
+            }}
+            value={city}
+            onChange={(event) => setCity(event.target.value)}
+          />
         )}
       </Field>
       <Field label={f('summary')} hint={t('summaryHint')} error={bad.summary}>
         {(control) => (
           <Textarea
             {...control}
+            ref={(element) => {
+              fields.current.summary = element;
+            }}
             rows={5}
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
@@ -749,6 +769,9 @@ function BasicsForm({
         {(control) => (
           <Textarea
             {...control}
+            ref={(element) => {
+              fields.current.goals = element;
+            }}
             rows={3}
             value={goals}
             onChange={(event) => setGoals(event.target.value)}
@@ -778,6 +801,7 @@ function LinksForm({
     profile.socialLinks.map((link) => ({ kind: link.kind, url: link.url })),
   );
   const [problems, setProblems] = useState<Record<string, string>>({});
+  const fields = useRef<Record<string, HTMLElement | null>>({});
   const sites = SOCIAL_LINK_KINDS.map((kind) => t(`linkKinds.${kind}`)).join(', ');
 
   function submit() {
@@ -793,11 +817,11 @@ function LinksForm({
     rows.forEach((row, index) => {
       if (row.kind === '' && row.url.trim() === '') return;
       if (row.kind === '') {
-        found[`row${index}`] = t('linkProblems.PROFILE_LINK_HOST_NOT_ALLOWED');
+        found[`site${index}`] = t('linkProblems.PROFILE_LINK_HOST_NOT_ALLOWED');
         return;
       }
       if (used.has(row.kind)) {
-        found[`row${index}`] = t('linkDuplicate');
+        found[`site${index}`] = t('linkDuplicate');
         return;
       }
       used.add(row.kind);
@@ -806,7 +830,11 @@ function LinksForm({
       else found[`row${index}`] = t(`linkProblems.${result.problem}`);
     });
     setProblems(found);
-    if (Object.keys(found).length > 0) return;
+    const first = Object.keys(found)[0];
+    if (first) {
+      fields.current[first]?.focus();
+      return;
+    }
     onSave(linkedinValue, links);
   }
 
@@ -829,6 +857,9 @@ function LinksForm({
         {(control) => (
           <Input
             {...control}
+            ref={(element) => {
+              fields.current.linkedin = element;
+            }}
             inputMode="url"
             autoCapitalize="none"
             value={linkedin}
@@ -841,20 +872,28 @@ function LinksForm({
         <p className="text-sm text-fg-muted">{t('allowedSites', { sites })}</p>
         {rows.map((row, index) => (
           <div key={index} className="flex flex-col gap-3 rounded-card border border-border p-3">
-            <Field label={t('siteLabel')}>
+            <Field label={t('siteLabel')} error={problems[`site${index}`]}>
               {(control) => (
                 <Select
                   {...control}
+                  ref={(element) => {
+                    fields.current[`site${index}`] = element;
+                  }}
                   value={row.kind}
-                  onChange={(event) =>
+                  onChange={(event) => {
                     setRows((current) =>
                       current.map((item, at) =>
                         at === index
                           ? { ...item, kind: event.target.value as SocialLinkKind }
                           : item,
                       ),
-                    )
-                  }
+                    );
+                    setProblems((current) => {
+                      const { [`site${index}`]: _gone, ...rest } = current;
+                      void _gone;
+                      return rest;
+                    });
+                  }}
                 >
                   <option value="">—</option>
                   {SOCIAL_LINK_KINDS.map((kind) => (
@@ -869,6 +908,9 @@ function LinksForm({
               {(control) => (
                 <Input
                   {...control}
+                  ref={(element) => {
+                    fields.current[`row${index}`] = element;
+                  }}
                   inputMode="url"
                   autoCapitalize="none"
                   value={row.url}

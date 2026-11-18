@@ -39,7 +39,7 @@ it('yıkıcı/yetki değiştiren eylemler açık onay ister', () => {
       correctMembershipSchema,
       { membershipId: 'm', reason: 'Yanlış beyan', changes: { entryYear: 2024 } },
     ],
-    [grantAdminSchema, { scope: 'SYSTEM', userId: 'u' }],
+    [grantAdminSchema, { scope: 'SYSTEM', userId: 'u', reason: 'Yetki görevlendirmesi' }],
     [revokeAdminSchema, { grantId: 'g', reason: 'Görev bitti' }],
     [deleteDictionaryEntrySchema, { kind: 'COMPANY', id: 'd', reason: 'Hatalı kayıt' }],
   ] as const;

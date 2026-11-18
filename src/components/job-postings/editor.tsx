@@ -6,6 +6,11 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState } from 'react';
 import {
   JOB_POSTING_MAX_DAYS,
+  JOB_POSTING_TITLE_MAX,
+  JOB_POSTING_ORGANIZATION_MAX,
+  JOB_POSTING_DESCRIPTION_MAX,
+  JOB_POSTING_LOCATION_MAX,
+  JOB_POSTING_URL_MAX,
   type JobPostingFormContext,
   type JobPostingIdInput,
   type MyJobPostingView,
@@ -236,12 +241,19 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
       },
     );
   }
-  const bad = (field: string) =>
-    invalid.has(field)
-      ? invalid.size === 1 && error !== t('formSummary')
-        ? error
-        : t('requiredError')
-      : undefined;
+  const bad = (field: string) => {
+    if (!invalid.has(field)) return undefined;
+    const lengths: Record<string, [string, number]> = {
+      title: [title, JOB_POSTING_TITLE_MAX],
+      organizationName: [organization, JOB_POSTING_ORGANIZATION_MAX],
+      description: [description, JOB_POSTING_DESCRIPTION_MAX],
+      location: [location, JOB_POSTING_LOCATION_MAX],
+      applyUrl: [url, JOB_POSTING_URL_MAX],
+    };
+    const limit = lengths[field];
+    if (limit && limit[0].trim().length > limit[1]) return t('tooLong', { max: limit[1] });
+    return invalid.size === 1 && error !== t('formSummary') ? error : t('requiredError');
+  };
   const fieldNames: Record<string, string> = {
     kind: t('kind'),
     title: t('titleLabel'),
@@ -334,7 +346,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   {...p}
                   data-error-field="title"
                   value={title}
-                  maxLength={120}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               )}
@@ -345,7 +356,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   {...p}
                   data-error-field="organizationName"
                   value={organization}
-                  maxLength={120}
                   onChange={(e) => setOrganization(e.target.value)}
                   autoComplete="organization"
                 />
@@ -377,7 +387,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   {...p}
                   data-error-field="description"
                   value={description}
-                  maxLength={3000}
                   rows={6}
                   onChange={(e) => setDescription(e.target.value)}
                 />
@@ -389,7 +398,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                   {...p}
                   data-error-field="location"
                   value={location}
-                  maxLength={100}
                   onChange={(e) => setLocation(e.target.value)}
                 />
               )}
@@ -546,7 +554,6 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                     type="url"
                     inputMode="url"
                     value={url}
-                    maxLength={500}
                     onChange={(e) => setUrl(e.target.value)}
                   />
                 )}

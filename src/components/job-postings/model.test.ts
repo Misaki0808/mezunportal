@@ -84,6 +84,20 @@ it('adım denetimi sözleşmenin uzunluk, bağlantı ve koşullu alan kuralları
   };
   expect(postingStepErrors(valid, 'dep', 0, '2026-11-13')).toEqual([]);
   expect(postingStepErrors(valid, 'dep', 1, '2026-11-13')).toEqual([]);
+  expect(postingStepErrors({ ...valid, title: 'İ'.repeat(120) }, 'dep', 0, '2026-11-13')).toEqual(
+    [],
+  );
+  expect(postingStepErrors({ ...valid, title: 'İ'.repeat(121) }, 'dep', 0, '2026-11-13')).toContain(
+    'title',
+  );
+  expect(
+    postingStepErrors(
+      { ...valid, applyMethod: 'URL', applyUrl: 'javascript:alert(1)' },
+      'dep',
+      1,
+      '2026-11-13',
+    ),
+  ).toContain('applyUrl');
   expect(
     postingStepErrors({ ...valid, deadlineOn: '2027-02-20' }, 'dep', 1, '2026-11-13'),
   ).toContain('deadlineOn');

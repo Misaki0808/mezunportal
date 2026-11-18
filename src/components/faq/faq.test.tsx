@@ -169,6 +169,35 @@ describe('SSS talebi gönder (öğrenci)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Talebi gönder' }));
     expect(p.submit).not.toHaveBeenCalled();
     expect(await screen.findByText('Soru 15–500 karakter olmalı.')).toBeVisible();
+    expect(screen.getByLabelText(/Sorduğun soru/)).toHaveFocus();
+  });
+  it('501 karakterlik soru kesilip gönderilmez, metin ve alan odağı korunur', async () => {
+    const p = student();
+    const field = screen.getByLabelText(/Sorduğun soru/);
+    const text = 'İ'.repeat(501);
+    expect(field).not.toHaveAttribute('maxlength');
+    fireEvent.change(field, { target: { value: text } });
+    fireEvent.click(screen.getByRole('button', { name: 'Talebi gönder' }));
+    expect(p.submit).not.toHaveBeenCalled();
+    expect(field).toHaveValue(text);
+    expect(field).toHaveFocus();
+    expect(field).toBeInvalid();
+  });
+
+  it('sunucu soru alanını reddederse yazılanı korur ve hataya odaklar', async () => {
+    student({
+      submit: vi.fn(async () => ({
+        ok: false as const,
+        errorCode: 'VALIDATION_INVALID' as const,
+        fieldErrors: { question: 'VALIDATION_INVALID' as const },
+      })),
+    });
+    typeQuestion(QUESTION);
+    fireEvent.click(screen.getByRole('button', { name: 'Talebi gönder' }));
+    expect(await screen.findByText('Soru 15–500 karakter olmalı.')).toBeVisible();
+    expect(screen.getByLabelText(/Sorduğun soru/)).toHaveValue(QUESTION);
+    expect(screen.getByLabelText(/Sorduğun soru/)).toHaveFocus();
+    expect(screen.getByLabelText(/Sorduğun soru/)).toBeInvalid();
   });
 
   it('benzer SSS varken önce onay ister, onayla yeniden gönderir', async () => {
@@ -304,6 +333,15 @@ describe('mentor cevap formu', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cevabı gönder' }));
     expect(answer).not.toHaveBeenCalled();
     expect(await screen.findByText('Cevap 20–2000 karakter olmalı.')).toBeVisible();
+    expect(screen.getByLabelText(/Cevabın/)).toHaveFocus();
+    const field = screen.getByLabelText(/Cevabın/);
+    const tooLong = 'İ'.repeat(2001);
+    expect(field).not.toHaveAttribute('maxlength');
+    fireEvent.change(field, { target: { value: tooLong } });
+    fireEvent.click(screen.getByRole('button', { name: 'Cevabı gönder' }));
+    expect(answer).not.toHaveBeenCalled();
+    expect(field).toHaveValue(tooLong);
+    expect(field).toHaveFocus();
     const body = 'Başvuruda transkript ve CV isteniyor, ayrıntı ilanda yazıyor.';
     fireEvent.change(screen.getByLabelText(/Cevabın/), { target: { value: body } });
     fireEvent.click(screen.getByRole('button', { name: 'Cevabı gönder' }));

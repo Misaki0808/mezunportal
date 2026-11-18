@@ -1,6 +1,6 @@
 'use client';
 import { useHydrated } from '@/hooks/use-hydrated';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { CONTACT_FIELDS, type ContactField } from '@/contracts/privacy';
@@ -27,6 +27,10 @@ export function ContactSendForm({
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
   const sentRef = useRef<HTMLParagraphElement>(null);
+  const firstField = useRef<HTMLInputElement>(null);
+  const messageField = useRef<HTMLTextAreaElement>(null);
+  const fieldErrorId = useId();
+  const firstAvailable = CONTACT_FIELDS.find((field) => requestableFields.includes(field));
   // Form kalkıp yerine sonuç gelir; odak formdaki düğmede kalamaz, sonuca taşınır.
   useEffect(() => {
     if (sent) sentRef.current?.focus();
@@ -62,13 +66,27 @@ export function ContactSendForm({
       className="space-y-5"
       onSubmit={(e) => {
         e.preventDefault();
-        const input = form.parse(sendContactRequestSchema, { targetUserId, fields, message });
+        const candidate = { targetUserId, fields, message };
+        const input = form.parse(sendContactRequestSchema, candidate);
         if (input)
           void form.run(
             () => sendContactRequest(input),
             () => setSent(true),
             t('sentToast'),
+            (failure) => {
+              if (failure.fieldErrors?.fields) firstField.current?.focus();
+              else if (failure.fieldErrors?.message) messageField.current?.focus();
+            },
           );
+        else {
+          const parsed = sendContactRequestSchema.safeParse(candidate);
+          if (!parsed.success) {
+            if (parsed.error.issues.some((issue) => issue.path[0] === 'fields'))
+              firstField.current?.focus();
+            else if (parsed.error.issues.some((issue) => issue.path[0] === 'message'))
+              messageField.current?.focus();
+          }
+        }
       }}
     >
       <Card>
@@ -79,10 +97,21 @@ export function ContactSendForm({
             <div key={field}>
               <Checkbox
                 label={labels(field)}
+                ref={field === firstAvailable ? firstField : undefined}
                 checked={fields.includes(field)}
                 disabled={form.busy || !requestableFields.includes(field)}
+                aria-invalid={
+                  form.fieldError('fields') && requestableFields.includes(field) ? true : undefined
+                }
                 aria-describedby={
-                  !requestableFields.includes(field) ? `${field}-unavailable` : undefined
+                  [
+                    !requestableFields.includes(field) ? `${field}-unavailable` : undefined,
+                    form.fieldError('fields') && requestableFields.includes(field)
+                      ? fieldErrorId
+                      : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(' ') || undefined
                 }
                 onChange={(e) =>
                   setFields(
@@ -98,7 +127,7 @@ export function ContactSendForm({
             </div>
           ))}
           {form.fieldError('fields') && (
-            <p role="alert" className="mt-2 text-base text-danger">
+            <p id={fieldErrorId} role="alert" className="mt-2 text-base text-danger">
               {t('fieldError')}
             </p>
           )}
@@ -114,8 +143,8 @@ export function ContactSendForm({
           {(control) => (
             <Textarea
               {...control}
+              ref={messageField}
               rows={4}
-              maxLength={CONTACT_MESSAGE_MAX}
               value={message}
               disabled={form.busy}
               placeholder={t('notePlaceholder')}

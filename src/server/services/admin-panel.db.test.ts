@@ -715,6 +715,7 @@ describe('listAuditLog', () => {
         action: 'ADMIN_GRANT',
         targetType: 'ADMIN_GRANT',
         targetId,
+        reason: 'Yetki görevlendirmesi',
       });
     });
     const byTarget = await listAuditLog(deps, admins.system, { targetId });
@@ -764,6 +765,7 @@ describe('listAuditLog', () => {
         action: 'ADMIN_GRANT',
         targetType: 'ADMIN_GRANT',
         targetId,
+        reason: 'Yetki görevlendirmesi',
       }),
     );
     await db.user.update({
@@ -879,6 +881,7 @@ describe('listAuditLog', () => {
           action: 'ADMIN_GRANT',
           targetType: 'ADMIN_GRANT',
           targetId,
+          reason: 'Yetki görevlendirmesi',
         });
       }
     });

@@ -53,7 +53,12 @@ it('zorunlu kutular seçilmeden kayıt göndermez; isteğe bağlı kutuyu zorlam
   expect(mocks.record).not.toHaveBeenCalled();
   expect(screen.getAllByText('Devam etmek için bu metni onayla.')).toHaveLength(2);
   const boxes = screen.getAllByRole('checkbox');
+  expect(boxes[0]).toHaveFocus();
+  expect(boxes[0]).toBeInvalid();
+  expect(boxes[0]).toHaveAccessibleDescription(/Devam etmek için/);
   await user.click(boxes[0]!);
+  expect(boxes[0]).not.toHaveAttribute('aria-invalid');
+  expect(screen.getAllByText('Devam etmek için bu metni onayla.')).toHaveLength(1);
   await user.click(boxes[1]!);
   mocks.record.mockResolvedValue({ ok: true, data: { ...state, blocking: false } });
   await user.click(screen.getByRole('button', { name: 'Seçimlerimi kaydet' }));

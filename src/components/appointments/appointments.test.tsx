@@ -121,9 +121,28 @@ describe('slot seçici', () => {
     await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
     expect(request).not.toHaveBeenCalled();
     expect(screen.getByText('Önce bir saat seç.')).toBeInTheDocument();
+    const timeGroup = screen.getByRole('radiogroup', { name: 'Saat seç' });
+    expect(timeGroup).toHaveAttribute('aria-invalid', 'true');
+    expect(timeGroup).toHaveAccessibleDescription('Önce bir saat seç.');
+    expect(screen.getByRole('radio', { name: '10:00 saatini seç' })).toHaveFocus();
     await user.click(screen.getByRole('radio', { name: '11:00 saatini seç' }));
     await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
     expect(request.mock.calls[0]![0]).toMatchObject({ mode: 'ONLINE' });
+  });
+
+  it('iki biçimli saatte seçim eksikse alan hatası ve odak gösterilir, not korunur', async () => {
+    const request = vi.fn();
+    const { user } = renderWithToasts(<SlotPicker list={slotList()} request={request} />);
+    await user.click(screen.getByRole('radio', { name: '10:00 saatini seç' }));
+    const note = screen.getByLabelText(/Mentora not/);
+    await user.type(note, 'Korunan not');
+    await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
+    expect(request).not.toHaveBeenCalled();
+    expect(screen.getByRole('radio', { name: 'Çevrimiçi' })).toHaveFocus();
+    const group = screen.getByRole('group', { name: /Görüşme biçimi/ });
+    expect(group).toHaveAttribute('aria-invalid', 'true');
+    expect(group).toHaveAccessibleDescription();
+    expect(note).toHaveValue('Korunan not');
   });
 
   it('gün değişince saatler değişir ve seçim sıfırlanır', async () => {
@@ -332,11 +351,15 @@ describe('mentor ayarları', () => {
     await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
     expect(actions.saveAvailability).not.toHaveBeenCalled();
     expect(within(monday).getByText('Aynı gündeki aralıklar çakışamaz.')).toBeInTheDocument();
+    expect(starts[0]).toHaveFocus();
+    expect(starts[0]).toBeInvalid();
+    expect(starts[0]).toHaveAccessibleDescription(/aralıklar çakışamaz/);
     const ends = within(monday).getAllByLabelText('Bitiş');
     await user.clear(ends[0]!);
     await user.type(ends[0]!, '08:00');
     await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
     expect(within(monday).getByText('Bitiş, başlangıçtan sonra olmalı.')).toBeInTheDocument();
+    expect(starts[0]).toHaveFocus();
   });
 
   it('yüz yüze seçilince yer notu zorunlu; geçersiz kapasite alan hatası verir', async () => {
@@ -346,11 +369,22 @@ describe('mentor ayarları', () => {
     await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
     expect(actions.saveSettings).not.toHaveBeenCalled();
     expect(screen.getByText('Yüz yüze için yer notu yaz.')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Yüz yüze görüşme yeri/)).toHaveFocus();
+    expect(screen.getByLabelText(/Yüz yüze görüşme yeri/)).toBeInvalid();
+    const locationNote = screen.getByLabelText(/Yüz yüze görüşme yeri/);
+    expect(locationNote).not.toHaveAttribute('maxlength');
+    fireEvent.change(locationNote, { target: { value: 'İ'.repeat(301) } });
+    await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
+    expect(locationNote).toHaveValue('İ'.repeat(301));
+    expect(locationNote).toHaveFocus();
+    expect(locationNote).toHaveAccessibleDescription(/en fazla 300/);
+    await user.clear(locationNote);
     await user.type(screen.getByLabelText(/Yüz yüze görüşme yeri/), 'Kampüs kafe');
     await user.clear(screen.getByLabelText(/Aylık görüşme kapasitesi/));
     await user.type(screen.getByLabelText(/Aylık görüşme kapasitesi/), '99');
     await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
     expect(screen.getByText('1 ile 40 arasında bir sayı gir.')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Aylık görüşme kapasitesi/)).toHaveFocus();
     await user.clear(screen.getByLabelText(/Aylık görüşme kapasitesi/));
     await user.type(screen.getByLabelText(/Aylık görüşme kapasitesi/), '5');
     await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
@@ -361,6 +395,38 @@ describe('mentor ayarları', () => {
       inPersonNote: 'Kampüs kafe',
       isActive: true,
     });
+  });
+
+  it('kapasitede fazla basamak veya harf sessizce değiştirilip kaydedilmez', async () => {
+    const actions = settingsActions();
+    const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
+    const capacity = screen.getByLabelText(/Aylık görüşme kapasitesi/);
+    const save = screen.getByRole('button', { name: 'Genel ayarları kaydet' });
+    for (const value of ['100', '4a']) {
+      await user.clear(capacity);
+      await user.type(capacity, value);
+      await user.click(save);
+      expect(actions.saveSettings).not.toHaveBeenCalled();
+      expect(capacity).toHaveValue(value);
+      expect(capacity).toBeInvalid();
+      expect(capacity).toHaveFocus();
+    }
+  });
+
+  it('sunucu kapasite alanını reddederse değer ve alan odağı korunur', async () => {
+    const actions = settingsActions();
+    vi.mocked(actions.saveSettings).mockResolvedValue({
+      ok: false,
+      errorCode: 'VALIDATION_INVALID',
+      fieldErrors: { monthlyCapacity: 'VALIDATION_INVALID' },
+    });
+    const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
+    const capacity = screen.getByLabelText(/Aylık görüşme kapasitesi/);
+    await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
+    await waitFor(() => expect(capacity).toHaveFocus());
+    expect(capacity).toHaveValue('6');
+    expect(capacity).toBeInvalid();
+    expect(capacity).toHaveAccessibleDescription(/1 ile 40/);
   });
 
   it('müsait değilim: tarih seçilmeden kaydedilmez; açıkken tarih, kapatınca null gider', async () => {

@@ -1176,6 +1176,17 @@ CV inceleme) `ActionBar`'a taşındı, `.sticky-actions` yardımcısı kalktı; 
 
 E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında işçi kaybı çift teslim üretebilir. Her denemede aynı Message-ID kullanılır; bu, sağlayıcıların tek teslimini garanti etmez. Tamamlanmış yükler 60 saniye sonra beş saniyelik bakım döngüsünde temizlenir; kapalı veya yoğun sistemde temizlik gecikebilir.
 
+## 2026-11-18 · Yönetici atamasında gerekçe
+
+Yetki vermek hassas ve işlem kaydına geçen bir işlemdir; gerekçe hem ekranda hem sunucuda
+zorunludur (kırpılmış 3–1000 karakter). İstemci ve sunucu ortak sözleşmeyi kullanır; işlem
+kaydı kişisel veri içeren gerekçeyi reddeder. Böylece doğrudan eylem çağrısı ekran kuralını
+atlayamaz.
+
+## 2026-11-18 · Elle iş deneyimi açıklaması
+
+Elle düzenlenen açıklama 1000 karakteri aşarsa veri kaybını önlemek için reddedilir ve alan
+hatası gösterilir. CV ayrıştırmasında uzun açıklamanın kesilmesi mevcut davranış olarak korunur.
 ## 2026-11-18 · Bekleyen e-posta işinin saklama süresi
 
 Ölçüm (kendi veritabanı, saklama süresi 30 saniyeye kısaltılmış): işçi kapalıyken kuyruğa giren 41 e-postadan, işçi açılınca

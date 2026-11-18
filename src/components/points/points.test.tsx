@@ -286,6 +286,7 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
     fireEvent.click(dialog().getByRole('button', { name: 'Kuralı kaydet' }));
     expect(a.updateRule).not.toHaveBeenCalled();
     expect(dialog().getByText('Gerekçe 3–1000 karakter olmalı.')).toBeVisible();
+    await waitFor(() => expect(dialog().getByLabelText(/Gerekçe/)).toHaveFocus());
     fireEvent.change(dialog().getByLabelText(/Gerekçe/), { target: { value: 'Pilot ayarı' } });
     fireEvent.click(dialog().getByRole('button', { name: 'Kuralı kaydet' }));
     await waitFor(() =>
@@ -298,6 +299,22 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
       }),
     );
     expect(await screen.findByText('Kural kaydedildi.')).toBeVisible();
+  });
+
+  it('kural puanı boşsa ilk hatalı sayı alanına odaklanır, gerekçe korunur', async () => {
+    const a = actions();
+    renderUi(<AdminPoints rules={[rule()]} flags={{ items: [], nextCursor: null }} actions={a} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Düzenle' })[0]!);
+    const points = dialog().getByLabelText(/^Puan/);
+    const reason = dialog().getByLabelText(/Gerekçe/);
+    fireEvent.change(points, { target: { value: '' } });
+    fireEvent.change(reason, { target: { value: 'Pilot ayarı' } });
+    fireEvent.click(dialog().getByRole('button', { name: 'Kuralı kaydet' }));
+    await waitFor(() => expect(points).toHaveFocus());
+    expect(points).toBeInvalid();
+    expect(points).toHaveAccessibleDescription();
+    expect(reason).toHaveValue('Pilot ayarı');
+    expect(a.updateRule).not.toHaveBeenCalled();
   });
 
   it('aralık dışı puan istekten önce engellenir', () => {
