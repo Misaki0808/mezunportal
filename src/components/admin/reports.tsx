@@ -1,7 +1,7 @@
 'use client';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { AdminReportPage, ListAdminReportsInput } from '@/contracts/admin';
 import type { JobPostingReportPage } from '@/contracts/job-postings';
 import {
@@ -33,6 +33,7 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
   const [choice, setChoice] = useState<{ id: string; decision: 'RESOLVED' | 'DISMISSED' }>();
   const [reason, setReason] = useState('');
   const [invalid, setInvalid] = useState(false);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<ErrorCode>();
   const [pending, setPending] = useState(false);
   const { rootRef, complete } = useQueueFocus(pending);
@@ -55,6 +56,7 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
     });
     if (!parsed.success) {
       setInvalid(true);
+      reasonRef.current?.focus();
       return;
     }
     setPending(true);
@@ -63,6 +65,10 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
     try {
       const result = await resolve(parsed.data);
       if (!result.ok) {
+        if (result.fieldErrors?.reason) {
+          setInvalid(true);
+          reasonRef.current?.focus();
+        }
         setError(result.errorCode);
         return;
       }
@@ -202,9 +208,13 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
           {(props) => (
             <Textarea
               {...props}
+              ref={reasonRef}
               rows={4}
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => {
+                setReason(e.target.value);
+                setInvalid(false);
+              }}
               maxLength={1000}
             />
           )}

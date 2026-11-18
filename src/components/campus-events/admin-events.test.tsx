@@ -135,6 +135,38 @@ describe('AdminEvents karar penceresi', () => {
   });
 });
 
+it('eksik etkinlik alanlarında görünüm sırasındaki ilk alan odaklanır', async () => {
+  const { user } = renderWithToasts(<AdminEvents departments={DEPARTMENTS} events={[]} />);
+  await user.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  const title = screen.getByLabelText(/Etkinlik adı/);
+  expect(title).toHaveFocus();
+  expect(title).toBeInvalid();
+  expect(title).toHaveAccessibleDescription();
+  expect(mocks.create).not.toHaveBeenCalled();
+});
+
+it('bölüm seçilmediğinde hata grubuna bağlanır ve ilk kutuya odaklanır', async () => {
+  const { user } = renderWithToasts(<AdminEvents departments={DEPARTMENTS} events={[]} />);
+  await user.type(screen.getByLabelText(/Etkinlik adı/), 'Keşif Buluşması');
+  await user.type(screen.getByLabelText(/^Açıklama/), 'Mezunlarla kısa sohbet etkinliği.');
+  await user.type(screen.getByLabelText(/^Yer/), 'Örnek Salon');
+  fireEvent.change(screen.getByLabelText(/Başlangıç \(İstanbul saati\)/), {
+    target: { value: '2026-12-01T14:00' },
+  });
+  fireEvent.change(screen.getByLabelText(/Bitiş \(İstanbul saati\)/), {
+    target: { value: '2026-12-01T15:00' },
+  });
+  fireEvent.change(screen.getByLabelText(/Kontenjan/), { target: { value: '30' } });
+  await user.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
+  const checkbox = screen.getByRole('checkbox', { name: /Yönetim Bilişim Sistemleri/ });
+  expect(checkbox).toHaveFocus();
+  const group = checkbox.closest('fieldset')!;
+  expect(group).toHaveAttribute('aria-invalid', 'true');
+  expect(group).toHaveAccessibleDescription();
+  expect(screen.getByLabelText(/Etkinlik adı/)).toHaveValue('Keşif Buluşması');
+  expect(mocks.create).not.toHaveBeenCalled();
+});
+
 it('bitiş başlangıçtan önceyse genel hata değil açık mesaj verir ve sunucuya gitmez', async () => {
   const { user } = renderWithToasts(<AdminEvents departments={DEPARTMENTS} events={[]} />);
   await user.type(screen.getByLabelText(/Etkinlik adı/), 'Keşif Buluşması');

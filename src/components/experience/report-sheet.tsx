@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import {
   reportExperienceSchema,
@@ -26,6 +26,7 @@ export function ReportExperience({ experienceId, report }: Props) {
   const [reasonInvalid, setReasonInvalid] = useState(false);
   const [error, setError] = useState<ErrorCode>();
   const [sent, setSent] = useState(false);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
   const action = useAction();
   const pending = action.busy;
 
@@ -40,6 +41,7 @@ export function ReportExperience({ experienceId, report }: Props) {
     const parsed = reportExperienceSchema.safeParse({ experienceId, reason });
     if (!parsed.success) {
       setReasonInvalid(true);
+      reasonRef.current?.focus();
       return;
     }
     setReasonInvalid(false);
@@ -51,7 +53,12 @@ export function ReportExperience({ experienceId, report }: Props) {
         setOpen(false);
         setReason('');
       },
-      onFailure: (failure) => setError(failure.errorCode),
+      onFailure: (failure) => {
+        if (failure.fieldErrors?.reason) {
+          setReasonInvalid(true);
+          reasonRef.current?.focus();
+        } else setError(failure.errorCode);
+      },
     });
   }
 
@@ -89,6 +96,7 @@ export function ReportExperience({ experienceId, report }: Props) {
           {(control) => (
             <Textarea
               {...control}
+              ref={reasonRef}
               rows={4}
               value={reason}
               onChange={(event) => setReason(event.target.value)}

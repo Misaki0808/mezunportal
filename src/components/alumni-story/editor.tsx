@@ -190,7 +190,6 @@ export function StoryEditor({
               {...props}
               ref={bodyRef}
               rows={10}
-              maxLength={3000}
               value={body}
               onChange={(event) => setBody(event.target.value)}
             />

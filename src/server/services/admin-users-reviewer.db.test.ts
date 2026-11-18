@@ -133,6 +133,7 @@ it('hesap silmeyle yarışan atama silinmiş kullanıcıya etkin yönetici yetki
     },
   });
   const grant = grantAdmin({ db: paused }, p.a, {
+    reason: 'Yetki görevlendirmesi',
     scope: 'DEPARTMENT',
     userId: p.target,
     departmentId: (await db.membership.findFirstOrThrow({ where: { userId: p.target } }))

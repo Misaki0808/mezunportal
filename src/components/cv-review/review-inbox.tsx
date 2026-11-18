@@ -35,6 +35,9 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
     [pending, setPending] = useState(''),
     [error, setError] = useState(''),
     [message, setMessage] = useState('');
+  const [limitText, setLimitText] = useState(initialSettings?.monthlyLimit.toString() ?? '');
+  const [limitInvalid, setLimitInvalid] = useState(false);
+  const limitRef = useRef<HTMLInputElement>(null);
   const lock = useRef(false);
   async function run(key: string, action: () => Promise<void>) {
     if (lock.current) return;
@@ -60,16 +63,18 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
   async function answer(row: CvReviewRequestView, comment: string) {
     const p = answerCvReviewRequestSchema.safeParse({ requestId: row.id, comment });
     if (!p.success) {
-      setError(t('required'));
-      return;
+      return true;
     }
+    let fieldError = false;
     await run(row.id, async () => {
       const r = await safeClientAction(() => answerCvReviewRequest(p.data));
       if (r.ok) {
         update(r.data);
         setMessage(t('answered'));
-      } else setError(errors(r.errorCode));
+      } else if (r.fieldErrors?.comment) fieldError = true;
+      else setError(errors(r.errorCode));
     });
+    return fieldError;
   }
   async function helpful(row: CvReviewRequestView) {
     await run(row.id, async () => {
@@ -90,16 +95,27 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
     });
   }
   async function save() {
-    const p = cvReviewSettingsSchema.safeParse(settings);
+    setError('');
+    setMessage('');
+    const p = cvReviewSettingsSchema.safeParse({
+      ...settings,
+      monthlyLimit: limitText.trim() ? Number(limitText) : undefined,
+    });
     if (!p.success) {
-      setError(t('required'));
+      setLimitInvalid(true);
+      limitRef.current?.focus();
       return;
     }
+    setLimitInvalid(false);
     await run('settings', async () => {
       const r = await safeClientAction(() => saveCvReviewSettings(p.data));
       if (r.ok) {
         setSettings(r.data);
+        setLimitText(String(r.data.monthlyLimit));
         setMessage(t('saved'));
+      } else if (r.fieldErrors?.monthlyLimit) {
+        setLimitInvalid(true);
+        limitRef.current?.focus();
       } else setError(errors(r.errorCode));
     });
   }
@@ -189,16 +205,20 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
             checked={settings.enabled}
             onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
           />
-          <Field label={t('limit')}>
+          <Field label={t('limit')} error={limitInvalid ? t('limitInvalid') : undefined}>
             {(control) => (
               <Input
                 {...control}
+                ref={limitRef}
                 type="number"
                 inputMode="numeric"
                 min={0}
                 max={100}
-                value={settings.monthlyLimit}
-                onChange={(e) => setSettings({ ...settings, monthlyLimit: Number(e.target.value) })}
+                value={limitText}
+                onChange={(e) => {
+                  setLimitText(e.target.value);
+                  setLimitInvalid(false);
+                }}
               />
             )}
           </Field>
@@ -223,11 +243,13 @@ function ReviewCard({
 }: {
   row: CvReviewRequestView;
   pending: boolean;
-  onAnswer: (row: CvReviewRequestView, comment: string) => Promise<void>;
+  onAnswer: (row: CvReviewRequestView, comment: string) => Promise<boolean>;
   onHelpful: (row: CvReviewRequestView) => Promise<void>;
 }) {
   const t = useTranslations('cvReview');
   const [comment, setComment] = useState('');
+  const [invalid, setInvalid] = useState(false);
+  const commentRef = useRef<HTMLTextAreaElement>(null);
   return (
     <article className="rounded-card border border-border p-5">
       <h3 className="text-lg font-semibold">{row.counterpart.displayName}</h3>
@@ -249,16 +271,29 @@ function ReviewCard({
           className="mt-4"
           onSubmit={(e) => {
             e.preventDefault();
-            void onAnswer(row, comment);
+            if (!answerCvReviewRequestSchema.safeParse({ requestId: row.id, comment }).success) {
+              setInvalid(true);
+              commentRef.current?.focus();
+              return;
+            }
+            void onAnswer(row, comment).then((fieldError) => {
+              if (fieldError) {
+                setInvalid(true);
+                commentRef.current?.focus();
+              }
+            });
           }}
         >
-          <Field label={t('comment')}>
+          <Field label={t('comment')} error={invalid ? t('commentInvalid') : undefined}>
             {(control) => (
               <Textarea
                 {...control}
+                ref={commentRef}
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                maxLength={3000}
+                onChange={(e) => {
+                  setComment(e.target.value);
+                  setInvalid(false);
+                }}
                 rows={4}
               />
             )}

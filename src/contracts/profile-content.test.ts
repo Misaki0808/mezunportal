@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ERROR_CODES } from '@/lib/errors';
 import { failureFromZod } from '@/lib/action-result';
+import { CV_LIMITS, parsedPositionSchema } from './cv';
 
 import {
   PROFILE_CONTENT_ACTION_ERRORS,
@@ -20,6 +21,23 @@ import {
 
 const ok = (schema: { safeParse: (v: unknown) => { success: boolean } }, value: unknown) =>
   schema.safeParse(value).success;
+
+it('elle iş açıklaması sınırda korunur, uzun metin reddedilir; CV çıktısı kesilmeye devam eder', () => {
+  const description = 'a'.repeat(CV_LIMITS.description);
+  const values = { company: 'Örnek', title: 'Analist', description };
+  expect(saveProfileEntrySchema.parse({ section: 'POSITION', values })).toMatchObject({
+    values: { description },
+  });
+  const long = { ...values, description: `${description}b` };
+  const result = saveProfileEntrySchema.safeParse({ section: 'POSITION', values: long });
+  expect(result.success).toBe(false);
+  if (!result.success)
+    expect(failureFromZod(result.error)).toMatchObject({
+      errorCode: 'VALIDATION_INVALID',
+      fieldErrors: { 'values.description': 'VALIDATION_INVALID' },
+    });
+  expect(parsedPositionSchema.parse(long).description).toBe(description);
+});
 
 describe('normalizeSocialLink', () => {
   it.each([

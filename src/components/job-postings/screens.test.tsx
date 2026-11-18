@@ -309,6 +309,56 @@ it('ilan iletişimi yalnız ilan kimliği ve seçilen alanlarla gönderilir', as
   );
   expect((await screen.findAllByText(/Talebin gönderildi/)).length).toBeGreaterThan(0);
 });
+it('ilan iletişiminde alan seçimi yoksa hata seçeneğe bağlanır ve odak korunur', async () => {
+  const { PostingContactForm } = await import('./contact');
+  const send = vi.fn();
+  renderWithToasts(
+    <PostingContactForm postingId="ilan-123" requestableFields={['EMAIL']} send={send} />,
+  );
+  const checkbox = screen.getByRole('checkbox', { name: 'E-posta' });
+  fireEvent.submit(screen.getByRole('button', { name: 'Talep gönder' }).closest('form')!);
+  expect(send).not.toHaveBeenCalled();
+  expect(checkbox).toHaveFocus();
+  expect(checkbox).toBeInvalid();
+  expect(checkbox).toHaveAccessibleDescription(/en az bir/i);
+});
+it('ilan iletişiminde 501 karakterlik not kesilmeden reddedilir', async () => {
+  const { PostingContactForm } = await import('./contact');
+  const send = vi.fn();
+  renderWithToasts(
+    <PostingContactForm postingId="ilan-123" requestableFields={['EMAIL']} send={send} />,
+  );
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  const note = screen.getByLabelText(/Kısa not/);
+  expect(note).not.toHaveAttribute('maxlength');
+  fireEvent.change(note, { target: { value: 'İ'.repeat(501) } });
+  fireEvent.submit(screen.getByRole('button', { name: 'Talep gönder' }).closest('form')!);
+  expect(send).not.toHaveBeenCalled();
+  expect(note).toHaveValue('İ'.repeat(501));
+  expect(note).toHaveFocus();
+  expect(note).toBeInvalid();
+});
+it('ilan iletişiminde sunucu not alanını reddederse not ve seçim korunur', async () => {
+  const { PostingContactForm } = await import('./contact');
+  const send = vi.fn().mockResolvedValue({
+    ok: false,
+    errorCode: 'VALIDATION_INVALID',
+    fieldErrors: { message: 'VALIDATION_INVALID' },
+  });
+  renderWithToasts(
+    <PostingContactForm postingId="ilan-123" requestableFields={['EMAIL']} send={send} />,
+  );
+  const checkbox = screen.getByRole('checkbox', { name: 'E-posta' });
+  fireEvent.click(checkbox);
+  const note = screen.getByLabelText(/Kısa not/);
+  fireEvent.change(note, { target: { value: 'Türkçe not' } });
+  fireEvent.submit(screen.getByRole('button', { name: 'Talep gönder' }).closest('form')!);
+  await waitFor(() => expect(note).toHaveFocus());
+  expect(note).toHaveValue('Türkçe not');
+  expect(note).toBeInvalid();
+  expect(note).toHaveAttribute('aria-describedby');
+  expect(checkbox).toBeChecked();
+});
 it('ilan iletişiminde çift gönderim tek istektir ve hata notu korur', async () => {
   const { PostingContactForm } = await import('./contact');
   const gate = Promise.withResolvers<{

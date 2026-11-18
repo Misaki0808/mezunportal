@@ -1,7 +1,7 @@
 'use client';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
-import { adminReason, type AdminOverview } from '@/contracts/admin';
+import { useRef, useState } from 'react';
+import { adminId, adminReason, type AdminOverview } from '@/contracts/admin';
 import {
   grantAdminSchema,
   revokeAdminSchema,
@@ -45,6 +45,14 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
   const [reason, setReason] = useState('');
   const [pending, setPending] = useState(false);
   const [invalid, setInvalid] = useState(false);
+  const [reasonError, setReasonError] = useState('');
+  const [lookupInvalid, setLookupInvalid] = useState(false);
+  const [grantField, setGrantField] = useState<'userId' | 'facultyId' | 'departmentId'>();
+  const queryRef = useRef<HTMLInputElement>(null);
+  const userRef = useRef<HTMLSelectElement>(null);
+  const facultyRef = useRef<HTMLSelectElement>(null);
+  const departmentRef = useRef<HTMLSelectElement>(null);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<ErrorCode>();
   const [notice, setNotice] = useState(false);
   const faculties = [
@@ -56,9 +64,11 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
     if (pending) return;
     const parsed = searchUsersSchema.safeParse({ query });
     if (!parsed.success || !query.trim()) {
-      setInvalid(true);
+      setLookupInvalid(true);
+      queryRef.current?.focus();
       return;
     }
+    setLookupInvalid(false);
     setPending(true);
     setInvalid(false);
     setError(undefined);
@@ -81,6 +91,7 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
     if (pending) return;
     setChoice(undefined);
     setReason('');
+    setReasonError('');
     setError(undefined);
     setInvalid(false);
   }
@@ -89,6 +100,8 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
     let operation: (() => Promise<ActionResult<unknown>>) | undefined;
     if (!adminReason.safeParse(reason).success) {
       setInvalid(true);
+      setReasonError(t('reasonInvalid'));
+      reasonRef.current?.focus();
       return;
     }
     if (choice.kind === 'grant') {
@@ -118,6 +131,11 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
     try {
       const result = await operation();
       if (!result.ok) {
+        if (result.fieldErrors?.reason) {
+          setInvalid(true);
+          setReasonError(errors(result.fieldErrors.reason));
+          reasonRef.current?.focus();
+        }
         setError(result.errorCode);
         return;
       }
@@ -159,12 +177,21 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
       <section className="rounded-card border border-border bg-surface p-5">
         <h2 className="text-xl font-semibold">{t('grants.grant')}</h2>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-          <Field className="flex-1" label={t('users.searchLabel')} hint={t('users.searchHint')}>
+          <Field
+            className="flex-1"
+            label={t('users.searchLabel')}
+            hint={t('users.searchHint')}
+            error={lookupInvalid ? t('invalid') : undefined}
+          >
             {(props) => (
               <Input
                 {...props}
+                ref={queryRef}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setLookupInvalid(false);
+                }}
                 maxLength={100}
               />
             )}
@@ -180,9 +207,21 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
         )}
         {users.length > 0 && (
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <Field label={t('grants.user')} required>
+            <Field
+              label={t('grants.user')}
+              required
+              error={grantField === 'userId' ? t('invalid') : undefined}
+            >
               {(props) => (
-                <Select {...props} value={userId} onChange={(e) => setUserId(e.target.value)}>
+                <Select
+                  {...props}
+                  ref={userRef}
+                  value={userId}
+                  onChange={(e) => {
+                    setUserId(e.target.value);
+                    setGrantField(undefined);
+                  }}
+                >
                   <option value="">{t('choose')}</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
@@ -208,9 +247,21 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
               )}
             </Field>
             {scope === 'FACULTY' && (
-              <Field label={t('grants.faculty')} required>
+              <Field
+                label={t('grants.faculty')}
+                required
+                error={grantField === 'facultyId' ? t('invalid') : undefined}
+              >
                 {(props) => (
-                  <Select {...props} value={faculty} onChange={(e) => setFaculty(e.target.value)}>
+                  <Select
+                    {...props}
+                    ref={facultyRef}
+                    value={faculty}
+                    onChange={(e) => {
+                      setFaculty(e.target.value);
+                      setGrantField(undefined);
+                    }}
+                  >
                     <option value="">{t('choose')}</option>
                     {faculties.map((v) => (
                       <option key={v.id} value={v.id}>
@@ -222,12 +273,20 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
               </Field>
             )}
             {scope === 'DEPARTMENT' && (
-              <Field label={t('department')} required>
+              <Field
+                label={t('department')}
+                required
+                error={grantField === 'departmentId' ? t('invalid') : undefined}
+              >
                 {(props) => (
                   <Select
                     {...props}
+                    ref={departmentRef}
                     value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
+                    onChange={(e) => {
+                      setDepartment(e.target.value);
+                      setGrantField(undefined);
+                    }}
                   >
                     <option value="">{t('choose')}</option>
                     {departments.map((v) => (
@@ -251,6 +310,24 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
             className="mt-4"
             onClick={() => {
               setInvalid(false);
+              const missing = !adminId.safeParse(userId).success
+                ? 'userId'
+                : scope === 'FACULTY' && !adminId.safeParse(faculty).success
+                  ? 'facultyId'
+                  : scope === 'DEPARTMENT' && !adminId.safeParse(department).success
+                    ? 'departmentId'
+                    : undefined;
+              if (missing) {
+                setGrantField(missing);
+                (missing === 'userId'
+                  ? userRef
+                  : missing === 'facultyId'
+                    ? facultyRef
+                    : departmentRef
+                ).current?.focus();
+                return;
+              }
+              setGrantField(undefined);
               setChoice({ kind: 'grant' });
             }}
           >
@@ -328,23 +405,23 @@ export function AdminGrants({ initial, departments, list, search, grant, revoke 
           </>
         }
       >
-        <Field
-          label={t('reason')}
-          hint={t('reasonHint')}
-          required
-          error={invalid && reason.trim().length < 3 ? t('reasonInvalid') : undefined}
-        >
+        <Field label={t('reason')} hint={t('reasonHint')} required error={reasonError || undefined}>
           {(props) => (
             <Textarea
               {...props}
+              ref={reasonRef}
               rows={4}
               maxLength={1000}
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => {
+                setReason(e.target.value);
+                setReasonError('');
+                setInvalid(false);
+              }}
             />
           )}
         </Field>
-        {invalid && reason.trim().length >= 3 && (
+        {invalid && !reasonError && (
           <p role="alert" className="mt-3 text-danger">
             {t('invalid')}
           </p>

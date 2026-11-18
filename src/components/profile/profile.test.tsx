@@ -59,6 +59,59 @@ function actions(overrides: Partial<MyProfileActions> = {}): MyProfileActions {
 }
 
 describe('kendi profilim', () => {
+  it('temel bilgiler geçersizse ilk hatalı alana odaklanır ve değerleri korur', async () => {
+    const updateBasics = ok(base);
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ updateBasics })} />,
+    );
+    await user.click(screen.getAllByRole('button', { name: 'Profilimi düzenle' })[0]!);
+    const headline = screen.getByLabelText('Başlık');
+    await user.type(headline, 'A'.repeat(121));
+    await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+    expect(updateBasics).not.toHaveBeenCalled();
+    expect(headline).toHaveValue('A'.repeat(121));
+    expect(headline).toBeInvalid();
+    expect(headline).toHaveAccessibleDescription();
+    expect(headline).toHaveFocus();
+  });
+
+  it('zararlı profil bağlantısını ilgili alanda reddeder, değeri ve odağı korur', async () => {
+    const setLinkedinUrl = ok(base);
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ setLinkedinUrl })} />,
+    );
+    const block = screen.getByRole('heading', { name: 'Bağlantılar' }).closest('section')!;
+    await user.click(within(block).getByRole('button', { name: 'Düzenle' }));
+    const sheet = await screen.findByRole('dialog');
+    const url = within(sheet).getByLabelText(/LinkedIn adresi/);
+    await user.type(url, 'javascript:alert(1)');
+    await user.click(within(sheet).getByRole('button', { name: 'Kaydet' }));
+    expect(setLinkedinUrl).not.toHaveBeenCalled();
+    expect(url).toHaveValue('javascript:alert(1)');
+    expect(url).toBeInvalid();
+    expect(url).toHaveAccessibleDescription();
+    expect(url).toHaveFocus();
+  });
+
+  it('bağlantı sitesi eksikse hata ve odak site alanındadır, adres korunur', async () => {
+    const setSocialLinks = ok(base);
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ setSocialLinks })} />,
+    );
+    const block = screen.getByRole('heading', { name: 'Bağlantılar' }).closest('section')!;
+    await user.click(within(block).getByRole('button', { name: 'Düzenle' }));
+    const sheet = await screen.findByRole('dialog');
+    await user.click(within(sheet).getByRole('button', { name: 'Bağlantı ekle' }));
+    await user.type(within(sheet).getByLabelText('Adres'), 'https://github.com/deniz');
+    await user.click(within(sheet).getByRole('button', { name: 'Kaydet' }));
+    const site = within(sheet).getByLabelText('Site');
+    expect(site).toHaveFocus();
+    expect(site).toBeInvalid();
+    expect(site).toHaveAccessibleDescription();
+    expect(within(sheet).getByLabelText('Adres')).toHaveValue('https://github.com/deniz');
+    expect(setSocialLinks).not.toHaveBeenCalled();
+  });
+
   it('beceri kaydı hatası bölüm kapatılsa da görünür; alan içeriği tekrar açılınca korunur', async () => {
     const addSkill = vi.fn().mockResolvedValue({ ok: false, errorCode: 'RATE_LIMITED' });
     const { user } = renderWithToasts(<MyProfile initial={base} actions={actions({ addSkill })} />);
@@ -226,6 +279,8 @@ describe('kendi profilim', () => {
     );
     expect(saveEntry).not.toHaveBeenCalled();
     expect(screen.getByText('Bu alan zorunlu.')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Kurum/)).toHaveFocus();
+    expect(screen.getByLabelText(/Kurum/)).toBeInvalid();
   });
 
   it('kalem silme onay penceresinden sonra gider; kaynak ve düzeltme rozetleri görünür', async () => {

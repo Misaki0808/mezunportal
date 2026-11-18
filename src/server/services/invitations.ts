@@ -1,6 +1,6 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
-import { z } from 'zod';
+import { parseInvitationEntries } from '@/lib/invitation-validation';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { codedValidation } from '@/lib/errors';
 import { loadSystemAdmin, TX_OPTIONS } from './admin-access';
@@ -9,22 +9,11 @@ import { requireConsent } from './privacy';
 import { consumeRateLimit, RATE_LIMITS } from './rateLimit';
 import { stagePilotInvitation } from './notification-intent';
 
-export const INVITATION_MAX = 100;
-export const invitationTextSchema = z.string().max(30000);
+export { INVITATION_MAX, invitationTextSchema } from '@/lib/invitation-validation';
 export function parseInvitations(input: string): string[] {
-  const text = invitationTextSchema.safeParse(input);
-  if (!text.success) throw codedValidation('VALIDATION_INVALID');
-  const entries = text.data.split(/[\s,;]+/).filter(Boolean);
-  if (entries[0]?.toLowerCase() === 'email' || entries[0]?.toLowerCase() === 'e-posta')
-    entries.shift();
-  if (
-    !entries.length ||
-    entries.length > INVITATION_MAX ||
-    entries.some((entry) => !z.email().safeParse(entry).success)
-  ) {
-    throw codedValidation('VALIDATION_INVALID');
-  }
-  return [...new Set(entries.map((entry) => entry.toLowerCase()))];
+  const entries = parseInvitationEntries(input);
+  if (!entries) throw codedValidation('VALIDATION_INVALID');
+  return entries;
 }
 
 export async function inviteUsers(

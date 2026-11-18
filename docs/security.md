@@ -155,7 +155,7 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
   etkin yönetici yetkisi olan kullanıcıyı yalnız sistem yöneticisi askıya alır/düzeltir (bölüm yöneticisi üstündekini
   askıya alamaz). Yetki işlemin İÇİNDE yeniden doğrulanır; değişiklik ve işlem kaydı aynı işlemdedir.
 - **Açık onay:** askıya alma/kaldırma, üyelik düzeltme, yönetici atama/kaldırma ve sözlük silme
-  girdileri `confirmed:true` ister. Askı kaldırma da gerekçelidir; sözlük silme ve eşleşmeyeni atmada
+  girdileri `confirmed:true` ister. Askı kaldırma ve yönetici atama/kaldırma da gerekçelidir; sözlük silme ve eşleşmeyeni atmada
   gerekçe zorunludur. Maske yalnız alan adı değildir: çıktı şeması ham telefon/e-posta değerini reddeder.
 - **Askı:** ban alanları yazılır ve oturumlar aynı işlemde silinir; kullanıcı yeni oturum açamaz. Süreli askı en fazla
   365 gün. Son sistem yöneticisi yetkisi kaldırılamaz.

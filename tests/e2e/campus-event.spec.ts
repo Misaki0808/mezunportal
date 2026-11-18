@@ -86,8 +86,15 @@ test('390 px QR okutulur; öğrenci kayıt olur ve kodla katılımını doğrula
     await page.goto(`/etkinlikler/${event.id}`);
     await expect(page.getByRole('heading', { name: eventTitle })).toBeVisible();
     await page.getByRole('button', { name: 'Katılıyorum' }).click();
-    await expect(page.getByLabel('Altı haneli katılım kodu')).toBeVisible();
-    await expect(page.getByLabel('Altı haneli katılım kodu')).toHaveValue(qrCode);
+    const checkinCode = page.getByLabel('Altı haneli katılım kodu');
+    await expect(checkinCode).toBeVisible();
+    await expect(checkinCode).toHaveValue(qrCode);
+    await checkinCode.fill(`${qrCode}7`);
+    await page.getByRole('button', { name: 'Katılımı doğrula' }).click();
+    await expect(checkinCode).toHaveValue(`${qrCode}7`);
+    await expect(checkinCode).toBeFocused();
+    await expect(checkinCode).toHaveAttribute('aria-invalid', 'true');
+    await checkinCode.fill(qrCode);
     await page.getByRole('button', { name: 'Katılımı doğrula' }).click();
     await expect(page.getByText('Katılımın doğrulandı.').first()).toBeVisible({ timeout: 15_000 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(

@@ -1,5 +1,6 @@
 'use client';
 import { safeClientAction } from '@/lib/safe-client-action';
+import { parseInvitationEntries } from '@/lib/invitation-validation';
 import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition } from 'react';
 import { sendInvitations } from '@/server/actions/invitations';
@@ -13,6 +14,8 @@ export function Invitations() {
   const [fileName, setFileName] = useState('');
   const [fileError, setFileError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [textInvalid, setTextInvalid] = useState(false);
+  const textField = useRef<HTMLTextAreaElement>(null);
   const [result, setResult] = useState<{ queued: number; skipped: number } | null>(null);
   const [pending, start] = useTransition();
   // Eşzamanlı kilit: iki hızlı tıklama aynı React grubuna düşerse `pending` henüz `true` olmaz; diğer formlar gibi `ref` ile engellenir.
@@ -20,10 +23,17 @@ export function Invitations() {
   return (
     <AdminFrame title={t('title')} description={t('description')}>
       <form
+        noValidate
         className="max-w-2xl space-y-4 rounded-card border border-border bg-surface p-4 shadow-card sm:p-5"
         onSubmit={(event) => {
           event.preventDefault();
           if (locked.current) return;
+          if (!parseInvitationEntries(text)) {
+            setTextInvalid(true);
+            textField.current?.focus();
+            return;
+          }
+          setTextInvalid(false);
           locked.current = true;
           setError(null);
           setResult(null);
@@ -31,7 +41,10 @@ export function Invitations() {
             try {
               const response = await safeClientAction(() => sendInvitations(text));
               if (response.ok) setResult(response.data);
-              else setError(response.errorCode);
+              else if (response.errorCode === 'VALIDATION_INVALID') {
+                setTextInvalid(true);
+                textField.current?.focus();
+              } else setError(response.errorCode);
             } finally {
               locked.current = false;
             }
@@ -39,13 +52,22 @@ export function Invitations() {
         }}
       >
         {/* Kit `Textarea`: ham `<textarea>` dekoratif `border` token'ıyla çizilmişti (koyu temada 1,77:1; kontrol sınırı 3:1 ister). */}
-        <Field label={t('label')} hint={t('help')} required>
+        <Field
+          label={t('label')}
+          hint={t('help')}
+          error={textInvalid ? errors('VALIDATION_INVALID') : undefined}
+          required
+        >
           {(control) => (
             <Textarea
               {...control}
+              ref={textField}
               className="min-h-48"
               value={text}
-              onChange={(event) => setText(event.target.value)}
+              onChange={(event) => {
+                setText(event.target.value);
+                setTextInvalid(false);
+              }}
             />
           )}
         </Field>
@@ -59,6 +81,7 @@ export function Invitations() {
                 const file = event.target.files?.[0];
                 if (file && file.size <= 30000) {
                   setText(await file.text());
+                  setTextInvalid(false);
                   setFileName(file.name);
                   setError(null);
                   setFileError(null);
