@@ -179,6 +179,33 @@ describe('ilk giriş akışı', () => {
     expect(first).toHaveAccessibleDescription(/En az bir seçenek/);
     expect(save).not.toHaveBeenCalled();
   });
+  it('20 üzeri seçimde şema hatası gruba bağlanır, seçimler korunur', async () => {
+    const save = vi.fn();
+    const choices = Array.from({ length: 21 }, (_, i) => ({
+      id: `i${i}`,
+      kind: 'INTEREST' as const,
+      slug: 'software',
+    }));
+    const { user } = renderUi(
+      <OnboardingFlow
+        initialState={initial}
+        interests={choices}
+        goals={goals}
+        initialVisibility={{ fields: [...visibility.fields] }}
+        save={save}
+        skip={vi.fn()}
+        saveVisibility={saveVisibility}
+      />,
+    );
+    for (const checkbox of screen.getAllByRole('checkbox')) await user.click(checkbox);
+    await user.click(screen.getByRole('button', { name: 'Devam et' }));
+    const boxes = screen.getAllByRole('checkbox');
+    expect(boxes[0]).toHaveFocus();
+    expect(boxes[0]).toBeInvalid();
+    expect(boxes[0]).toHaveAccessibleDescription();
+    expect(boxes.filter((box) => (box as HTMLInputElement).checked)).toHaveLength(21);
+    expect(save).not.toHaveBeenCalled();
+  });
   it('ilgi seçimini kaydeder ve hedef atlamasını ayrı eyleme yollar', async () => {
     const save = vi.fn().mockResolvedValueOnce({
       ok: true,
