@@ -6,6 +6,7 @@ import { AppShellClient } from './app-shell-client';
 import { isCodedError } from '@/lib/errors';
 import { getDb } from '@/server/db';
 import { requireUser, requireUserWithoutConsent } from '@/server/permissions';
+import { canUseCourseGuide } from '@/server/permissions/course-guide-access';
 import { countMyUnread } from '@/server/services/inbox';
 import { getShellUser } from '@/server/services/shell-user';
 
@@ -40,6 +41,8 @@ export async function AppShell({ children }: { children: ReactNode }) {
   return (
     <AppShellClient
       showAdmin={showAdmin}
+      // "Ders rehberi" yalnız erişebilen role görünür (hesap ayarlarıyla aynı koşul); yetkiyi sunucu verir.
+      showCourseGuide={actor ? canUseCourseGuide(actor.facts) : false}
       signedIn={!!actor}
       // Oturum var ama güncel onay yok: onay ekranı dışındaki her sayfa onaya geri yollar; gezinme kapalı kalır.
       consentPending={consentPending}

@@ -1164,3 +1164,6 @@ Telefonda ortak toast bölgesi alt gezinmenin hemen üstünde (5 rem) durur; dok
 bir sayıyla tahmin etmek her yeni çubukta bozulurdu; bu yüzden bölge, ekranda görünen çubukla çakışıyorsa onun üstüne
 kalkar (`data-action-bar`, `src/components/ui/toast.tsx`). Yeni yapışkan eylem çubuğu bu özniteliği taşımalı. Canlı bölgeler,
 metin ve süre aynı. Bekçi: birim testi ve `tests/e2e/toast-layout.spec.ts` (`elementFromPoint`).
+## 2026-11-18 · E-posta teslim ve kuyruk saklama sınırı
+
+E-posta en az bir kez teslim edilir: SMTP kabulü ile yerel commit arasında işçi kaybı çift teslim üretebilir. Her denemede aynı Message-ID kullanılır; bu, sağlayıcıların tek teslimini garanti etmez. Tamamlanmış yükler 60 saniye sonra beş saniyelik bakım döngüsünde temizlenir; kapalı veya yoğun sistemde temizlik gecikebilir.

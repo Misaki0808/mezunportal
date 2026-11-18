@@ -19,8 +19,7 @@ export async function scheduleFeedbackPrompts(db: PrismaClient, now = new Date()
       AND f."id" IS NULL AND p."enabled" IS DISTINCT FROM false AND e."id" IS NULL
     ORDER BY a."endsAt" ASC, a."id" ASC, u."id" ASC LIMIT 100`;
   for (const row of rows) {
-    const url = new URL(`/hesap/gorusme/${encodeURIComponent(row.appointmentId)}`, getEnv().APP_URL)
-      .href;
+    const url = new URL('/hesap/gorusmeler', getEnv().APP_URL).href;
     await enqueueEmail({
       to: row.email,
       recipientUserId: row.userId,

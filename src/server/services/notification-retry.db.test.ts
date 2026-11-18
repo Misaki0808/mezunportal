@@ -70,7 +70,10 @@ describe('TD-017 çözülemeyen bildirim niyeti', () => {
         now: () => new Date(now.getTime() + 86400_000),
       });
       expect(badCalls).toBe(5);
-      expect(warning.mock.calls).toEqual([['notification.intent: RETRY_EXHAUSTED\n']]);
+      expect(warning).toHaveBeenCalledOnce();
+      expect(String(warning.mock.calls[0]?.[0])).toMatch(
+        /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z notification\.intent: RETRY_EXHAUSTED\n$/,
+      );
       const output = JSON.stringify(warning.mock.calls);
       for (const secret of [
         userId,

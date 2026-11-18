@@ -90,7 +90,9 @@ const TAB_ITEMS: readonly { id: TabId; href: string; icon: ReactNode }[] = [
 
 /** "Menü" alt sayfasının keşfet grubu: alt çubukta yeri olmayan ekranlar (kimlik `MAIN_ITEMS` ile aynı). */
 const MENU_EXPLORE_IDS: readonly NavId[] = ['experiences', 'alumni', 'events', 'courses'];
-const MENU_EXPLORE = MENU_EXPLORE_IDS.flatMap((id) => MAIN_ITEMS.filter((item) => item.id === id));
+
+/** Erişim bayrağına bağlı öğe: bayrak kapalıyken hem yan menüde hem telefon Menü'sünde çizilmez. */
+const COURSE_GUIDE_ID: NavId = 'courses';
 
 function isCurrent(pathname: string, href: string): boolean {
   if (href === '/ilanlar' && pathname === '/ilanlarim') return true;
@@ -115,6 +117,7 @@ function sideLinkClasses(current: boolean): string {
 export function AppShellClient({
   children,
   showAdmin = false,
+  showCourseGuide = false,
   signedIn = false,
   consentPending = false,
   canRefreshNotifications = false,
@@ -123,6 +126,8 @@ export function AppShellClient({
 }: {
   children: ReactNode;
   showAdmin?: boolean;
+  /** "Ders rehberi" yalnız doğrulanmış öğrenciye açıktır; kabuk yalnız bayrağı bilir, yetkiyi sunucu verir. */
+  showCourseGuide?: boolean;
   signedIn?: boolean;
   /** Oturum açık ama zorunlu onay eksik: gezinme henüz kullanılamayan yerlere götürür, bu yüzden çizilmez. */
   consentPending?: boolean;
@@ -133,6 +138,8 @@ export function AppShellClient({
   shellUser?: ShellUser | null;
 }) {
   const t = useTranslations('nav');
+  const mainItems = MAIN_ITEMS.filter((item) => item.id !== COURSE_GUIDE_ID || showCourseGuide);
+  const menuExplore = MENU_EXPLORE_IDS.flatMap((id) => mainItems.filter((item) => item.id === id));
   const themeText = useTranslations('theme');
   const themeLabels = { toLight: themeText('switchToLight'), toDark: themeText('switchToDark') };
   const pathname = usePathname();
@@ -212,7 +219,7 @@ export function AppShellClient({
         )}
       >
         {item.icon}
-        <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[11px]">
+        <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[12px] @max-[13rem]:tracking-[-0.05em]">
           {t(`shortItems.${item.id}`)}
         </span>
       </Link>
@@ -221,7 +228,7 @@ export function AppShellClient({
 
   const closeMenu = () => setMenu({ open: false, path: pathname });
   const menuCurrent =
-    [...MENU_EXPLORE, PROFILE_ITEM, ACCOUNT_ITEM].some((item) => isCurrent(pathname, item.href)) ||
+    [...menuExplore, PROFILE_ITEM, ACCOUNT_ITEM].some((item) => isCurrent(pathname, item.href)) ||
     isCurrent(pathname, '/bildirimler') ||
     (showAdmin && isCurrent(pathname, '/yonetim'));
 
@@ -241,7 +248,7 @@ export function AppShellClient({
       )}
     >
       <MenuIcon />
-      <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[11px]">
+      <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[12px] @max-[13rem]:tracking-[-0.05em]">
         {t('shortItems.menu')}
       </span>
     </button>
@@ -329,7 +336,7 @@ export function AppShellClient({
             className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto"
           >
             <ul className="flex flex-col gap-0.5">
-              {MAIN_ITEMS.map((item) => (
+              {mainItems.map((item) => (
                 <li key={item.id}>{renderSideItem(item)}</li>
               ))}
             </ul>
@@ -494,7 +501,7 @@ export function AppShellClient({
                   {t('groups.explore')}
                 </p>
                 <ul aria-labelledby="menu-group-explore" className="flex flex-col gap-0.5">
-                  {MENU_EXPLORE.map((item) => (
+                  {menuExplore.map((item) => (
                     <li key={item.id}>{renderMenuItem(item)}</li>
                   ))}
                 </ul>

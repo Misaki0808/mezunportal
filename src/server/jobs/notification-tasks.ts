@@ -41,7 +41,7 @@ export async function profileFreshness(db: PrismaClient, now = new Date()) {
         userId: row.userId,
         event: 'freshness',
         eventId: `${row.id}:${anchor.toISOString()}`,
-        path: '/hesap',
+        path: '/profil',
       });
       if (sent)
         await db.profile.updateMany({

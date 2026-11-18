@@ -56,6 +56,10 @@ describe('bildirim işleri', () => {
     await profileFreshness(db, now);
     await profileFreshness(db, now);
     expect(mocks.send.mock.calls.filter(([item]) => item.userId === user.id)).toHaveLength(1);
+    expect(mocks.send.mock.calls.find(([item]) => item.userId === user.id)?.[0]).toMatchObject({
+      event: 'freshness',
+      path: '/profil',
+    });
     expect(
       (await db.profile.findUniqueOrThrow({ where: { userId: user.id } })).lastFreshnessPromptAt,
     ).toEqual(now);
