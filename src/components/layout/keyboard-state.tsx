@@ -14,7 +14,7 @@ export function isEditing(element: Element | null): boolean {
 
 /**
  * Ekran klavyesi durumunu `<html data-keyboard="open">` olarak yayar: açıkken alt gezinme gizlenir ve yapışkan eylem
- * çubukları (`.sticky-actions`) akışa döner; böylece klavye + gezinme + çubuk yazma alanını ezmez, eylemler formun
+ * çubukları (`ActionBar`) akışa döner; böylece klavye + gezinme + çubuk yazma alanını ezmez, eylemler formun
  * sonunda kaydırılarak erişilebilir kalır.
  *
  * Ölçüt "klavyesiz görünür yükseklik − şimdiki görünür yükseklik"tir. Klavyesiz yükseklik (`baseline`), metin girişi

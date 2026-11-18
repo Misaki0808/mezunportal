@@ -8,7 +8,7 @@ import {
 } from '@/contracts/notifications';
 import type { ActionResult } from '@/contracts/result';
 import { AccountFrameView } from '@/components/account/account-frame';
-import { Button, Switch, useAction } from '@/components/ui';
+import { ActionBar, Button, Switch, useAction } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
 
 type Props = {
@@ -84,11 +84,11 @@ export function NotificationPreferencesForm({ initial, save }: Props) {
             {errors(error)}
           </p>
         )}
-        <div className="sticky-actions z-20 mt-auto bg-bg pt-5 pb-2">
+        <ActionBar className="bg-bg pt-5 pb-2 lg:mt-auto">
           <Button type="submit" fullWidth size="lg" loading={pending}>
             {pending ? t('saving') : t('save')}
           </Button>
-        </div>
+        </ActionBar>
       </form>
     </AccountFrameView>
   );

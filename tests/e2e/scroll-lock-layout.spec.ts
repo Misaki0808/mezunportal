@@ -47,7 +47,7 @@ for (const classic of [true, false]) {
                 ) || 0,
               header: get('header.sticky'),
               nav: get('[data-bottom-nav] li:last-child > *'),
-              action: get('[data-action-bar], .sticky-actions'),
+              action: get('[data-action-bar]'),
               toast: get('[role=region] [role=status]'),
               main: get('main h1'),
             };

@@ -327,30 +327,11 @@
   }
 }
 
-/* Yapışkan eylem çubuğu (form altında alt gezinmenin üstünde). Masaüstünde ve ekran klavyesi açıkken (KeyboardState)
-   akışa döner: klavye + gezinme + çubuk yazma alanını ezmez, eylemler formun sonunda kalır. */
-@utility sticky-actions {
-  position: sticky;
-  bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  @media (min-width: 64rem) {
-    position: static;
-  }
-  :root[data-keyboard='open'] & {
-    position: static;
-  }
-}
-
 /* Odaklanan ya da `scrollIntoView({ block: 'nearest' })` ile gösterilen öğe, sabit alt gezinmenin (4,5 rem) ve yapışkan eylem
    çubuğunun ARKASINDA kalmasın: tarayıcı bu payı korur. WebKit `focus()` ile kaydırmaz; bu yüzden çağıran odaktan sonra
    `scrollIntoView({ block: 'nearest' })` de çağırır (WebKit ve Chromium ikisi de payı bu çağrıda uygular). */
 @utility scroll-above-bars {
   scroll-margin-bottom: calc(9rem + env(safe-area-inset-bottom));
-}
-
-/* Zorunlu onay beklerken alt gezinme çizilmez (AppShellClient `consentPending`): yapışkan eylem çubuğu ekranın dibine iner,
-   gezinmenin yüksekliği kadar boşluk bırakmaz. */
-[data-no-nav] .sticky-actions {
-  bottom: env(safe-area-inset-bottom);
 }
 
 /* Ekran klavyesi açıkken alt gezinme gizlenir. */

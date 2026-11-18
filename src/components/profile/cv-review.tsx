@@ -14,7 +14,7 @@ import type {
   DiscardCvOutput,
 } from '@/contracts/cv';
 import type { ActionResult } from '@/contracts/result';
-import { Badge, Button, Checkbox, EmptyState, Modal, Sheet } from '@/components/ui';
+import { ActionBar, Badge, Button, Checkbox, EmptyState, Modal, Sheet } from '@/components/ui';
 import { useHydrated } from '@/hooks/use-hydrated';
 import type { ErrorCode } from '@/lib/errors';
 
@@ -368,7 +368,7 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
         {t('discard')}
       </Button>
 
-      <div className="sticky-actions z-20 flex flex-col gap-2 bg-bg pt-3 pb-2">
+      <ActionBar className="flex flex-col gap-2 bg-bg pt-3 pb-2">
         {error && (
           <div role="alert" className="text-base text-danger">
             <p>{errors(error)}</p>
@@ -387,7 +387,7 @@ export function CvReview({ review, apply, discard, onApplied, onDiscarded }: Pro
         <Button size="lg" fullWidth loading={pending === 'apply'} onClick={() => void submit()}>
           {pending === 'apply' ? t('applying') : `${t('apply')} (${accepted.length})`}
         </Button>
-      </div>
+      </ActionBar>
 
       <Sheet
         open={editing !== undefined}
