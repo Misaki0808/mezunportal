@@ -57,6 +57,7 @@ for (const classic of [true, false]) {
               overflow: document.documentElement.style.overflow,
               bodyOverflow: document.body.style.overflow,
               bodyPaddingRight: document.body.style.paddingRight,
+              lockAttribute: document.documentElement.hasAttribute('data-scroll-lock-gutter'),
               lockGutter:
                 parseFloat(
                   document.documentElement.style.getPropertyValue('--scroll-lock-gutter'),
@@ -88,7 +89,15 @@ for (const classic of [true, false]) {
         const open = await measure();
         expect(open.overflow).toBe('hidden');
         expect(open.bodyOverflow).toBe('hidden');
-        expect(open.lockGutter).toBe(gutter);
+        // Kilidin bıraktığı boşluk kilitten ÖNCE ölçülen gerçek çubuk genişliğine eşit olmalı (yarım ya da 1 px eksik değil).
+        expect(open.lockGutter, '--scroll-lock-gutter ölçülen çubuk genişliği').toBe(gutter);
+        expect(open.bodyPaddingRight, 'gövde sağ boşluğu ölçülen çubuk genişliği').toBe(
+          gutter > 0 ? `${gutter}px` : before.bodyPaddingRight,
+        );
+        expect(open.lockAttribute, 'boşluk özniteliği yalnız gerçek çubukta').toBe(gutter > 0);
+        expect(open.width, 'kilit çubuğu kaldırır: içerik genişliği tam çubuk kadar büyür').toBe(
+          before.width + gutter,
+        );
         await page.keyboard.press('Escape');
         await expect(page.locator('dialog[open]')).toHaveCount(0);
         // dialog.close ve lockScroll temizliği ayrı React etkileridir; kapalı DOM tek başına kilidin bittiğini kanıtlamaz.
@@ -98,12 +107,16 @@ for (const classic of [true, false]) {
             return {
               overflow: state.overflow,
               bodyOverflow: state.bodyOverflow,
+              bodyPaddingRight: state.bodyPaddingRight,
+              lockAttribute: state.lockAttribute,
               lockGutter: state.lockGutter,
             };
           })
           .toEqual({
             overflow: before.overflow,
             bodyOverflow: before.bodyOverflow,
+            bodyPaddingRight: before.bodyPaddingRight,
+            lockAttribute: before.lockAttribute,
             lockGutter: before.lockGutter,
           });
         const closed = await measure();
