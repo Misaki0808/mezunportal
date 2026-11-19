@@ -1,4 +1,6 @@
+import { capPage } from '@/lib/list-params';
 import {
+  JOB_POSTING_PAGE_MAX,
   jobPostingContentSchema,
   saveJobPostingDraftSchema,
   searchJobPostingsSchema,
@@ -90,7 +92,8 @@ export function parseJobFilters(
     ...(params.get('withinDays') ? { withinDays: Number(params.get('withinDays')) } : {}),
     ...(params.get('page') ? { page: Number(params.get('page')) } : {}),
   };
-  const valid = searchJobPostingsSchema.safeParse(candidate);
+  // Üst sınırı aşan sayfa geçersiz sayılıp birinci sayfaya değil, son geçerli sayfaya çekilir (sayfa ekranda yönlendirir).
+  const valid = searchJobPostingsSchema.safeParse(capPage(candidate, JOB_POSTING_PAGE_MAX));
   if (valid.success) return valid.data;
   // Bozuk paylaşılan URL tek bir alan yüzünden sayfayı kırmaz.
   const result: SearchJobPostingsInput = {};
@@ -98,7 +101,8 @@ export function parseJobFilters(
     const parsed = searchJobPostingsSchema.safeParse({ [key]: value });
     if (parsed.success) Object.assign(result, { [key]: value });
   }
-  return result;
+  // Birlikte yine geçersizse (ör. aynı anda şirket ve kurum adı) süzgeçsiz varsayılana dönülür.
+  return searchJobPostingsSchema.safeParse(result).success ? result : {};
 }
 export function mayPost(
   roles: readonly { role: string; verificationStatus: string; endedAt: Date | null }[],

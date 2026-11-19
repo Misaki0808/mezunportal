@@ -167,3 +167,67 @@ it('kendini, silinenleri, bitmiş üyeliği ve öğrenci rolünü rehberde göst
   expect((await get(`Eskiişveren${key}`)).total).toBe(0);
   expect((await get(`Eskiunvan${key}`)).total).toBe(0);
 });
+
+it('adlar Türkçe harf sırasıyla gelir (ç, ğ, ı/i, ö, ş, ü); sayfalar arası çift/eksik yok; aralık dışı sayfa son sayfaya çekilir', async () => {
+  const institution = await createInstitution(db);
+  const viewer = await createUser(db);
+  await addMembership(db, {
+    userId: viewer,
+    departmentId: institution.deptA1,
+    role: 'STUDENT',
+    entryYear: 2020,
+  });
+  // Türkçe alfabe sırası; veritabanının varsayılan (kod noktası) sırasında Ç, Ğ, İ, Ö, Ş, Ü en sona düşerdi.
+  const expected = [
+    'Ada',
+    'Bora',
+    'Cem',
+    'Çağla',
+    'Deniz',
+    'Ece',
+    'Fatma',
+    'Gül',
+    'Ğ. Ali',
+    'Hale',
+    'Işık',
+    'İpek',
+    'Jale',
+    'Kaan',
+    'Leyla',
+    'Mert',
+    'Nur',
+    'Orhan',
+    'Ömer',
+    'Pelin',
+    'Rıza',
+    'Selin',
+    'Şule',
+    'Tolga',
+    'Ulaş',
+    'Ümit',
+    'Veli',
+    'Yağmur',
+    'Zeynep',
+  ];
+  const key = letterMarker('', 6);
+  for (const name of [...expected].reverse()) {
+    const userId = await createUser(db, { name: `${name} ${key}` });
+    await addMembership(db, {
+      userId,
+      departmentId: institution.deptA1,
+      role: 'ALUMNI',
+      graduationYear: 2021,
+    });
+    await db.profile.create({ data: { userId, alumniDirectoryVisible: true, city: 'İstanbul' } });
+  }
+  const actor = (await loadActor(db, viewer, new Date()))!;
+  const first = await searchAlumni(db, actor, alumniSearchSchema.parse({ q: key }));
+  const second = await searchAlumni(db, actor, alumniSearchSchema.parse({ q: key, page: 2 }));
+  const names = [...first.items, ...second.items].map((item) => item.name.replace(` ${key}`, ''));
+  expect(first.total).toBe(expected.length);
+  expect(first.items).toHaveLength(24);
+  expect(names).toEqual(expected);
+  const beyond = await searchAlumni(db, actor, alumniSearchSchema.parse({ q: key, page: 9 }));
+  expect(beyond.page).toBe(2);
+  expect(beyond.items.map((item) => item.userId)).toEqual(second.items.map((item) => item.userId));
+});

@@ -24,7 +24,9 @@ export async function searchCompanies(
     const actor = await requireVerifiedMember();
     const parsed = parseInput(searchCompaniesSchema, input);
     if (!parsed.ok) return parsed.failure;
-    return actionOk(await service.searchCompanies({ db: getDb() }, actor.userId, parsed.data.q));
+    return actionOk(
+      await service.searchCompanies({ db: getDb() }, actor.userId, parsed.data.q, parsed.data.page),
+    );
   } catch (error) {
     return failAction(error, 'searchCompanies');
   }

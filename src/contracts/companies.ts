@@ -6,7 +6,16 @@ import { JOB_POSTING_KINDS } from './job-postings';
 
 const id = z.uuid({ error: 'VALIDATION_INVALID' });
 export const COMPANY_MIN_GROUP = 3;
-export const searchCompaniesSchema = z.object({ q: userTextSchema(0, 100).default('') }).strict();
+/** Şirket listesi sayfa boyu ve en yüksek sayfa; şirket sayfasında ilk gösterilen ilan sayısı. */
+export const COMPANY_PAGE_SIZE = 40;
+export const COMPANY_PAGE_MAX = 1000;
+export const COMPANY_POSTING_LIMIT = 10;
+export const searchCompaniesSchema = z
+  .object({
+    q: userTextSchema(0, 100).default(''),
+    page: z.number().int().min(1).max(COMPANY_PAGE_MAX).default(1),
+  })
+  .strict();
 export type SearchCompaniesInput = z.input<typeof searchCompaniesSchema>;
 export const companySlugSchema = z.object({ slug: z.string().min(1).max(200) }).strict();
 export type CompanySlugInput = z.input<typeof companySlugSchema>;
@@ -20,7 +29,14 @@ export const companySummarySchema = z
   .strict();
 export type CompanySummary = z.infer<typeof companySummarySchema>;
 export const companiesPageSchema = z
-  .object({ companies: z.array(companySummarySchema), popular: z.array(companySummarySchema) })
+  .object({
+    companies: z.array(companySummarySchema),
+    popular: z.array(companySummarySchema),
+    /** Etkin sayfa (aralık dışı istek son geçerli sayfaya çekilir), eşleşen şirket sayısı ve sayfa boyu. */
+    page: z.number().int().min(1),
+    total: z.number().int().min(0),
+    pageSize: z.number().int().min(1),
+  })
   .strict();
 export type CompaniesPage = z.infer<typeof companiesPageSchema>;
 export const companyDetailSchema = companySummarySchema
@@ -61,9 +77,11 @@ export const companyDetailSchema = companySummarySchema
         .strict(),
     ),
     mentors: z.array(mentorCardSchema),
+    /** En yeni `COMPANY_POSTING_LIMIT` ilan; toplam sayı `postingTotal`'dadır (tümü `/ilanlar`ta). */
     postings: z.array(
       z.object({ id: z.string(), title: z.string(), kind: z.enum(JOB_POSTING_KINDS) }).strict(),
     ),
+    postingTotal: z.number().int().min(0),
   })
   .strict();
 export type CompanyDetail = z.infer<typeof companyDetailSchema>;

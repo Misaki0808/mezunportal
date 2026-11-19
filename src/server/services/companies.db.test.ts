@@ -9,7 +9,11 @@ import {
   grantRequiredConsents,
 } from '@/test/fixtures';
 import { companySlug, getCompany, mergeCompanies, searchCompanies } from './companies';
-import { companyDetailSchema } from '@/contracts/companies';
+import {
+  COMPANY_PAGE_SIZE,
+  COMPANY_POSTING_LIMIT,
+  companyDetailSchema,
+} from '@/contracts/companies';
 import { letterMarker } from '@/test/markers';
 
 const db = createTestPrisma();
@@ -197,4 +201,101 @@ it('şirket birleştirme bağlantıları taşır, audit yazar, tekrar aynı sonu
     await db.adminAuditLog.count({ where: { targetId: target.id, action: 'DICTIONARY_CHANGE' } }),
   ).toBe(1);
   expect((await getCompany({ db }, w.viewer, w.slug)).id).toBe(target.id);
+});
+
+it('şirket listesi sayfalanır: 40 + kalan, adlar Türkçe sırayla, aralık dışı sayfa son sayfaya çekilir', async () => {
+  const w = await setup();
+  const turkish = [
+    'Ada',
+    'Bora',
+    'Cem',
+    'Çağla',
+    'Deniz',
+    'Ece',
+    'Fatma',
+    'Gül',
+    'Ğ. Ali',
+    'Hale',
+    'Işık',
+    'İpek',
+    'Jale',
+    'Kaan',
+    'Leyla',
+    'Mert',
+    'Nur',
+    'Orhan',
+    'Ömer',
+    'Pelin',
+    'Rıza',
+    'Selin',
+    'Şule',
+    'Tolga',
+    'Ulaş',
+    'Ümit',
+    'Veli',
+    'Yağmur',
+    'Zeynep',
+  ];
+  const tail = Array.from({ length: 16 }, (_, n) => `Zzz ${String(n).padStart(2, '0')}`);
+  const expected = [...turkish, ...tail];
+  for (const name of [...expected].reverse())
+    await db.company.create({
+      data: {
+        name: `${name} ${w.key}`,
+        normalizedName: `${name.toLowerCase()} ${w.key}`,
+        aliases: [],
+      },
+    });
+  const first = await searchCompanies({ db }, w.viewer, w.key);
+  const second = await searchCompanies({ db }, w.viewer, w.key, 2);
+  expect(first.total).toBe(expected.length + 1); // + kurulumdaki "Örnek" şirketi (adında aynı işaret var)
+  expect(first.pageSize).toBe(COMPANY_PAGE_SIZE);
+  expect(first.companies).toHaveLength(COMPANY_PAGE_SIZE);
+  expect(second.companies).toHaveLength(expected.length + 1 - COMPANY_PAGE_SIZE);
+  const names = [...first.companies, ...second.companies].map((c) =>
+    c.name.replace(` ${w.key}`, ''),
+  );
+  expect(new Set(names).size).toBe(names.length);
+  // "Örnek" Türkçe sırada Ö'dür (Orhan'dan sonra, Pelin'dan önce); diğerleri beklenen sırada.
+  const withOrnek = [
+    ...turkish.slice(0, turkish.indexOf('Pelin')),
+    'Örnek',
+    ...turkish.slice(turkish.indexOf('Pelin')),
+    ...tail,
+  ];
+  expect(names).toEqual(withOrnek);
+  const beyond = await searchCompanies({ db }, w.viewer, w.key, 9);
+  expect(beyond.page).toBe(2);
+  expect(beyond.companies.map((c) => c.id)).toEqual(second.companies.map((c) => c.id));
+});
+
+it('şirket sayfasında yalnız en yeni ilk ilanlar gelir; toplam sayı ayrı verilir', async () => {
+  const w = await setup();
+  const author = await alumni(w.company.id, w.institution.deptA1, 'İlan Sahibi');
+  const total = COMPANY_POSTING_LIMIT + 2;
+  for (let n = 0; n < total; n += 1)
+    await db.jobPosting.create({
+      data: {
+        authorId: author,
+        departmentIdAtWrite: w.institution.deptA1,
+        companyId: w.company.id,
+        title: `Sınır ilanı ${n}`,
+        organizationName: 'Örnek',
+        description: 'Öğrenciler için örnek bir staj pozisyonu açıklaması.',
+        isRemote: true,
+        applyMethod: 'URL',
+        applyUrl: 'https://example.org',
+        status: 'PUBLISHED',
+        submittedAt: new Date(),
+        moderatedAt: new Date(),
+        moderatedById: w.viewer,
+        publishedAt: new Date(Date.now() - n * 60_000),
+        deadlineOn: new Date(Date.now() + 86400 * 14 * 1000),
+        targets: { create: [{ departmentId: w.institution.deptA1 }] },
+      },
+    });
+  const page = await getCompany({ db }, w.viewer, w.slug);
+  expect(page.postings).toHaveLength(COMPANY_POSTING_LIMIT);
+  expect(page.postingTotal).toBe(total);
+  expect(page.postings[0]?.title).toBe('Sınır ilanı 0'); // en yeni başta
 });

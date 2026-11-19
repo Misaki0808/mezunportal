@@ -1,8 +1,9 @@
 import 'server-only';
 
 import type { AlumniPage, AlumniSearch } from '@/contracts/alumni-directory';
-import type { Prisma, PrismaClient } from '@/generated/prisma/client';
+import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { matchingDirectoryText } from '../repositories/turkish-filters';
+import { turkishCollate } from '../repositories/turkish-collation';
 import type { Actor } from '../permissions/actor';
 import { errorForDenyReason } from '../permissions/guards';
 import { evaluateAccess } from '../rules/authorization';
@@ -78,40 +79,53 @@ export async function searchAlumni(
     },
     ...(positions.length ? { positions: { some: { isCurrent: true, AND: positions } } } : {}),
   };
-  const [total, rows] = await Promise.all([
-    db.user.count({ where }),
-    db.user.findMany({
-      where,
-      orderBy: [{ name: 'asc' }, { id: 'asc' }],
-      skip: (filter.page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      select: {
-        id: true,
-        name: true,
-        memberships: {
-          where: membership,
-          select: { graduationYear: true },
-          orderBy: { graduationYear: 'desc' },
-          take: 1,
-        },
-        positions: {
-          ...(positions.length ? { where: { isCurrent: true, AND: positions } } : {}),
-          orderBy: [
-            { isCurrent: 'desc' },
-            { startYear: { sort: 'desc', nulls: 'last' } },
-            { id: 'asc' },
-          ],
-          take: 1,
-          select: {
-            companyRaw: true,
-            titleRaw: true,
-            sector: { select: { name: true } },
-            company: { select: { sector: { select: { name: true } } } },
+  // Sıralama Türkçe harmanlamayla ve sayfalama veritabanında yapılır: eşleşen kimlikler önce alınır, sayfanın kimlikleri
+  // `ORDER BY name COLLATE "tr-TR-x-icu", id LIMIT/OFFSET` ile seçilir, ayrıntılar son sorguda gelir.
+  const matching = (await db.user.findMany({ where, select: { id: true } })).map((row) => row.id);
+  const total = matching.length;
+  // Aralık dışı sayfa son geçerli sayfaya çekilir; ekran adresi düzeltir (`page` etkin sayfadır).
+  const page = Math.min(filter.page, Math.max(1, Math.ceil(total / PAGE_SIZE)));
+  const collate = await turkishCollate(db);
+  const pageIds =
+    total === 0
+      ? []
+      : (
+          await db.$queryRaw<{ id: string }[]>(Prisma.sql`
+            SELECT "id" FROM "User" WHERE "id" = ANY(${matching}::text[])
+            ORDER BY "name" ${collate}, "id"
+            LIMIT ${PAGE_SIZE} OFFSET ${(page - 1) * PAGE_SIZE}`)
+        ).map((row) => row.id);
+  const found = pageIds.length
+    ? await db.user.findMany({
+        where: { id: { in: pageIds } },
+        select: {
+          id: true,
+          name: true,
+          memberships: {
+            where: membership,
+            select: { graduationYear: true },
+            orderBy: { graduationYear: 'desc' },
+            take: 1,
+          },
+          positions: {
+            ...(positions.length ? { where: { isCurrent: true, AND: positions } } : {}),
+            orderBy: [
+              { isCurrent: 'desc' },
+              { startYear: { sort: 'desc', nulls: 'last' } },
+              { id: 'asc' },
+            ],
+            take: 1,
+            select: {
+              companyRaw: true,
+              titleRaw: true,
+              sector: { select: { name: true } },
+              company: { select: { sector: { select: { name: true } } } },
+            },
           },
         },
-      },
-    }),
-  ]);
+      })
+    : [];
+  const rows = pageIds.flatMap((id) => found.filter((row) => row.id === id));
   return {
     items: rows.map((row) => ({
       userId: row.id,
@@ -125,8 +139,8 @@ export async function searchAlumni(
           }
         : null,
     })),
-    page: filter.page,
+    page,
     total,
-    hasMore: filter.page * PAGE_SIZE < total,
+    hasMore: page * PAGE_SIZE < total,
   };
 }

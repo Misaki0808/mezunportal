@@ -1,8 +1,10 @@
+import { redirect } from 'next/navigation';
 import { PostingList } from '@/components/job-postings/list';
 import { mayPost, parseJobFilters } from '@/components/job-postings/model';
 import { ErrorState } from '@/components/ui';
 import { requireVerifiedMember } from '@/server/permissions';
 import { isCodedError } from '@/lib/errors';
+import { lastPageIfPast } from '@/lib/list-params';
 import { getJobPostingFilterOptions, searchJobPostings } from '@/server/actions/job-postings';
 import { listSearchSectors } from '@/server/actions/search';
 export const dynamic = 'force-dynamic';
@@ -35,6 +37,14 @@ export default async function PostingsPage({
   const result = await searchJobPostings(filters).catch(() => null);
   if (!result) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
+  // Aralık dışı sayfa (ör. ?page=999): 404 değil, son geçerli sayfaya yönlendirilir.
+  const last = lastPageIfPast(filters.page ?? 1, result.data.total, result.data.pageSize);
+  if (last !== null) {
+    const next = new URLSearchParams(params);
+    if (last > 1) next.set('page', String(last));
+    else next.delete('page');
+    redirect(`/ilanlar${next.size ? `?${next}` : ''}`);
+  }
   return (
     <PostingList
       key={JSON.stringify(filters)}

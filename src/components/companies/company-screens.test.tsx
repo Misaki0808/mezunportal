@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { renderUi } from '@/test/render';
 import { CompaniesIndex } from './company-screens';
 
-const none = { companies: [], popular: [] };
+const none = { companies: [], popular: [], page: 1, total: 0, pageSize: 40 };
 
 describe('şirketler: boş durum', () => {
   it('arama yokken "bulunamadı" değil "henüz yok": gizlilik eşiği açıkça yazılır, tek eylem deneyim yazmaktır', () => {
@@ -38,5 +38,46 @@ describe('şirketler: ortak başlık (kart 424)', () => {
       'href',
       '/basvuru-takvimi',
     );
+  });
+});
+
+describe('şirketler: sayfalama', () => {
+  const company = (n: number) => ({
+    id: `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`,
+    slug: `sirket-${n}`,
+    name: `Şirket ${n}`,
+    sector: null,
+  });
+  it('arama ve sayfa birlikte korunur; ilk sayfada "Önceki" bağlantısı yoktur', () => {
+    renderUi(
+      <CompaniesIndex
+        data={{
+          companies: [company(1), company(2)],
+          popular: [],
+          page: 2,
+          total: 100,
+          pageSize: 40,
+        }}
+        query="yazılım"
+      />,
+    );
+    const nav = screen.getByRole('navigation', { name: 'Sayfalama' });
+    expect(within(nav).getByRole('link', { name: /Sonraki/ })).toHaveAttribute(
+      'href',
+      '/sirketler?q=yaz%C4%B1l%C4%B1m&page=3',
+    );
+    expect(within(nav).getByRole('link', { name: /Önceki/ })).toHaveAttribute(
+      'href',
+      '/sirketler?q=yaz%C4%B1l%C4%B1m',
+    );
+  });
+  it('tek sayfalık sonuçta sayfalama görünmez', () => {
+    renderUi(
+      <CompaniesIndex
+        data={{ companies: [company(1)], popular: [], page: 1, total: 1, pageSize: 40 }}
+        query=""
+      />,
+    );
+    expect(screen.queryByRole('navigation', { name: 'Sayfalama' })).not.toBeInTheDocument();
   });
 });

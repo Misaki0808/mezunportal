@@ -2,6 +2,8 @@ import 'server-only';
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import {
   COMPANY_MIN_GROUP,
+  COMPANY_PAGE_SIZE,
+  COMPANY_POSTING_LIMIT,
   companyDetailSchema,
   companiesPageSchema,
   type CompaniesPage,
@@ -10,6 +12,7 @@ import {
 import { createPermissions } from '../permissions/guards';
 import { codedNotFound } from '@/lib/errors';
 import { asciiFold } from '../repositories/search';
+import { turkishCollate } from '../repositories/turkish-collation';
 import { visibleJobPostingIds } from '../repositories/job-postings';
 import { requireConsent } from './privacy';
 import { viewerUniversityIds } from './search';
@@ -84,17 +87,30 @@ export async function searchCompanies(
   deps: CompanyDeps,
   userId: string,
   q: string,
+  page = 1,
 ): Promise<CompaniesPage> {
   return asMember(deps, userId, async (tx, _actor, universities) => {
     const needle = asciiFold(q.trim());
     const pattern = `%${needle.replace(/[\\%_]/g, '\\$&')}%`;
     await tx.$queryRaw`SELECT set_config('pg_trgm.word_similarity_threshold', '0.45', true)`;
+    const matches = Prisma.sql`${needle} = '' OR c."searchKeys" LIKE ${pattern} OR (${needle.length} >= 4 AND ${needle} <% c."searchKeys")`;
+    const total = Number(
+      (
+        await tx.$queryRaw<{ n: bigint }[]>(
+          Prisma.sql`SELECT count(*) AS n FROM "Company" c WHERE ${matches}`,
+        )
+      )[0]?.n ?? 0,
+    );
+    // Aralık dışı sayfa son geçerli sayfaya çekilir (ekran adresi düzeltir).
+    const effective = Math.min(page, Math.max(1, Math.ceil(total / COMPANY_PAGE_SIZE)));
+    const collate = await turkishCollate(tx);
     const rows = await tx.$queryRaw<
       { id: string; name: string; sector: string | null }[]
     >(Prisma.sql`
       SELECT c."id", c."name", s."name" AS sector FROM "Company" c LEFT JOIN "Sector" s ON s."id"=c."sectorId"
-      WHERE ${needle} = '' OR c."searchKeys" LIKE ${pattern} OR (${needle.length} >= 4 AND ${needle} <% c."searchKeys")
-      ORDER BY CASE WHEN ${needle} = '' THEN 0 ELSE word_similarity(${needle}, c."searchKeys") END DESC, c."name" ASC, c."id" ASC LIMIT 40`);
+      WHERE ${matches}
+      ORDER BY CASE WHEN ${needle} = '' THEN 0 ELSE word_similarity(${needle}, c."searchKeys") END DESC, c."name" ${collate} ASC, c."id" ASC
+      LIMIT ${COMPANY_PAGE_SIZE} OFFSET ${(effective - 1) * COMPANY_PAGE_SIZE}`);
     // Sıralamayı yalnız adla yayımlanmış deneyim belirler: anonim bir deneyimin eklenmesi popüler sırasından kimlik çıkarmaya izin vermez.
     const popular = await tx.$queryRaw<
       { id: string; name: string; sector: string | null }[]
@@ -104,14 +120,20 @@ export async function searchCompanies(
       JOIN "Department" d ON d."id" = e."departmentIdAtWrite" JOIN "Faculty" f ON f."id" = d."facultyId"
       LEFT JOIN "Sector" s ON s."id" = c."sectorId"
       WHERE f."universityId" = ANY(${universities}::text[])
-      GROUP BY c."id", c."name", s."name" HAVING count(DISTINCT e."authorId") >= ${COMPANY_MIN_GROUP} ORDER BY count(*) DESC, c."name" ASC LIMIT 12`);
+      GROUP BY c."id", c."name", s."name" HAVING count(DISTINCT e."authorId") >= ${COMPANY_MIN_GROUP} ORDER BY count(*) DESC, c."name" ${collate} ASC LIMIT 12`);
     const map = (r: { id: string; name: string; sector: string | null }) => ({
       id: r.id,
       name: r.name,
       sector: r.sector,
       slug: companySlug(r.name, r.id),
     });
-    return companiesPageSchema.parse({ companies: rows.map(map), popular: popular.map(map) });
+    return companiesPageSchema.parse({
+      companies: rows.map(map),
+      popular: popular.map(map),
+      page: effective,
+      total,
+      pageSize: COMPANY_PAGE_SIZE,
+    });
   });
 }
 export async function getCompany(
@@ -243,15 +265,18 @@ export async function getCompany(
         now,
       ),
     );
+    const visiblePostings = postings.filter((p) => visible.has(p.id));
     return companyDetailSchema.parse({
       ...summary(company),
       experiences: viewExperiences,
       alumni: { current, former },
       periods,
       mentors,
-      postings: postings
-        .filter((p) => visible.has(p.id))
+      // Ekranda yalnız en yeni ilk `COMPANY_POSTING_LIMIT` ilan; tamamı `/ilanlar?companyId=` ile açılır.
+      postings: visiblePostings
+        .slice(0, COMPANY_POSTING_LIMIT)
         .map((p) => ({ ...p, title: p.title ?? '' })),
+      postingTotal: visiblePostings.length,
     });
   });
 }

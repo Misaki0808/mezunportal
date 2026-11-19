@@ -1237,3 +1237,8 @@ Eski kuyrukların ayarları worker açılışında güncellenir; daha önce üre
 ## 2026-11-19 · İlan üzerinden iletişim notunda önek yok
 
 İlan üzerinden iletişim talebinde kullanıcının notu olduğu gibi (kırpılmış, NFC) saklanır; D7 kararındaki "İlan: <başlık> —" öneki kalkar ve not sessizce kısaltılmaz, çünkü ilan başlığı ve kurum zaten ayrı kaynak alanlarında tutulup gelen ve giden kutusunda ayrıca gösterilir; eski kayıtlar değişmez.
+
+## 2026-11-20 · Liste sıralaması ve sayfa kuralı
+
+Adla sıralanan listeler (mezun dizini, şirket listesi) Türkçe harf sırasını sorgu düzeyinde `COLLATE "tr-TR-x-icu"` ile alır ve sayfalama veritabanında kalır; kolon harmanlaması ve şema değişmez, harmanlama yoksa sorgu varsayılan sıraya düşer. Bütün liste adreslerinde geçersiz parametre sessizce varsayılana düşer, aralık dışı sayfa (`?page=999`) 404 yerine son geçerli sayfaya yönlendirilir; şirket listesi sayfalanır, şirket sayfasında en yeni 10 ilan gösterilip tamamı `/ilanlar?companyId=` ile açılır. Liste arama kutularındaki sessiz `maxLength` bilinçli kabul edildi: arama için sayaç gerekmez.
+
