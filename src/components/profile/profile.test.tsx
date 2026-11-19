@@ -363,6 +363,20 @@ describe('kendi profilim', () => {
     await waitFor(() => expect(suggestSkills).toHaveBeenCalledWith({ query: 'İİ' }));
   });
 
+  it('beceri önerisi eşiği kod noktasıyla sayılır: tek emoji 1, iki emoji 2 karakterdir', async () => {
+    const suggestSkills = vi.fn().mockResolvedValue({ ok: true, data: { skills: [] } });
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ suggestSkills })} />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Beceriler' }));
+    const input = screen.getByLabelText('Beceri ekle');
+    fireEvent.change(input, { target: { value: '😀' } });
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    expect(suggestSkills).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: '😀😀' } });
+    await waitFor(() => expect(suggestSkills).toHaveBeenCalledWith({ query: '😀😀' }));
+  });
+
   it('beceri: önerilen ad eklenir; sunucu sınır hatası katalog metniyle gösterilir', async () => {
     const addSkill = vi.fn().mockResolvedValue({ ok: false, errorCode: 'PROFILE_LIMIT_REACHED' });
     const suggestSkills = vi
