@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { tabForward } from './keyboard';
 
 /** Erişilebilirlik turu için sayfa içi ölçümler (kütüphane yok): ad, odak göstergesi, kontrast, yatay taşma. */
 export type A11yReport = {
@@ -176,7 +177,7 @@ export async function tabThrough(page: Page, steps = 30) {
   const seen = new Set<string>();
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   for (let step = 0; step < steps; step += 1) {
-    await page.keyboard.press('Tab');
+    await tabForward(page);
     const info = await page.evaluate(() => {
       const element = document.activeElement as HTMLElement | null;
       if (!element || element === document.body) return null;
