@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -32,10 +33,7 @@ const idSchema = z
   .max(64, { error: INVALID });
 
 /** Boş/yalnız boşluk not yok sayılır (null); veritabanı CHECK'iyle aynı üst sınır. */
-const messageSchema = z
-  .string({ error: INVALID })
-  .trim()
-  .max(CONTACT_MESSAGE_MAX, { error: INVALID })
+const messageSchema = userTextSchema(0, CONTACT_MESSAGE_MAX, INVALID)
   .transform((value) => (value === '' ? null : value))
   .nullable()
   .optional();

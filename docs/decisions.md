@@ -1219,6 +1219,11 @@ da güncellemez; yıllar sabit ve arayüzün varsayılan yılından farklı oldu
 etkilenmez. Servis kodu `server-only` olduğundan seed satırları elle yazar; tutarlılığı DB testi
 gerçek servislerle sınar.
 
+## 2026-11-18 · Kullanıcı metninde NFC ile uzunluk
+
+Kullanıcının sınırlı serbest metni doğrulama ve kayıttan önce kırpılıp NFC'ye dönüştürülür; uzunluk
+Unicode kod noktalarıyla sayılır. Böylece ayrışık Türkçe harfler istemcide ve sunucuda aynı sınırı
+kullanır. Var olan kayıtlar dönüştürülmez; kimlikler ve bağlantılar bu kuralla değiştirilmez.
 ## 2026-11-18 · CV ve puan kuyruğunda bekleyen iş saklaması
 
 Kısaltılmış DB deneyinde işçi kapalıyken süresi dolan `appointment.sweep`, `cv.parse`, `cv.parse.failed` ve

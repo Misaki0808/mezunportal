@@ -1,4 +1,5 @@
 'use client';
+import { userTextLength } from '@/lib/user-text';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useRef, useState, useTransition } from 'react';
@@ -56,7 +57,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
         if (!parsed.success) {
           if (parsed.error.issues.some((issue) => issue.path[0] === 'reason')) {
             setReasonError(
-              errors(reason.trim().length < 3 ? 'AUDIT_REASON_REQUIRED' : 'AUDIT_REASON_INVALID'),
+              errors(userTextLength(reason) < 3 ? 'AUDIT_REASON_REQUIRED' : 'AUDIT_REASON_INVALID'),
             );
             reasonInput.current?.focus();
           } else {
@@ -79,7 +80,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
         });
         if (!parsed.success) {
           setReasonError(
-            errors(reason.trim().length < 3 ? 'AUDIT_REASON_REQUIRED' : 'AUDIT_REASON_INVALID'),
+            errors(userTextLength(reason) < 3 ? 'AUDIT_REASON_REQUIRED' : 'AUDIT_REASON_INVALID'),
           );
           reasonInput.current?.focus();
           return;

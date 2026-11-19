@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 import type { ErrorCode } from '@/lib/errors';
 
@@ -38,16 +39,8 @@ const id = z
   .trim()
   .min(1, { error: INVALID })
   .max(64, { error: INVALID });
-const shortText = z
-  .string({ error: INVALID })
-  .trim()
-  .min(1, { error: INVALID })
-  .max(200, { error: INVALID });
-const bodyText = z
-  .string({ error: INVALID })
-  .trim()
-  .min(1, { error: INVALID })
-  .max(10_000, { error: INVALID });
+const shortText = userTextSchema(1, 200, INVALID);
+const bodyText = userTextSchema(1, 10_000, INVALID);
 const year = z
   .number({ error: INVALID })
   .int({ error: INVALID })
@@ -61,19 +54,12 @@ const duration = z
 export const processStepSchema = z
   .object({
     title: shortText,
-    description: z
-      .string({ error: INVALID })
-      .trim()
-      .min(1, { error: INVALID })
-      .max(2000, { error: INVALID }),
+    description: userTextSchema(1, 2000, INVALID),
   })
   .strict();
 const processSteps = z.array(processStepSchema, { error: INVALID }).max(20, { error: INVALID });
 const interviewQuestions = z
-  .array(
-    z.string({ error: INVALID }).trim().min(1, { error: INVALID }).max(1000, { error: INVALID }),
-    { error: INVALID },
-  )
+  .array(userTextSchema(1, 1000, INVALID), { error: INVALID })
   .max(20, { error: INVALID });
 const common = {
   organizationName: shortText,
@@ -211,6 +197,7 @@ export const reviewExperienceSchema = z.discriminatedUnion(
         reason: z
           .string({ error: 'AUDIT_REASON_REQUIRED' })
           .trim()
+          .normalize('NFC')
           .min(1, { error: 'AUDIT_REASON_REQUIRED' })
           .min(3, { error: 'AUDIT_REASON_INVALID' })
           .max(1000, { error: 'AUDIT_REASON_INVALID' }),
@@ -220,11 +207,7 @@ export const reviewExperienceSchema = z.discriminatedUnion(
   { error: INVALID },
 );
 export type ReviewExperienceInput = z.input<typeof reviewExperienceSchema>;
-const reason = z
-  .string({ error: INVALID })
-  .trim()
-  .min(3, { error: INVALID })
-  .max(1000, { error: INVALID });
+const reason = userTextSchema(3, 1000, INVALID);
 export const reportExperienceSchema = z.object({ experienceId: id, reason }).strict();
 export type ReportExperienceInput = z.input<typeof reportExperienceSchema>;
 const pageInput = {

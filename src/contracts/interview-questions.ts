@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
+import { userTextSchema } from '@/lib/user-text';
+
 export const interviewQuerySchema = z
   .object({
-    q: z.string().trim().max(100).default(''),
+    q: userTextSchema(0, 100).default(''),
     companyId: z.string().trim().max(64).default(''),
     sectorId: z.string().trim().max(64).default(''),
     page: z

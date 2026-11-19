@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -86,8 +87,7 @@ export const MY_JOB_POSTINGS_HREF = '/ilanlarim';
 // Alan doğrulayıcıları
 // ---------------------------------------------------------------------------------------------
 
-const text = (min: number, max: number) =>
-  z.string({ error: INVALID }).trim().min(min, { error: INVALID }).max(max, { error: INVALID });
+const text = (min: number, max: number) => userTextSchema(min, max, INVALID);
 const postingId = adminId;
 const deptId = adminId;
 
@@ -205,10 +205,7 @@ export type JobPostingContent = z.infer<typeof jobPostingContentSchema>;
  * aranır). Bağlantı varsa https olmalıdır.
  */
 const draftText = (max: number) =>
-  z
-    .string({ error: INVALID })
-    .trim()
-    .max(max, { error: INVALID })
+  userTextSchema(0, max, INVALID)
     .transform((value) => (value === '' ? null : value))
     .nullable()
     .optional();

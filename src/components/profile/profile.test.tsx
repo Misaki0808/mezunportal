@@ -349,6 +349,20 @@ describe('kendi profilim', () => {
     });
   });
 
+  it('beceri önerisi uzunluğu NFC üzerinden sayar ve sorguyu NFC gönderir', async () => {
+    const suggestSkills = vi.fn().mockResolvedValue({ ok: true, data: { skills: [] } });
+    const { user } = renderWithToasts(
+      <MyProfile initial={base} actions={actions({ suggestSkills })} />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Beceriler' }));
+    const input = screen.getByLabelText('Beceri ekle');
+    fireEvent.change(input, { target: { value: 'İ'.normalize('NFD') } });
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    expect(suggestSkills).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: 'İ'.normalize('NFD').repeat(2) } });
+    await waitFor(() => expect(suggestSkills).toHaveBeenCalledWith({ query: 'İİ' }));
+  });
+
   it('beceri: önerilen ad eklenir; sunucu sınır hatası katalog metniyle gösterilir', async () => {
     const addSkill = vi.fn().mockResolvedValue({ ok: false, errorCode: 'PROFILE_LIMIT_REACHED' });
     const suggestSkills = vi

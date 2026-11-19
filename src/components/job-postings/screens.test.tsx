@@ -337,6 +337,22 @@ it('ilan iletişiminde 501 karakterlik not kesilmeden reddedilir', async () => {
   expect(note).toHaveValue('İ'.repeat(501));
   expect(note).toHaveFocus();
   expect(note).toBeInvalid();
+  expect(note).toHaveAccessibleDescription(/En fazla 500 karakter yaz/);
+});
+it('ilan iletişimi 251 ayrışık harfi tek tek sayar ve NFC gönderir', async () => {
+  const { PostingContactForm } = await import('./contact');
+  const send = vi.fn().mockResolvedValue({ ok: true, data: { requestId: 'r', status: 'PENDING' } });
+  renderWithToasts(
+    <PostingContactForm postingId="ilan-123" requestableFields={['EMAIL']} send={send} />,
+  );
+  fireEvent.click(screen.getByRole('checkbox', { name: 'E-posta' }));
+  const note = screen.getByLabelText(/Kısa not/);
+  fireEvent.change(note, { target: { value: 'İ'.normalize('NFD').repeat(251) } });
+  expect(note).toHaveAccessibleDescription(/251 \/ 500 karakter/);
+  fireEvent.submit(screen.getByRole('button', { name: 'Talep gönder' }).closest('form')!);
+  await waitFor(() =>
+    expect(send).toHaveBeenCalledWith(expect.objectContaining({ message: 'İ'.repeat(251) })),
+  );
 });
 it('ilan iletişiminde sunucu not alanını reddederse not ve seçim korunur', async () => {
   const { PostingContactForm } = await import('./contact');
@@ -400,6 +416,36 @@ it('önizleme son başvuru gününü okunur Türkçe tarihle gösterir, ham ISO 
   fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
   expect(screen.getByText(`İstanbul · ${formatDeadline(deadline)}`)).toBeVisible();
   expect(screen.queryByText(deadline, { exact: false })).toBeNull();
+});
+
+it('taslakta 100 NFD harf NFC başlık olarak kaydedilir', async () => {
+  const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'draft-nfc' } });
+  renderWithToasts(<PostingEditor context={context} save={save} submit={vi.fn()} />);
+  fireEvent.change(screen.getByLabelText(/Pozisyon adı/), {
+    target: { value: 'İ'.normalize('NFD').repeat(100) },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+  await waitFor(() =>
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.objectContaining({ title: 'İ'.repeat(100) }) }),
+    ),
+  );
+});
+
+it('taslak başlığı NFC sınırını aşarsa metni korur, alan hatasını ve odağı gösterir', async () => {
+  const save = vi.fn();
+  renderWithToasts(<PostingEditor context={context} save={save} submit={vi.fn()} />);
+  const title = screen.getByLabelText(/Pozisyon adı/);
+  const value = 'İ'.normalize('NFD').repeat(121);
+  fireEvent.change(title, { target: { value } });
+  fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+  expect(save).not.toHaveBeenCalled();
+  expect(title).toHaveValue(value);
+  expect(title).toHaveAttribute('aria-invalid', 'true');
+  expect(document.getElementById(title.getAttribute('aria-describedby')!)).toHaveTextContent(
+    'En fazla 120 karakter gir.',
+  );
+  await waitFor(() => expect(title).toHaveFocus());
 });
 
 it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderilir', async () => {

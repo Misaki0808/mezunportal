@@ -1,5 +1,6 @@
 'use client';
 
+import { userTextLength } from '@/lib/user-text';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -193,7 +194,7 @@ export function MentorDirectory({
     </fieldset>
   );
 
-  const tooShort = (value?: string) => invalid && value !== undefined && value.trim().length < 2;
+  const tooShort = (value?: string) => invalid && value !== undefined && userTextLength(value) < 2;
   const filters = (includeQuick: boolean) => (
     <div className="flex flex-col gap-5">
       {includeQuick && (
@@ -311,7 +312,7 @@ export function MentorDirectory({
           label={t('search')}
           hint={t('searchPlaceholder')}
           submitLabel={t('searchButton')}
-          error={invalid && query.trim().length === 1 ? t('filters.invalid') : undefined}
+          error={invalid && userTextLength(query) === 1 ? t('filters.invalid') : undefined}
           pendingReason={pending ? directory('loading') : undefined}
           onSubmit={(event) => {
             event.preventDefault();

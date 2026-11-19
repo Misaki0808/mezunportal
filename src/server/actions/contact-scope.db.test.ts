@@ -70,9 +70,18 @@ it('profil talebi kapsamında olmayan hedeflerde yok ile aynı yanıt ve sıfır
   for (const targetUserId of [foreign, suspended, deleted, unverified])
     expect(await sendContactRequest({ targetUserId, fields: ['EMAIL'] })).toEqual(missing);
   expect(await db.contactRequest.count({ where: { requesterId: viewer } })).toBe(0);
-  const sent = await sendContactRequest({ targetUserId: same, fields: ['EMAIL'] });
+  const decomposed = 'İ'.normalize('NFD').repeat(251);
+  const sent = await sendContactRequest({
+    targetUserId: same,
+    fields: ['EMAIL'],
+    message: decomposed,
+  });
   expect(sent).toMatchObject({ ok: true, data: { status: 'PENDING' } });
   expect(await db.contactRequest.count({ where: { requesterId: viewer } })).toBe(1);
+  const saved = await db.contactRequest.findFirstOrThrow({
+    where: { requesterId: viewer, targetId: same },
+  });
+  expect(saved.message).toBe('İ'.repeat(251));
 });
 
 it('diğer profil, mentor, CV ve randevu kapılarında yabancı/askı/silinen hedef yok ile aynı', async () => {

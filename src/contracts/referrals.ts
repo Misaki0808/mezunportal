@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 import type { ErrorCode } from '@/lib/errors';
 import { adminId, adminPageInput, adminReason } from './admin';
@@ -25,10 +26,7 @@ export const REFERRAL_HREFS = {
   create: '/referans/yeni',
   moderation: '/yonetim/referanslar',
 } as const;
-const note = z
-  .string({ error: INVALID })
-  .trim()
-  .max(REFERRAL_NOTE_MAX, { error: INVALID })
+const note = userTextSchema(0, REFERRAL_NOTE_MAX, INVALID)
   .transform((v) => v || null)
   .nullable()
   .optional();
@@ -45,13 +43,7 @@ export const proposeReferralSchema = z
   .object({
     studentId: adminId,
     jobPostingId: adminId.nullable().optional(),
-    organizationName: z
-      .string({ error: INVALID })
-      .trim()
-      .min(2, { error: INVALID })
-      .max(REFERRAL_ORGANIZATION_MAX, { error: INVALID })
-      .nullable()
-      .optional(),
+    organizationName: userTextSchema(2, REFERRAL_ORGANIZATION_MAX, INVALID).nullable().optional(),
     note,
   })
   .strict()

@@ -37,6 +37,7 @@ it('iletişim notunun üst sınırı aşılırsa metin kesilmez ve alan odaklan�
   expect(sendContactRequest).not.toHaveBeenCalled();
   expect(note).toHaveValue('İ'.repeat(501));
   expect(note).toHaveFocus();
+  expect(note).toHaveAccessibleDescription(/En fazla 500 karakter yaz/);
   expect(note).toBeInvalid();
 });
 it('yalnız sunucunun talep edilebilir dediği alanlar seçilebilir ve diğerlerinin nedeni açıklanır', () => {

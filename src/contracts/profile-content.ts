@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -211,10 +212,7 @@ export type SetLinkedinUrlInput = z.input<typeof setLinkedinUrlSchema>;
 
 export const PROFILE_TEXT_LIMITS = { headline: 120, summary: 1500, city: 80, goals: 500 } as const;
 const optionalText = (max: number) =>
-  z
-    .string({ error: INVALID })
-    .trim()
-    .max(max, { error: INVALID })
+  userTextSchema(0, max, INVALID)
     .transform((value) => (value === '' ? null : value))
     .nullable()
     .refine((value) => value === null || !hasPersonalDataPattern(value), {
@@ -443,11 +441,7 @@ export type GetProfileInput = z.input<typeof getProfileSchema>;
  */
 export const suggestSkillsSchema = z
   .object({
-    query: z
-      .string({ error: INVALID })
-      .trim()
-      .min(2, { error: INVALID })
-      .max(80, { error: INVALID }),
+    query: userTextSchema(2, 80, INVALID),
   })
   .strict();
 export type SuggestSkillsInput = z.input<typeof suggestSkillsSchema>;

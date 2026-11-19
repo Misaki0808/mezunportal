@@ -76,6 +76,24 @@ const slotList = (over: Partial<SlotList> = {}): SlotList => ({
 });
 
 describe('slot seçici', () => {
+  it('not kesilmez; NFC sınırını aşınca alan hatası ve odak, geçerli NFD notta NFC gönderim', async () => {
+    const request = vi.fn().mockResolvedValue({ ok: true, data: {} });
+    const { user } = renderWithToasts(<SlotPicker list={slotList()} request={request} />);
+    await user.click(screen.getByRole('radio', { name: '11:00 saatini seç' }));
+    const note = screen.getByLabelText(/Mentora not/);
+    expect(note).not.toHaveAttribute('maxlength');
+    const tooLong = 'İ'.repeat(501);
+    fireEvent.change(note, { target: { value: tooLong } });
+    await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
+    expect(note).toHaveValue(tooLong);
+    expect(note).toHaveFocus();
+    expect(note).toBeInvalid();
+    expect(note).toHaveAccessibleDescription(/En fazla 500 karakter yaz/);
+    expect(request).not.toHaveBeenCalled();
+    fireEvent.change(note, { target: { value: 'İ'.normalize('NFD').repeat(251) } });
+    await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
+    expect(request).toHaveBeenCalledWith(expect.objectContaining({ note: 'İ'.repeat(251) }));
+  });
   it('çift gönderim tek istektir; ağ hatasında not korunur', async () => {
     const gate = Promise.withResolvers<{ ok: true; data: unknown }>();
     const request = vi.fn(() => gate.promise);
@@ -351,9 +369,9 @@ describe('mentor ayarları', () => {
     await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
     expect(actions.saveAvailability).not.toHaveBeenCalled();
     expect(within(monday).getByText('Aynı gündeki aralıklar çakışamaz.')).toBeInTheDocument();
-    expect(starts[0]).toHaveFocus();
-    expect(starts[0]).toBeInvalid();
-    expect(starts[0]).toHaveAccessibleDescription(/aralıklar çakışamaz/);
+    expect(starts[1]).toHaveFocus();
+    expect(starts[1]).toBeInvalid();
+    expect(starts[1]).toHaveAccessibleDescription(/aralıklar çakışamaz/);
     const ends = within(monday).getAllByLabelText('Bitiş');
     await user.clear(ends[0]!);
     await user.type(ends[0]!, '08:00');
@@ -647,6 +665,22 @@ describe('randevu detayı', () => {
       appointmentId: 'a1',
       reason: 'Takvimim dolu',
     });
+  });
+
+  it('ret gerekçesi kesilmez; sınırı aşınca pencerede korunur ve alana odaklanır', async () => {
+    const actions = detailActions();
+    const { user } = renderUi(<AppointmentDetail appointment={view()} actions={actions} />);
+    await user.click(screen.getByRole('button', { name: 'Reddet' }));
+    const dialog = await screen.findByRole('dialog');
+    const input = within(dialog).getByLabelText(/Ret gerekçesi/);
+    const tooLong = 'İ'.repeat(501);
+    expect(input).not.toHaveAttribute('maxlength');
+    fireEvent.change(input, { target: { value: tooLong } });
+    await user.click(within(dialog).getByRole('button', { name: 'Reddet' }));
+    expect(input).toHaveValue(tooLong);
+    expect(input).toHaveFocus();
+    expect(input).toHaveAccessibleDescription(/En az 3, en fazla 500/);
+    expect(actions.respond).not.toHaveBeenCalled();
   });
 
   it('onaylı online randevuda link yoksa mentor elle ekler; http reddedilir, https gider', async () => {

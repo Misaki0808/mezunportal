@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -30,11 +31,7 @@ export const adminId = z
 /** Gerekçe: 3–1000 karakter; kişisel veri içermesi sunucuda (`rules/adminAudit`) ayrıca reddedilir. */
 export const ADMIN_REASON_MIN = 3;
 export const ADMIN_REASON_MAX = 1000;
-export const adminReason = z
-  .string({ error: INVALID })
-  .trim()
-  .min(ADMIN_REASON_MIN, { error: INVALID })
-  .max(ADMIN_REASON_MAX, { error: INVALID });
+export const adminReason = userTextSchema(ADMIN_REASON_MIN, ADMIN_REASON_MAX, INVALID);
 
 /** Açık kullanıcı onayı; eksik/false değer sessizce kabul edilmez. */
 export const adminConfirmation = z.literal(true, { error: INVALID });
@@ -58,11 +55,7 @@ export const adminPageInput = {
 
 export const ADMIN_SEARCH_MIN = 2;
 export const ADMIN_SEARCH_MAX = 100;
-export const adminSearchText = z
-  .string({ error: INVALID })
-  .trim()
-  .min(ADMIN_SEARCH_MIN, { error: INVALID })
-  .max(ADMIN_SEARCH_MAX, { error: INVALID });
+export const adminSearchText = userTextSchema(ADMIN_SEARCH_MIN, ADMIN_SEARCH_MAX, INVALID);
 
 // ---------------------------------------------------------------------------------------------
 // Erişim tablosu: hangi eylem kime açık (tablo-güdümlü testin ve ekranın tek kaynağı)
@@ -215,11 +208,7 @@ export type DictionaryKind = (typeof DICTIONARY_KINDS)[number];
 
 export const DICTIONARY_NAME_MAX = 200;
 export const DICTIONARY_ALIASES_MAX = 20;
-const dictionaryName = z
-  .string({ error: INVALID })
-  .trim()
-  .min(2, { error: INVALID })
-  .max(DICTIONARY_NAME_MAX, { error: INVALID });
+const dictionaryName = userTextSchema(2, DICTIONARY_NAME_MAX, INVALID);
 /** Takma adlar servis tarafında `normalizeName` ile saklanır; yinelenenler birleşir. */
 const dictionaryAliases = z
   .array(dictionaryName, { error: INVALID })

@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 import { adminId, adminReason } from './admin';
 
@@ -12,11 +13,7 @@ export const monthSchema = z
 export const saveStorySchema = z
   .object({
     departmentId: adminId,
-    body: z
-      .string({ error: INVALID })
-      .trim()
-      .min(STORY_MIN_LENGTH, { error: INVALID })
-      .max(STORY_MAX_LENGTH, { error: INVALID }),
+    body: userTextSchema(STORY_MIN_LENGTH, STORY_MAX_LENGTH, INVALID),
     consent: z.boolean({ error: INVALID }),
   })
   .strict();

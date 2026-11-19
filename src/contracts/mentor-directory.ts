@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
+import { userTextSchema } from '@/lib/user-text';
 
 import { EXPERIENCE_TYPES } from './experience';
 
@@ -49,17 +50,17 @@ const enumList = <T extends readonly [string, ...string[]]>(values: T) =>
 export const searchMentorsSchema = z
   .object({
     /** Mentor adı, şirketi veya unvanında kısmi arama. */
-    q: text(MENTOR_QUERY_MIN, MENTOR_QUERY_MAX).optional(),
+    q: userTextSchema(MENTOR_QUERY_MIN, MENTOR_QUERY_MAX, INVALID).optional(),
     /** Mentorun üyelik türü: mezun, akademisyen, öğrenci (K-08 eşiğini geçmiş). */
     mentorTypes: enumList(MENTOR_TYPES).optional(),
     /** Sektör kimliği (`listSearchSectors`): mentorun herhangi bir pozisyonunun (ya da şirketinin) sektörü. */
     sectorId: text(1, 64).optional(),
     /** Şirket adı (kısmi): sözlük adı ya da mentorun yazdığı ad. */
-    company: text(MENTOR_QUERY_MIN, MENTOR_QUERY_MAX).optional(),
+    company: userTextSchema(MENTOR_QUERY_MIN, MENTOR_QUERY_MAX, INVALID).optional(),
     /** Unvan (kısmi). */
-    title: text(MENTOR_QUERY_MIN, MENTOR_QUERY_MAX).optional(),
+    title: userTextSchema(MENTOR_QUERY_MIN, MENTOR_QUERY_MAX, INVALID).optional(),
     /** Beceri adı; sözlük adı/takma adıyla normalleştirilir. */
-    skill: text(1, 200).optional(),
+    skill: userTextSchema(1, 200, INVALID).optional(),
     /** Mentorun yayınlanmış ADLI deneyim türü. */
     experienceTypes: enumList(EXPERIENCE_TYPES).optional(),
     /** Görüşme biçimlerinden herhangi birini sunan mentorlar. */

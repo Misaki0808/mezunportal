@@ -1,12 +1,12 @@
 import { z } from 'zod';
+
+import { userTextSchema } from '@/lib/user-text';
 import { mentorCardSchema } from './mentor-directory';
 import { JOB_POSTING_KINDS } from './job-postings';
 
 const id = z.uuid({ error: 'VALIDATION_INVALID' });
 export const COMPANY_MIN_GROUP = 3;
-export const searchCompaniesSchema = z
-  .object({ q: z.string().trim().max(100).default('') })
-  .strict();
+export const searchCompaniesSchema = z.object({ q: userTextSchema(0, 100).default('') }).strict();
 export type SearchCompaniesInput = z.input<typeof searchCompaniesSchema>;
 export const companySlugSchema = z.object({ slug: z.string().min(1).max(200) }).strict();
 export type CompanySlugInput = z.input<typeof companySlugSchema>;
