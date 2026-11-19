@@ -29,10 +29,17 @@ test('390 px: mezun hikâye gönderir, yönetici seçer, bölüm görür ve rız
   let storyId: string | undefined;
   try {
     await login(alumni!, 'alumniMentor');
-    await alumni!.goto('/hesap/hikayem');
+    await alumni!.goto('/hesap/hikayem', { waitUntil: 'networkidle' });
     const storyField = alumni!.getByLabel('Hikâyen', { exact: true });
+    // SSR alanı görünürken onChange henüz bağlı olmayabilir. Gerçek istemci doğrulaması hazır oluşu kanıtlar.
+    await alumni!.getByRole('button', { name: 'Kaydet', exact: true }).click();
+    await expect(storyField).toHaveAttribute('aria-invalid', 'true');
+    // Önceki hata uzunluk kontrolünü yanlışlıkla geçirmesin; bölüm seçimi hatayı temizlemeli.
+    await alumni!.getByRole('combobox').selectOption(member.departmentId);
+    await expect(storyField).not.toHaveAttribute('aria-invalid', 'true');
     const tooLong = 'İ'.repeat(3001);
     await storyField.fill(tooLong);
+    await expect(storyField).toHaveValue(tooLong);
     await alumni!.getByRole('button', { name: 'Kaydet' }).click();
     await expect(storyField).toHaveValue(tooLong);
     await expect(storyField).toBeFocused();
@@ -93,7 +100,7 @@ test('390 px: mezun hikâye gönderir, yönetici seçer, bölüm görür ve rız
       timeZone: 'Europe/Istanbul',
     }).format(new Date());
     await expect(student!.getByRole('region', { name: 'Ayın mezunu' })).toContainText(monthLabel);
-    await alumni!.reload();
+    await alumni!.reload({ waitUntil: 'networkidle' });
     await alumni!.getByRole('switch', { name: /Hikâyemin bölümümün üyeleriyle/ }).uncheck();
     await expect(alumni!.getByText('Yayın tercihin kaydedildi.')).toBeVisible();
     await student!.goto('/hikayeler');
