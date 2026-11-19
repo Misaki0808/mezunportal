@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { COMPLETION_FIELDS, type OnboardingState } from '@/contracts/profile';
@@ -99,7 +99,11 @@ describe('ilk giriş akışı', () => {
     ).toBeVisible();
     await user.click(screen.getByRole('checkbox', { name: 'Yazılım geliştirme' }));
     await user.click(screen.getByRole('button', { name: 'Devam et' }));
-    await user.click(await screen.findByRole('checkbox', { name: 'Staj bulmak' }));
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Staj bulmak' })).toBeEnabled(),
+    );
+    await user.click(screen.getByRole('checkbox', { name: 'Staj bulmak' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Geri' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Geri' }));
     expect(screen.getByRole('checkbox', { name: 'Yazılım geliştirme' })).toBeChecked();
     await user.click(screen.getByRole('button', { name: 'Devam et' }));
@@ -229,6 +233,9 @@ describe('ilk giriş akışı', () => {
       await screen.findByRole('heading', { name: 'Birlikte neyi hedefleyelim?' }),
     ).toBeInTheDocument();
     expect(save).toHaveBeenNthCalledWith(1, { step: 'INTERESTS', tagIds: ['i'] });
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Şimdilik atla' })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: 'Şimdilik atla' }));
     expect(skip).toHaveBeenCalledWith({ step: 'GOALS' });
     expect(save).toHaveBeenCalledTimes(1);
@@ -286,7 +293,7 @@ describe('ilk giriş akışı', () => {
     );
     await user.selectOptions(screen.getByLabelText('E-posta'), 'PRIVATE');
     expect(update).toHaveBeenCalledWith({ field: 'EMAIL', level: 'PRIVATE' });
-    expect(screen.getByLabelText('E-posta')).toHaveValue('PRIVATE');
+    await waitFor(() => expect(screen.getByLabelText('E-posta')).toHaveValue('PRIVATE'));
   });
   it.each(['MENTOR_PREFERENCE', 'VISIBILITY'] as const)(
     '%s adımını ayrı eylemle atlar',

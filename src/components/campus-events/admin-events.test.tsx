@@ -79,6 +79,9 @@ describe('AdminEvents karar penceresi', () => {
       decision: 'PUBLISH',
       reason: 'Yayımlanmaya uygun',
     });
+    await waitFor(() =>
+      expect(row('Staj Buluşması').getByRole('button', { name: 'Reddet' })).toBeEnabled(),
+    );
     await user.click(row('Staj Buluşması').getByRole('button', { name: 'Reddet' }));
     d = await screen.findByRole('dialog');
     expect(within(d).getByLabelText(/İşlem gerekçesi/)).toHaveValue('');
@@ -214,6 +217,9 @@ describe('AdminEvents: geri bildirim kalıbı (kart 207)', () => {
     expect(await screen.findByText('Etkinlik yayınlandı.')).toBeVisible();
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(mocks.refresh).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(row('Staj Buluşması').getByRole('button', { name: 'Reddet' })).toBeEnabled(),
+    );
     await user.click(row('Staj Buluşması').getByRole('button', { name: 'Reddet' }));
     expect(within(await screen.findByRole('dialog')).getByLabelText(/İşlem gerekçesi/)).toHaveValue(
       '',
@@ -239,6 +245,7 @@ describe('AdminEvents: geri bildirim kalıbı (kart 207)', () => {
     expect(await within(d).findByText(messages.errors.codes.SERVER_UNEXPECTED)).toBeVisible();
     expect(screen.queryByText('Etkinlik yayınlandı.')).toBeNull();
     expect(within(d).getByLabelText(/İşlem gerekçesi/)).toHaveValue('Uygun bulundu');
+    await waitFor(() => expect(within(d).getByRole('button', { name: 'Onayla' })).toBeEnabled());
     await user.click(within(d).getByRole('button', { name: 'Onayla' }));
     expect(await screen.findByText('Etkinlik yayınlandı.')).toBeVisible();
     expect(mocks.review).toHaveBeenCalledTimes(2);
@@ -252,6 +259,7 @@ describe('AdminEvents: geri bildirim kalıbı (kart 207)', () => {
     await user.type(within(d).getByLabelText(/İşlem gerekçesi/), 'Uygun bulundu');
     await user.click(within(d).getByRole('button', { name: 'Onayla' }));
     await within(d).findByText(messages.errors.codes.SERVER_UNEXPECTED);
+    await waitFor(() => expect(within(d).getByRole('button', { name: 'Vazgeç' })).toBeEnabled());
     await user.click(within(d).getByRole('button', { name: 'Vazgeç' }));
     await user.click(row('CV Atölyesi').getByRole('button', { name: 'Onayla' }));
     d = await screen.findByRole('dialog');

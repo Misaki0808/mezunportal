@@ -143,6 +143,9 @@ it('son karar sonrası eski sayfalama imleci de tükenince tek boş duruma geçe
   });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Onayla' }));
   await waitFor(() => expect(screen.queryByText(job.postingTitle)).toBeNull());
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Daha fazla göster' })).toBeEnabled(),
+  );
   fireEvent.click(screen.getByRole('button', { name: 'Daha fazla göster' }));
   await waitFor(() => expect(screen.getAllByText('Açık şikâyet yok.')).toHaveLength(1));
 });

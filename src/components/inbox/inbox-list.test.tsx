@@ -208,8 +208,9 @@ describe('InboxList: okundu işaretleme', () => {
     expect(mocks.markAll).toHaveBeenCalledTimes(1);
     expect(await screen.findByText('Bildirimlerin okundu olarak işaretlendi.')).toBeVisible();
     expect(screen.queryByText('Okunmadı')).toBeNull();
-    const button = screen.getByRole('button', { name: 'Hepsini okundu yap' });
-    expect(button).toBeDisabled();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Hepsini okundu yap' })).toBeDisabled(),
+    );
     expect(screen.getByText('Okunmamış bildirimin yok.')).toBeVisible();
   });
 
@@ -223,7 +224,9 @@ describe('InboxList: okundu işaretleme', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Hepsini okundu yap' }));
     expect(await screen.findByText('Bildirimlerin okundu olarak işaretlendi.')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Hepsini okundu yap' })).toBeDisabled();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Hepsini okundu yap' })).toBeDisabled(),
+    );
     await waitFor(() =>
       expect(screen.getByRole('heading', { level: 1, name: 'Bildirimler' })).toHaveFocus(),
     );
@@ -265,7 +268,9 @@ describe('InboxList: okundu işaretleme', () => {
     await user.click(screen.getByRole('button', { name: 'Hepsini okundu yap' }));
     expect(await screen.findByText(SERVER_ERROR)).toBeVisible();
     expect(screen.getByText('Okunmadı')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Hepsini okundu yap' })).toBeEnabled();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Hepsini okundu yap' })).toBeEnabled(),
+    );
   });
 
   it('ağ hatası sayfayı düşürmez; kullanıcı yeniden dener', async () => {
@@ -273,6 +278,9 @@ describe('InboxList: okundu işaretleme', () => {
     const { user } = show(page([group()]));
     await user.click(screen.getByRole('button', { name: 'Hepsini okundu yap' }));
     expect(await screen.findByText(SERVER_ERROR)).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Hepsini okundu yap' })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: 'Hepsini okundu yap' }));
     expect(await screen.findByText('Bildirimlerin okundu olarak işaretlendi.')).toBeVisible();
   });
@@ -314,7 +322,9 @@ describe('InboxList: daha eski bildirimler', () => {
     await user.click(screen.getByRole('button', { name: 'Daha eski bildirimler' }));
     expect(await screen.findByText(SERVER_ERROR)).toBeVisible();
     expect(screen.getByRole('link', { name: /Profiline uyan yeni bir ilan/ })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Daha eski bildirimler' })).toBeEnabled();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Daha eski bildirimler' })).toBeEnabled(),
+    );
   });
 });
 

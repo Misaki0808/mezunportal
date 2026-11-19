@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { RETURN_PATH_MAX_LENGTH } from '@/lib/return-path';
 import { renderUi } from '@/test/render';
 import { AlumniDirectory } from './alumni-directory';
@@ -142,7 +142,7 @@ it('rehber tercihi varsayılan kapalıdır ve yalnız açık seçimi kaydeder', 
   expect(checkbox).not.toBeChecked();
   await user.click(checkbox);
   expect(save).toHaveBeenCalledWith({ visible: true });
-  expect(await screen.findByRole('status')).toHaveTextContent('Tercihin kaydedildi.');
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Tercihin kaydedildi.'));
 });
 
 it('kaydetme başarısız olursa tercih önceki değere döner', async () => {

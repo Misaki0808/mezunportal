@@ -486,7 +486,10 @@ it('tamamlanmış ilan taslak olarak kaydedilir ve ardından incelemeye gönderi
   await act(async () => gate.reject(new Error('ağ')));
   expect(screen.getByText('Yazılım stajyeri')).toBeVisible();
   expect(await screen.findByText(/Beklenmeyen bir sorun/)).toBeVisible();
-  fireEvent.click(button);
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'İncelemeye gönder' })).toBeEnabled(),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
   await waitFor(() => expect(submit).toHaveBeenCalledWith({ postingId: 'draft-1' }));
   expect(save).toHaveBeenCalledWith(
     expect.objectContaining({
