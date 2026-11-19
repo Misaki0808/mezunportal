@@ -256,7 +256,7 @@ export async function getCompany(
         targets: { some: { department: { faculty: { universityId: { in: universities } } } } },
       },
       select: { id: true, title: true, kind: true },
-      orderBy: { publishedAt: 'desc' },
+      orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
     });
     const visible = new Set(
       await visibleJobPostingIds(

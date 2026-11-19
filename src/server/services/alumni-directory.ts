@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { AlumniPage, AlumniSearch } from '@/contracts/alumni-directory';
+import { ALUMNI_PAGE_SIZE, type AlumniPage, type AlumniSearch } from '@/contracts/alumni-directory';
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { matchingDirectoryText } from '../repositories/turkish-filters';
 import { turkishCollate } from '../repositories/turkish-collation';
@@ -12,7 +12,7 @@ import { notSuspended } from './mentor-directory';
 import { skillTagIdentity } from './profile-skills';
 import { viewerUniversityIds } from './search';
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = ALUMNI_PAGE_SIZE;
 export async function searchAlumni(
   db: PrismaClient,
   actor: Actor,

@@ -5,7 +5,9 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { firstSafeReturnPath, withReturnPath } from '@/lib/return-path';
 import {
+  ALUMNI_PAGE_SIZE,
   alumniSearchSchema,
   type AlumniPage,
   type AlumniSearch,
@@ -19,6 +21,7 @@ import {
   Field,
   Input,
   PageHeader,
+  Pagination,
   Sheet,
   Skeleton,
   buttonClasses,
@@ -79,6 +82,20 @@ export function AlumniDirectory({
     setOpen(false);
     startTransition(() => router.push(`/mezunlar${params.size ? `?${params}` : ''}`));
   }
+  /** Uygulanmış süzgeçle (taslakla değil) verilen sayfanın adresi: sayfalama ve "geri dön" bağlantıları buradan türer. */
+  function hrefFor(page: number, withoutQuery = false) {
+    const params = new URLSearchParams();
+    for (const key of keys)
+      if (filter[key] !== undefined && !(withoutQuery && key === 'q'))
+        params.set(key, String(filter[key]));
+    if (page > 1) params.set('page', String(page));
+    return `/mezunlar${params.size ? `?${params}` : ''}`;
+  }
+  // İletişim sayfasından dönüş yolu: uzun süzgeçte (kodlu yol 512'yi aşarsa) önce arama metni düşer (sayfa ve diğer süzgeçler
+  // kalır), o da yetmezse yalnız /mezunlar; dönüş asla tamamen kaybolmaz ve uzunluk sınırı gevşemez.
+  const returnTo =
+    firstSafeReturnPath([hrefFor(filter.page), hrefFor(filter.page, true), '/mezunlar']) ??
+    '/mezunlar';
   const set = (key: keyof Values, value: string) => {
     setDraft((old) => ({ ...old, [key]: value }));
     setInvalid(false);
@@ -301,7 +318,7 @@ export function AlumniDirectory({
                   <Link
                     className={buttonClasses({ fullWidth: true })}
                     aria-label={t('contactLabel', { name: item.name })}
-                    href={`/iletisim-iste/${item.userId}?donus=%2Fmezunlar`}
+                    href={withReturnPath(`/iletisim-iste/${item.userId}`, returnTo)}
                   >
                     {t('contact')}
                   </Link>
@@ -310,20 +327,12 @@ export function AlumniDirectory({
             ))}
           </div>
         )}
-        {(filter.page > 1 || results.hasMore) && (
-          <div className="mt-6 flex gap-3">
-            {filter.page > 1 && (
-              <Button variant="secondary" onClick={() => navigate(draft, filter.page - 1)}>
-                {t('previous')}
-              </Button>
-            )}
-            {results.hasMore && (
-              <Button variant="secondary" onClick={() => navigate(draft, filter.page + 1)}>
-                {t('next')}
-              </Button>
-            )}
-          </div>
-        )}
+        <Pagination
+          className="mt-6"
+          page={filter.page}
+          pageCount={Math.ceil(results.total / ALUMNI_PAGE_SIZE)}
+          hrefFor={hrefFor}
+        />
       </section>
     </div>
   );

@@ -580,8 +580,6 @@
     "graduated": "{year} mezunu",
     "contact": "İletişim iste",
     "contactLabel": "İletişim iste: {name}",
-    "previous": "Önceki",
-    "next": "Sonraki",
     "visibilityTitle": "Mezun rehberi",
     "visibilityDescription": "Açarsan, mezunluğun doğrulandığında adın ve profilindeki iş bilgilerin aynı üniversitedeki doğrulanmış üyelere rehberde görünür; şehrin ve becerilerin de filtrelerde kullanılır. İletişim bilgilerinin paylaşımı mevcut gizlilik tercihlerin ve talep onayına bağlıdır. İstediğin zaman kapatabilirsin.",
     "visibilityLabel": "Mezun rehberinde görün",

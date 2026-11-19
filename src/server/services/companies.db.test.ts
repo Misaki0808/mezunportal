@@ -134,6 +134,38 @@ it('arama takma adı bulur; k<3 sayı ve dönem döndürülmez; üniversite dı�
   expect(page.alumni.current).toBeNull();
   expect(page.postings.map((p) => p.id)).not.toContain(posting.id);
 });
+it('şirket sayfasında aynı yayın zamanlı ilanlar kimlik sırasıyla (yeniden eskiye) sabit gelir', async () => {
+  const w = await setup();
+  const author = await alumni(w.company.id, w.institution.deptA1, 'İlan Yazarı');
+  const publishedAt = new Date();
+  const ids: string[] = [];
+  for (let n = 0; n < 4; n += 1) {
+    const created = await db.jobPosting.create({
+      data: {
+        authorId: author,
+        departmentIdAtWrite: w.institution.deptA1,
+        companyId: w.company.id,
+        title: `Aynı zamanlı ilan ${n}`,
+        organizationName: 'Örnek',
+        description: 'Öğrenciler için örnek bir staj pozisyonu açıklaması.',
+        isRemote: true,
+        applyMethod: 'URL',
+        applyUrl: 'https://example.org',
+        status: 'PUBLISHED',
+        submittedAt: publishedAt,
+        moderatedAt: publishedAt,
+        moderatedById: w.viewer,
+        publishedAt,
+        deadlineOn: new Date(Date.now() + 86400 * 14 * 1000),
+        targets: { create: [{ departmentId: w.institution.deptA1 }] },
+      },
+      select: { id: true },
+    });
+    ids.push(created.id);
+  }
+  const page = await getCompany({ db }, w.viewer, w.slug);
+  expect(page.postings.map((p) => p.id)).toEqual([...ids].sort().reverse());
+});
 it('anonim yazar kesişimi: diğer tüm adaylar bilinse de dönem, sayı ve mentor kümesi yazarı ele vermez', async () => {
   const w = await setup();
   const names = ['Anonim Gizli Yazar', 'Bilinen Mezun', 'Başka Mezun'];

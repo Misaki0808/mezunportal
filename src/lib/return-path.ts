@@ -70,6 +70,15 @@ export function safeReturnPath(value: unknown): string | null {
   return path;
 }
 
+/**
+ * Adayları sırayla dener (en ayrıntılıdan en yalına) ve güvenli olan İLK yolu döndürür; uzunluk sınırı gevşemez, aşan aday
+ * bir sonrakine yerini bırakır. Hiçbiri güvenli değilse `null`.
+ */
+export function firstSafeReturnPath(candidates: readonly string[]): string | null {
+  for (const candidate of candidates) if (safeReturnPath(candidate) !== null) return candidate;
+  return null;
+}
+
 /** `/giris` ya da `/onay` gibi bir hedefe güvenli dönüş parametresi ekler; yol güvensizse eklemez. */
 export function withReturnPath(target: string, returnPath: unknown): string {
   const safe = safeReturnPath(returnPath);
