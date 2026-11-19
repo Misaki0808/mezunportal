@@ -61,7 +61,7 @@ it('ilan şikâyetinde çift tıklama tek istek, ağ hatasında açıklama korun
   expect(button).toHaveAttribute('aria-busy', 'true');
   await act(async () => gate.reject(new Error('ağ')));
   expect(details).toHaveValue('Korunan açıklama');
-  expect(within(dialog).getByText(/Beklenmeyen bir sorun/)).toBeVisible();
+  expect(await within(dialog).findByText(/Beklenmeyen bir sorun/)).toBeVisible();
 });
 
 it('şikâyet gönderilince odak kalkan düğmeden sonuç metnine taşınır', async () => {

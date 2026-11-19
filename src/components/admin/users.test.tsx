@@ -66,6 +66,7 @@ it('yetki atamada arama ve seçim hataları kendi alanlarına odaklanır', async
   await user.type(query, 'Örnek');
   await user.click(screen.getByRole('button', { name: 'Ara' }));
   const selectedUser = await screen.findByLabelText(/^Kullanıcı/);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Ara' })).toBeEnabled());
   await user.click(screen.getByRole('button', { name: 'Yönetici ata' }));
   expect(selectedUser).toHaveFocus();
   expect(selectedUser).toBeInvalid();

@@ -146,7 +146,7 @@ describe('kendi profilim', () => {
     await act(async () => gate.reject(new Error('ağ')));
     expect(headline).toHaveValue('Korunan başlık');
     expect(
-      within(screen.getByRole('dialog')).getByText(messages.errors.codes.SERVER_UNEXPECTED),
+      await within(screen.getByRole('dialog')).findByText(messages.errors.codes.SERVER_UNEXPECTED),
     ).toBeVisible();
   });
   it('temel bilgiler: başarıda "Profilin güncellendi" bildirimi, çekmece kapanır', async () => {
@@ -344,9 +344,11 @@ describe('kendi profilim', () => {
     );
     await user.click(within(sheet).getByRole('button', { name: 'Kaydet' }));
     expect(setLinkedinUrl).toHaveBeenCalledWith({ url: 'https://www.linkedin.com/in/deniz-aksoy' });
-    expect(setSocialLinks).toHaveBeenCalledWith({
-      links: [{ kind: 'GITHUB', url: 'https://github.com/deniz' }],
-    });
+    await waitFor(() =>
+      expect(setSocialLinks).toHaveBeenCalledWith({
+        links: [{ kind: 'GITHUB', url: 'https://github.com/deniz' }],
+      }),
+    );
   });
 
   it('beceri önerisi uzunluğu NFC üzerinden sayar ve sorguyu NFC gönderir', async () => {
@@ -572,6 +574,10 @@ describe('kendi profilim: işlemden sonra odak ve ipucu', () => {
     await view.user.click(screen.getByRole('button', { name: 'Beceriler' }));
     await view.user.click(screen.getByRole('button', { name: 'SQL becerisini kaldır' }));
     expect(await screen.findByText(messages.errors.codes.SERVER_UNEXPECTED)).toBeVisible();
+    const section = screen.getByRole('button', { name: 'Beceriler' }).closest('section')!;
+    await waitFor(() =>
+      expect(within(section).getByRole('button', { name: 'Ekle' })).toBeEnabled(),
+    );
     await view.user.type(screen.getByLabelText('Beceri ekle'), 'Python{Enter}');
     expect(await screen.findByRole('button', { name: 'Python becerisini kaldır' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Excel becerisini kaldır' })).not.toHaveFocus();

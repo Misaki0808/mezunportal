@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MyStory } from '@/contracts/alumni-story';
 import { renderUi } from '@/test/render';
+import { rescueFocus } from '@/components/ui/focus-rescue';
 
 const mocks = vi.hoisted(() => ({ save: vi.fn(), consent: vi.fn(), submit: vi.fn() }));
 vi.mock('@/server/actions/alumni-story', () => ({
@@ -38,6 +39,11 @@ const show = (initial: MyStory[] = [story()]) =>
     </main>,
   );
 const texts = () => screen.queryAllByRole('alert').filter((alert) => alert.textContent);
+
+// Gezinme için açık tutulan önceki testin odak kurtarması, sonraki testin belgesine taşınmasın.
+afterEach(() => {
+  rescueFocus(document.body)?.();
+});
 
 beforeEach(() => {
   vi.resetAllMocks();

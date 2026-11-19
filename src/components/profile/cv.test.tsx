@@ -135,7 +135,9 @@ describe('CV onay ekranı', () => {
       cvUploadId: 'cv1',
       decisions: [{ key: 'k-edu', section: 'EDUCATION', overwriteMine: false }],
     });
-    expect(onApplied).toHaveBeenCalledWith({ created: 1, updated: 1, invitations: 0 });
+    await waitFor(() =>
+      expect(onApplied).toHaveBeenCalledWith({ created: 1, updated: 1, invitations: 0 }),
+    );
   });
 
   it('çakışan kalem açık “üzerine yaz” seçimi olmadan kabul edilemez; seçimle overwriteMine gider', async () => {
@@ -209,7 +211,7 @@ describe('CV onay ekranı', () => {
       within(await screen.findByRole('dialog')).getByRole('button', { name: 'Evet, at' }),
     );
     expect(discard).toHaveBeenCalledWith({ cvUploadId: 'cv1' });
-    expect(onDiscarded).toHaveBeenCalled();
+    await waitFor(() => expect(onDiscarded).toHaveBeenCalled());
   });
 });
 
@@ -621,7 +623,7 @@ describe('CV onay ekranı: kararlar yenilemede korunur', () => {
     expect(window.sessionStorage.getItem(STORE)).not.toBeNull();
     await applied.user.click(screen.getByRole('button', { name: /Seçilenleri uygula/ }));
     await waitFor(() => expect(applied.onApplied).toHaveBeenCalled());
-    expect(window.sessionStorage.getItem(STORE)).toBeNull();
+    await waitFor(() => expect(window.sessionStorage.getItem(STORE)).toBeNull());
     applied.unmount();
 
     const discarded = setupReview();
