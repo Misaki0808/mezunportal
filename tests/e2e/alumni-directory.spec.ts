@@ -8,6 +8,57 @@ const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
 test.afterAll(() => db.$disconnect());
+
+test('seçili sektör adı dar ekranda kesilmez ve seçici erişilebilir boyutta kalır', async ({
+  page,
+}) => {
+  await loginAs(page, 'student');
+  await page.goto('/mezunlar');
+  const sector = page.getByRole('combobox', { name: 'Sektör' });
+  await expect(sector).toBeVisible();
+  await sector.selectOption({ label: 'Bilişim ve Yazılım' });
+  await expect(page).toHaveURL(/sectorId=/);
+  for (const width of [320, 360, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    const dimensions = await sector.evaluate((element) => {
+      const select = element as HTMLSelectElement;
+      const style = getComputedStyle(select);
+      const context = document.createElement('canvas').getContext('2d')!;
+      context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      const text = select.selectedOptions[0]?.textContent ?? '';
+      const widest = [...select.options].reduce(
+        (maximum, option) => Math.max(maximum, context.measureText(option.text).width),
+        0,
+      );
+      return {
+        text,
+        textWidth: context.measureText(text).width,
+        widest,
+        available:
+          select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+        fontSize: parseFloat(style.fontSize),
+        height: select.getBoundingClientRect().height,
+        overflow: document.documentElement.scrollWidth - innerWidth,
+      };
+    });
+    expect(dimensions.text).toBe('Bilişim ve Yazılım');
+    expect(dimensions.available, `${width}px: seçili sektör metni`).toBeGreaterThanOrEqual(
+      dimensions.textWidth,
+    );
+    expect(dimensions.available, `${width}px: en uzun sektör metni`).toBeGreaterThanOrEqual(
+      dimensions.widest,
+    );
+    expect(dimensions.fontSize).toBeGreaterThanOrEqual(16);
+    expect(dimensions.height).toBeGreaterThanOrEqual(44);
+    expect(dimensions.overflow).toBeLessThanOrEqual(1);
+    if (width === 390)
+      await test.info().attach('sektor-390', {
+        body: await page.screenshot(),
+        contentType: 'image/png',
+      });
+  }
+});
+
 test('mezun açıkça katılır, aynı üniversitenin öğrencisi bulur; kapatınca kaybolur', async ({
   page,
 }) => {

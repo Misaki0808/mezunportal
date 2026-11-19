@@ -150,7 +150,7 @@ export function AlumniDirectory({
               <input key={key} type="hidden" name={key} value={draft[key]} />
             ))}
         </SearchBar>
-        <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-border-control bg-surface px-3 text-sm font-semibold">
+        <label className="flex min-h-11 min-w-0 flex-1 basis-full items-center gap-2 rounded-full border border-border-control bg-surface px-3 text-sm font-semibold lg:basis-auto">
           <span>{t('sector')}</span>
           <span className="relative inline-flex min-w-0 flex-1">
             <select
