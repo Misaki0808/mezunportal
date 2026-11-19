@@ -115,6 +115,7 @@ export function graduationDocumentFileHref(documentId: string): string {
 const reviewReasonSchema = z
   .string({ error: 'AUDIT_REASON_REQUIRED' })
   .trim()
+  .normalize('NFC')
   .min(1, { error: 'AUDIT_REASON_REQUIRED' })
   .pipe(
     z

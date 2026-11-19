@@ -1233,3 +1233,7 @@ CV işleri yalnız yükleme kimliği taşır ve var olan 24 saatlik yükleme öm
 doldurma tek seferlik ve yükü boş olduğundan 7 gün bekler. Tamamlanan CV işleri 60 saniye sonra; boş yük taşıyan puan
 işi, 10 dakikalık tekillik penceresi korunacak şekilde 600 saniye sonra bakımda silinir.
 Eski kuyrukların ayarları worker açılışında güncellenir; daha önce üretilmiş işlerin mevcut bitiş zamanı değişmez.
+
+## 2026-11-19 · İlan üzerinden iletişim notunda önek yok
+
+İlan üzerinden iletişim talebinde kullanıcının notu olduğu gibi (kırpılmış, NFC) saklanır; D7 kararındaki "İlan: <başlık> —" öneki kalkar ve not sessizce kısaltılmaz, çünkü ilan başlığı ve kurum zaten ayrı kaynak alanlarında tutulup gelen ve giden kutusunda ayrıca gösterilir; eski kayıtlar değişmez.
