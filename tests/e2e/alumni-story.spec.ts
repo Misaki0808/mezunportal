@@ -44,7 +44,7 @@ test('390 px: mezun hikâye gönderir, yönetici seçer, bölüm görür ve rız
     await expect(storyField).toHaveValue(tooLong);
     await expect(storyField).toBeFocused();
     await expect(storyField).toHaveAttribute('aria-invalid', 'true');
-    await expect(storyField).toHaveAccessibleDescription(/en çok 3000/i);
+    await expect(storyField).toHaveAccessibleDescription(/en fazla 3000/i);
     await alumni!
       .getByLabel('Hikâyen', { exact: true })
       .fill(
