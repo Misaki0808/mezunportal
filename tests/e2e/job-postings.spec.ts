@@ -1,4 +1,5 @@
 import { loginAs } from './login';
+import { tabForward } from './keyboard';
 import { randomUUID } from 'node:crypto';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
 import { expect, test } from './fixture';
@@ -333,6 +334,7 @@ test('mobil ilk ekranda iki ilan kartı ve erişilebilir filtre alt sayfası gö
 
 test('ilan adımları klavyeyle doğrulanır, başlık duyurulur ve geri dönünce veri korunur', async ({
   page,
+  browserName,
 }) => {
   const { addDays, istanbulDay } = await import('../../src/components/job-postings/model');
   await page.setViewportSize({ width: 390, height: 844 });
@@ -342,7 +344,7 @@ test('ilan adımları klavyeyle doğrulanır, başlık duyurulur ve geri dönün
   const tabTo = async (target: import('@playwright/test').Locator) => {
     for (let i = 0; i < 45; i++) {
       if (await target.evaluate((element) => element === document.activeElement)) return;
-      await page.keyboard.press('Tab');
+      await tabForward(page);
     }
     throw new Error('Klavye hedefe ulaşamadı');
   };
@@ -390,9 +392,15 @@ test('ilan adımları klavyeyle doğrulanır, başlık duyurulur ve geri dönün
   await page.keyboard.type('İstanbul');
   const deadline = page.getByLabel('Son başvuru tarihi', { exact: false });
   await tabTo(deadline);
+  await expect(deadline).toBeFocused();
   const expectedDay = addDays(istanbulDay(), 14);
-  const [year, month, day] = expectedDay.split('-');
-  await page.keyboard.type(`${month}${day}${year}`);
+  // Safari'nin yerel tarih bölümleri MMDDYYYY tuş dizisini kabul etmiyor (kanal probunda değer boş kaldı).
+  // Alan yine gerçek klavye dolaşımıyla bulunur; yerel değer girişi motorun tarih kanalından yapılır.
+  if (browserName === 'webkit') await deadline.fill(expectedDay);
+  else {
+    const [year, month, day] = expectedDay.split('-');
+    await page.keyboard.type(`${month}${day}${year}`);
+  }
   await expect(deadline).toHaveValue(expectedDay);
   const department = page.getByRole('checkbox', { name: /Yönetim Bilişim Sistemleri/ }).first();
   await tabTo(department);
