@@ -1199,6 +1199,12 @@ başına bir saat olarak kalır; süresi dolan bağlantı zaten geçersiz olurdu
 (gönderebilmek için zorunlu); kullanıcı hesabını silerse bekleyen işler aynı işlemde silinmeye devam eder. Ölü mektup kuyruğu (`email.failed`)
 bir saatte kaldı: orada kaybolan, zaten gönderilemeyen e-postanın başarısızlık kaydıdır. Diğer kuyruklarda (`cv`, `appointment`, `points`)
 da kısa bekleme saklaması var; bu kartın kapsamı dışında, ayrıca değerlendirilir.
+## 2026-11-18 · Kimlikli sayfalarda gerçek 404
+
+Düzenleme, SSS ve şirket ayrıntısında yok/kapsam dışı kararı iskelet akışından önce verilir;
+istemci formu için sahiplik ayrıca doğrulanır. Yönetim etkinliğinde yalnız kayıt ve bölüm kapsamı
+kontrol edilir: kodun henüz geçerli olmaması, erişilebilir gelecekteki etkinliği 404 yapmaz.
+
 ## 2026-11-18 · Yılın Mezunu için örnek veri (seed)
 
 Deneme turunda "Bu mezunu seç", yayın rızası ve doğrulama bağlantısı adımları görülsün diye seed'e
@@ -1212,3 +1218,18 @@ tanımsız ya da başka değerde yazmaz. Aynı bölüm ve yıl için döngü var
 da güncellemez; yıllar sabit ve arayüzün varsayılan yılından farklı olduğu için tören tarihi adımı
 etkilenmez. Servis kodu `server-only` olduğundan seed satırları elle yazar; tutarlılığı DB testi
 gerçek servislerle sınar.
+
+## 2026-11-18 · Kullanıcı metninde NFC ile uzunluk
+
+Kullanıcının sınırlı serbest metni doğrulama ve kayıttan önce kırpılıp NFC'ye dönüştürülür; uzunluk
+Unicode kod noktalarıyla sayılır. Böylece ayrışık Türkçe harfler istemcide ve sunucuda aynı sınırı
+kullanır. Var olan kayıtlar dönüştürülmez; kimlikler ve bağlantılar bu kuralla değiştirilmez.
+## 2026-11-18 · CV ve puan kuyruğunda bekleyen iş saklaması
+
+Kısaltılmış DB deneyinde işçi kapalıyken süresi dolan `appointment.sweep`, `cv.parse`, `cv.parse.failed` ve
+`points.backfill` işleri bakımda silindi; daha uzun ömürlü işler tüketici açılınca birer kez işlendi. Randevu süpürmesi
+dakikalık ve tekrarlanabilir olduğundan 10 dakika kaldı; başlayan randevunun kaçmış hatırlatması geri getirilemez.
+CV işleri yalnız yükleme kimliği taşır ve var olan 24 saatlik yükleme ömrüne uyacak şekilde 24 saat bekler; puan geri
+doldurma tek seferlik ve yükü boş olduğundan 7 gün bekler. Tamamlanan CV işleri 60 saniye sonra; boş yük taşıyan puan
+işi, 10 dakikalık tekillik penceresi korunacak şekilde 600 saniye sonra bakımda silinir.
+Eski kuyrukların ayarları worker açılışında güncellenir; daha önce üretilmiş işlerin mevcut bitiş zamanı değişmez.

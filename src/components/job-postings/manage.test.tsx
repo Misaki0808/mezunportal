@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderUi, renderWithToasts } from '@/test/render';
 import type {
@@ -115,6 +115,21 @@ describe('ilan inceleme kuyruğu: karar sonrası geri bildirim', () => {
       reason: 'Başvuru bağlantısı eksik',
     });
     expect(screen.queryByText(REASON_INVALID)).toBeNull();
+  });
+
+  it('1001 karakterlik ret gerekçesi kesilmez ve alan hatasıyla odaklanır', async () => {
+    const { user } = renderQueue();
+    await user.click(row('Veri analizi stajyeri').getByRole('button', { name: 'Reddet' }));
+    const dialog = within(await screen.findByRole('dialog'));
+    const input = dialog.getByLabelText(/Ret gerekçesi/);
+    expect(input).not.toHaveAttribute('maxlength');
+    const value = 'İ'.repeat(1001);
+    fireEvent.change(input, { target: { value } });
+    await user.click(dialog.getByRole('button', { name: 'İlanı reddet' }));
+    expect(input).toHaveValue(value);
+    expect(input).toHaveFocus();
+    expect(input).toHaveAccessibleDescription(/En fazla 1000 karakter yaz/);
+    expect(review).not.toHaveBeenCalled();
   });
 
   it('boş gerekçeden sonraki ilanın penceresi hatasız açılır', async () => {

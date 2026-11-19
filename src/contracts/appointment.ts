@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -118,7 +119,7 @@ export const saveMentorSettingsSchema = z
       .max(MEETING_MODES.length)
       .refine((list) => new Set(list).size === list.length, { error: INVALID }),
     /** Yüz yüze görüşme yeri notu; yüz yüze sunuluyorsa zorunlu. */
-    inPersonNote: text(1, 300).nullable().default(null),
+    inPersonNote: userTextSchema(1, 300, INVALID).nullable().default(null),
     /** Dizinde görünür ve talep alır. */
     isActive: z.boolean({ error: INVALID }),
   })
@@ -195,7 +196,7 @@ export const requestAppointmentSchema = z
     mentorId: id,
     startsAt: z.coerce.date({ error: INVALID }),
     mode,
-    note: text(1, APPOINTMENT_NOTE_MAX).optional(),
+    note: userTextSchema(1, APPOINTMENT_NOTE_MAX, INVALID).optional(),
   })
   .strict();
 export type RequestAppointmentInput = z.input<typeof requestAppointmentSchema>;
@@ -211,7 +212,7 @@ export const respondAppointmentSchema = z.discriminatedUnion(
       .object({
         decision: z.literal('DECLINE'),
         appointmentId: id,
-        reason: text(3, 500).optional(),
+        reason: userTextSchema(3, 500, INVALID).optional(),
       })
       .strict(),
   ],
@@ -220,7 +221,7 @@ export const respondAppointmentSchema = z.discriminatedUnion(
 export type RespondAppointmentInput = z.input<typeof respondAppointmentSchema>;
 
 export const cancelAppointmentSchema = z
-  .object({ appointmentId: id, reason: text(3, 500).optional() })
+  .object({ appointmentId: id, reason: userTextSchema(3, 500, INVALID).optional() })
   .strict();
 export type CancelAppointmentInput = z.input<typeof cancelAppointmentSchema>;
 

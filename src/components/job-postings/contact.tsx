@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useHydrated } from '@/hooks/use-hydrated';
+import { userTextLength } from '@/lib/user-text';
 import { useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { CONTACT_FIELDS, type ContactField } from '@/contracts/privacy';
@@ -25,6 +26,7 @@ export function PostingContactForm({
 }) {
   const hydrated = useHydrated();
   const t = useTranslations('privacyScreens.contacts');
+  const formText = useTranslations('formText');
   const labels = useTranslations('privacyScreens.fields');
   const errors = useTranslations('errors.codes');
   const [fields, setFields] = useState<ContactField[]>([]);
@@ -62,16 +64,16 @@ export function PostingContactForm({
         if (!parsed.success) {
           const invalidFields = parsed.error.issues.some((issue) => issue.path[0] === 'fields');
           const invalidMessage = parsed.error.issues.some((issue) => issue.path[0] === 'message');
+          if (invalidMessage) setMessageError(formText('tooLong', { max: CONTACT_MESSAGE_MAX }));
           if (invalidFields) {
             setFieldInvalid(true);
             firstField.current?.focus();
           } else if (invalidMessage) {
-            setMessageError(errors('VALIDATION_INVALID'));
             messageField.current?.focus();
           } else setError(errors('VALIDATION_INVALID'));
           return;
         }
-        void action.run(() => send(input), {
+        void action.run(() => send({ ...input, message: parsed.data.message ?? '' }), {
           success: t('sentToast'),
           onOk: () => setSent(true),
           onFailure: (failure) => {
@@ -79,7 +81,11 @@ export function PostingContactForm({
               setFieldInvalid(true);
               firstField.current?.focus();
             } else if (failure.fieldErrors?.message) {
-              setMessageError(errors(failure.fieldErrors.message));
+              setMessageError(
+                userTextLength(message) > CONTACT_MESSAGE_MAX
+                  ? formText('tooLong', { max: CONTACT_MESSAGE_MAX })
+                  : errors(failure.fieldErrors.message),
+              );
               messageField.current?.focus();
             } else setError(errors(failure.errorCode));
           },
@@ -128,7 +134,7 @@ export function PostingContactForm({
       <div className="rounded-card border border-border bg-surface p-5">
         <Field
           label={t('message')}
-          hint={t('messageHelp', { max: CONTACT_MESSAGE_MAX })}
+          hint={`${t('messageHelp', { max: CONTACT_MESSAGE_MAX })} ${formText('counter', { count: userTextLength(message), max: CONTACT_MESSAGE_MAX })}`}
           error={messageError || undefined}
         >
           {(props) => (

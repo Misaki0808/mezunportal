@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 import { adminId, adminPageInput, adminReason } from './admin';
 
@@ -13,21 +14,9 @@ export const EVENT_CODE_ATTEMPTS_PER_MINUTE = 5;
 export const campusEventIdSchema = z.object({ eventId: adminId }).strict();
 export const createCampusEventSchema = z
   .object({
-    title: z
-      .string({ error: INVALID })
-      .trim()
-      .min(3, { error: INVALID })
-      .max(120, { error: INVALID }),
-    description: z
-      .string({ error: INVALID })
-      .trim()
-      .min(10, { error: INVALID })
-      .max(3000, { error: INVALID }),
-    location: z
-      .string({ error: INVALID })
-      .trim()
-      .min(2, { error: INVALID })
-      .max(200, { error: INVALID }),
+    title: userTextSchema(3, 120, INVALID),
+    description: userTextSchema(10, 3000, INVALID),
+    location: userTextSchema(2, 200, INVALID),
     startsAt: z.iso.datetime({ offset: true, error: INVALID }),
     endsAt: z.iso.datetime({ offset: true, error: INVALID }),
     capacity: z

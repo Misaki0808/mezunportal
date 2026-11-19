@@ -1,6 +1,6 @@
 # BACKLOG.md — Güncel durum, açık işler ve kararlar
 
-Son güncelleme: **2026-11-14**. Tek durum belgesidir: güncel durum, açık kararlar, pilot kapıları,
+Son güncelleme: **2026-11-18**. Tek durum belgesidir: güncel durum, açık kararlar, pilot kapıları,
 teknik borç ve ertelenmiş işler. Tamamlanan madde silinir; geçmiş Git'tedir. Çalışma günlüğü
 tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararların gerekçesi
 `docs/decisions.md`'dedir.
@@ -12,6 +12,8 @@ Faz 2'nin (fırsatlar, mevcut veriden değer, rehberlik, tanınma; `docs/faz2-pl
 yoktur ve bilinçli ertelenmiştir: geliştirme, test ve ekran doğrulaması yerelde, birleştirme kapıları yerelde; CI az ve öz (≤ 5 dk, K-14
 kararı, `docs/engineering.md` "CI"). Kullanıcı denemesinin rehberi `docs/engineering.md` “Faz 2 deneme rehberi”dir; tamamlanan işler ve bilinçli sapmalar faz planlarında, gerekçeler `docs/decisions.md`'dedir.
 
+Yerel demo, Yılın Mezunu için örnek ödül dönemi ve kazananı içerir (`prisma/seed-awards.ts`); gerçek kullanıcı denemesi henüz yapılmadı.
+
 Kullanıcıyı, hocayı ve PM'i bekleyen her şey tek listededir: aşağıdaki "Açık ürün kararları". Hiçbiri kodla çözülemez ve
 hiçbiri geliştirmeyi durdurmaz; her biri ilgili işe gelince sorulur.
 
@@ -19,7 +21,7 @@ hiçbiri geliştirmeyi durdurmaz; her biri ilgili işe gelince sorulur.
 
 Kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon listesi (84 kutu, Git dışı
 `pm-handoff/faz2-kapanis/`). Masaüstü Chromium 390 px ve Android emülatör provalarında ilk 70 kutunun 64'ü geçti, 6'sı gerçek cihaz bekliyor;
-"0. İlk giriş" bölümündeki 12 kutunun tamamı gerçek e-posta bağlantısıyla geçti. Gerçek cihazda telefona ağ adresiyle açma, QR'ı telefon kamerasıyla
+"0. İlk giriş" bölümündeki 12 kutunun tamamı gerçek e-posta bağlantısıyla geçti. Yerel demo duman turunda beş rolün menüleri ve kritik yolları açıldı; bu prova gerçek cihaz denemesinin yerini tutmaz. Gerçek cihazda telefona ağ adresiyle açma, QR'ı telefon kamerasıyla
 okutma, ana ekrana ekleme, iPhone çentik ve güvenli alan, iPhone ekran klavyesi ve Safari'de Tab denenir. Bulgular PM'de karta bölünür ya da bu
 belgeye borç olarak yazılır. Hesap isteyen işler ile canlıya alım ve pilot kararları kullanıcı gündeme getirince ele alınır. Faz 3 pilottan sonra konuşulur.
 
@@ -92,11 +94,10 @@ Açık PM kararı yok.
 
 ### Açık borçlar
 
-- [ ] **TD-009** · P1 · CV doğruluk tablosu sahte adaptörle, gerçek LLM ile değil
-  Ne: 5 sentetik örnek CV + ölçüm düzeneği (`src/test/cv-accuracy.ts`) hazır; sahte adaptörde sonuç hat
-  bütünlüğünü gösterir, LLM doğruluğunu değil. OpenAI uyumlu adaptör hazır; gerçek model doğruluğu ve canlı sağlayıcı seçimi K-04 kapsamında ölçülecek.
-  Neden borç: P1-05 kabulündeki alan doğruluğu tablosu gerçek çıktıyla üretilmedi.
-  Kapanış ölçütü: gerçek adaptör eklenir, aynı 5 örnekle tablo sonuç belgesine yazılır, veri politikası kaynakla doğrulanır.
+- [ ] **TD-009** · P1 · CV ayrıştırma doğruluğu kapsamlı gerçek model ölçümü bekliyor
+  Ne: OpenAI uyumlu adaptör ve 5 sentetik CV için ölçüm düzeneği (`src/test/cv-accuracy.ts`) hazır. Yerel qwen2.5:7b ile iki basit sentetik PDF üzerinde alan bulunması ölçüldü; bu ölçüm yanlış eklenen alanları veya beş örneğin tamamını kapsamıyor.
+  Neden borç: P1-05 kabulündeki kapsamlı doğruluk ve canlı sağlayıcı seçimi (K-04) henüz doğrulanmadı.
+  Kapanış ölçütü: seçilen gerçek sağlayıcıyla aynı 5 örneğin doğru, eksik ve yanlış eklenen alanları ölçülür; sonuç tablosu ve veri politikası kaynakla doğrulanır.
 - [ ] **TD-013** · P2 · `UserSkill` tablosu artık kullanılmıyor
   Ne: beceriler `Tag(SKILL)` + `ProfileTag`'e taşındı (P1-06); eski `UserSkill` tablosu ekleyici politikası gereği
   yerinde duruyor (hesap silme hâlâ eski satırları siler).
@@ -117,7 +118,7 @@ Açık PM kararı yok.
 
 ### Bilinçli kabul edilen sınırlar
 
-- Canlı ortam yok; dağıtım ve yedek P1-18'e kadar sınanmaz.
+- Canlı ortam yok; imaj ve yedek geri yükleme yerelde sınandı, canlı kabul PILOT-DEPLOY kapsamında bekliyor.
 - e-Devlet mezun belgesi elle doğrulanır (otomatik doğrulama için açık API yok).
 - Bölüm bilgisi beyandır; e-posta alan adı yalnız üniversiteyi doğrular.
 

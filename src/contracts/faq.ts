@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -39,8 +40,7 @@ export const FAQ_MENTOR_DIRECTORY_HREF = '/mentorlar';
 export const FAQ_STATUSES = ['OPEN', 'PUBLISHED', 'REJECTED', 'REDIRECTED'] as const;
 export type FaqStatus = (typeof FAQ_STATUSES)[number];
 
-const text = (min: number, max: number) =>
-  z.string({ error: INVALID }).trim().min(min, { error: INVALID }).max(max, { error: INVALID });
+const text = (min: number, max: number) => userTextSchema(min, max, INVALID);
 const faqId = adminId;
 const pageInput = {
   cursor: adminPageInput.cursor,

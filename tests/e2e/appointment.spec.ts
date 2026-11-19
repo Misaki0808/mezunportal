@@ -86,13 +86,20 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
       .getByRole('radio', { name: /saatini seç/ })
       .first()
       .click();
-    await s.getByLabel(/Mentora not/).fill('Staj başvurusu hakkında soru.');
+    const note = s.getByLabel(/Mentora not/);
+    await note.fill('İ'.repeat(501));
+    await s.getByRole('button', { name: 'Randevu talep et' }).click();
+    await expect(note).toHaveValue('İ'.repeat(501));
+    await expect(note).toBeFocused();
+    await expect(note).toHaveAccessibleDescription(/En fazla 500 karakter yaz/);
+    await note.fill('İ'.normalize('NFD').repeat(251));
     await s.getByRole('button', { name: 'Randevu talep et' }).click();
     await expect(s.getByRole('heading', { name: 'Talebin gönderildi' })).toBeVisible();
     const row = await db.appointment.findFirstOrThrow({
       where: { mentorId: mentor.id, menteeId: student.id, status: 'REQUESTED' },
     });
     expect(row.status).toBe('REQUESTED');
+    expect(row.menteeNote).toBe('İ'.repeat(251));
     await s.goto('/randevular');
     await expect(s.getByText('Yanıt bekliyor').first()).toBeVisible();
     await expect(s.locator('a[href="/randevular"][aria-current="page"]:visible')).toHaveCount(1);
@@ -103,7 +110,7 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
     await expect(m.getByText('Yanıt bekliyor').first()).toBeVisible();
     await m.goto(`/randevular/${row.id}`);
     await m.waitForLoadState('networkidle');
-    await expect(m.getByText('Staj başvurusu hakkında soru.')).toBeVisible();
+    await expect(m.getByText('İ'.repeat(251))).toBeVisible();
     await m.getByRole('button', { name: 'Onayla' }).click();
     await expect(m.getByText('Onaylandı').first()).toBeVisible();
     expect((await db.appointment.findUniqueOrThrow({ where: { id: row.id } })).status).toBe(
@@ -117,7 +124,7 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
     await s.goto('/hesap/bildirimler');
     await expect(s.getByRole('switch', { name: /Randevular/ })).toBeEnabled();
     await expect(
-      s.getByText('Randevu talepleri, onaylar, değişiklikler ve yaklaşan görüşme hatırlatmaları.'),
+      s.getByText('Randevu talepleri, onaylar, değişiklikler ve yaklaşan randevu hatırlatmaları.'),
     ).toBeVisible();
   } finally {
     await db.appointment.deleteMany({

@@ -1,4 +1,5 @@
 'use client';
+import { userTextLength } from '@/lib/user-text';
 import { useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AccountFrameView } from '@/components/account/account-frame';
@@ -152,7 +153,7 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
             hint={t('optional')}
             error={
               noteError
-                ? noteError === 'VALIDATION_INVALID' && note.trim().length > 1000
+                ? noteError === 'VALIDATION_INVALID' && userTextLength(note) > 1000
                   ? t('noteTooLong')
                   : errors(noteError)
                 : undefined

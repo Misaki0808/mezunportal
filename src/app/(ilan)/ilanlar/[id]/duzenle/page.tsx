@@ -1,8 +1,9 @@
+import { notFound } from 'next/navigation';
 import { PostingEditor } from '@/components/job-postings/editor';
 import { ErrorState } from '@/components/ui';
+import { requestEditablePosting } from '@/app/detail-route';
 import {
   getJobPostingFormContext,
-  listMyJobPostings,
   saveJobPostingDraft,
   submitJobPosting,
 } from '@/server/actions/job-postings';
@@ -11,24 +12,15 @@ export default async function EditPostingPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const context = await getJobPostingFormContext();
   if (!context.ok) return <ErrorState errorCode={context.errorCode} />;
-  let cursor: string | undefined;
-  const seen = new Set<string>();
-  do {
-    const page = await listMyJobPostings({ cursor, limit: 50 });
-    if (!page.ok) return <ErrorState errorCode={page.errorCode} />;
-    const item = page.data.items.find((p) => p.id === id);
-    if (item)
-      return (
-        <PostingEditor
-          context={context.data}
-          initial={item}
-          save={saveJobPostingDraft}
-          submit={submitJobPosting}
-        />
-      );
-    cursor = page.data.nextCursor ?? undefined;
-    if (cursor && seen.has(cursor)) break;
-    if (cursor) seen.add(cursor);
-  } while (cursor);
-  return <ErrorState errorCode="RESOURCE_NOT_FOUND" />;
+  const result = await requestEditablePosting(id);
+  if (!result.ok && result.errorCode === 'RESOURCE_NOT_FOUND') notFound();
+  if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
+  return (
+    <PostingEditor
+      context={context.data}
+      initial={result.data}
+      save={saveJobPostingDraft}
+      submit={submitJobPosting}
+    />
+  );
 }

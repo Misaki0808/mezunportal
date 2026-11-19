@@ -21,6 +21,7 @@ import {
   ActionBar,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
+import { userTextLength } from '@/lib/user-text';
 
 import { dayLabel, groupSlotsByDay, shortDayLabel, timeLabel } from './time';
 
@@ -35,6 +36,7 @@ type Props = {
  */
 export function SlotPicker({ list, request }: Props) {
   const t = useTranslations('appointments.request');
+  const formText = useTranslations('formText');
   const modesT = useTranslations('appointments.modes');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -48,6 +50,8 @@ export function SlotPicker({ list, request }: Props) {
   const [startsAt, setStartsAt] = useState<string>();
   const [mode, setMode] = useState<string>();
   const [note, setNote] = useState('');
+  const [noteError, setNoteError] = useState('');
+  const noteRef = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<ErrorCode>();
   const [needSlot, setNeedSlot] = useState(false);
   const [needMode, setNeedMode] = useState(false);
@@ -87,15 +91,24 @@ export function SlotPicker({ list, request }: Props) {
     };
     const parsed = requestAppointmentSchema.safeParse(input);
     if (!parsed.success) {
-      setError('VALIDATION_INVALID');
+      if (parsed.error.issues.some((issue) => issue.path[0] === 'note')) {
+        setNoteError(formText('tooLong', { max: APPOINTMENT_NOTE_MAX }));
+        noteRef.current?.focus();
+      } else setError('VALIDATION_INVALID');
       return;
     }
+    setNoteError('');
     setError(undefined);
     setNeedSlot(false);
     await action.run(() => request(parsed.data), {
       success: t('sent'),
       onOk: () => setDone(true),
       onFailure: (failure) => {
+        if (failure.fieldErrors?.note) {
+          setNoteError(formText('tooLong', { max: APPOINTMENT_NOTE_MAX }));
+          noteRef.current?.focus();
+          return;
+        }
         setError(failure.errorCode);
         if (['APPOINTMENT_SLOT_TAKEN', 'APPOINTMENT_SLOT_INVALID'].includes(failure.errorCode)) {
           setRejected((current) => ({
@@ -283,14 +296,22 @@ export function SlotPicker({ list, request }: Props) {
         </p>
       )}
 
-      <Field className="mt-5" label={t('note')} hint={t('noteHint')}>
+      <Field
+        className="mt-5"
+        label={t('note')}
+        hint={`${t('noteHint')} ${formText('counter', { count: userTextLength(note), max: APPOINTMENT_NOTE_MAX })}`}
+        error={noteError || undefined}
+      >
         {(control) => (
           <Textarea
             {...control}
             rows={4}
-            maxLength={APPOINTMENT_NOTE_MAX}
+            ref={noteRef}
             value={note}
-            onChange={(event) => setNote(event.target.value)}
+            onChange={(event) => {
+              setNote(event.target.value);
+              setNoteError('');
+            }}
           />
         )}
       </Field>

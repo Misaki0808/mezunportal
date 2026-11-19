@@ -1,10 +1,11 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 export const feedbackInputSchema = z
   .object({
     appointmentId: z.string().trim().min(1).max(64),
     happened: z.boolean(),
     helpful: z.boolean().nullable(),
-    note: z.string().trim().min(1).max(1000).nullable(),
+    note: userTextSchema(1, 1000).nullable(),
   })
   .strict()
   .refine((value) => value.happened || value.helpful === null);

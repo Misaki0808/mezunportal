@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
+import { userTextSchema } from '@/lib/user-text';
 
 import { APPLICATION_CHANNELS, EXPERIENCE_PAY, EXPERIENCE_TYPES, TERM_SEASONS } from './experience';
 
@@ -34,14 +35,14 @@ const distinct = <T extends string>(list: readonly T[]) => new Set(list).size ==
 export const searchExperiencesSchema = z
   .object({
     /** Serbest metin (Türkçe tam metin + yazım hatası toleransı); yoksa en yeniler. */
-    q: text(SEARCH_QUERY_MIN, SEARCH_QUERY_MAX).optional(),
+    q: userTextSchema(SEARCH_QUERY_MIN, SEARCH_QUERY_MAX, INVALID).optional(),
     types: z
       .array(z.enum(EXPERIENCE_TYPES, { error: INVALID }), { error: INVALID })
       .max(EXPERIENCE_TYPES.length, { error: INVALID })
       .refine(distinct, { error: INVALID })
       .optional(),
     /** Şirket/kurum adı (kısmi ve yazım hatasına toleranslı). */
-    company: text(SEARCH_QUERY_MIN, SEARCH_QUERY_MAX).optional(),
+    company: userTextSchema(SEARCH_QUERY_MIN, SEARCH_QUERY_MAX, INVALID).optional(),
     channels: z
       .array(z.enum(APPLICATION_CHANNELS, { error: INVALID }), { error: INVALID })
       .max(APPLICATION_CHANNELS.length, { error: INVALID })

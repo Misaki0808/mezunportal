@@ -247,6 +247,17 @@ describe('yazar: taslak', () => {
     expect(saved.targetDepartments).toEqual([]);
   });
 
+  it('taslak başlığında 100 NFD harf sınır içinde kalır ve NFC olarak kaydedilir', async () => {
+    const w = await world();
+    const saved = await saveJobPostingDraft(deps, w.alumni, {
+      departmentId: w.inst.deptA1,
+      content: { title: 'İ'.normalize('NFD').repeat(100) },
+    });
+    expect(saved.title).toBe('İ'.repeat(100));
+    const row = await db.jobPosting.findUniqueOrThrow({ where: { id: saved.id } });
+    expect(row.title).toBe('İ'.repeat(100));
+  });
+
   it('kapsam: yazarın bölümü dışında, başka üniversitenin hedefi ve başvuru yolu uyuşmazlığı reddedilir', async () => {
     const w = await world();
     expect(

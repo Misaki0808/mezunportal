@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { userTextSchema } from '@/lib/user-text';
+
 const id = z.string({ error: 'VALIDATION_INVALID' }).trim().min(1).max(64);
 export const courseSelectionSchema = z
   .object({
@@ -13,14 +15,14 @@ export const courseFilterSchema = z
   .object({
     semester: z.number().int().min(0).max(8).optional(),
     elective: z.boolean().optional(),
-    query: z.string().trim().max(100).optional(),
+    query: userTextSchema(0, 100).optional(),
   })
   .strict();
 export const courseInputSchema = z
   .object({
     departmentId: id,
     code: z.string().trim().min(1).max(32),
-    name: z.string().trim().min(1).max(200),
+    name: userTextSchema(1, 200),
     semester: z.number().int().min(0).max(8),
     elective: z.boolean(),
   })

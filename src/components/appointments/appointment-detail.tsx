@@ -8,6 +8,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import {
   appointmentIcsHref,
+  cancelAppointmentSchema,
+  respondAppointmentSchema,
   setMeetLinkSchema,
   type AppointmentView,
   type CancelAppointmentInput,
@@ -27,6 +29,7 @@ import {
   cn,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
+import { userTextLength } from '@/lib/user-text';
 
 import { AppointmentTimeline } from './appointment-timeline';
 import { AppointmentStatusBadge } from './status-badge';
@@ -54,12 +57,15 @@ export function AppointmentDetail({
   feedbackAvailable?: boolean;
 }) {
   const t = useTranslations('appointments.detail');
+  const formText = useTranslations('formText');
   const modes = useTranslations('appointments.modes');
   const feedback = useTranslations('feedback');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
   const [dialog, setDialog] = useState<'decline' | 'cancel'>();
   const [reason, setReason] = useState('');
+  const [reasonError, setReasonError] = useState('');
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
   const [link, setLink] = useState('');
   const [linkError, setLinkError] = useState<ErrorCode>();
   const [error, setError] = useState<ErrorCode>();
@@ -108,7 +114,35 @@ export function AppointmentDetail({
   function openDialog(kind: 'decline' | 'cancel') {
     setNotice(false);
     setError(undefined);
+    setReasonError('');
     setDialog(kind);
+  }
+
+  function submitDialog() {
+    const optionalReason = reason.trim() ? { reason } : {};
+    if (dialog === 'decline') {
+      const parsed = respondAppointmentSchema.safeParse({
+        decision: 'DECLINE',
+        appointmentId: a.id,
+        ...optionalReason,
+      });
+      if (!parsed.success) {
+        setReasonError(formText('range', { min: 3, max: 500 }));
+        reasonRef.current?.focus();
+        return;
+      }
+      setReasonError('');
+      void run('dialog', () => actions.respond(parsed.data));
+    } else if (dialog === 'cancel') {
+      const parsed = cancelAppointmentSchema.safeParse({ appointmentId: a.id, ...optionalReason });
+      if (!parsed.success) {
+        setReasonError(formText('range', { min: 3, max: 500 }));
+        reasonRef.current?.focus();
+        return;
+      }
+      setReasonError('');
+      void run('dialog', () => actions.cancel(parsed.data));
+    }
   }
 
   function saveLink() {
@@ -341,20 +375,7 @@ export function AppointmentDetail({
               variant="danger"
               fullWidth
               loading={pending === 'dialog'}
-              onClick={() =>
-                void run('dialog', () =>
-                  dialog === 'decline'
-                    ? actions.respond({
-                        decision: 'DECLINE',
-                        appointmentId: a.id,
-                        ...(reason.trim() ? { reason: reason.trim() } : {}),
-                      })
-                    : actions.cancel({
-                        appointmentId: a.id,
-                        ...(reason.trim() ? { reason: reason.trim() } : {}),
-                      }),
-                )
-              }
+              onClick={submitDialog}
             >
               {dialog === 'decline' ? t('declineConfirm') : t('cancelConfirm')}
             </Button>
@@ -364,14 +385,21 @@ export function AppointmentDetail({
           </>
         }
       >
-        <Field label={dialog === 'decline' ? t('declineReason') : t('cancelReason')}>
+        <Field
+          label={dialog === 'decline' ? t('declineReason') : t('cancelReason')}
+          hint={formText('counter', { count: userTextLength(reason), max: 500 })}
+          error={reasonError || undefined}
+        >
           {(control) => (
             <Textarea
               {...control}
               rows={3}
-              maxLength={500}
+              ref={reasonRef}
               value={reason}
-              onChange={(event) => setReason(event.target.value)}
+              onChange={(event) => {
+                setReason(event.target.value);
+                setReasonError('');
+              }}
             />
           )}
         </Field>

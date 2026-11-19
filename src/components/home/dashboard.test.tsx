@@ -88,7 +88,7 @@ describe('A görünümü kişisel pano', () => {
   });
   it('boş pilotta görüşme/ilan/mentor önerisi durumları ve rol kısayolları korunur', () => {
     show();
-    expect(screen.getByText('Henüz planlanmış görüşmen yok.')).toBeVisible();
+    expect(screen.getByText('Henüz planlanmış randevun yok.')).toBeVisible();
     expect(screen.getByText('İlan önerilerini burada göreceksin')).toBeVisible();
     expect(screen.getByText('Henüz mentor önerin yok')).toBeVisible();
     // Özet kutusu "0" ve "Şu an bekleyen bir işin yok." der; aynı cümleyi söyleyen boş kart çizilmez.
@@ -111,7 +111,7 @@ describe('A görünümü kişisel pano', () => {
         mentors: { ok: false, errorCode: 'SERVER_UNEXPECTED' },
       },
     });
-    expect(screen.queryByText('Henüz planlanmış görüşmen yok.')).toBeNull();
+    expect(screen.queryByText('Henüz planlanmış randevun yok.')).toBeNull();
     expect(screen.queryByText('Henüz mentor önerin yok')).toBeNull();
     expect(screen.getAllByRole('alert')).toHaveLength(4);
     expect(actions().queryByRole('link', { name: 'CV’den profilini doldur' })).toBeNull();
@@ -153,9 +153,9 @@ describe('A görünümü kişisel pano', () => {
         },
       },
     });
-    const region = within(screen.getByRole('region', { name: 'Yaklaşan görüşme' }));
-    expect(region.getByRole('heading', { name: 'Bir Mentor ile görüşme' })).toBeVisible();
-    expect(region.getByRole('link', { name: 'Görüşmeyi aç' })).toHaveAttribute(
+    const region = within(screen.getByRole('region', { name: 'Yaklaşan randevu' }));
+    expect(region.getByRole('heading', { name: 'Bir Mentor ile randevu' })).toBeVisible();
+    expect(region.getByRole('link', { name: 'Randevuyu aç' })).toHaveAttribute(
       'href',
       '/randevular/appt1',
     );
@@ -278,7 +278,7 @@ describe('A görünümü kişisel pano', () => {
     });
     const elements = [
       screen.getByRole('heading', { level: 1 }),
-      screen.getByRole('region', { name: 'Yaklaşan görüşme' }),
+      screen.getByRole('region', { name: 'Yaklaşan randevu' }),
       screen.getByRole('region', { name: 'Profilin' }),
       screen.getByRole('region', { name: 'Sana uygun ilanlar' }),
       screen.getByRole('region', { name: 'Mentorlar' }),
@@ -317,7 +317,7 @@ describe('A görünümü kişisel pano', () => {
       },
     });
     expect(screen.getByLabelText('Günün özeti')).toHaveTextContent('17 Kas');
-    expect(screen.queryByText(/Sıradaki görüşmen/)).toBeNull();
+    expect(screen.queryByText(/Sıradaki randevun/)).toBeNull();
   });
   it('alt sıra kalan karta göre dizilir: bekleyen iş yokken kısayollar tam genişlik, iş varken yanında', () => {
     const { unmount } = show();
@@ -401,9 +401,9 @@ describe('A görünümü kişisel pano', () => {
     expect(stats.getByText('17 Kas')).toBeVisible();
     expect(stats.queryByText('15 Kas')).toBeNull();
     expect(stats.queryByText('18 Kas')).toBeNull();
-    const upcoming = within(screen.getByRole('region', { name: 'Yaklaşan görüşme' }));
+    const upcoming = within(screen.getByRole('region', { name: 'Yaklaşan randevu' }));
     expect(
-      upcoming.getByRole('heading', { level: 3, name: 'Birinci Mentor ile görüşme' }),
+      upcoming.getByRole('heading', { level: 3, name: 'Birinci Mentor ile randevu' }),
     ).toBeVisible();
     expect(upcoming.queryByText(/Geçmiş Mentor/)).toBeNull();
     expect(upcoming.getByText(/Sonra:.*İkinci Mentor/)).toBeVisible();

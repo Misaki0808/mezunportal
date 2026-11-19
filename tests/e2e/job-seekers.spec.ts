@@ -88,7 +88,7 @@ test('öğrenci rıza verir, mezun anonim kartı bulur, talep onaylanınca kimli
     await alumniPage!.getByRole('checkbox', { name: 'E-posta' }).check();
     await alumniPage!.getByRole('button', { name: 'İstek gönder' }).click();
     await expect(
-      alumniPage!.getByRole('status').filter({ hasText: 'İletişim isteğin gönderildi.' }),
+      alumniPage!.getByRole('status').filter({ hasText: 'İletişim talebin gönderildi.' }),
     ).toBeVisible();
     await alumniPage!.getByRole('link', { name: 'Taleplerime git' }).click();
     await expect(

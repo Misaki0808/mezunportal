@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-const text = z.string().trim().min(2).max(100);
+import { userTextSchema } from '@/lib/user-text';
+
+const text = userTextSchema(2, 100);
 export const alumniSearchSchema = z
   .object({
     q: text.optional(),

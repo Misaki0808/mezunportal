@@ -42,7 +42,7 @@ for (const label of ['a', 'b']) {
       expect((await db.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe(name);
       await loginAs(page, 'student');
       expect(new URL(page.url()).origin).toBe(new URL(baseURL!).origin);
-      await expect(page.getByRole('heading', { name: 'Hesabın' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Hesap ayarları' })).toBeVisible();
       expect((await db.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe(name);
     } finally {
       await db.user.update({ where: { id: user.id }, data: { name: user.name } });

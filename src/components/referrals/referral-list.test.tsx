@@ -5,11 +5,12 @@ import { renderWithToasts as renderUi } from '@/test/render';
 import type { ReferralPage, ReferralView } from '@/contracts/referrals';
 import { ReferralCreate, ReferralList } from './referral-ui';
 
-const mocks = vi.hoisted(() => ({ review: vi.fn(), respond: vi.fn() }));
+const mocks = vi.hoisted(() => ({ review: vi.fn(), respond: vi.fn(), accept: vi.fn() }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 vi.mock('@/server/actions/referrals', () => ({
   reviewReferral: mocks.review,
   respondReferral: mocks.respond,
+  proposeReferralAcceptance: mocks.accept,
 }));
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function showModal() {
@@ -57,7 +58,24 @@ it('referans beyanında ilk geçersiz alana hata ve odak gider, not korunur', as
   await user.click(screen.getByRole('button', { name: /gönder/i }));
   expect(note).toHaveValue('İ'.repeat(501));
   expect(note).toHaveFocus();
-  expect(note).toHaveAccessibleDescription(/en fazla 500/);
+  expect(note).toHaveAccessibleDescription(/en fazla 500/i);
+});
+
+it('kabul notu 500 karakterde kesilmez ve uzun not alanına odaklanılır', async () => {
+  mocks.accept.mockReset();
+  const approved = { ...one, status: 'APPROVED' } as ReferralView;
+  const { user } = renderUi(
+    <ReferralList initial={{ items: [approved], nextCursor: null }} userId="u-student" />,
+  );
+  const note = screen.getByLabelText('Kabul hakkında kısa not');
+  expect(note).not.toHaveAttribute('maxlength');
+  const value = 'İ'.repeat(501);
+  fireEvent.change(note, { target: { value } });
+  await user.click(screen.getByRole('button', { name: 'İşe kabul edildim' }));
+  expect(note).toHaveValue(value);
+  expect(note).toHaveFocus();
+  expect(note).toHaveAccessibleDescription(/En fazla 500 karakter yaz/);
+  expect(mocks.accept).not.toHaveBeenCalled();
 });
 
 describe('referanslarım: boş durum role göre', () => {

@@ -11,6 +11,40 @@ const db = new PrismaClient({
 });
 test.afterAll(() => db.$disconnect());
 const login = loginAs;
+test('ilan taslağında NFD başlık sınırı ve NFC kaydı', async ({ page }) => {
+  test.setTimeout(90_000);
+  const author = await db.user.findUniqueOrThrow({
+    where: { email: TEST_PERSONAS.alumniMentor.email },
+  });
+  const normalized = 'İ'.repeat(100);
+  let postingId: string | undefined;
+  try {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page, 'alumniMentor');
+    await page.goto('/ilanlar/yeni');
+    await waitForHydratedControl(page, 'Taslağı kaydet');
+    const title = page.getByLabel('Pozisyon adı');
+    const tooLong = 'İ'.normalize('NFD').repeat(121);
+    await title.fill(tooLong);
+    await page.getByRole('button', { name: 'Taslağı kaydet' }).click();
+    await expect(title).toHaveValue(tooLong);
+    await expect(title).toBeFocused();
+    await expect(title).toHaveAccessibleDescription('En fazla 120 karakter gir.');
+    await title.fill('İ'.normalize('NFD').repeat(100));
+    const save = page.getByRole('button', { name: 'Taslağı kaydet' });
+    await save.click();
+    await expect(save).toBeEnabled({ timeout: 20_000 });
+    await expect(page.getByText('Taslağın kaydedildi.')).toBeVisible();
+    const row = await db.jobPosting.findFirstOrThrow({
+      where: { authorId: author.id, title: normalized, status: 'DRAFT' },
+    });
+    postingId = row.id;
+    expect(row.title).toBe(normalized);
+  } finally {
+    if (postingId) await db.jobPosting.delete({ where: { id: postingId } });
+  }
+});
+
 test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browser }) => {
   test.setTimeout(120_000);
   const title = `Staj ${randomUUID().replaceAll('-', '').slice(0, 10)}`;

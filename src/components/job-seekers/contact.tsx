@@ -1,4 +1,5 @@
 'use client';
+import { userTextLength } from '@/lib/user-text';
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
@@ -149,7 +150,7 @@ export function SeekerContact({
             />
             {messageError && (
               <span id={messageErrorId} role="alert" className="text-danger">
-                {message.trim().length > 500 ? t('messageTooLong') : errors('VALIDATION_INVALID')}
+                {userTextLength(message) > 500 ? t('messageTooLong') : errors('VALIDATION_INVALID')}
               </span>
             )}
           </label>

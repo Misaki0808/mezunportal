@@ -1,10 +1,12 @@
 'use client';
+import { userTextLength } from '@/lib/user-text';
 import messages from '../../../messages/tr.json';
 import { useHydrated } from '@/hooks/use-hydrated';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState } from 'react';
 import {
+  saveJobPostingDraftSchema,
   JOB_POSTING_MAX_DAYS,
   JOB_POSTING_TITLE_MAX,
   JOB_POSTING_ORGANIZATION_MAX,
@@ -202,9 +204,26 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
         return;
       }
     }
+    const parsed = saveJobPostingDraftSchema.safeParse({
+      ...(id ? { postingId: id } : {}),
+      departmentId,
+      content,
+    });
+    if (!parsed.success) {
+      const fields = parsed.error.issues
+        .map((issue) => (issue.path[0] === 'content' ? issue.path[1] : issue.path[0]))
+        .filter((field): field is string => typeof field === 'string')
+        .map((field) => (field === 'companyId' ? 'organizationName' : field));
+      const ordered = postingStepFields.flat().filter((field) => fields.includes(field));
+      const invalidUrl = parsed.error.issues.some(
+        (issue) => issue.message === 'JOB_POSTING_URL_INVALID',
+      );
+      showError(invalidUrl ? errors('JOB_POSTING_URL_INVALID') : t('formSummary'), ordered);
+      return;
+    }
     void action.run(
       async (): Promise<ActionResult<null>> => {
-        const saved = await save({ ...(id ? { postingId: id } : {}), departmentId, content });
+        const saved = await save(parsed.data);
         if (!saved.ok) return saved;
         setId(saved.data.id);
         if (thenSubmit) {
@@ -251,7 +270,7 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
       applyUrl: [url, JOB_POSTING_URL_MAX],
     };
     const limit = lengths[field];
-    if (limit && limit[0].trim().length > limit[1]) return t('tooLong', { max: limit[1] });
+    if (limit && userTextLength(limit[0]) > limit[1]) return t('tooLong', { max: limit[1] });
     return invalid.size === 1 && error !== t('formSummary') ? error : t('requiredError');
   };
   const fieldNames: Record<string, string> = {

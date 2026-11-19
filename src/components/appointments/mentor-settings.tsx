@@ -28,6 +28,7 @@ import {
   ActionBar,
 } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
+import { userTextLength } from '@/lib/user-text';
 
 import { minutesToTime, timeToMinutes } from './time';
 
@@ -159,7 +160,7 @@ export function MentorSettings({
         else if (key === 'meetingModes') found.modes = t('errors.modes');
         else if (key === 'inPersonNote')
           found.note =
-            inPersonNote.trim().length > 300 ? t('errors.noteTooLong') : t('errors.note');
+            userTextLength(inPersonNote) > 300 ? t('errors.noteTooLong') : t('errors.note');
       }
       setFieldErrors(found);
       if (found.capacity) capacityField.current?.focus();
@@ -191,7 +192,7 @@ export function MentorSettings({
     for (const weekday of WEEKDAYS) {
       const day = days[weekday]!;
       if (!day.on) continue;
-      const sorted: { start: number; end: number }[] = [];
+      const sorted: { start: number; end: number; index: number }[] = [];
       day.ranges.forEach((range, index) => {
         const start = timeToMinutes(range.start);
         const rawEnd = timeToMinutes(range.end);
@@ -201,7 +202,7 @@ export function MentorSettings({
           found[key] = t('errors.step');
         else if (end <= start) found[key] = t('errors.order');
         else {
-          sorted.push({ start, end });
+          sorted.push({ start, end, index });
           rules.push({
             weekday,
             startMinute: start,
@@ -211,8 +212,10 @@ export function MentorSettings({
         }
       });
       sorted.sort((a, b) => a.start - b.start);
-      if (sorted.some((range, index) => index > 0 && range.start < sorted[index - 1]!.end))
-        found[`d${weekday}`] = t('errors.overlap');
+      const overlap = sorted.find(
+        (range, index) => index > 0 && range.start < sorted[index - 1]!.end,
+      );
+      if (overlap) found[`d${weekday}r${overlap.index}`] = t('errors.overlap');
     }
     if (Object.keys(found).length === 0 && !saveAvailabilitySchema.safeParse({ rules }).success)
       found.weekly = t('errors.overlap');

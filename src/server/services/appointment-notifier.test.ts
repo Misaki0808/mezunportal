@@ -35,3 +35,22 @@ it(
   },
   SUBPROCESS_TEST_TIMEOUT_MS,
 );
+
+it.each(['requested', 'confirmed', 'cancelled', 'reminder'] as const)(
+  'planlanmış %s e-postası randevu terimini kullanır ve alanları doldurur',
+  async (event) => {
+    const { buildAppointmentEmail } = await import('./appointment-notifier');
+    const email = buildAppointmentEmail({
+      event,
+      appointmentId: 'terminology-proof',
+      recipient: { userId: 'recipient', email: 'example@example.invalid' },
+      counterpartName: 'Deneme',
+      startsAt: new Date('2030-06-17T06:00:00Z'),
+      expiresAt: new Date('2030-06-16T06:00:00Z'),
+      mode: 'ONLINE',
+      withReminder: true,
+    });
+    expect(email.text).toMatch(/randevu/i);
+    expect(email.text).not.toMatch(/\{(?:name|when|mode|deadline|details|reminder|reason)\}/);
+  },
+);

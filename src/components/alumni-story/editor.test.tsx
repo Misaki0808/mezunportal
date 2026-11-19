@@ -118,7 +118,7 @@ describe('hikâye editörü: odak ve duyurular', () => {
     await user.click(screen.getByRole('button', { name: 'Kaydet' }));
     const body = screen.getByLabelText('Hikâyen');
     await waitFor(() => expect(body).toHaveFocus());
-    expect(body).toHaveAccessibleDescription(/Alanları kontrol edip yeniden dene\./);
+    expect(body).toHaveAccessibleDescription(/En az 50, en fazla 3000 karakter yaz\./);
     expect(texts()).toHaveLength(1);
     expect(screen.queryByRole('status')).toBeNull();
   });

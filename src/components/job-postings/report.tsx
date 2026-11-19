@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { reportJobPostingSchema } from '@/contracts/job-postings';
+import { userTextLength } from '@/lib/user-text';
 import { useTranslations } from 'next-intl';
 import { Button, Field, Modal, Select, Textarea, useAction } from '@/components/ui';
 import type { ErrorCode } from '@/lib/errors';
@@ -9,12 +10,15 @@ import { reportJobPosting } from '@/server/actions/job-postings';
 
 export function ReportPosting({ postingId }: { postingId: string }) {
   const t = useTranslations('jobs');
+  const formText = useTranslations('formText');
   const errors = useTranslations('errors.codes');
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<'reportMisleading' | 'reportInappropriate' | 'reportOther'>(
     'reportMisleading',
   );
   const [details, setDetails] = useState('');
+  const [detailsError, setDetailsError] = useState('');
+  const detailsRef = useRef<HTMLTextAreaElement>(null);
   const action = useAction();
   const pending = action.busy;
   const [sent, setSent] = useState(false);
@@ -26,6 +30,13 @@ export function ReportPosting({ postingId }: { postingId: string }) {
   }, [sent]);
 
   async function submit() {
+    setError(undefined);
+    if (userTextLength(details) > 900) {
+      setDetailsError(formText('tooLong', { max: 900 }));
+      detailsRef.current?.focus();
+      return;
+    }
+    setDetailsError('');
     const parsed = reportJobPostingSchema.safeParse({
       postingId,
       reason: [t(reason), details.trim()].filter(Boolean).join(': '),
@@ -93,14 +104,21 @@ export function ReportPosting({ postingId }: { postingId: string }) {
           )}
         </Field>
         <div className="mt-4">
-          <Field label={t('reportDetails')}>
+          <Field
+            label={t('reportDetails')}
+            hint={formText('counter', { count: userTextLength(details), max: 900 })}
+            error={detailsError || undefined}
+          >
             {(props) => (
               <Textarea
                 {...props}
+                ref={detailsRef}
                 value={details}
-                maxLength={900}
                 rows={4}
-                onChange={(event) => setDetails(event.target.value)}
+                onChange={(event) => {
+                  setDetails(event.target.value);
+                  setDetailsError('');
+                }}
               />
             )}
           </Field>

@@ -1,12 +1,14 @@
+import { notFound } from 'next/navigation';
 import { CompanyScreen } from '@/components/companies/company-screens';
 import { ErrorState } from '@/components/ui';
-import { getCompany } from '@/server/actions/companies';
+import { requestCompanyDetail } from '@/app/detail-route';
 import { getInterviewQuestions } from '@/server/actions/interview-questions';
 import { getApplicationCalendar } from '@/server/actions/application-window';
 export const dynamic = 'force-dynamic';
 export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const result = await getCompany({ slug });
+  const result = await requestCompanyDetail(slug);
+  if (!result.ok && result.errorCode === 'RESOURCE_NOT_FOUND') notFound();
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   const [questions, calendar] = await Promise.all([
     getInterviewQuestions({ companyId: result.data.id }),

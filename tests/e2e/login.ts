@@ -32,7 +32,7 @@ export async function loginAs(
   }
   // /hesap geçici bir ara URL olabilir: onay veya gerçek hesap içeriği gelene kadar bekle.
   const consent = page.getByRole('checkbox', { name: 'Okudum ve onaylıyorum.', exact: true });
-  const account = page.getByRole('heading', { name: 'Hesabın', exact: true });
+  const account = page.getByRole('heading', { name: 'Hesap ayarları', exact: true });
   await expect(account.or(consent.first())).toBeVisible({ timeout: 20_000 });
   if (await consent.first().isVisible()) {
     await waitForHydratedForm(page, 'Seçimlerimi kaydet');

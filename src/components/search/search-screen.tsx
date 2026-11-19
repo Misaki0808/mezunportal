@@ -1,5 +1,6 @@
 'use client';
 
+import { userTextLength } from '@/lib/user-text';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -138,7 +139,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
       <Field
         label={t('company')}
         error={
-          invalid && draft.company && draft.company.trim().length < 2 ? t('invalid') : undefined
+          invalid && draft.company && userTextLength(draft.company) < 2 ? t('invalid') : undefined
         }
       >
         {(props) => (
@@ -273,7 +274,7 @@ export function SearchScreen({ filter, results, sectors }: Props) {
             hint={t('queryHint')}
             submitLabel={t('submit')}
             pendingReason={pending ? t('loading') : undefined}
-            error={invalid && draft.q && draft.q.trim().length < 2 ? t('invalid') : undefined}
+            error={invalid && draft.q && userTextLength(draft.q) < 2 ? t('invalid') : undefined}
             trailing={filtersButton}
             wideTrailing={active.length > 0}
             onSubmit={(event) => {
