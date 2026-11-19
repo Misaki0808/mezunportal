@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { safeReturnPath, withReturnPath } from './return-path';
+import {
+  RETURN_PATH_MAX_LENGTH,
+  firstSafeReturnPath,
+  safeReturnPath,
+  withReturnPath,
+} from './return-path';
 
 describe('dönüş yolu (açık yönlendirme yok)', () => {
   it.each([
@@ -52,5 +57,20 @@ describe('dönüş yolu (açık yönlendirme yok)', () => {
     expect(withReturnPath('/giris', '/')).toBe('/giris');
     expect(withReturnPath('/giris', '//kotu.example')).toBe('/giris');
     expect(withReturnPath('/onay', null)).toBe('/onay');
+  });
+});
+
+describe('kademeli dönüş yolu', () => {
+  it('sınırda olan aday kalır, sınırı aşan bir sonrakine bırakır; uzunluk sınırı gevşemez', () => {
+    const atLimit = `/mezunlar?q=${'a'.repeat(RETURN_PATH_MAX_LENGTH - '/mezunlar?q='.length)}`;
+    const over = `${atLimit}a`;
+    expect(atLimit).toHaveLength(RETURN_PATH_MAX_LENGTH);
+    expect(firstSafeReturnPath([atLimit, '/mezunlar'])).toBe(atLimit);
+    expect(firstSafeReturnPath([over, '/mezunlar?page=2', '/mezunlar'])).toBe('/mezunlar?page=2');
+    expect(safeReturnPath(over)).toBeNull();
+  });
+  it('hiçbir aday güvenli değilse null döner', () => {
+    expect(firstSafeReturnPath(['//kotu.example', 'javascript:1'])).toBeNull();
+    expect(firstSafeReturnPath([])).toBeNull();
   });
 });

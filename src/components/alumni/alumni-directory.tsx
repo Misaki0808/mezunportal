@@ -5,7 +5,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { withReturnPath } from '@/lib/return-path';
+import { firstSafeReturnPath, withReturnPath } from '@/lib/return-path';
 import {
   ALUMNI_PAGE_SIZE,
   alumniSearchSchema,
@@ -83,12 +83,19 @@ export function AlumniDirectory({
     startTransition(() => router.push(`/mezunlar${params.size ? `?${params}` : ''}`));
   }
   /** Uygulanmış süzgeçle (taslakla değil) verilen sayfanın adresi: sayfalama ve "geri dön" bağlantıları buradan türer. */
-  function hrefFor(page: number) {
+  function hrefFor(page: number, withoutQuery = false) {
     const params = new URLSearchParams();
-    for (const key of keys) if (filter[key] !== undefined) params.set(key, String(filter[key]));
+    for (const key of keys)
+      if (filter[key] !== undefined && !(withoutQuery && key === 'q'))
+        params.set(key, String(filter[key]));
     if (page > 1) params.set('page', String(page));
     return `/mezunlar${params.size ? `?${params}` : ''}`;
   }
+  // İletişim sayfasından dönüş yolu: uzun süzgeçte (kodlu yol 512'yi aşarsa) önce arama metni düşer (sayfa ve diğer süzgeçler
+  // kalır), o da yetmezse yalnız /mezunlar; dönüş asla tamamen kaybolmaz ve uzunluk sınırı gevşemez.
+  const returnTo =
+    firstSafeReturnPath([hrefFor(filter.page), hrefFor(filter.page, true), '/mezunlar']) ??
+    '/mezunlar';
   const set = (key: keyof Values, value: string) => {
     setDraft((old) => ({ ...old, [key]: value }));
     setInvalid(false);
@@ -311,7 +318,7 @@ export function AlumniDirectory({
                   <Link
                     className={buttonClasses({ fullWidth: true })}
                     aria-label={t('contactLabel', { name: item.name })}
-                    href={withReturnPath(`/iletisim-iste/${item.userId}`, hrefFor(filter.page))}
+                    href={withReturnPath(`/iletisim-iste/${item.userId}`, returnTo)}
                   >
                     {t('contact')}
                   </Link>
