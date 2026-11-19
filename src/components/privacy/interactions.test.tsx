@@ -225,6 +225,7 @@ it('tek kaydet sırasında kısmi hata kaydedilenleri belirtir ve yalnız kalan�
   expect(
     await screen.findByText('Bazı değişiklikler kaydedildi. Kalanları yeniden kaydet.'),
   ).toBeVisible();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Kaydet' })).toBeEnabled());
   await user.click(screen.getByRole('button', { name: 'Kaydet' }));
   await waitFor(() => expect(mocks.setVisibility).toHaveBeenCalledTimes(3));
   expect(mocks.setVisibility).toHaveBeenLastCalledWith({ field: 'PHONE', level: 'PRIVATE' });

@@ -253,7 +253,9 @@ describe('puan yönetimi (sistem yöneticisi)', () => {
     fireEvent.change(screen.getByLabelText(/Kullanıcı ara/), { target: { value: 'deniz' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ara' }));
     await screen.findByRole('button', { name: 'Seç: Deniz Aksoy' });
-    expect(screen.getByRole('button', { name: 'Daha fazla sonuç' })).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Daha fazla sonuç' })).toBeVisible(),
+    );
     fireEvent.change(screen.getByLabelText(/Kullanıcı ara/), { target: { value: 'selin' } });
     expect(screen.queryByRole('button', { name: 'Daha fazla sonuç' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Seç: Deniz Aksoy' })).not.toBeInTheDocument();

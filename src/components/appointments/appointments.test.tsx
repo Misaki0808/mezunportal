@@ -248,9 +248,15 @@ describe('mentor ayarları', () => {
     expect(actions.saveSettings).toHaveBeenCalledTimes(1);
     expect(actions.setPause).not.toHaveBeenCalled();
     expect(actions.saveAvailability).not.toHaveBeenCalled();
-    await user.click(pause);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Genel ayarları kaydet' })).toBeEnabled(),
+    );
+    await user.click(screen.getByRole('button', { name: 'Ara verme durumunu kaydet' }));
     expect(actions.setPause).toHaveBeenCalledWith({ pausedUntil: null });
-    await user.click(weekly);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Ara verme durumunu kaydet' })).toBeEnabled(),
+    );
+    await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
     expect(actions.saveAvailability).toHaveBeenCalledTimes(1);
     expect(actions.saveSettings).toHaveBeenCalledTimes(1);
     expect(actions.setPause).toHaveBeenCalledTimes(1);
@@ -320,6 +326,9 @@ describe('mentor ayarları', () => {
     expect(await screen.findByText('Kaydedildi.')).toBeInTheDocument();
     await user.clear(screen.getByLabelText(/Aylık görüşme kapasitesi/));
     await user.type(screen.getByLabelText(/Aylık görüşme kapasitesi/), '99');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Genel ayarları kaydet' })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
     expect(screen.getByText('1 ile 40 arasında bir sayı gir.')).toBeInTheDocument();
     expect(screen.queryByText('Kaydedildi.')).toBeNull();
@@ -345,6 +354,9 @@ describe('mentor ayarları', () => {
     const end = within(tuesday).getByLabelText('Bitiş');
     await user.clear(end);
     await user.type(end, '08:00');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
     expect(within(tuesday).getByText('Bitiş, başlangıçtan sonra olmalı.')).toBeInTheDocument();
     expect(screen.queryByText('Kaydedildi.')).toBeNull();
@@ -400,6 +412,9 @@ describe('mentor ayarları', () => {
     await user.type(screen.getByLabelText(/Yüz yüze görüşme yeri/), 'Kampüs kafe');
     await user.clear(screen.getByLabelText(/Aylık görüşme kapasitesi/));
     await user.type(screen.getByLabelText(/Aylık görüşme kapasitesi/), '99');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Genel ayarları kaydet' })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: 'Genel ayarları kaydet' }));
     expect(screen.getByText('1 ile 40 arasında bir sayı gir.')).toBeInTheDocument();
     expect(screen.getByLabelText(/Aylık görüşme kapasitesi/)).toHaveFocus();
@@ -553,7 +568,7 @@ describe('randevu detayı', () => {
     expect(screen.getByText('Staj hakkında soru')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Onayla' }));
     expect(actions.respond).toHaveBeenCalledWith({ decision: 'CONFIRM', appointmentId: 'a1' });
-    expect(router.refresh).toHaveBeenCalled();
+    await waitFor(() => expect(router.refresh).toHaveBeenCalled());
   });
 
   it('kapasite doluysa onay düğmesi devre dışı ve sebebi yazar', () => {
@@ -900,6 +915,9 @@ it('inceleyici: SLOT_TAKEN sonrası eski seçimi bırakır ve sunucunun slot lis
   expect(await screen.findByText(/başkası tarafından alındı/)).toBeInTheDocument();
   expect(router.refresh).toHaveBeenCalledTimes(1);
   expect(screen.queryByRole('radio', { name: '11:00 saatini seç' })).not.toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Randevu talep et' })).toBeEnabled(),
+  );
   await user.click(screen.getByRole('button', { name: 'Randevu talep et' }));
   expect(request).toHaveBeenCalledTimes(1);
   expect(screen.getByText('Önce bir saat seç.')).toBeVisible();
@@ -929,7 +947,9 @@ it('inceleyici: bekleyen sekme geçişinde ikinci tıklama listeyi yanlış roll
     }),
   );
   expect(list).toHaveBeenCalledTimes(1);
-  expect(screen.getByRole('tab', { name: 'Giden' })).toHaveAttribute('aria-selected', 'true');
+  await waitFor(() =>
+    expect(screen.getByRole('tab', { name: 'Giden' })).toHaveAttribute('aria-selected', 'true'),
+  );
   expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Giden');
   expect(screen.getByText('Onaylandı')).toBeVisible();
 });

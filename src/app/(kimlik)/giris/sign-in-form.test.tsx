@@ -96,6 +96,9 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
     await screen.findByRole('alert');
     expect(readSignInAddress()).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
     await waitFor(() => expect(push).toHaveBeenCalledWith('/giris/epostani-kontrol-et'));
     expect(readSignInAddress()).toBe('ayse@ogr.iu.edu.tr');

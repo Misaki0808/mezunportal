@@ -165,13 +165,13 @@ Düğmeyi bir kez sorgulayıp "etkinleşmesini" beklemek yük altında rastgele 
 sarmalayıcıyı bırakır; React düğmeyi yeni bir düğümle değiştirir. Devre dışıyken yakalanan düğüm DOM'dan çıkar ve sonsuza dek devre dışı kalır; sorgu geçişin ortasına
 denk gelirse `expect(düğüm).toBeEnabled()` 1 sn sonra düşer (`alumni-story/admin.test.tsx`: yük altında 80 koşuda 2 kırmızı, düzeltmeden sonra 0/80). Kural: yük altında
 değişebilen durumu (devre dışı ↔ etkin, yükleniyor ↔ hazır) beklerken öğeyi **her yoklamada yeniden sorgula** (`waitFor(() => expect(screen.getByRole(...)).toBeEnabled())`),
-tıklamayı da taze düğüme yap. Anlık `expect(...)` yalnız aynı React işlemiyle yazılan duruma bakar (örn. `useAction` hatası ve `busy` aynı turda gelir).
+tıklamayı da taze düğüme yap. Anlık `expect(...)` yalnız aynı React işlemiyle yazılan eşzamanlı durumu sınarken kullanılır. `useAction` hata yolunda hata ve `busy` aynı commit içinde güncellenir; bekleme burada savunmacıdır.
 
 **Geçiş (`useTransition`) sürerken (kart 502).** Hata ya da başarı iletisi görününce geçişin bittiği varsayılmaz: iletiyi yazan tur ile `isPending`'i kapatan tur ayrı render
 olabilir; o aralıkta düğme başka adla ("Kaydediliyor…") ya da anahtar/yonga pasiftir ve eşzamanlı sorgu bulamaz, tıklama yutulur. İletiden sonra etkileşimden ya da eski
 adı aramaktan önce etkinleşmeyi `waitFor` içinde bekle. Tarama yöntemi: `useTransition`'ı bitişini 20–250 ms geciktiren geçici bir `react` taklidiyle (`vi.mock('react')`,
 yalnız `unit` projesi) bütün bileşen testlerini koş; eşzamanlı arayan test deterministik kırmızı olur (kart 502'de yedi test, 20/60/250 ms'de aynı yedisi; #217 ve #235 aynı
-sınıftı). Odak kurtarma gibi gerçek zaman pencereleri 250 ms'de yapıntı kırmızı verebilir: 20 ve 60 ms'de de düşeni gerçek yarış say.
+sınıftı). Odak kurtarma gibi gerçek zaman pencereleri 250 ms'de yapıntı kırmızı verebilir; sonucu bağımsız gecikmeli eylemle de doğrula. Aynı bekleme ve yeniden sorgulama kuralı `useAction.busy`, elle yönetilen `pending` ve eylem sonucunu bekleyen sınamalar için de geçerlidir.
 
 ### Performans (P2-14)
 

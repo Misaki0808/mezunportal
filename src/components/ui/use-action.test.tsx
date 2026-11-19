@@ -68,9 +68,9 @@ describe('useAction', () => {
       ),
     );
     await user.click(screen.getByRole('button', { name: 'Gönder' }));
-    expect(onOk).toHaveBeenCalledWith({ id: 7 });
+    await waitFor(() => expect(onOk).toHaveBeenCalledWith({ id: 7 }));
     expect(await screen.findByText('Profilin güncellendi.')).toBeInTheDocument();
-    expect(screen.getByTestId('busy')).toHaveTextContent('false');
+    await waitFor(() => expect(screen.getByTestId('busy')).toHaveTextContent('false'));
   });
 
   it('çift gönderim kilidi: ilk eylem sürerken ikinci çağrı sunucuya gitmez', async () => {
@@ -125,6 +125,7 @@ describe('useAction', () => {
     const { user } = renderUi(wrap(<Harness action={action} success="Tamam" />));
     await user.click(screen.getByRole('button', { name: 'Gönder' }));
     expect(await screen.findByTestId('error')).toHaveTextContent(/.+/);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Gönder' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Gönder' }));
     await waitFor(() => expect(screen.queryByTestId('error')).toBeNull());
     expect(await screen.findByText('Tamam')).toBeInTheDocument();
