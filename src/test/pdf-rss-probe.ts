@@ -14,7 +14,9 @@ process.memoryUsage.rss = () => {
 };
 let code = 'SUCCESS';
 try {
-  await getPdfTextExtractor({ maxRssGrowthBytes: limit }).extract(bomb);
+  // Açık süre sınırı: koruma bozulursa hata, test zaman aşımı olarak değil (CV_PARSE_TIMEOUT diye) doğru nedenle görünsün.
+  // Sıra: bu sınır (3 sn) < `execFile` zaman aşımı (4 sn) < birim testinin zaman aşımı (5 sn).
+  await getPdfTextExtractor({ maxRssGrowthBytes: limit, timeoutMs: 3000 }).extract(bomb);
 } catch (error) {
   code = (error as { code?: string }).code ?? 'UNKNOWN';
 } finally {
