@@ -11,6 +11,8 @@ import { requestAppointmentSchema } from '@/contracts/appointment';
 import { sendContactRequestSchema } from '@/contracts/contact-request';
 import { proposeReferralAcceptanceSchema } from '@/contracts/referrals';
 import { jobPostingDraftContentSchema } from '@/contracts/job-postings';
+import { removeProfilePhotoSchema } from '@/contracts/profile-photo';
+import { REVIEW_REASON_MAX, reviewGraduationDocumentSchema } from '@/contracts/graduation-document';
 import { suggestSkillsSchema } from '@/contracts/profile-content';
 import { normalizeUserText, userTextLength, userTextSchema } from './user-text';
 
@@ -87,5 +89,28 @@ describe('kullanıcı metni NFC sınırı', () => {
       'İ'.repeat(251),
     );
     expect(adminReason.parse(`  ${nfd}  `)).toBe('İ'.repeat(251));
+  });
+
+  it('mezuniyet belgesi ret gerekçesi ve profil fotoğrafı kaldırma gerekçesi NFC ile sayılıp saklanır', () => {
+    const nfd = 'İ'.normalize('NFD');
+    const rejected = reviewGraduationDocumentSchema.parse({
+      decision: 'REJECT',
+      documentId: 'doc',
+      reason: `  ${nfd.repeat(REVIEW_REASON_MAX)}  `,
+    });
+    expect(rejected).toMatchObject({ reason: 'İ'.repeat(REVIEW_REASON_MAX) });
+    expect(
+      reviewGraduationDocumentSchema.safeParse({
+        decision: 'REJECT',
+        documentId: 'doc',
+        reason: nfd.repeat(REVIEW_REASON_MAX + 1),
+      }).success,
+    ).toBe(false);
+    expect(
+      removeProfilePhotoSchema.parse({ userId: 'u', reason: `  ${nfd.repeat(1000)}  ` }).reason,
+    ).toBe('İ'.repeat(1000));
+    expect(
+      removeProfilePhotoSchema.safeParse({ userId: 'u', reason: nfd.repeat(1001) }).success,
+    ).toBe(false);
   });
 });

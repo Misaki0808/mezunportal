@@ -1,5 +1,6 @@
 import { loginAs } from './login';
 import { expect, test, type Page } from './fixture';
+import { tabForward } from './keyboard';
 
 import { luminanceOf, measurePage, tabThrough } from './a11y';
 
@@ -143,7 +144,7 @@ async function audit(page: Page, path: string, scheme: 'light' | 'dark') {
     .not.toMatch(NOT_A_REAL_SCREEN);
   expect.soft(response?.status(), `${path}: HTTP durumu`).toBeLessThan(400);
   // İlk Tab durağı "İçeriğe geç": klavye kullanıcısı gezinmeyi atlayabilir.
-  await page.keyboard.press('Tab');
+  await tabForward(page);
   expect
     .soft(
       await page.evaluate(() => document.activeElement?.textContent?.trim()),

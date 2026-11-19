@@ -41,11 +41,7 @@ import {
   resolveJobPostingReport,
   reviewJobPosting,
 } from './job-posting-moderation';
-import {
-  contactNoteFor,
-  previewJobPostingContact,
-  requestJobPostingContact,
-} from './job-posting-contact';
+import { previewJobPostingContact, requestJobPostingContact } from './job-posting-contact';
 import { awardForJobPosting, runPointBackfill } from './points';
 import { searchJobPostingRows, visibleJobPostingIds } from '../repositories/job-postings';
 
@@ -1043,7 +1039,11 @@ describe('ilan üzerinden iletişim (D7)', () => {
       requesterId: w.student,
       targetId: w.academic,
       status: 'PENDING',
-      message: 'İlan: Veri analisti stajyeri — Merhaba, başvurmak istiyorum.',
+      message: 'Merhaba, başvurmak istiyorum.',
+      source: 'JOB_POSTING',
+      jobPostingId: id,
+      sourceTitle: 'Veri analisti stajyeri',
+      sourceOrganization: 'Örnek Teknoloji',
     });
     expect(row.fields).toEqual(['EMAIL']);
     expect(JSON.stringify(out)).not.toContain(w.academic);
@@ -1100,14 +1100,56 @@ describe('ilan üzerinden iletişim (D7)', () => {
     );
   });
 
-  it('contactNoteFor: bağlam + not; uzun başlık kısalır, uzun not 500 karaktere sığar', () => {
-    expect(contactNoteFor('Stajyer', null)).toBe('İlan: Stajyer');
-    expect(contactNoteFor('Stajyer', '   ')).toBe('İlan: Stajyer');
-    expect(contactNoteFor('Stajyer', ' Merhaba ')).toBe('İlan: Stajyer — Merhaba');
-    expect(contactNoteFor('a'.repeat(200), null)).toBe(`İlan: ${'a'.repeat(80)}…`);
-    const long = contactNoteFor('Stajyer', 'b'.repeat(500));
-    expect(long.length).toBe(500);
-    expect(long.startsWith('İlan: Stajyer — b')).toBe(true);
+  it('not kullanıcının yazdığı gibi saklanır: önek ve kısaltma yok, 500 karakter eksiksiz, 501 reddedilir; ilan bağlamı kaynak alanlarında kalır', async () => {
+    const w = await world();
+    const id = await contactPosting(w);
+    const nfd = 'İ'.normalize('NFD');
+    const full = await requestJobPostingContact(deps, w.student, {
+      jobPostingId: id,
+      fields: ['EMAIL'],
+      message: ` ${nfd.repeat(500)} `,
+    });
+    const stored = await db.contactRequest.findUniqueOrThrow({ where: { id: full.requestId } });
+    expect(stored.message).toBe('İ'.repeat(500));
+    expect(stored).toMatchObject({
+      source: 'JOB_POSTING',
+      sourceTitle: 'Veri analisti stajyeri',
+      sourceOrganization: 'Örnek Teknoloji',
+    });
+    const blank = await requestJobPostingContact(deps, w.otherStudent, {
+      jobPostingId: id,
+      fields: ['EMAIL'],
+      message: '   ',
+    });
+    expect(
+      (await db.contactRequest.findUniqueOrThrow({ where: { id: blank.requestId } })).message,
+    ).toBeNull();
+    const late = await w.make('STUDENT', 'Geç Gelen Öğrenci');
+    expect(
+      await code(
+        requestJobPostingContact(deps, late, {
+          jobPostingId: id,
+          fields: ['EMAIL'],
+          message: 'b'.repeat(501),
+        }),
+      ),
+    ).toBe('ZodError'); // eylem katmanı bunu VALIDATION_INVALID'e çevirir; servis kısaltmadan reddeder
+    expect(await db.contactRequest.count({ where: { requesterId: late } })).toBe(0);
+    // Önek kalkınca bağlam gelen kutusunda kaynak alanlarından görünür: notlu ve notsuz talep birlikte.
+    const incoming = await listContactRequests(db, w.academic, { box: 'INCOMING', limit: 50 });
+    const byId = new Map(incoming.items.map((item) => [item.id, item]));
+    for (const [requestId, message] of [
+      [full.requestId, 'İ'.repeat(500)],
+      [blank.requestId, null],
+    ] as const)
+      expect(byId.get(requestId)).toMatchObject({
+        message,
+        origin: {
+          kind: 'JOB_POSTING',
+          title: 'Veri analisti stajyeri',
+          organization: 'Örnek Teknoloji',
+        },
+      });
   });
 });
 

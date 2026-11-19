@@ -4,6 +4,7 @@ import { expect, test, type Page } from './fixture';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { loginAs } from './login';
 import { waitForHydratedForm } from './hydration';
+import { watchPageErrors } from './page-errors';
 import messages from '../../messages/tr.json' with { type: 'json' };
 
 /**
@@ -28,8 +29,7 @@ const login = loginAs;
 
 /** Sunucu eylemi POST'larını sayar, yavaşlatır ya da keser. */
 async function watchActions(page: Page) {
-  const state = { delay: 0, abort: false, posts: 0, uncaught: [] as string[] };
-  page.on('pageerror', (error) => state.uncaught.push(error.message));
+  const state = { delay: 0, abort: false, posts: 0, uncaught: watchPageErrors(page) };
   await page.route('**/*', async (route) => {
     const request = route.request();
     if (request.method() === 'POST' && request.headers()['next-action']) {
@@ -41,6 +41,58 @@ async function watchActions(page: Page) {
   });
   return state;
 }
+
+test('sayfa hata ölçümü yalnız yerel Next geliştirme tanılamasını dışlar, gerçek hatayı korur', async ({
+  page,
+}) => {
+  // Ürün betiği olmayan aynı kökenli sayfa: ölçüm kanalının kendisini gerçek pageerror olaylarıyla sınar.
+  await page.route('**/__test_page_errors', (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<main>Sentetik hata ölçümü</main>' }),
+  );
+  await page.goto('/__test_page_errors');
+  const errors = watchPageErrors(page);
+  const { host, origin } = new URL(page.url());
+  const other = new URL(origin);
+  other.port = String(Number(other.port) + 1);
+  const cases = [
+    {
+      message: `Fetch API cannot load ${origin}/__nextjs_original-stack-frames due to access control checks.`,
+      ignored: true,
+    },
+    {
+      message: `/${host}/__nextjs_original-stack-frames due to access control checks.`,
+      ignored: true,
+    },
+    { message: 'Gerçek uygulama hatası korunmalı', ignored: false },
+    {
+      message: `Fetch API cannot load ${origin}/api/profile due to access control checks.`,
+      ignored: false,
+    },
+    {
+      message: `Fetch API cannot load ${other.origin}/__nextjs_original-stack-frames due to access control checks.`,
+      ignored: false,
+    },
+    { message: 'Failed to fetch', ignored: false, typeError: true },
+  ];
+  const genuine: string[] = [];
+  for (const entry of cases) {
+    const emitted = page.waitForEvent('pageerror');
+    await page.evaluate(
+      ({ message, typeError }) => {
+        setTimeout(() => {
+          if (typeError) throw new TypeError(message);
+          throw new Error(message);
+        }, 0);
+      },
+      { message: entry.message, typeError: entry.typeError ?? false },
+    );
+    const error = await emitted;
+    // Karşılaştırma tarayıcının gerçekten ilettiği ham olayladır: WebKit URL içeren iletiyi kesebiliyor.
+    if (!entry.ignored) genuine.push(error.message);
+    expect(errors, entry.message).toEqual(genuine);
+  }
+  expect(genuine).toHaveLength(4);
+});
 
 /**
  * Bekleyen durumun ANINDA göründüğünü doğrular (eylem yavaşken; yoksa düğme "donmuş" hissi verir). Bekleyen düğmenin adı

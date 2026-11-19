@@ -60,9 +60,13 @@ describe('Toplu davet', () => {
       gate.resolve({ ok: true, data: { queued: 2, skipped: 0 } });
     });
     expect(await screen.findByRole('status')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Davetleri gönder' })).not.toHaveAttribute(
-      'aria-disabled',
-      'true',
+    // Kilit sonuçtan sonra ayrı bir render'da açılır; düğme o sürede "Kuyruğa ekleniyor…" adındadır (kart 502):
+    // her yoklamada yeniden sorgula.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Davetleri gönder' })).not.toHaveAttribute(
+        'aria-disabled',
+        'true',
+      ),
     );
     expect(send).toHaveBeenCalledTimes(1);
   });

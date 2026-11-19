@@ -3503,9 +3503,8 @@
     "student": "Öğrenci",
     "choose": "Seçiniz",
     "organization": "Kurum adı",
-    "organizationTooLong": "Kurum adı en fazla 120 karakter olmalı.",
+    "organizationTooLong": "Kurum adı en fazla {max} karakter olmalı.",
     "note": "Kısa not",
-    "noteTooLong": "Not en fazla 500 karakter olmalı.",
     "noteHint": "Telefon, e-posta, kimlik bilgisi gibi kişisel verileri yazma.",
     "send": "Beyan gönder",
     "empty": "Henüz gösterilecek referans yok.",
@@ -3989,6 +3988,6 @@
     "tooLong": "En fazla {max} karakter yaz.",
     "range": "En az {min}, en fazla {max} karakter yaz.",
     "selectStudent": "Bir öğrenci seç.",
-    "organization": "Kurum adı en az 2, en fazla 120 karakter olmalı."
+    "organization": "Kurum adı en az {min}, en fazla {max} karakter olmalı."
   }
 }

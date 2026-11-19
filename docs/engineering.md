@@ -167,6 +167,12 @@ denk gelirse `expect(düğüm).toBeEnabled()` 1 sn sonra düşer (`alumni-story/
 değişebilen durumu (devre dışı ↔ etkin, yükleniyor ↔ hazır) beklerken öğeyi **her yoklamada yeniden sorgula** (`waitFor(() => expect(screen.getByRole(...)).toBeEnabled())`),
 tıklamayı da taze düğüme yap. Anlık `expect(...)` yalnız aynı React işlemiyle yazılan duruma bakar (örn. `useAction` hatası ve `busy` aynı turda gelir).
 
+**Geçiş (`useTransition`) sürerken (kart 502).** Hata ya da başarı iletisi görününce geçişin bittiği varsayılmaz: iletiyi yazan tur ile `isPending`'i kapatan tur ayrı render
+olabilir; o aralıkta düğme başka adla ("Kaydediliyor…") ya da anahtar/yonga pasiftir ve eşzamanlı sorgu bulamaz, tıklama yutulur. İletiden sonra etkileşimden ya da eski
+adı aramaktan önce etkinleşmeyi `waitFor` içinde bekle. Tarama yöntemi: `useTransition`'ı bitişini 20–250 ms geciktiren geçici bir `react` taklidiyle (`vi.mock('react')`,
+yalnız `unit` projesi) bütün bileşen testlerini koş; eşzamanlı arayan test deterministik kırmızı olur (kart 502'de yedi test, 20/60/250 ms'de aynı yedisi; #217 ve #235 aynı
+sınıftı). Odak kurtarma gibi gerçek zaman pencereleri 250 ms'de yapıntı kırmızı verebilir: 20 ve 60 ms'de de düşeni gerçek yarış say.
+
 ### Performans (P2-14)
 
 `pnpm test:perf` (yalnız yerel; `pnpm test` ve CI'da koşmaz) iki hacimde liste/arama yanıt sürelerini ve kritik planları ölçer: **10× deneme verisi**
