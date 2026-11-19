@@ -54,6 +54,19 @@ function row(id: string) {
     .parentElement!;
 }
 
+it('ilan kaynaklı gelen talepte ilan ve kurum kaynak satırından görünür; not öneksiz ayrı kutudadır, notsuz talepte de bağlam kalır', () => {
+  const origin = { kind: 'JOB_POSTING' as const, title: 'Veri stajı', organization: 'Örnek Kurum' };
+  setup([
+    { ...item('notlu'), origin, message: 'Merhaba, başvurmak istiyorum.' },
+    { ...item('notsuz'), origin },
+  ]);
+  for (const id of ['notlu', 'notsuz'])
+    expect(within(row(id)).getByText('İlan: Veri stajı · Örnek Kurum')).toBeVisible();
+  const note = within(row('notlu')).getByText('Merhaba, başvurmak istiyorum.');
+  expect(note).toBeVisible();
+  expect(note.textContent).not.toMatch(/^İlan:/);
+  expect(within(row('notsuz')).queryByText(/Merhaba/)).toBeNull();
+});
 it('onaydan sonra sıradaki bekleyen kaydın kararına odaklanır; onay geri alma düğmesine sıçramaz', async () => {
   mocks.respond.mockResolvedValue({ ok: true, data: { requestId: 'ilk', status: 'APPROVED' } });
   mocks.list.mockResolvedValue({

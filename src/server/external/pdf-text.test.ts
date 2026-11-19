@@ -47,12 +47,12 @@ describe('gerçek PDF metin çıkarıcı', () => {
   });
   it('sıkıştırma bombası bellek sınırında sonlandırılır (yığın sınırı dış belleği saymaz)', async () => {
     // Her denemede ayrı süreç: önceki işçinin boşalttığı RSS tekrar kullanılırsa gerçek büyüme gizlenir.
-    const { stdout } = await promisify(execFile)(process.execPath, [
-      '--conditions=react-server',
-      '--import',
-      'tsx',
-      'src/test/pdf-rss-probe.ts',
-    ]);
+    // Takılan alt süreç testten sonra yaşamasın: `execFile` süre aşımında SIGKILL ile kapatır (birim zaman aşımından önce).
+    const { stdout } = await promisify(execFile)(
+      process.execPath,
+      ['--conditions=react-server', '--import', 'tsx', 'src/test/pdf-rss-probe.ts'],
+      { timeout: 4000, killSignal: 'SIGKILL' },
+    );
     expect(JSON.parse(stdout)).toEqual({
       code: 'CV_PDF_UNREADABLE',
       compressedWithinLimit: true,

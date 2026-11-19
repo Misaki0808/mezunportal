@@ -18,7 +18,8 @@ test('seçili sektör adı dar ekranda kesilmez ve seçici erişilebilir boyutta
   await expect(sector).toBeVisible();
   await sector.selectOption({ label: 'Bilişim ve Yazılım' });
   await expect(page).toHaveURL(/sectorId=/);
-  for (const width of [320, 360, 390]) {
+  // 1024: lg eşiği; eski düzen orada da seçili adı kesiyordu (kullanılabilir 109 px < 168 px).
+  for (const width of [320, 360, 390, 1024]) {
     await page.setViewportSize({ width, height: 844 });
     const dimensions = await sector.evaluate((element) => {
       const select = element as HTMLSelectElement;

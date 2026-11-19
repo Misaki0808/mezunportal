@@ -11,7 +11,6 @@ import {
   type RequestJobPostingContactInput,
   type RequestJobPostingContactOutput,
 } from '@/contracts/job-postings';
-import { CONTACT_MESSAGE_MAX } from '@/contracts/contact-request';
 import { codedNotFound, codedValidation } from '@/lib/errors';
 
 import { requestableFieldsOf, sendContactRequest } from './contactRequest';
@@ -25,16 +24,6 @@ import { RATE_LIMITS, consumeRateLimit } from './rateLimit';
  */
 
 const nowOf = (deps: JobPostingDeps) => (deps.now ?? (() => new Date()))();
-const CONTEXT_TITLE_MAX = 80;
-
-/** Talepteki not: ilan bağlamı + (varsa) kullanıcının notu; en çok `CONTACT_MESSAGE_MAX` karakter (kullanıcı notu kısalır). */
-export function contactNoteFor(title: string, message: string | null | undefined): string {
-  const context = `İlan: ${title.length > CONTEXT_TITLE_MAX ? `${title.slice(0, CONTEXT_TITLE_MAX)}…` : title}`;
-  const user = message?.trim();
-  if (!user) return context;
-  const room = CONTACT_MESSAGE_MAX - context.length - 3;
-  return room <= 0 ? context : `${context} — ${user.slice(0, room)}`;
-}
 
 /**
  * Önizleme. Talep edilemeyen her durum (ilan yok/kapsam dışı/açık değil/iletişim yöntemi değil, kendi ilanı, yazar askıda ya da
@@ -76,7 +65,8 @@ export async function requestJobPostingContact(
     {
       targetUserId: target.authorId,
       fields: parsed.fields,
-      message: contactNoteFor(target.title, parsed.message),
+      // Not olduğu gibi (kırpılmış, NFC) saklanır; ilan başlığı ve kurum aşağıdaki kaynak alanlarında ayrı durur.
+      message: parsed.message ?? null,
     },
     nowOf(deps),
     // D7: kaynak sunucuda yazılır; talep eden onaydan önce yazarın adını/kimliğini görmez.
