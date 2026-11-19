@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
 import type { SearchPage } from '@/contracts/search';
@@ -93,7 +93,9 @@ describe('hızlı tür yongaları', () => {
     await user.click(erasmus);
     expect(router.push).toHaveBeenCalledWith('/deneyimler?q=veri&types=ERASMUS&types=INTERNSHIP');
     router.push.mockClear();
-    await user.click(internship);
+    // İlk tıklamanın geçişi bitene kadar yongalar pasiftir ve `go` ikinci isteği yutar (kart 502): etkinleşmesini bekle.
+    await waitFor(() => expect(within(group).getByRole('button', { name: 'Staj' })).toBeEnabled());
+    await user.click(within(group).getByRole('button', { name: 'Staj' }));
     expect(router.push).toHaveBeenCalledWith('/deneyimler?q=veri');
   });
 
