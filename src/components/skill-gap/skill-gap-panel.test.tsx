@@ -30,7 +30,7 @@ vi.mock('react', async (importOriginal) => {
     },
   };
 });
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { renderUi } from '@/test/render';
 import { searchFaqSchema } from '@/contracts/faq';
 import { searchExperiencesSchema } from '@/contracts/search';
@@ -89,6 +89,12 @@ it('uzun sözlük adından üretilen bağlantılar arama sınırlarına uyar', (
   ).toBe(true);
 });
 
+// Test düşse bile gecikmeli geçiş bayrağı açık kalmasın: sonraki testler gerçek `useTransition` ile koşar (#235 incelemesi P3).
+afterEach(() => {
+  transition.delay = false;
+  transition.release = () => {};
+});
+
 it('ağ hatasında seçim korunur ve Türkçe yeniden deneme mesajı gösterilir', async () => {
   transition.delay = true;
   const user = userEvent.setup();
@@ -105,5 +111,4 @@ it('ağ hatasında seçim korunur ve Türkçe yeniden deneme mesajı gösterilir
   expect(screen.getByRole('combobox')).toHaveValue('title');
   setTimeout(() => transition.release(), 50);
   await waitFor(() => expect(screen.getByRole('button', { name: 'Hedefi kaydet' })).toBeEnabled());
-  transition.delay = false;
 });
