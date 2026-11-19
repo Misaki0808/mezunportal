@@ -71,6 +71,20 @@ describe('şirketler: sayfalama', () => {
       '/sirketler?q=yaz%C4%B1l%C4%B1m',
     );
   });
+  it('son sayfadaki şirketlerin hepsi öne çıkanlardaysa da sayfalama kalır; önceki sayfaya dönülebilir', () => {
+    const popular = company(1);
+    renderUi(
+      <CompaniesIndex
+        data={{ companies: [popular], popular: [popular], page: 3, total: 81, pageSize: 40 }}
+        query=""
+      />,
+    );
+    const nav = screen.getByRole('navigation', { name: 'Sayfalama' });
+    expect(within(nav).getByRole('link', { name: /Önceki/ })).toHaveAttribute(
+      'href',
+      '/sirketler?page=2',
+    );
+  });
   it('tek sayfalık sonuçta sayfalama görünmez', () => {
     renderUi(
       <CompaniesIndex

@@ -116,14 +116,15 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
               }
             />
           )}
-          <Pagination
-            className="mt-6"
-            page={data.page}
-            pageCount={Math.ceil(data.total / data.pageSize)}
-            hrefFor={(page) => companiesHref(query, page)}
-          />
         </section>
       )}
+      {/* Sonuç bölümünden bağımsız: son sayfadaki şirketlerin hepsi öne çıkanlardaysa da sayfalama kalır (geri dönülebilir). */}
+      <Pagination
+        className="mt-6"
+        page={data.page}
+        pageCount={Math.ceil(data.total / data.pageSize)}
+        hrefFor={(page) => companiesHref(query, page)}
+      />
     </div>
   );
 }

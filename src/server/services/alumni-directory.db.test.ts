@@ -1,4 +1,4 @@
-import { afterAll, expect, it } from 'vitest';
+import { afterAll, expect, it, vi } from 'vitest';
 import { alumniSearchSchema } from '@/contracts/alumni-directory';
 import { createTestPrisma } from '@/test/db';
 import { addMembership, createInstitution, createUser } from '@/test/fixtures';
@@ -230,4 +230,47 @@ it('adlar Türkçe harf sırasıyla gelir (ç, ğ, ı/i, ö, ş, ü); sayfalar a
   const beyond = await searchAlumni(db, actor, alumniSearchSchema.parse({ q: key, page: 9 }));
   expect(beyond.page).toBe(2);
   expect(beyond.items.map((item) => item.userId)).toEqual(second.items.map((item) => item.userId));
+});
+
+it('rehberden çıkma, kimlik seçimi ile son okuma arasında tamamlanırsa o kişi sayfadan düşer; yeni ad dönmez', async () => {
+  const institution = await createInstitution(db);
+  const viewer = await createUser(db);
+  const alumnus = await createUser(db, { name: 'Önceki Ad' });
+  await addMembership(db, {
+    userId: viewer,
+    departmentId: institution.deptA1,
+    role: 'STUDENT',
+    entryYear: 2020,
+  });
+  await addMembership(db, {
+    userId: alumnus,
+    departmentId: institution.deptA1,
+    role: 'ALUMNI',
+    graduationYear: 2021,
+  });
+  await db.profile.create({ data: { userId: alumnus, alumniDirectoryVisible: true } });
+  const actor = (await loadActor(db, viewer, new Date()))!;
+  const original = db.user.findMany.bind(db.user);
+  let hidden = false;
+  type Args = { select?: { id?: boolean; name?: boolean } };
+  const spy = vi.spyOn(db.user, 'findMany').mockImplementation((async (args: Args) => {
+    const rows = await original(args as never);
+    // Kimlik ön-seçimi bitti (yalnız `id` seçen sorgu): kişi rehberden çıkar ve adını değiştirir.
+    if (!hidden && args?.select?.id === true && !args?.select?.name) {
+      hidden = true;
+      await db.$transaction([
+        db.profile.update({ where: { userId: alumnus }, data: { alumniDirectoryVisible: false } }),
+        db.user.update({ where: { id: alumnus }, data: { name: 'Gizlendikten Sonra Yeni Ad' } }),
+      ]);
+    }
+    return rows;
+  }) as never);
+  try {
+    const result = await searchAlumni(db, actor, alumniSearchSchema.parse({}));
+    expect(hidden).toBe(true);
+    expect(result.items.map((item) => item.name)).not.toContain('Gizlendikten Sonra Yeni Ad');
+    expect(result.items).toHaveLength(0);
+  } finally {
+    spy.mockRestore();
+  }
 });

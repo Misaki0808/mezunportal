@@ -95,9 +95,11 @@ export async function searchAlumni(
             ORDER BY "name" ${collate}, "id"
             LIMIT ${PAGE_SIZE} OFFSET ${(page - 1) * PAGE_SIZE}`)
         ).map((row) => row.id);
+  // Son okumada görünürlük/askı/silinme/üyelik koşulu (`where`) YENİDEN uygulanır: iki sorgu arasında rehberden çıkan ya da
+  // gizlenen kişi bu sayfadan düşer (sayfa bir eksik gelebilir; toplam yeniden hesaplanmaz) ve değişen yeni ad dönmez.
   const found = pageIds.length
     ? await db.user.findMany({
-        where: { id: { in: pageIds } },
+        where: { AND: [where, { id: { in: pageIds } }] },
         select: {
           id: true,
           name: true,
