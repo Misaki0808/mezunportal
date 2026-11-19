@@ -206,6 +206,8 @@ describe('ilanlarım: kapatma hatası sonraki başarıdan sonra kalmaz', () => {
     const dialog = within(await screen.findByRole('dialog'));
     await user.click(dialog.getByRole('button', { name: 'İlanı kapat' }));
     expect(await dialog.findByText(messages.errors.codes.SERVER_UNEXPECTED)).toBeVisible();
+    // Hata görününce geçiş henüz bitmemiş olabilir: onay düğmesi bu sürede başka adla pasiftir (kart 502).
+    await waitFor(() => expect(dialog.getByRole('button', { name: 'İlanı kapat' })).toBeEnabled());
     await user.click(dialog.getByRole('button', { name: 'İlanı kapat' }));
     await waitFor(() => expect(close).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());

@@ -80,6 +80,9 @@ describe('hikâye editörü: odak ve duyurular', () => {
     const { user } = show();
     await user.click(screen.getByRole('button', { name: 'İncelemeye gönder' }));
     await screen.findByText('İnceleme için yayın izni gerekir.');
+    // Önceki işlem (gönder denemesi) bitmeden izin anahtarı pasiftir; hata metni görününce geçiş henüz bitmemiş olabilir
+    // (kart 502: yükte pasif anahtara tıklama yutuluyordu). Etkinleşmesini bekle, her yoklamada yeniden sorgula.
+    await waitFor(() => expect(screen.getByRole('switch')).toBeEnabled());
     await user.click(screen.getByRole('switch'));
     expect(screen.queryByText('İnceleme için yayın izni gerekir.')).toBeNull();
     // İzin değişince kayıt başlar; sürerken gönder düğmesi "Kaydediliyor…" adıyla pasiftir ve bitince eski adına döner
@@ -146,6 +149,8 @@ describe('hikâye editörü: odak ve duyurular', () => {
     ).toBeVisible();
     expect(texts()).toHaveLength(1);
     expect(screen.queryByRole('status')).toBeNull();
+    // Hata görününce geçiş henüz bitmemiş olabilir: "Kaydet" bu sürede "Kaydediliyor…" adıyla pasiftir (kart 502).
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Kaydet' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Kaydet' }));
     expect(await screen.findByText('Hikâyen kaydedildi.')).toBeVisible();
     expect(screen.queryByText(/Beklenmeyen bir sorun/)).toBeNull();
@@ -163,6 +168,8 @@ describe('hikâye editörü: odak ve duyurular', () => {
     const { user } = show();
     await user.click(screen.getByRole('button', { name: 'Kaydet' }));
     await screen.findByText('Hikâyen kaydedildi.');
+    // İleti görününce önceki işlemin geçişi henüz bitmemiş olabilir; o sürede izin anahtarı pasiftir (kart 502).
+    await waitFor(() => expect(screen.getByRole('switch')).toBeEnabled());
     await user.click(screen.getByRole('switch'));
     expect(await screen.findByText('Yayın tercihin kaydedildi.')).toBeVisible();
     expect(screen.queryByText('Hikâyen kaydedildi.')).toBeNull();
@@ -197,6 +204,11 @@ it('yeni işlem sürerken önceki başarı iletisi hemen temizlenir', async () =
   const { user } = show([story({ consent: true })]);
   await user.click(screen.getByRole('button', { name: 'Kaydet' }));
   await screen.findByText('Hikâyen kaydedildi.');
+  // Kayıt iletisi görününce geçiş henüz bitmemiş olabilir: gönder düğmesi "Kaydediliyor…" adıyla pasiftir ve bitince eski
+  // adına döner (kart 502: yükte eşzamanlı sorgu düğmeyi bulamıyordu). Etkinleşmesini bekle, her yoklamada yeniden sorgula.
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'İncelemeye gönder' })).toBeEnabled(),
+  );
   let release!: (value: unknown) => void;
   mocks.save.mockImplementationOnce(
     () =>
