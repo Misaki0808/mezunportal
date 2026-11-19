@@ -62,7 +62,7 @@ Mercan, Nane, yazı tipleri). Ölçü ilkeleri (değerler `globals.css`'te):
 - **Üst çubuk** (bilgisayar, 72 px, alt çizgili): arama, tema düğmesi, bildirim zili (okunmamışta nokta), avatar (hesap ayarları `/hesap`). Arama şimdilik **deneyim aramasıdır**
   (`/deneyimler?q=`, en az iki karakter); genel arama ekranı yok, olunca yönü değişir. Telefon üst çubuğu yapışkandır: logo, tema, zil, avatar.
 - **Telefon:** yan menü yok; altta beş öğe: dört sekme (Ana sayfa, İlanlar, Mentorlar, Randevular) ve **Menü** (sayfa değil, alt sayfa açar). Menü alt sayfası:
-  Keşfet (Deneyimler, Mezunlar, Etkinlikler, Ders rehberi), Hesap (Bildirimler + okunmamış rozeti, Profilim `/profil`, Hesap ayarları `/hesap`), yöneticide Yönetici
+  Diğer sayfalar (Deneyimler, Mezunlar, Etkinlikler, Ders rehberi), Hesap (Bildirimler + okunmamış rozeti, Profilim `/profil`, Hesap ayarları `/hesap`), yöneticide Yönetici
   (Yönetim). Menüdeki bir ekran açıkken Menü düğmesi ve o satır etkin görünür; alt sayfa klavye ve ekran okuyucuyla kullanılır (odak hapsi, Esc, kapatınca odak
   Menü düğmesine döner). Hesap ayarlarına üst çubuktaki avatar da götürür.
 - **İçerik genişliği:** `AppShellClient` içeriği en çok 1280 px, sola yaslı, telefonda 16 px, bilgisayarda 28/32 px dolguyla verir; sayfa kendi
