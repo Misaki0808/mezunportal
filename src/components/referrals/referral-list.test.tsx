@@ -3,6 +3,8 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithToasts as renderUi } from '@/test/render';
 import type { ReferralPage, ReferralView } from '@/contracts/referrals';
+import { REFERRAL_ORGANIZATION_MAX, REFERRAL_ORGANIZATION_MIN } from '@/contracts/referrals';
+import messages from '../../../messages/tr.json';
 import { ReferralCreate, ReferralList } from './referral-ui';
 
 const mocks = vi.hoisted(() => ({ review: vi.fn(), respond: vi.fn(), accept: vi.fn() }));
@@ -59,6 +61,30 @@ it('referans beyanında ilk geçersiz alana hata ve odak gider, not korunur', as
   expect(note).toHaveValue('İ'.repeat(501));
   expect(note).toHaveFocus();
   expect(note).toHaveAccessibleDescription(/en fazla 500/i);
+});
+
+it('kurum adı hata metinleri sınırı şemadan alır, metinde sabit sayı yoktur', async () => {
+  expect(messages.formText.organization).toContain('{min}');
+  expect(messages.formText.organization).toContain('{max}');
+  expect(messages.referrals.organizationTooLong).toContain('{max}');
+  const { user } = renderUi(
+    <ReferralCreate
+      candidates={{ students: [{ id: 'student-1', name: 'Deniz', departmentName: 'YBS' }] }}
+      postings={[]}
+    />,
+  );
+  await user.selectOptions(screen.getByLabelText(/Öğrenci/), 'student-1');
+  const organization = screen.getByLabelText(/Kurum/);
+  fireEvent.change(organization, { target: { value: 'A' } });
+  await user.click(screen.getByRole('button', { name: /gönder/i }));
+  expect(organization).toHaveAccessibleDescription(
+    `Kurum adı en az ${REFERRAL_ORGANIZATION_MIN}, en fazla ${REFERRAL_ORGANIZATION_MAX} karakter olmalı.`,
+  );
+  fireEvent.change(organization, { target: { value: 'K'.repeat(REFERRAL_ORGANIZATION_MAX + 1) } });
+  await user.click(screen.getByRole('button', { name: /gönder/i }));
+  expect(organization).toHaveAccessibleDescription(
+    `Kurum adı en fazla ${REFERRAL_ORGANIZATION_MAX} karakter olmalı.`,
+  );
 });
 
 it('kabul notu 500 karakterde kesilmez ve uzun not alanına odaklanılır', async () => {

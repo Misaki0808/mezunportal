@@ -14,6 +14,7 @@ import {
   proposeReferralAcceptanceSchema,
   REFERRAL_NOTE_MAX,
   REFERRAL_ORGANIZATION_MAX,
+  REFERRAL_ORGANIZATION_MIN,
   reviewReferralSchema,
   type ReferralCandidates,
   type ReferralPage,
@@ -76,7 +77,10 @@ export function ReferralCreate({
             key === 'studentId'
               ? formText('selectStudent')
               : key === 'organizationName'
-                ? formText('organization')
+                ? formText('organization', {
+                    min: REFERRAL_ORGANIZATION_MIN,
+                    max: REFERRAL_ORGANIZATION_MAX,
+                  })
                 : key === 'note'
                   ? formText('tooLong', { max: REFERRAL_NOTE_MAX })
                   : errors('VALIDATION_INVALID');
@@ -100,7 +104,10 @@ export function ReferralCreate({
                 key === 'studentId'
                   ? formText('selectStudent')
                   : key === 'organizationName'
-                    ? formText('organization')
+                    ? formText('organization', {
+                        min: REFERRAL_ORGANIZATION_MIN,
+                        max: REFERRAL_ORGANIZATION_MAX,
+                      })
                     : key === 'note'
                       ? formText('tooLong', { max: REFERRAL_NOTE_MAX })
                       : errors(code),
@@ -163,7 +170,7 @@ export function ReferralCreate({
               error={
                 fieldErrors.organizationName &&
                 userTextLength(organizationName) > REFERRAL_ORGANIZATION_MAX
-                  ? t('organizationTooLong')
+                  ? t('organizationTooLong', { max: REFERRAL_ORGANIZATION_MAX })
                   : fieldErrors.organizationName
               }
               required

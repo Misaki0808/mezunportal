@@ -6,6 +6,7 @@ import { adminId, adminPageInput, adminReason } from './admin';
 /** P2-03: yalnız onaylı iletişim veya tamamlanmış görüşmeyle tanınan öğrenci seçilebilir. */
 const INVALID = 'VALIDATION_INVALID' satisfies ErrorCode;
 export const REFERRAL_NOTE_MAX = 500;
+export const REFERRAL_ORGANIZATION_MIN = 2;
 export const REFERRAL_ORGANIZATION_MAX = 120;
 export const REFERRAL_DELAY_DAYS = 14;
 export const REFERRAL_DEFAULT_POINTS = { REFERRAL_GIVEN: 20, REFERRAL_ACCEPTED: 30 } as const;
@@ -43,7 +44,9 @@ export const proposeReferralSchema = z
   .object({
     studentId: adminId,
     jobPostingId: adminId.nullable().optional(),
-    organizationName: userTextSchema(2, REFERRAL_ORGANIZATION_MAX, INVALID).nullable().optional(),
+    organizationName: userTextSchema(REFERRAL_ORGANIZATION_MIN, REFERRAL_ORGANIZATION_MAX, INVALID)
+      .nullable()
+      .optional(),
     note,
   })
   .strict()

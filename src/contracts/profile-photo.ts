@@ -1,3 +1,4 @@
+import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
 const INVALID = 'VALIDATION_INVALID';
@@ -27,11 +28,7 @@ export type PhotoCrop = z.infer<typeof photoCropSchema>;
 export const removeProfilePhotoSchema = z
   .object({
     userId: z.string({ error: INVALID }).min(1, { error: INVALID }).max(64, { error: INVALID }),
-    reason: z
-      .string({ error: INVALID })
-      .trim()
-      .min(3, { error: INVALID })
-      .max(1000, { error: INVALID }),
+    reason: userTextSchema(3, 1000, INVALID),
   })
   .strict();
 
