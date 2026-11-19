@@ -14,7 +14,7 @@ import { queryCounter } from '@/test/query-counter';
 
 const db = createTestPrisma();
 // Mutlak süre eşiği yük altında anlamsızdır (makine yüklüyken 8 koşunun 5'i kırmızıydı, kart 442). Bunun yerine:
-// (1) sorgu sayısı: veri büyüklüğünden ve yükten bağımsız, N+1 gibi gerilemeyi yakalar (ölçülen: mezun 6, mentor 7;
+// (1) sorgu sayısı: veri büyüklüğünden ve yükten bağımsız, N+1 gibi gerilemeyi yakalar (ölçülen: mezun 8 — ilk çağrıda Türkçe harmanlama yoklaması dahil, sonrası 7 —, mentor 7;
 //     sayfa başına N+1 en az 24 sorgu ekler, payı iki sorgu);
 // (2) aynı döngüde ölçülen başvuru sorgusuna medyan oranı: yük ikisini de yavaşlatır, ama tam aynı oranda değil.
 //     Ölçülen: yüksüz 10-15, 60 `yes` ile yüklü (yük ortalaması ~130) mezun 26-31, mentor 12-17. Sınır bunun üstünde
