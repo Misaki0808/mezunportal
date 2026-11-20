@@ -3,6 +3,7 @@ import { useFocusFirstInvalid } from '@/hooks/use-focus-first-invalid';
 import { useHydrated } from '@/hooks/use-hydrated';
 
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -39,6 +40,7 @@ export function SignInForm({
   const { formRef, focusFirstInvalid } = useFocusFirstInvalid();
   const t = useTranslations('authScreens.signIn');
   const errors = useTranslations('errors.codes');
+  const suspended = useTranslations('privacyScreens.suspendedRights');
   const router = useRouter();
   const locked = useRef(false);
   const [email, setEmail] = useState('');
@@ -158,9 +160,24 @@ export function SignInForm({
           )}
         </Field>
         {error && (
-          <p role="alert" className="text-base text-danger">
-            {errors(error)}
-          </p>
+          <div className="flex flex-col gap-1">
+            <p role="alert" className="text-base text-danger">
+              {errors(error)}
+            </p>
+            {/* Askıdaki kullanıcı oturumunu kaybeder ve KVKK ekranlarına ulaşamaz: yolu burada, yalnız doğrulanmış giriş bağlantısına
+                tıklayınca (e-postanın sahibi) görür. Bağlantı isteme formu askıyı belli etmez; bu hata kodu o formdan gelmez. */}
+            {error === 'AUTH_ACCOUNT_SUSPENDED' && (
+              <>
+                <p className="text-base text-fg-muted">{t('suspendedKvkk')}</p>
+                <Link
+                  href="/hukuki/aydinlatma"
+                  className="inline-flex min-h-11 items-center self-start font-medium text-primary underline underline-offset-4"
+                >
+                  {suspended('link')}
+                </Link>
+              </>
+            )}
+          </div>
         )}
         <div className="mt-auto pt-8 pb-[env(safe-area-inset-bottom)]">
           <Button type="submit" fullWidth size="lg" loading={pending === 'email'}>
