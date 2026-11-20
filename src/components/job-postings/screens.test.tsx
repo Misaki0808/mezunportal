@@ -118,6 +118,35 @@ it('uzun konum rozetinde üç nokta çalışır: metin rozetin içinde kendi kut
   expect(badge).toHaveAttribute('title', location);
 });
 
+it('telefonda uzun kurum adı en çok 2 satırda üç noktayla kısalır (bağlantılı ve bağlantısız)', () => {
+  const organizationName = 'Türkiye Cumhuriyeti Kalkınma ve Yatırım Bankası Genel Müdürlüğü Ankara';
+  renderUi(
+    <PostingList
+      canPost={false}
+      filters={{}}
+      options={options}
+      page={{
+        items: [
+          { ...posting, id: 'job-a', organizationName, companyId: null },
+          { ...posting, id: 'job-b', organizationName, companyId: 'company-1' },
+        ],
+        total: 2,
+        page: 1,
+        pageSize: 20,
+      }}
+    />,
+  );
+  const [plain, linked] = screen.getAllByText(organizationName);
+  // Metin iç kutuda kısalır; kapsayıcı `truncate` (tek satır) değildir. Bağlantılı durumda bağlantı inline-flex olduğundan
+  // `line-clamp` bağlantıda değil, içindeki metin kutusundadır ve `min-w-0` ile daralır.
+  for (const text of [plain!, linked!]) {
+    expect(text).toHaveClass('line-clamp-2', 'break-words', 'sm:line-clamp-none');
+    expect(text.closest('p')).not.toHaveClass('truncate');
+  }
+  expect(linked).toHaveClass('min-w-0');
+  expect(linked!.closest('a')).toHaveClass('inline-flex', 'max-w-full');
+});
+
 it('"İncele" bağlantıları ilan başlığıyla adlanır; görünen metin aynı kalır', () => {
   const other: JobPostingCard = { ...posting, id: 'job-2', title: 'Veri analizi stajyeri' };
   renderUi(

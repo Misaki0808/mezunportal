@@ -54,18 +54,23 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
         </IconChip>
         <div className="min-w-0">
           <p
-            className="truncate text-xs font-semibold text-fg-muted sm:whitespace-normal sm:text-sm"
+            className="text-xs font-semibold text-fg-muted sm:text-sm"
             title={posting.organizationName}
           >
+            {/* Kurum adı telefonda en çok 2 satır (sonra üç nokta); metin iç kutuda kısalır, bağlantı inline-flex olduğundan bağlantıda değil. */}
             {posting.companyId ? (
               <Link
-                className="inline-flex min-h-11 items-center underline decoration-border-control underline-offset-4"
+                className="inline-flex min-h-11 max-w-full items-center underline decoration-border-control underline-offset-4"
                 href={`/sirketler/${posting.companyId}`}
               >
-                {posting.organizationName}
+                <span className="line-clamp-2 min-w-0 break-words sm:line-clamp-none">
+                  {posting.organizationName}
+                </span>
               </Link>
             ) : (
-              posting.organizationName
+              <span className="line-clamp-2 break-words sm:line-clamp-none">
+                {posting.organizationName}
+              </span>
             )}
           </p>
           <h2 className="mt-0.5 break-words text-lg font-bold leading-tight text-fg sm:mt-1 sm:text-xl">

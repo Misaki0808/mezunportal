@@ -1,5 +1,13 @@
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../../src/generated/prisma/client';
+import { TEST_PERSONAS } from '../../prisma/seed-data';
 import { expect, test, type Page } from './fixture';
 import { loginAs } from './login';
+
+const db = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
+});
+test.afterAll(() => db.$disconnect());
 
 // 360 px mobil tur (kart 536): ürünün en küçük hedefi 360 px'tir (docs/design.md "Mobil öncelik"). Gece değişen listelerde, kuyruklarda ve
 // KVKK ekranlarında; açık + koyu temada; 360 ve 390 genişlikte: yatay taşma yok, alt gezinme etiketleri tek satır, dokunma hedefi ≥ 44 px,
@@ -31,6 +39,55 @@ const ADMIN = [
   '/yonetim/eslesmeyenler',
   '/yonetim/davetler',
 ];
+
+// Uzun kurum/konum adlı iki yayımlı ilan (biri şirket bağlantılı): liste kartında kurum adı en çok 2 satır, konum rozeti üç noktayla kısalır.
+const LONG_ORG = 'Türkiye Cumhuriyeti Kalkınma ve Yatırım Bankası Genel Müdürlüğü Ankara Teşkilatı';
+const LONG_LOCATION = 'Kahramanmaraş Onikişubat Merkez Mahallesi Uzun Cadde Sokak Apartman Dairesi';
+const LONG_TITLE = 'Uzun adlı 360 ilanı';
+async function seedLongPostings() {
+  if (await db.jobPosting.count({ where: { title: { startsWith: LONG_TITLE } } })) return;
+  const [student, mentor, admin, company] = await Promise.all([
+    db.user.findUniqueOrThrow({
+      where: { email: TEST_PERSONAS.student.email },
+      include: { memberships: true },
+    }),
+    db.user.findUniqueOrThrow({ where: { email: TEST_PERSONAS.alumniMentor.email } }),
+    db.user.findUniqueOrThrow({ where: { email: TEST_PERSONAS.systemAdmin.email } }),
+    db.company.findFirstOrThrow(),
+  ]);
+  const departmentId = student.memberships[0]!.departmentId;
+  const now = new Date();
+  const deadlineOn = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 30),
+  );
+  const created = await db.jobPosting.createManyAndReturn({
+    data: [null, company.id].map((companyId, index) => ({
+      authorId: mentor.id,
+      departmentIdAtWrite: departmentId,
+      kind: 'INTERNSHIP' as const,
+      title: `${LONG_TITLE} ${index + 1}: Kurumsal Kaynak Planlama ve Müşteri İlişkileri Yönetimi Yaz Stajyeri`,
+      organizationName: LONG_ORG,
+      companyId,
+      location: LONG_LOCATION,
+      isRemote: false,
+      description:
+        'Uzun ad davranışını 360 piksel genişlikte ölçmek için üretilmiş açıklama metni, otuz karakterden uzundur.',
+      applyMethod: 'URL' as const,
+      applyUrl: 'https://example.com/uzun-ilan',
+      deadlineOn,
+      targetGrades: [] as number[],
+      status: 'PUBLISHED' as const,
+      submittedAt: now,
+      moderatedById: admin.id,
+      moderatedAt: now,
+      publishedAt: new Date(now.getTime() + index * 1000),
+    })),
+    select: { id: true },
+  });
+  await db.jobPostingDepartment.createMany({
+    data: created.map((posting) => ({ postingId: posting.id, departmentId })),
+  });
+}
 
 type Report = {
   overflow: number;
@@ -97,8 +154,41 @@ async function measure(page: Page): Promise<Report> {
   });
 }
 
+/** /ilanlar: uzun kurum adı en çok 2 satır, konum rozeti kart içinde kalır ve üç nokta çizer. */
+async function auditLongPostings(page: Page, where: string) {
+  const cards = page.locator('article').filter({ hasText: LONG_TITLE });
+  await expect(cards).toHaveCount(2);
+  for (const card of await cards.all()) {
+    const result = await card.evaluate(
+      (element, [org, location]) => {
+        const cardBox = element.getBoundingClientRect();
+        const text = element.querySelector(`p[title="${org}"] .line-clamp-2`)!;
+        const lineHeight = parseFloat(getComputedStyle(text).lineHeight);
+        const chip = element.querySelector(`[title="${location}"]`)!;
+        const chipText = chip.firstElementChild!;
+        return {
+          orgLines: Math.round(text.getBoundingClientRect().height / lineHeight),
+          orgClamp: getComputedStyle(text).getPropertyValue('-webkit-line-clamp'),
+          chipInside: chip.getBoundingClientRect().right <= cardBox.right + 1,
+          chipEllipsis: getComputedStyle(chipText).textOverflow === 'ellipsis',
+          chipTruncated: chipText.scrollWidth > chipText.clientWidth,
+        };
+      },
+      [LONG_ORG, LONG_LOCATION],
+    );
+    expect
+      .soft(result.orgLines, `/ilanlar (${where}): kurum adı en çok 2 satır`)
+      .toBeLessThanOrEqual(2);
+    expect.soft(result.orgClamp, `/ilanlar (${where}): kurum adı line-clamp`).toBe('2');
+    expect.soft(result.chipInside, `/ilanlar (${where}): konum rozeti kart içinde`).toBe(true);
+    expect.soft(result.chipEllipsis, `/ilanlar (${where}): konum üç nokta`).toBe(true);
+    expect.soft(result.chipTruncated, `/ilanlar (${where}): uzun konum kısalıyor`).toBe(true);
+  }
+}
+
 async function audit(page: Page, path: string, where: string) {
   await page.goto(path, { waitUntil: 'networkidle' });
+  if (path === '/ilanlar') await auditLongPostings(page, where);
   if (path === '/yonetim/ayin-mezunu') {
     await page.locator('main select').first().selectOption({ index: 0 });
     await page.getByRole('button', { name: 'Hikâyeleri göster' }).click();
@@ -124,6 +214,7 @@ for (const scheme of SCHEMES) {
 
       test('öğrenci ekranları', async ({ page }) => {
         test.setTimeout(240_000);
+        await seedLongPostings();
         await loginAs(page, 'student');
         for (const path of STUDENT) await audit(page, path, where);
       });
