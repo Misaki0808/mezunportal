@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -51,7 +52,7 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
   try {
     await login(mentorPage!, 'alumniMentor');
     await mentorPage!.goto('/referans/yeni');
-    await expect(mentorPage!.locator('[data-hydrated=true]')).toBeVisible();
+    await waitForFormReady(mentorPage!.getByLabel('Öğrenci'));
     await mentorPage!.getByLabel('Öğrenci').selectOption(student.id);
     await mentorPage!.getByLabel('Kurum adı').fill(organization);
     await mentorPage!.getByLabel('Kısa not').fill('Öğrenciyi ekip çalışması için önerdim.');
@@ -65,12 +66,17 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
     await login(studentPage!, 'student');
     await studentPage!.goto('/hesap/referanslar');
     const studentCard = studentPage!.locator('li').filter({ hasText: organization });
-    await expect(studentPage!.locator('[data-hydrated=true]')).toBeVisible();
+    await waitForFormReady(studentCard.getByRole('button', { name: 'Onayla' }));
     await studentCard.getByRole('button', { name: 'Onayla' }).click();
     await expect(studentCard.getByText('Yönetici onayı bekleniyor')).toBeVisible();
     await login(adminPage!, 'systemAdmin');
     await adminPage!.goto('/yonetim/referanslar');
-    await expect(adminPage!.locator('[data-hydrated=true]')).toBeVisible();
+    await waitForFormReady(
+      adminPage!
+        .locator('li')
+        .filter({ hasText: organization })
+        .getByRole('button', { name: 'Onayla' }),
+    );
     await adminPage!
       .locator('li')
       .filter({ hasText: organization })
@@ -84,11 +90,16 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
       )
       .toBe('APPROVED');
     await studentPage!.reload();
-    await expect(studentPage!.locator('[data-hydrated=true]')).toBeVisible();
+    await waitForFormReady(studentCard.getByRole('button', { name: 'İşe kabul edildim' }));
     await studentCard.getByRole('button', { name: 'İşe kabul edildim' }).click();
     await expect(studentCard.getByText('Mezun onayı bekleniyor')).toBeVisible();
     await mentorPage!.reload();
-    await expect(mentorPage!.locator('[data-hydrated=true]')).toBeVisible();
+    await waitForFormReady(
+      mentorPage!
+        .locator('li')
+        .filter({ hasText: organization })
+        .getByRole('button', { name: 'Onayla' }),
+    );
     await mentorPage!
       .locator('li')
       .filter({ hasText: organization })
@@ -101,7 +112,12 @@ test('390 px: mezun beyanı, öğrenci ve yönetici onayı; işe kabul ikinci on
         .getByText('Kabul için yönetici onayı bekleniyor'),
     ).toBeVisible();
     await adminPage!.reload();
-    await expect(adminPage!.locator('[data-hydrated=true]')).toBeVisible();
+    await waitForFormReady(
+      adminPage!
+        .locator('li')
+        .filter({ hasText: organization })
+        .getByRole('button', { name: 'Onayla' }),
+    );
     await adminPage!
       .locator('li')
       .filter({ hasText: organization })

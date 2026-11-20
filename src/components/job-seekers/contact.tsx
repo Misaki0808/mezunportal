@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { userTextLength } from '@/lib/user-text';
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
@@ -27,6 +28,7 @@ export function SeekerContact({
   const t = useTranslations('seekers');
   const fieldsText = useTranslations('privacyScreens.fields');
   const errors = useTranslations('errors.codes');
+  const hydrated = useHydrated();
   const [fields, setFields] = useState<ContactField[]>([]);
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
@@ -69,7 +71,10 @@ export function SeekerContact({
     });
   }
   return (
-    <div className="w-full min-w-0 max-w-2xl space-y-6">
+    <div
+      data-hydrated={hydrated ? 'true' : undefined}
+      className="w-full min-w-0 max-w-2xl space-y-6"
+    >
       <BackLink href="/adaylar" flush>
         {t('backSearch')}
       </BackLink>
