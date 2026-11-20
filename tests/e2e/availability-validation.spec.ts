@@ -2,6 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
 import { expect, test } from './fixture';
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
@@ -15,7 +16,10 @@ test('geceyi aşan tek aralık reddi ve iki güne bölerek kaydetme', async ({ p
   await page.setViewportSize({ width: 390, height: 844 });
   await loginAs(page, 'alumniMentor');
   await page.goto('/mentor/ayarlar');
-  await page.getByRole('switch', { name: 'Çarşamba günü müsait' }).check();
+  // Hidratasyondan önce açılan gün anahtarı ve yazılan saatler React durumuna işlenmez (hidratasyonda tohum değerine döner).
+  const wednesday = page.getByRole('switch', { name: 'Çarşamba günü müsait' });
+  await waitForFormReady(wednesday);
+  await wednesday.check();
   const wed = page.getByRole('group', { name: 'Çarşamba, 1. aralık' });
   await wed.getByLabel('Başlangıç').fill('23:00');
   await wed.getByLabel('Bitiş').fill('01:00');
