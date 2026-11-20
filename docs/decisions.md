@@ -1242,6 +1242,7 @@ Eski kuyrukların ayarları worker açılışında güncellenir; daha önce üre
 ## 2026-11-20 · KVKK hakları: CV ve askı
 
 JSON boyutunu büyütmemek için özgün CV baytları döküme gömülmez; dosya yalnız sahibine ayrı ve önbelleksiz indirilir. Askıdaki hesap ürün işlemlerine kapalı kalır, hak başvurusu için aydınlatma metnine yönlendirilir.
+
 ## 2026-11-20 · Liste sıralaması ve sayfa kuralı
 
 Adla sıralanan listeler (mezun dizini, şirket listesi) Türkçe harf sırasını sorgu düzeyinde `COLLATE "tr-TR-x-icu"` ile alır ve sayfalama veritabanında kalır; kolon harmanlaması ve şema değişmez, harmanlama yoksa sorgu varsayılan sıraya düşer. Bütün liste adreslerinde geçersiz parametre sessizce varsayılana düşer, aralık dışı sayfa (`?page=999`) 404 yerine son geçerli sayfaya yönlendirilir; şirket listesi sayfalanır, şirket sayfasında en yeni 10 ilan gösterilip tamamı `/ilanlar?companyId=` ile açılır. Liste arama kutularındaki sessiz `maxLength` bilinçli kabul edildi: arama için sayaç gerekmez.
