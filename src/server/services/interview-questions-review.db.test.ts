@@ -105,16 +105,20 @@ it('başka kaynak yazarın Unicode adı, e-posta ve telefon türev soru ve süre
   expect(result.companies.find((company) => company.id === w.company.id)?.name).toBe(
     'Örnek 532 Kurumu',
   );
-  expect(JSON.stringify(result)).not.toMatch(
+  // Soru ve süreç metinleri gruplardadır; bağımsız şirket/sektör sözlüğü aynı metni içerebilir.
+  expect(JSON.stringify(result.groups)).not.toMatch(
     /Néhir|Ｎｅｈｉｒ|N e h i r|@example|532 123 45 67|０５３２１２３４５６７|0 5 3 2 1 2 3 4 5 6 7/,
   );
+  for (const id of [w.context, ...w.authors]) expect(JSON.stringify(result)).not.toContain(id);
+  expect(JSON.stringify(result)).not.toContain('authorId');
 });
 it('kimlik kapısı başka kaynak yazar askıya alınınca adını sorularda açmaz', async () => {
   const w = await fixture();
   await w.add(w.context, []);
   for (const author of w.authors) await w.add(author, ['SQL nedir?', 'Néhirʼin görüşü nasıldı?']);
   const before = await getInterviewQuestions(db, w.viewer, w.query);
-  expect(JSON.stringify(before)).not.toContain('Néhir');
+  expect(JSON.stringify(before.groups)).not.toContain('Néhir');
+  expect(JSON.stringify(before)).not.toContain(w.context);
   await db.user.update({ where: { id: w.context }, data: { banned: true } });
   const after = await getInterviewQuestions(db, w.viewer, w.query);
   expect(after).toEqual(before);

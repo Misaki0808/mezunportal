@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, expect, it } from 'vitest';
 import { createTestPrisma } from '@/test/db';
 import { queryCounter } from '@/test/query-counter';
+import { letterMarker } from '@/test/markers';
 import {
   addMembership,
   createInstitution,
@@ -15,7 +16,7 @@ import { getInterviewQuestions } from './interview-questions';
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
 const filters = (companyId: string) => interviewQuerySchema.parse({ companyId });
-async function fixture() {
+async function fixture(authorName = 'Deniz Yılmaz') {
   const institution = await createInstitution(db);
   const other = await createInstitution(db);
   const viewer = await createUser(db);
@@ -31,7 +32,7 @@ async function fixture() {
     data: { name: `Şirket ${key}`, normalizedName: key, aliases: [] },
     select: { id: true },
   });
-  const authors = await Promise.all([0, 1, 2].map(() => createUser(db, { name: 'Deniz Yılmaz' })));
+  const authors = await Promise.all([0, 1, 2].map(() => createUser(db, { name: authorName })));
   const moderator = await createUser(db);
   return { institution, other, viewer, company, authors, moderator };
 }
@@ -68,16 +69,24 @@ async function addExperience(
   });
 }
 it('anonim soru gruplanır, kimlikli sorular düşer; K-07 ve hesap durumları her sorguda uygulanır', async () => {
-  const w = await fixture();
-  const personal = ['Denizʼin cevabı nedir?', 'Mail: biri@ornek.test'];
+  const marker = letterMarker();
+  const authorFirst = `Deniz${marker}`;
+  const w = await fixture(`${authorFirst} Yılmaz`);
+  // Şirket sözlüğü genel döner; başka testten aynı ilk adı taşıyan bir şirket gelmesi mümkündür.
+  const unrelatedCompany = await db.company.create({
+    data: { name: `Deniz ${marker}`, normalizedName: marker, aliases: [] },
+  });
+  const email = `biri-${marker}@ornek.test`;
+  const foreignQuestion = `Yabancı gizli ${marker}?`;
+  const personal = [`${authorFirst}ʼin cevabı nedir?`, `Mail: ${email}`];
   const rows = [];
   for (const author of w.authors)
     rows.push(await addExperience(w, author, w.institution.deptA1, ['SQL nedir?', ...personal]));
   const foreign = await createUser(db, { name: 'Yabancı Kişi' });
-  await addExperience(w, foreign, w.other.deptA1, ['Yabancı gizli soru?']);
+  await addExperience(w, foreign, w.other.deptA1, [foreignQuestion]);
   for (let i = 0; i < 2; i++) {
     const otherAuthor = await createUser(db, { name: `Başka Kullanıcı ${i}` });
-    await addExperience(w, otherAuthor, w.other.deptA1, ['Yabancı gizli soru?']);
+    await addExperience(w, otherAuthor, w.other.deptA1, [foreignQuestion]);
   }
   let result = await getInterviewQuestions(db, w.viewer, filters(w.company.id));
   expect(result.groups).toHaveLength(1);
@@ -87,7 +96,11 @@ it('anonim soru gruplanır, kimlikli sorular düşer; K-07 ve hesap durumları h
       { text: 'Takımda nasıl çalışırsın?', count: 3, category: 'PROCESS' },
     ]),
   );
-  expect(JSON.stringify(result)).not.toMatch(/Deniz|@ornek|Yabancı gizli|authorId/);
+  expect(result.companies.some((company) => company.id === unrelatedCompany.id)).toBe(true);
+  expect(JSON.stringify(result)).not.toContain(authorFirst);
+  expect(JSON.stringify(result)).not.toContain(email);
+  expect(JSON.stringify(result)).not.toContain(foreignQuestion);
+  expect(JSON.stringify(result)).not.toContain('authorId');
   const sector = await db.sector.create({
     data: { name: 'Test sektör', normalizedName: randomUUID() },
   });
@@ -146,7 +159,9 @@ it('başka bir kaynak yazarın adını üç kişi tekrarlasa bile soru yayımlan
     await addExperience(w, author, w.institution.deptA1, ['Néhirʼin görüşü nedir?']);
   }
   const result = await getInterviewQuestions(db, w.viewer, filters(w.company.id));
-  expect(JSON.stringify(result)).not.toContain('Néhir');
+  // Diğer şirketlerin adları sözlükte aynı metni içerebilir; kişisel soru gruplarda aranır.
+  expect(JSON.stringify(result.groups)).not.toContain('Néhir');
+  expect(JSON.stringify(result)).not.toContain(named);
 });
 it('1000 deneyimde sorgu sayısı kayıt başına artmaz', async () => {
   const w = await fixture();
