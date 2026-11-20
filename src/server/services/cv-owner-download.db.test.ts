@@ -1,4 +1,5 @@
 import { afterAll, expect, it, vi } from 'vitest';
+import { isValidElement, type ReactElement } from 'react';
 import { codedUnauthenticated } from '@/lib/errors';
 import { createTestPrisma } from '@/test/db';
 import { createUser } from '@/test/fixtures';
@@ -9,6 +10,7 @@ const state = vi.hoisted(() => ({
   files: new Map<string, Uint8Array>(),
 }));
 vi.mock('@/server/db', () => ({ getDb: () => state.db }));
+vi.mock('next-intl/server', () => ({ getTranslations: async () => (key: string) => key }));
 vi.mock('@/server/external/storage', () => ({
   getStorage: () => ({ get: async (key: string) => state.files.get(key) ?? null }),
 }));
@@ -19,6 +21,8 @@ vi.mock('@/server/permissions', () => ({
   },
 }));
 import { GET } from '@/app/api/hesabim/cv/[id]/route';
+import ExportPage from '@/app/(kvkk)/hesap/veriler/page';
+import { CvDownloads } from '@/components/privacy/cv-downloads';
 import { buildDataExport } from './dataExport';
 
 const db = createTestPrisma();
@@ -40,6 +44,13 @@ it('yalnız kendi dosyasını no-store ve attachment ile verir; yabancı, eksik 
     data: { userId: other, storageKey: otherKey, byteSize: 10, pageCount: 1 },
   });
   state.userId = owner;
+  const page = await ExportPage();
+  expect(page).not.toBeNull();
+  const children = (page as ReactElement<{ children: unknown[] }>).props.children;
+  const downloads = children.find(
+    (child) => isValidElement(child) && child.type === CvDownloads,
+  ) as ReactElement<{ files: { id: string }[] }> | undefined;
+  expect(downloads?.props.files.map((file) => file.id)).toEqual([mine.id]);
   const exportData = await buildDataExport(db, owner);
   expect(exportData.cv.uploads.find((x) => x.id === mine.id)?.downloadPath).toBe(
     `/api/hesabim/cv/${mine.id}`,
