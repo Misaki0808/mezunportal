@@ -1237,3 +1237,8 @@ Eski kuyrukların ayarları worker açılışında güncellenir; daha önce üre
 ## 2026-11-19 · İlan üzerinden iletişim notunda önek yok
 
 İlan üzerinden iletişim talebinde kullanıcının notu olduğu gibi (kırpılmış, NFC) saklanır; D7 kararındaki "İlan: <başlık> —" öneki kalkar ve not sessizce kısaltılmaz, çünkü ilan başlığı ve kurum zaten ayrı kaynak alanlarında tutulup gelen ve giden kutusunda ayrıca gösterilir; eski kayıtlar değişmez.
+
+
+## 2026-11-20 · KVKK hakları: CV ve askı
+
+JSON boyutunu büyütmemek için özgün CV baytları döküme gömülmez; dosya yalnız sahibine ayrı ve önbelleksiz indirilir. Askıdaki hesap ürün işlemlerine kapalı kalır, hak başvurusu için aydınlatma metnine yönlendirilir.

@@ -1,4 +1,6 @@
 import { beforeEach, expect, it, vi } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
+vi.mock('next-intl/server', () => ({ getTranslations: async () => (key: string) => key }));
 const { state, path } = vi.hoisted(() => ({
   state: vi.fn(),
   path: { value: '/hesap' as string | null },
@@ -59,5 +61,18 @@ it('onayı eksik kişi yalnız açık listedeki kendi KVKK sayfalarını açar',
   for (const value of ['/hesap/gizlilik/baskasi', '/hesap/veriler-ek', '/yonetim/kullanicilar']) {
     path.value = value;
     await expect(PrivacyGuard({ children: 'korumalı' })).rejects.toThrow('redirect:/onay');
+  }
+});
+
+it('askıdaki hesap iki hak sayfasında işlem açılmadan açıklama ve aydınlatma bağlantısı görür', async () => {
+  state.mockResolvedValue({ ok: false, errorCode: 'AUTH_ACCOUNT_SUSPENDED' });
+  for (const value of ['/hesap/veriler', '/hesap/hesabi-sil']) {
+    path.value = value;
+    const html = renderToStaticMarkup(
+      await PrivacyGuard({ children: <button>Gizli işlem</button> }),
+    );
+    expect(html).toContain('description');
+    expect(html).toContain('/hukuki/aydinlatma');
+    expect(html).not.toContain('Gizli işlem');
   }
 });

@@ -1739,7 +1739,14 @@
       "download": "Verilerimi indir",
       "downloading": "Dosyan hazırlanıyor…",
       "done": "Veri dosyan indirilmeye hazır.",
-      "fileName": "mezunportal-verilerim.json"
+      "fileName": "mezunportal-verilerim.json",
+      "cvTitle": "Yüklediğin CV dosyaları",
+      "cvDescription": "Yüklemelerini gör ve saklanan dosyalarını ayrı olarak indir.",
+      "cvDate": "Yükleme tarihi: {date}",
+      "cvDownload": "CV dosyasını indir",
+      "cvDownloadItem": "CV dosyasını indir ({number})",
+      "cvUnavailable": "Dosya artık saklanmıyor.",
+      "cvDownloading": "CV hazırlanıyor…"
     },
     "legal": {
       "draft": "Taslak · Hoca / hukuk onayı bekliyor",
@@ -1891,7 +1898,12 @@
         "slug": "profil-fotografi"
       }
     },
-    "erasedPersonalText": "Hesap silindiği için temizlendi."
+    "erasedPersonalText": "Hesap silindiği için temizlendi.",
+    "suspendedRights": {
+      "title": "KVKK başvurun",
+      "description": "Hesabın askıdayken bu işlem buradan yapılamaz; KVKK başvurusu için aydınlatma metnindeki iletişim yolunu kullanabilirsin.",
+      "link": "Aydınlatma metnini oku"
+    }
   },
   "onboarding": {
     "eyebrow": "SANA ÖZEL BİR BAŞLANGIÇ",
