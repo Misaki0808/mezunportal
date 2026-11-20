@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile, rm, access } from 'node:fs/promises';
@@ -47,7 +48,7 @@ test('CV talebi → yorum → faydalı; kapalı dosya erişimi 403', async ({ pa
     await page.goto(`/uye/${mentor.id}`);
     await page.waitForLoadState('networkidle');
     await page.getByRole('button', { name: 'CV incelemesi iste' }).click();
-    await page.waitForLoadState('networkidle');
+    await waitForFormReady(page.getByRole('button', { name: 'Talep gönder', exact: true }));
     await page.getByLabel('Mentora notun').fill('Staj başvurum için görüşünü alabilir miyim?');
     await page.getByRole('button', { name: 'Talep gönder' }).click();
     await expect(page.getByText('Talebin gönderildi.')).toBeVisible();
@@ -60,7 +61,7 @@ test('CV talebi → yorum → faydalı; kapalı dosya erişimi 403', async ({ pa
     );
     expect((await page.request.get(`/api/cv-inceleme/${request.id}/dosya`)).status()).toBe(403);
     await mentorPage.goto('/hesap/cv-inceleme');
-    await mentorPage.waitForLoadState('networkidle');
+    await waitForFormReady(mentorPage.getByRole('button', { name: 'Yorumu gönder', exact: true }));
     await mentorPage.getByLabel('Yazılı yorumun').fill('Projelerini daha belirgin anlatabilirsin.');
     await mentorPage.getByRole('button', { name: 'Yorumu gönder' }).click();
     await expect(mentorPage.getByText('Yorum gönderildi.')).toBeVisible();

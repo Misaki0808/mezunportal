@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
@@ -22,6 +23,7 @@ export function CourseAdmin({
   departments: { id: string; name: string }[];
   courses: Course[];
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('courseGuide');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -36,7 +38,7 @@ export function CourseAdmin({
     `${course.name} ${course.code}`.toLocaleLowerCase('tr-TR').includes(needle),
   );
   return (
-    <div className="space-y-5">
+    <div data-hydrated={hydrated ? 'true' : undefined} className="space-y-5">
       <Field label={t('search')}>
         {(control) => (
           <Input

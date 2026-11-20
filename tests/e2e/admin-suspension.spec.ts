@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -25,6 +26,7 @@ test('yönetici gerekçeyle askıya alır; oturum kapanır ve yeniden giriş eng
     await login(targetPage, 'alumniMentor');
     await login(page, 'systemAdmin');
     await page.goto('/yonetim/kullanicilar');
+    await waitForFormReady(page.getByRole('button', { name: 'Ara', exact: true }));
     await page.getByLabel('Ad veya e-posta ile ara').fill('alumni-mentor@test.mezunportal.local');
     await page.getByRole('button', { name: 'Ara', exact: true }).click();
     const card = page
@@ -142,6 +144,7 @@ test('sözlük kaydı eklenir, düzenlenir ve gerekçeyle silinir', async ({ pag
     await page.setViewportSize({ width: 390, height: 844 });
     await login(page, 'systemAdmin');
     await page.goto('/yonetim/sozlukler');
+    await waitForFormReady(page.getByLabel('Sözlük'));
     await page.getByLabel('Sözlük').selectOption('SECTOR');
     await page.getByRole('button', { name: 'Ekle', exact: true }).click();
     let dialog = page.getByRole('dialog');

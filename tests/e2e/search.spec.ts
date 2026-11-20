@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -45,6 +46,7 @@ test('mobil filtreli aramanın paylaşılan bağlantısı aynı sonucu açar', a
     await page.setViewportSize({ width: 390, height: 844 });
     await loginAs(page, 'academic');
     await page.goto('/deneyimler');
+    await waitForFormReady(page.getByRole('button', { name: 'Ara', exact: true }));
     await page.getByLabel('Deneyim ara').fill('KutupTeknoloji');
     await page.getByRole('button', { name: 'Ara', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'KutupTeknoloji' })).toBeVisible();

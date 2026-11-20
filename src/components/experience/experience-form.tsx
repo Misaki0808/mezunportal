@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -82,6 +83,7 @@ export function ExperienceForm(props: Props) {
 }
 
 function ExperienceFormBody({ departments, initial, save, submit }: Props) {
+  const hydrated = useHydrated();
   const t = useTranslations('experiences');
   const errorsT = useTranslations('errors.codes');
   const [state, setState] = useState<FormState>(initial?.state ?? emptyState());
@@ -587,6 +589,7 @@ function ExperienceFormBody({ departments, initial, save, submit }: Props) {
 
   return (
     <form
+      data-hydrated={hydrated ? 'true' : undefined}
       ref={formRef}
       noValidate
       onSubmit={(event) => {

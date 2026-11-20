@@ -159,6 +159,13 @@ bilinmeyen ya da karışık hata asla yeniden denenmez, kırmızı kalır). Birl
 react-server koşulu) `src/test/subprocess.ts` süreleriyle yazılır: test 30 sn, alt süreç 25 sn, `beforeAll(warmUpSubprocess)` ile tek seferlik ısınma (birim varsayılanı 5 sn yük altında
 yetmiyordu). Yeni bir alt süreç testi aynı yardımcıyı kullanır.
 
+### Tarayıcı testinde formun hazır olması
+
+SSR alanının görünmesi ya da `networkidle`, React olaylarının bağlandığını kanıtlamaz: erken doldurulan değer hidratasyonda sunucu değeriyle ezilebilir.
+Doldurmadan önce `tests/e2e/hydration.ts` içindeki `waitForFormReady` yardımcısına o formun düğmesini/alanını ver. Yardımcı en yakın **o bileşene ait** `useHydrated()` işaretini bekler;
+başka bir sayfa kabuğunun işareti yeterli değildir. Yerel HTML GET formu ya da aynı bileşenin durum değiştiren etkileşimiyle açılan pencere ayrıca değerlendirilir.
+`hydration.spec.ts`, JavaScript istekleri tutulurken SSR'nin hazır sayılmadığını ve bırakılınca gerçek alan doğrulamasının çalıştığını ölçer; sabit bekleme ve süre artırımı kullanılmaz.
+
 ### Bileşen testinde bayat düğüm (kart 379)
 
 Düğmeyi bir kez sorgulayıp "etkinleşmesini" beklemek yük altında rastgele düşer. `Button` sebep yazan devre dışı hâlde düğmeyi `<span>` içine sarar, etkinleşince

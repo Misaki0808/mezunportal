@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -27,7 +28,7 @@ test('deneyim: yaz → moderasyon → yayın → okuyucu anonim yazarı görmez'
   try {
     await login(page, 'student');
     await page.goto('/deneyim/yeni');
-    await page.waitForLoadState('networkidle');
+    await waitForFormReady(page.getByRole('button', { name: 'Taslağı kaydet', exact: true }));
     await page.getByLabel(/Kurum ya da etkinlik adı/).fill('E2E Teknoloji A.Ş.');
     await page.getByLabel(/^Yıl/).fill('2025');
     await page.getByLabel(/^Dönem/).selectOption('SUMMER');

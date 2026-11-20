@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -15,6 +16,7 @@ type Props = {
   search: (input: SearchUsersInput) => Promise<ActionResult<AdminUserPage>>;
 };
 export function AdminUsers({ initial, search }: Props) {
+  const hydrated = useHydrated();
   const t = useTranslations('admin');
   const errors = useTranslations('errors.codes');
   const [query, setQuery] = useState('');
@@ -62,6 +64,7 @@ export function AdminUsers({ initial, search }: Props) {
   return (
     <AdminFrame title={t('users.title')}>
       <form
+        data-hydrated={hydrated ? 'true' : undefined}
         className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-card sm:flex-row sm:items-start"
         onSubmit={(event) => {
           event.preventDefault();

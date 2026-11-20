@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -17,6 +18,7 @@ export function RequestForm({
   availability: CvReviewAvailability;
   embedded?: boolean;
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('cvReview'),
     errors = useTranslations('errors.codes');
   const [note, setNote] = useState(''),
@@ -75,6 +77,7 @@ export function RequestForm({
         </div>
       ) : availability.available ? (
         <form
+          data-hydrated={hydrated ? 'true' : undefined}
           className="mt-8 space-y-5"
           onSubmit={(e) => {
             e.preventDefault();

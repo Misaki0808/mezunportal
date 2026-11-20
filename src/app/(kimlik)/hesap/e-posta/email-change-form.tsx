@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export function EmailChangeForm({ submit }: Props) {
+  const hydrated = useHydrated();
   const t = useTranslations('authScreens.emailChange');
   const errors = useTranslations('errors.codes');
   const [email, setEmail] = useState('');
@@ -68,7 +70,13 @@ export function EmailChangeForm({ submit }: Props) {
   }
 
   return (
-    <form ref={formRef} noValidate onSubmit={handleSubmit} className="flex flex-1 flex-col gap-6">
+    <form
+      data-hydrated={hydrated ? 'true' : undefined}
+      ref={formRef}
+      noValidate
+      onSubmit={handleSubmit}
+      className="flex flex-1 flex-col gap-6"
+    >
       <Field
         className="[&_p]:text-base"
         label={t('label')}

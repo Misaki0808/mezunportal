@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -54,6 +55,7 @@ test('mobilde özel ay kaydı, toplu takvim ve takip', async ({ page }) => {
     });
     await loginAs(page, 'student');
     await page.goto('/deneyim/yeni');
+    await waitForFormReady(page.getByRole('button', { name: 'Taslağı kaydet', exact: true }));
     await page.getByLabel('Kurum ya da etkinlik adı').fill(name);
     await page.getByLabel('Başvuru ayı (isteğe bağlı)').selectOption('4');
     await page.getByRole('button', { name: 'Taslağı kaydet' }).click();

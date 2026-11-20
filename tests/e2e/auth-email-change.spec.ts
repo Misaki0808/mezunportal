@@ -3,7 +3,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { startEmailWorker, stopEmailWorker } from './email-worker';
 import { expect, test, type Page } from './fixture';
-import { waitForHydratedForm } from './hydration';
+import { waitForFormReady, waitForHydratedForm } from './hydration';
 
 async function emailLink(page: Page, email: string, path: string) {
   let link: string | undefined;
@@ -72,7 +72,10 @@ test('yeni hesap iki adımlı e-posta değiştirir, oturumunu yeniler, çıkar v
     await page.getByRole('button', { name: 'Seçimlerimi kaydet' }).click();
     await expect(page).toHaveURL(/\/hesap$/);
     const owner = await db.user.findUniqueOrThrow({ where: { email } });
-    await page.goto('/hesap/e-posta', { waitUntil: 'networkidle' });
+    await page.goto('/hesap/e-posta');
+    await waitForFormReady(
+      page.getByRole('button', { name: 'Doğrulama bağlantısı gönder', exact: true }),
+    );
     await page.getByLabel('Yeni e-posta adresi').fill(nextEmail);
     await page.getByRole('button', { name: 'Doğrulama bağlantısı gönder' }).click();
     await expect(page.getByRole('heading', { name: 'E-postanı kontrol et' })).toBeVisible();

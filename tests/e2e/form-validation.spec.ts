@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { expect, test } from './fixture';
 import { loginAs } from './login';
 
@@ -6,6 +7,7 @@ test('ad soyad: NFD üst sınır, uzunluk ve geçersiz karakter hataları veri k
 }) => {
   await loginAs(page, 'student');
   await page.goto('/hesap/ad-soyad');
+  await waitForFormReady(page.getByRole('button', { name: 'Kaydet', exact: true }));
   const name = page.getByLabel('Ad soyad');
   const save = page.getByRole('button', { name: 'Kaydet' });
   await name.fill('  ');
@@ -19,6 +21,7 @@ test('ad soyad: NFD üst sınır, uzunluk ve geçersiz karakter hataları veri k
   await expect(page.getByText('Adın güncellendi.')).toBeVisible();
   await expect(name).toHaveValue('İ'.repeat(80));
   await page.reload();
+  await waitForFormReady(page.getByRole('button', { name: 'Kaydet', exact: true }));
   await expect(name).toHaveValue('İ'.repeat(80));
 
   for (const invalid of ['A'.repeat(81), 'Ayşe 😀']) {
@@ -53,6 +56,7 @@ test('mentor kapasitesinde sınır dışı ve harf içeren değer kesilmeden red
 }) => {
   await loginAs(page, 'alumniMentor');
   await page.goto('/mentor/ayarlar');
+  await waitForFormReady(page.getByRole('button', { name: 'Genel ayarları kaydet', exact: true }));
   const capacity = page.getByLabel(/Aylık görüşme kapasitesi/);
   const save = page.getByRole('button', { name: 'Genel ayarları kaydet' });
   for (const value of ['41', '100', '4a']) {
@@ -71,6 +75,7 @@ test('mentor kapasitesinde sınır dışı ve harf içeren değer kesilmeden red
 test('CV inceleme sınırında boş değer ve 101 kaydedilmez, 0 geçerlidir', async ({ page }) => {
   await loginAs(page, 'alumniMentor');
   await page.goto('/hesap/cv-inceleme');
+  await waitForFormReady(page.getByRole('button', { name: 'Tercihleri kaydet', exact: true }));
   const limit = page.getByRole('spinbutton', { name: 'Aylık talep sınırı' });
   const old = await limit.inputValue();
   const save = page.getByRole('button', { name: 'Tercihleri kaydet' });
@@ -95,6 +100,7 @@ test('ders yönetiminde boş veya sınır dışı yarıyıl kaydedilmez ve veri 
 }) => {
   await loginAs(page, 'systemAdmin');
   await page.goto('/yonetim/dersler');
+  await waitForFormReady(page.getByRole('button', { name: 'Kaydet', exact: true }));
   await page.getByLabel(/Ders kodu/).fill('TEST101');
   const name = page.getByLabel(/Ders adı/);
   await name.fill('Deneme dersi');
