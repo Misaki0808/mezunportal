@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useState, useTransition } from 'react';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useTranslations } from 'next-intl';
@@ -11,6 +12,7 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
   const t = useTranslations('courseGuide');
   const errors = useTranslations('errors.codes');
   const [selected, setSelected] = useState(initial);
+  const hydrated = useHydrated();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
   const [pending, startTransition] = useTransition();
@@ -18,7 +20,7 @@ export function CourseSelector({ courses, initial }: { courses: Course[]; initia
     `${c.name} ${c.code}`.toLocaleLowerCase('tr-TR').includes(query.toLocaleLowerCase('tr-TR')),
   );
   return (
-    <div className="space-y-4">
+    <div data-hydrated={hydrated ? 'true' : undefined} className="space-y-4">
       <Field label={t('search')}>
         {(control) => (
           <Input {...control} value={query} onChange={(event) => setQuery(event.target.value)} />

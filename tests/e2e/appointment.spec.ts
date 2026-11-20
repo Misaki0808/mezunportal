@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -48,7 +49,7 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
     await m.goto('/hesap');
     await m.getByRole('link', { name: /Müsaitliğim/ }).click();
     await expect(m).toHaveURL(/\/mentor\/ayarlar$/);
-    await m.waitForLoadState('networkidle');
+    await waitForFormReady(m.getByRole('switch', { name: 'Pazartesi günü müsait' }));
     for (const day of ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']) {
       await m.getByRole('switch', { name: `${day} günü müsait` }).check();
     }
@@ -80,7 +81,7 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
       .getByRole('link', { name: 'Randevu iste', exact: true })
       .click();
     await expect(s).toHaveURL(new RegExp(`/randevu-al/${mentor.id}$`));
-    await s.waitForLoadState('networkidle');
+    await waitForFormReady(s.getByRole('radio', { name: /saatini seç/ }).first());
     await expect(s.getByText('Saatler İstanbul saatidir.')).toBeVisible();
     await s
       .getByRole('radio', { name: /saatini seç/ })
@@ -109,7 +110,7 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
     await m.waitForLoadState('networkidle');
     await expect(m.getByText('Yanıt bekliyor').first()).toBeVisible();
     await m.goto(`/randevular/${row.id}`);
-    await m.waitForLoadState('networkidle');
+    await waitForFormReady(m.getByRole('button', { name: 'Onayla' }));
     await expect(m.getByText('İ'.repeat(251))).toBeVisible();
     await m.getByRole('button', { name: 'Onayla' }).click();
     await expect(m.getByText('Onaylandı').first()).toBeVisible();
@@ -184,7 +185,7 @@ test('inceleyici: iki oturum aynı slot için yarışır; kaybeden SLOT_TAKEN g�
     await login(pages[1]!, 'seniorMentor');
     for (const page of pages) {
       await page.goto(`/randevu-al/${mentor.id}`);
-      await page.waitForLoadState('networkidle');
+      await waitForFormReady(page.getByRole('radio', { name: /saatini seç/ }).first());
     }
     const label = await pages[0]!
       .getByRole('radio', { name: /saatini seç/ })
@@ -310,7 +311,7 @@ test('inceleyici: izin verilen uzun yer notu 360/390/1440 genişliğinde taşmaz
     });
     await login(page, 'student');
     await page.goto(`/randevu-al/${mentor.id}`);
-    await page.waitForLoadState('networkidle');
+    await waitForFormReady(page.getByRole('radio', { name: /saatini seç/ }).first());
     await page
       .getByRole('radio', { name: /saatini seç/ })
       .first()

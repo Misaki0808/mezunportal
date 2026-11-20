@@ -1,5 +1,6 @@
 'use client';
 
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -40,6 +41,7 @@ export function SlotPicker({ list, request }: Props) {
   const modesT = useTranslations('appointments.modes');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
+  const hydrated = useHydrated();
   const [rejected, setRejected] = useState<{ source: SlotList['slots']; startsAt: string[] }>();
   const excluded = rejected?.source === list.slots ? rejected.startsAt : [];
   const slots = list.slots.filter(
@@ -179,6 +181,7 @@ export function SlotPicker({ list, request }: Props) {
   return (
     <form
       noValidate
+      data-hydrated={hydrated ? 'true' : undefined}
       onSubmit={(event) => {
         event.preventDefault();
         void submit();

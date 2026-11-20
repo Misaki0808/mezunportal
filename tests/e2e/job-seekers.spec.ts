@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { expect, test, type Page } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -58,8 +59,8 @@ test('öğrenci rıza verir, mezun anonim kartı bulur, talep onaylanınca kimli
   try {
     await login(studentPage!, 'student');
     await studentPage!.goto('/hesap/staj-ariyorum');
-    await studentPage!.waitForLoadState('networkidle');
     const visibility = studentPage!.getByRole('switch', { name: /İş arayanlara görün/ });
+    await waitForFormReady(visibility);
     if (!(await visibility.isChecked())) await visibility.check();
     const consent = studentPage!.getByRole('checkbox', { name: /Metni okudum/ });
     if (!(await consent.isChecked())) await consent.check();
@@ -70,8 +71,8 @@ test('öğrenci rıza verir, mezun anonim kartı bulur, talep onaylanınca kimli
     await evidence(studentPage!, 'ayar');
     await login(alumniPage!, 'alumniMentor');
     await alumniPage!.goto('/adaylar');
-    await alumniPage!.waitForLoadState('networkidle');
     const hiring = alumniPage!.getByRole('switch', { name: /İşe alım yapıyorum/ });
+    await waitForFormReady(hiring);
     if (!(await hiring.isChecked())) await hiring.click();
     await expect(alumniPage!.getByRole('button', { name: 'Aday ara' })).toBeVisible();
     await alumniPage!.getByRole('button', { name: 'Aday ara' }).click();
@@ -85,6 +86,7 @@ test('öğrenci rıza verir, mezun anonim kartı bulur, talep onaylanınca kimli
     await alumniPage!.waitForURL(/\/adaylar\/[^/]+\/iletisim$/);
     await expect(alumniPage!.getByRole('checkbox', { name: 'E-posta' })).toBeVisible();
     await evidence(alumniPage!, 'iletisim');
+    await waitForFormReady(alumniPage!.getByRole('checkbox', { name: 'E-posta' }));
     await alumniPage!.getByRole('checkbox', { name: 'E-posta' }).check();
     await alumniPage!.getByRole('button', { name: 'İstek gönder' }).click();
     await expect(
@@ -96,9 +98,9 @@ test('öğrenci rıza verir, mezun anonim kartı bulur, talep onaylanınca kimli
     ).toBeVisible();
     expect(await alumniPage!.content()).not.toContain(student.name);
     await studentPage!.goto('/hesap/iletisim?box=INCOMING');
-    await studentPage!.waitForLoadState('networkidle');
     const request = studentPage!.locator('div.rounded-card').filter({ hasText: alumni.name });
     await expect(request).toBeVisible();
+    await waitForFormReady(request.getByRole('button', { name: 'Onayla' }));
     await request.getByRole('button', { name: 'Onayla' }).click();
     await expect(request.getByRole('button', { name: 'Onayı geri al' })).toBeVisible();
     await alumniPage!.reload();
