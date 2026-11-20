@@ -238,24 +238,27 @@ export async function listStoryModeration(
     now = nowOf(deps);
   return deps.db.$transaction(async (tx) => {
     await admin(tx, userId, data.departmentId, now);
-    // 1) Hafif tarama: gövdesiz anahtar + şüphe durumu. Gövdeler (3000 karakter/hikâye) yalnız sayfadaki kayıtlar için okunur.
-    const heads = await tx.alumniStory.findMany({
-      where: {
-        departmentId: data.departmentId,
-        status: { in: ['PENDING', 'PUBLISHED'] },
-        user: {
-          deletedAt: null,
-          OR: [{ banned: false }, { banExpires: { lte: now } }],
-          memberships: {
-            some: {
-              departmentId: data.departmentId,
-              role: 'ALUMNI',
-              verificationStatus: 'VERIFIED',
-              endedAt: null,
-            },
+    // Görünürlük koşulu iki okumada AYNIDIR: tarama ile gövde okuması arasında hikâye taslağa dönerse ya da üyelik/kapsam
+    // değişirse o kayıt sayfadan düşer (bir eksik kabul), yöneticiye gönderilmemiş taslak gövdesi gitmez.
+    const visibleWhere = {
+      departmentId: data.departmentId,
+      status: { in: ['PENDING', 'PUBLISHED'] },
+      user: {
+        deletedAt: null,
+        OR: [{ banned: false }, { banExpires: { lte: now } }],
+        memberships: {
+          some: {
+            departmentId: data.departmentId,
+            role: 'ALUMNI',
+            verificationStatus: 'VERIFIED',
+            endedAt: null,
           },
         },
       },
+    } satisfies Prisma.AlumniStoryWhereInput;
+    // 1) Hafif tarama: gövdesiz anahtar + şüphe durumu. Gövdeler (3000 karakter/hikâye) yalnız sayfadaki kayıtlar için okunur.
+    const heads = await tx.alumniStory.findMany({
+      where: visibleWhere,
       select: {
         id: true,
         userId: true,
@@ -296,15 +299,27 @@ export async function listStoryModeration(
     const heading = ordered.slice(0, data.limit);
     const last = heading.at(-1);
     const nextCursor = ordered.length > data.limit && last ? storyCursorOf(last) : null;
-    // 2) Yalnız sayfadaki hikâyelerin gövdesi.
+    // 2) Yalnız sayfadaki hikâyelerin gövdesi; durum, kapsam ve şüphe güncel satırdan okunur.
     const rows = await tx.alumniStory.findMany({
-      where: { id: { in: heading.map((h) => h.id) } },
-      include: { department: { select: { name: true } }, user: { select: { name: true } } },
+      where: { ...visibleWhere, id: { in: heading.map((h) => h.id) } },
+      include: {
+        department: { select: { name: true } },
+        user: {
+          select: {
+            name: true,
+            suspicionFlags: {
+              where: { status: { in: ['OPEN', 'CONFIRMED'] } },
+              select: { id: true },
+            },
+          },
+        },
+      },
     });
     const byId = new Map(rows.map((row) => [row.id, row]));
     const items = heading.flatMap((head) => {
       const s = byId.get(head.id);
-      if (!s) return [];
+      // Arada düşen (taslağa dönen, kapsam dışına çıkan) ya da yayında iken şüpheli işaretlenen kayıt sayfadan düşer.
+      if (!s || (s.status === 'PUBLISHED' && s.user.suspicionFlags.length > 0)) return [];
       return [
         {
           id: s.id,
@@ -316,7 +331,7 @@ export async function listStoryModeration(
           status: s.status,
           consent: !!s.publicConsentAt && s.publicConsentVersion === STORY_CONSENT_VERSION,
           points: pointsOf.get(s.userId) ?? null,
-          suspicious: head.user.suspicionFlags.length > 0,
+          suspicious: s.user.suspicionFlags.length > 0,
         },
       ];
     });

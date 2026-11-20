@@ -9,7 +9,7 @@ import {
   grantRequiredConsents,
 } from '@/test/fixtures';
 import { STORY_CONSENT_VERSION } from '@/contracts/alumni-story';
-import { listStoryModeration } from './alumni-story';
+import { listStoryModeration, saveStory } from './alumni-story';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
@@ -201,5 +201,107 @@ describe('hikâye moderasyonu: imleçli sayfalama', () => {
       await expect(
         listStoryModeration({ db }, w.admin, { departmentId: w.inst.deptA1, ...bad }),
       ).rejects.toThrow();
+  });
+
+  /** Tarama ile gövde okuması arasına (ilk awardCandidate okuması) bir değişiklik sokar: gerçek eşzamanlılık yarışının deterministik hâli. */
+  async function listWithInterference(
+    w: Awaited<ReturnType<typeof fixture>>,
+    interfere: () => Promise<void>,
+  ) {
+    let ran = false;
+    const proxy = db.$extends({
+      query: {
+        awardCandidate: {
+          async findMany({ args, query }) {
+            const rows = await query(args);
+            if (!ran) {
+              ran = true;
+              await interfere();
+            }
+            return rows;
+          },
+        },
+      },
+    });
+    const page = await listStoryModeration({ db: proxy as never }, w.admin, {
+      departmentId: w.inst.deptA1,
+    });
+    expect(ran).toBe(true);
+    return page;
+  }
+
+  it('iki okuma arasında mezun hikâyeyi taslağa çevirirse taslak gövdesi moderasyona gitmez', async () => {
+    const w = await fixture();
+    const victim = w.stories[1]!; // yayımlı hikâye
+    const marker = 'ÖZEL TASLAK — yalnızca yazara ait, henüz gönderilmemiş sentetik hikâye metni.';
+    await grantRequiredConsents(db, victim.userId);
+    const page = await listWithInterference(w, async () => {
+      await saveStory({ db }, victim.userId, {
+        departmentId: w.inst.deptA1,
+        body: `${marker} ${BODY}`,
+        consent: true,
+      });
+    });
+    expect(page.items.some((item) => item.body.includes('ÖZEL TASLAK'))).toBe(false);
+    expect(page.items.map((item) => item.id)).not.toContain(victim.id);
+    // Arada düşen tek kayıt eksik; kalanı etkilenmez (bir eksik kabul).
+    expect(page.items.map((item) => item.id)).toEqual(w.expected.filter((id) => id !== victim.id));
+  });
+
+  it('arada yayımlı hikâyenin sahibi şüpheli işaretlenirse kayıt sayfadan düşer (şüphe güncel satırdan)', async () => {
+    const w = await fixture();
+    const victim = w.stories[3]!; // yayımlı
+    const page = await listWithInterference(w, async () => {
+      await db.suspicionFlag.create({
+        data: {
+          userId: victim.userId,
+          rule: 'BURST',
+          status: 'OPEN',
+          evidenceKey: `yaris-${victim.id}`,
+          entryIds: [],
+          windowStart: new Date('2026-05-09T09:00:00Z'),
+          windowEnd: SAME_TIME,
+          entryCount: 5,
+          points: 50,
+        },
+      });
+    });
+    expect(page.items.map((item) => item.id)).not.toContain(victim.id);
+  });
+
+  it('arada bekleyen hikâyenin sahibi şüpheli işaretlenirse kayıt kalır ama güncel şüphe bilgisiyle gelir', async () => {
+    const w = await fixture();
+    const victim = w.stories[0]!; // bekleyen
+    const page = await listWithInterference(w, async () => {
+      await db.suspicionFlag.create({
+        data: {
+          userId: victim.userId,
+          rule: 'BURST',
+          status: 'OPEN',
+          evidenceKey: `yaris-bekleyen-${victim.id}`,
+          entryIds: [],
+          windowStart: new Date('2026-05-09T09:00:00Z'),
+          windowEnd: SAME_TIME,
+          entryCount: 5,
+          points: 50,
+        },
+      });
+    });
+    expect(page.items.find((item) => item.id === victim.id)).toMatchObject({
+      status: 'PENDING',
+      suspicious: true,
+    });
+  });
+
+  it('arada mezunun üyeliği biterse kayıt sayfadan düşer (kapsam koşulu ikinci okumada da uygulanır)', async () => {
+    const w = await fixture();
+    const victim = w.stories[2]!; // bekleyen
+    const page = await listWithInterference(w, async () => {
+      await db.membership.updateMany({
+        where: { userId: victim.userId, departmentId: w.inst.deptA1 },
+        data: { endedAt: new Date() },
+      });
+    });
+    expect(page.items.map((item) => item.id)).not.toContain(victim.id);
   });
 });
