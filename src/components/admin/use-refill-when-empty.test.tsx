@@ -23,6 +23,17 @@ describe('kuyruk boşalınca sıradaki sayfa', () => {
     expect(setup({ empty: true, cursor: null, busy: false }).load).not.toHaveBeenCalled();
     expect(setup({ empty: true, cursor: 'c1', busy: true }).load).not.toHaveBeenCalled();
   });
+  it('istek başlamadıysa (false) imleç denenmiş sayılmaz; meşguliyet bitince yeniden dener', () => {
+    const load = vi.fn().mockReturnValueOnce(false).mockReturnValue(true);
+    const { rerender } = setup({ empty: true, cursor: 'c1', busy: false }, load);
+    expect(load).toHaveBeenCalledTimes(1); // başlamadı → denenmiş sayılmadı
+    rerender({ empty: true, cursor: 'c1', busy: true });
+    expect(load).toHaveBeenCalledTimes(1); // meşgulken yoklamaz
+    rerender({ empty: true, cursor: 'c1', busy: false });
+    expect(load).toHaveBeenCalledTimes(2); // kilit kalkınca sıraya girer
+    rerender({ empty: true, cursor: 'c1', busy: false });
+    expect(load).toHaveBeenCalledTimes(2); // başladıktan sonra aynı imleç yeniden denenmez (döngü yok)
+  });
   it('meşguliyet bitince ve yeni imleç gelince yeniden yükler', () => {
     const { load, rerender } = setup({ empty: true, cursor: 'c1', busy: true });
     rerender({ empty: true, cursor: 'c1', busy: false });

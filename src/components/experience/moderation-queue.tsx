@@ -254,9 +254,14 @@ export function ModerationQueue({
     },
   );
 
-  async function more(kind: 'experiences' | 'reports') {
-    if (locked.current) return;
+  /** Ortak kilit alınıp istek başladıysa `true`; başka yükleme sürüyorsa `false` (otomatik doldurma imleci denenmiş saymaz). */
+  function more(kind: 'experiences' | 'reports'): boolean {
+    if (locked.current) return false;
     locked.current = true;
+    void fetchMore(kind);
+    return true;
+  }
+  async function fetchMore(kind: 'experiences' | 'reports') {
     setLoading(true);
     setListError(undefined);
     try {
@@ -285,13 +290,13 @@ export function ModerationQueue({
     empty: items.length === 0,
     cursor,
     busy: loading,
-    load: () => void more('experiences'),
+    load: () => more('experiences'),
   });
   useRefillWhenEmpty({
     empty: reports.length === 0,
     cursor: reportCursor,
     busy: loading,
-    load: () => void more('reports'),
+    load: () => more('reports'),
   });
 
   const experiencesPanel =
