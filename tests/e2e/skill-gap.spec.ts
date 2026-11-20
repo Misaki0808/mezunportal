@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -97,6 +98,7 @@ test('mobilde hedef seç, güvenli beceri açığını ve filtreli mentoru gör'
     await loginAs(page, 'student');
     await page.goto('/profil');
     const panel = page.getByRole('region', { name: 'Hedefime ne kadar yakınım?' });
+    await waitForFormReady(panel.getByLabel('Hedef pozisyonun'));
     await panel.getByLabel('Hedef pozisyonun').selectOption(title.id);
     await panel.getByRole('button', { name: 'Hedefi kaydet' }).click();
     await expect(panel.getByText('10+ mezun grubundan')).toBeVisible();

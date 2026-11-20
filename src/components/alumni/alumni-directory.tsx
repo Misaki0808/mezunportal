@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 
 import { userTextLength } from '@/lib/user-text';
 import { useState, useTransition } from 'react';
@@ -56,6 +57,7 @@ export function AlumniDirectory({
   filter: AlumniSearch;
   sectors: { id: string; name: string }[];
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('alumniDirectory');
   const directory = useTranslations('directory');
   const router = useRouter();
@@ -140,7 +142,7 @@ export function AlumniDirectory({
     </div>
   );
   return (
-    <div className="w-full">
+    <div data-hydrated={hydrated ? 'true' : undefined} className="w-full">
       <PageHeader eyebrow={t('eyebrow')} title={t('titlePage')} description={t('description')} />
       <div className="mt-6 flex min-w-0 flex-wrap items-start gap-2">
         <SearchBar

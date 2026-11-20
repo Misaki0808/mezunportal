@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { userTextLength } from '@/lib/user-text';
 
 import { useTranslations } from 'next-intl';
@@ -30,6 +31,7 @@ type Props = {
 };
 
 export function RequestForm({ suggest, submit, onSubmitted }: Props) {
+  const hydrated = useHydrated();
   const t = useTranslations('faq.request');
   const errors = useTranslations('errors.codes');
   const [question, setQuestion] = useState('');
@@ -102,7 +104,12 @@ export function RequestForm({ suggest, submit, onSubmitted }: Props) {
       : [];
   const similarBlocked = error === 'FAQ_SIMILAR_EXISTS';
   return (
-    <form onSubmit={(e) => void onSubmit(e)} noValidate className="flex flex-col gap-4">
+    <form
+      data-hydrated={hydrated ? 'true' : undefined}
+      onSubmit={(e) => void onSubmit(e)}
+      noValidate
+      className="flex flex-col gap-4"
+    >
       <Field
         label={t('label')}
         hint={t('hint', { min: FAQ_QUESTION_MIN, max: FAQ_QUESTION_MAX })}
