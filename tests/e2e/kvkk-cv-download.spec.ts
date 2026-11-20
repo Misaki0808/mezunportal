@@ -75,6 +75,9 @@ test('kendi CV dosyasını indirir, askıda hak başvurusu bağlantısı göster
       if (process.env.KVKK_EVIDENCE && url === '/hesap/veriler') {
         for (const width of [390, 1440]) {
           await page.setViewportSize({ width, height: 900 });
+          const box = await page.getByRole('heading', { name: 'KVKK başvurun' }).boundingBox();
+          expect(box).not.toBeNull();
+          expect(box!.x).toBeGreaterThanOrEqual(16);
           await page.screenshot({
             path: `${process.env.KVKK_EVIDENCE}/aski-${width}.png`,
             fullPage: true,

@@ -27,16 +27,18 @@ export async function PrivacyGuard({ children }: { children: ReactNode }) {
     ) {
       const t = await getTranslations('privacyScreens.suspendedRights');
       return (
-        <Card className="mx-auto max-w-2xl space-y-4">
-          <h1 className="text-2xl font-semibold">{t('title')}</h1>
-          <p>{t('description')}</p>
-          <Link
-            className="inline-flex min-h-11 items-center text-primary underline"
-            href="/hukuki/aydinlatma"
-          >
-            {t('link')}
-          </Link>
-        </Card>
+        <div className="mx-auto w-full max-w-2xl px-4 py-6">
+          <Card className="space-y-4">
+            <h1 className="text-2xl font-semibold">{t('title')}</h1>
+            <p>{t('description')}</p>
+            <Link
+              className="inline-flex min-h-11 items-center text-primary underline"
+              href="/hukuki/aydinlatma"
+            >
+              {t('link')}
+            </Link>
+          </Card>
+        </div>
       );
     }
     return <ErrorState errorCode={result.errorCode} />;

@@ -15,6 +15,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const actor = await requireUserWithoutConsent();
     const { id } = await context.params;
     const bytes = await getDb().$transaction(async (tx) => {
+      // Silmeyle yarışı önlemek için kilit ve hesap durumu aynı işlemde; yarış testi henüz yok.
+      // Depolama uzak sürücüye taşınırsa okumayı işlem dışına al: havuz ve 5 sn işlem sınırı.
       await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${actor.userId} FOR SHARE`;
       const user = await tx.user.findUnique({
         where: { id: actor.userId },
@@ -32,7 +34,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       if (!file) throw codedNotFound('RESOURCE_NOT_FOUND');
       return file;
     });
-    return new Response(Buffer.from(bytes), {
+    return new Response(bytes as Uint8Array<ArrayBuffer>, {
       headers: {
         ...noStore,
         'content-type': 'application/pdf',
