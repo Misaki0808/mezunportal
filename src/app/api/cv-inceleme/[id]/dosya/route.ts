@@ -1,3 +1,4 @@
+import { API_REFERRER_POLICY, INLINE_PDF_CSP } from '@/lib/api-security-headers';
 import { getDb } from '@/server/db';
 import { getStorage } from '@/server/external/storage';
 import { readRouteSession } from '@/server/permissions/route-session';
@@ -17,8 +18,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
         'content-disposition': 'inline; filename="cv.pdf"',
         'x-content-type-options': 'nosniff',
         'cache-control': 'private, no-store',
-        'referrer-policy': 'no-referrer',
-        'content-security-policy': "default-src 'none'; sandbox",
+        'referrer-policy': API_REFERRER_POLICY,
+        'content-security-policy': INLINE_PDF_CSP,
       },
     });
   } catch (error) {

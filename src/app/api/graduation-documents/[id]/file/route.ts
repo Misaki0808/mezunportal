@@ -1,3 +1,4 @@
+import { API_REFERRER_POLICY, INLINE_PDF_CSP } from '@/lib/api-security-headers';
 import { isCodedError } from '@/lib/errors';
 import { getStorage } from '@/server/external/storage';
 import { getDb } from '@/server/db';
@@ -14,9 +15,9 @@ const HEADERS = {
   'content-disposition': 'inline; filename="mezun-belgesi.pdf"',
   'x-content-type-options': 'nosniff',
   'cache-control': 'private, no-store',
-  'referrer-policy': 'no-referrer',
-  // PDF görüntülemede kısıtlı içerik politikası (betik, gömme ve dış kaynak yok).
-  'content-security-policy': "default-src 'none'; sandbox",
+  'referrer-policy': API_REFERRER_POLICY,
+  // PDF görüntülemede kısıtlı içerik politikası (betik, gömme ve dış kaynak yok); `sandbox` nedeni `api-security-headers.ts`.
+  'content-security-policy': INLINE_PDF_CSP,
 } as const;
 
 const status = (code: number) =>
