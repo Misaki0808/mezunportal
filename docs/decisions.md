@@ -1251,3 +1251,15 @@ Adla sıralanan listeler (mezun dizini, şirket listesi) Türkçe harf sırasın
 
 Geri alma sırasında depolama da başarısız olursa kişisel dosya kayıtsız kalabileceğinden günlük iş, bir saatten eski ve kayıtla ilişkisi olmayan CV'leri mezun belgeleri gibi siler. CV günlük hakkı, kullanıcı kilidi altında kabul edilen yüklemeyle aynı işlemde tüketilir; eşzamanlı reddedilen ve başarısız işlemler hak tüketmez. Şifreli mezun belgeleri yöneticinin okuyamayacağı başvuruları önlemek için reddedilir; JavaScript içeren PDF kabul kuralı değişmez.
 
+
+## 2026-11-20 · Hikâye kuyruğu sayfalı, takvim şirket seçicisi dar, kimlikte denetim karakteri yok
+
+Ayın mezunu hikâye moderasyonu diğer kuyruklarla aynı imleçli sayfalamaya geçti. Sıra eskisi gibi puan ▸ gönderim zamanı ▸
+kimlik olduğundan imleç bu üçlüyü taşır; sunucu önce gövdesiz hafif bir tarama yapar, gövdeleri yalnız sayfadaki hikâyeler
+için okur (sayfa boyutu 20, en çok 50). Karar sonrası liste yeniden okunmaz, yüklenen sayfalar yerinde güncellenir.
+Başvuru takvimindeki şirket seçicisi bütün şirketleri sayfaya gömmez; yalnız izleyicinin üniversitesinde yayımlanmış en az
+bir staj deneyimi olan şirketleri (takvim toplamasıyla aynı koşul) ve URL'den gelen seçili şirketi taşır. Projede arama
+kutulu hazır bir şirket seçici yok; yeni bileşen/bağımlılık eklenmedi.
+İstemciden gelen kimlik, imleç ve anahtar metinleri ortak `idTextSchema` ile (`src/lib/id-text.ts`) kırpılır, 1–64 karakter
+(imleçte 200) olmalıdır ve NUL dahil hiçbir denetim karakteri (`\p{Cc}`) içeremez; `%00` içeren kimlik veritabanına gitmeden
+`VALIDATION_INVALID` döner (önceden beklenmeyen hataya dönüşüyordu). Serbest metin bu kuralın dışındadır (satır sonu geçerlidir).

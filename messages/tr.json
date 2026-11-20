@@ -3730,6 +3730,7 @@
     "adminIntro": "Hikâyeleri incele; onaylı ve rızalı mezunlar arasından bölümün için seçim yap.",
     "selectDepartment": "Bölüm seç",
     "load": "Hikâyeleri göster",
+    "loadMore": "Daha fazla göster",
     "queueEmpty": "Bu bölümde incelenecek veya seçilecek hikâye yok.",
     "review": "Hikâyeyi onayla",
     "reject": "Düzenleme iste",

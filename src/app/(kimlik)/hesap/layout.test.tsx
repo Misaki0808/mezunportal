@@ -17,6 +17,12 @@ it('inceleyici: başka katılımcının formu loading başlamadan 404 olur', asy
     digest: expect.stringContaining('404'),
   });
 });
+it('adresteki bozuk (denetim karakterli) görüşme kimliği hata ekranı değil 404 olur', async () => {
+  mocks.view.mockResolvedValue({ ok: false, errorCode: 'VALIDATION_INVALID' });
+  await expect(Layout({ children: 'form' })).rejects.toMatchObject({
+    digest: expect.stringContaining('404'),
+  });
+});
 it('inceleyici: oturum/onay kapısı ve normal hesap sayfası korunur', async () => {
   mocks.privacy.mockResolvedValueOnce('consent');
   expect(await Layout({ children: 'form' })).toBe('consent');

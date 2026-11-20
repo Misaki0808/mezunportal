@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 
 it('inceleyici: başka katılımcının ya da olmayan görüşme formu loading sınırının üstünde gerçek 404 olur', async () => {
-  for (const errorCode of ['RESOURCE_NOT_FOUND', 'AUTH_FORBIDDEN']) {
+  for (const errorCode of ['RESOURCE_NOT_FOUND', 'AUTH_FORBIDDEN', 'VALIDATION_INVALID']) {
     mocks.view.mockResolvedValue({ ok: false, errorCode });
     await expect(Layout({ children: 'form' })).rejects.toMatchObject({
       digest: expect.stringContaining('404'),

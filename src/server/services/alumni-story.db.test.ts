@@ -73,7 +73,7 @@ describe('Ayın mezunu', () => {
     });
     expect(await getCurrentStory(deps, student)).toBeNull();
     expect(
-      (await listStoryModeration(deps, admin, { departmentId: inst.deptA1 })).some(
+      (await listStoryModeration(deps, admin, { departmentId: inst.deptA1 })).items.some(
         (item) => item.id === story.id,
       ),
     ).toBe(false);
@@ -135,7 +135,7 @@ describe('Ayın mezunu', () => {
     });
     expect(await getCurrentStory(deps, student)).toBeNull();
     expect(
-      (await listStoryModeration(deps, admin, { departmentId: inst.deptA1 })).some(
+      (await listStoryModeration(deps, admin, { departmentId: inst.deptA1 })).items.some(
         (item) => item.id === story.id,
       ),
     ).toBe(false);
@@ -153,7 +153,7 @@ describe('Ayın mezunu', () => {
     });
     expect(await getCurrentStory(deps, student)).toBeNull();
     expect(
-      (await listStoryModeration(deps, admin, { departmentId: inst.deptA1 })).some(
+      (await listStoryModeration(deps, admin, { departmentId: inst.deptA1 })).items.some(
         (item) => item.id === story.id,
       ),
     ).toBe(false);

@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { normalizeUserText } from '@/lib/user-text';
 import { z } from 'zod';
 
@@ -300,7 +301,7 @@ export const cvUploadOutputSchema = z.object({
 });
 export type CvUploadOutput = z.infer<typeof cvUploadOutputSchema>;
 
-export const cvIdSchema = z.object({ cvUploadId: z.string({ error: INVALID }).min(1).max(64) });
+export const cvIdSchema = z.object({ cvUploadId: idTextSchema(INVALID) });
 export type CvIdInput = z.input<typeof cvIdSchema>;
 
 export const cvStatusOutputSchema = z.object({
@@ -389,7 +390,7 @@ export type CvReview = {
 // ---------------------------------------------------------------------------------------------
 
 const decisionBase = {
-  key: z.string({ error: INVALID }).min(1).max(64),
+  key: idTextSchema(INVALID),
   /** `CONFLICT` kalemde elle düzeltmenin üzerine yazmak için AÇIK onay; yoksa `CV_CONFLICT_UNRESOLVED`. */
   overwriteMine: z.boolean({ error: INVALID }).default(false),
 };
@@ -475,7 +476,7 @@ export const experienceInvitationsOutputSchema = z.object({
 export type ExperienceInvitationsOutput = z.infer<typeof experienceInvitationsOutputSchema>;
 
 export const dismissInvitationSchema = z.object({
-  invitationId: z.string({ error: INVALID }).min(1).max(64),
+  invitationId: idTextSchema(INVALID),
 });
 export type DismissInvitationInput = z.input<typeof dismissInvitationSchema>;
 

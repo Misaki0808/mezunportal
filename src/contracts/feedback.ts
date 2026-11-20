@@ -1,8 +1,9 @@
+import { idTextSchema } from '@/lib/id-text';
 import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 export const feedbackInputSchema = z
   .object({
-    appointmentId: z.string().trim().min(1).max(64),
+    appointmentId: idTextSchema(),
     happened: z.boolean(),
     helpful: z.boolean().nullable(),
     note: userTextSchema(1, 1000).nullable(),

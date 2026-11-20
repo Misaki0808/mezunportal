@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -95,10 +96,7 @@ export type ListInboxInput = z.input<typeof listInboxInputSchema>;
 
 export const markInboxReadInputSchema = z
   .object({
-    ids: z
-      .array(z.string({ error: 'VALIDATION_INVALID' }).min(1).max(64))
-      .min(1)
-      .max(INBOX_MARK_MAX_IDS),
+    ids: z.array(idTextSchema()).min(1).max(INBOX_MARK_MAX_IDS),
   })
   .strict();
 export type MarkInboxReadInput = z.input<typeof markInboxReadInputSchema>;

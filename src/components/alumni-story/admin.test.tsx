@@ -21,20 +21,23 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.list.mockResolvedValue({
     ok: true,
-    data: [
-      {
-        id: 's1',
-        userId: 'u1',
-        name: 'Örnek mezun',
-        departmentId: 'd1',
-        department: 'YBS',
-        body: 'Mezun hikâyesi örneği',
-        status: 'PENDING',
-        consent: true,
-        points: null,
-        suspicious: false,
-      },
-    ],
+    data: {
+      items: [
+        {
+          id: 's1',
+          userId: 'u1',
+          name: 'Örnek mezun',
+          departmentId: 'd1',
+          department: 'YBS',
+          body: 'Mezun hikâyesi örneği',
+          status: 'PENDING',
+          consent: true,
+          points: null,
+          suspicious: false,
+        },
+      ],
+      nextCursor: null,
+    },
   });
 });
 /**
@@ -92,9 +95,8 @@ it('sonraki hikâyede yayın kapalıysa gerekçeli ret eylemine devam eder', asy
     suspicious: false,
   };
   const second = { ...first, id: 's2', userId: 'u2', name: 'Diğer mezun', consent: false };
-  mocks.list
-    .mockResolvedValueOnce({ ok: true, data: [first, second] })
-    .mockResolvedValue({ ok: true, data: [{ ...first, status: 'PUBLISHED' }, second] });
+  // Karar sonrası liste yeniden okunmaz: yüklenmiş sayfalar korunur, onaylanan satır yerinde yayımlanmış olur.
+  mocks.list.mockResolvedValue({ ok: true, data: { items: [first, second], nextCursor: null } });
   mocks.review.mockResolvedValue({ ok: true, data: {} });
   const { user } = renderUi(<StoryAdmin departments={[{ id: 'd1', name: 'YBS' }]} />);
   await user.click(screen.getByRole('button', { name: 'Hikâyeleri göster' }));
@@ -113,7 +115,10 @@ it('sonraki hikâyede yayın kapalıysa gerekçeli ret eylemine devam eder', asy
 it('düğme etkinleşirken DOM düğümü yenilense de bekleme taze düğüme tıklar (bayat düğüm yarışı, kart 379)', async () => {
   let release!: () => void;
   mocks.list.mockImplementationOnce(
-    () => new Promise((resolve) => (release = () => resolve({ ok: true, data: [] }))),
+    () =>
+      new Promise(
+        (resolve) => (release = () => resolve({ ok: true, data: { items: [], nextCursor: null } })),
+      ),
   );
   const { user } = renderUi(<StoryAdmin departments={[{ id: 'd1', name: 'YBS' }]} />);
   const load = () => screen.getByRole('button', { name: 'Hikâyeleri göster' });
@@ -124,4 +129,89 @@ it('düğme etkinleşirken DOM düğümü yenilense de bekleme taze düğüme t�
   release();
   await clicking;
   expect(mocks.list).toHaveBeenCalledTimes(2);
+});
+
+const story = (n: number, extra: Record<string, unknown> = {}) => ({
+  id: `s${n}`,
+  userId: `u${n}`,
+  name: `Mezun ${n}`,
+  departmentId: 'd1',
+  department: 'YBS',
+  body: `Hikâye ${n}`,
+  status: 'PENDING',
+  consent: true,
+  points: null,
+  suspicious: false,
+  ...extra,
+});
+async function show() {
+  const { user } = renderUi(<StoryAdmin departments={[{ id: 'd1', name: 'YBS' }]} />);
+  await user.click(screen.getByRole('button', { name: 'Hikâyeleri göster' }));
+  return user;
+}
+
+it('ilk yanıt sayfa boyutuyla sınırlıdır; "Daha fazla göster" imleçle sıradakini ekler, çift satır olmaz', async () => {
+  mocks.list
+    .mockResolvedValueOnce({
+      ok: true,
+      data: { items: [story(1), story(2)], nextCursor: '5:10:s2' },
+    })
+    .mockResolvedValueOnce({ ok: true, data: { items: [story(2), story(3)], nextCursor: null } });
+  const user = await show();
+  expect(await screen.findByText('Mezun 2')).toBeInTheDocument();
+  expect(screen.queryByText('Mezun 3')).toBeNull();
+  expect(mocks.list).toHaveBeenLastCalledWith({ departmentId: 'd1' });
+  await clickWhenEnabled(user, () => screen.getByRole('button', { name: 'Daha fazla göster' }));
+  expect(await screen.findByText('Mezun 3')).toBeInTheDocument();
+  expect(mocks.list).toHaveBeenLastCalledWith({ departmentId: 'd1', cursor: '5:10:s2' });
+  expect(screen.getAllByText('Mezun 2')).toHaveLength(1);
+  expect(screen.queryByRole('button', { name: 'Daha fazla göster' })).toBeNull();
+});
+
+it('yüklü hikâyelerin hepsi işlenince sıradaki sayfa kendiliğinden gelir; boş durum yalnız imleç bitince görünür', async () => {
+  mocks.list
+    .mockResolvedValueOnce({ ok: true, data: { items: [story(1)], nextCursor: 'c1' } })
+    .mockResolvedValueOnce({ ok: true, data: { items: [story(2)], nextCursor: null } });
+  mocks.review.mockResolvedValue({ ok: true, data: {} });
+  const user = await show();
+  await clickWhenEnabled(user, () => screen.getByRole('button', { name: 'Düzenleme iste' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText(/Gerekçe/), 'Kapsamı yeniden açıkla');
+  await user.click(dialog.getByRole('button', { name: 'Kararı onayla' }));
+  expect(await screen.findByText('Mezun 2')).toBeInTheDocument();
+  expect(screen.queryByText('Mezun 1')).toBeNull();
+  expect(screen.queryByText(/incelenecek veya seçilecek hikâye yok/)).toBeNull();
+  expect(mocks.list).toHaveBeenCalledTimes(2);
+  expect(mocks.list).toHaveBeenLastCalledWith({ departmentId: 'd1', cursor: 'c1' });
+});
+
+it('imleç sürerken liste boşsa ve sıradaki sayfa gelmezse döngüye girmez, düğme kalır', async () => {
+  mocks.list
+    .mockResolvedValueOnce({ ok: true, data: { items: [], nextCursor: 'c1' } })
+    .mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+  await show();
+  await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+  await screen.findByRole('button', { name: 'Daha fazla göster' });
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  expect(mocks.list).toHaveBeenCalledTimes(2);
+  expect(screen.queryByText(/incelenecek veya seçilecek hikâye yok/)).toBeNull();
+});
+
+it('şüpheli kayıt yayımlanınca listeden düşer (sunucu kuralıyla aynı)', async () => {
+  mocks.list.mockResolvedValue({
+    ok: true,
+    data: { items: [story(1, { suspicious: true }), story(2)], nextCursor: null },
+  });
+  mocks.review.mockResolvedValue({ ok: true, data: {} });
+  const user = await show();
+  await clickWhenEnabled(
+    user,
+    () => screen.getAllByRole('button', { name: 'Hikâyeyi onayla' })[0]!,
+  );
+  await user.click(
+    within(await screen.findByRole('dialog')).getByRole('button', { name: 'Kararı onayla' }),
+  );
+  await waitFor(() => expect(screen.queryByText('Mezun 1')).toBeNull());
+  expect(screen.getByText('Mezun 2')).toBeInTheDocument();
+  expect(mocks.list).toHaveBeenCalledTimes(1);
 });

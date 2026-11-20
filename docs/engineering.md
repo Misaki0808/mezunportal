@@ -54,6 +54,8 @@ Ajanların eğitim verisinde eski sürümlerin örnekleri çoktur; kurulumda saa
 - İstemciye giden veri açık `select` ile seçilir; Prisma nesnesi olduğu gibi döndürülmez.
 - Tarih veritabanında UTC, ekranda `Europe/Istanbul`; biçimlendirme merkezi yardımcılardadır.
 - Türkçe büyük/küçük harf `tr-TR` ile (`toLocaleLowerCase('tr-TR')`).
+- Kimlik ön-seçimi + ayrıntı okuması yapan sorgularda (hafif tarama sonra gövde okuması) ikinci okuma ilkiyle AYNI yetki/görünürlük
+  koşulunu taşır; durum ve şüphe gibi karar girdileri ikinci okumadaki güncel satırdan hesaplanır, arada düşen kayıt sayfadan düşer.
 - Dış servis arayüz + adaptör arkasındadır; sahte ve gerçek uygulama aynı sözleşmeye uyar
   (`docs/architecture.md` “Dış servisler”).
 

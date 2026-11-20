@@ -14,7 +14,11 @@ import { getExperienceDetail, getOwnAppliedMonth, saveExperienceDraft } from './
 import { maySendNotification } from './notification-preferences';
 import { scheduleApplicationWindows } from '../jobs/application-window-task';
 import { sendNotificationIntent } from '../jobs/notification-intent-worker';
-import { getApplicationCalendar, setApplicationFollow } from './application-window';
+import {
+  getApplicationCalendar,
+  listCalendarCompanies,
+  setApplicationFollow,
+} from './application-window';
 
 const db = createTestPrisma();
 beforeEach(() => {
@@ -69,13 +73,19 @@ async function fixture() {
 async function add(
   w: Awaited<ReturnType<typeof fixture>>,
   authorId: string,
-  options: { anonymous?: boolean; departmentId?: string; appliedMonth?: number | null } = {},
+  options: {
+    anonymous?: boolean;
+    departmentId?: string;
+    appliedMonth?: number | null;
+    companyId?: string;
+    pending?: boolean;
+  } = {},
 ) {
   return db.experience.create({
     data: {
       authorId,
       departmentIdAtWrite: options.departmentId ?? w.institute.deptA1,
-      companyId: w.company.id,
+      companyId: options.companyId ?? w.company.id,
       type: 'INTERNSHIP',
       organizationName: w.company.name,
       termYear: 2025,
@@ -84,10 +94,14 @@ async function add(
       durationWeeks: 8,
       pay: 'PAID',
       applicationChannel: 'REFERRAL',
-      status: 'PUBLISHED',
-      moderatedAt: new Date(),
-      moderatedById: w.moderator,
-      publishedAt: new Date(),
+      ...(options.pending
+        ? { status: 'PENDING' as const }
+        : {
+            status: 'PUBLISHED' as const,
+            moderatedAt: new Date(),
+            moderatedById: w.moderator,
+            publishedAt: new Date(),
+          }),
       isAnonymous: options.anonymous ?? false,
       whatLearned: 'Öğrendim',
       advice: 'Çalışın',
@@ -117,6 +131,34 @@ it('K-07, üç farklı yazar, anonim kesişimi ve tekil ay gizliliği', async ()
   const anonymous = await createUser(db);
   await add(w, anonymous, { anonymous: true });
   expect((await getApplicationCalendar(db, w.student, scope, monthStart)).months).toEqual([]);
+});
+it('şirket seçicisi yalnız izleyicinin üniversitesinde yayımlanmış stajı olan şirketleri ve seçili şirketi taşır', async () => {
+  const w = await fixture();
+  const key = randomUUID();
+  const company = (name: string) =>
+    db.company.create({
+      data: { name: `${name} ${key}`, normalizedName: `${name}-${key}`, aliases: [] },
+    });
+  const empty = await company('Kayıtsız');
+  const foreign = await company('Yabancı');
+  const draft = await company('Taslak');
+  await add(w, w.authors[0]!);
+  await add(w, await createUser(db), { departmentId: w.other.deptA1, companyId: foreign.id });
+  await add(w, w.authors[1]!, { companyId: draft.id, pending: true });
+  const ids = async (selected?: string) =>
+    (await listCalendarCompanies(db, w.student, selected)).map((row) => row.id);
+  const base = await ids();
+  expect(base).toContain(w.company.id);
+  expect(base).not.toContain(empty.id);
+  expect(base).not.toContain(foreign.id);
+  expect(base).not.toContain(draft.id);
+  // Seçili şirket kayıtsız olsa da etiketiyle listede kalır; olmayan kimlik eklenmez.
+  expect(await ids(empty.id)).toEqual(expect.arrayContaining([w.company.id, empty.id]));
+  expect(await ids(randomUUID())).toEqual(base);
+  // Aynı şirketin birden çok kaydı listede tek satırdır.
+  await add(w, w.authors[2]!);
+  expect((await ids()).filter((id) => id === w.company.id)).toHaveLength(1);
+  await expect(listCalendarCompanies(db, w.student, '\u0000')).rejects.toThrow();
 });
 it('ay başında yalnız etkin takipçi için tek niyet, kapalı tercih ve takibi bırakma teslimi engeller', async () => {
   const w = await fixture();

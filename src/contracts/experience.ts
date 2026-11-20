@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 import type { ErrorCode } from '@/lib/errors';
@@ -34,11 +35,7 @@ export const EXPERIENCE_READ_SCOPE = 'VERIFIED_UNIVERSITY_MEMBERS' as const;
 /** Kullanıcı başına 24 saatte 10 şikâyet; süreçler arası sayaç P1-07 servisinde RateLimit'e bağlanır. */
 export const EXPERIENCE_REPORT_RATE_LIMIT = { maxRequests: 10, windowSeconds: 86_400 } as const;
 
-const id = z
-  .string({ error: INVALID })
-  .trim()
-  .min(1, { error: INVALID })
-  .max(64, { error: INVALID });
+const id = idTextSchema(INVALID);
 const shortText = userTextSchema(1, 200, INVALID);
 const bodyText = userTextSchema(1, 10_000, INVALID);
 const year = z

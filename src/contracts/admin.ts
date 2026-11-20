@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
@@ -22,11 +23,7 @@ export const INVALID = 'VALIDATION_INVALID' satisfies ErrorCode;
 // Ortak yapı taşları
 // ---------------------------------------------------------------------------------------------
 
-export const adminId = z
-  .string({ error: INVALID })
-  .trim()
-  .min(1, { error: INVALID })
-  .max(64, { error: INVALID });
+export const adminId = idTextSchema(INVALID);
 
 /** Gerekçe: 3–1000 karakter; kişisel veri içermesi sunucuda (`rules/adminAudit`) ayrıca reddedilir. */
 export const ADMIN_REASON_MIN = 3;

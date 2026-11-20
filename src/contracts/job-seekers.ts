@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -176,12 +177,9 @@ export const searchSeekersSchema = z
   .object({
     departmentId: deptId.optional(),
     tags: z
-      .array(
-        z.string({ error: INVALID }).trim().min(1, { error: INVALID }).max(64, { error: INVALID }),
-        {
-          error: INVALID,
-        },
-      )
+      .array(idTextSchema(INVALID), {
+        error: INVALID,
+      })
       .max(SEEKER_TAGS_MAX, { error: INVALID })
       .optional(),
     termYear: termYear.optional(),

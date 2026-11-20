@@ -39,6 +39,14 @@ async function inScope<T>(
     return run(tx, actor, await viewerUniversityIds(tx, actor));
   });
 }
+/** Takvime girebilecek deneyim: izleyicinin üniversitesinde yayımlanmış staj. Seçici ve toplama aynı koşulu kullanır. */
+function calendarExperienceWhere(universities: string[]): Prisma.ExperienceWhereInput {
+  return {
+    type: 'INTERNSHIP',
+    status: 'PUBLISHED',
+    department: { faculty: { universityId: { in: universities } } },
+  };
+}
 export async function aggregateApplicationMonths(
   tx: Tx,
   universities: string[],
@@ -52,10 +60,8 @@ export async function aggregateApplicationMonths(
       : await tx.company.findMany({ where: { sectorId: parsed.id }, select: { id: true } });
   const companyIds = companies.map((company) => company.id);
   const where: Prisma.ExperienceWhereInput = {
+    ...calendarExperienceWhere(universities),
     companyId: { in: companyIds },
-    type: 'INTERNSHIP',
-    status: 'PUBLISHED',
-    department: { faculty: { universityId: { in: universities } } },
   };
   // P2-09: aynı kapsamda herhangi bir anonim deneyim varken kesişen kesitler verilmez.
   if (await tx.experience.count({ where: { ...where, isAnonymous: true } })) return [];
@@ -86,6 +92,34 @@ export async function aggregateApplicationMonths(
   return parsed.kind === 'SECTOR'
     ? sectorApplicationDistribution(source)
     : applicationDistribution(source);
+}
+/**
+ * Takvim şirket seçicisi: bütün şirketler değil, izleyicinin üniversitesinde yayımlanmış en az bir staj deneyimi olanlar.
+ * URL'den gelen seçili şirket kayıtsız olsa da etiketiyle listeye girer (seçim kaybolmaz); olmayan kimlik eklenmez.
+ */
+export async function listCalendarCompanies(
+  db: PrismaClient,
+  userId: string,
+  selectedId?: string,
+  now = new Date(),
+) {
+  const selected = selectedId
+    ? applicationScopeSchema.parse({ kind: 'COMPANY', id: selectedId }).id
+    : undefined;
+  return db.$transaction(async (tx) =>
+    inScope(tx, userId, now, async (tx, _actor, universities) => {
+      const withRecords = await tx.experience.groupBy({
+        by: ['companyId'],
+        where: { ...calendarExperienceWhere(universities), companyId: { not: null } },
+      });
+      const ids = withRecords.flatMap((row) => (row.companyId ? [row.companyId] : []));
+      return tx.company.findMany({
+        where: { OR: [{ id: { in: ids } }, ...(selected ? [{ id: selected }] : [])] },
+        select: { id: true, name: true },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+      });
+    }),
+  );
 }
 export async function getApplicationCalendar(
   db: PrismaClient,

@@ -20,6 +20,12 @@ export async function feedbackRouteId(): Promise<string | null> {
   }
 }
 
+/** Formu açılamaz kılan "yok/yetkisiz/bozuk kimlik" sonuçları: ekran hata değil gerçek 404 verir (denetim karakterli kimlik dahil). */
+export const isMissingFeedbackCode = (errorCode: string) =>
+  errorCode === 'RESOURCE_NOT_FOUND' ||
+  errorCode === 'AUTH_FORBIDDEN' ||
+  errorCode === 'VALIDATION_INVALID';
+
 /**
  * Başka katılımcının (ya da olmayan) görüşme formu için GERÇEK 404. Bu denetim `(kimlik)/loading.tsx` sınırının ÜSTÜNDE
  * (rota grubu layout'unda) koşmalıdır: `loading.tsx` altında fırlatılan `notFound()` iskelet gönderildikten sonra olur ve
@@ -30,9 +36,5 @@ export async function rejectForeignFeedback(): Promise<void> {
   const id = await feedbackRouteId();
   if (id === null) return;
   const result = await getRequestFeedbackView(id);
-  if (
-    !result.ok &&
-    (result.errorCode === 'RESOURCE_NOT_FOUND' || result.errorCode === 'AUTH_FORBIDDEN')
-  )
-    notFound();
+  if (!result.ok && isMissingFeedbackCode(result.errorCode)) notFound();
 }

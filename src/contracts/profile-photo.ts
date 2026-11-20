@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
@@ -27,7 +28,7 @@ export const photoCropSchema = z
 export type PhotoCrop = z.infer<typeof photoCropSchema>;
 export const removeProfilePhotoSchema = z
   .object({
-    userId: z.string({ error: INVALID }).min(1, { error: INVALID }).max(64, { error: INVALID }),
+    userId: idTextSchema(INVALID),
     reason: userTextSchema(3, 1000, INVALID),
   })
   .strict();
