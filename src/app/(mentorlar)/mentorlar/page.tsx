@@ -1,12 +1,14 @@
+import { redirect } from 'next/navigation';
 import { PrivacyGuard } from '@/components/privacy/server-guard';
 import { MentorDirectory } from '@/components/mentors/mentor-directory';
-import { ResetLink } from '@/components/directory/reset-link';
 import { ErrorState } from '@/components/ui';
 import {
+  MENTOR_PAGE_MAX,
   mentorFilterFromParams,
   mentorFilterToParams,
   searchMentorsSchema,
 } from '@/contracts/mentor-directory';
+import { capPage, lastPageIfPast, parseListFilters } from '@/lib/list-params';
 import { getMyMentorSettings } from '@/server/actions/appointment';
 import { getSimilarMentors, searchMentors } from '@/server/actions/mentor-directory';
 import { listSearchSectors } from '@/server/actions/search';
@@ -16,18 +18,14 @@ export const dynamic = 'force-dynamic';
 type Params = Record<string, string | string[] | undefined>;
 
 async function Results({ params }: { params: Params }) {
-  const parsed = searchMentorsSchema.safeParse(mentorFilterFromParams(params));
-  if (!parsed.success) {
-    return (
-      <div className="w-full max-w-xl">
-        <ErrorState errorCode="VALIDATION_INVALID" />
-        <ResetLink href="/mentorlar" />
-      </div>
-    );
-  }
-  const filtered = mentorFilterToParams(parsed.data).toString() !== '';
+  // Geçersiz parametre sessizce varsayılana düşer; aralık dışı sayfa son geçerli sayfaya çekilir (aşağıda).
+  const parsed = parseListFilters(
+    searchMentorsSchema,
+    capPage(mentorFilterFromParams(params), MENTOR_PAGE_MAX),
+  );
+  const filtered = mentorFilterToParams(parsed).toString() !== '';
   const [results, sectors, similar, mine] = await Promise.all([
-    searchMentors(parsed.data),
+    searchMentors(parsed),
     listSearchSectors(),
     // “Sana benzer” yalnız filtresiz ilk sayfada gösterilir (filtreleri bölmesin).
     filtered ? Promise.resolve(null) : getSimilarMentors(),
@@ -35,11 +33,16 @@ async function Results({ params }: { params: Params }) {
     getMyMentorSettings().catch(() => null),
   ]);
   if (!results.ok) return <ErrorState errorCode={results.errorCode} />;
+  const last = lastPageIfPast(parsed.page, results.data.total, results.data.pageSize);
+  if (last !== null) {
+    const next = mentorFilterToParams({ ...parsed, page: last });
+    redirect(`/mentorlar${next.size ? `?${next}` : ''}`);
+  }
   // Sektör listesi ya da öneriler yüklenemezse sayfa yine çalışır (süzgeç/öneri kapanır).
   return (
     <MentorDirectory
-      key={mentorFilterToParams(parsed.data).toString()}
-      filter={parsed.data}
+      key={mentorFilterToParams(parsed).toString()}
+      filter={parsed}
       results={results.data}
       sectors={sectors.ok ? sectors.data.sectors : []}
       similar={similar?.ok ? similar.data : null}

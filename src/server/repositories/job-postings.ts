@@ -3,6 +3,7 @@ import 'server-only';
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 
 import { FUZZY_MIN_LENGTH, WORD_SIMILARITY_THRESHOLD, tokensOf } from './search';
+import { turkishCollate } from './turkish-collation';
 import { istanbulDay } from '../rules/jobPosting';
 
 /**
@@ -235,13 +236,14 @@ export async function jobPostingFilterOptionRows(
   if (input.universityIds.length === 0)
     return { organizations: [], departments: [], locations: [], remoteCount: 0 };
   const where = Prisma.join(visible(input.universityIds, input.today, input.now), ' AND ');
+  const collate = await turkishCollate(db);
   const [organizations, departments, locations, remote] = await Promise.all([
     // Satır = sözlük şirketi (companyId) YA DA sözlüğe bağlı olmayan, ASCII katlanmış ada göre gruplu serbest kurum.
     db.$queryRaw<{ companyId: string | null; name: string; count: bigint }[]>(Prisma.sql`
       SELECT i."companyId" AS "companyId", min(i."organizationName") AS "name", count(*) AS "count"
       ${FROM} WHERE ${where}
       GROUP BY COALESCE(i."companyId", 'n:' || tr_ascii(i."organizationName")), i."companyId"
-      ORDER BY count(*) DESC, min(i."organizationName") ASC
+      ORDER BY count(*) DESC, min(i."organizationName") ${collate} ASC
       LIMIT ${input.limit}`),
     db.$queryRaw<{ id: string; name: string; count: bigint }[]>(Prisma.sql`
       SELECT td."id", td."name", count(*) AS "count"
@@ -250,13 +252,13 @@ export async function jobPostingFilterOptionRows(
       JOIN "Department" td ON td."id" = t."departmentId"
       WHERE ${where}
       GROUP BY td."id", td."name"
-      ORDER BY count(*) DESC, td."name" ASC
+      ORDER BY count(*) DESC, td."name" ${collate} ASC
       LIMIT ${input.limit}`),
     db.$queryRaw<{ name: string; count: bigint }[]>(Prisma.sql`
       SELECT min(i."location") AS "name", count(*) AS "count"
       ${FROM} WHERE ${where} AND i."location" IS NOT NULL
       GROUP BY tr_ascii(i."location")
-      ORDER BY count(*) DESC, min(i."location") ASC
+      ORDER BY count(*) DESC, min(i."location") ${collate} ASC
       LIMIT ${input.limit}`),
     db.$queryRaw<{ count: bigint }[]>(
       Prisma.sql`SELECT count(*) AS "count" ${FROM} WHERE ${where} AND i."isRemote"`,

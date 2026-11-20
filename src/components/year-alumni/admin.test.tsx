@@ -63,6 +63,12 @@ beforeEach(() => vi.resetAllMocks());
 async function openDecision(user: ReturnType<typeof renderWithToasts>['user'], name: string) {
   await user.click(screen.getByRole('button', { name: 'Adayları göster' }));
   const card = (await screen.findByRole('heading', { name })).closest('li')!;
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Adayları göster' })).toBeEnabled(),
+  );
+  await waitFor(() =>
+    expect(within(card).getByRole('button', { name: 'Bu mezunu seç' })).toBeEnabled(),
+  );
   await user.click(within(card).getByRole('button', { name: 'Bu mezunu seç' }));
   return screen.getByRole('dialog');
 }
@@ -134,6 +140,12 @@ describe('AwardAdmin: gerekçe alanları birbirine karışmaz', () => {
     const { user } = renderWithToasts(<AwardAdmin departments={DEPARTMENTS} />);
     await user.click(screen.getByRole('button', { name: 'Adayları göster' }));
     await screen.findByRole('heading', { name: 'Ayşe Örnek' });
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Adayları göster' })).toBeEnabled(),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Listeyi yeniden hesapla' })).toBeEnabled(),
+    );
     await user.click(screen.getByRole('button', { name: 'Listeyi yeniden hesapla' }));
     expect(await screen.findByLabelText('Yeniden hesaplama gerekçesi')).toBeInvalid();
     expect(mocks.recalculate).not.toHaveBeenCalled();

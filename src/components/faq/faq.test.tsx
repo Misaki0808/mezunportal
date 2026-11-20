@@ -215,6 +215,9 @@ describe('SSS talebi gönder (öğrenci)', () => {
       screen.getByText('Önce benzer soruları gördüğünü onayla.', { exact: false }),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('checkbox', { name: /yine de göndermek istiyorum/ }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Talebi gönder' })).toBeEnabled(),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Talebi gönder' }));
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(2));
     expect(submit).toHaveBeenLastCalledWith({ question: QUESTION, similarAcknowledged: true });
@@ -316,7 +319,9 @@ describe('mentor cevap formu', () => {
     expect(toggle).toBeChecked();
     expect(toggle).toBeDisabled();
     await act(async () => gate.resolve({ ok: true, data: { items: [], nextCursor: null } }));
-    expect(toggle).toBeEnabled();
+    await waitFor(() =>
+      expect(screen.getByRole('switch', { name: 'Yalnız cevapsızlar' })).toBeEnabled(),
+    );
     expect(screen.getByText('Cevaplanacak soru yok.')).toBeVisible();
   });
   it('kısa cevap gönderilmez; geçerli cevap kaydedilir ve durum güncellenir', async () => {
@@ -348,7 +353,7 @@ describe('mentor cevap formu', () => {
     await waitFor(() => expect(answer).toHaveBeenCalledWith({ requestId: 'm1', body }));
     expect(await screen.findByText('Cevabın kaydedildi.')).toBeVisible();
     expect(screen.getByText('Cevapladın')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Cevabı güncelle' })).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'Cevabı güncelle' })).toBeVisible();
   });
 
   it('kendi talebine cevap hatası katalog metniyle görünür; soran kimliği çizilmez', async () => {

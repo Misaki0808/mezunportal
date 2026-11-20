@@ -191,7 +191,7 @@ describe('moderasyon kuyruğu', () => {
     const { user } = setup(vi.fn().mockResolvedValue({ ok: false, errorCode: 'AUTH_FORBIDDEN' }));
     await user.click(screen.getByRole('button', { name: 'Yayınla' }));
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Yayınla' }));
-    expect(within(screen.getByRole('dialog')).getByRole('alert')).not.toHaveTextContent(
+    expect(await within(screen.getByRole('dialog')).findByRole('alert')).not.toHaveTextContent(
       'AUTH_FORBIDDEN',
     );
     expect(screen.getByText('Örnek A.Ş.', { selector: 'h2' })).toBeInTheDocument();
@@ -223,7 +223,7 @@ describe('şikâyet alt sayfası', () => {
     expect(button).toHaveAttribute('aria-busy', 'true');
     await act(async () => gate.reject(new Error('ağ')));
     expect(reason).toHaveValue('Korunan gerekçe');
-    expect(within(dialog).getByText(/Beklenmeyen bir sorun/)).toBeVisible();
+    expect(await within(dialog).findByText(/Beklenmeyen bir sorun/)).toBeVisible();
   });
   it('kısa gerekçeyi göndermez; geçerli gerekçeyle gönderir ve teşekkür eder', async () => {
     const report = vi.fn().mockResolvedValue({ ok: true, data: { reportId: 'r', status: 'OPEN' } });
