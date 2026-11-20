@@ -49,7 +49,10 @@ kural sunucuda zorlanır.
   kendi mevcut adresi `EMAIL_CHANGE_SAME_ADDRESS` ile reddedilir. İki bağlantı sabit site içi yollara döner
   (`/hesap/e-posta?adim=eski-onaylandi` / `tamamlandi`; değer beyaz listeden okunur). **Değişim tamamlanınca (2. adım)
   kullanıcının diğer oturumları kapanır**; bağlantıyı tıklayan oturum kalır, bağlantı oturumsuz bir tarayıcıda açılırsa
-  hepsi kapanır (çalınmış çerez e-posta değişimiyle düşer; `auth.config` `afterEmailVerification`, kart 533). 1. adım
+  hepsi kapanır (çalınmış çerez e-posta değişimiyle düşer; `auth.config` `databaseHooks.user.update.before`, kart 533).
+  Silme e-posta güncellemesinden ÖNCE çalışır: silme hata verirse hata döner, e-posta değişmez ve aynı bağlantı yeniden
+  kullanılabilir; silmeden sonra güncelleme düşerse yalnız öteki oturumlar kapanmış olur. “E-posta değişti ama öteki oturum
+  açık” durumu hiçbir arıza yolunda oluşmaz (kart 538 P1; arıza enjeksiyonlu bekçi `auth-flow.db.test.ts`). 1. adım
   oturumlara dokunmaz. Kullanıcıya oturum listesi/“diğerlerini kapat” ekranı henüz yoktur.
 - **Oturum ve dönüş yolu:** oturum isteyen sayfa (`PrivacyGuard`) oturumsuz kullanıcıyı (çıkış yapmış, silinmiş
   hesap dahil) girişe, zorunlu onayı eksik kullanıcıyı onaya yönlendirir; gidilmek istenen yol `?donus=` ile

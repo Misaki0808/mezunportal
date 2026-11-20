@@ -684,6 +684,102 @@ describe('e-posta değiştirme (iki adımlı: eski adres onaylar, yeni adres do�
     expect(await prisma.session.count({ where: { userId } })).toBe(0);
   });
 
+  /**
+   * Arıza enjeksiyonu (kart 538 P1): gerçek Better Auth + gerçek veritabanı; yalnız bayrak açıkken ilgili sorgu hata verir.
+   * Değişmez: "e-posta değişti VE öteki oturum açık" durumu hiçbir arıza yolunda oluşmaz.
+   */
+  function faultyAuth() {
+    const fault = { sessionDelete: false, userEmailUpdate: false };
+    const faulty = prisma.$extends({
+      query: {
+        session: {
+          async deleteMany({ args, query }) {
+            if (fault.sessionDelete) throw new Error('synthetic-session-delete-failure');
+            return query(args);
+          },
+        },
+        user: {
+          async $allOperations({ operation, args, query }) {
+            const data = (args as { data?: Record<string, unknown> }).data;
+            if (
+              fault.userEmailUpdate &&
+              operation.startsWith('update') &&
+              data?.email !== undefined
+            )
+              throw new Error('synthetic-user-update-failure');
+            return query(args);
+          },
+        },
+      },
+    });
+    return { fault, harness: createTestAuth(faulty as never) };
+  }
+
+  /** İki açık oturum + tamamlanan 1. adım: 2. adım bağlantısı tıklanmaya hazır. */
+  async function readyForVerification(
+    harness: ReturnType<typeof createTestAuth>,
+    oldAddress: string,
+    newAddress: string,
+  ) {
+    const a = await signInWithMagicLink(harness.auth, harness.sent, oldAddress);
+    const b = await signInWithMagicLink(harness.auth, harness.sent, oldAddress);
+    const userId = (await harness.auth.api.getSession({ headers: a.headers }))?.user.id ?? '';
+    await flow.requestEmailChange(
+      { db: prisma, ...harness, now: () => NOW },
+      await actorOf(userId),
+      { newEmail: newAddress, headers: a.headers },
+    );
+    await harness.auth.handler(
+      new Request(harness.sent.changeConfirmations.at(-1)?.url ?? 'http://invalid.local/', {
+        headers: a.headers,
+      }),
+    );
+    const verifyUrl = harness.sent.changeVerifications.at(-1)?.url ?? 'http://invalid.local/';
+    return { a, b, userId, verifyUrl };
+  }
+
+  it('oturum silme ARIZASINDA e-posta DEĞİŞMEZ ve hata döner; bağlantı yeniden tıklanınca e-posta değişir, öteki oturum kapanır (kart 538 P1)', async () => {
+    const { fault, harness } = faultyAuth();
+    const oldAddress = uniqueAddress('ornek.test', 'eski');
+    const newAddress = uniqueAddress('ornek.test', 'yeni');
+    const { a, b, userId, verifyUrl } = await readyForVerification(harness, oldAddress, newAddress);
+
+    fault.sessionDelete = true;
+    const failed = await harness.auth.handler(new Request(verifyUrl, { headers: a.headers }));
+    expect(failed.status).toBeGreaterThanOrEqual(500); // başarı DEĞİL
+    // Değişmez: e-posta değişmedi, dolayısıyla öteki oturumun açık kalması "değişti + açık" durumu değildir.
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).email).toBe(oldAddress);
+    expect((await harness.auth.api.getSession({ headers: b.headers }))?.user.id).toBe(userId);
+
+    fault.sessionDelete = false;
+    const retried = await harness.auth.handler(new Request(verifyUrl, { headers: a.headers }));
+    expect(retried.status).toBeLessThan(400); // aynı bağlantı yeniden kullanılabilir (e-posta değişmediği için jeton geçerli)
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).email).toBe(newAddress);
+    expect((await harness.auth.api.getSession({ headers: a.headers }))?.user.id).toBe(userId);
+    expect(await harness.auth.api.getSession({ headers: b.headers })).toBeNull();
+    expect(await prisma.session.count({ where: { userId } })).toBe(1);
+  });
+
+  it('silmeden SONRA e-posta güncellemesi düşerse e-posta değişmez, yalnız öteki oturumlar kapanmış olur (güvenli yön); bağlantı yeniden çalışır', async () => {
+    const { fault, harness } = faultyAuth();
+    const oldAddress = uniqueAddress('ornek.test', 'eski');
+    const newAddress = uniqueAddress('ornek.test', 'yeni');
+    const { a, b, userId, verifyUrl } = await readyForVerification(harness, oldAddress, newAddress);
+
+    fault.userEmailUpdate = true;
+    const failed = await harness.auth.handler(new Request(verifyUrl, { headers: a.headers }));
+    expect(failed.status).toBeGreaterThanOrEqual(500);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).email).toBe(oldAddress);
+    expect(await harness.auth.api.getSession({ headers: b.headers })).toBeNull(); // silme önce yapıldı
+    expect((await harness.auth.api.getSession({ headers: a.headers }))?.user.id).toBe(userId); // tıklayan oturum kalır
+
+    fault.userEmailUpdate = false;
+    const retried = await harness.auth.handler(new Request(verifyUrl, { headers: a.headers }));
+    expect(retried.status).toBeLessThan(400);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).email).toBe(newAddress);
+    expect((await harness.auth.api.getSession({ headers: a.headers }))?.user.id).toBe(userId);
+  });
+
   it('yeni adres başkasına aitse CHECK_EMAIL (sızıntı yok); kendi mevcut adresi EMAIL_CHANGE_SAME_ADDRESS; hiçbir e-posta gitmez', async () => {
     const harness = createTestAuth(prisma);
     const deps = { db: prisma, ...harness, now: () => NOW };
