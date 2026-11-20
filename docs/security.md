@@ -252,6 +252,7 @@ kuralları değişmez. Aydınlatma metni değiştiğinde sürüm artırılır ve
   kullanıcı satırında `FOR SHARE` alır ve silinmişi reddeder, kullanıcı güncelleme `deletedAt IS NULL` ister (silme sürerken
   tıklanan yeni adres doğrulaması anonim e-postayı geri yazamaz); silme, tam adresle eşleşen bekleyen doğrulama kayıtlarını iptal eder.
   JSON değerindeki `email` alanı tam eşitlikle denetlenir; benzer/son eki aynı olan başka adreslerin bağlantıları silinmez.
+- **CV dosyasına erişim:** Saklanan özgün CV, JSON'a gömülmeden yalnız sahibinin oturumuna bağlı, önbelleksiz indirme yoluyla verilir; yabancı veya silinmiş dosya aynı 404'tür. Askıdaki hesapta indirme ve silme fail-closed kalır; KVKK başvuru yolu aydınlatma metninde gösterilir.
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11); kendi profilinin
   kişisel alanları, ilk giriş adım durumları ve etiketleri dahildir. Profil yoksa `profile: null` döner.
   Deneyimler bütün durumlarıyla yalnız kendi içeriklerinden oluşur; yazar/moderatör kimlikleri deneyim

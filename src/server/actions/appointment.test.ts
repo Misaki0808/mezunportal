@@ -172,3 +172,15 @@ describe('randevu eylemleri', () => {
     });
   });
 });
+
+it('gece yarısını geçen tek aralığı sunucu Bitiş alanında kararlı kodla reddeder', async () => {
+  const result = await actions.saveAvailability({
+    rules: [{ weekday: 3, startMinute: 1380, endMinute: 60 }],
+  });
+  expect(result).toEqual({
+    ok: false,
+    errorCode: 'VALIDATION_INVALID',
+    fieldErrors: { 'rules.0.endMinute': 'APPOINTMENT_AVAILABILITY_END_ORDER' },
+  });
+  expect(mocks.service.saveAvailability).not.toHaveBeenCalled();
+});
