@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
@@ -22,6 +23,7 @@ export function SeekerSearch({
   const t = useTranslations('seekers');
   const tagLabels = useTranslations('profileTags');
   const errors = useTranslations('errors.codes');
+  const hydrated = useHydrated();
   const [hiring, setHiring] = useState(initial.hiring);
   const [departmentId, setDepartmentId] = useState('');
   const [tag, setTag] = useState('');
@@ -68,7 +70,10 @@ export function SeekerSearch({
     });
   }
   return (
-    <div className="w-full min-w-0 max-w-4xl space-y-7">
+    <div
+      data-hydrated={hydrated ? 'true' : undefined}
+      className="w-full min-w-0 max-w-4xl space-y-7"
+    >
       <BackLink href="/hesap" flush>
         {t('backAccount')}
       </BackLink>
