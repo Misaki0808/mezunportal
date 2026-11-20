@@ -112,6 +112,55 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
     expect(await screen.findByRole('alert')).not.toHaveTextContent('RATE_LIMITED');
   });
+  it('askıdaki hesabın bağlantı hatasında açıklama ve aydınlatma metni bağlantısı görünür; başka hatada görünmez', () => {
+    const { unmount } = renderUi(
+      <SignInForm
+        options={disabledOptions}
+        callbackError="AUTH_ACCOUNT_SUSPENDED"
+        requestLink={vi.fn()}
+        startLinkedIn={startLinkedIn}
+      />,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('Hesabın askıya alındı.');
+    expect(
+      screen.getByText(
+        'KVKK kapsamındaki başvurular için aydınlatma metnindeki iletişim yolunu kullanabilirsin.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Aydınlatma metnini oku' })).toHaveAttribute(
+      'href',
+      '/hukuki/aydinlatma',
+    );
+    unmount();
+    renderUi(
+      <SignInForm
+        options={disabledOptions}
+        callbackError="AUTH_LINK_INVALID"
+        requestLink={vi.fn()}
+        startLinkedIn={startLinkedIn}
+      />,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('geçersiz ya da süresi dolmuş');
+    expect(screen.queryByRole('link', { name: 'Aydınlatma metnini oku' })).not.toBeInTheDocument();
+  });
+
+  it('yeni bir bağlantı isteği askı açıklamasını temizler; istek yanıtı askıyı belli etmez', async () => {
+    const requestLink = vi.fn().mockResolvedValue({ ok: true, data: { status: 'CHECK_EMAIL' } });
+    const { user } = renderUi(
+      <SignInForm
+        options={disabledOptions}
+        callbackError="AUTH_ACCOUNT_SUSPENDED"
+        requestLink={requestLink}
+        startLinkedIn={startLinkedIn}
+      />,
+    );
+    await user.type(screen.getByLabelText(/E-posta adresi/), 'ad@ogr.iu.edu.tr');
+    await user.click(screen.getByRole('button', { name: 'Giriş bağlantısı gönder' }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/giris/epostani-kontrol-et'));
+    expect(screen.queryByRole('link', { name: 'Aydınlatma metnini oku' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/askı/i)).not.toBeInTheDocument();
+  });
+
   it('giriş sonrası güvenli dönüş yolunu e-posta bağlantısı isteğine taşır', async () => {
     const request = vi.fn().mockResolvedValue({ ok: true, data: { status: 'CHECK_EMAIL' } });
     const { user } = renderUi(
