@@ -1,3 +1,4 @@
+import { INLINE_PDF_CSP } from '@/lib/api-security-headers';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { codedForbidden, codedNotFound } from '@/lib/errors';
@@ -52,7 +53,7 @@ describe('GET /api/graduation-documents/[id]/file', () => {
     expect(response.headers.get('content-type')).toBe('application/pdf');
     expect(response.headers.get('x-content-type-options')).toBe('nosniff');
     expect(response.headers.get('cache-control')).toBe('private, no-store');
-    expect(response.headers.get('content-security-policy')).toBe("default-src 'none'; sandbox");
+    expect(response.headers.get('content-security-policy')).toBe(INLINE_PDF_CSP);
     expect(response.headers.get('content-disposition')).toMatch(/^inline;/);
     expect(await response.text()).toBe('%PDF-1.7 gövde');
   });

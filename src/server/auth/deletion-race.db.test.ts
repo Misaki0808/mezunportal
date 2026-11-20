@@ -351,15 +351,13 @@ describe('hesap silme ile Better Auth yazımları (kart 371)', () => {
       headers,
       asResponse: true,
     });
-    const verify =
-      new URL(harness.sent.changeVerifications[0]?.url ?? '').searchParams.get('token') ?? '';
-    await harness.auth.api.verifyEmail({
-      query: { token: verify, callbackURL: '/' },
-      headers,
-      asResponse: true,
-    });
+    // 2. adım gerçek HTTP işleyicisinden (istek + çerez): e-posta değişimi tamamlanınca bağlantıyı tıklayan oturum kalır,
+    // kullanıcının öteki oturumu kapanır (kart 533); silinmemiş kullanıcının yazımları koruma tarafından reddedilmez.
+    await harness.auth.handler(
+      new Request(harness.sent.changeVerifications[0]?.url ?? 'http://invalid.local/', { headers }),
+    );
     const after = await state(userId);
-    expect(after.sessions).toBe(2);
+    expect(after.sessions).toBe(1);
     expect(after.accounts).toBe(1);
     expect(after.user).toMatchObject({ email: newAddress, emailVerified: true, deletedAt: null });
     expect(address).not.toBe(newAddress);

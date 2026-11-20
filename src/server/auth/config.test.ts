@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { PrismaClient } from '@/generated/prisma/client';
 import { testAuthEnv, createFakeEmail } from '@/test/auth';
 
-import { buildAuthOptions, SESSION_EXPIRES_IN_SECONDS } from './config';
+import { buildAuthOptions, emailChangeUserId, SESSION_EXPIRES_IN_SECONDS } from './config';
 import { TEST_LOGIN_PLUGIN_ID } from './test-login-plugin';
 
 // Yapılandırma saf kurulur (veritabanına bağlanmaz): sahte istemci yeterli. Silinmiş kullanıcı koruması (kart 371) istemciyi
@@ -102,5 +102,43 @@ describe('Better Auth yapılandırması', () => {
       process.stderr.write = original;
     }
     expect(written.join('')).toBe('[auth:error] başarısız [e-posta] [bağlantı]\n');
+  });
+});
+
+describe('emailChangeUserId: oturum kapatma yalnız e-posta değişimi 2. adım jetonunda ve eşleşen yeni adreste çalışır (kart 538 P1)', () => {
+  const token = (payload: unknown) =>
+    ['imza', Buffer.from(JSON.stringify(payload)).toString('base64url'), 'imza'].join('.');
+  const valid = {
+    email: 'eski@ornek.test',
+    updateTo: 'yeni@ornek.test',
+    requestType: 'change-email-verification',
+    userId: 'kullanici-1',
+  };
+
+  it('geçerli 2. adım jetonu ve eşleşen yeni adres kullanıcı kimliğini verir (büyük harf farkı yok sayılır)', () => {
+    expect(emailChangeUserId(token(valid), 'yeni@ornek.test')).toBe('kullanici-1');
+    expect(emailChangeUserId(token(valid), 'YENI@ornek.test')).toBe('kullanici-1');
+  });
+
+  it('1. adım jetonu, eşleşmeyen adres, eksik alan ve bozuk jeton null döner: hiçbir oturum kapanmaz', () => {
+    expect(
+      emailChangeUserId(
+        token({ ...valid, requestType: 'change-email-confirmation' }),
+        'yeni@ornek.test',
+      ),
+    ).toBeNull();
+    expect(emailChangeUserId(token(valid), 'baska@ornek.test')).toBeNull();
+    expect(emailChangeUserId(token({ ...valid, userId: undefined }), 'yeni@ornek.test')).toBeNull();
+    expect(
+      emailChangeUserId(token({ ...valid, updateTo: undefined }), 'yeni@ornek.test'),
+    ).toBeNull();
+    expect(
+      emailChangeUserId(token({ ...valid, requestType: undefined }), 'yeni@ornek.test'),
+    ).toBeNull();
+    expect(emailChangeUserId('bozuk', 'yeni@ornek.test')).toBeNull();
+    expect(emailChangeUserId('a.%%%.c', 'yeni@ornek.test')).toBeNull();
+    expect(emailChangeUserId(token('metin'), 'yeni@ornek.test')).toBeNull();
+    expect(emailChangeUserId(undefined, 'yeni@ornek.test')).toBeNull();
+    expect(emailChangeUserId(token(valid), undefined)).toBeNull();
   });
 });

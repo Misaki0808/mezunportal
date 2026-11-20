@@ -1,3 +1,4 @@
+import { API_CSP, API_REFERRER_POLICY } from '@/lib/api-security-headers';
 import { unstable_rethrow } from 'next/navigation';
 import { codedForbidden, codedNotFound, isCodedError } from '@/lib/errors';
 import { getDb } from '@/server/db';
@@ -40,8 +41,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
         'content-type': 'application/pdf',
         'content-disposition': 'attachment; filename="cv.pdf"',
         'x-content-type-options': 'nosniff',
-        'content-security-policy': "default-src 'none'; sandbox",
-        'referrer-policy': 'no-referrer',
+        'content-security-policy': API_CSP,
+        'referrer-policy': API_REFERRER_POLICY,
       },
     });
   } catch (error) {
