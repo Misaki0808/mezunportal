@@ -219,6 +219,74 @@ describe('yerel sürücüye özgü güvenlik', () => {
     },
   );
 
+  it('profil fotoğrafı yarım yazımları: eski .tmp silinir; sınır, yeni, gelecek, geçersiz ad, klasör, sembolik bağ ve asıl fotoğraf kalır', async () => {
+    const storage = createLocalStorage(root);
+    const now = new Date('2030-01-01T12:00:00Z');
+    const before = new Date(now.getTime() - 60 * 60 * 1000);
+    const old = new Date(before.getTime() - 1);
+    const user = path.join(root, 'photo', 'user');
+    const outside = path.join(root, 'outside');
+    await mkdir(user, { recursive: true });
+    await mkdir(outside);
+    const id = (n: number) => `0000000${n}-89ab-cdef-0123-456789abcdef`;
+    const hex = '012345abcdef';
+    const files: [string, Date][] = [
+      [`${id(1)}-512.webp.${hex}.tmp`, old], // silinir
+      [`${id(1)}-96.webp.${hex}.tmp`, old], // silinir
+      [`${id(2)}-512.webp.${hex}.tmp`, before], // tam sınır: kalır
+      [`${id(3)}-512.webp.${hex}.tmp`, now], // yazım sürüyor: kalır
+      [`${id(4)}-512.webp.${hex}.tmp`, new Date(now.getTime() + 3600000)], // gelecekte: kalır
+      [`${id(5)}-1024.webp.${hex}.tmp`, old], // geçersiz boyut: kalır
+      [`${id(5)}-512.png.${hex}.tmp`, old], // geçersiz uzantı: kalır
+      [`kisa-512.webp.${hex}.tmp`, old], // kimlik biçimi uymuyor: kalır
+      [`${id(6)}-512.webp.bad.tmp`, old], // hex biçimi uymuyor: kalır
+      [`${id(1)}-512.webp`, old], // asıl fotoğraf: eski olsa da süpürülmez
+      [`${id(1)}-96.webp`, old],
+    ];
+    for (const [name, age] of files) {
+      await writeFile(path.join(user, name), 'x');
+      await utimes(path.join(user, name), age, age);
+    }
+    const target = path.join(outside, 'target.webp');
+    await writeFile(target, 'korunur');
+    await utimes(target, old, old);
+    const outsideTemporary = path.join(outside, `${id(1)}-512.webp.${hex}.tmp`);
+    await writeFile(outsideTemporary, 'korunur');
+    await utimes(outsideTemporary, old, old);
+    const directory = `${id(7)}-512.webp.${hex}.tmp`;
+    await mkdir(path.join(user, directory));
+    await utimes(path.join(user, directory), old, old);
+    const link = `${id(8)}-512.webp.${hex}.tmp`;
+    await symlink(target, path.join(user, link));
+    await symlink(outside, path.join(root, 'photo', 'linked-user'));
+    expect(await storage.purgeTemporaryFiles!(before)).toBe(2);
+    expect(await storage.purgeTemporaryFiles!(before)).toBe(0);
+    for (const gone of [`${id(1)}-512.webp.${hex}.tmp`, `${id(1)}-96.webp.${hex}.tmp`])
+      await expect(lstat(path.join(user, gone))).rejects.toMatchObject({ code: 'ENOENT' });
+    expect((await readdir(user)).sort()).toEqual(
+      [
+        ...files
+          .map(([name]) => name)
+          .filter(
+            (name) =>
+              name !== `${id(1)}-512.webp.${hex}.tmp` && name !== `${id(1)}-96.webp.${hex}.tmp`,
+          ),
+        directory,
+        link,
+      ].sort(),
+    );
+    expect(await readFile(target, 'utf8')).toBe('korunur');
+    expect(await readFile(outsideTemporary, 'utf8')).toBe('korunur');
+    // Asıl fotoğraflar hiçbir süpürmede aday değildir (yalnız yarım yazımlar).
+    expect(await storage.listOldCvKeys!(before)).toEqual([]);
+    expect(await storage.listOldGraduationKeys!(before)).toEqual([]);
+    // Tür kökü sembolik bağ olursa dışarıdaki dosyalar aday olamaz.
+    await rm(path.join(root, 'photo'), { recursive: true });
+    await symlink(outside, path.join(root, 'photo'));
+    expect(await storage.purgeTemporaryFiles!(before)).toBe(0);
+    expect(await readFile(outsideTemporary, 'utf8')).toBe('korunur');
+  });
+
   it('dosyalar yalnız sahibi için okunur/yazılır (0600), klasörler 0700', async () => {
     const storage = createLocalStorage(root);
     await storage.put('graduation/u1/a.pdf', bytes('%PDF-x'), meta);

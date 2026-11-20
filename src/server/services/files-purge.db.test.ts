@@ -36,9 +36,15 @@ it('eski öksüz CV silinir; yeni öksüz ve veritabanına bağlı CV korunur', 
       await storage.put(key, new Uint8Array([1]), { contentType: 'application/pdf' });
     const old = new Date(Date.now() - 2 * 60 * 60 * 1000);
     for (const key of [orphan, linked]) await utimes(path.join(root, key), old, old);
+    const photoId = '00000001-89ab-cdef-0123-456789abcdef';
+    await storage.put(`photo/${userId}/${photoId}-512.webp`, new Uint8Array([1]), {
+      contentType: 'image/webp',
+    });
+    await utimes(path.join(root, `photo/${userId}/${photoId}-512.webp`), old, old);
     const temporary = [
       `${linked}.012345abcdef.tmp`,
       `graduation/${userId}/partial.pdf.012345abcdef.tmp`,
+      `photo/${userId}/00000002-89ab-cdef-0123-456789abcdef-96.webp.012345abcdef.tmp`,
     ];
     for (const key of temporary) {
       const file = path.join(root, key);
@@ -48,12 +54,13 @@ it('eski öksüz CV silinir; yeni öksüz ve veritabanına bağlı CV korunur', 
     }
     const result = await purgeFiles(db, storage);
     expect(result.orphanCvRemoved).toBe(1);
-    expect(result.temporaryRemoved).toBe(2);
+    expect(result.temporaryRemoved).toBe(3);
     for (const key of temporary)
       await expect(lstat(path.join(root, key))).rejects.toMatchObject({ code: 'ENOENT' });
     expect(await storage.get(orphan)).toBeNull();
     expect(await storage.get(recent)).not.toBeNull();
     expect(await storage.get(linked)).not.toBeNull();
+    expect(await storage.get(`photo/${userId}/${photoId}-512.webp`)).not.toBeNull(); // asıl fotoğraf eski olsa da kalır
     expect((await purgeFiles(db, storage)).orphanCvRemoved).toBe(0);
   } finally {
     await rm(root, { recursive: true, force: true });

@@ -18,7 +18,7 @@ export interface StorageAdapter {
   listOldGraduationKeys?(before: Date): Promise<string[]>;
   /** Belirtilen tarihten eski CV dosyaları. */
   listOldCvKeys?(before: Date): Promise<string[]>;
-  /** CV/mezun belgesi yazımından kalan eski geçici dosyalar; yeni yazım ve diğer dosyalar korunur. */
+  /** CV, mezun belgesi ve profil fotoğrafı yazımından kalan eski geçici dosyalar; yeni yazım ve asıl dosyalar korunur. */
   purgeTemporaryFiles?(before: Date): Promise<number>;
 }
 
