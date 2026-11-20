@@ -112,6 +112,10 @@ gerekçe `docs/decisions.md`'ye yazılır. Ücretli servis hiçbir satırda yokt
   Ne: `getRequestContext` şu anda istemcinin değiştirebildiği X-Forwarded-For değerini kullanır; IP kotası
   yalnız tamamlayıcı korumadır. Bu durum bütün kamuya açık hız sınırlarını etkiler.
   Neden borç: istemci XFF değiştirerek kotayı aşabilir; canlıda kaynak IP platform tarafından doğrulanmalıdır.
+  Ölçüm (kart 531, üretim derlemesi): sabit XFF ile 201. istekte IP sınırı çalışır, XFF değiştirilince sınır hemen sıfırlanır,
+  XFF yoksa IP sınırı hiç yoktur (Better Auth GET sınırı da öyle); adres başına saatte 5 bağlantı sınırı bundan bağımsız korunur,
+  yani tek adrese bombardıman yoktur ama farklı adreslere giriş e-postası sınırsız gönderilebilir. Vekil XFF'i EKLİYORSA
+  (nginx varsayılanı) “ilk değer” tam olarak istemcinin değeridir; güvenilir atlama sayısı ya da vekilin yazdığı tek başlık gerekir.
   Kapanış ölçütü: güvenilir proxy istemci başlıklarını ezer; `getRequestContext` yalnız platformun eklediği
   son hop'u kullanır, istemcinin XFF'sine güvenmez. Node doğrudan dışarı açılmaz; bütün kamuya açık
   kotalarda sahte başlık, eşzamanlı sınır ve pencere yenilenmesi testleri geçer.

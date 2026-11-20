@@ -33,6 +33,47 @@ export function withCallbackPath(url: string, path: string): string {
   return parsed.toString();
 }
 
+/**
+ * Oturum çerezinden oturum jetonunu okur. İmzayı DOĞRULAMAZ: yalnız hangi oturumun kalacağını seçer; jeton tablodaki
+ * hiçbir oturumla eşleşmezse (sahte/eski çerez) hiçbir oturum korunmaz, yani yanlış çerez fazladan oturum bırakamaz.
+ */
+export function sessionTokenFromCookie(
+  cookieHeader: string | null,
+  cookieName: string,
+): string | null {
+  for (const part of (cookieHeader ?? '').split(';')) {
+    const [name, ...rest] = part.trim().split('=');
+    if (name !== cookieName) continue;
+    try {
+      return decodeURIComponent(rest.join('=')).split('.')[0] || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * E-posta değişiminin 2. adım bağlantısından değişen kullanıcıyı okur (`requestType: change-email-verification`). İmzayı
+ * DOĞRULAMAZ: yalnız Better Auth jetonu doğrulayıp kullanıcıyı güncellemeye hazırlandığı anda (`user.update.before`)
+ * çağrılır; yük ayrıca güncellenecek yeni adresle eşleşmelidir. Başka istek, başka tür ya da eşleşmeyen adres `null` döner.
+ */
+export function emailChangeUserId(token: unknown, newEmail: unknown): string | null {
+  if (typeof token !== 'string' || typeof newEmail !== 'string') return null;
+  const part = token.split('.')[1];
+  if (!part) return null;
+  try {
+    const payload: unknown = JSON.parse(Buffer.from(part, 'base64url').toString('utf8'));
+    if (!payload || typeof payload !== 'object') return null;
+    const { requestType, updateTo, userId } = payload as Record<string, unknown>;
+    if (requestType !== 'change-email-verification') return null;
+    if (typeof userId !== 'string' || typeof updateTo !== 'string') return null;
+    return updateTo === newEmail.toLowerCase() ? userId : null;
+  } catch {
+    return null;
+  }
+}
+
 export const SESSION_EXPIRES_IN_SECONDS = 14 * 24 * 3600;
 export const SESSION_UPDATE_AGE_SECONDS = 24 * 3600;
 
@@ -118,6 +159,8 @@ export function buildAuthOptions(deps: AuthDeps) {
       autoSignInAfterVerification: false,
       sendOnSignUp: false,
       sendOnSignIn: false,
+      // Diğer oturumların kapanması `databaseHooks.user.update.before` içindedir (e-posta güncellemesinden ÖNCE); burada
+      // `afterEmailVerification` YOKTUR: sonradan silme hata verirse e-posta değişmiş ama öteki oturum açık kalırdı (kart 538 P1).
       // Yalnız e-posta değiştirmenin 2. adımında kullanılır: `user.email` YENİ adrestir.
       sendVerificationEmail: async ({ user, url, token }) => {
         // Silme sürerken tıklanan eski adres onayı yeni adrese e-posta göndermez (kart 371).
@@ -165,7 +208,32 @@ export function buildAuthOptions(deps: AuthDeps) {
     },
 
     databaseHooks: {
-      user: { create: { before: async (user) => userCreateBefore(user) } },
+      user: {
+        create: { before: async (user) => userCreateBefore(user) },
+        update: {
+          // E-posta değişimi tamamlanırken (yalnız 2. adım, doğrulama bağlantısına tıklanınca) bu isteği yapan oturum kalır,
+          // kullanıcının DİĞER oturumları kapanır (kart 531 B5: çalınmış çerez e-posta değişimiyle düşmüyordu). Silme
+          // e-posta güncellemesinden ÖNCE çalışır: silme hata verirse hata yayılır, güncelleme hiç yapılmaz (e-posta aynı kalır,
+          // bağlantı yeniden kullanılabilir); silme sonrası güncelleme düşerse yalnız oturumlar kapanmış olur. "E-posta değişti
+          // ama öteki oturum açık" durumu hiçbir yolda oluşmaz (kart 538 P1). Better Auth'un `revokeOtherSessions` çağrısı bu
+          // kancada kullanılamaz (oturum çözümü/örnek yok); aynı anlam doğrudan oturum tablosunda uygulanır. Bağlantı oturumsuz
+          // bir tarayıcıda açılırsa korunacak oturum yoktur: hepsi kapanır.
+          before: async (data, context) => {
+            const request = context as
+              { path?: string; query?: { token?: unknown }; request?: Request } | null | undefined;
+            if (request?.path !== '/verify-email') return;
+            const userId = emailChangeUserId(request.query?.token, data.email);
+            if (!userId) return;
+            const keep = sessionTokenFromCookie(
+              request.request?.headers.get('cookie') ?? null,
+              `${production ? '__Secure-' : ''}mezun.session_token`,
+            );
+            await db.session.deleteMany({
+              where: { userId, ...(keep ? { token: { not: keep } } : {}) },
+            });
+          },
+        },
+      },
       session: {
         create: {
           before: async (session) => sessionCreateBefore(session),
