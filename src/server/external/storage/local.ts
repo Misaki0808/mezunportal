@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { randomBytes } from 'node:crypto';
-import { mkdir, readFile, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readFile, readdir, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { assertValidStorageKey, isValidStorageKey } from './keys';
@@ -21,8 +21,17 @@ export function createLocalStorage(rootPath: string): StorageAdapter {
     return full;
   }
 
-  async function listOldKeys(kind: 'graduation' | 'cv', before: Date): Promise<string[]> {
+  async function listOldKeys(
+    kind: 'graduation' | 'cv',
+    before: Date,
+    temporary = false,
+  ): Promise<string[]> {
     const base = path.join(root, kind);
+    const baseInfo = await lstat(base).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') return null;
+      throw new StorageError('get', error);
+    });
+    if (!baseInfo?.isDirectory() || baseInfo.isSymbolicLink()) return [];
     const users = await readdir(base, { withFileTypes: true }).catch(
       (error: NodeJS.ErrnoException) => {
         if (error.code === 'ENOENT') return [];
@@ -35,9 +44,18 @@ export function createLocalStorage(rootPath: string): StorageAdapter {
       const files = await readdir(path.join(base, user.name), { withFileTypes: true });
       for (const file of files) {
         const key = `${kind}/${user.name}/${file.name}`;
-        if (!file.isFile() || file.isSymbolicLink() || !isValidStorageKey(key)) continue;
-        const info = await stat(resolveKey(key)).catch(() => null);
-        if (info && info.mtime < before) keys.push(key);
+        // Yalnız put'ın ürettiği <geçerli anahtar>.<12 hex>.tmp biçimi temizlenir;
+        // genel depolama anahtarı sözleşmesi .tmp kabul edecek şekilde gevşetilmez.
+        const originalKey = temporary ? /^(.*)\.[0-9a-f]{12}\.tmp$/.exec(key)?.[1] : key;
+        if (
+          !file.isFile() ||
+          file.isSymbolicLink() ||
+          !originalKey ||
+          !isValidStorageKey(originalKey)
+        )
+          continue;
+        const info = await lstat(path.join(root, key)).catch(() => null);
+        if (info?.isFile() && info.mtime < before) keys.push(key);
       }
     }
     return keys;
@@ -72,6 +90,22 @@ export function createLocalStorage(rootPath: string): StorageAdapter {
     },
     async listOldCvKeys(before) {
       return listOldKeys('cv', before);
+    },
+
+    async purgeTemporaryFiles(before) {
+      let removed = 0;
+      for (const kind of ['cv', 'graduation'] as const) {
+        for (const key of await listOldKeys(kind, before, true)) {
+          try {
+            await unlink(path.join(root, key));
+            removed++;
+          } catch (cause) {
+            if ((cause as NodeJS.ErrnoException).code !== 'ENOENT')
+              throw new StorageError('delete', cause);
+          }
+        }
+      }
+      return removed;
     },
 
     async delete(key) {

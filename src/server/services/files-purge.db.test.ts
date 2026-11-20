@@ -1,4 +1,4 @@
-import { mkdtemp, rm, utimes } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, expect, it } from 'vitest';
@@ -10,6 +10,16 @@ import { purgeFiles } from './files-purge';
 
 const db = createTestPrisma();
 afterAll(() => db.$disconnect());
+
+it('CV anahtar indeksi migration ile oluşturulur', async () => {
+  const indexes = await db.$queryRaw<{ indexdef: string }[]>`
+    SELECT indexdef FROM pg_indexes
+    WHERE schemaname = 'public' AND tablename = 'CvUpload'
+      AND indexname = 'CvUpload_storageKey_idx'
+  `;
+  expect(indexes).toHaveLength(1);
+  expect(indexes[0]!.indexdef).toContain('("storageKey")');
+});
 
 it('eski öksüz CV silinir; yeni öksüz ve veritabanına bağlı CV korunur', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'cv-orphan-'));
@@ -26,8 +36,21 @@ it('eski öksüz CV silinir; yeni öksüz ve veritabanına bağlı CV korunur', 
       await storage.put(key, new Uint8Array([1]), { contentType: 'application/pdf' });
     const old = new Date(Date.now() - 2 * 60 * 60 * 1000);
     for (const key of [orphan, linked]) await utimes(path.join(root, key), old, old);
+    const temporary = [
+      `${linked}.012345abcdef.tmp`,
+      `graduation/${userId}/partial.pdf.012345abcdef.tmp`,
+    ];
+    for (const key of temporary) {
+      const file = path.join(root, key);
+      await mkdir(path.dirname(file), { recursive: true });
+      await writeFile(file, 'yarım');
+      await utimes(file, old, old);
+    }
     const result = await purgeFiles(db, storage);
     expect(result.orphanCvRemoved).toBe(1);
+    expect(result.temporaryRemoved).toBe(2);
+    for (const key of temporary)
+      await expect(lstat(path.join(root, key))).rejects.toMatchObject({ code: 'ENOENT' });
     expect(await storage.get(orphan)).toBeNull();
     expect(await storage.get(recent)).not.toBeNull();
     expect(await storage.get(linked)).not.toBeNull();

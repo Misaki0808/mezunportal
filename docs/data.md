@@ -189,6 +189,10 @@ kullanıcı verisini siler; PR'da onay ister. `p2_04_*`, `p2_06_*`, `contact_req
 
 - Mezun belgesi karar anında silinir. CV'de son dosya tutulur; eski dosyalar uygulama anında
   silinir (açık incelemeye bağlı olan hariç). Ayrıştırma çıktısı uygulama/atma anında temizlenir.
+  Günlük dosya temizliği, bir saatten eski bağlı olmayan CV/mezun belgelerini ve yerel
+  sürücünün atomik yazımından kalan aynı yaştaki `.tmp` dosyalarını kaldırır. Tam bir saatlik,
+  yeni ve gelecekte tarihli dosyalar korunur; klasörler, sembolik bağlar ve sürücünün ad
+  biçimine uymayan dosyalar aday sayılmaz. CV bağlılığı sınırlı gruplar halinde sorgulanır.
 - `NotificationIntent` kalıcı hataları (`FAILED`), `failedAt` üzerinden 90 günü aşınca günlük işte silinir; diğer durumlar bu temizliğe girmez.
 - `EmailLog` 6 ay; `Event` 24 ay sonra kullanıcıdan koparılır (userId `null`).
 - Hesap silmede kişisel alanlar anında temizlenir, dosyalar silinir; yayınlanmış içerik kullanıcının
