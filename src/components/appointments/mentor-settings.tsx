@@ -253,12 +253,23 @@ export function MentorSettings({
 
   const updateDay = (weekday: number, patch: Partial<Day>) =>
     setDays((current) => ({ ...current, [weekday]: { ...current[weekday]!, ...patch } }));
-  const updateRange = (weekday: number, index: number, patch: Partial<Range>) =>
+  const updateRange = (weekday: number, index: number, patch: Partial<Range>) => {
+    const key = `d${weekday}r${index}`;
+    setFieldErrors((current) => {
+      const next = { ...current };
+      if ('start' in patch) {
+        delete next[key];
+        if (index === 0) delete next[`d${weekday}`];
+      }
+      if ('end' in patch) delete next[`${key}.end`];
+      return next;
+    });
     updateDay(weekday, {
       ranges: days[weekday]!.ranges.map((range, at) =>
         at === index ? { ...range, ...patch } : range,
       ),
     });
+  };
   const ruleCount = WEEKDAYS.reduce(
     (sum, weekday) => sum + (days[weekday]!.on ? days[weekday]!.ranges.length : 0),
     0,
