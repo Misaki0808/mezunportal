@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -32,7 +33,7 @@ test('öğrenci görüşme formunu 390 pikselde doldurur ve ikinci kez gönderem
   try {
     await loginAs(page, 'student');
     await page.goto(`/hesap/gorusme/${appointment.id}`);
-    await page.waitForLoadState('networkidle');
+    await waitForFormReady(page.getByRole('button', { name: 'Yanıtı gönder' }));
     await page.getByRole('button', { name: 'Yanıtı gönder' }).click();
     const happened = page.getByRole('radio', { name: 'Evet, gerçekleşti' });
     await expect(happened).toBeFocused();

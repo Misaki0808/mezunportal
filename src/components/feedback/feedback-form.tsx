@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { userTextLength } from '@/lib/user-text';
 import { useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
@@ -12,6 +13,7 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
   const t = useTranslations('feedback');
   const errors = useTranslations('errors.codes');
   const frame = useTranslations('accountFrame');
+  const hydrated = useHydrated();
   const [happened, setHappened] = useState<boolean | null>(null);
   const [helpful, setHelpful] = useState<boolean | null>(null);
   const [note, setNote] = useState('');
@@ -89,6 +91,7 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
       ) : (
         <form
           noValidate
+          data-hydrated={hydrated ? 'true' : undefined}
           className="flex flex-1 flex-col gap-6"
           onSubmit={(event) => {
             event.preventDefault();

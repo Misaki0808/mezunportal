@@ -1,5 +1,6 @@
 'use client';
 
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 
@@ -38,6 +39,7 @@ export function Tabs({
 }: TabsProps) {
   const baseId = useId();
   const [internal, setInternal] = useState(defaultId ?? items[0]?.id);
+  const hydrated = useHydrated();
   const selectedId = value ?? internal;
   const tabRefs = useRef(new Map<string, HTMLButtonElement>());
   const listRef = useRef<HTMLDivElement>(null);
@@ -93,7 +95,7 @@ export function Tabs({
   }
 
   return (
-    <div className={className}>
+    <div data-hydrated={hydrated ? 'true' : undefined} className={className}>
       <div className={cn('relative', bleed && '-mx-4 lg:mx-0')}>
         <div
           ref={listRef}

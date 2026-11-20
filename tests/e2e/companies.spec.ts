@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -72,6 +73,7 @@ test('şirketi takma adla bulur; anonim deneyim ve güvenli boş dönem görün�
         );
       }),
     ).toBe(true);
+    await waitForFormReady(applications);
     await applications.click();
     await expect(
       page.getByRole('heading', { name: 'Başvuru dönemleri', exact: true }),

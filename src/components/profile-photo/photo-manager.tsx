@@ -136,7 +136,7 @@ export function PhotoManager({
     }
   }
   return (
-    <div className="w-full max-w-xl space-y-6">
+    <div data-hydrated={hydrated ? 'true' : undefined} className="w-full max-w-xl space-y-6">
       <PageHeader title={t('title')} description={t('description')} />
       {present && (
         <Avatar
