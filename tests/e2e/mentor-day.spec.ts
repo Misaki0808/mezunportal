@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
@@ -57,7 +58,9 @@ test('mezun: iletişim kararı sonrası odak, bağlama uygun ret, açık mentor 
       0,
     );
     await page.goto('/mentor/ayarlar');
-    await page.waitForLoadState('networkidle');
+    await waitForFormReady(
+      page.getByRole('button', { name: 'Genel ayarları kaydet', exact: true }),
+    );
     for (const label of [
       'Genel ayarları kaydet',
       'Ara verme durumunu kaydet',

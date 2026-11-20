@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useTranslations } from 'next-intl';
 import { useRef, useState, type ReactNode } from 'react';
 import {
@@ -39,6 +40,7 @@ export function Dictionaries({
   remove,
   headerActions,
 }: Props) {
+  const hydrated = useHydrated();
   const t = useTranslations('admin');
   const errors = useTranslations('errors.codes');
   const [kind, setKind] = useState<DictionaryKind>('COMPANY');
@@ -170,7 +172,7 @@ export function Dictionaries({
   }
   return (
     <AdminFrame title={t('dictionary.title')} actions={headerActions}>
-      <div className="flex flex-wrap items-end gap-4">
+      <div data-hydrated={hydrated ? 'true' : undefined} className="flex flex-wrap items-end gap-4">
         <Field className="min-w-48" label={t('dictionary.kind')}>
           {(props) => (
             <Select

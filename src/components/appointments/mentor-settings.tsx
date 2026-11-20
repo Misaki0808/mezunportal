@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 
 import { useTranslations } from 'next-intl';
 import { useId, useRef, useState } from 'react';
@@ -75,6 +76,7 @@ export function MentorSettings({
   initial: MentorSettingsView;
   actions: MentorSettingsActions;
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('appointments.settings');
   const modesT = useTranslations('appointments.modes');
   const weekdays = useTranslations('appointments.weekdays');
@@ -276,7 +278,10 @@ export function MentorSettings({
   );
 
   return (
-    <div className="[&_.text-sm]:text-base flex w-full max-w-2xl flex-col gap-8">
+    <div
+      data-hydrated={hydrated ? 'true' : undefined}
+      className="[&_.text-sm]:text-base flex w-full max-w-2xl flex-col gap-8"
+    >
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
 
       {(notice || error) && (

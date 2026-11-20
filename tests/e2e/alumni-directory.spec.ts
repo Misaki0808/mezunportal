@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
@@ -16,6 +17,7 @@ test('seçili sektör adı dar ekranda kesilmez ve seçici erişilebilir boyutta
   await page.goto('/mezunlar');
   const sector = page.getByRole('combobox', { name: 'Sektör' });
   await expect(sector).toBeVisible();
+  await waitForFormReady(sector);
   await sector.selectOption({ label: 'Bilişim ve Yazılım' });
   await expect(page).toHaveURL(/sectorId=/);
   // 1024: lg eşiği; eski düzen orada da seçili adı kesiyordu (kullanılabilir 109 px < 168 px).

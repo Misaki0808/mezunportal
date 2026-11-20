@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { expect, test } from './fixture';
@@ -40,7 +41,7 @@ test('yönetici küçük grubu gizli görür ve aynı korumayla Excel indirir', 
     });
     await loginAs(page, 'systemAdmin');
     await page.goto('/yonetim/kullanim');
-    await page.waitForLoadState('networkidle');
+    await waitForFormReady(page.getByLabel('Bölüm', { exact: true }));
     await page.getByLabel('Bölüm', { exact: true }).selectOption(department.id);
     await page.getByLabel('Olay türü').selectOption('PROFILE_THRESHOLD');
     await page.getByRole('button', { name: 'Raporu göster' }).click();

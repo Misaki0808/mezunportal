@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useRef, useState } from 'react';
 import Link from 'next/link';
@@ -26,6 +27,7 @@ type Props = {
   initialSettings: CvReviewSettings | null;
 };
 export function ReviewInbox({ sent, received, initialSettings }: Props) {
+  const hydrated = useHydrated();
   const t = useTranslations('cvReview'),
     errors = useTranslations('errors.codes'),
     frame = useTranslations('accountFrame');
@@ -122,7 +124,7 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
   function section(page: CvReviewRequestPage | null, role: 'STUDENT' | 'MENTOR') {
     if (!page) return null;
     return (
-      <section>
+      <section data-hydrated={hydrated ? 'true' : undefined}>
         <h2 className="text-xl font-semibold">
           {t(role === 'STUDENT' ? 'studentHeading' : 'mentorHeading')}
         </h2>
@@ -198,7 +200,10 @@ export function ReviewInbox({ sent, received, initialSettings }: Props) {
       {section(student, 'STUDENT')}
       {section(mentor, 'MENTOR')}
       {settings && (
-        <section className="rounded-card border border-border p-5">
+        <section
+          data-hydrated={hydrated ? 'true' : undefined}
+          className="rounded-card border border-border p-5"
+        >
           <h2 className="text-xl font-semibold">{t('settings')}</h2>
           <Switch
             label={t('enabled')}

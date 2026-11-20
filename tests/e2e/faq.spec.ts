@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { randomUUID } from 'node:crypto';
 import { expect, test } from './fixture';
@@ -36,6 +37,7 @@ test('SSS: öğrenci talep eder → mentor cevaplar → moderatör yayımlar →
     await s!.goto('/hesap/sss');
     await s!.waitForLoadState('networkidle');
     const questionInput = s!.getByLabel(/Sorduğun soru/);
+    await waitForFormReady(questionInput);
     await questionInput.fill('İ'.repeat(501));
     await s!.getByRole('button', { name: 'Talebi gönder' }).click();
     await expect(questionInput).toHaveValue('İ'.repeat(501));

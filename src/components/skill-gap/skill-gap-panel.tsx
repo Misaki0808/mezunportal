@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
@@ -28,6 +29,7 @@ export function SkillGapPanel({
   data: SkillGapResult;
   titles: { id: string; name: string }[];
 }) {
+  const hydrated = useHydrated();
   const t = useTranslations('skillGap');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
@@ -52,6 +54,7 @@ export function SkillGapPanel({
   const analysis = data.analysis;
   return (
     <section
+      data-hydrated={hydrated ? 'true' : undefined}
       className="my-5 rounded-card border border-border bg-surface p-5 shadow-card"
       aria-labelledby="skill-gap-title"
     >

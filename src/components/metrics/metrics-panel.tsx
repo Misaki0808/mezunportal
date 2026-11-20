@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { useRef, useState } from 'react';
 import { AdminFrame } from '@/components/admin/frame';
 import { useTranslations } from 'next-intl';
@@ -23,6 +24,7 @@ type Props = {
   departments: AdminOverview['departments'];
 };
 export function MetricsPanel({ initial, initialFilter, departments }: Props) {
+  const hydrated = useHydrated();
   const t = useTranslations('admin.metrics');
   const errors = useTranslations('errors.codes');
   const [report, setReport] = useState(initial);
@@ -104,6 +106,7 @@ export function MetricsPanel({ initial, initialFilter, departments }: Props) {
   return (
     <AdminFrame title={t('title')} description={t('description')}>
       <form
+        data-hydrated={hydrated ? 'true' : undefined}
         className="mt-7 grid gap-4 rounded-card border border-border bg-surface p-4 shadow-card sm:grid-cols-2"
         onSubmit={(event) => {
           event.preventDefault();
