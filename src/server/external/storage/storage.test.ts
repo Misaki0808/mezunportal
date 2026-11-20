@@ -1,4 +1,15 @@
-import { mkdtemp, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  symlink,
+  utimes,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -135,6 +146,78 @@ describe('yerel sürücüye özgü güvenlik', () => {
   afterEach(async () => {
     await rm(root, { recursive: true, force: true });
   });
+
+  it.each(['cv', 'graduation'] as const)(
+    '%s listesi yalnız normal eski PDF sayar; eski yarım yazımları siler, sınır ve yeni yazımlar kalır',
+    async (kind) => {
+      const storage = createLocalStorage(root);
+      const now = new Date('2030-01-01T12:00:00Z');
+      const before = new Date(now.getTime() - 60 * 60 * 1000);
+      const old = new Date(before.getTime() - 1);
+      const user = path.join(root, kind, 'user');
+      const outside = path.join(root, 'outside');
+      await mkdir(user, { recursive: true });
+      await mkdir(outside);
+      const target = path.join(outside, 'target.pdf');
+      await writeFile(target, 'korunur');
+      await utimes(target, old, old);
+      const names = [
+        'old.pdf',
+        'boundary.pdf',
+        'new.pdf',
+        'future.pdf',
+        'old.pdf.012345abcdef.tmp',
+        'boundary.pdf.012345abcdef.tmp',
+        'new.pdf.012345abcdef.tmp',
+        'future.pdf.012345abcdef.tmp',
+        'unknown.tmp',
+        'bad.txt.012345abcdef.tmp',
+        'old.pdf.bad.tmp',
+      ];
+      for (const name of names) {
+        const file = path.join(user, name);
+        await writeFile(file, 'x');
+        const age = name.startsWith('boundary')
+          ? before
+          : name.startsWith('new')
+            ? now
+            : name.startsWith('future')
+              ? new Date(now.getTime() + 3600000)
+              : old;
+        await utimes(file, age, age);
+      }
+      for (const name of ['directory.pdf', 'directory.pdf.012345abcdef.tmp']) {
+        await mkdir(path.join(user, name));
+        await utimes(path.join(user, name), old, old);
+      }
+      for (const name of ['link.pdf', 'link.pdf.012345abcdef.tmp'])
+        await symlink(target, path.join(user, name));
+      await symlink(outside, path.join(root, kind, 'linked-user'));
+      const list = kind === 'cv' ? storage.listOldCvKeys! : storage.listOldGraduationKeys!;
+      expect(await list(before)).toEqual([`${kind}/user/old.pdf`]);
+      expect(await storage.purgeTemporaryFiles!(before)).toBe(1);
+      expect(await storage.purgeTemporaryFiles!(before)).toBe(0);
+      expect(await readdir(user)).toEqual(
+        expect.arrayContaining(names.filter((name) => !name.startsWith('old.pdf.012'))),
+      );
+      await expect(lstat(path.join(user, 'old.pdf.012345abcdef.tmp'))).rejects.toMatchObject({
+        code: 'ENOENT',
+      });
+      expect(await readFile(target, 'utf8')).toBe('korunur');
+      expect((await lstat(path.join(user, 'link.pdf.012345abcdef.tmp'))).isSymbolicLink()).toBe(
+        true,
+      );
+      expect((await lstat(path.join(user, 'directory.pdf.012345abcdef.tmp'))).isDirectory()).toBe(
+        true,
+      );
+      // Tür kökü de sembolik bağ olursa dışarıdaki dosyalar aday olamaz.
+      await rm(path.join(root, kind), { recursive: true });
+      await symlink(outside, path.join(root, kind));
+      expect(await list(before)).toEqual([]);
+      expect(await storage.purgeTemporaryFiles!(before)).toBe(0);
+      expect(await readFile(target, 'utf8')).toBe('korunur');
+    },
+  );
 
   it('dosyalar yalnız sahibi için okunur/yazılır (0600), klasörler 0700', async () => {
     const storage = createLocalStorage(root);

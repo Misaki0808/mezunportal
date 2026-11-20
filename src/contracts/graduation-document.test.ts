@@ -247,6 +247,11 @@ describe('kuyruk', () => {
 });
 
 describe('hata kodu kayıtları', () => {
+  it('şifreli belge reddi yükleme eyleminin hata sözleşmesindedir', () => {
+    expect(GRADUATION_DOCUMENT_ACTION_ERRORS.uploadGraduationDocument).toContain(
+      'DOCUMENT_ENCRYPTED',
+    );
+  });
   it('eylemlerin bütün kodları kayıtlıdır', () => {
     for (const code of Object.values(GRADUATION_DOCUMENT_ACTION_ERRORS).flat()) {
       expect(ERROR_CODES).toContain(code);
