@@ -1,4 +1,4 @@
-import { afterAll, expect, it } from 'vitest';
+import { afterAll, expect, it, vi } from 'vitest';
 import { alumniSearchSchema } from '@/contracts/alumni-directory';
 import { createTestPrisma } from '@/test/db';
 import { addMembership, createInstitution, createUser } from '@/test/fixtures';
@@ -166,4 +166,111 @@ it('kendini, silinenleri, bitmiş üyeliği ve öğrenci rolünü rehberde göst
   expect(result.items.map((item) => item.userId)).not.toContain(student);
   expect((await get(`Eskiişveren${key}`)).total).toBe(0);
   expect((await get(`Eskiunvan${key}`)).total).toBe(0);
+});
+
+it('adlar Türkçe harf sırasıyla gelir (ç, ğ, ı/i, ö, ş, ü); sayfalar arası çift/eksik yok; aralık dışı sayfa son sayfaya çekilir', async () => {
+  const institution = await createInstitution(db);
+  const viewer = await createUser(db);
+  await addMembership(db, {
+    userId: viewer,
+    departmentId: institution.deptA1,
+    role: 'STUDENT',
+    entryYear: 2020,
+  });
+  // Türkçe alfabe sırası; veritabanının varsayılan (kod noktası) sırasında Ç, Ğ, İ, Ö, Ş, Ü en sona düşerdi.
+  const expected = [
+    'Ada',
+    'Bora',
+    'Cem',
+    'Çağla',
+    'Deniz',
+    'Ece',
+    'Fatma',
+    'Gül',
+    'Ğ. Ali',
+    'Hale',
+    'Işık',
+    'İpek',
+    'Jale',
+    'Kaan',
+    'Leyla',
+    'Mert',
+    'Nur',
+    'Orhan',
+    'Ömer',
+    'Pelin',
+    'Rıza',
+    'Selin',
+    'Şule',
+    'Tolga',
+    'Ulaş',
+    'Ümit',
+    'Veli',
+    'Yağmur',
+    'Zeynep',
+  ];
+  const key = letterMarker('', 6);
+  for (const name of [...expected].reverse()) {
+    const userId = await createUser(db, { name: `${name} ${key}` });
+    await addMembership(db, {
+      userId,
+      departmentId: institution.deptA1,
+      role: 'ALUMNI',
+      graduationYear: 2021,
+    });
+    await db.profile.create({ data: { userId, alumniDirectoryVisible: true, city: 'İstanbul' } });
+  }
+  const actor = (await loadActor(db, viewer, new Date()))!;
+  const first = await searchAlumni(db, actor, alumniSearchSchema.parse({ q: key }));
+  const second = await searchAlumni(db, actor, alumniSearchSchema.parse({ q: key, page: 2 }));
+  const names = [...first.items, ...second.items].map((item) => item.name.replace(` ${key}`, ''));
+  expect(first.total).toBe(expected.length);
+  expect(first.items).toHaveLength(24);
+  expect(names).toEqual(expected);
+  const beyond = await searchAlumni(db, actor, alumniSearchSchema.parse({ q: key, page: 9 }));
+  expect(beyond.page).toBe(2);
+  expect(beyond.items.map((item) => item.userId)).toEqual(second.items.map((item) => item.userId));
+});
+
+it('rehberden çıkma, kimlik seçimi ile son okuma arasında tamamlanırsa o kişi sayfadan düşer; yeni ad dönmez', async () => {
+  const institution = await createInstitution(db);
+  const viewer = await createUser(db);
+  const alumnus = await createUser(db, { name: 'Önceki Ad' });
+  await addMembership(db, {
+    userId: viewer,
+    departmentId: institution.deptA1,
+    role: 'STUDENT',
+    entryYear: 2020,
+  });
+  await addMembership(db, {
+    userId: alumnus,
+    departmentId: institution.deptA1,
+    role: 'ALUMNI',
+    graduationYear: 2021,
+  });
+  await db.profile.create({ data: { userId: alumnus, alumniDirectoryVisible: true } });
+  const actor = (await loadActor(db, viewer, new Date()))!;
+  const original = db.user.findMany.bind(db.user);
+  let hidden = false;
+  type Args = { select?: { id?: boolean; name?: boolean } };
+  const spy = vi.spyOn(db.user, 'findMany').mockImplementation((async (args: Args) => {
+    const rows = await original(args as never);
+    // Kimlik ön-seçimi bitti (yalnız `id` seçen sorgu): kişi rehberden çıkar ve adını değiştirir.
+    if (!hidden && args?.select?.id === true && !args?.select?.name) {
+      hidden = true;
+      await db.$transaction([
+        db.profile.update({ where: { userId: alumnus }, data: { alumniDirectoryVisible: false } }),
+        db.user.update({ where: { id: alumnus }, data: { name: 'Gizlendikten Sonra Yeni Ad' } }),
+      ]);
+    }
+    return rows;
+  }) as never);
+  try {
+    const result = await searchAlumni(db, actor, alumniSearchSchema.parse({}));
+    expect(hidden).toBe(true);
+    expect(result.items.map((item) => item.name)).not.toContain('Gizlendikten Sonra Yeni Ad');
+    expect(result.items).toHaveLength(0);
+  } finally {
+    spy.mockRestore();
+  }
 });

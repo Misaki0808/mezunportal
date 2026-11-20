@@ -15,6 +15,7 @@ import {
   Input,
   Modal,
   PageHeader,
+  Pagination,
   Select,
   Tabs,
   buttonClasses,
@@ -45,6 +46,14 @@ function CompanyCard({ company }: { company: CompanySummary }) {
     </li>
   );
 }
+/** Şirket listesinin sayfa adresi: arama ve sayfa birlikte korunur. */
+function companiesHref(query: string, page: number) {
+  const params = new URLSearchParams();
+  if (query) params.set('q', query);
+  if (page > 1) params.set('page', String(page));
+  return `/sirketler${params.size ? `?${params}` : ''}`;
+}
+
 export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: string }) {
   const t = useTranslations('companies');
   const popularIds = new Set(data.popular.map((company) => company.id));
@@ -109,6 +118,13 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
           )}
         </section>
       )}
+      {/* Sonuç bölümünden bağımsız: son sayfadaki şirketlerin hepsi öne çıkanlardaysa da sayfalama kalır (geri dönülebilir). */}
+      <Pagination
+        className="mt-6"
+        page={data.page}
+        pageCount={Math.ceil(data.total / data.pageSize)}
+        hrefFor={(page) => companiesHref(query, page)}
+      />
     </div>
   );
 }
@@ -211,19 +227,31 @@ export function CompanyScreen({
             id: 'jobs',
             label: t('jobs'),
             content: (
-              <ul className="grid gap-3">
-                {company.postings.map((posting) => (
-                  <li key={posting.id} className="rounded-card border border-border p-4">
-                    <Badge tone="category">{jobs(posting.kind)}</Badge>
+              <>
+                <ul className="grid gap-3">
+                  {company.postings.map((posting) => (
+                    <li key={posting.id} className="rounded-card border border-border p-4">
+                      <Badge tone="category">{jobs(posting.kind)}</Badge>
+                      <Link
+                        href={`/ilanlar/${posting.id}`}
+                        className="mt-2 block min-h-11 break-words text-lg font-semibold text-primary"
+                      >
+                        {posting.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                {company.postingTotal > company.postings.length && (
+                  <div className="mt-4">
                     <Link
-                      href={`/ilanlar/${posting.id}`}
-                      className="mt-2 block min-h-11 break-words text-lg font-semibold text-primary"
+                      href={`/ilanlar?companyId=${encodeURIComponent(company.id)}`}
+                      className={buttonClasses({ variant: 'secondary' })}
                     >
-                      {posting.title}
+                      {t('allPostings', { count: company.postingTotal })}
                     </Link>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                )}
+              </>
             ),
           },
         ]

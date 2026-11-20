@@ -48,9 +48,9 @@ test('mentor bul: liste, mobil filtre alt sayfası, çip, boş durum ve geçersi
   await page.getByRole('button', { name: 'Filtreleri temizle' }).first().click();
   await expect(page.getByRole('heading', { name: 'Mert Yıldız' })).toBeVisible();
 
-  // Geçersiz adres çökmez: anlaşılır hata + temizle bağlantısı.
+  // Geçersiz adres çökmez: sessizce varsayılan listeye düşer (hata ekranı yok).
   await page.goto('/mentorlar?page=abc');
-  await expect(page.getByRole('link', { name: 'Filtreleri temizle' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mert Yıldız' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );

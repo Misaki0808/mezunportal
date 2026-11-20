@@ -320,6 +320,9 @@ export type MyJobPostingPage = z.infer<typeof myJobPostingPageSchema>;
 // Doğrulanmış üye: arama/liste ve detay (K-07)
 // ---------------------------------------------------------------------------------------------
 
+/** İlan listesinde en yüksek sayfa numarası; aşan istek son geçerli sayfaya çekilir. */
+export const JOB_POSTING_PAGE_MAX = 200;
+
 export const searchJobPostingsSchema = z
   .object({
     /** Serbest metin (Türkçe tam metin + yazım hatası toleransı); yoksa en yeni/yaklaşan. Sorgu metni loglanmaz. */
@@ -345,7 +348,12 @@ export const searchJobPostingsSchema = z
       .min(0, { error: INVALID })
       .max(JOB_POSTING_MAX_DAYS, { error: INVALID })
       .optional(),
-    page: z.number({ error: INVALID }).int({ error: INVALID }).min(1).max(200).default(1),
+    page: z
+      .number({ error: INVALID })
+      .int({ error: INVALID })
+      .min(1)
+      .max(JOB_POSTING_PAGE_MAX)
+      .default(1),
     pageSize: z
       .number({ error: INVALID })
       .int({ error: INVALID })
