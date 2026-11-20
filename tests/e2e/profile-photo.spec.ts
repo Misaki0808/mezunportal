@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import sharp from 'sharp';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
@@ -102,9 +103,12 @@ for (const width of [390, 1440])
         fullPage: true,
       });
       await page.goto('/profil/fotograf');
-      await page
-        .getByRole('button', { name: 'Rızamı geri al ve fotoğrafımı sil', exact: true })
-        .click();
+      const remove = page.getByRole('button', {
+        name: 'Rızamı geri al ve fotoğrafımı sil',
+        exact: true,
+      });
+      await waitForFormReady(remove);
+      await remove.click();
       await expect(
         page.getByRole('status').filter({ hasText: 'Fotoğrafın silindi; artık gösterilmiyor.' }),
       ).toBeVisible();

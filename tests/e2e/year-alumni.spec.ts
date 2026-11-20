@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { randomBytes } from 'node:crypto';
 import { expect, test, type Page } from './fixture';
@@ -61,6 +62,7 @@ test('mezun yayın iznini açar, doğrulama sayfasını görür ve geri alır', 
       .filter({ has: page.getByRole('switch', { name: /Ödülümü herkese açık/ }) })
       .last();
     await expect(card).toBeVisible();
+    await waitForFormReady(card.getByRole('switch', { name: /Ödülümü herkese açık/ }));
     await card.getByRole('switch', { name: /Ödülümü herkese açık/ }).check();
     await card.getByRole('button', { name: 'Kaydet' }).click();
     await expect(

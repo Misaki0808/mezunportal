@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
@@ -24,6 +25,7 @@ function AwardCard({ initial }: { initial: MyAward }) {
   const [publish, setPublish] = useState(initial.isPublic);
   const [message, setMessage] = useState('');
   const toast = useToast();
+  const hydrated = useHydrated();
   const [pending, start] = useTransition();
   function save() {
     start(async () => {
@@ -39,7 +41,7 @@ function AwardCard({ initial }: { initial: MyAward }) {
   }
   return (
     <Card className="relative overflow-hidden p-6">
-      <div className="relative space-y-5">
+      <div data-hydrated={hydrated ? 'true' : undefined} className="relative space-y-5">
         <IconChip tone="primary">
           <BadgeCheckIcon />
         </IconChip>
