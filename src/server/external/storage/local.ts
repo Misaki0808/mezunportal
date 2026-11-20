@@ -21,6 +21,28 @@ export function createLocalStorage(rootPath: string): StorageAdapter {
     return full;
   }
 
+  async function listOldKeys(kind: 'graduation' | 'cv', before: Date): Promise<string[]> {
+    const base = path.join(root, kind);
+    const users = await readdir(base, { withFileTypes: true }).catch(
+      (error: NodeJS.ErrnoException) => {
+        if (error.code === 'ENOENT') return [];
+        throw new StorageError('get', error);
+      },
+    );
+    const keys: string[] = [];
+    for (const user of users) {
+      if (!user.isDirectory() || user.isSymbolicLink()) continue;
+      const files = await readdir(path.join(base, user.name), { withFileTypes: true });
+      for (const file of files) {
+        const key = `${kind}/${user.name}/${file.name}`;
+        if (!file.isFile() || file.isSymbolicLink() || !isValidStorageKey(key)) continue;
+        const info = await stat(resolveKey(key)).catch(() => null);
+        if (info && info.mtime < before) keys.push(key);
+      }
+    }
+    return keys;
+  }
+
   return {
     async put(key, data) {
       const full = resolveKey(key);
@@ -46,25 +68,10 @@ export function createLocalStorage(rootPath: string): StorageAdapter {
     },
 
     async listOldGraduationKeys(before) {
-      const base = path.join(root, 'graduation');
-      const users = await readdir(base, { withFileTypes: true }).catch(
-        (error: NodeJS.ErrnoException) => {
-          if (error.code === 'ENOENT') return [];
-          throw new StorageError('get', error);
-        },
-      );
-      const keys: string[] = [];
-      for (const user of users) {
-        if (!user.isDirectory() || user.isSymbolicLink()) continue;
-        const files = await readdir(path.join(base, user.name), { withFileTypes: true });
-        for (const file of files) {
-          const key = `graduation/${user.name}/${file.name}`;
-          if (!file.isFile() || file.isSymbolicLink() || !isValidStorageKey(key)) continue;
-          const info = await stat(resolveKey(key)).catch(() => null);
-          if (info && info.mtime < before) keys.push(key);
-        }
-      }
-      return keys;
+      return listOldKeys('graduation', before);
+    },
+    async listOldCvKeys(before) {
+      return listOldKeys('cv', before);
     },
 
     async delete(key) {

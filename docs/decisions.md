@@ -1247,3 +1247,7 @@ JSON boyutunu büyütmemek için özgün CV baytları döküme gömülmez; dosya
 
 Adla sıralanan listeler (mezun dizini, şirket listesi) Türkçe harf sırasını sorgu düzeyinde `COLLATE "tr-TR-x-icu"` ile alır ve sayfalama veritabanında kalır; kolon harmanlaması ve şema değişmez, harmanlama yoksa sorgu varsayılan sıraya düşer. Bütün liste adreslerinde geçersiz parametre sessizce varsayılana düşer, aralık dışı sayfa (`?page=999`) 404 yerine son geçerli sayfaya yönlendirilir; şirket listesi sayfalanır, şirket sayfasında en yeni 10 ilan gösterilip tamamı `/ilanlar?companyId=` ile açılır. Liste arama kutularındaki sessiz `maxLength` bilinçli kabul edildi: arama için sayaç gerekmez.
 
+## 2026-11-20 · Yükleme temizliği ve hakkı
+
+Geri alma sırasında depolama da başarısız olursa kişisel dosya kayıtsız kalabileceğinden günlük iş, bir saatten eski ve kayıtla ilişkisi olmayan CV'leri mezun belgeleri gibi siler. CV günlük hakkı, kullanıcı kilidi altında kabul edilen yüklemeyle aynı işlemde tüketilir; eşzamanlı reddedilen ve başarısız işlemler hak tüketmez. Şifreli mezun belgeleri yöneticinin okuyamayacağı başvuruları önlemek için reddedilir; JavaScript içeren PDF kabul kuralı değişmez.
+

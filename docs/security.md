@@ -253,6 +253,7 @@ kuralları değişmez. Aydınlatma metni değiştiğinde sürüm artırılır ve
   tıklanan yeni adres doğrulaması anonim e-postayı geri yazamaz); silme, tam adresle eşleşen bekleyen doğrulama kayıtlarını iptal eder.
   JSON değerindeki `email` alanı tam eşitlikle denetlenir; benzer/son eki aynı olan başka adreslerin bağlantıları silinmez.
 - **CV dosyasına erişim:** Saklanan özgün CV, JSON'a gömülmeden yalnız sahibinin oturumuna bağlı, önbelleksiz indirme yoluyla verilir; yabancı veya silinmiş dosya aynı 404'tür. Askıdaki hesapta indirme ve silme fail-closed kalır; KVKK başvuru yolu aydınlatma metninde gösterilir.
+  Günlük temizlik, başarısız yükleme ve geri alma sonrasında depoda kalmış, kayıtla ilişkisi olmayan bir saatten eski CV dosyalarını da siler; bağlı ve yeni dosyaları korur.
 - **Veri dökümü:** kullanıcı kendi verisini JSON olarak indirir (KVKK m. 11); kendi profilinin
   kişisel alanları, ilk giriş adım durumları ve etiketleri dahildir. Profil yoksa `profile: null` döner.
   Deneyimler bütün durumlarıyla yalnız kendi içeriklerinden oluşur; yazar/moderatör kimlikleri deneyim
@@ -312,7 +313,7 @@ uygunsuz fotoğrafı gerekçeyle kaldırabilir; dosya ve gerekçe kişisel veri 
   sınırlıdır; çıktı yalnız **öneri** olarak onay ekranına gelir, kullanıcı onaylamadan
   uygulanmaz; rol, yetki, doğrulama durumu ve başka kullanıcıya ait veri **hiçbir zaman** LLM
   çıktısından yazılmaz; modele araç/çağrı yetkisi verilmez.
-- **Yükleme denetimi içeriğe bakar:** şifreli PDF ve 6 sayfadan uzun PDF reddedilir; maliyet sınırları (5 MB,
+- **Yükleme denetimi içeriğe bakar:** şifreli PDF, CV ve mezun belgesinde reddedilir; CV'de ayrıca 6 sayfadan uzun PDF reddedilir. Maliyet sınırları (5 MB,
   günlük hak, sağlayıcı harcama sınırı) sayfa sayımının sezgisel olmasını telafi eder.
 - **Profil serbest metni:** özet/hedef, başlık/şehir, profil kalemleri ve beceriler sunucuda SSS ile aynı
   e-posta/Türkiye cep telefonu/kimlik numarası biçim denetiminden geçer (`src/lib/personal-data.ts`). CV onayından

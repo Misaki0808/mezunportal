@@ -24,6 +24,7 @@ describe('dosya temizliği', () => {
       const old = new Date(Date.now() - 2 * 60 * 60 * 1000);
       for (const key of keys.slice(0, 2)) await utimes(path.join(root, key), old, old);
       const db = {
+        cvUpload: { findFirst: vi.fn().mockResolvedValue(null) },
         graduationDocument: {
           findFirst: vi.fn(async ({ where }: { where: { storageKey: string } }) =>
             where.storageKey === keys[1] ? { id: 'live' } : null,
