@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -27,11 +28,7 @@ export const emailSchema = z
   .pipe(z.email({ error: INVALID }))
   .transform((value) => value.toLowerCase());
 
-export const departmentIdSchema = z
-  .string({ error: INVALID })
-  .trim()
-  .min(1, { error: INVALID })
-  .max(64, { error: INVALID });
+export const departmentIdSchema = idTextSchema(INVALID);
 
 /** Ekran yolları: sunucu (Better Auth geri çağrıları) ve ekran aynı yolları kullanır. */
 export const AUTH_PATHS = {

@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -28,8 +29,6 @@ export const SEARCH_PAGE_MAX = 200;
 export const SEARCH_SORTS = ['RELEVANCE', 'NEWEST'] as const;
 export type SearchSort = (typeof SEARCH_SORTS)[number];
 
-const text = (min: number, max: number) =>
-  z.string({ error: INVALID }).trim().min(min, { error: INVALID }).max(max, { error: INVALID });
 const distinct = <T extends string>(list: readonly T[]) => new Set(list).size === list.length;
 
 export const searchExperiencesSchema = z
@@ -49,7 +48,7 @@ export const searchExperiencesSchema = z
       .refine(distinct, { error: INVALID })
       .optional(),
     /** Sektör kimliği (`listSearchSectors`). */
-    sectorId: text(1, 64).optional(),
+    sectorId: idTextSchema(INVALID).optional(),
     termYear: z.number({ error: INVALID }).int({ error: INVALID }).min(1900).max(2100).optional(),
     termSeason: z.enum(TERM_SEASONS, { error: INVALID }).optional(),
     pay: z.enum(EXPERIENCE_PAY, { error: INVALID }).optional(),

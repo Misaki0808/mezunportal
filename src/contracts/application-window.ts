@@ -1,5 +1,6 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
-const id = z.string().trim().min(1).max(64);
+const id = idTextSchema();
 export const applicationScopeSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('COMPANY'), id }).strict(),
   z.object({ kind: z.literal('SECTOR'), id }).strict(),

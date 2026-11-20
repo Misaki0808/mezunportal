@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { PrivacyGuard } from '@/components/privacy/server-guard';
 import { ErrorState } from '@/components/ui';
 import { getRequestFeedbackView } from '@/app/(kimlik)/feedback-view';
-import { feedbackRouteId } from '../feedback-route';
+import { feedbackRouteId, isMissingFeedbackCode } from '../feedback-route';
 
 /**
  * Oturum/onay kapısı ve formun zamanlama/sunucu hatası ekranı. Yabancı formun durum kodu 404 olan yanıtı bir üst
@@ -17,8 +17,7 @@ export default async function ConsentLayout({ children }: { children: ReactNode 
   if (id !== null) {
     const result = await getRequestFeedbackView(id);
     if (!result.ok) {
-      if (result.errorCode === 'RESOURCE_NOT_FOUND' || result.errorCode === 'AUTH_FORBIDDEN')
-        notFound();
+      if (isMissingFeedbackCode(result.errorCode)) notFound();
       return <ErrorState errorCode={result.errorCode} />;
     }
   }

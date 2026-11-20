@@ -1,5 +1,6 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
-const id = z.string({ error: 'VALIDATION_INVALID' }).trim().min(1).max(64);
+const id = idTextSchema();
 export const selectSkillGoalSchema = z.object({ titleId: id.nullable() }).strict();
 export type SelectSkillGoalInput = z.input<typeof selectSkillGoalSchema>;
 export const skillGapResultSchema = z

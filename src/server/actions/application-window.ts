@@ -24,6 +24,16 @@ export async function getApplicationCalendar(
     return failAction(error, 'getApplicationCalendar');
   }
 }
+export async function listCalendarCompanies(
+  selectedId?: string,
+): Promise<ActionResult<{ id: string; name: string }[]>> {
+  try {
+    const actor = await requireVerifiedMember();
+    return actionOk(await service.listCalendarCompanies(getDb(), actor.userId, selectedId));
+  } catch (error) {
+    return failAction(error, 'listCalendarCompanies');
+  }
+}
 export async function setApplicationFollow(
   input: ApplicationFollowInput,
 ): Promise<ActionResult<{ following: boolean }>> {

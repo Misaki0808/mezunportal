@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
@@ -52,9 +53,7 @@ export const AVAILABILITY_RULES_MAX = 28;
 /** Kullanıcı başına talep hız sınırı (24 saatte). */
 export const APPOINTMENT_REQUEST_RATE_LIMIT = { maxRequests: 10, windowSeconds: 86_400 } as const;
 
-const text = (min: number, max: number) =>
-  z.string({ error: INVALID }).trim().min(min, { error: INVALID }).max(max, { error: INVALID });
-const id = text(1, 64);
+const id = idTextSchema(INVALID);
 const mode = z.enum(MEETING_MODES, { error: INVALID });
 
 // ---------------------------------------------------------------------------------------------

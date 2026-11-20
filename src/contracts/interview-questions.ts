@@ -1,12 +1,21 @@
+import { hasControlCharacter, ID_TEXT_MAX_LENGTH } from '@/lib/id-text';
 import { z } from 'zod';
 
 import { userTextSchema } from '@/lib/user-text';
 
+/** Boş (süzgeç yok) ya da denetim karakteri içermeyen en çok 64 karakterlik kimlik. */
+const optionalIdText = () =>
+  z
+    .string()
+    .trim()
+    .max(ID_TEXT_MAX_LENGTH)
+    .refine((value) => !hasControlCharacter(value))
+    .default('');
 export const interviewQuerySchema = z
   .object({
     q: userTextSchema(0, 100).default(''),
-    companyId: z.string().trim().max(64).default(''),
-    sectorId: z.string().trim().max(64).default(''),
+    companyId: optionalIdText(),
+    sectorId: optionalIdText(),
     page: z
       .union([
         z.number(),
