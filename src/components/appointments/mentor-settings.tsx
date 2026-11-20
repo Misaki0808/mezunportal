@@ -14,7 +14,7 @@ import {
   type SetPauseInput,
 } from '@/contracts/appointment';
 import { MEETING_MODES } from '@/contracts/mentor-directory';
-import type { ActionResult } from '@/contracts/result';
+import type { ActionFailure, ActionResult } from '@/contracts/result';
 import {
   Button,
   Checkbox,
@@ -107,7 +107,11 @@ export function MentorSettings({
     setError(undefined);
   }
 
-  async function run(section: string, action: () => Result) {
+  async function run(
+    section: string,
+    action: () => Result,
+    onFailure?: (failure: ActionFailure) => boolean,
+  ) {
     if (locked.current) return;
     locked.current = true;
     setPending(section);
@@ -125,7 +129,7 @@ export function MentorSettings({
       } else if (section === 'general' && result.fieldErrors?.inPersonNote) {
         setFieldErrors({ note: t('errors.note') });
         noteField.current?.focus();
-      } else setError(result.errorCode);
+      } else if (!onFailure?.(result)) setError(result.errorCode);
     } catch {
       setError('SERVER_UNEXPECTED');
     } finally {
@@ -189,6 +193,7 @@ export function MentorSettings({
     clearResult();
     const found: Record<string, string> = {};
     const rules: SaveAvailabilityInput['rules'] = [];
+    const ruleKeys: string[] = [];
     for (const weekday of WEEKDAYS) {
       const day = days[weekday]!;
       if (!day.on) continue;
@@ -198,11 +203,12 @@ export function MentorSettings({
         const rawEnd = timeToMinutes(range.end);
         const end = rawEnd === 0 ? 1440 : rawEnd;
         const key = `d${weekday}r${index}`;
-        if (start === null || end === null || start % 5 !== 0 || end % 5 !== 0)
-          found[key] = t('errors.step');
-        else if (end <= start) found[key] = t('errors.order');
+        if (start === null || start % 5 !== 0) found[key] = t('errors.step');
+        else if (end === null || end % 5 !== 0) found[`${key}.end`] = t('errors.step');
+        else if (end <= start) found[`${key}.end`] = errors('APPOINTMENT_AVAILABILITY_END_ORDER');
         else {
           sorted.push({ start, end, index });
+          ruleKeys.push(key);
           rules.push({
             weekday,
             startMinute: start,
@@ -226,7 +232,23 @@ export function MentorSettings({
       weeklyFields.current[field]?.focus();
       return;
     }
-    void run('weekly', () => actions.saveAvailability({ rules }));
+    void run(
+      'weekly',
+      () => actions.saveAvailability({ rules }),
+      (failure) => {
+        for (const [field, code] of Object.entries(failure.fieldErrors ?? {})) {
+          const match = /^rules\.(\d+)\.endMinute$/.exec(field);
+          if (!match || code !== 'APPOINTMENT_AVAILABILITY_END_ORDER') continue;
+          const key = ruleKeys[Number(match[1])];
+          if (!key) continue;
+          const endKey = `${key}.end`;
+          setFieldErrors({ [endKey]: errors(code) });
+          weeklyFields.current[endKey]?.focus();
+          return true;
+        }
+        return false;
+      },
+    );
   }
 
   const updateDay = (weekday: number, patch: Partial<Day>) =>
@@ -412,7 +434,13 @@ export function MentorSettings({
                         aria-label={t('rangeGroup', { day: dayName, number: index + 1 })}
                         className="flex flex-col gap-2 rounded-control bg-surface p-3"
                       >
-                        <div className="grid grid-cols-2 gap-2">
+                        <div
+                          className={
+                            fieldErrors[`d${weekday}r${index}.end`]
+                              ? 'grid grid-cols-1 gap-2 sm:grid-cols-2'
+                              : 'grid grid-cols-2 gap-2'
+                          }
+                        >
                           <Field
                             label={t('from')}
                             error={
@@ -438,10 +466,14 @@ export function MentorSettings({
                           <Field
                             label={t('to')}
                             hint={range.end === '00:00' ? t('midnightHint') : undefined}
+                            error={fieldErrors[`d${weekday}r${index}.end`]}
                           >
                             {(control) => (
                               <Input
                                 {...control}
+                                ref={(element) => {
+                                  weeklyFields.current[`d${weekday}r${index}.end`] = element;
+                                }}
                                 type="time"
                                 step={300}
                                 value={range.end}

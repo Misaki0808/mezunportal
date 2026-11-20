@@ -71,7 +71,10 @@ export const availabilityRuleSchema = z
   })
   .strict()
   .refine((value) => value.startMinute % 5 === 0 && value.endMinute % 5 === 0, { error: INVALID })
-  .refine((value) => value.endMinute > value.startMinute, { error: INVALID, path: ['endMinute'] });
+  .refine((value) => value.endMinute > value.startMinute, {
+    error: 'APPOINTMENT_AVAILABILITY_END_ORDER',
+    path: ['endMinute'],
+  });
 export type AvailabilityRule = z.infer<typeof availabilityRuleSchema>;
 
 /** Tüm haftalık müsaitlik tek seferde yazılır (yerine koyar); aynı günde çakışan aralık olamaz. */
@@ -344,6 +347,7 @@ export const APPOINTMENT_ACTION_ERRORS = {
   saveAvailability: [
     ...authErrors,
     'VALIDATION_INVALID',
+    'APPOINTMENT_AVAILABILITY_END_ORDER',
     'MENTOR_NOT_ELIGIBLE',
     'MENTOR_SETTINGS_INVALID',
   ],

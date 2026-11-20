@@ -332,6 +332,7 @@
       "CV_PARSE_EMPTY": "CV'nden bilgi çıkaramadık. Boş ya da okunamayan bir dosya olabilir; bilgilerini elle girebilirsin.",
       "PROFILE_TAG_INVALID": "Seçtiğin etiketlerden biri geçerli değil. Seçimini yenile.",
       "MENTOR_NOT_ELIGIBLE": "Mentorluk için koşullar henüz tamamlanmadı.",
+      "APPOINTMENT_AVAILABILITY_END_ORDER": "Bitiş, başlangıçtan sonra olmalı. Gece yarısını geçen saatler için iki aralık ekle: ör. 23:00–00:00 ve ertesi gün 00:00–01:00.",
       "APPOINTMENT_SLOT_INVALID": "Bu saat artık seçilemiyor. Müsait saatleri yenile.",
       "APPOINTMENT_SLOT_TAKEN": "Bu saat az önce başkası tarafından alındı. Başka bir saat seç.",
       "APPOINTMENT_MENTOR_UNAVAILABLE": "Bu mentor şu an randevu almıyor.",
@@ -2792,7 +2793,6 @@
         "modes": "En az bir görüşme biçimi seç.",
         "note": "Yüz yüze için yer notu yaz.",
         "noteTooLong": "Yer notu en fazla 300 karakter olmalı.",
-        "order": "Bitiş, başlangıçtan sonra olmalı.",
         "overlap": "Aynı gündeki aralıklar çakışamaz.",
         "step": "Saatleri 5 dakikalık adımlarla gir.",
         "pauseDate": "Geçerli bir tarih seç."

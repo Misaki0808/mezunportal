@@ -358,7 +358,9 @@ describe('mentor ayarları', () => {
       expect(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' })).toBeEnabled(),
     );
     await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
-    expect(within(tuesday).getByText('Bitiş, başlangıçtan sonra olmalı.')).toBeInTheDocument();
+    expect(
+      within(tuesday).getByText(/Bitiş, başlangıçtan sonra olmalı\. Gece yarısını geçen/),
+    ).toBeInTheDocument();
     expect(screen.queryByText('Kaydedildi.')).toBeNull();
     expect(actions.saveAvailability).toHaveBeenCalledTimes(1);
   });
@@ -388,8 +390,13 @@ describe('mentor ayarları', () => {
     await user.clear(ends[0]!);
     await user.type(ends[0]!, '08:00');
     await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
-    expect(within(monday).getByText('Bitiş, başlangıçtan sonra olmalı.')).toBeInTheDocument();
-    expect(starts[0]).toHaveFocus();
+    expect(
+      within(monday).getByText(/Bitiş, başlangıçtan sonra olmalı\. Gece yarısını geçen/),
+    ).toBeInTheDocument();
+    expect(ends[0]).toHaveFocus();
+    expect(ends[0]).toBeInvalid();
+    expect(ends[0]).toHaveAccessibleDescription(/Gece yarısını geçen saatler için iki aralık ekle/);
+    expect(starts[0]).not.toBeInvalid();
   });
 
   it('yüz yüze seçilince yer notu zorunlu; geçersiz kapasite alan hatası verir', async () => {
@@ -1058,4 +1065,32 @@ describe('randevu listesi: karşı tarafın fotoğrafı (kart 388 + 387)', () =>
     expect(rows[1]!.querySelector('img')).toBeNull();
     expect(rows[1]).toHaveTextContent('DA');
   });
+});
+
+it('sunucudan Bitiş alanına dönen hata doğru günün doğru alanına ve odağa taşınır', async () => {
+  const actions = settingsActions();
+  actions.saveAvailability.mockResolvedValueOnce({
+    ok: false,
+    errorCode: 'VALIDATION_INVALID',
+    fieldErrors: { 'rules.1.endMinute': 'APPOINTMENT_AVAILABILITY_END_ORDER' },
+  });
+  const { user } = renderUi(
+    <MentorSettings
+      initial={settingsView({
+        rules: [
+          { weekday: 1, startMinute: 540, endMinute: 720, mode: null },
+          { weekday: 3, startMinute: 780, endMinute: 1020, mode: null },
+        ],
+      })}
+      actions={actions}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
+  const wednesday = screen.getByRole('switch', { name: 'Çarşamba günü müsait' }).closest('li')!;
+  const end = within(wednesday).getByLabelText('Bitiş');
+  const start = within(wednesday).getByLabelText('Başlangıç');
+  await waitFor(() => expect(end).toHaveFocus());
+  expect(end).toBeInvalid();
+  expect(end).toHaveAccessibleDescription(/Gece yarısını geçen saatler için iki aralık ekle/);
+  expect(start).not.toBeInvalid();
 });
