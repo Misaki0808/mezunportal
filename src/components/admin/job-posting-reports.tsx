@@ -10,6 +10,7 @@ import type { ErrorCode } from '@/lib/errors';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { listJobPostingReports, resolveJobPostingReport } from '@/server/actions/job-postings';
 import { Button, EmptyState, Field, Modal, Textarea, buttonClasses } from '@/components/ui';
+import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
 
 export function JobPostingReports({
   initial,
@@ -90,6 +91,7 @@ export function JobPostingReports({
     setItems((current) => [...current, ...result.data.items]);
     setCursor(result.data.nextCursor);
   }
+  useRefillWhenEmpty({ empty: items.length === 0, cursor, busy: pending, load: () => void more() });
   return (
     <div ref={rootRef} className="mt-10 space-y-4">
       {!hideEmpty && (
@@ -103,7 +105,7 @@ export function JobPostingReports({
           {errors(error)}
         </p>
       )}
-      {items.length === 0 ? (
+      {items.length === 0 && !cursor ? (
         !hideEmpty && <EmptyState title={t('reportQueueEmpty')} />
       ) : (
         <AdminList>

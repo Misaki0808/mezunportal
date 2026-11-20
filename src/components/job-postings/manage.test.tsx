@@ -165,6 +165,46 @@ describe('ilan inceleme kuyruğu: karar sonrası geri bildirim', () => {
     expect(screen.queryByText('Veri analizi stajyeri')).toBeNull();
   });
 
+  it('yüklü bütün ilanlar işlenince sıradaki sayfa kendiliğinden yüklenir; boş durum yalnız gerçekten boşken görünür', async () => {
+    const list = vi.fn().mockResolvedValue({
+      ok: true,
+      data: { items: [queued('q3', 'Sonraki sayfadaki ilan')], nextCursor: null },
+    });
+    const paged = {
+      items: [queued('q1', 'Veri analizi stajyeri')],
+      nextCursor: 'imlec-1',
+    } as unknown as JobPostingModerationPage;
+    const { user } = renderWithToasts(
+      <PostingModeration initial={paged} review={review} list={list} />,
+    );
+    await user.click(row('Veri analizi stajyeri').getByRole('button', { name: 'Yayımla' }));
+    const dialog = within(await screen.findByRole('dialog'));
+    await user.click(dialog.getByRole('button', { name: 'Onayla' }));
+    expect(await screen.findByText('Sonraki sayfadaki ilan')).toBeVisible();
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(list).toHaveBeenCalledWith({ cursor: 'imlec-1' });
+    expect(screen.queryByText(messages.jobs.moderationEmpty)).toBeNull();
+  });
+
+  it('sıradaki sayfa yüklenemezse sonsuz yeniden deneme olmaz; "Daha fazla" düğmesi kalır', async () => {
+    const list = vi.fn().mockResolvedValue({ ok: false, errorCode: 'SERVER_UNEXPECTED' });
+    const paged = {
+      items: [queued('q1', 'Veri analizi stajyeri')],
+      nextCursor: 'imlec-1',
+    } as unknown as JobPostingModerationPage;
+    const { user } = renderWithToasts(
+      <PostingModeration initial={paged} review={review} list={list} />,
+    );
+    await user.click(row('Veri analizi stajyeri').getByRole('button', { name: 'Yayımla' }));
+    const dialog = within(await screen.findByRole('dialog'));
+    await user.click(dialog.getByRole('button', { name: 'Onayla' }));
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(1));
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: messages.jobs.loadMore })).toBeVisible();
+    expect(screen.queryByText(messages.jobs.moderationEmpty)).toBeNull();
+  });
+
   it('ret başarılı olunca görünür bildirim verir', async () => {
     const { user } = renderQueue();
     await user.click(row('Yazılım stajyeri').getByRole('button', { name: 'Reddet' }));

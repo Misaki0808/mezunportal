@@ -11,6 +11,7 @@ import {
 } from '@/contracts/experience';
 import type { ActionResult } from '@/contracts/result';
 import { Button, EmptyState, Field, Modal, Textarea, buttonClasses } from '@/components/ui';
+import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
 import type { ErrorCode } from '@/lib/errors';
 import { AdminFrame } from './frame';
 import { ResponsiveRows } from './responsive-rows';
@@ -101,6 +102,7 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
       setPending(false);
     }
   }
+  useRefillWhenEmpty({ empty: items.length === 0, cursor, busy: pending, load: () => void more() });
   return (
     <AdminFrame title={t('report.title')}>
       {notice && (
@@ -119,7 +121,7 @@ export function AdminReports({ initial, jobReports, list, resolve }: Props) {
         ) : (
           <>
             <h2 className="mb-4 text-xl font-semibold">{t('report.experiences')}</h2>
-            {items.length === 0 ? (
+            {items.length === 0 && !cursor ? (
               <EmptyState title={t('report.emptyExperiences')} />
             ) : (
               <ResponsiveRows

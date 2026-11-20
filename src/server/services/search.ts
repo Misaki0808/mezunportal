@@ -1,3 +1,4 @@
+import { sortByTurkishName } from '@/lib/turkish-sort';
 import 'server-only';
 
 import {
@@ -130,5 +131,5 @@ export async function listSearchSectors(deps: SearchDeps, actor: Actor): Promise
     select: { id: true, name: true },
     orderBy: [{ name: 'asc' }, { id: 'asc' }],
   });
-  return searchSectorsSchema.parse({ sectors });
+  return searchSectorsSchema.parse({ sectors: sortByTurkishName(sectors) });
 }

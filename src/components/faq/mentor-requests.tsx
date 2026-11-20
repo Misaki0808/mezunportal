@@ -1,5 +1,6 @@
 'use client';
 
+import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
 import { useTranslations } from 'next-intl';
 import { useId, useRef, useState } from 'react';
 
@@ -155,6 +156,12 @@ export function MentorRequests({ initial, list, answer }: Props) {
       setPending(false);
     }
   }
+  useRefillWhenEmpty({
+    empty: items.length === 0,
+    cursor,
+    busy: pending,
+    load: () => void load(onlyUnanswered, cursor ?? undefined),
+  });
 
   return (
     <div className="flex w-full max-w-3xl min-w-0 flex-col gap-5">
@@ -173,7 +180,7 @@ export function MentorRequests({ initial, list, answer }: Props) {
           {errors(error)}
         </p>
       )}
-      {items.length === 0 ? (
+      {items.length === 0 && !cursor ? (
         <EmptyState title={t('empty')} description={t('emptyDescription')} />
       ) : (
         <ul className="flex flex-col gap-4">

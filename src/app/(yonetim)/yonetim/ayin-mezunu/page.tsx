@@ -1,3 +1,4 @@
+import { sortByTurkishName } from '@/lib/turkish-sort';
 import { guardPage } from '@/server/permissions/page-guard';
 import { ErrorState } from '@/components/ui';
 import { StoryAdmin } from '@/components/alumni-story/admin';
@@ -14,5 +15,5 @@ export default async function StoryAdminPage() {
     select: { id: true, name: true },
     orderBy: { name: 'asc' },
   });
-  return <StoryAdmin departments={departments} />;
+  return <StoryAdmin departments={sortByTurkishName(departments)} />;
 }

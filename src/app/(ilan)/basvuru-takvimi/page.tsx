@@ -1,3 +1,4 @@
+import { sortByTurkishName } from '@/lib/turkish-sort';
 import { CalendarPage } from '@/components/application-window/calendar';
 import { ErrorState } from '@/components/ui';
 import { getApplicationCalendar } from '@/server/actions/application-window';
@@ -12,21 +13,31 @@ export default async function Page({
 }) {
   await requireVerifiedMember();
   const raw = await searchParams;
-  const companyId = typeof raw.companyId === 'string' ? raw.companyId : '';
-  const sectorId = typeof raw.sectorId === 'string' ? raw.sectorId : '';
+  // Geçersiz kimlik (boş, uzun, denetim karakterli) sessizce seçimsiz varsayılana düşer; sorguya hiç gitmez.
+  const idOf = (value: string | string[] | undefined) =>
+    typeof value === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(value) ? value : '';
+  const companyId = idOf(raw.companyId);
+  const sectorId = idOf(raw.sectorId);
   const scope: ApplicationScope | null = companyId
     ? { kind: 'COMPANY', id: companyId }
     : sectorId
       ? { kind: 'SECTOR', id: sectorId }
       : null;
   const db = getDb();
-  const [companies, sectors, data] = await Promise.all([
+  const [companies, sectors, result] = await Promise.all([
     db.company.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
     db.sector.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
     scope ? getApplicationCalendar(scope) : null,
   ]);
-  if (data && !data.ok) return <ErrorState errorCode={data.errorCode} />;
+  // Olmayan şirket/sektör kimliği de geçersiz parametre gibi seçimsiz varsayılana düşer (404 gövdesi yok).
+  const missing = result && !result.ok && result.errorCode === 'RESOURCE_NOT_FOUND';
+  if (result && !result.ok && !missing) return <ErrorState errorCode={result.errorCode} />;
   return (
-    <CalendarPage companies={companies} sectors={sectors} scope={scope} data={data?.data ?? null} />
+    <CalendarPage
+      companies={sortByTurkishName(companies)}
+      sectors={sortByTurkishName(sectors)}
+      scope={missing ? null : scope}
+      data={result?.ok ? result.data : null}
+    />
   );
 }

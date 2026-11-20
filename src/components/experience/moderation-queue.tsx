@@ -1,6 +1,7 @@
 'use client';
 import { AdminFrame } from '@/components/admin/frame';
 import { AdminList, AdminListItem } from '@/components/admin/list';
+import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 import { useTranslations } from 'next-intl';
@@ -253,9 +254,14 @@ export function ModerationQueue({
     },
   );
 
-  async function more(kind: 'experiences' | 'reports') {
-    if (locked.current) return;
+  /** Ortak kilit alınıp istek başladıysa `true`; başka yükleme sürüyorsa `false` (otomatik doldurma imleci denenmiş saymaz). */
+  function more(kind: 'experiences' | 'reports'): boolean {
+    if (locked.current) return false;
     locked.current = true;
+    void fetchMore(kind);
+    return true;
+  }
+  async function fetchMore(kind: 'experiences' | 'reports') {
     setLoading(true);
     setListError(undefined);
     try {
@@ -280,6 +286,18 @@ export function ModerationQueue({
       setLoading(false);
     }
   }
+  useRefillWhenEmpty({
+    empty: items.length === 0,
+    cursor,
+    busy: loading,
+    load: () => more('experiences'),
+  });
+  useRefillWhenEmpty({
+    empty: reports.length === 0,
+    cursor: reportCursor,
+    busy: loading,
+    load: () => more('reports'),
+  });
 
   const experiencesPanel =
     items.length === 0 && !cursor ? (

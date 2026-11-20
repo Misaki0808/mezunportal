@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, screen, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { ExperienceDetail } from '@/contracts/experience';
@@ -151,6 +151,33 @@ describe('moderasyon kuyruğu', () => {
     );
     return { review, ...view };
   };
+
+  it('iki kuyruk aynı anda boş ve imleçliyse ortak kilide rağmen ikisi de yüklenir', async () => {
+    const listExperiences = vi.fn().mockResolvedValue({ ok: true, data: page([]) });
+    const listReports = vi
+      .fn()
+      .mockResolvedValue({ ok: true, data: { items: [], nextCursor: null } });
+    renderUi(
+      <ModerationQueue
+        initialExperiences={{ items: [], nextCursor: 'exp-1' }}
+        initialReports={{ items: [], nextCursor: 'rep-1' }}
+        listExperiences={listExperiences}
+        review={vi.fn()}
+        listReports={listReports}
+        resolve={vi.fn()}
+      />,
+    );
+    await waitFor(() => expect(listExperiences).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(listReports).toHaveBeenCalledTimes(1));
+    expect(listExperiences).toHaveBeenCalledWith({ cursor: 'exp-1' });
+    expect(listReports).toHaveBeenCalledWith({ cursor: 'rep-1' });
+    // İki kuyruk da tükendi: "Daha fazla" kalmaz, tekrar istek atılmaz.
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Daha fazla göster' })).toBeNull(),
+    );
+    expect(listExperiences).toHaveBeenCalledTimes(1);
+    expect(listReports).toHaveBeenCalledTimes(1);
+  });
 
   it('anonim deneyimde yazar bilgisi gösterilmez ve notu yazılır', () => {
     setup();
