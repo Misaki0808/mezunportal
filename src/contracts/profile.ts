@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -70,7 +71,7 @@ export type ProfileTagsOutput = z.infer<typeof profileTagsOutputSchema>;
 
 /** Kaydetmek en az bir seçim ister; seçim yapmadan geçmek `skipOnboardingStep`'tir (boş liste atlama DEĞİL). */
 const tagIds = z
-  .array(z.string({ error: INVALID }).min(1, { error: INVALID }).max(64, { error: INVALID }), {
+  .array(idTextSchema(INVALID), {
     error: INVALID,
   })
   .min(1, { error: INVALID })

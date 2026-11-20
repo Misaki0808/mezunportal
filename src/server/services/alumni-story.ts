@@ -9,13 +9,18 @@ import {
   monthlySelectionSchema,
   storiesScopeSchema,
   type MyStory,
-  type ModerationStory,
+  type ModerationStoryPage,
   type PublishedStory,
 } from '@/contracts/alumni-story';
 import { codedConflict, codedForbidden, codedNotFound, codedValidation } from '@/lib/errors';
 import { createPermissions } from '../permissions/guards';
 import { analyzeIdentity, foldTr } from '../rules/faq';
-import { istanbulMonth } from '../rules/alumniStory';
+import {
+  compareStoryKeys,
+  istanbulMonth,
+  storyCursorOf,
+  storyKeyAfter,
+} from '../rules/alumniStory';
 import { requireConsent } from './privacy';
 import { covers, loadAnyAdmin, TX_OPTIONS } from './admin-access';
 import { recordAdminAction } from './audit';
@@ -228,12 +233,13 @@ export async function listStoryModeration(
   deps: Deps,
   userId: string,
   input: unknown,
-): Promise<ModerationStory[]> {
+): Promise<ModerationStoryPage> {
   const data = storiesScopeSchema.parse(input),
     now = nowOf(deps);
   return deps.db.$transaction(async (tx) => {
     await admin(tx, userId, data.departmentId, now);
-    const rows = await tx.alumniStory.findMany({
+    // 1) Hafif tarama: gövdesiz anahtar + şüphe durumu. Gövdeler (3000 karakter/hikâye) yalnız sayfadaki kayıtlar için okunur.
+    const heads = await tx.alumniStory.findMany({
       where: {
         departmentId: data.departmentId,
         status: { in: ['PENDING', 'PUBLISHED'] },
@@ -250,11 +256,13 @@ export async function listStoryModeration(
           },
         },
       },
-      include: {
-        department: { select: { name: true } },
+      select: {
+        id: true,
+        userId: true,
+        status: true,
+        submittedAt: true,
         user: {
           select: {
-            name: true,
             suspicionFlags: {
               where: { status: { in: ['OPEN', 'CONFIRMED'] } },
               select: { id: true },
@@ -262,31 +270,57 @@ export async function listStoryModeration(
           },
         },
       },
-      orderBy: { submittedAt: 'asc' },
     });
+    const visible = heads.filter(
+      (s) => s.status === 'PENDING' || s.user.suspicionFlags.length === 0,
+    );
     const candidates = await tx.awardCandidate.findMany({
       where: {
         cycle: { departmentId: data.departmentId },
-        userId: { in: rows.map((r) => r.userId) },
+        userId: { in: visible.map((r) => r.userId) },
       },
-      select: { userId: true, points: true, cycle: { select: { year: true } } },
+      select: { userId: true, points: true },
       orderBy: { cycle: { year: 'desc' } },
     });
-    return rows
-      .filter((s) => s.status === 'PENDING' || s.user.suspicionFlags.length === 0)
+    const pointsOf = new Map<string, number>();
+    for (const candidate of candidates)
+      if (!pointsOf.has(candidate.userId)) pointsOf.set(candidate.userId, candidate.points);
+    const ordered = visible
       .map((s) => ({
-        id: s.id,
-        userId: s.userId,
-        name: s.user.name,
-        departmentId: s.departmentId,
-        department: s.department.name,
-        body: s.body,
-        status: s.status,
-        consent: !!s.publicConsentAt && s.publicConsentVersion === STORY_CONSENT_VERSION,
-        points: candidates.find((x) => x.userId === s.userId)?.points ?? null,
-        suspicious: s.user.suspicionFlags.length > 0,
+        ...s,
+        rank: pointsOf.get(s.userId) ?? -1,
+        at: s.submittedAt?.getTime() ?? 0,
       }))
-      .sort((a, b) => (b.points ?? -1) - (a.points ?? -1));
+      .sort(compareStoryKeys)
+      .filter(storyKeyAfter(data.cursor));
+    const heading = ordered.slice(0, data.limit);
+    const last = heading.at(-1);
+    const nextCursor = ordered.length > data.limit && last ? storyCursorOf(last) : null;
+    // 2) Yalnız sayfadaki hikâyelerin gövdesi.
+    const rows = await tx.alumniStory.findMany({
+      where: { id: { in: heading.map((h) => h.id) } },
+      include: { department: { select: { name: true } }, user: { select: { name: true } } },
+    });
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    const items = heading.flatMap((head) => {
+      const s = byId.get(head.id);
+      if (!s) return [];
+      return [
+        {
+          id: s.id,
+          userId: s.userId,
+          name: s.user.name,
+          departmentId: s.departmentId,
+          department: s.department.name,
+          body: s.body,
+          status: s.status,
+          consent: !!s.publicConsentAt && s.publicConsentVersion === STORY_CONSENT_VERSION,
+          points: pointsOf.get(s.userId) ?? null,
+          suspicious: head.user.suspicionFlags.length > 0,
+        },
+      ];
+    });
+    return { items, nextCursor };
   }, TX_OPTIONS);
 }
 export async function reviewStory(deps: Deps, userId: string, input: unknown): Promise<MyStory> {

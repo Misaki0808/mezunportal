@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import { userTextSchema } from '@/lib/user-text';
@@ -8,7 +9,7 @@ const text = userTextSchema(2, 100);
 export const alumniSearchSchema = z
   .object({
     q: text.optional(),
-    sectorId: z.string().min(1).max(64).optional(),
+    sectorId: idTextSchema().optional(),
     company: text.optional(),
     title: text.optional(),
     skill: text.optional(),

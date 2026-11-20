@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -150,8 +151,8 @@ export const usageMetricsFilterSchema = z
   .object({
     from: z.coerce.date({ error: INVALID }),
     to: z.coerce.date({ error: INVALID }),
-    departmentId: z.string({ error: INVALID }).trim().min(1).max(64).optional(),
-    facultyId: z.string({ error: INVALID }).trim().min(1).max(64).optional(),
+    departmentId: idTextSchema(INVALID).optional(),
+    facultyId: idTextSchema(INVALID).optional(),
     types: z
       .array(z.enum(EVENT_TYPES, { error: INVALID }), { error: INVALID })
       .min(1)

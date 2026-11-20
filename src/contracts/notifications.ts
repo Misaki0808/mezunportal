@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 /** P1-12: hesap/güvenlik bildirimleri kapatılamaz; geri kalan türler varsayılan açıktır. */
@@ -72,7 +73,7 @@ export type SetNotificationPreferencesInput = z.input<typeof setNotificationPref
 export const STILL_THERE_CHOICES = ['YES', 'NO'] as const;
 export type StillThereChoice = (typeof STILL_THERE_CHOICES)[number];
 export const stillThereInputSchema = z
-  .object({ token: z.string().min(1).max(512), choice: z.enum(STILL_THERE_CHOICES) })
+  .object({ token: idTextSchema('VALIDATION_INVALID', 512), choice: z.enum(STILL_THERE_CHOICES) })
   .strict();
 export type StillThereInput = z.input<typeof stillThereInputSchema>;
 export const stillThereOutputSchema = z.object({ choice: z.enum(STILL_THERE_CHOICES) }).strict();

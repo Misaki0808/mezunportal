@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -79,7 +80,7 @@ export const QUEUE_PAGE_SIZE_MAX = 50;
 export const listPendingGraduationDocumentsSchema = z.object({
   /** Verilirse yalnız bu bölüm (yöneticinin kapsamı içinde olmalı); verilmezse kapsamdaki tüm bölümler. */
   departmentId: departmentIdSchema.optional(),
-  cursor: z.string().min(1).max(200).optional(),
+  cursor: idTextSchema(INVALID, 200).optional(),
   limit: z.number().int().min(1).max(QUEUE_PAGE_SIZE_MAX).default(QUEUE_PAGE_SIZE_DEFAULT),
 });
 export type ListPendingGraduationDocumentsInput = z.input<
@@ -128,10 +129,10 @@ const reviewReasonSchema = z
 export const reviewGraduationDocumentSchema = z.discriminatedUnion(
   'decision',
   [
-    z.object({ decision: z.literal('APPROVE'), documentId: z.string().min(1).max(64) }),
+    z.object({ decision: z.literal('APPROVE'), documentId: idTextSchema() }),
     z.object({
       decision: z.literal('REJECT'),
-      documentId: z.string().min(1).max(64),
+      documentId: idTextSchema(),
       reason: reviewReasonSchema,
     }),
   ],

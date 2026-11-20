@@ -1,6 +1,6 @@
 import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
-import { adminId, adminReason } from './admin';
+import { ADMIN_PAGE_SIZE_DEFAULT, ADMIN_PAGE_SIZE_MAX, adminId, adminReason } from './admin';
 
 const INVALID = 'VALIDATION_INVALID';
 export const STORY_MIN_LENGTH = 50;
@@ -31,7 +31,22 @@ export const reviewStorySchema = storyIdSchema
 export const monthlySelectionSchema = z
   .object({ departmentId: adminId, storyId: adminId, month: monthSchema, reason: adminReason })
   .strict();
-export const storiesScopeSchema = z.object({ departmentId: adminId }).strict();
+/** İmleç: `puan:gönderimZamanı:kimlik` (puan yoksa -1); sıradaki sayfa bu üçlüden SONRAKİ kayıtlarla başlar. */
+export const storyCursorSchema = z
+  .string({ error: INVALID })
+  .regex(/^-?\d{1,9}:\d{1,16}:[A-Za-z0-9_-]{1,64}$/, { error: INVALID });
+export const storiesScopeSchema = z
+  .object({
+    departmentId: adminId,
+    cursor: storyCursorSchema.optional(),
+    limit: z
+      .number({ error: INVALID })
+      .int({ error: INVALID })
+      .min(1, { error: INVALID })
+      .max(ADMIN_PAGE_SIZE_MAX, { error: INVALID })
+      .default(ADMIN_PAGE_SIZE_DEFAULT),
+  })
+  .strict();
 export type SaveStoryInput = z.input<typeof saveStorySchema>;
 export type StoryIdInput = z.input<typeof storyIdSchema>;
 export type StoryConsentInput = z.input<typeof storyConsentSchema>;
@@ -76,6 +91,10 @@ export const moderationStorySchema = z
   })
   .strict();
 export type ModerationStory = z.infer<typeof moderationStorySchema>;
+export const moderationStoryPageSchema = z
+  .object({ items: z.array(moderationStorySchema), nextCursor: z.string().nullable() })
+  .strict();
+export type ModerationStoryPage = z.infer<typeof moderationStoryPageSchema>;
 export const STORY_ACTION_ACCESS = {
   listMyStories: 'ALUMNI',
   saveStory: 'ALUMNI',

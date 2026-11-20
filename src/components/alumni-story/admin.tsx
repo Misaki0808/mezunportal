@@ -1,6 +1,7 @@
 'use client';
 import { userTextLength } from '@/lib/user-text';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
+import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
 import { safeClientAction } from '@/lib/safe-client-action';
 import { useRef, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
@@ -18,6 +19,15 @@ import {
 } from '@/server/actions/alumni-story';
 
 type Intent = { mode: 'PUBLISH' | 'REJECT' | 'SELECT'; storyId: string };
+/** Karar sonrası liste sunucudaki kuralla aynı kalır: ret satırı çıkar, yayımlanan satır yayında olur (şüpheliyse listeden düşer). */
+function applyDecision(rows: ModerationStory[] | null, decided: Intent) {
+  if (!rows || decided.mode === 'SELECT') return rows;
+  return rows.flatMap((story) => {
+    if (story.id !== decided.storyId) return [story];
+    if (decided.mode === 'REJECT' || story.suspicious) return [];
+    return [{ ...story, status: 'PUBLISHED' as const }];
+  });
+}
 export function StoryAdmin({ departments }: { departments: { id: string; name: string }[] }) {
   const reasonInput = useRef<HTMLTextAreaElement>(null),
     monthInput = useRef<HTMLInputElement>(null);
@@ -26,6 +36,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
     errors = useTranslations('errors.codes');
   const [departmentId, setDepartment] = useState(departments[0]?.id ?? ''),
     [rows, setRows] = useState<ModerationStory[] | null>(null),
+    [cursor, setCursor] = useState<string | null>(null),
     [month, setMonth] = useState(istanbulMonth(new Date())),
     [reason, setReason] = useState(''),
     [intent, setIntent] = useState<Intent | null>(null),
@@ -38,12 +49,36 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
     start(async () => {
       setMessage('');
       const result = await safeClientAction(() => listStoryModeration({ departmentId }));
-      if (result.ok) setRows(result.data);
-      else setMessage(errors(result.errorCode));
+      if (result.ok) {
+        setRows(result.data.items);
+        setCursor(result.data.nextCursor);
+      } else setMessage(errors(result.errorCode));
     });
   }
+  function loadMore() {
+    if (!cursor) return;
+    start(async () => {
+      const result = await safeClientAction(() => listStoryModeration({ departmentId, cursor }));
+      if (!result.ok) {
+        setMessage(errors(result.errorCode));
+        return;
+      }
+      setRows((all) => {
+        const seen = new Set((all ?? []).map((story) => story.id));
+        return [...(all ?? []), ...result.data.items.filter((story) => !seen.has(story.id))];
+      });
+      setCursor(result.data.nextCursor);
+    });
+  }
+  useRefillWhenEmpty({
+    empty: rows !== null && rows.length === 0,
+    cursor,
+    busy: pending,
+    load: loadMore,
+  });
   function decide() {
     if (!intent) return;
+    const decided = intent;
     start(async () => {
       setMessage('');
       setReasonError('');
@@ -92,11 +127,11 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
         }
         setMessage(t('reviewSuccess'));
       }
-      completeDecision(intent.storyId);
+      completeDecision(decided.storyId);
       setIntent(null);
       setReason('');
-      const result = await safeClientAction(() => listStoryModeration({ departmentId }));
-      if (result.ok) setRows(result.data);
+      // Yüklenmiş sayfalar korunur: sunucuyu yeniden okumak liste başına dönüp yüklenenleri atardı.
+      setRows((all) => applyDecision(all, decided));
     });
   }
   function open(mode: Intent['mode'], storyId: string) {
@@ -117,6 +152,7 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
               onChange={(e) => {
                 setDepartment(e.target.value);
                 setRows(null);
+                setCursor(null);
               }}
             >
               {departments.map((d) => (
@@ -194,7 +230,17 @@ export function StoryAdmin({ departments }: { departments: { id: string; name: s
               </li>
             ))}
           </ul>
-          {!rows.length && <p>{t('queueEmpty')}</p>}
+          {cursor && (
+            <Button
+              variant="secondary"
+              {...disabled(pending, t('pending'))}
+              onClick={loadMore}
+              className="self-start"
+            >
+              {t('loadMore')}
+            </Button>
+          )}
+          {!rows.length && !cursor && <p>{t('queueEmpty')}</p>}
         </>
       )}
       <Modal

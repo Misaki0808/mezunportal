@@ -1247,3 +1247,15 @@ JSON boyutunu büyütmemek için özgün CV baytları döküme gömülmez; dosya
 
 Adla sıralanan listeler (mezun dizini, şirket listesi) Türkçe harf sırasını sorgu düzeyinde `COLLATE "tr-TR-x-icu"` ile alır ve sayfalama veritabanında kalır; kolon harmanlaması ve şema değişmez, harmanlama yoksa sorgu varsayılan sıraya düşer. Bütün liste adreslerinde geçersiz parametre sessizce varsayılana düşer, aralık dışı sayfa (`?page=999`) 404 yerine son geçerli sayfaya yönlendirilir; şirket listesi sayfalanır, şirket sayfasında en yeni 10 ilan gösterilip tamamı `/ilanlar?companyId=` ile açılır. Liste arama kutularındaki sessiz `maxLength` bilinçli kabul edildi: arama için sayaç gerekmez.
 
+
+## 2026-11-20 · Hikâye kuyruğu sayfalı, takvim şirket seçicisi dar, kimlikte denetim karakteri yok
+
+Ayın mezunu hikâye moderasyonu diğer kuyruklarla aynı imleçli sayfalamaya geçti. Sıra eskisi gibi puan ▸ gönderim zamanı ▸
+kimlik olduğundan imleç bu üçlüyü taşır; sunucu önce gövdesiz hafif bir tarama yapar, gövdeleri yalnız sayfadaki hikâyeler
+için okur (sayfa boyutu 20, en çok 50). Karar sonrası liste yeniden okunmaz, yüklenen sayfalar yerinde güncellenir.
+Başvuru takvimindeki şirket seçicisi bütün şirketleri sayfaya gömmez; yalnız izleyicinin üniversitesinde yayımlanmış en az
+bir staj deneyimi olan şirketleri (takvim toplamasıyla aynı koşul) ve URL'den gelen seçili şirketi taşır. Projede arama
+kutulu hazır bir şirket seçici yok; yeni bileşen/bağımlılık eklenmedi.
+İstemciden gelen kimlik, imleç ve anahtar metinleri ortak `idTextSchema` ile (`src/lib/id-text.ts`) kırpılır, 1–64 karakter
+(imleçte 200) olmalıdır ve NUL dahil hiçbir denetim karakteri (`\p{Cc}`) içeremez; `%00` içeren kimlik veritabanına gitmeden
+`VALIDATION_INVALID` döner (önceden beklenmeyen hataya dönüşüyordu). Serbest metin bu kuralın dışındadır (satır sonu geçerlidir).

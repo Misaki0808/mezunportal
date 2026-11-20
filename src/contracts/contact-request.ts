@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
@@ -26,11 +27,7 @@ export const CONTACT_MESSAGE_MAX = 500;
 export const CONTACT_LIST_PAGE_SIZE_DEFAULT = 20;
 export const CONTACT_LIST_PAGE_SIZE_MAX = 50;
 
-const idSchema = z
-  .string({ error: INVALID })
-  .trim()
-  .min(1, { error: INVALID })
-  .max(64, { error: INVALID });
+const idSchema = idTextSchema(INVALID);
 
 /** Boş/yalnız boşluk not yok sayılır (null); veritabanı CHECK'iyle aynı üst sınır. */
 const messageSchema = userTextSchema(0, CONTACT_MESSAGE_MAX, INVALID)
@@ -108,7 +105,7 @@ export type ContactRequestStatusOutput = z.infer<typeof contactRequestStatusOutp
 export const listContactRequestsSchema = z.object({
   box: z.enum(['INCOMING', 'OUTGOING'], { error: INVALID }),
   status: z.enum(CONTACT_REQUEST_STATUSES, { error: INVALID }).optional(),
-  cursor: z.string().min(1).max(200).optional(),
+  cursor: idTextSchema(INVALID, 200).optional(),
   limit: z
     .number({ error: INVALID })
     .int({ error: INVALID })
