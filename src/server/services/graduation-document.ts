@@ -33,6 +33,7 @@ import { listManagedDepartmentIds, resolveDepartmentScope } from '../permissions
 import { findReasonProblem } from '../rules/adminAudit';
 import { evaluateAccess } from '../rules/authorization';
 import { maskEmail } from '../rules/maskEmail';
+import { inspectPdf } from '../rules/pdf';
 import { planAlumniTransition } from '../rules/membershipTransition';
 import { applyAlumniTransitionPlan } from './membership';
 import { recordAdminAction } from './audit';
@@ -78,6 +79,7 @@ export async function uploadGraduationDocument(
   if (bytes.length === 0) throw codedValidation('DOCUMENT_EMPTY');
   if (bytes.length > MAX_DOCUMENT_BYTES) throw codedValidation('DOCUMENT_TOO_LARGE');
   if (!hasPdfMagic(bytes)) throw codedValidation('DOCUMENT_NOT_PDF');
+  if (inspectPdf(bytes).encrypted) throw codedValidation('DOCUMENT_ENCRYPTED');
 
   const department = await db.department.findUnique({
     where: { id: form.departmentId },

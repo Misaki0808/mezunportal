@@ -149,15 +149,6 @@ export async function uploadCv(
   });
   if (busy) throw codedConflict('CV_ALREADY_PROCESSING');
 
-  try {
-    await consumeRateLimit(db, cvParseRule(deps.dailyLimit), actor.userId, now);
-  } catch (error) {
-    if (isCodedError(error) && error.code === 'RATE_LIMITED') {
-      throw codedRateLimited('CV_DAILY_LIMIT_REACHED', { limit: deps.dailyLimit });
-    }
-    throw error;
-  }
-
   const key = newCvKey(actor.userId);
   try {
     const output = await db.$transaction(
@@ -166,6 +157,18 @@ export async function uploadCv(
         // Rıza kilit altında yeniden okunur: geri çekilmiş rızayla dosya kabul edilmez.
         if (!(await transferConsentGranted(tx, actor.userId))) {
           throw codedValidation('CV_TRANSFER_CONSENT_REQUIRED');
+        }
+        const inFlight = await tx.cvUpload.findFirst({
+          where: { userId: actor.userId, status: { in: [...IN_FLIGHT] } },
+          select: { id: true },
+        });
+        if (inFlight) throw codedConflict('CV_ALREADY_PROCESSING');
+        try {
+          await consumeRateLimit(tx, cvParseRule(deps.dailyLimit), actor.userId, now);
+        } catch (error) {
+          if (isCodedError(error) && error.code === 'RATE_LIMITED')
+            throw codedRateLimited('CV_DAILY_LIMIT_REACHED', { limit: deps.dailyLimit });
+          throw error;
         }
         // Onay bekleyen eski sonuç, yeni yükleme gelince atılır (en fazla bir onay bekleyen CV).
         const stale = await tx.cvUpload.findMany({
