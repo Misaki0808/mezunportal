@@ -230,6 +230,7 @@ export const exportedCvSchema = z.strictObject({
       errorCode: z.string().nullable(),
       pageCount: z.number().int(),
       hasFile: z.boolean(),
+      downloadPath: z.string(),
       createdAt: z.string(),
       appliedAt: z.string().nullable(),
       /** Onay bekleyen (uygulanmamış) ayrıştırma önerisi; uygulanınca/atılınca silinir. */
