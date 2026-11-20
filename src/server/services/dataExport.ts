@@ -698,6 +698,7 @@ async function loadCvExport(
       errorCode: row.errorCode,
       pageCount: row.pageCount,
       hasFile: row.storageKey !== null,
+      downloadPath: `/api/hesabim/cv/${row.id}`,
       createdAt: row.createdAt.toISOString(),
       appliedAt: iso(row.appliedAt),
       pendingParsedCv: row.parsedJson,
