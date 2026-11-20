@@ -1244,6 +1244,7 @@
       "redirecting": "Yönlendiriliyor…",
       "emailHint": "Öğrenci veya akademisyensen üniversite adresini, mezunsan kişisel e-posta adresini kullan.",
       "continueTitle": "Devam etmek için giriş yap",
+      "suspendedKvkk": "KVKK kapsamındaki başvurular için aydınlatma metnindeki iletişim yolunu kullanabilirsin.",
       "invalidEmail": "Geçerli bir e-posta adresi yaz."
     },
     "membership": {

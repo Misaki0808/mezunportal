@@ -1267,3 +1267,11 @@ kutulu hazır bir şirket seçici yok; yeni bileşen/bağımlılık eklenmedi.
 İstemciden gelen kimlik, imleç ve anahtar metinleri ortak `idTextSchema` ile (`src/lib/id-text.ts`) kırpılır, 1–64 karakter
 (imleçte 200) olmalıdır ve NUL dahil hiçbir denetim karakteri (`\p{Cc}`) içeremez; `%00` içeren kimlik veritabanına gitmeden
 `VALIDATION_INVALID` döner (önceden beklenmeyen hataya dönüşüyordu). Serbest metin bu kuralın dışındadır (satır sonu geçerlidir).
+
+## 2026-11-20 · Askıdaki kullanıcı KVKK yolunu giriş bağlantısına tıklayınca görür
+
+Yönetici hesabı askıya alınca oturum kapanır ve kullanıcı `/hesap/veriler`, `/hesap/hesabi-sil` ekranlarına arayüzden ulaşamaz;
+bu yüzden askı açıklaması (aydınlatma metni bağlantısı) yalnız oradaysa hiç görünmezdi. Aynı açıklama ve bağlantı, askıdaki
+kullanıcının doğrulanmış giriş bağlantısına tıklayınca düştüğü giriş sayfası hatasında (`/giris?hata=AUTH_ACCOUNT_SUSPENDED`)
+gösterilir. Hesap numaralandırma kuralı değişmez: bağlantı isteme formu kayıtlı, kayıtsız, askıdaki ve silinmiş adreste aynı
+yanıtı verir; askı yalnız e-postanın sahibi bağlantıya tıklayınca görünür.

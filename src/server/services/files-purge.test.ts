@@ -10,6 +10,50 @@ vi.mock('./cv-parse', () => ({
 import { purgeFiles } from './files-purge';
 
 describe('dosya temizliği', () => {
+  // 500'lük gruplar: [0, 499] [500, 999] [1000, 1002]. Sınır konumları (grubun ilk/son anahtarı ve komşuları) hem bağlı hem
+  // öksüz olarak denenir: hatalı dilim/adım (499, 501) bağlıyı silmez ama öksüzü ATLAR ya da İKİ KEZ siler; yalnız
+  // "silinenler tam olarak öksüzler, sırayla, tekrarsız" eşitliği bunu yakalar.
+  const BOUNDARY = [0, 498, 499, 500, 501, 998, 999, 1000, 1001, 1002];
+  it.each([
+    ['sınır konumlarındaki anahtarlar BAĞLI', 'linked'],
+    ['sınır konumlarındaki anahtarlar ÖKSÜZ', 'orphan'],
+  ] as const)(
+    'CV bağlılığını sınırlı toplu sorgularla ölçer; %s: öksüzlerin hepsi tam bir kez silinir, bağlılar silinmez',
+    async (_title, atBoundary) => {
+      const candidates = Array.from({ length: 1003 }, (_, index) => `cv/user/file-${index}.pdf`);
+      const boundary = new Set(BOUNDARY.map((index) => candidates[index]!));
+      const linked = new Set(
+        candidates.filter((key) =>
+          atBoundary === 'linked' ? boundary.has(key) : !boundary.has(key),
+        ),
+      );
+      const orphans = candidates.filter((key) => !linked.has(key));
+      const findMany = vi.fn(async ({ where }: { where: { storageKey: { in: string[] } } }) =>
+        where.storageKey.in.filter((key) => linked.has(key)).map((storageKey) => ({ storageKey })),
+      );
+      const storage = {
+        listOldGraduationKeys: vi.fn().mockResolvedValue([]),
+        listOldCvKeys: vi.fn().mockResolvedValue(candidates),
+        delete: vi.fn().mockResolvedValue(undefined),
+        purgeTemporaryFiles: vi.fn().mockResolvedValue(2),
+      };
+      const now = new Date('2030-01-01T12:00:00Z');
+      const result = await purgeFiles(
+        { cvUpload: { findMany } } as unknown as PrismaClient,
+        storage as unknown as Parameters<typeof purgeFiles>[1],
+        now,
+      );
+      expect(result.orphanCvRemoved).toBe(orphans.length);
+      expect(result.temporaryRemoved).toBe(2);
+      expect(storage.delete.mock.calls.map(([key]) => key)).toEqual(orphans);
+      expect(findMany).toHaveBeenCalledTimes(3);
+      expect(findMany.mock.calls.map(([args]) => args.where.storageKey.in.length)).toEqual([
+        500, 500, 3,
+      ]);
+      expect(storage.purgeTemporaryFiles).toHaveBeenCalledWith(new Date('2030-01-01T11:00:00Z'));
+    },
+  );
+
   it('eski ve bağlı olmayan mezun belgesini siler; bağlı ve yeni dosyaları korur', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'mezun-purge-'));
     try {

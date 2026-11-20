@@ -1025,6 +1025,7 @@ model CvUpload {
 
   @@index([userId, createdAt])
   @@index([source, createdAt])
+  @@index([storageKey])
 }
 
 enum CvReviewRequestStatus {

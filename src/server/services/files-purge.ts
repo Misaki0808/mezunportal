@@ -20,14 +20,22 @@ export async function purgeFiles(db: PrismaClient, storage: StorageAdapter, now 
     graduationRemoved++;
   }
   let orphanCvRemoved = 0;
-  for (const key of await storage.listOldCvKeys(new Date(now.getTime() - 60 * 60 * 1000))) {
-    const retained = await db.cvUpload.findFirst({
-      where: { storageKey: key },
-      select: { id: true },
+  // Yüklemenin DB işlemi en çok 30 sn: bir saatlik pay, henüz bağlanmamış PDF ve .tmp'yi korur.
+  const before = new Date(now.getTime() - 60 * 60 * 1000);
+  const cvCandidates = await storage.listOldCvKeys(before);
+  for (let offset = 0; offset < cvCandidates.length; offset += 500) {
+    const batch = cvCandidates.slice(offset, offset + 500);
+    const retained = await db.cvUpload.findMany({
+      where: { storageKey: { in: batch } },
+      select: { storageKey: true },
     });
-    if (retained) continue;
-    await storage.delete(key);
-    orphanCvRemoved++;
+    const retainedKeys = new Set(retained.map((row) => row.storageKey));
+    for (const key of batch) {
+      if (retainedKeys.has(key)) continue;
+      await storage.delete(key);
+      orphanCvRemoved++;
+    }
   }
-  return { ...cv, graduationRemoved, orphanCvRemoved };
+  const temporaryRemoved = (await storage.purgeTemporaryFiles?.(before)) ?? 0;
+  return { ...cv, graduationRemoved, orphanCvRemoved, temporaryRemoved };
 }
