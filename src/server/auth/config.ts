@@ -33,6 +33,26 @@ export function withCallbackPath(url: string, path: string): string {
   return parsed.toString();
 }
 
+/**
+ * Oturum çerezinden oturum jetonunu okur. İmzayı DOĞRULAMAZ: yalnız hangi oturumun kalacağını seçer; jeton tablodaki
+ * hiçbir oturumla eşleşmezse (sahte/eski çerez) hiçbir oturum korunmaz, yani yanlış çerez fazladan oturum bırakamaz.
+ */
+export function sessionTokenFromCookie(
+  cookieHeader: string | null,
+  cookieName: string,
+): string | null {
+  for (const part of (cookieHeader ?? '').split(';')) {
+    const [name, ...rest] = part.trim().split('=');
+    if (name !== cookieName) continue;
+    try {
+      return decodeURIComponent(rest.join('=')).split('.')[0] || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export const SESSION_EXPIRES_IN_SECONDS = 14 * 24 * 3600;
 export const SESSION_UPDATE_AGE_SECONDS = 24 * 3600;
 
@@ -118,6 +138,19 @@ export function buildAuthOptions(deps: AuthDeps) {
       autoSignInAfterVerification: false,
       sendOnSignUp: false,
       sendOnSignIn: false,
+      // E-posta değişimi tamamlandı (yalnız 2. adımda, doğrulama bağlantısına tıklanınca): bu isteği yapan oturum kalır,
+      // kullanıcının DİĞER oturumları kapanır (kart 531 B5: çalınmış çerez e-posta değişimiyle düşmüyordu). Better Auth'un
+      // `revokeOtherSessions` çağrısı bu kancada kullanılamaz (oturum çözümü/örnek yok); aynı anlam doğrudan oturum
+      // tablosunda uygulanır. Bağlantı oturumsuz bir tarayıcıda açılırsa korunacak oturum yoktur: hepsi kapanır.
+      afterEmailVerification: async (user, request) => {
+        const keep = sessionTokenFromCookie(
+          request?.headers.get('cookie') ?? null,
+          `${production ? '__Secure-' : ''}mezun.session_token`,
+        );
+        await db.session.deleteMany({
+          where: { userId: user.id, ...(keep ? { token: { not: keep } } : {}) },
+        });
+      },
       // Yalnız e-posta değiştirmenin 2. adımında kullanılır: `user.email` YENİ adrestir.
       sendVerificationEmail: async ({ user, url, token }) => {
         // Silme sürerken tıklanan eski adres onayı yeni adrese e-posta göndermez (kart 371).

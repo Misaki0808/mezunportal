@@ -1,3 +1,4 @@
+import { API_CSP, API_REFERRER_POLICY } from '@/lib/api-security-headers';
 import { getDb } from '@/server/db';
 import { getStorage } from '@/server/external/storage';
 import { readRouteSession } from '@/server/permissions/route-session';
@@ -11,7 +12,7 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
     'cache-control': 'private, no-store',
     vary: 'Cookie',
     'x-content-type-options': 'nosniff',
-    'referrer-policy': 'no-referrer',
+    'referrer-policy': API_REFERRER_POLICY,
   };
   if (!session.ok)
     return new Response(null, { status: session.response.status === 503 ? 503 : 404, headers });
@@ -31,7 +32,7 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
         ...headers,
         'content-type': 'image/webp',
         'content-disposition': 'inline; filename="profil.webp"',
-        'content-security-policy': "default-src 'none'; sandbox",
+        'content-security-policy': API_CSP,
       },
     });
   } catch (error) {

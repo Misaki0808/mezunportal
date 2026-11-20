@@ -27,7 +27,8 @@ kural sunucuda zorlanır.
   (veritabanı destekli, sabit pencere): bir e-postaya saatte 5 bağlantı, bir istemci adresinden saatte 200
   (adres başlıkla taklit edilebildiği için tamamlayıcıdır; asıl koruma e-posta başınadır), e-posta
   değiştirme kullanıcı başına saatte 3, mezun belgesi yükleme kullanıcı başına saatte 5. Sayaç anahtarları
-  HMAC ile özetlenir; ham e-posta/kimlik tabloya yazılmaz. Kampüs NAT arkasındaki bir sınıfın yaklaşık 80 kullanıcısı için doğrulama ve bağlantı eklentisi sınırları 5 dakikada 120, genel sınır dakikada 1000 IP başına istektir; güvenilir istemci IP yapılandırması TD-021 kapsamındadır.
+  HMAC ile özetlenir; ham e-posta/kimlik tabloya yazılmaz. Süresi dolmuş sayaç satırları günlük `auth.purge`
+  işiyle (en uzun pencereden, 30 gün, bir gün payla) silinir; silmek sınırı gevşetmez, yalnız tablonun büyümesini durdurur. Kampüs NAT arkasındaki bir sınıfın yaklaşık 80 kullanıcısı için doğrulama ve bağlantı eklentisi sınırları 5 dakikada 120, genel sınır dakikada 1000 IP başına istektir; güvenilir istemci IP yapılandırması TD-021 kapsamındadır.
 - **HTTP yüzeyi beyaz listedir** (`rules/authRoutePolicy.ts`): `/api/auth/` altında yalnız bağlantıya
   tıklamayla tetiklenen GET uçları (`magic-link/verify`, `verify-email`, `callback/linkedin`) açıktır;
   Better Auth'un admin (impersonation dahil), kayıt, parola, oturum ve doğrudan giriş uçlarının hepsi 404
@@ -46,7 +47,10 @@ kural sunucuda zorlanır.
 - **E-posta değiştirme** iki adımlıdır: eski adrese onay bağlantısı, onaydan sonra yeni adrese doğrulama
   bağlantısı. Yeni adres başkasına aitse yanıt aynıdır ve e-posta gitmez (kayıt durumu sızmaz); kullanıcının
   kendi mevcut adresi `EMAIL_CHANGE_SAME_ADDRESS` ile reddedilir. İki bağlantı sabit site içi yollara döner
-  (`/hesap/e-posta?adim=eski-onaylandi` / `tamamlandi`; değer beyaz listeden okunur).
+  (`/hesap/e-posta?adim=eski-onaylandi` / `tamamlandi`; değer beyaz listeden okunur). **Değişim tamamlanınca (2. adım)
+  kullanıcının diğer oturumları kapanır**; bağlantıyı tıklayan oturum kalır, bağlantı oturumsuz bir tarayıcıda açılırsa
+  hepsi kapanır (çalınmış çerez e-posta değişimiyle düşer; `auth.config` `afterEmailVerification`, kart 533). 1. adım
+  oturumlara dokunmaz. Kullanıcıya oturum listesi/“diğerlerini kapat” ekranı henüz yoktur.
 - **Oturum ve dönüş yolu:** oturum isteyen sayfa (`PrivacyGuard`) oturumsuz kullanıcıyı (çıkış yapmış, silinmiş
   hesap dahil) girişe, zorunlu onayı eksik kullanıcıyı onaya yönlendirir; gidilmek istenen yol `?donus=` ile
   taşınır ve magic-link geri çağrısına konur. **Açık yönlendirme yoktur:** yalnız `/` ile başlayan site içi
@@ -60,7 +64,8 @@ kural sunucuda zorlanır.
 - **Mezun belgesi:** yalnız PDF ≤ 5 MB; sunucu boyutu yeniden doğrular ve dosyanın İÇERİĞİNE bakar (`%PDF-`
   sihirli baytı; MIME/uzantı güvenilmez). Dosya `graduation/<userId>/<uuid>.pdf` anahtarıyla Git dışı
   depoda durur ve yalnız belgenin bölümünü kapsayan doğrulanmış yöneticiye yetki kontrollü rotadan akıtılır
-  (`nosniff`, `no-store`, `default-src 'none'; sandbox`); başvuran kendi belgesini bu rotadan okuyamaz.
+  (`nosniff`, `no-store`, `default-src 'none'; frame-ancestors 'none'`: satır içi PDF, `sandbox` yok, bkz. “Güvenlik
+  başlıkları”); başvuran kendi belgesini bu rotadan okuyamaz.
   Karar işlemi tek veritabanı işleminde yetkiyi yeniden doğrular, üyeliği günceller, işlem kaydını yazar ve
   dosyayı SİLER (silme başarısızsa karar geri alınır); karar sonrası belge depoda yoktur.
 - Test girişi yalnız `APP_ENV` `local`/`test`'te; `prod`'da yapılandırmada yoktur (eklenti yüklenmez, uç
@@ -387,6 +392,23 @@ yığın izi kullanıcıya gösterilmez. Ayrıntı `docs/architecture.md` “Dı
 `frame-ancestors 'none'`), `Referrer-Policy: strict-origin-when-cross-origin`,
 `Permissions-Policy` (kamera, mikrofon, konum kapalı), canlıda HSTS. Server Actions'ın köken
 kontrolü korunur; dosya yükleme gibi rota uçlarında köken ve oturum ayrıca doğrulanır.
+
+**Rota rota başlık politikası (kart 531/533).** `next.config` `headers()` aynı anahtarı SONRAKİ eşleşen kuralla ve rota
+işleyicisinin kendi başlığıyla ezer (üretim derlemesinde ölçüldü); bu yüzden politika `src/lib/api-security-headers.ts`'te
+tek yerde tanımlanır, `next.config` sırayla uygular (genel sayfa kuralı → `/api/:path*` → satır içi PDF istisnaları) ve rota
+işleyicileri aynı sabiti yazar; `src/server/next-config.test.ts` her rota sınıfı için ETKİN başlığı Next'in eşleyicisiyle sınar.
+
+| Yol | `Content-Security-Policy` | Neden |
+|---|---|---|
+| sayfalar, statik dosyalar | genel sayfa politikası (`script-src 'self' 'unsafe-inline'` …), `strict-origin-when-cross-origin` | Next satır içi betik kullanır (karar kaydı) |
+| `/api/*` (CV sahibine indirme, veri dökümü, yönetim raporları, takvim dosyaları, profil fotoğrafı, JSON, yönlendirme) | `default-src 'none'; frame-ancestors 'none'; sandbox`, `Referrer-Policy: no-referrer` | indirme/JSON/görsel yanıtı hiçbir alt kaynak, betik ya da gömme istemez |
+| `/api/graduation-documents/:id/file`, `/api/cv-inceleme/:id/dosya` (satır içi PDF) | `default-src 'none'; frame-ancestors 'none'`, `no-referrer` (**`sandbox` yok**) | `sandbox` Chrome'da (Playwright, üretim derlemesi) PDF görüntüleyiciyi bozmadı, ama WebKit'te ölçülemedi (Playwright WebKit PDF'i hiçbir politikada satır içi göstermez); ölçülmeyen kısıt telefondaki Safari'ye yüklenmez, gerçek Safari'de denenince eklenebilir |
+
+**Dağıtım koşulları.** Ters vekil `Host` ve `X-Forwarded-Host` başlıklarını kendisi yazar, istemciden geleni atar:
+Next'in sunucu eylemi köken denetimi bu başlıklara güvenir (yabancı `Origin` ile aynı yabancı `X-Forwarded-Host`
+birlikte gelirse eylem çalışır; tarayıcıdan sömürülemez ama doğrudan istemci için vekil engeli gerekir). HSTS ve CSP
+`next build` sırasında SABİTLENİR: HSTS yalnız derleme `APP_ENV=prod` ile yapılırsa yazılır (`Dockerfile` böyle derler);
+başka yoldan derlenen imaj HSTS'siz çıkar, bu yüzden dağıtımdan sonra `Strict-Transport-Security` başlığı denetlenir.
 
 - Yılın Mezunu ödülü: kamuya açık doğrulama genel oturum/rıza kapısının gerekçeli istisnasıdır; yalnız ödül sahibinin güncel sürümlü açık yayın rızasıyla sınırlı alanları gösterir. Kod 256 bit rastgele, istek IP bazında hız sınırlı ve sayfa noindex'tir. Açık/kapalı kararları sürümlü ve yalnız eklenen geçmişe yazılır; ödül hesap silmeyle kalktığında kanıt anonimleştirilmiş kullanıcıya bağlı kalır. Kullanıcının veri dökümü kendi ödülü, aday anlık görüntüsü ve rıza kararlarını kapsar.
 - Aylık özetten çıkış, kullanıcının isteğe bağlı e-postayı durdurabilmesi için oturum ve zorunlu onay kapısının istisnasıdır. HMAC imzalı bağlantı yalnız ilgili hesabın aylık özet tercihini kapatır; belirteç URL parçasında taşınır, sunucuya POST gövdesiyle iletilir ve sonuç hesap varlığını açıklamaz.

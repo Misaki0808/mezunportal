@@ -1,6 +1,12 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
+import {
+  API_CSP,
+  API_REFERRER_POLICY,
+  INLINE_PDF_CSP,
+  INLINE_PDF_SOURCES,
+} from './src/lib/api-security-headers';
 import { nextLogging } from './src/lib/dev-logging';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -34,6 +40,17 @@ const securityHeaders = [
     : []),
 ];
 
+// API yanıtları sayfa politikasını değil en dar politikayı taşır. `headers()` aynı anahtarı SONRAKİ kural ezer:
+// genel kural önce, API kuralı sonra, satır içi PDF istisnaları en sonda gelir (sıra yapılandırma testiyle korunur).
+const apiHeaders = [
+  { key: 'Content-Security-Policy', value: API_CSP },
+  { key: 'Referrer-Policy', value: API_REFERRER_POLICY },
+];
+const inlinePdfHeaders = [
+  { key: 'Content-Security-Policy', value: INLINE_PDF_CSP },
+  { key: 'Referrer-Policy', value: API_REFERRER_POLICY },
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   ...(process.env.APP_ENV === 'test' && /^[01]$/.test(process.env.E2E_NEXT_INSTANCE ?? '')
@@ -59,7 +76,11 @@ const nextConfig: NextConfig = {
   // Sunucu eylemi argümanları ve istek URL’leri günlüğe yazılmaz (src/lib/dev-logging.ts).
   logging: nextLogging,
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }];
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      { source: '/api/:path*', headers: apiHeaders },
+      ...INLINE_PDF_SOURCES.map((source) => ({ source, headers: inlinePdfHeaders })),
+    ];
   },
 };
 
