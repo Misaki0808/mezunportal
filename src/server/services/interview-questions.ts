@@ -1,3 +1,4 @@
+import { sortByTurkishName } from '@/lib/turkish-sort';
 import 'server-only';
 import type { PrismaClient } from '@/generated/prisma/client';
 import {
@@ -42,14 +43,12 @@ export async function getInterviewQuestions(
         select: { id: true, name: true, sectorId: true, sector: { select: { name: true } } },
         orderBy: [{ name: 'asc' }, { id: 'asc' }],
       });
-      const companyOptions = await tx.company.findMany({
-        select: { id: true, name: true },
-        orderBy: { name: 'asc' },
-      });
-      const sectors = await tx.sector.findMany({
-        select: { id: true, name: true },
-        orderBy: { name: 'asc' },
-      });
+      const companyOptions = sortByTurkishName(
+        await tx.company.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
+      );
+      const sectors = sortByTurkishName(
+        await tx.sector.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
+      );
       const experiences = await tx.experience.findMany({
         where: {
           companyId: { in: companies.map((c) => c.id) },

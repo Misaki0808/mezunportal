@@ -1,4 +1,5 @@
 'use client';
+import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
 import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
@@ -304,6 +305,7 @@ export function FaqModerationQueue({
       setPending(false);
     }
   }
+  useRefillWhenEmpty({ empty: items.length === 0, cursor, busy: pending, load: () => void more() });
 
   return (
     <div ref={queueRef} className="flex flex-col gap-4">
@@ -317,7 +319,7 @@ export function FaqModerationQueue({
           {errors(error)}
         </p>
       )}
-      {items.length === 0 ? (
+      {items.length === 0 && !cursor ? (
         <EmptyState title={t('empty')} description={t('emptyDescription')} />
       ) : (
         <AdminList>

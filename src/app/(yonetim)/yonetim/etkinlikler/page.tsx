@@ -1,3 +1,4 @@
+import { sortByTurkishName } from '@/lib/turkish-sort';
 import { AdminFrame } from '@/components/admin/frame';
 import { guardPage } from '@/server/permissions/page-guard';
 import { getTranslations } from 'next-intl/server';
@@ -24,7 +25,7 @@ export default async function AdminCampusEventsPage() {
   });
   return (
     <AdminFrame title={t('adminTitle')} description={t('adminDescription')}>
-      <AdminEvents departments={departments} events={result.data} />
+      <AdminEvents departments={sortByTurkishName(departments)} events={result.data} />
     </AdminFrame>
   );
 }

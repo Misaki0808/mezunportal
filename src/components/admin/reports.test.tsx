@@ -120,7 +120,7 @@ it('iki kuyruk doluyken boş mesaj göstermez', () => {
     expect(screen.queryByText(text)).toBeNull();
   }
 });
-it('son karar sonrası eski sayfalama imleci de tükenince tek boş duruma geçer', async () => {
+it('son karar sonrası eski sayfalama imleci kendiliğinden tüketilir ve tek boş duruma geçilir', async () => {
   mocks.resolve.mockResolvedValueOnce({
     ok: true,
     data: { reportId: job.id, status: 'DISMISSED' },
@@ -143,11 +143,11 @@ it('son karar sonrası eski sayfalama imleci de tükenince tek boş duruma geçe
   });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Onayla' }));
   await waitFor(() => expect(screen.queryByText(job.postingTitle)).toBeNull());
-  await waitFor(() =>
-    expect(screen.getByRole('button', { name: 'Daha fazla göster' })).toBeEnabled(),
-  );
-  fireEvent.click(screen.getByRole('button', { name: 'Daha fazla göster' }));
+  // Yüklü şikâyetlerin hepsi işlendi ve imleç sürüyor: sıradaki sayfa düğmeye basılmadan yüklenir, boş durum yalnız sonra görünür.
   await waitFor(() => expect(screen.getAllByText('Açık şikâyet yok.')).toHaveLength(1));
+  expect(mocks.list).toHaveBeenCalledTimes(1);
+  expect(mocks.list).toHaveBeenCalledWith({ cursor: 'older' });
+  expect(screen.queryByRole('button', { name: 'Daha fazla göster' })).toBeNull();
 });
 
 for (const desktop of [false, true]) {

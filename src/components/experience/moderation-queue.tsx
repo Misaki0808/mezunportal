@@ -1,6 +1,7 @@
 'use client';
 import { AdminFrame } from '@/components/admin/frame';
 import { AdminList, AdminListItem } from '@/components/admin/list';
+import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 
 import { useTranslations } from 'next-intl';
@@ -280,6 +281,18 @@ export function ModerationQueue({
       setLoading(false);
     }
   }
+  useRefillWhenEmpty({
+    empty: items.length === 0,
+    cursor,
+    busy: loading,
+    load: () => void more('experiences'),
+  });
+  useRefillWhenEmpty({
+    empty: reports.length === 0,
+    cursor: reportCursor,
+    busy: loading,
+    load: () => void more('reports'),
+  });
 
   const experiencesPanel =
     items.length === 0 && !cursor ? (

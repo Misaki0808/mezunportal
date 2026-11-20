@@ -683,6 +683,18 @@ describe('hata kodu', () => {
 });
 
 describe('listSearchSectors', () => {
+  it("adlar Türkçe harf sırasıyla gelir: Ç, Ş, İ gibi harfler Z'den sonraya düşmez", async () => {
+    const key = tag();
+    const names = ['Zirai', 'Şans', 'Çevre', 'İnşaat', 'Bilişim', 'Ömür'].map((n) => `${n} ${key}`);
+    for (const name of names)
+      await db.sector.create({ data: { name, normalizedName: name.toLowerCase() } });
+    const actor = (await loadActor(db, viewerId, new Date()))!;
+    const { sectors } = await listSearchSectors({ db }, actor);
+    expect(sectors.map((s) => s.name).filter((n) => n.endsWith(key))).toEqual(
+      ['Bilişim', 'Çevre', 'İnşaat', 'Ömür', 'Şans', 'Zirai'].map((n) => `${n} ${key}`),
+    );
+  });
+
   it('sektörleri listeler; doğrulanmış üye olmayan alamaz', async () => {
     const name = `Sektör ${tag()}`;
     const sector = await db.sector.create({ data: { name, normalizedName: name.toLowerCase() } });

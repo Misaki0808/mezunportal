@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition } from 'react';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
+import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
 import { reviewJobPostingSchema } from '@/contracts/job-postings';
 import { ADMIN_REASON_MAX, ADMIN_REASON_MIN } from '@/contracts/admin';
 import { userTextLength } from '@/lib/user-text';
@@ -256,6 +257,7 @@ export function PostingModeration({
       setCursor(result.data.nextCursor);
     });
   }
+  useRefillWhenEmpty({ empty: items.length === 0, cursor, busy: pending, load: loadMore });
   function confirm() {
     if (!choice) return;
     // Her denemede önceki hata silinir: doğrulama hatası düzeltilip karar verilince ekranda kalmaz.
@@ -295,7 +297,7 @@ export function PostingModeration({
   return (
     <div ref={rootRef} data-hydrated={hydrated ? 'true' : undefined}>
       <AdminFrame title={t('moderationTitle')}>
-        {items.length ? (
+        {items.length || cursor ? (
           <AdminList>
             {items.map((item) => (
               <AdminListItem

@@ -1,3 +1,4 @@
+import { sortByTurkishName } from '@/lib/turkish-sort';
 import { guardPage } from '@/server/permissions/page-guard';
 import { ErrorState } from '@/components/ui';
 import { AwardAdmin } from '@/components/year-alumni/admin';
@@ -14,5 +15,5 @@ export default async function YearAlumniAdminPage() {
     select: { id: true, name: true },
     orderBy: { name: 'asc' },
   });
-  return <AwardAdmin departments={departments} />;
+  return <AwardAdmin departments={sortByTurkishName(departments)} />;
 }

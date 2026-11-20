@@ -1,4 +1,5 @@
 'use client';
+import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import {
@@ -127,6 +128,7 @@ export function UnmatchedValues({ initial, list, resolve, searchEntries }: Props
       setPending(false);
     }
   }
+  useRefillWhenEmpty({ empty: items.length === 0, cursor, busy: pending, load: () => void more() });
   return (
     <AdminFrame title={t('dictionary.unmatched')}>
       {notice && (
@@ -139,7 +141,7 @@ export function UnmatchedValues({ initial, list, resolve, searchEntries }: Props
           {errors(error)}
         </p>
       )}
-      {items.length === 0 ? (
+      {items.length === 0 && !cursor ? (
         <EmptyState title={t('empty')} description={t('emptyDescription')} />
       ) : (
         <ResponsiveRows

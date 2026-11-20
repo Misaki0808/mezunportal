@@ -1,5 +1,6 @@
 'use client';
 
+import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -277,6 +278,12 @@ function FlagsPanel({
       setPending(false);
     }
   }
+  useRefillWhenEmpty({
+    empty: items.length === 0,
+    cursor,
+    busy: pending,
+    load: () => void load(status, cursor ?? undefined),
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -312,7 +319,7 @@ function FlagsPanel({
           {errors(error)}
         </p>
       )}
-      {items.length === 0 ? (
+      {items.length === 0 && !cursor ? (
         <EmptyState title={t('admin.flagsEmpty')} description={t('admin.flagsEmptyDescription')} />
       ) : (
         <ResponsiveRows
