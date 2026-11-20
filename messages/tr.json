@@ -2337,9 +2337,7 @@
       "UNPAID": "Ücretsiz",
       "NOT_DISCLOSED": "Belirtilmedi"
     },
-    "mine": "Deneyimlerim",
-    "invalidFiltersTitle": "Filtre bağlantısı geçersiz",
-    "invalidFiltersDescription": "Filtreleri temizleyip yeniden arayabilirsin."
+    "mine": "Deneyimlerim"
   },
   "campusEvents": {
     "title": "Etkinlikler",
@@ -3448,6 +3446,7 @@
     "periodCount": "{count} deneyim",
     "tableSeason": "Dönem",
     "tableCount": "Deneyim sayısı",
+    "allPostings": "Tüm ilanları gör ({count})",
     "mergeTitle": "Şirketleri birleştir",
     "mergeDescription": "Kaynak şirketin deneyim, pozisyon ve ilanları hedefe taşınır.",
     "mergeSource": "Kaynak şirketi ara",

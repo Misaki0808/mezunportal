@@ -5,7 +5,7 @@ import { watchPageErrors } from './page-errors';
 
 const login = (page: Page) => loginAs(page, 'academic');
 
-test('beş geçersiz filtre bağlantısı çökmeden temizleme sunar', async ({ page }) => {
+test('beş geçersiz filtre bağlantısı çökmeden varsayılan listeyi açar', async ({ page }) => {
   await login(page);
   const errors = watchPageErrors(page);
   for (const query of [
@@ -16,10 +16,9 @@ test('beş geçersiz filtre bağlantısı çökmeden temizleme sunar', async ({ 
     '?termYear=oops',
   ]) {
     await page.goto(`/deneyimler${query}`);
-    await expect(page.getByRole('heading', { name: 'Filtre bağlantısı geçersiz' })).toBeVisible();
-    await page.getByRole('link', { name: 'Filtreleri temizle' }).click();
-    await expect(page).toHaveURL(/\/deneyimler$/);
+    // Geçersiz parametre sessizce varsayılana düşer: hata ekranı yok, liste açılır (aralık dışı sayfa adresi düzeltir).
     await expect(page.getByRole('heading', { name: 'Deneyimlere bak' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Filtre bağlantısı geçersiz' })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'This page couldn’t load' })).toHaveCount(0);
   }
   expect(errors).toEqual([]);

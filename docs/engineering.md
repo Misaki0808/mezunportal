@@ -10,6 +10,9 @@ Son güncelleme: **2026-11-07**. Ajan çalışma ve belge yönlendirmesi için �
   derleme İLK seferde fonts.googleapis.com'a erişir ve dosyaları kendinden barındırır — çevrimdışı ilk derleme başarısız olur,
   sonraki derlemeler `.next/cache`ten gider; çalışma anında dış istek yok)
 - PostgreSQL 16+ (`pg_trgm`, `btree_gist`, `turkish` tam metin araması)
+  ve ICU harmanlaması `tr-TR-x-icu`: adla sıralanan listeler (mezun dizini, şirket listesi) Türkçe harf sırasını sorgu düzeyinde
+  `COLLATE "tr-TR-x-icu"` ile alır. Canlı Postgres'te ICU gerekir; harmanlama yoksa sorgu hata vermez, veritabanının varsayılan
+  sırasına düşer (Ç, Ö, Ş, Ü, İ, Ğ ile başlayan adlar Z'den sonra gelebilir).
 - Prisma 7 · Better Auth · Zod · pg-boss · ExcelJS
 - Vitest (birim ve servis), Playwright (çekirdek akış testleri ve PM'in tarayıcı turu)
 - Node sürümü `.nvmrc`'de, CI ile aynı; makinenin varsayılanı farklıysa test sonucu değişebilir

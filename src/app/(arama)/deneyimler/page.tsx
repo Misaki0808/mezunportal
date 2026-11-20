@@ -1,40 +1,37 @@
+import { redirect } from 'next/navigation';
 import { PrivacyGuard } from '@/components/privacy/server-guard';
 import { SearchScreen } from '@/components/search/search-screen';
 import { ErrorState } from '@/components/ui';
-import { getTranslations } from 'next-intl/server';
-import { ResetLink } from '@/components/search/reset-link';
 import {
+  SEARCH_PAGE_MAX,
   searchExperiencesSchema,
   searchFilterFromParams,
   searchFilterToParams,
 } from '@/contracts/search';
+import { capPage, lastPageIfPast, parseListFilters } from '@/lib/list-params';
 import { listSearchSectors, searchExperiences } from '@/server/actions/search';
 
 export const dynamic = 'force-dynamic';
 
 type Params = Record<string, string | string[] | undefined>;
 async function Results({ params }: { params: Params }) {
-  const parsed = searchExperiencesSchema.safeParse(searchFilterFromParams(params));
-  if (!parsed.success) {
-    const t = await getTranslations('search');
-    return (
-      <div role="alert" className="max-w-xl">
-        <h1 className="text-2xl font-semibold">{t('invalidFiltersTitle')}</h1>
-        <p className="mt-3 mb-6 text-fg-muted">{t('invalidFiltersDescription')}</p>
-        <ResetLink />
-      </div>
-    );
-  }
-  const [results, sectors] = await Promise.all([
-    searchExperiences(parsed.data),
-    listSearchSectors(),
-  ]);
+  // Geçersiz parametre sessizce varsayılana düşer; aralık dışı sayfa son geçerli sayfaya çekilir (aşağıda).
+  const parsed = parseListFilters(
+    searchExperiencesSchema,
+    capPage(searchFilterFromParams(params), SEARCH_PAGE_MAX),
+  );
+  const [results, sectors] = await Promise.all([searchExperiences(parsed), listSearchSectors()]);
   if (!results.ok) return <ErrorState errorCode={results.errorCode} />;
   if (!sectors.ok) return <ErrorState errorCode={sectors.errorCode} />;
+  const last = lastPageIfPast(parsed.page, results.data.total, results.data.pageSize);
+  if (last !== null) {
+    const next = searchFilterToParams({ ...parsed, page: last });
+    redirect(`/deneyimler${next.size ? `?${next}` : ''}`);
+  }
   return (
     <SearchScreen
-      key={searchFilterToParams(parsed.data).toString()}
-      filter={parsed.data}
+      key={searchFilterToParams(parsed).toString()}
+      filter={parsed}
       results={results.data}
       sectors={sectors.data.sectors}
     />
