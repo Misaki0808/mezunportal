@@ -70,14 +70,22 @@ test('kendi CV dosyasını indirir, askıda hak başvurusu bağlantısı göster
     }
     await db.user.update({ where: { id: owner.id }, data: { banned: true } });
     for (const url of ['/hesap/veriler', '/hesap/hesabi-sil']) {
+      await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(url);
       await expect(page.getByText(/Hesabın askıdayken bu işlem buradan yapılamaz/)).toBeVisible();
+      const card = await page
+        .getByRole('heading', { name: 'KVKK başvurun' })
+        .locator('..')
+        .boundingBox();
+      const header = await page.locator('header').first().boundingBox();
+      expect(card).not.toBeNull();
+      expect(header).not.toBeNull();
+      expect(card!.x).toBeGreaterThanOrEqual(16);
+      expect(card!.x + card!.width).toBeLessThanOrEqual(390 - 16);
+      expect(card!.y).toBeGreaterThanOrEqual(header!.y + header!.height + 16);
       if (process.env.KVKK_EVIDENCE && url === '/hesap/veriler') {
         for (const width of [390, 1440]) {
           await page.setViewportSize({ width, height: 900 });
-          const box = await page.getByRole('heading', { name: 'KVKK başvurun' }).boundingBox();
-          expect(box).not.toBeNull();
-          expect(box!.x).toBeGreaterThanOrEqual(16);
           await page.screenshot({
             path: `${process.env.KVKK_EVIDENCE}/aski-${width}.png`,
             fullPage: true,

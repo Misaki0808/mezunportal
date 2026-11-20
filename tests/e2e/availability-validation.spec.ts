@@ -26,6 +26,12 @@ test('geceyi aşan tek aralık reddi ve iki güne bölerek kaydetme', async ({ p
   await expect(end).toHaveAttribute('aria-invalid', 'true');
   await expect(end).toHaveAccessibleDescription(/23:00–00:00 ve ertesi gün 00:00–01:00/);
   await expect(wed.getByLabel('Başlangıç')).not.toHaveAttribute('aria-invalid', 'true');
+  const startBox = await wed.getByLabel('Başlangıç').boundingBox();
+  const endBox = await end.boundingBox();
+  expect(startBox).not.toBeNull();
+  expect(endBox).not.toBeNull();
+  expect(Math.abs(startBox!.x - endBox!.x)).toBeLessThanOrEqual(1);
+  expect(endBox!.y).toBeGreaterThan(startBox!.y + startBox!.height);
   await wed.scrollIntoViewIfNeeded();
   if (process.env.AVAILABILITY_EVIDENCE) {
     for (const width of [390, 1440]) {

@@ -399,6 +399,40 @@ describe('mentor ayarları', () => {
     expect(starts[0]).not.toBeInvalid();
   });
 
+  it('Başlangıç ve Bitiş değişince yalnız değişen alanın hatası temizlenir', async () => {
+    const actions = settingsActions();
+    const { user } = renderUi(
+      <MentorSettings
+        initial={settingsView({
+          rules: [
+            { weekday: 1, startMinute: 540, endMinute: 720, mode: null },
+            { weekday: 2, startMinute: 540, endMinute: 720, mode: null },
+          ],
+        })}
+        actions={actions}
+      />,
+    );
+    const monday = screen.getByRole('group', { name: 'Pazartesi, 1. aralık' });
+    const tuesday = screen.getByRole('group', { name: 'Salı, 1. aralık' });
+    const start = within(monday).getByLabelText('Başlangıç');
+    const end = within(tuesday).getByLabelText('Bitiş');
+    fireEvent.change(start, { target: { value: '' } });
+    fireEvent.change(end, { target: { value: '08:00' } });
+    await user.click(screen.getByRole('button', { name: 'Haftalık saatleri kaydet' }));
+    expect(start).toBeInvalid();
+    expect(end).toBeInvalid();
+    expect(within(monday).getByText('Saatleri 5 dakikalık adımlarla gir.')).toBeInTheDocument();
+    expect(within(tuesday).getByText(/Bitiş, başlangıçtan sonra olmalı/)).toBeInTheDocument();
+    fireEvent.change(start, { target: { value: '10:00' } });
+    expect(start).not.toHaveAttribute('aria-invalid', 'true');
+    expect(end).toBeInvalid();
+    fireEvent.change(end, { target: { value: '10:00' } });
+    expect(end).not.toHaveAttribute('aria-invalid', 'true');
+    expect(within(monday).queryByText('Saatleri 5 dakikalık adımlarla gir.')).toBeNull();
+    expect(within(tuesday).queryByText(/Bitiş, başlangıçtan sonra olmalı/)).toBeNull();
+    expect(actions.saveAvailability).not.toHaveBeenCalled();
+  });
+
   it('yüz yüze seçilince yer notu zorunlu; geçersiz kapasite alan hatası verir', async () => {
     const actions = settingsActions();
     const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);
