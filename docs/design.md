@@ -90,7 +90,7 @@ Mercan, Nane, yazı tipleri). Ölçü ilkeleri (değerler `globals.css`'te):
   başlık, son hücre eylem gibi tam genişliktir; ortadaki değerler iki sütuna iner (kart kısa kalır).
 - Dokunma hedefi ≥ 44 px; form alanlarında doğru `inputmode` ve `autocomplete`; klavye açıkken
   gönder düğmesi görünür kalır.
-- Yatay kaydırma yok. Uzun metin “devamını göster” ile kısalır.
+- Yatay kaydırma yok. Uzun metin “devamını göster” ile kısalır. Sayfa yatay kaymaz; sekme şeridi kendi kabında kayabilir, kenarda devam ipucu (kenar gölgesi) görünür.
 - Web app manifest ve ikon: kullanıcı “ana ekrana ekle” ile uygulama gibi açabilir.
 
 ### Ortak başlık ve renk dağılımı

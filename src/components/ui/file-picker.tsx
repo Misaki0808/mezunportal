@@ -87,7 +87,7 @@ export function FilePicker({
       </span>
       <span
         id={statusId}
-        className={cn('min-w-0 flex-1 truncate text-base', name ? 'text-fg' : 'text-fg-muted')}
+        className={cn('min-w-0 flex-1 text-base', name ? 'truncate text-fg' : 'text-fg-muted')}
       >
         {name || t('empty')}
       </span>

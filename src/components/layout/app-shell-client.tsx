@@ -203,7 +203,9 @@ export function AppShellClient({
 
   const tools = !consentPending;
 
-  // Daralan kapsayıcıda etiket ve aralıklar sınırlanır; normal yazıda mevcut sekme görünümü korunur.
+  // Daralan kapsayıcıda etiket ve aralıklar sınırlanır; normal yazıda mevcut sekme görünümü korunur. Eşik PİKSELDİR (rem DEĞİL):
+  // rem tabanlı eşik kök yazıyla büyür (%200'de 25rem = 800 px) ve 768 px'te büyük yazıyı 12 px'e sabitlerdi. 416 px, önceki 13rem eşiğinin
+  // %200 yazıdaki değeridir (390 px / %200 davranışı aynı); normal yazıda 360–414 px telefonlarda "Randevular" tek satırda kalır.
   function renderTab(item: (typeof TAB_ITEMS)[number]) {
     const current = isCurrent(pathname, item.href);
     return (
@@ -212,14 +214,14 @@ export function AppShellClient({
         aria-label={t(`items.${item.id}`)}
         aria-current={current ? 'page' : undefined}
         className={cn(
-          'press-control inline-flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 text-xs font-semibold @max-[13rem]:px-0',
+          'press-control inline-flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 text-xs font-semibold @max-[416px]:px-0',
           current
             ? 'bg-primary-soft text-on-primary-soft'
             : 'text-fg-muted hover:bg-surface-strong',
         )}
       >
         {item.icon}
-        <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[12px] @max-[13rem]:tracking-[-0.05em]">
+        <span className="max-w-full break-words text-center leading-[1.125] @max-[416px]:whitespace-nowrap @max-[416px]:text-[12px] @max-[416px]:tracking-[-0.05em]">
           {t(`shortItems.${item.id}`)}
         </span>
       </Link>
@@ -241,14 +243,14 @@ export function AppShellClient({
       aria-current={menuCurrent ? 'true' : undefined}
       onClick={() => setMenu({ open: true, path: pathname })}
       className={cn(
-        'press-control inline-flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 text-xs font-semibold @max-[13rem]:px-0',
+        'press-control inline-flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 text-xs font-semibold @max-[416px]:px-0',
         menuCurrent
           ? 'bg-primary-soft text-on-primary-soft'
           : 'text-fg-muted hover:bg-surface-strong',
       )}
     >
       <MenuIcon />
-      <span className="max-w-full break-words text-center leading-[1.125] @max-[13rem]:whitespace-nowrap @max-[13rem]:text-[12px] @max-[13rem]:tracking-[-0.05em]">
+      <span className="max-w-full break-words text-center leading-[1.125] @max-[416px]:whitespace-nowrap @max-[416px]:text-[12px] @max-[416px]:tracking-[-0.05em]">
         {t('shortItems.menu')}
       </span>
     </button>
@@ -481,7 +483,7 @@ export function AppShellClient({
             aria-label={t('labelBottom')}
             className="@container fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
           >
-            <ul className="grid grid-cols-5 gap-0.5 px-1 pt-1 @max-[13rem]:gap-[2px] @max-[13rem]:px-[4px]">
+            <ul className="grid grid-cols-5 gap-0.5 px-1 pt-1 @max-[416px]:gap-[2px] @max-[416px]:px-[4px]">
               {TAB_ITEMS.map((item) => (
                 <li key={item.id}>{renderTab(item)}</li>
               ))}
