@@ -100,6 +100,24 @@ it('filtreyle ilan bulunamayınca sayaç ve temizleme kalır, "henüz paylaşıl
   expect(screen.queryByText('Henüz ilan paylaşılmadı')).not.toBeInTheDocument();
   expect(screen.getByText('Filtreleri değiştirerek yeniden deneyebilirsin.')).toBeVisible();
 });
+it('uzun konum rozetinde üç nokta çalışır: metin rozetin içinde kendi kutusunda kesilir (inline-flex rozette `truncate` etkisizdir)', () => {
+  const location = 'Kahramanmaraş Onikişubat Merkez Mahallesi Uzun Cadde Sokak Apartman';
+  renderUi(
+    <PostingList
+      canPost={false}
+      filters={{}}
+      options={options}
+      page={{ items: [{ ...posting, location }], total: 1, page: 1, pageSize: 20 }}
+    />,
+  );
+  const text = screen.getByText(location);
+  const badge = text.parentElement!;
+  expect(text).toHaveClass('truncate', 'min-w-0');
+  expect(badge).toHaveClass('inline-flex', 'max-w-full');
+  expect(badge).not.toHaveClass('truncate');
+  expect(badge).toHaveAttribute('title', location);
+});
+
 it('"İncele" bağlantıları ilan başlığıyla adlanır; görünen metin aynı kalır', () => {
   const other: JobPostingCard = { ...posting, id: 'job-2', title: 'Veri analizi stajyeri' };
   renderUi(

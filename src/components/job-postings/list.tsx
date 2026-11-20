@@ -82,8 +82,11 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
         </div>
       </div>
       <div className="flex flex-wrap gap-1.5 sm:gap-2">
-        <Badge title={posting.location ?? undefined} className="max-w-full truncate">
-          {posting.location ?? (posting.isRemote ? t('remoteLabel') : t('unknownLocation'))}
+        <Badge title={posting.location ?? undefined} className="max-w-full">
+          {/* Rozet inline-flex olduğundan `truncate` kapsayıcıda üç nokta çizmez; metin kendi kutusunda kesilir. */}
+          <span className="min-w-0 truncate">
+            {posting.location ?? (posting.isRemote ? t('remoteLabel') : t('unknownLocation'))}
+          </span>
         </Badge>
         {posting.location && posting.isRemote && <Badge tone="category">{t('remoteLabel')}</Badge>}
         <Badge tone={posting.daysLeft <= 7 ? 'accent' : 'info'}>
