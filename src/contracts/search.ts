@@ -29,8 +29,6 @@ export const SEARCH_PAGE_MAX = 200;
 export const SEARCH_SORTS = ['RELEVANCE', 'NEWEST'] as const;
 export type SearchSort = (typeof SEARCH_SORTS)[number];
 
-const text = (min: number, max: number) =>
-  z.string({ error: INVALID }).trim().min(min, { error: INVALID }).max(max, { error: INVALID });
 const distinct = <T extends string>(list: readonly T[]) => new Set(list).size === list.length;
 
 export const searchExperiencesSchema = z

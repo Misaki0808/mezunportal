@@ -38,8 +38,6 @@ export const MENTOR_PAGE_SIZE_MAX = 50;
 export const MENTOR_PAGE_MAX = 100;
 export const SIMILAR_MENTORS_MAX = 5;
 
-const text = (min: number, max: number) =>
-  z.string({ error: INVALID }).trim().min(min, { error: INVALID }).max(max, { error: INVALID });
 const distinct = <T extends string>(list: readonly T[]) => new Set(list).size === list.length;
 const enumList = <T extends readonly [string, ...string[]]>(values: T) =>
   z
