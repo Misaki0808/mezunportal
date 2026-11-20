@@ -21,8 +21,9 @@ export function createLocalStorage(rootPath: string): StorageAdapter {
     return full;
   }
 
+  /** Profil fotoğrafı (`photo`) yalnız `temporary` kipinde taranır: asıl fotoğraflar hiçbir süpürmede aday olmaz. */
   async function listOldKeys(
-    kind: 'graduation' | 'cv',
+    kind: 'graduation' | 'cv' | 'photo',
     before: Date,
     temporary = false,
   ): Promise<string[]> {
@@ -94,7 +95,7 @@ export function createLocalStorage(rootPath: string): StorageAdapter {
 
     async purgeTemporaryFiles(before) {
       let removed = 0;
-      for (const kind of ['cv', 'graduation'] as const) {
+      for (const kind of ['cv', 'graduation', 'photo'] as const) {
         for (const key of await listOldKeys(kind, before, true)) {
           try {
             await unlink(path.join(root, key));
