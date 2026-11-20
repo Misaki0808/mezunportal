@@ -163,6 +163,31 @@ describe('hikâye moderasyonu: imleçli sayfalama', () => {
     expect(new Set(counts).size).toBe(1);
   });
 
+  it('gövdeler yalnız sayfadaki hikâyeler için okunur (bölümün tamamı için değil)', async () => {
+    const w = await fixture();
+    const bodyRows: number[] = [];
+    const spy = db.$extends({
+      query: {
+        alumniStory: {
+          async findMany({ args, query }) {
+            const rows = await query(args);
+            bodyRows.push(rows.length);
+            return rows;
+          },
+        },
+      },
+    });
+    const page = await listStoryModeration({ db: spy as never }, w.admin, {
+      departmentId: w.inst.deptA1,
+      limit: 3,
+    });
+    expect(page.items).toHaveLength(3);
+    // Önce gövdesiz tarama (görünür adayların hepsi), sonra yalnız sayfa boyu kadar kayıt okunur.
+    expect(bodyRows).toHaveLength(2);
+    expect(bodyRows[1]).toBe(3);
+    expect(bodyRows[0]).toBeGreaterThan(3);
+  });
+
   it('bozuk imleç ve sınır dışı boyut doğrulamada reddedilir', async () => {
     const w = await fixture();
     for (const bad of [

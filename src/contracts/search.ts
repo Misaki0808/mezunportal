@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -49,7 +50,7 @@ export const searchExperiencesSchema = z
       .refine(distinct, { error: INVALID })
       .optional(),
     /** Sektör kimliği (`listSearchSectors`). */
-    sectorId: text(1, 64).optional(),
+    sectorId: idTextSchema(INVALID).optional(),
     termYear: z.number({ error: INVALID }).int({ error: INVALID }).min(1900).max(2100).optional(),
     termSeason: z.enum(TERM_SEASONS, { error: INVALID }).optional(),
     pay: z.enum(EXPERIENCE_PAY, { error: INVALID }).optional(),

@@ -12,8 +12,10 @@ import { cvReviewRequestIdSchema } from './cv-review-request';
 import { experienceIdSchema } from './experience';
 import { markInboxReadInputSchema } from './inbox';
 import { interviewQuerySchema } from './interview-questions';
+import { getMentorEntryPointsSchema, searchMentorsSchema } from './mentor-directory';
 import { jobPostingIdSchema } from './job-postings';
 import { stillThereInputSchema } from './notifications';
+import { searchExperiencesSchema } from './search';
 
 /**
  * Kimlikteki NUL (`%00`) PostgreSQL'e gidince "geçersiz bayt dizisi" hatası verip beklenmeyen hataya (500) dönüşüyordu
@@ -38,6 +40,9 @@ const CASES: [string, { safeParse: (value: unknown) => { success: boolean } }, u
   ['ilan kimliği', jobPostingIdSchema, { postingId: NUL }],
   ['etkinlik kimliği', campusEventIdSchema, { eventId: NUL }],
   ['bildirim kimlikleri', markInboxReadInputSchema, { ids: [NUL] }],
+  ['deneyim arama sektör süzgeci', searchExperiencesSchema, { sectorId: NUL }],
+  ['mentor arama sektör süzgeci', searchMentorsSchema, { sectorId: NUL }],
+  ['mentor giriş noktaları kimliği', getMentorEntryPointsSchema, { userId: NUL }],
   ['hâlâ orada mısın jetonu', stillThereInputSchema, { token: NUL, choice: 'YES' }],
 ];
 

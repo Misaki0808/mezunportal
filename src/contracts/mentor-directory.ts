@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import type { ErrorCode } from '@/lib/errors';
@@ -54,7 +55,7 @@ export const searchMentorsSchema = z
     /** Mentorun üyelik türü: mezun, akademisyen, öğrenci (K-08 eşiğini geçmiş). */
     mentorTypes: enumList(MENTOR_TYPES).optional(),
     /** Sektör kimliği (`listSearchSectors`): mentorun herhangi bir pozisyonunun (ya da şirketinin) sektörü. */
-    sectorId: text(1, 64).optional(),
+    sectorId: idTextSchema(INVALID).optional(),
     /** Şirket adı (kısmi): sözlük adı ya da mentorun yazdığı ad. */
     company: userTextSchema(MENTOR_QUERY_MIN, MENTOR_QUERY_MAX, INVALID).optional(),
     /** Unvan (kısmi). */
@@ -241,7 +242,7 @@ export type SimilarMentors = z.infer<typeof similarMentorsSchema>;
 // Profilden giriş noktaları (randevu P1-10, CV incelemesi P1-15, iletişim talebi mevcut)
 // ---------------------------------------------------------------------------------------------
 
-export const getMentorEntryPointsSchema = z.object({ userId: text(1, 64) }).strict();
+export const getMentorEntryPointsSchema = z.object({ userId: idTextSchema(INVALID) }).strict();
 export type GetMentorEntryPointsInput = z.input<typeof getMentorEntryPointsSchema>;
 
 export const ENTRY_POINT_BLOCK_REASONS = [

@@ -5,9 +5,14 @@ export const dynamic = 'force-dynamic';
 export default async function FeedbackPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const result = await getRequestFeedbackView(id);
+  // Adresteki bozuk kimlik (ör. denetim karakteri) yazılmış ama olmayan kimlikle aynıdır: "bulunamadı".
   return result.ok ? (
     <FeedbackForm view={result.data} />
   ) : (
-    <ErrorState errorCode={result.errorCode} />
+    <ErrorState
+      errorCode={
+        result.errorCode === 'VALIDATION_INVALID' ? 'RESOURCE_NOT_FOUND' : result.errorCode
+      }
+    />
   );
 }
