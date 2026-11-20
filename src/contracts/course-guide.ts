@@ -1,8 +1,9 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import { userTextSchema } from '@/lib/user-text';
 
-const id = z.string({ error: 'VALIDATION_INVALID' }).trim().min(1).max(64);
+const id = idTextSchema();
 export const courseSelectionSchema = z
   .object({
     courseIds: z
@@ -21,7 +22,7 @@ export const courseFilterSchema = z
 export const courseInputSchema = z
   .object({
     departmentId: id,
-    code: z.string().trim().min(1).max(32),
+    code: idTextSchema('VALIDATION_INVALID', 32),
     name: userTextSchema(1, 200),
     semester: z.number().int().min(0).max(8),
     elective: z.boolean(),

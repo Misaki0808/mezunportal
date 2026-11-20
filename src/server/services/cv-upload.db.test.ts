@@ -139,6 +139,54 @@ describe('uploadCv — başarı yolu', () => {
     await expectCode(uploadCv(kit.deps, actor, pdfForm()), 'CV_PARSE_UNAVAILABLE');
     expect(await count(userId)).toBe(0);
     expect(kit.storage.files.size).toBe(0);
+    expect(await remaining(kit, actor)).toBe(kit.deps.dailyLimit);
+  });
+
+  it('kilit bekleyen eşzamanlı ret günlük hakkı tüketmez', async () => {
+    const { userId, actor } = await cvUser(db);
+    const kit = cvKit(db, { dailyLimit: 5 });
+    let release!: () => void;
+    let entered!: () => void;
+    const wait = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const ready = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const put = kit.storage.put.bind(kit.storage);
+    kit.deps.storage = {
+      ...kit.storage,
+      put: async (...args) => {
+        entered();
+        await wait;
+        await put(...args);
+      },
+    };
+    const first = uploadCv(kit.deps, actor, pdfForm());
+    await ready;
+    const second = uploadCv(kit.deps, actor, pdfForm());
+    let waiting = false;
+    try {
+      for (let i = 0; i < 100 && !waiting; i++) {
+        const rows = await db.$queryRaw<
+          { waiting: boolean }[]
+        >`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND pid<>pg_backend_pid() AND wait_event_type='Lock') AS waiting`;
+        waiting = rows[0]?.waiting ?? false;
+        if (!waiting) await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+      expect(waiting).toBe(true);
+    } finally {
+      release();
+    }
+    const results = await Promise.allSettled([first, second]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    const rejected = results.find((r) => r.status === 'rejected');
+    expect(
+      rejected?.status === 'rejected' && isCodedError(rejected.reason) && rejected.reason.code,
+    ).toBe('CV_ALREADY_PROCESSING');
+    expect(await remaining(kit, actor)).toBe(4);
+    expect(await count(userId)).toBe(1);
+    expect(kit.storage.files.size).toBe(1);
   });
 
   it('işlenen CV varken ikinci yükleme CV_ALREADY_PROCESSING; günlük hak harcanmaz', async () => {
@@ -169,6 +217,7 @@ describe('uploadCv — başarı yolu', () => {
     }
     expect(await count(userId)).toBe(1);
     expect(kit.storage.files.size).toBe(1);
+    expect(await remaining(kit, actor)).toBe(49);
   });
 
   it('silinmiş hesap yükleyemez; dosya bırakılmaz', async () => {

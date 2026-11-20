@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { userTextSchema } from '@/lib/user-text';
 import { z } from 'zod';
 
@@ -36,11 +37,7 @@ import { COMPLETION_FIELDS } from './profile';
  */
 
 const INVALID = 'VALIDATION_INVALID' satisfies ErrorCode;
-const id = z
-  .string({ error: INVALID })
-  .trim()
-  .min(1, { error: INVALID })
-  .max(64, { error: INVALID });
+const id = idTextSchema(INVALID);
 
 // ---------------------------------------------------------------------------------------------
 // Bağlantılar (yalnız https + izinli alan adı)

@@ -1,3 +1,4 @@
+import { idTextSchema } from '@/lib/id-text';
 import { z } from 'zod';
 
 import { userTextSchema } from '@/lib/user-text';
@@ -17,7 +18,9 @@ export const searchCompaniesSchema = z
   })
   .strict();
 export type SearchCompaniesInput = z.input<typeof searchCompaniesSchema>;
-export const companySlugSchema = z.object({ slug: z.string().min(1).max(200) }).strict();
+export const companySlugSchema = z
+  .object({ slug: idTextSchema('VALIDATION_INVALID', 200) })
+  .strict();
 export type CompanySlugInput = z.input<typeof companySlugSchema>;
 export const mergeCompaniesSchema = z
   .object({ sourceId: id, targetId: id })

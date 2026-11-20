@@ -16,6 +16,8 @@ export interface StorageAdapter {
   delete(key: string): Promise<void>;
   /** Belirtilen tarihten eski mezun belgeleri (temizlik işinin sunucu içi taraması). */
   listOldGraduationKeys?(before: Date): Promise<string[]>;
+  /** Belirtilen tarihten eski CV dosyaları. */
+  listOldCvKeys?(before: Date): Promise<string[]>;
 }
 
 export class StorageError extends Error {

@@ -1,6 +1,6 @@
 # BACKLOG.md — Güncel durum, açık işler ve kararlar
 
-Son güncelleme: **2026-11-18**. Tek durum belgesidir: güncel durum, açık kararlar, pilot kapıları,
+Son güncelleme: **2026-11-20**. Tek durum belgesidir: güncel durum, açık kararlar, pilot kapıları,
 teknik borç ve ertelenmiş işler. Tamamlanan madde silinir; geçmiş Git'tedir. Çalışma günlüğü
 tutulmaz. Faz içindeki adımlar faz planındadır (`docs/fazN-plan.md`); kararların gerekçesi
 `docs/decisions.md`'dedir.
@@ -22,7 +22,7 @@ hiçbiri geliştirmeyi durdurmaz; her biri ilgili işe gelince sorulur.
 Kullanıcının Faz 2 deneme turu: `docs/engineering.md` "Faz 2 deneme rehberi" ve kapanış paketindeki telefon listesi (84 kutu, Git dışı
 `pm-handoff/faz2-kapanis/`). Masaüstü Chromium 390 px ve Android emülatör provalarında ilk 70 kutunun 64'ü geçti, 6'sı gerçek cihaz bekliyor;
 "0. İlk giriş" bölümündeki 12 kutunun tamamı gerçek e-posta bağlantısıyla geçti. Yerel demo duman turunda beş rolün menüleri ve kritik yolları açıldı; bu prova gerçek cihaz denemesinin yerini tutmaz. Gerçek cihazda telefona ağ adresiyle açma, QR'ı telefon kamerasıyla
-okutma, ana ekrana ekleme, iPhone çentik ve güvenli alan, iPhone ekran klavyesi ve Safari'de Tab denenir. Bulgular PM'de karta bölünür ya da bu
+okutma, ana ekrana ekleme, iPhone çentik ve güvenli alan, iPhone ekran klavyesi, Safari'de Tab ve mezun belgesi ile CV inceleme PDF'inin Safari'de satır içi açılması (K-16) denenir. Bulgular PM'de karta bölünür ya da bu
 belgeye borç olarak yazılır. Hesap isteyen işler ile canlıya alım ve pilot kararları kullanıcı gündeme getirince ele alınır. Faz 3 pilottan sonra konuşulur.
 
 ### Bilinen kısıtlar
@@ -47,6 +47,8 @@ gerekçe `docs/decisions.md`'ye yazılır. Ücretli servis hiçbir satırda yokt
 | E4 | Google Cloud projesi, OAuth onay ekranı ve takvim izni; anahtarlar `korunan/google.env`'e; sonra `CALENDAR_PROVIDER=google` ve `/yonetim/google` | Gerçek takvim daveti ve Meet linki denemek istediğinde; yapılmazsa mentor linki elle ekler | P1-10 kabulü |
 | E3 | LinkedIn ile giriş **ertelendi** (kullanıcı kararı, `docs/decisions.md` 15 Kas): açık katman iş geçmişi, okul ve yetenek vermiyor; uygulama ve anahtar istenmez. Kod duruyor, anahtar yoksa düğme gizli | Kullanıcı LinkedIn ile girişi yeniden isterse (şirket sayfası + "Sign In with LinkedIn using OpenID Connect" uygulaması, anahtarlar `korunan/`'a) | Hiçbir şeyi; giriş e-posta bağlantısıyla çalışır |
 | Platform hesabı | Kurumsal kimlik: platformun adı ve LinkedIn kurum sayfası, canlı alan adı | Acelesiz; ödül paylaşımından (P2-01) ve canlı adresten önce | P2-01 paylaşımı, canlı alan adı |
+| K-16 | Satır içi PDF için Safari denemesi: mezun belgesi ve CV inceleme PDF'i iPhone Safari'de sayfa içinde açılıyor mu; yanıt başlığında `sandbox` kısıtı olup olmayacağı buna bağlı. Playwright WebKit PDF'i hiçbir politikada satır içi göstermediği için ölçülemedi | Gerçek cihaz turunda (bkz. "Yakın hedef") | Satır içi PDF yanıt başlığındaki `sandbox` kararı |
+| K-17 | TD-021 için canlı vekilin istemci IP'sini nasıl ilettiği: kaç vekil var, hangi başlığı yazıyor (nginx varsayılanı istemcinin değerini ilk değer olarak bırakır). Seçim dağıtım topolojisine bağlı, kodla önceden seçilemez | K-02 ile birlikte | TD-021, PILOT-DEPLOY |
 
 ### Hoca (kullanıcı üzerinden)
 
@@ -58,7 +60,10 @@ gerekçe `docs/decisions.md`'ye yazılır. Ücretli servis hiçbir satırda yokt
 
 ### PM
 
-Açık PM kararı yok.
+| No | Ne gerekiyor | Ne zaman | Neyi engelliyor |
+|---|---|---|---|
+| PM-01 | "Oturumlarım" ekranı: hesap ayarlarında açık oturumları gösteren ve kapatan ekran yok (kodda oturum listeleme ya da tek oturumu kapatma kullanımı yok). Yapılsın mı; yapılırsa ne gösterilsin (cihaz, son kullanım) ve "diğerlerini kapat" olsun mu? | Kullanıcı denemesinden sonra; denemede ihtiyaç çıkarsa öne alınır | Hiçbir şeyi |
+| PM-02 | Puan kazanıldığında ve Yılın Mezunu ödülü sonuçlandığında uygulama içi bildirim: bildirim türleri arasında puan ya da ödül yok (`NotificationType`), puan ve ödül servisleri bildirim üretmiyor. Eklensin mi; eklenirse tercih ekranına yeni tür olarak mı gelsin? | Ödül paylaşımı (P2-01) kararıyla birlikte | Hiçbir şeyi |
 
 ## Pilot öncesi kapılar
 
@@ -115,6 +120,14 @@ Açık PM kararı yok.
   Ne: Prisma 7.10.1 + `@prisma/adapter-pg` 7.10.1 + pg 8.23.1 ile işlemde tek Prisma sorgusunun birden fazla ilişkisi hâlâ tek pg istemcisine eşzamanlı sorgu gönderebilir. Aktör ve yönetim kullanıcı/atama yolları ayrıldı; işlem istemcisindeki açık paralel okumalar sıralandı. `scripts/td027-probe.ts relations` kalan yukarı akış davranışının kayıtlı yeniden üretimidir; komut ve ölçüm `docs/decisions.md`'de.
   Neden borç: uyarı pg@9'da hataya dönüşebilir; bütün ilişkili sorguların veya Prisma adaptörünün kesin çözümü henüz doğrulanmadı. Yukarı akış kaydı: https://github.com/prisma/orm/issues/29407.
   Kapanış ölçütü: kayıtlı ilişkili sorgu yeniden üretimi ve uygulamanın dev/e2e sunucuları uyarısız çalışır; e2e `--no-deprecation` istisnası kaldırılır, ilgili sonuç eşitliği ve kapılar geçer.
+
+- [ ] **TD-029** · P2 · Profil bağlantıları birim testi yük altında ara sıra kırmızı
+  Ne: `src/components/profile/profile.test.tsx` "bağlantılar: http ve izinsiz alan adı…" yalnız tam takım koşusunda ve işlemci çekişmesi altında
+  ara sıra düşer: adres alanı `htt` değerinde kalır, `submit()` yazılan adresin ilk üç karakterini görür; test tek başına koşunca yeşildir.
+  Kök bulunamadı: bileşende değeri önceden okuma yaması ve `waitFor` eklemek etkisiz, testin içine eşzamanlı günlük koymak sorunu gizliyor
+  (Git dışı ölçüm notu: `pm-handoff/515_R1_profil-dalga.sonuc.md`). Gerçek tarayıcıda aynı yarışın olup olmadığı ölçülmedi.
+  Neden borç: birleştirme kapısında sahte kırmızı; kapıyı baştan koşturur.
+  Kapanış ölçütü: kök bulunur ya da test `type` ile `click` arasında sağlamlaştırılır; eylem gecikmeli tarama düzeneğinde (8 koşu) kırmızı görülmez.
 
 ### Bilinçli kabul edilen sınırlar
 

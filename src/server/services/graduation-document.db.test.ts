@@ -12,6 +12,7 @@ import {
 } from '@/contracts/graduation-document';
 import { isCodedError, type ErrorCode } from '@/lib/errors';
 import { createTestPrisma } from '@/test/db';
+import { encryptedTestPdf } from '@/test/encrypted-pdf';
 import { createFakeEmail } from '@/test/auth';
 import {
   addGrant,
@@ -116,6 +117,16 @@ async function newApplicant(address = `${unique('basvuran')}@mezun.test`) {
 }
 
 describe('uploadGraduationDocument', () => {
+  it('şifreli PDF depoya ve veritabanına yazılmadan reddedilir', async () => {
+    const { storage, deps } = harness();
+    const { userId, actor } = await newApplicant();
+    const file = new File([encryptedTestPdf()], 'belge.pdf', { type: 'application/pdf' });
+    expect(await codeOf(uploadGraduationDocument(deps, actor, form(inst, { file })))).toBe(
+      'DOCUMENT_ENCRYPTED',
+    );
+    expect(storage.files.size).toBe(0);
+    expect(await prisma.graduationDocument.count({ where: { userId } })).toBe(0);
+  });
   it('geçerli PDF: dosya depoya yazılır, bekleyen belge + bekleyen mezun üyeliği oluşur', async () => {
     const { storage, deps } = harness();
     const { userId, actor } = await newApplicant();

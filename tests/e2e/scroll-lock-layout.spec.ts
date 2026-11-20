@@ -1,4 +1,5 @@
 import { expect, test } from './fixture';
+import { waitForFormReady } from './hydration';
 import { workerBaseUrl } from './isolation';
 import { loginAs } from './login';
 
@@ -41,7 +42,16 @@ for (const classic of [true, false]) {
             await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
           });
         }
-        await page.locator('select').first().selectOption({ index: 1 });
+        // Çıkış penceresi yalnız formun "değişti" durumuna bağlıdır. SSR alanı React bağlanmadan doldurulursa değişiklik
+        // sayılmaz (denetimli alan seçimi geri alır) ve pencere hiç açılmaz: önce gerçek hidratasyonu bekle (WebKit'te yarış).
+        const firstSelect = page.locator('select').first();
+        await waitForFormReady(firstSelect);
+        await firstSelect.selectOption({ index: 1 });
+        await expect
+          .poll(() =>
+            firstSelect.evaluate((element) => (element as HTMLSelectElement).selectedIndex),
+          )
+          .toBe(1);
         const measure = () =>
           page.evaluate(() => {
             const get = (selector: string) => {
