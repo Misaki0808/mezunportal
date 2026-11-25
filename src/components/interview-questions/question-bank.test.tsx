@@ -28,10 +28,10 @@ it('güvenli şirket toplamını gösterir, sayfalarken arama ve sektörü korur
       }}
     />,
   );
-  expect(screen.getByText('11 şirketten soru bulundu.')).toBeVisible();
+  expect(screen.getByText('11 şirketten tüyo bulundu.')).toBeVisible();
   expect(screen.getByRole('link', { name: 'Sonraki' })).toHaveAttribute(
     'href',
-    '/mulakat-sorulari?sectorId=sektor&q=veri+analizi&page=2',
+    '/mulakat-tuyolari?sectorId=sektor&q=veri+analizi&page=2',
   );
 });
 
@@ -50,8 +50,8 @@ it('kayıt yokken sıfır sayaç yazmaz; gizlilik eşiğini ve tek eylemi söyle
       }}
     />,
   );
-  expect(screen.queryByText(/şirketten soru bulundu/)).not.toBeInTheDocument();
-  expect(screen.getByText('Henüz gösterilebilecek soru yok.')).toBeVisible();
+  expect(screen.queryByText(/şirketten tüyo bulundu/)).not.toBeInTheDocument();
+  expect(screen.getByText('Henüz gösterilebilecek tüyo yok.')).toBeVisible();
   expect(screen.getByText(/en az üç farklı kişinin deneyiminde geçince/)).toBeVisible();
   expect(screen.getByRole('link', { name: 'Deneyim paylaş' })).toHaveAttribute(
     'href',
@@ -72,12 +72,12 @@ const bank = (over: Partial<Parameters<typeof QuestionBank>[0]['data']> = {}) =>
 
 it('süzgeçle eşleşme yokken "henüz yok"/gizlilik değil arama dili: tek eylem süzgeci temizlemek', () => {
   renderUi(<QuestionBank filters={{ companyId: '', sectorId: '', q: 'xyz' }} data={bank()} />);
-  expect(screen.getByText('Bu seçimle eşleşen soru yok')).toBeVisible();
-  expect(screen.queryByText('Henüz gösterilebilecek soru yok.')).not.toBeInTheDocument();
+  expect(screen.getByText('Bu seçimle eşleşen tüyo yok')).toBeVisible();
+  expect(screen.queryByText('Henüz gösterilebilecek tüyo yok.')).not.toBeInTheDocument();
   expect(screen.queryByText(/en az üç farklı kişinin/)).not.toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Filtreleri temizle' })).toHaveAttribute(
     'href',
-    '/mulakat-sorulari',
+    '/mulakat-tuyolari',
   );
   expect(screen.queryByRole('link', { name: 'Deneyim paylaş' })).not.toBeInTheDocument();
 });
@@ -90,14 +90,14 @@ it.each([
   (filters) => {
     renderUi(<QuestionBank filters={filters} data={bank({ insufficient: true })} />);
     // Eşik altındayken "eşleşen yok" fazla kesin: soru var ama gösterilemiyor olabilir.
-    expect(screen.getByText('Bu seçimde henüz gösterilebilecek soru yok')).toBeVisible();
-    expect(screen.queryByText('Bu seçimle eşleşen soru yok')).not.toBeInTheDocument();
+    expect(screen.getByText('Bu seçimde henüz gösterilebilecek tüyo yok')).toBeVisible();
+    expect(screen.queryByText('Bu seçimle eşleşen tüyo yok')).not.toBeInTheDocument();
     expect(screen.getByText(/en az üç farklı kişinin/)).toBeVisible();
     // Metin sayı ya da "şu şirkette az deneyim var" gibi bir şey söylemez (gizlilik).
     expect(screen.queryByText(/az sayıda deneyim/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Filtreleri temizle' })).toHaveAttribute(
       'href',
-      '/mulakat-sorulari',
+      '/mulakat-tuyolari',
     );
     expect(screen.queryByRole('link', { name: 'Deneyim paylaş' })).not.toBeInTheDocument();
   },
@@ -126,12 +126,12 @@ it('aralık dışı sayfada toplam sayı ile "henüz yok" çelişmez: bu sayfa b
       data={bank({ total: 12, page: 5 })}
     />,
   );
-  expect(screen.getByText('12 şirketten soru bulundu.')).toBeVisible();
-  expect(screen.getByText('Bu sayfada soru yok')).toBeVisible();
-  expect(screen.queryByText('Henüz gösterilebilecek soru yok.')).not.toBeInTheDocument();
+  expect(screen.getByText('12 şirketten tüyo bulundu.')).toBeVisible();
+  expect(screen.getByText('Bu sayfada tüyo yok')).toBeVisible();
+  expect(screen.queryByText('Henüz gösterilebilecek tüyo yok.')).not.toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'İlk sayfaya dön' })).toHaveAttribute(
     'href',
-    '/mulakat-sorulari?sectorId=sektor&q=veri&page=1',
+    '/mulakat-tuyolari?sectorId=sektor&q=veri&page=1',
   );
 });
 
@@ -143,7 +143,7 @@ it.each([
   (filters) => {
     renderUi(<QuestionBank filters={filters} data={bank({ insufficient: true })} />);
     const empty = screen.getByRole('heading', {
-      name: 'Bu seçimde henüz gösterilebilecek soru yok',
+      name: 'Bu seçimde henüz gösterilebilecek tüyo yok',
     }).parentElement!;
     expect(empty).toHaveTextContent(/en az üç farklı kişinin/);
     // Şirket ya da yazar sayısı hiçbir biçimde görünmez ("üç" yalnız herkese açık eşik kuralıdır).
@@ -175,10 +175,10 @@ it('ortak başlık (kart 424): tek h1; süzgeç formu GET ile aynı adrese gider
       }}
     />,
   );
-  expect(screen.getByRole('heading', { level: 1, name: 'Mülakat soru bankası' })).toBeVisible();
-  const form = container.querySelector('form[action="/mulakat-sorulari"]') as HTMLElement;
+  expect(screen.getByRole('heading', { level: 1, name: 'Mülakat tüyoları' })).toBeVisible();
+  const form = container.querySelector('form[action="/mulakat-tuyolari"]') as HTMLElement;
   expect(form).not.toBeNull();
   expect(within(form).getByLabelText('Şirket')).toHaveAttribute('name', 'companyId');
-  expect(within(form).getByRole('button', { name: 'Soruları göster' })).toBeVisible();
+  expect(within(form).getByRole('button', { name: 'Tüyoları göster' })).toBeVisible();
   expect(container.querySelector('.mx-auto')).toBeNull();
 });

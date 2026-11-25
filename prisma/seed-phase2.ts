@@ -9,10 +9,10 @@ import { seedId, seedUuid } from './seed-util';
  * adları "Örnek …" ile başlar (gerçek bir şirketi gösterdiği sanılmaz), yazarlar test hesaplarıdır, metinler örnektir.
  * Zamanlar ÇALIŞMA ANINA göredir (son başvuru tarihi gelecekte, yayın tarihi yakın geçmişte); bu yüzden yalnız bu modül saate bağlıdır
  * ve `now` verilebilir (test). İdempotenttir: kayıtlar sabit kimlikle upsert edilir, tekrar koşunca çoğalmaz, tarihler tazelenir.
- * K-anonimlik: şirket sayfası, soru bankası ve başvuru takvimi en az 3 FARKLI yazar ister; bu yüzden 4 örnek mezun (giriş yapılamayan sahte
+ * K-anonimlik: şirket sayfası, mülakat tüyoları ve başvuru takvimi en az 3 FARKLI yazar ister; bu yüzden 4 örnek mezun (giriş yapılamayan sahte
  * hesaplar) ve ortak sorular/başvuru ayları eklenir; anonim deneyim eklenmez (anonim deneyim kapsamdaki kesitleri bastırır: deneme turunda
  * kullanıcı kendisi anonim bir deneyim yazarak bu kuralı canlı görebilir).
- * Kapsam: örnek mezunlar, şirket, yayınlanmış deneyim (arama, şirket sayfası, soru bankası, başvuru takvimi, beceri analizi buradan beslenir),
+ * Kapsam: örnek mezunlar, şirket, yayınlanmış deneyim (arama, şirket sayfası, mülakat tüyoları, başvuru takvimi, beceri analizi buradan beslenir),
  * ilan (yayında/incelemede/taslak), etkinlik. Ders rehberi (P2-08) ve ay mezunu yayınları ana akışlarında (rıza + seçim)
  * yönetici ekranından denenir; seed rıza uydurmaz. Yılın Mezunu için donmuş dönem ve verilmiş ödül ayrı modüldedir (`seed-awards.ts`).
  */

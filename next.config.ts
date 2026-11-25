@@ -75,6 +75,15 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   // Sunucu eylemi argümanları ve istek URL’leri günlüğe yazılmaz (src/lib/dev-logging.ts).
   logging: nextLogging,
+  async redirects() {
+    return [
+      {
+        source: '/mulakat-sorulari',
+        destination: '/mulakat-tuyolari',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },

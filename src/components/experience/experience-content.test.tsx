@@ -22,9 +22,9 @@ const rich = {
 } as unknown as ExperienceDetail['content'];
 
 describe('ExperienceContent (okuma)', () => {
-  it('mülakat soruları ayrı, zeminli bir kutuda ve numaralı satırlarla öne çıkar', () => {
+  it('mülakat tüyoları ayrı, zeminli bir kutuda ve numaralı satırlarla öne çıkar', () => {
     renderUi(<ExperienceContent content={rich} />);
-    const heading = screen.getByRole('heading', { level: 2, name: 'Mülakat soruları' });
+    const heading = screen.getByRole('heading', { level: 2, name: 'Mülakat tüyoları' });
     const box = heading.closest('section')!;
     expect(box.className).toContain('bg-surface-strong');
     const items = within(box).getAllByRole('listitem');
@@ -68,7 +68,7 @@ describe('ExperienceContent (okuma)', () => {
         }
       />,
     );
-    for (const name of ['Mülakat soruları', 'Süreç', 'Tavsiyem', 'Öğrendiklerim'])
+    for (const name of ['Mülakat tüyoları', 'Süreç', 'Tavsiyem', 'Öğrendiklerim'])
       expect(screen.queryByRole('heading', { name })).toBeNull();
   });
 

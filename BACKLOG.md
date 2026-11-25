@@ -148,7 +148,7 @@ PR'da bu bölüme yazılır. Faz kapanışında kayıtsız kalmış borçlar bu 
 
 Kariyer yolu haritası · diğer fakültelere ve üniversitelere açılma. Doğal dille arama yerine yapılandırılmış mezun ve sektör filtreleri kullanılır.
 
-- Soru bankasında pozisyon süzgeci ve "kaydet/çalış" listesi (P2-10'dan ertelendi): deneyimde pozisyon alanı gerekir; anonim deneyimde yarı tanımlayıcı olma riski
+- Mülakat tüyolarında pozisyon süzgeci ve "kaydet/çalış" listesi (P2-10'dan ertelendi): deneyimde pozisyon alanı gerekir; anonim deneyimde yarı tanımlayıcı olma riski
   (`docs/decisions.md`) ve P1 form kapsamı yüzünden Faz 2'de yapılmadı.
 
 

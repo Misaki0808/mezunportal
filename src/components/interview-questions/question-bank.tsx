@@ -20,7 +20,7 @@ export function QuestionCards({
   insufficient,
   total = 0,
   filtered = false,
-  firstPageHref = '/mulakat-sorulari',
+  firstPageHref = '/mulakat-tuyolari',
 }: {
   groups: Group[];
   insufficient: boolean;
@@ -54,7 +54,7 @@ export function QuestionCards({
           title={insufficient ? t('noMatchInsufficient') : t('noMatch')}
           description={insufficient ? t('noMatchPrivacyHint') : t('noMatchHint')}
           action={
-            <Link href="/mulakat-sorulari" className={buttonClasses({ variant: 'secondary' })}>
+            <Link href="/mulakat-tuyolari" className={buttonClasses({ variant: 'secondary' })}>
               {t('clear')}
             </Link>
           }
@@ -120,13 +120,13 @@ export function QuestionBank({
     if (filters.sectorId) params.set('sectorId', filters.sectorId);
     if (filters.q) params.set('q', filters.q);
     params.set('page', String(page));
-    return `/mulakat-sorulari?${params.toString()}`;
+    return `/mulakat-tuyolari?${params.toString()}`;
   };
   return (
     <div className="w-full min-w-0">
       <PageHeader title={t('title')} description={t('description')} />
       <form
-        action="/mulakat-sorulari"
+        action="/mulakat-tuyolari"
         className="mt-7 grid gap-4 rounded-card border border-border bg-surface p-4 shadow-card sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.2fr_auto] lg:items-end"
       >
         <Field label={t('company')}>
