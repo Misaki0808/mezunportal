@@ -4,9 +4,12 @@ import { CV_MAX_BYTES, CV_MAX_PAGES } from '@/contracts/cv';
 import { hasPdfMagic } from '@/contracts/graduation-document';
 import type { ErrorCode } from '@/lib/errors';
 
+import { scanPdfEncryption } from './pdf-encryption';
+
 /**
  * CV PDF'i için içerik denetimi (saf; yeni bağımlılık yok). Uzantıya/MIME'a değil bayt içeriğine bakar:
- * sihirli bayt, şifreli PDF ve sayfa sayısı. Sayfa sayımı SEZGİSELDİR (tam PDF ayrıştırıcı değildir):
+ * sihirli bayt, şifreli PDF ve sayfa sayısı. Şifre YAPIYA bağlıdır (trailer / çapraz başvuru akışı sözlüğündeki
+ * `/Encrypt` anahtarı, bkz. `pdf-encryption.ts`); gövdede ya da yorumda geçen `/Encrypt` yazısı şifreli saymaz. Sayfa sayımı SEZGİSELDİR (tam PDF ayrıştırıcı değildir):
  * sayfa nesneleri ile `/Pages` düğümlerinin `/Count` değerinin büyüğü alınır; sıkıştırılmış nesne
  * akışları (`/ObjStm`) açılır, ad kaçışları (`/#50age`) çözülür. Maliyetin asıl sınırı 5 MB + günlük sınır +
  * sağlayıcı harcama sınırıdır; bu denetim kasıtsız aşırı uzun CV'leri erken ve ucuz eler.
@@ -55,7 +58,12 @@ function inflateObjectStreams(bytes: Uint8Array, text: string): string {
   return parts.join('\n');
 }
 
-export function inspectPdf(bytes: Uint8Array): { pageCount: number; encrypted: boolean } {
+export function inspectPdf(bytes: Uint8Array): {
+  pageCount: number;
+  encrypted: boolean;
+  /** Yalnız bozuk/kesik trailer varsa `true`; yoksa alan hiç yoktur. */
+  damaged?: boolean;
+} {
   const raw = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString('latin1');
   // Ad kaçışları (`/#50age` = `/Page`) çözülür; yoksa sayım atlatılabilirdi.
   const decodeNames = (source: string) =>
@@ -71,9 +79,12 @@ export function inspectPdf(bytes: Uint8Array): { pageCount: number; encrypted: b
     const count = /\/Count\s+(\d{1,6})\b/.exec(objectBody);
     if (count?.[1]) declaredPages = Math.max(declaredPages, Number(count[1]));
   }
+  // Şifre gövde metninde değil, yalnız yapıda aranır (ham metin: ad kaçışları jeton içinde çözülür).
+  const { encrypted, damaged } = scanPdfEncryption(raw);
   return {
     pageCount: Math.max(leafPages, declaredPages),
-    encrypted: /\/Encrypt\b/.test(scanned),
+    encrypted,
+    ...(damaged ? { damaged: true } : {}),
   };
 }
 
@@ -86,9 +97,9 @@ export function checkCvPdf(
   if (bytes.length === 0) return { ok: false, code: 'DOCUMENT_EMPTY' };
   if (bytes.length > maxBytes) return { ok: false, code: 'DOCUMENT_TOO_LARGE' };
   if (!hasPdfMagic(bytes)) return { ok: false, code: 'DOCUMENT_NOT_PDF' };
-  const { pageCount, encrypted } = inspectPdf(bytes);
-  // Şifreli PDF'nin akışları okunamaz; sayfa sayısı da güvenilmezdir.
-  if (encrypted || pageCount < 1) return { ok: false, code: 'CV_PDF_UNREADABLE' };
+  const { pageCount, encrypted, damaged } = inspectPdf(bytes);
+  // Şifreli PDF'nin akışları okunamaz; sayfa sayısı da güvenilmezdir. Bozuk/kesik trailer de okunamaz sayılır.
+  if (encrypted || damaged || pageCount < 1) return { ok: false, code: 'CV_PDF_UNREADABLE' };
   if (pageCount > maxPages) return { ok: false, code: 'CV_TOO_MANY_PAGES' };
   return { ok: true, pageCount };
 }

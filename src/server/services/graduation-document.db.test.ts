@@ -1,3 +1,4 @@
+import { buildTestPdf } from '@/test/pdf';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
@@ -126,6 +127,21 @@ describe('uploadGraduationDocument', () => {
     );
     expect(storage.files.size).toBe(0);
     expect(await prisma.graduationDocument.count({ where: { userId } })).toBe(0);
+  });
+  it('şifresiz ama metninde /Encrypt geçen PDF reddedilmez (şifre yalnız trailer sözlüğündeki anahtardır; kart 557)', async () => {
+    const { storage, deps } = harness();
+    const { userId, actor } = await newApplicant();
+    const file = new File(
+      [new Uint8Array(buildTestPdf({ text: ['/Encrypt 99 0 R'] }))],
+      'belge.pdf',
+      {
+        type: 'application/pdf',
+      },
+    );
+    const result = await uploadGraduationDocument(deps, actor, form(inst, { file }));
+    expect(result.status).toBe('PENDING');
+    expect(storage.files.size).toBe(1);
+    expect(await prisma.graduationDocument.count({ where: { userId } })).toBe(1);
   });
   it('geçerli PDF: dosya depoya yazılır, bekleyen belge + bekleyen mezun üyeliği oluşur', async () => {
     const { storage, deps } = harness();

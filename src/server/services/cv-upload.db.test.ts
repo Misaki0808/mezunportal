@@ -107,6 +107,20 @@ describe('uploadCv — dosya içeriği sunucuda yeniden doğrulanır', () => {
   );
 });
 
+describe('uploadCv — metninde /Encrypt geçen şifresiz PDF', () => {
+  it('kabul edilir (şifre yalnız trailer/çapraz başvuru sözlüğündeki anahtardır; kart 557)', async () => {
+    const { userId, actor } = await cvUser(db);
+    const kit = cvKit(db, { dailyLimit: 5 });
+    const result = await uploadCv(
+      kit.deps,
+      actor,
+      pdfForm({ text: ['Beceriler: /Encrypt, trailer'] }),
+    );
+    expect(result.status).toBe('QUEUED');
+    expect(await count(userId)).toBe(1);
+  });
+});
+
 describe('uploadCv — başarı yolu', () => {
   it('dosya depoya yazılır, QUEUED kayıt açılır, iş AYNI işlemde kuyruğa girer; LLM çağrılmaz', async () => {
     const { userId, actor } = await cvUser(db);

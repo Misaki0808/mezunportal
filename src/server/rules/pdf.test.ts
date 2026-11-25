@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { encryptedTestPdf } from '@/test/encrypted-pdf';
 import { buildTestPdf } from '@/test/pdf';
 
 import { checkCvPdf, inspectPdf } from './pdf';
@@ -82,5 +83,145 @@ describe('inspectPdf', () => {
       '%PDF-1.4\n1 0 obj\n<< /Type /Outlines /Count 40 >>\nendobj\n2 0 obj\n<< /Type /Pages /Count 2 >>\nendobj\n' +
       '3 0 obj\n<< /Type /Page >>\nendobj\n4 0 obj\n<< /Type /Page >>\nendobj';
     expect(inspectPdf(new TextEncoder().encode(text))).toEqual({ pageCount: 2, encrypted: false });
+  });
+});
+
+/** Kart 557: şifre yapıya (trailer / çapraz başvuru akışı sözlüğü) bağlıdır, gövdedeki `/Encrypt` yazısına değil. */
+const toText = (bytes: Uint8Array) => Buffer.from(bytes).toString('latin1');
+const toBytes = (text: string) => new Uint8Array(Buffer.from(text, 'latin1'));
+const insertBeforeTrailer = (bytes: Uint8Array, extra: string) =>
+  toBytes(toText(bytes).replace('\ntrailer', `\n${extra}\ntrailer`));
+/** Artımlı güncelleme: dosyanın sonuna yeni nesne + yeni trailer eklenir (birden çok trailer). */
+const appendUpdate = (bytes: Uint8Array, trailerDictionary: string) =>
+  toBytes(
+    `${toText(bytes)}\n5 0 obj\n<< /Producer (güncelleme) >>\nendobj\nxref\n5 1\n0000000099 00000 n \ntrailer\n${trailerDictionary}\nstartxref\n1234\n%%EOF\n`,
+  );
+const withTrailer = (bytes: Uint8Array, trailerDictionary: string) =>
+  toBytes(toText(bytes).replace(/trailer\n<<[^]*$/, `trailer\n${trailerDictionary}`));
+
+describe('şifre tespiti trailer sözlüğüne bağlıdır', () => {
+  it('gerçek şifreli PDF (parola gerekli) şifreli sayılır ve CV olarak okunamaz', () => {
+    expect(inspectPdf(encryptedTestPdf()).encrypted).toBe(true);
+    expect(checkCvPdf(encryptedTestPdf())).toEqual({ ok: false, code: 'CV_PDF_UNREADABLE' });
+    expect(inspectPdf(buildTestPdf({ encrypted: true })).encrypted).toBe(true);
+  });
+
+  const lookalikes: [string, () => Uint8Array][] = [
+    [
+      'içerik akışının metni (trailer kalıbı dahil)',
+      () => buildTestPdf({ text: ['/Encrypt 99 0 R', 'trailer << /Encrypt 99 0 R >>'] }),
+    ],
+    [
+      'yorum satırı',
+      () =>
+        insertBeforeTrailer(buildTestPdf({}), '% /Encrypt 99 0 R\n% trailer << /Encrypt 1 0 R >>'),
+    ],
+    [
+      'bir dizenin içi',
+      () =>
+        insertBeforeTrailer(
+          buildTestPdf({}),
+          '7 0 obj\n<< /Title (/Encrypt 99 0 R trailer << /Encrypt 1 0 R >>) >>\nendobj',
+        ),
+    ],
+    [
+      'bir değer olarak ad (anahtar değil)',
+      () => insertBeforeTrailer(buildTestPdf({}), '7 0 obj\n<< /Subtype /Encrypt >>\nendobj'),
+    ],
+    [
+      'iç sözlükte anahtar',
+      () =>
+        insertBeforeTrailer(buildTestPdf({}), '7 0 obj\n<< /Foo << /Encrypt 1 0 R >> >>\nendobj'),
+    ],
+    [
+      'sıradan nesne sözlüğünde anahtar (XRef değil, trailer değil)',
+      () =>
+        insertBeforeTrailer(buildTestPdf({}), '7 0 obj\n<< /Type /Annot /Encrypt 1 0 R >>\nendobj'),
+    ],
+    [
+      'trailer içinde iç sözlük ve değer olarak ad',
+      () =>
+        withTrailer(
+          buildTestPdf({}),
+          '<< /Root 1 0 R /Info << /Encrypt 3 0 R >> /Tag /Encrypt >>\n%%EOF',
+        ),
+    ],
+    [
+      'şifresiz artımlı güncelleme',
+      () => appendUpdate(buildTestPdf({ text: ['/Encrypt'] }), '<< /Root 1 0 R /Prev 100 >>'),
+    ],
+  ];
+  it.each(lookalikes)('metninde /Encrypt geçen ŞİFRESİZ PDF kabul edilir: %s', (_name, make) => {
+    const bytes = make();
+    expect(inspectPdf(bytes).encrypted).toBe(false);
+    expect(checkCvPdf(bytes)).toEqual({ ok: true, pageCount: 1 });
+  });
+
+  it('ad kaçışıyla yazılmış /Encrypt anahtarı da yakalanır (/#45ncrypt)', () => {
+    const bytes = toBytes(
+      toText(buildTestPdf({ encrypted: true })).replace('/Encrypt', '/#45ncrypt'),
+    );
+    expect(toText(bytes)).not.toContain('/Encrypt');
+    expect(inspectPdf(bytes).encrypted).toBe(true);
+  });
+
+  it.each([
+    [
+      "şifreli orijinal + güncellemenin trailer'ında da var",
+      true,
+      '<< /Root 1 0 R /Prev 100 /Encrypt 99 0 R >>',
+    ],
+    [
+      "şifreli orijinal + güncellemenin trailer'ında yok (muhafazakâr)",
+      true,
+      '<< /Root 1 0 R /Prev 100 >>',
+    ],
+    [
+      "şifresiz orijinal + güncellemenin trailer'ında var",
+      false,
+      '<< /Root 1 0 R /Prev 100 /Encrypt 99 0 R >>',
+    ],
+  ])('artımlı güncelleme (birden çok trailer): %s', (_name, originalEncrypted, update) => {
+    const bytes = appendUpdate(buildTestPdf({ encrypted: originalEncrypted }), update);
+    expect((toText(bytes).match(/\btrailer\b/g) ?? []).length).toBe(2);
+    expect(inspectPdf(bytes).encrypted).toBe(true);
+    expect(checkCvPdf(bytes)).toEqual({ ok: false, code: 'CV_PDF_UNREADABLE' });
+  });
+
+  describe('çapraz başvuru akışı (PDF 1.5, trailer sözcüğü yok)', () => {
+    const xrefStreamPdf = (dictionaryTail: string) =>
+      toBytes(
+        '%PDF-1.5\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Count 1 >>\nendobj\n' +
+          '3 0 obj\n<< /Type /Page /Parent 2 0 R >>\nendobj\n' +
+          `4 0 obj\n<< /Type /XRef /Size 5 /Root 1 0 R /W [1 2 1] ${dictionaryTail} /Length 4 >>\nstream\n\u0000\u0000\u0000\u0000\nendstream\nendobj\nstartxref\n200\n%%EOF\n`,
+      );
+    it('/Type /XRef sözlüğünde /Encrypt anahtarı varsa şifrelidir', () => {
+      const bytes = xrefStreamPdf('/Encrypt 9 0 R');
+      expect(toText(bytes)).not.toContain('trailer');
+      expect(inspectPdf(bytes).encrypted).toBe(true);
+      expect(checkCvPdf(bytes)).toEqual({ ok: false, code: 'CV_PDF_UNREADABLE' });
+    });
+    it('anahtar yoksa (yalnız /Info dizesinde yazı geçiyorsa) şifresizdir', () => {
+      const bytes = xrefStreamPdf('/Info (/Encrypt 9 0 R)');
+      expect(inspectPdf(bytes)).toEqual({ pageCount: 1, encrypted: false });
+      expect(checkCvPdf(bytes)).toEqual({ ok: true, pageCount: 1 });
+    });
+  });
+
+  describe('bozuk trailer mevcut "okunamadı" yoluna düşer', () => {
+    it('kesik sözlük (kapanmıyor): bozuk sayılır, CV okunamaz; /Encrypt ipucu varsa şifreli de sayılır', () => {
+      const broken = withTrailer(buildTestPdf({}), '<< /Root 1 0 R /Size');
+      expect(inspectPdf(broken)).toMatchObject({ encrypted: false, damaged: true });
+      expect(checkCvPdf(broken)).toEqual({ ok: false, code: 'CV_PDF_UNREADABLE' });
+      const brokenEncrypted = withTrailer(buildTestPdf({}), '<< /Root 1 0 R /Encrypt 99 0 R');
+      expect(inspectPdf(brokenEncrypted)).toMatchObject({ encrypted: true, damaged: true });
+      expect(checkCvPdf(brokenEncrypted)).toEqual({ ok: false, code: 'CV_PDF_UNREADABLE' });
+    });
+    it('sözlüksüz "trailer" sözcüğü bozuk sayılır; sağlam PDF\'de alan hiç yoktur', () => {
+      const broken = withTrailer(buildTestPdf({}), '\n%%EOF');
+      expect(inspectPdf(broken).damaged).toBe(true);
+      expect(checkCvPdf(broken)).toEqual({ ok: false, code: 'CV_PDF_UNREADABLE' });
+      expect(inspectPdf(buildTestPdf({}))).not.toHaveProperty('damaged');
+    });
   });
 });

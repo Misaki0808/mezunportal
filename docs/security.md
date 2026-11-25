@@ -321,7 +321,7 @@ uygunsuz fotoğrafı gerekçeyle kaldırabilir; dosya ve gerekçe kişisel veri 
   sınırlıdır; çıktı yalnız **öneri** olarak onay ekranına gelir, kullanıcı onaylamadan
   uygulanmaz; rol, yetki, doğrulama durumu ve başka kullanıcıya ait veri **hiçbir zaman** LLM
   çıktısından yazılmaz; modele araç/çağrı yetkisi verilmez.
-- **Yükleme denetimi içeriğe bakar:** şifreli PDF, CV ve mezun belgesinde reddedilir; CV'de ayrıca 6 sayfadan uzun PDF reddedilir. Maliyet sınırları (5 MB,
+- **Yükleme denetimi içeriğe bakar:** şifreli PDF, CV ve mezun belgesinde reddedilir (şifre dosya metninde değil, `trailer` ya da çapraz başvuru akışı sözlüğündeki `/Encrypt` anahtarından anlaşılır; metninde bu yazı geçen şifresiz PDF kabul edilir); CV'de ayrıca 6 sayfadan uzun PDF reddedilir. Maliyet sınırları (5 MB,
   günlük hak, sağlayıcı harcama sınırı) sayfa sayımının sezgisel olmasını telafi eder.
 - **Profil serbest metni:** özet/hedef, başlık/şehir, profil kalemleri ve beceriler sunucuda SSS ile aynı
   e-posta/Türkiye cep telefonu/kimlik numarası biçim denetiminden geçer (`src/lib/personal-data.ts`). CV onayından

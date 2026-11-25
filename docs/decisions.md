@@ -1275,3 +1275,14 @@ bu yüzden askı açıklaması (aydınlatma metni bağlantısı) yalnız oradays
 kullanıcının doğrulanmış giriş bağlantısına tıklayınca düştüğü giriş sayfası hatasında (`/giris?hata=AUTH_ACCOUNT_SUSPENDED`)
 gösterilir. Hesap numaralandırma kuralı değişmez: bağlantı isteme formu kayıtlı, kayıtsız, askıdaki ve silinmiş adreste aynı
 yanıtı verir; askı yalnız e-postanın sahibi bağlantıya tıklayınca görünür.
+
+## 2026-11-26 · Şifreli PDF tespiti yapıya bağlandı
+
+`inspectPdf` `/Encrypt` yazısını dosyanın bütün metninde arıyordu; metninde, yorumunda ya da dizesinde bu yazı geçen **şifresiz**
+PDF "şifreli" sayılıp CV ve mezun belgesinde reddediliyordu (#253 incelemesi). Şimdi dosya jetonlanır (yorumlar, dizeler ve akış
+gövdeleri atlanır) ve `/Encrypt` yalnız `trailer` sözlüğünün ya da `/Type /XRef` nesne sözlüğünün üst düzey ANAHTARI olarak sayılır;
+artımlı güncellemede herhangi bir trailer'da varsa dosya şifrelidir, ad kaçışları (`/#45ncrypt`) çözülür. Yeni bağımlılık yok
+(`src/server/rules/pdf-encryption.ts`), CV ve mezun belgesi aynı yardımcıyı kullanır.
+Bozuk ya da kesik trailer CV'de mevcut `CV_PDF_UNREADABLE` yoluna düşer (yapı okunamıyorsa sayfa sayısı da güvenilmezdir); sözlük
+kesilmiş ama sonraki 4 KB içinde `/Encrypt` görünüyorsa ayrıca şifreli sayılır (muhafazakâr yedek). Mezun belgesi yalnız şifre
+kuralını kullanır (`DOCUMENT_ENCRYPTED`): o yolun "okunamadı" kodu yoktur, bozuk trailer orada yeni bir red nedeni olmadı.
