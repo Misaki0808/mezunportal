@@ -80,6 +80,48 @@ for (const width of [320, 390]) {
   });
 }
 
+// Dar yerleşim eşiği yazı boyutuyla büyümez (kart 536 / #257 P2): 768 px'te büyük yazı büyük kalır, 390 px'te mevcut davranış sürer.
+for (const scenario of [
+  { width: 768, compact: false },
+  { width: 390, compact: true },
+]) {
+  test(`büyük yazıda ${scenario.width} px alt gezinme etiketleri ${scenario.compact ? '12 px sabit, tek satır' : 'büyür, tek satır'}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: scenario.width, height: 844 });
+    await loginAs(page, 'student');
+    await page.goto('/ilanlar', { waitUntil: 'networkidle' });
+    await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+    const labels = await page.locator('[data-bottom-nav] li').evaluateAll((items) =>
+      items.map((item) => {
+        const label = item.querySelector('a,button')!.querySelector('span:last-child')!;
+        return {
+          text: label.textContent ?? '',
+          fontSize: parseFloat(getComputedStyle(label).fontSize),
+          lines: Math.round(
+            label.getBoundingClientRect().height / parseFloat(getComputedStyle(label).lineHeight),
+          ),
+          clipped: label.scrollWidth > label.clientWidth + 1,
+        };
+      }),
+    );
+    expect(labels).toHaveLength(5);
+    for (const label of labels) {
+      expect.soft(label.lines, `${label.text}: tek satır`).toBe(1);
+      expect.soft(label.clipped, `${label.text}: kesilmiyor`).toBe(false);
+      if (scenario.compact) expect.soft(label.fontSize, `${label.text}: 12 px`).toBe(12);
+      else
+        expect
+          .soft(label.fontSize, `${label.text}: büyük yazı küçültülmez`)
+          .toBeGreaterThanOrEqual(20);
+    }
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      'yatay taşma yok',
+    ).toBe(true);
+  });
+}
+
 test('büyük yazıda deneyim formu bölüm metinleri sayfayı taşırmaz', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await loginAs(page, 'student');

@@ -10,12 +10,21 @@ import {
 
 describe('nameFromEmail', () => {
   it.each([
-    ['ayse.yilmaz@ogr.iu.edu.tr', 'ayse yilmaz'],
-    ['mert_k+etiket@gmail.com', 'mert k etiket'],
-    ['a@b.co', 'a'],
+    ['efebaydemir@ogr.iu.edu.tr', 'Efe Baydemir'],
+    ['efe.baydemir@ogr.iu.edu.tr', 'Efe Baydemir'],
+    ['irem.yilmaz@ogr.iu.edu.tr', 'İrem Yilmaz'],
+    ['ışıl.yilmaz@ogr.iu.edu.tr', 'Işıl Yilmaz'],
+    ['alican@ogr.iu.edu.tr', 'Alican'],
+    ['emrecan@ogr.iu.edu.tr', 'Emrecan'],
+    ['efesu@ogr.iu.edu.tr', 'Efesu'],
+    ['alicanyilmaz@ogr.iu.edu.tr', 'Alican Yilmaz'],
+    ['x1234@ogr.iu.edu.tr', 'X'],
+    ['ayse.yilmaz@ogr.iu.edu.tr', 'Ayse Yilmaz'],
+    ['mert_k+etiket@gmail.com', 'Mert K Etiket'],
+    ['a@b.co', 'A'],
     ['...@b.co', 'Üye'],
     ['@b.co', 'Üye'],
-    ['x'.repeat(200) + '@b.co', 'x'.repeat(80)],
+    ['x'.repeat(200) + '@b.co', 'X' + 'x'.repeat(79)],
   ])('%s → %j', (email, name) => {
     expect(nameFromEmail(email)).toBe(name);
   });
@@ -30,7 +39,7 @@ describe('userCreateBefore', () => {
     });
     expect(data).toMatchObject({
       email: 'ayse.yilmaz@example.com',
-      name: 'ayse yilmaz',
+      name: 'Ayse Yilmaz',
       emailVerified: true,
     });
   });

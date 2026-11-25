@@ -10,7 +10,7 @@ vi.mock('next/navigation', () => ({
 }));
 vi.mock('@/server/actions/interview-questions', () => ({ getInterviewQuestions: search }));
 vi.mock('@/components/interview-questions/question-bank', () => ({
-  QuestionBank: () => <div>Soru bankası</div>,
+  QuestionBank: () => <div>Mülakat tüyoları</div>,
 }));
 import Page from './page';
 beforeEach(() => {
@@ -42,7 +42,7 @@ it.each([
   async (params, expected) => {
     renderUi(await Page({ searchParams: Promise.resolve(params) }));
     expect(search).toHaveBeenCalledWith(expected);
-    expect(screen.getByText('Soru bankası')).toBeVisible();
+    expect(screen.getByText('Mülakat tüyoları')).toBeVisible();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   },
 );
@@ -60,7 +60,7 @@ it('aralık dışı sayfa son geçerli sayfaya yönlendirilir', async () => {
     },
   });
   await expect(Page({ searchParams: Promise.resolve({ q: 'SQL', page: '9' }) })).rejects.toThrow(
-    'REDIRECT:/mulakat-sorulari?q=SQL&page=2',
+    'REDIRECT:/mulakat-tuyolari?q=SQL&page=2',
   );
 });
 it('geçerli sayfa numarasını sayısal değere çevirir', async () => {

@@ -23,7 +23,7 @@ const noOverflow = async (page: Page) =>
 
 test.use({ viewport: { width: 390, height: 844 } });
 
-test('öğrenci: ilan, şirket, soru bankası, takvim ve etkinlik örnek içerikle dolu; yazar adı ve e-posta yok', async ({
+test('öğrenci: ilan, şirket, mülakat tüyoları, takvim ve etkinlik örnek içerikle dolu; yazar adı ve e-posta yok', async ({
   page,
 }) => {
   test.setTimeout(180_000);
@@ -47,8 +47,8 @@ test('öğrenci: ilan, şirket, soru bankası, takvim ve etkinlik örnek içerik
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Örnek Yazılım');
   await noOverflow(page);
 
-  // Mülakat soru bankası: en az üç farklı yazardan ortak soru görünür (k-anonimlik eşiği).
-  await page.goto('/mulakat-sorulari', { waitUntil: 'networkidle' });
+  // Mülakat tüyoları: en az üç farklı yazardan ortak soru görünür (k-anonimlik eşiği).
+  await page.goto('/mulakat-tuyolari', { waitUntil: 'networkidle' });
   await expect(page.getByText(SEEDED.sharedQuestion).first()).toBeVisible();
   await noOverflow(page);
 

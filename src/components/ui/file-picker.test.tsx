@@ -26,6 +26,16 @@ describe('FilePicker', () => {
     expect(input).toHaveAccessibleDescription('Henüz dosya seçilmedi');
   });
 
+  it('360 px: yer tutucu metin kesilmez (sarılır); uzun dosya adı üç noktayla kısalır', async () => {
+    const { user } = renderUi(
+      <Field label="Dosya">{(control) => <FilePicker {...control} />}</Field>,
+    );
+    // Yer tutucu "Henüz dosya seçilmedi" dar genişlikte "Henüz dosya se…" olmasın: `truncate` yok.
+    expect(screen.getByText('Henüz dosya seçilmedi')).not.toHaveClass('truncate');
+    await user.upload(screen.getByLabelText('Dosya'), pdf());
+    expect(screen.getByText('mezuniyet-belgesi.pdf')).toHaveClass('truncate', 'min-w-0');
+  });
+
   it('düğme yazısı verilmezse genel "Dosya seç" kullanılır', () => {
     renderUi(<Field label="Dosya">{(control) => <FilePicker {...control} />}</Field>);
 

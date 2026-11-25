@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import { Avatar } from '@/components/ui';
 
 import { useTranslations } from 'next-intl';
@@ -62,6 +63,7 @@ export function AppointmentDetail({
   const feedback = useTranslations('feedback');
   const errors = useTranslations('errors.codes');
   const router = useRouter();
+  const hydrated = useHydrated();
   const [dialog, setDialog] = useState<'decline' | 'cancel'>();
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState('');
@@ -162,7 +164,10 @@ export function AppointmentDetail({
   const confirmBlocked = !a.actions.canConfirm && a.actions.confirmBlockedReason !== null;
 
   return (
-    <article className="[&_.text-sm]:text-base flex w-full max-w-2xl flex-col gap-6">
+    <article
+      data-hydrated={hydrated ? 'true' : undefined}
+      className="[&_.text-sm]:text-base flex w-full max-w-2xl flex-col gap-6"
+    >
       <div>
         <Link
           href="/randevular"
@@ -358,6 +363,9 @@ export function AppointmentDetail({
           <Button variant="ghost" className="w-full sm:w-auto" onClick={() => openDialog('cancel')}>
             {t('cancel')}
           </Button>
+        )}
+        {a.role === 'MENTOR' && a.status === 'CONFIRMED' && a.actions.canCancel && (
+          <p className="w-full text-base text-fg-muted">{t('mentorCancelHint')}</p>
         )}
         {a.status === 'CONFIRMED' && (
           <p className="w-full text-base text-fg-muted">{t('emailShared')}</p>

@@ -1,3 +1,4 @@
+import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
 import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -34,6 +35,7 @@ test('360 px: mezun beş ders seçer, öğrenci YBS/ortak ayrımını ve seçmel
     await login(page, 'alumniMentor');
     await page.goto('/profil/dersler');
     const checks = page.getByRole('checkbox');
+    await waitForFormReady(checks.first());
     for (let i = 0; i < 5; i++) await checks.nth(i).check();
     await expect(checks.nth(5)).toBeDisabled();
     await page.getByRole('button', { name: t.save, exact: true }).click();

@@ -10,7 +10,7 @@ const LISTS = [
   '/deneyimler',
   '/sirketler',
   '/sss',
-  '/mulakat-sorulari',
+  '/mulakat-tuyolari',
 ] as const;
 
 test('liste adreslerinde geçersiz parametre varsayılana düşer, aralık dışı sayfa son sayfaya çekilir', async ({

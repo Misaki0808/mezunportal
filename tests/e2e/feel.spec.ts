@@ -480,7 +480,7 @@ test.describe('düzen zıplaması (CLS, 390)', () => {
       '/profil',
       '/ilanlar',
       '/sirketler',
-      '/mulakat-sorulari',
+      '/mulakat-tuyolari',
       '/basvuru-takvimi',
       '/ders-rehberi',
       '/etkinlikler',

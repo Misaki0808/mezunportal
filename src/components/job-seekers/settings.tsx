@@ -1,4 +1,5 @@
 'use client';
+import { useHydrated } from '@/hooks/use-hydrated';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
@@ -10,6 +11,7 @@ import type { SeekerSettings, SeekerTermSeason } from '@/contracts/job-seekers';
 import { SeekerCardView } from './card';
 
 export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
+  const hydrated = useHydrated();
   const t = useTranslations('seekers');
   const errors = useTranslations('errors.codes');
   const frame = useTranslations('accountFrame');
@@ -94,99 +96,102 @@ export function SeekerSettingsScreen({ initial }: { initial: SeekerSettings }) {
       description={t('settingsDescription')}
       width="max-w-2xl"
     >
-      <div className="rounded-card border border-border p-5">
-        <Switch
-          label={t('visibility')}
-          description={t('visibilityHint')}
-          checked={visible}
-          disabled={pending}
-          onChange={(e) => {
-            setVisible(e.target.checked);
-            setSaved(false);
-          }}
-        />
-      </div>
-      {visible && (
-        <div className="space-y-4 rounded-card border border-border p-5">
-          <h2 className="font-semibold">{t('consentTitle')}</h2>
-          <p className="text-fg-muted">{t('consentText')}</p>
-          <Link
-            className="inline-flex min-h-11 items-center font-semibold text-primary underline"
-            href="/hukuki/staj-arayan-gorunurlugu"
-          >
-            {t('consentLink')}
-          </Link>
-          <Checkbox
-            label={t('consentAgree')}
-            checked={agree}
-            onChange={(e) => setAgree(e.target.checked)}
+      {/* Çerçeve çocukları `space-y-5` ile dizer; işaret kabı aynı aralığı taşır (görünüm değişmez). */}
+      <div data-hydrated={hydrated ? 'true' : undefined} className="space-y-5">
+        <div className="rounded-card border border-border p-5">
+          <Switch
+            label={t('visibility')}
+            description={t('visibilityHint')}
+            checked={visible}
+            disabled={pending}
+            onChange={(e) => {
+              setVisible(e.target.checked);
+              setSaved(false);
+            }}
           />
         </div>
-      )}
-      <div className="space-y-3 rounded-card border border-border p-5">
-        <h2 className="font-semibold">{t('termTitle')}</h2>
-        <p className="text-sm text-fg-muted">{t('termHint')}</p>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="space-y-1">
-            <span>{t('year')}</span>
-            <Select value={year} onChange={(e) => setYear(e.target.value)}>
-              <option value="">{t('anyYear')}</option>
-              {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() + i).map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </Select>
-          </label>
-          <label className="space-y-1">
-            <span>{t('season')}</span>
-            <Select
-              value={season}
-              onChange={(e) => setSeason(e.target.value as SeekerTermSeason | '')}
+        {visible && (
+          <div className="space-y-4 rounded-card border border-border p-5">
+            <h2 className="font-semibold">{t('consentTitle')}</h2>
+            <p className="text-fg-muted">{t('consentText')}</p>
+            <Link
+              className="inline-flex min-h-11 items-center font-semibold text-primary underline"
+              href="/hukuki/staj-arayan-gorunurlugu"
             >
-              <option value="">{t('anySeason')}</option>
-              {(['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'] as const).map((s) => (
-                <option key={s} value={s}>
-                  {t(`seasons.${s}`)}
-                </option>
-              ))}
-            </Select>
-          </label>
-        </div>
-      </div>
-      <section aria-labelledby="preview-title" className="space-y-3">
-        <h2 id="preview-title" className="text-xl font-semibold">
-          {t('previewTitle')}
-        </h2>
-        <p className="text-fg-muted">{t('previewDescription')}</p>
-        {data.preview ? (
-          <SeekerCardView card={data.preview} />
-        ) : (
-          <p>
-            {t('previewEmpty')}{' '}
-            <Link className="text-primary underline" href="/profil">
-              {t('editProfile')}
+              {t('consentLink')}
             </Link>
-          </p>
+            <Checkbox
+              label={t('consentAgree')}
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+            />
+          </div>
         )}
-        <p className="text-sm text-fg-muted">{t('viewCount', { count: data.viewCount })}</p>
-      </section>
-      {/* Mesajlar Kaydet'in yanında durur: sayfa uzun, çubuk ekrana yapışık; altta kalan bir mesaj telefonda görünmezdi. */}
-      <ActionBar className="space-y-3 rounded-control bg-bg py-3">
-        {error && (
-          <p role="alert" className="text-danger">
-            {error}
-          </p>
-        )}
-        {saved && (
-          <p role="status" className="text-on-success-soft">
-            {t('saved')}
-          </p>
-        )}
-        <Button className="w-full" loading={pending} onClick={save}>
-          {t('save')}
-        </Button>
-      </ActionBar>
+        <div className="space-y-3 rounded-card border border-border p-5">
+          <h2 className="font-semibold">{t('termTitle')}</h2>
+          <p className="text-sm text-fg-muted">{t('termHint')}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="space-y-1">
+              <span>{t('year')}</span>
+              <Select value={year} onChange={(e) => setYear(e.target.value)}>
+                <option value="">{t('anyYear')}</option>
+                {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() + i).map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            <label className="space-y-1">
+              <span>{t('season')}</span>
+              <Select
+                value={season}
+                onChange={(e) => setSeason(e.target.value as SeekerTermSeason | '')}
+              >
+                <option value="">{t('anySeason')}</option>
+                {(['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'] as const).map((s) => (
+                  <option key={s} value={s}>
+                    {t(`seasons.${s}`)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </div>
+        </div>
+        <section aria-labelledby="preview-title" className="space-y-3">
+          <h2 id="preview-title" className="text-xl font-semibold">
+            {t('previewTitle')}
+          </h2>
+          <p className="text-fg-muted">{t('previewDescription')}</p>
+          {data.preview ? (
+            <SeekerCardView card={data.preview} />
+          ) : (
+            <p>
+              {t('previewEmpty')}{' '}
+              <Link className="text-primary underline" href="/profil">
+                {t('editProfile')}
+              </Link>
+            </p>
+          )}
+          <p className="text-sm text-fg-muted">{t('viewCount', { count: data.viewCount })}</p>
+        </section>
+        {/* Mesajlar Kaydet'in yanında durur: sayfa uzun, çubuk ekrana yapışık; altta kalan bir mesaj telefonda görünmezdi. */}
+        <ActionBar className="space-y-3 rounded-control bg-bg py-3">
+          {error && (
+            <p role="alert" className="text-danger">
+              {error}
+            </p>
+          )}
+          {saved && (
+            <p role="status" className="text-on-success-soft">
+              {t('saved')}
+            </p>
+          )}
+          <Button className="w-full" loading={pending} onClick={save}>
+            {t('save')}
+          </Button>
+        </ActionBar>
+      </div>
     </AccountFrameView>
   );
 }
