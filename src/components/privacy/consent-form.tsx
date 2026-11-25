@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import type { ConsentState } from '@/contracts/privacy';
 import { recordConsentsSchema } from '@/contracts/privacy';
 import { recordConsents } from '@/server/actions/privacy';
-import { ActionBar, Badge, Button, Card, Checkbox } from '@/components/ui';
+import { ActionBar, Badge, Button, Card, Checkbox, FileTextIcon } from '@/components/ui';
 import { usePrivacyForm } from './form-state';
 
 export const LEGAL_PATHS = {
@@ -78,36 +78,37 @@ export function ConsentForm({
           );
       }}
     >
-      <p className="rounded-control bg-warning-soft p-4 text-base text-on-warning-soft">
+      {/* Taslak uyarısı kalır ama sakindir: uyarı rengi değil, ikincil bilgi (kart 561). */}
+      <p className="rounded-control border border-border bg-surface-strong px-4 py-3 text-sm text-fg-muted">
         {t('draft')}
       </p>
       {documents.map((d) => (
-        <Card key={d.documentType} className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold">{t(d.documentType)}</h2>
-            <Badge tone={d.required ? 'info' : 'neutral'}>
-              {t(d.required ? 'required' : 'optional')}
-            </Badge>
-            {d.lastDecision && d.lastDecision.version !== d.currentVersion && (
-              <Badge tone="warning">{t('updated')}</Badge>
-            )}
+        <Card key={d.documentType} className="space-y-4">
+          {/* Her metin tek blok: başlık + rozet(lar), belirgin "Metni oku", onay kutusu; sürüm küçük ve ikincil. */}
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-lg leading-snug font-semibold">{t(d.documentType)}</h2>
+            <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+              <Badge tone={d.required ? 'info' : 'neutral'}>
+                {t(d.required ? 'required' : 'optional')}
+              </Badge>
+              {d.lastDecision && d.lastDecision.version !== d.currentVersion && (
+                <Badge tone="warning">{t('updated')}</Badge>
+              )}
+            </div>
           </div>
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-base text-fg-muted">
-              {t('version', { version: d.currentVersion })}
-            </span>
-            <Link
-              href={LEGAL_PATHS[d.documentType]}
-              aria-label={common('readNamed', { document: t(d.documentType) })}
-              className="press-row inline-flex min-h-11 items-center font-medium text-primary"
-            >
-              {common('read')}
-            </Link>
-          </div>
+          <Link
+            href={LEGAL_PATHS[d.documentType]}
+            aria-label={common('readNamed', { document: t(d.documentType) })}
+            className="press-row inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline underline-offset-4"
+          >
+            <FileTextIcon width={18} height={18} aria-hidden="true" />
+            {common('read')}
+          </Link>
           <Checkbox
             ref={(element) => {
               fields.current[d.documentType] = element;
             }}
+            className="rounded-control border border-border px-3"
             label={t(d.required ? 'accept' : 'optionalAccept')}
             checked={!!choices[d.documentType]}
             disabled={form.busy}
@@ -127,6 +128,7 @@ export function ConsentForm({
               {t('requiredError')}
             </p>
           )}
+          <p className="text-sm text-fg-muted">{t('version', { version: d.currentVersion })}</p>
         </Card>
       ))}
       {form.error && (
@@ -139,8 +141,9 @@ export function ConsentForm({
           {common('retry')}
         </Button>
       )}
-      <ActionBar className="bg-bg py-3 lg:rounded-control lg:border lg:border-border lg:p-3 lg:shadow-card">
-        <Button type="submit" fullWidth loading={form.busy}>
+      {/* Kaydet listenin SONUNDA, akışta (sabit çubuk değil; kart 561). */}
+      <ActionBar enabled={false} className="pt-2">
+        <Button type="submit" size="lg" fullWidth loading={form.busy}>
           {form.busy ? common('saving') : t('submit')}
         </Button>
       </ActionBar>

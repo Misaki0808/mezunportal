@@ -14,10 +14,11 @@ import { PrismaClient } from '../../src/generated/prisma/client';
  * Toast kutuları, gerçek toast bölgesine eklenen taklit kutulardır (toast'ı sayfa başına gerçek eylemle çıkarmak mümkün
  * değil, ürün koduna test kancası eklenmedi); bölge, konumu ve yığma düzeni gerçektir.
  * Kart 477: eskiden `.sticky-actions` kullanan formlar da (deneyim, rıza, gizlilik, görüşme geri bildirimi, bildirim tercihleri,
- * CV inceleme) bu turdadır. `/onay` rıza öncesi ekrandır (alt gezinme yok): çubuk ekranın dibinde durur.
+ * CV inceleme) bu turdadır. Kart 561: başlangıç adımları ve `/onay` bu turdan çıktı; eylemleri formun sonunda akışta durur
+ * (sabit çubuk yok), bkz. `layout-center.spec.ts`.
  */
 type Entry = {
-  persona: 'student' | 'alumniMentor' | 'systemAdmin' | 'consentPending';
+  persona: 'student' | 'alumniMentor' | 'systemAdmin';
   name: string;
   path: string | ((page: Page) => Promise<string>);
   /** Sayfa açıldıktan sonra çubuğu görünür kılan hazırlık. */
@@ -101,19 +102,11 @@ const feedbackPage = async () => {
   seededAppointments.push(appointment.id);
   return `/hesap/gorusme/${appointment.id}`;
 };
-/** Rıza vermemiş akademisyen: ilk girişte `/onay` açılır (a11y turundaki gibi). */
-async function signInConsentPending(page: Page) {
-  await page.goto('/giris/test?persona=academic');
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Test hesabıyla giriş yap' }).click();
-  await page.waitForURL(/\/onay/);
-}
 const firstLink = (list: string, selector: string) => async (page: Page) => {
   await page.goto(list, { waitUntil: 'networkidle' });
   return (await page.locator(selector).first().getAttribute('href'))!;
 };
 const PAGES: Entry[] = [
-  { persona: 'student', name: 'başlangıç', path: '/baslangic' },
   { persona: 'student', name: 'iş arayan ayarı', path: '/hesap/staj-ariyorum' },
   {
     persona: 'student',
@@ -135,7 +128,6 @@ const PAGES: Entry[] = [
   { persona: 'student', name: 'bildirim tercihleri', path: '/hesap/bildirimler' },
   { persona: 'student', name: 'görüşme geri bildirimi', path: feedbackPage },
   { persona: 'student', name: 'CV inceleme (seçilenleri uygula)', path: cvReviewPage },
-  { persona: 'consentPending', name: 'rıza ekranı (alt gezinme yok)', path: '/onay' },
 ];
 
 type Box = { x: number; y: number; width: number; height: number };
@@ -145,7 +137,7 @@ const FAKE = 'data-r1-fake-toast';
 function geometry(page: Page) {
   return page.evaluate(() => {
     const bar = document.querySelector('[data-action-bar]')!.getBoundingClientRect();
-    // Rıza öncesi ekranda alt gezinme yok: çubuk ekranın dibine iner (güvenli alan dışında boşluk yok).
+    // Alt gezinme olmayan bir ekranda çubuk ekranın dibine iner (güvenli alan dışında boşluk yok).
     const nav = document.querySelector('[data-bottom-nav]');
     return {
       barTop: bar.top,
@@ -254,8 +246,7 @@ for (const variant of VARIANTS) {
     const report: string[] = [];
     for (const entry of PAGES) {
       if (current !== entry.persona) {
-        if (entry.persona === 'consentPending') await signInConsentPending(page);
-        else await loginAs(page, entry.persona);
+        await loginAs(page, entry.persona);
         current = entry.persona;
       }
       const target = typeof entry.path === 'string' ? entry.path : await entry.path(page);

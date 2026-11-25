@@ -54,7 +54,7 @@ export function Gallery() {
   const [step, setStep] = useState(1);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-8 [.app-content_&]:mx-0 [.app-content_&]:p-0">
+    <div className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-8 [.app-content_&]:p-0">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold">{t('title')}</h1>
         <p className="text-fg-muted">{t('intro')}</p>

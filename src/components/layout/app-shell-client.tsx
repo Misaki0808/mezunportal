@@ -470,7 +470,9 @@ export function AppShellClient({
                 : 'pb-[calc(max(calc(4.5rem+env(safe-area-inset-bottom)),var(--bottom-nav-height))+var(--action-bar-h,0px))]',
             )}
           >
-            <div className="app-content w-full max-w-[80rem] px-4 pt-4 pb-6 lg:px-8 lg:pt-7 lg:pb-10">
+            {/* Masaüstünde içerik yan menünün sağındaki alanda ORTALANIR (kart 561): kap `mx-auto`, kapın doğrudan çocukları (dar sayfa kökleri:
+                max-w-2xl/3xl/4xl) kendi genişliğinde ortada durur; geniş liste sayfaları (genişlik 100%) aynen doludur. */}
+            <div className="app-content mx-auto w-full max-w-[80rem] px-4 pt-4 pb-6 lg:px-8 lg:pt-7 lg:pb-10 [&>*]:mx-auto">
               {children}
             </div>
           </main>

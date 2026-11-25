@@ -263,12 +263,14 @@ it('Profilim bağlantısını gösterir, yönetimi yalnız sunucudan açıkça i
 });
 
 describe('AppShell: görünüm A iskeleti', () => {
-  it('içerik en çok 1280 px ve sola yaslıdır (ortalanmaz); kabuk dolgusunu kendisi verir', () => {
+  it('içerik en çok 1280 px, masaüstünde ORTALANIR (kap ve doğrudan çocukları mx-auto); kabuk dolgusunu kendisi verir', () => {
     renderUi(<AppShell signedIn>x</AppShell>);
     const content = screen.getByRole('main').firstElementChild as HTMLElement;
     expect(content.className).toContain('app-content');
     expect(content.className).toContain('max-w-[80rem]');
-    expect(content.className).not.toContain('mx-auto');
+    // Kart 561: yan menünün sağındaki alanda ortalanır; dar sayfa kökleri (max-w-*) kendi genişliğinde ortada durur.
+    expect(content.className).toContain('mx-auto');
+    expect(content.className).toContain('[&>*]:mx-auto');
     // Telefon 16 px, bilgisayar 28/32 px.
     expect(content.className).toContain('px-4');
     expect(content.className).toContain('lg:px-8');
