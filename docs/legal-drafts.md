@@ -176,7 +176,7 @@ Hikâyemin incelendikten ve ayın mezunu seçildikten sonra adım ve bölümüml
 - **Etkinlik katılımı:** katılım kodu/QR ile yapılan kayıt etkinlik puanı ve kötüye kullanım kontrolü (aynı ağdan çok katılım) için işlenir; ağ bilgisi etkinliğe bağlı özet olarak tutulur ve 30 gün sonra silinir, ham IP saklanmaz. Hukuki sebep: meşru menfaat.
 - **Aylık özet e-postası:** bölümün önceki aya ait toplu deneyim ve ilan özeti, kullanıcı bildirim tercihine göre gönderilir; her e-postada tek tıkla abonelikten çıkış bağlantısı vardır. Hukuki sebep: açık rıza (tercih).
 - **Takvim ve Meet daveti:** online randevuda Google Takvim davetine e-posta adresleri, etkinlik başlığındaki mentor ve öğrenci adları ile görüşme saati gider; bu `§2` yurt dışına aktarım rızasına bağlıdır; rıza yoksa davet oluşturulmaz, mentor bağlantıyı elle ekler.
-- **Şirket/soru bankası/başvuru takvimi:** yayınlanmış deneyimlerden türetilen toplu özetlerdir; üç farklı yazardan az olan gruplar gösterilmez, kişi bilgisi içermez.
+- **Şirket/mülakat tüyoları/başvuru takvimi:** yayınlanmış deneyimlerden türetilen toplu özetlerdir; üç farklı yazardan az olan gruplar gösterilmez, kişi bilgisi içermez.
 
 
 ## Profil fotoğrafı görünürlüğü açık rızası — taslak-1 (Faz 2 eki)

@@ -67,7 +67,7 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
         description={t('description')}
         actions={
           <>
-            <Link href="/mulakat-sorulari" className={buttonClasses({ variant: 'secondary' })}>
+            <Link href="/mulakat-tuyolari" className={buttonClasses({ variant: 'secondary' })}>
               {t('interviewLink')}
             </Link>
             <Link href="/basvuru-takvimi" className={buttonClasses({ variant: 'secondary' })}>

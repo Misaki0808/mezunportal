@@ -372,10 +372,10 @@ async function measureAll(label: string, budget: number) {
     const slug = (await searchCompanies({ db }, viewer, 'performans sirketi 1')).companies[0]?.slug;
     if (slug) await getCompany({ db }, viewer, slug);
   });
-  await time(`${label} · soru bankası`, () =>
+  await time(`${label} · mülakat tüyoları`, () =>
     getInterviewQuestions(db, viewer, { q: '', companyId: '', sectorId: '' }),
   );
-  await time(`${label} · soru bankası (şirket)`, () =>
+  await time(`${label} · mülakat tüyoları (şirket)`, () =>
     getInterviewQuestions(db, viewer, { q: '', companyId: company, sectorId: '' }),
   );
   await time(`${label} · başvuru takvimi (şirket)`, () =>
@@ -401,7 +401,7 @@ async function measureAll(label: string, budget: number) {
   for (const [name, value] of own) {
     const required =
       label === 'stres' &&
-      ['ilan arama (metin)', 'deneyim arama (metin)', 'soru bankası'].some((namePart) =>
+      ['ilan arama (metin)', 'deneyim arama (metin)', 'mülakat tüyoları'].some((namePart) =>
         name.endsWith(` · ${namePart}`),
       )
         ? 300
@@ -444,7 +444,7 @@ describe('kritik planlar indeks kullanır (stres hacmi)', () => {
       `SELECT id FROM "Company" WHERE "normalizedName" ILIKE '%performans sirketi 1%' LIMIT 20`,
     );
     await plan(
-      'deneyim: şirket sayfası/soru bankası',
+      'deneyim: şirket sayfası/mülakat tüyoları',
       `SELECT id FROM "Experience" WHERE "companyId" = '${companyIds[0]}' AND status = 'PUBLISHED'`,
     );
     const actor = (await loadActor(db, viewer, new Date()))!;
@@ -454,12 +454,12 @@ describe('kritik planlar indeks kullanır (stres hacmi)', () => {
     const questionQueries = await questionPlans(viewer);
     expect(questionQueries.length).toBeGreaterThan(0);
     questionQueries.forEach((questionPlan, index) => {
-      plans[`gerçek: soru bankası #${index + 1}`] = questionPlan;
+      plans[`gerçek: mülakat tüyoları #${index + 1}`] = questionPlan;
     });
     const companyQuestions = await questionPlans(viewer, companyIds[0]!);
     expect(companyQuestions.length).toBeGreaterThan(0);
     companyQuestions.forEach((questionPlan, index) => {
-      plans[`gerçek: soru bankası şirket #${index + 1}`] = questionPlan;
+      plans[`gerçek: mülakat tüyoları şirket #${index + 1}`] = questionPlan;
     });
     await explainReal('deneyim arama', (client) =>
       searchExperiences(
@@ -477,6 +477,8 @@ describe('kritik planlar indeks kullanır (stres hacmi)', () => {
       expect(plans[name], name).toMatch(/Index|Bitmap/);
       expect(plans[name], name).not.toMatch(/Seq Scan on "(Experience|JobPosting)"/);
     }
-    expect(plans['deneyim: şirket sayfası/soru bankası']).not.toMatch(/Seq Scan on "Experience"/);
+    expect(plans['deneyim: şirket sayfası/mülakat tüyoları']).not.toMatch(
+      /Seq Scan on "Experience"/,
+    );
   });
 });

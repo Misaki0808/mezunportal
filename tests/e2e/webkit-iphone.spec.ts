@@ -213,7 +213,7 @@ test.describe('WebKit iPhone: çekirdek ekranlar (açık + koyu, 390)', () => {
     ]);
   });
 
-  test('öğrenci 2/3: ilan, şirket, soru bankası, başvuru takvimi', async ({ page }) => {
+  test('öğrenci 2/3: ilan, şirket, mülakat tüyoları, başvuru takvimi', async ({ page }) => {
     test.setTimeout(300_000);
     await tour(page, 'student', [
       { slug: 'ilanlar', path: '/ilanlar' },
@@ -223,7 +223,7 @@ test.describe('WebKit iPhone: çekirdek ekranlar (açık + koyu, 390)', () => {
         first: 'a[href^="/ilanlar/"]:not([href="/ilanlar/yeni"])',
       },
       { slug: 'sirketler', path: '/sirketler' },
-      { slug: 'mulakat-sorulari', path: '/mulakat-sorulari' },
+      { slug: 'mulakat-tuyolari', path: '/mulakat-tuyolari' },
       { slug: 'basvuru-takvimi', path: '/basvuru-takvimi' },
     ]);
   });

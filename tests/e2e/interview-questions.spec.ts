@@ -9,7 +9,17 @@ const db = new PrismaClient({
 });
 test.afterAll(() => db.$disconnect());
 
-test('mobilde soru süz ve şirket sekmesinde anonim soruyu gör', async ({ page }) => {
+test('eski mülakat adresi filtreleri koruyarak 308 ile yeni adrese gider', async ({ request }) => {
+  for (const query of ['', '?q=veri+analizi&companyId=ornek&sectorId=sektor&page=2']) {
+    const response = await request.get(`/mulakat-sorulari${query}`, { maxRedirects: 0 });
+    expect(response.status()).toBe(308);
+    const destination = new URL(response.headers().location!, process.env.APP_URL);
+    expect(destination.pathname).toBe('/mulakat-tuyolari');
+    expect(destination.search).toBe(query);
+  }
+});
+
+test('mobilde tüyo süz ve şirket sekmesinde anonim tüyoyu gör', async ({ page }) => {
   test.setTimeout(90000);
   await page.setViewportSize({ width: 390, height: 844 });
   const [student, alumni, academic, moderator] = await Promise.all(
@@ -54,10 +64,11 @@ test('mobilde soru süz ve şirket sekmesinde anonim soruyu gör', async ({ page
       })),
     });
     await loginAs(page, 'student');
-    await page.goto('/mulakat-sorulari');
+    await page.goto('/mulakat-tuyolari');
+    await expect(page.getByRole('heading', { level: 1, name: 'Mülakat tüyoları' })).toBeVisible();
     await page.getByLabel('Şirket', { exact: true }).selectOption(company.id);
-    await page.getByLabel('Sorularda ara').fill('SQL');
-    await page.getByRole('button', { name: 'Soruları göster' }).click();
+    await page.getByLabel('Tüyolarda ara').fill('SQL');
+    await page.getByRole('button', { name: 'Tüyoları göster' }).click();
     await expect(page.getByText('SQL nedir?')).toBeVisible();
     await expect(page.getByText('3 deneyimde geçti')).toBeVisible();
     const response = await page.content();
@@ -66,7 +77,7 @@ test('mobilde soru süz ve şirket sekmesinde anonim soruyu gör', async ({ page
       true,
     );
     await page.goto(`/sirketler/${company.id}`);
-    await page.getByRole('tab', { name: 'Mülakat' }).click();
+    await page.getByRole('tab', { name: 'Mülakat tüyoları' }).click();
     await expect(page.getByText('SQL nedir?')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,

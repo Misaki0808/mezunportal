@@ -32,7 +32,7 @@ export default async function Page({
     for (const key of ['q', 'companyId', 'sectorId'] as const)
       if (filters[key]) next.set(key, filters[key]);
     if (last > 1) next.set('page', String(last));
-    redirect(`/mulakat-sorulari${next.size ? `?${next}` : ''}`);
+    redirect(`/mulakat-tuyolari${next.size ? `?${next}` : ''}`);
   }
   return <QuestionBank data={result.data} filters={filters} />;
 }
