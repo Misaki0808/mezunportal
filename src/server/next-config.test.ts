@@ -12,6 +12,14 @@ const { pathToRegexp } = createRequire(import.meta.url)('next/dist/compiled/path
   pathToRegexp: (source: string) => RegExp;
 };
 
+it('eski mülakat adresi yeni adrese kalıcı yönlenir', async () => {
+  expect(await nextConfig.redirects?.()).toContainEqual({
+    source: '/mulakat-sorulari',
+    destination: '/mulakat-tuyolari',
+    permanent: true,
+  });
+});
+
 // Next.js 16 sunucu eylemi gövde sınırı varsayılan 1 MB'dır; 5 MB PDF yüklemek için artırılır.
 describe('next.config: sunucu eylemi gövde sınırı', () => {
   it('belge sınırını (5 MB) ve çok parçalı form zarfını karşılar, makul bir üst sınırı aşmaz', () => {

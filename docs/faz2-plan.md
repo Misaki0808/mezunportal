@@ -24,7 +24,7 @@ satırı + migration bekçisi; yeni kullanıcı metni yalnız `messages/tr.json`
    önce; boş, yükleniyor, hata ve devre dışı durumları tasarlanmış; küçük geçişler `prefers-reduced-motion`'a saygılı; kontrast
    AA (`src/lib/contrast.test.ts`). Ekran PR'ında önce/sonra ya da yeni ekran görüntüsü (`pnpm evidence`, 390 + 1440) zorunludur.
 2. **Gizlilik önce:** başkasına ait veri gösteren her yeni liste, **k-anonimlik eşiği** (varsayılan k = 3) ya da açık rıza ister;
-   anonim deneyimin yazarı hiçbir türev çıktıdan (şirket sayfası, soru bankası, takvim) çıkarılamaz (sızıntı testi).
+   anonim deneyimin yazarı hiçbir türev çıktıdan (şirket sayfası, mülakat tüyoları, takvim) çıkarılamaz (sızıntı testi).
 3. **Puan eklemeleri PM kararıdır:** her yeni `PointAction` değeri ve gecikmesi `docs/architecture.md` tablosuna ve `PointRule`
    seed'ine yazılır, şüphe taraması (`rules/pointsSuspicion`) yeni eylemi kapsar, `points.backfill` yeni eylemi
    idempotent yeniden hesaplar.
@@ -40,7 +40,7 @@ veren mezunlar tanınır ve topluluk etkinlikleriyle ağ canlı kalır (P2-01, P
 üyelik, görünürlük, moderasyon, puan ve bildirim altyapısını **yeniden kullanır**; yeni dış servis veya yeni yetki modeli getirmez.
 
 Faz 2'nin başarı ölçütleri (K-12 pilot ölçütleriyle birlikte hocayla belirlenir): yayınlanan ilan sayısı ve ilana tıklayan
-öğrenci oranı, eşleştirme bildiriminden ilana geçiş, ters aramada rızalı öğrenci sayısı, şirket sayfası ve soru bankası
+öğrenci oranı, eşleştirme bildiriminden ilana geçiş, ters aramada rızalı öğrenci sayısı, şirket sayfası ve mülakat tüyoları
 görüntülenmesi, etkinlik katılımı. Küçük ama gerçek kullanım büyük hedeften değerlidir. Pilot zamanı (K-12, kullanıcı kararı
 14 Kas 2026): finaller bittikten sonraki yaklaşık bir aylık tatil; pilotun kimlerle yapılacağı ve başarı ölçütleri hâlâ açıktır.
 
@@ -58,7 +58,7 @@ Faz 1'in D1–D17 kararları **aynen geçerlidir** (`docs/faz1-plan.md` §2). Fa
 | D23 | Rehber özellikleri | Beceri açığı ve ders rehberi yapay zekâsız, açık kuralla ve k-anonim sayımla çalışır |
 | D24 | Dış hesap | LinkedIn “Add to Profile” yalnız bağlantıdır (API/kazıma yok); kurum sayfası ve metinleri kullanıcıdan gelir (E maddesi) |
 | D25 | Ders rehberi kapsamı | YBS'nin **bütün dersleri** listelenir, seçmeliler öne çıkar; resmî ders listesi kullanıcı tarafından sağlandı (PM, 10 Kas) |
-| D26 | Soru bankası | Ayrı tablo yoktur; yayınlanmış deneyimlerdeki mülakat sorularından **türetilir** (PM, 8 Kas) |
+| D26 | Mülakat tüyoları | Ayrı tablo yoktur; yayınlanmış deneyimlerdeki mülakat tüyolarından **türetilir** (PM, 8 Kas) |
 | D27 | Yılın Mezunu havuzu | Aday havuzu **akademik yıl** (Eylül–Ağustos); liste törenden 30 gün önce **dondurulur** (PM, 8 Kas) |
 | D28 | Aday arama | Aramayı yalnız doğrulanmış ve “işe alım yapıyorum” beyanlı **mezun** yapar; öğrenci yalnız açık rıza + “staj arıyorum” etiketiyle görünür; sonuçlar maskeli, iletişim mevcut iletişim talebi akışıyla, hız sınırlı (PM, 8 Kas) |
 
@@ -155,10 +155,10 @@ mutasyon (onay sırası, ikili tavan); Playwright: üçlü onay.
 ### P2-09 · Şirket sayfaları (puansız) · Servis (W1) ∥ Ekran (W2) · H2
 **İş:** `/sirketler/[slug]`: sözlükle eşleşmiş `Company` için **türetilmiş** özet — yayınlanmış deneyimler (anonim olanlar
 yazarsız), çalışan/geçmiş çalışan mezun sayısı (yalnız görünürlüğü `MEMBERS` olan ve k ≥ 3 ise sayı), başvuru dönemi dağılımı,
-mülakat soruları (P2-10), o şirkette çalışan **mentorlar** (açık `MentorProfile`, mevcut dizin kartı). **Puanlama, yıldız, “öneriyor
+mülakat tüyoları (P2-10), o şirkette çalışan **mentorlar** (açık `MentorProfile`, mevcut dizin kartı). **Puanlama, yıldız, “öneriyor
 musun” yoktur** (D17/D21). Şirket arama (`pg_trgm` takma adlı). Yönetici sözlük aracına “şirket birleştir” (aynı şirketin iki kaydı;
 deneyim ve pozisyon bağlantıları taşınır, işlem kaydıyla) eklenir.
-**Ekran:** şirket sayfası (üstte ad/sektör, sekmeler: Deneyimler · Mülakat · Başvuru dönemi · Mentorlar), şirket arama ve
+**Ekran:** şirket sayfası (üstte ad/sektör, sekmeler: Deneyimler · Mülakat tüyoları · Başvuru dönemi · Mentorlar), şirket arama ve
 “popüler şirketler” (en çok deneyimli, k ≥ 3), boş durum: “Bu şirket için henüz deneyim yok — ilk paylaşan sen ol” (tek eylem).
 **Testler:** k < 3 olan dağılım/sayı hiçbir yanıtta yok; anonim deneyimin yazarı sayfanın hiçbir parçasından çıkarılamaz
 (sızıntı testi); K-07 üniversite görünürlüğü; birleştirme idempotent ve geri alınamaz uyarısı; puan/oy alanı yok (şema testi);
@@ -166,12 +166,12 @@ mutasyon (k eşiği, görünürlük).
 **Kabul:** yukarıdakiler.
 **Bağımlılık:** Faz 1 (P1-07 deneyim, sözlük, P1-10 mentor dizini).
 
-### P2-10 · Mülakat soru bankası · Servis + kural (W1) ∥ Ekran (W2) · H2
-**İş:** yayınlanmış deneyimlerdeki `interviewQuestions` ve süreç adımlarından **şirket/pozisyona göre** soru bankası.
+### P2-10 · Mülakat tüyoları · Servis + kural (W1) ∥ Ekran (W2) · H2
+**İş:** yayınlanmış deneyimlerdeki `interviewQuestions` ve süreç adımlarından **şirket/pozisyona göre** mülakat tüyoları.
 Yinelenenler `rules/questionDedupe` ile (katlama + `pg_trgm` benzerliği) gruplanır, “kaç deneyimde geçti” sayılır; soru metni
 kimlik içeremez (ad/e-posta biçimi, SSS kimlik denetiminin aynı kuralı, `analyzeIdentity`). Kaynak deneyim geri alınır ya da
 yazar hesabı silinirse soru türev çıktıdan düşer (sorgu anında türetme, ayrı tablo yok).
-**Ekran:** `/mulakat-sorulari` (şirket, pozisyon, sektör süzgeci, arama), soru kartı (“3 deneyimde geçti”), şirket sayfasında sekme;
+**Ekran:** `/mulakat-tuyolari` (şirket, pozisyon, sektör süzgeci, arama), soru kartı (“3 deneyimde geçti”), şirket sayfasında sekme;
 “kaydet/çalış” (öğrenci kendi listesi) **yalnız ek yükü azsa**, aksi halde sonraki faz.
 **Testler:** anonim deneyimin sorusu yazarsız; geri alınan/silinen deneyim sorusu çıkar; yinelenen sorular tek karta birleşir;
 k-anonimlik (tek deneyimli şirket yalnız “az sayıda” notuyla, yazar tanınmasın); mutasyon (yinelenen eşiği).
@@ -338,7 +338,7 @@ testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümle
 | P2-06 Ters yönlü arama | #66 | ✓ | Rızalı görünürlük, işe alım beyanlı mezun, maskeli kart, hız sınırı; D7 çapraz kaynak yan kanalı kapatıldı. Rıza metninin hukuki onayı kullanıcıda (⏸ → PILOT-LEGAL) |
 | P2-03 Referans akışı | #68 | ✓ | Üç taraflı onay, "referansla kabul", gecikmeli puan, ikili tavan, şüphe kuralları |
 | P2-09 Şirket sayfaları | #70 | ✓ | Puansız, k ≥ 3, anonim yazar sızıntı testi, şirket birleştirme |
-| P2-10 Mülakat soru bankası | #71 | ◐ | Türetilmiş, yinelenen birleştirme, kimlik denetimi ✓. **Pozisyon süzgeci ve "kaydet/çalış" yapılmadı** (PM kararı, kart 151: deneyimde pozisyon alanı yok, anonim deneyimde yarı tanımlayıcı riski) → Faz 3 |
+| P2-10 Mülakat tüyoları | #71 | ◐ | Türetilmiş, yinelenen birleştirme, kimlik denetimi ✓. **Pozisyon süzgeci ve "kaydet/çalış" yapılmadı** (PM kararı, kart 151: deneyimde pozisyon alanı yok, anonim deneyimde yarı tanımlayıcı riski) → Faz 3 |
 | P2-11 Staj başvuru takvimi | #72 | ✓ | `appliedMonth`, k ≥ 3, takip ve ay başı hatırlatma |
 | P2-07 Beceri açığı | #73 | ◐ | Küme farkı, k ≥ 5, bantlı sayılar ✓. Hedef, plandaki `GOAL` etiketi yerine sözlükten seçilen unvandır (PM kararı, kart 155) |
 | P2-08 Seçmeli ders rehberi | #79 | ✓ | 89 dersin tamamı (kullanıcının resmî listesi; hoca onayı koşulu kullanıcı kararıyla kalktı), k ≥ 3, en çok 5 işaret |
@@ -363,10 +363,10 @@ testi var) ve R1'in 188–206 ölçüm turlarına karşı denetledim; her cümle
 
 | Kalem | Nereye |
 |---|---|
-| Soru bankasında pozisyon süzgeci, "kaydet/çalış" | Faz 3 fikirleri (`BACKLOG.md`) |
+| Mülakat tüyolarında pozisyon süzgeci, "kaydet/çalış" | Faz 3 fikirleri (`BACKLOG.md`) |
 | Yerel profil fotoğrafı (ayın mezunu) | Faz 3 fikirleri (`BACKLOG.md`) |
-| Stres hacminde arama/soru bankası, `test:gate` OOM kalıbı ve diğer teknik borç | `BACKLOG.md` TD-022, TD-023, TD-024, TD-026, TD-027 |
+| Stres hacminde arama/mülakat tüyoları, `test:gate` OOM kalıbı ve diğer teknik borç | `BACKLOG.md` TD-022, TD-023, TD-024, TD-026, TD-027 |
 | Rıza metinlerinin hukuki okuması; LinkedIn kurum kimliği; Gemini ve Google Cloud anahtarları; platform hesabı | `BACKLOG.md` "Açık ürün kararları" (Kullanıcı, Hoca) ve PILOT-LEGAL |
 
 **Sayım:** 14 adımın 10'u ✓ (P2-04, P2-05, P2-06, P2-03, P2-09, P2-11, P2-08, P2-01, P2-12, P2-13), 4'ü ◐ (P2-10, P2-07, P2-02, P2-14); ✗ yok. Plandan sapmalar:
-soru bankası pozisyon süzgeci, hedef unvanın sözlükten seçilmesi, uzak fotoğraf yerine baş harf, rapor PDF'lerinin üretilmemesi.
+mülakat tüyoları pozisyon süzgeci, hedef unvanın sözlükten seçilmesi, uzak fotoğraf yerine baş harf, rapor PDF'lerinin üretilmemesi.

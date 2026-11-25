@@ -22,7 +22,7 @@ const STUDENT = [
   '/mentorlar',
   '/ders-rehberi',
   '/sirketler',
-  '/mulakat-sorulari',
+  '/mulakat-tuyolari',
   '/basvuru-takvimi',
   '/etkinlikler',
   '/profil',

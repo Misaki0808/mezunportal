@@ -215,7 +215,7 @@ describe('seed gerçekten GÖRÜNÜR içerik üretir (servisler k-anonimlik eşi
     );
   });
 
-  it('soru bankası: her örnek şirket en az üç farklı yazardan ortak soru gösterir', async () => {
+  it('mülakat tüyoları: her örnek şirket en az üç farklı yazardan ortak soru gösterir', async () => {
     const bank = await getInterviewQuestions(db, viewer, { q: '', companyId: '', sectorId: '' });
     for (const id of COMPANIES) {
       const group = bank.groups.find((g) => g.companyId === id);

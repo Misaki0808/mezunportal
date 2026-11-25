@@ -232,16 +232,16 @@ describe('deneyim formu', () => {
     expect(screen.queryByText(/Boş bıraktığın adım kaydedilmez/)).not.toBeInTheDocument();
   });
 
-  it('süreç adımı ve soru satırı eklenip silinir', async () => {
+  it('süreç adımı ve tüyo satırı eklenip silinir', async () => {
     const { user } = setup();
     await user.click(screen.getByRole('button', { name: 'Adım ekle' }));
     expect(screen.getByLabelText(/Adım başlığı/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Adımı sil' }));
     expect(screen.queryByLabelText(/Adım başlığı/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Soru ekle' }));
-    expect(screen.getByLabelText('1. soru')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Soruyu sil' }));
-    expect(screen.queryByLabelText('1. soru')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Tüyo ekle' }));
+    expect(screen.getByLabelText('1. tüyo')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Tüyoyu sil' }));
+    expect(screen.queryByLabelText('1. tüyo')).not.toBeInTheDocument();
   });
 });
 

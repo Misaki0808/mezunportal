@@ -79,7 +79,7 @@ aday alanları (`seekingInternship`, `seekerRef` opak ve benzersiz, `seekerViewC
 (`PROFILE` | `JOB_POSTING` | `SEEKER_PROFILE`; kaynak özeti talepte kalır) · `Company` (+ `CompanyMerge`, `CompanyFollow`) · `CampusEvent` (+ departmanlar,
 `CampusEventRegistration`, `EventAttendance`) · `AwardCycle`/`Award`/`AwardCandidate`/`AwardPublicationDecision`, `AlumniStory`/`StoryConsentDecision`/`MonthlyAlumnus` ·
 `Experience.appliedMonth` (yalnız staj; başvuru takvimi için) · `IntegrationConnection` (Google yenileme jetonu şifreli; sağlayıcı başına tek satır).
-Soru bankası, beceri açığı ve takvim kesitleri **ayrı tablo tutmaz**: yayınlanmış deneyimden sorgu anında görünürlük ve eşikle türer.
+Mülakat tüyoları, beceri açığı ve takvim kesitleri **ayrı tablo tutmaz**: yayınlanmış deneyimden sorgu anında görünürlük ve eşikle türer.
 Rıza belgeleri `ConsentDocument` değerleridir (`JOB_SEEKER_VISIBILITY` isteğe bağlı, sürümlü; ödül/hikâye yayın kararları kendi karar tablolarında).
 
 ## Temel değişmezler

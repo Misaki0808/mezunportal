@@ -107,7 +107,7 @@ export function ExperienceContent({
         </section>
       )}
       {questions.length > 0 && (
-        // Mülakat soruları öğrencinin en çok aradığı kısımdır: zeminli kutu ve numaralı satırlarla öne çıkar.
+        // Mülakat tüyoları öğrencinin en çok aradığı kısımdır: zeminli kutu ve numaralı satırlarla öne çıkar.
         <section className="rounded-card bg-surface-strong p-4 sm:p-5">
           <h2 className="mb-3 text-lg font-semibold text-fg">{t('detail.questions')}</h2>
           <ol className="flex flex-col gap-3">
