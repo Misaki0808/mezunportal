@@ -189,7 +189,9 @@ export function SlotPicker({ list, request }: Props) {
       className="[&_.text-sm]:text-base flex min-h-[calc(100dvh-10rem)] w-full max-w-2xl flex-col"
     >
       {header}
-      <p className="mt-3 text-base text-fg-muted">{t('description')}</p>
+      <p className="mt-3 text-base text-fg-muted">
+        {t('description', { name: list.mentor.displayName })}
+      </p>
       <p className="mt-1 text-base text-fg-muted">{t('timezone')}</p>
 
       <fieldset className="mt-6 min-w-0">

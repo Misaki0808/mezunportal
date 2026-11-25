@@ -1,5 +1,6 @@
 import { waitForFormReady } from './hydration';
 import { loginAs } from './login';
+import { startEmailWorker, stopEmailWorker } from './email-worker';
 import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
@@ -15,7 +16,7 @@ const login = loginAs;
 test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → mentor onaylar', async ({
   browser,
 }) => {
-  test.setTimeout(60_000); // İki oturum ve soğuk sayfa derlemeleri tek 30 sn'lik bütçeyi aşabilir.
+  test.setTimeout(120_000); // İki oturum, soğuk derleme ve Mailpit teslimi.
   const mentor = await db.user.findUniqueOrThrow({
     where: { email: 'alumni-mentor@test.mezunportal.local' },
   });
@@ -41,12 +42,13 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
 
   const mentorContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const studentContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const worker = startEmailWorker();
   const m = await mentorContext.newPage();
   const s = await studentContext.newPage();
   try {
     // 1) Mentor haftalık müsaitliği gün listesinden açar.
     await login(m, 'alumniMentor');
-    await m.goto('/hesap');
+    await m.goto('/hesap', { waitUntil: 'networkidle' });
     await m.getByRole('link', { name: /Müsaitliğim/ }).click();
     await expect(m).toHaveURL(/\/mentor\/ayarlar$/);
     await waitForFormReady(m.getByRole('switch', { name: 'Pazartesi günü müsait' }));
@@ -82,6 +84,11 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
       .click();
     await expect(s).toHaveURL(new RegExp(`/randevu-al/${mentor.id}$`));
     await waitForFormReady(s.getByRole('radio', { name: /saatini seç/ }).first());
+    await expect(
+      s.getByText(
+        `${mentor.name} tarafından uygun olduğu belirtilen saatlerden birini seç. ${mentor.name} onaylayınca randevu kesinleşir.`,
+      ),
+    ).toBeVisible();
     await expect(s.getByText('Saatler İstanbul saatidir.')).toBeVisible();
     await s
       .getByRole('radio', { name: /saatini seç/ })
@@ -118,6 +125,12 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
       'CONFIRMED',
     );
 
+    await expect(
+      m.getByText(
+        'Gelemeyeceksen randevuyu iptal et; öğrenciye haber gider. İstersen nedenini yazabilirsin.',
+      ),
+    ).toBeVisible();
+
     // 4) Öğrenci Giden sekmesinde onaylı randevuyu görür.
     await s.goto('/randevular');
     await s.waitForLoadState('networkidle');
@@ -127,10 +140,46 @@ test('randevu: mentor müsaitlik açar → öğrenci slot seçip talep eder → 
     await expect(
       s.getByText('Randevu talepleri, onaylar, değişiklikler ve yaklaşan randevu hatırlatmaları.'),
     ).toBeVisible();
+
+    // 5) Mentor gerekçeyle iptal eder; öğrenciye bildirim ve gerçek Mailpit e-postası ulaşır.
+    const reason = `Deneme iptali ${row.id}`;
+    const started = Date.now();
+    await m.getByRole('button', { name: 'Randevuyu iptal et' }).click();
+    await m.getByLabel('İptal nedeni (isteğe bağlı)').fill(reason);
+    await m.getByRole('button', { name: 'Evet, iptal et' }).click();
+    await expect(m.getByText('İptal edildi').first()).toBeVisible();
+    expect(
+      await db.inAppNotification.count({
+        where: { userId: student.id, kind: 'appointmentCancelled', refId: row.id },
+      }),
+    ).toBe(1);
+    await expect
+      .poll(
+        async () => {
+          const response = await fetch('http://127.0.0.1:8025/api/v1/messages?limit=100');
+          const list = await response.json();
+          const matches = list.messages.filter(
+            (item: { To: { Address: string }[]; Created: string; Subject: string }) =>
+              item.To.some((to) => to.Address.toLowerCase() === student.email.toLowerCase()) &&
+              Date.parse(item.Created) >= started - 5000 &&
+              item.Subject === 'Randevu iptal edildi',
+          );
+          for (const item of matches) {
+            const detail = await (
+              await fetch(`http://127.0.0.1:8025/api/v1/message/${item.ID}`)
+            ).json();
+            if ((detail.Text as string).includes(reason)) return true;
+          }
+          return false;
+        },
+        { timeout: 45_000, message: 'Öğrenciye iptal e-postası Mailpit üzerinden ulaşmadı.' },
+      )
+      .toBe(true);
   } finally {
     await db.appointment.deleteMany({
       where: { mentorId: mentor.id, status: { in: ['REQUESTED', 'CONFIRMED'] } },
     });
+    await stopEmailWorker(worker);
     await mentorContext.close();
     await studentContext.close();
   }

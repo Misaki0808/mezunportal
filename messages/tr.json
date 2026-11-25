@@ -2804,7 +2804,7 @@
     "request": {
       "eyebrow": "RANDEVU",
       "title": "{name} ile randevu al",
-      "description": "Müsait bir gün ve saat seç. Mentor onaylayınca randevu kesinleşir.",
+      "description": "{name} tarafından uygun olduğu belirtilen saatlerden birini seç. {name} onaylayınca randevu kesinleşir.",
       "pickDay": "Gün seç",
       "pickTime": "Saat seç",
       "timeLabel": "{time} saatini seç",
@@ -2882,6 +2882,7 @@
       "declineConfirm": "Reddet",
       "cancelTitle": "Randevu iptal edilsin mi?",
       "cancelDescription": "İptal edilen randevu geri alınamaz. Karşı taraf bilgilendirilir.",
+      "mentorCancelHint": "Gelemeyeceksen randevuyu iptal et; öğrenciye haber gider. İstersen nedenini yazabilirsin.",
       "cancelReason": "İptal nedeni (isteğe bağlı)",
       "cancelConfirm": "Evet, iptal et",
       "keep": "Vazgeç",
