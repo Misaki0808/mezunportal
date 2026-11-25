@@ -28,10 +28,23 @@ describe('e-posta bağlantısıyla giriş (gerçek Better Auth + gerçek veritab
     const session = await auth.api.getSession({ headers });
 
     expect(session?.user).toMatchObject({ email: address, emailVerified: true });
-    expect(session?.user.name).toMatch(/^yeni uye/);
+    expect(session?.user.name).toMatch(/^Yeni Uye/);
     const row = await prisma.session.findFirstOrThrow({ where: { userId: session?.user.id } });
     expect(row.ipAddress).toBeNull();
     expect(row.userAgent).toBeNull();
+  });
+
+  it('ilk girişte adı tahmin eder; sonraki giriş kullanıcının düzelttiği adı korur', async () => {
+    const { auth, sent } = createTestAuth(prisma);
+    const address = `efebaydemir@${crypto.randomUUID()}.test`;
+    const first = await signInWithMagicLink(auth, sent, address);
+    const firstSession = await auth.api.getSession({ headers: first.headers });
+    expect(firstSession?.user.name).toBe('Efe Baydemir');
+    const id = firstSession!.user.id;
+    await prisma.user.update({ where: { id }, data: { name: 'Efe Düzeltilmiş' } });
+    const second = await signInWithMagicLink(auth, sent, address);
+    const secondSession = await auth.api.getSession({ headers: second.headers });
+    expect(secondSession?.user).toMatchObject({ id, name: 'Efe Düzeltilmiş' });
   });
 
   it('bağlantı tek kullanımlıktır; ikinci tıklama geçersiz bağlantı (INVALID_TOKEN) yönlendirmesidir', async () => {

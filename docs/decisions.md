@@ -1282,3 +1282,8 @@ yanıtı verir; askı yalnız e-postanın sahibi bağlantıya tıklayınca gör�
 birebir istemez; nasıl hazırlanıldığı ve nelere dikkat edildiği paylaşılır. Sayfa `/mulakat-tuyolari` adresindedir;
 önceki adres filtreleri koruyan kalıcı (308) yönlendirmeyle çalışır. Veri modeli, mevcut içerik, görünürlük ve
 en az üç farklı yazar eşiği değişmez; bu değişiklik yalnız adlandırma, yardım metni ve adrestir.
+## 2026-11-25 · Yeni hesapta e-postadan ad tahmini
+
+Yeni kayıtta e-posta yerel kısmındaki ayraçlar ad parçalarını belirtir; bitişik yazımda en uzun yaygın Türkçe ad öneki ve
+kalan en az üç harf ayrılır. Kalan bölüm de yaygın bir adsa yanlış bölmeyi azaltmak için ayrılmaz. Bu yalnız düzeltilebilir
+bir tahmindir; mevcut hesapların ve kimlik sağlayıcısından gelen adların üzerine yazılmaz.

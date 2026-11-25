@@ -364,6 +364,9 @@ export function AppointmentDetail({
             {t('cancel')}
           </Button>
         )}
+        {a.role === 'MENTOR' && a.status === 'CONFIRMED' && a.actions.canCancel && (
+          <p className="w-full text-base text-fg-muted">{t('mentorCancelHint')}</p>
+        )}
         {a.status === 'CONFIRMED' && (
           <p className="w-full text-base text-fg-muted">{t('emailShared')}</p>
         )}

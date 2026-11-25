@@ -3,14 +3,33 @@
  * bunları bağlar; davranışları `hooks.test.ts` sınar.
  */
 
-/** Magic link ile ilk kez gelen kullanıcının adı boştur; e-postanın yerel kısmından türetilir (kullanıcı sonra düzeltir). */
+import { turkishFirstNames } from './turkish-first-names';
+
+const firstNames = new Set(turkishFirstNames);
+const longestFirstNames = [...firstNames].sort((a, b) => b.length - a.length);
+
+/** Magic link ile ilk kez gelen kullanıcının adı boştur; tahmin kullanıcı tarafından düzeltilebilir. */
 export function nameFromEmail(email: string): string {
-  const local = email.split('@')[0] ?? '';
-  const spaced = local
-    .replace(/[._+-]+/g, ' ')
-    .trim()
+  const local = (email.split('@')[0] ?? '').normalize('NFC').replace(/[0-9]/g, '');
+  let parts = local.split(/[._+\-]+/u).filter(Boolean);
+  if (parts.length === 1) {
+    const word = parts[0]!.toLocaleLowerCase('tr-TR');
+    if (!firstNames.has(word)) {
+      const firstName = longestFirstNames.find((name) => word.startsWith(name));
+      const rest = firstName ? word.slice(firstName.length) : '';
+      if (firstName && /^\p{L}{3,}$/u.test(rest) && !firstNames.has(rest)) {
+        parts = [firstName, rest];
+      }
+    }
+  }
+  const name = parts
+    .map((part) => {
+      const lower = part.toLocaleLowerCase('tr-TR');
+      return (lower[0]?.toLocaleUpperCase('tr-TR') ?? '') + lower.slice(1);
+    })
+    .join(' ')
     .slice(0, 80);
-  return spaced === '' ? 'Üye' : spaced;
+  return name || 'Üye';
 }
 
 type WithName = { name?: string | null; email: string } & Record<string, unknown>;
