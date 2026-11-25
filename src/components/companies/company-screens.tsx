@@ -282,7 +282,12 @@ export function CompanyScreen({
           )}
         </div>
       )}
-      <Tabs className="mt-8" label={t('tabs')} items={tabs} bleed />
+      <Tabs
+        className="mt-8 [&_[role=tab]]:px-2 sm:[&_[role=tab]]:px-4"
+        label={t('tabs')}
+        items={tabs}
+        bleed
+      />
     </div>
   );
 }

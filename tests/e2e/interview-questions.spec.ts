@@ -14,8 +14,9 @@ test('eski mülakat adresi filtreleri koruyarak 308 ile yeni adrese gider', asyn
     const response = await request.get(`/mulakat-sorulari${query}`, { maxRedirects: 0 });
     expect(response.status()).toBe(308);
     const destination = new URL(response.headers().location!, process.env.APP_URL);
+    expect(destination.origin).toBe(new URL(process.env.APP_URL!).origin);
     expect(destination.pathname).toBe('/mulakat-tuyolari');
-    expect(destination.search).toBe(query);
+    expect([...destination.searchParams]).toEqual([...new URLSearchParams(query)]);
   }
 });
 
