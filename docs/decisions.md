@@ -1275,3 +1275,9 @@ bu yüzden askı açıklaması (aydınlatma metni bağlantısı) yalnız oradays
 kullanıcının doğrulanmış giriş bağlantısına tıklayınca düştüğü giriş sayfası hatasında (`/giris?hata=AUTH_ACCOUNT_SUSPENDED`)
 gösterilir. Hesap numaralandırma kuralı değişmez: bağlantı isteme formu kayıtlı, kayıtsız, askıdaki ve silinmiş adreste aynı
 yanıtı verir; askı yalnız e-postanın sahibi bağlantıya tıklayınca görünür.
+
+## 2026-11-25 · Yeni hesapta e-postadan ad tahmini
+
+Yeni kayıtta e-posta yerel kısmındaki ayraçlar ad parçalarını belirtir; bitişik yazımda en uzun yaygın Türkçe ad öneki ve
+kalan en az üç harf ayrılır. Kalan bölüm de yaygın bir adsa yanlış bölmeyi azaltmak için ayrılmaz. Bu yalnız düzeltilebilir
+bir tahmindir; mevcut hesapların ve kimlik sağlayıcısından gelen adların üzerine yazılmaz.
