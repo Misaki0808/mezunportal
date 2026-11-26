@@ -842,6 +842,40 @@ describe('iptal ve link', () => {
     );
   });
 
+  it('mentor gerekçeyle iptal ettiğinde öğrenciye uygulama içi bildirim ve e-posta niyeti oluşur', async () => {
+    const { h, mentor, mentee, id } = await confirmed();
+    const reason = 'Dersim uzadı';
+    expect(await cancelAppointment(h.deps, mentor, { appointmentId: id, reason })).toMatchObject({
+      status: 'CANCELLED',
+      cancelledBy: 'MENTOR',
+      cancelReason: reason,
+    });
+    expect(h.notifier.notices.at(-1)).toMatchObject({
+      event: 'cancelled',
+      appointmentId: id,
+      recipient: { userId: mentee },
+      reason,
+    });
+    expect(
+      await db.inAppNotification.count({
+        where: { userId: mentee, kind: 'appointmentCancelled', refId: id },
+      }),
+    ).toBe(1);
+    expect(
+      await db.notificationIntent.findUnique({
+        where: { key: `appointment:cancelled:${id}:${mentee}` },
+      }),
+    ).toMatchObject({
+      userId: mentee,
+      kind: 'appointment',
+      payload: {
+        type: 'appointment',
+        event: 'cancelled',
+        appointmentId: id,
+      },
+    });
+  });
+
   it('onaylı randevu iki taraftan da iptal edilir; başlamışsa edilmez; yabancı göremez', async () => {
     const a = await confirmed();
     expect(await cancelAppointment(a.h.deps, a.mentor, { appointmentId: a.id })).toMatchObject({

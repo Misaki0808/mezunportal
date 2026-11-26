@@ -67,7 +67,7 @@ export function CompaniesIndex({ data, query }: { data: CompaniesPage; query: st
         description={t('description')}
         actions={
           <>
-            <Link href="/mulakat-sorulari" className={buttonClasses({ variant: 'secondary' })}>
+            <Link href="/mulakat-tuyolari" className={buttonClasses({ variant: 'secondary' })}>
               {t('interviewLink')}
             </Link>
             <Link href="/basvuru-takvimi" className={buttonClasses({ variant: 'secondary' })}>
@@ -282,7 +282,12 @@ export function CompanyScreen({
           )}
         </div>
       )}
-      <Tabs className="mt-8" label={t('tabs')} items={tabs} bleed />
+      <Tabs
+        className="mt-8 [&_[role=tab]]:px-2 sm:[&_[role=tab]]:px-4"
+        label={t('tabs')}
+        items={tabs}
+        bleed
+      />
     </div>
   );
 }

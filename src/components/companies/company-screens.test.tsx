@@ -30,9 +30,9 @@ describe('şirketler: ortak başlık (kart 424)', () => {
   it('mülakat ve takvim bağlantıları başlığın eylem alanındadır', () => {
     renderUi(<CompaniesIndex data={none} query="" />);
     const header = screen.getByRole('heading', { level: 1 }).closest('header')!;
-    expect(within(header).getByRole('link', { name: 'Mülakat sorularına bak' })).toHaveAttribute(
+    expect(within(header).getByRole('link', { name: 'Mülakat tüyolarına bak' })).toHaveAttribute(
       'href',
-      '/mulakat-sorulari',
+      '/mulakat-tuyolari',
     );
     expect(within(header).getByRole('link', { name: 'Başvuru takvimine bak' })).toHaveAttribute(
       'href',

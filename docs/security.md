@@ -184,7 +184,7 @@ tablosundadır. Panele giriş `requireAnyAdmin` (kapsamı olan etkin yetki + do�
 
 Gerekçeler `docs/decisions.md`'dedir (P2-01…P2-13 kayıtları); burada yalnız kalıcı kural ve bekçi yeri durur.
 
-- **K-07 her yerde:** ilan, deneyim, aday, şirket, soru bankası, etkinlik ve özet yalnız arayanın doğrulanmış üyeliklerinin üniversitesindeki
+- **K-07 her yerde:** ilan, deneyim, aday, şirket, mülakat tüyoları, etkinlik ve özet yalnız arayanın doğrulanmış üyeliklerinin üniversitesindeki
   veriyi görür; kapsam sunucuda oturumdan hesaplanır, istemci süzgeci genişletemez.
 - **D7, kaynak bağımsızlığı:** iletişim talebinin hedefi sunucuda çözülür; talep eden, hedefin adını/kimliğini yalnız talep `APPROVED` olunca görür
   (`source` ≠ `PROFILE` için giden listede ve veri dökümünde gizli). Bekleyen talep kaynak ve bağlam başına tektir (profil, aday kartı, ilan

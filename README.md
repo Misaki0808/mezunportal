@@ -12,7 +12,7 @@ açık işler `BACKLOG.md`'de, iş sırası faz planlarında (`docs/fazN-plan.md
 ## 1. Problem ve amaç
 
 İÜ'de mezun portalı yoktur. Bir öğrencinin staja nasıl girileceğini, hangi şirketin zorunlu
-olmayan stajı nasıl yürüttüğünü, mülakatta ne sorulduğunu öğrenmesinin düzenli bir yolu yoktur;
+olmayan stajı nasıl yürüttüğünü, mülakata nasıl hazırlanıldığını öğrenmesinin düzenli bir yolu yoktur;
 bu bilgi tek tek kişilerde dağınık durur. Mezun portalları genelde öğrenci ilgisi görmediği için
 söner. MezunPortal bu yüzden **staj odaklı** kurulur: öğrencinin gelmek için gerçek bir sebebi
 (başka yerde olmayan yapılandırılmış staj bilgisi ve ulaşılabilir mentorlar), mezunun katkı
@@ -77,7 +77,7 @@ motoru ve hile önleme · SSS akışı · canlıya alım ve pilot hazırlığı.
 
 Yılın Mezunu ve LinkedIn rozeti · ayın mezunu · referans akışı · mezun staj ilanları ve ilan
 eşleştirme · ters yönlü arama · beceri açığı analizi · seçmeli ders rehberi · şirket sayfaları
-(puansız) · mülakat soru bankası · staj başvuru takvimi · etkinlik modülü · aylık özet e-postası. Kapanış notu ve plan↔yapılan tablosu planın §12'sindedir; kullanıcı deneme turu `docs/engineering.md` “Faz 2 deneme rehberi”.
+(puansız) · mülakat tüyoları · staj başvuru takvimi · etkinlik modülü · aylık özet e-postası. Kapanış notu ve plan↔yapılan tablosu planın §12'sindedir; kullanıcı deneme turu `docs/engineering.md` “Faz 2 deneme rehberi”.
 
 ### Faz 3 (fikir)
 
