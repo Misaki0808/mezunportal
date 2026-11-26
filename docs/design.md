@@ -61,14 +61,17 @@ Mercan, Nane, yazı tipleri). Ölçü ilkeleri (değerler `globals.css`'te):
   (ad, bölüm kodu · sınıf ya da rol); veri yoksa satır çıkar, uydurulmaz. Koyu temada yan menü içerikten bir ton koyudur ve sağ kenarı çizgilidir.
 - **Üst çubuk** (bilgisayar, 72 px, alt çizgili): arama, tema düğmesi, bildirim zili (okunmamışta nokta), avatar (hesap ayarları `/hesap`). Arama şimdilik **deneyim aramasıdır**
   (`/deneyimler?q=`, en az iki karakter); genel arama ekranı yok, olunca yönü değişir. Telefon üst çubuğu yapışkandır: logo, tema, zil, avatar.
+  Üst çubuk iki boyda da yapışkan olduğundan odaklanan öğe onun arkasında kalmasın diye `AppShellClient` görünen çubuğun yüksekliğini `--app-header-h` olarak yayımlar ve
+  `globals.css` odaklanabilir öğelere bu kadar `scroll-margin-top` verir (kart 568). Odaklanamayan bölümler (bağlantıyla kaydırılan başlıklar) kendi `scroll-mt-*` payını taşır. Alt gezinme için karşılığı `scroll-above-bars`.
 - **Telefon:** yan menü yok; altta beş öğe: dört sekme (Ana sayfa, İlanlar, Mentorlar, Randevular) ve **Menü** (sayfa değil, alt sayfa açar). Menü alt sayfası:
   Diğer sayfalar (Deneyimler, Mezunlar, Etkinlikler, Ders rehberi), Hesap (Bildirimler + okunmamış rozeti, Profilim `/profil`, Hesap ayarları `/hesap`), yöneticide Yönetici
   (Yönetim). Menüdeki bir ekran açıkken Menü düğmesi ve o satır etkin görünür; alt sayfa klavye ve ekran okuyucuyla kullanılır (odak hapsi, Esc, kapatınca odak
   Menü düğmesine döner). Hesap ayarlarına üst çubuktaki avatar da götürür.
-- **İçerik genişliği:** `AppShellClient` içeriği en çok 1280 px, sola yaslı, telefonda 16 px, bilgisayarda 28/32 px dolguyla verir; sayfa kendi
-  ortalanmış dar sütununu (`mx-auto max-w-* px-* py-*`) kurmaz; yalnız okuma ölçüsünü (`max-w-*`) tutar. Form ve metin sayfaları dar kalabilir, ama
-  sola yaslıdır. İstisna: hem kabukta hem oturumsuz (kabuksuz) açılabilen sayfalar (hukuki metinler, ödül doğrulama, bildirim bağlantı ekranları,
-  hata sınırı, yükleme iskeleti) ortalanmış kendi kapsayıcısını taşır ve kabukta `[.app-content_&]:mx-0 [.app-content_&]:p-0` ile sıfırlar (kabuk içeriğinin
+- **İçerik genişliği:** `AppShellClient` içeriği en çok 1280 px, telefonda 16 px, bilgisayarda 28/32 px dolguyla verir ve **masaüstünde ortalar** (yan menünün
+  sağındaki alanda sola yaslı değil; kullanıcı sağ boşluğu "bomboş" buldu, kart 561). Kabın doğrudan çocukları `mx-auto` alır: dar sayfa kökleri
+  (`max-w-2xl/3xl/4xl`) kendi genişliğinde ortada durur, geniş liste sayfaları dolu kalır; sayfa kendi `mx-auto max-w-* px-* py-*` kabını kurmaz, yalnız okuma
+  ölçüsünü (`max-w-*`) tutar. İstisna: hem kabukta hem oturumsuz (kabuksuz) açılabilen sayfalar (hukuki metinler, ödül doğrulama, bildirim bağlantı ekranları,
+  hata sınırı, yükleme iskeleti) kendi ortalanmış kapsayıcısını taşır ve kabukta yalnız dolgusunu `[.app-content_&]:p-0` ile sıfırlar (kabuk içeriğinin
   `app-content` sınıfı bu yüzden durur); giriş ekranları ve `global-error` kabuk dışıdır. Sekme şeridi sayfa dolgusunda kullanılırken `Tabs bleed` telefonda
   şeridi ekran kenarına kadar uzatır (taşan son sekme kesik değil kayan görünür).
 - **Sayfa başlığı** (`PageHeader`): üst etiket (12 px, büyük harf, ana renk), `h1` (telefonda 26, bilgisayarda 34 px, Plus Jakarta 800), kısa açıklama;

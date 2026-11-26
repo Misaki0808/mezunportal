@@ -63,18 +63,20 @@ async function expectClear(page: Page, toast: ReturnType<Page['getByText']>, whe
   }
 }
 
-test('390: başlangıç çubuğu, toast görünürken, kaydırınca ve rota değişince örtülmez', async ({
+// Kart 561: başlangıç adımları artık sabit çubuk taşımaz (eylemler formun sonunda akışta); aynı sınama, sabit çubuklu görünürlük
+// formunda yapılır. Değişiklik yapmadan "Kaydet" de "Değişikliklerin kaydedildi." toast'ını çıkarır.
+test('390: gizlilik çubuğu, toast görünürken, kaydırınca ve rota değişince örtülmez', async ({
   page,
 }) => {
   await loginAs(page, 'student');
-  await page.goto('/baslangic', { waitUntil: 'networkidle' });
-  await waitForHydratedForm(page, messages.accountName.save);
-  await expect(page.getByRole('button', { name: 'Devam et', exact: true })).toBeVisible();
+  await page.goto('/hesap/gizlilik', { waitUntil: 'networkidle' });
+  await waitForHydratedForm(page, messages.privacyScreens.common.save);
   await expect(page.locator('[data-action-bar]')).toHaveCount(1);
 
-  await page.getByRole('textbox', { name: messages.accountName.label }).fill('Deniz Yılmaz');
-  await page.getByRole('button', { name: messages.accountName.save, exact: true }).click();
-  const toast = page.getByRole('status').getByText(messages.accountName.saved);
+  await page
+    .getByRole('button', { name: messages.privacyScreens.common.save, exact: true })
+    .click();
+  const toast = page.getByRole('status').getByText(messages.privacyScreens.common.saved);
   await expect(toast).toBeVisible();
   await expectClear(page, toast, 'ilk anda');
 
@@ -99,7 +101,7 @@ test('390: başlangıç çubuğu, toast görünürken, kaydırınca ve rota değ
     expect(box.y + box.height, 'toast alt gezinme üstündeki ana konumda').toBeGreaterThan(740);
     // B2 (çubuksuz → çubuklu): toast hâlâ açıkken çubuklu sayfaya dönünce yeni çubuk da korunur.
     await page.goBack();
-    await expect(page).toHaveURL(/\/baslangic/);
+    await expect(page).toHaveURL(/\/hesap\/gizlilik/);
     await expect(page.locator('[data-action-bar]')).toHaveCount(1);
     if (await toast.isVisible()) await expectClear(page, toast, 'çubuklu sayfaya dönünce');
     else

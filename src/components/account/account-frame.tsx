@@ -7,7 +7,7 @@ type FrameWidth = 'max-w-2xl' | 'max-w-3xl' | 'max-w-4xl';
 
 /**
  * Hesap ayarları alt sayfalarının ortak çerçevesi (kart 387, görünüm A): geri bağlantısı + `PageHeader` (üst etiket "Hesap") +
- * içerik. Kabuğun dolgusunu kendisi vermez (`AppShellClient`), yalnız okunur bir azami genişlik koyar ve sola yaslar.
+ * içerik. Kabuğun dolgusunu kendisi vermez (`AppShellClient`), yalnız okunur bir azami genişlik koyar; kabuk onu masaüstünde ortalar (kart 561).
  * Form düzeni değişmez: içerik `children` olarak aynen gelir. Metinler çağırandan gelir; istemci bileşenler bunu kullanır.
  */
 export function AccountFrameView({
