@@ -1,6 +1,8 @@
 import {
+  JOB_POSTING_AUTHOR_ROLES,
   JOB_POSTING_MAX_DAYS,
   JOB_POSTING_POINTS_PER_MONTH,
+  type JobPostingAuthorRole,
   type JobPostingStatus,
 } from '@/contracts/job-postings';
 
@@ -59,6 +61,47 @@ export function isOpen(
   today: string,
 ): boolean {
   return input.status === 'PUBLISHED' && input.deadlineOn !== null && input.deadlineOn >= today;
+}
+
+/** Yazarlığı belirleyen üyelik bilgisi (aktörün gerçekleri; yüklenen satırlar). */
+export type AuthorMembershipFact = {
+  role: string;
+  departmentId: string;
+  verificationStatus: string;
+  endedAt: Date | null;
+};
+
+const AUTHOR_ROLE_PRIORITY: readonly JobPostingAuthorRole[] = ['ACADEMIC', 'ALUMNI', 'STUDENT'];
+
+/**
+ * Yazarın BU bölümdeki ilan rolü: o bölümde doğrulanmış, etkin üyelik. Aynı bölümde birden çok rol varsa mezun/akademisyen
+ * öğrenciyi geçer. Üyelik yoksa `null` (yetkisiz). Moderasyon kapsamı ilanın yazıldığı bölümdür; kural da o bölüme göredir.
+ */
+export function postingAuthorRole(
+  memberships: readonly AuthorMembershipFact[],
+  departmentId: string,
+): JobPostingAuthorRole | null {
+  const roles = memberships
+    .filter(
+      (m) =>
+        m.departmentId === departmentId &&
+        m.endedAt === null &&
+        m.verificationStatus === 'VERIFIED' &&
+        (JOB_POSTING_AUTHOR_ROLES as readonly string[]).includes(m.role),
+    )
+    .map((m) => m.role as JobPostingAuthorRole);
+  return AUTHOR_ROLE_PRIORITY.find((role) => roles.includes(role)) ?? null;
+}
+
+/**
+ * Yazar bu bölümde yalnız öğrenci mi: yalnız `URL` (başka yerde görülen ilanın https bağlantısı) yöntemiyle ilan paylaşabilir,
+ * `CONTACT_REQUEST` (mezunun kendi adına iletişim talebi) mezun/akademisyene özgüdür.
+ */
+export function isUrlOnlyAuthor(
+  memberships: readonly AuthorMembershipFact[],
+  departmentId: string,
+): boolean {
+  return postingAuthorRole(memberships, departmentId) === 'STUDENT';
 }
 
 /** Yazar yalnız taslağı ve reddedilmiş ilanı düzenler. */

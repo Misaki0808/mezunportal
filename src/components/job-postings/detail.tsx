@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { parseApplyUrl, type JobPostingDetail } from '@/contracts/job-postings';
 import { BackLink, Badge, PageHeader, buttonClasses } from '@/components/ui';
 import { ReportPosting } from './report';
+import { SharedBy } from './shared-by';
 
 export function PostingDetail({
   posting,
@@ -93,6 +94,15 @@ export function PostingDetail({
                 )}
               </dd>
             </div>
+            {posting.authorKind === 'STUDENT' && (
+              <div>
+                <dt className="text-sm text-fg-muted">{t('sharedBy')}</dt>
+                <dd className="break-words text-base text-fg">
+                  <SharedBy posting={posting} stacked />
+                  <span className="mt-1 block text-sm text-fg-muted">{t('sharedNote')}</span>
+                </dd>
+              </div>
+            )}
             <div>
               <dt className="text-sm text-fg-muted">{t('kind')}</dt>
               <dd className="mt-1">

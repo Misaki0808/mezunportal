@@ -60,6 +60,7 @@ import {
   daysLeft,
   deadlineProblem,
   isOpen,
+  isUrlOnlyAuthor,
   istanbulDay,
 } from '../rules/jobPosting';
 import { idCursorWhere, toPage } from './admin-access';
@@ -102,7 +103,7 @@ async function asMember<T>(
   }, TX_OPTIONS);
 }
 
-/** Yazarın doğrulanmış etkin mezun/akademisyen üyelik bölümleri; yoksa yetkisiz. */
+/** Yazarın doğrulanmış etkin mezun/akademisyen/öğrenci üyelik bölümleri; yoksa yetkisiz. */
 function authorDepartmentIds(actor: Actor): string[] {
   const ids = actor.facts.memberships
     .filter(
@@ -219,7 +220,11 @@ export async function getJobPostingFormContext(
       orderBy: [{ faculty: { name: 'asc' } }, { name: 'asc' }],
     });
     return jobPostingFormContextSchema.parse({
-      authorDepartments: departments.map(({ id, name }) => ({ id, name })),
+      authorDepartments: departments.map(({ id, name }) => ({
+        id,
+        name,
+        urlOnly: isUrlOnlyAuthor(actor.facts.memberships, id),
+      })),
       availableTags: await tx.tag.findMany({
         where: { curated: true },
         select: { id: true, slug: true, label: true },
@@ -278,6 +283,12 @@ export async function saveJobPostingDraft(
         selectedTagIds.length
     )
       throw codedValidation('VALIDATION_INVALID');
+    // Bu bölümde yalnız öğrenci olan yazar iletişim talebiyle ilan yazamaz (yalnız dış bağlantı); kural kayıtta da zorlanır.
+    if (
+      draft.applyMethod === 'CONTACT_REQUEST' &&
+      isUrlOnlyAuthor(actor.facts.memberships, parsed.departmentId)
+    )
+      throw codedValidation('JOB_POSTING_APPLY_METHOD_FORBIDDEN');
     if (draft.applyMethod === 'CONTACT_REQUEST' && draft.applyUrl)
       throw codedValidation('JOB_POSTING_URL_INVALID');
     if (!draft.applyMethod && draft.applyUrl) throw codedValidation('JOB_POSTING_URL_INVALID');
@@ -360,6 +371,14 @@ export async function submitJobPosting(
     const row = await loadOwnPosting(tx, parsed.postingId, userId);
     if (row.status !== 'DRAFT') throw codedConflict('JOB_POSTING_NOT_DRAFT');
     if (!ids.includes(row.departmentIdAtWrite)) throw codedForbidden('AUTH_FORBIDDEN');
+    // Gönderimde üyelik yeniden yüklenir: taslak mezunken yazılıp bölümde yalnız öğrenci kalındıysa (ya da tersi) kural güncel role göre.
+    if (
+      row.applyMethod !== 'URL' &&
+      isUrlOnlyAuthor(actor.facts.memberships, row.departmentIdAtWrite)
+    )
+      throw codedValidation(
+        row.applyMethod === null ? 'JOB_POSTING_INCOMPLETE' : 'JOB_POSTING_APPLY_METHOD_FORBIDDEN',
+      );
     const company = row.companyId
       ? await tx.company.findUnique({ where: { id: row.companyId }, select: { name: true } })
       : null;
@@ -467,6 +486,7 @@ function toCard(
     applyMethod: row.applyMethod,
     publishedAt: row.publishedAt,
     authorKind: row.authorKind,
+    sourceHost: row.sourceHost,
     targetDepartments: row.targetDepartments,
   };
 }

@@ -197,7 +197,7 @@ describe('ilan eylemleri', () => {
     await actions.listMyJobPostings();
     expect(mocks.requireVerifiedMember).toHaveBeenCalledTimes(5);
     for (const call of mocks.requireVerifiedMember.mock.calls)
-      expect(call[0]).toEqual({ roles: ['ALUMNI', 'ACADEMIC'] });
+      expect(call[0]).toEqual({ roles: ['ALUMNI', 'ACADEMIC', 'STUDENT'] });
     mocks.requireVerifiedMember.mockClear();
     await actions.searchJobPostings();
     await actions.getJobPosting({ id: 'p1' });

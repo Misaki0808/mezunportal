@@ -25,8 +25,13 @@ it('URL süzgeçleri doğrulanır; hatalı alan sağlam alanı bozmaz', () => {
     withinDays: 7,
   });
 });
-it('yalnız etkin doğrulanmış mezun ve akademisyen ilan verebilir', () => {
-  expect(mayPost([{ role: 'STUDENT', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(false);
+it('yalnız etkin doğrulanmış mezun, akademisyen ve öğrenci ilan paylaşabilir', () => {
+  expect(mayPost([{ role: 'STUDENT', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(true);
+  expect(mayPost([{ role: 'STUDENT', verificationStatus: 'PENDING', endedAt: null }])).toBe(false);
+  expect(mayPost([{ role: 'STUDENT', verificationStatus: 'VERIFIED', endedAt: new Date() }])).toBe(
+    false,
+  );
+  expect(mayPost([{ role: 'MENTOR', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(false);
   expect(mayPost([{ role: 'ALUMNI', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(true);
   expect(mayPost([{ role: 'ACADEMIC', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(true);
   expect(mayPost([{ role: 'ACADEMIC', verificationStatus: 'PENDING', endedAt: null }])).toBe(false);

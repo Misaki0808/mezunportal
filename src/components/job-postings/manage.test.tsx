@@ -40,10 +40,10 @@ const page = (items: MyJobPostingView[]): MyJobPostingPage => ({ items, nextCurs
 const render = (items: MyJobPostingView[]) =>
   renderUi(<MyPostings initial={page(items)} list={vi.fn()} close={vi.fn()} />);
 
-describe('ilanlarım: "İlan ver" eylemi', () => {
+describe('ilanlarım: "İlan paylaş" eylemi', () => {
   it('boşken tek düğme: başlıktaki gizlenir, boş durumun düğmesi kalır', () => {
     render([]);
-    const post = screen.getAllByRole('link', { name: 'İlan ver' });
+    const post = screen.getAllByRole('link', { name: 'İlan paylaş' });
     expect(post).toHaveLength(1);
     expect(post[0]).toHaveAttribute('href', '/ilanlar/yeni');
     // Düğme boş durum kartının içindedir (başlık satırında değil): kardeşi boş durum başlığıdır.
@@ -52,9 +52,9 @@ describe('ilanlarım: "İlan ver" eylemi', () => {
     );
   });
 
-  it('doluyken "İlan ver" başlıkta kalır (bugünkü düzen)', () => {
+  it('doluyken "İlan paylaş" başlıkta kalır (bugünkü düzen)', () => {
     render([mine]);
-    expect(screen.getAllByRole('link', { name: 'İlan ver' })).toHaveLength(1);
+    expect(screen.getAllByRole('link', { name: 'İlan paylaş' })).toHaveLength(1);
     expect(screen.queryByText('Henüz bir ilan paylaşmadın.')).not.toBeInTheDocument();
   });
 });
@@ -96,6 +96,46 @@ describe('ilan inceleme kuyruğu: karar sonrası geri bildirim', () => {
     renderQueue();
     expect(screen.getAllByText(/5 Şubat 2027/)).toHaveLength(2);
     expect(screen.queryByText(/2027-02-05/)).toBeNull();
+  });
+
+  it('öğrencinin paylaştığı ilanda yönetici rolü "öğrenci" ve hedef bağlantıyı (yeni sekme, noopener) görür; geçersiz bağlantı bağlantıya çevrilmez', () => {
+    const student = (id: string, title: string, applyUrl: string) =>
+      ({
+        ...queued(id, title),
+        author: { displayName: 'Elif D.', role: 'STUDENT' },
+        applyMethod: 'URL',
+        applyUrl,
+      }) as unknown as JobPostingModerationPage['items'][number];
+    const alumniItem = {
+      ...queued('q3', 'Mezun ilanı'),
+      author: { displayName: 'Mert Y.', role: 'ALUMNI' },
+      applyMethod: 'CONTACT_REQUEST',
+      applyUrl: null,
+    } as unknown as JobPostingModerationPage['items'][number];
+    renderWithToasts(
+      <PostingModeration
+        initial={{
+          items: [
+            student('q1', 'Öğrenci ilanı', 'https://www.youthall.com/ilan/42'),
+            student('q2', 'Tehlikeli ilan', 'javascript:alert(1)'),
+            alumniItem,
+          ],
+          nextCursor: null,
+        }}
+        review={review}
+        list={vi.fn()}
+      />,
+    );
+    const shared = row('Öğrenci ilanı');
+    expect(shared.getByText(/Paylaşan: Elif D\. \(öğrenci\)/)).toBeVisible();
+    const link = shared.getByRole('link', { name: /youthall\.com\/ilan\/42/ });
+    expect(link).toHaveAttribute('href', 'https://www.youthall.com/ilan/42');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(row('Tehlikeli ilan').queryByRole('link')).toBeNull();
+    expect(row('Mezun ilanı').getByText(/Paylaşan: Mert Y\./)).toBeVisible();
+    expect(row('Mezun ilanı').queryByText(/\(öğrenci\)/)).toBeNull();
+    expect(row('Mezun ilanı').queryByRole('link')).toBeNull();
   });
 
   it('boş gerekçe hatası, gerekçe yazılıp ret başarılı olunca sayfada kalmaz', async () => {
@@ -289,11 +329,11 @@ describe('ilanlarım: ilan kapatılınca odak', () => {
 });
 
 describe('ilanlarım: ortak başlık (kart 424)', () => {
-  it('geri bağlantısı ilanlara gider; doluyken "İlan ver" başlığın eylem alanındadır', () => {
+  it('geri bağlantısı ilanlara gider; doluyken "İlan paylaş" başlığın eylem alanındadır', () => {
     render([mine]);
     expect(screen.getByRole('link', { name: 'İlanlara dön' })).toHaveAttribute('href', '/ilanlar');
     const header = screen.getByRole('heading', { level: 1, name: 'İlanlarım' }).closest('header')!;
-    expect(within(header).getByRole('link', { name: 'İlan ver' })).toHaveAttribute(
+    expect(within(header).getByRole('link', { name: 'İlan paylaş' })).toHaveAttribute(
       'href',
       '/ilanlar/yeni',
     );

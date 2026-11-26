@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition } from 'react';
 import { useQueueFocus } from '@/components/admin/use-queue-focus';
 import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
-import { reviewJobPostingSchema } from '@/contracts/job-postings';
+import { parseApplyUrl, reviewJobPostingSchema } from '@/contracts/job-postings';
 import { ADMIN_REASON_MAX, ADMIN_REASON_MIN } from '@/contracts/admin';
 import { userTextLength } from '@/lib/user-text';
 import { formatDeadline } from './model';
@@ -310,9 +310,24 @@ export function PostingModeration({
                 </Badge>
                 <p className="break-words text-sm text-fg-muted">
                   {item.organizationName} · {t('reviewedBy', { name: item.author.displayName })}
+                  {item.author.role === 'STUDENT' && ` (${t('roleStudent')})`}
                 </p>
                 <h2 className="mt-2 break-words text-xl font-bold">{item.title}</h2>
                 <p className="mt-3 whitespace-pre-wrap break-words">{item.description}</p>
+                {item.applyMethod === 'URL' && item.applyUrl && parseApplyUrl(item.applyUrl) && (
+                  <p className="mt-3 break-all text-sm">
+                    <span className="text-fg-muted">{t('applyUrl')}: </span>
+                    <a
+                      href={parseApplyUrl(item.applyUrl)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-11 items-center text-primary underline underline-offset-4"
+                    >
+                      {item.applyUrl}
+                      <span className="sr-only"> {t('newTab')}</span>
+                    </a>
+                  </p>
+                )}
                 <p className="mt-3 text-sm text-fg-muted">
                   {item.targetDepartments.map((d) => d.name).join(', ')} ·{' '}
                   {item.deadlineOn ? formatDeadline(item.deadlineOn) : '—'}

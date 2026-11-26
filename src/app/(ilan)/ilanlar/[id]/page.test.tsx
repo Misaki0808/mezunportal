@@ -24,6 +24,7 @@ it('sunucu, geçiş servisinden gelen yazar kimliğini istemci bileşenine geçi
       applyMethod: 'CONTACT_REQUEST',
       publishedAt: new Date(),
       authorKind: 'ALUMNI',
+      sourceHost: null,
       targetDepartments: [],
       matchTags: [{ slug: 'software', label: null }],
       description: 'Örnek',

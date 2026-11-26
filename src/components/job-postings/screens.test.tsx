@@ -4,7 +4,7 @@ import { expect, it, vi } from 'vitest';
 import messages from '../../../messages/tr.json';
 import { renderUi, renderWithToasts } from '@/test/render';
 import type { JobPostingCard, JobPostingFormContext } from '@/contracts/job-postings';
-import { PostingList } from './list';
+import { PostingCard, PostingList } from './list';
 import { PostingDetail } from './detail';
 import { PostingEditor } from './editor';
 const listNavigation = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn() }));
@@ -22,6 +22,7 @@ const posting: JobPostingCard = {
   applyMethod: 'URL',
   publishedAt: new Date(),
   authorKind: 'ALUMNI',
+  sourceHost: 'example.com',
   targetDepartments: [{ id: 'dep', name: 'YBS' }],
 };
 const options = {
@@ -31,28 +32,28 @@ const options = {
   remoteCount: 0,
 };
 const context: JobPostingFormContext = {
-  authorDepartments: [{ id: 'dep', name: 'YBS' }],
+  authorDepartments: [{ id: 'dep', name: 'YBS', urlOnly: false }],
   availableTags: [],
   targetDepartments: [{ id: 'dep', name: 'YBS', facultyName: 'İşletme' }],
   limits: { maxDays: 60, submitLimit: 5, submitWindowDays: 30, maxTargets: 10 },
 };
 const emptyPage = { items: [], total: 0, page: 1, pageSize: 20 };
-it('ilan yokken öğrenci: sıfır sayaç yok, ilanları kimin paylaştığı ve tek eylem (profil) yazılır', () => {
+it('ilan yokken paylaşma yetkisi olmayan üye: sıfır sayaç yok ve tek eylem (profil) yazılır', () => {
   renderWithToasts(<PostingList canPost={false} filters={{}} options={options} page={emptyPage} />);
   expect(screen.getByText('Henüz ilan paylaşılmadı')).toBeVisible();
   expect(screen.getByText(/İlgi alanlarını eklersen, ilan çıktıkça sana uyanlar/)).toBeVisible();
   expect(screen.queryByText('0 ilan')).not.toBeInTheDocument();
-  expect(screen.queryByRole('link', { name: 'İlan ver' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'İlan paylaş' })).not.toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Profilini düzenle' })).toHaveAttribute(
     'href',
     '/profil',
   );
 });
-it('ilan yokken ilan verebilen rol: öğrenciye söylenen metin değil, ilk ilanı sen paylaş', () => {
+it('ilan yokken ilan paylaşabilen rol (öğrenci dahil): ilk ilanı sen paylaş', () => {
   renderWithToasts(<PostingList canPost filters={{}} options={options} page={emptyPage} />);
   expect(screen.getByText(/ilk ilanı sen paylaşabilirsin/)).toBeVisible();
-  // Boşken tek "İlan ver": başlıktaki gizlenir, boş durumun düğmesi kalır ("İlanlarım" başka eylemdir).
-  const post = screen.getAllByRole('link', { name: 'İlan ver' });
+  // Boşken tek "İlan paylaş": başlıktaki gizlenir, boş durumun düğmesi kalır ("İlanlarım" başka eylemdir).
+  const post = screen.getAllByRole('link', { name: 'İlan paylaş' });
   expect(post).toHaveLength(1);
   expect(post[0]!.closest('header')).toBeNull();
   expect(screen.getByRole('link', { name: 'İlanlarım' })).toBeVisible();
@@ -60,7 +61,7 @@ it('ilan yokken ilan verebilen rol: öğrenciye söylenen metin değil, ilk ilan
   expect(screen.queryByRole('link', { name: 'Profilini düzenle' })).not.toBeInTheDocument();
   expect(screen.queryByText('0 ilan')).not.toBeInTheDocument();
 });
-it('ilan varken ilan veren rolde "İlan ver" başlıkta kalır (bugünkü düzen)', () => {
+it('ilan varken ilan paylaşabilen rolde "İlan paylaş" başlıkta kalır (bugünkü düzen)', () => {
   renderWithToasts(
     <PostingList
       canPost
@@ -69,7 +70,7 @@ it('ilan varken ilan veren rolde "İlan ver" başlıkta kalır (bugünkü düzen
       page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
     />,
   );
-  const post = screen.getAllByRole('link', { name: 'İlan ver' });
+  const post = screen.getAllByRole('link', { name: 'İlan paylaş' });
   expect(post).toHaveLength(1);
   expect(post[0]!.closest('header')).not.toBeNull();
 });
@@ -163,7 +164,7 @@ it('"İncele" bağlantıları ilan başlığıyla adlanır; görünen metin ayn�
   expect(second).toHaveAttribute('href', '/ilanlar/job-2');
   expect(first).toHaveTextContent(/^İncele/);
 });
-it('öğrenciye ilan verme sunulmaz; süzgeçler ve sonraki sayfa URL taşır', () => {
+it('doğrulanmamış üyeye ilan paylaşma sunulmaz; süzgeçler ve sonraki sayfa URL taşır', () => {
   renderWithToasts(
     <PostingList
       canPost={false}
@@ -172,9 +173,9 @@ it('öğrenciye ilan verme sunulmaz; süzgeçler ve sonraki sayfa URL taşır', 
       page={{ items: [posting], total: 25, page: 1, pageSize: 20 }}
     />,
   );
-  expect(screen.queryByRole('link', { name: 'İlan ver' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'İlan paylaş' })).not.toBeInTheDocument();
   expect(screen.getByRole('search')).toHaveAttribute('action', '/ilanlar');
-  expect(screen.getByText(/doğrulanmış mezunlar/)).toBeVisible();
+  expect(screen.getByText(/doğrulanmış üyelik gerekir/)).toBeVisible();
   expect(screen.getByRole('option', { name: 'Örnek Kurum' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /Sonraki/ }).getAttribute('href')).toContain(
     'organizationName=',
@@ -1177,4 +1178,105 @@ it('ilan ayrıntısı: iletişim isteği yöntemi başlıkta "İletişim iste", 
   );
   expect(screen.queryByRole('link', { name: 'İletişim iste' })).not.toBeInTheDocument();
   expect(screen.getByText(/iletişim talebi oluşturulamıyor/)).toBeVisible();
+});
+
+// --- Öğrenci paylaşımı (kart 563) ---
+const studentPosting: JobPostingCard = {
+  ...posting,
+  authorKind: 'STUDENT',
+  sourceHost: 'youthall.com',
+};
+
+it('öğrencinin paylaştığı ilan kartında tür ve kaynak açık yazar; mezun ilanında ve kaynaksız öğrenci ilanında kaynak/tür satırı yoktur', () => {
+  const { unmount } = renderUi(<PostingCard posting={studentPosting} />);
+  expect(screen.getByText('Bir öğrenci paylaştı')).toBeVisible();
+  expect(screen.getByText('Kaynak: youthall.com')).toBeVisible();
+  unmount();
+  renderUi(<PostingCard posting={posting} />);
+  expect(screen.queryByText('Bir öğrenci paylaştı')).not.toBeInTheDocument();
+  expect(screen.queryByText(/Kaynak:/)).not.toBeInTheDocument();
+  unmount();
+  renderUi(<PostingCard posting={{ ...studentPosting, sourceHost: null }} />);
+  expect(screen.getByText('Bir öğrenci paylaştı')).toBeVisible();
+  expect(screen.queryByText(/Kaynak:/)).not.toBeInTheDocument();
+});
+
+it('detayda öğrenci paylaşımı: paylaşan türü, kaynak alan adı ve "kabul garantisi yoktur" notu; mezun ilanında yoktur', () => {
+  const detail = {
+    ...studentPosting,
+    description: 'Örnek açıklama',
+    applyUrl: 'https://www.youthall.com/ilan/42',
+    matchTags: [],
+  };
+  const { unmount } = renderWithToasts(<PostingDetail posting={detail} />);
+  expect(screen.getByText('Paylaşan')).toBeVisible();
+  expect(screen.getByText('Bir öğrenci paylaştı')).toBeVisible();
+  expect(screen.getByText('Kaynak: youthall.com')).toBeVisible();
+  expect(screen.getByText(/kabul garantisi yoktur/)).toBeVisible();
+  expect(screen.getByRole('link', { name: /Başvur/ })).toHaveAttribute(
+    'href',
+    'https://www.youthall.com/ilan/42',
+  );
+  unmount();
+  renderWithToasts(<PostingDetail posting={{ ...detail, authorKind: 'ALUMNI' }} />);
+  expect(screen.queryByText('Paylaşan')).not.toBeInTheDocument();
+  expect(screen.queryByText(/kabul garantisi/)).not.toBeInTheDocument();
+});
+
+it('ilanlar başlığı kabul garantisi ima etmez: "Staj ve iş ilanları", paylaşım daveti ve bölüm onayı; öğrenciye "İlan paylaş" görünür', () => {
+  renderWithToasts(<PostingList canPost filters={{}} options={options} page={emptyPage} />);
+  expect(screen.queryByText(/Bir sonraki adımın burada/)).not.toBeInTheDocument();
+  expect(screen.getAllByText('Staj ve iş ilanları').length).toBeGreaterThan(0);
+  const subtitle = screen.getByText(/sen de paylaşabilirsin/);
+  expect(subtitle).toHaveTextContent(/her ilan bölüm onayından geçer/);
+  expect(subtitle.textContent ?? '').not.toMatch(/garanti|kesin|mutlaka|işe al/i);
+  // Telefon için kısa açıklama da aynı sözü verir: paylaşılan ve bölüm onaylı.
+  const compact = screen.getByText('Topluluğun paylaştığı, bölüm onaylı ilanlar.');
+  expect(compact.textContent ?? '').not.toMatch(/garanti|kesin|mutlaka|işe al/i);
+  expect(screen.getAllByRole('link', { name: 'İlan paylaş' }).length).toBeGreaterThan(0);
+});
+
+const studentContext: JobPostingFormContext = {
+  ...context,
+  authorDepartments: [{ id: 'dep', name: 'YBS', urlOnly: true }],
+};
+
+it('öğrenci formu (urlOnly): başvuru yolu seçimi yok, ilanın asıl sayfası istenir ve kayıtta URL yöntemi gider', async () => {
+  const save = vi.fn().mockResolvedValue({ ok: true, data: { id: 'draft-student' } });
+  renderWithToasts(<PostingEditor context={studentContext} save={save} submit={vi.fn()} />);
+  fireEvent.change(screen.getByLabelText(/Pozisyon adı/), {
+    target: { value: 'Yazılım stajyeri' },
+  });
+  fireEvent.change(screen.getByLabelText(/Kurum adı/), { target: { value: 'Örnek Kurum' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  expect(screen.queryByLabelText(/Başvuru yolu/)).not.toBeInTheDocument();
+  expect(screen.queryByRole('option', { name: 'İletişim talebi' })).not.toBeInTheDocument();
+  expect(screen.getByText(/başvuru o sayfada yapılır/)).toBeVisible();
+  expect(screen.queryByLabelText(/HTTPS başvuru bağlantısı/)).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText(/İlanın asıl sayfası/), {
+    target: { value: 'https://youthall.com/ilan/1' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Taslağı kaydet' }));
+  await waitFor(() =>
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.objectContaining({
+          applyMethod: 'URL',
+          applyUrl: 'https://youthall.com/ilan/1',
+        }),
+      }),
+    ),
+  );
+});
+
+it('mezun formu (urlOnly değil): başvuru yolu seçimi ve iletişim talebi seçeneği durur', () => {
+  renderWithToasts(<PostingEditor context={context} save={vi.fn()} submit={vi.fn()} />);
+  fireEvent.change(screen.getByLabelText(/Pozisyon adı/), {
+    target: { value: 'Yazılım stajyeri' },
+  });
+  fireEvent.change(screen.getByLabelText(/Kurum adı/), { target: { value: 'Örnek Kurum' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Devam et' }));
+  expect(screen.getByLabelText(/Başvuru yolu/)).toBeVisible();
+  expect(screen.getByRole('option', { name: 'İletişim talebi' })).toBeInTheDocument();
+  expect(screen.queryByText(/başvuru o sayfada yapılır/)).not.toBeInTheDocument();
 });

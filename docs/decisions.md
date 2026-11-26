@@ -1275,3 +1275,20 @@ bu yüzden askı açıklaması (aydınlatma metni bağlantısı) yalnız oradays
 kullanıcının doğrulanmış giriş bağlantısına tıklayınca düştüğü giriş sayfası hatasında (`/giris?hata=AUTH_ACCOUNT_SUSPENDED`)
 gösterilir. Hesap numaralandırma kuralı değişmez: bağlantı isteme formu kayıtlı, kayıtsız, askıdaki ve silinmiş adreste aynı
 yanıtı verir; askı yalnız e-postanın sahibi bağlantıya tıklayınca görünür.
+
+## 2026-11-26 · Doğrulanmış öğrenciler de ilan paylaşır (yalnız dış bağlantı)
+
+Kullanıcı kararı (25 Kas, "Öğrenciler de paylaşsın"): "buraya atılan ilanlardan kesinlikle kabul alacaksın diye bir şey yok. fakat Youthall gibi
+platformlara giden ilanları görüp insanlar buraya ilan paylaşmak da isteyebilir. eğer ki YBS bölümü ile ilgili olduğunu düşünüyorsa direkt ilanı buraya
+da atabilir." Karar: doğrulanmış, askıda olmayan öğrenci ilan yazabilir; bu bölümde yalnız öğrenciyse yalnız `URL` (orijinal ilanın `https` adresi)
+kullanır, iletişim talebi (`CONTACT_REQUEST`, mezunun kendi adına talebi) mezun/akademisyene özgü kalır. Aynı bölüm yöneticisi onayı ve aynı moderasyon
+kapsamı sürer (yazım anındaki bölüm). Kural kayıtta ve gönderimde sunucuda yeniden yüklenen üyelikle uygulanır (mezunken yazılan iletişim talepli taslak,
+bölümde yalnız öğrenci kalınca gönderilemez); istemci yalnız seçeneği gizler. Okuyucu kartı ve ayrıntısı paylaşanın türünü açık yazar ("Bir öğrenci
+paylaştı · Kaynak: alan adı"); ad ve kimlik yine okuyucu çıktısında yoktur. `/ilanlar` başlığı ve açıklaması kabul garantisi ima etmez ("Staj ve iş
+ilanları", "her ilan bölüm onayından geçer"), düğme "İlan paylaş" olur. Bu karar iki gizli engeli de ortaya çıkardı ve düzeltti: okuyucu görünürlük
+SQL'i yazarın hâlâ `ALUMNI`/`ACADEMIC` üyeliği olmasını şart koşuyordu (düzeltilmeseydi onaylanan öğrenci ilanı hiç görünmezdi) ve yönetici kuyruğunda
+ilanın dış bağlantısı görünmüyordu (öğrencinin paylaştığı bağlantıyı onaylayan hedefi göremezdi); kuyruğa bağlantı ve yazar rolü eklendi. Yazar türü
+sıralaması akademisyen > mezun > öğrenci. **Kapsam dışı / bilinçli:** (1) puan kuralı değişmedi: öğrencinin yayımlanan ilanı da mevcut kuralla (5 puan,
+7 gün gecikmeli, ayda en çok 3 ilan) puan yazar; öğrenciler zaten başka eylemlerle puan kazanıyor, ayda 3 tavanı sıradan kopyalamayı sınırlar. İstenirse
+öğrenci ilanları puansız yapılabilir (tek koşul, `awardJobPostingInTx` çağrısı). (2) Mezun ve akademisyen ilanlarında paylaşan türü satırı çizilmez
+(görünüm değişmedi). (3) Bağlantı hedefinin gerçekten ilan sayfası olduğu otomatik doğrulanmaz; denetim bölüm yöneticisinindir ve yönetici artık bağlantıyı görür.

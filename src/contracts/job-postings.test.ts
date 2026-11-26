@@ -5,6 +5,7 @@ import { isErrorCode } from '@/lib/errors';
 import {
   JOB_POSTING_ACTION_ACCESS,
   JOB_POSTING_ACTION_ERRORS,
+  JOB_POSTING_AUTHOR_ROLES,
   JOB_POSTING_MAX_DAYS,
   closeJobPostingOutputSchema,
   getJobPostingSchema,
@@ -448,5 +449,59 @@ describe('ilan üzerinden iletişim (D7)', () => {
         requestableFields: [],
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('öğrenci paylaşımı (kart 563)', () => {
+  const card = {
+    id: 'j1',
+    kind: 'INTERNSHIP',
+    title: 'Stajyer',
+    organizationName: 'Örnek',
+    companyId: null,
+    location: 'İstanbul',
+    isRemote: false,
+    deadlineOn: '2030-07-01',
+    daysLeft: 3,
+    applyMethod: 'URL',
+    publishedAt: new Date(),
+    authorKind: 'STUDENT',
+    sourceHost: 'youthall.com',
+    targetDepartments: [],
+  };
+
+  it('yazar rolleri mezun, akademisyen ve öğrenci; kart öğrenci türünü ve kaynak alan adını taşır', () => {
+    expect([...JOB_POSTING_AUTHOR_ROLES]).toEqual(['ALUMNI', 'ACADEMIC', 'STUDENT']);
+    expect(jobPostingCardSchema.safeParse(card).success).toBe(true);
+    expect(jobPostingCardSchema.safeParse({ ...card, sourceHost: null }).success).toBe(true);
+    expect(jobPostingCardSchema.safeParse({ ...card, authorKind: 'MENTOR' }).success).toBe(false);
+    expect(jobPostingCardSchema.safeParse({ ...card, sourceHost: undefined }).success).toBe(false);
+  });
+
+  it('form bağlamında her yazar bölümü urlOnly bayrağı taşır', () => {
+    const base = {
+      availableTags: [],
+      targetDepartments: [],
+      limits: { maxDays: 60, submitLimit: 5, submitWindowDays: 30, maxTargets: 10 },
+    };
+    expect(
+      jobPostingFormContextSchema.safeParse({
+        ...base,
+        authorDepartments: [{ id: 'd', name: 'YBS', urlOnly: true }],
+      }).success,
+    ).toBe(true);
+    expect(
+      jobPostingFormContextSchema.safeParse({
+        ...base,
+        authorDepartments: [{ id: 'd', name: 'YBS' }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it('kaydet ve gönder eylem hata listelerinde öğrenci kuralı kodu vardır ve katalogda tanımlıdır', () => {
+    for (const action of ['saveJobPostingDraft', 'submitJobPosting'] as const) {
+      expect(JOB_POSTING_ACTION_ERRORS[action]).toContain('JOB_POSTING_APPLY_METHOD_FORBIDDEN');
+    }
+    expect(isErrorCode('JOB_POSTING_APPLY_METHOD_FORBIDDEN')).toBe(true);
   });
 });

@@ -18,7 +18,7 @@ const nav = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({ useRouter: () => nav }));
 
 const context: JobPostingFormContext = {
-  authorDepartments: [{ id: 'dep', name: 'YBS' }],
+  authorDepartments: [{ id: 'dep', name: 'YBS', urlOnly: false }],
   availableTags: [],
   targetDepartments: [{ id: 'dep', name: 'YBS', facultyName: 'İşletme' }],
   limits: { maxDays: 60, submitLimit: 5, submitWindowDays: 30, maxTargets: 10 },

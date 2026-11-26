@@ -184,7 +184,7 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
     const apply = student!.getByRole('link', { name: /Başvur/ });
     await expect(apply).toHaveAttribute('href', 'https://example.org/staj');
     await expect(apply).toHaveAttribute('rel', 'noopener noreferrer');
-    await expect(student!.getByRole('link', { name: 'İlan ver' })).toHaveCount(0);
+    await expect(student!.getByRole('link', { name: 'İlan paylaş' })).toHaveCount(0);
     // Aynı yayın için D7 yöntemini sınayan sentetik senaryo: yazar kimliği HTML'e taşınmaz.
     const writer = await db.user.findUniqueOrThrow({ where: { id: record.authorId } });
     await db.jobPosting.update({
@@ -258,6 +258,160 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
       await db.pointEntry.deleteMany({ where: { sourceType: 'JOB_POSTING', sourceId: postingId } });
       await db.jobPosting.deleteMany({ where: { id: postingId } });
     }
+  }
+});
+
+test('öğrenci başka platformdaki ilanı dış bağlantıyla paylaşır; yönetici yayımlar; okuyucu "Bir öğrenci paylaştı" ve kaynağı görür', async ({
+  browser,
+}) => {
+  test.setTimeout(150_000);
+  const title = `Öğrenci paylaşımı ${randomUUID().replaceAll('-', '').slice(0, 10)}`;
+  const source = `https://www.youthall.com/ilan/${randomUUID().slice(0, 8)}`;
+  const sharer = await db.user.findUniqueOrThrow({
+    where: { email: TEST_PERSONAS.student.email },
+    select: { id: true },
+  });
+  const initialNotes = await db.inAppNotification.findMany({
+    where: { userId: sharer.id },
+    select: { id: true },
+  });
+  const initialIntents = await db.notificationIntent.findMany({
+    where: { userId: sharer.id },
+    select: { id: true },
+  });
+  const contexts = await Promise.all(
+    [0, 1, 2].map(() => browser.newContext({ viewport: { width: 390, height: 844 } })),
+  );
+  const [student, admin, reader] = await Promise.all(contexts.map((c) => c.newPage()));
+  const shots = process.env.R1_SHOT_DIR;
+  let postingId: string | undefined;
+  try {
+    await login(student!, 'student');
+    await student!.goto('/ilanlar');
+    // Başlık kabul garantisi ima etmez; doğrulanmış öğrenci "İlan paylaş" düğmesini görür.
+    await expect(student!.getByText('Bir sonraki adımın burada')).toHaveCount(0);
+    // 390 px: kısa açıklama görünür (ilk ekrana iki kart sığar); tam metin 1440 px'te.
+    await expect(student!.getByText('Topluluğun paylaştığı, bölüm onaylı ilanlar.')).toBeVisible();
+    await expect(student!.getByText(/sen de paylaşabilirsin/)).toBeHidden();
+    await expect(student!.getByRole('link', { name: 'İlan paylaş' }).first()).toBeVisible();
+    if (shots)
+      await student!.screenshot({ path: `${shots}/ogrenci-ilanlar-390.png`, fullPage: true });
+    await student!.goto('/hesap');
+    await expect(
+      student!.getByRole('region', { name: 'STAJ VE İŞ' }).getByRole('link', { name: /İlanlarım/ }),
+    ).toBeVisible();
+    await student!.goto('/ilanlar/yeni');
+    await waitForHydratedControl(student!, 'Devam et');
+    await student!.getByLabel('Pozisyon adı').fill(title);
+    await student!.getByLabel('Kurum adı').fill('Örnek Teknoloji');
+    await student!.getByRole('button', { name: 'Devam et' }).click();
+    // Öğrenci iletişim talebiyle ilan yazamaz: başvuru yolu seçimi yok, yalnız ilanın asıl sayfası istenir.
+    await expect(student!.getByLabel('Başvuru yolu')).toHaveCount(0);
+    await expect(student!.getByText(/başvuru o sayfada yapılır/)).toBeVisible();
+    await student!
+      .getByLabel('Açıklama')
+      .fill('Başka bir platformda gördüğüm, YBS öğrencileri için uygun örnek bir staj ilanı.');
+    await student!.getByLabel('Konum', { exact: true }).fill('İstanbul');
+    const deadline = new Date();
+    deadline.setUTCDate(deadline.getUTCDate() + 20);
+    await student!.getByLabel('Son başvuru tarihi').fill(deadline.toISOString().slice(0, 10));
+    await student!
+      .getByRole('checkbox', { name: /Yönetim Bilişim Sistemleri/ })
+      .first()
+      .check();
+    await student!.getByLabel('İlanın asıl sayfası (https://)').fill(source);
+    if (shots) await student!.screenshot({ path: `${shots}/ogrenci-form-390.png`, fullPage: true });
+    await student!.getByRole('button', { name: 'Devam et' }).click();
+    await student!.getByRole('button', { name: 'İncelemeye gönder' }).click();
+    await student!.waitForURL('**/ilanlarim');
+    await expect(
+      student!.locator('li').filter({ hasText: title }).getByText('İncelemede', { exact: true }),
+    ).toBeVisible();
+    const record = await db.jobPosting.findFirstOrThrow({ where: { title } });
+    postingId = record.id;
+    expect(record).toMatchObject({ authorId: sharer.id, applyMethod: 'URL', status: 'PENDING' });
+    // Onaysız ilan okuyucuya görünmez.
+    await login(reader!, 'alumniMentor');
+    await reader!.goto('/ilanlar');
+    await reader!.getByLabel('Pozisyon veya kurum ara').fill(title);
+    await reader!.getByRole('button', { name: 'Ara', exact: true }).click();
+    await expect(reader!.getByRole('heading', { name: title })).toHaveCount(0);
+    // Bölüm yöneticisi hedef bağlantıyı ve paylaşanın öğrenci olduğunu görerek yayımlar.
+    await login(admin!, 'systemAdmin');
+    await admin!.goto('/yonetim/ilanlar');
+    const card = admin!.locator('li').filter({ hasText: title });
+    await expect(card.locator('xpath=ancestor::*[@data-hydrated][1]')).toHaveAttribute(
+      'data-hydrated',
+      'true',
+    );
+    await expect(card).toContainText('(öğrenci)');
+    await expect(
+      card.getByRole('link', { name: new RegExp(source.replace(/[.]/g, '\\.')) }),
+    ).toBeVisible();
+    if (shots)
+      await admin!.screenshot({ path: `${shots}/yonetici-kuyruk-390.png`, fullPage: true });
+    await card.getByRole('button', { name: 'Yayımla' }).click();
+    await admin!.getByRole('dialog').getByRole('button', { name: 'Onayla' }).click();
+    await expect(card).toHaveCount(0);
+    // Okuyucu: kartta tür ve kaynak (www olmadan), ayrıntıda not ve dış bağlantı.
+    await reader!.goto('/ilanlar');
+    await reader!.getByLabel('Pozisyon veya kurum ara').fill(title);
+    await reader!.getByRole('button', { name: 'Ara', exact: true }).click();
+    const readerCard = reader!.locator('article').filter({ hasText: title });
+    await expect(readerCard.getByText('Bir öğrenci paylaştı')).toBeVisible();
+    await expect(readerCard.getByText('Kaynak: youthall.com')).toBeVisible();
+    expect(await reader!.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    if (shots) await reader!.screenshot({ path: `${shots}/okuyucu-kart-390.png`, fullPage: true });
+    await readerCard.getByRole('heading', { name: title }).getByRole('link').click();
+    await reader!.waitForURL(`**/ilanlar/${postingId}`);
+    await expect(reader!.getByText('Paylaşan')).toBeVisible();
+    await expect(reader!.getByText(/kabul garantisi yoktur/)).toBeVisible();
+    const apply = reader!.getByRole('link', { name: /Başvur/ });
+    await expect(apply).toHaveAttribute('href', source);
+    await expect(apply).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(await reader!.content()).not.toContain(sharer.id);
+    if (shots) await reader!.screenshot({ path: `${shots}/okuyucu-detay-390.png`, fullPage: true });
+    // 1440 px öz-kontrol: kart ve ayrıntı yatay taşmaz.
+    await reader!.setViewportSize({ width: 1440, height: 900 });
+    await expect(reader!.getByText('Bir öğrenci paylaştı')).toBeVisible();
+    expect(await reader!.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    if (shots)
+      await reader!.screenshot({ path: `${shots}/okuyucu-detay-1440.png`, fullPage: true });
+    await reader!.goto('/ilanlar');
+    await reader!.getByLabel('Pozisyon veya kurum ara').fill(title);
+    await reader!.getByRole('button', { name: 'Ara', exact: true }).click();
+    await expect(
+      reader!.locator('article').filter({ hasText: title }).getByText('Bir öğrenci paylaştı'),
+    ).toBeVisible();
+    if (shots) await reader!.screenshot({ path: `${shots}/okuyucu-kart-1440.png`, fullPage: true });
+    // 1440 px: tam açıklama ve "İlan paylaş" görünür, yatay taşma yok.
+    await student!.setViewportSize({ width: 1440, height: 900 });
+    await student!.goto('/ilanlar');
+    await expect(student!.getByText(/sen de paylaşabilirsin/)).toBeVisible();
+    await expect(student!.getByText('Topluluğun paylaştığı, bölüm onaylı ilanlar.')).toBeHidden();
+    await expect(student!.getByRole('link', { name: 'İlan paylaş' }).first()).toBeVisible();
+    expect(await student!.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    if (shots)
+      await student!.screenshot({ path: `${shots}/ogrenci-ilanlar-1440.png`, fullPage: true });
+  } finally {
+    await Promise.all(contexts.map((c) => c.close()));
+    postingId ??= (await db.jobPosting.findFirst({ where: { title }, select: { id: true } }))?.id;
+    if (postingId) {
+      await db.pointEntry.deleteMany({ where: { sourceType: 'JOB_POSTING', sourceId: postingId } });
+      await db.jobPosting.deleteMany({ where: { id: postingId } });
+    }
+    await db.inAppNotification.deleteMany({
+      where: { userId: sharer.id, id: { notIn: initialNotes.map((n) => n.id) } },
+    });
+    await db.notificationIntent.deleteMany({
+      where: { userId: sharer.id, id: { notIn: initialIntents.map((i) => i.id) } },
+    });
   }
 });
 

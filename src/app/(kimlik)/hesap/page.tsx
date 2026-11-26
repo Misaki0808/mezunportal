@@ -3,6 +3,7 @@ import { unstable_rethrow } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { hasAdminAccess } from '@/components/layout/admin-access';
+import { mayPost } from '@/components/job-postings/model';
 import {
   BadgeCheckIcon,
   BriefcaseIcon,
@@ -210,12 +211,7 @@ export default async function AccountPage() {
             : []),
         ]
       : []),
-    ...(actor.facts.memberships.some(
-      (m) =>
-        (m.role === 'ALUMNI' || m.role === 'ACADEMIC') &&
-        m.verificationStatus === 'VERIFIED' &&
-        m.endedAt === null,
-    )
+    ...(mayPost(actor.facts.memberships)
       ? [
           {
             href: '/ilanlarim',

@@ -9,8 +9,10 @@ import {
   daysLeft,
   deadlineProblem,
   isOpen,
+  isUrlOnlyAuthor,
   istanbulDay,
   jobPostingMultiplierPercent,
+  postingAuthorRole,
 } from './jobPosting';
 
 describe('İstanbul takvim günü', () => {
@@ -108,5 +110,39 @@ describe('ilan puanı aylık tavanı (ayda en çok 3 ilan puan getirir)', () => 
     expect(jobPostingMultiplierPercent(julyFirst, [julyFirst, julyFirst, julyFirst])).toBe(0);
     const juneLast = new Date('2030-06-30T20:59:00Z'); // İstanbul 30 Haziran 23:59
     expect(jobPostingMultiplierPercent(at, [juneLast, juneLast, juneLast])).toBe(0);
+  });
+});
+
+describe('ilan yazarı rolü (kart 563: öğrenci yalnız dış bağlantı paylaşır)', () => {
+  const member = (
+    role: string,
+    departmentId = 'A',
+    over: Partial<{ verificationStatus: string; endedAt: Date | null }> = {},
+  ) => ({ role, departmentId, verificationStatus: 'VERIFIED', endedAt: null, ...over });
+
+  it('yalnız o bölümdeki doğrulanmış etkin üyelik sayılır', () => {
+    expect(postingAuthorRole([member('STUDENT')], 'A')).toBe('STUDENT');
+    expect(postingAuthorRole([member('STUDENT')], 'B')).toBeNull();
+    expect(
+      postingAuthorRole([member('STUDENT', 'A', { verificationStatus: 'PENDING' })], 'A'),
+    ).toBeNull();
+    expect(postingAuthorRole([member('STUDENT', 'A', { endedAt: new Date() })], 'A')).toBeNull();
+    expect(postingAuthorRole([member('MENTOR')], 'A')).toBeNull();
+    expect(postingAuthorRole([], 'A')).toBeNull();
+  });
+
+  it('aynı bölümde mezun/akademisyen öğrenciyi geçer; akademisyen mezunu geçer', () => {
+    expect(postingAuthorRole([member('STUDENT'), member('ALUMNI')], 'A')).toBe('ALUMNI');
+    expect(postingAuthorRole([member('ALUMNI'), member('STUDENT')], 'A')).toBe('ALUMNI');
+    expect(postingAuthorRole([member('ALUMNI'), member('ACADEMIC')], 'A')).toBe('ACADEMIC');
+  });
+
+  it('urlOnly: yalnız o bölümde öğrenciyse; başka bölümdeki mezunluk öğrenciliği kaldırmaz', () => {
+    expect(isUrlOnlyAuthor([member('STUDENT')], 'A')).toBe(true);
+    expect(isUrlOnlyAuthor([member('ALUMNI')], 'A')).toBe(false);
+    expect(isUrlOnlyAuthor([member('ACADEMIC')], 'A')).toBe(false);
+    expect(isUrlOnlyAuthor([member('STUDENT', 'A'), member('ALUMNI', 'B')], 'A')).toBe(true);
+    expect(isUrlOnlyAuthor([member('STUDENT', 'A'), member('ALUMNI', 'A')], 'A')).toBe(false);
+    expect(isUrlOnlyAuthor([], 'A')).toBe(false); // üyelik yoksa urlOnly değil, yetkisiz (servis ayrıca reddeder)
   });
 });
