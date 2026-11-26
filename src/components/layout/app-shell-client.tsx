@@ -164,6 +164,37 @@ export function AppShellClient({
     return () => observer.disconnect();
   }, [bottomNav]);
 
+  // Sabit üst başlığın (telefonda üst çubuk, bilgisayarda arama çubuğu) gerçek yüksekliği `--app-header-h` olarak yayımlanır;
+  // `globals.css` odaklanan öğelere bu kadar kayma payı bırakır, böylece hata sonrası odaklanan alan başlığın ARKASINDA kalmaz
+  // (kart 568, P2). Biri `display: none` olan iki başlıktan görünen yüksektir; yazı boyutu ya da sarma değişince ölçü güncellenir.
+  useEffect(() => {
+    const headers = [...document.querySelectorAll<HTMLElement>('[data-app-header]')];
+    if (!headers.length) return;
+    const root = document.documentElement;
+    const publish = () => {
+      const tallest = Math.max(
+        0,
+        ...headers.map((header) => Math.ceil(header.getBoundingClientRect().height)),
+      );
+      if (tallest > 0) root.style.setProperty('--app-header-h', `${tallest}px`);
+      else root.style.removeProperty('--app-header-h');
+    };
+    publish();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', publish);
+      return () => {
+        window.removeEventListener('resize', publish);
+        root.style.removeProperty('--app-header-h');
+      };
+    }
+    const observer = new ResizeObserver(publish);
+    for (const header of headers) observer.observe(header, { box: 'border-box' });
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty('--app-header-h');
+    };
+  }, [pathname]);
+
   // Giriş tamamlandı (oturumlu bir ekran çizildi): "E-postanı kontrol et" ekranı için tutulan adres bu sekmede kalmasın.
   useEffect(() => {
     if (signedIn) forgetSignInAddress();
@@ -401,7 +432,10 @@ export function AppShellClient({
         </aside>
 
         <div className="flex min-h-dvh min-w-0 flex-col">
-          <header className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-border bg-bg px-4 py-1 lg:hidden">
+          <header
+            data-app-header=""
+            className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-border bg-bg px-4 py-1 lg:hidden"
+          >
             <Link href="/" className="press-control inline-flex min-h-11 items-center">
               <BrandLogo className="h-7 w-auto" label={t('brand')} />
             </Link>
@@ -421,7 +455,10 @@ export function AppShellClient({
             </div>
           </header>
 
-          <header className="sticky top-0 z-30 hidden h-[4.5rem] items-center gap-3.5 border-b border-border bg-bg px-8 lg:flex">
+          <header
+            data-app-header=""
+            className="sticky top-0 z-30 hidden h-[4.5rem] items-center gap-3.5 border-b border-border bg-bg px-8 lg:flex"
+          >
             {tools && (
               <form
                 role="search"

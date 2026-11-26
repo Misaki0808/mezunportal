@@ -277,6 +277,26 @@ describe('AppShell: görünüm A iskeleti', () => {
     expect(content.className).toContain('lg:pt-7');
   });
 
+  it('görünen sabit başlığın yüksekliği --app-header-h olarak yayımlanır ve ekran kalkınca silinir (kart 568 P2)', () => {
+    const rect = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        // Telefon başlığı 56 px görünür; bilgisayar başlığı `display: none` (yükseklik 0).
+        const mobile = this.hasAttribute('data-app-header') && this.className.includes('lg:hidden');
+        return { height: mobile ? 55.2 : 0 } as DOMRect;
+      });
+    try {
+      const { unmount } = renderUi(<AppShell signedIn>x</AppShell>);
+      expect(document.querySelectorAll('[data-app-header]')).toHaveLength(2);
+      // Yukarı yuvarlanır: pay başlığı bir piksel bile kısa kalmasın diye.
+      expect(document.documentElement.style.getPropertyValue('--app-header-h')).toBe('56px');
+      unmount();
+      expect(document.documentElement.style.getPropertyValue('--app-header-h')).toBe('');
+    } finally {
+      rect.mockRestore();
+    }
+  });
+
   it('yan menü 252 px, iki temada lacivert token ile çizilir ve yalnız bilgisayarda görünür', () => {
     renderUi(<AppShell signedIn>x</AppShell>);
     const aside = screen.getByRole('complementary');

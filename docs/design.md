@@ -61,6 +61,8 @@ Mercan, Nane, yazı tipleri). Ölçü ilkeleri (değerler `globals.css`'te):
   (ad, bölüm kodu · sınıf ya da rol); veri yoksa satır çıkar, uydurulmaz. Koyu temada yan menü içerikten bir ton koyudur ve sağ kenarı çizgilidir.
 - **Üst çubuk** (bilgisayar, 72 px, alt çizgili): arama, tema düğmesi, bildirim zili (okunmamışta nokta), avatar (hesap ayarları `/hesap`). Arama şimdilik **deneyim aramasıdır**
   (`/deneyimler?q=`, en az iki karakter); genel arama ekranı yok, olunca yönü değişir. Telefon üst çubuğu yapışkandır: logo, tema, zil, avatar.
+  Üst çubuk iki boyda da yapışkan olduğundan odaklanan öğe onun arkasında kalmasın diye `AppShellClient` görünen çubuğun yüksekliğini `--app-header-h` olarak yayımlar ve
+  `globals.css` odaklanabilir öğelere bu kadar `scroll-margin-top` verir (kart 568). Odaklanamayan bölümler (bağlantıyla kaydırılan başlıklar) kendi `scroll-mt-*` payını taşır. Alt gezinme için karşılığı `scroll-above-bars`.
 - **Telefon:** yan menü yok; altta beş öğe: dört sekme (Ana sayfa, İlanlar, Mentorlar, Randevular) ve **Menü** (sayfa değil, alt sayfa açar). Menü alt sayfası:
   Diğer sayfalar (Deneyimler, Mezunlar, Etkinlikler, Ders rehberi), Hesap (Bildirimler + okunmamış rozeti, Profilim `/profil`, Hesap ayarları `/hesap`), yöneticide Yönetici
   (Yönetim). Menüdeki bir ekran açıkken Menü düğmesi ve o satır etkin görünür; alt sayfa klavye ve ekran okuyucuyla kullanılır (odak hapsi, Esc, kapatınca odak

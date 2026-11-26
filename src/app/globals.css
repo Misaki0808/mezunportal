@@ -282,6 +282,14 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* Odaklanan öğe, yapışkan üst başlığın ARKASINDA kalmasın (kart 568 P2: /onay'da zorunlu kutular işaretlenmeden kaydedince
+     odaklanan ilk kutu 390 px'te başlığın altında kalıyordu). `AppShellClient` görünen başlığın yüksekliğini `--app-header-h`
+     olarak yayımlar; başlık yoksa (giriş ekranları) pay yalnız 0,75 rem nefes boşluğudur. `:where` özgüllük taşımaz, bileşen
+     `scroll-mt-*` ile ezebilir. Alt payı için bkz. `scroll-above-bars`. */
+  :where(input, select, textarea, button, summary, a[href], [tabindex]) {
+    scroll-margin-top: calc(var(--app-header-h, 0px) + 0.75rem);
+  }
 }
 
 /*
