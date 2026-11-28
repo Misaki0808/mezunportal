@@ -37,8 +37,8 @@ const mine = {
   endedAt: null,
 } as unknown as MyJobPostingView;
 const page = (items: MyJobPostingView[]): MyJobPostingPage => ({ items, nextCursor: null });
-const render = (items: MyJobPostingView[]) =>
-  renderUi(<MyPostings initial={page(items)} list={vi.fn()} close={vi.fn()} />);
+const render = (items: MyJobPostingView[], canPost = true) =>
+  renderUi(<MyPostings initial={page(items)} canPost={canPost} list={vi.fn()} close={vi.fn()} />);
 
 describe('ilanlarım: "İlan paylaş" eylemi', () => {
   it('boşken tek düğme: başlıktaki gizlenir, boş durumun düğmesi kalır', () => {
@@ -56,6 +56,35 @@ describe('ilanlarım: "İlan paylaş" eylemi', () => {
     render([mine]);
     expect(screen.getAllByRole('link', { name: 'İlan paylaş' })).toHaveLength(1);
     expect(screen.queryByText('Henüz bir ilan paylaşmadın.')).not.toBeInTheDocument();
+  });
+
+  const reason =
+    'İlanları 4. sınıflar ve mezunlar paylaşabilir. Gördüğün bir ilanı 4. sınıftan bir arkadaşına iletebilirsin.';
+  it('sınıfı yetmeyen kişide (kart 577): dolu listede oluşturma bağlantısı yok, sebep yazar; eski kayıt ve kapatma eylemi kalır', () => {
+    const draft = {
+      ...mine,
+      id: 'draft-1',
+      status: 'DRAFT',
+      title: 'Eski taslak',
+    } as MyJobPostingView;
+    render([draft, { ...mine, id: 'pending-1', status: 'PENDING' } as MyJobPostingView], false);
+    expect(screen.queryByRole('link', { name: 'İlan paylaş' })).not.toBeInTheDocument();
+    expect(screen.getByText(reason)).toBeInTheDocument();
+    expect(screen.getByText('Eski taslak')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Düzenle' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'İlanı kapat' })).toBeInTheDocument();
+  });
+
+  it('sınıfı yetmeyen kişide (kart 577): boş listede de oluşturma bağlantısı yok, sebep yazar', () => {
+    render([], false);
+    expect(screen.queryByRole('link', { name: 'İlan paylaş' })).not.toBeInTheDocument();
+    expect(screen.getByText(reason)).toBeInTheDocument();
+    expect(screen.getByText('Henüz bir ilan paylaşmadın.')).toBeInTheDocument();
+  });
+
+  it('sınıfı yeten kişide sebep satırı çizilmez', () => {
+    render([mine]);
+    expect(screen.queryByText(reason)).not.toBeInTheDocument();
   });
 });
 
@@ -281,7 +310,9 @@ describe('ilanlarım: kapatma hatası sonraki başarıdan sonra kalmaz', () => {
       .fn()
       .mockResolvedValueOnce({ ok: false, errorCode: 'SERVER_UNEXPECTED' })
       .mockResolvedValueOnce({ ok: true, data: {} });
-    const { user } = renderUi(<MyPostings initial={page([mine])} list={vi.fn()} close={close} />);
+    const { user } = renderUi(
+      <MyPostings initial={page([mine])} canPost list={vi.fn()} close={close} />,
+    );
     await user.click(screen.getByRole('button', { name: 'İlanı kapat' }));
     const dialog = within(await screen.findByRole('dialog'));
     await user.click(dialog.getByRole('button', { name: 'İlanı kapat' }));
@@ -307,7 +338,9 @@ describe('ilanlarım: ilan kapatılınca odak', () => {
   const second = { ...mine, id: 'p2', title: 'Yazılım stajyeri' } as unknown as MyJobPostingView;
   const closeFirst = async (items: MyJobPostingView[]) => {
     const close = vi.fn().mockResolvedValue({ ok: true, data: {} });
-    const { user } = renderUi(<MyPostings initial={page(items)} list={vi.fn()} close={close} />);
+    const { user } = renderUi(
+      <MyPostings initial={page(items)} canPost list={vi.fn()} close={close} />,
+    );
     await user.click(screen.getAllByRole('button', { name: 'İlanı kapat' })[0]!);
     const dialog = within(await screen.findByRole('dialog'));
     await user.click(dialog.getByRole('button', { name: 'İlanı kapat' }));

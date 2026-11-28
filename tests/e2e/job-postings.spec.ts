@@ -464,6 +464,75 @@ test('1-2-3. sınıf öğrenci ilan paylaşamaz: düğme ve "İlanlarım" yok, n
     await page.screenshot({ path: `${shots}/ucuncu-sinif-ilanlar-1440.png`, fullPage: true });
 });
 
+test('1-2-3. sınıf öğrenci eski taslakla doğrudan /ilanlarim açınca da oluşturma bağlantısı görmez (dolu ve boş); eski kayıt ve düzenleme bağlantısı kalır (kart 577)', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  const member = await db.membership.findFirstOrThrow({
+    where: { user: { email: TEST_PERSONAS.student.email }, role: 'STUDENT', endedAt: null },
+    select: { userId: true, departmentId: true, entryYear: true, classOffset: true },
+  });
+  const standing = computeClassStanding(member, new Date());
+  expect(
+    standing.kind === 'GRADE' && standing.grade < 4,
+    'seed öğrencisi 1-3. sınıf olmalı (prisma/seed-data.ts entryYear)',
+  ).toBe(true);
+  const reason =
+    'İlanları 4. sınıflar ve mezunlar paylaşabilir. Gördüğün bir ilanı 4. sınıftan bir arkadaşına iletebilirsin.';
+  const ids: string[] = [];
+  const create = async (title: string, status: 'DRAFT') =>
+    ids.push(
+      (
+        await db.jobPosting.create({
+          data: {
+            authorId: member.userId,
+            departmentIdAtWrite: member.departmentId,
+            title,
+            status,
+          },
+          select: { id: true },
+        })
+      ).id,
+    );
+  try {
+    await login(page, 'student');
+    await create('Önceden kalmış taslak 577', 'DRAFT');
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await page.goto('/ilanlarim');
+      await expect(page.getByRole('heading', { name: 'İlanlarım', exact: true })).toBeVisible();
+      await expect(page.getByText('Önceden kalmış taslak 577')).toBeVisible();
+      await expect(page.getByRole('link', { name: 'İlan paylaş' })).toHaveCount(0);
+      await expect(page.getByText(reason)).toBeVisible();
+      // Eski kayıt okunur, düzenleme yolu kapanmaz (kapatma eylemi birim bekçisinde: manage.test.tsx).
+      await expect(page.getByRole('link', { name: 'Düzenle' })).toHaveCount(1);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      );
+    }
+    await db.jobPosting.deleteMany({ where: { id: { in: ids } } });
+    ids.length = 0;
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await page.goto('/ilanlarim');
+      await expect(page.getByText('Henüz bir ilan paylaşmadın.')).toBeVisible();
+      await expect(page.getByRole('link', { name: 'İlan paylaş' })).toHaveCount(0);
+      await expect(page.getByText(reason)).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      );
+    }
+    // Karşı deney: 4. sınıf öğrenci aynı sayfada oluşturma bağlantısını görür, sebep satırı yoktur.
+    await login(page, 'seniorMentor');
+    await page.goto('/ilanlarim');
+    await expect(page.getByRole('heading', { name: 'İlanlarım', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'İlan paylaş' }).first()).toBeVisible();
+    await expect(page.getByText(reason)).toHaveCount(0);
+  } finally {
+    await db.jobPosting.deleteMany({ where: { id: { in: ids } } });
+  }
+});
+
 test('uzun kaynak alan adı (63+63 karakter etiket) ilan kartını ve ayrıntısını yatay taşırmaz; 390 ve 1440', async ({
   page,
 }) => {

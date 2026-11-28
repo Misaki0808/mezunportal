@@ -38,10 +38,13 @@ import {
 
 export function MyPostings({
   initial,
+  canPost,
   close,
   list,
 }: {
   initial: MyJobPostingPage;
+  /** Sınıfı yetmeyen öğrencide (eski taslağı olsa da) oluşturma eylemleri gizlenir; varsayılan yok (kapalı başlar). */
+  canPost: boolean;
   list: (input: ListMyJobPostingsInput) => Promise<ActionResult<MyJobPostingPage>>;
   close: (input: JobPostingIdInput) => Promise<ActionResult<CloseJobPostingOutput>>;
 }) {
@@ -97,13 +100,14 @@ export function MyPostings({
         className="mb-7"
         title={t('listTitle')}
         actions={
-          items.length > 0 ? (
+          canPost && items.length > 0 ? (
             <Link href="/ilanlar/yeni" className={buttonClasses()}>
               {t('post')}
             </Link>
           ) : undefined
         }
       />
+      {!canPost && <p className="mb-6 text-sm text-fg-muted">{t('studentReason')}</p>}
       {items.length ? (
         <ul className="grid gap-4 lg:grid-cols-2">
           {items.map((item) => (
@@ -176,9 +180,11 @@ export function MyPostings({
         <EmptyState
           title={t('listEmpty')}
           action={
-            <Link href="/ilanlar/yeni" className={buttonClasses()}>
-              {t('post')}
-            </Link>
+            canPost ? (
+              <Link href="/ilanlar/yeni" className={buttonClasses()}>
+                {t('post')}
+              </Link>
+            ) : undefined
           }
         />
       )}
