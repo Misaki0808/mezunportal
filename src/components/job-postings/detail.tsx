@@ -77,7 +77,7 @@ export function PostingDetail({
           aria-label={t('facts')}
           className="rounded-card border border-border bg-surface p-5 shadow-card max-lg:order-first lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
         >
-          <dl className="grid gap-4">
+          <dl className="grid grid-cols-1 gap-4">
             <div>
               <dt className="text-sm text-fg-muted">{t('company')}</dt>
               <dd className="break-words text-base font-semibold text-fg">
