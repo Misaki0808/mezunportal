@@ -55,7 +55,7 @@ export default async function AdminFeedbackPage({
                   )}
                   {item.answers[1] === null && item.helpful !== null && (
                     <p>
-                      {t('helpful')}: {t(item.helpful ? 'helpfulYes' : 'helpfulNo')}
+                      {t('helpful')} {t(item.helpful ? 'helpfulYes' : 'helpfulNo')}
                     </p>
                   )}
                   {item.ratingHalf !== null && (

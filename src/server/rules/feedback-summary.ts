@@ -1,10 +1,10 @@
 import type { FeedbackAnswer } from '@/contracts/feedback';
 
 /** Bireysel yanıtlar dışarı çıkmaz. Eski ve tamamlanmamış kayıtlar özetlenmez. */
-export function mentorRating(values: readonly number[]) {
-  if (values.length < 3) return null;
+export function mentorRating(values: readonly { studentId: string; ratingHalf: number }[]) {
+  if (new Set(values.map((value) => value.studentId)).size < 3) return null;
   return {
-    average: values.reduce((sum, value) => sum + value, 0) / values.length / 2,
+    average: values.reduce((sum, value) => sum + value.ratingHalf, 0) / values.length / 2,
     count: values.length,
   };
 }

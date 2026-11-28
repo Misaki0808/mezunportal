@@ -34,8 +34,13 @@ describe('kullanıcı metni NFC sınırı', () => {
       submitFaqRequestSchema.parse({ question: nfd, similarAcknowledged: true }).question,
     ).toBe(nfc);
     expect(
-      feedbackInputSchema.parse({ appointmentId: 'a1', happened: true, helpful: true, note: nfd })
-        .note,
+      feedbackInputSchema.parse({
+        appointmentId: 'a1',
+        happened: true,
+        answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+        rating: 4,
+        note: nfd,
+      }).note,
     ).toBe(nfc);
     expect(cleanCvText(nfd)).toBe(nfc);
   });

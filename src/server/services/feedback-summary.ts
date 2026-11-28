@@ -14,7 +14,7 @@ export async function mentorRatings(db: PrismaClient, mentorIds: readonly string
     where: {
       happened: true,
       ratingHalf: { not: null },
-      appointment: { mentorId: { in: [...mentorIds] } },
+      appointment: { status: 'COMPLETED', mentorId: { in: [...mentorIds] } },
     },
     select: {
       authorId: true,
@@ -22,11 +22,11 @@ export async function mentorRatings(db: PrismaClient, mentorIds: readonly string
       appointment: { select: { mentorId: true, menteeId: true } },
     },
   });
-  const values = new Map<string, number[]>();
+  const values = new Map<string, { studentId: string; ratingHalf: number }[]>();
   for (const row of rows) {
     if (row.authorId !== row.appointment.menteeId || row.ratingHalf === null) continue;
     const list = values.get(row.appointment.mentorId) ?? [];
-    list.push(row.ratingHalf);
+    list.push({ studentId: row.appointment.menteeId, ratingHalf: row.ratingHalf });
     values.set(row.appointment.mentorId, list);
   }
   const result = new Map<string, NonNullable<ReturnType<typeof mentorRating>>>();
@@ -53,6 +53,7 @@ export async function requestedStudentSummary(
       happened: true,
       appointment: {
         menteeId: studentId,
+        status: 'COMPLETED',
         mentee: {
           deletedAt: null,
           menteeAppointments: { some: { mentorId: viewerId, status: 'REQUESTED' } },

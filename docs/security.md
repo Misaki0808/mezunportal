@@ -144,7 +144,7 @@ Talep hız sınırı 24 saatte 10. Hesap silmede açık randevular sistem taraf�
 notu temizlenir; veri dökümü randevuları kapsar (öğrenci notu yalnız yazanın dökümünde).
 
 ### Görüşme değerlendirmeleri
-Görüşme yanıtları ve puanları yalnız yazarı ve bölüm kapsamındaki yetkili yöneticiye tekil olarak sunulur; karşı tarafa yalnız eşiği geçen özet verilir. Öğrenci özeti bekleyen talebin mentoruna, onun kendi yanıtı çıkarıldıktan sonra en az iki farklı diğer mentor kaldığında açılır. Mentor puanı en az üç öğrenci değerlendirmesinde gösterilir. Hesap silme, silinen kişiye ilişkin karşı tarafın değerlendirme alanlarını ve serbest notunu temizler.
+Görüşme yanıtları ve puanları yalnız yazarı ve bölüm kapsamındaki yetkili yöneticiye tekil olarak sunulur; karşı tarafa yalnız eşiği geçen özet verilir. Öğrenci özeti bekleyen talebin mentoruna, onun kendi yanıtı çıkarıldıktan sonra en az iki farklı diğer mentor kaldığında açılır. Mentor puanı yalnız tamamlanmış görüşmelerden, en az üç farklı öğrencinin değerlendirmesi olduğunda gösterilir; öğrenci özetine de yalnız tamamlanmış görüşmeler girer. Hesap silme, silinen kişiye ilişkin karşı tarafın değerlendirme alanlarını ve serbest notunu temizler.
 
 ### Mentor dizini (P1-09)
 

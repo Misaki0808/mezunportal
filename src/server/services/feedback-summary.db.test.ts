@@ -127,3 +127,121 @@ it('özetler eşikleri, yazarı ve yalnız yetkili mentor talebini uygular; yön
     }),
   ).rejects.toThrow();
 });
+
+it('yalnız COMPLETED görüşmeler ve en az üç ayrı öğrenci mentor ortalamasına girer', async () => {
+  const mentor = await createUser(db);
+  const students = await Promise.all([createUser(db), createUser(db), createUser(db)]);
+  let serial = 0;
+  const add = async (studentId: string, status: 'COMPLETED' | 'NO_SHOW', ratingHalf: number) => {
+    const start = new Date(Date.UTC(2033, 0, 1 + serial++, 10));
+    const appointment = await db.appointment.create({
+      data: {
+        mentorId: mentor,
+        menteeId: studentId,
+        status,
+        decidedAt: new Date(start.getTime() - 90000000),
+        startsAt: start,
+        endsAt: new Date(start.getTime() + 3600000),
+        expiresAt: new Date(start.getTime() - 86400000),
+        mode: 'ONLINE',
+      },
+    });
+    await db.sessionFeedback.create({
+      data: { appointmentId: appointment.id, authorId: studentId, happened: true, ratingHalf },
+    });
+    return appointment;
+  };
+  await add(students[0]!, 'COMPLETED', 10);
+  await add(students[0]!, 'COMPLETED', 10);
+  await add(students[0]!, 'COMPLETED', 10);
+  expect((await mentorRatings(db, [mentor])).get(mentor)).toBeUndefined();
+  await add(students[1]!, 'NO_SHOW', 1);
+  await add(students[2]!, 'NO_SHOW', 1);
+  expect((await mentorRatings(db, [mentor])).get(mentor)).toBeUndefined();
+  await add(students[1]!, 'COMPLETED', 8);
+  await add(students[2]!, 'COMPLETED', 8);
+  expect((await mentorRatings(db, [mentor])).get(mentor)).toEqual({ average: 4.6, count: 5 });
+});
+
+it('öğrenci özeti gerçekleşmeyen görüşmedeki mentor yanıtını saymaz', async () => {
+  const student = await createUser(db);
+  const mentors = await Promise.all([createUser(db), createUser(db), createUser(db)]);
+  let serial = 0;
+  const add = async (mentorId: string, status: 'COMPLETED' | 'NO_SHOW' | 'REQUESTED') => {
+    const start = new Date(Date.UTC(2034, 0, 1 + serial++, 10));
+    const appointment = await db.appointment.create({
+      data: {
+        mentorId,
+        menteeId: student,
+        status,
+        ...(status === 'REQUESTED' ? {} : { decidedAt: new Date(start.getTime() - 90000000) }),
+        startsAt: start,
+        endsAt: new Date(start.getTime() + 3600000),
+        expiresAt: new Date(start.getTime() - 86400000),
+        mode: 'ONLINE',
+      },
+    });
+    if (status !== 'REQUESTED')
+      await db.sessionFeedback.create({
+        data: {
+          appointmentId: appointment.id,
+          authorId: mentorId,
+          happened: true,
+          answerOne: 'POSITIVE',
+          answerTwo: 'POSITIVE',
+          answerThree: 'POSITIVE',
+          ratingHalf: 9,
+        },
+      });
+    return appointment;
+  };
+  await add(mentors[0]!, 'COMPLETED');
+  const noShow = await add(mentors[1]!, 'NO_SHOW');
+  await add(mentors[2]!, 'REQUESTED');
+  expect(await requestedStudentSummary(db, mentors[2]!, student)).toBeNull();
+  await db.appointment.update({ where: { id: noShow.id }, data: { status: 'COMPLETED' } });
+  expect(await requestedStudentSummary(db, mentors[2]!, student)).toMatchObject({
+    total: 2,
+    interested: 2,
+  });
+});
+
+it('veritabanı gerçekleşmeyen görüşmede her cevap ve puan alanını ayrı ayrı reddeder', async () => {
+  const mentor = await createUser(db);
+  const student = await createUser(db);
+  const start = new Date(Date.UTC(2035, 0, 1, 10));
+  const appointment = await db.appointment.create({
+    data: {
+      mentorId: mentor,
+      menteeId: student,
+      status: 'NO_SHOW',
+      decidedAt: new Date(start.getTime() - 90000000),
+      startsAt: start,
+      endsAt: new Date(start.getTime() + 3600000),
+      expiresAt: new Date(start.getTime() - 86400000),
+      mode: 'ONLINE',
+    },
+  });
+  const feedback = await db.sessionFeedback.create({
+    data: { appointmentId: appointment.id, authorId: student, happened: false },
+  });
+  await expect(
+    db.$executeRaw`UPDATE "SessionFeedback" SET "answerOne" = 'POSITIVE' WHERE "id" = ${feedback.id}`,
+  ).rejects.toThrow();
+  await expect(
+    db.$executeRaw`UPDATE "SessionFeedback" SET "answerTwo" = 'PARTIAL' WHERE "id" = ${feedback.id}`,
+  ).rejects.toThrow();
+  await expect(
+    db.$executeRaw`UPDATE "SessionFeedback" SET "answerThree" = 'NEGATIVE' WHERE "id" = ${feedback.id}`,
+  ).rejects.toThrow();
+  await expect(
+    db.$executeRaw`UPDATE "SessionFeedback" SET "ratingHalf" = 7 WHERE "id" = ${feedback.id}`,
+  ).rejects.toThrow();
+  expect(await db.sessionFeedback.findUniqueOrThrow({ where: { id: feedback.id } })).toMatchObject({
+    happened: false,
+    answerOne: null,
+    answerTwo: null,
+    answerThree: null,
+    ratingHalf: null,
+  });
+});
