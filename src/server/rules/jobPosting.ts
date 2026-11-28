@@ -1,10 +1,13 @@
 import {
+  JOB_POSTING_AUTHOR_ROLES,
   JOB_POSTING_MAX_DAYS,
   JOB_POSTING_POINTS_PER_MONTH,
+  type JobPostingAuthorRole,
   type JobPostingStatus,
 } from '@/contracts/job-postings';
 
 import { monthKey } from './appointmentSlots';
+import { computeClassStanding } from './classYear';
 
 /**
  * İlan kuralları (saf; docs/faz2-plan.md P2-04, D19). Veritabanı, saat ve rastgelelik yok: hepsi tablo-güdümlü testlidir.
@@ -59,6 +62,97 @@ export function isOpen(
   today: string,
 ): boolean {
   return input.status === 'PUBLISHED' && input.deadlineOn !== null && input.deadlineOn >= today;
+}
+
+/** Öğrencinin ilan paylaşabilmesi için etkin sınıfı en az bu olmalı (hoca önerisi + kullanıcı kararı, 28 Kas; uzatmadakiler dahil). */
+export const STUDENT_POSTING_MIN_GRADE = 4;
+
+/** Yazarlığı belirleyen üyelik bilgisi (aktörün gerçekleri; yüklenen satırlar). Öğrenci sınıfı `entryYear` + `classOffset`'ten hesaplanır. */
+export type AuthorMembershipFact = {
+  role: string;
+  departmentId: string;
+  verificationStatus: string;
+  endedAt: Date | null;
+  entryYear: number | null;
+  classOffset: number;
+};
+
+const AUTHOR_ROLE_PRIORITY: readonly JobPostingAuthorRole[] = ['ACADEMIC', 'ALUMNI', 'STUDENT'];
+
+/** Öğrencinin etkin sınıfı ilan paylaşmaya yeter mi: 4. sınıf ve üstü (uzatmadakiler dahil); hazırlık, başlamamış ve bilinmeyen yetmez. */
+export function meetsStudentPostingGrade(
+  member: Pick<AuthorMembershipFact, 'entryYear' | 'classOffset'>,
+  now: Date,
+): boolean {
+  const standing = computeClassStanding(
+    { entryYear: member.entryYear, classOffset: member.classOffset },
+    now,
+  );
+  return standing.kind === 'GRADE' && standing.grade >= STUDENT_POSTING_MIN_GRADE;
+}
+
+/** Bu bölümde doğrulanmış, etkin ve yazar rolü olan üyelikler (sınıf şartı ayrıca bakılır). */
+function authorMemberships(
+  memberships: readonly AuthorMembershipFact[],
+  departmentId: string,
+): AuthorMembershipFact[] {
+  return memberships.filter(
+    (m) =>
+      m.departmentId === departmentId &&
+      m.endedAt === null &&
+      m.verificationStatus === 'VERIFIED' &&
+      (JOB_POSTING_AUTHOR_ROLES as readonly string[]).includes(m.role),
+  );
+}
+
+/**
+ * Yazarın BU bölümdeki ilan rolü: o bölümde doğrulanmış, etkin üyelik; öğrenci üyelik yalnız sınıfı 4 ve üstüyse sayılır.
+ * Aynı bölümde birden çok rol varsa mezun/akademisyen öğrenciyi geçer (öğrenci sınıfı bakılmaz). Yoksa `null` (yetkisiz).
+ * Moderasyon kapsamı ilanın yazıldığı bölümdür; kural da o bölüme göredir.
+ */
+export function postingAuthorRole(
+  memberships: readonly AuthorMembershipFact[],
+  departmentId: string,
+  now: Date,
+): JobPostingAuthorRole | null {
+  const roles = authorMemberships(memberships, departmentId)
+    .filter((m) => m.role !== 'STUDENT' || meetsStudentPostingGrade(m, now))
+    .map((m) => m.role as JobPostingAuthorRole);
+  return AUTHOR_ROLE_PRIORITY.find((role) => roles.includes(role)) ?? null;
+}
+
+/**
+ * Bu bölümde ilan yazmayı YALNIZ sınıf yetmediği için kaybeden öğrenci mi: doğrulanmış etkin öğrenci üyeliği var ama sınıfı
+ * 4'ün altında (hazırlık ve bilinmeyen dahil) ve aynı bölümde mezun/akademisyen üyeliği yok. Hata kodunu ayırmak içindir.
+ */
+export function isStudentBelowPostingGrade(
+  memberships: readonly AuthorMembershipFact[],
+  departmentId: string,
+  now: Date,
+): boolean {
+  return (
+    postingAuthorRole(memberships, departmentId, now) === null &&
+    authorMemberships(memberships, departmentId).some((m) => m.role === 'STUDENT')
+  );
+}
+
+/** Yazar herhangi bir bölümde ilan yazabilir mi (ekranda “İlan paylaş” ve “İlanlarım” için; asıl yetki sunucuda denetlenir). */
+export function canPostAnywhere(memberships: readonly AuthorMembershipFact[], now: Date): boolean {
+  return [...new Set(memberships.map((m) => m.departmentId))].some(
+    (departmentId) => postingAuthorRole(memberships, departmentId, now) !== null,
+  );
+}
+
+/**
+ * Yazar bu bölümde yalnız öğrenci mi: yalnız `URL` (başka yerde görülen ilanın https bağlantısı) yöntemiyle ilan paylaşabilir,
+ * `CONTACT_REQUEST` (mezunun kendi adına iletişim talebi) mezun/akademisyene özgüdür.
+ */
+export function isUrlOnlyAuthor(
+  memberships: readonly AuthorMembershipFact[],
+  departmentId: string,
+  now: Date,
+): boolean {
+  return postingAuthorRole(memberships, departmentId, now) === 'STUDENT';
 }
 
 /** Yazar yalnız taslağı ve reddedilmiş ilanı düzenler. */

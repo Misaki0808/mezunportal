@@ -52,7 +52,7 @@ export default async function PostingsPage({
       filters={filters}
       options={options.data}
       sectors={sectors.data.sectors}
-      canPost={mayPost(actor.value.facts.memberships)}
+      canPost={mayPost(actor.value.facts.memberships, new Date())}
     />
   );
 }

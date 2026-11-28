@@ -26,6 +26,7 @@ import {
   buttonClasses,
 } from '@/components/ui';
 import { omitEmptyFields } from '@/components/directory/omit-empty-fields';
+import { SharedBy } from './shared-by';
 import { SearchBar } from '@/components/directory/search-bar';
 
 export function PostingCard({ posting }: { posting: JobPostingCard }) {
@@ -99,6 +100,7 @@ export function PostingCard({ posting }: { posting: JobPostingCard }) {
         </Badge>
         <Badge tone="category">{t(posting.kind)}</Badge>
       </div>
+      <SharedBy posting={posting} className="min-w-0 text-xs text-fg-muted sm:text-sm" />
       {!!posting.matchTags?.length && (
         <div className="flex min-w-0 items-center gap-1.5 text-xs sm:flex-col sm:items-start sm:gap-2">
           <p className="shrink-0 font-semibold">{t('whyMatch')}</p>
@@ -297,7 +299,11 @@ export function PostingList({
             <span className="sm:hidden">{t('compactTitle')}</span>
             <span className="hidden sm:inline">{t('title')}</span>
           </h1>
-          <p className="mt-1 text-sm text-fg-muted sm:mt-3 sm:text-base">{t('subtitle')}</p>
+          {/* Telefonda kısa açıklama (ilk ekrana iki kart sığmalı); tam metin sm ve üstünde. İkisi de kabul garantisi ima etmez. */}
+          <p className="mt-1 text-sm text-fg-muted sm:mt-3 sm:text-base">
+            <span className="sm:hidden">{t('compactSubtitle')}</span>
+            <span className="hidden sm:inline">{t(canPost ? 'subtitle' : 'subtitleReader')}</span>
+          </p>
           {!canPost && (
             <p className="mt-1 text-xs text-fg-muted sm:text-sm">{t('studentReason')}</p>
           )}

@@ -11,7 +11,7 @@ import { CONTACT_FIELDS } from './privacy';
  * Mezun staj/iş ilanları sözleşmesi (P2-04; docs/faz2-plan.md, D19). Servis (W1) ve ekranlar (W2/R1) paylaşır; DEĞİŞTİRMEZLER
  * (değişiklik `ORTAK DOSYA İSTEĞİ`).
  *
- * Akış: yazar (doğrulanmış etkin üyelikli MEZUN ya da AKADEMİSYEN; öğrenci yazamaz) taslak kaydeder → gönderir (`PENDING`; hız
+ * Akış: yazar (doğrulanmış etkin üyelikli MEZUN, AKADEMİSYEN ya da ÖĞRENCİ; öğrenci yalnız dış bağlantılı ilan paylaşır) taslak kaydeder → gönderir (`PENDING`; hız
  * sınırı: 30 günde 5 gönderim) → moderatör (yazarın yazım anındaki bölümünün kapsamı) yayımlar ya da gerekçeyle reddeder
  * (deneyim moderasyonuyla aynı kalıp: `MODERATION_PUBLISH`/`MODERATION_REJECT`, hedef `JOB_POSTING`, işlem kaydı aynı işlemde) →
  * `PUBLISHED` ilan son başvuru günü geçince kendiliğinden `EXPIRED` olur (`postings.expire`, İstanbul takvimi). Yazar `PENDING`
@@ -52,8 +52,11 @@ export const JOB_POSTING_STATUSES = [
 export type JobPostingStatus = (typeof JOB_POSTING_STATUSES)[number];
 export const JOB_APPLY_METHODS = ['URL', 'CONTACT_REQUEST'] as const;
 export type JobApplyMethod = (typeof JOB_APPLY_METHODS)[number];
-/** Yazar rolleri: ilanı yalnız doğrulanmış etkin üyelikli mezun ya da akademisyen yazar. */
-export const JOB_POSTING_AUTHOR_ROLES = ['ALUMNI', 'ACADEMIC'] as const;
+/**
+ * Yazar rolleri: ilanı doğrulanmış etkin üyelikli mezun, akademisyen ya da öğrenci yazar (kart 563, kullanıcı kararı 25 Kas).
+ * Öğrenci yalnız başka bir yerde gördüğü ilanın `https` bağlantısını (`URL`) paylaşır; `CONTACT_REQUEST` mezun/akademisyene özgüdür.
+ */
+export const JOB_POSTING_AUTHOR_ROLES = ['ALUMNI', 'ACADEMIC', 'STUDENT'] as const;
 export type JobPostingAuthorRole = (typeof JOB_POSTING_AUTHOR_ROLES)[number];
 
 export const JOB_POSTING_TITLE_MIN = 3;
@@ -147,10 +150,15 @@ const targetGrades = z
 
 export const getJobPostingFormContextSchema = z.object({}).strict();
 export type GetJobPostingFormContextInput = z.input<typeof getJobPostingFormContextSchema>;
-/** Form bağlamı: yazarın üyelik bölümleri (kapsam seçimi) ve hedef olabilecek bölümler (aynı üniversite). */
+/**
+ * Form bağlamı: yazarın üyelik bölümleri (kapsam seçimi) ve hedef olabilecek bölümler (aynı üniversite). `urlOnly`: yazar o bölümde
+ * yalnız öğrenciyse `true` (yalnız dış bağlantılı ilan; `CONTACT_REQUEST` seçeneği kapalı). Sunucu aynı kuralı kaydetme ve gönderimde ayrıca zorlar.
+ */
 export const jobPostingFormContextSchema = z
   .object({
-    authorDepartments: z.array(z.object({ id: z.string(), name: z.string() }).strict()),
+    authorDepartments: z.array(
+      z.object({ id: z.string(), name: z.string(), urlOnly: z.boolean() }).strict(),
+    ),
     availableTags: z.array(
       z.object({ id: z.string(), slug: z.string(), label: z.string().nullable() }).strict(),
     ),
@@ -383,6 +391,8 @@ export const jobPostingCardSchema = z
     applyMethod: z.enum(JOB_APPLY_METHODS),
     publishedAt: z.date(),
     authorKind: z.enum(JOB_POSTING_AUTHOR_ROLES),
+    /** Dış bağlantılı (`URL`) ilanda bağlantının alan adı (`www.` olmadan); aksi halde `null`. Tam bağlantı yalnız ayrıntıdadır. */
+    sourceHost: z.string().nullable(),
     matchTags: z.array(z.object({ slug: z.string(), label: z.string().nullable() })).optional(),
     targetDepartments: z.array(targetDepartmentSchema),
   })
@@ -630,13 +640,15 @@ const AUTH_ERRORS = [
 ] as const satisfies readonly ErrorCode[];
 
 export const JOB_POSTING_ACTION_ERRORS = {
-  getJobPostingFormContext: [...AUTH_ERRORS],
+  getJobPostingFormContext: [...AUTH_ERRORS, 'JOB_POSTING_STUDENT_GRADE_REQUIRED'],
   saveJobPostingDraft: [
     ...AUTH_ERRORS,
     'VALIDATION_INVALID',
     'RESOURCE_NOT_FOUND',
     'JOB_POSTING_NOT_EDITABLE',
+    'JOB_POSTING_STUDENT_GRADE_REQUIRED',
     'JOB_POSTING_URL_INVALID',
+    'JOB_POSTING_APPLY_METHOD_FORBIDDEN',
     'JOB_POSTING_DEADLINE_INVALID',
     'JOB_POSTING_TARGET_INVALID',
   ],
@@ -647,7 +659,9 @@ export const JOB_POSTING_ACTION_ERRORS = {
     'RATE_LIMITED',
     'JOB_POSTING_NOT_DRAFT',
     'JOB_POSTING_INCOMPLETE',
+    'JOB_POSTING_STUDENT_GRADE_REQUIRED',
     'JOB_POSTING_URL_INVALID',
+    'JOB_POSTING_APPLY_METHOD_FORBIDDEN',
     'JOB_POSTING_DEADLINE_INVALID',
     'JOB_POSTING_TARGET_INVALID',
   ],

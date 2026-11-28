@@ -29,6 +29,9 @@ export type MembershipFacts = {
   role: MembershipRoleName;
   verificationStatus: VerificationStatusName;
   endedAt: Date | null;
+  /** Öğrenci sınıfı bu iki alandan hesaplanır (`rules/classYear`); mezun ve akademisyen için anlamsızdır. */
+  entryYear: number | null;
+  classOffset: number;
 };
 
 export type GrantFacts = {

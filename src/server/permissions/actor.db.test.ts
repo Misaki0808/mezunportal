@@ -48,6 +48,8 @@ it('sıralı aktör okumaları eski ilişkili sorguyla aynı etkin olguları ve 
           role: true,
           verificationStatus: true,
           endedAt: true,
+          entryYear: true,
+          classOffset: true,
         },
       },
       adminGrants: {

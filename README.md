@@ -31,8 +31,11 @@ vermek için bir karşılığı (tanınma, kapasiteyi kendi belirlemesi) olur.
 ## 2. Kullanıcılar
 
 - **Öğrenci:** okul e-postasıyla doğrulanır; deneyim okur ve yazar, mentor bulur, randevu, CV
-  incelemesi ve SSS talebi gönderir.
-- **Mezun:** e-Devlet mezun belgesiyle doğrulanır; deneyim paylaşır, isterse mentor olur.
+  incelemesi ve SSS talebi gönderir. 4. sınıf ve üstü doğrulanmış öğrenci (uzatmadakiler dahil), başka bir platformda
+  gördüğü ve bölümüne uygun staj/iş ilanını dış bağlantıyla paylaşabilir; 1-2-3. sınıf ilan açmaz, 4. sınıftan bir arkadaşına iletir; ilan bölüm yöneticisi onayından geçer ve kabul
+  garantisi taşımaz.
+- **Mezun:** e-Devlet mezun belgesiyle doğrulanır; deneyim paylaşır, ilan paylaşır (dış bağlantı ya da
+  iletişim talebiyle), isterse mentor olur.
 - **Akademisyen:** kurumsal e-postayla doğrulanır; özellikle akademik kariyer ve yüksek lisans
   için mentor olabilir.
 - **Üst sınıf öğrenci:** eşiği geçerse (K-08) mentor olabilir; yeni bölümde en deneyimli

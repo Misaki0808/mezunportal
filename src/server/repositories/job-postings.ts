@@ -26,7 +26,8 @@ export type JobPostingRow = {
   deadlineOn: string;
   applyMethod: 'URL' | 'CONTACT_REQUEST';
   publishedAt: Date;
-  authorKind: 'ALUMNI' | 'ACADEMIC';
+  authorKind: 'ALUMNI' | 'ACADEMIC' | 'STUDENT';
+  sourceHost: string | null;
   targetDepartments: { id: string; name: string }[];
 };
 export type JobPostingDetailRow = JobPostingRow & {
@@ -43,8 +44,10 @@ const CARD_COLUMNS = Prisma.sql`i."id", i."kind", i."title", i."organizationName
   to_char(i."deadlineOn", 'YYYY-MM-DD') AS "deadlineOn", i."applyMethod", i."publishedAt",
   COALESCE((SELECT m."role" FROM "Membership" m
     WHERE m."userId" = i."authorId" AND m."endedAt" IS NULL AND m."verificationStatus" = 'VERIFIED'
-      AND m."role" IN ('ALUMNI', 'ACADEMIC')
-    ORDER BY (m."departmentId" = i."departmentIdAtWrite") DESC, (m."role" = 'ACADEMIC') DESC LIMIT 1), 'ALUMNI') AS "authorKind",
+      AND m."role" IN ('ALUMNI', 'ACADEMIC', 'STUDENT')
+    ORDER BY (m."departmentId" = i."departmentIdAtWrite") DESC,
+      CASE m."role" WHEN 'ACADEMIC' THEN 0 WHEN 'ALUMNI' THEN 1 ELSE 2 END LIMIT 1), 'ALUMNI') AS "authorKind",
+  CASE WHEN i."applyMethod" = 'URL' THEN regexp_replace(substring(i."applyUrl" from '^https://([^/:?#]+)'), '^www[.]', '') END AS "sourceHost",
   COALESCE((SELECT json_agg(json_build_object('id', t."departmentId", 'name', td."name") ORDER BY td."name", t."departmentId")
     FROM "JobPostingDepartment" t JOIN "Department" td ON td."id" = t."departmentId"
     WHERE t."postingId" = i."id"), '[]'::json) AS "targetDepartments"`;
@@ -63,7 +66,7 @@ function visiblePostingWhere(today: string, now: Date): Prisma.Sql[] {
     // gereksiz iç içe birleştirmek yerine kullanıcının indeksli üyeliğini aramasını sağlar.
     Prisma.sql`EXISTS (SELECT 1 FROM "Membership" m
       WHERE m."userId" = i."authorId" AND m."departmentId" = i."departmentIdAtWrite"
-        AND m."role" IN ('ALUMNI', 'ACADEMIC') AND m."verificationStatus" = 'VERIFIED'
+        AND m."role" IN ('ALUMNI', 'ACADEMIC', 'STUDENT') AND m."verificationStatus" = 'VERIFIED'
         AND m."endedAt" IS NULL OFFSET 0)`,
     Prisma.sql`i."id" IN (SELECT jt."postingId" FROM "JobPostingDepartment" jt
       GROUP BY jt."postingId" HAVING count(*) BETWEEN 1 AND 10)`,

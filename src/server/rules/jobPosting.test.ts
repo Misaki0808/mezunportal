@@ -4,13 +4,18 @@ import {
   addDays,
   canClosePosting,
   canEditPosting,
+  canPostAnywhere,
   dayOfDateColumn,
   daysBetween,
   daysLeft,
   deadlineProblem,
   isOpen,
+  isStudentBelowPostingGrade,
+  isUrlOnlyAuthor,
   istanbulDay,
   jobPostingMultiplierPercent,
+  meetsStudentPostingGrade,
+  postingAuthorRole,
 } from './jobPosting';
 
 describe('İstanbul takvim günü', () => {
@@ -108,5 +113,134 @@ describe('ilan puanı aylık tavanı (ayda en çok 3 ilan puan getirir)', () => 
     expect(jobPostingMultiplierPercent(julyFirst, [julyFirst, julyFirst, julyFirst])).toBe(0);
     const juneLast = new Date('2030-06-30T20:59:00Z'); // İstanbul 30 Haziran 23:59
     expect(jobPostingMultiplierPercent(at, [juneLast, juneLast, juneLast])).toBe(0);
+  });
+});
+
+describe('ilan yazarı rolü (kart 563: öğrenci yalnız dış bağlantı; kart 571: yalnız 4. sınıf ve üstü)', () => {
+  // 26 Kas 2026: akademik yıl 2026 başlangıçlı. Giriş 2023 → 4. sınıf, 2024 → 3., 2025 → 2., 2026 → 1., 2022 → 5. (uzatma).
+  const NOW = new Date('2026-11-26T09:00:00Z');
+  const member = (
+    role: string,
+    departmentId = 'A',
+    over: Partial<{
+      verificationStatus: string;
+      endedAt: Date | null;
+      entryYear: number | null;
+      classOffset: number;
+    }> = {},
+  ) => ({
+    role,
+    departmentId,
+    verificationStatus: 'VERIFIED',
+    endedAt: null,
+    entryYear: 2023,
+    classOffset: 0,
+    ...over,
+  });
+
+  it('yalnız o bölümdeki doğrulanmış etkin üyelik sayılır', () => {
+    expect(postingAuthorRole([member('STUDENT')], 'A', NOW)).toBe('STUDENT');
+    expect(postingAuthorRole([member('STUDENT')], 'B', NOW)).toBeNull();
+    expect(
+      postingAuthorRole([member('STUDENT', 'A', { verificationStatus: 'PENDING' })], 'A', NOW),
+    ).toBeNull();
+    expect(
+      postingAuthorRole([member('STUDENT', 'A', { endedAt: new Date() })], 'A', NOW),
+    ).toBeNull();
+    expect(postingAuthorRole([member('MENTOR')], 'A', NOW)).toBeNull();
+    expect(postingAuthorRole([], 'A', NOW)).toBeNull();
+  });
+
+  it('aynı bölümde mezun/akademisyen öğrenciyi geçer; akademisyen mezunu geçer', () => {
+    expect(postingAuthorRole([member('STUDENT'), member('ALUMNI')], 'A', NOW)).toBe('ALUMNI');
+    expect(postingAuthorRole([member('ALUMNI'), member('STUDENT')], 'A', NOW)).toBe('ALUMNI');
+    expect(postingAuthorRole([member('ALUMNI'), member('ACADEMIC')], 'A', NOW)).toBe('ACADEMIC');
+  });
+
+  it.each([
+    ['1. sınıf', { entryYear: 2026 }, false],
+    ['2. sınıf', { entryYear: 2025 }, false],
+    ['3. sınıf', { entryYear: 2024 }, false],
+    ['4. sınıf', { entryYear: 2023 }, true],
+    ['5. sınıf (uzatma)', { entryYear: 2022 }, true],
+    ['uzun uzatma', { entryYear: 2015 }, true],
+    ['hazırlık (düzeltme −1 ile ilk yıl)', { entryYear: 2026, classOffset: -1 }, false],
+    ['düzeltmeyle 4. sınıf (3. yıl +1)', { entryYear: 2024, classOffset: 1 }, true],
+    ['düzeltmeyle 3. sınıfa düşen (4. yıl −1)', { entryYear: 2023, classOffset: -1 }, false],
+    ['giriş yılı bilinmiyor', { entryYear: null }, false],
+    ['henüz başlamamış (gelecek giriş)', { entryYear: 2027 }, false],
+  ])('öğrenci %s → paylaşabilir mi: %s', (_name, over, allowed) => {
+    const memberships = [member('STUDENT', 'A', over)];
+    expect(meetsStudentPostingGrade(memberships[0]!, NOW)).toBe(allowed);
+    expect(postingAuthorRole(memberships, 'A', NOW)).toBe(allowed ? 'STUDENT' : null);
+    expect(canPostAnywhere(memberships, NOW)).toBe(allowed);
+    expect(isStudentBelowPostingGrade(memberships, 'A', NOW)).toBe(!allowed);
+  });
+
+  it('sınıf eşiği İstanbul akademik yıl sınırında geçer: 31 Ağustos 23:59 → 3., 1 Eylül 00:00 → 4. sınıf', () => {
+    const third = new Date('2026-08-31T20:59:59Z'); // İstanbul 31 Ağustos 23:59:59 (akademik yıl 2025)
+    const fourth = new Date('2026-08-31T21:00:00Z'); // İstanbul 1 Eylül 00:00 (akademik yıl 2026)
+    expect(postingAuthorRole([member('STUDENT')], 'A', third)).toBeNull();
+    expect(postingAuthorRole([member('STUDENT')], 'A', fourth)).toBe('STUDENT');
+  });
+
+  it('mezun ve akademisyen sınıfa bakılmaz (giriş yılı boş ya da yeni olsa da yazar)', () => {
+    for (const role of ['ALUMNI', 'ACADEMIC']) {
+      expect(postingAuthorRole([member(role, 'A', { entryYear: null })], 'A', NOW)).toBe(role);
+      expect(postingAuthorRole([member(role, 'A', { entryYear: 2026 })], 'A', NOW)).toBe(role);
+    }
+  });
+
+  it('hem 1-2-3. sınıf öğrenci hem mezun: mezun kuralı geçerli, "sınıf yetmiyor" sayılmaz', () => {
+    const memberships = [member('STUDENT', 'A', { entryYear: 2026 }), member('ALUMNI', 'A')];
+    expect(postingAuthorRole(memberships, 'A', NOW)).toBe('ALUMNI');
+    expect(isUrlOnlyAuthor(memberships, 'A', NOW)).toBe(false);
+    expect(isStudentBelowPostingGrade(memberships, 'A', NOW)).toBe(false);
+  });
+
+  it('bölüm bazlıdır: A bölümünde 4. sınıf, B bölümünde 2. sınıf öğrenci yalnız A için yazar', () => {
+    const memberships = [
+      member('STUDENT', 'A', { entryYear: 2023 }),
+      member('STUDENT', 'B', { entryYear: 2025 }),
+    ];
+    expect(postingAuthorRole(memberships, 'A', NOW)).toBe('STUDENT');
+    expect(postingAuthorRole(memberships, 'B', NOW)).toBeNull();
+    expect(isStudentBelowPostingGrade(memberships, 'B', NOW)).toBe(true);
+    expect(isStudentBelowPostingGrade(memberships, 'A', NOW)).toBe(false);
+    expect(canPostAnywhere(memberships, NOW)).toBe(true);
+  });
+
+  it('"sınıf yetmiyor" yalnız doğrulanmış etkin öğrenci üyeliği varken: üyelik yok/beklemede/bitmiş/başka rol → false', () => {
+    expect(isStudentBelowPostingGrade([], 'A', NOW)).toBe(false);
+    expect(
+      isStudentBelowPostingGrade(
+        [member('STUDENT', 'A', { entryYear: 2026, verificationStatus: 'PENDING' })],
+        'A',
+        NOW,
+      ),
+    ).toBe(false);
+    expect(
+      isStudentBelowPostingGrade(
+        [member('STUDENT', 'A', { entryYear: 2026, endedAt: new Date() })],
+        'A',
+        NOW,
+      ),
+    ).toBe(false);
+    expect(isStudentBelowPostingGrade([member('MENTOR', 'A', { entryYear: 2026 })], 'A', NOW)).toBe(
+      false,
+    );
+    expect(
+      isStudentBelowPostingGrade([member('STUDENT', 'B', { entryYear: 2026 })], 'A', NOW),
+    ).toBe(false);
+  });
+
+  it('urlOnly: yalnız o bölümde (yeterli sınıfta) öğrenciyse; başka bölümdeki mezunluk öğrenciliği kaldırmaz', () => {
+    expect(isUrlOnlyAuthor([member('STUDENT')], 'A', NOW)).toBe(true);
+    expect(isUrlOnlyAuthor([member('ALUMNI')], 'A', NOW)).toBe(false);
+    expect(isUrlOnlyAuthor([member('ACADEMIC')], 'A', NOW)).toBe(false);
+    expect(isUrlOnlyAuthor([member('STUDENT', 'A'), member('ALUMNI', 'B')], 'A', NOW)).toBe(true);
+    expect(isUrlOnlyAuthor([member('STUDENT', 'A'), member('ALUMNI', 'A')], 'A', NOW)).toBe(false);
+    expect(isUrlOnlyAuthor([], 'A', NOW)).toBe(false); // üyelik yoksa urlOnly değil, yetkisiz (servis ayrıca reddeder)
+    expect(isUrlOnlyAuthor([member('STUDENT', 'A', { entryYear: 2026 })], 'A', NOW)).toBe(false); // sınıfı yetmeyen: yazar bile değil
   });
 });

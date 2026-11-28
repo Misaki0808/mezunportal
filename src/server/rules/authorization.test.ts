@@ -30,6 +30,8 @@ const membership = (
   role: 'STUDENT',
   verificationStatus: 'VERIFIED',
   endedAt: null,
+  entryYear: null,
+  classOffset: 0,
   ...overrides,
 });
 

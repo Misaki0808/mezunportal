@@ -97,7 +97,12 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
   const [remote, setRemote] = useState(initial?.isRemote ?? false);
   const [description, setDescription] = useState(initial?.description ?? '');
   const [deadline, setDeadline] = useState(initial?.deadlineOn ?? '');
-  const [method, setMethod] = useState<'URL' | 'CONTACT_REQUEST'>(initial?.applyMethod ?? 'URL');
+  const [chosenMethod, setMethod] = useState<'URL' | 'CONTACT_REQUEST'>(
+    initial?.applyMethod ?? 'URL',
+  );
+  // Seçili bölümde yalnız öğrenci olan yazar yalnız dış bağlantıyla ilan paylaşır (sunucu aynı kuralı ayrıca zorlar).
+  const urlOnly = context.authorDepartments.find((d) => d.id === departmentId)?.urlOnly ?? false;
+  const method = urlOnly ? 'URL' : chosenMethod;
   const [url, setUrl] = useState(initial?.applyUrl ?? '');
   const [targets, setTargets] = useState<string[]>(
     initial?.targetDepartments.map((d) => d.id) ?? [],
@@ -551,21 +556,31 @@ export function PostingEditor({ context, initial, save, submit }: Props) {
                 ))}
               </div>
             </fieldset>
-            <PostingField label={t('applyMethod')} required error={bad('applyMethod')}>
-              {(p) => (
-                <Select
-                  {...p}
-                  data-error-field="applyMethod"
-                  value={method}
-                  onChange={(e) => setMethod(e.target.value as typeof method)}
-                >
-                  <option value="URL">{t('urlMethod')}</option>
-                  <option value="CONTACT_REQUEST">{t('contactMethod')}</option>
-                </Select>
-              )}
-            </PostingField>
+            {urlOnly ? (
+              <p className="rounded-card bg-primary-soft p-4 text-base text-on-primary-soft">
+                {t('urlOnlyHint')}
+              </p>
+            ) : (
+              <PostingField label={t('applyMethod')} required error={bad('applyMethod')}>
+                {(p) => (
+                  <Select
+                    {...p}
+                    data-error-field="applyMethod"
+                    value={method}
+                    onChange={(e) => setMethod(e.target.value as typeof method)}
+                  >
+                    <option value="URL">{t('urlMethod')}</option>
+                    <option value="CONTACT_REQUEST">{t('contactMethod')}</option>
+                  </Select>
+                )}
+              </PostingField>
+            )}
             {method === 'URL' && (
-              <PostingField label={t('applyUrl')} required error={bad('applyUrl')}>
+              <PostingField
+                label={t(urlOnly ? 'sourceUrl' : 'applyUrl')}
+                required
+                error={bad('applyUrl')}
+              >
                 {(p) => (
                   <Input
                     {...p}

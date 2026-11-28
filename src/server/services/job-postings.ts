@@ -60,7 +60,10 @@ import {
   daysLeft,
   deadlineProblem,
   isOpen,
+  isStudentBelowPostingGrade,
+  isUrlOnlyAuthor,
   istanbulDay,
+  postingAuthorRole,
 } from '../rules/jobPosting';
 import { idCursorWhere, toPage } from './admin-access';
 import { publicReach } from '../rules/jobMatch';
@@ -102,7 +105,7 @@ async function asMember<T>(
   }, TX_OPTIONS);
 }
 
-/** Yazarın doğrulanmış etkin mezun/akademisyen üyelik bölümleri; yoksa yetkisiz. */
+/** Yazarın doğrulanmış etkin mezun/akademisyen/öğrenci üyelik bölümleri; yoksa yetkisiz. */
 function authorDepartmentIds(actor: Actor): string[] {
   const ids = actor.facts.memberships
     .filter(
@@ -114,6 +117,19 @@ function authorDepartmentIds(actor: Actor): string[] {
     .map((m) => m.departmentId);
   if (ids.length === 0) throw codedForbidden('AUTH_FORBIDDEN');
   return [...new Set(ids)];
+}
+
+/**
+ * Bu bölümde ilan YAZMA (taslak kaydı, gönderim) yetkisi: mezun/akademisyen üyelik ya da sınıfı 4 ve üstü doğrulanmış öğrenci üyeliği.
+ * Yalnız sınıfı yetmeyen öğrenci kararlı kodla (`JOB_POSTING_STUDENT_GRADE_REQUIRED`) reddedilir; başka her eksiklik yetkisizdir.
+ * Sınıf, işlem içinde yeniden yüklenen üyelikten hesaplanır; istemciye güvenilmez. Okuma (kendi ilanlarını listele/kapat) bu şarta bağlı değildir.
+ */
+function requirePostingRole(actor: Actor, departmentId: string, now: Date) {
+  const role = postingAuthorRole(actor.facts.memberships, departmentId, now);
+  if (role) return role;
+  if (isStudentBelowPostingGrade(actor.facts.memberships, departmentId, now))
+    throw codedForbidden('JOB_POSTING_STUDENT_GRADE_REQUIRED');
+  throw codedForbidden('AUTH_FORBIDDEN');
 }
 
 async function universityOfDepartment(tx: Tx, departmentId: string): Promise<string> {
@@ -205,8 +221,12 @@ export async function getJobPostingFormContext(
   deps: JobPostingDeps,
   userId: string,
 ): Promise<JobPostingFormContext> {
-  return asMember(deps, userId, async (tx, actor) => {
-    const ids = authorDepartmentIds(actor);
+  return asMember(deps, userId, async (tx, actor, now) => {
+    // Yalnız yazabildiği bölümler listelenir; hiçbiri yoksa nedeni (sınıf) söyleyen kararlı kodla reddedilir.
+    const ids = authorDepartmentIds(actor).filter(
+      (id) => postingAuthorRole(actor.facts.memberships, id, now) !== null,
+    );
+    if (ids.length === 0) throw codedForbidden('JOB_POSTING_STUDENT_GRADE_REQUIRED');
     const departments = await tx.department.findMany({
       where: { id: { in: ids } },
       select: { id: true, name: true, faculty: { select: { universityId: true } } },
@@ -219,7 +239,11 @@ export async function getJobPostingFormContext(
       orderBy: [{ faculty: { name: 'asc' } }, { name: 'asc' }],
     });
     return jobPostingFormContextSchema.parse({
-      authorDepartments: departments.map(({ id, name }) => ({ id, name })),
+      authorDepartments: departments.map(({ id, name }) => ({
+        id,
+        name,
+        urlOnly: isUrlOnlyAuthor(actor.facts.memberships, id, now),
+      })),
       availableTags: await tx.tag.findMany({
         where: { curated: true },
         select: { id: true, slug: true, label: true },
@@ -266,9 +290,9 @@ export async function saveJobPostingDraft(
 ): Promise<MyJobPostingView> {
   const parsed = saveJobPostingDraftSchema.parse(input);
   const draft = parsed.content;
-  return asMember(deps, userId, async (tx, actor) => {
-    const ids = authorDepartmentIds(actor);
-    if (!ids.includes(parsed.departmentId)) throw codedForbidden('AUTH_FORBIDDEN');
+  return asMember(deps, userId, async (tx, actor, now) => {
+    authorDepartmentIds(actor);
+    requirePostingRole(actor, parsed.departmentId, now);
     const universityId = await universityOfDepartment(tx, parsed.departmentId);
     const targetIds = await validTargets(tx, universityId, draft.targetDepartmentIds ?? []);
     const selectedTagIds = draft.tagIds ?? [];
@@ -278,6 +302,12 @@ export async function saveJobPostingDraft(
         selectedTagIds.length
     )
       throw codedValidation('VALIDATION_INVALID');
+    // Bu bölümde yalnız öğrenci olan yazar iletişim talebiyle ilan yazamaz (yalnız dış bağlantı); kural kayıtta da zorlanır.
+    if (
+      draft.applyMethod === 'CONTACT_REQUEST' &&
+      isUrlOnlyAuthor(actor.facts.memberships, parsed.departmentId, now)
+    )
+      throw codedValidation('JOB_POSTING_APPLY_METHOD_FORBIDDEN');
     if (draft.applyMethod === 'CONTACT_REQUEST' && draft.applyUrl)
       throw codedValidation('JOB_POSTING_URL_INVALID');
     if (!draft.applyMethod && draft.applyUrl) throw codedValidation('JOB_POSTING_URL_INVALID');
@@ -356,10 +386,19 @@ export async function submitJobPosting(
 ): Promise<SubmitJobPostingOutput> {
   const parsed = jobPostingIdSchema.parse(input);
   return asMember(deps, userId, async (tx, actor, now) => {
-    const ids = authorDepartmentIds(actor);
+    authorDepartmentIds(actor);
     const row = await loadOwnPosting(tx, parsed.postingId, userId);
     if (row.status !== 'DRAFT') throw codedConflict('JOB_POSTING_NOT_DRAFT');
-    if (!ids.includes(row.departmentIdAtWrite)) throw codedForbidden('AUTH_FORBIDDEN');
+    // Önceden açılmış taslak da bu şarta tabidir: sınıfı yetmeyen öğrencinin taslağı silinmez, yalnız gönderimi reddedilir.
+    requirePostingRole(actor, row.departmentIdAtWrite, now);
+    // Gönderimde üyelik yeniden yüklenir: taslak mezunken yazılıp bölümde yalnız öğrenci kalındıysa (ya da tersi) kural güncel role göre.
+    if (
+      row.applyMethod !== 'URL' &&
+      isUrlOnlyAuthor(actor.facts.memberships, row.departmentIdAtWrite, now)
+    )
+      throw codedValidation(
+        row.applyMethod === null ? 'JOB_POSTING_INCOMPLETE' : 'JOB_POSTING_APPLY_METHOD_FORBIDDEN',
+      );
     const company = row.companyId
       ? await tx.company.findUnique({ where: { id: row.companyId }, select: { name: true } })
       : null;
@@ -467,6 +506,7 @@ function toCard(
     applyMethod: row.applyMethod,
     publishedAt: row.publishedAt,
     authorKind: row.authorKind,
+    sourceHost: row.sourceHost,
     targetDepartments: row.targetDepartments,
   };
 }

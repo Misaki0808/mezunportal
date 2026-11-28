@@ -25,14 +25,40 @@ it('URL süzgeçleri doğrulanır; hatalı alan sağlam alanı bozmaz', () => {
     withinDays: 7,
   });
 });
-it('yalnız etkin doğrulanmış mezun ve akademisyen ilan verebilir', () => {
-  expect(mayPost([{ role: 'STUDENT', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(false);
-  expect(mayPost([{ role: 'ALUMNI', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(true);
-  expect(mayPost([{ role: 'ACADEMIC', verificationStatus: 'VERIFIED', endedAt: null }])).toBe(true);
-  expect(mayPost([{ role: 'ACADEMIC', verificationStatus: 'PENDING', endedAt: null }])).toBe(false);
-  expect(mayPost([{ role: 'ALUMNI', verificationStatus: 'VERIFIED', endedAt: new Date() }])).toBe(
-    false,
-  );
+it('ekranda ilan paylaşma: mezun/akademisyen ve 4. sınıf ve üstü öğrenci; 1-2-3. sınıf, bekleyen, biten ve başka rol görmez', () => {
+  const NOW = new Date('2026-11-26T09:00:00Z'); // akademik yıl 2026
+  const m = (
+    role: string,
+    over: Partial<{
+      verificationStatus: string;
+      endedAt: Date | null;
+      entryYear: number | null;
+      classOffset: number;
+    }> = {},
+  ) => ({
+    role,
+    departmentId: 'A',
+    verificationStatus: 'VERIFIED',
+    endedAt: null,
+    entryYear: 2023,
+    classOffset: 0,
+    ...over,
+  });
+  expect(mayPost([m('STUDENT')], NOW)).toBe(true); // 4. sınıf
+  expect(mayPost([m('STUDENT', { entryYear: 2022 })], NOW)).toBe(true); // uzatma
+  for (const entryYear of [2024, 2025, 2026, null]) {
+    expect(mayPost([m('STUDENT', { entryYear })], NOW)).toBe(false); // 3., 2., 1. sınıf, bilinmeyen
+  }
+  expect(mayPost([m('STUDENT', { entryYear: 2026, classOffset: -1 })], NOW)).toBe(false); // hazırlık
+  expect(mayPost([m('STUDENT', { verificationStatus: 'PENDING' })], NOW)).toBe(false);
+  expect(mayPost([m('STUDENT', { endedAt: new Date() })], NOW)).toBe(false);
+  expect(mayPost([m('MENTOR')], NOW)).toBe(false);
+  expect(mayPost([m('ALUMNI', { entryYear: null })], NOW)).toBe(true);
+  expect(mayPost([m('ACADEMIC', { entryYear: null })], NOW)).toBe(true);
+  expect(mayPost([m('ACADEMIC', { verificationStatus: 'PENDING' })], NOW)).toBe(false);
+  expect(mayPost([m('ALUMNI', { endedAt: new Date() })], NOW)).toBe(false);
+  // 1. sınıf öğrenci + mezun üyelik: mezun kuralı geçerli.
+  expect(mayPost([m('STUDENT', { entryYear: 2026 }), m('ALUMNI')], NOW)).toBe(true);
 });
 it('serbest ve sözlük kurum seçimi aynı URL ile doğru alana çevrilir', () => {
   const options = [

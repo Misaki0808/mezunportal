@@ -1276,6 +1276,33 @@ kullanıcının doğrulanmış giriş bağlantısına tıklayınca düştüğü 
 gösterilir. Hesap numaralandırma kuralı değişmez: bağlantı isteme formu kayıtlı, kayıtsız, askıdaki ve silinmiş adreste aynı
 yanıtı verir; askı yalnız e-postanın sahibi bağlantıya tıklayınca görünür.
 
+## 2026-11-26 · Doğrulanmış öğrenciler de ilan paylaşır (yalnız dış bağlantı)
+
+Kullanıcı kararı (25 Kas, "Öğrenciler de paylaşsın"): "buraya atılan ilanlardan kesinlikle kabul alacaksın diye bir şey yok. fakat Youthall gibi
+platformlara giden ilanları görüp insanlar buraya ilan paylaşmak da isteyebilir. eğer ki YBS bölümü ile ilgili olduğunu düşünüyorsa direkt ilanı buraya
+da atabilir." Karar: doğrulanmış, askıda olmayan öğrenci ilan yazabilir; bu bölümde yalnız öğrenciyse yalnız `URL` (orijinal ilanın `https` adresi)
+kullanır, iletişim talebi (`CONTACT_REQUEST`, mezunun kendi adına talebi) mezun/akademisyene özgü kalır. Aynı bölüm yöneticisi onayı ve aynı moderasyon
+kapsamı sürer (yazım anındaki bölüm). Kural kayıtta ve gönderimde sunucuda yeniden yüklenen üyelikle uygulanır (mezunken yazılan iletişim talepli taslak,
+bölümde yalnız öğrenci kalınca gönderilemez); istemci yalnız seçeneği gizler. Okuyucu kartı ve ayrıntısı paylaşanın türünü açık yazar ("Bir öğrenci
+paylaştı · Kaynak: alan adı"); ad ve kimlik yine okuyucu çıktısında yoktur. `/ilanlar` başlığı ve açıklaması kabul garantisi ima etmez ("Staj ve iş
+ilanları", "her ilan bölüm onayından geçer"), düğme "İlan paylaş" olur. Bu karar iki gizli engeli de ortaya çıkardı ve düzeltti: okuyucu görünürlük
+SQL'i yazarın hâlâ `ALUMNI`/`ACADEMIC` üyeliği olmasını şart koşuyordu (düzeltilmeseydi onaylanan öğrenci ilanı hiç görünmezdi) ve yönetici kuyruğunda
+ilanın dış bağlantısı görünmüyordu (öğrencinin paylaştığı bağlantıyı onaylayan hedefi göremezdi); kuyruğa bağlantı ve yazar rolü eklendi. Yazar türü
+sıralaması akademisyen > mezun > öğrenci. **Kapsam dışı / bilinçli:** (1) puan kuralı değişmedi: öğrencinin yayımlanan ilanı da mevcut kuralla (5 puan,
+7 gün gecikmeli, ayda en çok 3 ilan) puan yazar; öğrenciler zaten başka eylemlerle puan kazanıyor, ayda 3 tavanı sıradan kopyalamayı sınırlar. İstenirse
+öğrenci ilanları puansız yapılabilir (tek koşul, `awardJobPostingInTx` çağrısı). (2) Mezun ve akademisyen ilanlarında paylaşan türü satırı çizilmez
+(görünüm değişmedi). (3) Bağlantı hedefinin gerçekten ilan sayfası olduğu otomatik doğrulanmaz; denetim bölüm yöneticisinindir ve yönetici artık bağlantıyı görür.
+## 2026-11-28 · Öğrenci ilanı yalnız 4. sınıf ve üstü öğrenciye açık
+
+Kaynak: hocanın önerisi ("Sadece 4. sınıflara ilan koyabilme hakkı verelim, 1-2-3ler ilan koymak isterse 4lerden destek almak durumunda kalsın;
+mezunlar zaten ilan koyabilir") ve kullanıcının kararı (28 Kas): 1-2-3. sınıf ilan açmaz, bilgiyi 4. sınıftan bir arkadaşına iletir; "destekliyorum"
+akışı yoktur. 25 Kasım'daki "doğrulanmış öğrenci de paylaşsın" kararı bu eşikle daraltıldı. Etkin sınıf `rules/classYear` ile hesaplanır (uzatmadakiler
+dahil); hazırlık, henüz başlamamış ve giriş yılı bilinmeyen öğrenci eşiğin altındadır. Kural kayıtta, gönderimde ve form bağlamında sunucuda, işlem içinde
+yeniden yüklenen üyelikten uygulanır (`JOB_POSTING_STUDENT_GRADE_REQUIRED`); eşik bölüm bazlıdır, aynı bölümde mezun/akademisyen üyeliği olan kişi mezun
+kuralına tabidir. Önceden açılmış taslak silinmez, yalnız kaydı ve gönderimi reddedilir; kendi ilanlarını listeleme ve kapatma sınıfa bağlı değildir.
+Yayındaki öğrenci ilanı okuyucudan düşmez (okuyucu görünürlüğü yazarın rolüne bakar, sınıfına değil). Ekranda 1-2-3. sınıfa "İlan paylaş" ve "İlanlarım" yoktur,
+kısa bir satır nedeni ve yolu söyler. Kapsam dışı: ilanların "kişinin açtığı / dışarıdan" diye ikiye ayrılması ayrı karttır.
+
 ## 2026-11-26 · İçerik masaüstünde ortalanır; başlangıç ve onay eylemleri akışta
 
 Kullanıcı testinde masaüstünde her sayfada sağ taraf boş kaldı (1440 px'te bildirimler sol 32 / sağ 388 px, profil 32 / 260 px).

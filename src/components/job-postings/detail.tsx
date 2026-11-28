@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { parseApplyUrl, type JobPostingDetail } from '@/contracts/job-postings';
 import { BackLink, Badge, PageHeader, buttonClasses } from '@/components/ui';
 import { ReportPosting } from './report';
+import { SharedBy } from './shared-by';
 
 export function PostingDetail({
   posting,
@@ -77,7 +78,7 @@ export function PostingDetail({
           aria-label={t('facts')}
           className="rounded-card border border-border bg-surface p-5 shadow-card max-lg:order-first lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
         >
-          <dl className="grid gap-4">
+          <dl className="grid grid-cols-1 gap-4">
             <div>
               <dt className="text-sm text-fg-muted">{t('company')}</dt>
               <dd className="break-words text-base font-semibold text-fg">
@@ -93,6 +94,15 @@ export function PostingDetail({
                 )}
               </dd>
             </div>
+            {posting.authorKind === 'STUDENT' && (
+              <div>
+                <dt className="text-sm text-fg-muted">{t('sharedBy')}</dt>
+                <dd className="break-words text-base text-fg">
+                  <SharedBy posting={posting} stacked />
+                  <span className="mt-1 block text-sm text-fg-muted">{t('sharedNote')}</span>
+                </dd>
+              </div>
+            )}
             <div>
               <dt className="text-sm text-fg-muted">{t('kind')}</dt>
               <dd className="mt-1">

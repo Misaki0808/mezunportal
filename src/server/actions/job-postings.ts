@@ -1,6 +1,7 @@
 'use server';
 
 import {
+  JOB_POSTING_AUTHOR_ROLES,
   getJobPostingSchema,
   previewJobPostingContactSchema,
   requestJobPostingContactSchema,
@@ -60,7 +61,7 @@ const deps = () => ({ db: getDb() });
 
 export async function getJobPostingFormContext(): Promise<ActionResult<JobPostingFormContext>> {
   try {
-    const actor = await requireVerifiedMember({ roles: ['ALUMNI', 'ACADEMIC'] });
+    const actor = await requireVerifiedMember({ roles: [...JOB_POSTING_AUTHOR_ROLES] });
     return actionOk(await jobPostings.getJobPostingFormContext(deps(), actor.userId));
   } catch (error) {
     return failAction(error, 'getJobPostingFormContext');
@@ -71,7 +72,7 @@ export async function saveJobPostingDraft(
   input: SaveJobPostingDraftInput,
 ): Promise<ActionResult<MyJobPostingView>> {
   try {
-    const actor = await requireVerifiedMember({ roles: ['ALUMNI', 'ACADEMIC'] });
+    const actor = await requireVerifiedMember({ roles: [...JOB_POSTING_AUTHOR_ROLES] });
     const parsed = parseInput(saveJobPostingDraftSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.saveJobPostingDraft(deps(), actor.userId, parsed.data));
@@ -84,7 +85,7 @@ export async function submitJobPosting(
   input: JobPostingIdInput,
 ): Promise<ActionResult<SubmitJobPostingOutput>> {
   try {
-    const actor = await requireVerifiedMember({ roles: ['ALUMNI', 'ACADEMIC'] });
+    const actor = await requireVerifiedMember({ roles: [...JOB_POSTING_AUTHOR_ROLES] });
     const parsed = parseInput(jobPostingIdSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.submitJobPosting(deps(), actor.userId, parsed.data));
@@ -97,7 +98,7 @@ export async function closeJobPosting(
   input: JobPostingIdInput,
 ): Promise<ActionResult<CloseJobPostingOutput>> {
   try {
-    const actor = await requireVerifiedMember({ roles: ['ALUMNI', 'ACADEMIC'] });
+    const actor = await requireVerifiedMember({ roles: [...JOB_POSTING_AUTHOR_ROLES] });
     const parsed = parseInput(jobPostingIdSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.closeJobPosting(deps(), actor.userId, parsed.data));
@@ -110,7 +111,7 @@ export async function listMyJobPostings(
   input: ListMyJobPostingsInput = {},
 ): Promise<ActionResult<MyJobPostingPage>> {
   try {
-    const actor = await requireVerifiedMember({ roles: ['ALUMNI', 'ACADEMIC'] });
+    const actor = await requireVerifiedMember({ roles: [...JOB_POSTING_AUTHOR_ROLES] });
     const parsed = parseInput(listMyJobPostingsSchema, input);
     if (!parsed.ok) return parsed.failure;
     return actionOk(await jobPostings.listMyJobPostings(deps(), actor.userId, parsed.data));
