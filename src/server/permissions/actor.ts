@@ -25,7 +25,15 @@ export async function loadActor(db: ActorReader, userId: string, now: Date): Pro
   if (!user) return null;
   const memberships = await db.membership.findMany({
     where: { userId, endedAt: null },
-    select: { id: true, departmentId: true, role: true, verificationStatus: true, endedAt: true },
+    select: {
+      id: true,
+      departmentId: true,
+      role: true,
+      verificationStatus: true,
+      endedAt: true,
+      entryYear: true,
+      classOffset: true,
+    },
   });
   const grants = await db.adminGrant.findMany({
     where: { userId, revokedAt: null },

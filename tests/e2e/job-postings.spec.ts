@@ -2,6 +2,7 @@ import { loginAs } from './login';
 import { tabForward } from './keyboard';
 import { randomUUID } from 'node:crypto';
 import { TEST_PERSONAS } from '../../prisma/seed-data';
+import { computeClassStanding } from '../../src/server/rules/classYear';
 import { expect, test } from './fixture';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client';
@@ -261,14 +262,14 @@ test('mezun ilan verir, yönetici yayımlar ve öğrenci bulur', async ({ browse
   }
 });
 
-test('öğrenci başka platformdaki ilanı dış bağlantıyla paylaşır; yönetici yayımlar; okuyucu "Bir öğrenci paylaştı" ve kaynağı görür', async ({
+test('4. sınıf öğrenci başka platformdaki ilanı dış bağlantıyla paylaşır; yönetici yayımlar; okuyucu "Bir öğrenci paylaştı" ve kaynağı görür', async ({
   browser,
 }) => {
   test.setTimeout(150_000);
   const title = `Öğrenci paylaşımı ${randomUUID().replaceAll('-', '').slice(0, 10)}`;
   const source = `https://www.youthall.com/ilan/${randomUUID().slice(0, 8)}`;
   const sharer = await db.user.findUniqueOrThrow({
-    where: { email: TEST_PERSONAS.student.email },
+    where: { email: TEST_PERSONAS.seniorMentor.email }, // seed: 2023 girişli, 4. sınıf
     select: { id: true },
   });
   const initialNotes = await db.inAppNotification.findMany({
@@ -286,7 +287,7 @@ test('öğrenci başka platformdaki ilanı dış bağlantıyla paylaşır; yöne
   const shots = process.env.R1_SHOT_DIR;
   let postingId: string | undefined;
   try {
-    await login(student!, 'student');
+    await login(student!, 'seniorMentor');
     await student!.goto('/ilanlar');
     // Başlık kabul garantisi ima etmez; doğrulanmış öğrenci "İlan paylaş" düğmesini görür.
     await expect(student!.getByText('Bir sonraki adımın burada')).toHaveCount(0);
@@ -412,6 +413,126 @@ test('öğrenci başka platformdaki ilanı dış bağlantıyla paylaşır; yöne
     await db.notificationIntent.deleteMany({
       where: { userId: sharer.id, id: { notIn: initialIntents.map((i) => i.id) } },
     });
+  }
+});
+
+test('1-2-3. sınıf öğrenci ilan paylaşamaz: düğme ve "İlanlarım" yok, nedeni ve yolu yazar, doğrudan adres de reddeder', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const membership = await db.membership.findFirstOrThrow({
+    where: { user: { email: TEST_PERSONAS.student.email }, role: 'STUDENT', endedAt: null },
+    select: { entryYear: true, classOffset: true },
+  });
+  const standing = computeClassStanding(membership, new Date());
+  // Seed öğrencisi zamanla 4. sınıfa ulaşır; o zaman bu bekçi sessizce geçmesin, seed giriş yılı güncellensin.
+  expect(
+    standing.kind === 'GRADE' && standing.grade < 4,
+    'seed öğrencisi 1-3. sınıf olmalı (prisma/seed-data.ts entryYear)',
+  ).toBe(true);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page, 'student');
+  await page.goto('/ilanlar');
+  const reason =
+    'İlanları 4. sınıflar ve mezunlar paylaşabilir. Gördüğün bir ilanı 4. sınıftan bir arkadaşına iletebilirsin.';
+  await expect(page.getByText(reason)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'İlan paylaş' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'İlanlarım' })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.goto('/hesap');
+  // Önce sayfanın yüklendiğini ve "Staj ve iş" grubunun geldiğini bekle; yoksa "yok" denetimi boşuna geçer.
+  const career = page.getByRole('region', { name: 'STAJ VE İŞ' });
+  await expect(career).toBeVisible();
+  await expect(career.getByRole('link', { name: /İlanlarım/ })).toHaveCount(0);
+  // Doğrudan adres: form açılmaz, neden yazılır; sunucu kaydı da reddeder (DB testlerinde).
+  await page.goto('/ilanlar/yeni');
+  await expect(
+    page.getByText(/İlanları 4\. sınıf ve üstü öğrenciler ile mezunlar paylaşabilir/),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Devam et' })).toHaveCount(0);
+  // 1440 px: tam açıklamada "sen de paylaşabilirsin" yok (yalnız paylaşabilene söylenir), yatay taşma yok.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/ilanlar');
+  await expect(page.getByText(/sen de paylaşabilirsin/)).toHaveCount(0);
+  await expect(
+    page.getByText('Topluluğun paylaştığı ilanlar; her ilan bölüm onayından geçer.'),
+  ).toBeVisible();
+  await expect(page.getByText(reason)).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const shots = process.env.R1_SHOT_DIR;
+  if (shots)
+    await page.screenshot({ path: `${shots}/ucuncu-sinif-ilanlar-1440.png`, fullPage: true });
+});
+
+test('uzun kaynak alan adı (63+63 karakter etiket) ilan kartını ve ayrıntısını yatay taşırmaz; 390 ve 1440', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  const sharer = await db.user.findUniqueOrThrow({
+    where: { email: TEST_PERSONAS.seniorMentor.email },
+  });
+  const moderator = await db.user.findUniqueOrThrow({
+    where: { email: 'system-admin@test.mezunportal.local' },
+  });
+  const membership = await db.membership.findFirstOrThrow({
+    where: { userId: sharer.id, role: 'STUDENT', endedAt: null },
+  });
+  const title = `Uzun alan adı ${randomUUID().replaceAll('-', '').slice(0, 10)}`;
+  const host = `${'a'.repeat(63)}.${'b'.repeat(63)}.example.org`;
+  const at = new Date();
+  const deadline = new Date(at);
+  deadline.setUTCDate(deadline.getUTCDate() + 10);
+  const posting = await db.jobPosting.create({
+    data: {
+      authorId: sharer.id,
+      departmentIdAtWrite: membership.departmentId,
+      title,
+      organizationName: 'Örnek Teknoloji',
+      location: 'İstanbul',
+      isRemote: false,
+      description: 'Uzun bir kaynak alan adıyla paylaşılan, düzeni bozmaması gereken örnek ilan.',
+      applyMethod: 'URL',
+      applyUrl: `https://${host}/ilan/1`,
+      deadlineOn: deadline,
+      status: 'PUBLISHED',
+      submittedAt: at,
+      moderatedAt: at,
+      moderatedById: moderator.id,
+      publishedAt: at,
+      targets: { create: { departmentId: membership.departmentId } },
+    },
+  });
+  const shots = process.env.R1_SHOT_DIR;
+  try {
+    await login(page, 'alumniMentor');
+    for (const [width, height] of [
+      [390, 844],
+      [1440, 900],
+    ] as const) {
+      await page.setViewportSize({ width, height });
+      await page.goto('/ilanlar');
+      await page.getByLabel('Pozisyon veya kurum ara').fill(title);
+      await page.getByRole('button', { name: 'Ara', exact: true }).click();
+      const card = page.locator('article').filter({ hasText: title });
+      await expect(card.getByText(/Kaynak: /)).toBeVisible();
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+        `${width} px liste belge genişliği`,
+      ).toBeLessThanOrEqual(width);
+      await page.goto(`/ilanlar/${posting.id}`);
+      await expect(page.getByText('Paylaşan')).toBeVisible();
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+        `${width} px ayrıntı belge genişliği`,
+      ).toBeLessThanOrEqual(width);
+      if (shots)
+        await page.screenshot({
+          path: `${shots}/uzun-alan-adi-detay-${width}.png`,
+          fullPage: true,
+        });
+    }
+  } finally {
+    await db.jobPosting.deleteMany({ where: { id: posting.id } });
   }
 });
 

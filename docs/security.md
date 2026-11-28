@@ -85,7 +85,7 @@ ve akademisyen açabilir; öğrenci eşiği K-08. Yönetici yetkisi ayrı tablod
 | Kendi profili, CV, görünürlük | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Deneyim yaz / taslak / moderasyona gönder | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Yayınlanmış deneyim, SSS ve ilan okuma | ✓ (K-07) | ✓ | ✓ | ✓ | ✓ |
-| İlan yaz / gönder / çek (mezun ve akademisyen; öğrenci yalnız dış bağlantılı) | ✓ (yalnız `URL`) | ✓ | — | — | — |
+| İlan yaz / gönder / çek (mezun ve akademisyen; 4. sınıf ve üstü öğrenci yalnız dış bağlantılı) | ✓ (yalnız `URL`) | ✓ | — | — | — |
 | Mentor dizini; randevu, CV inceleme, iletişim talebi | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Müsaitlik, randevu onayı, CV incelemesi, SSS cevabı | — | ✓ | — | — | — |
 | Deneyim/SSS/ilan moderasyonu, şikâyet kuyruğu | — | — | kendi bölümü | fakülte | hepsi |
@@ -364,7 +364,9 @@ uygunsuz fotoğrafı gerekçeyle kaldırabilir; dosya ve gerekçe kişisel veri 
   ilan üzerinden gider ve ilan→yazar eşlemesi yalnız sunucudadır (önizleme ad değil ilan başlığı gösterir; ad onayda açılır, D7). Hedef bölümler ve
   kapsam bölümü servis kapısında yazarın üniversitesine bağlanır (K-07; veritabanında tetikleyici yoktur). Başvuru bağlantısı yalnız `https`
   (şema, kimlik bilgisi, iç adres yok). Veri dökümü yalnız kendi ilanlarını içerir; hesap silme ilanları siler.
-  **Öğrenci yazar (kart 563):** doğrulanmış etkin öğrenci üyeliği de ilan yazabilir ama o bölümde yalnız öğrenciyse yalnız `URL` yöntemini kullanır
+  **Öğrenci yazar (kart 563, 571):** doğrulanmış etkin öğrenci üyeliği de ilan yazabilir, ama yalnız etkin sınıfı 4 ve üstüyse (`rules/jobPosting` `STUDENT_POSTING_MIN_GRADE`;
+  sınıf işlem içinde yeniden yüklenen `entryYear`/`classOffset`'ten hesaplanır; 1-2-3, hazırlık ve sınıfı bilinmeyen `JOB_POSTING_STUDENT_GRADE_REQUIRED` ile reddedilir;
+  kayıt, gönderim ve form bağlamı sunucuda denetlenir, kendi ilanını listeleme/kapatma sınıfa bağlı değildir) ve o bölümde yalnız öğrenciyse yalnız `URL` yöntemini kullanır
   (`isUrlOnlyAuthor`; kayıtta ve gönderimde sunucuda yeniden yüklenen üyelikle denetlenir, `JOB_POSTING_APPLY_METHOD_FORBIDDEN`; mezun/akademisyen
   akışı değişmez). Moderasyon kapsamı yine yazım anındaki bölümdür; kuyrukta yazarın görünen adı, rolü (öğrenci) ve hedef bağlantı görünür.
   Okuyucuda ad ve kimlik yine yoktur: yalnız "Bir öğrenci paylaştı · Kaynak: alan adı". Okuyucu görünürlüğü yazarın etkin doğrulanmış üyeliğine

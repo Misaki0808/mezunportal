@@ -7,8 +7,13 @@ import {
   type SearchJobPostingsInput,
 } from '@/contracts/job-postings';
 
-import { JOB_POSTING_AUTHOR_ROLES } from '@/contracts/job-postings';
-import { deadlineProblem, istanbulDay as dayInIstanbul, daysLeft } from '@/server/rules/jobPosting';
+import {
+  canPostAnywhere,
+  deadlineProblem,
+  istanbulDay as dayInIstanbul,
+  daysLeft,
+  type AuthorMembershipFact,
+} from '@/server/rules/jobPosting';
 export { addDays } from '@/server/rules/jobPosting';
 
 /** Ekrandaki sıralama: ilk hataya odaklanmak ve sunucudan gelen yolu aynı adıma taşımak için. */
@@ -104,13 +109,7 @@ export function parseJobFilters(
   // Birlikte yine geçersizse (ör. aynı anda şirket ve kurum adı) süzgeçsiz varsayılana dönülür.
   return searchJobPostingsSchema.safeParse(result).success ? result : {};
 }
-export function mayPost(
-  roles: readonly { role: string; verificationStatus: string; endedAt: Date | null }[],
-): boolean {
-  return roles.some(
-    (role) =>
-      JOB_POSTING_AUTHOR_ROLES.some((allowed) => allowed === role.role) &&
-      role.verificationStatus === 'VERIFIED' &&
-      role.endedAt === null,
-  );
+/** Ekranda “İlan paylaş” ve “İlanlarım” görünsün mü: mezun/akademisyen ya da 4. sınıf ve üstü doğrulanmış öğrenci. Yetki sunucuda yeniden denetlenir. */
+export function mayPost(memberships: readonly AuthorMembershipFact[], now: Date): boolean {
+  return canPostAnywhere(memberships, now);
 }

@@ -302,7 +302,7 @@ export function PostingList({
           {/* Telefonda kısa açıklama (ilk ekrana iki kart sığmalı); tam metin sm ve üstünde. İkisi de kabul garantisi ima etmez. */}
           <p className="mt-1 text-sm text-fg-muted sm:mt-3 sm:text-base">
             <span className="sm:hidden">{t('compactSubtitle')}</span>
-            <span className="hidden sm:inline">{t('subtitle')}</span>
+            <span className="hidden sm:inline">{t(canPost ? 'subtitle' : 'subtitleReader')}</span>
           </p>
           {!canPost && (
             <p className="mt-1 text-xs text-fg-muted sm:text-sm">{t('studentReason')}</p>

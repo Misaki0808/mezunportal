@@ -164,7 +164,7 @@ it('"İncele" bağlantıları ilan başlığıyla adlanır; görünen metin ayn�
   expect(second).toHaveAttribute('href', '/ilanlar/job-2');
   expect(first).toHaveTextContent(/^İncele/);
 });
-it('doğrulanmamış üyeye ilan paylaşma sunulmaz; süzgeçler ve sonraki sayfa URL taşır', () => {
+it('ilan paylaşamayan üyeye (1-2-3. sınıf) paylaşma sunulmaz, nedeni ve yolu söylenir; süzgeçler ve sonraki sayfa URL taşır', () => {
   renderWithToasts(
     <PostingList
       canPost={false}
@@ -175,11 +175,34 @@ it('doğrulanmamış üyeye ilan paylaşma sunulmaz; süzgeçler ve sonraki sayf
   );
   expect(screen.queryByRole('link', { name: 'İlan paylaş' })).not.toBeInTheDocument();
   expect(screen.getByRole('search')).toHaveAttribute('action', '/ilanlar');
-  expect(screen.getByText(/doğrulanmış üyelik gerekir/)).toBeVisible();
+  expect(
+    screen.getByText(
+      'İlanları 4. sınıflar ve mezunlar paylaşabilir. Gördüğün bir ilanı 4. sınıftan bir arkadaşına iletebilirsin.',
+    ),
+  ).toBeVisible();
+  // Açıklamada "sen de paylaşabilirsin" yalnız paylaşabilene söylenir.
+  expect(screen.queryByText(/sen de paylaşabilirsin/)).not.toBeInTheDocument();
+  expect(
+    screen.getByText('Topluluğun paylaştığı ilanlar; her ilan bölüm onayından geçer.'),
+  ).toBeInTheDocument();
   expect(screen.getByRole('option', { name: 'Örnek Kurum' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /Sonraki/ }).getAttribute('href')).toContain(
     'organizationName=',
   );
+});
+it('ilan paylaşabilen üyeye paylaşma çağrısı ve "sen de paylaşabilirsin" açıklaması gösterilir; 1-2-3. sınıf nedeni gösterilmez', () => {
+  renderWithToasts(
+    <PostingList
+      canPost
+      filters={{}}
+      options={options}
+      page={{ items: [posting], total: 1, page: 1, pageSize: 20 }}
+    />,
+  );
+  expect(screen.getAllByRole('link', { name: 'İlan paylaş' }).length).toBeGreaterThan(0);
+  expect(screen.getByRole('link', { name: 'İlanlarım' })).toBeInTheDocument();
+  expect(screen.getByText(/sen de paylaşabilirsin/)).toBeInTheDocument();
+  expect(screen.queryByText(/4\. sınıflar ve mezunlar paylaşabilir/)).not.toBeInTheDocument();
 });
 it('ilan hızlı yongası önceki arama ve kurumu korur, sayfayı sıfırlar', () => {
   listNavigation.push.mockReset();

@@ -378,6 +378,172 @@ describe('öğrenci paylaşımı (kart 563: doğrulanmış öğrenci yalnız dı
   });
 });
 
+describe('öğrenci sınıf şartı (kart 571: ilanı yalnız 4. sınıf ve üstü öğrenci ile mezun paylaşır)', () => {
+  const SOURCE = 'https://www.youthall.com/ilan/42';
+  // NOW = 20 Haz 2030 → akademik yıl 2029 başlangıçlı: giriş 2029 → 1., 2028 → 2., 2027 → 3., 2026 → 4., 2025 → 5. sınıf (uzatma).
+  async function studentOf(
+    w: World,
+    entryYear: number | null,
+    classOffset = 0,
+    departmentId = w.inst.deptA1,
+  ) {
+    const userId = await createUser(db, {
+      name: `Öğrenci ${entryYear ?? 'bilinmiyor'}/${classOffset}`,
+    });
+    await addMembership(db, {
+      userId,
+      departmentId,
+      role: 'STUDENT',
+      status: 'VERIFIED',
+      entryYear,
+    });
+    if (classOffset !== 0)
+      await db.membership.updateMany({ where: { userId }, data: { classOffset } });
+    await grantRequiredConsents(db, userId);
+    return userId;
+  }
+  const BELOW: ReadonlyArray<readonly [string, number | null, number]> = [
+    ['1. sınıf', 2029, 0],
+    ['2. sınıf', 2028, 0],
+    ['3. sınıf', 2027, 0],
+    ['hazırlık (ilk yıl, düzeltme −1)', 2029, -1],
+    ['giriş yılı bilinmiyor', null, 0],
+    ['henüz başlamamış (gelecek giriş)', 2031, 0],
+  ];
+  const ENOUGH: ReadonlyArray<readonly [string, number, number]> = [
+    ['4. sınıf', 2026, 0],
+    ['5. sınıf (uzatma)', 2025, 0],
+    ['uzun uzatma', 2018, 0],
+    ['düzeltmeyle 4. sınıf (3. yıl +1)', 2027, 1],
+  ];
+
+  it.each(BELOW)(
+    '%s: form bağlamı ve taslak kaydı JOB_POSTING_STUDENT_GRADE_REQUIRED ile reddedilir; hiçbir şey kaydedilmez',
+    async (_name, entryYear, offset) => {
+      const w = await world();
+      const user = await studentOf(w, entryYear, offset);
+      expect(await code(getJobPostingFormContext(deps, user))).toBe(
+        'JOB_POSTING_STUDENT_GRADE_REQUIRED',
+      );
+      expect(await code(draft(w, user, { applyUrl: SOURCE }))).toBe(
+        'JOB_POSTING_STUDENT_GRADE_REQUIRED',
+      );
+      expect(await db.jobPosting.count({ where: { authorId: user } })).toBe(0);
+    },
+  );
+
+  it.each(ENOUGH)(
+    '%s: form bağlamı açılır (yalnız dış bağlantı), taslak kaydedilir ve gönderilir',
+    async (_name, entryYear, offset) => {
+      const w = await world();
+      const user = await studentOf(w, entryYear, offset);
+      const ctx = await getJobPostingFormContext(deps, user);
+      expect(ctx.authorDepartments).toEqual([
+        { id: w.inst.deptA1, name: expect.any(String), urlOnly: true },
+      ]);
+      const saved = await draft(w, user, { applyUrl: SOURCE });
+      await submitJobPosting(deps, user, { postingId: saved.id });
+      expect(await db.jobPosting.findUniqueOrThrow({ where: { id: saved.id } })).toMatchObject({
+        status: 'PENDING',
+      });
+    },
+  );
+
+  it('4. sınıf eşiği İstanbul akademik yıl sınırında geçer: 31 Ağustos 23:59:59 reddedilir, 1 Eylül 00:00 kabul edilir', async () => {
+    const w = await world();
+    const user = await studentOf(w, 2027); // 2029 yazında 3. sınıf, 2030 Eylül'de 4. sınıf
+    const input = {
+      departmentId: w.inst.deptA1,
+      content: content(w, { applyUrl: SOURCE, deadlineOn: '2030-09-30' }),
+    };
+    expect(await code(saveJobPostingDraft(at('2030-08-31T20:59:59Z'), user, input))).toBe(
+      'JOB_POSTING_STUDENT_GRADE_REQUIRED',
+    );
+    expect(await code(saveJobPostingDraft(at('2030-08-31T21:00:00Z'), user, input))).toBeNull();
+  });
+
+  it('önceden açılmış taslak silinmez: sınıfı düşen (düzeltme −1) öğrencinin gönderimi ve düzenlemesi reddedilir, düzelince gönderilir', async () => {
+    const w = await world();
+    const user = await studentOf(w, 2026);
+    const saved = await draft(w, user, { applyUrl: SOURCE });
+    await db.membership.updateMany({ where: { userId: user }, data: { classOffset: -1 } }); // 3. sınıf
+    expect(await code(submitJobPosting(deps, user, { postingId: saved.id }))).toBe(
+      'JOB_POSTING_STUDENT_GRADE_REQUIRED',
+    );
+    expect(await code(draft(w, user, { title: 'Başka başlık' }, saved.id))).toBe(
+      'JOB_POSTING_STUDENT_GRADE_REQUIRED',
+    );
+    expect(await db.jobPosting.findUniqueOrThrow({ where: { id: saved.id } })).toMatchObject({
+      status: 'DRAFT',
+      title: 'Veri analisti stajyeri',
+    });
+    // Okuma tarafı sınıfa bağlı değildir: kendi ilanlarını görür ve kapatabilir.
+    expect((await listMyJobPostings(deps, user, {})).items.map((i) => i.id)).toEqual([saved.id]);
+    await db.membership.updateMany({ where: { userId: user }, data: { classOffset: 0 } });
+    await submitJobPosting(deps, user, { postingId: saved.id });
+    await db.membership.updateMany({ where: { userId: user }, data: { classOffset: -1 } });
+    await closeJobPosting(deps, user, { postingId: saved.id });
+    expect(await db.jobPosting.findUniqueOrThrow({ where: { id: saved.id } })).toMatchObject({
+      status: 'CLOSED',
+    });
+  });
+
+  it('bölüm bazlı: A bölümünde 4. sınıf, B bölümünde 2. sınıf öğrenci yalnız A için yazar', async () => {
+    const w = await world();
+    const user = await studentOf(w, 2026);
+    await addMembership(db, {
+      userId: user,
+      departmentId: w.inst.deptB1,
+      role: 'STUDENT',
+      status: 'VERIFIED',
+      entryYear: 2028,
+    });
+    const ctx = await getJobPostingFormContext(deps, user);
+    expect(ctx.authorDepartments.map((d) => d.id)).toEqual([w.inst.deptA1]);
+    expect(
+      await code(
+        saveJobPostingDraft(deps, user, {
+          departmentId: w.inst.deptB1,
+          content: content(w, { applyUrl: SOURCE, targetDepartmentIds: [w.inst.deptB1] }),
+        }),
+      ),
+    ).toBe('JOB_POSTING_STUDENT_GRADE_REQUIRED');
+    expect(await draft(w, user, { applyUrl: SOURCE })).toMatchObject({ status: 'DRAFT' });
+  });
+
+  it('1. sınıf öğrenci aynı bölümde mezunsa mezun kuralı geçerli: iletişim talebiyle ilan yazabilir, sınıf şartı yok', async () => {
+    const w = await world();
+    const user = await studentOf(w, 2029);
+    await addMembership(db, {
+      userId: user,
+      departmentId: w.inst.deptA1,
+      role: 'ALUMNI',
+      status: 'VERIFIED',
+      graduationYear: 2020,
+    });
+    const ctx = await getJobPostingFormContext(deps, user);
+    expect(ctx.authorDepartments).toEqual([
+      { id: w.inst.deptA1, name: expect.any(String), urlOnly: false },
+    ]);
+    const saved = await draft(w, user, { applyMethod: 'CONTACT_REQUEST', applyUrl: null });
+    await submitJobPosting(deps, user, { postingId: saved.id });
+    expect(await db.jobPosting.findUniqueOrThrow({ where: { id: saved.id } })).toMatchObject({
+      status: 'PENDING',
+    });
+  });
+
+  it('mezun ve akademisyen sınıfa bakılmaz: giriş yılı olmasa da yazar', async () => {
+    const w = await world();
+    await db.membership.updateMany({
+      where: { userId: { in: [w.alumni, w.academic] } },
+      data: { entryYear: null },
+    });
+    for (const author of [w.alumni, w.academic]) {
+      expect(await draft(w, author)).toMatchObject({ status: 'DRAFT' });
+    }
+  });
+});
+
 describe('yazar: taslak', () => {
   it('kaydeder, günceller (tam üzerine yazma), hedef bölümleri değiştirir; çıktıda yazar kimliği yoktur', async () => {
     const w = await world();

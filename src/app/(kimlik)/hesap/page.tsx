@@ -211,7 +211,7 @@ export default async function AccountPage() {
             : []),
         ]
       : []),
-    ...(mayPost(actor.facts.memberships)
+    ...(mayPost(actor.facts.memberships, new Date())
       ? [
           {
             href: '/ilanlarim',

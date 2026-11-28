@@ -1292,6 +1292,17 @@ sıralaması akademisyen > mezun > öğrenci. **Kapsam dışı / bilinçli:** (1
 7 gün gecikmeli, ayda en çok 3 ilan) puan yazar; öğrenciler zaten başka eylemlerle puan kazanıyor, ayda 3 tavanı sıradan kopyalamayı sınırlar. İstenirse
 öğrenci ilanları puansız yapılabilir (tek koşul, `awardJobPostingInTx` çağrısı). (2) Mezun ve akademisyen ilanlarında paylaşan türü satırı çizilmez
 (görünüm değişmedi). (3) Bağlantı hedefinin gerçekten ilan sayfası olduğu otomatik doğrulanmaz; denetim bölüm yöneticisinindir ve yönetici artık bağlantıyı görür.
+## 2026-11-28 · Öğrenci ilanı yalnız 4. sınıf ve üstü öğrenciye açık
+
+Kaynak: hocanın önerisi ("Sadece 4. sınıflara ilan koyabilme hakkı verelim, 1-2-3ler ilan koymak isterse 4lerden destek almak durumunda kalsın;
+mezunlar zaten ilan koyabilir") ve kullanıcının kararı (28 Kas): 1-2-3. sınıf ilan açmaz, bilgiyi 4. sınıftan bir arkadaşına iletir; "destekliyorum"
+akışı yoktur. 25 Kasım'daki "doğrulanmış öğrenci de paylaşsın" kararı bu eşikle daraltıldı. Etkin sınıf `rules/classYear` ile hesaplanır (uzatmadakiler
+dahil); hazırlık, henüz başlamamış ve giriş yılı bilinmeyen öğrenci eşiğin altındadır. Kural kayıtta, gönderimde ve form bağlamında sunucuda, işlem içinde
+yeniden yüklenen üyelikten uygulanır (`JOB_POSTING_STUDENT_GRADE_REQUIRED`); eşik bölüm bazlıdır, aynı bölümde mezun/akademisyen üyeliği olan kişi mezun
+kuralına tabidir. Önceden açılmış taslak silinmez, yalnız kaydı ve gönderimi reddedilir; kendi ilanlarını listeleme ve kapatma sınıfa bağlı değildir.
+Yayındaki öğrenci ilanı okuyucudan düşmez (okuyucu görünürlüğü yazarın rolüne bakar, sınıfına değil). Ekranda 1-2-3. sınıfa "İlan paylaş" ve "İlanlarım" yoktur,
+kısa bir satır nedeni ve yolu söyler. Kapsam dışı: ilanların "kişinin açtığı / dışarıdan" diye ikiye ayrılması ayrı karttır.
+
 ## 2026-11-26 · İçerik masaüstünde ortalanır; başlangıç ve onay eylemleri akışta
 
 Kullanıcı testinde masaüstünde her sayfada sağ taraf boş kaldı (1440 px'te bildirimler sol 32 / sağ 388 px, profil 32 / 260 px).
