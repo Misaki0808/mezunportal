@@ -25,7 +25,7 @@ export default async function VerificationPage({ params }: { params: Promise<{ k
   if (!award) notFound();
   const t = await getTranslations('yearAlumni');
   return (
-    <div className="mx-auto max-w-2xl px-5 py-12 [.app-content_&]:mx-0 [.app-content_&]:p-0">
+    <div className="mx-auto max-w-2xl px-5 py-12 [.app-content_&]:p-0">
       <PageHeader
         eyebrow={t('awardName')}
         title={t('verifyTitle')}

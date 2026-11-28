@@ -1292,6 +1292,20 @@ sıralaması akademisyen > mezun > öğrenci. **Kapsam dışı / bilinçli:** (1
 7 gün gecikmeli, ayda en çok 3 ilan) puan yazar; öğrenciler zaten başka eylemlerle puan kazanıyor, ayda 3 tavanı sıradan kopyalamayı sınırlar. İstenirse
 öğrenci ilanları puansız yapılabilir (tek koşul, `awardJobPostingInTx` çağrısı). (2) Mezun ve akademisyen ilanlarında paylaşan türü satırı çizilmez
 (görünüm değişmedi). (3) Bağlantı hedefinin gerçekten ilan sayfası olduğu otomatik doğrulanmaz; denetim bölüm yöneticisinindir ve yönetici artık bağlantıyı görür.
+## 2026-11-26 · İçerik masaüstünde ortalanır; başlangıç ve onay eylemleri akışta
+
+Kullanıcı testinde masaüstünde her sayfada sağ taraf boş kaldı (1440 px'te bildirimler sol 32 / sağ 388 px, profil 32 / 260 px).
+Neden: kabuk içeriği en çok 80 rem'di ama ortalanmıyordu ve dar sayfa kökleri (`max-w-*`) kabın soluna yaslanıyordu; görünüm A
+iskeletindeki "kabuk içeriği sola yaslar" kararı (2026-11-15 kaydı, 5. madde) bunu bilerek böyle bırakmıştı, kullanıcı bunu istemedi.
+Karar: kap `mx-auto` alır, doğrudan çocukları `[&>*]:mx-auto` ile kendi genişliğinde ortada durur. Liste sayfaları (ilanlar,
+mezunlar, şirketler) kabı zaten doldurduğu için geniş kalır; sayfa başlığı içerikle aynı hizadadır. Özel sayfaların `mx-0`
+sıfırlamaları kalktı, yalnız dolgu sıfırlaması (`p-0`) kaldı.
+Başlangıç adımlarında ve `/onay`'da eylem düğmeleri sabit alt çubuk yerine formun sonunda akışta durur (`ActionBar enabled={false}`):
+telefonda sabit çubuk kaydırınca da yerinde kalıp içeriği örtüyordu, masaüstünde içerikten kopuk ekranın dibine iniyordu. Geri
+düğmesi dar ve sabit genişlikte, ana düğme aynı yükseklikte ve kalan alanı alır (uzun metin düzgün satıra bölünür). `/onay`'da her
+belge kendi kartıdır (başlık, Zorunlu / İsteğe bağlı etiketi, "Metni oku", onay kutusu, küçük sürüm satırı); taslak uyarısı daha
+sakin, kaydet düğmesi listenin sonundadır. Diğer ekranların sabit alt çubuğu değişmedi. Yeni bekçi: `layout-center.spec.ts`.
+`action-bar-pages` turundan bu iki ekran çıktı, `toast-layout` örtülme sınaması görünürlük formuna taşındı.
 ## 2026-11-25 · Mülakat tüyoları (kart 564, kullanıcı kararı)
 
 Şirket gizliliği ve KVKK kaygısıyla özellik “Mülakat tüyoları” olarak adlandırılır. Deneyim formu şirketin sorularını

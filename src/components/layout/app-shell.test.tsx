@@ -263,16 +263,38 @@ it('Profilim bağlantısını gösterir, yönetimi yalnız sunucudan açıkça i
 });
 
 describe('AppShell: görünüm A iskeleti', () => {
-  it('içerik en çok 1280 px ve sola yaslıdır (ortalanmaz); kabuk dolgusunu kendisi verir', () => {
+  it('içerik en çok 1280 px, masaüstünde ORTALANIR (kap ve doğrudan çocukları mx-auto); kabuk dolgusunu kendisi verir', () => {
     renderUi(<AppShell signedIn>x</AppShell>);
     const content = screen.getByRole('main').firstElementChild as HTMLElement;
     expect(content.className).toContain('app-content');
     expect(content.className).toContain('max-w-[80rem]');
-    expect(content.className).not.toContain('mx-auto');
+    // Kart 561: yan menünün sağındaki alanda ortalanır; dar sayfa kökleri (max-w-*) kendi genişliğinde ortada durur.
+    expect(content.className).toContain('mx-auto');
+    expect(content.className).toContain('[&>*]:mx-auto');
     // Telefon 16 px, bilgisayar 28/32 px.
     expect(content.className).toContain('px-4');
     expect(content.className).toContain('lg:px-8');
     expect(content.className).toContain('lg:pt-7');
+  });
+
+  it('görünen sabit başlığın yüksekliği --app-header-h olarak yayımlanır ve ekran kalkınca silinir (kart 568 P2)', () => {
+    const rect = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        // Telefon başlığı 56 px görünür; bilgisayar başlığı `display: none` (yükseklik 0).
+        const mobile = this.hasAttribute('data-app-header') && this.className.includes('lg:hidden');
+        return { height: mobile ? 55.2 : 0 } as DOMRect;
+      });
+    try {
+      const { unmount } = renderUi(<AppShell signedIn>x</AppShell>);
+      expect(document.querySelectorAll('[data-app-header]')).toHaveLength(2);
+      // Yukarı yuvarlanır: pay başlığı bir piksel bile kısa kalmasın diye.
+      expect(document.documentElement.style.getPropertyValue('--app-header-h')).toBe('56px');
+      unmount();
+      expect(document.documentElement.style.getPropertyValue('--app-header-h')).toBe('');
+    } finally {
+      rect.mockRestore();
+    }
   });
 
   it('yan menü 252 px, iki temada lacivert token ile çizilir ve yalnız bilgisayarda görünür', () => {

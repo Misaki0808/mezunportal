@@ -39,6 +39,8 @@ import type { AlumniVisibilityInput } from '@/contracts/alumni-directory';
 type Tag = ProfileTagsOutput['tags'][number];
 type Save = (input: SaveOnboardingStepInput) => Promise<ActionResult<OnboardingState>>;
 
+/** Ana eylem düğmesi: uzun metin (ör. "Tercihlerimi gözden geçirdim") 390'da düzgün kırılır, Geri ile aynı yükseklikte kalır. */
+const MAIN_ACTION = 'h-full py-2.5 text-center leading-snug text-balance';
 export function OnboardingFlow({
   initialState,
   interests,
@@ -255,10 +257,7 @@ export function OnboardingFlow({
               ? t('visibilityDescription')
               : t(done ? 'completeDescription' : 'readyDescription');
   return (
-    <div
-      data-hydrated={hydrated ? 'true' : undefined}
-      className="flex min-h-[calc(100dvh-8rem)] w-full max-w-lg flex-col"
-    >
+    <div data-hydrated={hydrated ? 'true' : undefined} className="flex w-full max-w-lg flex-col">
       <p className="text-base font-semibold text-primary">{t('eyebrow')}</p>
       <div
         className="mt-5"
@@ -415,8 +414,9 @@ export function OnboardingFlow({
           <p className="mt-2 text-sm text-fg-muted">{t('missingDescription')}</p>
         </section>
       )}
-      <ActionBar className="space-y-2 bg-bg pt-4 pb-2 lg:mt-auto lg:pt-8">
-        {/* Hata, eylem düğmesinin hemen üstünde: 390'da uzun listenin altında görünmeden kalmaz. */}
+      {/* Başlangıç adımlarında çubuk SABİT değil, akışta: Geri / ilerle / "Şimdilik atla" formun sonunda, içeriğin hemen altında durur
+          (mobil ve masaüstü; kart 561). Hata, eylem düğmesinin hemen üstünde: 390'da uzun listenin altında görünmeden kalmaz. */}
+      <ActionBar enabled={false} className="mt-8 space-y-3">
         {error && (
           <p id={actionErrorId} role="alert" className="text-base text-danger">
             {errors(error)}
@@ -431,6 +431,8 @@ export function OnboardingFlow({
           {previous && (
             <Button
               variant="secondary"
+              size="lg"
+              className="shrink-0 px-5"
               loading={pending || alumniSaving}
               onClick={() => {
                 editing.current = true;
@@ -445,7 +447,10 @@ export function OnboardingFlow({
           )}
           <div className="min-w-0 flex-1">
             {step === 'MEMBERSHIP' && (
-              <Link className={buttonClasses({ fullWidth: true, size: 'lg' })} href="/dogrulama">
+              <Link
+                className={`${buttonClasses({ fullWidth: true, size: 'lg' })} ${MAIN_ACTION}`}
+                href="/dogrulama"
+              >
                 {t('membershipAction')}
               </Link>
             )}
@@ -454,6 +459,7 @@ export function OnboardingFlow({
                 <Button
                   size="lg"
                   fullWidth
+                  className={MAIN_ACTION}
                   loading={pending}
                   onClick={() => void submit({ step, tagIds: selected })}
                 >
@@ -465,6 +471,7 @@ export function OnboardingFlow({
               <Button
                 size="lg"
                 fullWidth
+                className={MAIN_ACTION}
                 loading={pending || alumniSaving}
                 onClick={() => void submit({ step: 'VISIBILITY', confirmed: true })}
               >
@@ -475,6 +482,7 @@ export function OnboardingFlow({
               <Button
                 size="lg"
                 fullWidth
+                className={MAIN_ACTION}
                 loading={pending}
                 onClick={() => void submit({ step: 'COMPLETE' })}
               >
@@ -482,7 +490,10 @@ export function OnboardingFlow({
               </Button>
             )}
             {step === 'COMPLETE' && done && (
-              <Link className={buttonClasses({ fullWidth: true, size: 'lg' })} href="/">
+              <Link
+                className={`${buttonClasses({ fullWidth: true, size: 'lg' })} ${MAIN_ACTION}`}
+                href="/"
+              >
                 {t('home')}
               </Link>
             )}
