@@ -30,13 +30,16 @@ vermek için bir karşılığı (tanınma, kapasiteyi kendi belirlemesi) olur.
 
 ## 2. Kullanıcılar
 
-- **Öğrenci:** okul e-postasıyla doğrulanır; deneyim okur ve yazar, mentor bulur, randevu, CV
-  incelemesi ve SSS talebi gönderir.
+- **Öğrenci:** okul e-postasıyla doğrulanır; deneyim okur ve yazar (1. sınıf da yazabilir; staj,
+  kulüp, ders ya da günlük hayat), mentor bulur, randevu, CV incelemesi ve SSS talebi gönderir.
 - **Mezun:** e-Devlet mezun belgesiyle doğrulanır; deneyim paylaşır, isterse mentor olur.
 - **Akademisyen:** kurumsal e-postayla doğrulanır; özellikle akademik kariyer ve yüksek lisans
   için mentor olabilir.
-- **Üst sınıf öğrenci:** eşiği geçerse (K-08) mentor olabilir; yeni bölümde en deneyimli
-  kişiler onlardır.
+- **Öğrenci mentor:** 3. ve 4. sınıf (uzatmadakiler dahil) doğrulanmış öğrenci kendiliğinden öğrenci
+  mentordur (K-08); başvuru ya da yayınlanmış deneyim şartı yoktur. En az bir müsait saat eklemeden
+  mentor listesinde görünmez, istediği an “Mentorluğu bırak” der, sonra dönebilir. Kendisi hariç her
+  öğrenciye (1-4. sınıf) görüşme verebilir, başka mentordan randevu da alabilir. Görüşme puanı
+  mezun/akademisyen mentorun yarısıdır. 1-2. sınıf, hazırlık ve sınıfı bilinmeyen öğrenci mentor olamaz.
 - **Yöneticiler:** bölüm, fakülte ve sistem kapsamında moderasyon, doğrulama ve rapor yürütür.
   Kişisel veriye yalnız görev ekranında ve maskeli erişir.
 

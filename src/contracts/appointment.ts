@@ -48,6 +48,15 @@ export const REQUEST_EXPIRY_HOURS = 72;
 export const EXPIRY_BEFORE_START_HOURS = 12;
 export const REMINDER_BEFORE_HOURS = 24;
 export const MENTOR_MONTHLY_CAPACITY_MAX = 40;
+/**
+ * Mentor ayarları formunun öntanımı. Kapasite ve süre mentorun kararıdır; bu değerler yalnız forma önerilir ve öğrenci mentor
+ * HİÇ ayar kaydetmeden mentorluğu bıraktığında kapalı (`isActive=false`) satırı kurar (kart 572). Kapalı satır listelenmez.
+ */
+export const MENTOR_SETTINGS_DEFAULTS = {
+  monthlyCapacity: 4,
+  sessionMinutes: 30,
+  meetingModes: ['ONLINE'],
+} as const;
 export const APPOINTMENT_NOTE_MAX = 500;
 export const AVAILABILITY_RULES_MAX = 28;
 /** Kullanıcı başına talep hız sınırı (24 saatte). */
@@ -137,11 +146,18 @@ export const setPauseSchema = z
   .object({ pausedUntil: z.coerce.date({ error: INVALID }).nullable() })
   .strict();
 export type SetPauseInput = z.input<typeof setPauseSchema>;
+/** Öğrenci mentorun "Mentorluğu bırak" / "Mentorluğa dön" tercihi (kart 572). Ayarlara ve müsaitliğe dokunmaz. */
+export const setMentorActiveSchema = z.object({ isActive: z.boolean({ error: INVALID }) }).strict();
+export type SetMentorActiveInput = z.input<typeof setMentorActiveSchema>;
 
 export const mentorSettingsViewSchema = z
   .object({
-    /** Bu kullanıcı mentor olabilir mi? (mezun/akademisyen ya da K-08'i geçmiş öğrenci). */
+    /** Bu kullanıcı mentor olabilir mi? (mezun/akademisyen ya da 3. sınıf ve üstü öğrenci, K-08). */
     eligible: z.boolean(),
+    /** Yalnız öğrenci üyeliğiyle mentor mu (mezun/akademisyen değil)? Ekran bırak/dön düğmesini yalnız bunlara gösterir. */
+    studentMentor: z.boolean(),
+    /** Bekleyen ya da onaylı, henüz bitmemiş randevu sayısı. Mentorluğu bırakmak bunları iptal ETMEZ. */
+    openAppointments: z.number().int().min(0),
     settings: z
       .object({
         monthlyCapacity: z.number().int(),
@@ -351,6 +367,7 @@ export const APPOINTMENT_ACTION_ERRORS = {
     'MENTOR_SETTINGS_INVALID',
   ],
   setPause: [...authErrors, 'VALIDATION_INVALID', 'MENTOR_NOT_ELIGIBLE'],
+  setMentorActive: [...authErrors, 'VALIDATION_INVALID', 'MENTOR_NOT_ELIGIBLE'],
   listSlots: [...authErrors, 'VALIDATION_INVALID', 'RESOURCE_NOT_FOUND'],
   requestAppointment: [
     ...authErrors,

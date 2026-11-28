@@ -17,6 +17,7 @@ import {
   saveAvailabilitySchema,
   saveMentorSettingsSchema,
   setMeetLinkSchema,
+  setMentorActiveSchema,
   setPauseSchema,
   slotListSchema,
   type AppointmentPage,
@@ -30,6 +31,7 @@ import {
   type SaveAvailabilityInput,
   type SaveMentorSettingsInput,
   type SetMeetLinkInput,
+  type SetMentorActiveInput,
   type SetPauseInput,
   type SlotList,
   type AppointmentIdInput,
@@ -51,12 +53,14 @@ import {
 } from '../rules/appointmentLifecycle';
 import { findSlot, generateSlots, monthKey, monthRange } from '../rules/appointmentSlots';
 import { evaluateAccess } from '../rules/authorization';
+import { computeClassStanding } from '../rules/classYear';
+import { studentMentorEligibility } from '../rules/profileCompletion';
 import { buildIcs } from '../rules/ics';
 import type { AppointmentNotice, AppointmentNotifier } from './appointment-notifier';
 import { stageAppointmentNotices } from './notification-intent';
 import { viewerUniversityIds } from './search';
 import { CAPACITY_STATUSES } from './mentor-load';
-import { onboardingSnapshot } from './profile';
+import { setMentorProfileActive } from './mentor-status';
 import { consumeRateLimit } from './rateLimit';
 import { visibleMentorWhere } from './mentor-directory';
 import { requireConsent } from './privacy';
@@ -269,29 +273,46 @@ export function noticeFor(
 // Mentor ayarları
 // ---------------------------------------------------------------------------------------------
 
-/** Mezun/akademisyen mentor olabilir; öğrenci K-08 eşiğini (3. sınıf + yayınlanmış deneyim) geçmişse. */
-async function isMentorEligible(tx: Tx, actor: Actor, now: Date): Promise<boolean> {
+/**
+ * Mentor olabilir mi? Mezun/akademisyen her zaman; öğrenci doğrulanmış üyeliğinde etkin sınıf 3 ve üstüyse (K-08, kart 572:
+ * yayınlanmış deneyim şartı yok; sınıf her seferinde hesaplanır). `studentMentor` yalnız öğrenci üyeliğiyle mentor olanlar içindir.
+ */
+type MentorStanding = { eligible: boolean; studentMentor: boolean };
+async function mentorStanding(tx: Tx, actor: Actor, now: Date): Promise<MentorStanding> {
   const verified = actor.facts.memberships.filter(
     (membership) => membership.verificationStatus === 'VERIFIED' && membership.endedAt === null,
   );
   if (verified.some((membership) => membership.role === 'ALUMNI' || membership.role === 'ACADEMIC'))
-    return true;
-  if (!verified.some((membership) => membership.role === 'STUDENT')) return false;
-  return (await onboardingSnapshot(tx, actor.userId, now)).mentorStepAvailable;
+    return { eligible: true, studentMentor: false };
+  const students = verified.filter((membership) => membership.role === 'STUDENT');
+  if (students.length === 0) return { eligible: false, studentMentor: false };
+  const rows = await tx.membership.findMany({
+    where: { id: { in: students.map((membership) => membership.id) } },
+    select: { entryYear: true, classOffset: true },
+  });
+  const eligible = rows.some(
+    (row) => studentMentorEligibility(computeClassStanding(row, now)).eligible,
+  );
+  return { eligible, studentMentor: eligible };
 }
-
 async function settingsView(
   tx: Tx,
   userId: string,
-  eligible: boolean,
+  standing: MentorStanding,
+  now: Date,
 ): Promise<MentorSettingsView> {
   const profile = await tx.mentorProfile.findUnique({ where: { userId } });
+  const openAppointments = await tx.appointment.count({
+    where: { mentorId: userId, status: { in: ['REQUESTED', 'CONFIRMED'] }, endsAt: { gt: now } },
+  });
   const rules = await tx.availabilityRule.findMany({
     where: { mentorId: userId },
     orderBy: [{ weekday: 'asc' }, { startMinute: 'asc' }],
   });
   return mentorSettingsViewSchema.parse({
-    eligible,
+    eligible: standing.eligible,
+    studentMentor: standing.studentMentor,
+    openAppointments,
     settings: profile
       ? {
           monthlyCapacity: profile.monthlyCapacity,
@@ -318,7 +339,7 @@ export async function getMyMentorSettings(
   const now = nowOf(deps);
   return deps.db.$transaction(async (tx) => {
     const actor = await requireMember(tx, userId, now);
-    return settingsView(tx, userId, await isMentorEligible(tx, actor, now));
+    return settingsView(tx, userId, await mentorStanding(tx, actor, now), now);
   }, TX);
 }
 
@@ -332,7 +353,8 @@ export async function saveMentorSettings(
   return deps.db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
     const actor = await requireMember(tx, userId, now);
-    if (!(await isMentorEligible(tx, actor, now))) throw codedForbidden('MENTOR_NOT_ELIGIBLE');
+    const standing = await mentorStanding(tx, actor, now);
+    if (!standing.eligible) throw codedForbidden('MENTOR_NOT_ELIGIBLE');
     const data = {
       isActive: parsed.isActive,
       monthlyCapacity: parsed.monthlyCapacity,
@@ -341,7 +363,7 @@ export async function saveMentorSettings(
       inPersonNote: parsed.meetingModes.includes('IN_PERSON') ? parsed.inPersonNote : null,
     };
     await tx.mentorProfile.upsert({ where: { userId }, create: { userId, ...data }, update: data });
-    return settingsView(tx, userId, true);
+    return settingsView(tx, userId, standing, now);
   }, TX);
 }
 
@@ -355,7 +377,8 @@ export async function saveAvailability(
   return deps.db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
     const actor = await requireMember(tx, userId, now);
-    if (!(await isMentorEligible(tx, actor, now))) throw codedForbidden('MENTOR_NOT_ELIGIBLE');
+    const standing = await mentorStanding(tx, actor, now);
+    if (!standing.eligible) throw codedForbidden('MENTOR_NOT_ELIGIBLE');
     await tx.availabilityRule.deleteMany({ where: { mentorId: userId } });
     try {
       await tx.availabilityRule.createMany({
@@ -364,7 +387,7 @@ export async function saveAvailability(
     } catch {
       throw codedValidation('MENTOR_SETTINGS_INVALID');
     }
-    return settingsView(tx, userId, true);
+    return settingsView(tx, userId, standing, now);
   }, TX);
 }
 
@@ -390,7 +413,31 @@ export async function setPause(
       data: { pausedUntil: parsed.pausedUntil },
     });
     if (updated.count === 0) throw codedForbidden('MENTOR_NOT_ELIGIBLE');
-    return settingsView(tx, userId, await isMentorEligible(tx, actor, now));
+    return settingsView(tx, userId, await mentorStanding(tx, actor, now), now);
+  }, TX);
+}
+
+/**
+ * "Mentorluğu bırak" / "Mentorluğa dön" (kart 572; öğrenci mentor, ama her uygun mentor için çalışır). Yalnız `isActive` değişir:
+ * kapasite, süre ve müsaitlik kuralları korunur, bekleyen/onaylı randevular SESSİZCE İPTAL EDİLMEZ (mentor onları yanıtlar ya da
+ * kendi iptal eder; mezun mentorun kapatma kuralıyla aynı). Ayar satırı hiç yoksa bırakma kapalı bir satır kurar
+ * (`MENTOR_SETTINGS_DEFAULTS`); satır kapalı olduğu için listelenmez ve randevu almaz. Geri dönüş satırı açar; listelenmek için
+ * öğrenci mentorun yine en az bir müsaitlik kuralı olmalıdır (`listedMentorUser`).
+ */
+export async function setMentorActive(
+  deps: AppointmentDeps,
+  userId: string,
+  input: SetMentorActiveInput,
+): Promise<MentorSettingsView> {
+  const parsed = setMentorActiveSchema.parse(input);
+  const now = nowOf(deps);
+  return deps.db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
+    const actor = await requireMember(tx, userId, now);
+    const standing = await mentorStanding(tx, actor, now);
+    if (!standing.eligible) throw codedForbidden('MENTOR_NOT_ELIGIBLE');
+    await setMentorProfileActive(tx, userId, parsed.isActive);
+    return settingsView(tx, userId, standing, now);
   }, TX);
 }
 

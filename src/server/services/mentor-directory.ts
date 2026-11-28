@@ -29,6 +29,7 @@ import { monthRange } from '../rules/appointmentSlots';
 import { computeMentorAvailability } from '../rules/mentorAvailability';
 import { rankSimilar, type PathItem, type PathSignals } from '../rules/similarity';
 import { emitEvent, subjectFromActor, usedFilterKeys } from './event';
+import { listedMentorUser } from './mentor-listing';
 import { approvedCountsThisMonth, type ApprovedCounts } from './mentor-load';
 import { viewerUniversityIds } from './search';
 
@@ -110,9 +111,10 @@ export function visibleMentorWhere(
         },
       },
       // Şirket/unvan metni searchMentors içinde yalnız güncel pozisyonda aranır.
-      ...(positionClauses.length > 0
-        ? { AND: positionClauses.map((clause) => ({ positions: { some: clause } })) }
-        : {}),
+      AND: [
+        listedMentorUser,
+        ...positionClauses.map((clause) => ({ positions: { some: clause } })),
+      ],
       // Yalnız ADLI deneyim: anonim deneyim mentoru hiçbir süzgeçte ele vermez.
       ...(filter.experienceTypes
         ? {

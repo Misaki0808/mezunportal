@@ -4,6 +4,7 @@ import {
   getMyMentorSettings,
   saveAvailability,
   saveMentorSettings,
+  setMentorActive,
   setPause,
 } from '@/server/actions/appointment';
 
@@ -16,7 +17,12 @@ export default async function MentorSettingsPage() {
   return (
     <MentorSettings
       initial={result.data}
-      actions={{ saveSettings: saveMentorSettings, saveAvailability, setPause }}
+      actions={{
+        saveSettings: saveMentorSettings,
+        saveAvailability,
+        setPause,
+        setActive: setMentorActive,
+      }}
     />
   );
 }

@@ -2,6 +2,7 @@ import 'server-only';
 
 import {
   EXPERIENCE_REPORT_RATE_LIMIT,
+  EXPERIENCE_SUBMIT_RATE_LIMIT,
   experienceIdSchema,
   experienceTemplateSchema,
   listExperienceReportsSchema,
@@ -38,7 +39,7 @@ import {
   projectExperience,
   type ExperienceRow,
 } from './experienceProjection';
-import { consumeRateLimit } from './rateLimit';
+import { consumeRateLimit, RATE_LIMITS } from './rateLimit';
 import type { EXPERIENCE_TYPES } from '@/contracts/experience';
 import { stageNotification } from './notification-intent';
 import { emitEvent } from './event';
@@ -207,6 +208,19 @@ export async function submitExperience(
     if (row.status !== 'DRAFT') throw codedConflict('EXPERIENCE_NOT_DRAFT');
     if (!experienceTemplateSchema.safeParse(experienceContent(row)).success)
       throw codedValidation('EXPERIENCE_INCOMPLETE');
+    // Günlük gönderim sınırı (kart 572): doğrulamalardan SONRA ve durum yazımından ÖNCE tüketilir; reddedilen gönderim sayaç
+    // artırmaz, sınır aşılırsa işlem (sayaç dahil) geri sarılır. Kullanıcı satırı kilitli olduğundan eşzamanlı gönderimler sıralanır.
+    await consumeRateLimit(
+      tx,
+      {
+        name: RATE_LIMITS.experienceSubmit.name,
+        limit: EXPERIENCE_SUBMIT_RATE_LIMIT.maxRequests,
+        windowMs: EXPERIENCE_SUBMIT_RATE_LIMIT.windowSeconds * 1000,
+      },
+      userId,
+      now,
+      'EXPERIENCE_DAILY_LIMIT',
+    );
     await tx.experience.update({ where: { id: row.id }, data: { status: 'PENDING' } });
     return { experienceId: row.id, status: 'PENDING' };
   });

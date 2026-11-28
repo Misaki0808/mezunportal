@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getDb } from '@/server/db';
+import { listedMentorUser } from './mentor-listing';
 
 /** Küçük gruplar ve ulaşılamayan veriler herkese açık sayaçta sayı olarak gösterilmez. */
 export type LandingStats = {
@@ -26,6 +27,7 @@ export async function getLandingStats(): Promise<LandingStats> {
           user: {
             deletedAt: null,
             banned: false,
+            ...listedMentorUser,
             memberships: { some: { endedAt: null, verificationStatus: 'VERIFIED' } },
           },
         },

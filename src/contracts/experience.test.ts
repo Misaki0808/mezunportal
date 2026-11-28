@@ -66,6 +66,11 @@ const ready = {
     country: 'İtalya',
     durationWeeks: 36,
   },
+  // Günlük hayat (kart 572): yalnız anlatı zorunlu; şirket, dönem, süre, ücret, başvuru yok.
+  DAILY_LIFE: {
+    type: 'DAILY_LIFE',
+    whatLearned: 'Final haftası için yemekhane sonrası kütüphane düzeni',
+  },
 };
 const now = new Date('2026-11-08T00:00:00Z');
 const anonymous = {
@@ -104,6 +109,31 @@ describe('P1-07 sözleşmesi', () => {
       expect(experienceTemplateSchema.safeParse(ready[type]).success).toBe(true);
     },
   );
+  it('günlük hayat: şirket, dönem ve ücret olmadan geçerli; staja özgü alanı reddeder', () => {
+    expect(experienceTemplateSchema.safeParse(ready.DAILY_LIFE).success).toBe(true);
+    // Konu (organizationName) ve tavsiye isteğe bağlıdır.
+    expect(
+      experienceTemplateSchema.safeParse({
+        ...ready.DAILY_LIFE,
+        organizationName: 'Final haftası',
+        advice: 'Erken başla',
+      }).success,
+    ).toBe(true);
+    // Anlatı yine zorunlu: boş ya da eksik günlük hayat gönderilemez.
+    expect(experienceTemplateSchema.safeParse({ type: 'DAILY_LIFE' }).success).toBe(false);
+    expect(
+      experienceTemplateSchema.safeParse({ type: 'DAILY_LIFE', whatLearned: '   ' }).success,
+    ).toBe(false);
+    for (const schema of [experienceTemplateSchema, experienceDraftTemplateSchema]) {
+      for (const extra of [
+        { pay: 'PAID' },
+        { termYear: 2026 },
+        { companyId: 'c' },
+        { country: 'Almanya' },
+      ])
+        expect(schema.safeParse({ ...ready.DAILY_LIFE, ...extra }).success).toBe(false);
+    }
+  });
   it('tür değişince alanlar değişir: sertifika ücret/mülakat, staj yabancı tür alanı kabul etmez', () => {
     for (const schema of [experienceTemplateSchema, experienceDraftTemplateSchema]) {
       expect(schema.safeParse({ ...ready.CERTIFICATE, pay: 'PAID' }).success).toBe(false);

@@ -1,3 +1,4 @@
+import { untitledKey } from '@/components/experience/title';
 import { unstable_rethrow } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -54,7 +55,7 @@ export default async function ExperienceDetailPage({
         <Badge tone="category">{t(`types.${experience.content.type}`)}</Badge>
       </div>
       <h1 className="mt-3 break-words text-3xl font-semibold tracking-tight text-fg">
-        {content.organizationName ?? t('mine.untitled')}
+        {content.organizationName ?? t(untitledKey(experience.content.type))}
       </h1>
       <p className="mt-2 text-base text-fg-muted">
         {author ? t('detail.by', { name: author.displayName }) : t('detail.anonymousAuthor')}

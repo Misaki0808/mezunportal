@@ -273,6 +273,66 @@ describe('görüşme puanı: iki taraf şartı, ikili tavanı, azalan çarpan, g
     expect(await entriesOf(student)).toHaveLength(0);
   });
 
+  it('öğrenci mentorun görüşme puanı yarıdır, mezununki aynı kalır; ay tavanı ve azalma yarım puanla da işler (kart 572)', async () => {
+    const mentee = await member();
+    const alumnus = await member('ALUMNI');
+    const student = await member(); // öğrenci mentor
+    const dates = [
+      '2030-03-10T10:00:00Z',
+      '2030-03-20T10:00:00Z', // aynı ay → 0
+      '2030-04-10T10:00:00Z', // 50
+      '2030-05-10T10:00:00Z', // 25
+    ];
+    for (const mentor of [alumnus, student]) {
+      for (const iso of dates) {
+        const session = await completedSession(mentor, mentee, new Date(iso));
+        await awardForSession(deps, session.id);
+      }
+    }
+    const full = await entriesOf(alumnus);
+    const half = await entriesOf(student);
+    expect(full.map((r) => r.multiplierPercent)).toEqual([100, 0, 50, 25]);
+    expect(full.map((r) => r.points)).toEqual([10, 0, 5, 2]);
+    expect(half.map((r) => r.multiplierPercent)).toEqual([50, 0, 25, 12]);
+    expect(half.map((r) => r.points)).toEqual([5, 0, 2, 1]);
+    // Taban puan kural tablosundan olduğu gibi kalır; yarım puan çarpanda taşınır.
+    expect(half.every((r) => r.basePoints === 10)).toBe(true);
+    // Yüz yüze: 15 tabanda öğrenci mentor 7.
+    const inPerson = await completedSession(
+      await member(),
+      mentee,
+      new Date('2030-06-05T10:00:00Z'),
+      'IN_PERSON',
+    );
+    await awardForSession(deps, inPerson.id);
+    expect((await entriesOf(inPerson.mentorId))[0]).toMatchObject({
+      action: 'SESSION_IN_PERSON',
+      basePoints: 15,
+      multiplierPercent: 50,
+      points: 7,
+    });
+  });
+
+  it('mentor türü puanın yazıldığı andaki üyelikten gelir: mezun olunca tam, geçmiş kayıt değişmez', async () => {
+    const mentee = await member();
+    const mentor = await member();
+    const first = await completedSession(mentor, mentee, new Date('2030-03-10T10:00:00Z'));
+    await awardForSession(deps, first.id);
+    // Öğrenci üyeliği kapanır, mezun üyeliği başlar.
+    await db.membership.updateMany({ where: { userId: mentor }, data: { endedAt: now } });
+    await addMembership(db, {
+      userId: mentor,
+      departmentId: inst.deptA1,
+      role: 'ALUMNI',
+      graduationYear: 2029,
+    });
+    const second = await completedSession(mentor, mentee, new Date('2030-05-10T10:00:00Z'));
+    await awardForSession(deps, second.id);
+    const rows = await entriesOf(mentor);
+    expect(rows.map((r) => r.points)).toEqual([5, 5]);
+    expect(rows.map((r) => r.multiplierPercent)).toEqual([50, 50]);
+  });
+
   it('tek taraf onayı, CONFIRMED/NO_SHOW durumu ya da "gerçekleşmedi" yanıtı puan üretmez', async () => {
     const { mentor, student } = await pair();
     const session = await completedSession(mentor, student, new Date('2030-06-10T10:00:00Z'));

@@ -176,6 +176,13 @@ LLM çıktısı güvenilmeyen girdidir; yalnız profil alanlarına öneri olur, 
 
 Sıra korunur: yazılı < görüntülü < yüz yüze < referans (referans Faz 2).
 
+**Öğrenci mentor** (3. sınıf ve üstü öğrenci, K-08): görüşme puanı (online ve yüz yüze) mezun/akademisyen mentorun **yarısıdır**;
+diğer bütün eylemler herkes için aynıdır. Yarım puan `PointEntry` kısıtına (puan = taban × çarpan / 100, çarpan 0–100 tam sayı)
+uysun diye ÇARPANA yazılır: görüşme çarpanı (100 → 50 → 25, ay tavanında 0) bir kez daha yarıya inip **aşağı yuvarlanır**
+(100→50, 50→25, 25→12, 0→0), puan da tek aşağı yuvarlamayla çıkar. Online görüşme (taban 10) öğrenci mentorda 5 → 2 → 1,
+yüz yüze (taban 15) 7 → 3 → 1 puandır. Mentor türü puanın yazıldığı andaki doğrulanmış etkin üyelikten belirlenir (mezun ya da
+akademisyen üyeliği de olan kişi tam puan alır); geçmiş kayıtlar değişmez. Kural `rules/points.ts` `mentorSessionPercent`.
+
 **Kurallar** (`src/server/rules/points*`, saf fonksiyon, tablo-güdümlü test):
 
 - Puan yalnız doğrulanmış olaydan: görüşmede iki taraf “gerçekleşti” der; SSS ve deneyimde

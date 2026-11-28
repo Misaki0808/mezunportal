@@ -37,7 +37,10 @@ export function ExperienceContent({
   const text = (key: string) => (typeof read[key] === 'string' ? (read[key] as string) : '');
   const rows: Row[] = [];
   if (showOrganization && text('organizationName'))
-    rows.push({ label: t('detail.organization'), value: text('organizationName') });
+    rows.push({
+      label: content.type === 'DAILY_LIFE' ? t('detail.topic') : t('detail.organization'),
+      value: text('organizationName'),
+    });
   const season = text('termSeason');
   const year = read.termYear;
   if (season || year) {

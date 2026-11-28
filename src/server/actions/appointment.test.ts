@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
     saveMentorSettings: vi.fn(),
     saveAvailability: vi.fn(),
     setPause: vi.fn(),
+    setMentorActive: vi.fn(),
     listSlots: vi.fn(),
     requestAppointment: vi.fn(),
     respondAppointment: vi.fn(),
@@ -50,6 +51,7 @@ const calls: [string, () => Promise<unknown>, keyof typeof mocks.service, unknow
     'saveAvailability',
   ],
   ['setPause', () => actions.setPause({ pausedUntil: null }), 'setPause'],
+  ['setMentorActive', () => actions.setMentorActive({ isActive: false }), 'setMentorActive'],
   ['listSlots', () => actions.listSlots({ mentorId: 'm' }), 'listSlots'],
   [
     'requestAppointment',

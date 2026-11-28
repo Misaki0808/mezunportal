@@ -82,6 +82,7 @@ export function experienceContent(row: ExperienceRow): ExperienceDraftTemplate {
     CERTIFICATE: [],
     GRADUATE_STUDY: ['country', 'city', 'applicationChannel', 'processSteps', 'interviewQuestions'],
     STUDY_ABROAD: ['country', 'city', 'applicationChannel', 'processSteps'],
+    DAILY_LIFE: [],
   };
   return experienceDraftTemplateSchema.parse({
     type: row.type,
@@ -126,9 +127,10 @@ export function draftColumns(content: ExperienceDraftTemplate) {
   return {
     type: content.type,
     organizationName: content.organizationName ?? null,
-    termYear: content.termYear ?? null,
-    termSeason: content.termSeason ?? null,
-    durationWeeks: content.durationWeeks ?? null,
+    // Günlük hayat türünde (kart 572) dönem/süre alanları yoktur; sütunlar boş kalır.
+    termYear: 'termYear' in content ? (content.termYear ?? null) : null,
+    termSeason: 'termSeason' in content ? (content.termSeason ?? null) : null,
+    durationWeeks: 'durationWeeks' in content ? (content.durationWeeks ?? null) : null,
     whatLearned: content.whatLearned ?? '',
     advice: content.advice ?? '',
     country: 'country' in content ? (content.country ?? null) : null,

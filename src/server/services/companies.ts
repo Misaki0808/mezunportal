@@ -17,6 +17,7 @@ import { visibleJobPostingIds } from '../repositories/job-postings';
 import { requireConsent } from './privacy';
 import { viewerUniversityIds } from './search';
 import { loadCompanyMentorCards, notSuspended } from './mentor-directory';
+import { listedMentorUser } from './mentor-listing';
 import type { Actor } from '../permissions/actor';
 
 type Tx = Prisma.TransactionClient;
@@ -229,6 +230,7 @@ export async function getCompany(
           user: {
             deletedAt: null,
             ...notSuspended(now),
+            ...listedMentorUser,
             memberships: {
               some: {
                 endedAt: null,

@@ -27,9 +27,11 @@ describe('P1-04 sözleşmesi', () => {
       mentorEligibilitySchema.safeParse({ eligible: true, reason: 'NOT_UPPER_CLASS' }).success,
     ).toBe(false);
     expect(
-      mentorEligibilitySchema.safeParse({ eligible: false, reason: 'EXPERIENCE_UNAVAILABLE' })
-        .success,
+      mentorEligibilitySchema.safeParse({ eligible: false, reason: 'NOT_UPPER_CLASS' }).success,
     ).toBe(true);
+    // Kart 572: deneyim nedenleri kalktı.
+    for (const reason of ['EXPERIENCE_UNAVAILABLE', 'PUBLISHED_EXPERIENCE_REQUIRED'])
+      expect(mentorEligibilitySchema.safeParse({ eligible: false, reason }).success).toBe(false);
   });
   it('boş etiket listesi kaydetme değildir; seçim yapmadan geçmek atlama eylemidir', () => {
     expect(saveOnboardingStepSchema.safeParse({ step: 'INTERESTS', tagIds: [] }).success).toBe(

@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Prisma } from '@/generated/prisma/client';
-import { codedRateLimited } from '@/lib/errors';
+import { codedRateLimited, type ErrorCode } from '@/lib/errors';
 
 /**
  * Sabit pencereli hız sınırı, Better Auth'un `RateLimit` tablosunda (süreçler arası ve yeniden başlatmada
@@ -36,6 +36,8 @@ export const RATE_LIMITS = {
   seekerContact: { name: 'seeker-contact', limit: 20, windowMs: 30 * 24 * 60 * 60 * 1000 },
   /** Hesap adı değişikliği (kart 353): her değişiklik işlem kaydı yazar; kullanıcı başına saatte 10. */
   accountName: { name: 'account-name', limit: 10, windowMs: 60 * 60 * 1000 },
+  /** Deneyim gönderimi (kart 572): kişi başına günde 3 (onaya gönderme anı). */
+  experienceSubmit: { name: 'experience-submit', limit: 3, windowMs: 24 * 60 * 60 * 1000 },
   /** İlan şikâyeti (P2-04): kullanıcı başına günde 10. */
   jobPostingReport: { name: 'job-posting-report', limit: 10, windowMs: 24 * 60 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitRule>;
@@ -48,12 +50,13 @@ export async function consumeRateLimit(
   rule: RateLimitRule,
   subjectId: string,
   now: Date = new Date(),
+  errorCode: ErrorCode = 'RATE_LIMITED',
 ): Promise<void> {
-  await consumeRateLimitBy(db, rule, subjectId, 1, now);
+  await consumeRateLimitBy(db, rule, subjectId, 1, now, errorCode);
 }
 
 /**
- * Sayacı `cost` kadar artırır (ör. bir yanıtta dönen kart sayısı); sınır aşılırsa `RATE_LIMITED` (artış geri alınmaz: çağıran işlemi
+ * Sayacı `cost` kadar artırır (ör. bir yanıtta dönen kart sayısı); sınır aşılırsa `errorCode` (öntanımlı `RATE_LIMITED`; artış geri alınmaz: çağıran işlemi
  * geri sarar). `cost` 1..`rule.limit` aralığında tam sayıdır.
  */
 export async function consumeRateLimitBy(
@@ -62,6 +65,7 @@ export async function consumeRateLimitBy(
   subjectId: string,
   cost: number,
   now: Date = new Date(),
+  errorCode: ErrorCode = 'RATE_LIMITED',
 ): Promise<void> {
   if (!Number.isInteger(cost) || cost < 1 || cost > rule.limit)
     throw new RangeError('invalid cost');
@@ -76,7 +80,7 @@ export async function consumeRateLimitBy(
       "lastRequest" = CASE WHEN "RateLimit"."lastRequest" < ${windowStart} THEN ${nowMs} ELSE "RateLimit"."lastRequest" END
     RETURNING "count"`;
   const count = Number(rows[0]?.count ?? 0);
-  if (count > rule.limit) throw codedRateLimited('RATE_LIMITED');
+  if (count > rule.limit) throw codedRateLimited(errorCode);
 }
 
 /** Sayacı ARTIRMADAN kalan hakkı okur (ekran "bugün kaç hakkın kaldı" göstersin diye). */

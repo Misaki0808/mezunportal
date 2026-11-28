@@ -99,6 +99,8 @@ type MentorOptions = {
   cvReviewMonthlyLimit?: number;
   name?: string;
   headline?: string;
+  /** Öğrenci mentor varsayılanı: bir müsaitlik kuralı vardır (kart 572); `false` ile kuralsız. */
+  availability?: boolean;
 };
 async function mentor(options: MentorOptions = {}) {
   const userId = await member(options.departmentId ?? inst.deptA1, options.role ?? 'ALUMNI', {
@@ -116,6 +118,10 @@ async function mentor(options: MentorOptions = {}) {
       cvReviewMonthlyLimit: options.cvReviewMonthlyLimit ?? 0,
     },
   });
+  if ((options.role ?? 'ALUMNI') === 'STUDENT' && options.availability !== false)
+    await db.availabilityRule.create({
+      data: { mentorId: userId, weekday: 3, startMinute: 600, endMinute: 720, mode: null },
+    });
   if (options.headline)
     await db.profile.upsert({
       where: { userId },
@@ -464,6 +470,29 @@ describe('süzgeçler', () => {
     ).toEqual([academic, student].sort());
     const cards = (await search(viewer, {})).items;
     expect(cards.find((c) => c.userId === student)?.mentorType).toBe('STUDENT');
+  });
+
+  it('öğrenci mentor müsaitlik kuralı eklemeden listelenmez; mezun/akademisyen kuralsız da listelenir (kart 572)', async () => {
+    const viewer = await member();
+    const bare = await mentor({ role: 'STUDENT', availability: false });
+    const ready = await mentor({ role: 'STUDENT' });
+    const alumnus = await mentor({ role: 'ALUMNI' });
+    const left = await mentor({ role: 'STUDENT', isActive: false });
+    const listed = ids(await search(viewer, {}));
+    expect(listed).toEqual(expect.arrayContaining([ready, alumnus]));
+    expect(listed).not.toContain(bare);
+    // Bırakmış (kapalı) öğrenci mentor kuralı olsa da listelenmez.
+    expect(listed).not.toContain(left);
+    // Kuralı eklenince aynı mentor görünür olur.
+    await db.availabilityRule.create({
+      data: { mentorId: bare, weekday: 2, startMinute: 600, endMinute: 660, mode: null },
+    });
+    expect(ids(await search(viewer, {}))).toContain(bare);
+    // Profilden giriş noktası da kuralsız öğrenci mentoru "mentor değil" sayar.
+    const bare2 = await mentor({ role: 'STUDENT', availability: false });
+    expect(
+      (await getMentorEntryPoints(deps(), await actorOf(viewer), { userId: bare2 })).appointment,
+    ).toEqual({ available: false, reason: 'NOT_MENTOR' });
   });
 
   it('görüşme biçimi: istenenlerden herhangi birini sunan', async () => {

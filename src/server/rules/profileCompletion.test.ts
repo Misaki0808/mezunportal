@@ -107,21 +107,20 @@ describe('açık “atla” biçimi', () => {
     expect(nextOnboardingStep('COMPLETE')).toBe('COMPLETE');
   });
 });
-describe('öğrenci mentor eşiği K-08', () => {
+describe('öğrenci mentor eşiği K-08 (kart 572)', () => {
   it.each([
-    [{ kind: 'PREPARATORY' } as const, 10, false, 'NOT_UPPER_CLASS'],
-    [{ kind: 'GRADE', grade: 2, extended: false } as const, 2, false, 'NOT_UPPER_CLASS'],
-    [{ kind: 'GRADE', grade: 3, extended: false } as const, null, false, 'EXPERIENCE_UNAVAILABLE'],
-    [
-      { kind: 'GRADE', grade: 3, extended: false } as const,
-      0,
-      false,
-      'PUBLISHED_EXPERIENCE_REQUIRED',
-    ],
-    [{ kind: 'GRADE', grade: 3, extended: false } as const, 1, true, null],
-    [{ kind: 'GRADE', grade: 5, extended: true } as const, 1, true, null],
-  ])('sınıf ve yayınlanmış deneyimi birlikte arar', (standing, count, eligible, reason) => {
-    expect(studentMentorEligibility(standing, count)).toEqual({ eligible, reason });
+    [{ kind: 'UNKNOWN' } as const, false],
+    [{ kind: 'NOT_STARTED' } as const, false],
+    [{ kind: 'PREPARATORY' } as const, false],
+    [{ kind: 'GRADE', grade: 1, extended: false } as const, false],
+    [{ kind: 'GRADE', grade: 2, extended: false } as const, false],
+    [{ kind: 'GRADE', grade: 3, extended: false } as const, true],
+    [{ kind: 'GRADE', grade: 4, extended: false } as const, true],
+    [{ kind: 'GRADE', grade: 5, extended: true } as const, true],
+  ])('yalnız sınıfa bakar: yayınlanmış deneyim şartı yok', (standing, eligible) => {
+    expect(studentMentorEligibility(standing)).toEqual(
+      eligible ? { eligible: true, reason: null } : { eligible: false, reason: 'NOT_UPPER_CLASS' },
+    );
   });
 });
 

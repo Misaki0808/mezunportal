@@ -1292,6 +1292,8 @@ enum ExperienceType {
   CERTIFICATE
   GRADUATE_STUDY
   STUDY_ABROAD
+  /// Staj dışı günlük yaşam deneyimi (kart 572); şirket, dönem, ücret gibi staja özgü alanlar yoktur.
+  DAILY_LIFE
 }
 
 enum ExperienceStatus {

@@ -25,6 +25,7 @@ import {
   saveAvailability,
   saveMentorSettings,
   setMeetLink,
+  setMentorActive,
   setPause,
   type AppointmentDeps,
 } from './appointment';
@@ -75,17 +76,14 @@ async function person(
   role: 'STUDENT' | 'ALUMNI' | 'ACADEMIC' = 'STUDENT',
   departmentId = inst.deptA1,
   name?: string,
+  entryYear = 2024,
 ) {
   const userId = await createUser(db, name ? { name } : {});
   await addMembership(db, {
     userId,
     departmentId,
     role,
-    ...(role === 'ALUMNI'
-      ? { graduationYear: 2021 }
-      : role === 'STUDENT'
-        ? { entryYear: 2024 }
-        : {}),
+    ...(role === 'ALUMNI' ? { graduationYear: 2021 } : role === 'STUDENT' ? { entryYear } : {}),
   });
   return userId;
 }
@@ -128,7 +126,7 @@ const ask = (
 
 // =============================================================================================
 describe('mentor ayarları', () => {
-  it('mezun/akademisyen mentor olabilir; öğrenci K-08’i geçmeden olamaz; doğrulanmamış kullanamaz', async () => {
+  it('mezun/akademisyen mentor olabilir; öğrenci 3. sınıfa gelmeden olamaz; doğrulanmamış kullanamaz', async () => {
     const h = harness();
     const base = {
       monthlyCapacity: 4,
@@ -145,7 +143,8 @@ describe('mentor ayarları', () => {
         isActive: true,
       });
     }
-    const student = await person('STUDENT');
+    // NOW = Haziran 2030 → akademik yıl 2029: 2028 girişli 2. sınıftır (mentor olamaz).
+    const student = await person('STUDENT', inst.deptA1, undefined, 2028);
     expect((await getMyMentorSettings(h.deps, student)).eligible).toBe(false);
     await expectCode(saveMentorSettings(h.deps, student, base), 'MENTOR_NOT_ELIGIBLE');
     await expectCode(saveAvailability(h.deps, student, { rules: [] }), 'MENTOR_NOT_ELIGIBLE');
@@ -255,6 +254,138 @@ describe('mentor ayarları', () => {
     );
     const noProfile = await person('ALUMNI');
     await expectCode(setPause(h.deps, noProfile, { pausedUntil: until }), 'MENTOR_NOT_ELIGIBLE');
+  });
+});
+
+// =============================================================================================
+// Kart 572: öğrenci mentor. NOW = Haziran 2030 → akademik yıl 2029: 2027 girişli 3., 2029 girişli 1. sınıftır.
+describe('öğrenci mentor (kart 572)', () => {
+  const THIRD = 2027;
+  const SECOND = 2028;
+  const FIRST = 2029;
+  const base = {
+    monthlyCapacity: 6,
+    sessionMinutes: 30 as const,
+    meetingModes: ['ONLINE' as const],
+    inPersonNote: null,
+    isActive: true,
+  };
+  const wedRules = { rules: [{ weekday: 3, startMinute: 600, endMinute: 720, mode: null }] };
+  /** Ayarları ve çarşamba müsaitliği tamam öğrenci mentor. */
+  async function studentMentor(entryYear = THIRD) {
+    const userId = await person('STUDENT', inst.deptA1, undefined, entryYear);
+    const h = harness();
+    await saveMentorSettings(h.deps, userId, base);
+    await saveAvailability(h.deps, userId, wedRules);
+    return userId;
+  }
+
+  it('3. sınıf deneyimsiz öğrenci mentordur; 2. sınıf ve 1. sınıf değildir', async () => {
+    const h = harness();
+    const third = await person('STUDENT', inst.deptA1, undefined, THIRD);
+    expect(await db.experience.count({ where: { authorId: third } })).toBe(0);
+    expect(await getMyMentorSettings(h.deps, third)).toMatchObject({
+      eligible: true,
+      studentMentor: true,
+      settings: null,
+    });
+    expect((await saveMentorSettings(h.deps, third, base)).settings).toMatchObject({
+      isActive: true,
+    });
+    for (const entryYear of [SECOND, FIRST]) {
+      const lower = await person('STUDENT', inst.deptA1, undefined, entryYear);
+      expect(await getMyMentorSettings(h.deps, lower)).toMatchObject({
+        eligible: false,
+        studentMentor: false,
+      });
+      await expectCode(saveMentorSettings(h.deps, lower, base), 'MENTOR_NOT_ELIGIBLE');
+      await expectCode(setMentorActive(h.deps, lower, { isActive: false }), 'MENTOR_NOT_ELIGIBLE');
+      expect(await db.mentorProfile.count({ where: { userId: lower } })).toBe(0);
+    }
+    // Mezun mentor öğrenci sayılmaz.
+    expect(await getMyMentorSettings(h.deps, await person('ALUMNI'))).toMatchObject({
+      eligible: true,
+      studentMentor: false,
+    });
+  });
+
+  it('sınıf hesaplanır: Eylül akademik yılı değişince 2. sınıf kendiliğinden mentor olur', async () => {
+    const userId = await person('STUDENT', inst.deptA1, undefined, SECOND);
+    const june = harness();
+    const september = harness({ now: new Date('2030-09-02T09:00:00Z') });
+    expect((await getMyMentorSettings(june.deps, userId)).eligible).toBe(false);
+    expect((await getMyMentorSettings(september.deps, userId)).eligible).toBe(true);
+  });
+
+  it('bırakan öğrenci mentor listeden ve randevudan çıkar; dönünce ayarlar ve saatler duruyor', async () => {
+    const h = harness();
+    const mentor = await studentMentor();
+    const mentee = await person('STUDENT', inst.deptA1, undefined, FIRST);
+    expect((await listSlots(h.deps, mentee, { mentorId: mentor })).slots.length).toBeGreaterThan(0);
+
+    const left = await setMentorActive(h.deps, mentor, { isActive: false });
+    expect(left.settings).toMatchObject({ isActive: false, monthlyCapacity: 6 });
+    expect(left.rules).toHaveLength(1);
+    await expectCode(listSlots(h.deps, mentee, { mentorId: mentor }), 'RESOURCE_NOT_FOUND');
+    await expectCode(ask(h, mentee, mentor), 'RESOURCE_NOT_FOUND');
+
+    const back = await setMentorActive(h.deps, mentor, { isActive: true });
+    expect(back.settings).toMatchObject({ isActive: true, monthlyCapacity: 6 });
+    expect(back.rules).toHaveLength(1);
+    expect((await ask(h, mentee, mentor)).status).toBe('REQUESTED');
+  });
+
+  it('hiç ayar kaydetmemiş öğrenci mentor bırakabilir (kapalı satır kurulur, listelenmez); bırakmak randevuyu iptal etmez', async () => {
+    const h = harness();
+    const bare = await person('STUDENT', inst.deptA1, undefined, THIRD);
+    expect(await db.mentorProfile.count({ where: { userId: bare } })).toBe(0);
+    expect((await setMentorActive(h.deps, bare, { isActive: false })).settings).toMatchObject({
+      isActive: false,
+    });
+    expect(await db.mentorProfile.findUniqueOrThrow({ where: { userId: bare } })).toMatchObject({
+      isActive: false,
+    });
+
+    const mentor = await studentMentor();
+    const mentee = await person('STUDENT', inst.deptA1, undefined, FIRST);
+    const requested = await ask(h, mentee, mentor);
+    const left = await setMentorActive(h.deps, mentor, { isActive: false });
+    expect(left.openAppointments).toBe(1);
+    // Bekleyen randevu sessizce iptal edilmez; mentor yine yanıtlayabilir.
+    expect((await dbRow(requested.id)).status).toBe('REQUESTED');
+    await respondAppointment(h.deps, mentor, { decision: 'CONFIRM', appointmentId: requested.id });
+    expect((await dbRow(requested.id)).status).toBe('CONFIRMED');
+  });
+
+  it('müsaitliksiz öğrenci mentordan randevu alınamaz; mezun mentor kuralsız da listelenir', async () => {
+    const h = harness();
+    const mentee = await person('STUDENT', inst.deptA1, undefined, FIRST);
+    const bare = await person('STUDENT', inst.deptA1, undefined, THIRD);
+    await saveMentorSettings(h.deps, bare, base);
+    await expectCode(listSlots(h.deps, mentee, { mentorId: bare }), 'RESOURCE_NOT_FOUND');
+    await saveAvailability(h.deps, bare, wedRules);
+    expect((await listSlots(h.deps, mentee, { mentorId: bare })).slots.length).toBeGreaterThan(0);
+    // Kuralı silince yine listelenmez.
+    await saveAvailability(h.deps, bare, { rules: [] });
+    await expectCode(listSlots(h.deps, mentee, { mentorId: bare }), 'RESOURCE_NOT_FOUND');
+    const alumnus = await person('ALUMNI');
+    await saveMentorSettings(h.deps, alumnus, base);
+    expect((await listSlots(h.deps, mentee, { mentorId: alumnus })).slots).toHaveLength(0);
+  });
+
+  it('3. sınıf öğrenci başka 3. sınıf öğrenci mentordan randevu alabilir; 1-2. sınıf da alabilir; kendinden alamaz', async () => {
+    const h = harness();
+    const mentorA = await studentMentor();
+    const mentorB = await studentMentor();
+    expect((await ask(h, mentorA, mentorB, WED_11)).status).toBe('REQUESTED');
+    for (const [entryYear, startsAt] of [
+      [FIRST, WED_10],
+      [SECOND, WED_1030],
+    ] as const) {
+      const lower = await person('STUDENT', inst.deptA1, undefined, entryYear);
+      expect((await ask(h, lower, mentorA, startsAt)).status).toBe('REQUESTED');
+    }
+    await expectCode(ask(h, mentorA, mentorA), 'RESOURCE_NOT_FOUND');
   });
 });
 

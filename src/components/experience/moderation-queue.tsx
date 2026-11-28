@@ -1,4 +1,5 @@
 'use client';
+import { untitledKey } from './title';
 import { AdminFrame } from '@/components/admin/frame';
 import { AdminList, AdminListItem } from '@/components/admin/list';
 import { useRefillWhenEmpty } from '@/components/admin/use-refill-when-empty';
@@ -326,7 +327,7 @@ export function ModerationQueue({
               </div>
               <h2 className="mt-3 break-words text-lg font-semibold text-fg">
                 {(item.content as { organizationName?: string }).organizationName ??
-                  t('mine.untitled')}
+                  t(untitledKey(item.content.type))}
               </h2>
               <p className="mt-1 text-sm text-fg-muted">
                 {t('queue.submitted', { date: dateOf(item.updatedAt) })}

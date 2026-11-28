@@ -349,6 +349,7 @@
       "ONBOARDING_REQUIRED_STEP_PENDING": "Bitirmeden önce rolünü ve bölümünü seç.",
       "EXPERIENCE_NOT_EDITABLE": "Bu deneyim şu an düzenlenemiyor. Taslak veya reddedilen deneyimini seç.",
       "EXPERIENCE_INCOMPLETE": "Deneyimindeki eksik alanları tamamlayıp yeniden gönder.",
+      "EXPERIENCE_DAILY_LIMIT": "Bugün için deneyim gönderme sınırına ulaştın, yarın tekrar dene.",
       "EXPERIENCE_NOT_DRAFT": "Bu deneyim gönderime hazır bir taslak değil. Durumunu kontrol et.",
       "EXPERIENCE_NOT_PENDING": "Bu deneyim artık moderasyon beklemiyor. Listeyi yenile.",
       "EXPERIENCE_NOT_PUBLISHED": "Yalnız yayınlanmış deneyimleri şikâyet edebilirsin.",
@@ -594,7 +595,7 @@
   "mentors": {
     "eyebrow": "MENTORLAR",
     "title": "Mentor bul",
-    "description": "Mezun, akademisyen ve üst sınıf mentorlar burada. Müsait olanları süzüp randevu ya da iletişim isteyebilirsin.",
+    "description": "Mezun, akademisyen ve öğrenci mentorlar burada. Müsait olanları süzüp randevu ya da iletişim isteyebilirsin.",
     "resultsHeading": "Mentorlar",
     "search": "Mentor ara",
     "searchPlaceholder": "Ad, şirket veya unvan ara",
@@ -617,7 +618,7 @@
     "types": {
       "ALUMNI": "Mezun",
       "ACADEMIC": "Akademisyen",
-      "STUDENT": "Üst sınıf öğrencisi"
+      "STUDENT": "Öğrenci mentor"
     },
     "modes": {
       "ONLINE": "Çevrimiçi",
@@ -1307,7 +1308,7 @@
       "chooseRole": "Devam etmek için bir test rolü seç.",
       "personas": {
         "student": "Öğrenci",
-        "seniorMentor": "Üst sınıf mentor",
+        "seniorMentor": "Öğrenci mentor",
         "alumniMentor": "Mezun mentor",
         "academic": "Akademisyen",
         "departmentAdmin": "Bölüm yöneticisi",
@@ -1336,7 +1337,7 @@
         "REJECTED": "Reddedildi"
       },
       "emptyTitle": "Henüz deneyim yazmadın",
-      "emptyDescription": "Staj, Erasmus ya da yarışma deneyimini paylaş; sonraki öğrencilere yol göster.",
+      "emptyDescription": "Staj, Erasmus, yarışma ya da günlük hayattan bir deneyimini paylaş; sonraki öğrencilere yol göster.",
       "emptyFilteredTitle": "Bu durumda deneyim yok",
       "emptyFilteredDescription": "Başka bir durum seç ya da yeni bir deneyim yaz.",
       "untitled": "Başlıksız taslak",
@@ -1373,7 +1374,8 @@
       "CLUB": "Kulüp",
       "CERTIFICATE": "Sertifika",
       "GRADUATE_STUDY": "Yüksek lisans",
-      "STUDY_ABROAD": "Yurt dışı eğitim"
+      "STUDY_ABROAD": "Yurt dışı eğitim",
+      "DAILY_LIFE": "Günlük hayat"
     },
     "seasons": {
       "SPRING": "Bahar",
@@ -1402,6 +1404,17 @@
       "description": "Daha sonra devam etmek için ayrılmadan önce taslağı kaydet.",
       "typeLegend": "Deneyim türü",
       "typeChanged": "Tür değişti: bu türde sorulmayan alanlar kaydedilmez.",
+      "encourage": "Her deneyim değerli: staj, kulüp, bir ders ya da günlük hayattan öğrendiğin bir şey. 1. sınıfta da yazabilirsin.",
+      "daily": {
+        "aboutTitle": "Konu",
+        "aboutIntro": "İstersen kısa bir başlık ver; boş da bırakabilirsin.",
+        "storyIntro": "Küçük şeyler de değerli: bir ders çalışma düzeni, yemekhane ya da yurt tüyosu, bir sınav haftası. Kendi sözlerinle yaz.",
+        "organizationName": "Konu (isteğe bağlı)",
+        "organizationNameHint": "Örn. “Final haftasında nasıl çalıştım”.",
+        "whatLearned": "Neler yaşadın, ne öğrendin?",
+        "whatLearnedHint": "Birkaç cümle yeter. Mükemmel olması gerekmiyor.",
+        "advice": "Sonrakilere tavsiyen (isteğe bağlı)"
+      },
       "department": "Bölüm",
       "departmentPlaceholder": "Bölüm seç",
       "departmentLocked": "Yazıldığı bölüm sonradan değişmez.",
@@ -1502,6 +1515,7 @@
       "department": "Bölüm: {name}",
       "report": "Şikâyet et",
       "organization": "Kurum",
+      "topic": "Konu",
       "term": "Dönem",
       "place": "Yer",
       "duration": "Süre",
@@ -1922,6 +1936,10 @@
     "mentorDescription": "Deneyimlerini paylaşarak başkalarına destek olabilirsin.",
     "mentorYes": "Evet, ilgileniyorum",
     "mentorNo": "Hayır, ilgilenmiyorum",
+    "mentorStudentTitle": "Öğrenci mentorsun",
+    "mentorStudentDescription": "3. sınıf ve üstü olduğun için öğrenci mentorsun. Müsait saatlerini eklersen listede görünürsün; istemezsen bırakabilirsin.",
+    "mentorStudentYes": "Tamam, mentor kalıyorum",
+    "mentorStudentNo": "Mentorluğu bırakıyorum",
     "visibilityTitle": "Gizlilik tercihlerini gözden geçir",
     "visibilityDescription": "E-posta ve telefonun varsayılan olarak gizlidir. İstediğin zaman değiştirebilirsin.",
     "visibilityConfirm": "Tercihlerimi gözden geçirdim",
@@ -2296,7 +2314,8 @@
   "search": {
     "eyebrow": "DENEYİMLER",
     "title": "Deneyimlere bak",
-    "description": "Başka öğrencilerin ve mezunların staj, Erasmus ve yarışma deneyimlerini oku.",
+    "description": "Başka öğrencilerin ve mezunların staj, Erasmus, yarışma ve günlük hayat deneyimlerini oku.",
+    "encourage": "Her deneyim değerli: staj, kulüp, bir ders ya da günlük hayattan öğrendiğin bir şey. 1. sınıfta da yazabilirsin.",
     "query": "Deneyim ara",
     "queryHint": "Kurum, konu",
     "submit": "Ara",
@@ -2329,7 +2348,8 @@
       "CLUB": "Kulüp",
       "CERTIFICATE": "Sertifika",
       "GRADUATE_STUDY": "Lisansüstü",
-      "STUDY_ABROAD": "Yurt dışında eğitim"
+      "STUDY_ABROAD": "Yurt dışında eğitim",
+      "DAILY_LIFE": "Günlük hayat"
     },
     "channels": {
       "LINKEDIN_POST": "LinkedIn ilanı",
@@ -2759,7 +2779,7 @@
       "title": "Mentorluk ayarların",
       "description": "Kapasiteni, görüşme süreni ve haftalık müsait saatlerini belirle. Öğrenciler yalnız seçtiğin saatlere talep gönderir.",
       "notEligibleTitle": "Mentor olmak için henüz uygun değilsin",
-      "notEligibleDescription": "Mezunlar ve akademisyenler doğrudan, öğrenciler ise 3. sınıftan sonra ve yayınlanmış bir deneyimle mentor olabilir.",
+      "notEligibleDescription": "Mezunlar ve akademisyenler doğrudan mentor olabilir. Öğrenciler 3. sınıf ve üstünde kendiliğinden öğrenci mentor olur. 1. ve 2. sınıftayken mentorlardan randevu alabilirsin.",
       "general": "Genel ayarlar",
       "capacity": "Aylık görüşme kapasitesi",
       "capacityHint": "Bir ayda onaylayabileceğin en fazla görüşme sayısı (1–40).",
@@ -2771,6 +2791,18 @@
       "active": "Mentor listesinde görün",
       "activeHint": "Kapalıyken mentor dizininde görünmez ve talep almazsın.",
       "saveGeneral": "Genel ayarları kaydet",
+      "student": {
+        "title": "Öğrenci mentorsun",
+        "description": "3. sınıf ve üstü öğrenciler kendiliğinden öğrenci mentor olur. Müsait saatlerini eklersen mentor listesinde görünürsün; istemezsen mentorluğu bırakabilirsin.",
+        "needAvailability": "Listede görünmek için aşağıdan en az bir müsait saat ekle.",
+        "leave": "Mentorluğu bırak",
+        "leftTitle": "Mentorluğu bıraktın",
+        "leftDescription": "Mentor listesinde görünmüyorsun ve yeni randevu talebi almıyorsun. Ayarların ve saatlerin duruyor.",
+        "resume": "Mentorluğa dön",
+        "openAppointments": "Bekleyen ya da onaylı {count} randevun var. Mentorluğu bıraksan da bunlar iptal olmaz; yanıtlayabilir ya da kendin iptal edebilirsin.",
+        "leftDone": "Mentorluğu bıraktın.",
+        "resumeDone": "Mentorluğa döndün."
+      },
       "pause": "Müsait değilim",
       "pauseHint": "Seçtiğin tarihe kadar yeni talep almazsın.",
       "pauseUntil": "Şu tarihe kadar",

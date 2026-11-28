@@ -17,6 +17,7 @@ const personas = {
   student: 'student',
   öğrenci: 'student',
   seniorMentor: 'seniorMentor',
+  'öğrenci mentor': 'seniorMentor',
   'üst sınıf mentor': 'seniorMentor',
   alumniMentor: 'alumniMentor',
   'mezun mentor': 'alumniMentor',

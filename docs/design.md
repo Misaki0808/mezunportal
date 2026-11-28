@@ -196,8 +196,8 @@ kendisi `messages/tr.json`'dadır; burada yalnız kelime seçimi tutulur. Kodda 
 | Öğrenci | Doğrulanmış öğrenci üyeliği | `STUDENT` |
 | Mezun | Belgesi onaylanmış mezun | `ALUMNI` |
 | Akademisyen | Kurumsal e-postayla doğrulanmış öğretim elemanı | `ACADEMIC` |
-| Mentor | Görüşme veren, CV inceleyen, SSS cevaplayan kişi (mezun, akademisyen ya da eşiği geçen üst sınıf) | `MentorProfile` |
-| Üst sınıf | 3. sınıf ve üstü öğrenci (K-08) | — |
+| Mentor | Görüşme veren, CV inceleyen, SSS cevaplayan kişi (mezun, akademisyen ya da öğrenci mentor) | `MentorProfile` |
+| Öğrenci mentor | 3. sınıf ve üstü doğrulanmış öğrenci; kendiliğinden mentordur, istediği an bırakabilir (K-08) | — |
 | Bölüm/Fakülte/Sistem yöneticisi | Kapsamlı yönetici yetkileri | `AdminGrant` |
 | Kurucu üye | Pilot döneminde katkı verenlerin platform içi etiketi | `FOUNDING_MEMBER` |
 

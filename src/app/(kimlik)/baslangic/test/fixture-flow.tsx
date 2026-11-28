@@ -28,7 +28,7 @@ const initial: OnboardingState = {
   goalTagIds: [],
   mentorInterested: null,
   completion: { percent: 25, missing: ['INTERESTS', 'GOALS', 'VISIBILITY'] },
-  studentMentorEligibility: { eligible: false, reason: 'EXPERIENCE_UNAVAILABLE' },
+  studentMentorEligibility: { eligible: false, reason: 'NOT_UPPER_CLASS' },
 };
 const fields: FieldVisibilitySettings = {
   fields: CONTACT_FIELDS.map((field) => ({

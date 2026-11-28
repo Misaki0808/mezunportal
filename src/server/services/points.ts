@@ -18,7 +18,9 @@ import {
   awardStatus,
   bothSidesConfirmed,
   isFoundingEligible,
+  mentorSessionPercent,
   pointsOf,
+  scaleSessionMultiplier,
   sessionActionFor,
   sessionMultiplierPercent,
 } from '../rules/points';
@@ -227,9 +229,18 @@ export async function awardForSession(
             },
             select: { eventAt: true },
           });
-          return sessionMultiplierPercent(
+          const decayed = sessionMultiplierPercent(
             row.startsAt,
             scored.map((entry) => entry.eventAt),
+          );
+          // Öğrenci mentor yarım puan alır (kart 572); tür, puanın yazıldığı andaki doğrulanmış etkin üyelikten gelir.
+          const memberships = await inner.membership.findMany({
+            where: { userId: row.mentorId, endedAt: null, verificationStatus: 'VERIFIED' },
+            select: { role: true },
+          });
+          return scaleSessionMultiplier(
+            decayed,
+            mentorSessionPercent(memberships.map((membership) => membership.role)),
           );
         },
       },
