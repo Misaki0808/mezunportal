@@ -128,9 +128,17 @@ test('öğrenci e-posta bağlantısıyla girer ve üyeliğini doğrular', async 
     await page.getByRole('button', { name: 'Devam et' }).click();
     await expect(page.getByRole('checkbox', { name: 'Staj bulmak' })).toBeChecked();
     await page.getByRole('button', { name: 'Devam et' }).click();
-    await expect(
-      page.getByRole('heading', { name: 'Gizlilik tercihlerini gözden geçir' }),
-    ).toBeVisible();
+    // Kart 572: 3. sınıf ve üstü öğrenci kendiliğinden öğrenci mentordur ve mentor adımı yalnız bilgilendirir; 1-2. sınıfta
+    // bu adım yoktur. Giriş yılı 2024 olduğundan hangi yılda koşulursa koşulsun iki durum da doğru kabul edilir.
+    const mentorStep = page.getByRole('heading', { name: 'Öğrenci mentorsun' });
+    const visibilityStep = page.getByRole('heading', {
+      name: 'Gizlilik tercihlerini gözden geçir',
+    });
+    await expect(mentorStep.or(visibilityStep)).toBeVisible();
+    if (await mentorStep.isVisible()) {
+      await page.getByRole('button', { name: 'Tamam, mentor kalıyorum' }).click();
+    }
+    await expect(visibilityStep).toBeVisible();
     await page.getByLabel('LinkedIn').selectOption('PRIVATE');
     await page.getByRole('button', { name: 'Tercihlerimi gözden geçirdim' }).click();
     await page.getByRole('button', { name: 'Başlangıcı tamamla' }).click();

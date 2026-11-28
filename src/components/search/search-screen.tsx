@@ -266,6 +266,9 @@ export function SearchScreen({ filter, results, sectors }: Props) {
           </Link>
         </div>
       </PageHeader>
+      <p className="mt-4 max-w-prose rounded-card bg-primary-soft p-4 text-base text-on-primary-soft">
+        {t('encourage')}
+      </p>
       <FilterShell
         search={(filtersButton) => (
           <SearchBar

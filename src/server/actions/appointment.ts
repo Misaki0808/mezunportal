@@ -10,6 +10,7 @@ import {
   saveAvailabilitySchema,
   saveMentorSettingsSchema,
   setMeetLinkSchema,
+  setMentorActiveSchema,
   setPauseSchema,
   type AppointmentIdInput,
   type AppointmentPage,
@@ -23,6 +24,7 @@ import {
   type SaveAvailabilityInput,
   type SaveMentorSettingsInput,
   type SetMeetLinkInput,
+  type SetMentorActiveInput,
   type SetPauseInput,
   type SlotList,
 } from '@/contracts/appointment';
@@ -88,6 +90,22 @@ export async function setPause(input: SetPauseInput): Promise<ActionResult<Mento
     return actionOk(await appointments.setPause(appointmentDeps(), actor.userId, parsed.data));
   } catch (error) {
     return failAction(error, 'setPause');
+  }
+}
+
+/** Öğrenci mentorun "Mentorluğu bırak" / "Mentorluğa dön" tercihi (kart 572). */
+export async function setMentorActive(
+  input: SetMentorActiveInput,
+): Promise<ActionResult<MentorSettingsView>> {
+  try {
+    const actor = await requireVerifiedMember();
+    const parsed = parseInput(setMentorActiveSchema, input);
+    if (!parsed.ok) return parsed.failure;
+    return actionOk(
+      await appointments.setMentorActive(appointmentDeps(), actor.userId, parsed.data),
+    );
+  } catch (error) {
+    return failAction(error, 'setMentorActive');
   }
 }
 

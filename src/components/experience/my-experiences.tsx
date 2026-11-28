@@ -1,5 +1,6 @@
 'use client';
 
+import { untitledKey } from './title';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
@@ -105,7 +106,7 @@ export function MyExperiences({ initial, list }: Props) {
                   {item.isAnonymous && <Badge>{t('mine.anonymousNote')}</Badge>}
                 </div>
                 <h2 className="mt-3 break-words text-lg font-semibold text-fg">
-                  {title || t('mine.untitled')}
+                  {title || t(untitledKey(item.content.type))}
                 </h2>
                 <p className="mt-1 text-base text-fg-muted">{t(`statusHint.${item.status}`)}</p>
                 <p className="mt-1 text-sm text-fg-muted">
@@ -131,7 +132,7 @@ export function MyExperiences({ initial, list }: Props) {
                                 ? 'rejection.actionNamed'
                                 : 'mine.editNamed',
                               {
-                                title: title || t('mine.untitled'),
+                                title: title || t(untitledKey(item.content.type)),
                                 index: index + 1,
                                 count: items.length,
                               },
@@ -149,7 +150,7 @@ export function MyExperiences({ initial, list }: Props) {
                       aria-label={
                         sameName.open > 1
                           ? t('mine.openNamed', {
-                              title: title || t('mine.untitled'),
+                              title: title || t(untitledKey(item.content.type)),
                               index: index + 1,
                               count: items.length,
                             })

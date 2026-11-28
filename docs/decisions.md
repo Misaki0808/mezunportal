@@ -1301,3 +1301,35 @@ en az üç farklı yazar eşiği değişmez; bu değişiklik yalnız adlandırma
 Yeni kayıtta e-posta yerel kısmındaki ayraçlar ad parçalarını belirtir; bitişik yazımda en uzun yaygın Türkçe ad öneki ve
 kalan en az üç harf ayrılır. Kalan bölüm de yaygın bir adsa yanlış bölmeyi azaltmak için ayrılmaz. Bu yalnız düzeltilebilir
 bir tahmindir; mevcut hesapların ve kimlik sağlayıcısından gelen adların üzerine yazılmaz.
+
+## 2026-11-28 · Öğrenci mentor, yarım görüşme puanı, “Günlük hayat” deneyimi ve günlük gönderim sınırı (kart 572, hoca önerisi)
+
+**K-08 değişti.** Önceki kural (etkin sınıf ≥ 3 + ≥ 1 yayınlanmış deneyim + öğrencinin başvurusu) yerine doğrulanmış öğrenci üyeliği + etkin
+sınıf ≥ 3 (uzatma dahil) kişiyi kendiliğinden **öğrenci mentor** yapar; yayınlanmış deneyim ve başvuru şartı kalktı. Kural hesaplanır
+(Eylül'de 3. sınıfa geçen kendiliğinden mentor olur), tek seferlik veri doldurma yoktur. 1-2. sınıf, hazırlık ve sınıfı bilinmeyen öğrenci
+mentor olamaz (`MENTOR_NOT_ELIGIBLE`). Arayüz adı “Öğrenci mentor” oldu; kod tanımlayıcıları (`seniorMentor` personası gibi) kalır.
+- **Bırakma:** ayarlarda “Mentorluğu bırak” / “Mentorluğa dön”; durum yeni sütun yerine `MentorProfile.isActive`'tir (satırı olmayan öğrenci
+  bırakırsa form varsayılanlarıyla kapalı bir satır açılır). Bırakan kişi dizinden çıkar ve ondan randevu alınamaz; ileri tarihli bekleyen/onaylı
+  randevular sessizce iptal edilmez (mezun mentorun kapatma kuralıyla aynı), ekran açık randevu sayısını hatırlatır. Önceden mentorluğu
+  kapatmış öğrenci “bırakmış” sayılır; başvurup açmış olan aynen devam eder. İlk giriş adımı başvuru yerine bilgilendirmedir.
+- **Listede görünme:** öğrenci mentor en az bir müsaitlik kuralı eklemeden dizinde, şirket mentor sayımında ve açılış sayacında görünmez
+  (otomatik açılan boş profiller listeyi doldurmasın); tek ortak koşul `services/mentor-listing.ts`'tedir. Mezun/akademisyen kuralı değişmedi.
+- **Kime mentorluk:** öğrenci mentor kendisi hariç her öğrenciye (1-4. sınıf) randevu verebilir, başka mentordan randevu alabilir; kısıt yoktur,
+  bekçi testi eklendi. Bilinen sınır: sınıfını sonradan 3'ün altına düzelten öğrencinin açık profili kendiliğinden kapanmaz (uygunluk
+  yalnız mentor ayarı kaydedilirken denetlenir; mevcut davranışla aynı).
+- **Yarım puan:** öğrenci mentorun görüşme puanı (`SESSION_ONLINE`, `SESSION_IN_PERSON`) mezun/akademisyenin yarısıdır; diğer eylemler aynı.
+  `PointEntry` kısıtı (puan = taban × çarpan / 100, çarpan 0–100 tam sayı) yüzünden yarım çarpana yazılır: görüşme çarpanı bir kez daha
+  yarıya inip **aşağı yuvarlanır** (100→50, 50→25, 25→12), puan tek aşağı yuvarlamayla çıkar (online 5/2/1, yüz yüze 7/3/1). Aşağı
+  yuvarlama seçildi, çünkü ek sütun gerektirmeden kısıtla uyumlu kalır ve öğrenci mentor puanı hiçbir halde mezununkini aşamaz.
+  Mentor türü puanın yazıldığı andaki doğrulanmış etkin üyelikten belirlenir (mezun/akademisyen üyeliği de olan kişi tam puan alır); geçmiş
+  kayıtlar değişmez.
+
+**Deneyim.** Yeni tür **“Günlük hayat”** (`DAILY_LIFE`, ekleyici migration): şirket, dönem, süre, ücret gibi staja özgü alanlar zorunlu
+değildir, yalnız ne öğrenildiği zorunludur; form türe göre sadeleşir, filtrede ve kartta görünür. `/deneyimler` ve `/deneyim/yeni` her
+deneyimin değerli olduğunu söyleyen kısa bir teşvik metni gösterir (1. sınıf da yazabilir). Deneyimi zaten her doğrulanmış üye yazabiliyordu.
+- **Günlük sınır:** kişi başı en çok 3 deneyim gönderimi; sayım onaya gönderme anındadır ve mevcut `RateLimit` altyapısını kullanır
+  (`experience-submit`, sabit 24 saatlik pencere: ilk gönderimle başlar, takvim günü değildir). Aşınca kararlı kod
+  `EXPERIENCE_DAILY_LIMIT` döner ve işlem geri alınır. Neden yalnız gönderim sınırı: deneyim zaten yönetici onayından geçtiği için ayrıca
+  bekleme süresi konmadı (kullanıcının onayladığı PM önerisi).
+- **Puan:** “Günlük hayat” deneyimi de diğer deneyimler gibi yayınlanınca 5 puan (`EXPERIENCE_PUBLISHED`) verir (PM kararı); günde 3 sınırı ve yönetici
+  onayı puan istismarını zaten sınırlar.

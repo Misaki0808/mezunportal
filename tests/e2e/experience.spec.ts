@@ -21,6 +21,8 @@ test('deneyim: yaz → moderasyon → yayın → okuyucu anonim yazarı görmez'
     where: { email: 'student@test.mezunportal.local' },
   });
   await db.experience.deleteMany({ where: { authorId: student.id } });
+  // Günlük gönderim sınırı (kişi başı 3, 24 saat): aynı veritabanında yinelenen koşular birbirini kilitlemesin.
+  await db.rateLimit.deleteMany({ where: { key: { startsWith: 'app:experience-submit:' } } });
   const adminContext = await browser.newContext();
   const readerContext = await browser.newContext();
   const admin = await adminContext.newPage();

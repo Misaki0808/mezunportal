@@ -217,6 +217,8 @@ describe('slot seçici', () => {
 
 const settingsView = (over: Partial<MentorSettingsView> = {}): MentorSettingsView => ({
   eligible: true,
+  studentMentor: false,
+  openAppointments: 0,
   settings: {
     monthlyCapacity: 6,
     sessionMinutes: 30,
@@ -232,9 +234,47 @@ const settingsActions = () => ({
   saveSettings: vi.fn().mockResolvedValue({ ok: true, data: {} }),
   saveAvailability: vi.fn().mockResolvedValue({ ok: true, data: {} }),
   setPause: vi.fn().mockResolvedValue({ ok: true, data: {} }),
+  setActive: vi.fn().mockResolvedValue({ ok: true, data: {} }),
 });
 
 describe('mentor ayarları', () => {
+  it('öğrenci mentor: bırak/dön düğmesi vardır, "listede görün" anahtarı yoktur; bırakınca yalnız isActive gider', async () => {
+    const actions = settingsActions();
+    const { user } = renderUi(
+      <MentorSettings
+        initial={settingsView({ studentMentor: true, openAppointments: 2 })}
+        actions={actions}
+      />,
+    );
+    expect(screen.getByRole('heading', { name: 'Öğrenci mentorsun' })).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: 'Mentor listesinde görün' })).toBeNull();
+    // Bekleyen/onaylı randevular iptal olmaz uyarısı sayıyla gösterilir.
+    expect(screen.getByText(/2 randevun var.*iptal olmaz/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Mentorluğu bırak' }));
+    expect(actions.setActive).toHaveBeenCalledWith({ isActive: false });
+    expect(actions.saveSettings).not.toHaveBeenCalled();
+    expect(await screen.findByRole('heading', { name: 'Mentorluğu bıraktın' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Mentorluğa dön' }));
+    expect(actions.setActive).toHaveBeenLastCalledWith({ isActive: true });
+    expect(await screen.findByRole('heading', { name: 'Öğrenci mentorsun' })).toBeInTheDocument();
+  });
+
+  it('öğrenci mentor müsaitlik kuralı yoksa listelenmek için saat eklemesi gerektiğini görür', () => {
+    renderUi(
+      <MentorSettings
+        initial={settingsView({ studentMentor: true, rules: [] })}
+        actions={settingsActions()}
+      />,
+    );
+    expect(screen.getByText(/en az bir müsait saat ekle/)).toBeInTheDocument();
+  });
+
+  it('mezun mentorda bırak/dön bölümü yok, eski anahtar duruyor', () => {
+    renderUi(<MentorSettings initial={settingsView()} actions={settingsActions()} />);
+    expect(screen.queryByRole('button', { name: 'Mentorluğu bırak' })).toBeNull();
+    expect(screen.getByRole('switch', { name: /Mentor listesinde görün/ })).toBeInTheDocument();
+  });
+
   it('üç bölümün kaydı açık adlandırılır ve her düğme yalnız kendi bölümünü kaydeder', async () => {
     const actions = settingsActions();
     const { user } = renderUi(<MentorSettings initial={settingsView()} actions={actions} />);

@@ -18,6 +18,7 @@ import { codedValidation } from '@/lib/errors';
 import { errorForDenyReason } from '../permissions/guards';
 import { loadActor } from '../permissions/actor';
 import { emitProfileThresholds } from './event';
+import { applyStudentMentorPreference } from './mentor-status';
 import { evaluateAccess } from '../rules/authorization';
 import { computeClassStanding } from '../rules/classYear';
 import {
@@ -46,26 +47,19 @@ async function requireCurrentUser(tx: Prisma.TransactionClient, userId: string, 
   if (!decision.allowed) throw errorForDenyReason(decision.reason);
 }
 
-/** Tercih kaydı yetki vermez; MentorProfile açılmaz ve hiçbir üyelik doğrulanmaz. */
+/** Tercih kaydı yetki vermez; MentorProfile açılmaz ve hiçbir üyelik doğrulanmaz. Öğrenci için mentor adımı 3. sınıf ve üstünde uygulanır. */
 async function membershipFacts(tx: Prisma.TransactionClient, userId: string, now: Date) {
   const memberships = await tx.membership.findMany({
     where: { userId, endedAt: null, verificationStatus: { not: 'REJECTED' } },
     select: { role: true, entryYear: true, classOffset: true },
   });
   const students = memberships.filter((membership) => membership.role === 'STUDENT');
-  const publishedExperienceCount = await tx.experience.count({
-    where: { authorId: userId, status: 'PUBLISHED' },
-  });
+  // Kart 572: öğrenci mentorluk yalnız sınıfa bağlıdır (yayınlanmış deneyim şartı kalktı).
   const eligibilities = students.map((membership) =>
-    studentMentorEligibility(computeClassStanding(membership, now), publishedExperienceCount),
+    studentMentorEligibility(computeClassStanding(membership, now)),
   );
   const studentEligibility =
-    eligibilities.find((eligibility) => eligibility.eligible) ??
-    eligibilities.find(
-      (eligibility) => !eligibility.eligible && eligibility.reason === 'EXPERIENCE_UNAVAILABLE',
-    ) ??
-    eligibilities[0] ??
-    null;
+    eligibilities.find((eligibility) => eligibility.eligible) ?? eligibilities[0] ?? null;
   return {
     membershipCompleted: memberships.length > 0,
     mentorStepAvailable:
@@ -168,6 +162,8 @@ async function runOnboarding(
               where: { id: profile.id },
               data: { mentorInterested: save.interested },
             });
+            // Öğrenci mentor (kart 572): "Hayır" mentorluğu bırakır, "Evet" bırakılmışsa geri açar.
+            await applyStudentMentorPreference(tx, userId, save.interested);
           }
           skipped.delete(step);
           completed.add(step);

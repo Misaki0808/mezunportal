@@ -14,6 +14,8 @@ export const EXPERIENCE_TYPES = [
   'CERTIFICATE',
   'GRADUATE_STUDY',
   'STUDY_ABROAD',
+  /** Staj dışı günlük yaşam deneyimi (kart 572): staja özgü alan zorunlu değil. */
+  'DAILY_LIFE',
 ] as const;
 export const EXPERIENCE_STATUSES = ['DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED'] as const;
 export const TERM_SEASONS = ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'] as const;
@@ -32,6 +34,11 @@ export const REPORT_TARGET_TYPES = ['EXPERIENCE'] as const;
 export const REPORT_STATUSES = ['OPEN', 'RESOLVED', 'DISMISSED'] as const;
 /** K-07: aynı üniversitedeki etkin, doğrulanmış üyelik; bölüm/fakülte sınırı YOK. Servis zorlar. */
 export const EXPERIENCE_READ_SCOPE = 'VERIFIED_UNIVERSITY_MEMBERS' as const;
+/**
+ * Kişi başına günde en çok 3 deneyim GÖNDERİMİ (onaya gönderme anı; taslak kaydetmek saymaz). Deneyimler zaten yönetici onayından
+ * geçtiği için yalnız gönderim hızı sınırlanır (kart 572). Sayaç `RateLimit` altyapısındadır (24 saatlik sabit pencere).
+ */
+export const EXPERIENCE_SUBMIT_RATE_LIMIT = { maxRequests: 3, windowSeconds: 86_400 } as const;
 /** Kullanıcı başına 24 saatte 10 şikâyet; süreçler arası sayaç P1-07 servisinde RateLimit'e bağlanır. */
 export const EXPERIENCE_REPORT_RATE_LIMIT = { maxRequests: 10, windowSeconds: 86_400 } as const;
 
@@ -145,6 +152,16 @@ const templates = [
       ...application,
     })
     .strict(),
+  // Günlük hayat (kart 572): şirket, dönem, süre, ücret, başvuru yok. Yalnız anlatı zorunludur; `organizationName` bu türde
+  // isteğe bağlı kısa konu/başlık yerine geçer (liste ve detay başlığı onu kullanır), `advice` isteğe bağlıdır.
+  z
+    .object({
+      type: z.literal('DAILY_LIFE'),
+      organizationName: shortText.optional(),
+      whatLearned: bodyText,
+      advice: bodyText.optional(),
+    })
+    .strict(),
 ] as const;
 export const experienceTemplateSchema = z.discriminatedUnion('type', templates, { error: INVALID });
 export type ExperienceTemplate = z.infer<typeof experienceTemplateSchema>;
@@ -160,6 +177,7 @@ export const experienceDraftTemplateSchema = z.discriminatedUnion(
     templates[5].partial().required({ type: true }),
     templates[6].partial().required({ type: true }),
     templates[7].partial().required({ type: true }),
+    templates[8].partial().required({ type: true }),
   ],
   { error: INVALID },
 );
@@ -328,6 +346,7 @@ export const EXPERIENCE_ACTION_ERRORS = {
     'RESOURCE_NOT_FOUND',
     'EXPERIENCE_INCOMPLETE',
     'EXPERIENCE_NOT_DRAFT',
+    'EXPERIENCE_DAILY_LIMIT',
   ],
   reviewExperience: [
     ...authErrors,

@@ -105,7 +105,13 @@ Rıza belgeleri `ConsentDocument` değerleridir (`JOB_SEEKER_VISIBILITY` isteğe
 - `Session`/`Account` kullanıcıyla birlikte silinir (kimlik doğrulama artığıdır; kullanıcı satırı zaten silinmez,
   anonimleştirilir). `Account.password` kullanılmaz (giriş parolasızdır).
 - `MentorProfile`: görüşme süresi 15/20/30 dk; etkin profilin en az bir görüşme biçimi vardır. Kapasite
-  ve süre mentorun kararıdır, varsayılanı yoktur.
+  ve süre mentorun kararıdır, varsayılanı yoktur. Öğrenci mentor (3. sınıf ve üstü) için profil satırı
+  zorunlu değildir: uygunluk sınıftan hesaplanır, “bıraktı” `isActive=false` ile tutulur (satır yoksa form
+  varsayılanlarıyla kapalı bir satır açılır) ve ek sütun/tablo yoktur. Öğrenci mentor en az bir
+  `AvailabilityRule` eklemeden dizinde görünmez; mezun/akademisyen kuralı değişmez.
+- `ExperienceType.DAILY_LIFE` (“Günlük hayat”): şirket, dönem, süre, ücret gibi staja özgü alanlar zorunlu değildir;
+  yalnız ne öğrendiği zorunludur (`Experience_ready_check` gönderilmiş kayıtta DAILY_LIFE için yalnız bunu ister, ayrı migration). Sözlük işlevi `experience_type_label` yeni türü de içerir (aksi halde üretilmiş
+  `searchVector`/`searchKeys` boşalırdı); enum değeri ve işlev (ve kontrol) ayrı migration'lardır (PostgreSQL yeni değeri aynı işlemde kullandırmaz).
 - `RateLimit`: Better Auth'un hız sınırı deposu; uygulamanın kendi sınırları (iletişim talebi, veri dökümü,
   hesap silme) aynı tabloda `app:` önekli anahtarla, kullanıcı kimliğiyle tutulur (anahtarda kişisel veri yok).
 - `Consent`: geri çekme ve yeni sürüm onayı yeni satırdır; bir belgenin geçerli durumu o belge için en son

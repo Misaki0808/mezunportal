@@ -281,28 +281,40 @@ function ExperienceFormBody({ departments, initial, save, submit }: Props) {
     );
   }
 
-  const label = (key: FieldKey) => t(`form.fields.${key}`);
+  // Günlük hayat (kart 572): aynı sözleşme alanları, günlük dile uyarlanmış etiket ve ipuçlarıyla sorulur.
+  const daily = type === 'DAILY_LIFE';
+  const dailyKeys = ['organizationName', 'whatLearned', 'advice'] as const;
+  const isDailyKey = (key: FieldKey): key is (typeof dailyKeys)[number] =>
+    daily && (dailyKeys as readonly string[]).includes(key);
+  const label = (key: FieldKey) =>
+    isDailyKey(key) ? t(`form.daily.${key}`) : t(`form.fields.${key}`);
   const errorOf = (key: string) => {
     const kind = fieldErrors[key];
     return kind ? t(`fieldErrors.${kind}`) : undefined;
   };
   const required = (key: FieldKey) => isRequired(type, key);
   const hintOf = (key: FieldKey) =>
-    (
-      [
-        'organizationName',
-        'termYear',
-        'country',
-        'city',
-        'durationWeeks',
-        'pay',
-        'whatLearned',
-        'advice',
-        'interviewQuestions',
-      ] as const
-    ).includes(key as 'organizationName')
-      ? t(`form.hints.${key as 'organizationName'}`)
-      : undefined;
+    isDailyKey(key)
+      ? key === 'organizationName'
+        ? t('form.daily.organizationNameHint')
+        : key === 'whatLearned'
+          ? t('form.daily.whatLearnedHint')
+          : undefined
+      : (
+            [
+              'organizationName',
+              'termYear',
+              'country',
+              'city',
+              'durationWeeks',
+              'pay',
+              'whatLearned',
+              'advice',
+              'interviewQuestions',
+            ] as const
+          ).includes(key as 'organizationName')
+        ? t(`form.hints.${key as 'organizationName'}`)
+        : undefined;
 
   function renderField(key: FieldKey) {
     if (!fields.has(key)) return null;
@@ -565,7 +577,7 @@ function ExperienceFormBody({ departments, initial, save, submit }: Props) {
 
   const sectionTitle = {
     type: t('form.sections.type'),
-    about: t('form.sections.about'),
+    about: daily ? t('form.daily.aboutTitle') : t('form.sections.about'),
     process: t('form.sections.process'),
     story: t('form.sections.story'),
     privacy: t('form.sections.privacy'),
@@ -603,6 +615,11 @@ function ExperienceFormBody({ departments, initial, save, submit }: Props) {
         title={initial ? t('form.editTitle') : t('form.newTitle')}
         description={t('form.description')}
       />
+      {!initial && (
+        <p className="mt-4 rounded-card bg-primary-soft p-4 text-base text-on-primary-soft">
+          {t('form.encourage')}
+        </p>
+      )}
 
       {initial?.moderationNote && (
         <section className="mt-6 rounded-card border border-danger bg-danger-soft p-4 text-on-danger-soft">
@@ -694,7 +711,13 @@ function ExperienceFormBody({ departments, initial, save, submit }: Props) {
               id={section.id}
               number={numberOf(section.id)}
               title={sectionTitle[section.id]}
-              intro={t(`form.intro.${section.id}`)}
+              intro={
+                daily && section.id === 'about'
+                  ? t('form.daily.aboutIntro')
+                  : daily && section.id === 'story'
+                    ? t('form.daily.storyIntro')
+                    : t(`form.intro.${section.id}`)
+              }
             >
               {visible.map(renderField)}
               {section.id === 'process' && type === 'INTERNSHIP' && (

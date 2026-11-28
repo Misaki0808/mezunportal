@@ -591,13 +591,13 @@ describe('anonimlik: rastgele verili tüm eylem yanıtları', () => {
 });
 
 it('şikâyet hız sınırı, tek açık kayıt, kapsamlı kuyruk ve atomik çözüm', async () => {
-  const author = await member(institution.deptA1),
-    reporter = await member(institution.deptB1),
+  const reporter = await member(institution.deptB1),
     wrong = await member(institution.deptA2);
   await addGrant(db, { userId: wrong, scope: 'DEPARTMENT', departmentId: institution.deptA2 });
   await grantRequiredConsents(db, wrong);
   const ids: string[] = [];
-  for (let i = 0; i < 11; i++) ids.push(await published(author));
+  // Günlük gönderim sınırı kişi başı 3 (kart 572): her deneyim ayrı yazardan gelir.
+  for (let i = 0; i < 11; i++) ids.push(await published(await member(institution.deptA1)));
   const reports = [];
   for (const id of ids.slice(0, 10))
     reports.push(
@@ -758,32 +758,139 @@ it('hesap silmeyle eşzamanlı kayıt silinmiş hesaba yeni deneyim bırakmaz', 
     expect(result[1].reason).toMatchObject({ code: 'AUTH_UNAUTHENTICATED' });
   expect(await db.experience.count({ where: { authorId: author } })).toBe(0);
 });
-it('K-08 yalnız gerçekten yayınlanmış kendi deneyimini sayar; alt sınıfı deneyim tek başına açmaz', async () => {
+it('Günlük hayat (kart 572): şirket, dönem, ücret olmadan gönderilir, yayınlanır ve aranabilir', async () => {
+  const author = await member(institution.deptA1);
+  const saved = await service.saveExperienceDraft(
+    db,
+    author,
+    {
+      departmentId: institution.deptA1,
+      content: { type: 'DAILY_LIFE', whatLearned: 'Final haftasında kütüphane düzenim' },
+      isAnonymous: false,
+    },
+    NOW,
+  );
+  expect(saved.content).toEqual({
+    type: 'DAILY_LIFE',
+    whatLearned: 'Final haftasında kütüphane düzenim',
+  });
+  expect(await service.submitExperience(db, author, { experienceId: saved.id }, NOW)).toMatchObject(
+    { status: 'PENDING' },
+  );
+  await service.reviewExperience(
+    db,
+    moderator,
+    { experienceId: saved.id, decision: 'PUBLISH' },
+    NOW,
+  );
+  const row = await db.experience.findUniqueOrThrow({ where: { id: saved.id } });
+  expect(row).toMatchObject({
+    type: 'DAILY_LIFE',
+    status: 'PUBLISHED',
+    organizationName: null,
+    companyId: null,
+    termYear: null,
+    termSeason: null,
+    durationWeeks: null,
+    pay: null,
+    applicationChannel: null,
+  });
+  // Tür etiketi işlevi yeni türü bilmezse üretilmiş arama sütunları NULL olurdu.
+  const [search] = await db.$queryRaw<{ vector: boolean; keys: boolean }[]>`
+    SELECT "searchVector" IS NOT NULL AS vector, "searchKeys" IS NOT NULL AS keys
+    FROM "Experience" WHERE "id" = ${saved.id}`;
+  expect(search).toEqual({ vector: true, keys: true });
+  // Staja özgü alan günlük hayat taslağına girmez.
+  await expect(
+    service.saveExperienceDraft(
+      db,
+      author,
+      {
+        departmentId: institution.deptA1,
+        content: { type: 'DAILY_LIFE', whatLearned: 'x', pay: 'PAID' } as never,
+        isAnonymous: false,
+      },
+      NOW,
+    ),
+  ).rejects.toThrow();
+});
+
+it('günde en çok 3 gönderim (kart 572): 4. gönderim reddedilir, taslak kalır; eksik gönderim saymaz; ertesi gün ve başka kişi serbest', async () => {
+  const author = await member(institution.deptA1);
+  const other = await member(institution.deptA1);
+  const daily = (whatLearned: string) =>
+    service.saveExperienceDraft(
+      db,
+      author,
+      {
+        departmentId: institution.deptA1,
+        content: { type: 'DAILY_LIFE', whatLearned },
+        isAnonymous: true,
+      },
+      NOW,
+    );
+  const incomplete = await service.saveExperienceDraft(
+    db,
+    author,
+    { departmentId: institution.deptA1, content: { type: 'DAILY_LIFE' }, isAnonymous: true },
+    NOW,
+  );
+  // Eksik içerik EXPERIENCE_INCOMPLETE alır ve sayaç harcamaz.
+  await expect(
+    service.submitExperience(db, author, { experienceId: incomplete.id }, NOW),
+  ).rejects.toMatchObject({ code: 'EXPERIENCE_INCOMPLETE' });
+  const rows = [await daily('bir'), await daily('iki'), await daily('üç'), await daily('dört')];
+  for (const row of rows.slice(0, 3))
+    expect(await service.submitExperience(db, author, { experienceId: row.id }, NOW)).toMatchObject(
+      { status: 'PENDING' },
+    );
+  await expect(
+    service.submitExperience(db, author, { experienceId: rows[3]!.id }, NOW),
+  ).rejects.toMatchObject({ code: 'EXPERIENCE_DAILY_LIMIT' });
+  expect((await db.experience.findUniqueOrThrow({ where: { id: rows[3]!.id } })).status).toBe(
+    'DRAFT',
+  );
+  // Sınır yalnız bu kişiyi bağlar; farklı türler de aynı sayacı paylaşır.
+  const another = await service.saveExperienceDraft(
+    db,
+    other,
+    {
+      departmentId: institution.deptA1,
+      content: { type: 'DAILY_LIFE', whatLearned: 'başka kişi' },
+      isAnonymous: true,
+    },
+    NOW,
+  );
+  expect(
+    await service.submitExperience(db, other, { experienceId: another.id }, NOW),
+  ).toMatchObject({ status: 'PENDING' });
+  // 24 saat sonra sayaç yenilenir.
+  const tomorrow = new Date(NOW.getTime() + 25 * 3_600_000);
+  expect(
+    await service.submitExperience(db, author, { experienceId: rows[3]!.id }, tomorrow),
+  ).toMatchObject({ status: 'PENDING' });
+  // Taslak kaydetmek sayaç tüketmez (yalnız onaya gönderme sayılır).
+  for (let i = 0; i < 5; i += 1) await daily(`taslak ${i}`);
+});
+
+it('K-08 (kart 572): öğrenci mentorluk yalnız sınıfa bağlıdır; deneyim yazmak ya da yayınlamak sonucu değiştirmez', async () => {
   const upper = await member(institution.deptA1),
     lower = await member(institution.deptA1);
   await db.membership.updateMany({ where: { userId: lower }, data: { entryYear: 2025 } });
-  expect((await getOnboardingState(db, upper, NOW)).studentMentorEligibility).toEqual({
-    eligible: false,
-    reason: 'PUBLISHED_EXPERIENCE_REQUIRED',
-  });
-  await draft(upper);
-  expect((await getOnboardingState(db, upper, NOW)).studentMentorEligibility?.eligible).toBe(false);
-  await published(lower);
-  expect((await getOnboardingState(db, upper, NOW)).studentMentorEligibility?.eligible).toBe(false);
-  expect((await getOnboardingState(db, lower, NOW)).studentMentorEligibility).toEqual({
-    eligible: false,
-    reason: 'NOT_UPPER_CLASS',
-  });
-  await published(upper);
+  // 3. sınıf öğrenci deneyimi olmasa da mentordur; alt sınıf deneyim yayınlasa da mentor olamaz.
   expect((await getOnboardingState(db, upper, NOW)).studentMentorEligibility).toEqual({
     eligible: true,
     reason: null,
   });
-  expect(
-    (await saveOnboardingStep(db, upper, { step: 'MENTOR_PREFERENCE', interested: true }, NOW))
-      .mentorInterested,
-  ).toBe(true);
-  expect(await db.mentorProfile.count({ where: { userId: upper } })).toBe(0);
+  await published(lower);
+  expect((await getOnboardingState(db, lower, NOW)).studentMentorEligibility).toEqual({
+    eligible: false,
+    reason: 'NOT_UPPER_CLASS',
+  });
+  await expect(
+    saveOnboardingStep(db, lower, { step: 'MENTOR_PREFERENCE', interested: true }, NOW),
+  ).rejects.toMatchObject({ code: 'MENTOR_NOT_ELIGIBLE' });
+  expect(await db.mentorProfile.count({ where: { userId: { in: [upper, lower] } } })).toBe(0);
 });
 
 it('moderasyonla hesap silme yarışında yayın anonim kalır veya içerik silinir; yazar bağı kalmaz', async () => {

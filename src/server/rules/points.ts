@@ -41,6 +41,29 @@ export function sessionMultiplierPercent(eventAt: Date, scored: readonly Date[])
   return earlier === 1 ? DECAY_STEPS.one : DECAY_STEPS.twoOrMore;
 }
 
+/**
+ * Öğrenci mentorun görüşme puanı mezun/akademisyenin YARISIDIR (kart 572; öğrencinin boş vakti fazladır). Yarım puan kayda ayrı bir
+ * alan olarak değil ÇARPANA yazılır (`PointEntry` kısıtı: puan = taban × çarpan / 100, çarpan 0–100 tam sayı): görüşme çarpanı
+ * (100 → 50 → 25, ay tavanında 0) bir kez daha yarıya indirilir ve AŞAĞI yuvarlanır (100→50, 50→25, 25→12, 0→0). Puan yine tek
+ * aşağı yuvarlamayla çıkar. Mentor türü puanın yazıldığı andaki doğrulanmış etkin üyelikten belirlenir; geçmiş kayıtlar değişmez.
+ */
+export const STUDENT_MENTOR_SESSION_PERCENT = 50;
+
+/** Doğrulanmış etkin üyelik rollerinden mentorun görüşme puanı oranı (yüzde): yalnız öğrenci olan 50, aksi 100. */
+export function mentorSessionPercent(roles: readonly string[]): number {
+  const senior = roles.some((role) => role === 'ALUMNI' || role === 'ACADEMIC');
+  return !senior && roles.includes('STUDENT') ? STUDENT_MENTOR_SESSION_PERCENT : 100;
+}
+
+/** Görüşme çarpanını mentor türü oranıyla ölçekler (tam sayı, aşağı yuvarlanır). */
+export function scaleSessionMultiplier(multiplierPercent: number, mentorPercent: number): number {
+  if (!Number.isInteger(multiplierPercent) || multiplierPercent < 0 || multiplierPercent > 100)
+    throw new RangeError('invalid multiplier');
+  if (!Number.isInteger(mentorPercent) || mentorPercent < 0 || mentorPercent > 100)
+    throw new RangeError('invalid mentor percent');
+  return Math.floor((multiplierPercent * mentorPercent) / 100);
+}
+
 /** Kayıt durumu: gecikmesiz ya da gecikmesi çoktan dolmuş olay `FINAL`, aksi `PENDING`. */
 export function awardStatus(
   delayDays: number,

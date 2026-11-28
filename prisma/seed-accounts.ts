@@ -29,7 +29,7 @@ const VERIFICATION_METHOD = {
 } as const;
 
 /**
- * Rol başına test kullanıcıları (öğrenci, üst sınıf mentor, mezun mentor, akademisyen, bölüm yöneticisi,
+ * Rol başına test kullanıcıları (öğrenci, öğrenci mentor, mezun mentor, akademisyen, bölüm yöneticisi,
  * sistem yöneticisi): kullanıcı + doğrulanmış üyelik (+ mentor profili / yönetici yetkisi). İdempotenttir:
  * kullanıcı kimlikle upsert edilir, etkin üyelik/yetki doğal anahtarla bulunup eşitlenir. Giriş bilgisi
  * üretmez (test girişi P1-02).

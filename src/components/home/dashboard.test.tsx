@@ -26,7 +26,16 @@ const panels = (): HomePanels => ({
   appointments: { ok: true, data: { items: [], nextCursor: null } },
   mentors: { ok: true, data: { items: [] } },
   jobs: { ok: true, data: [] },
-  settings: { ok: true, data: { eligible: false, settings: null, rules: [] } },
+  settings: {
+    ok: true,
+    data: {
+      eligible: false,
+      studentMentor: false,
+      openAppointments: 0,
+      settings: null,
+      rules: [],
+    },
+  },
 });
 const show = (props: Partial<HomeDashboardProps> = {}) =>
   renderUi(<HomeDashboard summary={base} panels={panels()} now={now} {...props} />);
@@ -194,6 +203,8 @@ describe('A görünümü kişisel pano', () => {
           ok: true,
           data: {
             eligible: true,
+            studentMentor: false,
+            openAppointments: 0,
             settings: {
               monthlyCapacity: 7,
               sessionMinutes: 20,

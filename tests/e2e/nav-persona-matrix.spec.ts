@@ -4,7 +4,7 @@ import { loginAs } from './login';
 /**
  * Gezinme ↔ erişim eşleşmesi (kart 457; R2 451 B1: akademisyen ve bölüm yöneticisi yan menüde "Ders rehberi"ni görüyor,
  * tıklayınca rol uyarısına düşüyordu). Her persona için yan menüde (1440) görünen HER bağlantı açılır: rol uyarısı, 404 ya da
- * giriş isteği yok. "Ders rehberi" yalnız doğrulanmış öğrencide (öğrenci ve üst sınıf mentor) görünür; 390'da telefon
+ * giriş isteği yok. "Ders rehberi" yalnız doğrulanmış öğrencide (öğrenci ve öğrenci mentor) görünür; 390'da telefon
  * Menü'sü aynı kurala uyar. Görünen ama açılmayan öğe bu testi kırar.
  */
 const WARNING = /Bu sayfa senin rolün için değil|Aradığın sayfa bulunamadı|Giriş yapman gerekiyor/;

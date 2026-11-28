@@ -229,6 +229,8 @@ export function OnboardingFlow({
   const mentorAvailable = state.steps.some(
     (item) => item.step === 'MENTOR_PREFERENCE' && item.applicable,
   );
+  // Öğrenci mentor (kart 572): 3. sınıf ve üstü kendiliğinden mentordur; adım başvuru yerine bilgilendirmedir.
+  const studentMentor = state.studentMentorEligibility?.eligible === true;
   const skippable = state.steps.some(
     (item) => item.step === step && item.skippable && item.applicable,
   );
@@ -240,7 +242,7 @@ export function OnboardingFlow({
         : step === 'GOALS'
           ? t('goalsTitle')
           : step === 'MENTOR_PREFERENCE'
-            ? t('mentorTitle')
+            ? t(studentMentor ? 'mentorStudentTitle' : 'mentorTitle')
             : step === 'VISIBILITY'
               ? t('visibilityTitle')
               : t(done ? 'completeTitle' : 'readyTitle');
@@ -252,7 +254,7 @@ export function OnboardingFlow({
         : step === 'GOALS'
           ? t('goalsDescription')
           : step === 'MENTOR_PREFERENCE'
-            ? t('mentorDescription')
+            ? t(studentMentor ? 'mentorStudentDescription' : 'mentorDescription')
             : step === 'VISIBILITY'
               ? t('visibilityDescription')
               : t(done ? 'completeDescription' : 'readyDescription');
@@ -353,7 +355,7 @@ export function OnboardingFlow({
             loading={pending}
             onClick={() => void submit({ step: 'MENTOR_PREFERENCE', interested: true })}
           >
-            {t('mentorYes')}
+            {t(studentMentor ? 'mentorStudentYes' : 'mentorYes')}
           </Button>
           <Button
             variant="secondary"
@@ -362,7 +364,7 @@ export function OnboardingFlow({
             loading={pending}
             onClick={() => void submit({ step: 'MENTOR_PREFERENCE', interested: false })}
           >
-            {t('mentorNo')}
+            {t(studentMentor ? 'mentorStudentNo' : 'mentorNo')}
           </Button>
         </div>
       )}

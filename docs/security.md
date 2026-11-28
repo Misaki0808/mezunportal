@@ -77,7 +77,7 @@ kural sunucuda zorlanır.
 ## Yetkilendirme
 
 Roller: `STUDENT`, `ALUMNI`, `ACADEMIC` (üyelik). Mentorluk etkin `MentorProfile` demektir: mezun
-ve akademisyen açabilir; öğrenci eşiği K-08. Yönetici yetkisi ayrı tablodur (`AdminGrant`):
+ve akademisyen açabilir; 3. sınıf ve üstü öğrenci kendiliğinden öğrenci mentordur (K-08), `MentorProfile.isActive` ile bırakır. Yönetici yetkisi ayrı tablodur (`AdminGrant`):
 `SYSTEM`, `FACULTY(id)`, `DEPARTMENT(id)`; kapsam aşağıyı kapsar.
 
 | Eylem | Öğrenci | Mentor | Bölüm yön. | Fakülte yön. | Sistem yön. |

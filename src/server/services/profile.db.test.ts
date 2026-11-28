@@ -155,11 +155,7 @@ it('hepsini atlayıp bitirme zorunlu beyanı korur; veriler durur, eksikler ve s
   expect(await getOnboardingState(db, userId, NOW)).toEqual(complete);
 });
 
-it.each([
-  [2025, 'NOT_UPPER_CLASS'],
-  [2024, 'PUBLISHED_EXPERIENCE_REQUIRED'],
-  [2020, 'PUBLISHED_EXPERIENCE_REQUIRED'],
-])(
+it.each([[2025, 'NOT_UPPER_CLASS']])(
   'K-08 sunucuda reddeder: giriş yılı %i, sonuç %s (interested true/false ikisi de kapalı)',
   async (entryYear, reason) => {
     const userId = await person('STUDENT', entryYear);
@@ -175,6 +171,65 @@ it.each([
     expect(await db.mentorProfile.count({ where: { userId } })).toBe(0);
   },
 );
+
+it.each([
+  [2024, '3. sınıf'],
+  [2023, '4. sınıf'],
+  [2020, 'uzatma'],
+])(
+  'K-08 (kart 572): %i girişli %s öğrenci yayınlanmış deneyimi olmadan da öğrenci mentordur',
+  async (entryYear) => {
+    const userId = await person('STUDENT', entryYear);
+    expect(await db.experience.count({ where: { authorId: userId } })).toBe(0);
+    const state = await getOnboardingState(db, userId, NOW);
+    expect(state.studentMentorEligibility).toEqual({ eligible: true, reason: null });
+    expect(state.steps.find((item) => item.step === 'MENTOR_PREFERENCE')).toMatchObject({
+      applicable: true,
+    });
+    const saved = await saveOnboardingStep(
+      db,
+      userId,
+      { step: 'MENTOR_PREFERENCE', interested: true },
+      NOW,
+    );
+    expect(saved.mentorInterested).toBe(true);
+    // Onaylanmamış üyelikte tercih kaydı yetki ya da mentor satırı üretmez.
+    expect(await db.mentorProfile.count({ where: { userId } })).toBe(0);
+  },
+);
+
+it('öğrenci mentor ilk giriş adımı: "Hayır" mentorluğu bırakır, "Evet" bırakılmışsa geri açar; mezun etkilenmez', async () => {
+  const student = await createUser(db);
+  await addMembership(db, {
+    userId: student,
+    departmentId,
+    role: 'STUDENT',
+    entryYear: 2024,
+    status: 'VERIFIED',
+  });
+  // "Evet": satır yoksa açılmaz (öğrenci mentor zaten kendiliğinden mentordur).
+  await saveOnboardingStep(db, student, { step: 'MENTOR_PREFERENCE', interested: true }, NOW);
+  expect(await db.mentorProfile.count({ where: { userId: student } })).toBe(0);
+  await saveOnboardingStep(db, student, { step: 'MENTOR_PREFERENCE', interested: false }, NOW);
+  expect(await db.mentorProfile.findUniqueOrThrow({ where: { userId: student } })).toMatchObject({
+    isActive: false,
+  });
+  await saveOnboardingStep(db, student, { step: 'MENTOR_PREFERENCE', interested: true }, NOW);
+  expect(await db.mentorProfile.findUniqueOrThrow({ where: { userId: student } })).toMatchObject({
+    isActive: true,
+  });
+
+  const alumnus = await createUser(db);
+  await addMembership(db, {
+    userId: alumnus,
+    departmentId,
+    role: 'ALUMNI',
+    entryYear: 2018,
+    status: 'VERIFIED',
+  });
+  await saveOnboardingStep(db, alumnus, { step: 'MENTOR_PREFERENCE', interested: false }, NOW);
+  expect(await db.mentorProfile.count({ where: { userId: alumnus } })).toBe(0);
+});
 
 it('K-08 sınıf düzeltmesini ve kapanmış/reddedilmiş üyelikleri sunucudan okur', async () => {
   const userId = await person('STUDENT', 2024);

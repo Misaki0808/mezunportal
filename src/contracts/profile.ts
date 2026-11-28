@@ -54,7 +54,8 @@ export const mentorEligibilitySchema = z.discriminatedUnion('eligible', [
   z.object({ eligible: z.literal(true), reason: z.null() }),
   z.object({
     eligible: z.literal(false),
-    reason: z.enum(['NOT_UPPER_CLASS', 'PUBLISHED_EXPERIENCE_REQUIRED', 'EXPERIENCE_UNAVAILABLE']),
+    // Kart 572: yayınlanmış deneyim şartı kalktı; tek ret nedeni sınıftır (3. sınıf altı, hazırlık, sınıfı bilinmeyen).
+    reason: z.enum(['NOT_UPPER_CLASS']),
   }),
 ]);
 export type MentorEligibility = z.infer<typeof mentorEligibilitySchema>;

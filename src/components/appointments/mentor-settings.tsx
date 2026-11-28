@@ -12,12 +12,14 @@ import {
   type MentorSettingsView,
   type SaveAvailabilityInput,
   type SaveMentorSettingsInput,
+  type SetMentorActiveInput,
   type SetPauseInput,
 } from '@/contracts/appointment';
 import { MEETING_MODES } from '@/contracts/mentor-directory';
 import type { ActionFailure, ActionResult } from '@/contracts/result';
 import {
   Button,
+  Card,
   Checkbox,
   EmptyState,
   Field,
@@ -38,6 +40,8 @@ export type MentorSettingsActions = {
   saveSettings: (input: SaveMentorSettingsInput) => Result;
   saveAvailability: (input: SaveAvailabilityInput) => Result;
   setPause: (input: SetPauseInput) => Result;
+  /** Öğrenci mentorun "Mentorluğu bırak" / "Mentorluğa dön" tercihi (kart 572). */
+  setActive: (input: SetMentorActiveInput) => Result;
 };
 
 type Range = { start: string; end: string; mode: '' | 'ONLINE' | 'IN_PERSON' };
@@ -96,6 +100,8 @@ export function MentorSettings({
   const [paused, setPaused] = useState(Boolean(settings?.pausedUntil));
   const [pausedUntil, setPausedUntil] = useState(dateInput(settings?.pausedUntil ?? null));
   const [days, setDays] = useState(() => daysFromRules(initial));
+  // Kaydedilmiş müsaitlik kuralı sayısı (öğrenci mentorun listelenme ipucu için): haftalık kayıt başarılı olunca güncellenir.
+  const [savedRules, setSavedRules] = useState(initial.rules.length);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<ErrorCode>();
   const [notice, setNotice] = useState<string>();
@@ -113,15 +119,18 @@ export function MentorSettings({
     section: string,
     action: () => Result,
     onFailure?: (failure: ActionFailure) => boolean,
-  ) {
-    if (locked.current) return;
+    successNotice?: string,
+  ): Promise<boolean> {
+    if (locked.current) return false;
     locked.current = true;
     setPending(section);
     setError(undefined);
     setNotice(undefined);
+    let ok = false;
     try {
       const result = await action();
-      if (result.ok) setNotice(t('saved'));
+      ok = result.ok;
+      if (result.ok) setNotice(successNotice ?? t('saved'));
       else if (section === 'general' && result.fieldErrors?.monthlyCapacity) {
         setFieldErrors({ capacity: t('errors.capacity') });
         capacityField.current?.focus();
@@ -138,6 +147,19 @@ export function MentorSettings({
       locked.current = false;
       setPending(undefined);
     }
+    return ok;
+  }
+
+  /** Öğrenci mentor bırak/dön: yalnız `isActive` değişir; sonuç gelince ekran durumu güncellenir. */
+  async function toggleStudentActive(next: boolean) {
+    clearResult();
+    const ok = await run(
+      'active',
+      () => actions.setActive({ isActive: next }),
+      undefined,
+      t(next ? 'student.resumeDone' : 'student.leftDone'),
+    );
+    if (ok) setIsActive(next);
   }
 
   if (!initial.eligible) {
@@ -236,7 +258,11 @@ export function MentorSettings({
     }
     void run(
       'weekly',
-      () => actions.saveAvailability({ rules }),
+      async () => {
+        const result = await actions.saveAvailability({ rules });
+        if (result.ok) setSavedRules(rules.length);
+        return result;
+      },
       (failure) => {
         for (const [field, code] of Object.entries(failure.fieldErrors ?? {})) {
           const match = /^rules\.(\d+)\.endMinute$/.exec(field);
@@ -295,6 +321,36 @@ export function MentorSettings({
         >
           {error ? errors(error) : notice}
         </p>
+      )}
+
+      {initial.studentMentor && (
+        <section aria-labelledby="student-title">
+          <Card className="flex flex-col gap-3">
+            <h2 id="student-title" className="text-xl font-semibold text-fg">
+              {t(isActive ? 'student.title' : 'student.leftTitle')}
+            </h2>
+            <p className="text-base text-fg-muted">
+              {t(isActive ? 'student.description' : 'student.leftDescription')}
+            </p>
+            {isActive && savedRules === 0 && (
+              <p className="text-base text-fg">{t('student.needAvailability')}</p>
+            )}
+            {initial.openAppointments > 0 && (
+              <p className="text-base text-fg-muted">
+                {t('student.openAppointments', { count: initial.openAppointments })}
+              </p>
+            )}
+            <Button
+              variant={isActive ? 'secondary' : 'primary'}
+              size="lg"
+              fullWidth
+              loading={pending === 'active'}
+              onClick={() => void toggleStudentActive(!isActive)}
+            >
+              {t(isActive ? 'student.leave' : 'student.resume')}
+            </Button>
+          </Card>
+        </section>
       )}
 
       <section className="flex flex-col gap-4" aria-labelledby="general-title">
@@ -365,12 +421,14 @@ export function MentorSettings({
             )}
           </Field>
         )}
-        <Switch
-          label={t('active')}
-          description={t('activeHint')}
-          checked={isActive}
-          onChange={(event) => setIsActive(event.target.checked)}
-        />
+        {!initial.studentMentor && (
+          <Switch
+            label={t('active')}
+            description={t('activeHint')}
+            checked={isActive}
+            onChange={(event) => setIsActive(event.target.checked)}
+          />
+        )}
         <Button
           variant="primary"
           size="lg"

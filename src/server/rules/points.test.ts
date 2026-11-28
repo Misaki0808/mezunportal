@@ -4,7 +4,9 @@ import {
   awardStatus,
   bothSidesConfirmed,
   isFoundingEligible,
+  mentorSessionPercent,
   pointsOf,
+  scaleSessionMultiplier,
   sessionActionFor,
   sessionMultiplierPercent,
 } from './points';
@@ -42,6 +44,39 @@ describe('pointsOf', () => {
     expect(() => pointsOf(10, 101)).toThrow(RangeError);
     expect(() => pointsOf(10, -1)).toThrow(RangeError);
     expect(() => pointsOf(10, 0.5)).toThrow(RangeError);
+  });
+});
+
+describe('öğrenci mentor yarım görüşme puanı (kart 572)', () => {
+  it('yalnız doğrulanmış öğrenci üyeliği olan mentor yarım alır; mezun/akademisyen ve karma tam alır', () => {
+    expect(mentorSessionPercent(['STUDENT'])).toBe(50);
+    expect(mentorSessionPercent(['ALUMNI'])).toBe(100);
+    expect(mentorSessionPercent(['ACADEMIC'])).toBe(100);
+    expect(mentorSessionPercent(['STUDENT', 'ALUMNI'])).toBe(100);
+    expect(mentorSessionPercent(['STUDENT', 'ACADEMIC'])).toBe(100);
+    expect(mentorSessionPercent([])).toBe(100);
+  });
+
+  it('görüşme çarpanı yarıya iner ve aşağı yuvarlanır: 100→50, 50→25, 25→12, 0→0', () => {
+    expect([100, 50, 25, 0].map((m) => scaleSessionMultiplier(m, 50))).toEqual([50, 25, 12, 0]);
+    expect([100, 50, 25, 0].map((m) => scaleSessionMultiplier(m, 100))).toEqual([100, 50, 25, 0]);
+  });
+
+  it('puan tablosu: online 10 / yüz yüze 15 tabanda öğrenci mentor mezunun yarısı (aşağı yuvarlanmış), tek yuvarlamayla', () => {
+    const points = (base: number, decay: number, mentor: number) =>
+      pointsOf(base, scaleSessionMultiplier(decay, mentor));
+    expect([100, 50, 25].map((m) => points(10, m, 100))).toEqual([10, 5, 2]);
+    expect([100, 50, 25].map((m) => points(10, m, 50))).toEqual([5, 2, 1]);
+    expect([100, 50, 25].map((m) => points(15, m, 100))).toEqual([15, 7, 3]);
+    expect([100, 50, 25].map((m) => points(15, m, 50))).toEqual([7, 3, 1]);
+    // Hiçbir puanlı görüşme çarpan yuvarlamasıyla 0 çarpana düşmez (0 yalnız ay tavanıdır).
+    for (const m of [100, 50, 25]) expect(scaleSessionMultiplier(m, 50)).toBeGreaterThan(0);
+  });
+
+  it('geçersiz girdiyi reddeder', () => {
+    expect(() => scaleSessionMultiplier(101, 50)).toThrow(RangeError);
+    expect(() => scaleSessionMultiplier(50, -1)).toThrow(RangeError);
+    expect(() => scaleSessionMultiplier(50.5, 50)).toThrow(RangeError);
   });
 });
 

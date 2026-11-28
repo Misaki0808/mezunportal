@@ -323,7 +323,7 @@ bu adresin ana makinesini de `127.0.0.1` olarak ayarla; portu koru.
   konteynerinde. Ayrıntı yukarıda “Yerel paralel çalışma”.
 - **Mailpit:** `http://localhost:8025`; giriş bağlantıları ve bütün bildirimler buraya düşer.
 - **Dosyalar:** Git dışı `.data/files/`.
-- **Seed:** kurumlar ve rol başına altı test kullanıcısı hazırdır (öğrenci, üst sınıf mentor, mezun mentor,
+- **Seed:** kurumlar ve rol başına altı test kullanıcısı hazırdır (öğrenci, öğrenci mentor, mezun mentor,
   akademisyen, bölüm yöneticisi, sistem yöneticisi: doğrulanmış üyelik, mentor profili, yönetici yetkisi).
   Modül sırası ve deterministik kimlik/zaman üreticisi `prisma/seed-framework.ts`'tedir. E-postalar
   `@test.mezunportal.local` (gerçek alan adı değil); parola üretilmez. Yerel test girişi hazırdır;
@@ -427,7 +427,7 @@ Hazırlık: `pnpm db:deploy && pnpm db:seed` (Faz 2 örnek verisi gelir: "Örnek
 tarihler seed'i koştuğun ana göredir, yeniden koşmak tazeler). Bilgisayarda `pnpm dev:all` açıkken
 `APP_URL` adresinde başlayabilirsin; e-posta teslimi için worker da çalışır. Fotoğraf/CV yüklerken `.env.local` içindeki `APP_URL` ile aynı adresi kullan; `localhost` ile `127.0.0.1` arasında geçiş yapma. Telefon için yukarıdaki
 “Telefon testi” adımlarını izle. Her hesap için `/giris/test?persona=<hesap>` adresini aç ve **"Test hesabıyla giriş yap"** düğmesine bas
-(rol seçici: `/giris/test`; hesaplar orada "Öğrenci", "Üst sınıf mentor", "Mezun mentor", "Akademisyen", "Bölüm yöneticisi", "Sistem yöneticisi" adıyla durur). **Onaylarını tamamla:** onay ekranı açılmadıysa `/onay` adresine git; iki "Okudum ve onaylıyorum." kutusunu işaretle, "Seçimlerimi kaydet"e bas (bu ekranda alt sekme çubuğu yoktur; kaydedince ana sayfaya, bir sayfadan yönlendirildiysen o sayfaya dönersin). Kaydedince ana sayfadan denemeye devam et. Telefonda alt çubuk **Ana sayfa · İlanlar · Mentorlar · Randevular · Menü**. Deneyimler, Mezunlar, Etkinlikler, Ders rehberi ve Bildirimler **Menü** içinde; **Profilim** gerçek profilini (`/profil`), **Hesap ayarları** ayarlarını (`/hesap`) açar. Bilgisayarda aynı sayfaları soldaki menüden aç; yöneticiysen Yönetim grubu da görünür.
+(rol seçici: `/giris/test`; hesaplar orada "Öğrenci", "Öğrenci mentor", "Mezun mentor", "Akademisyen", "Bölüm yöneticisi", "Sistem yöneticisi" adıyla durur). **Onaylarını tamamla:** onay ekranı açılmadıysa `/onay` adresine git; iki "Okudum ve onaylıyorum." kutusunu işaretle, "Seçimlerimi kaydet"e bas (bu ekranda alt sekme çubuğu yoktur; kaydedince ana sayfaya, bir sayfadan yönlendirildiysen o sayfaya dönersin). Kaydedince ana sayfadan denemeye devam et. Telefonda alt çubuk **Ana sayfa · İlanlar · Mentorlar · Randevular · Menü**. Deneyimler, Mezunlar, Etkinlikler, Ders rehberi ve Bildirimler **Menü** içinde; **Profilim** gerçek profilini (`/profil`), **Hesap ayarları** ayarlarını (`/hesap`) açar. Bilgisayarda aynı sayfaları soldaki menüden aç; yöneticiysen Yönetim grubu da görünür.
 Hesaplar: `student` Deniz (öğrenci), `seniorMentor` Elif, `alumniMentor` Mert (mezun), `academic` Selin,
 `departmentAdmin` Kerem (bölüm yöneticisi), `systemAdmin`. E-postalar Mailpit'te (`http://localhost:8025`). Bulgularını aşağıdaki küçük tabloya ya da pm-handoff'taki
 `BULGU-LISTESI-SABLONU-FAZ2.md` dosyasına yaz.

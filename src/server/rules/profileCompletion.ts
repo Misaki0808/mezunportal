@@ -98,17 +98,15 @@ export function nextOnboardingStep(step: OnboardingStepName): OnboardingStepName
   return ONBOARDING_STEPS[index + 1] ?? 'COMPLETE';
 }
 
-/** K-08: üçüncü sınıf ve üzeri + yayınlanmış deneyim. null, P1-07 verisinin henüz bulunmadığı anlamına gelir. */
-export function studentMentorEligibility(
-  standing: ClassStanding,
-  publishedExperienceCount: number | null,
-): MentorEligibility {
-  if (!isUpperClass(standing)) return { eligible: false, reason: 'NOT_UPPER_CLASS' };
-  if (publishedExperienceCount === null)
-    return { eligible: false, reason: 'EXPERIENCE_UNAVAILABLE' };
-  if (!Number.isInteger(publishedExperienceCount) || publishedExperienceCount < 1)
-    return { eligible: false, reason: 'PUBLISHED_EXPERIENCE_REQUIRED' };
-  return { eligible: true, reason: null };
+/**
+ * K-08 (kart 572): doğrulanmış öğrenci üyeliğinde etkin sınıf 3 ve üzeri (uzatma dahil) ise kişi ÖĞRENCİ MENTORdur; yayınlanmış
+ * deneyim şartı yoktur. Sınıf hesaplanır (Eylül'de 3. sınıfa geçen kendiliğinden mentor olur); 1-2. sınıf, hazırlık ve sınıfı
+ * bilinmeyen mentor olamaz. Mentorluğu bırakma ayrı bir tercihtir (`MentorProfile.isActive`), uygunluğu değiştirmez.
+ */
+export function studentMentorEligibility(standing: ClassStanding): MentorEligibility {
+  return isUpperClass(standing)
+    ? { eligible: true, reason: null }
+    : { eligible: false, reason: 'NOT_UPPER_CLASS' };
 }
 
 /**

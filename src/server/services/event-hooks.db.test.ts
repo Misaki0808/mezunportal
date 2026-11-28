@@ -43,13 +43,17 @@ const events = async (userId: string, type?: string) => {
     orderBy: { id: 'asc' },
   });
 };
-async function member(role: 'STUDENT' | 'ALUMNI' = 'STUDENT', departmentId = inst.deptA1) {
+async function member(
+  role: 'STUDENT' | 'ALUMNI' = 'STUDENT',
+  departmentId = inst.deptA1,
+  entryYear = 2024,
+) {
   const userId = await createUser(db);
   await addMembership(db, {
     userId,
     departmentId,
     role,
-    ...(role === 'ALUMNI' ? { graduationYear: 2021 } : { entryYear: 2024 }),
+    ...(role === 'ALUMNI' ? { graduationYear: 2021 } : { entryYear }),
   });
   return userId;
 }
@@ -216,7 +220,9 @@ describe('olay kancaları', () => {
   });
 
   it('profil eşiği: yazım yukarı yönde eşiği geçince PROFILE_THRESHOLD tam bir kez yazılır, aynı eşik tekrar yazılmaz', async () => {
-    const userId = await member();
+    // 3. sınıf ve üstü öğrenci kendiliğinden öğrenci mentordur ve mentor adımı sayılır (9 adım); eşik 8 adım üzerinden
+    // sınanır, bu yüzden bu kişi bugün hangi yıl olursa olsun 1. sınıftır (giriş yılı içinde bulunulan takvim yılı).
+    const userId = await member('STUDENT', inst.deptA1, new Date().getFullYear());
     await db.profile.create({
       data: { userId, completedSteps: ['MEMBERSHIP', 'INTERESTS', 'GOALS'] },
     });
