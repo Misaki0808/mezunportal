@@ -184,6 +184,17 @@ export function AppointmentDetail({
         </PageHeader>
       </div>
 
+      {a.role === 'MENTOR' && a.status === 'REQUESTED' && a.studentSummary && (
+        <p className="rounded-card border border-border bg-surface p-4 text-base text-fg-muted">
+          {feedback('studentSummary', {
+            total: a.studentSummary.total,
+            interested: a.studentSummary.interested,
+            prepared: feedback(a.studentSummary.prepared ? 'preparedGenerally' : 'preparedMixed'),
+            punctual: feedback(a.studentSummary.punctual ? 'punctualGenerally' : 'punctualMixed'),
+          })}
+        </p>
+      )}
+
       {notice && (
         <p
           ref={noticeRef}

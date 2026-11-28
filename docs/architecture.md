@@ -117,6 +117,7 @@ LLM çıktısı güvenilmeyen girdidir; yalnız profil alanlarına öneri olur, 
 - **Yüz yüze:** mentorun yer notu; `.ics` indirilebilir.
 - **Hatırlatma:** başlangıçtan 24 saat önce; onay o noktadan sonra geldiyse hatırlatma onayla
   birlikte gider. Bitişten 1 saat sonra iki tarafa geri bildirim formu.
+- **Görüşme değerlendirmesi:** her katılımcı gerçekleşme yanıtından sonra kendi üç sorusunu ve yarım adımlı puanını verir. Öğrencinin fayda cevabında Evet/Kısmen eski `helpful` alanına `true`, Hayır `false` eşlenir; mentor için bu alan boş kalır. Görüşme puanı iki tarafın gerçekleşme yanıtına, eşzamanlı yanıt şüphe kuralı yanıt zamanına bağlıdır; bu kurallar değişmez. Tekil yanıtlar diğer katılımcıya açılmaz.
 - **İptal:** iki taraftan da; takvim etkinliği silinir.
 - **Uygulama (P1-10):** zaman kuralları `rules/appointmentSlots` (slot üretimi), `rules/appointmentLifecycle` (durum
   makinesi, D11, hatırlatma), `rules/ics`; servis `services/appointment.ts`; arka plan `services/appointment-jobs.ts`

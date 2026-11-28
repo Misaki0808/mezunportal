@@ -37,7 +37,8 @@ Efe Baydemir (gerçek kişi; MezunPortal projesinin sahibi).
 - **Doğrulama:** okul/kurum e-posta adresi; mezunlar için e-Devlet mezun belgesi (karar verildiği
   anda silinir).
 - **Platform kullanımı:** deneyim paylaşımları, randevu ve görüşme kayıtları, SSS talepleri,
-  katkı puanı, güvenilirlik göstergesi, işlem güvenliği kayıtları.
+  katkı puanı, güvenilirlik göstergesi, işlem güvenliği kayıtları. Görüşme sonrası değerlendirme yanıtları ve puanları
+  görüşme kalitesini izlemek ve eşiklerle özetler sunmak için işlenir; tekil yanıtlar diğer katılımcıya gösterilmez, bölüm kapsamındaki yetkili yönetici tarafından incelenebilir.
 
 ### 3. İşleme amaçları
 Üyeliğin doğrulanması; profil oluşturma; öğrencilerin mentor ve deneyimlere erişimi; randevu

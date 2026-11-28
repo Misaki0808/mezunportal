@@ -9,6 +9,7 @@ import {
 import { isCodedError } from '@/lib/errors';
 import { feedbackView, studentReliability, submitFeedback } from './feedback';
 import { buildDataExport } from './dataExport';
+import { deleteAccount } from './accountDeletion';
 import { reliabilitySince } from '../rules/reliability';
 import { settleEvents } from './event';
 import { seedPointRules } from '../../../prisma/seed-points';
@@ -61,7 +62,8 @@ describe('görüşme sonrası form', () => {
     const input = {
       appointmentId: appointment.id,
       happened: true,
-      helpful: true,
+      answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'] as ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+      rating: 4.5,
       note: 'Özel not',
     };
     expect(await code(submitFeedback(db, stranger, input, now))).toBe('RESOURCE_NOT_FOUND');
@@ -92,19 +94,36 @@ describe('görüşme sonrası form', () => {
     );
     expect(await code(submitFeedback(db, student, input, now))).toBe('FEEDBACK_ALREADY_SUBMITTED');
     expect(await code(feedbackView(db, stranger, appointment.id, now))).toBe('RESOURCE_NOT_FOUND');
+    const mentorView = await feedbackView(db, mentor, appointment.id, now);
+    expect(JSON.stringify(mentorView)).not.toContain('Özel not');
+    expect(JSON.stringify(mentorView)).not.toContain('answerOne');
+    const studentExport = (await buildDataExport(db, student)).appointments.find(
+      (row) => row.id === appointment.id,
+    )?.feedback;
+    expect(studentExport).toMatchObject({
+      answerOne: 'POSITIVE',
+      answerTwo: 'POSITIVE',
+      ratingHalf: 9,
+    });
   });
   it('mentor katılım olmadı dediğinde NO_SHOW olur ve karşıt yanıt görüşmeyi tamamlamaz', async () => {
     const { mentor, student, appointment } = await setup();
     await submitFeedback(
       db,
       mentor,
-      { appointmentId: appointment.id, happened: false, helpful: null, note: null },
+      { appointmentId: appointment.id, happened: false, answers: null, rating: null, note: null },
       now,
     );
     await submitFeedback(
       db,
       student,
-      { appointmentId: appointment.id, happened: true, helpful: null, note: null },
+      {
+        appointmentId: appointment.id,
+        happened: true,
+        answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'] as ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+        rating: 4.5,
+        note: null,
+      },
       now,
     );
     expect((await db.appointment.findUniqueOrThrow({ where: { id: appointment.id } })).status).toBe(
@@ -123,12 +142,28 @@ it.each([false, true])(
   'inceleyici: öğrenci hayır, mentor evet — sıra %s olsa da tamamlanmaz',
   async (mentorFirst) => {
     const { mentor, student, appointment } = await setup();
-    const yes = { appointmentId: appointment.id, happened: true, helpful: null, note: null };
+    const yes = {
+      appointmentId: appointment.id,
+      happened: true,
+      answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'] as ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+      rating: 4.5,
+      note: null,
+    };
     if (mentorFirst) {
       await submitFeedback(db, mentor, yes, now);
-      await submitFeedback(db, student, { ...yes, happened: false }, now);
+      await submitFeedback(
+        db,
+        student,
+        { ...yes, happened: false, answers: null, rating: null },
+        now,
+      );
     } else {
-      await submitFeedback(db, student, { ...yes, happened: false }, now);
+      await submitFeedback(
+        db,
+        student,
+        { ...yes, happened: false, answers: null, rating: null },
+        now,
+      );
       await submitFeedback(db, mentor, yes, now);
     }
     expect((await db.appointment.findUniqueOrThrow({ where: { id: appointment.id } })).status).toBe(
@@ -145,7 +180,8 @@ it.each(['ONLINE', 'IN_PERSON'] as const)(
     const input = {
       appointmentId: appointment.id,
       happened: true,
-      helpful: true,
+      answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'] as ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+      rating: 4.5,
       note: 'Olay yüküne taşınmayan özel not',
     };
     const results = await Promise.allSettled(
@@ -235,4 +271,121 @@ it('inceleyici: yıl sınırı dahil, önceki an/future/iptal hariç; gösterge 
   });
   await db.appointment.update({ where: { id: request.id }, data: { status: 'CANCELLED' } });
   expect(await code(studentReliability(db, mentor, student, now))).toBe('RESOURCE_NOT_FOUND');
+});
+
+it.each([
+  ['POSITIVE', true],
+  ['PARTIAL', true],
+  ['NEGATIVE', false],
+] as const)(
+  'öğrencinin fayda yanıtı %s eski helpful alanına %s eşlenir',
+  async (answer, expected) => {
+    const { student, appointment } = await setup();
+    await submitFeedback(
+      db,
+      student,
+      {
+        appointmentId: appointment.id,
+        happened: true,
+        answers: ['POSITIVE', answer, 'POSITIVE'],
+        rating: 4.5,
+        note: null,
+      },
+      now,
+    );
+    expect(
+      (
+        await db.sessionFeedback.findUniqueOrThrow({
+          where: { appointmentId_authorId: { appointmentId: appointment.id, authorId: student } },
+        })
+      ).helpful,
+    ).toBe(expected);
+  },
+);
+
+it('hesap silinince karşı tarafın bu kişi hakkındaki yanıtı ve notu silinir, katılım kanıtı kalır', async () => {
+  const { mentor, student, appointment } = await setup();
+  await submitFeedback(
+    db,
+    mentor,
+    {
+      appointmentId: appointment.id,
+      happened: true,
+      answers: ['POSITIVE', 'PARTIAL', 'NEGATIVE'],
+      rating: 4.5,
+      note: 'Öğrenciye ilişkin not',
+    },
+    now,
+  );
+  const user = await db.user.findUniqueOrThrow({ where: { id: student } });
+  await deleteAccount(
+    db,
+    student,
+    { publishedContent: 'ANONYMIZE', confirmEmail: user.email },
+    { removeStoredFiles: null },
+    now,
+  );
+  const row = await db.sessionFeedback.findUniqueOrThrow({
+    where: { appointmentId_authorId: { appointmentId: appointment.id, authorId: mentor } },
+  });
+  expect(row).toMatchObject({
+    happened: true,
+    answerOne: null,
+    answerTwo: null,
+    answerThree: null,
+    ratingHalf: null,
+    note: null,
+  });
+  expect(
+    await code(
+      submitFeedback(
+        db,
+        mentor,
+        {
+          appointmentId: appointment.id,
+          happened: true,
+          answers: ['POSITIVE', 'PARTIAL', 'NEGATIVE'],
+          rating: 4.5,
+          note: null,
+        },
+        now,
+      ),
+    ),
+  ).toBe('RESOURCE_NOT_FOUND');
+});
+
+it('mentor hesabı silinince öğrencinin eski helpful cevabı dahil değerlendirme temizlenir', async () => {
+  const { mentor, student, appointment } = await setup();
+  await submitFeedback(
+    db,
+    student,
+    {
+      appointmentId: appointment.id,
+      happened: true,
+      answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+      rating: 5,
+      note: 'Mentora ilişkin not',
+    },
+    now,
+  );
+  const user = await db.user.findUniqueOrThrow({ where: { id: mentor } });
+  await deleteAccount(
+    db,
+    mentor,
+    { publishedContent: 'ANONYMIZE', confirmEmail: user.email },
+    { removeStoredFiles: null },
+    now,
+  );
+  const row = await db.sessionFeedback.findUniqueOrThrow({
+    where: { appointmentId_authorId: { appointmentId: appointment.id, authorId: student } },
+  });
+  expect(row).toMatchObject({
+    happened: true,
+    helpful: null,
+    answerOne: null,
+    answerTwo: null,
+    answerThree: null,
+    ratingHalf: null,
+    note: null,
+  });
 });

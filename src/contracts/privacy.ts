@@ -304,6 +304,10 @@ export const exportedAppointmentSchema = z
       .object({
         happened: z.boolean(),
         helpful: z.boolean().nullable(),
+        answerOne: z.enum(['POSITIVE', 'PARTIAL', 'NEGATIVE']).nullable(),
+        answerTwo: z.enum(['POSITIVE', 'PARTIAL', 'NEGATIVE']).nullable(),
+        answerThree: z.enum(['POSITIVE', 'PARTIAL', 'NEGATIVE']).nullable(),
+        ratingHalf: z.number().int().min(1).max(10).nullable(),
         note: z.string().nullable(),
         createdAt: z.string(),
       })

@@ -1,4 +1,5 @@
 import 'server-only';
+import { mentorRatings } from './feedback-summary';
 import { photoSources } from './photo-presentation';
 
 import {
@@ -260,6 +261,7 @@ async function loadCards(
   });
   const used = knownUsed ?? (await countsOf(deps)(deps.db, mentorIds, now));
   const photos = await photoSources(deps.db, mentorIds, { universities: universityIds }, now);
+  const ratings = await mentorRatings(deps.db, mentorIds);
   const byId = new Map(rows.map((row) => [row.userId, row]));
   // Yarışta görünürlüğü kaybeden (üyeliği kapanan vb.) mentor kartı düşer.
   return mentorIds.flatMap((id) => {
@@ -268,6 +270,7 @@ async function loadCards(
       ? [
           {
             ...toCard(row, used.get(id) ?? 0, now),
+            ...(ratings.has(id) ? { ratingSummary: ratings.get(id)! } : {}),
             ...(photos.has(id) ? { photoSrc: photos.get(id)! } : {}),
           },
         ]
@@ -587,7 +590,9 @@ export async function getMentorEntryPoints(
     used,
     now,
   });
+  const ratingSummary = (await mentorRatings(deps.db, [targetId])).get(targetId) ?? null;
   return mentorEntryPointsSchema.parse({
+    ...(ratingSummary ? { ratingSummary } : {}),
     availability: {
       available: availability.available,
       reason: availability.reason,

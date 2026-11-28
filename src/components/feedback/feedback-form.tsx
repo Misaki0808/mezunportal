@@ -4,7 +4,12 @@ import { useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AccountFrameView } from '@/components/account/account-frame';
 import { ActionBar, Button, Field, Radio, Textarea } from '@/components/ui';
-import { feedbackInputSchema, type FeedbackView } from '@/contracts/feedback';
+import {
+  FEEDBACK_ANSWERS,
+  feedbackInputSchema,
+  type FeedbackAnswer,
+  type FeedbackView,
+} from '@/contracts/feedback';
 import type { ErrorCode } from '@/lib/errors';
 import { submitSessionFeedback } from '@/server/actions/feedback';
 
@@ -13,7 +18,14 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
   const errors = useTranslations('errors.codes');
   const frame = useTranslations('accountFrame');
   const [happened, setHappened] = useState<boolean | null>(null);
-  const [helpful, setHelpful] = useState<boolean | null>(null);
+  const [answers, setAnswers] = useState<(FeedbackAnswer | null)[]>([null, null, null]);
+  const [rating, setRating] = useState<number | null>(null);
+  const [answersInvalid, setAnswersInvalid] = useState(false);
+  const [ratingInvalid, setRatingInvalid] = useState(false);
+  const answerRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const firstRating = useRef<HTMLInputElement>(null);
+  const answersErrorId = useId();
+  const ratingErrorId = useId();
   const [note, setNote] = useState('');
   const [done, setDone] = useState(view.submitted);
   const [error, setError] = useState<ErrorCode>();
@@ -30,15 +42,24 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
     const parsed = feedbackInputSchema.safeParse({
       appointmentId: view.appointmentId,
       happened,
-      helpful: happened ? helpful : null,
+      answers: happened ? answers : null,
+      rating: happened ? rating : null,
       note: note.trim() || null,
     });
     setHappenedInvalid(false);
+    setAnswersInvalid(false);
+    setRatingInvalid(false);
     setNoteError(undefined);
     if (!parsed.success) {
       if (parsed.error.issues.some((issue) => issue.path[0] === 'happened')) {
         setHappenedInvalid(true);
         firstHappened.current?.focus();
+      } else if (parsed.error.issues.some((issue) => issue.path[0] === 'answers')) {
+        setAnswersInvalid(true);
+        answerRefs.current[answers.findIndex((answer) => answer === null)]?.focus();
+      } else if (parsed.error.issues.some((issue) => issue.path[0] === 'rating')) {
+        setRatingInvalid(true);
+        firstRating.current?.focus();
       } else if (parsed.error.issues.some((issue) => issue.path[0] === 'note')) {
         setNoteError('VALIDATION_INVALID');
         noteField.current?.focus();
@@ -53,6 +74,17 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
         if (result.fieldErrors?.happened) {
           setHappenedInvalid(true);
           firstHappened.current?.focus();
+        } else if (result.fieldErrors?.answers) {
+          setAnswersInvalid(true);
+          answerRefs.current[
+            Math.max(
+              0,
+              answers.findIndex((answer) => answer === null),
+            )
+          ]?.focus();
+        } else if (result.fieldErrors?.rating) {
+          setRatingInvalid(true);
+          firstRating.current?.focus();
         } else if (result.fieldErrors?.note) {
           setNoteError(result.fieldErrors.note);
           noteField.current?.focus();
@@ -126,26 +158,87 @@ export function FeedbackForm({ view }: { view: FeedbackView }) {
             )}
           </fieldset>
           {happened && (
-            <fieldset>
-              <legend className="font-semibold">
-                {t('helpful')} <span className="font-normal text-fg-muted">({t('optional')})</span>
-              </legend>
-              <div className="mt-3 grid gap-2">
-                {([true, false] as const).map((value) => (
-                  <label
-                    key={String(value)}
-                    className="flex min-h-12 items-center gap-3 rounded-control border border-border px-4"
-                  >
-                    <Radio
-                      name="helpful"
-                      checked={helpful === value}
-                      onChange={() => setHelpful(value)}
-                    />
-                    {t(value ? 'helpfulYes' : 'helpfulNo')}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+            <div className="space-y-6">
+              {([0, 1, 2] as const).map((index) => (
+                <fieldset key={index}>
+                  <legend className="font-semibold">{t(`questions.${view.role}.${index}`)}</legend>
+                  <div className="mt-3 grid gap-2">
+                    {FEEDBACK_ANSWERS.map((value) => (
+                      <label
+                        key={value}
+                        className="flex min-h-12 items-center gap-3 rounded-control border border-border px-4"
+                      >
+                        <Radio
+                          name={`answer-${index}`}
+                          ref={
+                            value === 'POSITIVE'
+                              ? (element) => {
+                                  answerRefs.current[index] = element;
+                                }
+                              : undefined
+                          }
+                          required
+                          aria-invalid={(answersInvalid && !answers[index]) || undefined}
+                          aria-describedby={
+                            answersInvalid && !answers[index] ? answersErrorId : undefined
+                          }
+                          checked={answers[index] === value}
+                          onChange={() => {
+                            setAnswers((current) =>
+                              current.map((item, i) => (i === index ? value : item)),
+                            );
+                            setAnswersInvalid(false);
+                          }}
+                        />
+                        {t(`answers.${view.role}.${index}.${value}`)}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              ))}
+              {answersInvalid && (
+                <p id={answersErrorId} role="alert" className="text-danger">
+                  {t('questionsRequired')}
+                </p>
+              )}
+              <fieldset>
+                <legend className="font-semibold">{t('rating')}</legend>
+                <div className="mt-3 grid grid-cols-5 gap-2">
+                  {Array.from({ length: 10 }, (_, index) => {
+                    const value = (index + 1) / 2;
+                    const label = new Intl.NumberFormat('tr-TR', {
+                      maximumFractionDigits: 1,
+                    }).format(value);
+                    return (
+                      <label
+                        key={value}
+                        className="flex min-h-12 cursor-pointer items-center justify-center gap-1 rounded-control border border-border px-1 has-checked:border-primary has-checked:bg-primary-soft"
+                      >
+                        <Radio
+                          name="rating"
+                          ref={index === 0 ? firstRating : undefined}
+                          required
+                          aria-label={t('ratingOption', { value: label })}
+                          aria-invalid={ratingInvalid || undefined}
+                          aria-describedby={ratingInvalid ? ratingErrorId : undefined}
+                          checked={rating === value}
+                          onChange={() => {
+                            setRating(value);
+                            setRatingInvalid(false);
+                          }}
+                        />
+                        <span aria-hidden="true">{label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {ratingInvalid && (
+                  <p id={ratingErrorId} role="alert" className="mt-2 text-danger">
+                    {t('ratingRequired')}
+                  </p>
+                )}
+              </fieldset>
+            </div>
           )}
           <Field
             className="[&_.text-sm]:text-base"

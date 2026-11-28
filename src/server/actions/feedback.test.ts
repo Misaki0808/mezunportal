@@ -24,7 +24,13 @@ import {
   getMyReliability,
   getFeedbackOverview,
 } from './feedback';
-const input = { appointmentId: 'meeting', happened: true, helpful: true, note: null };
+const input = {
+  appointmentId: 'meeting',
+  happened: true,
+  answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'] as ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+  rating: 4.5,
+  note: null,
+};
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.actor.mockResolvedValue({

@@ -302,6 +302,22 @@ export async function deleteAccount(
     await tx.jobMatchDigest.deleteMany({ where: { userId } });
     await tx.notificationIntent.deleteMany({ where: { userId } });
     await tx.inAppNotification.deleteMany({ where: { userId } });
+    // Karşı tarafın yanıtı da silinen katılımcıyı tarif edebilir. Olay/katılım kanıtını koru;
+    // bireysel değerlendirme ve serbest metni hesap silme işlemi içinde temizle.
+    await tx.sessionFeedback.updateMany({
+      where: {
+        authorId: { not: userId },
+        appointment: { OR: [{ mentorId: userId }, { menteeId: userId }] },
+      },
+      data: {
+        helpful: null,
+        answerOne: null,
+        answerTwo: null,
+        answerThree: null,
+        ratingHalf: null,
+        note: null,
+      },
+    });
     await tx.sessionFeedback.deleteMany({ where: { authorId: userId } });
     await tx.notificationPreference.deleteMany({ where: { userId } });
     await tx.notificationAction.deleteMany({ where: { userId } });

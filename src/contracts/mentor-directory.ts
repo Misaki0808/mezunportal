@@ -186,6 +186,10 @@ export const mentorCardSchema = z
     sessionMinutes: z.number().int(),
     meetingModes: z.array(z.enum(MEETING_MODES)),
     cvReviewEnabled: z.boolean(),
+    ratingSummary: z
+      .object({ average: z.number(), count: z.number().int().min(3) })
+      .nullable()
+      .optional(),
   })
   .strict();
 export type MentorCard = z.infer<typeof mentorCardSchema>;
@@ -272,6 +276,10 @@ export const mentorEntryPointsSchema = z
     contact: entryPointSchema,
     /** Görünür mentorun dizin kartında da gösterilen kamusal müsaitliği. */
     availability: mentorAvailabilitySchema.optional(),
+    ratingSummary: z
+      .object({ average: z.number(), count: z.number().int().min(3) })
+      .nullable()
+      .optional(),
   })
   .strict();
 export type MentorEntryPoints = z.infer<typeof mentorEntryPointsSchema>;

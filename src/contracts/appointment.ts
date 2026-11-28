@@ -278,6 +278,15 @@ export const appointmentViewSchema = z
   .object({
     id: z.string(),
     status: z.enum(APPOINTMENT_STATUSES),
+    studentSummary: z
+      .object({
+        total: z.number().int().min(2),
+        interested: z.number().int().min(0),
+        prepared: z.boolean(),
+        punctual: z.boolean(),
+      })
+      .nullable()
+      .optional(),
     /** Bu randevuda kullanıcının rolü. */
     role: z.enum(['MENTOR', 'MENTEE']),
     counterpart: z

@@ -430,7 +430,9 @@
     "brand": "MezunPortal",
     "labelBottom": "Ana gezinme",
     "labelSide": "Yan menü",
-    "menu": { "title": "Menü" },
+    "menu": {
+      "title": "Menü"
+    },
     "skipToContent": "İçeriğe geç",
     "comingSoon": "yakında",
     "items": {
@@ -1772,7 +1774,7 @@
               "item1": "Kimlik ve iletişim: ad, soyad, e-posta, (isteğe bağlı) telefon, profil fotoğrafı.",
               "item2": "Eğitim ve mesleki bilgi: bölüm, giriş/mezuniyet yılı, eğitim ve iş geçmişi, beceriler, diller, sertifikalar, CV dosyası.",
               "item3": "Doğrulama: okul/kurum e-posta adresi; mezunlar için e-Devlet mezun belgesi (karar verildiği anda silinir).",
-              "item4": "Platform kullanımı: deneyim paylaşımları, randevu ve görüşme kayıtları, SSS talepleri, katkı puanı, güvenilirlik göstergesi, işlem güvenliği kayıtları."
+              "item4": "Platform kullanımı: deneyim paylaşımları, randevu ve görüşme kayıtları, SSS talepleri, katkı puanı, güvenilirlik göstergesi, işlem güvenliği kayıtları. Görüşme sonrası değerlendirme yanıtları ve puanları görüşme kalitesini izlemek ve eşiklerle özetler sunmak için işlenir; tekil yanıtlar diğer katılımcıya gösterilmez, bölüm kapsamındaki yetkili yönetici tarafından incelenebilir."
             }
           },
           "section3": {
@@ -2024,7 +2026,8 @@
       "yearAlumni": "Yılın Mezunu",
       "alumniStory": "Ayın mezunu",
       "googleCalendar": "Google Takvim",
-      "courses": "Ders sözlüğü"
+      "courses": "Ders sözlüğü",
+      "sessionFeedback": "Görüşme geri bildirimleri"
     },
     "intro": {
       "users": "Kullanıcıları ara ve üyeliklerini yönet.",
@@ -2045,7 +2048,8 @@
       "yearAlumni": "Adayları incele ve bölüm adına karar ver.",
       "alumniStory": "Hikâyeleri incele ve ayın mezununu seç.",
       "googleCalendar": "Çevrimiçi randevulara otomatik Meet bağlantısı için Google hesabını bağla.",
-      "courses": "Bölümünün derslerini ekle veya güncelle."
+      "courses": "Bölümünün derslerini ekle veya güncelle.",
+      "sessionFeedback": "Bölüm kapsamındaki görüşme değerlendirmelerini incele."
     },
     "users": {
       "title": "Kullanıcılar",
@@ -2611,7 +2615,7 @@
     "emailSubject": "Görüşmeni değerlendir",
     "emailText": "Görüşmen hakkındaki kısa formu doldur: {url}",
     "title": "Görüşmen nasıldı?",
-    "description": "Kısa yanıtın görüşmelerin daha iyi olmasına yardımcı olur.",
+    "description": "Kısa yanıtın görüşmelerin daha iyi olmasına yardımcı olur. Tekil yanıtların diğer katılımcıya gösterilmez; bölümünün yetkili yöneticisi inceleyebilir.",
     "happened": "Görüşme gerçekleşti mi?",
     "happenedRequired": "Görüşmenin gerçekleşip gerçekleşmediğini seç.",
     "noteTooLong": "Not en fazla 1000 karakter olmalı.",
@@ -2641,7 +2645,74 @@
     "open": "Formu doldur",
     "mentorRequests": "Sana gelen talepler",
     "requestBadge": "Bekleyen randevu talebi",
-    "studentReliability": "Öğrencinin güvenilirliği"
+    "studentReliability": "Öğrencinin güvenilirliği",
+    "questionsRequired": "Üç sorunun her birini yanıtla.",
+    "ratingRequired": "Görüşme için bir puan seç.",
+    "questions": {
+      "MENTEE": {
+        "0": "Mentor seni dinledi ve sorularınla ilgilendi mi?",
+        "1": "Görüşmeden işine yarayacak somut bir şey çıktı mı? (yol haritası, kaynak, tavsiye)",
+        "2": "Görüşme zamanında başladı mı?"
+      },
+      "MENTOR": {
+        "0": "Öğrenci istekli ve ilgili miydi?",
+        "1": "Öğrenci görüşmeye hazırlıklı geldi mi? (soruları, hedefi, CV’si)",
+        "2": "Öğrenci zamanında katıldı mı?"
+      }
+    },
+    "answers": {
+      "MENTEE": {
+        "0": {
+          "POSITIVE": "Evet",
+          "PARTIAL": "Kısmen",
+          "NEGATIVE": "Hayır"
+        },
+        "1": {
+          "POSITIVE": "Evet",
+          "PARTIAL": "Kısmen",
+          "NEGATIVE": "Hayır"
+        },
+        "2": {
+          "POSITIVE": "Zamanında",
+          "PARTIAL": "Biraz gecikti",
+          "NEGATIVE": "Çok gecikti"
+        }
+      },
+      "MENTOR": {
+        "0": {
+          "POSITIVE": "Çok istekliydi",
+          "PARTIAL": "Normaldi",
+          "NEGATIVE": "İlgisizdi"
+        },
+        "1": {
+          "POSITIVE": "Evet",
+          "PARTIAL": "Kısmen",
+          "NEGATIVE": "Hayır"
+        },
+        "2": {
+          "POSITIVE": "Zamanında",
+          "PARTIAL": "Biraz gecikti",
+          "NEGATIVE": "Çok gecikti"
+        }
+      }
+    },
+    "rating": "Görüşmeyi 5 üzerinden değerlendir.",
+    "ratingOption": "{value} / 5",
+    "ratingSummary": "{average} ({count} değerlendirme)",
+    "studentSummary": "Önceki {total} görüşmenin {interested} tanesinde istekli bulundu · {prepared} · {punctual}",
+    "preparedGenerally": "genelde hazırlıklı",
+    "preparedMixed": "hazırlık düzeyi değişken",
+    "punctualGenerally": "genelde zamanında",
+    "punctualMixed": "katılım zamanı değişken",
+    "adminTitle": "Görüşme geri bildirimleri",
+    "adminDescription": "Bölümünün kapsamındaki görüşmelere ait yanıtlar.",
+    "adminEmpty": "Henüz geri bildirim yok.",
+    "adminRoleMENTOR": "Mentor yanıtı",
+    "adminRoleMENTEE": "Öğrenci yanıtı",
+    "adminNotHeld": "Görüşme gerçekleşmedi",
+    "adminNote": "Not: {note}",
+    "adminRating": "Puan: {rating} / 5",
+    "adminMore": "Daha fazla göster"
   },
   "invitations": {
     "title": "Toplu davet",

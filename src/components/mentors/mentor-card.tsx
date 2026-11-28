@@ -24,6 +24,7 @@ export function MentorCard({
   const t = useTranslations('mentors');
   const tags = useTranslations('profileTags');
   const ui = useTranslations('ui');
+  const feedback = useTranslations('feedback');
   // Aynı adlı eylem bağlantıları kartın sahibiyle ayırt edilir: "Profili gör: Ad" (görünen metin değişmez).
   const named = (key: 'card.profile' | 'card.appointment' | 'card.contact') =>
     ui('namedAction', { action: t(key), target: mentor.displayName });
@@ -57,6 +58,17 @@ export function MentorCard({
           )}
         </div>
       </div>
+      {mentor.ratingSummary && (
+        <p className="mt-2 text-sm font-medium text-fg">
+          {feedback('ratingSummary', {
+            average: new Intl.NumberFormat('tr-TR', {
+              minimumFractionDigits: 1,
+              maximumFractionDigits: 1,
+            }).format(mentor.ratingSummary.average),
+            count: mentor.ratingSummary.count,
+          })}
+        </p>
+      )}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <MentorAvailabilityBadge availability={availability} />
         <Badge tone="category">

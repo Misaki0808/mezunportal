@@ -6,6 +6,7 @@ import { actionOk, parseInput } from '@/lib/action-result';
 import { failAction } from '../fail-action';
 import { codedForbidden } from '@/lib/errors';
 import { getDb } from '../db';
+import { mentorRatings } from '../services/feedback-summary';
 import { requireVerifiedMember } from '../permissions';
 import * as feedback from '../services/feedback';
 import { requireConsent } from '../services/privacy';
@@ -57,5 +58,16 @@ export async function getFeedbackOverview() {
     return actionOk(await feedback.feedbackOverview(getDb(), actor.userId));
   } catch (error) {
     return failAction(error, 'getFeedbackOverview');
+  }
+}
+
+/** Kişi kendi mentor ortalamasını da aynı üç değerlendirme eşiğiyle görür. */
+export async function getMyMentorRating() {
+  try {
+    const actor = await requireVerifiedMember();
+    const db = getDb();
+    return actionOk((await mentorRatings(db, [actor.userId])).get(actor.userId) ?? null);
+  } catch (error) {
+    return failAction(error, 'getMyMentorRating');
   }
 }
