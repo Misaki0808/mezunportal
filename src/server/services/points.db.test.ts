@@ -412,7 +412,13 @@ describe('görüşme puanı: iki taraf şartı, ikili tavanı, azalan çarpan, g
         status: 'CONFIRMED',
       },
     });
-    const input = { appointmentId: row.id, happened: true, helpful: true, note: null };
+    const input = {
+      appointmentId: row.id,
+      happened: true,
+      answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'] as ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+      rating: 4.5,
+      note: null,
+    };
     await submitFeedback(db, student, input, now);
     expect(await entriesOf(mentor)).toHaveLength(0); // yalnız bir taraf
     await submitFeedback(db, mentor, input, now);
@@ -439,13 +445,19 @@ describe('görüşme puanı: iki taraf şartı, ikili tavanı, azalan çarpan, g
     await submitFeedback(
       db,
       mentor,
-      { appointmentId: row.id, happened: false, helpful: null, note: null },
+      { appointmentId: row.id, happened: false, answers: null, rating: null, note: null },
       now,
     );
     await submitFeedback(
       db,
       student,
-      { appointmentId: row.id, happened: true, helpful: true, note: null },
+      {
+        appointmentId: row.id,
+        happened: true,
+        answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'] as ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+        rating: 4.5,
+        note: null,
+      },
       now,
     );
     expect(await entriesOf(mentor)).toHaveLength(0);
@@ -771,7 +783,13 @@ describe('uzlaştırma: geç tamamlanan görüşme (puan yazımı düşmüş)', 
         status: 'CONFIRMED',
       },
     });
-    const input = { appointmentId: row.id, happened: true, helpful: true, note: null };
+    const input = {
+      appointmentId: row.id,
+      happened: true,
+      answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'] as ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+      rating: 4.5,
+      note: null,
+    };
     // Öğrenci hemen, mentor 25 gün sonra "bugün" yanıtlar → COMPLETED bugün olur.
     await submitFeedback(db, student, input, new Date(start.getTime() + 3 * HOUR));
     await submitFeedback(db, mentor, input, new Date(now.getTime() - HOUR));

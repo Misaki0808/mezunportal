@@ -7,6 +7,7 @@ import { reliability, reliabilitySince } from '../rules/reliability';
 import { awardForSession, awardSafely } from './points';
 import { requireConsent } from './privacy';
 import { emitEvent } from './event';
+import { requestedStudentSummary } from './feedback-summary';
 
 const HOUR = 60 * 60 * 1000;
 export async function submitFeedback(
@@ -17,7 +18,20 @@ export async function submitFeedback(
 ) {
   const parsed = feedbackInputSchema.parse(input);
   const result = await db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${userId} FOR SHARE`;
+    // Hesap silmeyle aynı User → Appointment kilit sırası: karşı taraf silinirse onun hakkında
+    // yeni bir değerlendirme geride kalamaz. Katılımcı olmayan kimlikler başka kullanıcıları kilitlemez.
+    const candidate = await tx.appointment.findUnique({
+      where: { id: parsed.appointmentId },
+      select: { mentorId: true, menteeId: true },
+    });
+    if (!candidate || (candidate.mentorId !== userId && candidate.menteeId !== userId))
+      throw codedNotFound('RESOURCE_NOT_FOUND');
+    for (const participant of [candidate.mentorId, candidate.menteeId].sort()) {
+      const locked = await tx.$queryRaw<
+        { deletedAt: Date | null }[]
+      >`SELECT "deletedAt" FROM "User" WHERE "id"=${participant} FOR SHARE`;
+      if (!locked.length || locked[0]!.deletedAt) throw codedNotFound('RESOURCE_NOT_FOUND');
+    }
     await createPermissions({
       db: () => tx,
       getSessionUserId: async () => userId,
@@ -38,7 +52,20 @@ export async function submitFeedback(
       row.endsAt.getTime() + HOUR > now.getTime()
     )
       throw codedConflict('FEEDBACK_NOT_READY');
-    await tx.sessionFeedback.create({ data: { ...parsed, authorId: userId } });
+    const answers = parsed.answers;
+    await tx.sessionFeedback.create({
+      data: {
+        appointmentId: row.id,
+        authorId: userId,
+        happened: parsed.happened,
+        helpful: userId === row.menteeId && answers ? answers[1] !== 'NEGATIVE' : null,
+        answerOne: answers?.[0] ?? null,
+        answerTwo: answers?.[1] ?? null,
+        answerThree: answers?.[2] ?? null,
+        ratingHalf: parsed.rating === null ? null : parsed.rating * 2,
+        note: parsed.note,
+      },
+    });
     let completed = false;
     if (userId === row.mentorId && !parsed.happened) {
       await tx.appointment.update({ where: { id: row.id }, data: { status: 'NO_SHOW' } });
@@ -149,6 +176,10 @@ export async function feedbackOverview(db: PrismaClient, userId: string, now = n
       startsAt: row.startsAt,
       name: row.mentorId === userId ? row.mentee.name : row.mentor.name,
       kind: row.status === 'REQUESTED' ? ('REQUEST' as const) : ('FEEDBACK' as const),
+      studentSummary:
+        row.status === 'REQUESTED' && row.mentorId === userId
+          ? await requestedStudentSummary(db, userId, row.menteeId)
+          : null,
       reliability:
         row.status === 'REQUESTED' && row.mentorId === userId
           ? await studentReliability(db, userId, row.menteeId, now)

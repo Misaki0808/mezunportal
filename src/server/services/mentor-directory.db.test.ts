@@ -1034,3 +1034,52 @@ it('deneyim türü yalnız arayanın üniversitesindeki yayından sinyal alır',
   expect(ids(await search(viewer, { experienceTypes: ['ERASMUS'] }))).toContain(person);
   expect(row.departmentIdAtWrite).toBe(other.deptA1);
 });
+
+it('mentor puanı iki değerlendirmede kart ve profilde gizli; üçte yalnız ortalama ve adet görünür', async () => {
+  const scope = await createInstitution(db);
+  const viewer = await member(scope.deptA1);
+  const target = await mentor({ departmentId: scope.deptA1, name: `Mentor ${tag()}` });
+  const addRating = async (half: number, day: number) => {
+    const author = await member(scope.deptA1);
+    const startsAt = new Date(Date.UTC(2029, 5, day, 10));
+    const appointment = await db.appointment.create({
+      data: {
+        mentorId: target,
+        menteeId: author,
+        status: 'COMPLETED',
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + 3600000),
+        expiresAt: new Date(startsAt.getTime() - 86400000),
+        decidedAt: new Date(startsAt.getTime() - 90000000),
+        mode: 'ONLINE',
+      },
+    });
+    await db.sessionFeedback.create({
+      data: {
+        appointmentId: appointment.id,
+        authorId: author,
+        happened: true,
+        answerOne: 'NEGATIVE',
+        answerTwo: 'PARTIAL',
+        answerThree: 'POSITIVE',
+        ratingHalf: half,
+        note: 'Gizli test notu',
+      },
+    });
+  };
+  await addRating(10, 1);
+  await addRating(8, 2);
+  const card = async () => (await search(viewer)).items.find((item) => item.userId === target)!;
+  expect((await card()).ratingSummary).toBeUndefined();
+  expect(
+    (await getMentorEntryPoints(deps(), await actorOf(viewer), { userId: target })).ratingSummary,
+  ).toBeUndefined();
+  await addRating(9, 3);
+  expect((await card()).ratingSummary).toEqual({ average: 4.5, count: 3 });
+  const entry = await getMentorEntryPoints(deps(), await actorOf(viewer), { userId: target });
+  expect(entry.ratingSummary).toEqual({ average: 4.5, count: 3 });
+  for (const value of [await card(), entry]) {
+    expect(JSON.stringify(value)).not.toContain('Gizli test notu');
+    expect(JSON.stringify(value)).not.toContain('answerOne');
+  }
+});

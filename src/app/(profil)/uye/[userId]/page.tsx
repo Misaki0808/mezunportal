@@ -23,7 +23,7 @@ export default async function MemberProfilePage({
     getMentorEntryPoints({ userId }).catch(() => null),
     getCvReviewAvailability({ mentorId: userId }).catch(() => null),
   ]);
-  const [count, t] = await Promise.all([
+  const [count, t, feedback] = await Promise.all([
     getDb().referralClaim.count({
       where: {
         alumnusId: userId,
@@ -32,15 +32,27 @@ export default async function MemberProfilePage({
       },
     }),
     getTranslations('referrals'),
+    getTranslations('feedback'),
   ]);
   return (
     <ProfileView
       profile={result.data}
       badges={
-        (entry?.ok && entry.data.availability) || count > 0 ? (
+        (entry?.ok && (entry.data.availability || entry.data.ratingSummary)) || count > 0 ? (
           <span className="flex flex-wrap items-center gap-2">
             {entry?.ok && entry.data.availability && (
               <MentorAvailabilityBadge availability={entry.data.availability} />
+            )}
+            {entry?.ok && entry.data.ratingSummary && (
+              <Badge>
+                {feedback('ratingSummary', {
+                  average: new Intl.NumberFormat('tr-TR', {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  }).format(entry.data.ratingSummary.average),
+                  count: entry.data.ratingSummary.count,
+                })}
+              </Badge>
             )}
             {count > 0 && <Badge>{t('profileCount', { count })}</Badge>}
           </span>

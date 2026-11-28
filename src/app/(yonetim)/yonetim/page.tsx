@@ -52,6 +52,7 @@ export default async function AdminOverviewPage() {
     { key: 'yearAlumni', href: '/yonetim/yilin-mezunu', visible: true },
     { key: 'alumniStory', href: '/yonetim/ayin-mezunu', visible: true },
     { key: 'courses', href: '/yonetim/dersler', visible: true },
+    { key: 'sessionFeedback', href: '/yonetim/gorusme-geri-bildirimleri', visible: true },
   ] as const;
   const queueCounts: Partial<Record<(typeof links)[number]['key'], number | null>> = {
     documents: counts.pendingGraduationDocuments,
@@ -84,6 +85,7 @@ export default async function AdminOverviewPage() {
     adminGrants: 'accent',
     points: 'accent',
     googleCalendar: 'accent',
+    sessionFeedback: 'primary',
   } as const;
   const ICON = {
     users: <UsersIcon width={22} height={22} />,
@@ -105,6 +107,7 @@ export default async function AdminOverviewPage() {
     adminGrants: <ShieldCheckIcon width={22} height={22} />,
     points: <BadgeCheckIcon width={22} height={22} />,
     googleCalendar: <CalendarIcon width={22} height={22} />,
+    sessionFeedback: <FileTextIcon width={22} height={22} />,
   } as const;
   const queueLinks = links.filter((link) => link.visible && link.key in queueCounts);
   const waiting = queueLinks.filter((link) => (queueCounts[link.key] ?? 0) > 0);

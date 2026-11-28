@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '@/test/render';
@@ -23,6 +23,18 @@ beforeEach(() => {
   submit.mockResolvedValue({ ok: true, data: {} });
 });
 
+async function answerQuestions(user: ReturnType<typeof renderUi>['user']) {
+  for (const question of [
+    'Mentor seni dinledi ve sorularınla ilgilendi mi?',
+    'Görüşmeden işine yarayacak somut bir şey çıktı mı? (yol haritası, kaynak, tavsiye)',
+    'Görüşme zamanında başladı mı?',
+  ]) {
+    const group = screen.getByRole('group', { name: question });
+    await user.click(within(group).getAllByRole('radio')[0]!);
+  }
+  await user.click(screen.getByRole('radio', { name: '4,5 / 5' }));
+}
+
 describe('FeedbackForm', () => {
   it('yanıt seçilmediğinde ilk seçeneğe odaklanır ve alan hatasını bağlar', async () => {
     renderUi(<FeedbackForm view={view} />);
@@ -41,6 +53,7 @@ describe('FeedbackForm', () => {
     });
     const { user } = renderUi(<FeedbackForm view={view} />);
     await user.click(screen.getByRole('radio', { name: 'Evet, gerçekleşti' }));
+    await answerQuestions(user);
     const note = screen.getByLabelText(/Eklemek istediğin/);
     await user.type(note, 'Türkçe not');
     await user.click(screen.getByRole('button', { name: 'Yanıtı gönder' }));
@@ -52,6 +65,7 @@ describe('FeedbackForm', () => {
   it('1001 karakterlik notu kesmeden reddeder ve alana odaklanır', async () => {
     const { user } = renderUi(<FeedbackForm view={view} />);
     await user.click(screen.getByRole('radio', { name: 'Evet, gerçekleşti' }));
+    await answerQuestions(user);
     const note = screen.getByLabelText(/Eklemek istediğin/);
     expect(note).not.toHaveAttribute('maxlength');
     fireEvent.change(note, { target: { value: 'İ'.repeat(1001) } });
@@ -75,41 +89,51 @@ describe('FeedbackForm', () => {
     expect(radios.every((radio) => (radio as HTMLInputElement).required)).toBe(true);
   });
 
-  it('"faydalı mı" grubu yalnız görüşme gerçekleştiyse açılır; seçimler eyleme aynen gider', async () => {
+  it('gerçekleştiyse üç farklı soru ve yarım puan zorunlu; veri eyleme gider', async () => {
     const { user } = renderUi(<FeedbackForm view={view} />);
-    expect(screen.queryByRole('radio', { name: 'Evet, faydalıydı' })).not.toBeInTheDocument();
-
     await user.click(screen.getByRole('radio', { name: 'Evet, gerçekleşti' }));
-    const helpful = screen
-      .getAllByRole('radio')
-      .filter((r) => (r as HTMLInputElement).name === 'helpful');
-    expect(helpful).toHaveLength(2);
-    for (const radio of helpful) expect(radio).toHaveClass('appearance-none', 'size-6');
-    await user.click(screen.getByRole('radio', { name: 'Evet, faydalıydı' }));
     await user.click(screen.getByRole('button', { name: 'Yanıtı gönder' }));
-
+    expect(submit).not.toHaveBeenCalled();
+    await answerQuestions(user);
+    await user.click(screen.getByRole('button', { name: 'Yanıtı gönder' }));
     await waitFor(() =>
       expect(submit).toHaveBeenCalledWith({
         appointmentId: 'ap1',
         happened: true,
-        helpful: true,
+        answers: ['POSITIVE', 'POSITIVE', 'POSITIVE'],
+        rating: 4.5,
         note: null,
       }),
     );
   });
 
-  it('"gerçekleşmedi" seçilince ikinci grup yoktur ve faydalı bilgisi null gider', async () => {
+  it('mentor farklı soruları görür ve yarım puanı klavyeyle seçebilir', async () => {
+    const { user } = renderUi(<FeedbackForm view={{ ...view, role: 'MENTOR' }} />);
+    await user.click(screen.getByRole('radio', { name: 'Evet, gerçekleşti' }));
+    expect(screen.getByRole('group', { name: 'Öğrenci istekli ve ilgili miydi?' })).toBeVisible();
+    expect(
+      screen.getByRole('group', {
+        name: 'Öğrenci görüşmeye hazırlıklı geldi mi? (soruları, hedefi, CV’si)',
+      }),
+    ).toBeVisible();
+    expect(screen.getByRole('group', { name: 'Öğrenci zamanında katıldı mı?' })).toBeVisible();
+    const first = screen.getByRole('radio', { name: '0,5 / 5' });
+    first.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('radio', { name: '1 / 5' })).toBeChecked();
+  });
+
+  it('gerçekleşmediyse sorular yok ve alanlar boş gönderilir', async () => {
     const { user } = renderUi(<FeedbackForm view={view} />);
-
     await user.click(screen.getByRole('radio', { name: 'Hayır, gerçekleşmedi' }));
-    expect(screen.queryByRole('radio', { name: 'Evet, faydalıydı' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: '4,5 / 5' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Yanıtı gönder' }));
-
     await waitFor(() =>
       expect(submit).toHaveBeenCalledWith({
         appointmentId: 'ap1',
         happened: false,
-        helpful: null,
+        answers: null,
+        rating: null,
         note: null,
       }),
     );

@@ -27,6 +27,20 @@ export default async function FeedbackOverviewPage() {
                   timeZone: 'Europe/Istanbul',
                 }).format(new Date(item.startsAt))}
               </p>
+              {item.studentSummary && (
+                <p className="mt-3 text-base text-fg-muted">
+                  {t('studentSummary', {
+                    total: item.studentSummary.total,
+                    interested: item.studentSummary.interested,
+                    prepared: t(
+                      item.studentSummary.prepared ? 'preparedGenerally' : 'preparedMixed',
+                    ),
+                    punctual: t(
+                      item.studentSummary.punctual ? 'punctualGenerally' : 'punctualMixed',
+                    ),
+                  })}
+                </p>
+              )}
               {item.kind === 'FEEDBACK' ? (
                 <Link
                   className="mt-3 inline-flex min-h-11 items-center font-medium text-primary"

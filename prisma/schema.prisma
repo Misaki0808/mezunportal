@@ -1520,6 +1520,13 @@ model Appointment {
   @@index([status, expiresAt])
 }
 
+/// Sabit soruların olumlu / orta / olumsuz yanıtları (soru metni yazarın tarafına bağlıdır).
+enum FeedbackAnswer {
+  POSITIVE
+  PARTIAL
+  NEGATIVE
+}
+
 /// Görüşme sonu yanıtı: her katılımcı aynı randevu için yalnız bir kez yanıtlar.
 model SessionFeedback {
   id            String      @id @default(uuid(7))
@@ -1527,6 +1534,10 @@ model SessionFeedback {
   authorId      String
   happened      Boolean
   helpful       Boolean?
+  answerOne     FeedbackAnswer?
+  answerTwo     FeedbackAnswer?
+  answerThree   FeedbackAnswer?
+  ratingHalf    Int?           @db.SmallInt
   note          String?
   createdAt     DateTime    @default(now())
   appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)

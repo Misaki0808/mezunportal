@@ -756,7 +756,16 @@ async function loadAppointmentExport(
       menteeId: true,
       feedbacks: {
         where: { authorId: userId },
-        select: { happened: true, helpful: true, note: true, createdAt: true },
+        select: {
+          happened: true,
+          helpful: true,
+          answerOne: true,
+          answerTwo: true,
+          answerThree: true,
+          ratingHalf: true,
+          note: true,
+          createdAt: true,
+        },
       },
       startsAt: true,
       endsAt: true,

@@ -1,4 +1,6 @@
 import { MyProfile } from '@/components/profile/my-profile';
+import { getTranslations } from 'next-intl/server';
+import { getMyMentorRating } from '@/server/actions/feedback';
 import { Contribution, ContributionSummary } from '@/components/points/contribution';
 import { ErrorState } from '@/components/ui';
 import {
@@ -25,6 +27,8 @@ export default async function ProfilePage() {
   if (!result) return <ErrorState errorCode="SERVER_UNEXPECTED" />;
   if (!result.ok) return <ErrorState errorCode={result.errorCode} />;
   const points = await getMyContribution({}).catch(() => null);
+  const rating = await getMyMentorRating().catch(() => null);
+  const feedback = await getTranslations('feedback');
   const gap = await getSkillGap().catch(() => null);
   const titles = gap?.ok ? await listSkillGapTitles().catch(() => null) : null;
   const alumniVisibility = await getAlumniVisibility();
@@ -32,7 +36,22 @@ export default async function ProfilePage() {
     <>
       <MyProfile
         initial={result.data}
-        beforeCompletion={points?.ok && <ContributionSummary summary={points.data.summary} />}
+        beforeCompletion={
+          <>
+            {points?.ok && <ContributionSummary summary={points.data.summary} />}
+            {rating?.ok && rating.data && (
+              <p>
+                {feedback('ratingSummary', {
+                  average: new Intl.NumberFormat('tr-TR', {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  }).format(rating.data.average),
+                  count: rating.data.count,
+                })}
+              </p>
+            )}
+          </>
+        }
         afterSections={
           <>
             {alumniVisibility.ok ? (

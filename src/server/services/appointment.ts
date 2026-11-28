@@ -1,4 +1,5 @@
 import 'server-only';
+import { requestedStudentSummary } from './feedback-summary';
 import { photoSources } from './photo-presentation';
 import { emitEvent } from './event';
 
@@ -939,7 +940,11 @@ export async function getAppointment(
     const row = await loadParticipantRow(tx, userId, parsed.appointmentId);
     const full = (await fullMonthsForRows(tx, [row], userId)).get(userId) ?? new Set<string>();
     const photos = await photoSources(tx, [nameOf(row, userId).id], { viewerId: userId }, now);
-    return toView(row, userId, now, full, photos);
+    const view = toView(row, userId, now, full, photos);
+    if (row.mentorId === userId && row.status === 'REQUESTED') {
+      return { ...view, studentSummary: await requestedStudentSummary(tx, userId, row.menteeId) };
+    }
+    return view;
   }, TX);
 }
 

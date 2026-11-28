@@ -1301,3 +1301,10 @@ en az üç farklı yazar eşiği değişmez; bu değişiklik yalnız adlandırma
 Yeni kayıtta e-posta yerel kısmındaki ayraçlar ad parçalarını belirtir; bitişik yazımda en uzun yaygın Türkçe ad öneki ve
 kalan en az üç harf ayrılır. Kalan bölüm de yaygın bir adsa yanlış bölmeyi azaltmak için ayrılmaz. Bu yalnız düzeltilebilir
 bir tahmindir; mevcut hesapların ve kimlik sağlayıcısından gelen adların üzerine yazılmaz.
+
+
+## 2026-11-28 · Görüşme sonrası değerlendirme
+
+Yalnız iki tarafın da gerçekleşti dediği (COMPLETED) görüşmeler mentor ortalaması ve öğrenci özetinde sayılır. Mentor ortalaması geçerli bütün puanlardan hesaplanır; ardışık iki görünümün farkı son puanı yaklaşık ele verebilir, eşikle çözülemeyen bu risk kabul edildi.
+
+İki taraf birbirinden bağımsız üç sabit soruyu ve 0,5–5 arası yarım adımlı puanı yanıtlar; gerçekleşmeyen görüşmede bu alanlar boş kalır. Eski kayıtlar korunur. Puan küçük tam sayı olarak yarım birimlerde saklanır. Mentor için yalnız öğrenci puanlarının ortalaması ve adedi en az üç farklı öğrencinin puanı varsa gösterilir; tekil yanıt ve not karşı tarafa verilmez. Talep alan mentora öğrencinin özeti en az iki farklı başka mentorun yanıtıyla açılır; kendi yanıtını toplamdan çıkarma yoluyla diğer mentoru çözmesini önlemek için mevcut mentorun yanıtı özetten çıkarılır. Ham yanıtlar yalnız öğrencinin güncel bölüm kapsamındaki yöneticidedir. Hesap silinince diğer tarafın silinen kişiyi tarif edebilen cevapları, puanı ve notu temizlenir; gerçekleşme kanıtı korunur.
